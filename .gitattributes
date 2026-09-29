@@ -1,0 +1,2 @@
+# store every file byte-for-byte: site/ must match what is deployed exactly
+* -text

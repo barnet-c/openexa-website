@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Specializing a Model to a Rulebook and Proving What It Did. A Research Note on Post-Training and Audit — OpenEXA Research</title>
+  <meta name="description" content="This post covers two technical questions that any autonomous system in regulated work must answer. How do you make a general language model reliably follow a specific rulebook? And how do you prove, after the fact, exactly what the system did and why?">
+  <meta name="theme-color" content="#0E1512">
+  <link rel="canonical" href="https://www.openexa.com/research/02-post-training-and-audit.html">
+  <meta property="og:url" content="https://www.openexa.com/research/02-post-training-and-audit.html">
+  <meta property="og:site_name" content="OpenEXA">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Specializing a Model to a Rulebook and Proving What It Did. A Research Note on Post-Training and Audit — OpenEXA Research">
+  <meta property="og:description" content="This post covers two technical questions that any autonomous system in regulated work must answer. How do you make a general language model reliably follow a specific rulebook? And how do you prove, after the fact, exactly what the system did and why?">
+  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Specializing a Model to a Rulebook and Proving What It Did. A Research Note on Post-Training and Audit — OpenEXA Research">
+  <meta name="twitter:description" content="This post covers two technical questions that any autonomous system in regulated work must answer. How do you make a general language model reliably follow a specific rulebook? And how do you prove, after the fact, exactly what the system did and why?">
+  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Specializing a Model to a Rulebook and Proving What It Did. A Research Note on Post-Training and Audit","description":"This post covers two technical questions that any autonomous system in regulated work must answer. How do you make a general language model reliably follow a specific rulebook? And how do you prove, after the fact, exactly what the system did and why?","url":"https://www.openexa.com/research/02-post-training-and-audit.html","isPartOf":{"@type":"Blog","name":"OpenEXA Research","url":"https://www.openexa.com/research.html"},"publisher":{"@type":"Organization","name":"OpenEXA","url":"https://www.openexa.com/"},"author":{"@type":"Organization","name":"OpenEXA"},"wordCount":1470}</script>
+</head>
+<body data-nav="dark-start" class="article-page">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <div class="container">
+      <a class="brand" href="../index.html" aria-label="OpenEXA home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../platform.html">Platform</a>
+        <a href="../lifecycles.html">Lifecycles</a>
+        <a href="../evidence.html">Proof</a>
+        <a href="../trust.html">Trust</a>
+        <a href="../research.html" aria-current="page">Research</a>
+        <a href="../company.html">Company</a>
+      </nav>
+      <a class="btn btn--sm" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
+    </div>
+  </header>
+  <div class="nav-menu">
+    <a href="../platform.html">Platform</a>
+    <a href="../lifecycles.html">Lifecycles</a>
+    <a href="../evidence.html">Proof</a>
+    <a href="../trust.html">Trust</a>
+    <a href="../research.html" aria-current="page">Research</a>
+    <a href="../company.html">Company</a>
+    <a class="btn" href="../access.html">Request access</a>
+  </div>
+
+  <main id="main">
+    <section class="page-hero page-hero--dark is-dark grain article-hero">
+      <div class="figure-stage article-figure" data-figure="weights" data-spin="0.10" aria-hidden="true"><canvas></canvas></div>
+      <div class="container">
+        <div class="article-hero-grid">
+          <div>
+            <div class="eyebrow" data-reveal>Research · 02 of 10 · Research note</div>
+            <h1 class="display-1 article-title" data-reveal data-split style="--d:60ms">Specializing a Model to a Rulebook and Proving What It Did. A Research Note on Post-Training and Audit</h1>
+            <p class="lede mt-3" data-reveal style="--d:120ms">This post covers two technical questions that any autonomous system in regulated work must answer. How do you make a general language model reliably follow a specific rulebook? And how do you prove, after the fact, exactly what the system did and why?</p>
+            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder's notes</span><span>7 min read</span><span>Fig. 02 — weights</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section article-body-section">
+      <div class="container">
+        <div class="grid">
+          <aside class="col-3 article-side">
+            <div class="sticky">
+              <div class="eyebrow mb-2">In this note</div>
+              <ol class="toc" data-toc><li><a href="#part-one-retrieval-is-not-enough">Part one: retrieval is not enough</a></li><li><a href="#post-training-moves-the-rulebook-into-the-weights">Post-training moves the rulebook into the weights</a></li><li><a href="#parameter-efficient-specialization-and-the-forgetting-problem">Parameter-efficient specialization and the forgetting problem</a></li><li><a href="#constrained-decoding-closes-the-schema-gap">Constrained decoding closes the schema gap</a></li><li><a href="#part-two-proving-what-happened">Part two: proving what happened</a></li><li><a href="#what-must-go-in-the-record">What must go in the record</a></li><li><a href="#replay-as-off-policy-evaluation">Replay as off-policy evaluation</a></li><li><a href="#summary">Summary</a></li></ol>
+              <div class="article-share mt-3"><a class="link-arrow" href="../research.html">All research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
+            </div>
+          </aside>
+          <article class="col-7 offset-5 article">
+            <h2 id="part-one-retrieval-is-not-enough">Part one: retrieval is not enough</h2><p class="lead">The default approach to giving a language model domain knowledge is retrieval-augmented generation. Store the documents, retrieve the relevant passages at inference time, place them in context. It works well for question answering. It works poorly for rule-following under exceptions, for three reasons.</p><p>First, retrieval selects by similarity, and the rule that governs an exception is often not textually similar to the exception. A shortfall in a basket delivery after cutoff is governed by a procedures clause that mentions neither shortfall nor cutoff in the same sentence. Embedding similarity misses it.</p><p>Second, retrieved context competes with the model's prior. A general model has strong priors about how finance works from pretraining. When a retrieved rule contradicts the prior, the model does not reliably defer to the rule. Studies of knowledge conflicts between context and parametric memory consistently show the model splitting the difference or ignoring the context under adversarial phrasing.</p><p>Third, retrieval does not teach the model the mapping from messy state to rule application. The documents say what the rule is. They do not say what the world looks like when the rule applies. That mapping is exactly what a human specialist has and a general model lacks.</p><h2 id="post-training-moves-the-rulebook-into-the-weights">Post-training moves the rulebook into the weights</h2><p>Post-training, meaning supervised fine-tuning followed by preference optimization on domain data, changes the model's prior rather than competing with it. The rulebook becomes what the model believes, not what it is told.</p><p>The supervised stage is straightforward in principle. Each training example is a lifecycle state, the applicable rule, and the correct structured action. The hard part is the data. Rules are documented. Correct actions under exceptions are not. They live in resolution logs, reconciliation records, and the memory of the people who handled them. Building the training set means turning every historical exception into a case with its state, its resolution, and its confirmation. The append-only ledger discussed later in this post is, among other things, the mechanism that generates this data continuously once the system is live.</p><p>The preference stage matters more than it appears. Direct Preference Optimization and its relatives train the model to prefer one response over another given the same state. In a governed system, the natural preference signal is the verifier. Every proposal the council rejected is a negative example paired with the state that produced it. Every proposal the council approved and the counterparty confirmed is a positive example. The model learns where the policy boundary is without anyone writing it down as a rule, because the verifier's decisions are the labels.</p><p>This creates a feedback loop that is unusual in deployed machine learning. Most systems train once and drift. A system with an explicit verifier and an append-only record of its decisions generates labeled data every session, and the labels come from the component that is by construction the most reliable in the system.</p><h2 id="parameter-efficient-specialization-and-the-forgetting-problem">Parameter-efficient specialization and the forgetting problem</h2><p>Full fine-tuning of a large model on a narrow domain risks catastrophic forgetting: the model gets better at the rulebook and worse at general reasoning it still needs. Parameter-efficient methods such as low-rank adaptation train a small set of additional weights while freezing the base model. The base model's reasoning is preserved. The adapter carries the domain.</p><p>This has an architectural consequence for multi-lifecycle systems. One base model, many adapters. A new lifecycle is a new adapter trained on that lifecycle's rules and exceptions, sharing the base with every other lifecycle. The replication of a proven agent onto a new asset class becomes, at the model layer, the training of one adapter on one new case set while the reasoning substrate stays fixed. That is the technical basis for a master-and-copy agent model.</p><h2 id="constrained-decoding-closes-the-schema-gap">Constrained decoding closes the schema gap</h2><p>A post-trained model that reasons correctly must still emit an action the execution layer can consume. Free-form text is not an action. The solution is constrained decoding. The model's output is restricted at the token level to conform to a grammar or schema, typically a JSON schema describing the proposal type, its fields, and their permitted values. Tokens that would violate the schema are masked before sampling.</p><p>This is not a formatting convenience. It is the mechanism by which the boundary between probabilistic reasoning and deterministic execution is made airtight. The model cannot emit a proposal with a field the schema does not define, a venue the schema does not permit, or a size outside the schema's range. Whatever it believes, its output is a well-typed structure or it is nothing. The execution layer never parses natural language.</p><h2 id="part-two-proving-what-happened">Part two: proving what happened</h2><p>A system that acts autonomously in regulated work must be able to answer, for any past moment, what it did, why, and on what authority. That is an audit requirement and it is also a research requirement, because it is the only way to evaluate and improve the system offline.</p><p>The data structure for this is a hash chain, the same primitive that underlies Merkle trees, version control systems, and certificate transparency logs. Each record includes a cryptographic hash of its own contents and the hash of the previous record. The chain has one property that matters: any modification to any record changes its hash, which invalidates the next record's stored reference, which cascades to the end of the chain. Tampering is not prevented. It is made detectable by anyone holding the final hash.</p><p>Append-only is the complementary property. The store accepts new records and refuses updates and deletes at the storage layer, not merely by policy. Together, the two properties mean the record is a fact about the past that no administrator can revise.</p><h2 id="what-must-go-in-the-record">What must go in the record</h2><p>The content of each record is as important as its integrity. For an autonomous system, a useful record captures the agent identity and permission scope that produced a proposal, the full structured proposal, the verifier's decision and the specific policy check that determined it, the execution result, and the independent counterparty confirmation. Recording the counterparty confirmation as the condition for the settled record, rather than the system's own belief that an action completed, is what makes the ledger ground truth rather than self-report.</p><p>Per-agent attribution is what makes a swarm accountable. When thousands of components act concurrently, the question after an incident is never what the system did. It is which agent, at which gate, under which permission, produced the proposal that led to the outcome. A ledger keyed by agent identity answers that directly.</p><h2 id="replay-as-off-policy-evaluation">Replay as off-policy evaluation</h2><p>The research payoff of a replayable ledger is that every live session becomes an evaluation environment. Because the record contains the full state at each decision point and the action taken, one can ask what a different policy would have done against the same states. This is off-policy evaluation, a well-developed area in reinforcement learning, and the ledger is what makes it possible without simulation.</p><p>Concretely: a new model checkpoint can be run against the recorded states of every past session and its proposals compared to the verifier's historical decisions before it touches live capital. A tighter council policy can be evaluated by counting which historical proposals it would have rejected and what those proposals subsequently did. A change to an agent's permission scope can be checked for whether it would have blocked any action that was in fact confirmed and profitable. None of this requires a market simulator, which is fortunate, because market simulators are the least trustworthy component in any quantitative pipeline.</p><h2 id="summary">Summary</h2><p>The two halves of this post are one argument. Post-training moves a rulebook into a model's weights, with the verifier's decisions as the preference signal and constrained decoding as the guarantee that outputs are well-typed. The append-only, hash-chained ledger records every decision with per-agent attribution and counterparty confirmation, which serves audit and simultaneously generates the training data and the evaluation environment for the next model. The model gets more specific to the lifecycle the longer it runs. The record of what it did is the reason it can.</p><p>---</p><p><em>Disclosures: Performance figures referenced in this series are proof-of-concept results over a limited period and are not guarantees of future results. OpenEXA does not take custody of client assets. Lifecycles beyond Lifecycle 01 describe roadmap intent. Any offering of securities would be made only to accredited investors under Rule 506(c). Named brokers and exchanges do not endorse OpenEXA.</em></p>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder's notes · 02 / 10</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section is-paper-2 section--tight">
+      <div class="container">
+        <div class="pager">
+          <a class='pager-card' href='01-compounding-error.html'><span class='k'>← Previous · 01</span><h3>Compounding Error and the Case for Decomposition. A Research Note on Agent Architecture</h3><p>Why long-horizon autonomous work must be decomposed into narrow agents behind a deterministic boundary.</p></a>
+          <a class='pager-card next' href='03-not-tasks-lifecycles.html'><span class='k'>Next · 03 →</span><h3>Not Tasks. Lifecycles. Why We Stopped Building Assistants</h3><p>Why we stopped building assistants and changed the unit of work to the lifecycle.</p></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="top">
+        <div>
+          <a class="brand" href="../index.html"><i class="mark"></i>OpenEXA</a>
+          <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
+        </div>
+        <div><h4>Product</h4><ul><li><a href="../platform.html">Platform</a></li><li><a href="../lifecycles.html">Lifecycles</a></li><li><a href="../evidence.html">Proof</a></li><li><a href="../trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h4>Company</h4><ul><li><a href="../company.html">About OpenEXA</a></li><li><a href="../research.html">Research</a></li><li><a href="../research/blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
+        <div><h4>Access</h4><ul><li><a href="../access.html">Request access</a></li><li><a href="../access.html#managers">For managers</a></li><li><a href="../access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+      </div>
+      <div class="disc">
+        <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>
+        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
+      </div>
+      <div class="bottom">
+        <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
+        <span>Infrastructure for agentic lifecycles</span>
+      </div>
+      <div class="wordmark" aria-hidden="true">OpenEXA</div>
+    </div>
+  </footer>
+
+  <script src="../assets/js/figure.js" defer></script>
+  <script src="../assets/js/site.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agents Decide. Code Executes. The One Boundary That Matters — OpenEXA Research</title>
+  <meta name="description" content="Eight layers, one boundary. The top four estimate; the bottom four are deterministic code.">
+  <meta name="theme-color" content="#0E1512">
+  <link rel="canonical" href="https://www.openexa.com/research/05-agents-decide-code-executes.html">
+  <meta property="og:url" content="https://www.openexa.com/research/05-agents-decide-code-executes.html">
+  <meta property="og:site_name" content="OpenEXA">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Agents Decide. Code Executes. The One Boundary That Matters — OpenEXA Research">
+  <meta property="og:description" content="Eight layers, one boundary. The top four estimate; the bottom four are deterministic code.">
+  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Agents Decide. Code Executes. The One Boundary That Matters — OpenEXA Research">
+  <meta name="twitter:description" content="Eight layers, one boundary. The top four estimate; the bottom four are deterministic code.">
+  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Agents Decide. Code Executes. The One Boundary That Matters","description":"Eight layers, one boundary. The top four estimate; the bottom four are deterministic code.","url":"https://www.openexa.com/research/05-agents-decide-code-executes.html","isPartOf":{"@type":"Blog","name":"OpenEXA Research","url":"https://www.openexa.com/research.html"},"publisher":{"@type":"Organization","name":"OpenEXA","url":"https://www.openexa.com/"},"author":{"@type":"Organization","name":"OpenEXA"},"wordCount":630}</script>
+</head>
+<body data-nav="dark-start" class="article-page">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <div class="container">
+      <a class="brand" href="../index.html" aria-label="OpenEXA home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../platform.html">Platform</a>
+        <a href="../lifecycles.html">Lifecycles</a>
+        <a href="../evidence.html">Proof</a>
+        <a href="../trust.html">Trust</a>
+        <a href="../research.html" aria-current="page">Research</a>
+        <a href="../company.html">Company</a>
+      </nav>
+      <a class="btn btn--sm" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
+    </div>
+  </header>
+  <div class="nav-menu">
+    <a href="../platform.html">Platform</a>
+    <a href="../lifecycles.html">Lifecycles</a>
+    <a href="../evidence.html">Proof</a>
+    <a href="../trust.html">Trust</a>
+    <a href="../research.html" aria-current="page">Research</a>
+    <a href="../company.html">Company</a>
+    <a class="btn" href="../access.html">Request access</a>
+  </div>
+
+  <main id="main">
+    <section class="page-hero page-hero--dark is-dark grain article-hero">
+      <div class="figure-stage article-figure" data-figure="boundary" data-spin="0.10" aria-hidden="true"><canvas></canvas></div>
+      <div class="container">
+        <div class="article-hero-grid">
+          <div>
+            <div class="eyebrow" data-reveal>Research · 05 of 10 · Series · 03</div>
+            <h1 class="display-1 article-title" data-reveal data-split style="--d:60ms">Agents Decide. Code Executes. The One Boundary That Matters</h1>
+            <p class="lede mt-3" data-reveal style="--d:120ms">Eight layers, one boundary. The top four estimate; the bottom four are deterministic code.</p>
+            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder's notes</span><span>3 min read</span><span>Fig. 05 — boundary</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section article-body-section">
+      <div class="container">
+        <div class="grid">
+          <aside class="col-3 article-side">
+            <div class="sticky">
+              <div class="eyebrow mb-2">In this note</div>
+              <ol class="toc" data-toc><li><a href="#why-the-boundary-sits-there">Why the boundary sits there</a></li><li><a href="#idempotency-as-a-safety-property">Idempotency as a safety property</a></li><li><a href="#mcp-as-the-structural-interface">MCP as the structural interface</a></li></ol>
+              <div class="article-share mt-3"><a class="link-arrow" href="../research.html">All research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
+            </div>
+          </aside>
+          <article class="col-7 offset-5 article">
+            <p class="lead">If I had to reduce the OpenEXA architecture to one sentence, it would be this: agents decide, code executes. Every design decision we have made follows from where we drew that line.</p><p>Our stack has eight layers. The top four decide. Signal intelligence perceives the environment with our own risk and prediction models. The model layer reasons on a post-trained language model. Domain-specific agents propose actions. The execution council governs those proposals against policy. All four are probabilistic. They estimate, they reason, they can be wrong.</p><p>The bottom four execute, and they are deterministic code. The routing layer selects a venue and counterparty by scoring, not by judgment. The execution layer is a state machine that is idempotent, retried, and reconciled against the broker. The MCP server exposes authenticated tools to the outside world and is deployed per customer. The authentication layer holds scoped, revocable permissions for every agent and every tool.</p><h2 id="why-the-boundary-sits-there">Why the boundary sits there</h2><p>Language models are excellent at the part of the lifecycle that used to require a specialist: reading an exception, interpreting a rule, proposing what to do. They are the wrong tool for the part that requires certainty: sending an order once and only once, confirming a fill, writing a record that cannot be edited.</p><p>By making layers five through eight deterministic, we get a property I consider non-negotiable in regulated work. Nothing an agent believes can move what it is not permitted to. An agent can be confidently wrong about the size of a NAV gap. The consequences of that error stop at the council, and even if the council approves, the execution layer will only do what the permission scope allows, exactly once, and it will reconcile the result with an independent counterparty.</p><h2 id="idempotency-as-a-safety-property">Idempotency as a safety property</h2><p>The execution layer is built around a simple contract: do it once. Every order transition has a unique identity. If a network fault causes a retry, the state machine recognizes the transition and refuses to run it twice. This sounds like plumbing. It is actually the mechanism that lets us give agents autonomy. Autonomy without idempotency means a confused agent can double-execute. Autonomy with idempotency means the worst case is a rejected proposal.</p><h2 id="mcp-as-the-structural-interface">MCP as the structural interface</h2><p>We use the Model Context Protocol as the boundary between reasoning and the external world. Brokers, custodians, exchanges, and clearing houses are exposed to agents as authenticated tools. Each customer gets their own MCP server, so permissions are scoped to that customer's accounts and nothing else. Custody never moves. No agent and no tool has withdrawal rights.</p><p>This is what lets us claim that the lifecycle is machine-actionable. The structured trait in our lifecycle test is not about data formats. It is about whether the process can be expressed as a set of tools with clear inputs, outputs, and permission scopes. When it can, the swarm can run it. When it cannot, no amount of model capability will make it safe.</p>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder's notes · 05 / 10</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section is-paper-2 section--tight">
+      <div class="container">
+        <div class="pager">
+          <a class='pager-card' href='04-five-thousand-small-agents.html'><span class='k'>← Previous · 04</span><h3>Why Five Thousand Small Agents Beat One Large One</h3><p>Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.</p></a>
+          <a class='pager-card next' href='06-post-training-on-a-rulebook.html'><span class='k'>Next · 06 →</span><h3>Post-Training a Model on a Rulebook, Not on the Internet</h3><p>Closing the gap between a model that knows finance and one that knows this lifecycle.</p></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="top">
+        <div>
+          <a class="brand" href="../index.html"><i class="mark"></i>OpenEXA</a>
+          <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
+        </div>
+        <div><h4>Product</h4><ul><li><a href="../platform.html">Platform</a></li><li><a href="../lifecycles.html">Lifecycles</a></li><li><a href="../evidence.html">Proof</a></li><li><a href="../trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h4>Company</h4><ul><li><a href="../company.html">About OpenEXA</a></li><li><a href="../research.html">Research</a></li><li><a href="../research/blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
+        <div><h4>Access</h4><ul><li><a href="../access.html">Request access</a></li><li><a href="../access.html#managers">For managers</a></li><li><a href="../access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+      </div>
+      <div class="disc">
+        <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>
+        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
+      </div>
+      <div class="bottom">
+        <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
+        <span>Infrastructure for agentic lifecycles</span>
+      </div>
+      <div class="wordmark" aria-hidden="true">OpenEXA</div>
+    </div>
+  </footer>
+
+  <script src="../assets/js/figure.js" defer></script>
+  <script src="../assets/js/site.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+.shots/
+dist/
+__pycache__/
+*.pyc
+.netlify/
+tools/research_cards.html

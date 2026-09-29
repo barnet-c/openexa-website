@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trust &amp; governance — OpenEXA · Autonomous agents, accountable by construction</title>
+  <meta name="description" content="How OpenEXA governs autonomous agents: the Execution Council gate on every proposal, scoped and revocable permissions, custody that never moves, three operating modes, a database-backed halt and an append-only, hash-chained ledger.">
+  <meta name="theme-color" content="#F5F2EC">
+  <link rel="canonical" href="https://www.openexa.com/trust.html">
+  <meta property="og:url" content="https://www.openexa.com/trust.html">
+  <meta property="og:site_name" content="OpenEXA">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Trust &amp; governance — OpenEXA · Autonomous agents, accountable by construction">
+  <meta property="og:description" content="How OpenEXA governs autonomous agents: the Execution Council gate on every proposal, scoped and revocable permissions, custody that never moves, three operating modes, a database-backed halt and an append-only, hash-chained ledger.">
+  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Trust &amp; governance — OpenEXA · Autonomous agents, accountable by construction">
+  <meta name="twitter:description" content="How OpenEXA governs autonomous agents: the Execution Council gate on every proposal, scoped and revocable permissions, custody that never moves, three operating modes, a database-backed halt and an append-only, hash-chained ledger.">
+  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav nav--solid">
+    <div class="container">
+      <a class="brand" href="index.html" aria-label="OpenEXA home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="platform.html">Platform</a>
+        <a href="lifecycles.html">Lifecycles</a>
+        <a href="evidence.html">Proof</a>
+        <a href="trust.html">Trust</a>
+        <a href="research.html">Research</a>
+        <a href="company.html">Company</a>
+      </nav>
+      <a class="btn btn--sm" href="access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
+    </div>
+  </header>
+  <div class="nav-menu">
+    <a href="platform.html">Platform</a>
+    <a href="lifecycles.html">Lifecycles</a>
+    <a href="evidence.html">Proof</a>
+    <a href="trust.html">Trust</a>
+    <a href="research.html">Research</a>
+    <a href="company.html">Company</a>
+    <a class="btn" href="access.html">Request access</a>
+  </div>
+
+  <main id="main">
+
+    <section class="page-hero">
+      <div class="container">
+        <div class="grid">
+          <div class="col-8">
+            <div class="eyebrow" data-reveal>Trust &amp; governance</div>
+            <h1 class="display-1" data-reveal style="--d:60ms">Autonomous agents. Accountable by construction.</h1>
+          </div>
+          <div class="col-4 offset-9">
+            <p class="lede" data-reveal style="--d:120ms">Autonomy is a dial, not a leap. Agents propose; the Execution Council approves or rejects against your policy; scoped permissions bound what any agent can touch; custody never moves; and every transition is written to a ledger you can replay.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 01 GOVERNANCE MODEL -->
+    <section class="section">
+      <div class="container">
+        <div class="sec-head" data-reveal><span class="idx">01</span><span class="lab">The governance model</span><span class="aside">Six commitments</span></div>
+        <ol class="list-rule list-rule--3" data-reveal>
+          <li><span class="k">T-01</span><div><h3>Every proposal passes the Council</h3><p>No agent executes its own idea. Proposals go to the Execution Council, which checks policy, limits and conflicts and returns approve or reject — automatically, or by handing the decision to a human.</p></div><div class="mono small muted">Propose → Council → approve / reject</div></li>
+          <li><span class="k">T-02</span><div><h3>Custody never moves</h3><p>Assets stay in your brokerage account. Agents act through scoped API permissions — they can operate within your limits; they can never withdraw. Permissions are revocable per agent, instantly.</p></div><div class="mono small muted">Broker-held · scoped · revocable</div></li>
+          <li><span class="k">T-03</span><div><h3>The ledger is the truth</h3><p>Append-only, hash-chained records preserve every proposal, Council decision, submission, fill and reconciliation — including the rejects. Nothing is edited after the fact; every record points at the one before it.</p></div><div class="mono small muted">Append-only · hash-chained · replayable</div></li>
+          <li><span class="k">T-04</span><div><h3>Autonomy per lifecycle, per mandate</h3><p>Fully automatic, auto-with-approval and manual modes support different mandates and oversight levels — switchable at any time, without redeploying an agent.</p></div><div class="mono small muted">Automatic · with approval · manual</div></li>
+          <li><span class="k">T-05</span><div><h3>Deterministic below the agents</h3><p>Limits live in the execution layer, not in the model that proposed the action. Whatever an agent believes, the state machine enforces caps, gates and idempotency before anything exists as an order.</p></div><div class="mono small muted">Enforced in code · not in a prompt</div></li>
+          <li><span class="k">T-06</span><div><h3>Resilient by default</h3><p>The emergency halt is database-backed and available in every mode. Counterparty and API disruptions are met with retries, exponential backoff and circuit breakers. Compliance framing — Reg D 506(c), accredited investors — is built into onboarding.</p></div><div class="mono small muted">Halt · retry · backoff · circuit-break</div></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 02 CONTROL PLANE -->
+    <section class="section is-paper-2">
+      <div class="container">
+        <div class="sec-head" data-reveal><span class="idx">02</span><span class="lab">Control plane</span><span class="aside">What you set. What agents obey.</span></div>
+        <div class="grid">
+          <div class="col-4">
+            <h2 class="display-2" data-reveal>Limits are not suggestions.</h2>
+            <p class="body-lg mt-3" data-reveal style="--d:80ms">Every constraint below is enforced in the deterministic execution layer — before an action exists — not in the agent that proposed it. Change any of them at any time; the swarm obeys on the next proposal.</p>
+          </div>
+          <div class="col-8">
+            <div class="card-grid card-grid--2">
+              <div class="card" data-reveal><div class="n"><span>K-01</span><span>Scope</span></div><h3 class="h4">Instruments &amp; venues</h3><p>Whitelisted instruments and routing venues per lifecycle. Anything else is rejected at validation.</p></div>
+              <div class="card" data-reveal style="--d:60ms"><div class="n"><span>K-02</span><span>Size</span></div><h3 class="h4">Position &amp; notional caps</h3><p>Per-instrument and per-pool position limits, notional caps per action and per session.</p></div>
+              <div class="card" data-reveal style="--d:120ms"><div class="n"><span>K-03</span><span>Time</span></div><h3 class="h4">Market-hours gates</h3><p>Actions only inside defined windows; no after-hours surprises from an agent that never sleeps.</p></div>
+              <div class="card" data-reveal style="--d:180ms"><div class="n"><span>K-04</span><span>Approval</span></div><h3 class="h4">Who signs</h3><p>The Council alone, a delegate, or you — and change it whenever the mandate changes.</p></div>
+              <div class="card" data-reveal style="--d:240ms"><div class="n"><span>K-05</span><span>Visibility</span></div><h3 class="h4">Positions, NAV, fills, decisions</h3><p>Operators and investors see positions, NAV, strategy-level performance and every Council decision in real time.</p></div>
+              <div class="card" data-reveal style="--d:300ms"><div class="n"><span>K-06</span><span>Stop</span></div><h3 class="h4">Emergency halt</h3><p>One action, any operator, every mode. Halts new proposals and works open actions down safely.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 LEDGER -->
+    <section class="section is-dark grain" id="ledger">
+      <div class="container">
+        <div class="sec-head" data-reveal><span class="idx">03</span><span class="lab">The ledger</span><span class="aside">Append-only · hash-chained</span></div>
+        <div class="grid">
+          <div class="col-5">
+            <h2 class="display-2" data-reveal>Not a black box. A book of record.</h2>
+            <p class="body-lg mt-3" data-reveal style="--d:80ms">Every transition is traceable to the agent that proposed it and the decision that allowed it. Any state — proposed, rejected, approved, submitted, partially filled, filled, reconciled — can be replayed with the inputs that produced it, by an operator, an auditor or a regulator.</p>
+          </div>
+          <div class="col-7 offset-6" data-reveal style="--d:120ms">
+            <div class="card card--tint mono small" style="line-height:1.9;font-size:.78rem">
+              <div class="n"><span>lifecycle 01 · IBIT · create</span><span>chain ✓</span></div>
+              <div style="color:var(--fg-3)">#4f1a · 09:31:03.902 · PROPOSED · agent=strategy:s-0412 · create 2,600 · prev 8c1d</div>
+              <div style="color:var(--reject)">#4f1b · 09:31:03.951 · REJECTED · council · notional cap exceeded · prev 4f1a</div>
+              <div style="color:var(--fg-3)">#4f20 · 09:31:04.071 · PROPOSED · agent=strategy:s-0412 · create 2,000 · prev 4f1b</div>
+              <div style="color:var(--fg-3)">#4f21 · 09:31:04.118 · VALIDATED · schema ✓ policy ✓ caps ✓ hours ✓ · prev 4f20</div>
+              <div style="color:var(--fg-3)">#4f22 · 09:31:04.203 · APPROVED · council · mode=auto-with-approval · by=operator:bs · prev 4f21</div>
+              <div style="color:var(--fg-3)">#4f23 · 09:31:04.377 · SUBMITTED · agent=exec:e-0088 · venue=dark · idem=7a…e2 · prev 4f22</div>
+              <div style="color:var(--fg-3)">#4f24 · 09:31:05.910 · PARTIAL · 1,400 / 2,000 · prev 4f23</div>
+              <div style="color:var(--fg-3)">#4f25 · 09:31:06.442 · FILLED · 2,000 / 2,000 · prev 4f24</div>
+              <div style="color:var(--accent)">#4f26 · 16:05:12.006 · RECONCILED · agent=recon:r-0031 · internal ≡ broker · Δ 0 · prev 4f25</div>
+              <div class="figure-cap" style="margin-top:14px"><span>Illustrative log excerpt · rejects are recorded too</span><span>Every record references its predecessor's hash</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 PLAIN LANGUAGE -->
+    <section class="section">
+      <div class="container">
+        <div class="sec-head" data-reveal><span class="idx">04</span><span class="lab">Plain language</span><span class="aside">What the agents do — and do not do</span></div>
+        <div class="two-col">
+          <div data-reveal>
+            <div class="eyebrow mb-2">What the agents do</div>
+            <ul class="checks">
+              <li>Run selected lifecycles end to end — signal, decision, execution, settlement, reconciliation — under risk limits and Council governance.</li>
+              <li>Give operators and investors real-time visibility into positions, NAV, strategy-level performance and every decision.</li>
+              <li>Act through API permissions you grant and can revoke, with your broker as custodian throughout.</li>
+              <li>Write every transition, including rejects, to an append-only, hash-chained ledger you can inspect.</li>
+            </ul>
+          </div>
+          <div data-reveal style="--d:80ms">
+            <div class="eyebrow mb-2">What the agents do not do</div>
+            <ul class="checks">
+              <li>They do not custody funds. Ever.</li>
+              <li>They do not promise guaranteed returns. Performance is market-dependent and capital is at risk.</li>
+              <li>They do not hide decisions inside a model. The execution layer is deterministic and every action is attributable to an agent and a Council decision.</li>
+              <li>They do not act outside the mode you set — and they stop, in every mode, when any operator says halt.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-band is-dark grain">
+      <i class="mark globe" aria-hidden="true"></i>
+      <div class="container">
+        <div class="eyebrow" data-reveal>Access</div>
+        <h2 class="display-2 mt-2" data-reveal style="--d:60ms">Bring your compliance team.</h2>
+        <p class="lede mt-3" data-reveal style="--d:120ms">We will walk through the Council, the permissions, the control plane and the ledger with the people whose job is to say no.</p>
+        <div class="row" data-reveal style="--d:180ms">
+          <a class="btn" href="access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+          <a class="btn btn--ghost" href="platform.html">Inside the stack</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="top">
+        <div>
+          <a class="brand" href="index.html"><i class="mark"></i>OpenEXA</a>
+          <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
+        </div>
+        <div><h4>Product</h4><ul><li><a href="platform.html">Platform</a></li><li><a href="lifecycles.html">Lifecycles</a></li><li><a href="evidence.html">Proof</a></li><li><a href="trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h4>Company</h4><ul><li><a href="company.html">About OpenEXA</a></li><li><a href="research.html">Research</a></li><li><a href="research/blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
+        <div><h4>Access</h4><ul><li><a href="access.html">Request access</a></li><li><a href="access.html#managers">For managers</a></li><li><a href="access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+      </div>
+      <div class="disc">
+        <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>
+        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
+      </div>
+      <div class="bottom">
+        <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
+        <span>Infrastructure for agentic lifecycles</span>
+      </div>
+      <div class="wordmark" aria-hidden="true">OpenEXA</div>
+    </div>
+  </footer>
+
+  <script src="assets/js/site.js" defer></script>
+</body>
+</html>

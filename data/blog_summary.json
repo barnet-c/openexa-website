@@ -1,0 +1,45 @@
+{
+  "total": 29,
+  "years": [
+    2008,
+    2024
+  ],
+  "series": {
+    "name": "The Gen-AI series",
+    "first": "in-search-gen-ai-business-model",
+    "count": 4,
+    "minutes": 28
+  },
+  "collections": [
+    {
+      "key": "ai",
+      "label": "AI & agents",
+      "count": 5,
+      "years": [
+        2024,
+        2024
+      ],
+      "lede": "The first notes on AI copilots, guardrails and autonomous agents in financial markets — the thinking that became OpenEXA's agentic infrastructure."
+    },
+    {
+      "key": "markets",
+      "label": "Financial markets research",
+      "count": 16,
+      "years": [
+        2020,
+        2022
+      ],
+      "lede": "Summaries of peer-reviewed research in computational finance: ETF price dynamics and drawdown risk, optimal execution, futures portfolios, sparse mean-reverting portfolios and multiscale signal processing."
+    },
+    {
+      "key": "economics",
+      "label": "Market structure & economics",
+      "count": 8,
+      "years": [
+        2008,
+        2023
+      ],
+      "lede": "Summaries of academic research on how financial markets shape real decisions — information, contracting, credit, automation and the labour share."
+    }
+  ]
+}

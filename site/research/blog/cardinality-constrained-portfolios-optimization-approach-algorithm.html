@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cardinality-Constrained Portfolios: Optimization Approach &amp; Algorithm — OpenEXA Blog</title>
+  <meta name="description" content="Every portfolio can be partitioned into multiple asset groups defined by asset classes, sectors, styles, and other features. ">
+  <meta name="theme-color" content="#0E1512">
+  <link rel="canonical" href="https://www.openexa.com/research/blog/cardinality-constrained-portfolios-optimization-approach-algorithm.html">
+  <meta property="og:url" content="https://www.openexa.com/research/blog/cardinality-constrained-portfolios-optimization-approach-algorithm.html">
+  <meta property="og:site_name" content="OpenEXA">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Cardinality-Constrained Portfolios: Optimization Approach &amp; Algorithm — OpenEXA Blog">
+  <meta property="og:description" content="Every portfolio can be partitioned into multiple asset groups defined by asset classes, sectors, styles, and other features. ">
+  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cardinality-Constrained Portfolios: Optimization Approach &amp; Algorithm — OpenEXA Blog">
+  <meta name="twitter:description" content="Every portfolio can be partitioned into multiple asset groups defined by asset classes, sectors, styles, and other features. ">
+  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <link rel="apple-touch-icon" href="../../assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="../../site.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="../../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="../../assets/css/site.css">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Cardinality-Constrained Portfolios: Optimization Approach & Algorithm", "description": "Every portfolio can be partitioned into multiple asset groups defined by asset classes, sectors, styles, and other features. ", "url": "https://www.openexa.com/research/blog/cardinality-constrained-portfolios-optimization-approach-algorithm.html", "datePublished": "2021-02-07", "author": {"@type": "Person", "name": "Tim Leung, Ph.D."}, "publisher": {"@type": "Organization", "name": "OpenEXA", "url": "https://www.openexa.com/"}, "isPartOf": {"@type": "Blog", "name": "OpenEXA Blog", "url": "https://www.openexa.com/research/blog/"}, "isBasedOn": "https://medium.com/quantitative-investing/cardinality-constrained-portfolios-optimization-approach-algorithm-f2b2e776b5d0"}</script>
+</head>
+<body data-nav="dark-start" class="article-page blog-post">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <div class="container">
+      <a class="brand" href="../../index.html" aria-label="OpenEXA home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../../platform.html">Platform</a>
+        <a href="../../lifecycles.html">Lifecycles</a>
+        <a href="../../evidence.html">Proof</a>
+        <a href="../../trust.html">Trust</a>
+        <a href="../../research.html" aria-current="page">Research</a>
+        <a href="../../company.html">Company</a>
+      </nav>
+      <a class="btn btn--sm" href="../../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
+    </div>
+  </header>
+  <div class="nav-menu">
+    <a href="../../platform.html">Platform</a>
+    <a href="../../lifecycles.html">Lifecycles</a>
+    <a href="../../evidence.html">Proof</a>
+    <a href="../../trust.html">Trust</a>
+    <a href="../../research.html" aria-current="page">Research</a>
+    <a href="../../company.html">Company</a>
+    <a class="btn" href="../../access.html">Request access</a>
+  </div>
+
+  <main id="main">
+    <section class="page-hero page-hero--dark is-dark grain article-hero blog-post-hero">
+      <div class="figure-stage article-figure" data-figure="horizon" data-spin="0.08" aria-hidden="true"><canvas></canvas></div>
+      <div class="container">
+        <div class="eyebrow" data-reveal><a href="../../research.html">Research</a> · <a href="index.html">Blog</a> · Financial markets research</div>
+        <h1 class="display-2 article-title blog-title" data-reveal data-split style="--d:60ms">Cardinality-Constrained Portfolios: Optimization Approach &amp; Algorithm</h1>
+        <div class="article-meta" data-reveal style="--d:140ms"><span>Tim Leung, Ph.D.</span><span>Feb 7, 2021</span><span>4 min read</span></div>
+      </div>
+    </section>
+
+    <section class="section article-body-section">
+      <div class="container">
+        <div class="grid">
+          <aside class="col-3 article-side">
+            <div class="sticky blog-side">
+              
+              <div class="eyebrow mb-2">Financial markets research</div>
+              <a class="link-arrow" href="https://medium.com/quantitative-investing/cardinality-constrained-portfolios-optimization-approach-algorithm-f2b2e776b5d0" target="_blank" rel="noopener">Original on medium.com <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"/></svg></a><a class="link-arrow" href="https://scholar.google.com/citations?user=P40aOHIAAAAJ" target="_blank" rel="noopener">More on financial markets research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"/></svg></a><a class="link-arrow" href="index.html#markets">Financial markets research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a><a class="link-arrow" href="index.html">All posts <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+            </div>
+          </aside>
+          <article class="col-7 offset-5 article blog-article">
+            <figure class="blog-hero-img"><img src="../../assets/img/blog/blog-018-649889f411e142a6840350cd-13-e80e75c9.webp" alt="" decoding="async"></figure>
+            <p>Every portfolio can be partitioned into multiple asset groups defined by asset classes, sectors, styles, and other features. A <strong>cardinality-constrained</strong> portfolio caps the number of stocks to be traded within each of these groups. These limitations arise from real-world scenarios faced by fund managers who seek to satisfy certain investment mandates or achieve their asset allocation objectives.</p><p>As an example, suppose you want to construct a portfolio by investing in stocks across <em>m</em> sectors you favor. And in each sector you select up to <em>k</em> stocks and each sector should not constitute more than <em>q% </em>of your portfolio. Moreover, you don't know <em>which</em> and <em>how</em> <em>many</em> stocks should be included yet. You'll also need to determine the portfolio <em>weights</em> based on your risk-return tradeoff. Now, imagine you can do all that automatically by running an algorithm.</p><p>In this <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3272588" target="_blank" rel="noopener">paper</a>, we develop a new approach to solve cardinality-constrained portfolio optimization problems with different constraints and objectives. In particular, our approach extends both Markowitz and conditional value at risk (CVaR) optimization models with cardinality constraints. A continuous relaxation method is proposed for the NP-hard objective, which allows for very efficient algorithms with standard convergence guarantees for nonconvex problems.</p><p>For smaller cases, where brute force search is feasible to compute the globally optimal cardinality-constrained portfolio, the new approach finds the best portfolio for the cardinality-constrained Markowitz model and a very good local minimum for the cardinality-constrained CVaR model.</p><p>As the total number of assets grows, brute-force exhaustive search quickly becomes prohibitively expensive. For instance, choosing 10 assets out of 30 requires solving more than 30 million optimization problems over the subsets. Our algorithm can solve problems of this scale on an average of 20 runs. We find feasible portfolios that are nearly as efficient as their non-cardinality constrained counterparts.</p><p>We are given a total of <em>n</em> candidate assets and a certain selection criterion <em>f(w)</em>. The portfolio weights satisfy the simplex constraint...</p>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>Originally published on openexa.com, Feb 7, 2021. A summary of work first published on medium.com.</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section is-paper-2 section--tight">
+      <div class="container"><div class="pager"><a class='pager-card prev' href='multiscale-financial-signal-processing.html'><span class='k'>← Newer</span><h3>Multiscale Financial Signal Processing</h3><p>May 8, 2021</p></a><a class='pager-card next' href='employee-stock-options-exercise-timing-hedging-and-valuation.html'><span class='k'>Older →</span><h3>Employee Stock Options - Exercise Timing, Hedging, and Valuation</h3><p>Nov 14, 2020</p></a></div></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="top">
+        <div>
+          <a class="brand" href="../../index.html"><i class="mark"></i>OpenEXA</a>
+          <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
+        </div>
+        <div><h4>Product</h4><ul><li><a href="../../platform.html">Platform</a></li><li><a href="../../lifecycles.html">Lifecycles</a></li><li><a href="../../evidence.html">Proof</a></li><li><a href="../../trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h4>Company</h4><ul><li><a href="../../company.html">About OpenEXA</a></li><li><a href="../../research.html">Research</a></li><li><a href="../../research/blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
+        <div><h4>Access</h4><ul><li><a href="../../access.html">Request access</a></li><li><a href="../../access.html#managers">For managers</a></li><li><a href="../../access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+      </div>
+      <div class="disc">
+        <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>
+        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
+      </div>
+      <div class="bottom">
+        <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
+        <span>Infrastructure for agentic lifecycles</span>
+      </div>
+      <div class="wordmark" aria-hidden="true">OpenEXA</div>
+    </div>
+  </footer>
+
+  <script src="../../assets/js/figure.js" defer></script>
+  <script src="../../assets/js/site.js" defer></script>
+</body>
+</html>

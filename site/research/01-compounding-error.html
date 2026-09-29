@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Compounding Error and the Case for Decomposition. A Research Note on Agent Architecture — OpenEXA Research</title>
+  <meta name="description" content="This post steps back from any particular product. It lays out the technical reasons, drawn from machine learning and systems research, why long-horizon autonomous work should be decomposed into many narrow agents behind a deterministic execution boundary rather than handed to one capable model.">
+  <meta name="theme-color" content="#0E1512">
+  <link rel="canonical" href="https://www.openexa.com/research/01-compounding-error.html">
+  <meta property="og:url" content="https://www.openexa.com/research/01-compounding-error.html">
+  <meta property="og:site_name" content="OpenEXA">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Compounding Error and the Case for Decomposition. A Research Note on Agent Architecture — OpenEXA Research">
+  <meta property="og:description" content="This post steps back from any particular product. It lays out the technical reasons, drawn from machine learning and systems research, why long-horizon autonomous work should be decomposed into many narrow agents behind a deterministic execution boundary rather than handed to one capable model.">
+  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Compounding Error and the Case for Decomposition. A Research Note on Agent Architecture — OpenEXA Research">
+  <meta name="twitter:description" content="This post steps back from any particular product. It lays out the technical reasons, drawn from machine learning and systems research, why long-horizon autonomous work should be decomposed into many narrow agents behind a deterministic execution boundary rather than handed to one capable model.">
+  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Compounding Error and the Case for Decomposition. A Research Note on Agent Architecture","description":"This post steps back from any particular product. It lays out the technical reasons, drawn from machine learning and systems research, why long-horizon autonomous work should be decomposed into many narrow agents behind a deterministic execution boundary rather than handed to one capable model.","url":"https://www.openexa.com/research/01-compounding-error.html","isPartOf":{"@type":"Blog","name":"OpenEXA Research","url":"https://www.openexa.com/research.html"},"publisher":{"@type":"Organization","name":"OpenEXA","url":"https://www.openexa.com/"},"author":{"@type":"Organization","name":"OpenEXA"},"wordCount":1260}</script>
+</head>
+<body data-nav="dark-start" class="article-page">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <div class="container">
+      <a class="brand" href="../index.html" aria-label="OpenEXA home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../platform.html">Platform</a>
+        <a href="../lifecycles.html">Lifecycles</a>
+        <a href="../evidence.html">Proof</a>
+        <a href="../trust.html">Trust</a>
+        <a href="../research.html" aria-current="page">Research</a>
+        <a href="../company.html">Company</a>
+      </nav>
+      <a class="btn btn--sm" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
+    </div>
+  </header>
+  <div class="nav-menu">
+    <a href="../platform.html">Platform</a>
+    <a href="../lifecycles.html">Lifecycles</a>
+    <a href="../evidence.html">Proof</a>
+    <a href="../trust.html">Trust</a>
+    <a href="../research.html" aria-current="page">Research</a>
+    <a href="../company.html">Company</a>
+    <a class="btn" href="../access.html">Request access</a>
+  </div>
+
+  <main id="main">
+    <section class="page-hero page-hero--dark is-dark grain article-hero">
+      <div class="figure-stage article-figure" data-figure="horizon" data-spin="0.10" aria-hidden="true"><canvas></canvas></div>
+      <div class="container">
+        <div class="article-hero-grid">
+          <div>
+            <div class="eyebrow" data-reveal>Research · 01 of 10 · Research note</div>
+            <h1 class="display-1 article-title" data-reveal data-split style="--d:60ms">Compounding Error and the Case for Decomposition. A Research Note on Agent Architecture</h1>
+            <p class="lede mt-3" data-reveal style="--d:120ms">This post steps back from any particular product. It lays out the technical reasons, drawn from machine learning and systems research, why long-horizon autonomous work should be decomposed into many narrow agents behind a deterministic execution boundary rather than handed to one capable model.</p>
+            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder's notes</span><span>6 min read</span><span>Fig. 01 — horizon</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section article-body-section">
+      <div class="container">
+        <div class="grid">
+          <aside class="col-3 article-side">
+            <div class="sticky">
+              <div class="eyebrow mb-2">In this note</div>
+              <ol class="toc" data-toc><li><a href="#the-problem-is-horizon-not-capability">The problem is horizon, not capability</a></li><li><a href="#decomposition-changes-the-exponent">Decomposition changes the exponent</a></li><li><a href="#the-generator-verifier-gap">The generator-verifier gap</a></li><li><a href="#why-the-execution-layer-should-not-be-a-language-model">Why the execution layer should not be a language model</a></li><li><a href="#capability-based-permissions-as-the-enforcement-mechanism">Capability-based permissions as the enforcement mechanism</a></li><li><a href="#summary">Summary</a></li></ol>
+              <div class="article-share mt-3"><a class="link-arrow" href="../research.html">All research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
+            </div>
+          </aside>
+          <article class="col-7 offset-5 article">
+            <h2 id="the-problem-is-horizon-not-capability">The problem is horizon, not capability</h2><p class="lead">Most discussion of agent reliability focuses on model capability. Bigger models, better reasoning, longer context. That framing misses the dominant failure mode in autonomous work, which is horizon length.</p><p>Consider an agent that must take a sequence of dependent steps to complete a job. Suppose each step is correct with probability p, and errors are not recoverable. The probability that a run of n steps completes correctly is p to the power n. At p equal to 0.99 and a hundred steps, the success rate is about 37 percent. At a thousand steps, it is effectively zero. No plausible improvement in per-step accuracy changes the shape of that curve. A lifecycle that runs from market open to settlement is thousands of steps.</p><p>This is not a new observation. In imitation learning, it is the compounding error problem. A policy trained to mimic expert behavior on the expert's state distribution drifts into states the expert never visited, where its errors are larger, which drives it further off distribution. Ross and Bagnell showed in 2010 that the expected cost of a naive behavior-cloning policy grows quadratically with horizon, and that interactive data collection (their DAgger algorithm) is needed to make it linear. Language models used as agents are behavior-cloning policies at scale. They inherit the quadratic term.</p><p>The autoregressive structure of the models makes this worse. Every token is conditioned on the model's own previous outputs. A hallucinated intermediate fact becomes context for every subsequent step. The literature calls this exposure bias, and it means a monolithic agent has no natural point at which an error stops propagating.</p><h2 id="decomposition-changes-the-exponent">Decomposition changes the exponent</h2><p>The standard engineering response to a p-to-the-n problem is to shorten n and insert checkpoints. If a job of a thousand steps is decomposed into a thousand single-step agents, each of which produces an output that is verified before the next agent consumes it, the failure model changes. An error at step k is caught at the verification gate after step k. It does not become context for step k plus one. The success probability of the run is no longer the product of a thousand unverified steps. It is the product of a thousand steps each with a verifier, and a verifier only has to be good at one narrow question.</p><p>This is why the number of agents in a well-designed system is large. It is not parallelism for throughput. It is decomposition for error containment. Each agent's scope is chosen so that its output can be checked by a simple rule or a narrow model, and so that its failure is local.</p><p>There is a second benefit. A narrow agent has a narrow input distribution. The state space a borrow-cost estimator sees is small and stable. The state space a do-everything agent sees is the whole world. Narrow distributions are the regime in which learned models are reliable and in which their errors are measurable. Distribution shift, the thing that kills deployed models, is bounded by construction when the agent's job is bounded.</p><h2 id="the-generator-verifier-gap">The generator-verifier gap</h2><p>A further reason to separate proposing from approving comes from a well-documented asymmetry. For many problems, verifying a candidate answer is far easier than producing one. This is the intuition behind the P versus NP distinction and it shows up empirically in language models: a model asked to check a proposed solution against explicit criteria is markedly more accurate than the same model asked to produce the solution unaided. Recent work on process reward models and verifier-guided search exploits exactly this gap, training a separate verifier to score intermediate steps rather than trusting the generator's own confidence.</p><p>An execution council in an agent architecture is a verifier made explicit. It does not need to know how to trade. It needs to know the policy, the caps, the hours, and the conflicts, and it needs to check a structured proposal against them. That check is a small, well-posed problem. The generator can be probabilistic and occasionally wrong. The verifier is where reliability is concentrated.</p><p>The corollary is that the verifier should not be the same model instance as the generator. Self-verification by a single model inherits the model's own blind spots. Independent verification, whether by a rules engine or a separately trained model, does not.</p><h2 id="why-the-execution-layer-should-not-be-a-language-model">Why the execution layer should not be a language model</h2><p>Language models are poor at a specific class of operations: those that require exactly-once semantics, exact arithmetic on identifiers, and deterministic state transitions. The reasons are structural. Sampling introduces variance even at low temperature. Tokenization fragments long numeric strings and identifiers in ways that make exact reproduction unreliable. The model has no persistent state between calls except what is placed in context, so it cannot natively guarantee that an action already taken is not taken again.</p><p>Distributed systems research solved exactly-once execution decades ago, through idempotency keys, write-ahead logs, and reconciliation against an authoritative source. Those solutions are deterministic code. The correct architecture uses the language model for what it is good at, interpreting ambiguous state and proposing structured actions, and hands the structured action to a deterministic state machine for execution. The boundary between them is a typed schema. The model emits a proposal that conforms to the schema or it emits nothing that executes.</p><p>This is the neuro-symbolic division of labor, and it is older than the current wave of agents. Perception and reasoning are learned. Action is compiled. The interesting research is in making the interface between them tight enough that nothing leaks across.</p><h2 id="capability-based-permissions-as-the-enforcement-mechanism">Capability-based permissions as the enforcement mechanism</h2><p>Decomposition and verification contain errors. They do not by themselves prevent a wrong-but-approved action from doing damage beyond its intended scope. That requires a permission model.</p><p>The right model comes from object-capability security. An agent does not have an identity that is checked against an access list at execution time. It holds capabilities, unforgeable tokens that grant specific rights to specific resources, and it can only invoke what it holds. A prediction agent holds a read capability on market data. It does not hold, and cannot acquire, a capability that places orders. This is the principle of least privilege applied at the granularity of individual agents and individual tools, and it is enforced by the runtime rather than by the model's good behavior.</p><p>The practical consequence is that the blast radius of any single agent is fixed at design time. The model can be jailbroken, confused, or wrong. It still cannot call a tool it does not hold a capability for. Combined with a deterministic execution layer and an independent verifier, this is what allows a system of thousands of probabilistic components to be safe in aggregate.</p><h2 id="summary">Summary</h2><p>The argument for swarms of narrow agents is not a preference for scale. It follows from four results. Compounding error grows with horizon, so horizons must be shortened with verification gates. Verification is easier than generation, so verifiers should be separate and explicit. Language models cannot guarantee exactly-once execution, so execution must be deterministic code. And permission must be enforced by the runtime, not by the model, so capabilities must be scoped per agent. An architecture that respects all four looks like many small agents, one council, one state machine, and one permission layer. That is not a product decision. It is what the research implies.</p>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder's notes · 01 / 10</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section is-paper-2 section--tight">
+      <div class="container">
+        <div class="pager">
+          <a class='pager-card' href='../research.html'><span class='k'>← Research</span><h3>All ten notes</h3><p>The research behind swarm-based agentic lifecycles, in reading order.</p></a>
+          <a class='pager-card next' href='02-post-training-and-audit.html'><span class='k'>Next · 02 →</span><h3>Specializing a Model to a Rulebook and Proving What It Did. A Research Note on Post-Training and Audit</h3><p>How a general model comes to follow one rulebook, and how a hash-chained ledger proves what it did.</p></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="top">
+        <div>
+          <a class="brand" href="../index.html"><i class="mark"></i>OpenEXA</a>
+          <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
+        </div>
+        <div><h4>Product</h4><ul><li><a href="../platform.html">Platform</a></li><li><a href="../lifecycles.html">Lifecycles</a></li><li><a href="../evidence.html">Proof</a></li><li><a href="../trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h4>Company</h4><ul><li><a href="../company.html">About OpenEXA</a></li><li><a href="../research.html">Research</a></li><li><a href="../research/blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
+        <div><h4>Access</h4><ul><li><a href="../access.html">Request access</a></li><li><a href="../access.html#managers">For managers</a></li><li><a href="../access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+      </div>
+      <div class="disc">
+        <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>
+        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
+      </div>
+      <div class="bottom">
+        <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
+        <span>Infrastructure for agentic lifecycles</span>
+      </div>
+      <div class="wordmark" aria-hidden="true">OpenEXA</div>
+    </div>
+  </footer>
+
+  <script src="../assets/js/figure.js" defer></script>
+  <script src="../assets/js/site.js" defer></script>
+</body>
+</html>

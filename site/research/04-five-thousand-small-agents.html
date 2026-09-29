@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Why Five Thousand Small Agents Beat One Large One — OpenEXA Research</title>
+  <meta name="description" content="Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.">
+  <meta name="theme-color" content="#0E1512">
+  <link rel="canonical" href="https://www.openexa.com/research/04-five-thousand-small-agents.html">
+  <meta property="og:url" content="https://www.openexa.com/research/04-five-thousand-small-agents.html">
+  <meta property="og:site_name" content="OpenEXA">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Why Five Thousand Small Agents Beat One Large One — OpenEXA Research">
+  <meta property="og:description" content="Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.">
+  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Why Five Thousand Small Agents Beat One Large One — OpenEXA Research">
+  <meta name="twitter:description" content="Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.">
+  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Why Five Thousand Small Agents Beat One Large One","description":"Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.","url":"https://www.openexa.com/research/04-five-thousand-small-agents.html","isPartOf":{"@type":"Blog","name":"OpenEXA Research","url":"https://www.openexa.com/research.html"},"publisher":{"@type":"Organization","name":"OpenEXA","url":"https://www.openexa.com/"},"author":{"@type":"Organization","name":"OpenEXA"},"wordCount":630}</script>
+</head>
+<body data-nav="dark-start" class="article-page">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <div class="container">
+      <a class="brand" href="../index.html" aria-label="OpenEXA home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../platform.html">Platform</a>
+        <a href="../lifecycles.html">Lifecycles</a>
+        <a href="../evidence.html">Proof</a>
+        <a href="../trust.html">Trust</a>
+        <a href="../research.html" aria-current="page">Research</a>
+        <a href="../company.html">Company</a>
+      </nav>
+      <a class="btn btn--sm" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
+    </div>
+  </header>
+  <div class="nav-menu">
+    <a href="../platform.html">Platform</a>
+    <a href="../lifecycles.html">Lifecycles</a>
+    <a href="../evidence.html">Proof</a>
+    <a href="../trust.html">Trust</a>
+    <a href="../research.html" aria-current="page">Research</a>
+    <a href="../company.html">Company</a>
+    <a class="btn" href="../access.html">Request access</a>
+  </div>
+
+  <main id="main">
+    <section class="page-hero page-hero--dark is-dark grain article-hero">
+      <div class="figure-stage article-figure" data-figure="swarm" data-spin="0.10" aria-hidden="true"><canvas></canvas></div>
+      <div class="container">
+        <div class="article-hero-grid">
+          <div>
+            <div class="eyebrow" data-reveal>Research · 04 of 10 · Series · 02</div>
+            <h1 class="display-1 article-title" data-reveal data-split style="--d:60ms">Why Five Thousand Small Agents Beat One Large One</h1>
+            <p class="lede mt-3" data-reveal style="--d:120ms">Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.</p>
+            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder's notes</span><span>3 min read</span><span>Fig. 04 — swarm</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section article-body-section">
+      <div class="container">
+        <div class="grid">
+          <aside class="col-3 article-side">
+            <div class="sticky">
+              <div class="eyebrow mb-2">In this note</div>
+              <ol class="toc" data-toc><li><a href="#the-verification-argument">The verification argument</a></li><li><a href="#the-economic-argument">The economic argument</a></li><li><a href="#what-the-swarm-shares">What the swarm shares</a></li></ol>
+              <div class="article-share mt-3"><a class="link-arrow" href="../research.html">All research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
+            </div>
+          </aside>
+          <article class="col-7 offset-5 article">
+            <p class="lead">The most common question I get is why we run five thousand to fifty thousand agents per lifecycle instead of one capable agent with a long context window and a good set of tools. The answer comes from failure analysis, not from a preference for scale.</p><p>A monolithic agent has one property that makes it unacceptable in regulated work: it sees the whole job. That sounds like an advantage. In practice it means the agent's belief about the world and its permission to act on the world are held in the same place. When the belief is wrong, the action follows. There is no seam where a policy can intervene, no boundary where a failure stops instead of propagating.</p><p>Our design principle is the opposite. No single agent sees the whole trade. Each agent is scoped to exactly one gate in the lifecycle and does exactly one job. A signal agent reads NAV and flow data. A prediction agent estimates the direction and duration of a gap. A decision agent proposes one sized, routed action. None of them can execute anything. Their output is a proposal, and a proposal is just a data structure until something downstream permits it.</p><h2 id="the-verification-argument">The verification argument</h2><p>Small agents are verifiable in a way large agents are not. An agent whose job is to estimate borrow cost for a single basket can be tested against historical borrow data, given a bounded tool set, and assigned a permission scope that covers only what it needs to read. When it is wrong, we know which agent was wrong and at which gate. When a monolithic agent is wrong, we know only that the output was wrong.</p><p>This is the same reason distributed systems engineers moved from monoliths to services, and the same reason safety-critical software is built from small components with explicit interfaces. The agent layer is not exempt from those lessons because the components happen to reason in natural language.</p><h2 id="the-economic-argument">The economic argument</h2><p>The swarm size is also driven by the economics of the work itself. At five percent a year, a dollar earns roughly two ten-thousandths of a cent per day. A human desk cannot cover its own cost on a band that thin. Wall Street leaves the four to eight percent yield band in ETF primary markets alone for that reason, not because the opportunity is invisible.</p><p>A swarm changes the arithmetic. Thousands of narrow agents, each holding no inventory and each waiting on no counterparty, can work a band that is too small for people. The scale is not a demonstration. It is the only configuration in which the lifecycle is profitable to run.</p><h2 id="what-the-swarm-shares">What the swarm shares</h2><p>The agents are small, but they are not isolated. Every agent reasons on the same model layer, a language model post-trained on the lifecycle's rules, documents, and exceptions. That shared substrate is what keeps five thousand independent decisions consistent with one rulebook. I will cover the post-training work in a later post. The point here is that specialization at the agent level and consistency at the model level are complementary, not in tension.</p>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder's notes · 04 / 10</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section is-paper-2 section--tight">
+      <div class="container">
+        <div class="pager">
+          <a class='pager-card' href='03-not-tasks-lifecycles.html'><span class='k'>← Previous · 03</span><h3>Not Tasks. Lifecycles. Why We Stopped Building Assistants</h3><p>Why we stopped building assistants and changed the unit of work to the lifecycle.</p></a>
+          <a class='pager-card next' href='05-agents-decide-code-executes.html'><span class='k'>Next · 05 →</span><h3>Agents Decide. Code Executes. The One Boundary That Matters</h3><p>Eight layers, one boundary. The top four estimate; the bottom four are deterministic code.</p></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="top">
+        <div>
+          <a class="brand" href="../index.html"><i class="mark"></i>OpenEXA</a>
+          <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
+        </div>
+        <div><h4>Product</h4><ul><li><a href="../platform.html">Platform</a></li><li><a href="../lifecycles.html">Lifecycles</a></li><li><a href="../evidence.html">Proof</a></li><li><a href="../trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h4>Company</h4><ul><li><a href="../company.html">About OpenEXA</a></li><li><a href="../research.html">Research</a></li><li><a href="../research/blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
+        <div><h4>Access</h4><ul><li><a href="../access.html">Request access</a></li><li><a href="../access.html#managers">For managers</a></li><li><a href="../access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+      </div>
+      <div class="disc">
+        <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>
+        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
+      </div>
+      <div class="bottom">
+        <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
+        <span>Infrastructure for agentic lifecycles</span>
+      </div>
+      <div class="wordmark" aria-hidden="true">OpenEXA</div>
+    </div>
+  </footer>
+
+  <script src="../assets/js/figure.js" defer></script>
+  <script src="../assets/js/site.js" defer></script>
+</body>
+</html>

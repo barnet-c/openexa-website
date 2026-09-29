@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Execution Council. Governance in Milliseconds — OpenEXA Research</title>
+  <meta name="description" content="Governance in milliseconds: what the council checks, three operating modes, and the kill switch.">
+  <meta name="theme-color" content="#0E1512">
+  <link rel="canonical" href="https://www.openexa.com/research/07-the-execution-council.html">
+  <meta property="og:url" content="https://www.openexa.com/research/07-the-execution-council.html">
+  <meta property="og:site_name" content="OpenEXA">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="The Execution Council. Governance in Milliseconds — OpenEXA Research">
+  <meta property="og:description" content="Governance in milliseconds: what the council checks, three operating modes, and the kill switch.">
+  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="The Execution Council. Governance in Milliseconds — OpenEXA Research">
+  <meta name="twitter:description" content="Governance in milliseconds: what the council checks, three operating modes, and the kill switch.">
+  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"The Execution Council. Governance in Milliseconds","description":"Governance in milliseconds: what the council checks, three operating modes, and the kill switch.","url":"https://www.openexa.com/research/07-the-execution-council.html","isPartOf":{"@type":"Blog","name":"OpenEXA Research","url":"https://www.openexa.com/research.html"},"publisher":{"@type":"Organization","name":"OpenEXA","url":"https://www.openexa.com/"},"author":{"@type":"Organization","name":"OpenEXA"},"wordCount":630}</script>
+</head>
+<body data-nav="dark-start" class="article-page">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <div class="container">
+      <a class="brand" href="../index.html" aria-label="OpenEXA home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../platform.html">Platform</a>
+        <a href="../lifecycles.html">Lifecycles</a>
+        <a href="../evidence.html">Proof</a>
+        <a href="../trust.html">Trust</a>
+        <a href="../research.html" aria-current="page">Research</a>
+        <a href="../company.html">Company</a>
+      </nav>
+      <a class="btn btn--sm" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
+    </div>
+  </header>
+  <div class="nav-menu">
+    <a href="../platform.html">Platform</a>
+    <a href="../lifecycles.html">Lifecycles</a>
+    <a href="../evidence.html">Proof</a>
+    <a href="../trust.html">Trust</a>
+    <a href="../research.html" aria-current="page">Research</a>
+    <a href="../company.html">Company</a>
+    <a class="btn" href="../access.html">Request access</a>
+  </div>
+
+  <main id="main">
+    <section class="page-hero page-hero--dark is-dark grain article-hero">
+      <div class="figure-stage article-figure" data-figure="council" data-spin="0.10" aria-hidden="true"><canvas></canvas></div>
+      <div class="container">
+        <div class="article-hero-grid">
+          <div>
+            <div class="eyebrow" data-reveal>Research · 07 of 10 · Series · 05</div>
+            <h1 class="display-1 article-title" data-reveal data-split style="--d:60ms">The Execution Council. Governance in Milliseconds</h1>
+            <p class="lede mt-3" data-reveal style="--d:120ms">Governance in milliseconds: what the council checks, three operating modes, and the kill switch.</p>
+            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder's notes</span><span>3 min read</span><span>Fig. 07 — council</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section article-body-section">
+      <div class="container">
+        <div class="grid">
+          <aside class="col-3 article-side">
+            <div class="sticky">
+              <div class="eyebrow mb-2">In this note</div>
+              <ol class="toc" data-toc><li><a href="#what-the-council-checks">What the council checks</a></li><li><a href="#three-operating-modes">Three operating modes</a></li><li><a href="#the-kill-switch">The kill switch</a></li><li><a href="#conflict-arbitration">Conflict arbitration</a></li></ol>
+              <div class="article-share mt-3"><a class="link-arrow" href="../research.html">All research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
+            </div>
+          </aside>
+          <article class="col-7 offset-5 article">
+            <p class="lead">Between the agents that propose and the code that executes sits a component we call the execution council. It is the fourth layer in the stack and the last layer that decides. Every proposal from every agent passes through it. It approves or rejects against policy in milliseconds, and its rejections are the most important output the system produces.</p><h2 id="what-the-council-checks">What the council checks</h2><p>The council is a policy engine. For a create-or-redeem proposal, it checks the position caps, the permitted symbols, the trading hours, the approval mode the customer has set, and whether the proposal conflicts with another proposal in flight. If any check fails, the proposal exits at the gate and is logged. Nothing downstream ever sees it.</p><p>This is the mechanism that turns a swarm of probabilistic reasoners into a governed system. Individual agents can be aggressive in what they propose because the council is conservative in what it permits. In our interactive demos we let visitors adjust council strictness and watch the approval rate change. The lesson is that autonomy is a dial, not a leap. Turn the strictness up and the swarm becomes a recommendation engine. Turn it down within limits and it becomes an autonomous desk.</p><h2 id="three-operating-modes">Three operating modes</h2><p>We ship the council with three modes, and every customer chooses one per lifecycle.</p><p>Automatic: the council approves within limits and execution proceeds without a person.</p><p>With approval: a named person must sign every approved proposal before it executes. The council does the policy work. The human does the accountability work.</p><p>Manual: agents prepare the full proposal, the council checks it, and the customer's own desk executes.</p><p>The point of three modes is that the same swarm, the same model, and the same ledger serve a customer at every stage of trust. Institutions do not adopt autonomy all at once. They adopt it gate by gate, and the council is how they control the pace.</p><h2 id="the-kill-switch">The kill switch</h2><p>One switch halts everything, in every mode. It is database-backed, so it does not depend on any agent or any process being healthy. Every design review I run ends with the same question: if this component fails, does the halt still work? If the answer is no, the design is rejected.</p><h2 id="conflict-arbitration">Conflict arbitration</h2><p>The council also arbitrates between agents. When two decision agents propose actions on the same basket in the same window, the council resolves the conflict by policy before either reaches routing. This is the swarm equivalent of a lock, and it is what allows thousands of agents to operate concurrently on a single lifecycle without stepping on one another.</p>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder's notes · 07 / 10</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section is-paper-2 section--tight">
+      <div class="container">
+        <div class="pager">
+          <a class='pager-card' href='06-post-training-on-a-rulebook.html'><span class='k'>← Previous · 06</span><h3>Post-Training a Model on a Rulebook, Not on the Internet</h3><p>Closing the gap between a model that knows finance and one that knows this lifecycle.</p></a>
+          <a class='pager-card next' href='08-a-ledger-nobody-can-edit.html'><span class='k'>Next · 08 →</span><h3>A Ledger Nobody Can Edit. Hash Chains as Audit Infrastructure</h3><p>Append-only, hash-chained, replayable. Why a record an administrator can edit is only a claim.</p></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="top">
+        <div>
+          <a class="brand" href="../index.html"><i class="mark"></i>OpenEXA</a>
+          <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
+        </div>
+        <div><h4>Product</h4><ul><li><a href="../platform.html">Platform</a></li><li><a href="../lifecycles.html">Lifecycles</a></li><li><a href="../evidence.html">Proof</a></li><li><a href="../trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h4>Company</h4><ul><li><a href="../company.html">About OpenEXA</a></li><li><a href="../research.html">Research</a></li><li><a href="../research/blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
+        <div><h4>Access</h4><ul><li><a href="../access.html">Request access</a></li><li><a href="../access.html#managers">For managers</a></li><li><a href="../access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+      </div>
+      <div class="disc">
+        <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>
+        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
+      </div>
+      <div class="bottom">
+        <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
+        <span>Infrastructure for agentic lifecycles</span>
+      </div>
+      <div class="wordmark" aria-hidden="true">OpenEXA</div>
+    </div>
+  </footer>
+
+  <script src="../assets/js/figure.js" defer></script>
+  <script src="../assets/js/site.js" defer></script>
+</body>
+</html>

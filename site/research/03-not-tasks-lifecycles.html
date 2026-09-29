@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Not Tasks. Lifecycles. Why We Stopped Building Assistants — OpenEXA Research</title>
+  <meta name="description" content="Why we stopped building assistants and changed the unit of work to the lifecycle.">
+  <meta name="theme-color" content="#0E1512">
+  <link rel="canonical" href="https://www.openexa.com/research/03-not-tasks-lifecycles.html">
+  <meta property="og:url" content="https://www.openexa.com/research/03-not-tasks-lifecycles.html">
+  <meta property="og:site_name" content="OpenEXA">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Not Tasks. Lifecycles. Why We Stopped Building Assistants — OpenEXA Research">
+  <meta property="og:description" content="Why we stopped building assistants and changed the unit of work to the lifecycle.">
+  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Not Tasks. Lifecycles. Why We Stopped Building Assistants — OpenEXA Research">
+  <meta name="twitter:description" content="Why we stopped building assistants and changed the unit of work to the lifecycle.">
+  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Not Tasks. Lifecycles. Why We Stopped Building Assistants","description":"Why we stopped building assistants and changed the unit of work to the lifecycle.","url":"https://www.openexa.com/research/03-not-tasks-lifecycles.html","isPartOf":{"@type":"Blog","name":"OpenEXA Research","url":"https://www.openexa.com/research.html"},"publisher":{"@type":"Organization","name":"OpenEXA","url":"https://www.openexa.com/"},"author":{"@type":"Organization","name":"OpenEXA"},"wordCount":630}</script>
+</head>
+<body data-nav="dark-start" class="article-page">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <div class="container">
+      <a class="brand" href="../index.html" aria-label="OpenEXA home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="../platform.html">Platform</a>
+        <a href="../lifecycles.html">Lifecycles</a>
+        <a href="../evidence.html">Proof</a>
+        <a href="../trust.html">Trust</a>
+        <a href="../research.html" aria-current="page">Research</a>
+        <a href="../company.html">Company</a>
+      </nav>
+      <a class="btn btn--sm" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
+    </div>
+  </header>
+  <div class="nav-menu">
+    <a href="../platform.html">Platform</a>
+    <a href="../lifecycles.html">Lifecycles</a>
+    <a href="../evidence.html">Proof</a>
+    <a href="../trust.html">Trust</a>
+    <a href="../research.html" aria-current="page">Research</a>
+    <a href="../company.html">Company</a>
+    <a class="btn" href="../access.html">Request access</a>
+  </div>
+
+  <main id="main">
+    <section class="page-hero page-hero--dark is-dark grain article-hero">
+      <div class="figure-stage article-figure" data-figure="lifecycle" data-spin="0.10" aria-hidden="true"><canvas></canvas></div>
+      <div class="container">
+        <div class="article-hero-grid">
+          <div>
+            <div class="eyebrow" data-reveal>Research · 03 of 10 · Series · 01</div>
+            <h1 class="display-1 article-title" data-reveal data-split style="--d:60ms">Not Tasks. Lifecycles. Why We Stopped Building Assistants</h1>
+            <p class="lede mt-3" data-reveal style="--d:120ms">Why we stopped building assistants and changed the unit of work to the lifecycle.</p>
+            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder's notes</span><span>3 min read</span><span>Fig. 03 — lifecycle</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section article-body-section">
+      <div class="container">
+        <div class="grid">
+          <aside class="col-3 article-side">
+            <div class="sticky">
+              <div class="eyebrow mb-2">In this note</div>
+              <ol class="toc" data-toc><li><a href="#the-lifecycle-test">The lifecycle test</a></li><li><a href="#why-finance-first">Why finance first</a></li></ol>
+              <div class="article-share mt-3"><a class="link-arrow" href="../research.html">All research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
+            </div>
+          </aside>
+          <article class="col-7 offset-5 article">
+            <p class="lead">For most of the last three years, the industry has been building assistants. An assistant takes a task, produces an output, and hands it back to a person who decides what to do next. That loop is useful. It is also the wrong abstraction for the work that actually costs institutions money.</p><p>When I looked at where floors of specialists still sit in finance, semiconductors, energy, and pharma, I did not find tasks. I found lifecycles. A lifecycle is a multi-party process that starts with a signal, moves through a series of decisions and approvals, executes against an external counterparty, and ends with a record that a regulator can audit years later. ETF creation and redemption is a lifecycle. A letter of credit is a lifecycle. Batch release in a pharmaceutical plant is a lifecycle.</p><p>The defining feature of a lifecycle is that most of its cost lives in the exceptions. The happy path is already automated. What consumes human hours is the reconciliation break, the counterparty that did not confirm, the order that partially filled, the approval that needs a named person because a cap was breached. Software has always waited for a human to decide at those moments. My research thesis is that it no longer has to.</p><p>So we changed the unit of work. OpenEXA does not build an agent that does a task. We build infrastructure on which a swarm of small agents runs an entire lifecycle, from the first signal to the final ledger entry, with a human in the loop whenever a policy says there must be one and not otherwise.</p><h2 id="the-lifecycle-test">The lifecycle test</h2><p>Not every process qualifies. Early on, we wrote down six traits a process must have before we will touch it. It must be multi-party, regulated, structured enough to be machine-actionable, exception-heavy, gated by approvals or settlement, and bound to an audit trail. All six, or it isn't ours.</p><p>Those traits are not arbitrary. Each one maps to a layer in the system we built. Multi-party means we need authenticated connections to counterparties. Regulated means a policy engine must sit between decision and execution. Structured means an MCP server can expose the process as tools. Exception-heavy is where the agents earn their keep. Gated tells us where the council sits. Audit-bound tells us why the ledger is append-only and hash-chained.</p><p>If a process fails one of the six, the architecture has a piece with nothing to hold. That is why the list is a filter and not a wishlist.</p><h2 id="why-finance-first">Why finance first</h2><p>We deliberately chose the smallest, lowest-risk lifecycle we could find as our proving ground: matching a fund's price to what it holds. ETF create and redeem is narrow, the rules are public, the counterparties confirm every action independently, and the downside of a mistake is bounded by position caps. It is the ideal environment to prove that thousands of agents can run a regulated process end to end without a person watching every step.</p><p>Trust is earned in the lowest-risk lifecycle first. Then it compounds. The next posts in this series describe how.</p>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder's notes · 03 / 10</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section is-paper-2 section--tight">
+      <div class="container">
+        <div class="pager">
+          <a class='pager-card' href='02-post-training-and-audit.html'><span class='k'>← Previous · 02</span><h3>Specializing a Model to a Rulebook and Proving What It Did. A Research Note on Post-Training and Audit</h3><p>How a general model comes to follow one rulebook, and how a hash-chained ledger proves what it did.</p></a>
+          <a class='pager-card next' href='04-five-thousand-small-agents.html'><span class='k'>Next · 04 →</span><h3>Why Five Thousand Small Agents Beat One Large One</h3><p>Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.</p></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="top">
+        <div>
+          <a class="brand" href="../index.html"><i class="mark"></i>OpenEXA</a>
+          <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
+        </div>
+        <div><h4>Product</h4><ul><li><a href="../platform.html">Platform</a></li><li><a href="../lifecycles.html">Lifecycles</a></li><li><a href="../evidence.html">Proof</a></li><li><a href="../trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h4>Company</h4><ul><li><a href="../company.html">About OpenEXA</a></li><li><a href="../research.html">Research</a></li><li><a href="../research/blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
+        <div><h4>Access</h4><ul><li><a href="../access.html">Request access</a></li><li><a href="../access.html#managers">For managers</a></li><li><a href="../access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+      </div>
+      <div class="disc">
+        <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>
+        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
+      </div>
+      <div class="bottom">
+        <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
+        <span>Infrastructure for agentic lifecycles</span>
+      </div>
+      <div class="wordmark" aria-hidden="true">OpenEXA</div>
+    </div>
+  </footer>
+
+  <script src="../assets/js/figure.js" defer></script>
+  <script src="../assets/js/site.js" defer></script>
+</body>
+</html>

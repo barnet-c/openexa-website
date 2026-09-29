@@ -1,0 +1,206 @@
+[
+  {
+    "img": "/graphics/Ajit.webp",
+    "kicker": "Founder",
+    "name": "Ajit K Dubey",
+    "short": "Founder and CEO of OpenEXA Inc. | Leveraging AI to Transform Non-Yielding Assets",
+    "bio": [
+      "Ajit brings over a decade of first-hand experience from top financial institutions such as Goldman Sachs, Bank of America and American Express. He also has a successful entrepreneurial venture with an AI startup, Bond Intelligence Inc, which uses machine learning and big data to predict risk and price for the fixed income markets, finding relative value and greek analysis to maximize untapped alpha. He shares his two cents on financial markets as a guest lecturer and industry collaborator with the University of Washington's CFRM Class of 2019, he has contributed to the industry by serving as a reviewer for IEEE for Intelligent Systems for AI in Fintech, and holding a position and representing Bond Intelligence Inc. on the XBRL Business Reporting Standards Committee. He also served on the WGFOA's Municipal Finance Disclosure Modernization Panel, which allowed him to meaningfully contribute to the development and implementation of key industry standards and guidelines. Furthermore, he played a pivotal role in implementing the first CNG network in Asia, including the Indian Parliament.",
+      "Ajit's accolades include a Roles of Honor, awarded by the Head of State (Mr. Gegon Apang), which he received for winning the National Science Exhibition, graced by the President of India, Sri. R Venkatraman. He holds a degree in Mechanical Engineering from the Indian National Institute of Technology and has honed his leadership skills through training at XLRI and MTC."
+    ],
+    "links": [
+      [
+        "LinkedIn",
+        "https://www.linkedin.com/in/ajitkdubey/"
+      ],
+      [
+        "X/Twitter",
+        "https://twitter.com/ajitdubey"
+      ]
+    ]
+  },
+  {
+    "img": "/graphics/Tim.webp",
+    "kicker": "AI & Financial Mkt.",
+    "name": "Tim Leung, Ph.D.",
+    "short": "Endowed Chair Professor of Applied Mathematics and director of the Computational Finance and Risk Management.",
+    "bio": [
+      "Tim is a Boeing Endowed Chair Professor of Applied Mathematics and the director of the Computational Finance and Risk Management Programs and the founder of Quantitative Analytics Lab at the University of Washington. His research areas are Quantitative Finance and Stochastic Optimal Control. He has worked on a variety of problems, such as derivatives pricing, algorithmic trading, exchange-traded funds, commodities, credit risk and cryptocurrencies. His research has been funded by the National Science Foundation. He has published over 60 peer-reviewed articles and 4 books, including Optimal Mean Reversion Trading, selected as one of the 100 Best Derivatives Books of All Time.",
+      "Tim served as the Chair of the Institute for Operations Research and the Management Sciences Finance Section and Vice Chair for the SIAM Activity Group on Financial Mathematics & Engineering. He is the founding editor of Modern Trends in Financial Engineering. He is on the editorial board of a number of journals, including Stochastic Models, Applied Mathematical Finance, SIAM Journal on Financial Math, Journal of Financial Engineering, Studies in Economics & Finance, High Frequency, IISE Transactions, and Digital Signal Processing. In 2020, he was the co-editor of the IEEE Intelligent Systems Special Issue on AI and Fintech. In 2016, he won the Emerald Literati Network Award."
+    ],
+    "links": []
+  },
+  {
+    "img": "/graphics/Barnet.webp",
+    "kicker": "Market Analyst",
+    "name": "Barnet Sherman",
+    "short": "Founder of Braintree Capital, Portfolio Manager and Trader at Morgan Stanley & TIAA-CREF.",
+    "bio": [
+      "Barnet Sherman is Wall Street's own Impact Investor & Strategist. He founded and ran hedge funds, managed multi-billion-dollar pension portfolios. Guest lectured at Columbia University, Boston University School of Law and the Duke University School of Law. He is a regular contributor to Forbes. His insights into the financial market come from the extensive investment career advising to and making investments for pensions funds, mutual funds, insurance companies, and investment advisors.",
+      "Barnet was a Trader and Portfolio Manager at Morgan Stanley and TIAA-CREF, Founder of Braintree Capital, a hedge fund, as well as head of Bond Research at Thompson & Reuters, and a fin-tech startup Neighborly Investments. His columns running their tenth year on Forbes, his views on the financial market featured across the financial news outlets such as CNBC, INC, Bloomberg, The New York Times, and Wall Street Journal. He has been recognized by Who's Who in America, Who's Who in Business and Industry, Smith's Municipal Analyst All-Stars and twice testified as an expert on bonds in Federal Court. Former congressional aide in Washington, D.C."
+    ],
+    "links": [
+      [
+        "LinkedIn",
+        "https://www.linkedin.com/in/barnetsherman/"
+      ]
+    ]
+  },
+  {
+    "img": "/graphics/Mike.webp",
+    "kicker": "Technology & Data",
+    "name": "Mike Lockhart",
+    "short": "An architect on high-stakes systems, such as those that touch 90% of Microsoft's revenue.",
+    "bio": [
+      "Mike, a seasoned software architect with a passion for solving complex real-time system challenges, including those in the realm of blockchain. He has served as an architect on several high-stakes business systems, including the initial online banking transaction processing system for Washington Mutual and Paper Exchange, a start-up that revolutionized online exchange transactions in the forest products industry, eventually acquired by a German firm, PaperSpace.",
+      "At Microsoft, Mike held the title of principal architect, where he designed and executed a comprehensive global pricing system that touched upon 90% of Microsoft's revenues. This included an optimal real-time pricing and quoting system, and a massive product and price data warehouse used by Microsoft on a global scale. Mike's exceptional work has been recognized with a patent for a real-time rules-based algorithm processing system and his expertise extends to two real-time embedded software essential avionics systems on the Boeing 737/757/767."
+    ],
+    "links": [
+      [
+        "LinkedIn",
+        "https://www.linkedin.com/in/mike-lockhart-95a1b/"
+      ]
+    ]
+  },
+  {
+    "img": "/graphics/John.webp",
+    "kicker": "Strategy & Markets",
+    "name": "John Shuster",
+    "short": "A startup founder and executive, received his MBA in Finance from The Wharton School.",
+    "bio": [
+      "John Schuster is a technology development executive with extensive experience in hands-on leadership and engineering roles including CEO, CTO, COO, and VP of Engineering. Prior to joining OpenEXA, he was the co-founder and COO of GeoParking Technologies, Inc., a seed stage startup that was developing an Airbnb type platform to enable Robotaxi companies to source between-ride and overnight parking from GPT's local community platform users.",
+      "Prior to GeoParking, John worked in the satellite industry as a Senior Technical Program Manager on Amazon's Kuiper Project and as the SVP of Engineering at LeoSat. Earlier in his career John co-founded NudgeRx, which developed and launched a call-center and internet-based service to reduces hospital readmission for heart surgery patients. John was also CTO of Terabeam Corporation, a unicorn start-up in 2000, where he was technical lead of the team that raised over $526M in equity financing and established the company as the clear leader in the wireless optical communications space. John received his MBA in Finance from The Wharton School of Business and his BS in Engineering and Applied Science from the Caltech."
+    ],
+    "links": [
+      [
+        "LinkedIn",
+        "https://www.linkedin.com/in/johnschuster/"
+      ]
+    ]
+  },
+  {
+    "img": "/graphics/Victor.webp",
+    "kicker": "Strategy & Tech",
+    "name": "Victor Gamolsky",
+    "short": "Victor brings 10 years of experience with Lean Startup tools such as Customer Development.",
+    "bio": [
+      "As a business process expert, Victor has extensive knowledge and experience in analyzing, designing, and implementing effective processes that improve organizational efficiency and productivity. He specializes in identifying process bottlenecks and implementing solutions to improve workflow. At OpenEXA, Victor is busy designing the business workflow for the movement of real world assets into crypto markets.",
+      "Victor brings 10 years of experience with Lean Startup tools such as Customer Development, Business Model Generation, and Blue Ocean strategy, to name a few. He co-founded a MetaVerse company, Roomful, and served as the CTO of a BPM Company, Database Republic. Victor graduated from a top university in Russia with a degree in Nuclear Physics. Upon arriving in Silicon Valley, he immersed himself in the innovative startup culture and has since dedicated his professional life to bringing new ideas to life."
+    ],
+    "links": [
+      [
+        "LinkedIn",
+        "https://www.linkedin.com/in/victorgamolsky/"
+      ]
+    ]
+  },
+  {
+    "img": "/graphics/Subuddh.webp",
+    "kicker": "SME AI & ML",
+    "name": "Subuddh Parekh",
+    "short": "Engineering, product and machine learning expert @ Stanford (BSCS) & (MSCS)",
+    "bio": [
+      "Subuddh Parekh is a machine learning expert with multiple years of experience in product and engineering. Graduated from Stanford University with Bachelor of Science in Computer Science and Master of Science in Computer Science. Subuddh was a member of the pioneering team at early PayPal and has done stints with Western Union and Rakuten. He is keenly interested in the impact of AI on humans and is passionate about using AI to make markets more accessible and efficient. In his free time Subuddh enjoys writing screenplays and making films."
+    ],
+    "links": []
+  },
+  {
+    "img": "/graphics/Abhishek.webp",
+    "kicker": "Program Manager Tech",
+    "name": "Abhishek Sinha",
+    "short": "A technology expert with over a decade of experience, delivering v1 initiatives on ground.",
+    "bio": [
+      "A blockchain technology enthusiast with over a decade of experience implementing V1 initiatives in the field. Abhishek believes in OpenEXA as a startup. He believes it would solve the institutional trust problem in crypto. Has experience in many large technology companies like Amazon and Microsoft.",
+      "Abhishek demonstrates a relentless pursuit of excellence in driving for results that provide business value. Extensive expertise in project planning and managing software projects with a strong focus on customer experience. Proven ability to establish cross-functional, global, collaborative relationships built on trust and credibility. Recognized for strategic planning, analytical and pragmatic problem solving and decisiveness. Strengths include data mining to derive business insight, influencing and motivating teams to get most out of them."
+    ],
+    "links": [
+      [
+        "LinkedIn",
+        "https://www.linkedin.com/in/abhishekpsinha/"
+      ]
+    ]
+  },
+  {
+    "img": "/graphics/Shalabh.webp",
+    "kicker": "SME AI/ML Big Data",
+    "name": "Shalabh Choudhri",
+    "short": "At Google Shalabh made the ML efforts for spam/fraud detection & optimization.",
+    "bio": [
+      "Shalabh is a passionate problem-solver and seasoned software engineer and leader with experience in building large-scale distributed systems and scaling software, product, and teams at both early-stage startups and big institutions like Google. His specialties include contextual data discovery, storage systems, and ML infrastructure.",
+      "At Google, Shalabh founded the ML efforts for conversion optimization and spam/fraud detection using TensorFlow. His team was the first to successfully build ML models based on phone call recordings, achieving a record of roughly 10 models with over 90% accuracy in the first year. Currently, Shalabh is passionate about pursuing the field of AI Crypto, where he aims to bridge traditional Wall Street assets into crypto markets. Shalabh is uniquely positioned to explore innovative ways of integrating AI with crypto. His ultimate goal is to help drive the mainstream adoption of crypto by leveraging the power of AI and Blockchain."
+    ],
+    "links": [
+      [
+        "LinkedIn",
+        "https://www.linkedin.com/in/shalabh-chou/"
+      ]
+    ]
+  },
+  {
+    "img": "/graphics/Julius.webp",
+    "kicker": "Compliance & Risk",
+    "name": "Dr. Julius E. Ekeroma, Ph.D.",
+    "short": "Chief Compliance | AML & Crypto Risk",
+    "bio": [
+      "An expert in compliance and financial risk with 25+ years in auditing, operations, and financial forensics. Ph.D. in Business Analytics, expert in AML, fraud, and regulatory frameworks across emerging tech and digital assets."
+    ],
+    "links": []
+  },
+  {
+    "img": "/graphics/Dipit.webp",
+    "kicker": "SME (Financial Mkt.)",
+    "name": "Dipit Nanawati",
+    "short": "A trusted advisor to some of Wall St.'s largest firms on operational efficiency, compliance and profitability.",
+    "bio": [
+      "As a trusted advisor to some of the largest Wall Street firms, Dipit has provided expert guidance on a range of critical areas including business function optimization, regulatory compliance, revenue recognition, and cost reduction. With expertise in capital markets, as well as trade surveillance and transaction monitoring in key industry verticals such as correspondent banking, broker/dealer, hedge funds, and asset management, he has helped clients achieve greater efficiency, compliance, and profitability in their operations.",
+      "He has a deep understanding of the regulatory dimension of financial services: Anti-financial crime, AML, BSA, OFAC, KYC, Enterprise Case Management and trade surveillance. Integrating data sets, performing analytical calculations, building and configuring models, performing model validation and tuning. He has worked at institutions such as Chainvine, Goldman Sachs, Nomura Securities, Deutsche Bank, Citibank, Nice Actimize, JPMorgan Chase, Barclays Capital, Fluere Analytics, Bank of America Merrill Lynch and Standard Chartered."
+    ],
+    "links": []
+  },
+  {
+    "img": "/graphics/Kumar.webp",
+    "kicker": "Advisor",
+    "name": "Kumar Mehta",
+    "short": "Kumar is the Co-Founder/CDO and Former CEO at Versa Networks.",
+    "bio": [
+      "Kumar is the Co-Founder/CDO and Former CEO at Versa Networks. Kumar brings a proven track record of leading mega-projects at startups as well as publicly traded companies. His vision, work ethic, and leadership as VP of Engineering at Juniper Networks resulted in multiple blockbuster product deliveries, including the market-leading Metro and Carrier Ethernet solution, the MX series. His leadership in design, development, and delivery of differentiated solutions resulted in huge and continuing revenue streams for the company and brought Kumar the prestigious CEO Excellence Award. Prior to Juniper, Kumar held engineering management positions at Riverstone Networks and Yago Systems. Kumar is a graduate of the Executive Program at Stanford University Graduate School of Business. He has a master's degree in Engineering from Virginia Tech and a Bachelor of Technology from the Indian Institute of Technology, Kharagpur."
+    ],
+    "links": [
+      [
+        "LinkedIn",
+        "https://www.linkedin.com/in/kumar-mehta-73733259/"
+      ]
+    ]
+  },
+  {
+    "img": "/graphics/Sreeram.webp",
+    "kicker": "Advisor",
+    "name": "Sreeram Kannan",
+    "short": "Founder and CEO of Eigen Layer and director of UW's Blockchain Lab.",
+    "bio": [
+      "Sreeram Kannan is the founder and CEO of Eigen Layer and the director of the University of Washington's Blockchain Lab. His research at UW focuses on distributed computing, information theory, queuing theory, networking, coding theory, and game theory of blockchain systems. Eigen Layer is a proof of stake validation marketplace that reuses state capital and existing validation infrastructure. With Eigen Layer, Ethereum can enable permissionless and modular innovation across all blockchain layers. He is a 2021 National-Academy-of-Engineering Frontiers-of-engineering speaker at the US-Japan bilateral meet, a recipient of the 2019 UW ECE outstanding teaching award, 2017 NSF Faculty Early CAREER award, the 2013 Van Valkenburg outstanding dissertation award from UIUC, a co-recipient of the 2010 Qualcomm Cognitive Radio Contest first prize, a recipient of 2010 Qualcomm CTO Roberto Padovani outstanding intern award, and a recipient of SVC Aiya medal from the Indian Institute of Science."
+    ],
+    "links": [
+      [
+        "LinkedIn",
+        "https://www.linkedin.com/in/sreeram-kannan-a397a47/"
+      ]
+    ]
+  },
+  {
+    "img": "/graphics/Philip.webp",
+    "kicker": "Advisor",
+    "name": "Philip Bond, Ph.D.",
+    "short": "Distinguished Professor of Capital Markets, Business, Finance and Economics.",
+    "bio": [
+      "Philip Alan Bond is Edward E. Carlson Distinguished Professor in Business Administration in the Finance and Business Economics Department of the Foster School of Business at the University of Washington. Before the current position, he served on the faculties of the Finance departments at Carlson at University of Minnesota, Wharton at University of Pennsylvania, and Kellogg at Northwestern University. He holds a Ph.D. in Economics from the University of Chicago, and a BA in Mathematics from the University of Oxford.",
+      "He has held leadership positions in internationally prominent academic organizations, most notably as co-editor of the Journal of Finance and as president of the Finance Theory Group. He has published 25 papers, the majority of these appearing in the field's leading academic journals, on a wide array of topics relating to capital markets, market microstructure, microeconomics, monetary policy, financial markets, macroeconomics, derivatives, financial intermediation, and the structure of the Financial Services industry and Investment Banking."
+    ],
+    "links": [
+      [
+        "LinkedIn",
+        "https://foster.uw.edu/faculty-research/directory/philip-bond/"
+      ]
+    ]
+  }
+]
