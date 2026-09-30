@@ -47,7 +47,7 @@ TEAM = [
 ADVISORS = [
     ("kumar-mehta", "Kumar Mehta", "Kumar Mehta", "Advisor", "Co-founder and CDO, and former CEO, of Versa Networks.", None, []),
     ("sreeram-kannan", "Sreeram Kannan", "Sreeram Kannan", "Advisor", "Founder and CEO of Eigen Layer and director of the University of Washington's Blockchain Lab.", None, []),
-    ("philip-bond", "Dr. Philip Bond", "Philip Bond, Ph.D.", "Advisor", "Distinguished Professor of Capital Markets, Business, Finance and Economics.", None, [("His research on the blog →", "research/blog/index.html#economics")]),
+    ("philip-bond", "Dr. Philip Bond", "Philip Bond, Ph.D.", "Advisor", "Distinguished Professor of Capital Markets, Business, Finance and Economics.", None, [("His research on the blog →", "blog/index.html#economics")]),
 ]
 
 # ---------------- portraits ----------------
@@ -80,7 +80,7 @@ def bio(src_name):
     return "".join(out)
 def links(src_name, extra):
     ls = [(("X" if t.startswith("X") else t), u) for t, u in old[src_name]["links"]] + extra
-    return "".join(f'<a href="{H.escape(u)}"' + ('' if u.startswith("research/") else ' target="_blank" rel="noopener"') + f'>{H.escape(t)}</a>' for t, u in ls)
+    return "".join(f'<a href="{H.escape(u)}"' + ('' if u.startswith("blog/") else ' target="_blank" rel="noopener"') + f'>{H.escape(t)}</a>' for t, u in ls)
 def cards(people, prefix, cols):
     items, report = [], []
     for i, (slug, name, src, title, short, v1, extra) in enumerate(people):
