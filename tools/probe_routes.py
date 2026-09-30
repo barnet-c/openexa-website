@@ -13,11 +13,12 @@ CASES = [  # path, expected status, expected Location (or None), body must conta
     ("/blog/", 200, None, "The Gen-AI series"),
     ("/blog/index.html", 200, None, "The Gen-AI series"),
     (f"/blog/{KEEP}.html", 200, None, "Leveraged ETFs"),
-    (f"/blog/{KEEP}", 200, None, "Leveraged ETFs"),
-    (f"/blog/{KEEP}/", 200, None, "Leveraged ETFs"),                  # old openexa.com form
+    (f"/blog/{KEEP}", 301, f"/blog/{KEEP}.html", None),
+    (f"/blog/{KEEP}/", 301, f"/blog/{KEEP}.html", None),             # old openexa.com form
+    ("/blog", 200, None, "The Gen-AI series"),                         # served with <base href="/blog/">
     (f"/blog/{HELD}/", 301, "/blog/", None),
     (f"/blog/{GONE}/", 301, "/blog/", None),
-    (f"/research/blog/{KEEP}.html", 301, f"/blog/{KEEP}", None),     # the blog's previous home
+    (f"/research/blog/{KEEP}.html", 301, f"/blog/{KEEP}.html", None),     # the blog's previous home
     ("/research/blog/index.html", 301, "/blog/", None),
     ("/research/blog/", 301, "/blog/", None),
     ("/research", 200, None, "The thinking behind the swarm"),

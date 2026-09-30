@@ -241,7 +241,7 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     </section>''')
 years = sorted(p["dt"].year for p in kept)
 desc = f"The OpenEXA blog: {len(kept)} posts from {years[0]} to {years[-1]} on AI agents in finance, financial markets research and market structure."
-page = head(BASE, "Blog — OpenEXA Research", desc, "website") + f'''
+page = head(BASE, "Blog — OpenEXA", desc, "website").replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
 <body data-nav="dark-start" class="blog-page">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -383,25 +383,27 @@ json.dump({"total": len(kept), "years": [years[0], years[-1]],
 # Azure serves /company as company.html and /blog as blog/index.html on its own. These rules only cover URLs that
 # moved: the old openexa.com site (its pages and /blog/<slug>/ with a trailing slash), held-back and removed posts,
 # and /research/blog/, where the blog lived before 2026-09-30. Rules are evaluated in order; the first match wins.
+# Azure ignores a trailing slash when matching ("/x" and "/x/" are the same route, and listing both is rejected), so:
+#   - each legacy path gets one rule;
+#   - a kept post's /blog/<slug> rule also catches the old /blog/<slug>/ form; it redirects to /blog/<slug>.html (the
+#     form every link on the site uses) rather than serving in place, because the page's relative links would resolve
+#     against the wrong folder under a trailing slash.
 def rd(route, to): return {"route": route, "redirect": to, "statusCode": 301}
 OLD_PAGES = [("/strategies", "/lifecycles"), ("/trust-risk", "/trust"), ("/status", "/evidence"),
              ("/for-managers", "/access#managers"), ("/for-investors", "/access#investors"), ("/beta", "/access")]
-routes = []
-for src, dst in OLD_PAGES:
-    routes += [rd(src, dst), rd(src + "/", dst)]
+routes = [rd(src, dst) for src, dst in OLD_PAGES]
 # the blog's previous home (a link to it was shared on 2026-09-30); longest slugs first so no prefix shadows another
 for p in sorted(kept, key=lambda q: -len(q["slug"])):
-    routes.append(rd(f'/research/blog/{p["slug"]}*', p["source"] if p["stub"] else f'/blog/{p["slug"]}'))
+    routes.append(rd(f'/research/blog/{p["slug"]}*', p["source"] if p["stub"] else f'/blog/{p["slug"]}.html'))
 routes.append(rd("/research/blog*", "/blog/"))
-# old openexa.com blog URLs: held-back and removed posts go to the index; kept posts are served at the same path
+# old openexa.com blog URLs: held-back and removed posts go to the index; kept posts to their page
 for p in posts:
     s = p["slug"]
-    if s in EXCLUDE or s in REMOVED:
-        routes += [rd(f"/blog/{s}", "/blog/"), rd(f"/blog/{s}/", "/blog/")]
-    elif SLUGS[s]["stub"]:
-        routes += [rd(f"/blog/{s}", SLUGS[s]["source"]), rd(f"/blog/{s}/", SLUGS[s]["source"])]
-    else:
-        routes.append({"route": f"/blog/{s}/", "rewrite": f"/blog/{s}.html"})
+    if s in EXCLUDE or s in REMOVED: routes.append(rd(f"/blog/{s}", "/blog/"))
+    elif SLUGS[s]["stub"]: routes.append(rd(f"/blog/{s}", SLUGS[s]["source"]))
+    else: routes.append(rd(f"/blog/{s}", f"/blog/{s}.html"))
+_norm = [r["route"].rstrip("/").rstrip("*").lower() for r in routes]
+assert len(set(_norm)) == len(_norm), "Azure rejects routes that differ only by a trailing slash"
 CONFIG = {
     "routes": routes,
     "responseOverrides": {"404": {"rewrite": "/404.html", "statusCode": 404}},
@@ -417,8 +419,8 @@ for p in posts:
     s = p["slug"]
     if s in EXCLUDE or s in REMOVED: rules.append(f"/blog/{s}/  /blog/  301")
     elif SLUGS[s]["stub"]: rules.append(f'/blog/{s}/  {SLUGS[s]["source"]}  301')
-    else: rules.append(f"/blog/{s}/  /blog/{s}.html  200")
-for p in kept: rules.append(f'/research/blog/{p["slug"]}.html  /blog/{p["slug"]}  301')
+    else: rules.append(f"/blog/{s}/  /blog/{s}.html  301")
+for p in kept: rules.append(f'/research/blog/{p["slug"]}.html  /blog/{p["slug"]}.html  301')
 rules.append("/research/blog/  /blog/  301")
 (FILES / "blog_redirects.txt").write_text("\n".join(rules) + "\n", encoding="utf-8")
 

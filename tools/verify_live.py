@@ -21,7 +21,7 @@ def check(rel):
 with cf.ThreadPoolExecutor(12) as ex:
     results = list(ex.map(check, files))
 diff = [(r, s) for r, s, same in results if not same]
-clean = {p: fetch(p)[0] for p in ("company", "research", "research/01-compounding-error", "blog/", "blog/leveraged-etfs-price-dynamics-and-options-valuation", "access", "")}
+clean = {p: fetch(p)[0] for p in ("company", "research", "research/01-compounding-error", "blog/", "blog/leveraged-etfs-price-dynamics-and-options-valuation.html", "access", "")}
 print(f"{BASE}: {len(results) - len(diff)}/{len(results)} files byte-identical to site/")
 print("clean urls:", clean)
 for r, s in diff[:15]: print("  DIFF", s, r)
