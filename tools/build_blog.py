@@ -1,9 +1,10 @@
-"""Build research/blog/ from the old openexa.com blog (scraped by scrape_oldblog.py into oldblog/posts.json).
+"""Build blog/ from the old openexa.com blog (scraped by scrape_oldblog.py into oldblog/posts.json).
 
 Curation: the research and AI posts are imported; the 2023-24 crypto/token-product posts (OXA, AUT, stable credit,
 wallets, NFTs, a crypto margin account) are held back - they describe a business OpenEXA no longer runs. Held-back posts
 are listed in EXCLUDE and redirected to the blog index; flip one out of EXCLUDE to publish it.
-Old URLs /blog/<slug>/ keep their slug at /research/blog/<slug>; redirect rules are written to blog_redirects.txt.
+Posts keep their old openexa.com slugs at /blog/<slug>. Redirects and routes for Azure Static Web Apps are written to
+site/staticwebapp.config.json (old site pages, held-back posts, trailing slashes, and the earlier /research/blog/ location).
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -16,7 +17,7 @@ import ftfy
 FILES = Path(str(DATA))
 OLD = FILES / "oldblog"
 ROOT = Path(str(SITE))
-OUT = ROOT / "research" / "blog"
+OUT = ROOT / "blog"
 IMG = ROOT / "assets" / "img" / "blog"
 SCHOLAR = "https://scholar.google.com/citations?user=P40aOHIAAAAJ"
 
@@ -98,7 +99,7 @@ def clean_body(p):
         src = m.group(1); alt = (re.search(r'alt="([^"]*)"', m.group(0)) or [None, ""])[1]
         name = src.rsplit("/", 1)[-1]
         shutil.copyfile(OLD / "img" / name, IMG / name) if (OLD / "img" / name).exists() else None
-        return f'<img src="../../assets/img/blog/{name}" alt="{esc(alt)}" loading="lazy" decoding="async">'
+        return f'<img src="../assets/img/blog/{name}" alt="{esc(alt)}" loading="lazy" decoding="async">'
     b = re.sub(r'<img[^>]*src="(/graphics/[^"]+)"[^>]*>', img, b)
     b = re.sub(r"<figure>\s*(<img[^>]+>)\s*</figure>", r"<figure>\1</figure>", b)
     b = re.sub(r"<p>\s*(<img[^>]+>)\s*</p>", r"<figure>\1</figure>", b)
@@ -137,10 +138,9 @@ NAV = re.search(r'  <header class="nav">.*?</header>\n  <div class="nav-menu">.*
 FOOTER = re.search(r'  <footer class="footer">.*?</footer>\n', index_html, re.S).group(0)
 ARROW = '<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg>'
 OUTB = '<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"/></svg>'
-PFX = "../../"
+PFX = "../"
 def chrome():
     nav = NAV.replace('href="', f'href="{PFX}').replace(f'href="{PFX}#', 'href="#')
-    nav = nav.replace(f'<a href="{PFX}research.html">Research</a>', f'<a href="{PFX}research.html" aria-current="page">Research</a>')
     foot = FOOTER.replace('href="', f'href="{PFX}').replace(f'href="{PFX}http', 'href="http').replace(f'href="{PFX}mailto', 'href="mailto')
     return nav, foot
 def head(url, title, desc, kind="article", extra=""):
@@ -176,7 +176,7 @@ span = lambda a, b: f"{a}" if a == b else f"{a}–{b}"
 fmt = lambda d: d.strftime("%b %-d, %Y") if os.name != "nt" else d.strftime("%b %#d, %Y")
 LABEL = {k: l for k, l, _ in COLLECTIONS}
 FIG = {"ai": "swarm", "markets": "horizon", "economics": "council", "munis": "ledger"}  # figure.js formations
-BASE = "https://www.openexa.com/research/blog/"
+BASE = "https://www.openexa.com/blog/"
 def href(p): return p["source"] if p["stub"] else f'{p["slug"]}.html'
 
 # the 2024 Gen-AI series (Ajit): an introduction and a three-part finance series that cross-link one another
@@ -241,7 +241,7 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     </section>''')
 years = sorted(p["dt"].year for p in kept)
 desc = f"The OpenEXA blog: {len(kept)} posts from {years[0]} to {years[-1]} on AI agents in finance, financial markets research and market structure."
-page = head(BASE, "Blog — OpenEXA Research", desc, "website") + f'''
+page = head(BASE, "Blog — OpenEXA", desc, "website").replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
 <body data-nav="dark-start" class="blog-page">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -252,7 +252,7 @@ page = head(BASE, "Blog — OpenEXA Research", desc, "website") + f'''
       <div class="container">
         <div class="grid">
           <div class="col-7">
-            <div class="eyebrow" data-reveal><a href="{PFX}research.html">Research</a> · Blog</div>
+            <div class="eyebrow" data-reveal>The OpenEXA blog</div>
             <h1 class="display-1" data-reveal data-split style="--d:60ms">The blog.</h1>
             <p class="lede mt-3" data-reveal style="--d:120ms">Research summaries and the first notes on AI agents in finance — {len(kept)} posts from the people behind OpenEXA and the researchers they work with.</p>
             <div class="article-meta" data-reveal style="--d:180ms"><span>{len(kept)} posts</span><span>{years[0]}–{years[-1]}</span><span>{len(COLLECTIONS)} collections</span></div>
@@ -290,6 +290,7 @@ page = head(BASE, "Blog — OpenEXA Research", desc, "website") + f'''
 </html>
 '''
 if OUT.exists(): shutil.rmtree(OUT)
+if (ROOT / "research" / "blog").exists(): shutil.rmtree(ROOT / "research" / "blog")  # the blog lived here until 2026-09-30
 write(OUT / "index.html", page)
 
 # ---------------- posts ----------------
@@ -334,7 +335,7 @@ for p in order:
     <section class="page-hero page-hero--dark is-dark grain article-hero blog-post-hero">
       <div class="figure-stage article-figure" data-figure="{FIG[p["col"]]}" data-spin="0.08" aria-hidden="true"><canvas></canvas></div>
       <div class="container">
-        <div class="eyebrow" data-reveal><a href="{PFX}research.html">Research</a> · <a href="index.html">Blog</a> · {crumb}</div>
+        <div class="eyebrow" data-reveal><a href="index.html">Blog</a> · {crumb}</div>
         <h1 class="display-2 article-title blog-title" data-reveal data-split style="--d:60ms">{esc(p["title"])}</h1>
         <div class="article-meta" data-reveal style="--d:140ms"><span>{esc(p["author"])}</span><span>{fmt(p["dt"])}</span><span>{p["minutes"]} min read</span>{meta_extra}</div>
       </div>
@@ -378,13 +379,49 @@ json.dump({"total": len(kept), "years": [years[0], years[-1]],
            "collections": [{"key": k, "label": l, "count": len(by_col[k]), "years": [by_col[k][-1]["dt"].year, by_col[k][0]["dt"].year], "lede": lede} for k, l, lede in COLLECTIONS]},
           open(FILES / "blog_summary.json", "w", encoding="utf-8"), indent=2, ensure_ascii=False)
 
-# ---------------- redirects for the old site's URLs ----------------
-rules = ["# Old openexa.com blog -> /research/blog (slugs preserved); held-back and removed posts -> the blog index"]
+# ---------------- routes for Azure Static Web Apps (site/staticwebapp.config.json) ----------------
+# Azure serves /company as company.html and /blog as blog/index.html on its own. These rules only cover URLs that
+# moved: the old openexa.com site (its pages and /blog/<slug>/ with a trailing slash), held-back and removed posts,
+# and /research/blog/, where the blog lived before 2026-09-30. Rules are evaluated in order; the first match wins.
+# Azure ignores a trailing slash when matching ("/x" and "/x/" are the same route, and listing both is rejected), so:
+#   - each legacy path gets one rule;
+#   - a kept post's /blog/<slug> rule also catches the old /blog/<slug>/ form; it redirects to /blog/<slug>.html (the
+#     form every link on the site uses) rather than serving in place, because the page's relative links would resolve
+#     against the wrong folder under a trailing slash.
+def rd(route, to): return {"route": route, "redirect": to, "statusCode": 301}
+OLD_PAGES = [("/strategies", "/lifecycles"), ("/trust-risk", "/trust"), ("/status", "/evidence"),
+             ("/for-managers", "/access#managers"), ("/for-investors", "/access#investors"), ("/beta", "/access")]
+routes = [rd(src, dst) for src, dst in OLD_PAGES]
+# the blog's previous home (a link to it was shared on 2026-09-30); longest slugs first so no prefix shadows another
+for p in sorted(kept, key=lambda q: -len(q["slug"])):
+    routes.append(rd(f'/research/blog/{p["slug"]}*', p["source"] if p["stub"] else f'/blog/{p["slug"]}.html'))
+routes.append(rd("/research/blog*", "/blog/"))
+# old openexa.com blog URLs: held-back and removed posts go to the index; kept posts to their page
 for p in posts:
-    if p["slug"] in EXCLUDE or p["slug"] in REMOVED: rules.append(f'/blog/{p["slug"]}  /research/blog/  301')
-    elif next(q for q in kept if q["slug"] == p["slug"])["stub"]: rules.append(f'/blog/{p["slug"]}  {p["source"]}  301')
-    else: rules.append(f'/blog/{p["slug"]}  /research/blog/{p["slug"]}  301')
-rules.append("/blog  /research/blog/  301")
+    s = p["slug"]
+    if s in EXCLUDE or s in REMOVED: routes.append(rd(f"/blog/{s}", "/blog/"))
+    elif SLUGS[s]["stub"]: routes.append(rd(f"/blog/{s}", SLUGS[s]["source"]))
+    else: routes.append(rd(f"/blog/{s}", f"/blog/{s}.html"))
+_norm = [r["route"].rstrip("/").rstrip("*").lower() for r in routes]
+assert len(set(_norm)) == len(_norm), "Azure rejects routes that differ only by a trailing slash"
+CONFIG = {
+    "routes": routes,
+    "responseOverrides": {"404": {"rewrite": "/404.html", "statusCode": 404}},
+    "mimeTypes": {".webmanifest": "application/manifest+json"},
+}
+ONE = lambda o: json.dumps(o, ensure_ascii=False, separators=(", ", ": "))  # one route per line: compact but diffable
+io.open(ROOT / "staticwebapp.config.json", "w", encoding="utf-8", newline="\n").write("{\n  \"routes\": [\n" + ",\n".join("    " + ONE(r) for r in routes) + "\n  ],\n  \"responseOverrides\": " + ONE(CONFIG["responseOverrides"]) + ",\n  \"mimeTypes\": " + ONE(CONFIG["mimeTypes"]) + "\n}\n")
+if (ROOT / "_redirects").exists(): (ROOT / "_redirects").unlink()  # Netlify-only; Azure would serve it as a public file
+# the same old-URL map, for tools/verify_redirects.py
+rules = []
+for src, dst in OLD_PAGES: rules.append(f"{src}/  {dst}  301")
+for p in posts:
+    s = p["slug"]
+    if s in EXCLUDE or s in REMOVED: rules.append(f"/blog/{s}/  /blog/  301")
+    elif SLUGS[s]["stub"]: rules.append(f'/blog/{s}/  {SLUGS[s]["source"]}  301')
+    else: rules.append(f"/blog/{s}/  /blog/{s}.html  301")
+for p in kept: rules.append(f'/research/blog/{p["slug"]}.html  /blog/{p["slug"]}.html  301')
+rules.append("/research/blog/  /blog/  301")
 (FILES / "blog_redirects.txt").write_text("\n".join(rules) + "\n", encoding="utf-8")
 
 # ---------------- image optimisation (in place; deterministic) ----------------
@@ -401,22 +438,6 @@ def optimise(path):
     if tmp.stat().st_size < path.stat().st_size: tmp.replace(path)
     else: tmp.unlink()
 for f in IMG.iterdir(): optimise(f)
-
-
-# write the full _redirects: the old openexa.com site's pages, then its blog
-OLD_PAGES = """# Netlify's built-in clean URLs serve the .html pages (/company -> company.html).
-# The rules below only catch URLs from the previous openexa.com site, so links to it keep working.
-# (Netlify normalises trailing slashes before matching, so /strategies also matches /strategies/.)
-
-# Old site pages -> their counterparts
-/strategies    /lifecycles          301
-/trust-risk    /trust               301
-/status        /evidence            301
-/for-managers  /access#managers     301
-/for-investors /access#investors    301
-/beta          /access              301
-"""
-io.open(ROOT / "_redirects", "w", encoding="utf-8", newline="\n").write(OLD_PAGES + "\n" + "\n".join(rules) + "\n")
 
 # ---------------- report ----------------
 imgs = list(IMG.iterdir())

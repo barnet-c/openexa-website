@@ -10,13 +10,13 @@ BASE = "http://127.0.0.1:8125"
 OUT = Path(str(SHOTS / 'v9'))
 OUT.mkdir(exist_ok=True)
 PAGES = ["index", "platform", "lifecycles", "evidence", "trust", "company", "research",
-         "research/01-compounding-error", "research/10-master-and-copy", "research/blog/index",
-         "research/blog/examining-the-drawdown-risk-of-sector-etfs-2022", "research/blog/empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way",
+         "research/01-compounding-error", "research/10-master-and-copy", "blog/index",
+         "blog/examining-the-drawdown-risk-of-sector-etfs-2022", "blog/empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way",
          "access", "404"]
 FIGURE_PAGES = ["company", "research", "research/01-compounding-error"]
 fname = lambda name: name.replace("/", "_")[:60]
 FORBIDDEN = re.compile(r"NASDAQ|NYSE|TradeStation|Interactive Brokers|DTCC|704 458|Campus Pkwy|ajit@|\$100M\+ ARR|\$1B\+ ARR", re.I)
-# the team is public on company.html; blog bylines (research/blog/) are the only other place names may appear.
+# the team is public on company.html; blog bylines (blog/) are the only other place names may appear.
 # Barnet Sherman left the team (now a customer) and must not appear anywhere.
 PEOPLE = re.compile(r"Ajit|Dubey|Leung|Lockhart|Gamolsky|Choudhri|Schuster|Parekh|Sinha|Ekeroma|Nanawati|Mehta|Kannan|Philip Bond", re.I)
 TEAM_NAMES = ["Ajit K Dubey", "Dr. Tim Leung", "Mike Lockhart", "Victor Gamolsky", "Shalabh Choudhri", "John Schuster", "Subuddh Parekh",
@@ -52,7 +52,7 @@ async def main():
                 if name == "company":
                     missing = [n for n in TEAM_NAMES if n not in m["text"]]
                     assert not missing, ("company page must carry the whole team", missing)
-                elif not name.startswith("research/blog/"):
+                elif not name.startswith("blog/"):
                     assert not people, (name, w, "team names outside company.html and the blog", people)
                 await pg.evaluate("if (document.activeElement instanceof HTMLElement) document.activeElement.blur()")
                 await pg.screenshot(path=str(OUT / f"{fname(name)}-{w}.png"))
@@ -161,7 +161,7 @@ async def main():
         print("company: 10 team + 3 advisors, 13 portraits (560px masters), monochrome at rest, colour on hover, full descriptions expand, no patent count, sections 01-05")
         assert await pg.locator('.crew a[href*="scholar.google.com/citations?user=P40aOHIAAAAJ"]').count() == 1
         # ---- blog: collections filter, hash deep link, cards resolve ----
-        await pg.goto(f"{BASE}/research/blog/index.html#markets", wait_until="load")
+        await pg.goto(f"{BASE}/blog/index.html#markets", wait_until="load")
         await pg.wait_for_timeout(900)
         shown = await pg.evaluate("[...document.querySelectorAll('[data-blog-collection]')].filter(s => !s.hidden).map(s => s.id)")
         assert shown == ["markets"], shown
@@ -178,7 +178,7 @@ async def main():
         assert await pg.evaluate("document.querySelector('[data-blog-series]').hidden")
         await pg.locator('.blog-chips [data-blog-filter="ai"]').click(); await pg.wait_for_timeout(400)
         assert not await pg.evaluate("document.querySelector('[data-blog-series]').hidden")
-        await pg.goto(f"{BASE}/research/blog/rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies.html", wait_until="load")
+        await pg.goto(f"{BASE}/blog/rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies.html", wait_until="load")
         assert await pg.evaluate("document.querySelector('.series-box li[aria-current=\"true\"] b').textContent") == "Part 1"
         assert await pg.locator(".series-box li").count() == 4
         print("blog: featured Gen-AI series (4 parts) shows under All/AI, hides under other filters; series nav marks the current part")

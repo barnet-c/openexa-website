@@ -1,5 +1,5 @@
 /* OpenEXA — blog collections filter. Chips narrow the page to one collection; the hash keeps it linkable
-   (/research/blog/#markets). Without JavaScript the chips are plain jump links and every collection shows. */
+   (/blog/#markets). Without JavaScript the chips are plain jump links and every collection shows. */
 (function () {
   'use strict';
   const chips = Array.from(document.querySelectorAll('[data-blog-filter]'));

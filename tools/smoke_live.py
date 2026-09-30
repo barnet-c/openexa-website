@@ -1,4 +1,4 @@
-"""Smoke a deploy (Netlify site name, full URL, or local server) in a real browser: figures render, company modes switch,
+"""Smoke a deploy (full URL, e.g. the Azure site, or a local server) in a real browser: figures render, company modes switch,
 research hover morphs, the team is on /company only, no errors."""
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -7,8 +7,8 @@ import asyncio, sys
 from pathlib import Path
 from playwright.async_api import async_playwright, expect
 
-ARG = sys.argv[1] if len(sys.argv) > 1 else "silly-gelato-17a75a"
-BASE = ARG.rstrip("/") if ARG.startswith("http") else f"https://{ARG}.netlify.app"
+ARG = sys.argv[1] if len(sys.argv) > 1 else "https://thankful-mushroom-0dd42611e.3.azurestaticapps.net"
+BASE = ARG.rstrip("/")
 OUT = Path(str(SHOTS)) / (BASE.split("//")[1].split(".")[0].replace(":", "-") + "-live")
 OUT.mkdir(exist_ok=True)
 
@@ -67,7 +67,7 @@ async def main():
         team = await pg.evaluate("[...document.querySelectorAll('.crew img')].map(i => i.complete && i.naturalWidth === 560)")
         assert len(team) == 13 and all(team), team
         await pg.locator(".crew").first.screenshot(path=str(OUT / "team.png"))
-        for path in ("/company", "/research/blog/", "/research"):
+        for path in ("/company", "/blog/", "/research"):
             await pg.goto(f"{BASE}{path}", wait_until="load")
             txt = await pg.evaluate("document.body.innerText")
             assert not any(n in txt for n in ("Barnet", "Sherman", "Braintree")), (path, "Barnet Sherman must not appear")

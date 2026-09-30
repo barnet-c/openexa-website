@@ -59,8 +59,8 @@ for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
 write(os.path.join(ROOT, "site.webmanifest"), '{\n  "name": "OpenEXA",\n  "short_name": "OpenEXA",\n  "description": "Infrastructure for agentic lifecycles.",\n  "start_url": "/",\n  "display": "standalone",\n  "background_color": "#0E1512",\n  "theme_color": "#0E1512",\n  "icons": [\n    { "src": "assets/img/icon-192.png", "sizes": "192x192", "type": "image/png" },\n    { "src": "assets/img/icon-512.png", "sizes": "512x512", "type": "image/png" }\n  ]\n}\n')
 write(os.path.join(ROOT, "robots.txt"), "User-agent: *\nAllow: /\n\nSitemap: https://www.openexa.com/sitemap.xml\n")
 pages += sorted("research/" + os.path.basename(a) for a in glob.glob(os.path.join(ROOT, "research", "*.html")))
-pages += ["research/blog/"] + sorted("research/blog/" + os.path.basename(a) for a in glob.glob(os.path.join(ROOT, "research", "blog", "*.html")) if os.path.basename(a) != "index.html")
-urls = "".join(f"  <url><loc>{SITE if p == 'index.html' else SITE + p}</loc><lastmod>2026-09-23</lastmod><changefreq>{'weekly' if p == 'index.html' else 'monthly'}</changefreq><priority>{'1.0' if p == 'index.html' else '0.7'}</priority></url>\n" for p in pages)
+pages += ["blog/"] + sorted("blog/" + os.path.basename(a) for a in glob.glob(os.path.join(ROOT, "blog", "*.html")) if os.path.basename(a) != "index.html")
+urls = "".join(f"  <url><loc>{SITE if p == 'index.html' else SITE + p}</loc><lastmod>2026-09-30</lastmod><changefreq>{'weekly' if p == 'index.html' else 'monthly'}</changefreq><priority>{'1.0' if p == 'index.html' else '0.7'}</priority></url>\n" for p in pages)
 write(os.path.join(ROOT, "sitemap.xml"), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls + "</urlset>\n")
 
 # 404 — header/footer from index.html
@@ -103,6 +103,8 @@ page404 = f'''<!DOCTYPE html>
 </body>
 </html>
 '''
+# Azure serves this page for any missing URL, at any depth (/blog/x/y), so every local link must be root-relative
+page404 = re.sub(r'(href|src)="(?!https?:|mailto:|#|/)', r'\1="/', page404)
 write(os.path.join(ROOT, "404.html"), page404)
 print("wrote site.webmanifest, robots.txt, sitemap.xml, 404.html;", len(pages), "pages in sitemap")
 

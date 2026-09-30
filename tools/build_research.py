@@ -268,9 +268,9 @@ index_page = f'''<!DOCTYPE html>
           <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Research summaries, market-structure economics and the first notes on AI agents in finance, from the people behind OpenEXA and the researchers they work with.</p><a class="link-arrow mt-3 scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a></div>
         </div>
         <div class="card-grid card-grid--{len(BLOG['collections'])}" data-reveal style="--d:120ms">
-{chr(10).join(f'          <a class="card research-card" href="research/blog/index.html#{c["key"]}"><div class="n"><span>{c["count"]} posts</span><span>{c["years"][0] if c["years"][0] == c["years"][1] else str(c["years"][0]) + "–" + str(c["years"][1])}</span></div><h3 class="h4">{H.escape(c["label"])}</h3><p>{H.escape(c["lede"])}</p><span class="link-arrow mt-3">Browse {ARROW}</span></a>' for c in BLOG['collections'])}
+{chr(10).join(f'          <a class="card research-card" href="blog/index.html#{c["key"]}"><div class="n"><span>{c["count"]} posts</span><span>{c["years"][0] if c["years"][0] == c["years"][1] else str(c["years"][0]) + "–" + str(c["years"][1])}</span></div><h3 class="h4">{H.escape(c["label"])}</h3><p>{H.escape(c["lede"])}</p><span class="link-arrow mt-3">Browse {ARROW}</span></a>' for c in BLOG['collections'])}
         </div>
-        <div class="mt-4 row-links" data-reveal><a class="link-arrow" href="research/blog/index.html#series">Start with {BLOG['series']['name']}: from business model to AI agents {ARROW}</a><a class="link-arrow" href="research/blog/index.html">All {BLOG['total']} posts {ARROW}</a></div>
+        <div class="mt-4 row-links" data-reveal><a class="link-arrow" href="blog/index.html#series">Start with {BLOG['series']['name']}: from business model to AI agents {ARROW}</a><a class="link-arrow" href="blog/index.html">All {BLOG['total']} posts {ARROW}</a></div>
       </div>
     </section>
 
