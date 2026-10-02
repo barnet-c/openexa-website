@@ -213,3 +213,10 @@ to the advisors. The Company page now shows five team members (Ajit, Tim, Mike, 
 4x2 grid of the same compact cards. Advisor kickers read `Advisor - <area>`, the area taken from each person's own bio, so
 no advisor card carries an employee title. The section heading, lede and counters (5 / 8 / 100+) follow the roster, and
 `verify_v9.py` now pins the exact names in each group.
+
+## Closing a pull request now removes its Azure preview (2 Oct)
+
+The workflow's close job failed on every merged PR, so each PR's preview environment stayed behind (the free plan allows three).
+First it lacked the deployment token; then, with the token, Azure answered "No matching static site found". This Static Web App
+authorizes deployments with GitHub (OIDC), and in that mode the close step also needs the id token, which the deploy step
+already had. The close job now installs the OIDC client, gets the id token and passes it as `github_id_token`.
