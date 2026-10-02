@@ -38,18 +38,20 @@ TEAM = [
     ("ajit-dubey", "Ajit K Dubey", "Ajit K Dubey", "Founder · CEO", "Founder and CEO of OpenEXA. Big Tech and capital-markets veteran, building the foundational infrastructure for agentic lifecycles.", "ajit-dubey", []),
     ("tim-leung", "Dr. Tim Leung", "Tim Leung, Ph.D.", "Chief Scientist", "Boeing Endowed Chair Professor of Applied Mathematics and Director of Computational Finance & Risk Management at the University of Washington.", "tim-leung", [("More on financial markets research ↗", SCHOLAR)]),
     ("mike-lockhart", "Mike Lockhart", "Mike Lockhart", "Chief Technology", "Architect of high-stakes systems, including those that touch 90% of Microsoft's revenue.", "mike-lockhart", []),
-    ("victor-gamolsky", "Victor Gamolsky", "Victor Gamolsky", "Chief Product", "A decade of building and scaling ventures with lean, evidence-driven product methods.", "victor-gamolsky", []),
+    ("subuddh-parekh", "Subuddh Parekh", "Subuddh Parekh", "SME · AI & ML", "Engineering, product and machine-learning expert, with a BS and MS in Computer Science from Stanford.", None, []),
     ("shalabh-choudhri", "Shalabh Choudhri", "Shalabh Choudhri", "Chief AI Agents", "Leads agent research and the post-trained models behind OpenEXA's domain-specific execution agents.", "shalabh-choudhri", []),
 ]
-# Eight advisors: the three long-standing ones, then the five who moved over from the team on 2026-10-02 (John Schuster,
-# Subuddh Parekh, Abhishek Sinha, Dr. Julius E. Ekeroma, Dipit Nanawati). Kickers read "Advisor · <area>", the area taken
-# from each person's own bio, so no card carries an employee title (Program Manager, Chief Compliance) under Advisors.
+# Eight advisors: the three long-standing ones, then four who moved over from the team on 2026-10-02 (John Schuster,
+# Abhishek Sinha, Dr. Julius E. Ekeroma, Dipit Nanawati) and Victor Gamolsky, who swapped places with Subuddh Parekh later
+# that day (Victor takes Subuddh's slot as an advisor; Subuddh takes Victor's slot on the team). Kickers read
+# "Advisor · <area>", the area taken from each person's own bio or old About-page label ("Strategy & Tech" for Victor), so
+# no advisor card carries an employee title (Program Manager, Chief Compliance, Chief Product).
 ADVISORS = [
     ("kumar-mehta", "Kumar Mehta", "Kumar Mehta", "Advisor · Networking", "Co-founder and CDO, and former CEO, of Versa Networks.", None, []),
     ("sreeram-kannan", "Sreeram Kannan", "Sreeram Kannan", "Advisor · Blockchain Systems", "Founder and CEO of Eigen Layer and director of the University of Washington's Blockchain Lab.", None, []),
     ("philip-bond", "Dr. Philip Bond", "Philip Bond, Ph.D.", "Advisor · Capital Markets", "Distinguished Professor of Capital Markets, Business, Finance and Economics.", None, [("His research on the blog →", "blog/index.html#economics")]),
     ("john-schuster", "John Schuster", "John Shuster", "Advisor · Strategy & Markets", "A startup founder and executive, with an MBA in Finance from The Wharton School.", None, []),
-    ("subuddh-parekh", "Subuddh Parekh", "Subuddh Parekh", "Advisor · AI & ML", "Engineering, product and machine-learning expert, with a BS and MS in Computer Science from Stanford.", None, []),
+    ("victor-gamolsky", "Victor Gamolsky", "Victor Gamolsky", "Advisor · Strategy & Technology", "A decade of building and scaling ventures with lean, evidence-driven product methods.", "victor-gamolsky", []),
     ("abhishek-sinha", "Abhishek Sinha", "Abhishek Sinha", "Advisor · Technology Programs", "A technology expert with over a decade of experience delivering v1 initiatives on the ground.", None, []),
     ("julius-ekeroma", "Dr. Julius E. Ekeroma", "Dr. Julius E. Ekeroma, Ph.D.", "Advisor · Compliance & Risk", "Expert in compliance and financial risk, with 25+ years in auditing, operations and financial forensics.", None, []),
     ("dipit-nanawati", "Dipit Nanawati", "Dipit Nanawati", "Advisor · Financial Markets", "A trusted advisor to some of Wall Street's largest firms on operational efficiency, compliance and profitability.", None, []),

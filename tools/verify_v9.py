@@ -152,11 +152,15 @@ async def main():
         assert await pg.locator(".crew--team > li").count() == 5 and await pg.locator(".crew--advisors > li").count() == 8
         names_team = await pg.locator(".crew--team > li h3").all_inner_texts()
         names_adv = await pg.locator(".crew--advisors > li h3").all_inner_texts()
-        assert names_team == ["Ajit K Dubey", "Dr. Tim Leung", "Mike Lockhart", "Victor Gamolsky", "Shalabh Choudhri"], names_team
-        moved = ["John Schuster", "Subuddh Parekh", "Abhishek Sinha", "Dr. Julius E. Ekeroma", "Dipit Nanawati"]
-        assert all(n in names_adv for n in moved) and not any(n in names_team for n in moved), (names_team, names_adv)
+        # Victor and Subuddh swapped places on 2026-10-02: Subuddh holds Victor's old team slot (4th), Victor Subuddh's old advisor slot (5th)
+        assert names_team == ["Ajit K Dubey", "Dr. Tim Leung", "Mike Lockhart", "Subuddh Parekh", "Shalabh Choudhri"], names_team
+        assert names_adv == ["Kumar Mehta", "Sreeram Kannan", "Dr. Philip Bond", "John Schuster", "Victor Gamolsky", "Abhishek Sinha", "Dr. Julius E. Ekeroma", "Dipit Nanawati"], names_adv
         roles = await pg.locator(".crew--advisors > li .role").all_inner_texts()
         assert all(r.upper().startswith("ADVISOR") for r in roles), roles
+        assert not any("CHIEF PRODUCT" in r.upper() for r in roles), roles
+        team_ids = await pg.locator(".crew--team > li .n").all_inner_texts()
+        adv_ids = await pg.locator(".crew--advisors > li .n").all_inner_texts()
+        assert team_ids[3] == "T-04" and adv_ids[4] == "A-05", (team_ids, adv_ids)
         ajit = await pg.locator(".crew--team > li").first.inner_text()
         assert "Ajit K Dubey" in ajit and not re.search(r"patent|fourteen", ajit, re.I), ajit
         more = pg.locator(".crew--team > li:nth-child(2) details.crew-more")
@@ -165,7 +169,7 @@ async def main():
         assert await more.evaluate("d => d.open && d.querySelector('.crew-bio').innerText.length > 400")
         stats = await pg.locator(".crew-stats").inner_text()
         assert "PATENT" not in stats.upper() and "100+" in stats, stats
-        print("company: 5 team + 8 advisors (5 moved over), 13 portraits (560px masters), monochrome at rest, colour on hover, full descriptions expand, no patent count, sections 01-05")
+        print("company: 5 team + 8 advisors (Victor and Subuddh swapped places), 13 portraits (560px masters), monochrome at rest, colour on hover, full descriptions expand, no patent count, sections 01-05")
         assert await pg.locator('.crew a[href*="scholar.google.com/citations?user=P40aOHIAAAAJ"]').count() == 1
         # ---- blog: collections filter, hash deep link, cards resolve ----
         await pg.goto(f"{BASE}/blog/index.html#markets", wait_until="load")

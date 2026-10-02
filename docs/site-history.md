@@ -220,3 +220,10 @@ The workflow's close job failed on every merged PR, so each PR's preview environ
 First it lacked the deployment token; then, with the token, Azure answered "No matching static site found". This Static Web App
 authorizes deployments with GitHub (OIDC), and in that mode the close step also needs the id token, which the deploy step
 already had. The close job now installs the OIDC client, gets the id token and passes it as `github_id_token`.
+
+## Victor Gamolsky and Subuddh Parekh swap places (2 Oct)
+
+At Ajit's request Victor moves to the advisors and Subuddh to the team, each taking the other's slot: Subuddh is now T-04 on
+the team (kicker `SME - AI & ML`, his old About-page label) and Victor is A-05 among the advisors (kicker `Advisor - Strategy &
+Technology`, from his old label `Strategy & Tech`, so no advisor card carries `Chief Product`). Counts stay 5 and 8.
+`verify_v9.py` pins both orders and the slot numbers.
