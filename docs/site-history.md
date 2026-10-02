@@ -205,3 +205,11 @@ Apps (deployed from GitHub on every push to `main`); Netlify is no longer used. 
 `staticwebapp.config.json`: redirects for the old openexa.com pages and held-back posts, `/research/blog/...` →
 `/blog/...` for links shared before the move, and `404.html` for missing pages (its links are now root-relative so
 it renders at any depth). This file moved out of `site/` so it is no longer published.
+
+## Five people move from the team to the advisors (2 Oct)
+
+At Ajit's request John Schuster, Subuddh Parekh, Abhishek Sinha, Dr. Julius E. Ekeroma and Dipit Nanawati moved from the team
+to the advisors. The Company page now shows five team members (Ajit, Tim, Mike, Victor, Shalabh) and eight advisors in a
+4x2 grid of the same compact cards. Advisor kickers read `Advisor - <area>`, the area taken from each person's own bio, so
+no advisor card carries an employee title. The section heading, lede and counters (5 / 8 / 100+) follow the roster, and
+`verify_v9.py` now pins the exact names in each group.

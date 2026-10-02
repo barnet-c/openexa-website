@@ -149,7 +149,14 @@ async def main():
         hovered = await pg.locator(".crew > li").nth(2).locator("img").evaluate("i => getComputedStyle(i).filter")
         assert hovered == "none", hovered
         assert await pg.locator(".sec-head .idx").all_inner_texts() == ["01", "02", "03", "04", "05"]
-        assert await pg.locator(".crew--team > li").count() == 10 and await pg.locator(".crew--advisors > li").count() == 3
+        assert await pg.locator(".crew--team > li").count() == 5 and await pg.locator(".crew--advisors > li").count() == 8
+        names_team = await pg.locator(".crew--team > li h3").all_inner_texts()
+        names_adv = await pg.locator(".crew--advisors > li h3").all_inner_texts()
+        assert names_team == ["Ajit K Dubey", "Dr. Tim Leung", "Mike Lockhart", "Victor Gamolsky", "Shalabh Choudhri"], names_team
+        moved = ["John Schuster", "Subuddh Parekh", "Abhishek Sinha", "Dr. Julius E. Ekeroma", "Dipit Nanawati"]
+        assert all(n in names_adv for n in moved) and not any(n in names_team for n in moved), (names_team, names_adv)
+        roles = await pg.locator(".crew--advisors > li .role").all_inner_texts()
+        assert all(r.upper().startswith("ADVISOR") for r in roles), roles
         ajit = await pg.locator(".crew--team > li").first.inner_text()
         assert "Ajit K Dubey" in ajit and not re.search(r"patent|fourteen", ajit, re.I), ajit
         more = pg.locator(".crew--team > li:nth-child(2) details.crew-more")
@@ -158,7 +165,7 @@ async def main():
         assert await more.evaluate("d => d.open && d.querySelector('.crew-bio').innerText.length > 400")
         stats = await pg.locator(".crew-stats").inner_text()
         assert "PATENT" not in stats.upper() and "100+" in stats, stats
-        print("company: 10 team + 3 advisors, 13 portraits (560px masters), monochrome at rest, colour on hover, full descriptions expand, no patent count, sections 01-05")
+        print("company: 5 team + 8 advisors (5 moved over), 13 portraits (560px masters), monochrome at rest, colour on hover, full descriptions expand, no patent count, sections 01-05")
         assert await pg.locator('.crew a[href*="scholar.google.com/citations?user=P40aOHIAAAAJ"]').count() == 1
         # ---- blog: collections filter, hash deep link, cards resolve ----
         await pg.goto(f"{BASE}/blog/index.html#markets", wait_until="load")
