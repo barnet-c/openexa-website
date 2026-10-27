@@ -1161,3 +1161,25 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
   .beat .body-lg, .beat-0 .hero-sub { margin-top: 10px; font-size: .9rem; line-height: 1.45; max-width: 72ch; }
   .beat .hero-cta, .beat-0 .hero-cta { margin-top: 14px; }
 }
+/* ---------- print: pages, research notes and posts print as clean documents (ink on white, everything revealed) ---------- */
+@media print {
+  @page { margin: 16mm 15mm; }
+  html, body { background: #fff !important; color: #000 !important; }
+  .loader, .nav, .nav-menu, .skip, .chapters, .story-idx, .story-motion, .story-labels, .story-static-mark, .hero-scroll,
+  .ticker, canvas, .figure-stage, .article-side, .pager, .article-share, .cta-band, .footer .top, .footer .wordmark,
+  .swarm-live, .ledger-stream, .chain, .desk, .blog-filter, .grain::after, .section[data-n]::before { display: none !important; }
+  * { animation: none !important; transition: none !important; box-shadow: none !important; text-shadow: none !important; }
+  .is-dark, .page-hero--dark { --bg: #fff; --bg-2: #fff; --fg: #000; --fg-2: #222; --fg-3: #444; --line: #bbb; --line-strong: #888; --accent: #1E7A5A; background: #fff !important; color: #000 !important; }
+  .is-dark *, .page-hero--dark * { color: #000 !important; background-color: transparent !important; border-color: #bbb !important; }
+  .btn { background: none !important; color: #000 !important; border: 1px solid #000 !important; }
+  .story-stage::before, .page-hero::before, .page-hero::after { display: none !important; }
+  [data-reveal], .will-reveal, [data-split] .wi, .beat { opacity: 1 !important; transform: none !important; visibility: visible !important; }
+  .story, .story-stage, .story-ui, .story-ui .container { position: static !important; height: auto !important; min-height: 0 !important; overflow: visible !important; }
+  .beat { position: static !important; padding: 0 0 10mm !important; }
+  .section, .page-hero, .article-hero { padding-block: 8mm !important; min-height: 0 !important; }
+  .article, .article-body-section .article, .blog-article { grid-column: 1 / -1 !important; margin: 0 !important; max-width: 100% !important; }
+  h1, h2, h3, h4 { break-after: avoid; } figure, table, img, .card, .layer, .stats > div { break-inside: avoid; }
+  a { color: inherit !important; }
+  .article a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; word-break: break-all; color: #444; }
+  .footer { padding-top: 6mm !important; border-top: 1px solid #bbb; } .footer .disc { font-size: 8pt; }
+}
