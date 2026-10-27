@@ -810,8 +810,15 @@
       if (reduced) { flows.splice(0).forEach((f) => f.g.remove()); pulse = permit = 0; bound.flash = bound.ripT = 0; ex = exStart >= 0 ? 1 : ex; }
       kick(true);
     });
-    const ro = new ResizeObserver(() => { measure(); measureCard(); kick(true); });
-    ro.observe(bodyEl); ro.observe(list); ro.observe(card);
+    // a new size is measured in the next frame, not inside the observer: measuring can resize the instrument (the room it
+    // reserves for the card), and resizing an observed box inside its own callback is a ResizeObserver loop
+    let roQueued = false;
+    const ro = new ResizeObserver(() => {
+      if (roQueued) return;
+      roQueued = true;
+      requestAnimationFrame(() => { roQueued = false; measure(); measureCard(); kick(true); });
+    });
+    ro.observe(bodyEl); ro.observe(list);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { measure(); measureCard(); kick(true); });
     new IntersectionObserver((entries) => {
       entries.forEach((e) => {
