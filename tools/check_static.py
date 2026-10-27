@@ -4,7 +4,9 @@
   figures; people's names only on company.html (the whole team) and in the blog; the removed person nowhere;
 - every page has one <h1>; every indexable page a canonical URL, parseable JSON-LD and an og:image that exists;
 - the sitemap lists exactly the indexable pages; both Atom feeds parse and link only to pages that exist;
-- staticwebapp.config.json parses and every redirect target that is a site path exists.
+- staticwebapp.config.json parses and every redirect target that is a site path exists;
+- markup integrity on every page: no duplicate id, and every label for= / aria-labelledby / aria-describedby /
+  aria-controls points at an id that exists (a broken one silently mutes a control for screen readers).
     python tools/check_static.py
 """
 import sys as _sys, os as _os
@@ -36,6 +38,13 @@ for rel in pages:
         missing = [n for n in TEAM_NAMES if n not in text]
         if missing: fail(rel, "team names missing:", missing)
     elif not rel.startswith("blog/") and people: fail(rel, "names outside Company and the blog:", people)
+    markup = re.sub(r"<(script|style)\b.*?</\1>", "", s, flags=re.S | re.I)
+    ids = re.findall(r'\sid="([^"]+)"', markup)
+    dupes = sorted({i for i in ids if ids.count(i) > 1})
+    if dupes: fail(rel, "duplicate ids:", dupes)
+    for attr, refs in re.findall(r'\s(for|aria-labelledby|aria-describedby|aria-controls)="([^"]+)"', markup):
+        missing = [r for r in refs.split() if r not in ids]
+        if missing: fail(rel, f"{attr} points at missing ids:", missing)
     if rel == "insights.html": continue
     if len(re.findall(r"<h1[\s>]", s)) != 1: fail(rel, "needs exactly one <h1>")
     if rel in NOT_INDEXED: continue
