@@ -98,14 +98,23 @@ def clean_body(p):
     assert not re.search(r'href="/', b), (p["slug"], re.findall(r'href="(/[^"]*)"', b))
     def img(m):
         src = m.group(1); alt = (re.search(r'alt="([^"]*)"', m.group(0)) or [None, ""])[1]
+        if alt == "__wf_reserved_inherit": alt = ""  # a Webflow placeholder, not a description: screen readers read it out
         name = src.rsplit("/", 1)[-1]
         shutil.copyfile(OLD / "img" / name, IMG / name) if (OLD / "img" / name).exists() else None
-        return f'<img src="../assets/img/blog/{name}" alt="{esc(alt)}" loading="lazy" decoding="async">'
+        return f'<img src="../assets/img/blog/{name}" alt="{esc(alt)}"{size(name)} loading="lazy" decoding="async">'
     b = re.sub(r'<img[^>]*src="(/graphics/[^"]+)"[^>]*>', img, b)
     b = re.sub(r"<figure>\s*(<img[^>]+>)\s*</figure>", r"<figure>\1</figure>", b)
     b = re.sub(r"<p>\s*(<img[^>]+>)\s*</p>", r"<figure>\1</figure>", b)
     b = re.sub(r"(?<!<figure>)(<img[^>]+>)(?!</figure>)", r"<figure>\1</figure>", b)
     return b.strip()
+
+def size(name):
+    """width/height attributes for a blog image as optimise() will leave it (at most 1800 px wide): the page reserves its box."""
+    from PIL import Image
+    if not (OLD / "img" / name).exists(): return ""
+    w, h = Image.open(OLD / "img" / name).size
+    if w > 1800: w, h = 1800, round(h * 1800 / w)
+    return f' width="{w}" height="{h}"'
 
 if IMG.exists(): shutil.rmtree(IMG)  # rebuilt from the scraped originals every time
 IMG.mkdir(parents=True, exist_ok=True)
@@ -206,7 +215,7 @@ nav, foot = chrome()
 series_cards = []
 for i, (s, part, short) in enumerate(SERIES):
     p = SLUGS[s]
-    thumb = f'<div class="blog-thumb"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt="" loading="lazy" decoding="async"></div>' if p.get("hero_file") else ""
+    thumb = f'<div class="blog-thumb"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt=""{size(p["hero_file"])} loading="lazy" decoding="async"></div>' if p.get("hero_file") else ""
     series_cards.append(f'''          <li><a class="series-card" href="{s}.html">
             <span class="series-n">{i:02d}</span>{thumb}
             <div class="k"><span>{esc(part)} · {esc(short)}</span><span>{p["minutes"]} min</span></div>
@@ -233,7 +242,7 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     cards = []
     for p in by_col[k]:
         ext = p["stub"]
-        thumb = f'<div class="blog-thumb"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt="" loading="lazy" decoding="async"></div>' if p.get("hero_file") else ""
+        thumb = f'<div class="blog-thumb"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt=""{size(p["hero_file"])} loading="lazy" decoding="async"></div>' if p.get("hero_file") else ""
         cards.append(f'''          <a class="blog-card" href="{esc(href(p))}"{' target="_blank" rel="noopener"' if ext else ''}>
             {thumb}<div class="blog-card-body"><div class="k"><span>{fmt(p["dt"])}</span><span>{esc(p["author"])}</span></div>
             <h3>{esc(p["title"])}</h3><p>{esc(p["excerpt"])}</p>
@@ -325,7 +334,7 @@ for p in order:
     side_links = [f'<a class="link-arrow" href="index.html#{p["col"]}">{esc(LABEL[p["col"]])} {ARROW}</a>', f'<a class="link-arrow" href="index.html">All posts {ARROW}</a>']
     if p["source"]: side_links.insert(0, f'<a class="link-arrow" href="{esc(p["source"])}" target="_blank" rel="noopener">Original on {esc(src_host)} {OUTB}</a>')
     if p["col"] == "markets": side_links.insert(1, f'<a class="link-arrow" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a>')
-    hero_img = f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt="" decoding="async"></figure>' if p.get("hero_file") else ""
+    hero_img = f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt=""{size(p["hero_file"])} decoding="async"></figure>' if p.get("hero_file") else ""
     pager = "".join([
         f"<a class='pager-card prev' href='{prev['slug']}.html'><span class='k'>← Newer</span><h3>{esc(prev['title'])}</h3><p>{fmt(prev['dt'])}</p></a>" if prev else f"<a class='pager-card prev' href='index.html'><span class='k'>← The blog</span><h3>All {len(kept)} posts</h3><p>{esc(LABEL[p['col']])} and {len(COLLECTIONS) - 1} more collections.</p></a>",
         f"<a class='pager-card next' href='{nxt['slug']}.html'><span class='k'>Older →</span><h3>{esc(nxt['title'])}</h3><p>{fmt(nxt['dt'])}</p></a>" if nxt else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>Research →</span><h3>The thinking behind the swarm.</h3><p>Two research notes and an eight-part series.</p></a>",

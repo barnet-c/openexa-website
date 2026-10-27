@@ -92,8 +92,8 @@
           <div class="col-6 offset-7">
             <form class="form" data-access data-reveal style="--d:80ms" aria-label="Request access to OpenEXA">
               <div class="f">
-                <label>I am requesting</label>
-                <div class="seg">
+                <label id="interest-label">I am requesting</label>
+                <div class="seg" role="radiogroup" aria-labelledby="interest-label">
                   <label><input type="radio" name="interest" value="Bring a lifecycle" checked><span>Bring a lifecycle<small>Trade · securitization · energy · industrial</small></span></label>
                   <label><input type="radio" name="interest" value="Manager platform"><span>Manager platform<small>Deploy agents on the stack</small></span></label>
                   <label><input type="radio" name="interest" value="Platform partnership"><span>Partnership<small>Broker · custodian · data · distribution</small></span></label>
@@ -105,8 +105,8 @@
                 <div class="f"><label for="email">Work email</label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
               </div>
               <div class="two">
-                <div class="f"><label for="org">Organization</label><input id="org" name="organization" type="text" autocomplete="organization"></div>
-                <div class="f"><label for="role">Role</label><input id="role" name="role" type="text" autocomplete="organization-title"></div>
+                <div class="f"><label for="org">Organization</label><input id="org" name="organization" type="text" autocomplete="organization" maxlength="120"></div>
+                <div class="f"><label for="role">Role</label><input id="role" name="role" type="text" autocomplete="organization-title" maxlength="120"></div>
               </div>
               <div class="f">
                 <label for="assets">Assets you are considering (optional)</label>
@@ -119,7 +119,7 @@
                   <option>Over $1B</option>
                 </select>
               </div>
-              <div class="f"><label for="msg">Anything we should know</label><textarea id="msg" name="message" placeholder="Mandate, timeline, custody arrangements, questions…"></textarea></div>
+              <div class="f"><label for="msg">Anything we should know</label><textarea id="msg" name="message" maxlength="1200" placeholder="Mandate, timeline, custody arrangements, questions…"></textarea></div>
               <div class="f">
                 <label class="small" style="font-family:var(--sans);font-size:.9rem;text-transform:none;letter-spacing:0;display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:start;color:var(--fg-2)"><input type="checkbox" name="accredited" value="yes" style="width:16px;margin-top:3px"> <span>I am, or represent, an accredited investor or a regulated financial institution, and I understand that nothing on this site is an offer of securities.</span></label>
               </div>
