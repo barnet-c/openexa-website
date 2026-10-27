@@ -1,6 +1,6 @@
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
-from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE
+from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
 # -*- coding: utf-8 -*-
 """Launch metadata for the OpenEXA site: canonical + Open Graph + Twitter tags, manifest, icons, JSON-LD,
 robots.txt, sitemap.xml and a branded 404 page (header/footer templated from index.html)."""
@@ -35,13 +35,14 @@ for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
     if not meta(s, "og:title", True): block.append(f'<meta property="og:title" content="{html.escape(og_title, quote=True)}">')
     if not meta(s, "og:description", True): block.append(f'<meta property="og:description" content="{html.escape(og_desc, quote=True)}">')
     block += [
-        f'<meta property="og:image" content="{SITE}assets/img/og.png">',
+        f'<meta property="og:image" content="{og_image(url)}">',
+        f'<meta property="og:image:alt" content="{html.escape(og_title, quote=True)}">',
         '<meta property="og:image:width" content="1200">',
         '<meta property="og:image:height" content="630">',
         '<meta name="twitter:card" content="summary_large_image">',
         f'<meta name="twitter:title" content="{html.escape(og_title, quote=True)}">',
         f'<meta name="twitter:description" content="{html.escape(og_desc, quote=True)}">',
-        f'<meta name="twitter:image" content="{SITE}assets/img/og.png">',
+        f'<meta name="twitter:image" content="{og_image(url)}">',
         '<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">',
         '<link rel="manifest" href="site.webmanifest">',
     ]

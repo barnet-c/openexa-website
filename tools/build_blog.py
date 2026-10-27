@@ -8,7 +8,7 @@ site/staticwebapp.config.json (old site pages, held-back posts, trailing slashes
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
-from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE
+from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
 import html as H, io, json, os, re, shutil
 from datetime import datetime
 from pathlib import Path
@@ -158,13 +158,14 @@ def head(url, title, desc, kind="article", extra=""):
   <meta property="og:type" content="{kind}">
   <meta property="og:title" content="{esc(title)}">
   <meta property="og:description" content="{esc(desc)}">
-  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image" content="{og_image(url)}">
+  <meta property="og:image:alt" content="{esc(title)}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{esc(title)}">
   <meta name="twitter:description" content="{esc(desc)}">
-  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta name="twitter:image" content="{og_image(url)}">
   <link rel="apple-touch-icon" href="{PFX}assets/img/apple-touch-icon.png">
   <link rel="manifest" href="{PFX}site.webmanifest">
   <link rel="icon" type="image/svg+xml" href="{PFX}assets/img/favicon.svg">

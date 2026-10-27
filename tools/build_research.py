@@ -1,6 +1,6 @@
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
-from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE
+from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
 # -*- coding: utf-8 -*-
 """Build the OpenEXA research section from openexa-research-blogs.md:
    research.html (index) + research/NN-slug.html (ten articles), in the requested order 9 · 10 · 1 … 8."""
@@ -98,13 +98,14 @@ def og(prefix, url, title, desc):
   <meta property="og:type" content="article">
   <meta property="og:title" content="{H.escape(title, quote=True)}">
   <meta property="og:description" content="{H.escape(desc, quote=True)}">
-  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image" content="{og_image(url)}">
+  <meta property="og:image:alt" content="{H.escape(title, quote=True)}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{H.escape(title, quote=True)}">
   <meta name="twitter:description" content="{H.escape(desc, quote=True)}">
-  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta name="twitter:image" content="{og_image(url)}">
 {HEAD_LINKS.format(p=prefix)}'''
 
 # ---------------- articles ----------------
