@@ -399,13 +399,13 @@ for p in order:
     <section class="section article-body-section">
       <div class="container">
         <div class="grid">
-          <aside class="col-3 article-side">
+          <div class="col-3 article-side">
             <div class="sticky blog-side">
               {series_box}
               <div class="eyebrow mb-2">{esc(LABEL[p["col"]])}</div>
               {"".join(side_links)}
             </div>
-          </aside>
+          </div>
           <article class="col-7 offset-5 article blog-article">
             {hero_img}
             {p["body"]}

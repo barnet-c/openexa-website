@@ -155,7 +155,7 @@
           <div class="col-6"><h2 class="display-3" data-reveal data-split>One session, simulated. Move the sliders.</h2></div>
           <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">The gap between an ETF's price and its NAV wanders through a trading day. Whenever it runs past the threshold, an agent acts — create above NAV, redeem below — and pulls it back. More agents on the fund close gaps sooner; a lower threshold works smaller ones. Illustrative, not market data.</p></div>
         </div>
-        <div class="desk is-dark" data-gap data-reveal style="--d:120ms" aria-label="Illustrative model of one trading session">
+        <div class="desk is-dark" data-gap data-reveal style="--d:120ms" role="group" aria-label="Illustrative model of one trading session">
           <div class="desk-head">
             <span class="live"><i></i><span data-gap-state>Session live</span></span>
             <span class="t" data-gap-time>09:30 ET</span>
@@ -166,7 +166,7 @@
               <canvas data-gap-canvas aria-hidden="true"></canvas>
               <div class="desk-legend"><span><i class="ivory"></i>Price</span><span><i class="khaki"></i>NAV</span><span><i class="green"></i>Agents act</span><span><i class="band"></i>Threshold</span></div>
             </div>
-            <aside class="desk-side">
+            <div class="desk-side">
               <div class="desk-stats">
                 <div><b data-gap-creates>0</b><span>Creates</span></div>
                 <div><b data-gap-redeems>0</b><span>Redeems</span></div>
@@ -178,7 +178,7 @@
               </div>
               <ol class="desk-log" data-gap-log aria-live="off" aria-label="Agent actions"></ol>
               <p class="desk-note">Move the sliders. More agents close the gap sooner; a lower threshold works smaller gaps. The ledger fills itself.</p>
-            </aside>
+            </div>
           </div>
         </div>
         <div class="figure-cap" data-reveal><span>Fig. 02 — The desk · one simulated session of Lifecycle 01</span><span>Illustrative · draws nothing from any feed</span></div>
@@ -223,9 +223,9 @@
           <a class="brand" href="index.html"><i class="mark"></i>OpenEXA</a>
           <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
         </div>
-        <div><h4>Product</h4><ul><li><a href="platform.html">Platform</a></li><li><a href="lifecycles.html">Lifecycles</a></li><li><a href="evidence.html">Proof</a></li><li><a href="trust.html">Trust &amp; governance</a></li></ul></div>
-        <div><h4>Company</h4><ul><li><a href="company.html">About OpenEXA</a></li><li><a href="research.html">Research</a></li><li><a href="blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
-        <div><h4>Access</h4><ul><li><a href="access.html">Request access</a></li><li><a href="access.html#managers">For managers</a></li><li><a href="access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+        <div><h2>Product</h2><ul><li><a href="platform.html">Platform</a></li><li><a href="lifecycles.html">Lifecycles</a></li><li><a href="evidence.html">Proof</a></li><li><a href="trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h2>Company</h2><ul><li><a href="company.html">About OpenEXA</a></li><li><a href="research.html">Research</a></li><li><a href="blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk <span aria-hidden="true">↗</span></a></li></ul></div>
+        <div><h2>Access</h2><ul><li><a href="access.html">Request access</a></li><li><a href="access.html#managers">For managers</a></li><li><a href="access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
       </div>
       <div class="disc">
         <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>

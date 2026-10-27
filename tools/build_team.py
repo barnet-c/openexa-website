@@ -100,7 +100,7 @@ def cards(people, prefix, cols):
     for i, (slug, name, src, title, short, v1, extra) in enumerate(people):
         where, h = portrait(slug, src, v1); report.append((name, where, h))
         l = links(src, extra)
-        items.append(f'''          <li data-reveal style="--d:{60 + (i % cols) * 60}ms"><div class="n"><span>{prefix}-{i + 1:02d}</span></div><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{slug}.webp" alt="{H.escape(name)}" width="560" height="560" loading="lazy" decoding="async"></div><div class="role">{H.escape(title)}</div><h3>{H.escape(name)}</h3><p>{H.escape(short, quote=False)}</p>{f'<div class="links">{l}</div>' if l else ''}<details class="crew-more"><summary>Read full description</summary><div class="crew-bio">{bio(src)}</div></details></li>''')
+        items.append(f'''          <li data-reveal style="--d:{60 + (i % cols) * 60}ms"><div class="n"><span>{prefix}-{i + 1:02d}</span></div><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{slug}.webp" alt="{H.escape(name)}" width="560" height="560" loading="lazy" decoding="async"></div><div class="role">{H.escape(title)}</div><h3>{H.escape(name)}</h3><p>{H.escape(short, quote=False)}</p>{f'<div class="links">{l}</div>' if l else ''}<details class="crew-more"><summary>Read full description<span class="sr-only"> for {H.escape(name)}</span></summary><div class="crew-bio">{bio(src)}</div></details></li>''')
     return "\n".join(items), report
 
 WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"]

@@ -173,13 +173,13 @@ for i, post in enumerate(ordered):
     <section class="section article-body-section">
       <div class="container">
         <div class="grid">
-          <aside class="col-3 article-side">
+          <nav class="col-3 article-side" aria-label="In this note">
             <div class="sticky">
               <div class="eyebrow mb-2">In this note</div>
               <ol class="toc" data-toc>{toc}</ol>
               <div class="article-share mt-3"><a class="link-arrow" href="../research.html">All research {ARROW}</a></div>
             </div>
-          </aside>
+          </nav>
           <article class="col-7 offset-5 article">
             {"".join(body)}
             <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder's notes · {post['order']:02d} / {len(ordered):02d}</span></div>
