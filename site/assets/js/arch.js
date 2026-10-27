@@ -45,6 +45,7 @@
   }
   const still = (o, target) => Math.abs(o.x - target) < 0.02 && Math.abs(o.v) < 0.02;
   const NSS = 'non-scaling-stroke';
+  const navH = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 72; // the bar's height
 
   let uid = 0;
   roots.forEach((root) => explorer(root, uid++));
@@ -191,6 +192,10 @@
     const guides = S('path', { class: 'guides', fill: 'none', stroke: IVORY, 'stroke-opacity': 0, 'stroke-width': 1, 'stroke-dasharray': '2 3' }, svg);
     svg.appendChild(gLead);
     const gFront = S('g', { class: 'lv-front' }, svg);
+    // pointer targets, one per plate, held at the plates' resting places: a plate that lifts under the pointer never
+    // slides out from under it (no hover flicker); the upper plates' targets sit on top, as their plates do
+    const gHit = S('g', { class: 'hits' }, svg);
+    for (let i = N - 1; i >= 0; i--) plates[i].hit = S('polygon', { class: 'ap-hit', fill: 'transparent' }, gHit);
 
     function buildPlate(p, lv) {
       const g = S('g', { class: 'ap' }, lv);
@@ -205,7 +210,6 @@
       p.key = S('line', { stroke: GREEN, 'stroke-width': 1.2, 'stroke-opacity': 0 }, g);
       p.rim = S('polyline', { fill: 'none', stroke: IVORY, 'stroke-width': 1, 'stroke-linejoin': 'round' }, g);
       p.bead = S('g', { class: 'ap-beads' }, g);
-      p.hit = S('polygon', { class: 'ap-hit', fill: 'transparent' }, g);
       p.num = S('text', { class: 'ap-num', 'dominant-baseline': 'middle' }, lv);
       p.num.textContent = items[p.i].num + (items[p.i].verb ? ' · ' + items[p.i].verb : '');
       p.numShort = items[p.i].num;
@@ -369,6 +373,7 @@
       view.tF = F0; if (!pointerOn) view.F = F0;
       setA(svg, 'viewBox', `0 0 ${f1(W)} ${f1(Hh)}`);
       field.style.setProperty('--seam', f1(by) + 'px'); field.style.setProperty('--cx', f1(cx) + 'px');
+      figTop = fig.getBoundingClientRect().top; navHc = navH();
       geoDirty = true;
     }
 
@@ -376,7 +381,7 @@
     let hover = -1, focus = -1, open = -1, hot = -2, kbd = false, hoverTimer = 0, pointerOn = false;
     let reduced = reduceMQ.matches, paused = false, visible = false, started = false, exStart = -1, ex = 0, t = 0;
     const cardY = { x: 0, v: 0 };
-    let cardTop = 0, cardH = 0, titleOff = 0, cardVis = 0;
+    let cardTop = 0, cardH = 0, titleOff = 0, cardVis = 0, figTop = 0, navHc = 72;
     const measureCard = () => { cardH = card.offsetHeight; titleOff = snm.offsetTop + snm.offsetHeight / 2; };
     // at rest the stack breathes: a slow wave runs down it, a pixel or two
     const plateY = (i) => by + (base[i] - by) * exOf(i) + plates[i].off.x + (reduced ? 0 : 1.4 * Math.sin(t * 1.15 - i * 0.55) * (1 - plates[i].heat.x));
@@ -430,7 +435,7 @@
       btns.forEach((b, i) => b.classList.toggle('is-hot', i === hot));
       plates.forEach((p, i) => setA(p.num, 'class', 'ap-num' + (i === hot ? ' is-hot' : '')));
       card.classList.toggle('is-peek', hot !== open);
-      if (hot >= 0) fillCard(hot);
+      if (hot >= 0) { figTop = fig.getBoundingClientRect().top; fillCard(hot); }
       kick();
     }
     function placePanels() {
@@ -476,7 +481,7 @@
         else if (e.key === 'Home') j = 0;
         else if (e.key === 'End') j = N - 1;
         else if (e.key === 'Escape' && open >= 0) { e.preventDefault(); const o = open; setOpen(-1); btns[o].focus(); return; }
-        else return;
+        else { if (e.key === 'Enter' || e.key === ' ') { kbd = true; clearTimeout(hoverTimer); hover = -1; } return; }
         e.preventDefault();
         kbd = true; clearTimeout(hoverTimer); hover = -1;
         if (j !== i) btns[j].focus(); else setHot();
@@ -488,16 +493,19 @@
       p.hit.addEventListener('click', () => {
         setOpen(open === i ? -1 : i);
         btns[i].focus({ preventScroll: true });
-        if (!wide && open === i) { // narrow: the layer opens in the list under the drawing; bring its heading and text into view
-          const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 72;
-          const top = btns[i].getBoundingClientRect().top, bottom = panels[i].getBoundingClientRect().bottom;
-          if (top < navH + 4 || bottom > window.innerHeight - 8) window.scrollTo({ top: Math.max(0, window.scrollY + top - navH - 10), behavior: reduced ? 'auto' : 'smooth' });
-        }
+        if (open !== i || wide) return;
+        // narrow: the layer opens in the list under the drawing; bring its heading and text into view
+        const nh = navH(), top = btns[i].getBoundingClientRect().top, bottom = panels[i].getBoundingClientRect().bottom;
+        if (top < nh + 4 || bottom > window.innerHeight - 8) window.scrollTo({ top: Math.max(0, window.scrollY + top - nh - 10), behavior: reduced ? 'auto' : 'smooth' });
       });
     });
     root.addEventListener('pointermove', (e) => {
       if (!isMouse(e)) return;
-      kbd = false;
+      if (kbd) { // the pointer takes over from the keyboard: hover what it is on now (its enter event came while keys ruled)
+        kbd = false;
+        const b = e.target.closest ? e.target.closest('.arch-layer') : null, i = b ? btns.indexOf(b) : plates.findIndex((p) => p.hit === e.target);
+        if (i >= 0) hoverIn(i);
+      }
       if (reduced || !wide) return;
       const r = fig.getBoundingClientRect();
       const px = clamp(((e.clientX - r.left) / r.width - 0.5) * 2, -1, 1), py = clamp(((e.clientY - r.top) / r.height - 0.5) * 2, -1, 1);
@@ -659,7 +667,11 @@
       if (Math.abs(cardVis - cvT) > 0.01) busy = true; else cardVis = cvT;
       // the readout card follows the plate you point at (wide)
       if (wide && hot >= 0) {
-        const target = clamp(plateY(hot) - titleOff, readTop, Math.max(readTop, Hh - 40 - cardH)) - readTop;
+        const inLo = readTop, inHi = Math.max(readTop, Hh - 40 - cardH);       // inside the instrument
+        const vTop = navHc + 14 - figTop, vBot = window.innerHeight - 14 - figTop; // on screen, in the drawing's coordinates
+        let lo = Math.max(inLo, vTop), hi = Math.min(inHi, vBot - cardH);
+        if (lo > hi) { lo = Math.max(14, vTop); hi = Math.max(lo, Math.min(Hh - 14 - cardH, vBot - cardH)); } // tight: use the padding too
+        const target = clamp(plateY(hot) - titleOff, lo, hi) - readTop;
         if (snap || !card.__placed) { cardY.x = target; cardY.v = 0; card.__placed = true; } else if (dt > 0) spring(cardY, target, dt, 15);
         if (!still(cardY, target)) busy = true;
         card.style.transform = `translateY(${f1(cardY.x)}px)`;
@@ -673,6 +685,7 @@
       plates.forEach((p, i) => {
         const y = plateY(i), f = p.fade.x, h = p.heat.x, vis = 1 - 0.62 * f;
         setA(p.g, 'transform', `translate(${f1(cx)} ${f1(y)})`);
+        setA(p.hit, 'transform', `translate(${f1(cx)} ${f1(by + (base[i] - by) * exOf(i))})`);
         setA(p.top, 'fill-opacity', f3(0.93 - 0.6 * f));
         setA(p.glow, 'fill-opacity', f3(0.075 * h));
         setA(p.sideL, 'fill-opacity', f3(0.97 - 0.5 * f)); setA(p.sideR, 'fill-opacity', f3(0.97 - 0.5 * f));
@@ -810,6 +823,7 @@
       kick();
     }, { threshold: [0, 0.05, 0.1, 0.2, 0.3, 0.5] }).observe(root);
     document.addEventListener('visibilitychange', () => kick());
+    window.addEventListener('scroll', () => { if (wide && hot >= 0 && visible) { figTop = fig.getBoundingClientRect().top; kick(); } }, { passive: true });
     // printing: every layer's detail, inline, in order
     window.addEventListener('beforeprint', () => { root.__wasWide = wide; panels.forEach((p) => { p.hidden = false; }); if (wide) { wide = false; root.classList.remove('is-wide'); root.classList.add('is-narrow'); placePanels(); } });
     window.addEventListener('afterprint', () => { panels.forEach((p, i) => { p.hidden = i !== open; }); setMode(wideMQ.matches); });

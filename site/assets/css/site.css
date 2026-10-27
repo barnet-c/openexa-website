@@ -1268,6 +1268,8 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .arch-bound .sides { position: relative; z-index: 1; display: grid; gap: 14px; justify-items: end; text-align: right; }
 .arch-bound .sides > span { padding: 0 2px; background: var(--a-ground); white-space: nowrap; }
 .arch-bound .sides > span:first-child { color: var(--accent); }
+.arch-list { container-type: inline-size; }
+@container (max-width: 340px) { .arch-bound { padding-top: 8px; padding-bottom: 8px; } .arch-bound .sides { gap: 12px; } .arch-bound .sides > span { white-space: normal; text-wrap: balance; } }
 /* a layer's detail: inline under its button on narrow screens, in the readout on wide ones */
 .arch-panel { padding: 2px 6px 24px 58px; }
 .arch-panel > p { color: var(--fg-2); font-size: .98rem; line-height: 1.6; max-width: 62ch; }
@@ -1316,9 +1318,10 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .arch-card .arch-panel > p { font-size: .94rem; line-height: 1.58; }
 .arch-card .arch-panel .io, .arch-card .arch-panel .arch-side { display: none; } /* the card already shows them */
 .arch-card.is-peek .arch-panel { display: none; }
+.arch-card:not(.is-peek) .sum-job { display: none; } /* open: the full text below replaces the one-line job */
 
 /* wide: readout | stack | buttons */
-.arch.is-wide .arch-body { display: grid; grid-template-columns: minmax(240px, .92fr) minmax(330px, 1.24fr) minmax(300px, 1.04fr); column-gap: 28px; align-items: start; padding: 58px 26px 52px 34px; min-height: var(--arch-minh, 0px); }
+.arch.is-wide .arch-body { display: grid; grid-template-columns: minmax(196px, .92fr) minmax(280px, 1.24fr) minmax(268px, 1.04fr); column-gap: clamp(18px, 2.2vw, 28px); align-items: start; padding: 58px clamp(16px, 1.9vw, 26px) 52px clamp(22px, 2.5vw, 34px); min-height: var(--arch-minh, 0px); }
 .arch.is-wide .arch-fig { position: absolute; inset: 0; z-index: 0; }
 .arch.is-wide .arch-list { grid-column: 3; grid-row: 1; position: relative; z-index: 1; }
 .arch.is-wide .arch-read { grid-column: 1; grid-row: 1; align-self: stretch; z-index: 1; }
@@ -1329,6 +1332,7 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .arch.is-narrow .arch-list > .arch-h:first-child .arch-layer { border-top: 0; }
 .arch.is-narrow .arch-read, .arch.is-narrow .arch-legend { display: none; }
 .arch.is-narrow .arch-hint { margin-left: auto; }
+@media (max-width: 1239px) { .arch.is-wide .arch-hint { display: none; } }
 @media (max-width: 600px) {
   .arch-head { gap: 12px; padding-left: 16px; }
   .arch-hint { display: none; }
