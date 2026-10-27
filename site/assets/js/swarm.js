@@ -56,7 +56,7 @@
   const SX = new Float32Array(CAP), SY = new Float32Array(CAP), SZ = new Float32Array(CAP);
   const SPD = new Float32Array(CAP), RHO = new Float32Array(CAP), PHI = new Float32Array(CAP), PH = new Float32Array(CAP);
   const RISK = new Float32Array(CAP), T0 = new Float32Array(CAP), BORN = new Float32Array(CAP), UID = new Int32Array(CAP);
-  const GT = new Float32Array(CAP * 7);                        // when each agent crossed each gate (model seconds)
+  const GT = new Float32Array(CAP * 7), UNSET = -1e9;          // when each agent crossed each gate (model seconds; UNSET: not yet)
   const PX = new Float32Array(CAP), PY = new Float32Array(CAP), PF = new Float32Array(CAP), PS = new Float32Array(CAP); // projected x, y, fog 0..1, scale
   const HIST = new Float32Array(CAP * TRAIL * 2);              // trails, in screen space (re-sampled on resize)
   const freeList = new Int32Array(CAP); let nFree = 0, hi = 0;
@@ -97,7 +97,7 @@
     st[i] = FLOW; gate[i] = 0; hc[i] = 0; flag[i] = 0;
     X[i] = x; RHO[i] = Math.sqrt(rnd()); PHI[i] = rnd() * TAU; PH[i] = rnd() * TAU;
     SPD[i] = 0.165 + rnd() * 0.085; RISK[i] = rnd(); T0[i] = 0; BORN[i] = sim; UID[i] = ++seq;
-    for (let g = 0; g < 7; g++) GT[i * 7 + g] = -1;
+    for (let g = 0; g < 7; g++) GT[i * 7 + g] = UNSET;
     flowPos(i);
     return i;
   }
@@ -113,7 +113,11 @@
       if (x > GX[3] && rnd() > keepRail) x = GX[0] - 0.08 + rnd() * (GX[3] - GX[0] + 0.07);
       const i = spawnAt(x); if (i < 0) break;
       BORN[i] = sim - 5;
-      while (gate[i] < 6 && X[i] >= GX[gate[i]]) { gate[i]++; GT[i * 7 + gate[i]] = sim - (X[i] - GX[gate[i] - 1]) / SPD[i]; }
+      // the gates it passed before the model began, back-dated at its own pace upstream and the rails' pace past the council
+      while (gate[i] < 6 && X[i] >= GX[gate[i]]) {
+        const x0 = GX[gate[i]]; gate[i]++;
+        GT[i * 7 + gate[i]] = sim - Math.max(0, Math.min(X[i], GX[3]) - x0) / SPD[i] - Math.max(0, X[i] - Math.max(x0, GX[3])) / V_RAIL;
+      }
       if (gate[i] >= 3) st[i] = PROP;
       if (gate[i] >= 4) {
         RISK[i] = rnd() * limit; st[i] = RAIL; lane[i] = clamp(Math.floor(rnd() * 5), 0, 4);
@@ -762,7 +766,7 @@
     li.append(a, b, c); el.log.appendChild(li);
   }
   const fmtT = (s) => `${Math.max(0, s).toFixed(2)} s`;
-  function t0Of(i) { const t = GT[i * 7 + 1]; return t >= 0 ? t : sim; }
+  function t0Of(i) { const t = GT[i * 7 + 1]; return t > UNSET ? t : sim; } // back-dated crossings are negative: only UNSET means "not yet"
   function traceGate(i, g) {
     const [v, kind] = VERDICT(i, g, 1 - strict);
     row(fmtT(GT[i * 7 + g] - t0Of(i)), `0${g} ${GATE[g - 1]}`, v, kind);
