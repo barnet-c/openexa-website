@@ -416,7 +416,7 @@ for p in order:
     </section>
 
     <section class="section is-paper-2 section--tight">
-      <div class="container"><div class="pager">{pager}</div></div>
+      <div class="container"><h2 class="sr-only">More posts</h2><div class="pager">{pager}</div></div>
     </section>
   </main>
 

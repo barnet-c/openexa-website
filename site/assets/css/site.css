@@ -34,6 +34,7 @@
   --signal: #1E7A5A;
   --signal-bright: #4FCB93;
   --reject: #B4443C;
+  --reject-bright: #D9675D;   /* reject on dark grounds, as --signal-bright is the green's: 4.7:1 where #B4443C was 2.95:1 */
   --brand-blue: #4A5FC1;
 
   /* scoped tokens (swap in dark sections) */
@@ -133,7 +134,7 @@ em, .ital { font-style: italic; }
   --bg: var(--ink); --bg-2: var(--ink-2);
   --fg: var(--paper); --fg-2: rgba(245, 242, 236, .78); --fg-3: rgba(245, 242, 236, .56);
   --line: rgba(245, 242, 236, .14); --line-strong: rgba(245, 242, 236, .32);
-  --accent: var(--signal-bright);
+  --accent: var(--signal-bright); --reject: var(--reject-bright);
   background: var(--bg); color: var(--fg);
 }
 .is-dark ::selection { background: var(--paper); color: var(--ink); }
@@ -521,6 +522,7 @@ em, .ital { font-style: italic; }
 .barlab span { font-family: var(--mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); }
 .bars .bar { display: flex; height: 54px; border: 1px solid var(--line); background: var(--bg-2); position: relative; }
 .bars .bar i { display: flex; align-items: center; justify-content: center; width: var(--w); background: var(--c); transform-origin: left; transform: scaleX(0); transition: transform 1s var(--ease); overflow: hidden; font-style: normal; }
+.bars .bar i[data-ink] span { color: var(--ink); } /* labels on the light khaki segments */
 .bars .bar i span { font-family: var(--mono); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--paper); white-space: nowrap; padding: 0 8px; }
 .bars .bar em { position: absolute; left: 9%; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-style: normal; font-size: .7rem; letter-spacing: .06em; color: var(--fg-3); }
 .bars.is-in .bar i { transform: scaleX(1); }
@@ -715,7 +717,7 @@ body.is-loading { overflow: hidden; }
 .swarm-controls input[type=range]::-moz-range-thumb { width: 8px; height: 8px; border-radius: 50%; background: var(--paper); border: 3px solid var(--ink-2); box-shadow: 0 0 0 1px var(--line-strong); }
 .swarm-controls input[type=range]:focus-visible { outline: none; } .swarm-controls input[type=range]:focus-visible::-webkit-slider-thumb, .swarm-controls input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 1px var(--accent); }
 .swarm-controls .halt { font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; padding: 12px 18px; border: 1px solid var(--reject); color: var(--reject); border-radius: 2px; transition: background .25s, color .25s; align-self: end; margin-bottom: 4px; }
-.swarm-controls .halt:hover { background: var(--reject); color: var(--paper); }
+.swarm-controls .halt:hover { background: var(--reject); color: var(--ink); }
 .swarm-live.is-halted .halt { background: var(--paper); color: var(--ink); border-color: var(--paper); }
 .gates--compact > div { padding: 18px 16px 20px; } .gates--compact h3 { font-size: 1.25rem; } .gates--compact p { font-size: .82rem; }
 @media (max-width: 1100px) { .swarm-bar { grid-template-columns: 1fr; } .swarm-stats { border-right: 0; border-bottom: 1px solid var(--line); } }
@@ -1051,7 +1053,7 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .blog-chips { display: flex; gap: 8px; padding: 14px 0; overflow-x: auto; scrollbar-width: none; }
 .blog-chips::-webkit-scrollbar { display: none; }
 .chip { flex: none; display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border: 1px solid var(--line-strong); border-radius: 999px; font-family: var(--mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-2); white-space: nowrap; transition: background .3s var(--ease), color .3s var(--ease), border-color .3s var(--ease); }
-.chip b { font-weight: 500; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.chip b { font-weight: 500; color: var(--fg-2); font-variant-numeric: tabular-nums; }
 .chip:hover { border-color: var(--fg); color: var(--fg); }
 .chip[aria-current="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 .chip[aria-current="true"] b { color: var(--signal-bright); }

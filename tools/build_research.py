@@ -259,7 +259,7 @@ index_page = f'''<!DOCTYPE html>
 
     <section class="section" id="notes">
       <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">01</span><span class="lab">Research notes</span><span class="aside">Start here · the argument from first principles</span></div>
+        <div class="sec-head" data-reveal role="heading" aria-level="2"><span class="idx">01</span><span class="lab">Research notes</span><span class="aside">Start here · the argument from first principles</span></div>
         <ol class="posts-list" data-reveal>
 {chr(10).join(rows[:2])}
         </ol>
