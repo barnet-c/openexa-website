@@ -241,6 +241,13 @@
     (function step(now) { const p = Math.min(1, (now - t0) / dur); el.textContent = countText(el, ease(p)); if (p < 1) requestAnimationFrame(step); })(t0);
   }
   const counters = $$('[data-count]');
+  // printing: the legal disclosures (folded into a <details> above) and every counter's real value must reach the paper,
+  // whatever the reader has opened or scrolled past
+  window.addEventListener('beforeprint', () => {
+    $$('details.footer-legal').forEach(d => { d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; });
+    counters.forEach(c => { c.textContent = countText(c, 1); });
+  });
+  window.addEventListener('afterprint', () => $$('details.footer-legal').forEach(d => { d.open = d.dataset.wasOpen === '1'; }));
   if (counters.length && 'IntersectionObserver' in window && !prefersReduced) {
     const cio = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { countUp(e.target); cio.unobserve(e.target); } }); }, { threshold: 0.4 });
     counters.filter(c => { const r = c.getBoundingClientRect(); return r.top < 0 || r.bottom > window.innerHeight; }) // wholly in view already: keep the value

@@ -1085,7 +1085,8 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .blog-article .blog-hero-img { margin-bottom: 2.2em; }
 .blog-article > ol, .blog-article > ul { margin: 0 0 1.35em; padding-left: 1.3em; color: var(--fg-2); max-width: 64ch; }
 .blog-article li { margin: .35em 0; }
-.blog-article h3 { font-family: var(--serif); font-weight: 400; font-size: clamp(1.35rem, 2vw, 1.7rem); line-height: 1.2; margin: 1.8em 0 .6em; }
+.blog-article h3, .blog-article h2.h3 { font-family: var(--serif); font-weight: 400; font-size: clamp(1.35rem, 2vw, 1.7rem); line-height: 1.2; margin: 1.8em 0 .6em; }
+.blog-article h2.h3 { max-width: none; letter-spacing: normal; } .blog-article h2.h3::before { display: none; } /* an h3 promoted to h2 (build_blog.py) looks as before */
 .blog-article blockquote { margin: 0 0 1.35em; padding-left: 20px; border-left: 2px solid var(--accent); color: var(--fg); font-family: var(--serif); font-size: 1.3rem; line-height: 1.45; }
 .blog-article a { border-bottom: 1px solid var(--line-strong); transition: border-color .3s; overflow-wrap: anywhere; }
 .blog-article a:hover { border-color: var(--fg); }
@@ -1185,4 +1186,9 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
   a { color: inherit !important; }
   .article a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; word-break: break-all; color: #444; }
   .footer { padding-top: 6mm !important; border-top: 1px solid #bbb; } .footer .disc { font-size: 8pt; }
+  .footer-legal > summary { display: none !important; }
+  /* figures that grow on scroll print grown, in their own colours */
+  .bars .bar i, .compare .agent .bar i, .perf .day::before { transform: none !important; }
+  .timeline::after { transform: scaleX(var(--p, .68)) !important; }
+  .bars .bar i, .compare .agent .bar i, .perf .day::before, .timeline::after { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

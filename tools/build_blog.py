@@ -118,6 +118,12 @@ def clean_body(p):
     b = re.sub(r"<figure>\s*(<img[^>]+>)\s*</figure>", r"<figure>\1</figure>", b)
     b = re.sub(r"<p>\s*(<img[^>]+>)\s*</p>", r"<figure>\1</figure>", b)
     b = re.sub(r"(?<!<figure>)(<img[^>]+>)(?!</figure>)", r"<figure>\1</figure>", b)
+    levels = [int(n) for n in re.findall(r"<h([2-6])[\s>]", b)]
+    if levels and min(levels) > 2:  # no h2 under the page's h1: shift the post's headings up, class keeps the old look
+        k = min(levels) - 2
+        assert not re.search(r"<h[3-6]\s", b), (p["slug"], "heading with attributes")
+        b = re.sub(r"<h([3-6])>", lambda m: f'<h{int(m.group(1)) - k} class="h{m.group(1)}">', b)
+        b = re.sub(r"</h([3-6])>", lambda m: f"</h{int(m.group(1)) - k}>", b)
     return b.strip()
 
 def dims(name):
@@ -134,9 +140,18 @@ def size(name):
 THUMB_W = (480, 800)
 # one sizes value for the cards and the (smaller) series rail, so a post shown in both loads the same file once
 CARD_SIZES = "(max-width: 640px) calc(100vw - 40px), (max-width: 1080px) calc(50vw - 40px), min(440px, 31vw)"
+def card_widths(name):
+    """Widths of the card-size copies made for a hero: none for transparent images (a lossy copy comes out larger than
+    the original) or for images wider than the 16:9 card (object-fit: cover crops them, so they need full width)."""
+    from PIL import Image
+    d = dims(name)
+    if not d: return []
+    im = Image.open(OLD / "img" / name)
+    if im.mode in ("RGBA", "LA", "P") or d[0] / d[1] > 16 / 9 * 1.02: return []
+    return [t for t in THUMB_W if t < d[0]]
 def thumb(name, sizes):
     d = dims(name); stem = name.rsplit(".", 1)[0]
-    ws = [t for t in THUMB_W if d and t < d[0]]
+    ws = card_widths(name)
     src = f"{PFX}assets/img/blog/"
     if not ws: return f'<img src="{src}{name}" alt=""{size(name)} loading="lazy" decoding="async">'
     srcset = ", ".join([f"{src}{stem}-{t}w.webp {t}w" for t in ws] + [f"{src}{name} {d[0]}w"])
@@ -527,10 +542,9 @@ def optimise(path):
 for f in IMG.iterdir(): optimise(f)
 for p in kept:  # the card-size copies thumb() refers to
     if not p.get("hero_file"): continue
-    im = Image.open(IMG / p["hero_file"]); w, h = im.size; stem = p["hero_file"].rsplit(".", 1)[0]
-    im = im.convert("RGBA" if im.mode in ("RGBA", "LA", "P") else "RGB")
-    for t in THUMB_W:
-        if t < w: im.resize((t, round(h * t / w)), Image.LANCZOS).save(IMG / f"{stem}-{t}w.webp", "WEBP", quality=82, method=6)
+    im = Image.open(IMG / p["hero_file"]).convert("RGB"); w, h = im.size; stem = p["hero_file"].rsplit(".", 1)[0]
+    for t in card_widths(p["hero_file"]):
+        im.resize((t, round(h * t / w)), Image.LANCZOS).save(IMG / f"{stem}-{t}w.webp", "WEBP", quality=82, method=6)
 
 # ---------------- report ----------------
 imgs = list(IMG.iterdir())
