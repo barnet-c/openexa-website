@@ -274,3 +274,24 @@ every pull request; `tools/requirements.txt` pins the Python packages.
 **Visible differences.** The slate grey used for captions and metadata is about 4% darker (`#6F736F` -> `#666966`,
 WCAG AA contrast), in a commit of its own. Keyboard users see focus rings where there were none. Visitors without
 WebGL now see the 2D swarm instead of a blank stage. Everything else looks as it did.
+
+**Second pass (27 Oct, early morning).**
+- *Instant page loads:* a `Speculation-Rules` header makes Chrome and Edge prefetch a page's HTML when its link is
+  hovered (prefetch only, no early script).
+- *Print:* pages, research notes and posts print as ink-on-white documents with everything revealed and the
+  interactive pieces dropped.
+- *Blog:* all 29 article figures (charts, tables, formulas, screenshots) have alt text written from the images
+  themselves (`data/blog_alt.json`). Three broken excerpts from the old site's data are replaced with each post's own
+  words. Card images come in 480/800 px versions through `srcset`, so card images on a 1x desktop drop from 2.1 MB to
+  0.5 MB.
+- *Accessibility:*
+  - Footer headings are `<h2>`.
+  - The research sidebar is a labelled `<nav>`; other `<aside>`s are plain `<div>`s.
+  - Labelled widgets have roles.
+  - The bio buttons name their person.
+  - Reject red on dark grounds swaps to `--reject-bright`, as the green does.
+  - Heading skips are fixed.
+  - Result: axe-core finds 20 issues on the 11 key pages, down from 528. What remains is the decorative wordmark, the
+    nav tagline and the brand green on a selected form option.
+- *Performance:* split-text words no longer keep a GPU layer each.
+- *Checks:* `check_static.py` also fails a build on duplicate ids and on label/ARIA references to missing ids.
