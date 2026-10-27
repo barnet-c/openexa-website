@@ -938,7 +938,7 @@
       put('bdg', ap, true, apc, 0.05 + 0.18 * k, 7, 0.5);
       const ticks = []; for (let j = 0; j < 60; j++) { const a = j / 60 * TAU, r0 = AP_R + 0.03, r1 = AP_R + 0.03 + (j % 5 ? 0.035 : 0.07) * (1 + 0.6 * k); ticks.push([LX + Math.cos(a) * r0, GATE_Y[COUNCIL], Math.sin(a) * r0], [LX + Math.cos(a) * r1, GATE_Y[COUNCIL], Math.sin(a) * r1]); }
       put('apt', ticks, 'pairs', k > 0.02 && pulse.rej ? C.red : C.green, 0.4 + 0.5 * k, 1, 0.5);
-      put('hz', [[LX - 0.3, Y_LEDGER, 0], [LEDGER_X0 + LEDGER_DX * (LEDGER_N - 0.2), Y_LEDGER, 0]], false, C.ivory, 0.3, 1, 0.9);
+      put('hz', [[LEDGER_X0 - 0.14, Y_LEDGER, 0], [LEDGER_X0 + LEDGER_DX * (LEDGER_N - 0.2), Y_LEDGER, 0]], false, C.ivory, 0.3, 1, 0.9); // the ledger's rule, under its records
       // hash links: each record points at the one before it
       const recs = ledger(T);
       if (recs.length > 1) {
@@ -1442,9 +1442,14 @@
     if (d > 0 && base >= 4) { // past the last scene: through the hand-off to the first paper chapter
       e.preventDefault();
       const next = document.querySelector('.story ~ section[id], .story ~ * section[id]');
-      const top = next ? next.getBoundingClientRect().top + window.scrollY : storyTop + story.offsetHeight;
+      const top = next ? next.getBoundingClientRect().top + window.scrollY - navH : storyTop + story.offsetHeight; // it lands at the nav's lower edge
       window.scrollTo({ top: Math.round(top), behavior: reducedMQ.matches ? 'instant' : 'smooth' });
       lastGo = { i: 5, t: performance.now() };
+      if (next) { // the keyboard goes on with the chapter it arrived at
+        if (!next.hasAttribute('tabindex')) next.setAttribute('tabindex', '-1');
+        next.classList.add('story-next-target');
+        next.focus({ preventScroll: true });
+      }
       return;
     }
     if (d < 0 && base <= 0) return;

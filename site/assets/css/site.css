@@ -1221,6 +1221,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-ink .story-lab .rg { color: rgba(14, 21, 18, .62); }
 .story-ink .story-lab.is-prem .rg { color: var(--signal); }
 .story.is-leaving .story-lab { pointer-events: none; }
+.story-next-target:focus { outline: none; } /* the chapter the keys stepped into from the last scene: focus moves there, no ring on the section */
 .story-paper-cap { display: flex; justify-content: space-between; gap: 6px 24px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--rule); font: .7rem/1.5 var(--mono); letter-spacing: .06em; color: var(--slate); }
 .beat-4 .body-lg, .beat-4 .hero-cta { opacity: var(--xo, 1); }
 
