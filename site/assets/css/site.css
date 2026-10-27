@@ -781,8 +781,6 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 /* ---------- objects that live on paper sections keep their own ink ---------- */
 .swarm-live, .chain, .desk { color: var(--paper); --fg: var(--paper); --fg-2: rgba(245, 242, 236, .78); --fg-3: rgba(245, 242, 236, .56); --line: rgba(245, 242, 236, .14); --line-strong: rgba(245, 242, 236, .32); --accent: var(--signal-bright); --bg: var(--ink); --bg-2: var(--ink-2); }
 .swarm-live .swarm-controls input[type=range]::-webkit-slider-thumb, .desk-controls input[type=range]::-webkit-slider-thumb { background: var(--paper); }
-.chain-list .chain-fallback { display: block; padding: 18px; font-family: var(--sans); line-height: 1.7; color: var(--fg-3); }
-.chain-restore[hidden] { display: none; }
 .model-motion { margin-left: auto; padding: 5px 9px; min-height: 36px; border: 1px solid var(--line); border-radius: 2px; color: var(--fg-2); font: .59rem/1.6 var(--mono); text-transform: uppercase; white-space: nowrap; }
 .model-motion:hover { border-color: var(--signal-bright); color: var(--signal-bright); }
 .model-motion[hidden] { display: none; }

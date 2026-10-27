@@ -209,7 +209,7 @@
     ['wheel', 'touchstart', 'pointerdown'].forEach(t => view.addEventListener(t, intent, { passive: true }));
     let edgeRaf = 0;
     view.addEventListener('scroll', () => {
-      if (!edgeRaf) edgeRaf = requestAnimationFrame(() => { edgeRaf = 0; edges(); leader(); });
+      if (!edgeRaf) edgeRaf = requestAnimationFrame(() => { edgeRaf = 0; edges(); if (sel === null && !following) inspect(); else leader(); });
       if (performance.now() > intentUntil) return;
       if (atEnd()) { if (sel === null && !following) follow(false); }
       else if (following) { following = false; unseen = 0; state(); }
@@ -225,9 +225,22 @@
       // the first eight hex are the ones written on the links
       el.replaceChildren(node('b', null, hex.slice(0, 8)), document.createTextNode(grouped(hex).slice(8)));
     }
+    // with nothing selected the inspector describes what the reader is looking at: the head while the view follows it,
+    // otherwise the newest record wholly in view (on a phone the excerpt opens at its start, and so does the inspector)
+    function inView() {
+      const left = view.scrollLeft - 2, right = view.scrollLeft + view.clientWidth + 2;
+      for (let li = track.lastElementChild; li; li = li.previousElementSibling) {
+        if (li.offsetLeft >= left && li.offsetLeft + li.offsetWidth - 18 <= right) return bySeq(+li.dataset.seq);
+      }
+      return null;
+    }
+    let shown = '';
     function inspect() {
       if (!ui.insp || !recs.length) return;
-      const r = (sel !== null && bySeq(sel)) || bySeq(rendered) || recs[recs.length - 1];
+      const r = (sel !== null && bySeq(sel)) || (!following && inView()) || bySeq(rendered) || recs[recs.length - 1];
+      const key = `${r.seq}/${recs[recs.length - 1].seq}`;
+      if (key === shown) { leader(); return; }
+      shown = key;
       F.rec.textContent = `${r.id} · ${r.t}`;
       F.ev.textContent = r.ev; F.ev.className = 'lt-insp-ev' + tone(r.ev);
       F.d.textContent = r.d;
@@ -409,6 +422,7 @@
       const all = recs.slice();
       if (!all.length) return;
       if (sel !== null) follow(false);
+      following = true; // the view and the inspector follow the record being written
       els.clear(); track.replaceChildren(); rendered = 0;
       let i = 0;
       const next = () => {
@@ -441,7 +455,8 @@
     }
     function verify() {
       // an audit walks every link from the first record to the last, so the selection steps aside and the strip pans along
-      if (sel !== null) { const o = els.get(sel); if (o) { o.classList.remove('is-sel'); o.setAttribute('aria-selected', 'false'); } sel = null; inspect(); }
+      if (sel !== null) { const o = els.get(sel); if (o) { o.classList.remove('is-sel'); o.setAttribute('aria-selected', 'false'); } sel = null; }
+      following = false; inspect(); // the inspector rides along with the sweep
       sweep.forEach(clearTimeout); sweep = [];
       if (replaying) { clearTimeout(replaying); replaying = 0; whole(); inspect(); } // a replay in progress completes at once
       const ok = verified(), n = recs.length, lis = Array.from(track.children), STEP = 110;
