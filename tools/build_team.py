@@ -10,6 +10,8 @@ Changes from the source, deliberately:
   - Julius's short line drops "Crypto" from "AML & Crypto Risk"; John's surname follows his bio and LinkedIn (Schuster).
   - 2026-10-02: John Schuster, Subuddh Parekh, Abhishek Sinha, Dr. Julius E. Ekeroma and Dipit Nanawati moved from the
     team to the advisors (Ajit's request). The team is the five leaders; the advisors are eight.
+  - 2026-10-27: three typos in the scraped bios are corrected (FIX), and Philip's link, labelled "LinkedIn" on the old
+    About page, is his UW faculty page, so it reads "Faculty page".
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -32,6 +34,9 @@ DROP = [  # sentences removed from bios (old crypto-business positioning)
     "Currently, Shalabh is passionate about pursuing the field of AI Crypto, where he aims to bridge traditional Wall Street assets into crypto markets.",
     "Shalabh is uniquely positioned to explore innovative ways of integrating AI with crypto.",
     "His ultimate goal is to help drive the mainstream adoption of crypto by leveraging the power of AI and Blockchain.",
+]
+FIX = [  # typos in the scraped bios
+    ("reuses state capital", "reuses staked capital"), ("to reduces", "to reduce"), ("from the Caltech", "from Caltech"),
 ]
 # (slug, display name, source name, title, short line, v1 photo or None, extra links)
 TEAM = [
@@ -82,11 +87,13 @@ def bio(src_name):
     out = []
     for para in old[src_name]["bio"]:
         for s in DROP: para = para.replace(s, "")
+        for a, b in FIX: para = para.replace(a, b)
         para = re.sub(r"\s{2,}", " ", para).strip()
         if para: out.append(f"<p>{H.escape(para, quote=False)}</p>")
     return "".join(out)
 def links(src_name, extra):
     ls = [(("X" if t.startswith("X") else t), u) for t, u in old[src_name]["links"]] + extra
+    ls = [("Faculty page" if t == "LinkedIn" and "linkedin.com" not in u else t, u) for t, u in ls]  # Philip's "LinkedIn" is his UW page
     return "".join(f'<a href="{H.escape(u)}"' + ('' if u.startswith("blog/") else ' target="_blank" rel="noopener"') + f'>{H.escape(t)}</a>' for t, u in ls)
 def cards(people, prefix, cols):
     items, report = [], []

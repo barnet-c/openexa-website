@@ -349,7 +349,7 @@
   LAYERS.forEach((n, li) => label(2, 'lay', `${String(li + 1).padStart(2, '0')} · ${li === 2 ? `<b>${n}</b>` : n}<i></i>`, [-SW - 0.08, layerY(li), 0], { m: false }));
   // beat 4: sessions + floor
   for (let c = 0; c < 10; c++) label(4, 'node', `${String(c + 1).padStart(2, '0')}`, [-PROOF_SPAN / 2 + PROOF_SPAN / 10 * (c + 0.5), PROOF_BASE - 0.15, 0]);
-  label(4, 'band', '<i></i>The floor · ten runs, ten above it', [-PROOF_SPAN / 2 - 0.02, PROOF_BASE + PROOF_FLOOR + 0.02, 0], { anchor: 'w' });
+  label(4, 'band', '<i></i>The floor · ten sessions, ten above it', [-PROOF_SPAN / 2 - 0.02, PROOF_BASE + PROOF_FLOOR + 0.02, 0], { anchor: 'w' });
 
   const OFFSETS = [[1.0, 0.30, 0], [0.78, -0.04, 0], [1.15, 0.0, 0], [0.9, -0.04, 0], [0.85, 0.0, 0]];
   const DSCALES = [1, 0.88, 1, 1, 1]; // desktop scale per beat: the constellation keeps its outer labels inside the viewport

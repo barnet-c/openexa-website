@@ -46,7 +46,7 @@ This is the same reason distributed systems engineers moved from monoliths to se
 
 ### The economic argument
 
-The swarm size is also driven by the economics of the work itself. At five percent a year, a dollar earns roughly two ten-thousandths of a cent per day. A human desk cannot cover its own cost on a band that thin. Wall Street leaves the four to eight percent yield band in ETF primary markets alone for that reason, not because the opportunity is invisible.
+The swarm size is also driven by the economics of the work itself. At five percent a year, a dollar earns roughly two ten-thousandths of a dollar per day. A human desk cannot cover its own cost on a band that thin. Wall Street leaves the four to eight percent yield band in ETF primary markets alone for that reason, not because the opportunity is invisible.
 
 A swarm changes the arithmetic. Thousands of narrow agents, each holding no inventory and each waiting on no counterparty, can work a band that is too small for people. The scale is not a demonstration. It is the only configuration in which the lifecycle is profitable to run.
 
@@ -174,7 +174,7 @@ Every architecture is a hypothesis until it runs on live capital. This post is a
 
 ### The setup
 
-Lifecycle 01 is ETF creation and redemption, starting with a Bitcoin ETF. The mechanism is old and well understood. When an ETF trades above its net asset value, an authorized participant delivers the underlying basket, receives shares at NAV, and sells them at the premium. When it trades below, the participant buys shares at the discount, redeems them, and receives the basket. The gap between price and NAV is the yield, and it appears daily across roughly seventeen thousand ETFs holding about twenty-two trillion dollars.
+Lifecycle 01 is ETF creation and redemption, starting with a Bitcoin ETF. The mechanism is old and well understood. When an ETF trades above its net asset value, an authorized participant delivers the underlying basket, receives shares at NAV, and sells them at the premium. When it trades below, the participant buys shares at the discount, redeems them, and receives the basket. The gap between price and NAV is the yield, and it appears daily across roughly seventeen thousand ETFs holding trillions of dollars.
 
 We ran the full six-gate lifecycle. Signal agents read market data, NAV, flows, and borrow. Prediction agents estimated gap direction, size, and duration. Decision agents proposed sized, routed create-or-redeem actions. The council checked policy, caps, and hours. The execution layer routed to NASDAQ and NYSE. The settle gate reconciled against the broker and wrote to the ledger.
 

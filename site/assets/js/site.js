@@ -244,22 +244,6 @@
     } else counters.forEach(countUp);
   }
 
-  /* ---------------- economics calculator ---------------- */
-  $$('[data-calc]').forEach(calc => {
-    const range = $('input[type=range]', calc);
-    const tiers = [100e6, 250e6, 500e6, 1e9, 2.5e9, 5e9, 10e9];
-    const money = v => v >= 1e9 ? '$' + (v / 1e9).toLocaleString('en-US', { maximumFractionDigits: 1 }) + 'B' : '$' + Math.round(v / 1e6).toLocaleString('en-US') + 'M';
-    const update = () => {
-      const aum = tiers[parseInt(range.value, 10)];
-      const ret = aum * 0.0004 * 250;   // 4 bps/day × 250 trading days
-      const arr = ret * 0.10;           // OpenEXA keeps 10% of yield generated
-      $('[data-out=aum]', calc).textContent = money(aum);
-      $('[data-out=ret]', calc).textContent = money(ret);
-      $('[data-out=arr]', calc).textContent = money(arr);
-    };
-    range.addEventListener('input', update); update();
-  });
-
   /* ---------------- forms (no backend: mailto handoff or configured endpoint) ---------------- */
   $$('form[data-access]').forEach(form => {
     const result = $('.form-ok', form.parentElement);
