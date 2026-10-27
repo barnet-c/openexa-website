@@ -152,11 +152,11 @@
     if (visible && !document.hidden) { step(dt); draw(); if ((ui += dt) > 0.15) { ui = 0; stats(); } }
     requestFrame();
   }
-  resize(); window.addEventListener('resize', resize);
+  window.addEventListener('resize', resize);
   // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
   (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
-  if (reduced.matches) staticStudy();
-  else stats();
+  // first measure in a frame, not at script time: reading layout mid-load forced an extra full layout of the page
+  requestAnimationFrame(() => { resize(); if (reduced.matches) staticStudy(); else stats(); });
   if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => {
     visible = e.isIntersecting; last = performance.now();
     if (visible) requestFrame(); else stopFrames();

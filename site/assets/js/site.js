@@ -207,7 +207,7 @@
     let p = 0, done = false;
     const t0 = performance.now();
     // the overture's WebGL starts after first paint: lift the loader once it has drawn (or fallen back), never later than the cap
-    const glReady = !$('.story-gl') || document.documentElement.classList.contains('no-webgl') ? Promise.resolve()
+    const glReady = !$('.story-gl') || ['gl-ready', 'no-webgl'].some(c => document.documentElement.classList.contains(c)) ? Promise.resolve()
       : new Promise(r => ['story:gl-ready', 'story:no-webgl'].forEach(t => document.addEventListener(t, r, { once: true })));
     // time-based, so a slow GPU never stretches the count: 0 → 92 in 1.1 s, then straight to 100 once the page is ready
     const ready = Promise.all([document.fonts ? document.fonts.ready : Promise.resolve(), document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true })), glReady]);

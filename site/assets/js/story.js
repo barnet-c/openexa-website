@@ -24,7 +24,8 @@
   const FORM = [0, 1, 3, 2, 4]; // beat → formation: globe · lifecycles · the stack · the swarm · proof
   story.style.setProperty('--beats', BEATS);
   root.classList.add('story-ready');
-  const narrow = () => window.innerWidth < 960;
+  // a media query, not innerWidth: reading innerWidth forces a full layout whenever the DOM is dirty, and this runs per label per frame
+  const narrowMQ = window.matchMedia('(max-width: 959.98px)'), narrow = () => narrowMQ.matches;
   const N = narrow() ? 8000 : 20000;
 
   /* ---------------- shaders ---------------- */
@@ -391,8 +392,15 @@
 
   // render at the device's full resolution (up to 3x), within a UHD pixel budget so the full-viewport stage stays fluid
   const PIXEL_BUDGET = 3840 * 2160;
+  // no layout reads inside the frame: the story's place is measured on resize and the scroll position comes from a passive
+  // listener. Reading either per frame forced a full layout whenever another script had just touched the DOM (the loader
+  // rewrites its counter every frame), which made up most of the homepage's blocking time.
+  let storyTop = 0, storyRun = 1, scrollTop = 0;
+  const measure = () => { scrollTop = window.scrollY; storyTop = story.getBoundingClientRect().top + scrollTop; storyRun = Math.max(1, story.offsetHeight - window.innerHeight); };
+  window.addEventListener('scroll', () => { scrollTop = window.scrollY; }, { passive: true });
   function resize(force) {
     if (lost || !prog) return;
+    measure();
     const w = stage.clientWidth, h = stage.clientHeight, r = window.devicePixelRatio || 1;
     // the mobile address bar showing/hiding fires resize without changing the stage (100svh): keep the drawing buffer
     if (force !== true && w === W && h === H && r === ratio) return;
@@ -408,9 +416,7 @@
 
   let bfTarget = 0, settled = false;
   function scrollState(dt) {
-    const rect = story.getBoundingClientRect();
-    const total = story.offsetHeight - window.innerHeight;
-    const p = Math.min(1, Math.max(0, -rect.top / Math.max(1, total)));
+    const p = Math.min(1, Math.max(0, (scrollTop - storyTop) / storyRun));
     bfTarget = p * (BEATS - 1);
     // the cloud follows the scroll with a little weight — it flocks rather than snaps
     if (reduced.matches || !settled) { bf = bfTarget; settled = true; }
@@ -560,7 +566,7 @@
     updateMotion();
     stopFrames();
     frame(performance.now(), true);
-    document.dispatchEvent(new Event('story:gl-ready')); // the loader waits for this (capped), so the hero is never blank
+    root.classList.add('gl-ready'); document.dispatchEvent(new Event('story:gl-ready')); // the loader waits for this (capped)
   }
   function start() {
     try { gl = cv.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'high-performance' }); } catch (e) { gl = null; }
@@ -570,6 +576,7 @@
     cv.addEventListener('webglcontextrestored', () => { lost = false; if (running) setupGL(begin); });
     setupGL(begin);
   }
-  // after the first paint: context creation and shader compilation never hold it up
-  requestAnimationFrame(() => setTimeout(start, 0));
+  // start now, under the loader (which covers the stage until the first frame anyway): deferring this past first paint
+  // only moved the shader compile into the window Lighthouse counts as blocking time (homepage TBT 0 -> 1.1 s)
+  start();
 })();
