@@ -514,7 +514,7 @@
   precision highp float;
   attribute vec2 a_corner; attribute vec3 a_p0, a_p1; attribute vec4 a_col; attribute float a_w;
   uniform mat4 u_view, u_proj; uniform vec2 u_res; uniform float u_pr, u_dist, u_fogR; uniform vec4 u_occ;
-  varying vec4 v_col; varying float v_side, v_hw;
+  varying vec4 v_col; varying float v_side, v_hw, v_glow;
   void main() {
     vec4 v0 = u_view * vec4(a_p0, 1.0), v1 = u_view * vec4(a_p1, 1.0);
     vec4 c0 = u_proj * v0, c1 = u_proj * v1;
@@ -529,7 +529,7 @@
     vec2 off = n * a_corner.y * (hw + 1.0) + dir * (a_corner.x * 2.0 - 1.0) * 0.5;
     c.xy += off / (u_res * 0.5) * c.w;
     gl_Position = c;
-    v_side = a_corner.y * (hw + 1.0); v_hw = hw;
+    v_side = a_corner.y * (hw + 1.0); v_hw = hw; v_glow = a_w > 3.0 ? 1.0 : 0.0;
     float fz = clamp((-vv.z - u_dist + u_fogR) / (2.0 * u_fogR), 0.0, 1.0);
     float al = a_col.a * mix(1.1, 0.38, fz);
     if (u_occ.w > 0.0) {
@@ -542,10 +542,10 @@
   }`;
   const FS_LINE = `
   precision mediump float;
-  varying vec4 v_col; varying float v_side, v_hw;
+  varying vec4 v_col; varying float v_side, v_hw, v_glow;
   void main() {
-    float cov = clamp(v_hw + 0.5 - abs(v_side), 0.0, 1.0);
-    float a = v_col.a * cov;
+    float cov = clamp(v_hw + 0.5 - abs(v_side), 0.0, 1.0), g = abs(v_side) / max(v_hw, 1.0);
+    float a = v_col.a * mix(cov, exp(-g * g * 3.0) * 1.5, v_glow);
     gl_FragColor = vec4(v_col.rgb * a, a);
   }`;
   // the actors: proposal ring (morphs into the settled square), record block, tick, bead, soft flash
@@ -680,7 +680,7 @@
   let W = 1, H = 1, dpr = 1, ratio = 0, stacked = false, navH = 72, barH = 64, gutter = 24;
   const EXT = [[2.9, 2.5], [3.45, 2.2], [2.75, 2.75], [2.55, 2.5], [3.8, 2.0]]; // local extent seen from each scene's camera (w, h)
   const CENTER = [[0, 0, 0], [0, 0.04, 0], [0, -0.02, 0], [0.12, 0.08, 0], [0, Y_FLOOR + 0.6, 0]]; // S4 sits low: the floor line is where the paper will rise to
-  const CAM = [[0.13, 0.0], [0.6, -0.08], [0.5, -0.56], [0.17, -0.07], [0.12, 0.0]]; // elevation, azimuth
+  const CAM = [[0.13, 0.0], [0.6, -0.08], [0.5, -0.56], [0.3, -0.3], [0.12, 0.0]]; // elevation, azimuth
   const ROOM_W = [0, 250, 236, 214, 0]; // room kept on the right of the structure for its callouts (wide layouts)
   const ZONE = ['right', 'upper', 'right', 'right', 'right'];
   const layouts = Array.from({ length: 5 }, () => ({ cx: 0, cy: 0, s: 1, rect: [0, 0, 0, 0] }));
@@ -889,12 +889,20 @@
   /* ================= hairlines: orbits, rings, layer rims, the boundary, gates, the aperture, the ledger, hash links ================= */
   const LOOP_N = LITE ? 72 : 112;
   const loopAngles = (az) => Array.from({ length: LOOP_N }, (_, j) => az - j / LOOP_N * TAU); // world angles shared by every loop shape
+  const LIMB_N = 128, limbPts = Array.from({ length: LIMB_N }, () => [0, 0, 0]);
   const GEO = new Map(), geo = (k, fn) => { let g = GEO.get(k); if (!g) GEO.set(k, g = fn()); return g; }; // static shapes, built once
   function linesFor(sc, T, out) {
     const put = (id, pts, closed, col, a, w, key, dy) => out.set(id, { pts, closed, col, a, w: w || 1, key: key == null ? 0.5 : key, dy: dy || 0 });
     if (sc === 0) {
       ORBITS.forEach((o, k) => { const pts = geo('o0' + k, () => Array.from({ length: LOOP_N }, (_, j) => onLoop(OB[k], o[0], j / LOOP_N * TAU, 0))); put('o' + k, pts, true, k === 0 ? C.green : C.ivory, k === 0 ? 0.2 : 0.1, 1, 0.12 + 0.5 * k / 6); });
       put('hz', [[-1.35, -1.3, 0], [1.35, -1.3, 0]], false, C.ivory, 0.07, 1, 0.9);
+      // the silhouette of a unit sphere seen from the eye: a circle of radius sqrt(1 - k²), k²/… toward the eye (k = scale / distance)
+      const k = clamp(scale[0] / CAM_D, 0, 0.9), rl = Math.sqrt(1 - k * k), e = [eye[0] - target[0], eye[1] - target[1], eye[2] - target[2]], el = Math.hypot(e[0], e[1], e[2]) || 1;
+      const Rv = [view[0], view[4], view[8]], Uv = [view[1], view[5], view[9]], c = [e[0] / el * k, e[1] / el * k, e[2] / el * k];
+      const limb = limbPts;
+      for (let j = 0; j < LIMB_N; j++) { const a = j / LIMB_N * TAU, ca = Math.cos(a) * rl, sa = Math.sin(a) * rl, q = limb[j]; q[0] = c[0] + Rv[0] * ca + Uv[0] * sa; q[1] = c[1] + Rv[1] * ca + Uv[1] * sa; q[2] = c[2] + Rv[2] * ca + Uv[2] * sa; }
+      put('lg', limb, true, C.green, 0.075, 26, 0.02);
+      put('lr', limb, true, C.ivory, 0.045, 1, 0.02);
     } else if (sc === 1) {
       RINGS.forEach((o, k) => {
         const pts = geo('o1' + k, () => Array.from({ length: LOOP_N }, (_, j) => onLoop(RB[k], o[0], j / LOOP_N * TAU, 0)));
@@ -1250,7 +1258,7 @@
       const a = Math.min(3, Math.floor(sNow)), f = sNow - a;
       const fit = numFit[a], op = red || stacked || !fit || sNow >= 4 || xNow > 0 ? 0 : 1 - sstep(0.06, 0.15, Math.abs(f - 0.5));
       if (a !== shownNum) { shownNum = a; numRows[0][0].textContent = pad2(a); numRows[0][1].textContent = pad2(a + 1); numRows[1][0].textContent = SCENES[a]; numRows[1][1].textContent = SCENES[a + 1]; }
-      const v = op.toFixed(3), tr = red ? 'none' : `translate3d(0, ${((0.5 - f) * 24).toFixed(1)}px, 0) scale(${fit.toFixed(3)})`, roll = sstep(0.43, 0.57, f).toFixed(3);
+      const v = op.toFixed(3), tr = red ? 'none' : `translate3d(0, ${((0.5 - f) * 24).toFixed(1)}px, 0) scale(${fit.toFixed(3)})`, roll = f < 0.5 ? '0' : '1'; // it rolls over as the scene passes halfway (a CSS spring), never rests between numbers
       if (v !== shownNumOp) { num.style.opacity = shownNumOp = v; }
       if (tr !== shownNumTr) { num.style.transform = shownNumTr = tr; }
       if (roll !== shownRoll) num.style.setProperty('--roll', shownRoll = roll);

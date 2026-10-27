@@ -1132,7 +1132,7 @@ body.is-loading { overflow: hidden; }
 .story-num { position: absolute; left: var(--gutter); top: calc(var(--nav-h) + clamp(16px, 4.5vh, 48px)); opacity: 0; pointer-events: none; color: var(--paper); will-change: opacity, transform; } /* above the copy column, so it never sits on the copy it bridges */
 .story-num { transform-origin: 0 0; }
 .story-num b, .story-num span { display: block; overflow: hidden; }
-.story-num i { display: block; font-style: normal; transform: translate3d(0, calc(var(--roll, 0) * -100%), 0); } /* two lines, rolled like a counter */
+.story-num i { display: block; font-style: normal; transform: translate3d(0, calc(var(--roll, 0) * -100%), 0); transition: transform .6s cubic-bezier(.2, .9, .25, 1.12); } /* two lines, rolled like a counter */
 .story-num b { height: 1em; font: 400 clamp(6rem, 12vw, 10.5rem)/1 var(--serif); letter-spacing: -0.045em; color: rgba(245, 242, 236, .16); font-variant-numeric: tabular-nums; }
 .story-num b i { height: 1em; }
 .story-num span { height: 1.4em; margin-top: 4px; font: .62rem/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .62); }
@@ -1238,8 +1238,9 @@ html:not(.story-ready) .story-labels, html:not(.story-ready) .story-bar, html:no
 html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 100%; max-width: 440px; height: auto; margin-top: 34px; }
 @media (min-aspect-ratio: 23/20) and (min-width: 640px) {
   html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { position: absolute; right: 0; top: 50%; width: 38%; margin: 0; transform: translateY(-50%); }
-  .no-webgl .story-2d { left: 42%; width: 58%; } /* site.js's 2D globe stays clear of the copy */
 }
+/* wide screens: site.js's 2D globe gets a canvas of its own on the right (960 px or more keeps its wide layout), clear of the copy */
+@media (min-aspect-ratio: 23/20) and (min-width: 1200px) { .no-webgl .story-2d { left: auto; right: 0; width: max(960px, 56%); } }
 
 /* short wide screens (a phone held sideways, 200% zoom): every beat fits between the nav and the index */
 @media (max-height: 760px) and (min-aspect-ratio: 23/20) {
@@ -1291,7 +1292,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
   html:not(.story-ready) .beat-0 { padding-top: calc(var(--nav-h) + 66vw + 48px); }
 }
 @media (max-width: 400px) { .hero-stats { grid-template-columns: repeat(2, auto); justify-content: start; gap: 12px 26px; } }
-@media (prefers-reduced-motion: reduce) { .story-bar .hero-scroll i { animation: none; opacity: .5; } .story-lab, .story-leader, .story-insp, .story-idx button { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .story-bar .hero-scroll i { animation: none; opacity: .5; } .story-lab, .story-leader, .story-insp, .story-idx button, .story-num i { transition: none; } }
 @media print { .story-bar, .story-paper, .story-insp, .story-leaders, .story-legend { display: none !important; } }
 /* v2:overture:end */
 /* -------------------------------------------------------------------------- */
