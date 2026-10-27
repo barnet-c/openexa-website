@@ -1192,3 +1192,25 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
   .timeline::after { transform: scaleX(var(--p, .68)) !important; }
   .bars .bar i, .compare .agent .bar i, .perf .day::before, .timeline::after { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ==========================================================================
+   v2 — one region per component (see each component's engine for its behaviour)
+   ========================================================================== */
+/* v2:overture:start */
+/* v2:overture:end */
+/* -------------------------------------------------------------------------- */
+/* v2:swarm:start */
+/* v2:swarm:end */
+/* -------------------------------------------------------------------------- */
+/* v2:ledger:start */
+/* v2:ledger:end */
+/* -------------------------------------------------------------------------- */
+/* v2:arch:start */
+/* v2:arch:end */
+/* -------------------------------------------------------------------------- */
+/* v2:proof:start */
+/* v2:proof:end */
+/* -------------------------------------------------------------------------- */
+/* v2:nav:start */
+/* v2:nav:end */
+/* -------------------------------------------------------------------------- */
