@@ -292,7 +292,10 @@
         if (animate && !reduced) { was.classList.add('is-linking'); setTimeout(() => was.classList.remove('is-linking'), 1400); }
         rendered = fresh[fresh.length - 1].seq;
         markHead(); trim();
-        if (following) { stop(track.lastElementChild); toEnd(animate); } else unseen += fresh.length;
+        // a paused stream holds still: records still append (the ledger never drops one), the view stays where it is
+        // and the Latest pill counts what arrived
+        if (following && playing) { stop(track.lastElementChild); toEnd(animate); }
+        else { following = false; unseen += fresh.length; }
       }
       edges(); counts(); if (following) inspect(); state();
     }

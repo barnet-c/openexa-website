@@ -1337,6 +1337,13 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .chain-list > li.is-heal .chain-node { animation: chain-heal .62s cubic-bezier(.2, .8, .3, 1) var(--dl) backwards; }
 .chain-list > li.is-heal .chain-seg::before, .chain-list > li.is-heal .chain-seg::after { animation: chain-mend .85s var(--ease) calc(var(--dl) + 55ms) backwards; }.chain-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; padding: 12px 20px; border-top: 1px solid var(--line); font: .62rem/1.5 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
 .chain-fallback { color: var(--fg-2); }
+/* before the hashes exist (no JavaScript, or the first frames): the same spine and blocks, nothing claimed as verified */
+.chain:not(.chain-ready) .chain-status { color: var(--fg-3); }
+.chain-foot:has(.chain-fallback) > span:first-child { display: none; } /* no hashes are shown until the browser computes them */
+.chain:not(.chain-ready) .chain-list > li { padding-bottom: 16px; }
+.chain:not(.chain-ready) .chain-list > li::before { content: ""; position: absolute; left: 9px; top: 13px; width: 11px; height: 11px; background: var(--fg); }
+.chain:not(.chain-ready) .chain-list > li::after { content: ""; position: absolute; left: 14px; top: 27px; bottom: -10px; width: 1px; background: var(--line-strong); }
+.chain:not(.chain-ready) .chain-list > li:last-child::after { bottom: 4px; background: repeating-linear-gradient(var(--line-strong) 0 3px, transparent 3px 6px); }
 .chain-row { align-items: start; }
 .chain-row .display-3 { max-width: 13ch; }
 /* §06: the five governance terms as one spec row, leading into the ledger */
@@ -1377,6 +1384,7 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
   .chain-list > li { grid-template-columns: 2.4em minmax(0, 1fr) auto; grid-template-areas: "i who flag" "i ev ev" "i what what"; row-gap: 2px; padding: 8px 8px 32px 36px; }
   .chain-list .i { grid-area: i; } .chain-list .who { grid-area: who; } .chain-list .ev { grid-area: ev; justify-self: start; } .chain-list .what { grid-area: what; white-space: normal; justify-self: start; } .chain-flag { grid-area: flag; }
   .chain-node { left: 5px; } .chain-seg { left: 10px; } .chain-link { left: 36px; } .chain-link::before { left: -24px; width: 20px; }
+  .chain:not(.chain-ready) .chain-list > li::before { left: 5px; } .chain:not(.chain-ready) .chain-list > li::after { left: 10px; }
   .chain-genesis { padding: 16px 12px 0; } .chain-genesis i { margin-left: 5px; }
   .chain-head { padding: 10px 10px 10px 14px; } .chain-foot { padding: 11px 14px; }
 }
@@ -1394,7 +1402,7 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
   .lt-foot { padding: 11px 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lt *, .lt *::before, .lt *::after, .chain *, .chain *::before, .chain *::after { animation: none !important; transition: none !important; }
+  .lt, .lt *, .lt *::before, .lt *::after, .chain, .chain *, .chain *::before, .chain *::after { animation: none !important; transition: none !important; }
 }
 @media print {
   .lt-view { overflow: visible !important; -webkit-mask-image: none !important; mask-image: none !important; }
