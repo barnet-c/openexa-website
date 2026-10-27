@@ -39,7 +39,7 @@
       `<b class="ev" spellcheck="false" role="textbox" aria-label="Event for record ${i + 1}" aria-multiline="false"></b>` +
       `<span class="what" spellcheck="false" role="textbox" aria-label="Detail for record ${i + 1}" aria-multiline="false"></span>` +
       `<span class="chain-flag" hidden>edited</span><i class="chain-seg" aria-hidden="true"></i>` +
-      `<span class="chain-link"><span class="sr-only">Hash of record ${i + 1}: </span><s hidden></s><b></b></span>`;
+      `<span class="chain-link"><span class="sr-only">Hash of record ${i + 1}: </span><s><span class="sr-only">stored </span><span class="chain-was"></span><span class="sr-only">, now </span></s><b></b></span>`;
     li.querySelector('.who').textContent = r[0];
     li.querySelector('.ev').textContent = r[1];
     li.querySelector('.what').textContent = r[2];
@@ -64,6 +64,8 @@
   async function write() {
     const c = await compute();
     c.forEach(p => stored.push(p));
+    // what each link stored when the chain was written: shown struck through beside the new hash once that link snaps
+    rows.forEach((li, i) => { li.querySelector('.chain-was').textContent = stored[i][1].slice(0, 8); });
     paint(c, -1);
     rows.forEach(li => li.querySelectorAll('.ev, .what').forEach(field => field.setAttribute('contenteditable', 'plaintext-only')));
     if (tryIt) tryIt.hidden = false;
@@ -114,12 +116,16 @@
       // "edited" marks every record whose content differs from what was written, not only the first one
       const edited = li.querySelector('.ev').textContent !== ORIGINAL[i][1] || li.querySelector('.what').textContent !== ORIGINAL[i][2];
       li.style.setProperty('--k', k);
+      // a record that stops verifying flares red as the break reaches it; one that verifies again flares green
+      const heals = !bad && li.classList.contains('is-broken');
       li.classList.toggle('is-broken', bad);
+      if (heals) {
+        li.classList.remove('is-heal'); void li.offsetWidth; li.classList.add('is-heal');
+        clearTimeout(li._heal); li._heal = setTimeout(() => li.classList.remove('is-heal'), k * STEP + 1100);
+      } else if (bad) li.classList.remove('is-heal');
       li.classList.toggle('is-edited', edited);
       li.querySelector('.chain-flag').hidden = !edited;
-      const s = li.querySelector('.chain-link s'), b = li.querySelector('.chain-link b');
-      s.hidden = !bad; s.textContent = bad ? stored[i][1].slice(0, 8) : '';
-      roll(b, c[i][1].slice(0, 8), k * STEP + (bad ? STEP / 2 : 0));
+      roll(li.querySelector('.chain-link b'), c[i][1].slice(0, 8), k * STEP + (bad ? STEP / 2 : 0));
     });
     lastBroken = broken;
     const intact = broken < 0;

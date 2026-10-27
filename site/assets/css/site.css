@@ -1194,25 +1194,33 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .lt-track { position: relative; display: flex; width: max-content; min-width: 100%; margin: 0; padding: 28px 28px 22px; list-style: none; }
 
 /* one record = one column standing on the line */
-.lt-rec { flex: none; position: relative; width: var(--lt-col); padding-right: 18px; cursor: pointer; outline: none; transition: opacity .35s var(--ease); -webkit-tap-highlight-color: transparent; }
-.lt-meta { display: flex; justify-content: space-between; gap: 10px; font: 500 .6rem/1.4 var(--mono); letter-spacing: .08em; color: var(--fg-3); white-space: nowrap; }
+.lt-rec { flex: none; position: relative; isolation: isolate; width: var(--lt-col); padding-right: 18px; cursor: pointer; outline: none; transition: opacity .35s var(--ease); -webkit-tap-highlight-color: transparent; }
+/* pointing at a record lifts its block off the panel; the link row below stays on the line */
+.lt-rec::after { content: ""; position: absolute; z-index: -1; inset: -12px 6px 34px -10px; border-radius: 2px; background: rgba(245, 242, 236, .045); opacity: 0; transition: opacity .25s var(--ease); pointer-events: none; }
+.lt-rec:hover::after, .lt-rec.is-sel::after { opacity: 1; }
+.lt-meta { display: flex; justify-content: space-between; gap: 10px; font: 500 .62rem/1.4 var(--mono); letter-spacing: .08em; color: var(--fg-3); white-space: nowrap; }
 .lt-lc { overflow: hidden; text-overflow: ellipsis; opacity: .85; text-transform: uppercase; }
-.lt-ev { display: block; margin-top: 10px; font: 500 .74rem/1.25 var(--mono); letter-spacing: .1em; color: var(--fg); white-space: nowrap; }
-.lt-sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.9em; margin-top: 6px; font: .64rem/1.45 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
-.lt-t { display: block; margin-top: 8px; font: .58rem/1.3 var(--mono); letter-spacing: .03em; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.lt-ev { display: block; margin-top: 10px; font: 500 .76rem/1.25 var(--mono); letter-spacing: .1em; color: var(--fg); white-space: nowrap; }
+.lt-sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.9em; margin-top: 6px; font: .66rem/1.45 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
+.lt--excerpt .lt-sub { -webkit-line-clamp: 3; min-height: 4.35em; } /* the excerpt is read in full: nothing in it is cut */
+.lt-t { display: block; margin-top: 8px; font: .6rem/1.3 var(--mono); letter-spacing: .03em; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+/* the line: a 12 px block per record, and out of it the link that carries the record's SHA-256 (first 8 hex) */
 .lt-line { position: relative; display: block; height: 24px; margin: 14px -18px 0 0; }
-.lt-node { position: absolute; left: 0; top: 7px; width: 10px; height: 10px; background: var(--fg); transition: transform .3s var(--ease), box-shadow .3s var(--ease), background .3s; }
-.lt-seg { position: absolute; left: 10px; right: 0; top: 12px; height: 1px; background: var(--line-strong); transform-origin: 0 50%; }
-.lt-tag { position: absolute; left: calc(50% + 5px); top: 12px; transform: translate(-50%, -50%); padding: 2px 7px; background: var(--lt-bg); font: .56rem/1.2 var(--mono); letter-spacing: .08em; color: var(--fg-3); white-space: nowrap; transition: color .3s; }
-.lt-gap { position: absolute; left: calc(50% + 5px); top: 22px; transform: translateX(-50%); font: .54rem/1 var(--mono); letter-spacing: .1em; color: var(--khaki); white-space: nowrap; }
+.lt-node { position: absolute; left: 0; top: 6px; width: 12px; height: 12px; background: var(--fg); transition: transform .3s var(--ease), box-shadow .3s var(--ease), background .3s; }
+.lt-seg { position: absolute; left: 12px; right: 0; top: 12px; height: 1px; background: var(--line-strong); transform-origin: 0 50%; }
+.lt-tag { position: absolute; left: calc(50% + 6px); top: 12px; transform: translate(-50%, -50%); padding: 2px 6px; background: var(--lt-bg); font: .6rem/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-2); white-space: nowrap; font-variant-numeric: tabular-nums; transition: color .3s; }
+.lt-gap { position: absolute; left: calc(50% + 6px); top: 23px; transform: translateX(-50%); font: .54rem/1 var(--mono); letter-spacing: .1em; color: var(--khaki); white-space: nowrap; }
 .lt-rec.is-settled .lt-node { background: var(--accent); }
 .lt-rec.is-settled .lt-ev { color: var(--accent); }
 .lt-rec.is-rejected .lt-node { background: transparent; box-shadow: inset 0 0 0 1.5px var(--reject); }
 .lt-rec.is-rejected .lt-ev { color: var(--reject); }
 .lt-rec.is-swarm .lt-lc { color: var(--khaki); opacity: 1; }
+/* the proposal the visitor followed through the gates above lands here marked as theirs */
+.lt-rec.is-followed .lt-lc { color: var(--accent); }
+.lt-rec.is-followed .lt-node { box-shadow: 0 0 0 3px var(--lt-bg), 0 0 0 4px rgba(79, 203, 147, .5), 0 0 16px rgba(79, 203, 147, .45); }
 /* the newest record: its hash is out, the link waits for the next record to store it */
 .lt-rec.is-head .lt-seg { right: 24%; background: repeating-linear-gradient(90deg, var(--line-strong) 0 3px, transparent 3px 7px); -webkit-mask-image: linear-gradient(90deg, #000 35%, transparent); mask-image: linear-gradient(90deg, #000 35%, transparent); }
-.lt-rec.is-head .lt-tag { left: calc(36% + 5px); }
+.lt-rec.is-head .lt-tag { left: calc(36% + 6px); color: var(--fg-3); }
 .lt.is-live .lt-rec.is-head .lt-seg { animation: lt-await 2.4s ease-in-out infinite; }
 /* inspecting: the chosen record and both of its hash links stay lit; everything else steps back */
 .lt-rec:hover .lt-node, .lt-rec.is-sel .lt-node { transform: scale(1.25); }
@@ -1259,6 +1267,9 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .lt-rec.is-new > :not(.lt-line) { animation: lt-rise .55s var(--ease) backwards; }
 .lt-rec.is-new > .lt-ev { animation-delay: .05s; } .lt-rec.is-new > .lt-sub { animation-delay: .1s; } .lt-rec.is-new > .lt-t { animation-delay: .14s; }
 .lt-rec.is-new .lt-node { animation: lt-snap .34s cubic-bezier(.3, .7, .3, 1) .24s backwards; }
+/* a proposal the swarm above settled arrives from above and drops onto the line */
+@keyframes lt-drop { 0% { opacity: 0; transform: translateY(-18px) scale(.55); } 62% { opacity: 1; transform: translateY(1px) scale(1.18); } 100% { transform: none; } }
+.lt-rec.is-new.is-swarm .lt-node { animation: lt-drop .52s cubic-bezier(.3, .7, .3, 1) .16s backwards; }
 .lt-rec.is-new .lt-seg, .lt-rec.is-new .lt-tag { animation: lt-fade .5s var(--ease) .42s backwards; }
 .lt-rec.is-linking .lt-seg { animation: lt-form .9s var(--ease) backwards; }
 .lt-rec.is-linking .lt-tag { animation: lt-lit 1.4s var(--ease) backwards; }
@@ -1292,10 +1303,14 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .chain-seg { position: absolute; left: 14px; top: 27px; bottom: -10px; width: 1px; }
 .chain-seg::before, .chain-seg::after { content: ""; position: absolute; left: 0; width: 1px; height: calc(50% - 1px); background: var(--line-strong); transition: transform .55s cubic-bezier(.3, 1.6, .45, 1) calc(var(--dl) + 55ms), background .3s calc(var(--dl) + 55ms), box-shadow .3s calc(var(--dl) + 55ms); }
 .chain-seg::before { top: 0; } .chain-seg::after { bottom: 0; }
-.chain-link { position: absolute; left: 44px; bottom: 9px; display: flex; align-items: center; gap: 8px; font: .62rem/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
+.chain-link { position: absolute; left: 44px; bottom: 9px; display: flex; align-items: center; font: .62rem/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
 .chain-link::before { content: ""; position: absolute; left: -26px; top: 50%; width: 18px; height: 1px; background: var(--line); transition: background .3s calc(var(--dl) + 55ms); }
 .chain-link b { font-weight: 400; color: var(--accent); transition: color .3s calc(var(--dl) + 55ms); }
-.chain-link s { color: var(--fg-3); text-decoration-color: rgba(217, 103, 93, .85); animation: lt-fade .3s var(--ease) calc(var(--dl) + 55ms) both; }
+/* the hash this link stored when the chain was written: it slides out, struck through, only when the break reaches it */
+.chain-link s { display: block; max-width: 0; margin-right: 0; overflow: hidden; white-space: nowrap; opacity: 0; visibility: hidden; color: var(--fg-3); text-decoration-color: rgba(217, 103, 93, .9);
+  transition: max-width .34s var(--ease) calc(var(--dl) + 40ms), margin .34s var(--ease) calc(var(--dl) + 40ms), opacity .2s var(--ease) calc(var(--dl) + 40ms), visibility 0s linear calc(var(--dl) + 380ms); }
+.chain-list > li.is-broken .chain-link s { max-width: 10ch; margin-right: 8px; opacity: 1; visibility: visible;
+  transition: max-width .36s var(--ease) calc(var(--dl) + 55ms), margin .36s var(--ease) calc(var(--dl) + 55ms), opacity .3s var(--ease) calc(var(--dl) + 150ms), visibility 0s linear calc(var(--dl) + 55ms); }
 .chain-flag { align-self: center; font: 500 .54rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--reject); border: 1px solid rgba(217, 103, 93, .55); padding: 4px 6px 3px; animation: lt-fade .3s var(--ease) both; }
 /* the last record's hash waits for a record that does not exist yet */
 .chain-list > li:last-child .chain-seg { bottom: 4px; }
@@ -1311,7 +1326,16 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .chain-list > li.is-broken:last-child .chain-seg::before, .chain-list > li.is-broken:last-child .chain-seg::after { background: repeating-linear-gradient(var(--reject) 0 3px, transparent 3px 6px); }
 .chain-list > li.is-broken .chain-link b { color: var(--reject); }
 .chain-list > li.is-broken .chain-link::before { background: rgba(217, 103, 93, .5); }
-.chain-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; padding: 12px 20px; border-top: 1px solid var(--line); font: .62rem/1.5 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
+/* the cascade: as the break reaches each record its block flares and its link surges red, record by record; restore
+   sends the same pulse down in green */
+@keyframes chain-pop { 32% { transform: scale(1.8); box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 0 5px rgba(217, 103, 93, .2), 0 0 26px rgba(217, 103, 93, .95); } 100% { transform: none; } }
+@keyframes chain-surge { 0% { background: var(--line-strong); box-shadow: none; } 28% { background: #ff9b90; box-shadow: 0 0 10px rgba(255, 128, 112, .95); } }
+@keyframes chain-heal { 32% { transform: scale(1.55); background: var(--accent); box-shadow: 0 0 0 5px rgba(79, 203, 147, .16), 0 0 22px rgba(79, 203, 147, .85); } 100% { transform: none; } }
+@keyframes chain-mend { 28% { background: var(--accent); box-shadow: 0 0 9px rgba(79, 203, 147, .9); } }
+.chain-list > li.is-broken .chain-node { animation: chain-pop .62s cubic-bezier(.2, .8, .3, 1) var(--dl) backwards; }
+.chain-list > li.is-broken .chain-seg::before, .chain-list > li.is-broken .chain-seg::after { animation: chain-surge .85s var(--ease) calc(var(--dl) + 55ms) backwards; }
+.chain-list > li.is-heal .chain-node { animation: chain-heal .62s cubic-bezier(.2, .8, .3, 1) var(--dl) backwards; }
+.chain-list > li.is-heal .chain-seg::before, .chain-list > li.is-heal .chain-seg::after { animation: chain-mend .85s var(--ease) calc(var(--dl) + 55ms) backwards; }.chain-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; padding: 12px 20px; border-top: 1px solid var(--line); font: .62rem/1.5 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
 .chain-fallback { color: var(--fg-2); }
 .chain-row { align-items: start; }
 .chain-row .display-3 { max-width: 13ch; }

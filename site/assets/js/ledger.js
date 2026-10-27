@@ -55,6 +55,7 @@
   const clock = (d = new Date()) => d.toTimeString().slice(0, 8) + '.' + String(d.getMilliseconds()).padStart(3, '0');
   const node = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
   const grouped = hex => hex.match(/.{8}/g).join(' ');
+  const HEX = '0123456789abcdef';
   const clean = v => String(v).replace(/[^\w:.#-]/g, '').slice(0, 16);
   const TOOLS = ['source-01', 'registry-02', 'workflow-01', 'records-03'];
   const REASONS = ['permission missing', 'approval required', 'input outside policy'];
@@ -105,13 +106,13 @@
 
     /* ---- one record = one column on the line ---- */
     function build(r) {
-      const li = node('li', 'ln lt-rec' + tone(r.ev) + (r.src === 'swarm' ? ' is-swarm' : ''));
+      const li = node('li', 'ln lt-rec' + tone(r.ev) + (r.src === 'swarm' ? ' is-swarm' : '') + (r.followed ? ' is-followed' : ''));
       li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false'); li.tabIndex = -1;
       li.dataset.seq = r.seq;
       li.setAttribute('aria-label', `${r.id}, ${r.ev}, ${r.d}, ${r.t}`);
       const meta = node('span', 'lt-meta'); meta.append(node('span', 'lt-id', r.id), node('span', 'lt-lc', r.lc || ''));
       const line = node('span', 'lt-line'); line.setAttribute('aria-hidden', 'true');
-      line.append(node('i', 'lt-node'), node('i', 'lt-seg'), node('span', 'lt-tag', r.hash.slice(0, 6)));
+      line.append(node('i', 'lt-node'), node('i', 'lt-seg'), node('span', 'lt-tag', r.hash.slice(0, 8)));
       li.append(meta, node('b', 'lt-ev', r.ev), node('span', 'lt-sub', r.sub), node('time', 'lt-t', r.t), line);
       els.set(r.seq, li);
       return li;
@@ -129,7 +130,25 @@
       if (sel !== null) els.get(sel).classList.add('is-sel'), els.get(sel).setAttribute('aria-selected', 'true');
       stop(sel !== null ? els.get(sel) : track.lastElementChild);
     }
-    function landed(li) { li.classList.add('is-new'); setTimeout(() => li.classList.remove('is-new'), 1300); }
+    // a new record's hash resolves on its link, digit by digit, as the link forms (the chain below does the same)
+    function roll(el, to, delay, dur = 420) {
+      cancelAnimationFrame(el._roll);
+      if (reduced) { el.textContent = to; return; }
+      const start = performance.now() + delay;
+      const step = now => {
+        if (now >= start) {
+          const p = Math.min(1, (now - start) / dur), n = Math.floor(p * to.length);
+          el.textContent = to.slice(0, n) + Array.from({ length: to.length - n }, () => HEX[Math.random() * 16 | 0]).join('');
+          if (p >= 1) { el.textContent = to; return; }
+        }
+        el._roll = requestAnimationFrame(step);
+      };
+      el._roll = requestAnimationFrame(step);
+    }
+    function landed(li) {
+      li.classList.add('is-new'); setTimeout(() => li.classList.remove('is-new'), 1300);
+      const tag = li.querySelector('.lt-tag'); if (tag) roll(tag, tag.textContent, 380);
+    }
     // columns are sized so a whole number of records fills the view: no record is ever cut in half at rest
     const MIN_COL = live ? 136 : 122;
     function fit() {
@@ -203,7 +222,8 @@
 
     /* ---- the inspector: id, event, detail, and both hash links of one record ---- */
     function hexInto(el, hex) {
-      el.replaceChildren(node('b', null, hex.slice(0, 6)), document.createTextNode(grouped(hex).slice(6)));
+      // the first eight hex are the ones written on the links
+      el.replaceChildren(node('b', null, hex.slice(0, 8)), document.createTextNode(grouped(hex).slice(8)));
     }
     function inspect() {
       if (!ui.insp || !recs.length) return;
@@ -212,7 +232,7 @@
       F.ev.textContent = r.ev; F.ev.className = 'lt-insp-ev' + tone(r.ev);
       F.d.textContent = r.d;
       if (srcRow) srcRow.hidden = r.src !== 'swarm';
-      if (F.src && r.src === 'swarm') F.src.textContent = `The swarm above · proposal ${r.pid}${r.lane ? ' · ' + r.lane : ''}`;
+      if (F.src && r.src === 'swarm') F.src.textContent = `The swarm above · proposal ${r.pid}${r.n > 1 ? ` + ${r.n - 1} more` : ''}${r.lane ? ' · ' + r.lane : ''}${r.followed ? ' · the proposal you followed' : ''}`;
       hexInto(F.prev, r.prev); hexInto(F.hash, r.hash);
       // real checks, not labels: the stored link equals the previous record's hash; this hash recomputes from the content
       const before = bySeq(r.seq - 1), after = bySeq(r.seq + 1);
@@ -351,8 +371,12 @@
       batch.forEach(d => {
         const pid = typeof d.id === 'number' ? 'P-' + d.id : clean(d.id || '') || '—';
         const lane = d.lane == null || d.lane === '' ? '' : 'lane ' + (typeof d.lane === 'number' ? (Number.isInteger(d.lane) ? d.lane : d.lane.toFixed(2)) : clean(d.lane));
-        const r = write({ id: newId(), t: stamp(d.ts), ev: 'SETTLED', lc: 'Swarm', sub: `proposal ${pid}${lane ? ' · ' + lane : ''}`,
-          d: `proposal ${pid} settled in the swarm above · chained here`, src: 'swarm', pid, lane });
+        // the swarm may announce several settlements at once (detail.count): one record says so, ids are never invented
+        const n = Math.min(9999, Math.max(1, Math.floor(Number(d.count)) || 1)), followed = d.followed === true;
+        const r = write({ id: newId(), t: stamp(d.ts), ev: 'SETTLED', lc: followed ? 'Followed' : 'Swarm',
+          sub: n > 1 ? `${pid} +${n - 1} more${lane ? ' · ' + lane : ''}` : `proposal ${pid}${lane ? ' · ' + lane : ''}`,
+          d: n > 1 ? `${pid} and ${n - 1} more settled in the swarm above · chained here` : `proposal ${pid} settled in the swarm above · chained here`,
+          src: 'swarm', pid, lane, n, followed });
         fromSwarm++;
         document.dispatchEvent(new CustomEvent('oxa:recorded', { detail: { id: d.id, record: r.id, hash: r.hash, seq: r.seq } }));
       });
