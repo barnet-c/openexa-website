@@ -1182,7 +1182,7 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
    Without JavaScript the gate list is a static six-gate diagram and the dead controls are not shown. */
 .swarm-live { position: relative; border: 1px solid var(--line-strong); border-radius: var(--r); background: #0B110F; overflow: hidden; margin-bottom: 40px; }
 .sw-head { display: flex; align-items: center; gap: 10px 22px; flex-wrap: wrap; min-height: 56px; padding: 10px 12px 10px 20px; border-bottom: 1px solid var(--line); font: 500 .64rem/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); }
-.sw-live, .sw-follow, .sw-on .sw-gates small, .sw-limit, .sw-ledger, .sw-banner, .sw-agent, .sw-hover, .sw-trace, .swarm-live:not(.sw-on) .swarm-bar { display: none; }
+.sw-live, .sw-follow, .sw-on .sw-gates small, .sw-limit, .sw-ledger, .sw-bound, .sw-banner, .sw-agent, .sw-hover, .sw-trace, .swarm-live:not(.sw-on) .swarm-bar { display: none; }
 .sw-on .sw-live { display: inline-flex; align-items: center; gap: 9px; color: var(--accent); min-width: 8.5em; }
 .sw-live i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 0 rgba(79, 203, 147, .55); animation: desk-ping 1.8s ease-out infinite; }
 .swarm-live.is-halted .sw-live { color: var(--khaki); }
@@ -1224,7 +1224,10 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .sw-on .sw-gates li.is-hit b { color: var(--accent); } .sw-on .sw-gates li.is-hit span { color: #fff; }
 .sw-on .sw-gates small { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .swarm-live.is-halted .sw-gates li:first-child, .swarm-live.is-halted .sw-gates li:first-child b { color: var(--khaki); }
-.sw-on .sw-limit { display: block; margin-top: 2px; font-style: normal; font-size: .56rem; letter-spacing: .08em; text-transform: none; color: rgba(245, 242, 236, .56); }
+.sw-on .sw-limit { display: block; margin-top: 2px; font-style: normal; font-size: .56rem; letter-spacing: .08em; text-transform: none; color: rgba(245, 242, 236, .56); transition: color .45s; }
+.sw-on .sw-gates li.is-tuned .sw-limit { color: var(--accent); transition-duration: .1s; }
+.sw-on .sw-bound { display: block; position: absolute; left: 0; top: 0; white-space: nowrap; pointer-events: none; font: 500 .54rem/1.3 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(79, 203, 147, .72); will-change: transform; }
+.sw-on .sw-bound.is-off { visibility: hidden; }
 .sw-on .sw-ledger, .sw-on .sw-banner:not([hidden]), .sw-on .sw-agent:not([hidden]) { display: block; position: absolute; left: 0; top: 0; white-space: nowrap; pointer-events: none; font: 500 .58rem/1.35 var(--mono); letter-spacing: .14em; text-transform: uppercase; will-change: transform; }
 .sw-on .sw-ledger { color: rgba(245, 242, 236, .56); }
 .sw-on .sw-banner:not([hidden]) { padding: 7px 11px; border: 1px solid rgba(172, 166, 142, .45); background: rgba(11, 17, 15, .8); color: var(--khaki); letter-spacing: .12em; }
@@ -1279,7 +1282,7 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 @media (max-width: 640px) {
   .sw-head { padding-left: 16px; row-gap: 8px; }
   .sw-on .sw-kicker { order: -1; flex-basis: 100%; font-size: .56rem; } /* its own first line: the lab names itself an illustrative model at every width */
-  .sw-stage { --sw-h: 310px; }
+  .sw-stage { --sw-h: 284px; }
   .swarm-stats > div { padding: 14px 10px 12px 12px; }
   .swarm-stats b { font-size: 1.45rem; }
   .swarm-stats span { font-size: .5rem; letter-spacing: .06em; white-space: nowrap; }

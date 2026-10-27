@@ -27,7 +27,7 @@
     gates: Array.from(root.querySelectorAll('[data-sw-gates] > li')), limit: $('[data-sw-limit]'), ledger: $('[data-sw-ledger]'),
     banner: $('[data-sw-banner]'), tag: $('[data-sw-agent]'), trace: $('[data-sw-callout]'), traceId: $('[data-sw-trace-id]'),
     traceState: $('[data-sw-trace-state]'), log: $('[data-sw-log]'), close: $('[data-sw-trace-close]'), say: $('[data-sw-say]'),
-    hov: $('[data-sw-hover]'),
+    hov: $('[data-sw-hover]'), bound: $('[data-sw-bound]'),
   };
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const TAU = Math.PI * 2;
@@ -454,9 +454,9 @@
   }
   // the boundary: a glowing hairline plane just past the council. Upstream agents jitter (estimation); downstream they
   // run on a grid (deterministic code). Intelligence decides, execution is deterministic.
-  const XB = GX[3] + 0.075;
+  const XB = GX[3] + 0.075, BHY = 0.34, BHZ = 0.3;
   function drawBoundary() {
-    const hy = 0.34, hz = 0.3;
+    const hy = BHY, hz = BHZ;
     ctx.beginPath(); frameQuad(XB, hy, hz);
     ctx.fillStyle = `rgba(${GR},.028)`; ctx.fill();
     ctx.lineWidth = 1; ctx.strokeStyle = `rgba(${GR},.13)`; ctx.stroke();
@@ -607,7 +607,7 @@
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < hi; i++) if (st[i] === SETTLE && T0[i] < 0.2 && !isFollowed(i)) blit('halo', PX[i], PY[i], r0 * 4.5 * PS[i], 0.32 * (1 - T0[i] / 0.2) * dim);
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
-    if (live(hover) && UID[hover] === hoverUid && !isFollowed(hover)) {
+    if (!hoverHold && live(hover) && UID[hover] === hoverUid && !isFollowed(hover)) {
       ctx.strokeStyle = `rgba(${IV},.85)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(PX[hover], PY[hover], r0 * 1.7 + 5, 0, TAU); ctx.stroke();
     }
   }
@@ -680,6 +680,7 @@
     el.gates.forEach((li, g) => { lw[g] = [li.offsetWidth, li.offsetHeight]; });
     if (el.ledger) lw[6] = [el.ledger.offsetWidth, el.ledger.offsetHeight];
     if (el.banner) lw[7] = [el.banner.offsetWidth, el.banner.offsetHeight];
+    if (el.bound) lw[8] = [el.bound.offsetWidth, el.bound.offsetHeight];
     rowH = Math.max(24, ...el.gates.map((li, g) => (lw[g] ? lw[g][1] : 24)));
   }
   const setPos = (node, x, y) => { const v = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`; if (node.__t !== v) { node.style.transform = v; node.__t = v; } };
@@ -707,6 +708,19 @@
     if (el.ledger && lw[6]) { proj(LX + 0.04, 0, 0); setPos(el.ledger, clamp(P_X, 4, W - lw[6][0] - 4), P_Y + 12); }
     // the halt banner: bottom right on wide stages (the trace owns the bottom left), above the lower label row on phones
     if (el.banner && lw[7]) setPos(el.banner, narrow ? 8 : W - lw[7][0] - 14, narrow ? H - rowH - 18 - lw[7][1] : H - lw[7][1] - 14);
+    // the boundary's name sits off the far end of its lit top edge, when it clears every gate label and leader
+    if (el.bound && lw[8]) {
+      proj(XB, BHY, -BHZ);
+      const w = lw[8][0], h = lw[8][1], x = P_X + 8, y = P_Y - h + 2;
+      let ok = !narrow && x + w < W - 6 && y > rowTop + rowH + 6;
+      for (const b of lbl) {
+        if (!ok) break;
+        if (x < b.x + b.w + 8 && x + w > b.x - 8 && y < b.y + b.h + 6 && y + h > b.y - 6) ok = false; // the label box
+        else if (!b.bottom && b.lx > x - 8 && b.lx < x + w + 8 && y < b.ay && y + h > b.y + b.h) ok = false; // its leader
+      }
+      el.bound.classList.toggle('is-off', !ok);
+      if (ok) setPos(el.bound, x, y);
+    }
     placeTag(); placeHover();
   }
   let tagBox = null;
@@ -843,16 +857,22 @@
     if (!keep) { hover = hitTest(mouse.x, mouse.y, 14); hoverUid = hover >= 0 ? UID[hover] : 0; }
     cv.style.cursor = hover >= 0 ? 'pointer' : '';
   }
+  // the hover tag never covers the followed proposal's tag: it takes the other side, or steps aside; right after a click
+  // it waits for the pointer to move, so the new follow is not crowded by a tag for its neighbour
+  let hoverHold = null;
+  const hits = (x, y, w, h, b) => b && x < b.x + b.w + 6 && x + w > b.x - 6 && y < b.y + b.h + 6 && y + h > b.y - 6;
   function placeHover() {
     const t = el.hov; if (!t) return;
-    const on = hover >= 0 && live(hover) && UID[hover] === hoverUid && !isFollowed(hover);
+    const on = !hoverHold && hover >= 0 && live(hover) && UID[hover] === hoverUid && !isFollowed(hover);
     if (!on) { if (!t.hidden) t.hidden = true; return; }
     const id = pid(UID[hover]), b = t.firstElementChild;
     if (t.hidden) t.hidden = false;
     if (b && b.textContent !== id) { b.textContent = id; t.__w = t.offsetWidth; t.__h = t.offsetHeight; }
-    const w = t.__w || 120, h = t.__h || 32, x = PX[hover], y = PY[hover];
-    const right = x + 16 + w < W - 6;
-    setPos(t, right ? x + 16 : x - 16 - w, clamp(y - h - 12, 4, H - h - 4));
+    const w = t.__w || 120, h = t.__h || 32, x = PX[hover], y = clamp(PY[hover] - (t.__h || 32) - 12, 4, H - h - 4);
+    let px = x + 16 + w < W - 6 ? x + 16 : x - 16 - w;
+    if (hits(px, y, w, h, tagBox)) px = px > x ? x - 16 - w : x + 16;
+    if (hits(px, y, w, h, tagBox) || px < 2 || px + w > W - 2) { t.hidden = true; return; }
+    setPos(t, px, y);
   }
 
   /* ---------------- counters, all read from the model ---------------- */
@@ -884,7 +904,16 @@
     el.n.value = Math.round(Math.log(target / 500) / Math.log(12) * 100);
     el.n.addEventListener('input', () => { target = Math.round(500 * Math.pow(12, el.n.value / 100) / 100) * 100; showN(); if (reduced.matches) still(); });
   }
-  if (el.strict) { el.strict.value = Math.round(strict * 100); el.strict.addEventListener('input', () => { setStrict(el.strict.value / 100); showStrict(); if (reduced.matches) still(); else measureSoon(); }); }
+  let tuneT = 0;
+  if (el.strict) {
+    el.strict.value = Math.round(strict * 100);
+    el.strict.addEventListener('input', () => {
+      setStrict(el.strict.value / 100); showStrict();
+      const li = el.gates[3]; // the council's label lights while its policy is being changed
+      if (li) { li.classList.add('is-tuned'); clearTimeout(tuneT); tuneT = setTimeout(() => li.classList.remove('is-tuned'), 900); }
+      if (reduced.matches) still(); else measureSoon();
+    });
+  }
   if (el.halt) {
     el.halt.removeAttribute('aria-pressed'); // the label itself toggles
     el.halt.addEventListener('click', () => { halted = !halted; el.halt.textContent = halted ? 'Resume' : 'Halt'; stats(); if (reduced.matches) still(); else measureSoon(); });
@@ -904,14 +933,17 @@
   cv.addEventListener('pointermove', (e) => {
     if (e.pointerType !== 'mouse') return;
     mouse = local(e); parT = clamp(mouse.x / W - 0.5, -0.5, 0.5);
+    if (hoverHold && Math.hypot(mouse.x - hoverHold.x, mouse.y - hoverHold.y) > 8) hoverHold = null;
     if (reduced.matches || !running()) { updateHover(); draw(); }
   });
   cv.addEventListener('pointerleave', () => { mouse = null; hover = -1; parT = 0; cv.style.cursor = ''; placeHover(); if (reduced.matches) draw(); });
   cv.addEventListener('click', (e) => {
     const p = local(e);
-    // a mouse click takes the agent the hover tag names; a tap searches a finger-sized radius
-    const i = !pointerTouch && live(hover) && UID[hover] === hoverUid ? hover : hitTest(p.x, p.y, pointerTouch ? 30 : 16);
-    if (i >= 0 && !isFollowed(i)) startFollow(i);
+    // a mouse click takes the agent the hover tag names (if it is still under the pointer); a tap searches a
+    // finger-sized radius
+    const named = !pointerTouch && live(hover) && UID[hover] === hoverUid && (PX[hover] - p.x) ** 2 + (PY[hover] - p.y) ** 2 < 484;
+    const i = named ? hover : hitTest(p.x, p.y, pointerTouch ? 30 : 16);
+    if (i >= 0 && !isFollowed(i)) { hoverHold = p; startFollow(i); }
   });
 
   /* ---------------- still studies (prefers-reduced-motion) ---------------- */
