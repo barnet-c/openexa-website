@@ -1,10 +1,14 @@
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
+from meta import HOME, ORG, WEBSITE, FEED_LINKS, ROBOTS, ld, crumbs, git_date
 # -*- coding: utf-8 -*-
 """Launch metadata for the OpenEXA site: canonical + Open Graph + Twitter tags, manifest, icons, JSON-LD,
-robots.txt, sitemap.xml and a branded 404 page (header/footer templated from index.html)."""
-import os, re, io, glob, html
+robots.txt, sitemap.xml and a branded 404 page (header/footer templated from index.html).
+Also: each top-level page's schema.org graph (<script id="ld-page">; research.html's is build_research.py's), the feed
+links and robots preview hint in every head, sitemap lastmod from git, and /favicon.ico from the 512 px icon."""
+import os, re, io, glob, html, json
+from PIL import Image
 
 ROOT = str(SITE)
 SITE = "https://www.openexa.com/"
@@ -15,12 +19,17 @@ def meta(s, name, prop=False):
     m = re.search(r'<meta %s="%s" content="([^"]*)">' % ("property" if prop else "name", re.escape(name)), s)
     return m.group(1) if m else ""
 
+KIND = {"company.html": "AboutPage", "access.html": "ContactPage"}
+CRUMB = {"platform.html": "Platform", "lifecycles.html": "Lifecycles", "evidence.html": "Proof", "trust.html": "Trust & governance",
+         "company.html": "Company", "access.html": "Request access"}
 pages = []
 for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
     name = os.path.basename(path)
     if name in ("404.html", "insights.html"): continue
     s = read(path); before = s
     s = re.sub(r'\n  <link rel="canonical".*?<link rel="manifest" href="site.webmanifest">', "", s, flags=re.S)  # idempotent
+    s = re.sub(r'\n  <script type="application/ld\+json" id="ld-page">.*?</script>', "", s, flags=re.S)
+    s = re.sub(r'\n  <script type="application/ld\+json">{"@context":"https://schema.org","@type":"Organization".*?</script>', "", s, flags=re.S)  # pre-graph home JSON-LD
     title = html.unescape(re.search(r"<title>(.*?)</title>", s, re.S).group(1)).strip()
     desc = meta(s, "description")
     url = SITE if name == "index.html" else SITE + name
@@ -43,25 +52,41 @@ for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
         f'<meta name="twitter:title" content="{html.escape(og_title, quote=True)}">',
         f'<meta name="twitter:description" content="{html.escape(og_desc, quote=True)}">',
         f'<meta name="twitter:image" content="{og_image(url)}">',
+        ROBOTS, *FEED_LINKS,
         '<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">',
         '<link rel="manifest" href="site.webmanifest">',
     ]
     s, hits = re.subn(r'(<meta name="theme-color" content="#[0-9A-Fa-f]{6}">)', lambda m: m.group(1) + "\n  " + "\n  ".join(block), s, count=1)
     assert hits == 1, name
-    if name == "index.html" and "application/ld+json" not in s:
-        ld = ('<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"OpenEXA","url":"https://www.openexa.com/",'
-              '"logo":"https://www.openexa.com/assets/img/icon-512.png","description":"OpenEXA is an AI agentic company. It builds the end-to-end infrastructure on which swarms of domain-specific AI agents run high-value lifecycles end to end. Lifecycle 01 is live on real capital.",'
-              '"address":{"@type":"PostalAddress","addressLocality":"Seattle","addressRegion":"WA","addressCountry":"US"},"sameAs":["https://sentiment.openexa.com/"]}</script>')
-        s = s.replace("</head>", "  " + ld + "\n</head>", 1)
+    if name != "research.html":  # build_research.py writes research.html's graph (CollectionPage + the ten notes)
+        page = {"@type": KIND.get(name, "WebPage"), "@id": url + "#webpage", "url": url, "name": title, "description": html.unescape(desc),
+                "isPartOf": WEBSITE, "primaryImageOfPage": og_image(url), "inLanguage": "en"}
+        if name == "index.html":
+            org = dict(ORG, legalName="OpenEXA Inc.", image=og_image(url), description="OpenEXA is an AI agentic company. It builds the "
+                       "end-to-end infrastructure on which swarms of domain-specific AI agents run high-value lifecycles end to end. "
+                       "Lifecycle 01 is live on real capital.",
+                       address={"@type": "PostalAddress", "addressLocality": "Seattle", "addressRegion": "WA", "addressCountry": "US"})
+            nodes = [org, dict(WEBSITE, inLanguage="en", publisher={"@id": ORG["@id"]}), dict(page, isPartOf={"@id": WEBSITE["@id"]}, about={"@id": ORG["@id"]})]
+        else:
+            nodes = [page, crumbs((CRUMB[name], url))]
+        s = s.replace("</head>", "  " + ld(*nodes, id="ld-page") + "\n</head>", 1)
     if s != before: write(path, s); print("meta ->", name)
     pages.append(name)
 
 # manifest · robots · sitemap
-write(os.path.join(ROOT, "site.webmanifest"), '{\n  "name": "OpenEXA",\n  "short_name": "OpenEXA",\n  "description": "Infrastructure for agentic lifecycles.",\n  "start_url": "/",\n  "display": "standalone",\n  "background_color": "#0E1512",\n  "theme_color": "#0E1512",\n  "icons": [\n    { "src": "assets/img/icon-192.png", "sizes": "192x192", "type": "image/png" },\n    { "src": "assets/img/icon-512.png", "sizes": "512x512", "type": "image/png" }\n  ]\n}\n')
+MANIFEST = {"id": "/", "name": "OpenEXA", "short_name": "OpenEXA", "description": "Infrastructure for agentic lifecycles.", "lang": "en",
+            "start_url": "/", "scope": "/", "display": "standalone", "background_color": "#0E1512", "theme_color": "#0E1512",
+            "icons": [{"src": "assets/img/icon-192.png", "sizes": "192x192", "type": "image/png"},
+                      {"src": "assets/img/icon-512.png", "sizes": "512x512", "type": "image/png"},
+                      # the globe sits inside the maskable safe zone (radius 40%) on a full-bleed ink tile
+                      {"src": "assets/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}]}
+write(os.path.join(ROOT, "site.webmanifest"), json.dumps(MANIFEST, indent=2) + "\n")
+Image.open(os.path.join(ROOT, "assets", "img", "icon-512.png")).save(os.path.join(ROOT, "favicon.ico"), sizes=[(16, 16), (32, 32), (48, 48)])
 write(os.path.join(ROOT, "robots.txt"), "User-agent: *\nAllow: /\n\nSitemap: https://www.openexa.com/sitemap.xml\n")
 pages += sorted("research/" + os.path.basename(a) for a in glob.glob(os.path.join(ROOT, "research", "*.html")))
 pages += ["blog/"] + sorted("blog/" + os.path.basename(a) for a in glob.glob(os.path.join(ROOT, "blog", "*.html")) if os.path.basename(a) != "index.html")
-urls = "".join(f"  <url><loc>{SITE if p == 'index.html' else SITE + p}</loc><lastmod>2026-09-30</lastmod><changefreq>{'weekly' if p == 'index.html' else 'monthly'}</changefreq><priority>{'1.0' if p == 'index.html' else '0.7'}</priority></url>\n" for p in pages)
+page_file = lambda p: os.path.join(ROOT, *(p + "index.html" if p.endswith("/") else p).split("/"))
+urls = "".join(f"  <url><loc>{SITE if p == 'index.html' else SITE + p}</loc><lastmod>{git_date(page_file(p))}</lastmod><changefreq>{'weekly' if p == 'index.html' else 'monthly'}</changefreq><priority>{'1.0' if p == 'index.html' else '0.7'}</priority></url>\n" for p in pages)
 write(os.path.join(ROOT, "sitemap.xml"), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls + "</urlset>\n")
 
 # 404 — header/footer from index.html

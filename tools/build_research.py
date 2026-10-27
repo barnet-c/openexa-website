@@ -1,6 +1,7 @@
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
+from meta import HOME, ORG, WEBSITE, FEED_LINKS, ROBOTS, ld, crumbs, git_date, atom
 # -*- coding: utf-8 -*-
 """Build the OpenEXA research section from openexa-research-blogs.md:
    research.html (index) + research/NN-slug.html (ten articles), in the requested order 9 · 10 · 1 … 8."""
@@ -27,7 +28,13 @@ FIXES = [
     ("Every fill in our ten live sessions was confirmed through TradeStation or Interactive Brokers before it entered the ledger.",
      "Every fill in our ten live sessions was confirmed by the executing broker before it entered the ledger."),
     ("The execution layer routed to NASDAQ and NYSE.", "The execution layer routed each action to the venue and counterparty the routing layer scored best."),
+    # 2026-10-27: a unit slip (5% a year is ~$0.0002 a day per dollar - a ten-thousandth of a dollar, not of a cent) and
+    # the site-wide rule "Trillions", never $22 trillion
+    ("a dollar earns roughly two ten-thousandths of a cent per day", "a dollar earns roughly two ten-thousandths of a dollar per day"),
+    ("roughly seventeen thousand ETFs holding about twenty-two trillion dollars.", "roughly seventeen thousand ETFs holding trillions of dollars."),
 ]
+PUBLISHED = "2026-09-21"  # the research section went live with v10 (docs/site-history.md); the markdown has no dates
+SERIES_LD = {"@type": "CreativeWorkSeries", "@id": HOME + "research.html#series", "name": "OpenEXA Research", "url": HOME + "research.html"}
 
 def read(p): return io.open(p, encoding="utf-8").read()
 def write(p, s):
@@ -57,8 +64,9 @@ for num, body in zip(chunks[0::2], chunks[1::2]):
         if para.startswith("### "): blocks.append(("h", para[4:].strip()))
         else: blocks.append(("p", " ".join(l.strip() for l in para.split("\n"))))
     words = sum(len(t.split()) for k, t in blocks if k == "p") + (len(dek.split()) if dek else 0)
-    posts[int(num)] = {"num": int(num), "title": title, "dek": dek, "blocks": blocks, "minutes": max(3, round(words / 210))}
+    posts[int(num)] = {"num": int(num), "title": title, "dek": dek, "blocks": blocks, "words": words, "minutes": max(3, round(words / 210))}
 assert sorted(posts) == list(range(1, 11)), sorted(posts)
+MODIFIED = git_date(MD)
 
 def inline(t):
     t = H.escape(t, quote=False)
@@ -106,6 +114,9 @@ def og(prefix, url, title, desc):
   <meta name="twitter:title" content="{H.escape(title, quote=True)}">
   <meta name="twitter:description" content="{H.escape(desc, quote=True)}">
   <meta name="twitter:image" content="{og_image(url)}">
+  {ROBOTS}
+  {FEED_LINKS[0]}
+  {FEED_LINKS[1]}
 {HEAD_LINKS.format(p=prefix)}'''
 
 # ---------------- articles ----------------
@@ -136,7 +147,10 @@ for i, post in enumerate(ordered):
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{H.escape(title)} — OpenEXA Research</title>
 {og("../", url, title + " — OpenEXA Research", dek)}
-  <script type="application/ld+json">{{"@context":"https://schema.org","@type":"TechArticle","headline":{json.dumps(title)},"description":{json.dumps(dek)},"url":"{url}","isPartOf":{{"@type":"Blog","name":"OpenEXA Research","url":"https://www.openexa.com/research.html"}},"publisher":{{"@type":"Organization","name":"OpenEXA","url":"https://www.openexa.com/"}},"author":{{"@type":"Organization","name":"OpenEXA"}},"wordCount":{post["minutes"] * 210}}}</script>
+  {ld({"@type": "TechArticle", "@id": url + "#article", "headline": title, "description": dek, "url": url, "mainEntityOfPage": url,
+        "datePublished": PUBLISHED, "dateModified": MODIFIED, "inLanguage": "en", "image": [og_image(url)], "author": ORG, "publisher": ORG,
+        "isPartOf": SERIES_LD, "position": post["order"], "wordCount": post["words"], "timeRequired": f"PT{post['minutes']}M"},
+       crumbs(("Research", HOME + "research.html"), (title, url)))}
 </head>
 <body data-nav="dark-start" class="article-page">
   <a class="skip" href="#main">Skip to content</a>
@@ -219,6 +233,11 @@ index_page = f'''<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Research — OpenEXA · The thinking behind agentic lifecycles</title>
 {og("", url, "Research — OpenEXA", desc).replace('content="article"', 'content="website"')}
+  {ld({"@type": "CollectionPage", "@id": url + "#webpage", "url": url, "name": "Research — OpenEXA", "description": desc,
+       "isPartOf": WEBSITE, "primaryImageOfPage": og_image(url), "inLanguage": "en",
+       "mainEntity": {"@type": "ItemList", "itemListElement": [
+           {"@type": "ListItem", "position": p["order"], "url": HOME + p["file"], "name": p["title"]} for p in ordered]}},
+      crumbs(("Research", url)), id="ld-research")}
 </head>
 <body data-nav="dark-start" class="research-page">
   <a class="skip" href="#main">Skip to content</a>
@@ -314,6 +333,10 @@ index_page = f'''<!DOCTYPE html>
 '''
 write(os.path.join(ROOT, "research.html"), index_page)
 print("wrote research.html")
+atom(os.path.join(OUT_DIR, "feed.xml"), "OpenEXA Research", "Research notes and the series behind OpenEXA's agentic infrastructure.",
+     url, [{"url": HOME + p["file"], "title": p["title"], "published": PUBLISHED, "updated": MODIFIED, "author": "OpenEXA",
+            "summary": p["short"]} for p in ordered])
+print("wrote research/feed.xml")
 
 # homepage teaser cards (three featured) → printed for the caller to insert
 featured = [ordered[0], ordered[1], ordered[2]]

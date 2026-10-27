@@ -9,6 +9,7 @@ site/staticwebapp.config.json (old site pages, held-back posts, trailing slashes
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
+from meta import HOME, ORG, FEED_LINKS, ROBOTS, ld, crumbs, atom
 import html as H, io, json, os, re, shutil
 from datetime import datetime
 from pathlib import Path
@@ -166,6 +167,9 @@ def head(url, title, desc, kind="article", extra=""):
   <meta name="twitter:title" content="{esc(title)}">
   <meta name="twitter:description" content="{esc(desc)}">
   <meta name="twitter:image" content="{og_image(url)}">
+  {ROBOTS}
+  {FEED_LINKS[0]}
+  {FEED_LINKS[1]}
   <link rel="apple-touch-icon" href="{PFX}assets/img/apple-touch-icon.png">
   <link rel="manifest" href="{PFX}site.webmanifest">
   <link rel="icon" type="image/svg+xml" href="{PFX}assets/img/favicon.svg">
@@ -178,6 +182,14 @@ fmt = lambda d: d.strftime("%b %-d, %Y") if os.name != "nt" else d.strftime("%b 
 LABEL = {k: l for k, l, _ in COLLECTIONS}
 FIG = {"ai": "swarm", "markets": "horizon", "economics": "council", "munis": "ledger"}  # figure.js formations
 BASE = "https://www.openexa.com/blog/"
+BLOG_LD = {"@type": "Blog", "@id": BASE + "#blog", "name": "OpenEXA Blog", "url": BASE}
+def person(byline):
+    """schema.org author for a byline ("Tim Leung, Ph.D." -> a Person with the credential as honorificSuffix)."""
+    if byline == "OpenEXA": return ORG
+    m = re.match(r"^(.*?), *(Ph[.]D[.])$", byline)
+    who = {"@type": "Person", "name": m.group(1) if m else byline, "url": HOME + "company.html#team"}
+    if m: who["honorificSuffix"] = m.group(2)
+    return who
 def href(p): return p["source"] if p["stub"] else f'{p["slug"]}.html'
 
 # the 2024 Gen-AI series (Ajit): an introduction and a three-part finance series that cross-link one another
@@ -242,7 +254,11 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     </section>''')
 years = sorted(p["dt"].year for p in kept)
 desc = f"The OpenEXA blog: {len(kept)} posts from {years[0]} to {years[-1]} on AI agents in finance, financial markets research and market structure."
-page = head(BASE, "Blog — OpenEXA", desc, "website").replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
+blog_ld = ld(dict(BLOG_LD, description=desc, inLanguage="en", publisher=ORG, blogPost=[
+    {"@type": "BlogPosting", "headline": p["title"], "url": BASE + p["slug"] + ".html", "datePublished": p["dt"].strftime("%Y-%m-%d"),
+     "author": person(p["author"])} for p in sorted(kept, key=lambda p: p["dt"], reverse=True) if not p["stub"]]),
+    crumbs(("Blog", BASE)))
+page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n").replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
 <body data-nav="dark-start" class="blog-page">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -301,10 +317,11 @@ for p in order:
     i = sib.index(p); prev = sib[i - 1] if i else None; nxt = sib[i + 1] if i + 1 < len(sib) else None
     src_host = re.sub(r"^www\.", "", re.search(r"//([^/]+)", p["source"]).group(1)) if p["source"] else ""
     url = BASE + p["slug"] + ".html"
-    ld = {"@context": "https://schema.org", "@type": "BlogPosting", "headline": p["title"], "description": p["excerpt"], "url": url,
-          "datePublished": p["dt"].strftime("%Y-%m-%d"), "author": {"@type": "Person" if p["author"] != "OpenEXA" else "Organization", "name": p["author"]},
-          "publisher": {"@type": "Organization", "name": "OpenEXA", "url": "https://www.openexa.com/"}, "isPartOf": {"@type": "Blog", "name": "OpenEXA Blog", "url": BASE}}
-    if p["source"]: ld["isBasedOn"] = p["source"]
+    post_ld = {"@type": "BlogPosting", "@id": url + "#article", "headline": p["title"], "description": p["excerpt"], "url": url,
+               "mainEntityOfPage": url, "datePublished": p["dt"].strftime("%Y-%m-%d"), "inLanguage": "en", "image": [og_image(url)],
+               "author": person(p["author"]), "publisher": ORG, "isPartOf": BLOG_LD, "articleSection": LABEL[p["col"]],
+               "timeRequired": f"PT{p['minutes']}M"}
+    if p["source"]: post_ld["isBasedOn"] = p["source"]
     side_links = [f'<a class="link-arrow" href="index.html#{p["col"]}">{esc(LABEL[p["col"]])} {ARROW}</a>', f'<a class="link-arrow" href="index.html">All posts {ARROW}</a>']
     if p["source"]: side_links.insert(0, f'<a class="link-arrow" href="{esc(p["source"])}" target="_blank" rel="noopener">Original on {esc(src_host)} {OUTB}</a>')
     if p["col"] == "markets": side_links.insert(1, f'<a class="link-arrow" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a>')
@@ -325,9 +342,10 @@ for p in order:
             f"<a class='pager-card prev' href='{sp['slug']}.html'><span class='k'>← {esc(SERIES[j - 1][1])}</span><h3>{esc(sp['title'])}</h3><p>{fmt(sp['dt'])}</p></a>" if sp else f"<a class='pager-card prev' href='index.html#series'><span class='k'>← {SERIES_NAME}</span><h3>Four posts, from business model to AI agents.</h3><p>2024 · {series_minutes} min in total</p></a>",
             f"<a class='pager-card next' href='{sn['slug']}.html'><span class='k'>{esc(SERIES[j + 1][1])} →</span><h3>{esc(sn['title'])}</h3><p>{fmt(sn['dt'])}</p></a>" if sn else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>What came next →</span><h3>The thinking behind the swarm.</h3><p>The research notes and eight-part series behind OpenEXA's agentic infrastructure.</p></a>",
         ])
-        ld["isPartOf"] = {"@type": "CreativeWorkSeries", "name": f"{SERIES_NAME} - OpenEXA Blog", "url": BASE + "#series"}; ld["position"] = j
+        post_ld["isPartOf"] = [BLOG_LD, {"@type": "CreativeWorkSeries", "name": f"{SERIES_NAME} - OpenEXA Blog", "url": BASE + "#series"}]
+        post_ld["position"] = j + 1
     note = f"Originally published on openexa.com, {fmt(p['dt'])}." + (f" A summary of work first published on {src_host}." if p["source"] else "")
-    page = head(url, f'{p["title"]} — OpenEXA Blog', p["excerpt"], "article", f'  <script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n') + f'''
+    page = head(url, f'{p["title"]} — OpenEXA Blog', p["excerpt"], "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (p["title"], url)))}\n') + f'''
 <body data-nav="dark-start" class="article-page blog-post">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -373,6 +391,9 @@ for p in order:
 </html>
 '''
     write(OUT / f'{p["slug"]}.html', page)
+atom(OUT / "feed.xml", "OpenEXA Blog", "AI agents in finance, financial markets research and market structure.", BASE,
+     [{"url": BASE + p["slug"] + ".html", "title": p["title"], "published": p["dt"].strftime("%Y-%m-%d"), "updated": p["dt"].strftime("%Y-%m-%d"),
+       "author": p["author"], "summary": p["excerpt"]} for p in sorted(kept, key=lambda p: p["dt"], reverse=True) if not p["stub"]])
 
 # ---------------- summary for the research index ----------------
 json.dump({"total": len(kept), "years": [years[0], years[-1]],
