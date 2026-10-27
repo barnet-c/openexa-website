@@ -140,7 +140,11 @@ async def main():
         # ---- company team: six portraits load, monochrome at rest, colour on hover ----
         await pg.goto(f"{BASE}/company.html#team", wait_until="load")
         await pg.locator(".crew--team").scroll_into_view_if_needed()
-        await pg.wait_for_timeout(1500)
+        # the advisors' portraits are loading="lazy": walk the page so every one is fetched before counting them
+        for y in range(0, await pg.evaluate("document.body.scrollHeight"), 400):
+            await pg.evaluate(f"scrollTo(0, {y})"); await pg.wait_for_timeout(120)
+        await pg.locator(".crew--team").scroll_into_view_if_needed()
+        await pg.wait_for_function("[...document.querySelectorAll('.crew img')].every(i => i.complete && i.naturalWidth === 560)", timeout=15000)
         team = await pg.evaluate("[...document.querySelectorAll('.crew img')].map(i => ({ok: i.complete && i.naturalWidth === 560, filter: getComputedStyle(i).filter}))")
         assert len(team) == 13 and all(t["ok"] for t in team), team
         assert all("grayscale(1)" in t["filter"] for t in team), team
