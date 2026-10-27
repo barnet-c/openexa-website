@@ -235,8 +235,9 @@ decided was undone; what a visitor can see differently is listed at the end.
 
 **Speed and privacy.** The three typefaces are self-hosted (`site/assets/fonts/`, the same WOFF2 files and subsets
 Google Fonts served, OFL licences alongside; `tools/vendor_fonts.py`), and two are preloaded. First paint no longer
-waits on a four-hop chain through fonts.googleapis.com, and no visitor's IP goes to Google. WebGL contexts and
-shaders start after first paint (150-480 ms off the main thread). Blog images carry their dimensions, so pages don't
+waits on a four-hop chain through fonts.googleapis.com, and no visitor's IP goes to Google. The research and company figures start their WebGL after first
+paint; the homepage overture starts under its loader and no longer forces a full page layout on every frame
+(it read layout per label per frame). Blog images carry their dimensions, so pages don't
 jump as they load. Fonts and blog images are cached for 30 days, other images for 7 days and portraits for 1.
 
 **Sharing.** Every page has its own 1200x630 share card (`tools/build_og.py`, 48 cards) in the original card's design:
