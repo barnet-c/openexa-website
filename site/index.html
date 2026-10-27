@@ -62,13 +62,13 @@
 
   <main id="main">
 
-    <!-- ============ OVERTURE — scroll-driven story stage ============ -->
+    <!-- ============ OVERTURE — one instrument, five scenes (story.js) ============ -->
     <section class="story is-dark" aria-label="Overture">
-      <div class="story-stage grain">
+      <div class="story-stage grain" role="group" aria-label="Five scenes" aria-describedby="story-keys">
         <canvas class="story-gl" aria-hidden="true"></canvas>
         <canvas class="story-2d" data-swarm aria-hidden="true" hidden></canvas>
         <img class="story-static-mark" src="assets/img/globe.svg" alt="" aria-hidden="true">
-        <div class="story-labels" aria-hidden="true"></div>
+        <div class="story-labels"></div>
         <div class="story-ui">
           <div class="container">
 
@@ -101,8 +101,8 @@
             <div class="beat beat-2">
               <div class="beat-text">
                 <div class="eyebrow">02 · The stack</div>
-                <h2 class="display-2" data-split>Eight layers. One autonomous stack.</h2>
-                <p class="body-lg">Signal intelligence, a post-trained model layer, domain-specific agents, an execution council, routing, execution, a custom MCP server and an authentication layer — built as one system, so an agent can perceive, decide, act and prove without a human in the loop, and with one whenever you want.</p>
+                <h2 class="display-2" data-split>Eight layers. One boundary.</h2>
+                <p class="body-lg">Signal intelligence, a post-trained model layer, domain-specific agents and an execution council sit above the boundary: they estimate and decide. Routing, execution, a custom MCP server and an authentication layer sit below it: deterministic code that carries the decision out. One system, so an agent can perceive, decide, act and prove, without a human in the loop or with one whenever you want.</p>
               </div>
             </div>
 
@@ -110,15 +110,18 @@
               <div class="beat-text">
                 <div class="eyebrow">03 · The swarm</div>
                 <h2 class="display-2" data-split>Five to fifty thousand agents. Each does one job.</h2>
-                <p class="body-lg">Every point on this screen is an agent. Signals funnel in; narrow agents predict, decide, approve, execute and settle down a vertical rail; rejected proposals leave at the gate; every settled transition is written to a hash-chained ledger.</p>
+                <p class="body-lg">Seen from the side, the layers become a lane. Signals enter at the top; every proposal passes six gates, and at the fourth the execution council decides. Rejections fall away. Settled actions become records, each linked by its hash to the one before.</p>
+                <ul class="story-legend" aria-label="Key">
+                  <li class="lg-p">Proposal</li><li class="lg-s">Settled</li><li class="lg-r">Rejected</li><li class="lg-b">Record</li>
+                </ul>
               </div>
             </div>
 
             <div class="beat beat-4">
               <div class="beat-text">
-                <div class="eyebrow">04 · Lifecycle 01</div>
+                <div class="eyebrow">04 · The proof</div>
                 <h2 class="display-2" data-split>ETF creation and redemption. Live. Ten for ten.</h2>
-                <p class="body-lg">Our first lifecycle runs on live capital: more than ten basis points captured in every one of ten sessions, each fill confirmed against the executing broker's own records — with 90% of the traditional cost and risk gone. Three beta customers. Five lifecycle runs.</p>
+                <p class="body-lg">Lifecycle 01 runs on live capital. In every one of ten sessions the agents captured more than ten basis points, in premium and discount regimes alike, and every fill was confirmed against the executing broker's own records, with 90% of the traditional cost and risk gone. Three beta customers. Five lifecycle runs.</p>
                 <div class="hero-cta">
                   <a class="btn" href="evidence.html">Read the proof <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
                   <a class="btn btn--ghost" href="#lifecycles">Continue below</a>
@@ -128,15 +131,24 @@
 
           </div>
         </div>
-        <nav class="story-idx" aria-label="Explore the story">
-          <button type="button" data-n="00" aria-label="Infrastructure" aria-current="step"></button>
-          <button type="button" data-n="01" aria-label="The work"></button>
-          <button type="button" data-n="02" aria-label="The stack"></button>
-          <button type="button" data-n="03" aria-label="The swarm"></button>
-          <button type="button" data-n="04" aria-label="Lifecycle 01"></button>
-        </nav>
-        <button class="story-motion" type="button" data-story-motion hidden>Pause motion</button>
-        <div class="hero-scroll" aria-hidden="true"><i></i>Scroll</div>
+        <div class="story-bar">
+          <div class="container">
+            <nav class="story-idx" aria-label="Scenes">
+              <ol>
+                <li><button type="button" data-n="00" aria-current="step"><span class="n">00</span><span class="t">Infrastructure</span><i aria-hidden="true"></i></button></li>
+                <li><button type="button" data-n="01"><span class="n">01</span><span class="t">The work</span><i aria-hidden="true"></i></button></li>
+                <li><button type="button" data-n="02"><span class="n">02</span><span class="t">The stack</span><i aria-hidden="true"></i></button></li>
+                <li><button type="button" data-n="03"><span class="n">03</span><span class="t">The swarm</span><i aria-hidden="true"></i></button></li>
+                <li><button type="button" data-n="04"><span class="n">04</span><span class="t">The proof</span><i aria-hidden="true"></i></button></li>
+              </ol>
+            </nav>
+            <p class="story-keys" id="story-keys">Arrow keys or Page Up and Page Down step through the scenes</p>
+            <button class="story-motion" type="button" data-story-motion hidden>Pause motion</button>
+            <div class="hero-scroll" aria-hidden="true"><i></i>Scroll</div>
+          </div>
+        </div>
+        <div class="story-paper" aria-hidden="true"><div class="container"><p class="story-paper-cap"><span>Fig. 04 — Lifecycle 01 · ten sessions on live capital</span><span data-story-sum>Each above the 10 bps floor · broker-confirmed</span></p></div></div>
+        <p class="sr-only" aria-live="polite" data-story-live></p>
       </div>
     </section>
 
