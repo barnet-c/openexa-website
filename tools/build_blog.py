@@ -120,13 +120,27 @@ def clean_body(p):
     b = re.sub(r"(?<!<figure>)(<img[^>]+>)(?!</figure>)", r"<figure>\1</figure>", b)
     return b.strip()
 
-def size(name):
-    """width/height attributes for a blog image as optimise() will leave it (at most 1800 px wide): the page reserves its box."""
+def dims(name):
+    """(width, height) of a blog image as optimise() will leave it (at most 1800 px wide), or None."""
     from PIL import Image
-    if not (OLD / "img" / name).exists(): return ""
+    if not (OLD / "img" / name).exists(): return None
     w, h = Image.open(OLD / "img" / name).size
-    if w > 1800: w, h = 1800, round(h * 1800 / w)
-    return f' width="{w}" height="{h}"'
+    return (1800, round(h * 1800 / w)) if w > 1800 else (w, h)
+def size(name):
+    """width/height attributes for a blog image, so the page reserves its box."""
+    d = dims(name)
+    return f' width="{d[0]}" height="{d[1]}"' if d else ""
+# card-size copies of each hero image for the blog cards' srcset: a card is ~440 px wide, a hero up to 1800
+THUMB_W = (480, 800)
+# one sizes value for the cards and the (smaller) series rail, so a post shown in both loads the same file once
+CARD_SIZES = "(max-width: 640px) calc(100vw - 40px), (max-width: 1080px) calc(50vw - 40px), min(440px, 31vw)"
+def thumb(name, sizes):
+    d = dims(name); stem = name.rsplit(".", 1)[0]
+    ws = [t for t in THUMB_W if d and t < d[0]]
+    src = f"{PFX}assets/img/blog/"
+    if not ws: return f'<img src="{src}{name}" alt=""{size(name)} loading="lazy" decoding="async">'
+    srcset = ", ".join([f"{src}{stem}-{t}w.webp {t}w" for t in ws] + [f"{src}{name} {d[0]}w"])
+    return f'<img src="{src}{stem}-{ws[-1]}w.webp" srcset="{srcset}" sizes="{sizes}" alt=""{size(name)} loading="lazy" decoding="async">'
 
 if IMG.exists(): shutil.rmtree(IMG)  # rebuilt from the scraped originals every time
 IMG.mkdir(parents=True, exist_ok=True)
@@ -228,9 +242,9 @@ nav, foot = chrome()
 series_cards = []
 for i, (s, part, short) in enumerate(SERIES):
     p = SLUGS[s]
-    thumb = f'<div class="blog-thumb"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt=""{size(p["hero_file"])} loading="lazy" decoding="async"></div>' if p.get("hero_file") else ""
+    thumb_html = f'<div class="blog-thumb">{thumb(p["hero_file"], CARD_SIZES)}</div>' if p.get("hero_file") else ""
     series_cards.append(f'''          <li><a class="series-card" href="{s}.html">
-            <span class="series-n">{i:02d}</span>{thumb}
+            <span class="series-n">{i:02d}</span>{thumb_html}
             <div class="k"><span>{esc(part)} · {esc(short)}</span><span>{p["minutes"]} min</span></div>
             <h3>{esc(p["title"])}</h3>
             <span class="link-arrow">{fmt(p["dt"])} {ARROW}</span>
@@ -255,9 +269,9 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     cards = []
     for p in by_col[k]:
         ext = p["stub"]
-        thumb = f'<div class="blog-thumb"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt=""{size(p["hero_file"])} loading="lazy" decoding="async"></div>' if p.get("hero_file") else ""
+        thumb_html = f'<div class="blog-thumb">{thumb(p["hero_file"], CARD_SIZES)}</div>' if p.get("hero_file") else ""
         cards.append(f'''          <a class="blog-card" href="{esc(href(p))}"{' target="_blank" rel="noopener"' if ext else ''}>
-            {thumb}<div class="blog-card-body"><div class="k"><span>{fmt(p["dt"])}</span><span>{esc(p["author"])}</span></div>
+            {thumb_html}<div class="blog-card-body"><div class="k"><span>{fmt(p["dt"])}</span><span>{esc(p["author"])}</span></div>
             <h3>{esc(p["title"])}</h3><p>{esc(p["excerpt"])}</p>
             <span class="link-arrow">{("Read on " + re.sub(r"^www\.", "", re.search(r"//([^/]+)", p["source"]).group(1)) + " " + OUTB) if ext else (str(p["minutes"]) + " min read " + ARROW)}</span></div>
           </a>''')
@@ -511,6 +525,12 @@ def optimise(path):
     if tmp.stat().st_size < path.stat().st_size: tmp.replace(path)
     else: tmp.unlink()
 for f in IMG.iterdir(): optimise(f)
+for p in kept:  # the card-size copies thumb() refers to
+    if not p.get("hero_file"): continue
+    im = Image.open(IMG / p["hero_file"]); w, h = im.size; stem = p["hero_file"].rsplit(".", 1)[0]
+    im = im.convert("RGBA" if im.mode in ("RGBA", "LA", "P") else "RGB")
+    for t in THUMB_W:
+        if t < w: im.resize((t, round(h * t / w)), Image.LANCZOS).save(IMG / f"{stem}-{t}w.webp", "WEBP", quality=82, method=6)
 
 # ---------------- report ----------------
 imgs = list(IMG.iterdir())
