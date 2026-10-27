@@ -27,6 +27,7 @@
     gates: Array.from(root.querySelectorAll('[data-sw-gates] > li')), limit: $('[data-sw-limit]'), ledger: $('[data-sw-ledger]'),
     banner: $('[data-sw-banner]'), tag: $('[data-sw-agent]'), trace: $('[data-sw-callout]'), traceId: $('[data-sw-trace-id]'),
     traceState: $('[data-sw-trace-state]'), log: $('[data-sw-log]'), close: $('[data-sw-trace-close]'), say: $('[data-sw-say]'),
+    hov: $('[data-sw-hover]'),
   };
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const TAU = Math.PI * 2;
@@ -44,7 +45,7 @@
   const GATE = ['Signal', 'Predict', 'Decide', 'Approve', 'Execute', 'Settle'];
   const RY = 0.26, RZ = 0.18, FLOOR = -0.47;                  // the stream's half-height and half-depth; the floor
   const RAIL_Y = [-0.18, -0.09, 0, 0.09, 0.18], RAIL_Z = 0;    // five deterministic rails, a flat ladder after the boundary
-  const X_SNAP = 0.14, LX = GX[5] + 0.24;                      // snap distance past the council; the ledger's open block
+  const X_SNAP = 0.14, LX = GX[5] + 0.24, XR = GX[3] - 0.05;   // snap distance past the council; the ledger's open block; where rejections land
   const V_RAIL = 0.34, TICK = 0.4, V_LED = 0.16;               // rails advance in lockstep ticks; the ledger line drifts right
   const TRAIL = 5, TRAIL_DT = 0.042;                           // per-agent trail: five samples, 42 ms apart
   const CAP = 8200, MOTES = 220, NT = 96;                      // agent slots; incoming signals; ticks on the council aperture
@@ -67,9 +68,12 @@
   let sim = 0, seq = 41000 + Math.floor(Math.random() * 9000), inflight = 0, spawnAcc = 0, railPh = 0, histT = 0, hHead = 0, pulse = 0, rejGlow = 0;
   const S = { settled: 0, rejected: 0, win: [] };               // derived counters read these, nothing else
   const ledger = []; let blockSeq = 1040 + Math.floor(Math.random() * 400), openPulse = 0;
-  let apR = 0.18;
-  const setStrict = (v) => { strict = v; apR = 0.19 - 0.12 * (v / 0.6); }; // tightening the council closes its aperture
-  setStrict(strict);
+  // tightening the council closes its aperture: an iris that eases to its new opening (a click on the slider's track
+  // must not snap the funnel and every agent in it); the entry gate's shutter eases closed on Halt the same way
+  const AP_MAX = 0.19;
+  let apR = 0.18, apT = 0.18, shutK = 0;
+  const setStrict = (v, snap) => { strict = v; apT = AP_MAX - 0.12 * (v / 0.6); if (snap) apR = apT; };
+  setStrict(strict, true);
   const pid = (u) => `P-${String(u).padStart(5, '0')}`;
 
   function alloc() { if (nFree) return freeList[--nFree]; return hi < CAP ? hi++ : -1; }
@@ -132,7 +136,7 @@
   const isFollowed = (i) => follow.active && follow.i === i && follow.uid === UID[i];
 
   /* ---------------- settled → ledger blocks + the page event (at most 4/s) ---------------- */
-  let evPending = null, evLast = -1e9;
+  let evPending = null, evLast = -1e9, evTimer = 0;
   function sealed(i) {
     const f = isFollowed(i);
     if (!evPending) evPending = { id: '', lane: 0, count: 0, followed: false };
@@ -140,8 +144,12 @@
     if (f || !evPending.followed) { evPending.id = pid(UID[i]); evPending.lane = lane[i] + 1; evPending.followed = f; }
     openPulse = 1;
   }
-  function flush(nowMs, force) {
-    if (!evPending || (!force && nowMs - evLast < 250)) return;
+  // the clock is read at dispatch, not the frame's timestamp, so listeners never see two events closer than 250 ms;
+  // a forced flush (a followed proposal in a still study) waits for its turn instead of breaking the limit
+  function flush(force) {
+    if (!evPending) return;
+    const nowMs = performance.now(), wait = 250 - (nowMs - evLast);
+    if (wait > 0) { if (force && !evTimer) evTimer = setTimeout(() => { evTimer = 0; flush(true); }, wait + 1); return; }
     evLast = nowMs;
     const p = evPending; evPending = null;
     const block = ++blockSeq;
@@ -154,6 +162,8 @@
   /* ---------------- one step of the model ---------------- */
   function step(dt, project) {
     sim += dt;
+    apR += (apT - apR) * (1 - Math.exp(-dt * 5));
+    shutK += ((halted ? 1 : 0) - shutK) * (1 - Math.exp(-dt * 8));
     const limit = 1 - strict, cong = 0.1 + 1.05 * strict;
     if (!halted) { // inflow keeps the lane near the population you chose
       const tEst = (GX[3] - GX[0]) / 0.2 * (1 + cong * 0.3) + (1 - strict) * (GX[5] - GX[3]) / V_RAIL;
@@ -232,7 +242,9 @@
     const f = isFollowed(i);
     if (RISK[i] >= limit) {
       st[i] = REJECT; T0[i] = 0; flag[i] = 0; S.rejected++;
-      VX[i] = 0.05 + rnd() * 0.05; VY[i] = 0.02 + rnd() * 0.07; VZ[i] = Z[i] * 0.5 + (rnd() - 0.5) * 0.08;
+      // it falls away on the near side of the boundary (a rejected proposal never reaches the deterministic rails),
+      // fanning outward in depth so the fall reads as a curtain in front of the council, not a bundle through it
+      VX[i] = -0.02 - rnd() * 0.06; VY[i] = rnd() * 0.06; VZ[i] = Z[i] * 0.6 + (rnd() - 0.5) * 0.1;
       TF[k] = 1; TC[k] = 1;
     } else {
       st[i] = RAIL; lane[i] = pickLane(i); SY[i] = Y[i]; SZ[i] = Z[i]; T0[i] = 0;
@@ -281,9 +293,9 @@
     cam.cx = 0; cam.cy = 0; cam.F = 1;
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, d0 = 1e9, d1 = -1e9;
     const pts = [];
-    for (let g = 0; g < 6; g++) { const [hy, hz] = frameDims(g); for (const sy of [-1, 1]) for (const sz of [-1, 1]) pts.push([GX[g], sy * hy, sz * hz]); }
+    for (let g = 0; g < 6; g++) { const [hy, hz] = frameDims(g, true); for (const sy of [-1, 1]) for (const sz of [-1, 1]) pts.push([GX[g], sy * hy, sz * hz]); }
     // phones crop the runway and the ledger's tail so the gates get the width
-    pts.push([GX[0] - (narrow ? 0.06 : 0.3), 0, 0], [LX + (narrow ? 0.1 : 0.3), 0, 0], [GX[3] + 0.16, FLOOR, 0.12], [GX[3] + 0.16, FLOOR, -0.12]);
+    pts.push([GX[0] - (narrow ? 0.06 : 0.3), 0, 0], [LX + (narrow ? 0.1 : 0.3), 0, 0], [XR, FLOOR, 0.2], [XR, FLOOR, -0.2]);
     for (const p of pts) { proj(p[0], p[1], p[2]); x0 = Math.min(x0, P_X); x1 = Math.max(x1, P_X); y0 = Math.min(y0, P_Y); y1 = Math.max(y1, P_Y); d0 = Math.min(d0, P_D); d1 = Math.max(d1, P_D); }
     const padT = narrow ? rowTop + rowH + 18 : rowTop + rowH + 26, padB = narrow ? rowH + 22 : 16, padX = narrow ? 4 : 10;
     const aw = W - padX * 2, ah = H - padT - padB;
@@ -292,7 +304,7 @@
     cam.dmin = d0; cam.dmax = d1; cam.k0 = cam.F / cam.D;
     if (!isFinite(cam.F) || cam.F <= 0) Object.assign(cam, keep);
   }
-  function frameDims(g) { return g <= 2 ? [RY + 0.07, RZ + 0.07] : g === 3 ? [apR + 0.11, apR + 0.11] : [0.245, 0.075]; }
+  function frameDims(g, fitting) { const a = (fitting ? AP_MAX : apR) + 0.11; return g <= 2 ? [RY + 0.07, RZ + 0.07] : g === 3 ? [a, a] : [0.245, 0.075]; } // the camera fits the open aperture, so strictness never re-frames the shot
 
   /* ---------------- sprites: bead shading, green key light upper-left, ivory rim ---------------- */
   const SPR = {};
@@ -322,15 +334,15 @@
     } else if (kind === 'mote') {
       const gr = g.createRadialGradient(r, r, 0, r, r, r); gr.addColorStop(0, 'rgba(245,242,236,1)'); gr.addColorStop(0.35, 'rgba(245,242,236,.5)'); gr.addColorStop(1, 'rgba(245,242,236,0)');
       g.fillStyle = gr; g.fillRect(0, 0, P, P);
-    } else if (kind === 'halo' || kind === 'halor') {
+    } else if (kind === 'halo' || kind === 'halor' || kind === 'haloi') {
       const gr = g.createRadialGradient(r, r, 0, r, r, r);
-      const c0 = kind === 'halo' ? '79,203,147' : '217,103,93';
+      const c0 = kind === 'halo' ? '79,203,147' : kind === 'haloi' ? '245,242,236' : '217,103,93';
       gr.addColorStop(0, `rgba(${c0},.55)`); gr.addColorStop(0.4, `rgba(${c0},.16)`); gr.addColorStop(1, `rgba(${c0},0)`);
       g.fillStyle = gr; g.fillRect(0, 0, P, P);
     }
     return c;
   }
-  function buildSprites() { for (const k of ['bead', 'red', 'ring', 'square', 'mote', 'halo', 'halor']) SPR[k] = SPR_SIZES.map(P => makeSprite(k, P)); }
+  function buildSprites() { for (const k of ['bead', 'red', 'ring', 'square', 'mote', 'halo', 'halor', 'haloi']) SPR[k] = SPR_SIZES.map(P => makeSprite(k, P)); }
   function spr(kind, devPx) { const a = SPR[kind]; for (let j = 0; j < a.length; j++) if (SPR_SIZES[j] >= devPx) return a[j]; return a[a.length - 1]; }
   function blit(kind, x, y, size, alpha) {
     if (alpha <= 0.004 || size <= 0) return;
@@ -342,10 +354,19 @@
   const IV = '245,242,236', GR = '79,203,147', RD = '217,103,93', KH = '172,166,142';
   const bands = [new Int32Array(CAP), new Int32Array(CAP), new Int32Array(CAP)], bandN = [0, 0, 0];
   const cls = [new Int32Array(CAP), new Int32Array(CAP), new Int32Array(CAP)], clsN = [0, 0, 0];
-  let lost = false, hover = -1, mouse = null, pointerTouch = false;
+  let lost = false, hover = -1, hoverUid = 0, mouse = null, pointerTouch = false;
   const lbl = []; // gate label boxes this frame: {x, y, w, h, ax, ay, bottom}
 
   function seg(x0, y0, z0, x1, y1, z1) { proj(x0, y0, z0); ctx.moveTo(P_X, P_Y); proj(x1, y1, z1); ctx.lineTo(P_X, P_Y); }
+  // a soft light pool on the floor between x0 and x1: one stretched gradient sprite, turned to lie along the lane
+  function pool(x0, x1, kind, alpha) {
+    if (alpha <= 0.004) return;
+    proj(x0, FLOOR, 0); const ax = P_X, ay = P_Y; proj(x1, FLOOR, 0); const bx = P_X, by = P_Y;
+    proj((x0 + x1) / 2, FLOOR, 0.3); const dz = Math.hypot(P_X - (ax + bx) / 2, P_Y - (ay + by) / 2);
+    const w = Math.hypot(bx - ax, by - ay) * 1.25, h = Math.max(8, dz * 1.7);
+    ctx.save(); ctx.translate((ax + bx) / 2, (ay + by) / 2); ctx.rotate(Math.atan2(by - ay, bx - ax));
+    ctx.globalAlpha = alpha; ctx.drawImage(spr(kind, 64), -w / 2, -h / 2, w, h); ctx.restore();
+  }
   function draw() {
     if (lost) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -368,9 +389,14 @@
     ctx.beginPath();
     for (let g = 0; g < 6; g++) seg(GX[g], FLOOR, -0.39, GX[g], FLOOR, 0.39);
     ctx.strokeStyle = `rgba(${IV},.075)`; ctx.stroke();
+    // the lane lights the floor under it: a soft ivory pool under the estimation field, a green one under the rails
+    ctx.globalCompositeOperation = 'lighter';
+    pool(GX[0] - 0.1, GX[3], 'haloi', 0.05 * clamp(inflight / Math.max(1, target), 0.15, 1)); // a drained lane leaves the floor dark
+    pool(GX[3] + 0.1, LX, 'halo', 0.06);
+    ctx.globalCompositeOperation = 'source-over';
     // where rejected proposals land: a faint red bloom under the council, as strong as recent rejections
     if (rejGlow > 0.01) {
-      proj(GX[3] + 0.16, FLOOR, 0); const x = P_X, y = P_Y; proj(GX[3] + 0.16 + 0.32, FLOOR, 0); const rx = Math.abs(P_X - x) + 8;
+      proj(XR, FLOOR, 0); const x = P_X, y = P_Y; proj(XR + 0.32, FLOOR, 0); const rx = Math.abs(P_X - x) + 8;
       ctx.save(); ctx.translate(x, y); ctx.scale(1, 0.32);
       const gr = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, `rgba(${RD},${(0.16 * rejGlow).toFixed(3)})`); gr.addColorStop(1, `rgba(${RD},0)`);
       ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, rx, 0, TAU); ctx.fill(); ctx.restore();
@@ -407,19 +433,23 @@
     for (let g = 0; g < 6; g++) {
       if (g === 3) continue; // the council is the aperture
       const [hy, hz] = frameDims(g), x = GX[g], L = 0.055;
-      const shut = g === 0 && halted, col = g === 5 ? GR : shut ? KH : IV, f = GF[g];
+      const k = g === 0 ? shutK : 0, col = g === 5 ? GR : k > 0.5 ? KH : IV, f = GF[g];
       ctx.beginPath(); frameQuad(x, hy, hz);
       ctx.strokeStyle = `rgba(${col},${(0.07 + 0.1 * f).toFixed(3)})`; ctx.stroke();
-      if (shut) { // halted: the entry gate closes
-        ctx.fillStyle = `rgba(${KH},.08)`; ctx.beginPath(); frameQuad(x, hy, hz); ctx.fill();
-        ctx.beginPath(); for (let b = -2; b <= 2; b++) seg(x, b * hy / 3, -hz, x, b * hy / 3, hz);
-        ctx.strokeStyle = `rgba(${KH},.42)`; ctx.stroke();
+      if (k > 0.01) { // halted: the entry gate's shutter drops, slat by slat (and lifts again on Resume)
+        ctx.fillStyle = `rgba(${KH},${(0.08 * k).toFixed(3)})`; ctx.beginPath(); frameQuad(x, hy, hz); ctx.fill();
+        ctx.beginPath();
+        for (let b = 0; b < 5; b++) {
+          const e = easeOut(clamp(k * 1.5 - b * 0.12, 0, 1)), y = hy + ((2 - b) * hy / 3 - hy) * e;
+          if (e > 0.002) seg(x, y, -hz, x, y, hz);
+        }
+        ctx.strokeStyle = `rgba(${KH},${(0.42 * k).toFixed(3)})`; ctx.stroke();
       }
       ctx.beginPath();
       for (const sy of [-1, 1]) for (const sz of [-1, 1]) {
         seg(x, sy * hy, sz * hz, x, sy * (hy - L), sz * hz); seg(x, sy * hy, sz * hz, x, sy * hy, sz * (hz - L * 1.4));
       }
-      ctx.strokeStyle = `rgba(${col},${((g === 5 ? 0.62 : shut ? 0.75 : 0.36) + 0.4 * f).toFixed(3)})`; ctx.lineWidth = 1 + 0.4 * f; ctx.stroke(); ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(${col},${((g === 5 ? 0.62 : 0.36 + 0.39 * k) + 0.4 * f).toFixed(3)})`; ctx.lineWidth = 1 + 0.4 * f; ctx.stroke(); ctx.lineWidth = 1;
     }
   }
   // the boundary: a glowing hairline plane just past the council. Upstream agents jitter (estimation); downstream they
@@ -493,10 +523,15 @@
       if ((P_D < cd) !== front) { pen = false; continue; }
       if (pen) ctx.lineTo(P_X, P_Y); else { ctx.moveTo(P_X, P_Y); pen = true; }
     }
-    ctx.strokeStyle = `rgba(${GR},${(0.4 + 0.4 * pulse).toFixed(3)})`; ctx.stroke();
+    // two-pass glow: a wide faint stroke and a narrower one under the hairline make the aperture's rim luminous
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineWidth = 9; ctx.strokeStyle = `rgba(${GR},${(0.035 + 0.05 * pulse).toFixed(3)})`; ctx.stroke();
+    ctx.lineWidth = 3.5; ctx.strokeStyle = `rgba(${GR},${(0.08 + 0.12 * pulse).toFixed(3)})`; ctx.stroke();
+    ctx.globalCompositeOperation = 'source-over'; ctx.lineWidth = 1;
+    ctx.strokeStyle = `rgba(${GR},${(0.5 + 0.4 * pulse).toFixed(3)})`; ctx.stroke();
   }
   function drawMotes() {
-    const shut = halted ? 0.25 : 1, dim = 1 - 0.7 * follow.dim;
+    const shut = 1 - 0.75 * shutK, dim = 1 - 0.7 * follow.dim;
     for (let m = 0; m < MOTES; m++) {
       const o = m * 6, t = MS[m], e = t * t * (3 - 2 * t);
       const x = MX[o] + (MX[o + 3] - MX[o]) * t, y = MX[o + 1] + (MX[o + 4] - MX[o + 1]) * e, z = MX[o + 2] + (MX[o + 5] - MX[o + 2]) * e;
@@ -572,7 +607,7 @@
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < hi; i++) if (st[i] === SETTLE && T0[i] < 0.2 && !isFollowed(i)) blit('halo', PX[i], PY[i], r0 * 4.5 * PS[i], 0.32 * (1 - T0[i] / 0.2) * dim);
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
-    if (hover >= 0 && st[hover] && !isFollowed(hover)) {
+    if (live(hover) && UID[hover] === hoverUid && !isFollowed(hover)) {
       ctx.strokeStyle = `rgba(${IV},.85)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(PX[hover], PY[hover], r0 * 1.7 + 5, 0, TAU); ctx.stroke();
     }
   }
@@ -672,7 +707,7 @@
     if (el.ledger && lw[6]) { proj(LX + 0.04, 0, 0); setPos(el.ledger, clamp(P_X, 4, W - lw[6][0] - 4), P_Y + 12); }
     // the halt banner: bottom right on wide stages (the trace owns the bottom left), above the lower label row on phones
     if (el.banner && lw[7]) setPos(el.banner, narrow ? 8 : W - lw[7][0] - 14, narrow ? H - rowH - 18 - lw[7][1] : H - lw[7][1] - 14);
-    placeTag();
+    placeTag(); placeHover();
   }
   let tagBox = null;
   function placeTag() {
@@ -790,14 +825,34 @@
     if (best < 0) for (let i = 0; i < hi; i++) if ((st[i] === FLOW || st[i] === PROP || st[i] === RAIL) && (best < 0 || X[i] < X[best])) best = i;
     return best;
   }
+  const live = (i) => i >= 0 && (st[i] === FLOW || st[i] === PROP || st[i] === RAIL);
   function hitTest(mx, my, radius) {
     let best = -1, bd = radius * radius;
     for (let i = 0; i < hi; i++) {
-      const s = st[i]; if (s !== FLOW && s !== PROP && s !== RAIL) continue;
+      if (!live(i)) continue;
       const dx = PX[i] - mx, dy = PY[i] - my, d = dx * dx + dy * dy;
       if (d < bd) { bd = d; best = i; }
     }
     return best;
+  }
+  // the agent under the mouse, with hysteresis: it stays the hovered one while it is within 22 px of the pointer, so
+  // the hover tag does not flicker between neighbours as the lane flows under a resting cursor
+  function updateHover() {
+    if (!mouse) { hover = -1; return; }
+    const keep = live(hover) && UID[hover] === hoverUid && (PX[hover] - mouse.x) ** 2 + (PY[hover] - mouse.y) ** 2 < 484;
+    if (!keep) { hover = hitTest(mouse.x, mouse.y, 14); hoverUid = hover >= 0 ? UID[hover] : 0; }
+    cv.style.cursor = hover >= 0 ? 'pointer' : '';
+  }
+  function placeHover() {
+    const t = el.hov; if (!t) return;
+    const on = hover >= 0 && live(hover) && UID[hover] === hoverUid && !isFollowed(hover);
+    if (!on) { if (!t.hidden) t.hidden = true; return; }
+    const id = pid(UID[hover]), b = t.firstElementChild;
+    if (t.hidden) t.hidden = false;
+    if (b && b.textContent !== id) { b.textContent = id; t.__w = t.offsetWidth; t.__h = t.offsetHeight; }
+    const w = t.__w || 120, h = t.__h || 32, x = PX[hover], y = PY[hover];
+    const right = x + 16 + w < W - 6;
+    setPos(t, right ? x + 16 : x - 16 - w, clamp(y - h - 12, 4, H - h - 4));
   }
 
   /* ---------------- counters, all read from the model ---------------- */
@@ -821,7 +876,7 @@
     const pct = Math.round(strict * 100), lim = (1 - strict).toFixed(2);
     if (el.strictOut) el.strictOut.textContent = `${pct}%`;
     if (el.strict) el.strict.setAttribute('aria-valuetext', `${pct}% rejected, risk limit ${lim}`);
-    if (el.limit) el.limit.textContent = `rejects risk > ${lim}`;
+    if (el.limit) el.limit.textContent = strict > 0 ? `rejects risk > ${lim}` : 'approves every proposal';
   };
 
   /* ---------------- controls ---------------- */
@@ -836,24 +891,33 @@
   }
   if (el.follow) el.follow.addEventListener('click', () => { if (follow.active) stopFollow(); else startFollow(pickFresh()); });
   if (el.close) el.close.addEventListener('click', () => { stopFollow(); if (el.follow) el.follow.focus(); });
-  root.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (follow.active || follow.show || (el.trace && !el.trace.hidden))) { stopFollow(); if (el.follow) el.follow.focus(); } });
+  // Escape stops following from inside the lab, and also after a click or tap on an agent (focus is then on the page
+  // itself); it is left alone while another widget (the nav's chapter list, the menu) holds focus
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || e.defaultPrevented || !(follow.active || follow.show || (el.trace && !el.trace.hidden))) return;
+    const t = e.target;
+    if (!(root.contains(t) || !t || t === document.body || t === document.documentElement)) return;
+    stopFollow(); if (el.follow) el.follow.focus({ preventScroll: true });
+  });
   const local = (e) => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   cv.addEventListener('pointerdown', (e) => { pointerTouch = e.pointerType !== 'mouse'; });
   cv.addEventListener('pointermove', (e) => {
     if (e.pointerType !== 'mouse') return;
     mouse = local(e); parT = clamp(mouse.x / W - 0.5, -0.5, 0.5);
-    if (reduced.matches || !running()) { hover = hitTest(mouse.x, mouse.y, 14); cv.style.cursor = hover >= 0 ? 'pointer' : ''; if (reduced.matches) draw(); }
+    if (reduced.matches || !running()) { updateHover(); draw(); }
   });
-  cv.addEventListener('pointerleave', () => { mouse = null; hover = -1; parT = 0; cv.style.cursor = ''; });
+  cv.addEventListener('pointerleave', () => { mouse = null; hover = -1; parT = 0; cv.style.cursor = ''; placeHover(); if (reduced.matches) draw(); });
   cv.addEventListener('click', (e) => {
-    const p = local(e), i = hitTest(p.x, p.y, pointerTouch ? 30 : 16);
+    const p = local(e);
+    // a mouse click takes the agent the hover tag names; a tap searches a finger-sized radius
+    const i = !pointerTouch && live(hover) && UID[hover] === hoverUid ? hover : hitTest(p.x, p.y, pointerTouch ? 30 : 16);
     if (i >= 0 && !isFollowed(i)) startFollow(i);
   });
 
   /* ---------------- still studies (prefers-reduced-motion) ---------------- */
   function still() {
     if (follow.show || follow.active) { follow.active = false; follow.show = false; hideTag(); el.gates.forEach(li => li.classList.remove('is-hit')); if (el.trace) el.trace.hidden = true; root.classList.remove('is-tracing'); setFollowButton(); }
-    seed = 11; reset(); camera(); warmStart();
+    seed = 11; reset(); apR = apT; shutK = halted ? 1 : 0; camera(); warmStart();
     const steps = halted ? 100 : 40; // halted: the lane has had five seconds to drain
     for (let k = 0; k < steps; k++) {
       step(0.05, k >= steps - TRAIL - 1);
@@ -867,8 +931,7 @@
   function settleStill() {
     let guard = 0;
     while (follow.active && guard++ < 600) step(0.05, false);
-    if (evPending && evPending.followed) flush(performance.now(), true);
-    evPending = null;
+    if (evPending && evPending.followed) flush(true); else evPending = null;
     for (let k = 0; k < TRAIL + 1; k++) step(0.03, true);
     follow.endAt = sim; projectAll(); draw(); stats();
   }
@@ -906,8 +969,9 @@
     if (!running() || !onScreen) return;
     const raw = Math.max(0, (now - last) / 1000), dt = Math.min(0.05, raw); last = now; frameDt = dt;
     if (raw < 0.5) govern(raw);
-    if (mouse) { hover = hitTest(mouse.x, mouse.y, 14); cv.style.cursor = hover >= 0 ? 'pointer' : ''; }
-    step(dt, true); draw(); flush(now, false);
+    step(dt, true);
+    if (mouse) updateHover();
+    draw(); flush(false);
     if ((ui += dt) > 0.15) { ui = 0; stats(); }
     frameId = requestAnimationFrame(frame);
   }
@@ -917,7 +981,7 @@
     if (!running() || onScreen) return;
     const now = performance.now(), dt = Math.min(0.5, (now - last) / 1000); last = now;
     for (let k = 0; k < 5; k++) step(dt / 5, false);
-    flush(now, false); stats();
+    flush(false); stats();
     bgId = setTimeout(bg, 250);
   }
   function schedule() {

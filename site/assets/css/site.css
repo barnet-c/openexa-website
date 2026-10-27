@@ -1182,7 +1182,7 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
    Without JavaScript the gate list is a static six-gate diagram and the dead controls are not shown. */
 .swarm-live { position: relative; border: 1px solid var(--line-strong); border-radius: var(--r); background: #0B110F; overflow: hidden; margin-bottom: 40px; }
 .sw-head { display: flex; align-items: center; gap: 10px 22px; flex-wrap: wrap; min-height: 56px; padding: 10px 12px 10px 20px; border-bottom: 1px solid var(--line); font: 500 .64rem/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); }
-.sw-live, .sw-follow, .sw-on .sw-gates small, .sw-limit, .sw-ledger, .sw-banner, .sw-agent, .sw-trace, .swarm-live:not(.sw-on) .swarm-bar { display: none; }
+.sw-live, .sw-follow, .sw-on .sw-gates small, .sw-limit, .sw-ledger, .sw-banner, .sw-agent, .sw-hover, .sw-trace, .swarm-live:not(.sw-on) .swarm-bar { display: none; }
 .sw-on .sw-live { display: inline-flex; align-items: center; gap: 9px; color: var(--accent); min-width: 8.5em; }
 .sw-live i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 0 rgba(79, 203, 147, .55); animation: desk-ping 1.8s ease-out infinite; }
 .swarm-live.is-halted .sw-live { color: var(--khaki); }
@@ -1233,6 +1233,9 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .sw-agent span { display: block; }
 .sw-agent.is-bad { border-color: rgba(217, 103, 93, .6); } .sw-agent.is-bad b { color: var(--reject-bright); }
 .sw-agent.is-ok { border-color: rgba(79, 203, 147, .6); }
+/* the hover tag (mouse only): names the agent under the pointer and says it can be followed */
+.sw-on .sw-hover:not([hidden]) { display: block; position: absolute; left: 0; top: 0; padding: 5px 9px 6px; border-left: 1px solid var(--accent); background: rgba(11, 17, 15, .82); white-space: nowrap; pointer-events: none; font: 500 .56rem/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .62); will-change: transform; }
+.sw-hover b { display: block; font-weight: 500; color: var(--paper); }
 
 /* the trace of a followed proposal: over the stage's lower left; below the canvas on narrow screens */
 .sw-on .sw-trace:not([hidden]) { display: block; position: absolute; left: 16px; top: calc(var(--sw-h) - 16px); transform: translateY(-100%); width: min(400px, calc(100% - 32px)); border: 1px solid rgba(245, 242, 236, .2); background: rgba(11, 17, 15, .88); font-family: var(--mono); animation: sw-in .35s var(--ease) both; }
@@ -1274,8 +1277,8 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .swarm-live.is-halted .halt { background: var(--paper); color: #0B110F; border-color: var(--paper); }
 @media (max-width: 1100px) { .swarm-bar { grid-template-columns: 1fr; } .swarm-stats { border-right: 0; border-bottom: 1px solid var(--line); } }
 @media (max-width: 640px) {
-  .sw-head { padding-left: 16px; }
-  .sw-on .sw-kicker { display: none; } /* with JavaScript the state and Follow fill the head; without it the kicker stays */
+  .sw-head { padding-left: 16px; row-gap: 8px; }
+  .sw-on .sw-kicker { order: -1; flex-basis: 100%; font-size: .56rem; } /* its own first line: the lab names itself an illustrative model at every width */
   .sw-stage { --sw-h: 310px; }
   .swarm-stats > div { padding: 14px 10px 12px 12px; }
   .swarm-stats b { font-size: 1.45rem; }
@@ -1287,6 +1290,9 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 /* set by the engine from the stage's own width: under 820px the trace flows under the canvas; under 560px the
    labels split into two rows (02 04 06 above the lane, 01 03 05 below) and tighten */
 .sw-on.is-stacked .sw-trace:not([hidden]) { position: relative; left: auto; top: auto; transform: none; width: auto; border: 0; border-top: 1px solid var(--line); animation-name: sw-in; }
+/* in the flow the log keeps the height of a full journey (six gates + the ledger) from its first row, so the counters
+   and controls below it do not step down with every gate */
+.sw-on.is-stacked .sw-log { min-height: 18.6em; }
 .sw-on.is-narrow .sw-gates li { font-size: .56rem; letter-spacing: .1em; }
 .sw-on.is-narrow .sw-gates b { margin-right: .25em; }
 .sw-on.is-narrow .sw-ledger span { display: none; }
