@@ -168,8 +168,8 @@ def head(url, title, desc, kind="article", extra=""):
   <link rel="apple-touch-icon" href="{PFX}assets/img/apple-touch-icon.png">
   <link rel="manifest" href="{PFX}site.webmanifest">
   <link rel="icon" type="image/svg+xml" href="{PFX}assets/img/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="{PFX}assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{PFX}assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{PFX}assets/css/site.css">
 {extra}</head>'''
 span = lambda a, b: f"{a}" if a == b else f"{a}–{b}"
