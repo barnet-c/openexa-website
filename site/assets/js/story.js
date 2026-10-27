@@ -347,9 +347,9 @@
         vec3 d = normalize(s.xyz + vec3(0.0001));
         if (grp > 0.5) d = normalize(vec3(cos(r.z * TAU), (r.w - 0.5) * 0.7, sin(r.z * TAU)));
         S = rotY((r.w - 0.5) * 1.4) * (d * (2.3 + 1.3 * r.z)) + vec3(0.0, (r.x - 0.5) * 0.8, 0.0);
-      } else S = T + vec3((r.z - 0.5) * 1.0, 0.3 + 0.36 * r.x, (r.w - 0.5) * 0.45);
+      } else S = T + vec3((r.z - 0.5) * 0.7, 0.16 + 0.24 * r.x, (r.w - 0.5) * 0.35); // a tight funnel just above the lane
       float e = ph * ph;
-      al = smoothstep(0.0, 0.14, ph) * (1.0 - smoothstep(0.86, 1.0, ph));
+      al = smoothstep(0.0, 0.14, ph) * (1.0 - smoothstep(0.9, 1.0, ph)) * (1.0 + 1.4 * smoothstep(0.72, 0.92, ph));
       vec3 P = mix(S, T, e);
       return rotY((1.0 - e) * (r.w - 0.5) * 1.1) * (P - T) + T;
     }
@@ -455,6 +455,8 @@
       float behind = smoothstep(0.0, 0.25 * u_occ.w, oc.z - mv.z);
       al *= 1.0 - 0.8 * inside * behind;
     }
+    float green = step(1.5, k) * step(k, 2.5);
+    al *= 1.0 - 0.16 * green * (0.5 + 0.5 * sin(u_time * 2.2 + a_rand.w * 6.283));
     float dim = u_hovOn * (1.0 - h);
     al *= (1.0 + 0.55 * h) * (1.0 - 0.5 * dim);
     // the intro: the globe draws in band by band, from the top
@@ -864,27 +866,28 @@
   /* ================= hairlines: orbits, rings, layer rims, the boundary, gates, the aperture, the ledger, hash links ================= */
   const LOOP_N = LITE ? 72 : 112;
   const loopAngles = (az) => Array.from({ length: LOOP_N }, (_, j) => az - j / LOOP_N * TAU); // world angles shared by every loop shape
+  const GEO = new Map(), geo = (k, fn) => { let g = GEO.get(k); if (!g) GEO.set(k, g = fn()); return g; }; // static shapes, built once
   function linesFor(sc, T, out) {
-    const put = (id, pts, closed, col, a, w, key) => out.set(id, { pts, closed, col, a, w: w || 1, key: key == null ? 0.5 : key });
+    const put = (id, pts, closed, col, a, w, key, dy) => out.set(id, { pts, closed, col, a, w: w || 1, key: key == null ? 0.5 : key, dy: dy || 0 });
     if (sc === 0) {
-      ORBITS.forEach((o, k) => { const pts = []; for (let j = 0; j < LOOP_N; j++) pts.push(onLoop(OB[k], o[0], j / LOOP_N * TAU, 0)); put('o' + k, pts, true, k === 0 ? C.green : C.ivory, k === 0 ? 0.2 : 0.1, 1, 0.12 + 0.5 * k / 6); });
+      ORBITS.forEach((o, k) => { const pts = geo('o0' + k, () => Array.from({ length: LOOP_N }, (_, j) => onLoop(OB[k], o[0], j / LOOP_N * TAU, 0))); put('o' + k, pts, true, k === 0 ? C.green : C.ivory, k === 0 ? 0.2 : 0.1, 1, 0.12 + 0.5 * k / 6); });
       put('hz', [[-1.35, -1.3, 0], [1.35, -1.3, 0]], false, C.ivory, 0.07, 1, 0.9);
     } else if (sc === 1) {
       RINGS.forEach((o, k) => {
-        const pts = []; for (let j = 0; j < LOOP_N; j++) pts.push(onLoop(RB[k], o[0], j / LOOP_N * TAU, 0));
+        const pts = geo('o1' + k, () => Array.from({ length: LOOP_N }, (_, j) => onLoop(RB[k], o[0], j / LOOP_N * TAU, 0)));
         put('o' + k, pts, true, k === 0 ? C.green : k < 3 ? C.ivory : C.khaki, (k === 0 ? 0.42 : k < 3 ? 0.16 : 0.12) * (1 + 1.6 * hovFor(1, k)), 1 + 0.6 * hovFor(1, k), 0.15 + 0.6 * k / 6);
       });
-      const tk = []; for (let j = 0; j < 48; j++) { const a = j / 48 * TAU, l = j % 4 ? 0.03 : 0.07; tk.push(onLoop(RB[0], RINGS[0][0] - 0.06, a, 0), onLoop(RB[0], RINGS[0][0] - 0.06 - l, a, 0)); }
+      const tk = geo('tk1', () => { const t = []; for (let j = 0; j < 48; j++) { const a = j / 48 * TAU, l = j % 4 ? 0.03 : 0.07; t.push(onLoop(RB[0], RINGS[0][0] - 0.06, a, 0), onLoop(RB[0], RINGS[0][0] - 0.06 - l, a, 0)); } return t; });
       put('tk', tk, 'pairs', C.green, 0.32, 1, 0.3);
       put('hub', [[-0.07, 0, 0], [0.07, 0, 0], [0, 0, -0.07], [0, 0, 0.07], [0, -0.07, 0], [0, 0.07, 0]], 'pairs', C.ivory, 0.32, 1, 0.5);
       put('hz', [[-1.6, -0.92, 0], [1.6, -0.92, 0]], false, C.ivory, 0.0, 1, 0.9);
     } else if (sc === 2) {
       for (let p = 0; p < 8; p++) {
-        const hp = hovFor(2, p), az = p < 6 ? RINGS[p][2] : 0, y = PL_Y(p) + (reducedMQ.matches ? 0 : hp * 0.07);
-        const pts = loopAngles(az).map(ph => { const [x, z] = rrHit(ph, PL_HX, PL_HZ, PL_RC); return [x, y, z]; });
-        put('o' + p, pts, true, p === 3 ? C.green : C.ivory, (p < 4 ? 0.2 : 0.26) * (1 + 1.5 * hp) * (p === 3 ? 1.4 : 1), 1 + 0.5 * hp, (p + 0.2) / 8.4);
+        const hp = hovFor(2, p), az = p < 6 ? RINGS[p][2] : 0, y = PL_Y(p);
+        const pts = geo('o2' + p, () => loopAngles(az).map(ph => { const [x, z] = rrHit(ph, PL_HX, PL_HZ, PL_RC); return [x, y, z]; }));
+        put('o' + p, pts, true, p === 3 ? C.green : C.ivory, (p < 4 ? 0.2 : 0.26) * (1 + 1.5 * hp) * (p === 3 ? 1.4 : 1), 1 + 0.5 * hp, (p + 0.2) / 8.4, reducedMQ.matches ? 0 : hp * 0.07);
       }
-      const bd = loopAngles(0).map(ph => { const [x, z] = rrHit(ph, PL_HX * 1.1, PL_HZ * 1.12, PL_RC * 1.6); return [x, 0, z]; });
+      const bd = geo('bd2', () => loopAngles(0).map(ph => { const [x, z] = rrHit(ph, PL_HX * 1.1, PL_HZ * 1.12, PL_RC * 1.6); return [x, 0, z]; }));
       put('bd', bd, true, C.green, 0.75, 1.25, 0.5);
       put('bdg', bd, true, C.green, 0.07, 7, 0.5);
       [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([sx, sz], j) => put('v' + j, [[sx * (PL_HX - 0.02), PL_Y(0), sz * (PL_HZ - 0.02)], [sx * (PL_HX - 0.02), PL_Y(7), sz * (PL_HZ - 0.02)]], false, C.ivory, 0.06, 1, 0.5));
@@ -893,11 +896,11 @@
       const pulse = councilPulse(T);
       for (let p = 0; p < 8; p++) {
         const g = GATE_OF_PLATE[p], az = p < 6 ? RINGS[p][2] : 0, y = GATE_Y[g];
-        const pts = loopAngles(az).map(ph => { const [x, z] = rrHit(ph, GATE_HX, GATE_HZ, 0.04); return [LX + x, y, z]; });
+        const pts = geo('o3' + p, () => loopAngles(az).map(ph => { const [x, z] = rrHit(ph, GATE_HX, GATE_HZ, 0.04); return [LX + x, y, z]; }));
         put('o' + p, pts, true, C.ivory, (p === 5 || p === 7) ? 0.0 : 0.3, 1, (p + 0.2) / 8.4);
       }
       const apc = pulse.rej ? C.red : C.green, k = pulse.k;
-      const ap = loopAngles(0).map(ph => [LX + Math.cos(ph) * AP_R, GATE_Y[COUNCIL], Math.sin(ph) * AP_R]);
+      const ap = geo('ap3', () => loopAngles(0).map(ph => [LX + Math.cos(ph) * AP_R, GATE_Y[COUNCIL], Math.sin(ph) * AP_R]));
       put('bd', ap, true, C.green, 0.55 + 0.4 * k, 1 + 0.6 * k, 0.5);
       put('bdg', ap, true, apc, 0.05 + 0.18 * k, 7, 0.5);
       const ticks = []; for (let j = 0; j < 60; j++) { const a = j / 60 * TAU, r0 = AP_R + 0.03, r1 = AP_R + 0.03 + (j % 5 ? 0.035 : 0.07) * (1 + 0.6 * k); ticks.push([LX + Math.cos(a) * r0, GATE_Y[COUNCIL], Math.sin(a) * r0], [LX + Math.cos(a) * r1, GATE_Y[COUNCIL], Math.sin(a) * r1]); }
@@ -930,30 +933,34 @@
     linesFor(seg, simTime, linA); linesFor(seg + 1, simTime, linB);
     const sA = scale[0], sB = scale[1];
     let o = 0; nLine = 0;
-    const segOut = (p0, p1, col, a, w) => {
-      if (nLine >= N_LINE_MAX || a < 0.003) return;
-      lineData[o] = p0[0]; lineData[o + 1] = p0[1]; lineData[o + 2] = p0[2]; lineData[o + 3] = p1[0]; lineData[o + 4] = p1[1]; lineData[o + 5] = p1[2];
-      lineData[o + 6] = col[0]; lineData[o + 7] = col[1]; lineData[o + 8] = col[2]; lineData[o + 9] = a; lineData[o + 10] = w; o += 11; nLine++;
-    };
-    const emitSet = (pts, closed, col, a, w) => {
+    // one hairline set (A alone, B alone, or A morphing into B with t) written segment by segment into the buffer
+    const emit = (A, B, t, cr, cg, cb, a, w) => {
       a *= intro;
       if (a < 0.003) return;
-      if (closed === 'pairs') { for (let j = 0; j + 1 < pts.length; j += 2) segOut(pts[j], pts[j + 1], col, a, w); return; }
-      for (let j = 0; j + 1 < pts.length; j++) segOut(pts[j], pts[j + 1], col, a, w);
-      if (closed) segOut(pts[pts.length - 1], pts[0], col, a, w);
+      const P = A.pts, Q = B ? B.pts : null, n = P.length, pairs = A.closed === 'pairs';
+      const segs = pairs ? n >> 1 : (A.closed ? n : n - 1);
+      const dA = A.dy, dB = B ? B.dy : 0;
+      for (let j = 0; j < segs && nLine < N_LINE_MAX; j++) {
+        const i0 = pairs ? 2 * j : j, i1 = pairs ? 2 * j + 1 : (j + 1) % n;
+        for (let e = 0; e < 2; e++) {
+          const i = e ? i1 : i0, p = P[i], d = o + e * 3;
+          if (Q) { const q = Q[i]; lineData[d] = lerp(p[0] * sA, q[0] * sB, t); lineData[d + 1] = lerp((p[1] + dA) * sA, (q[1] + dB) * sB, t); lineData[d + 2] = lerp(p[2] * sA, q[2] * sB, t); }
+          else { const s = A.s; lineData[d] = p[0] * s; lineData[d + 1] = (p[1] + dA) * s; lineData[d + 2] = p[2] * s; }
+        }
+        lineData[o + 6] = cr; lineData[o + 7] = cg; lineData[o + 8] = cb; lineData[o + 9] = a; lineData[o + 10] = w; o += 11; nLine++;
+      }
     };
-    const sc = (pts, s) => pts.map(p => [p[0] * s, p[1] * s, p[2] * s]);
     linA.forEach((A, id) => {
       const B = linB.get(id), t = ease(stag(mRaw, B ? B.key : A.key)), tc = clamp(t, 0, 1);
+      A.s = sA;
       if (B && B.pts.length === A.pts.length && B.closed === A.closed) {
-        const pts = A.pts.map((p, j) => { const q = B.pts[j]; return [lerp(p[0] * sA, q[0] * sB, t), lerp(p[1] * sA, q[1] * sB, t), lerp(p[2] * sA, q[2] * sB, t)]; });
-        emitSet(pts, A.closed, [lerp(A.col[0], B.col[0], tc), lerp(A.col[1], B.col[1], tc), lerp(A.col[2], B.col[2], tc)], lerp(A.a, B.a, tc), lerp(A.w, B.w, tc));
+        emit(A, B, t, lerp(A.col[0], B.col[0], tc), lerp(A.col[1], B.col[1], tc), lerp(A.col[2], B.col[2], tc), lerp(A.a, B.a, tc), lerp(A.w, B.w, tc));
       } else {
-        emitSet(sc(A.pts, sA), A.closed, A.col, A.a * (1 - tc), A.w);
-        if (B) emitSet(sc(B.pts, sB), B.closed, B.col, B.a * tc, B.w);
+        emit(A, null, 0, A.col[0], A.col[1], A.col[2], A.a * (1 - tc), A.w);
+        if (B) { B.s = sB; emit(B, null, 0, B.col[0], B.col[1], B.col[2], B.a * tc, B.w); }
       }
     });
-    linB.forEach((B, id) => { if (!linA.has(id)) { const t = clamp(ease(stag(mRaw, B.key)), 0, 1); emitSet(sc(B.pts, sB), B.closed, B.col, B.a * t, B.w); } });
+    linB.forEach((B, id) => { if (!linA.has(id)) { const t = clamp(ease(stag(mRaw, B.key)), 0, 1); B.s = sB; emit(B, null, 0, B.col[0], B.col[1], B.col[2], B.a * t, B.w); } });
   }
 
   /* ================= callouts: DOM labels projected from 3D anchors, leader lines, hover and focus ================= */
@@ -1039,7 +1046,7 @@
     const off = () => { hoverFocus = null; setHover(); };
     l.el.addEventListener('focus', on); l.el.addEventListener('blur', off);
     l.el.addEventListener('pointerenter', () => { hoverPtr = { scene: l.scene, idx: l.group }; setHover(); });
-    l.el.addEventListener('pointerleave', () => { hoverPtr = null; setHover(); });
+    l.el.addEventListener('pointerleave', e => { if (e.pointerType === 'touch') return; hoverPtr = null; setHover(); });
   });
   const vis = (sc) => 1 - sstep(0.22, 0.4, Math.abs(sNow - sc)) - (sc === 4 ? sstep(0.15, 0.55, xNow) : 0);
   let tabScene = -1;
@@ -1152,12 +1159,24 @@
   const motionButton = story.querySelector('[data-story-motion]');
   const live = story.querySelector('[data-story-live]');
   const bar = story.querySelector('.story-bar');
+  const num = story.querySelector('.story-num'), numB = num && num.querySelector('b'), numS = num && num.querySelector('span');
+  let shownNum = -1, shownNumOp = '', shownNumTr = '';
   const paper = story.querySelector('.story-paper');
   const paperSum = story.querySelector('[data-story-sum]');
   if (paperSum) paperSum.textContent = `${NCOL} of ${NCOL} above the 10 bps floor · ${N_PREM} premium · ${N_DISC} discount · every fill broker-confirmed`;
   const shown = beats.map(() => ({ op: '', tr: '', on: null }));
+  const beatLinks = beats.map(b => Array.from(b.querySelectorAll('a[href], button')));
   let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownXo = '', shownFill = [];
   let paperH = 0;
+  // the index follows the scroll position itself: immediate, and right even when frames are slow or throttled
+  function syncIndex() {
+    const ci = clamp(Math.round(sTarget), 0, 4);
+    if (shownIdx === ci) return;
+    shownIdx = ci;
+    idx.forEach((button, i) => { const a = ci === i; button.classList.toggle('is-on', a); if (a) button.setAttribute('aria-current', 'step'); else button.removeAttribute('aria-current'); });
+    beatLinks.forEach((list, i) => list.forEach(el => { if (i === ci) el.removeAttribute('tabindex'); else el.setAttribute('tabindex', '-1'); }));
+    story.dataset.scene = String(ci);
+  }
   function updateUI() {
     const red = reducedMQ.matches, xe = red ? (xNow > 0.5 ? 1 : 0) : xNow;
     // the hand-off: the paper rises from the bottom edge to the ledger's floor line, which becomes its edge
@@ -1166,7 +1185,7 @@
     if (paper) { const v = paperH.toFixed(1); if (v !== shownPaper) { shownPaper = v; paper.style.height = v + 'px'; paper.style.visibility = paperH > 0.5 ? 'visible' : 'hidden'; } }
     beats.forEach((b, i) => {
       const d = Math.abs(sNow - i);
-      let op = 1 - sstep(0.32, 0.5, d);
+      let op = red ? (Math.round(sNow) === i ? 1 : 0) : 1 - sstep(0.38, 0.5, d); // each scene's copy holds for 76% of the scroll (reduced motion: it snaps with the scene)
       let dy = red ? 0 : (sNow - i) * -24;
       if (i === 4 && xe > 0) { // the headline stays above the paper when it fits; the rest gives way to it
         const br = beatRects[4] || { ht: 0, hb: 0 }, edge = H - paperH - 26, shift = Math.min(0, edge - br.hb);
@@ -1179,14 +1198,18 @@
       if (s.tr !== tr) b.style.transform = s.tr = tr;
       if (s.on !== op > 0.5) b.classList.toggle('is-active', s.on = op > 0.5);
     });
-    const ci = clamp(Math.round(sTarget), 0, 4);
-    if (shownIdx !== ci) {
-      shownIdx = ci;
-      idx.forEach((button, i) => { const a = ci === i; button.classList.toggle('is-on', a); if (a) button.setAttribute('aria-current', 'step'); else button.removeAttribute('aria-current'); });
-      story.dataset.scene = String(ci);
-    }
+    syncIndex();
     idx.forEach((button, i) => { const f = clamp(sNow - i + 0.5, 0, 1).toFixed(2); if (shownFill[i] !== f) button.style.setProperty('--fill', shownFill[i] = f); });
     if (shownScrolled !== sNow > 0.3) story.classList.toggle('is-scrolled', shownScrolled = sNow > 0.3);
+    // between two scenes, while the copy hands over, the incoming scene's numeral holds the column (a chapter mark, never an empty frame)
+    if (num) {
+      const f = sNow - Math.floor(sNow), n = clamp(Math.round(sTarget), 0, 4);
+      const op = red || sNow >= 4 || xNow > 0 ? 0 : 1 - sstep(0.06, 0.15, Math.abs(f - 0.5)); // reduced motion: the copy snaps, nothing to bridge
+      if (n !== shownNum) { shownNum = n; numB.textContent = pad2(n); numS.textContent = SCENES[n]; }
+      const v = op.toFixed(3), tr = red ? 'none' : `translate3d(0, ${((0.5 - f) * 40).toFixed(1)}px, 0)`;
+      if (v !== shownNumOp) { num.style.opacity = shownNumOp = v; }
+      if (tr !== shownNumTr) { num.style.transform = shownNumTr = tr; }
+    }
     const bo = (1 - sstep(0.08, 0.3, xe)).toFixed(3);
     if (bar && bo !== shownBar) { bar.style.opacity = shownBar = bo; bar.style.visibility = bo < 0.01 ? 'hidden' : ''; }
     placeLabels();
@@ -1333,10 +1356,11 @@
     if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
     const d = e.key === 'ArrowRight' || e.key === 'PageDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'PageUp' ? -1 : 0;
     if (!d) return;
+    measure();
+    if (window.scrollY < storyTop - 4 || window.scrollY > storyTop + run + 4) return; // past the overture the keys scroll the page as usual
     const base = performance.now() - lastGo.t < 1200 ? lastGo.i : clamp(Math.round(sTarget + (xTarget > 0 ? 0.5 : 0)), 0, 4);
     if (d > 0 && base >= 4) { // past the last scene: through the hand-off to the first paper chapter
       e.preventDefault();
-      measure();
       const next = document.querySelector('.story ~ section[id], .story ~ * section[id]');
       const top = next ? next.getBoundingClientRect().top + window.scrollY : storyTop + story.offsetHeight;
       window.scrollTo({ top: Math.round(top), behavior: reducedMQ.matches ? 'instant' : 'smooth' });
@@ -1353,12 +1377,13 @@
     if (err) console.error(err);
     running = false; stopFrames();
     beats.forEach(b => { b.style.opacity = b.style.transform = b.style.visibility = ''; b.classList.remove('is-active'); });
+    beatLinks.forEach(list => list.forEach(el => el.removeAttribute('tabindex')));
     labels.forEach(l => l.el.remove()); leaders.remove();
     if (bar) bar.style.opacity = bar.style.visibility = '';
     if (paper) paper.style.height = paper.style.visibility = '';
     if (motionButton) motionButton.hidden = true;
     insp.remove();
-    stage.removeAttribute('tabindex');
+    stage.removeAttribute('tabindex'); stage.removeAttribute('aria-describedby');
     fallback();
   }
   let wired = false;
@@ -1366,6 +1391,7 @@
     if (!wired) {
       wired = true;
       stage.tabIndex = 0; // the stage takes focus: arrow keys and Page Up / Page Down step the scenes
+      if (document.getElementById('story-keys')) stage.setAttribute('aria-describedby', 'story-keys');
       idx.forEach((button, i) => button.addEventListener('click', () => goTo(i, true)));
       stage.addEventListener('keydown', onKey);
       // every beat stays in the accessibility tree; keyboard focus entering one brings the story to it
@@ -1375,7 +1401,7 @@
       window.addEventListener('resize', () => resize());
       stackedMQ.addEventListener('change', () => resize(true));
       (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
-      window.addEventListener('scroll', () => { scrollY = window.scrollY; sceneScroll(); requestFrame(); }, { passive: true });
+      window.addEventListener('scroll', () => { scrollY = window.scrollY; sceneScroll(); syncIndex(); requestFrame(); }, { passive: true });
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => resize(true));
       window.addEventListener('load', () => resize(true), { once: true });
       stage.addEventListener('pointermove', e => {
@@ -1386,7 +1412,7 @@
         if (!reducedMQ.matches && !paused && e.pointerType !== 'touch') { mouse.tx = (e.clientX / window.innerWidth - 0.5) * 2; mouse.ty = (e.clientY / window.innerHeight - 0.5) * 2; }
         requestFrame();
       }, { passive: true });
-      stage.addEventListener('pointerleave', () => { ptr = null; pointerDirty = true; mouse.tx = mouse.ty = 0; requestFrame(); });
+      stage.addEventListener('pointerleave', e => { if (e.pointerType === 'touch') return; ptr = null; pointerDirty = true; mouse.tx = mouse.ty = 0; requestFrame(); }); // a tap's highlight stays until the next tap
       stage.addEventListener('pointerdown', e => { // touch: a tap shows what is under the finger
         if (e.pointerType !== 'touch') return;
         const r = stage.getBoundingClientRect();

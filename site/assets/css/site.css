@@ -1128,6 +1128,11 @@ body.is-loading { overflow: hidden; }
 .hero-stats b em { font-style: normal; color: var(--signal-bright); }
 .hero-stats span { display: block; margin-top: 9px; font-family: var(--mono); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58); line-height: 1.4; }
 .hero-stats .badge { margin-top: 6px; color: rgba(245, 242, 236, .8); border-color: rgba(245, 242, 236, .32); white-space: nowrap; }
+/* the chapter mark: the incoming scene's numeral holds the copy column while one scene hands over to the next */
+.story-num { position: absolute; left: var(--gutter); bottom: calc(var(--story-bar-h) + clamp(18px, 3.6vh, 40px)); opacity: 0; pointer-events: none; color: var(--paper); will-change: opacity, transform; }
+.story-num b { display: block; font: 400 clamp(6rem, 12vw, 10.5rem)/.78 var(--serif); letter-spacing: -0.045em; color: rgba(245, 242, 236, .16); font-variant-numeric: tabular-nums; }
+.story-num span { display: block; margin-top: 16px; font: .62rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .62); }
+html:not(.story-ready) .story-num, .no-webgl .story-num { display: none; }
 /* the role-coded vocabulary, as a key */
 .story-legend { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-top: 22px; font: .6rem/1 var(--mono); letter-spacing: .13em; text-transform: uppercase; color: rgba(245, 242, 236, .66); }
 .story-legend li { display: inline-flex; align-items: center; gap: 8px; }
@@ -1161,10 +1166,10 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-lab.is-hot::before { content: ""; position: absolute; left: -14px; top: 50%; width: 8px; height: 1px; background: var(--paper); }
 .story-lab.day.is-hot::before { display: none; }
 .story-lab.note .n { color: rgba(245, 242, 236, .52); }
-.story-lab.cap { font-size: .56rem; letter-spacing: .1em; color: rgba(245, 242, 236, .4); }
-.story-lab.cap b { color: rgba(245, 242, 236, .66); font-weight: 400; margin-right: .7em; }
+.story-lab.cap { font-size: .56rem; letter-spacing: .1em; color: rgba(245, 242, 236, .56); } /* AA: small text stays above 4.5:1 on the ground */
+.story-lab.cap b { color: rgba(245, 242, 236, .78); font-weight: 400; margin-right: .7em; }
 .story-lab.day { display: grid; justify-items: center; gap: 3px; padding: 4px 5px; min-width: 28px; }
-.story-lab.day .rg { font-size: .54rem; color: rgba(245, 242, 236, .46); }
+.story-lab.day .rg { font-size: .54rem; color: rgba(245, 242, 236, .58); }
 .story-lab.day.is-prem .rg { color: var(--signal-bright); }
 .story-lab.day.is-hot .k { color: var(--paper); }
 .story-lab.floor { color: rgba(245, 242, 236, .74); padding-bottom: 2px; }
@@ -1183,7 +1188,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-bar .container { height: 100%; display: flex; align-items: center; gap: 22px; }
 .story-idx { pointer-events: auto; margin-right: auto; }
 .story-idx ol { display: flex; gap: 6px; }
-.story-idx button { position: relative; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 14px 4px 0; font: .6rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: rgba(245, 242, 236, .44); transition: color .3s; }
+.story-idx button { position: relative; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 14px 4px 0; font: .6rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: rgba(245, 242, 236, .54); transition: color .3s; }
 .story-idx button .n { font-variant-numeric: tabular-nums; }
 .story-idx button::before, .story-idx button i { content: ""; position: absolute; left: 0; right: 14px; bottom: 9px; height: 1px; background: rgba(245, 242, 236, .16); }
 .story-idx button i { background: rgba(245, 242, 236, .8); transform: scaleX(var(--fill, 0)); transform-origin: left; }
@@ -1216,6 +1221,13 @@ html:not(.story-ready) .beat [data-split] .wi, .no-webgl .beat [data-split] .wi 
 html:not(.story-ready) .story-labels, html:not(.story-ready) .story-bar, html:not(.story-ready) .story-gl, html:not(.story-ready) .story-paper, html:not(.story-ready) .story-legend,
 .no-webgl .story-labels, .no-webgl .story-bar, .no-webgl .story-gl, .no-webgl .story-paper, .no-webgl .story-legend { display: none; }
 .no-webgl .story-2d { height: 100vh; height: 100svh; }
+/* each later beat carries a small static schematic of its scene (the live instrument replaces them) */
+.beat-fig { display: none; }
+html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 100%; max-width: 440px; height: auto; margin-top: 34px; }
+@media (min-aspect-ratio: 23/20) and (min-width: 640px) {
+  html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { position: absolute; right: 0; top: 50%; width: 38%; margin: 0; transform: translateY(-50%); }
+  .no-webgl .story-2d { left: 42%; width: 58%; } /* site.js's 2D globe stays clear of the copy */
+}
 
 /* short wide screens (a phone held sideways, 200% zoom): every beat fits between the nav and the index */
 @media (max-height: 760px) and (min-aspect-ratio: 23/20) {
@@ -1232,9 +1244,9 @@ html:not(.story-ready) .story-labels, html:not(.story-ready) .story-bar, html:no
   .beat h2 { font-size: clamp(1.4rem, 7.5vh, 2.4rem); max-width: 24ch; }
   .beat .body-lg, .beat-0 .hero-sub { margin-top: 10px; font-size: .86rem; line-height: 1.45; }
   .beat .hero-cta, .beat-0 .hero-cta { margin-top: 14px; }
-  .story-idx button .t { display: none; }
+  .story-idx button .t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
-@media (min-aspect-ratio: 23/20) and (max-width: 1100px) { .story-idx button .t { display: none; } .story-idx button.is-on .t { display: inline; } }
+@media (min-aspect-ratio: 23/20) and (max-width: 1100px) { .story-idx button .t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .story-idx button.is-on .t { position: static; width: auto; height: auto; clip-path: none; } }
 
 /* portrait: the instrument above, the copy below, the index under the nav */
 @media (max-width: 639.98px), (max-aspect-ratio: 23/20) {
@@ -1244,7 +1256,7 @@ html:not(.story-ready) .story-labels, html:not(.story-ready) .story-bar, html:no
   .story-idx ol { gap: 0; }
   .story-idx button { padding-right: 10px; min-width: 34px; }
   .story-idx button::before, .story-idx button i { right: 10px; }
-  .story-idx button .t { display: none; }
+  .story-idx button .t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .story-bar .hero-scroll { display: none; }
   .beat { bottom: clamp(16px, 3vh, 34px); }
   .beat-text, .beat-0 .beat-text { max-width: 100%; }
@@ -1266,6 +1278,7 @@ html:not(.story-ready) .story-labels, html:not(.story-ready) .story-bar, html:no
   html:not(.story-ready) .beat-0 { padding-top: calc(var(--nav-h) + 66vw + 48px); }
 }
 @media (max-width: 400px) { .hero-stats { grid-template-columns: repeat(2, auto); justify-content: start; gap: 12px 26px; } }
+@media (prefers-reduced-motion: reduce) { .story-bar .hero-scroll i { animation: none; opacity: .5; } .story-lab, .story-leader, .story-insp, .story-idx button { transition: none; } }
 @media print { .story-bar, .story-paper, .story-insp, .story-leaders, .story-legend { display: none !important; } }
 /* v2:overture:end */
 /* -------------------------------------------------------------------------- */
