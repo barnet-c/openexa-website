@@ -1,12 +1,12 @@
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
-from meta import HOME, ORG, WEBSITE, FEED_LINKS, ROBOTS, ld, crumbs, git_date
+from meta import HOME, ORG, WEBSITE, FEED_LINKS, ROBOTS, ld, crumbs, lastmod, save_lastmod
 # -*- coding: utf-8 -*-
 """Launch metadata for the OpenEXA site: canonical + Open Graph + Twitter tags, manifest, icons, JSON-LD,
 robots.txt, sitemap.xml and a branded 404 page (header/footer templated from index.html).
 Also: each top-level page's schema.org graph (<script id="ld-page">; research.html's is build_research.py's), the feed
-links and robots preview hint in every head, sitemap lastmod from git, and /favicon.ico from the 512 px icon."""
+links and robots preview hint in every head, sitemap lastmod (data/lastmod.json, see meta.py), and /favicon.ico from the 512 px icon."""
 import os, re, io, glob, html, json
 from PIL import Image
 
@@ -86,8 +86,9 @@ write(os.path.join(ROOT, "robots.txt"), "User-agent: *\nAllow: /\n\nSitemap: htt
 pages += sorted("research/" + os.path.basename(a) for a in glob.glob(os.path.join(ROOT, "research", "*.html")))
 pages += ["blog/"] + sorted("blog/" + os.path.basename(a) for a in glob.glob(os.path.join(ROOT, "blog", "*.html")) if os.path.basename(a) != "index.html")
 page_file = lambda p: os.path.join(ROOT, *(p + "index.html" if p.endswith("/") else p).split("/"))
-urls = "".join(f"  <url><loc>{SITE if p == 'index.html' else SITE + p}</loc><lastmod>{git_date(page_file(p))}</lastmod><changefreq>{'weekly' if p == 'index.html' else 'monthly'}</changefreq><priority>{'1.0' if p == 'index.html' else '0.7'}</priority></url>\n" for p in pages)
+urls = "".join(f"  <url><loc>{SITE if p == 'index.html' else SITE + p}</loc><lastmod>{lastmod(page_file(p))}</lastmod><changefreq>{'weekly' if p == 'index.html' else 'monthly'}</changefreq><priority>{'1.0' if p == 'index.html' else '0.7'}</priority></url>\n" for p in pages)
 write(os.path.join(ROOT, "sitemap.xml"), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls + "</urlset>\n")
+save_lastmod(page_file(p) for p in pages)
 
 # 404 — header/footer from index.html
 index = read(os.path.join(ROOT, "index.html"))

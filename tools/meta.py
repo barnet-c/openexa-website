@@ -1,5 +1,5 @@
-"""Metadata shared by the builders: the schema.org publisher node and breadcrumbs, Atom feeds, and the date a file last
-changed in git (sitemap lastmod, dateModified).
+"""Metadata shared by the builders: the schema.org publisher node and breadcrumbs, Atom feeds, and the date a page's
+content last changed (sitemap lastmod).
 
 Used by launch_meta_v9.py (page graphs, sitemap, the feed links in every head), build_research.py (TechArticle,
 CollectionPage, research/feed.xml) and build_blog.py (BlogPosting, Blog, blog/feed.xml). People stay out of the
@@ -7,8 +7,8 @@ site-wide graph: authors appear only on blog posts, as their bylines do.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
-from paths import REPO, SITE
-import datetime, html as H, io, json, subprocess
+from paths import REPO, SITE, DATA
+import datetime, hashlib, html as H, io, json, subprocess
 from pathlib import Path
 
 HOME = "https://www.openexa.com/"
@@ -31,11 +31,26 @@ def crumbs(*trail):
     return {"@type": "BreadcrumbList", "itemListElement": [
         {"@type": "ListItem", "position": i, "name": n, "item": u} for i, (n, u) in enumerate(items, 1)]}
 
-def git_date(path):
-    """YYYY-MM-DD of the last commit that touched `path`; today if it has uncommitted changes or no history yet."""
-    run = lambda *a: subprocess.run(["git", *a, "--", str(path)], cwd=REPO, capture_output=True, text=True).stdout.strip()
-    date = run("log", "-1", "--format=%cs")
-    return datetime.date.today().isoformat() if run("status", "--porcelain") or not date else date
+STAMPS = Path(str(DATA)) / "lastmod.json"
+_stamps = json.loads(STAMPS.read_text(encoding="utf-8")) if STAMPS.exists() else {}
+
+def lastmod(path):
+    """YYYY-MM-DD the content of `path` (inside site/) last changed. data/lastmod.json records a hash and a date per page;
+    the date moves to today only when the bytes change. Recorded rather than read from git history, so the dates survive
+    squash merges and a rebuild in CI reproduces them exactly. A page seen for the first time takes its last commit's date."""
+    key = Path(path).relative_to(SITE).as_posix()
+    digest = hashlib.sha256(Path(path).read_bytes()).hexdigest()[:16]
+    seen = _stamps.get(key)
+    if not seen or seen["sha"] != digest:
+        run = lambda *a: subprocess.run(["git", *a, "--", str(path)], cwd=REPO, capture_output=True, text=True).stdout.strip()
+        first = not seen and not run("status", "--porcelain") and run("log", "-1", "--format=%cs")
+        _stamps[key] = {"sha": digest, "date": first or datetime.date.today().isoformat()}
+    return _stamps[key]["date"]
+
+def save_lastmod(keep):
+    """Write data/lastmod.json, keeping only the pages in `keep` (paths inside site/)."""
+    live = {Path(p).relative_to(SITE).as_posix() for p in keep}
+    STAMPS.write_text(json.dumps({k: v for k, v in _stamps.items() if k in live}, indent=1, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
 
 def atom(path, title, subtitle, page_url, entries):
     """Write an Atom 1.0 feed to `path` (inside site/). entries: url, title, published, updated (YYYY-MM-DD), author, summary."""

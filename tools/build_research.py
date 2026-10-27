@@ -1,7 +1,7 @@
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
-from meta import HOME, ORG, WEBSITE, FEED_LINKS, ROBOTS, ld, crumbs, git_date, atom
+from meta import HOME, ORG, WEBSITE, FEED_LINKS, ROBOTS, ld, crumbs, atom
 # -*- coding: utf-8 -*-
 """Build the OpenEXA research section from openexa-research-blogs.md:
    research.html (index) + research/NN-slug.html (ten articles), in the requested order 9 · 10 · 1 … 8."""
@@ -66,7 +66,6 @@ for num, body in zip(chunks[0::2], chunks[1::2]):
     words = sum(len(t.split()) for k, t in blocks if k == "p") + (len(dek.split()) if dek else 0)
     posts[int(num)] = {"num": int(num), "title": title, "dek": dek, "blocks": blocks, "words": words, "minutes": max(3, round(words / 210))}
 assert sorted(posts) == list(range(1, 11)), sorted(posts)
-MODIFIED = git_date(MD)
 
 def inline(t):
     t = H.escape(t, quote=False)
@@ -148,7 +147,7 @@ for i, post in enumerate(ordered):
   <title>{H.escape(title)} — OpenEXA Research</title>
 {og("../", url, title + " — OpenEXA Research", dek)}
   {ld({"@type": "TechArticle", "@id": url + "#article", "headline": title, "description": dek, "url": url, "mainEntityOfPage": url,
-        "datePublished": PUBLISHED, "dateModified": MODIFIED, "inLanguage": "en", "image": [og_image(url)], "author": ORG, "publisher": ORG,
+        "datePublished": PUBLISHED, "inLanguage": "en", "image": [og_image(url)], "author": ORG, "publisher": ORG,
         "isPartOf": SERIES_LD, "position": post["order"], "wordCount": post["words"], "timeRequired": f"PT{post['minutes']}M"},
        crumbs(("Research", HOME + "research.html"), (title, url)))}
 </head>
@@ -334,7 +333,7 @@ index_page = f'''<!DOCTYPE html>
 write(os.path.join(ROOT, "research.html"), index_page)
 print("wrote research.html")
 atom(os.path.join(OUT_DIR, "feed.xml"), "OpenEXA Research", "Research notes and the series behind OpenEXA's agentic infrastructure.",
-     url, [{"url": HOME + p["file"], "title": p["title"], "published": PUBLISHED, "updated": MODIFIED, "author": "OpenEXA",
+     url, [{"url": HOME + p["file"], "title": p["title"], "published": PUBLISHED, "updated": PUBLISHED, "author": "OpenEXA",
             "summary": p["short"]} for p in ordered])
 print("wrote research/feed.xml")
 
