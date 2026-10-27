@@ -105,8 +105,12 @@
   // a lane already in steady state: agents placed along it with the history they would have had
   function warmStart() {
     const limit = 1 - strict;
+    // steady-state density: the rails run faster than the estimation field and carry only the approved share, so they
+    // hold fewer agents per unit length; a uniform fill would flush a burst of settlements in the first seconds
+    const keepRail = clamp(0.2075 / V_RAIL * limit, 0, 1);
     for (let k = 0; k < target; k++) {
-      const x = GX[0] - 0.08 + rnd() * (GX[5] - GX[0] + 0.06);
+      let x = GX[0] - 0.08 + rnd() * (GX[5] - GX[0] + 0.06);
+      if (x > GX[3] && rnd() > keepRail) x = GX[0] - 0.08 + rnd() * (GX[3] - GX[0] + 0.07);
       const i = spawnAt(x); if (i < 0) break;
       BORN[i] = sim - 5;
       while (gate[i] < 6 && X[i] >= GX[gate[i]]) { gate[i]++; GT[i * 7 + gate[i]] = sim - (X[i] - GX[gate[i] - 1]) / SPD[i]; }
@@ -178,7 +182,6 @@
       const s = st[i];
       if (s === DEAD) continue;
       if (s === FLOW || s === PROP) {
-        fl++;
         const slow = 1 - cong * smooth(GX[3] - 0.22, GX[3], X[i]);   // the stricter the council, the longer each decision
         X[i] += SPD[i] * dt * slow * (1 + 0.16 * Math.sin(sim * 1.3 + PH[i]));
         flowPos(i);
@@ -189,8 +192,8 @@
           if (isFollowed(i)) traceGate(i, g);
           if (g === 4) break;
         }
+        if (st[i] !== REJECT) fl++; // counted after its decision: in flight means not yet settled or rejected
       } else if (s === RAIL) {
-        fl++;
         X[i] += railDx; T0[i] += dt;
         const e = easeBack(Math.min(1, T0[i] / 0.42));
         Y[i] = SY[i] + (RAIL_Y[lane[i]] - SY[i]) * e; Z[i] = SZ[i] + (RAIL_Z - SZ[i]) * e;
@@ -199,7 +202,7 @@
           gate[i] = 6; GT[i * 7 + 6] = sim; st[i] = SETTLE; T0[i] = 0; SX[i] = X[i]; SY[i] = Y[i]; SZ[i] = Z[i];
           S.settled++; S.win.push(sim);
           if (isFollowed(i)) traceGate(i, 6);
-        }
+        } else fl++;
       } else if (s === SETTLE) {
         T0[i] += dt;
         if (T0[i] < 0.22) X[i] = SX[i] + V_RAIL * T0[i];          // the snap: it turns solid, gliding off the clocked rail
@@ -767,12 +770,14 @@
     if (id !== follow.id) return;
     row(fmtT(sim - follow.t1), 'Ledger', `sealed in block ${block}`, 'ok');
     say(`${id}: written to the ledger, block ${block}.`);
+    const s = el.tag && el.tag.querySelector('span'); if (s) s.textContent = `settled · block ${block}`;
+    if (reduced.matches) draw(); // a still study: re-place the tag (and its leader) for the longer text
   }
   function tagText(i, g) {
     if (!el.tag) return;
     const b = el.tag.querySelector('b'), s = el.tag.querySelector('span');
     if (b) b.textContent = follow.id;
-    if (s) s.textContent = st[i] === REJECT ? 'rejected at 04' : g >= 6 ? 'settled' : g > 0 ? `${String(g).padStart(2, '0')} ${GATE[g - 1]}` : 'entering 01';
+    if (s) s.textContent = st[i] === REJECT ? `rejected · risk ${RISK[i].toFixed(2)}` : g >= 6 ? 'settled' : g > 0 ? `${String(g).padStart(2, '0')} ${GATE[g - 1]}` : 'entering 01';
     el.tag.classList.toggle('is-bad', st[i] === REJECT);
     el.tag.classList.toggle('is-ok', g >= 6);
   }
@@ -815,7 +820,7 @@
     follow.active = false; follow.verdict = verdict; follow.endAt = sim;
     follow.x = X[i]; follow.y = Y[i]; follow.z = Z[i];
     if (el.traceState) { el.traceState.textContent = verdict === 'settled' ? 'Settled' : 'Rejected at 04'; el.traceState.className = 'sw-trace-state ' + (verdict === 'settled' ? 'is-ok' : 'is-bad'); }
-    if (el.tag) { const s = el.tag.querySelector('span'); if (s) s.textContent = verdict === 'settled' ? 'settled · in the ledger' : 'rejected at 04'; el.tag.classList.toggle('is-ok', verdict === 'settled'); el.tag.classList.toggle('is-bad', verdict !== 'settled'); }
+    if (el.tag) { const s = el.tag.querySelector('span'); if (s) s.textContent = verdict === 'settled' ? 'settled · sealing' : `rejected at 04 · risk ${RISK[i].toFixed(2)}`; el.tag.classList.toggle('is-ok', verdict === 'settled'); el.tag.classList.toggle('is-bad', verdict !== 'settled'); }
     if (verdict === 'rejected') { row(fmtT(sim - follow.t1), 'Floor', 'fell away · not executed', 'bad'); say(`${follow.id}: rejected at gate 04, never executed.`); }
     setFollowButton();
   }
