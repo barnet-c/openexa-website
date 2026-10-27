@@ -55,6 +55,17 @@ FIXES = [
     (r",? such as Interactive Brokers,?", ""),
 ]
 FORBIDDEN = re.compile(r"NASDAQ|NYSE|TradeStation|Interactive Brokers|DTCC", re.I)
+# descriptions broken in the old site's data (they feed the cards, meta descriptions and feeds), replaced with each
+# post's own words: one cut off mid-word, one copied from another post, one that was just the book's title
+DESC = {
+    "buying-high-and-selling-low-stock-repurchases-and-persistent-asymmetric-information":
+        "Analyzes a dynamic version of Myers and Majluf's classic model. Equilibria feature repurchases, even though all firms want to raise cash.",
+    "the-real-effects-of-financial-markets":
+        "An essential topic in financial economics is investigating whether financial markets exert an influence on the actual economy.",
+    "employee-stock-options-exercise-timing-hedging-and-valuation":
+        "Employee stock options (ESOs) are an integral component of compensation in the US. In fact, almost all S&P 500 companies grant options to their top executives.",
+}
+ALT = json.load(open(DATA / "blog_alt.json", encoding="utf-8")) if (DATA / "blog_alt.json").exists() else {}  # body-image alt text, written by looking at each image
 
 def read(p): return io.open(p, encoding="utf-8").read()
 def write(p, s):
@@ -100,6 +111,7 @@ def clean_body(p):
         src = m.group(1); alt = (re.search(r'alt="([^"]*)"', m.group(0)) or [None, ""])[1]
         if alt == "__wf_reserved_inherit": alt = ""  # a Webflow placeholder, not a description: screen readers read it out
         name = src.rsplit("/", 1)[-1]
+        alt = alt or ALT.get(name, "")
         shutil.copyfile(OLD / "img" / name, IMG / name) if (OLD / "img" / name).exists() else None
         return f'<img src="../assets/img/blog/{name}" alt="{esc(alt)}"{size(name)} loading="lazy" decoding="async">'
     b = re.sub(r'<img[^>]*src="(/graphics/[^"]+)"[^>]*>', img, b)
@@ -127,6 +139,7 @@ for p in kept:
             req = urllib.request.Request("https://www.openexa.com" + src, headers={"User-Agent": "Mozilla/5.0 openexa-archive/1.0"})
             (OLD / "img" / name).write_bytes(urllib.request.urlopen(req, timeout=40).read())
     p["body"] = clean_body(p)
+    p["description"] = DESC.get(p["slug"], p["description"])
     p["title"] = re.sub(r"\s+", " ", p["title"]).strip()
     for pat, rep in FIXES: p["title"] = re.sub(pat, rep, p["title"]); p["description"] = re.sub(pat, rep, p["description"])
     assert not FORBIDDEN.search(p["body"] + p["title"] + p["description"]), (p["slug"], FORBIDDEN.findall(p["body"]))
