@@ -27,7 +27,7 @@
   --ink: #0E1512;
   --ink-2: #1B221F;
   --graphite: #4D4D4D;
-  --slate: #6F736F;
+  --slate: #666966;   /* was #6F736F: 4.31:1 on paper; this is 4.98:1 (WCAG AA), same hue, ~4% darker */
   --mist: #9A9E98;
   --khaki: #ACA68E;
   --khaki-deep: #857F66;
