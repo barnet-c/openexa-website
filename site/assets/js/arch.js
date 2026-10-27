@@ -94,6 +94,9 @@
     const bodyEl = H('div', 'arch-body');
     const fig = H('div', 'arch-fig', bodyEl);
     fig.setAttribute('aria-hidden', 'true');
+    // the ground on either side of the boundary: scattered motes above it (estimation), a lattice below it (determinism)
+    const field = H('div', 'arch-field', fig);
+    H('i', 'af-up', field); H('i', 'af-dn', field);
     const svg = S('svg', { class: 'arch-svg', focusable: 'false' }, fig);
     const list = H('div', 'arch-list', bodyEl);
     const read = H('div', 'arch-read', bodyEl);
@@ -183,6 +186,9 @@
       else buildPlate(plates[key], lv);
       levels[key] = S('g', { class: 'lv-above' }, svg);
     });
+    // the explosion lines of a technical drawing: dashed, from each plate's visible corners down to the next plate's
+    // (the left, front and right corners are never covered by another plate, so one path drawn over the stack is right)
+    const guides = S('path', { class: 'guides', fill: 'none', stroke: IVORY, 'stroke-opacity': 0, 'stroke-width': 1, 'stroke-dasharray': '2 3' }, svg);
     svg.appendChild(gLead);
     const gFront = S('g', { class: 'lv-front' }, svg);
 
@@ -334,9 +340,12 @@
       setA(bound.pat, 'transform', m);
     }
     function measure() {
-      const fr = fig.getBoundingClientRect();
+      let fr = fig.getBoundingClientRect();
       W = Math.max(1, fr.width);
       if (wide) {
+        readTop = read.getBoundingClientRect().top - fr.top;
+        reserve(); // may grow the instrument, so the rest is measured after it
+        fr = fig.getBoundingClientRect();
         Hh = Math.max(1, fr.height);
         const rr = read.getBoundingClientRect(), lr = list.getBoundingClientRect();
         readL = rr.left - fr.left; readR = rr.right - fr.left; readTop = rr.top - fr.top;
@@ -346,6 +355,7 @@
         cx = (readR + listL) / 2; halfW = clamp((listL - readR) / 2 - 42, 96, 178);
         F0 = 19 * DEG; thick = 7; base = rowC.slice();
       } else {
+        reserve();
         halfW = clamp(W * (W < 560 ? 0.29 : 0.27), 84, 196); cx = W * (W < 560 ? 0.39 : 0.38);
         F0 = (W < 560 ? 22 : 18) * DEG; thick = W < 560 ? 6 : 7;
         const hh = halfW * Math.sin(F0), pitch = Math.max(30, hh * (W < 560 ? 0.92 : 0.86)), gap = pitch * 1.5, top = 30 + hh;
@@ -358,6 +368,7 @@
       Sc = halfW / Math.SQRT2;
       view.tF = F0; if (!pointerOn) view.F = F0;
       setA(svg, 'viewBox', `0 0 ${f1(W)} ${f1(Hh)}`);
+      field.style.setProperty('--seam', f1(by) + 'px'); field.style.setProperty('--cx', f1(cx) + 'px');
       geoDirty = true;
     }
 
@@ -374,7 +385,7 @@
       const d = Math.abs(i - (bIndex - 0.5)) * 0.06; // the stack opens from the boundary outward
       return ease3(clamp((ex * 1.5 - d) / 1, 0, 1));
     };
-    function fillCard(i) {
+    function fillSum(i) {
       const it = items[i], above = i < bIndex;
       skL.textContent = `${it.num} / ${pad2(N)} · ${it.verb}`;
       skR.textContent = above ? 'Decides' : 'Executes';
@@ -388,8 +399,28 @@
       sside.classList.toggle('is-below', !above);
       scue.textContent = open === i ? '' : fineMQ.matches ? 'Click, or press Enter, to read more' : 'Tap to read more';
       scue.hidden = open === i;
+    }
+    function fillCard(i) {
+      fillSum(i);
       sum.classList.remove('is-swap'); void sum.offsetWidth; sum.classList.add('is-swap');
       measureCard();
+    }
+    /* The instrument never changes height while you point around it: it reserves room for the tallest card once per layout
+       (and for the open layer's card while one is open), so the page below does not jump on hover. */
+    let peekMax = 0, openH = 0;
+    function reserve() {
+      if (!wide) { if (minH) { minH = 0; root.style.removeProperty('--arch-minh'); } return; }
+      const was = card.classList.contains('is-peek');
+      card.classList.add('is-peek');
+      peekMax = 0;
+      items.forEach((_, i) => { fillSum(i); peekMax = Math.max(peekMax, card.offsetHeight); });
+      openH = 0;
+      if (open >= 0) { fillSum(open); card.classList.remove('is-peek'); openH = card.offsetHeight; }
+      card.classList.toggle('is-peek', was);
+      if (hot >= 0) fillSum(hot);
+      measureCard();
+      const need = Math.ceil(readTop + Math.max(peekMax, openH) + 40);
+      if (Math.abs(need - minH) > 1) { minH = need; root.style.setProperty('--arch-minh', need + 'px'); }
     }
     function setHot() {
       const h = hover >= 0 ? hover : focus >= 0 ? focus : open;
@@ -398,8 +429,8 @@
       root.classList.toggle('has-hot', hot >= 0 && wide);
       btns.forEach((b, i) => b.classList.toggle('is-hot', i === hot));
       plates.forEach((p, i) => setA(p.num, 'class', 'ap-num' + (i === hot ? ' is-hot' : '')));
-      if (hot >= 0) fillCard(hot);
       card.classList.toggle('is-peek', hot !== open);
+      if (hot >= 0) fillCard(hot);
       kick();
     }
     function placePanels() {
@@ -415,7 +446,7 @@
       root.classList.toggle('has-open', open >= 0);
       placePanels();
       hot = -2; setHot();
-      measureCard();
+      reserve();
       kick();
     }
     function setMode(w) {
@@ -457,7 +488,11 @@
       p.hit.addEventListener('click', () => {
         setOpen(open === i ? -1 : i);
         btns[i].focus({ preventScroll: true });
-        if (!wide && open === i) btns[i].scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+        if (!wide && open === i) { // narrow: the layer opens in the list under the drawing; bring its heading and text into view
+          const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 72;
+          const top = btns[i].getBoundingClientRect().top, bottom = panels[i].getBoundingClientRect().bottom;
+          if (top < navH + 4 || bottom > window.innerHeight - 8) window.scrollTo({ top: Math.max(0, window.scrollY + top - navH - 10), behavior: reduced ? 'auto' : 'smooth' });
+        }
       });
     });
     root.addEventListener('pointermove', (e) => {
@@ -496,20 +531,27 @@
       }
       segs.push({ type: 'exit', at: N - 1, d: 0.95 });
       const g = S('g', null);
-      const f = { st, segs, s: 0, t: 0, reject: rnd() < 0.16, decided: false, kind: 'signal', g, lvl: null, alpha: 0, x: 0, y: 0, side: rnd() < 0.5 ? -1 : 1 };
+      const f = { st, segs, s: 0, t: 0, reject: rnd() < 0.16, decided: false, kind: 'signal', g, lvl: null, alpha: 0, x: 0, y: 0, side: rnd() < 0.5 ? -1 : 1, ringR: 3.6, regT: -1 };
       f.halo = S('circle', { r: 8, fill: IVORY, 'fill-opacity': 0.1 }, g);
       f.dot = S('circle', { r: 1.9, fill: IVORY }, g);
-      f.ring = S('circle', { r: 3.6, fill: 'none', stroke: GREEN, 'stroke-width': 1.4, display: 'none' }, g);
-      f.sq = S('rect', { width: 5.4, height: 5.4, x: -2.7, y: -2.7, fill: GREEN, display: 'none' }, g);
+      // one mark for the proposal and what it becomes: a ring (rx = half its size) that squares up as it crosses the boundary
+      f.mk = S('rect', { fill: GREEN, 'fill-opacity': 0, stroke: GREEN, 'stroke-width': 1.4, display: 'none' }, g);
+      // registration ticks: they close on the square as it lands on the grid below the boundary
+      f.reg = S('path', { d: 'M-5.5 -2.5V-5.5H-2.5M2.5 -5.5H5.5V-2.5M5.5 2.5V5.5H2.5M-2.5 5.5H-5.5V2.5', fill: 'none', stroke: GREEN, 'stroke-width': 1, 'stroke-opacity': 0, 'vector-effect': NSS }, g);
       flows.push(f);
     }
     const stationXY = (k, u, v, h) => { const q = proj(u, v, h); return [cx + q[0], plateY(k) + q[1]]; };
+    function setMark(f, m) { // m: 0 = the proposal's ring, 1 = a settled square
+      const s = 2 * f.ringR * (1 - m) + 5.6 * m, rx = (s / 2) * (1 - m) + 0.4 * m;
+      setA(f.mk, 'x', f1(-s / 2)); setA(f.mk, 'y', f1(-s / 2)); setA(f.mk, 'width', f1(s)); setA(f.mk, 'height', f1(s)); setA(f.mk, 'rx', f1(rx));
+      setA(f.mk, 'fill-opacity', f3(m)); setA(f.mk, 'stroke-opacity', f3(1 - m));
+    }
     function setKind(f, kind) {
       f.kind = kind;
       setA(f.dot, 'display', kind === 'signal' || kind === 'reject' ? 'inline' : 'none');
       setA(f.dot, 'fill', kind === 'reject' ? RED : IVORY); setA(f.dot, 'r', kind === 'reject' ? '2.6' : '1.9');
-      setA(f.ring, 'display', kind === 'proposal' ? 'inline' : 'none');
-      setA(f.sq, 'display', kind === 'settled' ? 'inline' : 'none');
+      setA(f.mk, 'display', kind === 'proposal' || kind === 'settled' ? 'inline' : 'none');
+      if (kind === 'proposal') setMark(f, 0); else if (kind === 'settled') setMark(f, 1);
       setA(f.halo, 'fill', kind === 'signal' ? IVORY : kind === 'reject' ? RED : GREEN);
       setA(f.halo, 'fill-opacity', kind === 'signal' ? '0.1' : '0.16');
     }
@@ -538,18 +580,31 @@
         } else if (seg.type === 'move') {
           const sa = f.st[seg.from], sb = f.st[seg.to];
           const A = stationXY(seg.from, sa.u, sa.v, 0.03), B = stationXY(seg.to, sb.u, sb.v, 0.03);
+          let e;
           if (seg.to <= council) { // estimation: a curved path, eased
-            const e = inout(p); x = A[0] + (B[0] - A[0]) * e + Math.sin(Math.PI * p) * 12 * f.side; y = A[1] + (B[1] - A[1]) * e;
+            e = inout(p); x = A[0] + (B[0] - A[0]) * e + Math.sin(Math.PI * p) * 12 * f.side; y = A[1] + (B[1] - A[1]) * e;
           } else { // deterministic: straight, and it snaps in at the end
-            const e = p < 0.78 ? inout(p / 0.78) * 0.97 : 0.97 + 0.03 * ease3((p - 0.78) / 0.22); x = A[0] + (B[0] - A[0]) * e; y = A[1] + (B[1] - A[1]) * e;
+            e = p < 0.78 ? inout(p / 0.78) * 0.97 : 0.97 + 0.03 * ease3((p - 0.78) / 0.22); x = A[0] + (B[0] - A[0]) * e; y = A[1] + (B[1] - A[1]) * e;
           }
-          if (seg.from === council) { // the ring crosses the plane and lands as a settled square
-            if (p < 0.5) toLevel(f, 'B');
-            else { toLevel(f, seg.to); if (!f.crossed) { f.crossed = true; setKind(f, 'settled'); bound.flash = 1; bound.ripT = 1; bound.ru = (sa.u + sb.u) / 2; bound.rv = (sa.v + sb.v) / 2; } }
+          if (seg.from === council) { // the ring crosses the plane, squaring up as it goes, and lands on the grid as a settled square
+            setMark(f, ease3(clamp((e - 0.3) / 0.4, 0, 1)));
+            const u = sa.u + (sb.u - sa.u) * e, v = sa.v + (sb.v - sa.v) * e;
+            if (y < by + proj(u, v, 0)[1]) toLevel(f, 'B'); // still above the plane's surface
+            else {
+              toLevel(f, seg.to);
+              if (!f.crossed) { f.crossed = true; f.kind = 'settled'; f.regT = 0; bound.flash = 1; bound.ripT = 1; bound.ru = u; bound.rv = v; }
+            }
           } else toLevel(f, seg.to);
         } else { // exit, under the last plate
           const sN = f.st[N - 1], A = stationXY(N - 1, sN.u, sN.v, 0.03), B = stationXY(N - 1, sN.u, sN.v, -1.5), e = p * p;
           x = A[0] + (B[0] - A[0]) * e; y = A[1] + (B[1] - A[1]) * e; a = 1 - p; toLevel(f, 'bottom');
+        }
+        if (f.regT >= 0) { // the snap: ticks close on the square in ~220 ms, then let go
+          f.regT += dt;
+          const r = f.regT, k = 1 + 1.3 * (1 - ease3(Math.min(1, r / 0.22)));
+          setA(f.reg, 'transform', `scale(${f3(k)})`);
+          setA(f.reg, 'stroke-opacity', f3(r < 0.22 ? 0.95 : Math.max(0, 0.95 * (1 - (r - 0.22) / 0.34))));
+          if (r > 0.56) { f.regT = -1; setA(f.reg, 'stroke-opacity', '0'); }
         }
         f.x = x; f.y = y;
         setA(f.g, 'transform', `translate(${f1(x)} ${f1(y)})`);
@@ -570,7 +625,7 @@
     function decide(f) {
       f.decided = true; pulse = 1;
       if (f.reject) { setKind(f, 'reject'); f.segs.length = f.s + 1; } // its way ends here: it falls away
-      else { setA(f.ring, 'stroke-width', '2'); setA(f.ring, 'r', '4.2'); } // approved: the ring brightens and goes on
+      else { f.ringR = 4.2; setA(f.mk, 'stroke-width', '2'); setMark(f, 0); } // approved: the ring brightens and goes on
     }
 
     /* ---------------- 8 · the frame ---------------- */
@@ -602,9 +657,7 @@
       const cvT = wide && hot >= 0 ? 1 : 0;
       cardVis = snap ? cvT : cardVis + (cvT - cardVis) * (1 - Math.exp(-dt * 11));
       if (Math.abs(cardVis - cvT) > 0.01) busy = true; else cardVis = cvT;
-      // the readout card follows the plate you point at (wide); the instrument grows if an open layer needs the room
-      const need = wide && hot >= 0 ? Math.ceil(readTop + cardH + 40) : 0;
-      if (Math.abs(need - minH) > 1) { minH = need; if (need) root.style.setProperty('--arch-minh', need + 'px'); else root.style.removeProperty('--arch-minh'); }
+      // the readout card follows the plate you point at (wide)
       if (wide && hot >= 0) {
         const target = clamp(plateY(hot) - titleOff, readTop, Math.max(readTop, Hh - 40 - cardH)) - readTop;
         if (snap || !card.__placed) { cardY.x = target; cardY.v = 0; card.__placed = true; } else if (dt > 0) spring(cardY, target, dt, 15);
@@ -651,6 +704,18 @@
         const xr = cx + C[0] + 12;
         setA(p.num, 'x', f1(xr)); setA(p.num, 'y', f1(y + C[1]));
       });
+      // explosion lines between the plates' corners; they stretch as a plate lifts
+      const gA = clamp((ex - 0.6) / 0.4, 0, 1);
+      if (gA > 0) {
+        const D = proj(-1, -1, 0);
+        let d = '';
+        for (let i = 0; i < N - 1; i++) {
+          const y0 = plateY(i), y1 = plateY(i + 1);
+          for (const K of [A, D, C]) { const ya = y0 + K[1] + thick + 3, yb = y1 + K[1] - 3; if (yb - ya > 6) d += `M${f1(cx + K[0])} ${f1(ya)}V${f1(yb)}`; }
+        }
+        setA(guides, 'd', d);
+      }
+      setA(guides, 'stroke-opacity', f3(0.24 * gA));
       // the boundary plane and its line across the instrument
       const bk = 1.16, BL = proj(-bk, bk, 0), BR = proj(bk, -bk, 0);
       setA(bound.g, 'transform', `translate(${f1(cx)} ${f1(by)})`);

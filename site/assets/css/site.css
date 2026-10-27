@@ -1235,6 +1235,18 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .arch-body { position: relative; }
 .arch-fig { position: relative; }
 .arch-svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
+/* the ground either side of the boundary (static): scattered motes above it, estimation; a lattice below it, determinism */
+.arch-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; will-change: transform; }
+.arch-field i { position: absolute; left: 0; right: 0; }
+.arch-field .af-up { top: 0; height: var(--seam, 50%); opacity: .5;
+  background-image: radial-gradient(circle at 31% 42%, rgba(245, 242, 236, .62) .6px, transparent 1.3px), radial-gradient(circle at 74% 17%, rgba(245, 242, 236, .5) .6px, transparent 1.3px),
+    radial-gradient(circle at 12% 81%, rgba(245, 242, 236, .44) .6px, transparent 1.3px), radial-gradient(circle at 58% 66%, rgba(245, 242, 236, .56) .6px, transparent 1.3px),
+    radial-gradient(circle at 88% 93%, rgba(245, 242, 236, .4) .6px, transparent 1.3px);
+  background-size: 23px 29px, 37px 31px, 41px 47px, 53px 43px, 61px 67px;
+  -webkit-mask-image: linear-gradient(to top, #000, rgba(0, 0, 0, .35) 90px, transparent 230px); mask-image: linear-gradient(to top, #000, rgba(0, 0, 0, .35) 90px, transparent 230px); }
+.arch-field .af-dn { top: var(--seam, 50%); bottom: 0; opacity: .5;
+  background-image: radial-gradient(circle, rgba(245, 242, 236, .42) .7px, transparent 1.2px); background-size: 16px 16px; background-position: calc(var(--cx, 50%) - 8px) 0;
+  -webkit-mask-image: linear-gradient(to bottom, #000, rgba(0, 0, 0, .35) 90px, transparent 250px); mask-image: linear-gradient(to bottom, #000, rgba(0, 0, 0, .35) 90px, transparent 250px); }
 
 /* the layers, as buttons: each is the label of its plate */
 .arch-h { margin: 0; font: inherit; }
