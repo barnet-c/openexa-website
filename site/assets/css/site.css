@@ -1203,12 +1203,12 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .layers .io dt { font-family: var(--mono); font-size: .64rem; letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); }
 .layers .io dd { margin: 0; font-size: .92rem; line-height: 1.45; color: var(--fg); }
 .layers .layer-boundary { display: grid; grid-template-columns: 80px 1.1fr 1.6fr; gap: 28px; padding: 24px clamp(22px, 3vw, 40px); border-top: 1px solid var(--signal); border-bottom: 1px solid var(--signal); margin-top: -1px; background: color-mix(in srgb, var(--signal) 7%, var(--bg)); }
-.layers .layer-boundary .k { color: var(--signal); }
+.layers .layer-boundary .k { color: color-mix(in srgb, var(--signal) 80%, var(--ink)); } /* small text on the tinted row: 5.6:1 (signal alone is 4.3:1) */
 .layers .lb-t { font-family: var(--serif); font-size: clamp(1.4rem, 2vw, 1.9rem); line-height: 1.15; letter-spacing: -0.015em; color: var(--signal); }
 .layers .lb-t small { display: block; margin-top: 10px; font-family: var(--mono); font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
 .layers .lb-io { display: grid; gap: 12px; }
 .layers .lb-io p { color: var(--fg-2); }
-.layers .lb-io b { display: block; font-family: var(--mono); font-weight: 500; font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: var(--signal); margin-bottom: 4px; }
+.layers .lb-io b { display: block; font-family: var(--mono); font-weight: 500; font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: color-mix(in srgb, var(--signal) 80%, var(--ink)); margin-bottom: 4px; }
 .layers .lb-io strong { font-weight: 600; color: var(--fg); }
 @media (max-width: 860px) { .layers .layer, .layers .layer-boundary { grid-template-columns: 1fr; gap: 14px; } }
 
