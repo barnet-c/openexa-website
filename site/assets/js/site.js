@@ -361,58 +361,6 @@
     });
   });
 
-  /* ---------------- illustrative ledger stream ---------------- */
-  $$('[data-ledger-stream]').forEach(box => {
-    const body = $('.body', box), counter = $('[data-stream-count]', box);
-    const TOOLS = ['source-01', 'registry-02', 'workflow-01', 'records-03'];
-    let n = 0x4f21, active = [], running = true;
-    const hex = v => '#' + v.toString(16).padStart(4, '0');
-    const now = () => { const d = new Date(); return d.toTimeString().slice(0, 8) + '.' + String(d.getMilliseconds()).padStart(3, '0'); };
-    const push = (cls, st, detail) => {
-      const prev = hex(n - 1); const id = hex(n++);
-      const ln = document.createElement('div'); ln.className = 'ln ' + cls;
-      ln.innerHTML = `<span class="h">${id}</span><span class="t">${now()}</span><span class="s">${st}</span><span class="d">${detail}</span><span class="p">prev ${prev}</span>`;
-      body.appendChild(ln);
-      while (body.children.length > 12) body.removeChild(body.firstChild);
-      if (counter) counter.textContent = (n - 0x4f21).toLocaleString('en-US');
-    };
-    const rnd = a => a[Math.floor(Math.random() * a.length)];
-    const agent = (p) => `${p}-${String(Math.floor(Math.random() * 900) + 100).padStart(4, '0')}`;
-    const order = () => {
-      const job = 'L-' + String(Math.floor(Math.random() * 9000) + 1000), tool = rnd(TOOLS);
-      const steps = [
-        ['dim', 'PROPOSED', `agent=domain:${agent('a')} · lifecycle=${job} · next step`],
-        ['', 'VALIDATED', `${job} · schema checked · inputs complete · scope checked`],
-      ];
-      if (Math.random() < 0.09) { steps.push(['bad', 'REJECTED', `council · ${rnd(['permission missing', 'approval required', 'input outside policy'])} · recorded`]); return steps; }
-      steps.push(['', 'APPROVED', 'council · policy v7 · bounded action']);
-      steps.push(['', 'SUBMITTED', `agent=exec:${agent('e')} · tool=${tool} · idempotent`]);
-      steps.push(['', 'COMPLETED', `${job} · action confirmed · receipt attached`]);
-      steps.push(['ok', 'SETTLED', `agent=records:${agent('r')} · previous hash linked`]);
-      return steps;
-    };
-    let queue = [], timer = 0;
-    const loop = () => {
-      if (!running) return;
-      if (!queue.length) queue = order();
-      const [cls, st, detail] = queue.shift(); push(cls, st, detail);
-      timer = setTimeout(loop, 520 + Math.random() * 900);
-    };
-    const start = () => { if (running) return; running = true; loop(); };
-    const stop = () => { running = false; clearTimeout(timer); };
-    running = false;
-    for (let i = 0; i < 6; i++) { if (!queue.length) queue = order(); const [c, s, d] = queue.shift(); push(c, s, d); }
-    if (!prefersReduced) {
-      if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { e.isIntersecting && !document.hidden ? start() : stop(); }, { threshold: 0.1 }).observe(box);
-      else start();
-      document.addEventListener('visibilitychange', () => {
-        const rect = box.getBoundingClientRect();
-        if (!document.hidden && rect.bottom > 0 && rect.top < window.innerHeight) start();
-        else stop();
-      });
-    }
-  });
-
   /* ---------------- 2D swarm (interior heroes & no-WebGL fallback) ---------------- */
   const canvas = $('canvas[data-swarm]');
   const inStory = canvas && canvas.closest('.story');

@@ -120,23 +120,50 @@
         <div class="grid">
           <div class="col-5">
             <h2 class="display-2" data-reveal>Not a black box. A book of record.</h2>
-            <p class="body-lg mt-3" data-reveal style="--d:80ms">Every transition is traceable to the agent that proposed it and the decision that allowed it. Any state — proposed, rejected, approved, submitted, partially filled, filled, reconciled — can be replayed with the inputs that produced it, by an operator, an auditor or a regulator.</p>
           </div>
-          <div class="col-7 offset-6" data-reveal style="--d:120ms">
-            <div class="card card--tint mono small" style="line-height:1.9;font-size:.78rem">
-              <div class="n"><span>lifecycle 01 · IBIT · create</span><span>chain ✓</span></div>
-              <div style="color:var(--fg-3)">#4f1a · 09:31:03.902 · PROPOSED · agent=strategy:s-0412 · create 2,600 · prev 8c1d</div>
-              <div style="color:var(--reject)">#4f1b · 09:31:03.951 · REJECTED · council · notional cap exceeded · prev 4f1a</div>
-              <div style="color:var(--fg-3)">#4f20 · 09:31:04.071 · PROPOSED · agent=strategy:s-0412 · create 2,000 · prev 4f1b</div>
-              <div style="color:var(--fg-3)">#4f21 · 09:31:04.118 · VALIDATED · schema ✓ policy ✓ caps ✓ hours ✓ · prev 4f20</div>
-              <div style="color:var(--fg-3)">#4f22 · 09:31:04.203 · APPROVED · council · mode=auto-with-approval · by=operator:op-02 · prev 4f21</div>
-              <div style="color:var(--fg-3)">#4f23 · 09:31:04.377 · SUBMITTED · agent=exec:e-0088 · venue=dark · idem=7a…e2 · prev 4f22</div>
-              <div style="color:var(--fg-3)">#4f24 · 09:31:05.910 · PARTIAL · 1,400 / 2,000 · prev 4f23</div>
-              <div style="color:var(--fg-3)">#4f25 · 09:31:06.442 · FILLED · 2,000 / 2,000 · prev 4f24</div>
-              <div style="color:var(--accent)">#4f26 · 16:05:12.006 · RECONCILED · agent=recon:r-0031 · internal ≡ broker · Δ 0 · prev 4f25</div>
-              <div class="figure-cap" style="margin-top:14px"><span>Illustrative log excerpt · rejects are recorded too</span><span>Every record references its predecessor's hash</span></div>
-            </div>
+          <div class="col-6 offset-7">
+            <p class="body-lg" data-reveal style="--d:80ms">Every transition is traceable to the agent that proposed it and the decision that allowed it. Any state — proposed, rejected, approved, submitted, partially filled, filled, reconciled — can be replayed with the inputs that produced it, by an operator, an auditor or a regulator.</p>
           </div>
+        </div>
+
+        <!-- the ledger trace: a fixed excerpt, replayable and verifiable in the browser (ledger.js) -->
+        <div class="lt lt--excerpt mt-5" data-ledger="replay" data-reveal style="--d:120ms" role="group" aria-label="Illustrative log excerpt, hash-chained">
+          <div class="lt-head">
+            <span class="lt-title">Lifecycle 01 · IBIT · create</span>
+            <span class="lt-state"><i></i><span data-lt-state>Illustrative excerpt</span></span>
+            <span class="lt-ctrl">
+              <button type="button" class="lt-btn lt-btn--ico" data-lt-replay hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M13.2 8.6A5.2 5.2 0 1 1 11.7 4.3"/><path d="M12.4 1.6v3.2H9.2"/></svg><span>Replay</span></button>
+              <button type="button" class="lt-btn lt-btn--ico" data-lt-verify hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 8.4l3.4 3.3 7.6-7.6"/></svg><span>Verify the chain</span></button>
+            </span>
+          </div>
+          <div class="lt-stage">
+          <div class="lt-view">
+            <ol class="lt-track" aria-label="Ledger records, oldest first">
+              <li class="ln lt-rec" data-d="agent=strategy:s-0412 · create 2,600"><span class="lt-meta"><span class="lt-id">#4f1a</span><span class="lt-lc"></span></span><b class="lt-ev">PROPOSED</b><span class="lt-sub">strategy s-0412 · create 2,600</span><time class="lt-t">09:31:03.902</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec is-rejected" data-d="council · notional cap exceeded"><span class="lt-meta"><span class="lt-id">#4f1b</span><span class="lt-lc"></span></span><b class="lt-ev">REJECTED</b><span class="lt-sub">council · notional cap exceeded</span><time class="lt-t">09:31:03.951</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="agent=strategy:s-0412 · create 2,000"><span class="lt-meta"><span class="lt-id">#4f20</span><span class="lt-lc"></span></span><b class="lt-ev">PROPOSED</b><span class="lt-sub">strategy s-0412 · create 2,000</span><time class="lt-t">09:31:04.071</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="schema ✓ policy ✓ caps ✓ hours ✓"><span class="lt-meta"><span class="lt-id">#4f21</span><span class="lt-lc"></span></span><b class="lt-ev">VALIDATED</b><span class="lt-sub">schema ✓ policy ✓ caps ✓ hours ✓</span><time class="lt-t">09:31:04.118</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="council · mode=auto-with-approval · by=operator:op-02"><span class="lt-meta"><span class="lt-id">#4f22</span><span class="lt-lc"></span></span><b class="lt-ev">APPROVED</b><span class="lt-sub">council · auto-with-approval · op-02</span><time class="lt-t">09:31:04.203</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="agent=exec:e-0088 · venue=dark · idem=7a…e2"><span class="lt-meta"><span class="lt-id">#4f23</span><span class="lt-lc"></span></span><b class="lt-ev">SUBMITTED</b><span class="lt-sub">exec e-0088 · venue=dark</span><time class="lt-t">09:31:04.377</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="1,400 / 2,000"><span class="lt-meta"><span class="lt-id">#4f24</span><span class="lt-lc"></span></span><b class="lt-ev">PARTIAL</b><span class="lt-sub">1,400 / 2,000</span><time class="lt-t">09:31:05.910</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="2,000 / 2,000"><span class="lt-meta"><span class="lt-id">#4f25</span><span class="lt-lc"></span></span><b class="lt-ev">FILLED</b><span class="lt-sub">2,000 / 2,000</span><time class="lt-t">09:31:06.442</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec is-settled" data-d="agent=recon:r-0031 · internal ≡ broker · Δ 0"><span class="lt-meta"><span class="lt-id">#4f26</span><span class="lt-lc"></span></span><b class="lt-ev">RECONCILED</b><span class="lt-sub">internal ≡ broker · Δ 0</span><time class="lt-t">16:05:12.006</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+            </ol>
+          </div>
+          </div>
+          <div class="lt-insp" data-lt-insp hidden>
+            <dl>
+              <div><dt>Record</dt><dd data-f="rec">—</dd></div>
+              <div><dt>Event</dt><dd data-f="ev">—</dd></div>
+              <div><dt>Detail</dt><dd data-f="d">—</dd></div>
+            </dl>
+            <dl>
+              <div><dt>Prev hash</dt><dd><code data-f="prev">—</code><span class="lt-check" data-f="prevok"></span></dd></div>
+              <div><dt>Hash</dt><dd><code data-f="hash">—</code><span class="lt-check" data-f="next"></span></dd></div>
+            </dl>
+          </div>
+          <i class="lt-leader" aria-hidden="true"></i>
+          <div class="lt-foot"><span>Illustrative log excerpt · rejects are recorded too</span><span>Every record references its predecessor's hash</span></div>
         </div>
       </div>
     </section>
@@ -205,6 +232,7 @@
     </div>
   </footer>
 
+  <script src="assets/js/ledger.js" defer></script>
   <script src="assets/js/site.js" defer></script>
 </body>
 </html>
