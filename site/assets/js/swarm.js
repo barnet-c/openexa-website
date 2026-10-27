@@ -1042,7 +1042,13 @@
   showN(); showStrict(); setFollowButton();
   // first measure in a frame, not at script time: reading layout mid-load forced an extra full layout of the page
   requestAnimationFrame(boot);
-  if ('ResizeObserver' in window) new ResizeObserver(() => { if (booted) { resize(); if (reduced.matches) still(); } }).observe(cv);
+  // a still study is re-run on resize (its trails live in screen space), except while it shows a followed proposal:
+  // then the same moment is re-projected, so a rotated phone keeps the journey and its trace
+  if ('ResizeObserver' in window) new ResizeObserver(([e]) => {
+    if (!booted) return;
+    const r = e && e.contentRect; if (r && Math.round(r.width) === W && Math.round(r.height) === H) return; // its first report repeats boot's size
+    resize(); if (reduced.matches && !follow.show) still();
+  }).observe(cv);
   else window.addEventListener('resize', () => { if (booted) resize(); });
   (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { if (booted) resize(); watchRatio(); }, { once: true }); })();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (booted) { measure(); fit(); draw(); } });
