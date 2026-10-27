@@ -73,43 +73,66 @@
           </div>
         </div>
         <div class="stats mt-5" data-reveal style="--d:180ms">
-          <div><div class="v">&gt;<span data-count="10">10</span><small>bps</small></div><div class="k">Per session · floor</div><div class="d">Observed in all ten sessions.</div></div>
-          <div><div class="v"><span data-count="10">10</span>/10</div><div class="k">Sessions above floor</div><div class="d">Six premium, four discount.</div></div>
+          <div><div class="v">&gt;<span data-count="10" data-proof="floor">10</span><small>bps</small></div><div class="k">Per session · floor</div><div class="d">Observed in all <span data-proof="above" data-proof-as="words">ten</span> sessions.</div></div>
+          <div><div class="v"><span data-count="10" data-proof="above">10</span>/<span data-proof="total">10</span></div><div class="k">Sessions above floor</div><div class="d" data-proof="regimes">Five premium, five discount.</div></div>
           <div><div class="v"><span data-count="3">3</span></div><div class="k">Beta customers</div><div class="d">Running the lifecycle on their assets.</div></div>
           <div><div class="v"><span data-count="5">5</span></div><div class="k">Runs</div><div class="d">Lifecycle executions.</div></div>
         </div>
       </div>
     </section>
 
-    <!-- 01 PERFORMANCE LEDGER -->
-    <section class="section">
+    <!-- 01 PERFORMANCE REPORT -->
+    <section class="section" id="performance">
       <div class="container">
         <div class="sec-head" data-reveal><span class="idx">01</span><span class="lab">Performance report</span><span class="aside">Consistent &amp; sustainable · both NAV regimes</span></div>
-        <div class="grid">
-          <div class="col-4">
+        <div class="proof-layout proof-layout--report">
+          <div class="proof-copy">
             <h2 class="display-2" data-reveal>Both sides of the NAV. Same swarm, same gates.</h2>
-            <p class="body-lg mt-3" data-reveal style="--d:80ms">A system that only works when funds trade rich — or only when they trade cheap — is half a system. The create-and-redeem agents cleared the floor in six premium sessions and four discount sessions, with the same policy, the same Council and the same ledger throughout.</p>
+            <p class="body-lg mt-3" data-reveal style="--d:80ms">A system that only works when funds trade rich — or only when they trade cheap — is half a system. The create-and-redeem agents cleared the floor in <span data-proof="premium" data-proof-as="words">five</span> premium sessions and <span data-proof="discount" data-proof-as="words">five</span> discount sessions, with the same policy, the same Council and the same ledger throughout.</p>
             <p class="small muted mt-3" data-reveal style="--d:140ms">Results are from a limited proof-of-concept period on live capital and are not a forecast. See disclosures.</p>
           </div>
-          <div class="col-8 ledger-wrap" data-reveal style="--d:120ms">
-            <div class="table-scroll" role="region" aria-label="Table" tabindex="0">
-              <table class="ledger">
-              <thead><tr><th>Session</th><th>NAV regime</th><th class="num">Captured</th><th>Verification</th><th>Status</th></tr></thead>
-              <tbody>
-                <tr><td class="lab">Day 01</td><td>Discount</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
-                <tr><td class="lab">Day 02</td><td>Discount</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
-                <tr><td class="lab">Day 03</td><td>Premium</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
-                <tr><td class="lab">Day 04</td><td>Premium</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
-                <tr><td class="lab">Day 05</td><td>Premium</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
-                <tr><td class="lab">Day 06</td><td>Premium</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
-                <tr><td class="lab">Day 07</td><td>Discount</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
-                <tr><td class="lab">Day 08</td><td>Premium</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
-                <tr><td class="lab">Day 09</td><td>Discount</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
-                <tr><td class="lab">Day 10</td><td>Discount</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
-              </tbody>
-            </table>
+          <div class="proof-main">
+            <!-- The one record of the ten sessions. assets/js/proof.js draws the chart and rebuilds the table from it, and derives
+                 every session count on this page. Edit the sessions here, then the static table and text to match. -->
+            <script type="application/json" id="oxa-sessions">
+{"lifecycle": "Lifecycle 01", "unit": "bps", "floor": 10, "sessions": [
+  {"day": "Day 01", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 02", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 03", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 04", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 05", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 06", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 07", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 08", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 09", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 10", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"}
+]}
+            </script>
+            <figure class="proof-fig" data-proof-fig hidden>
+              <div class="eyebrow"><span>Lifecycle 01 · <span data-proof="total">10</span> sessions · live capital</span></div>
+              <div class="proof" data-proof-chart></div>
+              <figcaption class="figure-cap"><span>Fig. 01 — bps captured per session against the <span data-proof="floor">10</span> bps floor · NAV regime per session</span><span>Exact values above the floor are not published</span></figcaption>
+            </figure>
+            <div data-reveal>
+              <div class="table-scroll" role="region" aria-label="Table 01 — the proof-of-concept sessions" tabindex="0">
+                <table class="ledger proof-table" data-proof-table>
+                <thead><tr><th>Session</th><th>NAV regime</th><th class="num">Captured</th><th>Verification</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td class="lab">Day 01</td><td><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
+                  <tr><td class="lab">Day 02</td><td><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
+                  <tr><td class="lab">Day 03</td><td><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
+                  <tr><td class="lab">Day 04</td><td><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
+                  <tr><td class="lab">Day 05</td><td><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
+                  <tr><td class="lab">Day 06</td><td><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
+                  <tr><td class="lab">Day 07</td><td><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
+                  <tr><td class="lab">Day 08</td><td><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
+                  <tr><td class="lab">Day 09</td><td><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
+                  <tr><td class="lab">Day 10</td><td><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num">&gt;10 bps</td><td>Broker confirmation</td><td><span class="tag on">Settled</span></td></tr>
+                </tbody>
+              </table>
+              </div>
+              <div class="figure-cap"><span>Table 01 — Proof-of-concept sessions · bps captured by the agents</span><span>Every session confirmed by the executing broker</span></div>
             </div>
-            <div class="figure-cap"><span>Table 01 — Proof-of-concept sessions · bps captured by the agents</span><span>Every session confirmed by the executing broker</span></div>
           </div>
         </div>
       </div>
@@ -228,5 +251,6 @@
   </footer>
 
   <script src="assets/js/site.js" defer></script>
+  <script src="assets/js/proof.js" defer></script>
 </body>
 </html>
