@@ -1254,8 +1254,8 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .arch-layer .n { font-family: var(--mono); font-size: .68rem; letter-spacing: .1em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color .25s; }
 .arch-layer .nm { font-family: var(--serif); font-size: clamp(1.25rem, 1.5vw, 1.5rem); line-height: 1.1; letter-spacing: -0.01em; }
 .arch-layer .vb { font-family: var(--mono); font-size: .58rem; letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); transition: color .25s; }
-.arch-layer::after { content: "+"; font-family: var(--mono); font-size: .95rem; line-height: 1; color: var(--fg-3); text-align: center; transition: color .25s, transform .3s var(--ease); }
-.arch-layer[aria-expanded="true"]::after { content: "\2212"; color: var(--accent); }
+.arch-layer::after { content: "+"; content: "+" / ""; font-family: var(--mono); font-size: .95rem; line-height: 1; color: var(--fg-3); text-align: center; transition: color .25s, transform .3s var(--ease); }
+.arch-layer[aria-expanded="true"]::after { content: "\2212"; content: "\2212" / ""; color: var(--accent); } /* decoration: aria-expanded carries the state */
 .arch-layer::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; background: var(--accent); transform: scaleY(0); transition: transform .3s var(--ease); }
 .arch-layer.is-hot { color: var(--fg); background-color: rgba(79, 203, 147, .07); }
 .arch-layer.is-hot .n, .arch-layer.is-hot .vb, .arch-layer[aria-expanded="true"] .n { color: var(--accent); }
@@ -1316,7 +1316,9 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 @keyframes arch-swap { from { opacity: .25; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .arch-card .arch-panel { padding: 16px 0 0; margin-top: 16px; border-top: 1px solid var(--line); }
 .arch-card .arch-panel > p { font-size: .94rem; line-height: 1.58; }
-.arch-card .arch-panel .io, .arch-card .arch-panel .arch-side { display: none; } /* the card already shows them */
+/* the card's summary already shows In -> Out and the side of the boundary; the panel keeps them for screen readers
+   (the summary is aria-hidden), visually hidden rather than display: none */
+.arch-card .arch-panel .io, .arch-card .arch-panel .arch-side { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .arch-card.is-peek .arch-panel { display: none; }
 .arch-card:not(.is-peek) .sum-job { display: none; } /* open: the full text below replaces the one-line job */
 
