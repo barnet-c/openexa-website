@@ -661,9 +661,13 @@
     // leader: an elbow from the agent to its tag
     if (tagBox && a > 0.05) {
       ctx.globalAlpha = a; ctx.strokeStyle = `rgba(${IV},.7)`; ctx.lineWidth = 1; ctx.beginPath();
-      const ex = tagBox.side > 0 ? tagBox.x : tagBox.x + tagBox.w, ey = tagBox.y + tagBox.h / 2;
-      ctx.moveTo(x + tagBox.side * (r0 * 2 + 7) * 0.7, y - (r0 * 2 + 7) * 0.7); ctx.lineTo(ex - tagBox.side * 10, ey); ctx.lineTo(ex, ey); ctx.stroke();
-      ctx.globalAlpha = 1;
+      const R = r0 * 2 + 7;
+      if (x > tagBox.x - 4 && x < tagBox.x + tagBox.w + 4) { ctx.moveTo(x, y - R); ctx.lineTo(x, Math.min(y - R, tagBox.y + tagBox.h)); } // tag clamped above: straight up
+      else {
+        const ex = tagBox.side > 0 ? tagBox.x : tagBox.x + tagBox.w, ey = tagBox.y + tagBox.h / 2;
+        ctx.moveTo(x + tagBox.side * R * 0.7, y - R * 0.7); ctx.lineTo(ex - tagBox.side * 10, ey); ctx.lineTo(ex, ey);
+      }
+      ctx.stroke(); ctx.globalAlpha = 1;
     }
   }
   function drawLeaders() {
@@ -730,9 +734,12 @@
   function placeTag() {
     if (!el.tag || el.tag.hidden || !follow.show) { tagBox = null; return; }
     proj(follow.x, follow.y, follow.z);
-    const w = el.tag.offsetWidth || 120, h = el.tag.offsetHeight || 34, gap = 26;
-    let side = P_X + gap + w < W - 6 ? 1 : -1;
-    const x = side > 0 ? P_X + gap : P_X - gap - w, y = clamp(P_Y - h - 22, rowTop + rowH + 8, H - h - 6);
+    const w = el.tag.offsetWidth || 120, h = el.tag.offsetHeight || 34, gap = narrow ? 16 : 26;
+    // the side with room; when neither side holds the whole tag (a long verdict on a phone) it is clamped into the
+    // stage above the agent, and the leader rises straight to it
+    const roomR = W - 6 - (P_X + gap), roomL = P_X - gap - 6;
+    const side = roomR >= w ? 1 : roomL >= w ? -1 : roomR >= roomL ? 1 : -1;
+    const x = clamp(side > 0 ? P_X + gap : P_X - gap - w, 6, Math.max(6, W - w - 6)), y = clamp(P_Y - h - 22, rowTop + rowH + 8, H - h - 6);
     setPos(el.tag, x, y); tagBox = { x, y, w, h, side };
   }
   function hideTag() { if (el.tag) el.tag.hidden = true; tagBox = null; }
