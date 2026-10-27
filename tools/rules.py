@@ -1,4 +1,4 @@
-"""The site's content rules (from the user and the CEO; see CLAUDE.md), shared by check_static.py and verify_v9.py."""
+"""The site's content rules (from the user and the CEO; README.md lists them), shared by check_static.py and verify_v9.py."""
 import re
 
 # no exchange, broker or clearing-house names; no office address, phone or personal email; no pitch-deck ARR figures
