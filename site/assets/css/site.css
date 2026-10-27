@@ -574,7 +574,7 @@ body.is-loading { overflow: hidden; }
 .story-stage::before { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 78% 45%, rgba(245, 242, 236, .05), transparent 60%); pointer-events: none; }
 .story-gl, .story-2d { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
 .story-labels { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
-.no-webgl .story-2d[hidden] { display: block; }
+.no-webgl .story-2d { height: 100vh; height: 100svh; }  /* site.js un-hides the 2D swarm when WebGL is unavailable */
 .beat.is-active [data-split] .wi { transform: translateY(0); }
 .story-ui { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .story-ui .container { position: relative; height: 100%; }
@@ -715,7 +715,7 @@ body.is-loading { overflow: hidden; }
 .swarm-controls input[type=range]:focus-visible { outline: none; } .swarm-controls input[type=range]:focus-visible::-webkit-slider-thumb, .swarm-controls input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 1px var(--accent); }
 .swarm-controls .halt { font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; padding: 12px 18px; border: 1px solid var(--reject); color: var(--reject); border-radius: 2px; transition: background .25s, color .25s; align-self: end; margin-bottom: 4px; }
 .swarm-controls .halt:hover { background: var(--reject); color: var(--paper); }
-.swarm-controls .halt[aria-pressed="true"] { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+.swarm-live.is-halted .halt { background: var(--paper); color: var(--ink); border-color: var(--paper); }
 .gates--compact > div { padding: 18px 16px 20px; } .gates--compact h3 { font-size: 1.25rem; } .gates--compact p { font-size: .82rem; }
 @media (max-width: 1100px) { .swarm-bar { grid-template-columns: 1fr; } .swarm-stats { border-right: 0; border-bottom: 1px solid var(--line); } }
 @media (max-width: 640px) { .swarm-stats { grid-template-columns: 1fr 1fr; } .swarm-stats > div:nth-child(2) { border-right: 0; } .swarm-stats > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); } .swarm-controls { grid-template-columns: 1fr; } .swarm-controls .halt { justify-self: start; } .swarm-live canvas { height: 260px; } }

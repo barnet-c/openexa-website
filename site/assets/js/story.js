@@ -4,7 +4,9 @@
      0 the globe (brand mark + agent orbits)      1 the gap (price drifting from NAV; agents create above it, redeem below it)
      2 the vertical execution rail (the swarm)    3 the agentic stack (eight layers) — beats run globe · lifecycles · stack · swarm · proof
      4 proof (ten sessions above the floor)
-   Labels are DOM nodes projected from 3D each frame. Falls back to static beats without WebGL. */
+   Labels are DOM nodes projected from 3D each frame. Falls back to static beats without WebGL.
+   The stage is laid out as the scroll story from the first paint; the context, shaders and buffers are built just after
+   it (the loader covers the gap), and rebuilt in place if the GPU drops the context. */
 (function () {
   'use strict';
   const story = document.querySelector('.story');
@@ -12,12 +14,16 @@
   const stage = story.querySelector('.story-stage');
   const cv = story.querySelector('canvas.story-gl');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const gl = cv && cv.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'high-performance' });
-  if (!gl) { document.documentElement.classList.add('no-webgl'); return; }
+  const root = document.documentElement;
+  // static beats; site.js runs the 2D swarm behind them (it listens for this event when WebGL fails after it has run)
+  const fallback = () => { root.classList.remove('story-ready'); root.classList.add('no-webgl'); document.dispatchEvent(new Event('story:no-webgl')); };
+  if (!cv || !window.WebGLRenderingContext) { fallback(); return; }
+  let gl = null, lost = false;
 
   const BEATS = 5;
   const FORM = [0, 1, 3, 2, 4]; // beat → formation: globe · lifecycles · the stack · the swarm · proof
   story.style.setProperty('--beats', BEATS);
+  root.classList.add('story-ready');
   const narrow = () => window.innerWidth < 960;
   const N = narrow() ? 8000 : 20000;
 
@@ -138,18 +144,8 @@
     gl_FragColor = vec4(v_col * a, a);
   }`;
 
-  function compile(type, src) {
-    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); throw new Error('shader'); }
-    return s;
-  }
-  const prog = gl.createProgram();
-  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
-  gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(prog)); document.documentElement.classList.add('no-webgl'); return; }
-  gl.useProgram(prog);
-  const U = {}; ['u_proj', 'u_view', 'u_time', 'u_mix', 'u_pr', 'u_spin', 'u_fade', 'u_scale', 'u_halo', 'u_maxpt', 'u_from', 'u_to', 'u_offset', 'u_rc', 'u_ru', 'u_rv', 'u_rs', 'u_lc', 'u_ld', 'u_ln', 'u_ls'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
-  gl.uniform1f(U.u_maxpt, (gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE) || [1, 64])[1]);
+  let prog = null;
+  const U = {};
 
   /* ---------------- deterministic random ---------------- */
   let seed = 7;
@@ -283,22 +279,39 @@
     while (i < N) set(4, i++, (rnd() - 0.5) * (span + 0.3), base + floor + gauss() * 0.006, 0.06, 1);
   })();
 
-  /* ---------------- buffers ---------------- */
+  /* ---------------- GL resources: program, buffers, constant uniforms — built after first paint, rebuilt on restore ---------------- */
   function attrib(name, data, size) {
     const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, name); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
   }
-  F.forEach((f, i) => attrib('a_p' + i, f, 4));
-  attrib('a_rand', RAND, 4);
-  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.disable(gl.DEPTH_TEST);
-  gl.uniform3fv(U.u_rc, new Float32Array(rings.flatMap(r => r.c)));
-  gl.uniform3fv(U.u_ru, new Float32Array(rings.flatMap(r => r.u)));
-  gl.uniform3fv(U.u_rv, new Float32Array(rings.flatMap(r => r.v)));
-  gl.uniform1fv(U.u_rs, new Float32Array(rings.map(r => r.speed)));
-  gl.uniform3fv(U.u_lc, new Float32Array(lines.flatMap(l => l.c)));
-  gl.uniform3fv(U.u_ld, new Float32Array(lines.flatMap(l => l.d)));
-  gl.uniform3fv(U.u_ln, new Float32Array(lines.flatMap(l => l.n)));
-  gl.uniform1fv(U.u_ls, new Float32Array(lines.map(l => l.speed)));
+  // a compile/link failure (or any throw) takes the no-WebGL path; a context lost mid-setup does not — the restore starts over
+  const guard = (fn) => { try { fn(); } catch (e) { if (!gl.isContextLost()) fail(e); } };
+  function setupGL(done) { guard(() => {
+    const shader = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+    const vs = shader(gl.VERTEX_SHADER, VS), fs = shader(gl.FRAGMENT_SHADER, FS), p = gl.createProgram();
+    gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p);
+    const par = gl.getExtension('KHR_parallel_shader_compile'); // poll the link instead of stalling the main thread on it
+    (function linked() { guard(() => {
+      if (gl.isContextLost()) return;
+      if (par && !gl.getProgramParameter(p, par.COMPLETION_STATUS_KHR)) { requestAnimationFrame(linked); return; }
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('story shader: ' + (gl.getShaderInfoLog(vs) || gl.getShaderInfoLog(fs) || gl.getProgramInfoLog(p)));
+      prog = p; gl.useProgram(prog);
+      ['u_proj', 'u_view', 'u_time', 'u_mix', 'u_pr', 'u_spin', 'u_fade', 'u_scale', 'u_halo', 'u_maxpt', 'u_from', 'u_to', 'u_offset', 'u_rc', 'u_ru', 'u_rv', 'u_rs', 'u_lc', 'u_ld', 'u_ln', 'u_ls'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+      gl.uniform1f(U.u_maxpt, (gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE) || [1, 64])[1]);
+      F.forEach((f, i) => attrib('a_p' + i, f, 4));
+      attrib('a_rand', RAND, 4);
+      gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.disable(gl.DEPTH_TEST);
+      gl.uniform3fv(U.u_rc, new Float32Array(rings.flatMap(r => r.c)));
+      gl.uniform3fv(U.u_ru, new Float32Array(rings.flatMap(r => r.u)));
+      gl.uniform3fv(U.u_rv, new Float32Array(rings.flatMap(r => r.v)));
+      gl.uniform1fv(U.u_rs, new Float32Array(rings.map(r => r.speed)));
+      gl.uniform3fv(U.u_lc, new Float32Array(lines.flatMap(l => l.c)));
+      gl.uniform3fv(U.u_ld, new Float32Array(lines.flatMap(l => l.d)));
+      gl.uniform3fv(U.u_ln, new Float32Array(lines.flatMap(l => l.n)));
+      gl.uniform1fv(U.u_ls, new Float32Array(lines.map(l => l.speed)));
+      done();
+    }); })();
+  }); }
 
   /* ---------------- matrices ---------------- */
   const proj = new Float32Array(16), view = new Float32Array(16);
@@ -369,16 +382,20 @@
   const motionButton = story.querySelector('[data-story-motion]');
 
   /* ---------------- state & loop ---------------- */
-  let W = 1, H = 1, dpr = 1, t0 = performance.now(), time = 0, running = true, visible = true;
+  let W = 1, H = 1, dpr = 1, ratio = 0, t0 = performance.now(), time = 0, running = true, visible = true;
   let mix = 0, from = 0, to = 0, bf = 0;
   let frameId = 0, paused = false;
   const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
 
   // render at the device's full resolution (up to 3x), within a UHD pixel budget so the full-viewport stage stays fluid
   const PIXEL_BUDGET = 3840 * 2160;
-  function resize() {
-    W = stage.clientWidth; H = stage.clientHeight;
-    dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / Math.max(1, W * H)));
+  function resize(force) {
+    if (lost) return;
+    const w = stage.clientWidth, h = stage.clientHeight, r = window.devicePixelRatio || 1;
+    // the mobile address bar showing/hiding fires resize without changing the stage (100svh): keep the drawing buffer
+    if (force !== true && w === W && h === H && r === ratio) return;
+    W = w; H = h; ratio = r;
+    dpr = Math.min(3, r, Math.sqrt(PIXEL_BUDGET / Math.max(1, W * H)));
     cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr);
     gl.viewport(0, 0, cv.width, cv.height);
     perspective(proj, 0.62, W / H, 0.1, 30);
@@ -404,23 +421,28 @@
     mix = mix * mix * (3 - 2 * mix);
   }
 
+  // the DOM is written only when a value changes: at rest a frame touches nothing
+  const shown = beats.map(() => ({ op: '', tr: '', on: null }));
+  let shownIdx = -1, shownScrolled = null;
   function updateUI() {
     beats.forEach((b, i) => {
       const d = Math.abs(bf - i);
       const op = 1 - Math.min(1, Math.max(0, (d - 0.22) / 0.34));
-      b.style.opacity = op.toFixed(3);
-      b.style.transform = `translateY(${((bf - i) * -26).toFixed(1)}px)`;
-      b.classList.toggle('is-active', op > 0.5);
-      b.inert = op <= 0.5;
-      b.setAttribute('aria-hidden', String(op <= 0.5));
+      const s = shown[i], o = op.toFixed(3), tr = `translateY(${((bf - i) * -26).toFixed(1)}px)`;
+      if (s.op !== o) b.style.opacity = s.op = o;
+      if (s.tr !== tr) b.style.transform = s.tr = tr;
+      if (s.on !== op > 0.5) b.classList.toggle('is-active', s.on = op > 0.5);
     });
-    idx.forEach((button, i) => {
-      const active = Math.round(bf) === i;
-      button.classList.toggle('is-on', active);
-      if (active) button.setAttribute('aria-current', 'step');
-      else button.removeAttribute('aria-current');
-    });
-    story.classList.toggle('is-scrolled', bf > 0.35);
+    if (shownIdx !== Math.round(bf)) {
+      shownIdx = Math.round(bf);
+      idx.forEach((button, i) => {
+        const active = shownIdx === i;
+        button.classList.toggle('is-on', active);
+        if (active) button.setAttribute('aria-current', 'step');
+        else button.removeAttribute('aria-current');
+      });
+    }
+    if (shownScrolled !== bf > 0.35) story.classList.toggle('is-scrolled', shownScrolled = bf > 0.35);
     const out = { x: 0, y: 0, z: 0 };
     const { scale, offset } = layout();
     const spin = time * 0.10 + mouse.x * 0.25;
@@ -430,16 +452,17 @@
       if (narrow() && (l.beat === 0 || !l.m)) on = false;
       let p = l.pos;
       if (l.spin) { const c = Math.cos(spin), s = Math.sin(spin); p = [l.pos[0] * c + l.pos[2] * s, l.pos[1], -l.pos[0] * s + l.pos[2] * c]; if (p[2] < -0.15 && Math.hypot(p[0], p[1]) < 1.0) on = false; }
-      if (!on) { if (l.el.classList.contains('is-on')) l.el.classList.remove('is-on'); return; }
+      if (!on) { if (l.on) { l.el.classList.remove('is-on'); l.on = false; } return; }
       project([p[0] * scale + offset[0], p[1] * scale + offset[1], p[2] * scale + offset[2]], out);
-      l.el.style.transform = `translate(${out.x.toFixed(1)}px, ${out.y.toFixed(1)}px) ${ANCH[l.anchor]}`;
-      l.el.classList.add('is-on');
+      const tr = `translate(${out.x.toFixed(1)}px, ${out.y.toFixed(1)}px) ${ANCH[l.anchor]}`;
+      if (l.tr !== tr) l.el.style.transform = l.tr = tr;
+      if (!l.on) { l.el.classList.add('is-on'); l.on = true; }
     });
   }
 
   function frame(now, initial = false) {
     frameId = 0;
-    if (!running) return;
+    if (!running || lost) return;
     const dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
     if ((visible && !document.hidden) || initial) {
       if (!reduced.matches && !paused) {
@@ -467,7 +490,7 @@
   }
 
   function requestFrame() {
-    if (!frameId && running && visible && !document.hidden) frameId = requestAnimationFrame(frame);
+    if (!frameId && running && !lost && visible && !document.hidden) frameId = requestAnimationFrame(frame);
   }
   function stopFrames() {
     cancelAnimationFrame(frameId);
@@ -477,43 +500,73 @@
   function updateMotion() {
     if (!motionButton) return;
     motionButton.hidden = reduced.matches;
-    motionButton.setAttribute('aria-pressed', String(paused || reduced.matches));
     motionButton.textContent = paused ? 'Resume motion' : 'Pause motion';
   }
-  idx.forEach((button, i) => button.addEventListener('click', () => {
-    const start = window.scrollY + story.getBoundingClientRect().top;
-    const travel = story.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: start + travel * i / (BEATS - 1), behavior: reduced.matches ? 'instant' : 'smooth' });
-  }));
-  if (motionButton) motionButton.addEventListener('click', () => {
-    paused = !paused;
+  const beatTop = (i) => window.scrollY + story.getBoundingClientRect().top + (story.offsetHeight - window.innerHeight) * i / (BEATS - 1);
+  const goTo = (i) => window.scrollTo({ top: beatTop(i), behavior: reduced.matches ? 'instant' : 'smooth' });
+
+  // WebGL failed to start (or to come back): stop, clear what the loop wrote, hand over to the static beats
+  function fail(err) {
+    if (err) console.error(err);
+    running = false; stopFrames();
+    beats.forEach(b => { b.style.opacity = b.style.transform = ''; b.classList.remove('is-active'); });
+    if (motionButton) motionButton.hidden = true;
+    fallback();
+  }
+  let wired = false;
+  function begin() {
+    if (!wired) {
+      wired = true;
+      idx.forEach((button, i) => button.addEventListener('click', () => goTo(i)));
+      // every beat stays in the accessibility tree; keyboard focus entering one scrolls the story to it
+      beats.forEach((b, i) => b.addEventListener('focusin', () => {
+        if (running && Math.abs(window.scrollY - beatTop(i)) > (story.offsetHeight - window.innerHeight) / (BEATS - 1) / 2) goTo(i);
+      }));
+      if (motionButton) {
+        motionButton.removeAttribute('aria-pressed'); // the label itself toggles
+        motionButton.addEventListener('click', () => {
+          paused = !paused;
+          updateMotion();
+          requestFrame();
+        });
+      }
+      reduced.addEventListener('change', () => {
+        mouse.x = mouse.y = mouse.tx = mouse.ty = 0;
+        updateMotion();
+        requestFrame();
+      });
+      window.addEventListener('resize', resize);
+      // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
+      (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
+      window.addEventListener('scroll', requestFrame, { passive: true });
+      window.addEventListener('pointermove', e => {
+        if (reduced.matches || paused || e.pointerType === 'touch') return;
+        mouse.tx = (e.clientX / window.innerWidth - 0.5) * 2; mouse.ty = (e.clientY / window.innerHeight - 0.5) * 2;
+      }, { passive: true });
+      if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => {
+        visible = e.isIntersecting;
+        if (visible) requestFrame();
+        else stopFrames();
+      }, { threshold: 0 }).observe(story);
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stopFrames();
+        else requestFrame();
+      });
+    }
+    resize(true);
+    gl.uniform1f(U.u_fade, 1);
     updateMotion();
-    requestFrame();
-  });
-  reduced.addEventListener('change', () => {
-    mouse.x = mouse.y = mouse.tx = mouse.ty = 0;
-    updateMotion();
-    requestFrame();
-  });
-  document.documentElement.classList.add('story-ready');
-  resize();
-  window.addEventListener('resize', resize);
-  window.addEventListener('scroll', requestFrame, { passive: true });
-  window.addEventListener('pointermove', e => {
-    if (reduced.matches || paused || e.pointerType === 'touch') return;
-    mouse.tx = (e.clientX / window.innerWidth - 0.5) * 2; mouse.ty = (e.clientY / window.innerHeight - 0.5) * 2;
-  }, { passive: true });
-  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => {
-    visible = e.isIntersecting;
-    if (visible) requestFrame();
-    else stopFrames();
-  }, { threshold: 0 }).observe(story);
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stopFrames();
-    else requestFrame();
-  });
-  gl.uniform1f(U.u_fade, 1);
-  updateMotion();
-  stopFrames();
-  frame(performance.now(), true);
+    stopFrames();
+    frame(performance.now(), true);
+  }
+  function start() {
+    try { gl = cv.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'high-performance' }); } catch (e) { gl = null; }
+    if (!gl) { fail(); return; }
+    // a lost context skips frames; a restored one gets fresh program and buffers, then picks up where it was
+    cv.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; prog = null; stopFrames(); });
+    cv.addEventListener('webglcontextrestored', () => { lost = false; if (running) setupGL(begin); });
+    setupGL(begin);
+  }
+  // after the first paint: context creation and shader compilation never hold it up
+  requestAnimationFrame(() => setTimeout(start, 0));
 })();

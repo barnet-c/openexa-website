@@ -82,7 +82,7 @@ async def main():
         box = await pg.locator(".beat-0 .hero-stats").bounding_box()
         assert box and box["x"] + box["width"] < 1440 * 0.56, ("hero stats intrude on the globe", box)
         await pg.locator("[data-story-motion]").click()
-        await expect(pg.locator("[data-story-motion]")).to_have_attribute("aria-pressed", "true")
+        await expect(pg.locator("[data-story-motion]")).to_have_text("Resume motion")
         await pg.locator("[data-story-motion]").click()
         # swarm
         await pg.locator("[data-swarm-live]").scroll_into_view_if_needed()

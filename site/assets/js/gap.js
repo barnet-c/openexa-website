@@ -79,10 +79,12 @@
     root.classList.toggle('is-closed', !!S.done);
   }
   const fmtAgents = (n) => n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n);
-  if (el.thr) el.thr.addEventListener('input', () => { thr = +el.thr.value; if (el.thrOut) el.thrOut.textContent = thr; if (reduced.matches) staticStudy(); else draw(); });
-  if (el.n) el.n.addEventListener('input', () => { agents = Math.round(500 * Math.pow(100, el.n.value / 100) / 100) * 100; if (el.nOut) el.nOut.textContent = fmtAgents(agents); if (reduced.matches) staticStudy(); });
-  if (el.thrOut) el.thrOut.textContent = thr;
-  if (el.nOut) el.nOut.textContent = fmtAgents(agents);
+  // the agent slider is log-scaled: screen readers announce what the outputs show, not the raw position
+  const showThr = () => { if (el.thrOut) el.thrOut.textContent = thr; if (el.thr) el.thr.setAttribute('aria-valuetext', `${thr} bps`); };
+  const showN = () => { if (el.nOut) el.nOut.textContent = fmtAgents(agents); if (el.n) el.n.setAttribute('aria-valuetext', `${fmtAgents(agents)} agents`); };
+  if (el.thr) el.thr.addEventListener('input', () => { thr = +el.thr.value; showThr(); if (reduced.matches) staticStudy(); else draw(); });
+  if (el.n) el.n.addEventListener('input', () => { agents = Math.round(500 * Math.pow(100, el.n.value / 100) / 100) * 100; showN(); if (reduced.matches) staticStudy(); });
+  showThr(); showN();
 
   /* ---------------- drawing ---------------- */
   let W = 0, H = 0, dpr = 1, hover = null;
@@ -178,8 +180,7 @@
   motion.type = 'button';
   motion.className = 'model-motion';
   motion.dataset.gapMotion = '';
-  motion.setAttribute('aria-pressed', 'false');
-  motion.textContent = 'Pause model';
+  motion.textContent = 'Pause model'; // the label itself toggles: no aria-pressed
   const head = root.querySelector('.desk-head');
   if (head) head.appendChild(motion);
   function staticStudy() {
@@ -208,7 +209,6 @@
   motion.addEventListener('click', () => {
     paused = !paused;
     motion.textContent = paused ? 'Resume model' : 'Pause model';
-    motion.setAttribute('aria-pressed', String(paused));
     if (paused) stopFrames(); else requestFrame();
     draw(); stats();
   });
@@ -219,6 +219,8 @@
   motion.hidden = reduced.matches;
   if (reduced.matches) staticStudy(); else stats();
   window.addEventListener('resize', resize);
+  // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
+  (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
   if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => {
     visible = e.isIntersecting; last = performance.now();
     if (visible) requestFrame(); else stopFrames();

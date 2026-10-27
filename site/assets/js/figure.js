@@ -198,25 +198,41 @@
     const cv = stage.querySelector('canvas');
     const initial = stage.dataset.figure;
     if (!cv || !FORMS[initial]) { stage.classList.add('no-figure'); return; }
-    const gl = cv.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: true, powerPreference: 'low-power' });
+    let gl = null;
+    try { gl = cv.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: true, powerPreference: 'low-power' }); } catch (e) { gl = null; }
     if (!gl) { stage.classList.add('no-figure'); return; }
-    const compile = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.warn('figure shader:', gl.getShaderInfoLog(s)); return null; } return s; };
-    const vs = compile(gl.VERTEX_SHADER, VS), fs = compile(gl.FRAGMENT_SHADER, FS);
-    if (!vs || !fs) { stage.classList.add('no-figure'); return; }
-    const prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.warn('figure program:', gl.getProgramInfoLog(prog)); stage.classList.add('no-figure'); return; }
-    gl.useProgram(prog);
     const N = narrow() ? 7000 : 15000;
     const rnd = makeRng(41), g = () => (rnd() + rnd() + rnd() - 1.5) * 0.82;
     const RAND = new Float32Array(N * 4); for (let i = 0; i < N * 4; i++) RAND[i] = rnd();
     const built = {};
     const build = (name) => { if (!built[name]) { const r = makeRng(name.length * 977 + 13), gg = () => (r() + r() + r() - 1.5) * 0.82; const pts = FORMS[name](N, r, gg); const f = new Float32Array(N * 4); for (let i = 0; i < N; i++) { const p = pts[i] || [0, 0, -2, 7]; f[i * 4] = p[0]; f[i * 4 + 1] = p[1]; f[i * 4 + 2] = p[2]; f[i * 4 + 3] = p[3]; } built[name] = f; } return built[name]; };
+    let prog = null, bufA = null, bufB = null;
+    const U = {};
     const buf = (name, data) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW); const loc = gl.getAttribLocation(prog, name); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, 0); return b; };
-    const first = build(initial);
-    const bufA = buf('a_a', first), bufB = buf('a_b', first); buf('a_rand', RAND);
-    const U = {}; ['u_proj', 'u_view', 'u_time', 'u_mix', 'u_pr', 'u_spin', 'u_scale', 'u_halo', 'u_maxpt'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
-    gl.uniform1f(U.u_maxpt, (gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE) || [1, 64])[1]);
-    gl.enable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
+    const fail = (msg, log) => { if (!gl.isContextLost()) { console.warn(msg, log); stage.classList.add('no-figure'); } };
+    // program, buffers and constant state — built once, and again in place when a lost context is restored
+    function setup(done) {
+      try {
+        const shader = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+        const vs = shader(gl.VERTEX_SHADER, VS), fs = shader(gl.FRAGMENT_SHADER, FS), p = gl.createProgram();
+        gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p);
+        const par = gl.getExtension('KHR_parallel_shader_compile'); // poll the link instead of stalling the main thread on it
+        (function linked() {
+          try {
+            if (gl.isContextLost()) return; // the restore starts over
+            if (par && !gl.getProgramParameter(p, par.COMPLETION_STATUS_KHR)) { requestAnimationFrame(linked); return; }
+            if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { fail('figure program:', gl.getShaderInfoLog(vs) || gl.getShaderInfoLog(fs) || gl.getProgramInfoLog(p)); return; }
+            prog = p; gl.useProgram(prog);
+            const target = build(current); mix = 1; // a restore lands on the current formation
+            bufA = buf('a_a', target); bufB = buf('a_b', target); buf('a_rand', RAND);
+            ['u_proj', 'u_view', 'u_time', 'u_mix', 'u_pr', 'u_spin', 'u_scale', 'u_halo', 'u_maxpt'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+            gl.uniform1f(U.u_maxpt, (gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE) || [1, 64])[1]);
+            gl.enable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
+            done();
+          } catch (e) { fail('figure:', e); }
+        })();
+      } catch (e) { fail('figure:', e); }
+    }
     const proj = new Float32Array(16), view = new Float32Array(16);
     let W = 1, H = 1, dpr = 1, time = 0, mix = 1, current = initial, spinBase = parseFloat(stage.dataset.spin || '0.12');
     const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
@@ -224,7 +240,7 @@
     const scale = parseFloat(stage.dataset.scale || '1');
     // render at the device's full resolution (up to 3x), within a UHD pixel budget so a large stage on a 3x display stays fluid
     const PIXEL_BUDGET = 3840 * 2160;
-    function resize() { const r = cv.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height); dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / (W * H))); cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); gl.viewport(0, 0, cv.width, cv.height); perspective(proj, 0.62, W / H, 0.1, 30); gl.uniform1f(U.u_pr, dpr); draw(true); }
+    function resize() { if (!prog || lost) return; const r = cv.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height); dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / (W * H))); cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); gl.viewport(0, 0, cv.width, cv.height); perspective(proj, 0.62, W / H, 0.1, 30); gl.uniform1f(U.u_pr, dpr); draw(true); }
     function draw(force) {
       const now = performance.now(); const dt = Math.min(0.05, (now - last) / 1000); last = now;
       const moving = !reduced.matches;
@@ -241,34 +257,41 @@
       if (!force && (moving || mix < 1)) request();
     }
     function frame() { frameId = 0; if (!visible || document.hidden || lost) return; draw(false); }
-    function request() { if (!frameId && visible && !document.hidden && !lost) frameId = requestAnimationFrame(frame); }
+    function request() { if (!frameId && prog && visible && !document.hidden && !lost) frameId = requestAnimationFrame(frame); }
     function stop() { cancelAnimationFrame(frameId); frameId = 0; last = performance.now(); }
     stage.__figure = {
       show(name) {
-        if (!FORMS[name] || name === current || lost) return;
+        if (!FORMS[name] || name === current) return;
+        stage.dataset.figureCurrent = name;
+        if (!prog || lost) { current = name; return; } // not drawing yet: setup or the restore starts on this formation
         // the current target becomes the origin; snapping mid-morph is invisible at these speeds
         gl.bindBuffer(gl.ARRAY_BUFFER, bufA); gl.bufferData(gl.ARRAY_BUFFER, build(current), gl.DYNAMIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, bufB); gl.bufferData(gl.ARRAY_BUFFER, build(name), gl.DYNAMIC_DRAW);
-        current = name; mix = 0; stage.dataset.figureCurrent = name; request();
+        current = name; mix = 0; request();
       },
     };
     stage.dataset.figureCurrent = initial;
-    cv.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; stop(); stage.classList.add('no-figure'); });
-    cv.addEventListener('webglcontextrestored', () => { location.reload(); });
+    // a lost context shows the static mark; a restored one is rebuilt in place and carries on
+    cv.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; prog = null; stop(); stage.classList.add('no-figure'); });
+    cv.addEventListener('webglcontextrestored', () => { lost = false; setup(() => { stage.classList.remove('no-figure'); resize(); request(); }); });
     if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) request(); else stop(); }, { threshold: 0 }).observe(stage);
     document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else request(); });
     reduced.addEventListener('change', () => { mouse.tx = mouse.ty = 0; request(); });
     if ('ResizeObserver' in window) new ResizeObserver(() => resize()).observe(stage); else window.addEventListener('resize', resize);
+    // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
+    (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
     stage.addEventListener('pointermove', e => { if (reduced.matches || e.pointerType === 'touch') return; const r = stage.getBoundingClientRect(); mouse.tx = (e.clientX - r.left) / r.width - 0.5; mouse.ty = (e.clientY - r.top) / r.height - 0.5; }, { passive: true });
     stage.addEventListener('pointerleave', () => { mouse.tx = mouse.ty = 0; });
-    resize(); request();
+    setup(() => { resize(); request(); });
   }
-  stages.forEach(init);
+  // after the first paint, one stage per task: context creation and shader compilation never hold up a frame
+  requestAnimationFrame(() => stages.forEach(s => setTimeout(() => init(s), 0)));
 
   // the research index: point at a post, the sculpture becomes that post's figure
   document.querySelectorAll('[data-figure-target]').forEach(el => {
     const stage = document.querySelector(el.dataset.figureStage ? `#${el.dataset.figureStage}` : '[data-figure]');
-    const go = () => stage && stage.__figure && stage.__figure.show(el.dataset.figureTarget);
+    // before its stage has started, the choice becomes the formation it starts on
+    const go = () => { if (!stage) return; if (stage.__figure) stage.__figure.show(el.dataset.figureTarget); else stage.dataset.figure = el.dataset.figureTarget; };
     if (el.tagName === 'BUTTON') {
       // mode buttons: click switches the figure, marks the pressed state among siblings and swaps the caption
       el.addEventListener('click', () => {

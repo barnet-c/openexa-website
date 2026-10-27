@@ -123,11 +123,13 @@
     root.classList.toggle('is-halted', halted);
   }
   const fmtN = (n) => n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n);
-  if (el.n) { el.n.value = Math.round(Math.log(target / 500) / Math.log(12) * 100); el.n.addEventListener('input', () => { target = Math.round(500 * Math.pow(12, el.n.value / 100) / 100) * 100; if (el.nOut) el.nOut.textContent = fmtN(target); if (reduced.matches) staticStudy(); }); }
-  if (el.strict) el.strict.addEventListener('input', () => { strict = el.strict.value / 100; if (el.strictOut) el.strictOut.textContent = `${el.strict.value}%`; if (reduced.matches) staticStudy(); });
-  if (el.halt) el.halt.addEventListener('click', () => { halted = !halted; el.halt.setAttribute('aria-pressed', String(halted)); el.halt.textContent = halted ? 'Resume' : 'Halt'; stats(); draw(); });
-  if (el.nOut) el.nOut.textContent = fmtN(target);
-  if (el.strictOut) el.strictOut.textContent = `${Math.round(strict * 100)}%`;
+  // the sliders are log-scaled: screen readers announce what the outputs show, not the raw position
+  const showN = () => { if (el.nOut) el.nOut.textContent = fmtN(target); if (el.n) el.n.setAttribute('aria-valuetext', `${fmtN(target)} agents`); };
+  const showStrict = () => { const pct = Math.round(strict * 100); if (el.strictOut) el.strictOut.textContent = `${pct}%`; if (el.strict) el.strict.setAttribute('aria-valuetext', `${pct}% rejected`); };
+  if (el.n) { el.n.value = Math.round(Math.log(target / 500) / Math.log(12) * 100); el.n.addEventListener('input', () => { target = Math.round(500 * Math.pow(12, el.n.value / 100) / 100) * 100; showN(); if (reduced.matches) staticStudy(); }); }
+  if (el.strict) el.strict.addEventListener('input', () => { strict = el.strict.value / 100; showStrict(); if (reduced.matches) staticStudy(); });
+  if (el.halt) { el.halt.removeAttribute('aria-pressed'); el.halt.addEventListener('click', () => { halted = !halted; el.halt.textContent = halted ? 'Resume' : 'Halt'; stats(); draw(); }); } // the label itself toggles
+  showN(); showStrict();
 
   let visible = false, last = performance.now(), ui = 0, frameId = 0;
   function staticStudy() {
@@ -151,6 +153,8 @@
     requestFrame();
   }
   resize(); window.addEventListener('resize', resize);
+  // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
+  (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
   if (reduced.matches) staticStudy();
   else stats();
   if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => {

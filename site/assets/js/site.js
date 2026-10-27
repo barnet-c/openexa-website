@@ -12,8 +12,10 @@
   const nav = $('.nav');
   const darkStart = document.body.dataset.nav === 'dark-start';
   const progress = document.createElement('i'); progress.className = 'nav-progress'; if (nav) nav.appendChild(progress);
-  let lastY = window.scrollY;
+  let lastY = window.scrollY, navRaf = 0;
+  const hero = $('.story, .hero, .page-hero--dark');
   function updateNav() {
+    navRaf = 0;
     if (!nav) return;
     const max = document.documentElement.scrollHeight - window.innerHeight;
     const y = window.scrollY;
@@ -24,14 +26,14 @@
     else if (open || y < lastY - 6 || y < 140) nav.classList.remove('nav--hidden');
     lastY = y;
     if (!darkStart) { nav.classList.add('nav--solid'); return; }
-    const hero = $('.story, .hero, .page-hero--dark');
     const staticStory = document.documentElement.classList.contains('no-webgl'); // beats stack and scroll under the nav
     const threshold = hero && !staticStory ? hero.offsetHeight + hero.offsetTop - nav.offsetHeight - 8 : 40;
     nav.classList.toggle('nav--solid', y > threshold || open);
   }
   updateNav();
-  window.addEventListener('scroll', updateNav, { passive: true });
-  window.addEventListener('resize', updateNav);
+  const queueNav = () => { if (!navRaf) navRaf = requestAnimationFrame(updateNav); }; // at most once a frame
+  window.addEventListener('scroll', queueNav, { passive: true });
+  window.addEventListener('resize', queueNav);
 
   const toggle = $('.nav-toggle');
   const menu = $('.nav-menu');
@@ -162,7 +164,7 @@
   });
 
   /* ---------------- ticker ---------------- */
-  $$('.ticker-track').forEach(t => { const ul = $('ul', t); if (ul && t.children.length === 1) t.appendChild(ul.cloneNode(true)); });
+  $$('.ticker-track').forEach(t => { const ul = $('ul', t); if (ul && t.children.length === 1) { const copy = ul.cloneNode(true); copy.setAttribute('aria-hidden', 'true'); t.appendChild(copy); } }); // the copy only closes the loop: read once
 
   /* ---------------- kinetic split text ---------------- */
   function splitWords(el) {
@@ -228,20 +230,18 @@
     $$('.beat-0 [data-split]').forEach(el => el.classList.add('is-in'));
   }
   /* ---------------- count-up ---------------- */
+  // the HTML holds the real value (no-JS, screen readers); counters still below the fold are zeroed now and count up on arrival
   const fmt = (n, dec) => n.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  const countText = (el, k) => (el.dataset.prefix || '') + fmt(parseFloat(el.dataset.count) * k, parseInt(el.dataset.decimals || '0', 10)) + (el.dataset.suffix || '');
   function countUp(el) {
-    const target = parseFloat(el.dataset.count), dec = parseInt(el.dataset.decimals || '0', 10);
-    const prefix = el.dataset.prefix || '', suffix = el.dataset.suffix || '';
-    if (prefersReduced) { el.textContent = prefix + fmt(target, dec) + suffix; return; }
     const dur = 1400, t0 = performance.now(), ease = t => 1 - Math.pow(1 - t, 4);
-    (function step(now) { const p = Math.min(1, (now - t0) / dur); el.textContent = prefix + fmt(target * ease(p), dec) + suffix; if (p < 1) requestAnimationFrame(step); })(t0);
+    (function step(now) { const p = Math.min(1, (now - t0) / dur); el.textContent = countText(el, ease(p)); if (p < 1) requestAnimationFrame(step); })(t0);
   }
   const counters = $$('[data-count]');
-  if (counters.length) {
-    if ('IntersectionObserver' in window) {
-      const cio = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { countUp(e.target); cio.unobserve(e.target); } }); }, { threshold: 0.4 });
-      counters.forEach(c => cio.observe(c));
-    } else counters.forEach(countUp);
+  if (counters.length && 'IntersectionObserver' in window && !prefersReduced) {
+    const cio = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { countUp(e.target); cio.unobserve(e.target); } }); }, { threshold: 0.4 });
+    counters.filter(c => { const r = c.getBoundingClientRect(); return r.bottom <= 0 || r.top >= window.innerHeight; }) // already in view: keep the value
+      .forEach(c => { c.textContent = countText(c, 0); cio.observe(c); });
   }
 
   /* ---------------- forms (no backend: mailto handoff or configured endpoint) ---------------- */
@@ -307,8 +307,19 @@
           showError('The email draft could not be prepared. Please reload and try again.');
           return;
         }
-        const body = Object.entries(data).map(([key, value]) => `${key}: ${value}`).join('\r\n');
-        mail.href = `mailto:${CONTACT}?subject=${encodeURIComponent('OpenEXA introduction - ' + data.interest)}&body=${encodeURIComponent(body)}`;
+        // Windows mail handlers cut mailto URLs past ~2,000 characters, even mid-escape: shorten the message (then, if need be, the body) to fit
+        const head = `mailto:${CONTACT}?subject=${encodeURIComponent('OpenEXA introduction - ' + data.interest)}&body=`;
+        const fits = s => (head + encodeURIComponent(s)).length <= 1900;
+        const bodyWith = msg => Object.entries(data).map(([key, value]) => `${key}: ${key === 'message' ? msg : value}`).join('\r\n');
+        const cut = (text, wrap) => { // longest whole-character prefix that fits, marked with …
+          const ch = Array.from(text); let lo = 0, hi = ch.length;
+          while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (fits(wrap(ch.slice(0, mid).join('') + '…'))) lo = mid; else hi = mid - 1; }
+          return wrap(ch.slice(0, lo).join('') + '…');
+        };
+        let body = bodyWith(data.message || '');
+        if (!fits(body)) body = cut(data.message || '', bodyWith);
+        if (!fits(body)) body = cut(body, s => s);
+        mail.href = head + encodeURIComponent(body);
         showResult(false);
         return;
       }
@@ -395,11 +406,14 @@
   /* ---------------- 2D swarm (interior heroes & no-WebGL fallback) ---------------- */
   const canvas = $('canvas[data-swarm]');
   const inStory = canvas && canvas.closest('.story');
+  // story.js decides on WebGL after first paint, so its fallback can arrive after this script has run
   if (canvas && (!inStory || document.documentElement.classList.contains('no-webgl'))) initSwarm(canvas);
+  else if (inStory) document.addEventListener('story:no-webgl', () => initSwarm(canvas), { once: true });
 
   function initSwarm(cv) {
     const ctx = cv.getContext('2d', { alpha: true });
-    let W = 0, H = 0, dpr = 1, running = true, visible = true, t = 0, last = performance.now();
+    cv.hidden = false;
+    let W = 0, H = 0, dpr = 1, visible = true, frameId = 0, t = 0, last = performance.now();
     const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
     const IVORY = [245, 242, 236], KHAKI = [172, 166, 142], GREEN = [79, 203, 147], RED = [214, 96, 86];
     const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
@@ -408,7 +422,9 @@
     const NODES = ['Signal', 'Predict', 'Decide', 'Approve', 'Execute', 'Settle'];
     const rings = [{ r: 1.38, tiltX: 1.12, rotZ: -0.38, speed: 0.11, count: 150, labelled: true }, { r: 1.62, tiltX: 1.42, rotZ: 0.55, speed: -0.07, count: 110, labelled: false }];
     rings.forEach(ring => { ring.agents = []; for (let i = 0; i < ring.count; i++) ring.agents.push({ a: Math.random() * Math.PI * 2, v: 0.75 + Math.random() * 0.6, off: (Math.random() - 0.5) * 0.06, flash: 0, kind: 0, size: 0.8 + Math.random() * 1.2, lastNode: -1 }); });
-    function resize() { dpr = Math.min(3, window.devicePixelRatio || 1); const r = cv.getBoundingClientRect(); W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height)); cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); if (prefersReduced) draw(0); }
+    // up to 3x within a UHD budget, no side past 4096 px: a tall fallback stage stays under iOS Safari's ~16 MP canvas limit
+    const PIXEL_BUDGET = 3840 * 2160;
+    function resize() { const r = cv.getBoundingClientRect(); W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height)); dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / (W * H)), 4096 / W, 4096 / H); cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); if (prefersReduced) draw(0); }
     function rot(p, ax, ay, az) { let [x, y, z] = p; let c = Math.cos(ax), s = Math.sin(ax); let y1 = y * c - z * s, z1 = y * s + z * c; y = y1; z = z1; c = Math.cos(ay); s = Math.sin(ay); let x1 = x * c + z * s; z1 = -x * s + z * c; x = x1; z = z1; c = Math.cos(az); s = Math.sin(az); x1 = x * c - y * s; y1 = x * s + y * c; return [x1, y1, z]; }
     function draw(dt) {
       ctx.clearRect(0, 0, W, H);
@@ -445,12 +461,18 @@
       const g = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.12); g.addColorStop(0, rgba(IVORY, 0.05)); g.addColorStop(1, rgba(IVORY, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.12, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1;
     }
-    function frame(now) { if (!running) return; const dt = Math.min(0.05, (now - last) / 1000); last = now; if (visible && !document.hidden) { t += dt; draw(dt); } requestAnimationFrame(frame); }
+    // the loop runs only while the canvas is on screen in a visible tab
+    function frame(now) { frameId = 0; if (!visible || document.hidden) return; const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt; draw(dt); request(); }
+    function request() { if (!frameId && visible && !document.hidden) frameId = requestAnimationFrame(frame); }
+    function stop() { cancelAnimationFrame(frameId); frameId = 0; last = performance.now(); }
     resize(); window.addEventListener('resize', resize);
+    // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
+    (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
     if (!prefersReduced) {
       window.addEventListener('pointermove', (e) => { mouse.tx = (e.clientX / window.innerWidth - 0.5) * 2; mouse.ty = (e.clientY / window.innerHeight - 0.5) * 2; }, { passive: true });
-      if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0 }).observe(cv);
-      requestAnimationFrame(frame);
+      if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) request(); else stop(); }, { threshold: 0 }).observe(cv);
+      document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else request(); });
+      request();
     } else draw(0);
   }
 })();
