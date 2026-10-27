@@ -1151,3 +1151,13 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 @media (max-width: 860px) { .crew--team { grid-template-columns: repeat(2, 1fr); } .crew-sub { grid-template-columns: 1fr; } }
 @media (max-width: 560px) { .crew--team, .crew--advisors { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .crew-bio { animation: none; } .crew-more summary::after { transition: none; } }
+/* ---------- short screens (a phone held sideways, 200% zoom): every overture beat fits between the nav and the bottom ---------- */
+@media (max-height: 600px) {
+  .beat { bottom: 16px; }
+  .beat .eyebrow { margin-bottom: 8px; }
+  .beat-0 .hero-kicker, .beat-0 .hero-stats { display: none; }
+  .beat-0 .display-1 { font-size: clamp(1.9rem, 10vh, 3.4rem); }
+  .beat h2 { font-size: clamp(1.4rem, 7.5vh, 2.4rem); max-width: 24ch; }
+  .beat .body-lg, .beat-0 .hero-sub { margin-top: 10px; font-size: .9rem; line-height: 1.45; max-width: 72ch; }
+  .beat .hero-cta, .beat-0 .hero-cta { margin-top: 14px; }
+}
