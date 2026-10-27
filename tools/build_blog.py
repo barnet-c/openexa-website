@@ -426,13 +426,40 @@ for p in posts:
     else: routes.append(rd(f"/blog/{s}", f"/blog/{s}.html"))
 _norm = [r["route"].rstrip("/").rstrip("*").lower() for r in routes]
 assert len(set(_norm)) == len(_norm), "Azure rejects routes that differ only by a trailing slash"
+# Security headers for every response. Nothing inline executes (the JSON-LD blocks are data, which CSP does not govern)
+# and every font, image and script is same-origin, so the policy is strict; the pages' style="" attributes (and the
+# ones the engines set) need style-src-attr. form-action 'none': the access form only builds a mailto draft in JS, and
+# without JS it must not submit itself (its fields would land in a GET URL). Add a form endpoint's origin to
+# connect-src if one is ever configured (data-endpoint, see site.js).
+CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; "
+       "img-src 'self' data:; connect-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'none'; "
+       "frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests")
+HEADERS = {
+    "Content-Security-Policy": CSP,
+    "Permissions-Policy": "accelerometer=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), "
+                          "hid=(), magnetometer=(), microphone=(), midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=()",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "same-origin",
+    "X-Content-Type-Options": "nosniff",
+}
+# Longer caching for assets whose content rarely changes; HTML, CSS and JS keep Azure's revalidate-after-30 s default
+# because their URLs carry no version. Most specific first: the first matching route wins.
+CACHE = [
+    ("/assets/fonts/*", "public, max-age=2592000, stale-while-revalidate=86400"),   # rename the files if the fonts change
+    ("/assets/img/blog/*", "public, max-age=2592000, stale-while-revalidate=86400"),
+    ("/assets/img/team/*", "public, max-age=86400, stale-while-revalidate=604800"),
+    ("/assets/img/og/*", "public, max-age=604800, stale-while-revalidate=86400"),
+    ("/assets/img/*", "public, max-age=604800, stale-while-revalidate=86400"),
+]
 CONFIG = {
-    "routes": routes,
+    "routes": [{"route": r, "headers": {"Cache-Control": c}} for r, c in CACHE] + routes,
     "responseOverrides": {"404": {"rewrite": "/404.html", "statusCode": 404}},
+    "globalHeaders": HEADERS,
     "mimeTypes": {".webmanifest": "application/manifest+json"},
 }
 ONE = lambda o: json.dumps(o, ensure_ascii=False, separators=(", ", ": "))  # one route per line: compact but diffable
-io.open(ROOT / "staticwebapp.config.json", "w", encoding="utf-8", newline="\n").write("{\n  \"routes\": [\n" + ",\n".join("    " + ONE(r) for r in routes) + "\n  ],\n  \"responseOverrides\": " + ONE(CONFIG["responseOverrides"]) + ",\n  \"mimeTypes\": " + ONE(CONFIG["mimeTypes"]) + "\n}\n")
+io.open(ROOT / "staticwebapp.config.json", "w", encoding="utf-8", newline="\n").write("{\n  \"routes\": [\n" + ",\n".join("    " + ONE(r) for r in CONFIG["routes"]) + "\n  ],\n" + "".join(f'  "{k}": {ONE(CONFIG[k])},\n' for k in ("responseOverrides", "globalHeaders")) + "  \"mimeTypes\": " + ONE(CONFIG["mimeTypes"]) + "\n}\n")
 if (ROOT / "_redirects").exists(): (ROOT / "_redirects").unlink()  # Netlify-only; Azure would serve it as a public file
 # the same old-URL map, for tools/verify_redirects.py
 rules = []
