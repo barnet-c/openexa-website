@@ -1334,7 +1334,7 @@ html:not(.story-ready) .beat [data-split] .wi { transform: none; }
 .arch.is-narrow .arch-list > .arch-h:first-child .arch-layer { border-top: 0; }
 .arch.is-narrow .arch-read, .arch.is-narrow .arch-legend { display: none; }
 .arch.is-narrow .arch-hint { margin-left: auto; }
-@media (max-width: 1239px) { .arch.is-wide .arch-hint { display: none; } }
+@media (max-width: 1299px) { .arch.is-wide .arch-hint { display: none; } } /* below this the head would wrap */
 @media (max-width: 600px) {
   .arch-head { gap: 12px; padding-left: 16px; }
   .arch-hint { display: none; }

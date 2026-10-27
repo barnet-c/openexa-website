@@ -3,9 +3,11 @@
    the stack drawn in SVG in the centre (an axonometric projection, so it stays crisp at any pixel ratio) and the layers
    as buttons on the right, each one the label of its plate. Pointing at a layer, or focusing it, lifts its plate and shows
    its job and In -> Out; Up/Down (or Left/Right), Home and End move between layers, Enter or Space opens one, Escape closes it.
-   Above the boundary (between 04 and 05) agents jitter, estimating; below it every mark snaps to the plane's grid.
-   An illustrative proposal travels the stack: the Council decides, approved work crosses the boundary and settles, rejected
-   work falls away. Motion runs only on screen in a visible tab, stops on request, and never starts under reduced motion. */
+   Above the boundary (between 04 and 05) agents jitter, estimating; below it every mark snaps to the plane's grid, and the
+   ground itself changes at the seam: scattered motes above, a lattice below. Dashed explosion lines join the plates' corners.
+   An illustrative proposal travels the stack: the Council decides; approved, its ring squares up as it crosses the boundary
+   and lands on the grid as a settled square; rejected, it falls away. The readout card follows the plate you point at and
+   keeps itself on screen. Motion runs only on screen in a visible tab, stops on request, never starts under reduced motion. */
 (function () {
   'use strict';
   const roots = Array.from(document.querySelectorAll('.layers[data-arch]'));
