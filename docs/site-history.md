@@ -227,3 +227,49 @@ At Ajit's request Victor moves to the advisors and Subuddh to the team, each tak
 the team (kicker `SME - AI & ML`, his old About-page label) and Victor is A-05 among the advisors (kicker `Advisor - Strategy &
 Technology`, from his old label `Strategy & Tech`, so no advisor card carries `Chief Product`). Counts stay 5 and 8.
 `verify_v9.py` pins both orders and the slot numbers.
+
+## The 27 Oct pass: speed, sharing, search, security, accessibility and tooling
+
+One branch (`next-level`), every change regenerated through the tools and checked in a real browser. Nothing the owner
+decided was undone; what a visitor can see differently is listed at the end.
+
+**Speed and privacy.** The three typefaces are self-hosted (`site/assets/fonts/`, the same WOFF2 files and subsets
+Google Fonts served, OFL licences alongside; `tools/vendor_fonts.py`), and two are preloaded. First paint no longer
+waits on a four-hop chain through fonts.googleapis.com, and no visitor's IP goes to Google. WebGL contexts and
+shaders start after first paint (150-480 ms off the main thread). Blog images carry their dimensions, so pages don't
+jump as they load. Fonts and blog images are cached for 30 days, other images for 7 days and portraits for 1.
+
+**Sharing.** Every page has its own 1200x630 share card (`tools/build_og.py`, 48 cards) in the original card's design:
+the page's own headline and description, set in the site's fonts. No names appear on cards.
+
+**Search.** schema.org graphs on every page (Organization + WebSite on the home page, WebPage / AboutPage /
+ContactPage with breadcrumbs, TechArticle for the research notes, BlogPosting for the posts; `tools/meta.py`), Atom
+feeds at `/blog/feed.xml` and `/research/feed.xml`, `/favicon.ico`, a maskable manifest icon, and sitemap dates that
+follow each page's real last change (`data/lastmod.json`).
+
+**Security.** `staticwebapp.config.json` sends a strict Content-Security-Policy (same-origin only, now that nothing
+loads from a third party), Permissions-Policy, Cross-Origin-Opener-Policy and X-Frame-Options. Without JavaScript the
+access form can no longer submit its fields in a URL.
+
+**Accessibility.** The access form's four options are reachable by keyboard and screen reader (they were
+`display:none`); focus is visible on the checkbox, chapter rail and sliders; sliders announce what they show; the
+overture's five beats are reachable by screen readers and keyboards; counters hold real values without JavaScript;
+the desk log no longer announces every simulated action; 22 blog images lost a placeholder alt text.
+
+**Robustness.** The overture and figures survive WebGL context loss and follow display-scaling changes; the no-WebGL
+2D fallback actually shows; a shader failure falls back instead of throwing; the homepage loader fades by itself if
+JavaScript never runs.
+
+**Copy.** Research 04's yield-per-day figure was off by 100x (a ten-thousandth of a dollar, not of a cent); research
+09 says "trillions" per the site rule; the overture's proof label says "sessions", not "runs"; the Proof bar label
+reads "<10"; the illustrative ledger's approver is `operator:op-02`; the Access footer link reads "Trust &
+governance"; three bio typos; Philip Bond's faculty-page link is labelled as such; a dead calculator removed.
+
+**Tooling.** `tools/serve.py` previews `site/` the way Azure serves it (headers, CSP, redirects, clean URLs);
+`tools/check_static.py` checks the content rules and metadata on all 50 pages without a browser; the rules live in
+`tools/rules.py`; `.github/workflows/checks.yml` reruns the generators, both static checks and the browser suites on
+every pull request; `tools/requirements.txt` pins the Python packages.
+
+**Visible differences.** The slate grey used for captions and metadata is about 4% darker (`#6F736F` -> `#666966`,
+WCAG AA contrast), in a commit of its own. Keyboard users see focus rings where there were none. Visitors without
+WebGL now see the 2D swarm instead of a blank stage. Everything else looks as it did.
