@@ -18,6 +18,48 @@
   const story = document.querySelector('.story');
   if (!story) return;
   const root = document.documentElement;
+
+  /* ================= data: the sessions record (the proof chart reads the same block) ================= */
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const NUMW = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty'.split(' ');
+  const words = (n) => NUMW[n] || String(n), capw = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  // without the page's <script type="application/json" id="oxa-sessions">: the per-session table as published, the same record
+  const TABLE = { lifecycle: 'Lifecycle 01', unit: 'bps', floor: 10, sessions: 'DDPPPPDPDD'.split('').map((c, i) => ({ day: 'Day ' + pad2(i + 1), regime: c === 'P' ? 'Premium' : 'Discount', value: '>10', confirmation: 'Broker confirmation', status: 'Settled' })) };
+  const REC = (() => {
+    const str = (v) => (v == null ? '' : String(v)).trim();
+    const read = (j) => {
+      const list = j && Array.isArray(j.sessions) ? j.sessions : null, floor = Number(j && j.floor);
+      if (!list || !list.length || list.length > 24 || !(floor > 0)) return null;
+      const sessions = list.map((s, i) => {
+        const r = str(s && s.regime).toLowerCase(), value = str(s && s.value).replace(/\s+/g, '');
+        const m = /^(>=|≥|>)?(\d+(?:\.\d+)?)$/.exec(value), amount = m ? Number(m[2]) : NaN, conf = str(s && s.confirmation);
+        return {
+          day: pad2(parseInt((str(s && s.day).match(/\d+/) || [String(i + 1)])[0], 10)),
+          regime: r.startsWith('prem') ? 'premium' : r.startsWith('disc') ? 'discount' : '',
+          value, above: !!m && (m[1] === '>' ? amount >= floor : amount > floor), // ">10" on a 10 floor: above it, by how much is not published
+          confirmed: /confirm/i.test(conf) && !/pending|awaiting|unconfirm|^not\b/i.test(conf),
+        };
+      });
+      if (!sessions.every(s => s.regime)) return null;
+      return { lifecycle: str(j.lifecycle) || TABLE.lifecycle, unit: str(j.unit) || 'bps', floor, sessions };
+    };
+    try { const el = document.getElementById('oxa-sessions'); const r = el && read(JSON.parse(el.textContent)); if (r) return r; } catch (e) { /* unreadable: the table */ }
+    return read(TABLE);
+  })();
+  const SESSIONS = REC.sessions, NCOL = SESSIONS.length, FLOOR = REC.floor, UNIT = REC.unit, FLOOR_T = `${FLOOR} ${UNIT}`;
+  const count = (f) => SESSIONS.filter(f).length;
+  const N_PREM = count(s => s.regime === 'premium'), N_DISC = NCOL - N_PREM, N_ABOVE = count(s => s.above), N_CONF = count(s => s.confirmed);
+  const valueT = (s) => s.value ? `${s.value} ${UNIT}` : 'value not stated'; // only what the record states: ">10 bps"
+  // every count in the overture's copy is derived from the record: [data-story-n="total|above|premium|discount|floor|confirmed|every|tally|lifecycle"]
+  const derive = (k, as) => {
+    if (k === 'every') return N_ABOVE === NCOL ? 'every one of ' + words(NCOL) : words(N_ABOVE) + ' of ' + words(NCOL);
+    if (k === 'lifecycle') return REC.lifecycle;
+    if (k === 'tally') return `${capw(words(N_ABOVE))} for ${words(NCOL)}.`; // 'Ten for ten.'
+    const n = { total: NCOL, above: N_ABOVE, premium: N_PREM, discount: N_DISC, floor: FLOOR, confirmed: N_CONF }[k];
+    return n == null ? null : as === 'words' ? words(n) : as === 'Words' ? capw(words(n)) : String(n);
+  };
+  story.querySelectorAll('[data-story-n]').forEach(el => { const t = derive(el.dataset.storyN, el.dataset.storyAs); if (t != null && el.textContent !== t) el.textContent = t; });
+
   const stage = story.querySelector('.story-stage');
   const cv = story.querySelector('canvas.story-gl');
   const reducedMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -28,32 +70,6 @@
   // portrait and small screens stack the visual above the copy (the same query lives in the stylesheet)
   const stackedMQ = window.matchMedia('(max-width: 639.98px), (max-aspect-ratio: 23/20)');
   const LITE = stackedMQ.matches || Math.min(window.innerWidth, window.innerHeight) < 640;
-
-  /* ================= data ================= */
-  const pad2 = (n) => String(n).padStart(2, '0');
-  // the sessions come from the page's one JSON block (the proof chart reads the same); without it, the per-session table
-  const SESSIONS = (() => {
-    const regimeOf = (s) => {
-      if (!s) return '';
-      if (s.premium === true) return 'premium';
-      if (s.premium === false) return 'discount';
-      const v = String(s.regime != null ? s.regime : s.side != null ? s.side : s.type != null ? s.type : '').trim().toLowerCase();
-      return v.startsWith('p') ? 'premium' : v.startsWith('d') ? 'discount' : '';
-    };
-    const dayOf = (s, i) => { const m = String(s && (s.day != null ? s.day : s.n != null ? s.n : '')).match(/\d+/); return pad2(m ? parseInt(m[0], 10) : i + 1); };
-    try {
-      const el = document.getElementById('oxa-sessions');
-      const j = el && JSON.parse(el.textContent);
-      const list = Array.isArray(j) ? j : j && (j.sessions || j.data);
-      if (Array.isArray(list) && list.length && list.length <= 24) {
-        const out = list.map((s, i) => ({ day: dayOf(s, i), regime: regimeOf(s) }));
-        if (out.every(s => s.regime)) return out;
-      }
-    } catch (e) { /* a malformed block: the table below */ }
-    return 'DDPPPPDPDD'.split('').map((c, i) => ({ day: pad2(i + 1), regime: c === 'P' ? 'premium' : 'discount' }));
-  })();
-  const NCOL = SESSIONS.length;
-  const N_PREM = SESSIONS.filter(s => s.regime === 'premium').length, N_DISC = NCOL - N_PREM;
 
   const SCENES = ['Infrastructure', 'The work', 'The stack', 'The swarm', 'The proof'];
   const LC = [ // code, short name (callout), status, full name and job (inspector)
@@ -278,11 +294,12 @@
     const perC = Math.floor(N_SURF / NCOL);
     for (let c = 0; c < NCOL; c++) {
       const list = byY.slice(c * perC, c === NCOL - 1 ? N_SURF : (c + 1) * perC);
-      const nx = 4, nz = 3, ny = Math.ceil(list.length / (nx * nz)), x0 = COL_X(c), prem = SESSIONS[c].regime === 'premium';
+      const nx = 4, nz = 3, ny = Math.ceil(list.length / (nx * nz)), x0 = COL_X(c), ss = SESSIONS[c];
+      const kind = !ss.above ? K.DIM : ss.regime === 'premium' ? K.GREEN : K.BRIGHT; // a session the record does not put above the floor stays dim
       list.sort((a, b) => R(a, 2) - R(b, 2)).forEach((q, j) => {
         const a = j % nx, b = Math.floor(j / nx) % nz, h = Math.floor(j / (nx * nz));
         const x = x0 + (a - (nx - 1) / 2) * 0.026, z = (b - (nz - 1) / 2) * 0.026, y = Y_FLOOR + 0.04 + (h + 0.5) / ny * H_COL;
-        set(4, q, x, y, z, code(M.COLUMN, prem ? K.GREEN : K.BRIGHT, c));
+        set(4, q, x, y, z, code(M.COLUMN, kind, c));
         KEY[q * 4 + 3] = (c + 0.55 * (h / ny)) / (NCOL + 0.55);
       });
     }
@@ -308,7 +325,7 @@
   uniform float u_time, u_m, u_spread, u_swirl, u_lift, u_keyIdx, u_sA, u_sB, u_spin, u_pr, u_dist, u_fogR, u_halo, u_maxpt, u_intro, u_shade;
   uniform vec3 u_liftDir, u_light;
   uniform vec3 u_rU[12]; uniform vec3 u_rV[12]; uniform float u_rW[12];
-  uniform float u_hov[10]; uniform float u_hovOn, u_hovScene, u_sceneA, u_sceneB, u_hovLift;
+  uniform float u_hov[24]; uniform float u_hovOn, u_hovScene, u_sceneA, u_sceneB, u_hovLift;
   uniform vec4 u_occ;
   varying vec3 v_col; varying float v_a, v_size, v_soft, v_halo;
   const float PI = 3.14159265, TAU = 6.2831853;
@@ -429,7 +446,7 @@
     float g = te < 0.5 ? gA : gB;
     float sc = te < 0.5 ? u_sceneA : u_sceneB;
     float h = 0.0;
-    if (u_hovOn > 0.001 && abs(sc - u_hovScene) < 0.5) h = u_hov[int(clamp(g, 0.0, 9.0) + 0.5)];
+    if (u_hovOn > 0.001 && abs(sc - u_hovScene) < 0.5) h = u_hov[int(clamp(g, 0.0, 23.0) + 0.5)];
     P.y += h * u_hovLift;
     vec4 mv = u_view * vec4(P, 1.0);
     gl_Position = u_proj * mv;
@@ -667,7 +684,7 @@
   const ROOM_W = [0, 250, 236, 214, 0]; // room kept on the right of the structure for its callouts (wide layouts)
   const ZONE = ['right', 'upper', 'right', 'right', 'right'];
   const layouts = Array.from({ length: 5 }, () => ({ cx: 0, cy: 0, s: 1, rect: [0, 0, 0, 0] }));
-  const beatRects = [];
+  const beatRects = [], numFit = [0, 0, 0, 0];
   let storyTop = 0, run = 1, scrollY = 0;
   function measure() {
     scrollY = window.scrollY;
@@ -688,6 +705,12 @@
       const h2 = b.querySelector('h2, h1');
       beatRects[i] = { l, r, t, ht: h2 ? b.offsetTop + h2.offsetTop : t, hb: h2 ? b.offsetTop + h2.offsetTop + h2.offsetHeight : t };
     });
+    // the chapter mark sits above the copy column: per hand-over, the scale that keeps it clear of both scenes' copy (0: no room)
+    const nm = story.querySelector('.story-num');
+    if (nm) {
+      const nh = nm.offsetHeight, nt = nm.offsetTop;
+      for (let a = 0; a < 4; a++) { const k = nh ? Math.min(1, (Math.min(beatRects[a].t, beatRects[a + 1].t) - nt - 18) / nh) : 0; numFit[a] = k < 0.42 ? 0 : k; }
+    }
   }
   function fitScenes() {
     stacked = stackedMQ.matches;
@@ -747,9 +770,9 @@
     lookAt(view, eye, target);
     const frust = (cy) => { perspective(proj, FOV, W / H, 0.1, 40, (L.cx / W) * 2 - 1, 1 - (cy / H) * 2); mul(vp, proj, view); };
     frust(L.cy);
-    if (stacked && seg === 3 && xNow > 0) { // portrait: the proof settles lower as the paper rises, so the paper never fills the screen
+    if (seg === 3 && xNow > 0) { // the hand-off: the proof settles lower as the paper rises to meet it, so the paper is a page edge, not a wall
       const f = project(0, Y_FLOOR * layouts[4].s, 0).y, xe = reducedMQ.matches ? (xNow > 0.5 ? 1 : 0) : xNow;
-      frust(L.cy + Math.max(0, H * 0.7 - f) * sstep(0, 0.7, xe));
+      frust(L.cy + Math.max(0, H * (stacked ? 0.7 : 0.76) - f) * sstep(0, 0.7, xe));
     }
   }
 
@@ -828,7 +851,7 @@
       for (let c = 0; c < NCOL; c++) {
         const x = COL_X(c), prem = SESSIONS[c].regime === 'premium';
         put('r' + c, x, Y_FLOOR + 0.035, 0.04, prem ? C.green : C.ivory, 0.95, 2, 15, prem ? 0.5 : 0, 0);
-        put('t' + c, x, Y_FLOOR + H_COL + 0.1, 0, C.green, 0.95, 3, 12, 0.5, 0);
+        if (SESSIONS[c].confirmed) put('t' + c, x, Y_FLOOR + H_COL + 0.1, 0, C.green, 0.95, 3, 12, 0.5, 0);
       }
     }
     return out;
@@ -991,7 +1014,7 @@
     label(1, '<b>Fig. 01</b> Six lifecycle classes · one infrastructure', { cls: 'cap', kind: 'cap' });
     label(2, '<b>Fig. 02</b> Eight layers, read top to bottom · one boundary', { cls: 'cap', kind: 'cap' });
     label(3, '<b>Fig. 03</b> Six gates · one council · one ledger · illustrative', { cls: 'cap', kind: 'cap' });
-    label(4, `<b>Fig. 04</b> Lifecycle 01 · ${NCOL} sessions · heights not to scale`, { cls: 'cap', kind: 'cap' });
+    label(4, `<b>Fig. 04</b> ${REC.lifecycle} · ${NCOL} sessions · heights not to scale`, { cls: 'cap', kind: 'cap' });
     // S1: a column of callouts, one per ring, each anchored on the ring's front-right arc
     lab.rings = LC.map((c, k) => label(1, `<span class="k">${c[0]}</span><span class="n">${c[1]}</span><span class="st st-${c[2].toLowerCase()}">${c[2]}</span><span class="dt">${c[3]}: ${c[4]}</span>`,
       { cls: 'ring' + (k === 0 ? ' is-live' : ''), kind: 'list', group: k, leader: true, info: [`${c[0]} · ${c[3]}`, c[2], c[4]], anchor: () => onLoop(RB[k], RINGS[k][0], RINGS[k][2] - 0.95, 0) }));
@@ -1005,17 +1028,18 @@
     label(3, '<i class="lg-r"></i><span class="n">Rejected · falls away</span>', { cls: 'note', kind: 'list', leader: true, wide: true, anchor: () => [LX + 0.74, GATE_Y[COUNCIL] - 0.36, 0] });
     label(3, '<i class="lg-b"></i><span class="n">Records · hash-linked</span>', { cls: 'note', kind: 'list', leader: true, wide: true, anchor: () => [LEDGER_X0 + LEDGER_DX * 3.5, Y_LEDGER + 0.05, 0] });
     // S4: the sessions under their columns (from the data), the floor, the derived summary
-    lab.days = SESSIONS.map((s, c) => label(4, `<span class="k">${s.day}</span><span class="rg">${s.regime === 'premium' ? 'P' : 'D'}</span><span class="dt">Day ${s.day} · ${s.regime === 'premium' ? 'premium' : 'discount'} · &gt;10 bps · broker-confirmed</span>`,
-      { cls: 'day' + (s.regime === 'premium' ? ' is-prem' : ''), kind: 'tag', group: c, side: 's', info: [`Day ${s.day}`, s.regime === 'premium' ? 'Premium' : 'Discount', 'Above the 10 bps floor (>10 bps) · confirmed against the broker’s records'], anchor: () => [COL_X(c), Y_FLOOR - 0.07, 0] }));
-    label(4, '10 bps floor', { cls: 'floor', kind: 'tag', wide: true, anchor: () => [-COL_SPAN / 2 - 0.5, Y_FLOOR + 0.02, 0], side: 'ne' });
-    label(4, `<b>${NCOL} of ${NCOL}</b> sessions above the 10 bps floor<span class="sep"></span><span class="lg-p">${N_PREM} premium</span> · <span class="lg-d">${N_DISC} discount</span><span class="sep"></span><span class="lg-t">every fill broker-confirmed</span>`, { cls: 'sum', kind: 'tag', anchor: () => [COL_SPAN / 2 + 0.06, Y_FLOOR + H_COL + 0.26, 0], side: 'nw' });
+    const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    lab.days = SESSIONS.map((s, c) => label(4, `<span class="k">${s.day}</span><span class="rg">${s.regime === 'premium' ? 'P' : 'D'}</span><span class="dt">Day ${s.day} · ${s.regime} · ${esc(valueT(s))} · ${s.confirmed ? 'broker-confirmed' : 'confirmation not stated'}</span>`,
+      { cls: 'day' + (s.regime === 'premium' ? ' is-prem' : ''), kind: 'tag', group: c, side: 's', keep: true, info: [`Day ${s.day}`, capw(s.regime), `${s.above ? 'Above' : 'Not above'} the ${FLOOR_T} floor (${esc(valueT(s))}) · ${s.confirmed ? 'confirmed against the broker’s records' : 'confirmation not stated'}`], anchor: () => [COL_X(c), Y_FLOOR - 0.07, 0] }));
+    label(4, `${FLOOR_T} floor`, { cls: 'floor', kind: 'tag', wide: true, anchor: () => [-COL_SPAN / 2 - 0.5, Y_FLOOR + 0.02, 0], side: 'ne' });
+    label(4, `<b>${N_ABOVE} of ${NCOL}</b> sessions above the ${FLOOR_T} floor<span class="sep"></span><span class="lg-p">${N_PREM} premium</span> · <span class="lg-d">${N_DISC} discount</span><span class="sep"></span><span class="lg-t">${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed</span>`, { cls: 'sum', kind: 'tag', anchor: () => [COL_SPAN / 2 + 0.06, Y_FLOOR + H_COL + 0.26, 0], side: 'nw' });
   }
   // the inspector: one quiet box that shows the hovered or focused ring, layer or session
   const insp = document.createElement('div');
   insp.className = 'story-insp'; insp.setAttribute('aria-hidden', 'true');
   if (labelHost) labelHost.appendChild(insp);
   let inspFor = null, inspW = 0, inspH = 0;
-  const hov = new Float32Array(10), hovT = new Float32Array(10);
+  const hov = new Float32Array(24), hovT = new Float32Array(24);
   const hovFor = (sc, i) => (hoverScene === sc ? hov[i] : 0);
   let hoverPtr = null, hoverFocus = null, hoverOn = 0, hoverScene = -1;
   function setHover() {
@@ -1048,7 +1072,8 @@
     l.el.addEventListener('pointerenter', () => { hoverPtr = { scene: l.scene, idx: l.group }; setHover(); });
     l.el.addEventListener('pointerleave', e => { if (e.pointerType === 'touch') return; hoverPtr = null; setHover(); });
   });
-  const vis = (sc) => 1 - sstep(0.22, 0.4, Math.abs(sNow - sc)) - (sc === 4 ? sstep(0.15, 0.55, xNow) : 0);
+  // a callout shows while its scene is near; on the way out the proof's day tags stay, so the rising paper turns them to ink
+  const vis = (sc, keep) => 1 - sstep(0.22, 0.4, Math.abs(sNow - sc)) - (sc === 4 && !keep ? sstep(0.15, 0.55, xNow) : 0);
   let tabScene = -1;
   function placeLabels() {
     if (!labelHost) return;
@@ -1060,7 +1085,7 @@
     }
     const listCol = [];
     labels.forEach(l => {
-      const v = vis(l.scene), on = v > 0.5 && !(stacked && l.wide); // portrait screens leave out the secondary notes
+      const v = vis(l.scene, l.keep), on = v > 0.5 && !(stacked && l.wide); // portrait screens leave out the secondary notes
       if (on !== l.on) { l.on = on; l.el.classList.toggle('is-on', on); if (l.path) l.path.classList.toggle('is-on', on); }
       if (!on) return;
       if (!l.w) { l.w = l.el.offsetWidth; l.h = l.el.offsetHeight; }
@@ -1079,8 +1104,9 @@
         if (sd.includes('w')) x -= l.w + 8; else if (sd.includes('e')) x += 8; else x -= l.w / 2;
         if (sd.includes('n')) y -= l.h + 6; else if (sd.includes('s')) y += 6; else y -= l.h / 2;
         x = clamp(x, 6, W - l.w - 6);
+        l.y = y;
         const tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
-        if (tr !== l.tr) l.el.style.transform = l.tr = tr;
+        if (tr !== l.tr) { l.el.style.transform = l.tr = tr; if (l.ink) l.ink.style.transform = tr; } // its ink copy on the paper sits exactly under it
       }
     });
     if (listCol.length) { // a column of callouts on the right of the structure; spread so they never touch
@@ -1159,11 +1185,22 @@
   const motionButton = story.querySelector('[data-story-motion]');
   const live = story.querySelector('[data-story-live]');
   const bar = story.querySelector('.story-bar');
-  const num = story.querySelector('.story-num'), numB = num && num.querySelector('b'), numS = num && num.querySelector('span');
-  let shownNum = -1, shownNumOp = '', shownNumTr = '';
+  // the chapter mark: two stacked lines (this scene, the next) for the numeral and for the name, rolled like a counter
+  const num = story.querySelector('.story-num');
+  const numRows = num ? ['b', 'span'].map(t => { const el = num.querySelector(t); el.textContent = ''; return [0, 1].map(() => el.appendChild(document.createElement('i'))); }) : null;
+  let shownNum = -1, shownNumOp = '', shownNumTr = '', shownRoll = '';
   const paper = story.querySelector('.story-paper');
+  const paperIn = paper && paper.querySelector('.story-paper-in'), paperCap = paperIn && paperIn.querySelector('.container');
+  // the paper's copy of the proof's day tags, in ink: the rising edge uncovers each one exactly where its tag stood
+  if (paperIn && lab.days) {
+    const ink = document.createElement('div');
+    ink.className = 'story-ink';
+    lab.days.forEach(l => { const e = document.createElement('div'); e.className = l.el.className; e.innerHTML = l.el.innerHTML; ink.appendChild(e); l.ink = e; });
+    paperIn.insertBefore(ink, paperIn.firstChild);
+  }
+  let shownCap = '', shownLeaving = null;
   const paperSum = story.querySelector('[data-story-sum]');
-  if (paperSum) paperSum.textContent = `${NCOL} of ${NCOL} above the 10 bps floor · ${N_PREM} premium · ${N_DISC} discount · every fill broker-confirmed`;
+  if (paperSum) paperSum.textContent = `${N_ABOVE} of ${NCOL} above the ${FLOOR_T} floor · ${N_PREM} premium · ${N_DISC} discount · ${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed`;
   const shown = beats.map(() => ({ op: '', tr: '', on: null }));
   const beatLinks = beats.map(b => Array.from(b.querySelectorAll('a[href], button')));
   let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownXo = '', shownFill = [];
@@ -1179,19 +1216,25 @@
   }
   function updateUI() {
     const red = reducedMQ.matches, xe = red ? (xNow > 0.5 ? 1 : 0) : xNow;
+    const ov = Math.max(0, scrollY - storyTop - run); // past the pin the stage leaves with the page
     // the hand-off: the paper rises from the bottom edge to the ledger's floor line, which becomes its edge
     paperH = 0;
     if (xe > 0 && seg === 3) paperH = Math.max(0, H - project(0, Y_FLOOR * layouts[4].s, 0).y - 1) * sstep(0.16, 0.8, xe);
     if (paper) { const v = paperH.toFixed(1); if (v !== shownPaper) { shownPaper = v; paper.style.height = v + 'px'; paper.style.visibility = paperH > 0.5 ? 'visible' : 'hidden'; } }
     beats.forEach((b, i) => {
       const d = Math.abs(sNow - i);
-      let op = red ? (Math.round(sNow) === i ? 1 : 0) : 1 - sstep(0.38, 0.5, d); // each scene's copy holds for 76% of the scroll (reduced motion: it snaps with the scene)
+      let op = red ? (Math.round(sNow) === i ? 1 : 0) : 1 - sstep(stacked ? 0.42 : 0.38, 0.5, d); // each scene's copy holds for 76-84% of the scroll (reduced motion: it snaps with the scene)
       let dy = red ? 0 : (sNow - i) * -24;
       if (i === 4 && xe > 0) { // the headline stays above the paper when it fits; the rest gives way to it
         const br = beatRects[4] || { ht: 0, hb: 0 }, edge = H - paperH - 26, shift = Math.min(0, edge - br.hb);
         if (!stacked && br.ht + shift >= navH + 14) dy += shift; else op *= 1 - sstep(0.03, 0.3, xe);
         const xo = (1 - sstep(0.04, 0.3, xe)).toFixed(3);
         if (xo !== shownXo) b.style.setProperty('--xo', shownXo = xo);
+      }
+      if (i === 4 && ov > 0) { // as the stage scrolls away the copy finishes leaving before it reaches the nav's lower edge
+        const room0 = (beatRects[4] ? beatRects[4].t : 0) + dy - navH; // the room left above it when the stage starts to move
+        const k = room0 <= 6 ? 0 : 1 - sstep(Math.max(0, room0 - 6 - Math.min(150, H * 0.2)), room0 - 6, ov);
+        op *= k; if (!red) dy -= (1 - k) * 14;
       }
       const s = shown[i], o = op.toFixed(3), tr = `translate3d(0, ${dy.toFixed(1)}px, 0)`;
       if (s.op !== o) b.style.opacity = s.op = o;
@@ -1201,18 +1244,29 @@
     syncIndex();
     idx.forEach((button, i) => { const f = clamp(sNow - i + 0.5, 0, 1).toFixed(2); if (shownFill[i] !== f) button.style.setProperty('--fill', shownFill[i] = f); });
     if (shownScrolled !== sNow > 0.3) story.classList.toggle('is-scrolled', shownScrolled = sNow > 0.3);
-    // between two scenes, while the copy hands over, the incoming scene's numeral holds the column (a chapter mark, never an empty frame)
+    // between two scenes, while the copy hands over, the scene numeral holds the column and rolls from this scene to the next
+    // (a chapter mark, never an empty frame; reduced motion: the copy snaps, nothing to bridge)
     if (num) {
-      const f = sNow - Math.floor(sNow), n = clamp(Math.round(sTarget), 0, 4);
-      const op = red || sNow >= 4 || xNow > 0 ? 0 : 1 - sstep(0.06, 0.15, Math.abs(f - 0.5)); // reduced motion: the copy snaps, nothing to bridge
-      if (n !== shownNum) { shownNum = n; numB.textContent = pad2(n); numS.textContent = SCENES[n]; }
-      const v = op.toFixed(3), tr = red ? 'none' : `translate3d(0, ${((0.5 - f) * 40).toFixed(1)}px, 0)`;
+      const a = Math.min(3, Math.floor(sNow)), f = sNow - a;
+      const fit = numFit[a], op = red || stacked || !fit || sNow >= 4 || xNow > 0 ? 0 : 1 - sstep(0.06, 0.15, Math.abs(f - 0.5));
+      if (a !== shownNum) { shownNum = a; numRows[0][0].textContent = pad2(a); numRows[0][1].textContent = pad2(a + 1); numRows[1][0].textContent = SCENES[a]; numRows[1][1].textContent = SCENES[a + 1]; }
+      const v = op.toFixed(3), tr = red ? 'none' : `translate3d(0, ${((0.5 - f) * 24).toFixed(1)}px, 0) scale(${fit.toFixed(3)})`, roll = sstep(0.43, 0.57, f).toFixed(3);
       if (v !== shownNumOp) { num.style.opacity = shownNumOp = v; }
       if (tr !== shownNumTr) { num.style.transform = shownNumTr = tr; }
+      if (roll !== shownRoll) num.style.setProperty('--roll', shownRoll = roll);
     }
     const bo = (1 - sstep(0.08, 0.3, xe)).toFixed(3);
     if (bar && bo !== shownBar) { bar.style.opacity = shownBar = bo; bar.style.visibility = bo < 0.01 ? 'hidden' : ''; }
+    if (shownLeaving !== xe > 0.05) story.classList.toggle('is-leaving', shownLeaving = xe > 0.05); // the covered tags take no pointer
     placeLabels();
+    // the paper's caption sits under the ink tags (stage coordinates: the paper uncovers it, it does not carry it)
+    if (paperCap && paperH > 0.5) {
+      let yb = 0;
+      if (lab.days) lab.days.forEach(l => { if (l.on && l.h) yb = Math.max(yb, l.y + l.h); });
+      if (!yb) yb = H - paperH + 30;
+      const cap = `translate3d(0, ${Math.round(yb + 16)}px, 0)`;
+      if (cap !== shownCap) paperCap.style.transform = shownCap = cap;
+    }
   }
 
   /* ================= the frame ================= */
@@ -1227,6 +1281,7 @@
       dpr = Math.min(3, r, Math.sqrt(PIXEL_BUDGET / Math.max(1, W * H)));
       cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr);
       gl.viewport(0, 0, cv.width, cv.height);
+      if (paperIn) paperIn.style.height = H + 'px'; // the paper's contents live in the stage's frame
       leaders.setAttribute('viewBox', `0 0 ${W} ${H}`);
       labels.forEach(l => { l.w = 0; l.tr = ''; });
     }
@@ -1318,7 +1373,7 @@
     }
     const kh = 1 - Math.exp(-dtS * (red ? 60 : 12));
     let hmax = 0;
-    for (let i = 0; i < 10; i++) { hov[i] += (hovT[i] - hov[i]) * kh; if (Math.abs(hovT[i] - hov[i]) < 0.002) hov[i] = hovT[i]; hmax = Math.max(hmax, hov[i]); }
+    for (let i = 0; i < hov.length; i++) { hov[i] += (hovT[i] - hov[i]) * kh; if (Math.abs(hovT[i] - hov[i]) < 0.002) hov[i] = hovT[i]; hmax = Math.max(hmax, hov[i]); }
     hoverOn = hmax;
     buildLines(); buildActors();
     gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);

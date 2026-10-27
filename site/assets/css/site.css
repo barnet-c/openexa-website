@@ -1129,9 +1129,14 @@ body.is-loading { overflow: hidden; }
 .hero-stats span { display: block; margin-top: 9px; font-family: var(--mono); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58); line-height: 1.4; }
 .hero-stats .badge { margin-top: 6px; color: rgba(245, 242, 236, .8); border-color: rgba(245, 242, 236, .32); white-space: nowrap; }
 /* the chapter mark: the incoming scene's numeral holds the copy column while one scene hands over to the next */
-.story-num { position: absolute; left: var(--gutter); bottom: calc(var(--story-bar-h) + clamp(18px, 3.6vh, 40px)); opacity: 0; pointer-events: none; color: var(--paper); will-change: opacity, transform; }
-.story-num b { display: block; font: 400 clamp(6rem, 12vw, 10.5rem)/.78 var(--serif); letter-spacing: -0.045em; color: rgba(245, 242, 236, .16); font-variant-numeric: tabular-nums; }
-.story-num span { display: block; margin-top: 16px; font: .62rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .62); }
+.story-num { position: absolute; left: var(--gutter); top: calc(var(--nav-h) + clamp(16px, 4.5vh, 48px)); opacity: 0; pointer-events: none; color: var(--paper); will-change: opacity, transform; } /* above the copy column, so it never sits on the copy it bridges */
+.story-num { transform-origin: 0 0; }
+.story-num b, .story-num span { display: block; overflow: hidden; }
+.story-num i { display: block; font-style: normal; transform: translate3d(0, calc(var(--roll, 0) * -100%), 0); } /* two lines, rolled like a counter */
+.story-num b { height: 1em; font: 400 clamp(6rem, 12vw, 10.5rem)/1 var(--serif); letter-spacing: -0.045em; color: rgba(245, 242, 236, .16); font-variant-numeric: tabular-nums; }
+.story-num b i { height: 1em; }
+.story-num span { height: 1.4em; margin-top: 4px; font: .62rem/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .62); }
+.story-num span i { height: 1.4em; }
 html:not(.story-ready) .story-num, .no-webgl .story-num { display: none; }
 /* the role-coded vocabulary, as a key */
 .story-legend { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-top: 22px; font: .6rem/1 var(--mono); letter-spacing: .13em; text-transform: uppercase; color: rgba(245, 242, 236, .66); }
@@ -1204,7 +1209,14 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story.is-scrolled .hero-scroll { opacity: 0; }
 /* the hand-off: the paper rises to the ledger's floor line, which becomes its edge; the chapters' figure rule continues on it */
 .story-paper { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; height: 0; overflow: hidden; visibility: hidden; background: var(--paper); color: var(--ink); pointer-events: none; }
-.story-paper .container { padding-top: clamp(16px, 2.6vh, 26px); }
+.story-paper-in { position: absolute; left: 0; right: 0; bottom: 0; height: 100vh; height: 100svh; } /* the stage's frame: the paper uncovers what is here, it does not carry it */
+.story-paper-in > .container { position: absolute; left: 0; right: 0; top: 0; }
+.story-ink { position: absolute; inset: 0; }
+.story-ink .story-lab { opacity: 1; transition: none; pointer-events: none; }
+.story-ink .story-lab .k { color: var(--ink); }
+.story-ink .story-lab .rg { color: rgba(14, 21, 18, .62); }
+.story-ink .story-lab.is-prem .rg { color: var(--signal); }
+.story.is-leaving .story-lab { pointer-events: none; }
 .story-paper-cap { display: flex; justify-content: space-between; gap: 6px 24px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--rule); font: .7rem/1.5 var(--mono); letter-spacing: .06em; color: var(--slate); }
 .beat-4 .body-lg, .beat-4 .hero-cta { opacity: var(--xo, 1); }
 
@@ -1275,6 +1287,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
   .story-lab.ring .n, .story-lab.layer .n, .story-lab.gate .k { display: none; }
   .story-lab.cap { font-size: .52rem; }
   .story-static-mark { width: 56%; top: calc(var(--nav-h) + 30px); right: 22%; }
+  .story-num { display: none; } /* portrait: the index under the nav already marks the scene; the copy hands over in a shorter window */
   html:not(.story-ready) .beat-0 { padding-top: calc(var(--nav-h) + 66vw + 48px); }
 }
 @media (max-width: 400px) { .hero-stats { grid-template-columns: repeat(2, auto); justify-content: start; gap: 12px 26px; } }
