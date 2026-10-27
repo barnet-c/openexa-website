@@ -286,13 +286,15 @@
   }
   // a compile/link failure (or any throw) takes the no-WebGL path; a context lost mid-setup does not — the restore starts over
   const guard = (fn) => { try { fn(); } catch (e) { if (!gl.isContextLost()) fail(e); } };
+  let setupGen = 0; // a quick lose/restore starts a new setup: the old link poll must stop, not spin on a dead program
   function setupGL(done) { guard(() => {
     const shader = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
     const vs = shader(gl.VERTEX_SHADER, VS), fs = shader(gl.FRAGMENT_SHADER, FS), p = gl.createProgram();
     gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p);
     const par = gl.getExtension('KHR_parallel_shader_compile'); // poll the link instead of stalling the main thread on it
+    const gen = ++setupGen;
     (function linked() { guard(() => {
-      if (gl.isContextLost()) return;
+      if (gen !== setupGen || gl.isContextLost()) return;
       if (par && !gl.getProgramParameter(p, par.COMPLETION_STATUS_KHR)) { requestAnimationFrame(linked); return; }
       if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('story shader: ' + (gl.getShaderInfoLog(vs) || gl.getShaderInfoLog(fs) || gl.getProgramInfoLog(p)));
       prog = p; gl.useProgram(prog);
@@ -390,7 +392,7 @@
   // render at the device's full resolution (up to 3x), within a UHD pixel budget so the full-viewport stage stays fluid
   const PIXEL_BUDGET = 3840 * 2160;
   function resize(force) {
-    if (lost) return;
+    if (lost || !prog) return;
     const w = stage.clientWidth, h = stage.clientHeight, r = window.devicePixelRatio || 1;
     // the mobile address bar showing/hiding fires resize without changing the stage (100svh): keep the drawing buffer
     if (force !== true && w === W && h === H && r === ratio) return;
@@ -462,7 +464,7 @@
 
   function frame(now, initial = false) {
     frameId = 0;
-    if (!running || lost) return;
+    if (!running || lost || !prog) return;
     const dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
     if ((visible && !document.hidden) || initial) {
       if (!reduced.matches && !paused) {
@@ -490,7 +492,7 @@
   }
 
   function requestFrame() {
-    if (!frameId && running && !lost && visible && !document.hidden) frameId = requestAnimationFrame(frame);
+    if (!frameId && running && !lost && prog && visible && !document.hidden) frameId = requestAnimationFrame(frame);
   }
   function stopFrames() {
     cancelAnimationFrame(frameId);
@@ -558,6 +560,7 @@
     updateMotion();
     stopFrames();
     frame(performance.now(), true);
+    document.dispatchEvent(new Event('story:gl-ready')); // the loader waits for this (capped), so the hero is never blank
   }
   function start() {
     try { gl = cv.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'high-performance' }); } catch (e) { gl = null; }

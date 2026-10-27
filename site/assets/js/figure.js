@@ -211,15 +211,17 @@
     const buf = (name, data) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW); const loc = gl.getAttribLocation(prog, name); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, 0); return b; };
     const fail = (msg, log) => { if (!gl.isContextLost()) { console.warn(msg, log); stage.classList.add('no-figure'); } };
     // program, buffers and constant state — built once, and again in place when a lost context is restored
+    let setupGen = 0; // a quick lose/restore starts a new setup: the old link poll must stop, not spin on a dead program
     function setup(done) {
       try {
         const shader = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
         const vs = shader(gl.VERTEX_SHADER, VS), fs = shader(gl.FRAGMENT_SHADER, FS), p = gl.createProgram();
         gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p);
         const par = gl.getExtension('KHR_parallel_shader_compile'); // poll the link instead of stalling the main thread on it
+        const gen = ++setupGen;
         (function linked() {
           try {
-            if (gl.isContextLost()) return; // the restore starts over
+            if (gen !== setupGen || gl.isContextLost()) return; // the restore starts over
             if (par && !gl.getProgramParameter(p, par.COMPLETION_STATUS_KHR)) { requestAnimationFrame(linked); return; }
             if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { fail('figure program:', gl.getShaderInfoLog(vs) || gl.getShaderInfoLog(fs) || gl.getProgramInfoLog(p)); return; }
             prog = p; gl.useProgram(prog);

@@ -206,8 +206,11 @@
     const count = $('.loader-count', loader), bar = $('.loader-bar i', loader);
     let p = 0, done = false;
     const t0 = performance.now();
+    // the overture's WebGL starts after first paint: lift the loader once it has drawn (or fallen back), never later than the cap
+    const glReady = !$('.story-gl') || document.documentElement.classList.contains('no-webgl') ? Promise.resolve()
+      : new Promise(r => ['story:gl-ready', 'story:no-webgl'].forEach(t => document.addEventListener(t, r, { once: true })));
     // time-based, so a slow GPU never stretches the count: 0 → 92 in 1.1 s, then straight to 100 once the page is ready
-    const ready = Promise.all([document.fonts ? document.fonts.ready : Promise.resolve(), document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true }))]);
+    const ready = Promise.all([document.fonts ? document.fonts.ready : Promise.resolve(), document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true })), glReady]);
     const tick = (now) => {
       const target = done ? 100 : Math.min(92, (now - t0) / 1100 * 92);
       p += (target - p) * 0.18;
@@ -225,7 +228,7 @@
     };
     ready.then(() => { done = true; });
     setTimeout(() => { done = true; }, 1800); // never hold the page hostage
-    if (prefersReduced) { finish(); } else requestAnimationFrame(tick);
+    if (prefersReduced) Promise.race([glReady, new Promise(r => setTimeout(r, 1800))]).then(finish); else requestAnimationFrame(tick);
   } else {
     $$('.beat-0 [data-split]').forEach(el => el.classList.add('is-in'));
   }
@@ -240,7 +243,7 @@
   const counters = $$('[data-count]');
   if (counters.length && 'IntersectionObserver' in window && !prefersReduced) {
     const cio = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { countUp(e.target); cio.unobserve(e.target); } }); }, { threshold: 0.4 });
-    counters.filter(c => { const r = c.getBoundingClientRect(); return r.bottom <= 0 || r.top >= window.innerHeight; }) // already in view: keep the value
+    counters.filter(c => { const r = c.getBoundingClientRect(); return r.top < 0 || r.bottom > window.innerHeight; }) // wholly in view already: keep the value
       .forEach(c => { c.textContent = countText(c, 0); cio.observe(c); });
   }
 
@@ -311,14 +314,14 @@
         const head = `mailto:${CONTACT}?subject=${encodeURIComponent('OpenEXA introduction - ' + data.interest)}&body=`;
         const fits = s => (head + encodeURIComponent(s)).length <= 1900;
         const bodyWith = msg => Object.entries(data).map(([key, value]) => `${key}: ${key === 'message' ? msg : value}`).join('\r\n');
-        const cut = (text, wrap) => { // longest whole-character prefix that fits, marked with …
+        const cut = (text, wrap, mark) => { // longest whole-character prefix that fits, then the mark
           const ch = Array.from(text); let lo = 0, hi = ch.length;
-          while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (fits(wrap(ch.slice(0, mid).join('') + '…'))) lo = mid; else hi = mid - 1; }
-          return wrap(ch.slice(0, lo).join('') + '…');
+          while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (fits(wrap(ch.slice(0, mid).join('') + mark))) lo = mid; else hi = mid - 1; }
+          return wrap(ch.slice(0, lo).join('') + mark);
         };
         let body = bodyWith(data.message || '');
-        if (!fits(body)) body = cut(data.message || '', bodyWith);
-        if (!fits(body)) body = cut(body, s => s);
+        if (!fits(body)) body = cut(data.message || '', bodyWith, '… [shortened to fit an email link: paste the rest here]');
+        if (!fits(body)) body = cut(body, s => s, '…');
         mail.href = head + encodeURIComponent(body);
         showResult(false);
         return;
