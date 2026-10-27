@@ -363,6 +363,8 @@
     }
     function wake() {
       if (visible && !document.hidden) {
+        // what the swarm settled while the line was out of view arrives as one sealed block (a few stragglers stay single)
+        if (live && inbox.length) { if (inbox.length > 2) seal(); else { clearTimeout(sealTimer); sealTimer = 0; drain(); } }
         flush(false);
         if (live && playing && !timer) timer = setTimeout(tick, 1100);
       } else { clearTimeout(timer); timer = 0; }
@@ -374,30 +376,48 @@
     });
     if (ui.latest) ui.latest.addEventListener('click', () => follow());
 
-    /* ---- live: proposals settled by the swarm become records ---- */
-    let inbox = [], draining = false;
+    /* ---- live: proposals settled by the swarm become records ----
+       In view, every announcement is one record. Out of view (the visitor is watching the swarm), announcements are
+       sealed together into one block every few seconds, so the line never fills with a wall of identical records; a
+       block names the proposal it carries (the followed one first) and how many more, and no id is ever invented. */
+    const SEAL_MS = 8000;
+    let inbox = [], draining = false, sealTimer = 0;
+    const laneOf = v => v == null || v === '' ? null : typeof v === 'number' ? (Number.isInteger(v) ? v : +v.toFixed(2)) : clean(v);
+    const countOf = d => Math.min(9999, Math.max(1, Math.floor(Number(d.count)) || 1)); // detail.count: settlements in one announcement
     if (live) document.addEventListener('oxa:settled', e => {
       if (!e || !e.detail) return;
       inbox.push(e.detail);
-      if (!draining) { draining = true; queueMicrotask(drain); } // never inside the swarm's own frame
+      if (visible && !document.hidden) { if (!draining) { draining = true; queueMicrotask(drain); } } // never inside the swarm's frame
+      else if (!sealTimer) sealTimer = setTimeout(seal, SEAL_MS);
     });
+    function settle(group) { // one record for one or more announcements
+      const key = group.find(d => d.followed === true) || group[group.length - 1];
+      const pid = typeof key.id === 'number' ? 'P-' + key.id : clean(key.id || '') || '—';
+      const n = group.reduce((s, d) => s + countOf(d), 0), followed = key.followed === true;
+      const lanes = Array.from(new Set(group.map(d => laneOf(d.lane)).filter(v => v !== null)));
+      const nums = lanes.every(v => typeof v === 'number') ? lanes.slice().sort((a, b) => a - b) : null;
+      const lane = !lanes.length ? '' : lanes.length === 1 ? `lane ${lanes[0]}` : nums ? `lanes ${nums[0]}–${nums[nums.length - 1]}` : `${lanes.length} lanes`;
+      const sealed = group.length > 1;
+      const r = write({ id: newId(), t: stamp(group[group.length - 1].ts), ev: 'SETTLED', lc: followed ? 'Followed' : 'Swarm',
+        sub: n > 1 ? `${pid} +${n - 1} more${lane ? ' · ' + lane : ''}` : `proposal ${pid}${lane ? ' · ' + lane : ''}`,
+        d: (n > 1 ? `${pid}${followed ? ' (followed)' : ''} and ${n - 1} more settled in the swarm above` : `proposal ${pid} settled in the swarm above`) +
+          (sealed ? ' · sealed as one block' : '') + ' · chained here',
+        src: 'swarm', pid, lane, n, followed });
+      fromSwarm++;
+      group.forEach(d => document.dispatchEvent(new CustomEvent('oxa:recorded', { detail: { id: d.id, record: r.id, hash: r.hash, seq: r.seq } })));
+    }
     function drain() {
       draining = false;
       const batch = inbox; inbox = [];
-      batch.forEach(d => {
-        const pid = typeof d.id === 'number' ? 'P-' + d.id : clean(d.id || '') || '—';
-        const lane = d.lane == null || d.lane === '' ? '' : 'lane ' + (typeof d.lane === 'number' ? (Number.isInteger(d.lane) ? d.lane : d.lane.toFixed(2)) : clean(d.lane));
-        // the swarm may announce several settlements at once (detail.count): one record says so, ids are never invented
-        const n = Math.min(9999, Math.max(1, Math.floor(Number(d.count)) || 1)), followed = d.followed === true;
-        const r = write({ id: newId(), t: stamp(d.ts), ev: 'SETTLED', lc: followed ? 'Followed' : 'Swarm',
-          sub: n > 1 ? `${pid} +${n - 1} more${lane ? ' · ' + lane : ''}` : `proposal ${pid}${lane ? ' · ' + lane : ''}`,
-          d: n > 1 ? `${pid} and ${n - 1} more settled in the swarm above · chained here` : `proposal ${pid} settled in the swarm above · chained here`,
-          src: 'swarm', pid, lane, n, followed });
-        fromSwarm++;
-        document.dispatchEvent(new CustomEvent('oxa:recorded', { detail: { id: d.id, record: r.id, hash: r.hash, seq: r.seq } }));
-      });
+      batch.forEach(d => settle([d]));
       counts();
       if (visible && !document.hidden) soon();
+    }
+    function seal() {
+      clearTimeout(sealTimer); sealTimer = 0;
+      if (!inbox.length) return;
+      const batch = inbox; inbox = [];
+      settle(batch); counts();
     }
 
     /* ---- replay: the excerpt writes itself again, at its own rhythm ---- */
