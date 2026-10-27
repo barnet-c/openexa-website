@@ -15,13 +15,7 @@ PAGES = ["index", "platform", "lifecycles", "evidence", "trust", "company", "res
          "access", "404"]
 FIGURE_PAGES = ["company", "research", "research/01-compounding-error"]
 fname = lambda name: name.replace("/", "_")[:60]
-FORBIDDEN = re.compile(r"NASDAQ|NYSE|TradeStation|Interactive Brokers|DTCC|704 458|Campus Pkwy|ajit@|\$100M\+ ARR|\$1B\+ ARR", re.I)
-# the team is public on company.html; blog bylines (blog/) are the only other place names may appear.
-# Barnet Sherman left the team (now a customer) and must not appear anywhere.
-PEOPLE = re.compile(r"Ajit|Dubey|Leung|Lockhart|Gamolsky|Choudhri|Schuster|Parekh|Sinha|Ekeroma|Nanawati|Mehta|Kannan|Philip Bond", re.I)
-TEAM_NAMES = ["Ajit K Dubey", "Dr. Tim Leung", "Mike Lockhart", "Victor Gamolsky", "Shalabh Choudhri", "John Schuster", "Subuddh Parekh",
-              "Abhishek Sinha", "Dr. Julius E. Ekeroma", "Dipit Nanawati", "Kumar Mehta", "Sreeram Kannan", "Dr. Philip Bond"]
-GONE = re.compile(r"Barnet|Sherman|Braintree|TIAA", re.I)
+from rules import FORBIDDEN, PEOPLE, TEAM_NAMES, GONE  # the site's content rules (tools/rules.py)
 LAYOUT = """() => {
   const vis = el => { const r = el.getBoundingClientRect(), s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !el.closest('.beat[aria-hidden="true"]') && !el.closest('details:not([open]) > :not(summary)') && !el.closest('.table-scroll') && !el.closest('.blog-chips'); };
   const over = [...document.querySelectorAll('main h1, main h2, main h3, main p, main a, main button, main canvas, main table')].filter(vis).filter(el => { const r = el.getBoundingClientRect(); return r.left < -2 || r.right > innerWidth + 2; }).map(el => el.tagName + '.' + el.className);

@@ -408,7 +408,7 @@ atom(OUT / "feed.xml", "OpenEXA Blog", "AI agents in finance, financial markets 
 json.dump({"total": len(kept), "years": [years[0], years[-1]],
            "series": {"name": SERIES_NAME, "first": SERIES[0][0], "count": len(SERIES), "minutes": series_minutes},
            "collections": [{"key": k, "label": l, "count": len(by_col[k]), "years": [by_col[k][-1]["dt"].year, by_col[k][0]["dt"].year], "lede": lede} for k, l, lede in COLLECTIONS]},
-          open(FILES / "blog_summary.json", "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+          open(FILES / "blog_summary.json", "w", encoding="utf-8", newline="\n"), indent=2, ensure_ascii=False)
 
 # ---------------- routes for Azure Static Web Apps (site/staticwebapp.config.json) ----------------
 # Azure serves /company as company.html and /blog as blog/index.html on its own. These rules only cover URLs that
@@ -480,7 +480,7 @@ for p in posts:
     else: rules.append(f"/blog/{s}/  /blog/{s}.html  301")
 for p in kept: rules.append(f'/research/blog/{p["slug"]}.html  /blog/{p["slug"]}.html  301')
 rules.append("/research/blog/  /blog/  301")
-(FILES / "blog_redirects.txt").write_text("\n".join(rules) + "\n", encoding="utf-8")
+(FILES / "blog_redirects.txt").write_text("\n".join(rules) + "\n", encoding="utf-8", newline="\n")
 
 # ---------------- image optimisation (in place; deterministic) ----------------
 from PIL import Image
