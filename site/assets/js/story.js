@@ -706,6 +706,8 @@
       beatRects[i] = { l, r, t, ht: h2 ? b.offsetTop + h2.offsetTop : t, hb: h2 ? b.offsetTop + h2.offsetTop + h2.offsetHeight : t };
     });
     // the chapter mark sits above the copy column: per hand-over, the scale that keeps it clear of both scenes' copy (0: no room)
+    const cd = story.querySelector('.story-coda');
+    codaH = cd ? cd.offsetHeight : 0;
     const nm = story.querySelector('.story-num');
     if (nm) {
       const nh = nm.offsetHeight, nt = nm.offsetTop;
@@ -1207,6 +1209,9 @@
     paperIn.insertBefore(ink, paperIn.firstChild);
   }
   let shownCap = '', shownLeaving = null;
+  // portrait screens: as the paper covers the copy, the proof's statement reappears above the columns (an end card, not an empty sky)
+  const coda = story.querySelector('.story-coda');
+  let shownCoda = '', shownCodaTr = '', codaH = 0;
   const paperSum = story.querySelector('[data-story-sum]');
   if (paperSum) paperSum.textContent = `${N_ABOVE} of ${NCOL} above the ${FLOOR_T} floor · ${N_PREM} premium · ${N_DISC} discount · ${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed`;
   const shown = beats.map(() => ({ op: '', tr: '', on: null }));
@@ -1266,6 +1271,18 @@
     const bo = (1 - sstep(0.08, 0.3, xe)).toFixed(3);
     if (bar && bo !== shownBar) { bar.style.opacity = shownBar = bo; bar.style.visibility = bo < 0.01 ? 'hidden' : ''; }
     if (shownLeaving !== xe > 0.05) story.classList.toggle('is-leaving', shownLeaving = xe > 0.05); // the covered tags take no pointer
+    if (coda) {
+      let co = 0, top = 0;
+      if (stacked && xe > 0) {
+        const pxu = (H / 2) / (CAM_D * Math.tan(FOV / 2)), colTop = H * 0.7 - (H_COL + 0.24) * layouts[4].s * pxu; // the ticks, once the proof has settled
+        top = Math.max(navH + 14, (navH + colTop) / 2 - codaH / 2);
+        co = red ? (xe > 0.5 ? 1 : 0) : sstep(0.42, 0.74, xe); // after the scene's own callouts have gone
+        if (ov > 0) { const room0 = top - navH; co *= room0 <= 6 ? 0 : 1 - sstep(Math.max(0, room0 - 6 - Math.min(150, H * 0.2)), room0 - 6, ov); }
+      }
+      const v = co.toFixed(3), tr = `translate3d(0, ${(top + (red ? 0 : (1 - co) * 10)).toFixed(1)}px, 0)`;
+      if (v !== shownCoda) coda.style.opacity = shownCoda = v;
+      if (co > 0 && tr !== shownCodaTr) coda.style.transform = shownCodaTr = tr;
+    }
     placeLabels();
     // the paper's caption sits under the ink tags (stage coordinates: the paper uncovers it, it does not carry it)
     if (paperCap && paperH > 0.5) {

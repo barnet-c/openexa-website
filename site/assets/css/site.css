@@ -1138,6 +1138,10 @@ body.is-loading { overflow: hidden; }
 .story-num span { height: 1.4em; margin-top: 4px; font: .62rem/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .62); }
 .story-num span i { height: 1.4em; }
 html:not(.story-ready) .story-num, .no-webgl .story-num { display: none; }
+/* portrait screens: the proof's statement over the columns while the paper takes the copy's place */
+.story-coda { position: absolute; left: var(--gutter); right: var(--gutter); top: 0; display: none; opacity: 0; pointer-events: none; will-change: opacity, transform; }
+.story-coda .eyebrow { margin-bottom: 12px; color: rgba(245, 242, 236, .62); }
+.story-coda-t { font: 400 clamp(2.1rem, 9.4vw, 3.8rem)/1.02 var(--serif); letter-spacing: -0.02em; color: var(--paper); text-wrap: balance; }
 /* the role-coded vocabulary, as a key */
 .story-legend { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-top: 22px; font: .6rem/1 var(--mono); letter-spacing: .13em; text-transform: uppercase; color: rgba(245, 242, 236, .66); }
 .story-legend li { display: inline-flex; align-items: center; gap: 8px; }
@@ -1289,6 +1293,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
   .story-lab.cap { font-size: .52rem; }
   .story-static-mark { width: 56%; top: calc(var(--nav-h) + 30px); right: 22%; }
   .story-num { display: none; } /* portrait: the index under the nav already marks the scene; the copy hands over in a shorter window */
+  .story-ready:not(.no-webgl) .story-coda { display: block; }
   html:not(.story-ready) .beat-0 { padding-top: calc(var(--nav-h) + 66vw + 48px); }
 }
 @media (max-width: 400px) { .hero-stats { grid-template-columns: repeat(2, auto); justify-content: start; gap: 12px 26px; } }
