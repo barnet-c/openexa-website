@@ -464,6 +464,8 @@ HEADERS = {
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "same-origin",
     "X-Content-Type-Options": "nosniff",
+    # instant navigation: Chrome/Edge prefetch a page's HTML when a link is hovered (prefetch only - no script runs early)
+    "Speculation-Rules": '"/speculation.specrules"',
 }
 # Longer caching for assets whose content rarely changes; HTML, CSS and JS keep Azure's revalidate-after-30 s default
 # because their URLs carry no version. Most specific first: the first matching route wins.
@@ -478,7 +480,7 @@ CONFIG = {
     "routes": [{"route": r, "headers": {"Cache-Control": c}} for r, c in CACHE] + routes,
     "responseOverrides": {"404": {"rewrite": "/404.html", "statusCode": 404}},
     "globalHeaders": HEADERS,
-    "mimeTypes": {".webmanifest": "application/manifest+json"},
+    "mimeTypes": {".webmanifest": "application/manifest+json", ".specrules": "application/speculationrules+json"},
 }
 ONE = lambda o: json.dumps(o, ensure_ascii=False, separators=(", ", ": "))  # one route per line: compact but diffable
 io.open(ROOT / "staticwebapp.config.json", "w", encoding="utf-8", newline="\n").write("{\n  \"routes\": [\n" + ",\n".join("    " + ONE(r) for r in CONFIG["routes"]) + "\n  ],\n" + "".join(f'  "{k}": {ONE(CONFIG[k])},\n' for k in ("responseOverrides", "globalHeaders")) + "  \"mimeTypes\": " + ONE(CONFIG["mimeTypes"]) + "\n}\n")
