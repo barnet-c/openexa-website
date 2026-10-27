@@ -248,7 +248,7 @@ feeds at `/blog/feed.xml` and `/research/feed.xml`, `/favicon.ico`, a maskable m
 follow each page's real last change (`data/lastmod.json`).
 
 **Security.** `staticwebapp.config.json` sends a strict Content-Security-Policy (same-origin only, now that nothing
-loads from a third party), Permissions-Policy, Cross-Origin-Opener-Policy and X-Frame-Options. Without JavaScript the
+loads from a third party), Permissions-Policy and X-Frame-Options. Without JavaScript the
 access form can no longer submit its fields in a URL.
 
 **Accessibility.** The access form's four options are reachable by keyboard and screen reader (they were

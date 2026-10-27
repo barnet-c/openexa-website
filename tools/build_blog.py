@@ -439,7 +439,8 @@ assert len(set(_norm)) == len(_norm), "Azure rejects routes that differ only by 
 # and every font, image and script is same-origin, so the policy is strict; the pages' style="" attributes (and the
 # ones the engines set) need style-src-attr. form-action 'none': the access form only builds a mailto draft in JS, and
 # without JS it must not submit itself (its fields would land in a GET URL). Add a form endpoint's origin to
-# connect-src if one is ever configured (data-endpoint, see site.js).
+# connect-src if one is ever configured (data-endpoint, see site.js). No Cross-Origin-Opener-Policy: it makes Lighthouse
+# (and so PageSpeed Insights) fail with NO_NAVSTART, and a static site with no sessions gains next to nothing from it.
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; "
        "img-src 'self' data:; connect-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'none'; "
        "frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests")
@@ -447,7 +448,6 @@ HEADERS = {
     "Content-Security-Policy": CSP,
     "Permissions-Policy": "accelerometer=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), "
                           "hid=(), magnetometer=(), microphone=(), midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=()",
-    "Cross-Origin-Opener-Policy": "same-origin",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "same-origin",
     "X-Content-Type-Options": "nosniff",
