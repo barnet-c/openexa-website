@@ -46,7 +46,7 @@ jobs:
     name: Browser checks (Playwright)
     needs: static
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40  # round 1's verify_v9 guards add about 9 minutes under CI's software GL (tests report)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
