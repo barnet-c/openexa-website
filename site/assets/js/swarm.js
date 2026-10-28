@@ -12,7 +12,8 @@
      'oxa:rejected' {id, ts, count, followed, gate: 'approve'}        proposals the council rejected since then
    A ledger on the page ([data-ledger="live"], home §06) answers with 'oxa:recorded' {id, record, hash, seq, followed}; the
    trace of a followed proposal then names that record, and its button scrolls the ledger into view and dispatches
-   'oxa:inspect' {record, seq, focus}. Without a ledger (Platform) the trace says so.
+   'oxa:inspect' {record, seq, focus}. Without a ledger (Platform) the trace names the lab's own ledger line, where the
+   followed proposal's block was drawn (a followed rejection is logged there too, in red).
    The model runs while the lab is on screen. Off screen it writes nothing to the DOM and steps (a 4 Hz pulse, nothing
    drawn) only while the page's ledger is within a viewport or a followed proposal is still in flight; otherwise model
    time stops: nothing is extrapolated. 'Pause motion' freezes it all; hidden tabs too.
@@ -186,7 +187,16 @@
       document.dispatchEvent(new CustomEvent('oxa:settled', { detail: { id: p.id, lane: p.lane, ts, gate: 'settle', count: p.count, followed: p.followed } }));
     }
     if (q) {
-      if (q.followed) traceFlushed(q.id, 'rejected');
+      if (q.followed) {
+        // the rejection you followed is logged on the lab's own ledger line, as a record of its own (red): the newest
+        // block, so a settled digest sealed in the same flush steps one place along the line (it is not drawn yet)
+        const b = ledger[ledger.length - 1];
+        if (p && b && b.t === sim) b.x += 0.03;
+        ledger.push({ x: LX, n: 1, t: sim, f: true, r: true });
+        if (ledger.length > 64) ledger.shift();
+        openPulse = 1;
+        traceFlushed(q.id, 'rejected');
+      }
       document.dispatchEvent(new CustomEvent('oxa:rejected', { detail: { id: q.id, ts, count: q.count, followed: q.followed, gate: 'approve' } }));
     }
   }
@@ -456,10 +466,11 @@
       const age = sim - B.t, fresh = reduced.matches ? 0 : clamp(1 - age / 0.6, 0, 1);
       if (prevX !== null) { ctx.globalAlpha = 0.55; ctx.strokeStyle = `rgba(${IV},.6)`; ctx.beginPath(); ctx.moveTo(prevX - prevS / 2 - 1, prevY); ctx.lineTo(P_X + s / 2 + 1, P_Y); ctx.stroke(); }
       ctx.globalAlpha = 1;
-      ctx.fillStyle = B.f ? `rgba(${GR},1)` : fresh > 0 ? `rgba(${GR},${(0.35 + 0.65 * fresh).toFixed(3)})` : `rgba(${IV},.86)`;
+      const C = B.r ? RD : GR; // a followed rejection's record is red, every settlement's green
+      ctx.fillStyle = B.f ? `rgba(${C},1)` : fresh > 0 ? `rgba(${GR},${(0.35 + 0.65 * fresh).toFixed(3)})` : `rgba(${IV},.86)`;
       if (!B.f && fresh > 0) { ctx.fillStyle = `rgba(${IV},.86)`; ctx.fillRect(P_X - s / 2, P_Y - s / 2, s, s); ctx.fillStyle = `rgba(${GR},${fresh.toFixed(3)})`; }
       ctx.fillRect(P_X - s / 2, P_Y - s / 2, s, s);
-      if (B.f) { ctx.strokeStyle = `rgba(${GR},.9)`; ctx.strokeRect(P_X - s / 2 - 3.5, P_Y - s / 2 - 3.5, s + 7, s + 7); }
+      if (B.f) { ctx.strokeStyle = `rgba(${C},.9)`; ctx.strokeRect(P_X - s / 2 - 3.5, P_Y - s / 2 - 3.5, s + 7, s + 7); }
       prevX = P_X; prevY = P_Y; prevS = s;
     }
     // the open block: proposals land here and are sealed into the next block
@@ -845,7 +856,8 @@
     touch();
   }
   // the followed proposal's announcement is going out: with a ledger on the page the trace waits for its record;
-  // without one it says so. The lab's own line drew it sealed (a canvas block, never named in words).
+  // without one (Platform) the trace names what the lab itself drew: the block on its own ledger line (green for a
+  // settlement, red for the rejection), and the screen reader hears where the inspectable ledger is
   function traceFlushed(id, outcome) {
     if (!T.open || id !== T.id) return;
     const t = sim - follow.t1;
@@ -858,9 +870,11 @@
       }, 10000);
       if (outcome === 'settled') tagSet('settled · sealing…', 'ok');
     } else {
-      setRow('led', t, outcome === 'settled' ? 'sealed · no ledger on this page' : 'rejected · no ledger on this page', outcome === 'settled' ? 'ok' : 'bad');
+      const what = outcome === 'settled' ? "sealed into the lab's ledger line" : "rejection logged on the lab's ledger line";
+      setRow('led', t, what, outcome === 'settled' ? 'ok' : 'bad');
+      const r = rowOf('led'); if (r) r.link = 'index.html#governance'; // its name links to the inspectable ledger
       if (outcome === 'settled') tagSet('settled · sealed', 'ok');
-      say(`${id}: ${outcome === 'settled' ? 'sealed' : 'rejected'}; there is no ledger on this page.`);
+      say(`${id}: ${what}; the inspectable ledger is on the home page.`);
     }
     touch();
   }
@@ -1027,6 +1041,12 @@
       const was = li.__cls; li.__ver = r.ver; li.__cls = r.cls;
       li.className = (r.cls ? 'is-' + r.cls : '') + (was === 'pend' && r.cls !== 'pend' ? ' is-filled' : '');
       li.children[0].textContent = r.t === null ? '—' : fmtT(r.t);
+      if (r.link && !li.children[1].firstElementChild) { // a page without a ledger: the row's name leads to the home page's
+        const a = document.createElement('a'); a.href = r.link; a.className = 'sw-led-a';
+        a.setAttribute('aria-label', 'The ledger on the home page');
+        const ar = document.createElement('i'); ar.setAttribute('aria-hidden', 'true'); ar.textContent = ' →';
+        a.append(r.name, ar); li.children[1].replaceChildren(a);
+      }
       const v = li.children[2];
       if (r.rec) { // the ledger's answer: a button that takes the reader to that record
         const btn = document.createElement('button');

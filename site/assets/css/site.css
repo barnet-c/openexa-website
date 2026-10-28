@@ -1180,7 +1180,12 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .sw-log li:last-child { border-bottom: 0; }
 .sw-log li[data-k="led"] { min-height: 34px; } /* the ledger row holds the record button's height from the start */
 .sw-log .sw-t { color: var(--fg-3); text-align: right; }
+.sw-log .sw-v { text-wrap: balance; } /* a two-line verdict breaks evenly, never leaving one word on its own line */
 .sw-log b { font-weight: 500; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--paper); }
+/* a page without a ledger (Platform): the Ledger row's name leads to the inspectable ledger on the home page */
+.sw-led-a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, currentColor 50%, transparent); }
+.sw-led-a i { font-style: normal; }
+.sw-led-a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sw-log .is-ok .sw-v, .sw-log .is-rec .sw-v { color: var(--accent); } .sw-log .is-bad .sw-v, .sw-log .is-bad b { color: var(--reject-bright); }
 .sw-log li.is-pend { opacity: .4; } .sw-log li.is-pend b, .sw-log li.is-pend .sw-t { color: var(--fg-3); }
 .sw-log li.is-wait .sw-v { color: rgba(79, 203, 147, .78); }
