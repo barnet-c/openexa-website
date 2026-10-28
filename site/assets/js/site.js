@@ -1,6 +1,6 @@
 /* OpenEXA — shared behaviour
    nav (chapter readout, progress, menu sheet) · clocks · loader · kinetic type · manifesto · reveals · counters · forms
-   · ledger stream · 2D swarm fallback */
+   · 2D swarm fallback */
 (function () {
   'use strict';
 

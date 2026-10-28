@@ -570,7 +570,7 @@ em, .ital { font-style: italic; }
 .footer .footer-legal .disc { margin-top: 0; padding-top: 0; padding-bottom: 25px; border-top: 0; }
 @media (prefers-reduced-motion: reduce) {
   [data-reveal].will-reveal:not(.is-in) { opacity: 1; transform: none; }
-  .badge i, .ledger-stream .head .live i, .swarm-live .live i, .desk-head .live i { animation: none; }
+  .badge i, .swarm-live .live i, .desk-head .live i { animation: none; }
 }
 
 /* ---------- form feedback ---------- */
@@ -887,9 +887,9 @@ em, .ital { font-style: italic; }
 @media print {
   @page { margin: 16mm 15mm; }
   html, body { background: #fff !important; color: #000 !important; }
-  .loader, .nav, .nav-menu, .skip, .chapters, .story-idx, .story-motion, .story-labels, .story-static-mark, .hero-scroll,
+  .loader, .nav, .nav-menu, .skip, .story-idx, .story-motion, .story-labels, .story-static-mark, .hero-scroll,
   .ticker, canvas, .figure-stage, .article-side, .pager, .article-share, .cta-band, .footer .top, .footer .wordmark,
-  .swarm-live, .ledger-stream, .chain, .desk, .blog-filter, .grain::after, .section[data-n]::before { display: none !important; }
+  .swarm-live, .chain, .desk, .blog-filter, .grain::after, .section[data-n]::before { display: none !important; }
   * { animation: none !important; transition: none !important; box-shadow: none !important; text-shadow: none !important; }
   .is-dark, .page-hero--dark { --bg: #fff; --bg-2: #fff; --fg: #000; --fg-2: #222; --fg-3: #444; --line: #bbb; --line-strong: #888; --accent: #1E7A5A; background: #fff !important; color: #000 !important; }
   .is-dark *, .page-hero--dark * { color: #000 !important; background-color: transparent !important; border-color: #bbb !important; }
@@ -906,9 +906,9 @@ em, .ital { font-style: italic; }
   .footer { padding-top: 6mm !important; border-top: 1px solid #bbb; } .footer .disc { font-size: 8pt; }
   .footer-legal > summary { display: none !important; }
   /* figures that grow on scroll print grown, in their own colours */
-  .bars .bar i, .compare .agent .bar i, .perf .day::before { transform: none !important; }
+  .bars .bar i, .compare .agent .bar i { transform: none !important; }
   .timeline::after { transform: scaleX(var(--p, .68)) !important; }
-  .bars .bar i, .compare .agent .bar i, .perf .day::before, .timeline::after { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .bars .bar i, .compare .agent .bar i, .timeline::after { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
 /* ==========================================================================
