@@ -3,6 +3,8 @@
    link below it carries that hash down to the next record, which stores it. Edit any field and the link out of that
    record snaps: it and every record after it turn red, one after another, because each stored previous-hash no longer
    matches. "Restore" heals the chain from the top. The records come from the page (readable without JavaScript).
+   The cascade is walked here, one record every 110 ms, and the status line counts exactly the records that are red on
+   screen; the sentence it ends on is announced once, to a separate live region.
    The point: nothing on the ledger can be changed quietly. */
 (function () {
   'use strict';
@@ -10,11 +12,25 @@
   if (!root) return;
   const list = root.querySelector('[data-chain-list]'), status = root.querySelector('[data-chain-status]');
   const restore = root.querySelector('[data-chain-restore]'), tryIt = root.querySelector('[data-chain-try]');
+  const acts = root.querySelector('.chain-acts'), foot = root.querySelector('.chain-foot'), sayEl = root.querySelector('[data-chain-say]');
   const fallback = root.querySelector('[data-chain-fallback]');
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (!list || !status) return;
+  // one Text node per element, its data rewritten in place
+  function textOf(el) {
+    let t = el.lastChild;
+    if (t && t.nodeType === 3 && (t === el.firstChild || el === status)) return t;
+    const s = el === status ? '' : el.textContent;
+    if (el !== status) el.textContent = '';
+    t = document.createTextNode(s); el.append(t);
+    return t;
+  }
+  const statusText = textOf(status);
+  const setStatus = s => { if (statusText.data !== s) statusText.data = s; };
+  // the actions' container shows only when it holds a button (no selector has to ask the document)
+  const syncActs = () => { if (acts) acts.hidden = (!tryIt || tryIt.hidden) && (!restore || restore.hidden); };
   if (!window.crypto || !crypto.subtle) {
-    status.textContent = 'Interactive verification is unavailable';
+    setStatus('Interactive verification is unavailable');
     if (fallback) fallback.textContent = 'This study needs a browser with WebCrypto on HTTPS or localhost. No records have been verified.';
     console.warn('OpenEXA chain study: WebCrypto is unavailable on this origin.');
     return;
@@ -45,11 +61,16 @@
     li.querySelector('.what').textContent = r[2];
     return li;
   });
+  const links = rows.map(li => li.querySelector('.chain-link b'));
   list.replaceChildren(...rows);
   if (fallback) fallback.remove();
+  if (foot) foot.classList.remove('is-static');
   root.classList.add('chain-ready');
+  // its one loop (the broken status dot) runs only while the chain is on screen
+  if ('IntersectionObserver' in window) new IntersectionObserver(([en]) => root.classList.toggle('is-away', !en.isIntersecting)).observe(root);
   const stored = []; // the chain as it was written: [prevHash, hash] per record
-  let busy = false, pending = false, revision = 0, lastBroken = -1;
+  const want = []; // the hash each link is showing, or rolling towards
+  let busy = false, pending = false, revision = 0;
 
   async function compute() {
     const snapshot = rows.map(li => `${li.querySelector('.who').textContent}|${li.querySelector('.ev').textContent}|${li.querySelector('.what').textContent}`);
@@ -66,9 +87,10 @@
     c.forEach(p => stored.push(p));
     // what each link stored when the chain was written: shown struck through beside the new hash once that link snaps
     rows.forEach((li, i) => { li.querySelector('.chain-was').textContent = stored[i][1].slice(0, 8); });
-    paint(c, -1);
+    paint(c, -1, true);
     rows.forEach(li => li.querySelectorAll('.ev, .what').forEach(field => field.setAttribute('contenteditable', 'plaintext-only')));
     if (tryIt) tryIt.hidden = false;
+    syncActs();
   }
   async function verify() {
     pending = true;
@@ -87,52 +109,89 @@
     }
   }
   function reportCryptoError(error) {
-    status.textContent = 'Verification failed. Reload the page to retry.';
+    setStatus('Verification failed. Reload the page to retry.');
     console.error('OpenEXA chain study could not compute the record hashes.', error);
   }
 
-  // hex digits roll to their new value, in step with the cascade
-  const HEX = '0123456789abcdef';
+  // hex digits roll to their new value, in step with the cascade: one shared frame loop for every rolling link
+  const HEX = '0123456789abcdef', rolls = new Map();
+  let rollRaf = 0;
   function roll(el, to, delay) {
-    cancelAnimationFrame(el._roll);
-    if (el.textContent === to) return;
-    if (motion.matches || !el.textContent) { el.textContent = to; return; }
-    const from = el.textContent, start = performance.now() + delay, dur = 380;
-    const step = now => {
-      if (now < start) { el.textContent = from; el._roll = requestAnimationFrame(step); return; }
-      const p = Math.min(1, (now - start) / dur), n = Math.floor(p * to.length);
-      el.textContent = to.slice(0, n) + Array.from({ length: to.length - n }, () => HEX[Math.random() * 16 | 0]).join('');
-      if (p < 1) el._roll = requestAnimationFrame(step); else el.textContent = to;
-    };
-    el._roll = requestAnimationFrame(step);
+    const t = textOf(el);
+    if (motion.matches || !t.data) { rolls.delete(t); t.data = to; return; }
+    rolls.set(t, { to, start: performance.now() + delay, dur: 380 });
+    if (!rollRaf) rollRaf = requestAnimationFrame(frame);
+  }
+  function frame(now) {
+    rollRaf = 0;
+    rolls.forEach((r, t) => {
+      if (now < r.start) return;
+      const p = Math.min(1, (now - r.start) / r.dur);
+      if (p >= 1) { t.data = r.to; rolls.delete(t); return; }
+      const n = Math.floor(p * r.to.length);
+      let s = r.to.slice(0, n);
+      for (let k = n; k < r.to.length; k++) s += HEX[Math.random() * 16 | 0];
+      t.data = s;
+    });
+    if (rolls.size) rollRaf = requestAnimationFrame(frame);
+  }
+
+  // the status line reads what is red on screen right now
+  const red = () => rows.reduce((n, li) => n + (li.classList.contains('is-broken') ? 1 : 0), 0);
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  function line(broken) {
+    const n = red();
+    if (!n) return 'Chain intact · every record points at the one before it';
+    if (broken < 0) return `Restoring · ${plural(n, 'record still fails', 'records still fail')}`;
+    const first = rows.findIndex(li => li.classList.contains('is-broken'));
+    return `Chain broken at record ${pad(first + 1)} · ${plural(n, 'record no longer verifies', 'records no longer verify')}`;
+  }
+  let said = '';
+  function settled(broken, quiet) { // the cascade has reached the last record: the final sentence, announced once
+    const s = line(broken);
+    setStatus(s);
+    root.classList.toggle('is-broken', red() > 0);
+    if (!quiet && sayEl && s !== said) sayEl.textContent = said = s;
+    if (quiet) said = s;
   }
 
   const STEP = 110; // ms between one record turning and the next: the cascade (and the healing) travel down the line
-  function paint(c, broken) {
-    const was = lastBroken;
+  let cascade = [];
+  function paint(c, broken, quiet) {
+    cascade.forEach(clearTimeout); cascade = [];
+    const steps = [];
     rows.forEach((li, i) => {
-      const bad = broken >= 0 && i >= broken;
-      const k = bad ? i - broken : was >= 0 && i >= was ? i - was : 0;
       // "edited" marks every record whose content differs from what was written, not only the first one
       const edited = li.querySelector('.ev').textContent !== ORIGINAL[i][1] || li.querySelector('.what').textContent !== ORIGINAL[i][2];
-      li.style.setProperty('--k', k);
-      // a record that stops verifying flares red as the break reaches it; one that verifies again flares green
-      const heals = !bad && li.classList.contains('is-broken');
-      li.classList.toggle('is-broken', bad);
-      if (heals) {
-        li.classList.remove('is-heal'); void li.offsetWidth; li.classList.add('is-heal');
-        clearTimeout(li._heal); li._heal = setTimeout(() => li.classList.remove('is-heal'), k * STEP + 1100);
-      } else if (bad) li.classList.remove('is-heal');
       li.classList.toggle('is-edited', edited);
       li.querySelector('.chain-flag').hidden = !edited;
-      roll(li.querySelector('.chain-link b'), c[i][1].slice(0, 8), k * STEP + (bad ? STEP / 2 : 0));
+      const bad = broken >= 0 && i >= broken, h = c[i][1].slice(0, 8);
+      if (li.classList.contains('is-broken') !== bad || want[i] !== h) steps.push({ i, bad, h });
     });
-    lastBroken = broken;
+    const now = quiet || motion.matches;
+    steps.forEach((s, k) => {
+      const run = () => {
+        const li = rows[s.i];
+        if (li.classList.contains('is-broken') !== s.bad) {
+          // a record that stops verifying flares red as the break reaches it; one that verifies again flares green
+          li.classList.toggle('is-broken', s.bad);
+          li.classList.remove('is-heal');
+          if (!s.bad && !now) {
+            void li.offsetWidth; li.classList.add('is-heal');
+            clearTimeout(li._heal); li._heal = setTimeout(() => li.classList.remove('is-heal'), 1100);
+          }
+        }
+        if (want[s.i] !== s.h) { want[s.i] = s.h; roll(links[s.i], s.h, s.bad ? STEP / 2 : 0); }
+        if (k === steps.length - 1) settled(broken, quiet);
+        else { setStatus(line(broken)); root.classList.toggle('is-broken', red() > 0); }
+      };
+      if (now || !k) run(); else cascade.push(setTimeout(run, k * STEP));
+    });
+    if (!steps.length) settled(broken, quiet);
     const intact = broken < 0;
-    root.classList.toggle('is-broken', !intact);
-    status.innerHTML = intact ? '<i></i>Chain intact · every record points at the one before it' : `<i></i>Chain broken at record ${pad(broken + 1)} · ${rows.length - broken} record${rows.length - broken > 1 ? 's' : ''} no longer verify`;
     if (restore) restore.hidden = intact;
     if (tryIt) tryIt.hidden = !intact || !stored.length;
+    syncActs();
   }
   let t = 0;
   list.addEventListener('input', () => { revision++; clearTimeout(t); t = setTimeout(() => verify().catch(reportCryptoError), 120); });
