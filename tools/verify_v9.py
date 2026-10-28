@@ -104,6 +104,9 @@ class ThrottledContext:
     def __getattr__(self, k): return getattr(self._ctx, k)
     async def new_page(self):
         pg = await self._ctx.new_page()
+        # a navigation may take long on a slow runner (CI) or a loaded PC: 90 s, as open_page has always allowed
+        # (Playwright's 30 s default failed home's first goto at 100% host load); a check's own limit still bounds it
+        pg.set_default_navigation_timeout(90000)
         await throttle_page(self._ctx, pg)
         return pg
 
@@ -2173,15 +2176,14 @@ async def stop_at(pg, cdp, y, touch, w, h):
 @check
 async def overture_rest(b):
     """where the reader stops, the copy settles: at 1440 (wheel) and 390x844 (touch), stopping at 25, 50 and 75% of each
-    of the four hand-overs, the frame 1 s later (or once .story[data-settled] is set) shows exactly one beat with every
-    headline word risen (translateY <= 6%) and its .body-lg (S0: its lede) at >= .9, and no other beat's eyebrow above .1; from S0 to S1
-    .story-num never shows '00' (every frame) (OV-R2-2)"""
+    of the four hand-overs, the frame 1 s later (or later, once the copy has stopped changing) shows exactly one beat with
+    every headline word risen (translateY <= 6%) and its .body-lg (S0: its lede) at >= .9, and no other beat's eyebrow
+    above .1; from S0 to S1 .story-num never shows '00' (every frame) (OV-R2-2)"""
     bad, n = [], 0
     for w, h, touch in ((1440, 900, False), (390, 844, True)):
         tag = f"index.html@{w}x{h}" + (" touch" if touch else " wheel")
         ctx, pg = await open_page(b, "index.html", w, h, touch=touch)
         cdp = await ctx.new_cdp_session(pg)
-        settled = await has_settled(pg)
         await scene_rest(pg, 0)
         await pg.evaluate(NUM_REC)
         await stop_at(pg, cdp, await pg.evaluate(STORY_Y, 1.0), touch, w, h)
@@ -2190,13 +2192,22 @@ async def overture_rest(b):
         if nr["bad"]: bad.append(f"{tag} S0 -> S1: .story-num shows '00' in {len(nr['bad'])}+ of {nr['n']} frames, e.g. {nr['bad'][:2]}")
         # the reader moves on from each stop to the next (forward through the four hand-overs, 25/50/75% of each relay
         # window [i+.32, i+.68]); each stop is judged where it settles
+        await pg.evaluate(FRAME_COUNTER)
         for i in range(4):
             for f in (0.25, 0.5, 0.75):
                 s = i + 0.32 + 0.36 * f
                 y = await stop_at(pg, cdp, await pg.evaluate(STORY_Y, s), touch, w, h)
                 await pg.wait_for_timeout(1000)
-                if settled: await until(pg, "!!document.querySelector('.story[data-settled]')", 20000, 150)
-                st = await pg.evaluate(REST_STATE); n += 1
+                # then the copy as it stays: two equal reads with at least two frames between them (up to 8 s; 16 s
+                # throttled). Not .story[data-settled]: story.js sets it only at a scene's rest, never mid-hand-over
+                # (86db818), so waiting for it cost 20 s a stop and timed the check out at 1200 s
+                st, last, t_w = None, None, time.monotonic()
+                while time.monotonic() - t_w < (16 if MODE["throttle"] > 1 else 8):
+                    st, fr = await pg.evaluate(f"[{REST_STATE}, window.__oxaF]")
+                    if last and st == last[0] and fr - last[1] >= 2: break
+                    if not last or st != last[0]: last = (st, fr)
+                    await pg.wait_for_timeout(150)
+                n += 1
                 whole = [x["i"] for x in st if x["n"] and x["up"] == x["n"] and (x["body"] or 0) >= 0.9]
                 eyes = [(x["i"], x["eye"]) for x in st if x["i"] not in whole and x["eye"] > 0.1]
                 if len(whole) != 1 or eyes:
