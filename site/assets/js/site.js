@@ -616,73 +616,50 @@
     cv.hidden = false;
     let W = 0, H = 0, dpr = 1, visible = true, frameId = 0, t = 0, last = performance.now();
     const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
-    const IVORY = [245, 242, 236], KHAKI = [172, 166, 142], GREEN = [79, 203, 147], RED = [214, 96, 86];
+    const IVORY = [245, 242, 236], GREEN = [79, 203, 147], TAU = Math.PI * 2;
     const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
-    const sphere = [];
-    for (let lat = -80; lat <= 80; lat += 10) { const la = lat * Math.PI / 180; const n = Math.max(6, Math.round(40 * Math.cos(la))); for (let k = 0; k < n; k++) sphere.push({ la, lo: (k + 0.5) / n * Math.PI * 2 }); }
-    const NODES = ['Signal', 'Predict', 'Decide', 'Approve', 'Execute', 'Settle'];
-    const rings = [{ r: 1.38, tiltX: 1.12, rotZ: -0.38, speed: 0.11, count: 150, labelled: true }, { r: 1.62, tiltX: 1.42, rotZ: 0.55, speed: -0.07, count: 110, labelled: false }];
-    rings.forEach(ring => { ring.agents = []; for (let i = 0; i < ring.count; i++) ring.agents.push({ a: Math.random() * Math.PI * 2, v: 0.75 + Math.random() * 0.6, off: (Math.random() - 0.5) * 0.06, flash: 0, kind: 0, size: 0.8 + Math.random() * 1.2, lastNode: -1 }); });
+    // the overture's globe, drawn flat: the brand mark's latitude rows as fine beads (the back hemisphere is never drawn), two thin
+    // orbits and one green proposal travelling the first of them
+    const sphere = [], ROWS = 34;
+    for (let r = 0; r < ROWS; r++) { const la = (78 - 156 * r / (ROWS - 1)) * Math.PI / 180, n = Math.max(8, Math.round(92 * Math.cos(la))); for (let k = 0; k < n; k++) sphere.push({ la, lo: (k + (r % 2) * 0.5) / n * TAU }); }
+    const orbits = [{ r: 1.34, tiltX: 1.16, rotZ: -0.36 }, { r: 1.6, tiltX: 1.42, rotZ: 0.52 }];
     // up to 3x within a UHD budget, no side past 4096 px: a tall fallback stage stays under iOS Safari's ~16 MP canvas limit
     const PIXEL_BUDGET = 3840 * 2160;
     function resize() { const r = cv.getBoundingClientRect(); W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height)); dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / (W * H)), 4096 / W, 4096 / H); cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); if (prefersReduced) draw(0); }
     function rot(p, ax, ay, az) { let [x, y, z] = p; let c = Math.cos(ax), s = Math.sin(ax); let y1 = y * c - z * s, z1 = y * s + z * c; y = y1; z = z1; c = Math.cos(ay); s = Math.sin(ay); let x1 = x * c + z * s; z1 = -x * s + z * c; x = x1; z = z1; c = Math.cos(az); s = Math.sin(az); x1 = x * c - y * s; y1 = x * s + y * c; return [x1, y1, z]; }
-    function draw(dt) {
+    function draw() {
       ctx.clearRect(0, 0, W, H);
       const narrow = W < 960;
       const R = narrow ? W * 0.40 : Math.min(W * 0.20, H * 0.30), cx = narrow ? W * 0.62 : W * 0.735, cy = narrow ? H * 0.22 : H * 0.42;
       ctx.globalAlpha = narrow ? 0.55 : 1;
       mouse.x += (mouse.tx - mouse.x) * 0.04; mouse.y += (mouse.ty - mouse.y) * 0.04;
       const spin = t * 0.10 + mouse.x * 0.25, tilt = 0.32 + mouse.y * 0.12;
+      const onOrbit = (o, a) => { const q = rot(rot([Math.cos(a) * o.r, Math.sin(a) * o.r, 0], o.tiltX, 0, o.rotZ), tilt, spin * 0.3, 0); return [cx + q[0] * R, cy + q[1] * R, q[2]]; };
+      const hidden = (x, y, z) => z < 0 && Math.hypot((x - cx) / R, (y - cy) / R) < 0.99; // behind the globe
+      // two thin orbits, one stroke each (their arcs behind the globe are left out)
       ctx.lineWidth = 1;
-      for (let i = 1; i <= 3; i++) { ctx.beginPath(); ctx.arc(cx, cy, R * (1 + i * 0.42), 0, Math.PI * 2); ctx.strokeStyle = rgba(IVORY, 0.035); ctx.stroke(); }
-      const behind = [], front = [];
-      rings.forEach((ring, ri) => {
-        ring.agents.forEach(ag => {
-          ag.a += ring.speed * ag.v * dt; if (ag.a > Math.PI * 2) ag.a -= Math.PI * 2; if (ag.a < 0) ag.a += Math.PI * 2;
-          ag.flash = Math.max(0, ag.flash - dt * 1.4);
-          if (ring.labelled) { const seg = Math.floor(ag.a / (Math.PI * 2) * NODES.length); if (seg !== ag.lastNode) { ag.lastNode = seg; if (seg === 3 && Math.random() < 0.10) { ag.kind = 2; ag.flash = 1; } else if (seg === 5 && ag.kind !== 2) { ag.kind = 1; ag.flash = 1; } else if (seg === 0) ag.kind = 0; } }
-          const rr = ring.r * (1 + ag.off);
-          const q = rot(rot([Math.cos(ag.a) * rr, Math.sin(ag.a) * rr, 0], ring.tiltX, 0, ring.rotZ), tilt, spin * (ri ? -0.15 : 0.35), 0);
-          (q[2] < 0 ? behind : front).push({ x: cx + q[0] * R, y: cy + q[1] * R, z: q[2], ag, ring });
-        });
-        ctx.beginPath();
-        for (let i = 0; i <= 120; i++) { const a = i / 120 * Math.PI * 2; const q = rot(rot([Math.cos(a) * ring.r, Math.sin(a) * ring.r, 0], ring.tiltX, 0, ring.rotZ), tilt, spin * (ri ? -0.15 : 0.35), 0); const x = cx + q[0] * R, y = cy + q[1] * R; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
-        ctx.strokeStyle = rgba(IVORY, 0.10); ctx.stroke();
-        if (ring.labelled && !narrow) {
-          ctx.font = '500 10px "IBM Plex Mono", monospace'; ctx.textBaseline = 'middle';
-          NODES.forEach((n, i) => { const a = i / NODES.length * Math.PI * 2; const q = rot(rot([Math.cos(a) * ring.r, Math.sin(a) * ring.r, 0], ring.tiltX, 0, ring.rotZ), tilt, spin * 0.35, 0); const x = cx + q[0] * R, y = cy + q[1] * R; if (q[2] < 0 && Math.hypot(q[0], q[1]) < 1) return; const al = 0.35 + 0.45 * (q[2] + 1) / 2; ctx.fillStyle = rgba(IVORY, al * 0.9); ctx.fillRect(x - 0.5, y - 5, 1, 10); ctx.fillStyle = rgba(i === 5 ? GREEN : IVORY, al); ctx.textAlign = q[0] > 0 ? 'left' : 'right'; ctx.fillText(n.toUpperCase(), x + (q[0] > 0 ? 9 : -9), y); });
-        }
+      orbits.forEach((o, oi) => {
+        ctx.beginPath(); let pen = false;
+        for (let i = 0; i <= 160; i++) { const [x, y, z] = onOrbit(o, i / 160 * TAU); if (hidden(x, y, z)) { pen = false; continue; } if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; } }
+        ctx.strokeStyle = rgba(oi ? IVORY : GREEN, oi ? 0.09 : 0.16); ctx.stroke();
       });
-      // dots of one colour and a similar alpha (steps of 1/24) share one path: ~60 fills a frame instead of ~800, which
-      // matters where this fallback runs: without WebGL, often on software raster
-      const TAU = Math.PI * 2, COLS = [IVORY, KHAKI, GREEN, RED], fills = new Map();
-      const drawAgents = (list) => {
-        list.forEach(it => {
-          const { ag, z } = it;
-          if (z < 0 && Math.hypot((it.x - cx) / R, (it.y - cy) / R) < 0.985) return;
-          const depth = (z + 1) / 2, ci = ag.kind === 1 ? 2 : ag.kind === 2 ? 3 : it.ring.labelled ? 0 : 1, sz = ag.size * (0.8 + depth * 0.9);
-          if (ag.flash > 0) { ctx.beginPath(); ctx.arc(it.x, it.y, sz + 8 * ag.flash, 0, TAU); ctx.strokeStyle = rgba(COLS[ci], 0.55 * ag.flash); ctx.lineWidth = 1; ctx.stroke(); }
-          const k = ci * 32 + Math.min(24, Math.round((0.22 + depth * 0.7) * (ag.kind === 2 ? 0.7 : 1) * 24));
-          let f = fills.get(k); if (!f) fills.set(k, f = []); f.push(it.x, it.y, sz);
-        });
-        fills.forEach((f, k) => { ctx.beginPath(); for (let i = 0; i < f.length; i += 3) { ctx.moveTo(f[i] + f[i + 2], f[i + 1]); ctx.arc(f[i], f[i + 1], f[i + 2], 0, TAU); } ctx.fillStyle = rgba(COLS[k >> 5], (k & 31) / 24); ctx.fill(); });
-        fills.clear();
-      };
-      drawAgents(behind);
-      const dotR = R * 0.021, eb = new Map();
+      // the globe: ~1.2 px beads at 10-14% ivory, brighter facing the eye; beads of one alpha share one path (a few fills a frame)
+      const eb = new Map();
       sphere.forEach(pt => {
-        const lo = pt.lo + spin; const q = rot([Math.cos(pt.la) * Math.sin(lo), Math.sin(pt.la), Math.cos(pt.la) * Math.cos(lo)], tilt, 0, 0); if (q[2] <= 0.02) return;
-        const k = Math.round((0.07 + 0.40 * Math.pow(q[2], 1.6)) * 40);
-        let f = eb.get(k); if (!f) eb.set(k, f = []); f.push(cx + q[0] * R, cy + q[1] * R, Math.max(0.4, dotR * q[2]), Math.atan2(q[1], q[0]));
+        const lo = pt.lo + spin, q = rot([Math.cos(pt.la) * Math.sin(lo), Math.sin(pt.la), Math.cos(pt.la) * Math.cos(lo)], tilt, 0, 0);
+        if (q[2] <= 0.04) return;
+        const k = Math.round((0.10 + 0.04 * q[2]) * 100);
+        let f = eb.get(k); if (!f) eb.set(k, f = []); f.push(cx + q[0] * R, cy + q[1] * R);
       });
-      eb.forEach((f, k) => { ctx.beginPath(); for (let i = 0; i < f.length; i += 4) { const rx = f[i + 2], th = f[i + 3]; ctx.moveTo(f[i] + rx * Math.cos(th), f[i + 1] + rx * Math.sin(th)); ctx.ellipse(f[i], f[i + 1], rx, dotR, th, 0, TAU); } ctx.fillStyle = rgba(IVORY, k / 40); ctx.fill(); });
-      drawAgents(front);
-      const g = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.12); g.addColorStop(0, rgba(IVORY, 0.05)); g.addColorStop(1, rgba(IVORY, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.12, 0, Math.PI * 2); ctx.fill();
+      eb.forEach((f, k) => { ctx.beginPath(); for (let i = 0; i < f.length; i += 2) { ctx.moveTo(f[i] + 0.6, f[i + 1]); ctx.arc(f[i], f[i + 1], 0.6, 0, TAU); } ctx.fillStyle = rgba(IVORY, k / 100); ctx.fill(); });
+      // one proposal: a green ring travelling the first orbit (it passes behind the globe)
+      const [px, py, pz] = onOrbit(orbits[0], t * 0.32 + 1.1);
+      if (!hidden(px, py, pz)) { ctx.beginPath(); ctx.arc(px, py, 3.4, 0, TAU); ctx.strokeStyle = rgba(GREEN, 0.9); ctx.lineWidth = 1.2; ctx.stroke(); }
+      const g = ctx.createRadialGradient(cx, cy, R * 0.94, cx, cy, R * 1.1); g.addColorStop(0, rgba(IVORY, 0.035)); g.addColorStop(1, rgba(IVORY, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.1, 0, TAU); ctx.fill();
       ctx.globalAlpha = 1;
     }
     // the loop runs only while the canvas is on screen in a visible tab
-    function frame(now) { frameId = 0; if (!visible || document.hidden) return; const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt; draw(dt); request(); }
+    function frame(now) { frameId = 0; if (!visible || document.hidden) return; const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt; draw(); request(); }
     function request() { if (!frameId && visible && !document.hidden) frameId = requestAnimationFrame(frame); }
     function stop() { cancelAnimationFrame(frameId); frameId = 0; last = performance.now(); }
     resize(); window.addEventListener('resize', resize);

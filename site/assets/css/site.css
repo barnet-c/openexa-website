@@ -1066,6 +1066,9 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-compact .beat .hero-cta .btn, .story-short .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
 .story-short .beat-4 .body-lg { display: none; } /* its callouts and the paper's caption carry the record */
 .beat.is-tight .body-lg, .beat-0.is-tight .hero-sub { display: none; }
+.story-short .story-lab.floor span { display: block; } /* two short lines, left of column 01 */
+.story-short .story-lab.floor { line-height: 1.3; }
+.story-short .story-lab.day { padding: 2px 0; min-width: 0; }
 
 /* without JavaScript, and when WebGL is unavailable (site.js then draws the 2D swarm behind the first beat), the beats read as a
    sequence. With JavaScript the pinned stage holds from the first paint, so nothing shifts when story.js arrives; should it never
@@ -1101,13 +1104,15 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 }
 /* wide screens: site.js's 2D globe gets a canvas of its own on the right (960 px or more keeps its wide layout), clear of the copy */
 @media (min-aspect-ratio: 23/20) and (min-width: 1200px) { .no-webgl .story-2d { left: auto; right: 0; width: max(960px, 56%); } }
-/* the safety net: JavaScript on, but story.js never ran */
-html:not(.story-ready):not(.no-webgl) .story { animation: story-static-h 1ms 4s forwards; }
-html:not(.story-ready):not(.no-webgl) .story-stage { animation: story-static-stage 1ms 4s forwards; }
-html:not(.story-ready):not(.no-webgl) .story-ui { animation: story-static-ui 1ms 4s forwards; }
-html:not(.story-ready):not(.no-webgl) .beat { animation: story-static-beat 1ms 4s forwards; }
-html:not(.story-ready):not(.no-webgl) .beat [data-split] .wi { animation: story-static-wi 1ms 4s forwards; }
-html:not(.story-ready):not(.no-webgl) .story-bar, html:not(.story-ready):not(.no-webgl) .story-labels { animation: story-static-off 1ms 4s forwards; }
+/* the safety net: JavaScript on, but story.js never ran (a failed download): after 4 s the static sequence */
+@media (scripting: enabled) {
+  html:not(.story-ready):not(.no-webgl) .story { animation: story-static-h 1ms 4s forwards; }
+  html:not(.story-ready):not(.no-webgl) .story-stage { animation: story-static-stage 1ms 4s forwards; }
+  html:not(.story-ready):not(.no-webgl) .story-ui { animation: story-static-ui 1ms 4s forwards; }
+  html:not(.story-ready):not(.no-webgl) .beat { animation: story-static-beat 1ms 4s forwards; }
+  html:not(.story-ready):not(.no-webgl) .beat [data-split] .wi { animation: story-static-wi 1ms 4s forwards; }
+  html:not(.story-ready):not(.no-webgl) .story-bar, html:not(.story-ready):not(.no-webgl) .story-labels { animation: story-static-off 1ms 4s forwards; }
+}
 @keyframes story-static-h { to { height: auto; } }
 @keyframes story-static-stage { to { position: relative; height: auto; min-height: 100svh; } }
 @keyframes story-static-ui { to { position: relative; } }

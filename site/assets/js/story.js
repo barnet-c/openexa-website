@@ -735,12 +735,14 @@
     const cont = stage.querySelector('.story-ui .container');
     gutter = (cont && parseFloat(getComputedStyle(cont).paddingLeft)) || 24; // --gutter is a clamp(): read it resolved
     measureBeats();
-    // the callouts' own sizes (captions wrap; portrait screens leave out the names): every frame keeps clear of them
+    // the callouts' own sizes (captions wrap; portrait screens leave out the names): every frame keeps clear of them. On wide
+    // screens a caption wraps inside its scene's frame, never reaching back over the copy
     labelMaxW.fill(0); capH.fill(0);
     labels.forEach(l => {
+      if (l.kind === 'cap') { const br = beatRects[l.scene]; l.el.style.maxWidth = !stacked && br && br.r > 0 ? Math.max(180, W - gutter - (br.r + 28)) + 'px' : ''; }
       l.w = l.el.offsetWidth; l.h = l.el.offsetHeight; l.tr = '';
       if (l.kind === 'cap') capH[l.scene] = l.h;
-      else if (l.kind === 'list' && !(stacked && l.wide)) labelMaxW[l.scene] = Math.max(labelMaxW[l.scene], l.w);
+      else if (l.kind === 'list' && !((stacked || short) && l.wide)) labelMaxW[l.scene] = Math.max(labelMaxW[l.scene], l.w);
       if (l.floor) floorW = l.w;
     });
     // the chapter mark sits above the copy column: per hand-over, the scale of its numeral that keeps it clear of both scenes' copy
@@ -782,7 +784,7 @@
         const room = Math.min(ROOM_W[i], W * 0.18);
         x1 = W - gutter - room; y0 = navH + 22;
         if (ZONE[i] === 'upper' && br.t - y0 > H * 0.36) { x0 = gutter + (W - 2 * gutter) * 0.3; y1 = br.t - 26; }
-        else { x0 = Math.min(br.r + 36, W * 0.56); y1 = H - barH - 18; }
+        else { x0 = Math.min(br.r + 36, W * 0.56); y1 = H - barH - Math.max(18, capH[i] + 12); } // above the scene's caption
         if (x1 - x0 < 240) x0 = x1 - 240;
       } else { // above this scene's copy, under the index and the scene's caption, never across the copy; the callouts keep their column
         const room = Math.max([0, 0.13, 0.15, 0.1, 0][i] * W, labelMaxW[i] ? labelMaxW[i] + 28 : 0);
@@ -844,10 +846,14 @@
     frust(L.cy);
     if (seg === 3 && xNow > 0) { // the hand-off: while the columns drain into their records the floor line settles to where the paper meets it
       const f = project(0, Y_FLOOR * layouts[4].s, 0).y;
-      frust(L.cy + Math.max(0, H * FLOOR_END() - f) * (stacked || short ? sstep(0.18, 0.42, xeNow) : sstep(0, 0.35, xeNow))); // portrait: only once the copy below has gone
+      frust(L.cy + Math.max(0, H * FLOOR_END() - f) * (stacked ? sstep(0.46, 0.62, xeNow) : sstep(0, 0.35, xeNow))); // portrait: only once the copy below has gone
     }
   }
   const FLOOR_END = () => (stacked ? 0.7 : 0.76); // where the floor line, the paper's edge to be, ends on screen (share of the stage)
+  // the way out, in shares of the exit. Wide (and short landscape): the columns drain while the proof settles to its final height,
+  // then the paper rises to the floor line; the headline stays above it. Portrait: the columns drain, then the proof's copy hands
+  // over to the coda (they never share a region), then the floor line settles into the space the copy left and the paper rises.
+  const EXIT = { wide: { paper: [0.35, 0.8], cap: [0.74, 0.9] }, tall: { copy: [0.36, 0.48], coda: [0.3, 0.42], paper: [0.6, 0.88], cap: [0.84, 0.96] } };
   // the exit, column by column: each drains into its record, left to right, over the first third of the way out
   const drainOf = (c) => clamp((xeNow - 0.02 - 0.144 * c / Math.max(1, NCOL - 1)) / 0.17, 0, 1);
   const dcArr = new Float32Array(24);
@@ -1225,7 +1231,7 @@
     const paperTop = H - paperH;
     const listCol = [];
     labels.forEach(l => {
-      let on = vis(l.scene, l.keep) > 0.5 && !(stacked && l.wide); // portrait screens leave out the secondary notes
+      let on = vis(l.scene, l.keep) > 0.5 && !((stacked || short) && l.wide); // portrait and short screens leave out the secondary notes
       if (on && l.col != null) on = colIn(l.col) > 0.5;
       let x = 0, y = 0, tr = '';
       if (on && l.kind === 'cap') {
@@ -1245,7 +1251,7 @@
           if (sd.includes('n')) y -= l.h + 6; else if (sd.includes('s')) y += 6; else y -= l.h / 2;
           y += l.dy || 0;
           x = clamp(x, 6, W - l.w - 6);
-          if (stacked) y = Math.max(y, tagTop + capH[l.scene]);
+          y = Math.max(y, stacked ? tagTop + capH[l.scene] : navH + 6); // never under the nav (portrait: nor the index or the caption)
           if (l.sum) { // the summary only where it clears the columns' tops; the copy, the coda and the paper's caption state it too
             const s4 = layouts[4].s, top = project(0, (Y_FLOOR + H_COL + 0.2) * s4, 0).y;
             if (y + l.h > top - 4) on = false;
@@ -1263,7 +1269,7 @@
       listCol.sort((a, b) => a.ay - b.ay);
       const sc = listCol[0].scene, L = layouts[sc];
       const maxW = Math.max(...listCol.map(l => l.w)), colX = stacked ? W - gutter * 0.5 - maxW : Math.min(L.rect[2] + 22, W - gutter * 0.5 - maxW);
-      const gap = Math.max(...listCol.map(l => l.h)) + (stacked ? 2 : 6), top = navH + (stacked ? barH + capH[sc] + 8 : 0) + 14, bottom = (stacked ? beatRects[sc].t - 10 : H - barH - 26);
+      const gap = Math.max(...listCol.map(l => l.h)) + (stacked || short ? 2 : 6), top = navH + (stacked ? barH + capH[sc] + 8 : 0) + 14, bottom = (stacked ? beatRects[sc].t - 10 : H - barH - capH[sc] - 16);
       let y = -1e9;
       listCol.forEach(l => { l.y = Math.max(l.ay - l.h / 2, y + gap); y = l.y; });
       const over = y + listCol[listCol.length - 1].h - bottom;
@@ -1373,7 +1379,7 @@
   const shown = beats.map(() => ({ op: '', tr: '', on: null, eo: '', w: '', bo: '' }));
   const beatLinks = beats.map(b => Array.from(b.querySelectorAll('a[href], button')));
   let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownFill = [], shownCapO = '', shownGlyph = '', shownLabTr = '';
-  let paperH = 0, relay0 = false, relayReady = false;
+  let paperH = 0, relay0 = false, relayReady = false, codaFallback = false;
   // the index follows the scroll position itself: immediate, and right even when frames are slow or throttled
   function syncIndex() {
     const ci = clamp(Math.round(sTarget), 0, 4);
@@ -1386,10 +1392,11 @@
   function updateUI() {
     const red = reducedMQ.matches, xe = xeNow;
     const ov = Math.max(0, scrollY - storyTop - run); // past the pin the stage leaves with the page
-    const lean = stacked || short; // portrait and short landscape: on the way out the coda takes over from the proof's copy
+    const lean = stacked, X = stacked ? EXIT.tall : EXIT.wide; // portrait: on the way out the coda takes over from the proof's copy
+    codaFallback = false; // (short landscape: only if the headline cannot stay above the paper)
     // the hand-off: once the columns have drained, the paper rises from the bottom edge to the floor line, which becomes its edge
     paperH = 0;
-    if (xe > 0 && seg === 3) paperH = Math.max(0, H - project(0, Y_FLOOR * layouts[4].s, 0).y - 1) * (lean ? sstep(0.42, 0.8, xe) : sstep(0.35, 0.8, xe));
+    if (xe > 0 && seg === 3) paperH = Math.max(0, H - project(0, Y_FLOOR * layouts[4].s, 0).y - 1) * sstep(X.paper[0], X.paper[1], xe);
     if (paper) { const v = paperH.toFixed(1); if (v !== shownPaper) { shownPaper = v; paper.style.height = v + 'px'; paper.style.visibility = paperH > 0.5 ? 'visible' : 'hidden'; } }
     if (!relay0 && (relayReady || sNow > 0.3)) { relay0 = true; beats[0].classList.add('is-relay'); } // S0's headline hands over to the relay after its entrance
     // the copy relay: every value is a function of the scroll position (d: 0 at rest, 0.5 halfway to the next scene), so a reverse
@@ -1403,9 +1410,9 @@
       else { eo = 1 - sstep(0.48, 0.54, d); w = 1 - sstep(0.38, 0.48, d); bo = 1 - sstep(0.32, 0.42, d); op = d < 0.56 ? 1 : 0; }
       let dy = red ? 0 : (sNow - i) * -18;
       if (i === 4 && xe > 0) { // on the way out: the headline stays above the paper when it fits (wide screens); the rest gives way
-        bo *= 1 - sstep(0.04, 0.3, xe);
         const br = beatRects[4] || { ht: 0, hb: 0 }, edge = H - paperH - 26, shift = Math.min(0, edge - br.hb);
-        if (!lean && br.ht + shift >= navH + 14) dy += shift; else op *= 1 - sstep(0.02, 0.17, xe); // portrait: gone before the floor moves down
+        if (lean) op *= 1 - sstep(X.copy[0], X.copy[1], xe); // portrait: the coda has the summary by then
+        else { bo *= 1 - sstep(0.04, 0.3, xe); if (br.ht + shift >= navH + 14) dy += shift; else { op *= 1 - sstep(0.03, 0.3, xe); codaFallback = true; } }
       }
       if (i === 4 && ov > 0) { // as the stage scrolls away the copy finishes leaving before it reaches the nav's lower edge
         const room0 = (beatRects[4] ? beatRects[4].t : 0) + dy - navH; // the room left above it when the stage starts to move
@@ -1427,7 +1434,7 @@
     // the chapter mark: absent at rest, it rises only inside a hand-over (wide screens) and rolls from this scene's numeral to the next
     if (num) {
       const a = Math.min(3, Math.floor(sNow)), f = sNow - a;
-      const fit = numFit[a], op = red || lean || !fit || sNow >= 4 || xNow > 0 ? 0 : sstep(0.42, 0.47, f) * (1 - sstep(0.53, 0.58, f));
+      const fit = numFit[a], op = red || lean || short || !fit || sNow >= 4 || xNow > 0 ? 0 : sstep(0.42, 0.47, f) * (1 - sstep(0.53, 0.58, f));
       if (a !== shownNum) { shownNum = a; numRows[0][0].textContent = pad2(a); numRows[0][1].textContent = pad2(a + 1); numRows[1][0].textContent = SCENES[a]; numRows[1][1].textContent = SCENES[a + 1]; }
       const v = op.toFixed(3), tr = red ? 'none' : `translate3d(0, ${((0.5 - f) * 24).toFixed(1)}px, 0)`, roll = f < 0.5 ? '0' : '1'; // it rolls over as the scene passes halfway (a CSS spring)
       if (v !== shownNumOp) { num.style.opacity = shownNumOp = v; }
@@ -1446,10 +1453,10 @@
     // empty sky), then finishes leaving before it could reach the nav
     if (coda) {
       let co = 0, top = 0;
-      if (lean && xe > 0) {
+      if ((lean || codaFallback) && xe > 0) {
         const fy = H * FLOOR_END();
         top = stacked ? Math.max(navH + 14, (navH + fy - 40) / 2 - codaH / 2) : Math.max(navH + 14, fy - 34 - codaH);
-        co = red ? (xe > 0.5 ? 1 : 0) : sstep(0.22, 0.5, xe);
+        co = red ? (xe > 0.5 ? 1 : 0) : lean ? sstep(X.coda[0], X.coda[1], xe) : sstep(0.22, 0.5, xe);
         if (ov > 0) { const room0 = top - navH; co *= room0 <= 6 ? 0 : 1 - sstep(Math.max(0, room0 - 6 - Math.min(150, H * 0.2)), room0 - 6, ov); }
       }
       const v = co.toFixed(3), tr = `translate3d(0, ${(top + (red ? 0 : (1 - co) * 10)).toFixed(1)}px, 0)`;
@@ -1476,7 +1483,7 @@
         if (!yb) yb = H - paperH + 30;
         const cap = `translate3d(0, ${Math.round(yb + 16)}px, 0)`;
         if (cap !== shownCap) paperCap.style.transform = shownCap = cap;
-        const co = (red ? 1 : sstep(0.74, 0.9, xe)).toFixed(3);
+        const co = (red ? 1 : sstep(X.cap[0], X.cap[1], xe)).toFixed(3);
         if (co !== shownCapO) paperCap.style.opacity = shownCapO = co;
       }
     }
