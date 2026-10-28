@@ -1280,6 +1280,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .sw-on.is-narrow .sw-gates li { letter-spacing: .1em; }
 .sw-on.is-narrow .sw-gates b { margin-right: .25em; }
 .sw-on.is-narrow .sw-ledger span { display: none; }
+.sw-on.is-narrow .sw-log li { grid-template-columns: 4em 7.6em minmax(0, 1fr); gap: 8px; } /* a verdict ('approved · risk 0.04 ≤ 0.88') holds one line at 390 */
 /* touch: every control in the lab is at least 44 px tall, the sliders' thumbs 22 px */
 @media (pointer: coarse) {
   .swarm-controls input[type=range] { height: 44px; }
