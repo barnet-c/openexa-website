@@ -984,19 +984,39 @@
   function toLedger(rec, kbd) {
     if (!LEDGER) return;
     cancelAnimationFrame(inspectRaf); inspectRaf = 0; unhold();
-    // a scroll still under way (the focus that brought the button into view, a wheel's glide) finishes first: a cut
-    // taken mid-glide is undone by the glide's remaining frames. Two still frames, and 0.12 s after the button took
-    // keyboard focus (its scroll into view starts a frame or two late); half a second at most.
-    let sy = window.scrollY, still = 0; const t0 = performance.now();
+    // the trip starts on the next frame, unless a scroll is still under way (the focus that brought the button into
+    // view, a wheel's glide): a cut taken mid-glide is undone by the glide's remaining frames, so that finishes first
+    // (two still frames). After the button took keyboard focus, 0.12 s (its scroll into view starts a frame or two
+    // late); half a second at most.
+    const t0 = performance.now();
+    let sy = window.scrollY, still = 0, need = t0 - scrollT < 120 ? 2 : 1;
     const settle = () => {
-      const y = window.scrollY, now = performance.now(); still = Math.abs(y - sy) < 0.5 ? still + 1 : 0; sy = y;
-      if ((still < 2 || (kbd && now - recFocusT < 120)) && now - t0 < 500) { inspectRaf = requestAnimationFrame(settle); return; }
+      const y = window.scrollY, now = performance.now();
+      if (Math.abs(y - sy) < 0.5) still++; else { still = 0; need = 2; }
+      sy = y;
+      if ((still < need || (kbd && now - recFocusT < 120)) && now - t0 < 500) { inspectRaf = requestAnimationFrame(settle); return; }
       inspectRaf = 0; trip(rec, kbd);
     };
     inspectRaf = requestAnimationFrame(settle);
   }
-  let recFocusT = -1e9;
+  let recFocusT = -1e9, scrollT = -1e9;
+  window.addEventListener('scroll', () => { scrollT = performance.now(); }, { passive: true });
   if (el.log) el.log.addEventListener('focusin', (e) => { if (e.target.closest('[data-sw-rec]')) recFocusT = performance.now(); });
+  // the record button answers the hand at once: pressed (pointer down, Enter or Space) it fills and its arrow nudges
+  // down (.is-going) while the trip gets under way; the fill lets go once the ledger has been asked for the record, or
+  // when a press never became a click
+  let goingB = null, goingT = 0;
+  function going(b, on, after) {
+    clearTimeout(goingT); goingT = 0;
+    if (goingB && goingB !== b) goingB.classList.remove('is-going');
+    goingB = on ? b : null;
+    if (b) b.classList.toggle('is-going', !!on);
+    if (on && after) goingT = setTimeout(() => going(b, false), after);
+  }
+  if (el.log) {
+    el.log.addEventListener('pointerdown', (e) => { const b = e.target.closest('[data-sw-rec]'); if (b && e.button === 0) going(b, true, 900); });
+    el.log.addEventListener('keydown', (e) => { const b = e.target.closest('[data-sw-rec]'); if (b && (e.key === 'Enter' || e.key === ' ')) going(b, true, 900); });
+  }
   function trip(rec, kbd) {
     // the ledger is asked for the record once it has been told it is in view: two frames, and, for a ledger that draws
     // what it held only when it comes into view, until its record is on the line (half a second at most)
@@ -1006,6 +1026,7 @@
       const f = () => {
         if (++n < 2 || (!drawn() && n < 30)) { inspectRaf = requestAnimationFrame(f); return; }
         inspectRaf = 0;
+        going(goingB, false);
         document.dispatchEvent(new CustomEvent('oxa:inspect', { detail: { record: rec.record, seq: rec.seq, focus: !!kbd } }));
       };
       inspectRaf = requestAnimationFrame(f);
@@ -1021,6 +1042,9 @@
         ask();
       };
       if (reduced.matches || typeof document.startViewTransition !== 'function' || document.hidden) { go(); return; }
+      // the nav's rule (site.js VT_LIMIT): the browser's still of the outgoing view holds nothing below about 16,384 px,
+      // so a trip that leaves a view reaching past 16,000 px is a plain cut, and what lands settles in (.is-landing, v2:nav)
+      if (from + window.innerHeight > VT_LIMIT) { go(); landing(); return; }
       de.dataset.jump = y > from ? 'down' : 'up';
       let vt;
       try { vt = document.startViewTransition(go); } catch (err) { delete de.dataset.jump; go(); return; }
@@ -1042,8 +1066,16 @@
   }
   if (el.log) el.log.addEventListener('click', (e) => {
     const b = e.target.closest('[data-sw-rec]'); if (!b) return;
-    const r = rowOf('led'); if (r && r.rec) toLedger(r.rec, e.detail === 0);
+    const r = rowOf('led'); if (r && r.rec) { going(b, true); toLedger(r.rec, e.detail === 0); }
   });
+  const VT_LIMIT = 16000;
+  function landing() { // as the nav's cut lands past VT_LIMIT: the bands on screen settle in from a dim start (v2:nav CSS)
+    document.querySelectorAll('main > *, body > .footer').forEach((n) => {
+      const r = n.getBoundingClientRect(); if (r.bottom <= 0 || r.top >= window.innerHeight) return;
+      n.classList.remove('is-offscreen', 'is-landing'); void n.offsetWidth; n.classList.add('is-landing');
+      setTimeout(() => n.classList.remove('is-landing'), 400);
+    });
+  }
 
   /* ---------------- writing the trace to the DOM (on screen only) ---------------- */
   let inLoop = false, uiDirty = false;
