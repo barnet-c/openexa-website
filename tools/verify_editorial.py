@@ -62,7 +62,8 @@ async def main():
         await pg.goto(f"{BASE}/index.html", wait_until="load"); await pg.wait_for_timeout(3000)
         await pg.evaluate("document.querySelector('#research').scrollIntoView()"); await pg.wait_for_timeout(1500)
         await pg.screenshot(path=f"{OUT}\\home-research.png")
-        assert await pg.locator(".chapters a").count() == 7
+        # the chapters live in the nav's readout list now (the fixed right rail is gone)
+        assert await pg.locator(".nav-ch-list a").count() == 7 and await pg.locator(".chapters").count() == 0
         # insights redirect
         await pg.goto(f"{BASE}/insights.html", wait_until="load"); await pg.wait_for_timeout(800)
         assert pg.url.endswith("/research.html"), pg.url
