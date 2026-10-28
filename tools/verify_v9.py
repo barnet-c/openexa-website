@@ -1109,8 +1109,11 @@ async def overture_phones(b):
                     await bounded(pg.touchscreen.tap(bb["x"] + bb["width"] * 0.3, bb["y"] + bb["height"] / 2), f"a tap on callout {k + 1} at {w}x{h}")
                     await until(pg, "!!document.querySelector('.story-insp.is-on')", 3000)
                     await pg.wait_for_timeout(400)
-                    r = await pg.evaluate(INSP_BOX, idx)
-                    if r and r["hits"]: bad.append(f"index.html@{w}x{h} scene 0{i}: the inspector {r['text']!r} at {r['box']} (callout {k + 1} tapped) crosses {r['hits']}")
+                    r = await until(pg, f"(() => {{ const r = ({INSP_BOX})({idx}); return r ? JSON.stringify(r) : ''; }})()", 3000, 150)
+                    r = json.loads(r) if r else None
+                    # a tap must open its inspector (OV-R2-4: ring_tap opens 6/6 at 844x390 and 667x375), or nothing was tested
+                    if not r: bad.append(f"index.html@{w}x{h} scene 0{i}: callout {k + 1} tapped at ({bb['x'] + bb['width'] * 0.3:.0f}, {bb['y'] + bb['height'] / 2:.0f}): no inspector opened")
+                    elif r["hits"]: bad.append(f"index.html@{w}x{h} scene 0{i}: the inspector {r['text']!r} at {r['box']} (callout {k + 1} tapped) crosses {r['hits']}")
                     await bounded(pg.touchscreen.tap(6, h * 0.5), "a tap on empty stage"); await pg.wait_for_timeout(400)  # a tap on empty stage closes it
         await ctx.close()
     assert not bad, f"overture_phones: {len(bad)} problems:\n  " + "\n  ".join(bad[:30])
@@ -1396,8 +1399,9 @@ async def desk_warm_start(b):
     ctx, pg = await open_page(b, "lifecycles.html", 1440, 900)
     await pg.evaluate("document.querySelector('[data-gap]').scrollIntoView({block: 'center', behavior: 'instant'})")
     t0 = time.monotonic()
-    ok = await until(pg, "(() => { const m = (document.querySelector('[data-gap-time]').textContent || '').match(/(\\d\\d):(\\d\\d)/); return !!m && (+m[1] * 60 + +m[2]) >= 660 && document.querySelectorAll('.desk-log li').length >= 1; })()", 4000)
-    info = await pg.evaluate("({time: document.querySelector('[data-gap-time]').textContent, log: document.querySelectorAll('.desk-log li').length})")
+    # LC-R2-6a adds a leading '+N earlier records' row (li.dk-more): it is not a record, so it is not counted
+    ok = await until(pg, "(() => { const m = (document.querySelector('[data-gap-time]').textContent || '').match(/(\\d\\d):(\\d\\d)/); return !!m && (+m[1] * 60 + +m[2]) >= 660 && document.querySelectorAll('.desk-log li:not(.dk-more)').length >= 1; })()", 4000)
+    info = await pg.evaluate("({time: document.querySelector('[data-gap-time]').textContent, log: document.querySelectorAll('.desk-log li:not(.dk-more)').length})")
     await ctx.close()
     assert ok, f"desk_warm_start lifecycles.html@1440x900: {time.monotonic() - t0:.1f} s after the reveal the desk reads {info} (>= 11:00 ET and >= 1 record expected)"
     print(f"desk_warm_start: {info} within {time.monotonic() - t0:.1f} s of the reveal")

@@ -67,10 +67,15 @@ async def main():
         for y in range(0, await pg.evaluate("document.body.scrollHeight"), 400):
             await pg.evaluate(f"scrollTo(0, {y})"); await pg.wait_for_timeout(120)
         await pg.locator(".crew--team").scroll_into_view_if_needed()
-        await pg.wait_for_function("[...document.querySelectorAll('.crew img')].every(i => i.complete && i.naturalWidth === 560)", timeout=15000)
+        # polled with evaluate: the site's CSP has no 'unsafe-eval', so wait_for_function(<string>) cannot run there
+        for _ in range(75):
+            if await pg.evaluate("[...document.querySelectorAll('.crew img')].every(i => i.complete && i.naturalWidth === 560)"): break
+            await pg.wait_for_timeout(200)
         team = await pg.evaluate("[...document.querySelectorAll('.crew img')].map(i => i.complete && i.naturalWidth === 560)")
         assert len(team) == 13 and all(team), team
-        await pg.locator(".crew").first.screenshot(path=str(OUT / "team.png"))
+        # a clipped page screenshot (round 2): never Locator.screenshot's 'element is stable' wait
+        box = await pg.evaluate("(() => { const r = document.querySelector('.crew').getBoundingClientRect(); const y0 = Math.max(0, r.top), y1 = Math.min(innerHeight, r.bottom); return {x: Math.max(0, r.left), y: y0, width: Math.min(innerWidth, r.right) - Math.max(0, r.left), height: y1 - y0}; })()")
+        if box["width"] >= 1 and box["height"] >= 1: await pg.screenshot(path=str(OUT / "team.png"), clip=box, animations="disabled")
         for path in ("/company", "/blog/", "/research"):
             await pg.goto(f"{BASE}{path}", wait_until="load")
             txt = await pg.evaluate("document.body.innerText")

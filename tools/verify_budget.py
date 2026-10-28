@@ -11,7 +11,8 @@ status 1 if any check failed, 2 if none failed but some were inconclusive. Start
 (Get-Process -Id $PID).PriorityClass = 'BelowNormal'.
 
 Load awareness (round 2). Before each check the run prints the host's CPU load and a calibration: a fixed JavaScript loop
-(1e7 square roots, after a warm-up run) timed in the browser, as a ratio to this machine's idle time for it. The idle
+(3e6 square roots, about 50 ms idle; the median of three after a warm-up run) timed in the browser, as a ratio to this
+machine's idle time for it. The idle
 reference is the fastest calibration this machine has recorded (.shots/budget-calibration.json, per machine and
 workload; --cal-ref MS sets it): the first run on a machine has no reference and says so. The timing
 checks (marked * below) run three times and judge the median; when such a check, or page_transition (+, judged frame by
@@ -50,8 +51,9 @@ GPU = ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"]
 SWIFTSHADER = ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 CATS = "devtools.timeline,disabled-by-default-devtools.timeline"
 CAL_FILE = Path(str(V.SHOTS)) / "budget-calibration.json"
-CAL_ID = "sqrt-1e7"  # the calibration workload; its idle time is recorded per machine and per workload
-CAL_LOOP = "(() => { const t = performance.now(); let x = 0; for (let i = 0; i < 1e7; i++) x += Math.sqrt(i); window.__calx = x; return performance.now() - t; })()"
+CAL_ID = "sqrt-3e6"  # the calibration workload; its idle time is recorded per machine and per workload
+# about 50 ms on an idle laptop (director's test list: 'a 50 ms JS calibration'); the median of three runs is used
+CAL_LOOP = "(() => { const t = performance.now(); let x = 0; for (let i = 0; i < 3e6; i++) x += Math.sqrt(i); window.__calx = x; return performance.now() - t; })()"
 # counts requestAnimationFrame callbacks per calling script (assets/js/<file>), before any page script runs
 RAF_COUNTER = r"""(() => { const W = window; if (W.__raf) return; const R = W.__raf = { n: 0, by: {} };
   const who = () => { const m = ((new Error()).stack || '').match(/assets\/js\/([\w.-]+\.js)/); return m ? m[1] : 'other'; };
@@ -255,9 +257,10 @@ async def headline_after_step(b):
 async def desk_warm_time(b):
     ctx, pg = await V.open_page(b, "lifecycles.html", 1440, 900)
     r = await pg.evaluate("""async () => { document.querySelector('[data-gap]').scrollIntoView({block: 'center', behavior: 'instant'}); const t0 = performance.now();
-      const ok = () => { const m = (document.querySelector('[data-gap-time]').textContent || '').match(/(\\d\\d):(\\d\\d)/); return !!m && (+m[1] * 60 + +m[2]) >= 660 && document.querySelectorAll('.desk-log li').length >= 1; };
+      const recs = () => document.querySelectorAll('.desk-log li:not(.dk-more)').length;  // LC-R2-6a's '+N earlier records' row is no record
+      const ok = () => { const m = (document.querySelector('[data-gap-time]').textContent || '').match(/(\\d\\d):(\\d\\d)/); return !!m && (+m[1] * 60 + +m[2]) >= 660 && recs() >= 1; };
       while (!ok() && performance.now() - t0 < 1200) await new Promise(r => setTimeout(r, 50));
-      return { ok: ok(), ms: Math.round(performance.now() - t0), time: document.querySelector('[data-gap-time]').textContent, log: document.querySelectorAll('.desk-log li').length }; }""")
+      return { ok: ok(), ms: Math.round(performance.now() - t0), time: document.querySelector('[data-gap-time]').textContent, log: recs() }; }""")
     await ctx.close()
     return r["ok"], f"lifecycles.html@1440x900: {r['ms']} ms after the reveal the desk reads {r['time']} with {r['log']} record(s); budget >= 11:00 ET and >= 1 record within 1.2 s", r["ms"] if r["ok"] else float("inf")
 
