@@ -2255,6 +2255,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
      unknown selector voids a whole list. */
   :root:has(.nav-sheet:popover-open) { overflow: hidden; }
   :root:has(.nav-sheet:popover-open) .nav { background: var(--ink); color: var(--paper); -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom-color: rgba(245, 242, 236, .08); --accent: var(--signal-bright); }
+html[data-jump]::view-transition { pointer-events: none; } /* a click during the move reaches the page, already there */
   :root:has(.nav-sheet:popover-open) .nav .brand .mark { color: var(--paper); }
   :root:has(.nav-sheet:popover-open) .nav-toggle span::before { transform: translateY(3.75px) rotate(45deg); }
   :root:has(.nav-sheet:popover-open) .nav-toggle span::after { transform: translateY(-3.75px) rotate(-45deg); }
