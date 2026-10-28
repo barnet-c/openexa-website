@@ -849,7 +849,7 @@ async def loader(b):
              (f" (a compositor fade crossed opacity .05 then; the page first answered at {t_seen:.0f} ms)" if t_hid is not None and t_hid != t_seen else "") + \
              (f", removed at {t_rem:.0f} ms" if t_rem is not None else ", never removed") + f"; {len(samples)} samples, last visible one at {shown[-1][0]:.0f} ms" * bool(shown) + \
              (f"; the page did not answer for {gap:.0f} ms before it was seen hidden" if gap > 400 else "") + \
-             "".join(f"; its animation '{n}' started at {st:.0f} ms (the loader's first frame) and takes opacity under .05 at {at:.0f} ms, " +
+             "".join(f"; its animation '{n}' starts at {st:.0f} ms on the page's clock (the loader's first frame, unless the page sets it) and takes opacity under .05 at {at:.0f} ms, " +
                      ("on the compositor" if comp else f"on the main thread (it also animates {', '.join(o)}), so it froze while scripts held the page") for n, st, at, comp, o in fades)
     assert t_hid is not None and t_hid <= 4500 and t_rem is not None and t_rem <= 9000, \
         f"loader index.html@1440x900, requestAnimationFrame starved: {detail} (must be not visible by 4500 ms and removed by 9000 ms)"
