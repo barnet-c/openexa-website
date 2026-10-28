@@ -1201,9 +1201,11 @@
   if (el.follow) el.follow.addEventListener('click', () => { if (follow.active) stopFollow(); else startFollow(pickFresh()); });
   if (el.close) el.close.addEventListener('click', () => { stopFollow(); if (el.follow) el.follow.focus(); });
   // Escape stops following from inside the lab, and also after a click or tap on an agent (focus is then on the page
-  // itself); it is left alone while another widget (the nav's chapter list, the menu) holds focus
+  // itself); it is left alone while another widget (the nav's chapter list, the menu) holds focus, and while no part of
+  // the lab is on screen (after the record button's trip focus may still sit on that button: Escape is then the ledger's)
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape' || e.defaultPrevented || !(follow.active || follow.show || T.open)) return;
+    const box = root.getBoundingClientRect(); if (box.bottom <= 0 || box.top >= window.innerHeight) return;
     const t = e.target;
     if (!(root.contains(t) || !t || t === document.body || t === document.documentElement)) return;
     stopFollow(); if (el.follow) el.follow.focus({ preventScroll: true });
