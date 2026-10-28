@@ -878,24 +878,58 @@
     say(`${d.id}: ${T.outcome === 'rejected' ? 'its rejection is recorded' : 'sealed'} in the ledger below as record ${rec}.`);
     touch();
   });
-  // the record button: brings the ledger into view (centred under the nav), then, once the scroll has landed (the
-  // ledger renders what it holds when it is in view), asks it to show that record
+  // the record button: brings the ledger into view (centred under the nav), then, once the page has landed (the
+  // ledger renders what it holds when it is in view), asks it to show that record. The ledger is screens below the lab,
+  // so the trip is taken the way the site takes every long jump (site.js, nav): what it passes over and lands on is
+  // revealed at once (no half-revealed paper streams past, and the landing is measured without an entrance offset), the
+  // page lands at once, and where same-document view transitions exist the ledger comes in as a sheet over a still of
+  // the lab (html[data-jump], styled by the nav's CSS); reduced motion or no view transitions: a plain cut. Then
+  // 'oxa:jump' {from, to}, as after any long jump. A hop of 1.5 screens or less glides.
   let inspectRaf = 0;
-  function toLedger(rec, kbd) {
-    if (!LEDGER) return;
+  function ledgerY() { // the scroll position that centres the ledger in the room under the bar (top-aligned when taller)
     const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0;
     const r = LEDGER.getBoundingClientRect(), room = window.innerHeight - navH;
-    const y = Math.max(0, Math.min(document.documentElement.scrollHeight - window.innerHeight, Math.round(window.scrollY + r.top - navH - Math.max(0, (room - r.height) / 2))));
+    return Math.max(0, Math.min(document.documentElement.scrollHeight - window.innerHeight, Math.round(window.scrollY + r.top - navH - Math.max(0, (room - r.height) / 2))));
+  }
+  function revealPassed(a, b) { // site.js's reveal classes: .is-in shows, .is-cut marks a skipped entrance, .is-instant drops transitions for two frames
+    const y = window.scrollY;
+    document.querySelectorAll('.will-reveal:not(.is-in)').forEach((n) => {
+      const r = n.getBoundingClientRect();
+      if (!(r.width || r.height) || r.top + y >= b || r.bottom + y <= a) return;
+      n.classList.add('is-cut', 'is-in', 'is-instant');
+      requestAnimationFrame(() => requestAnimationFrame(() => n.classList.remove('is-instant')));
+    });
+  }
+  function toLedger(rec, kbd) {
+    if (!LEDGER) return;
+    cancelAnimationFrame(inspectRaf); inspectRaf = 0;
+    const ask = () => document.dispatchEvent(new CustomEvent('oxa:inspect', { detail: { record: rec.record, seq: rec.seq, focus: !!kbd } }));
+    const from = window.scrollY, y = ledgerY();
+    if (Math.abs(y - from) > 1.5 * window.innerHeight) {
+      const de = document.documentElement;
+      const go = () => {
+        revealPassed(Math.min(from, y), Math.max(from, y) + window.innerHeight);
+        window.scrollTo({ top: ledgerY(), behavior: 'instant' }); // measured again: nothing on the way is mid-entrance now
+        document.dispatchEvent(new CustomEvent('oxa:jump', { detail: { from, to: window.scrollY } }));
+        ask();
+      };
+      if (reduced.matches || typeof document.startViewTransition !== 'function' || document.hidden) { go(); return; }
+      de.dataset.jump = y > from ? 'down' : 'up';
+      let vt;
+      try { vt = document.startViewTransition(go); } catch (err) { delete de.dataset.jump; go(); return; }
+      vt.ready.catch(() => {}); vt.updateCallbackDone.catch(() => {});
+      vt.finished.catch(() => {}).then(() => { delete de.dataset.jump; });
+      return;
+    }
     window.scrollTo({ top: y, behavior: reduced.matches ? 'auto' : 'smooth' });
     const t0 = performance.now(), y0 = window.scrollY; let lastY = y0, still = 0, moved = false;
-    cancelAnimationFrame(inspectRaf);
     const land = () => { // landed: at the target, or stopped for four frames once it moved, or 1.6 s at most
       const sy = window.scrollY, dt = performance.now() - t0;
       if (Math.abs(sy - y0) > 1) moved = true;
       still = Math.abs(sy - lastY) < 0.5 ? still + 1 : 0; lastY = sy;
       if (Math.abs(sy - y) > 1.5 && (moved ? still < 4 : dt < 400) && dt < 1600) { inspectRaf = requestAnimationFrame(land); return; }
       inspectRaf = 0;
-      document.dispatchEvent(new CustomEvent('oxa:inspect', { detail: { record: rec.record, seq: rec.seq, focus: !!kbd } }));
+      ask();
     };
     inspectRaf = requestAnimationFrame(land);
   }
