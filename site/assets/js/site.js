@@ -151,13 +151,29 @@
     }
     const c = chapters[shownK];
     if (ui.line && c) { MODES.forEach(m => ui.line.classList.toggle(m, m === 'is-' + c.mode)); }
+    nameReadout();
+  }
+  /* the readout's accessible name starts with exactly what it shows (WCAG 2.5.3: a speech user says what they see), then
+     the chapter's full label where the bar shows less, then the page's count */
+  const midMQ = window.matchMedia('(min-width: 961px) and (max-width: 1099.98px)'), wideMQ = window.matchMedia('(min-width: 1100px)');
+  function shownText(k) {
+    if (k < 0) return wideMQ.matches && tagline ? tagline : 'Index';
+    const c = chapters[k];
+    if (midMQ.matches) return c.n; // a narrow desktop shows the number only
+    if (c.mode === 'short' && c.short) return `${c.n} ${c.short}`;
+    if (c.mode === 'compact' && /^\d+$/.test(c.n)) return `§${c.n} / ${total()}`;
+    return `${c.n} ${c.title}`;
+  }
+  function nameReadout() {
+    if (!ui.btn || shownK < -1) return;
+    const shown = shownText(shownK), full = shownK < 0 ? shown : `${chapters[shownK].n} ${chapters[shownK].title}`;
+    ui.btn.setAttribute('aria-label', `${shown}${full === shown ? '' : ' · ' + chapters[shownK].title} · on this page: ${chapters.length} chapters`);
   }
   function showChapter(k) {
     if (!ui.roll || k === shownK) return;
     const dir = k > shownK ? 1 : -1, first = shownK === -3;
     shownK = k;
-    const label = k < 0 ? `On this page: ${chapters.length} chapters` : `Chapter ${chapters[k].n}, ${chapters[k].title}. On this page: ${chapters.length} chapters`;
-    ui.btn.setAttribute('aria-label', label);
+    nameReadout();
     chapters.forEach(c => { if (c.k === k) c.a.setAttribute('aria-current', 'true'); else c.a.removeAttribute('aria-current'); });
     if (ui.roll.getAnimations) ui.roll.getAnimations({ subtree: true }).forEach(a => a.cancel());
     const w0 = first ? 0 : ui.roll.getBoundingClientRect().width; // the width on screen now, before anything leaves
@@ -312,10 +328,10 @@
       if (!a) return;
       const c = chapters[+a.dataset.k];
       setPanel(false);
-      // focus follows the reader to the chapter (the next Tab continues inside it). A long jump cuts to it (jumpTo);
-      // a short hop is the browser's own anchor scroll, smooth where motion is welcome
-      c.el.setAttribute('tabindex', '-1'); c.el.classList.add('nav-ch-target');
-      const focus = () => c.el.focus({ preventScroll: true });
+      // focus follows the reader to the chapter, onto its heading (a named place: a screen reader announces it; the next
+      // Tab continues inside the chapter). A long jump cuts to it (jumpTo); a short hop is the browser's own anchor
+      // scroll, smooth where motion is welcome
+      const focus = () => focusInto(c.el);
       if (!jumpTo(c.el, a.hash, e, focus)) setTimeout(focus, 0);
     });
     $('.nav-ch-top', ui.wrap).addEventListener('click', e => {
@@ -445,12 +461,19 @@
     if (url.origin !== location.origin || url.pathname !== location.pathname || url.search !== location.search || url.hash.length < 2) return;
     const el = document.getElementById(decodeURIComponent(url.hash.slice(1)));
     if (!el || el.closest('details:not([open])')) return; // the browser opens a closed <details> for its target
-    jumpTo(el, url.hash, e, () => {
-      // as after an anchor jump, the next Tab continues from the destination
-      if (!el.matches('a[href], button, input, select, textarea, [tabindex]')) { el.setAttribute('tabindex', '-1'); el.classList.add('nav-ch-target'); }
-      el.focus({ preventScroll: true });
-    });
+    jumpTo(el, url.hash, e, () => focusInto(el)); // as after an anchor jump, the next Tab continues from the destination
   });
+  // where focus lands after a jump: a control or an element that takes focus itself; a section, by its heading (an
+  // unnamed section announces nothing); anything else made focusable for the moment (tabindex -1, no ring)
+  function focusInto(el) {
+    let t = el;
+    if (el.tagName === 'SECTION') {
+      const h = $$('h2', el).find(x => x.getClientRects().length && x.closest('section') === el);
+      if (h) t = h;
+    }
+    if (!t.matches('a[href], button, input, select, textarea, summary, [tabindex]')) { t.setAttribute('tabindex', '-1'); t.classList.add('nav-ch-target'); }
+    t.focus({ preventScroll: true });
+  }
 
   /* ---------------- page transitions: leaving the overture holds its last frame ----------------
      The browser's still of the outgoing page can miss the overture's WebGL stage (a full-screen white frame between two
