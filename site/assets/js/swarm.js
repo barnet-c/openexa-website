@@ -796,16 +796,19 @@
   }
   function say(t) { if (el.say) el.say.textContent = t; }
   // the ledger trace further down the page answers every announcement with 'oxa:recorded' {id, record, hash, seq}; when
-  // the answer is for the proposal being followed, its last line becomes the record it was chained into and the first
-  // 8 hex of that record's hash (off screen the ledger seals announcements every few seconds, so this can come later)
+  // the answer is for the proposal in the trace, its last line becomes the record it was chained into and the first 8 hex
+  // of that record's hash. Off screen the ledger seals announcements every few seconds, so the answer can come after the
+  // drawn path has faded (follow.show is false by then): the open trace is what decides
   document.addEventListener('oxa:recorded', (e) => {
     const d = e.detail;
-    if (!d || !follow.show || !follow.id || d.id !== follow.id || !d.record) return;
+    if (!d || !d.record || !follow.id || d.id !== follow.id || !el.trace || el.trace.hidden) return;
     const h = /^[0-9a-f]{8}/i.test(d.hash || '') ? d.hash.slice(0, 8).toLowerCase() : '';
     follow.rec = `record ${d.record}${h ? ' · ' + h : ''}`;
     const v = el.log && el.log.querySelector('[data-sw-ledger] .sw-v');
     if (!v) return;
     v.textContent = follow.rec;
+    const s = el.tag && !el.tag.hidden && el.tag.querySelector('span'); // its tag on the stage names the same record
+    if (s && /^settled/.test(s.textContent)) { s.textContent = `settled · record ${d.record}`; if (reduced.matches) draw(); }
     say(`${d.id}: chained into the ledger below as record ${d.record}.`);
   });
   function setFollowButton() {
