@@ -2311,4 +2311,21 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
   .article-hero .figure-stage { left: 50%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%); mask-image: linear-gradient(90deg, transparent, #000 14%); }
   .article-hero .lede { max-width: 40ch; }
 }
+
+/* ---------- phone tables: restacked, never clipped (PG5; the proof owner writes data-th on its table and rows) ----------
+   Under 601 px each row of a .ledger table becomes a block: its first cell is the row's title across the width, the
+   others pair up in two columns, each under its column's name (td[data-th]); a last cell left alone takes the width.
+   The thead stays in the accessibility tree, visually hidden. */
+@media (max-width: 600px) {
+  .table-scroll > .ledger { display: block; min-width: 0; }
+  .table-scroll > .ledger > thead { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .table-scroll > .ledger > tbody { display: block; border-top: 1px solid var(--line-strong); }
+  .table-scroll > .ledger > tbody > tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .table-scroll > .ledger > tbody > tr:last-child { border-bottom: 0; }
+  .table-scroll > .ledger > tbody > tr > td { display: block; min-width: 0; border: 0; padding: 0; text-align: left; overflow-wrap: anywhere; }
+  .table-scroll > .ledger > tbody > tr > td:first-child { grid-column: 1 / -1; padding-bottom: 4px; }
+  .table-scroll > .ledger > tbody > tr > td:last-child:nth-child(even) { grid-column: 1 / -1; }
+  .table-scroll > .ledger td[data-th]::before { content: attr(data-th); display: block; margin-bottom: 3px; font: 500 var(--mono-xs)/1.4 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); }
+  .table-scroll > .ledger td[data-th]:first-child::before { display: none; }
+}
 /* v2:pages:end */
