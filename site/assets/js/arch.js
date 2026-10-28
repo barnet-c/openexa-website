@@ -1,17 +1,25 @@
-/* OpenEXA — the architecture explorer: eight layers, exploded, one boundary.
+/* OpenEXA — the architecture explorer: eight layers, exploded, one boundary, on the floor of the rails.
    Enhances a `.layers[data-arch]` list (readable as it is without JavaScript) into an instrument: a readout on the left,
    the stack drawn in SVG in the centre (an axonometric projection, so it stays crisp at any pixel ratio) and the layers
    as buttons on the right, each one the label of its plate. Pointing at a layer, or focusing it, lifts its plate and shows
    its job and In -> Out; Up/Down (or Left/Right), Home and End move between layers, Enter or Space opens one, Escape closes it.
+   With `data-arch-spec` (Platform) the list stays on the page as the full spec, under the instrument: Enter, a click or a
+   tap on a layer or its plate brings that layer's entry into view and lights it, instead of opening a panel.
    Above the boundary (between 04 and 05) agents jitter, estimating; below it every mark snaps to the plane's grid, and the
    ground itself changes at the seam: scattered motes above, a lattice below. Dashed explosion lines join the plates' corners.
-   An illustrative proposal travels the stack: the Council decides; approved, its ring squares up as it crosses the boundary
-   and lands on the grid as a settled square; rejected, it falls away. The readout card follows the plate you point at and
-   keeps itself on screen. Motion runs only on screen in a visible tab, stops on request, never starts under reduced motion. */
+   Under 08 lies the floor (`.layer-floor`: the rails the stack connects to).
+   An illustrative proposal travels the stack: the Council decides; approved, it crosses the boundary as a ring and snaps
+   to each plate's grid below it, still a ring, until the last plate settles it as a square that drops to the floor;
+   rejected, it falls away. The readout card follows the plate you point at and keeps itself on screen; it swaps one layer
+   for the next out, then in, never both at once. Motion runs only on screen in a visible tab, stops on request, never
+   starts under reduced motion.
+   The wide instrument's height is set in CSS (--arch-minh), before and after this script builds it, so the page under it
+   never moves when it does. */
 (function () {
   'use strict';
   const roots = Array.from(document.querySelectorAll('.layers[data-arch]'));
-  if (!roots.length || !('ResizeObserver' in window) || !('IntersectionObserver' in window)) return;
+  // no instrument here: the list stays a list (.is-plain lifts the room CSS holds for the instrument)
+  if (!roots.length || !('ResizeObserver' in window) || !('IntersectionObserver' in window)) { roots.forEach((r) => r.classList.add('is-plain')); return; }
 
   const NS = 'http://www.w3.org/2000/svg';
   const reduceMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -54,9 +62,10 @@
 
   function explorer(root, id) {
     const pre = `arch${id}`;
+    const spec = root.hasAttribute('data-arch-spec'); // Platform: the list stays, as the spec under the instrument
     /* ---------------- 1 · read the list (also what readers without JavaScript get) ---------------- */
     const items = [];
-    let bIndex = -1, bEl = null;
+    let bIndex = -1, bEl = null, fEl = null;
     const txt = (n) => (n ? n.textContent : '').replace(/\s+/g, ' ').trim();
     Array.from(root.children).forEach((el) => {
       if (el.classList.contains('layer')) {
@@ -65,10 +74,12 @@
         const dd = body ? body.querySelectorAll('dl.io dd') : [];
         items.push({ el, body, num: txt(k) || pad2(items.length + 1), name, verb: txt(small), job: el.dataset.job || '', inp: txt(dd[0]), out: txt(dd[1]) });
       } else if (el.classList.contains('layer-boundary')) { bIndex = items.length; bEl = el; }
+      else if (el.classList.contains('layer-floor')) fEl = el;
     });
     const N = items.length;
-    if (N < 2 || items.some((it) => !it.body || it.body.tagName !== 'DIV' || !it.name)) return; // not the markup this expects: leave the list
+    if (N < 2 || items.some((it) => !it.body || it.body.tagName !== 'DIV' || !it.name)) { root.classList.add('is-plain'); return; } // not the markup this expects: leave the list
     if (bIndex < 1 || bIndex >= N) bIndex = Math.ceil(N / 2);
+    const floorTxt = fEl ? txt(fEl.querySelector('p') || fEl).replace(/^[—–-]\s*/, '') : ''; // what the stack stands on: the rails
     const sideOf = (sel) => {
       const p = bEl && bEl.querySelector(sel);
       if (!p) return null;
@@ -83,8 +94,11 @@
     const noDot = (s) => s.replace(/[.\s]+$/, '');
 
     /* ---------------- 2 · the instrument ---------------- */
-    root.classList.remove('layers');
-    root.classList.add('arch', 'is-building');
+    // inst is the instrument: the list itself (it becomes the explorer), or, in spec mode, a stage above the list (which stays)
+    const inst = spec ? document.createElement('div') : root;
+    if (!spec) root.classList.remove('layers');
+    inst.classList.add('arch', 'is-building');
+    if (spec) inst.classList.add('arch--spec');
     const head = H('div', 'arch-head');
     H('span', 'arch-lab', head, root.dataset.archLabel || 'The agentic stack');
     const legend = H('span', 'arch-legend', head);
@@ -105,7 +119,7 @@
     const read = H('div', 'arch-read', bodyEl);
 
     const btns = [], panels = [], heads = [];
-    let bRow = null;
+    let bRow = null, fRow = null;
     // a glyph of the stack: eight bars, the boundary between them, the layer in question lit
     const glyph = (i) => {
       const g = S('svg', { class: 'arch-glyph', viewBox: `0 0 16 ${N * 3 + 3}`, width: 16, height: N * 3 + 3, 'aria-hidden': 'true', focusable: 'false' });
@@ -114,21 +128,30 @@
       return g;
     };
     items.forEach((it, i) => {
-      const hd = H('h3', 'arch-h', list);
+      // spec mode: the entries below carry the headings, so the stage's layers are plain buttons that lead to them
+      const hd = H(spec ? 'div' : 'h3', 'arch-h', list);
       const b = H('button', 'arch-layer', hd);
       b.type = 'button'; b.id = `${pre}-b${i + 1}`;
-      b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-controls', `${pre}-p${i + 1}`);
       H('span', 'n', b, it.num); H('span', 'nm', b, it.name); H('span', 'vb', b, it.verb);
       const p = it.body;
-      p.className = 'arch-panel'; p.id = `${pre}-p${i + 1}`; p.hidden = true;
-      p.setAttribute('role', 'region'); p.setAttribute('aria-labelledby', b.id);
-      const above = i < bIndex;
-      const sd = document.createElement('p');
-      sd.className = 'arch-side' + (above ? '' : ' is-below');
-      sd.appendChild(glyph(i));
-      H('span', '', sd, above ? `Above the boundary · ${noDot(UP.t).toLowerCase()}` : `Below the boundary · ${noDot(DN.t).toLowerCase()}`);
-      p.insertBefore(sd, p.firstChild);
-      list.appendChild(p);
+      p.id = `${pre}-p${i + 1}`;
+      if (spec) {
+        // the entry stays where it is, every word on the page; the button brings it into view and lights it
+        it.el.id = `${pre}-e${i + 1}`; it.el.tabIndex = -1;
+        p.classList.add('arch-panel');
+        b.setAttribute('aria-controls', it.el.id);
+      } else {
+        b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-controls', p.id);
+        p.className = 'arch-panel'; p.hidden = true;
+        p.setAttribute('role', 'region'); p.setAttribute('aria-labelledby', b.id);
+        const above = i < bIndex;
+        const sd = document.createElement('p');
+        sd.className = 'arch-side' + (above ? '' : ' is-below');
+        sd.appendChild(glyph(i));
+        H('span', '', sd, above ? `Above the boundary · ${noDot(UP.t).toLowerCase()}` : `Below the boundary · ${noDot(DN.t).toLowerCase()}`);
+        p.insertBefore(sd, p.firstChild);
+        list.appendChild(p);
+      }
       btns.push(b); panels.push(p); heads.push(hd);
       if (i === bIndex - 1) {
         bRow = H('div', 'arch-bound', list);
@@ -142,6 +165,17 @@
         });
       }
     });
+    // the floor under 08: the rails the stack connects to (wide: a row in the list, level with the floor line it labels);
+    // when it needs two lines, they break at the middle dot nearest the middle, never leaving a dot at a line's end
+    const fParts = floorTxt.split(' · ');
+    let fMid = 1;
+    for (let j = 1, bd = Infinity; j < fParts.length; j++) { const d = Math.abs(fParts.slice(0, j).join(' · ').length - floorTxt.length / 2); if (d < bd) { bd = d; fMid = j; } }
+    if (floorTxt) {
+      fRow = H('div', 'arch-floor', list); H('span', 'gl', fRow).setAttribute('aria-hidden', 'true');
+      const ft = H('span', 'ft', fRow);
+      if (fParts.length > 1) { H('span', 'fa', ft, fParts.slice(0, fMid).join(' · ')); H('span', 'fs', ft, ' · '); H('span', 'fb', ft, fParts.slice(fMid).join(' · ')); }
+      else ft.textContent = floorTxt;
+    }
     // the readout: an overview that straddles the boundary, and a card that follows the layer you point at
     const ov = H('div', 'arch-ov', read);
     ov.setAttribute('aria-hidden', 'true');
@@ -158,9 +192,9 @@
     const sIn = ioRow('In'), sOut = ioRow('Out');
     const sside = H('p', 'sum-side', sum), scue = H('p', 'sum-cue', sum);
 
-    items.forEach((it) => it.el.remove());
-    if (bEl) bEl.remove();
-    root.append(head, bodyEl);
+    inst.append(head, bodyEl);
+    if (spec) { root.insertBefore(inst, root.firstChild); root.classList.add('is-built'); } // takes the room CSS held for it
+    else { items.forEach((it) => it.el.remove()); if (bEl) bEl.remove(); if (fEl) fEl.remove(); }
 
     /* ---------------- 3 · the drawing ---------------- */
     const defs = S('defs', null, svg);
@@ -170,6 +204,19 @@
     const gBead = grad('radialGradient', 'bead', { cx: 0.36, cy: 0.34, r: 0.72 }, [[0, IVORY, 1], [0.55, IVORY, 0.78], [1, IVORY, 0.28]]);
     const gPlane = grad('radialGradient', 'plane', { cx: 0.5, cy: 0.5, r: 0.5 }, [[0, GREEN, 0.2], [0.7, GREEN, 0.06], [1, GREEN, 0]]);
     const gAtt = grad('radialGradient', 'att', { cx: 0.5, cy: 0.5, r: 0.5 }, [[0, GREEN, 0.42], [1, GREEN, 0]]);
+    // the floor under the stack: a ground line with the hatching of a technical drawing, labelled with what lies there
+    const floor = floorTxt ? (() => {
+      const g = S('g', { class: 'af' }, svg);
+      const fl = { g, land: 0, lx: 0 };
+      fl.hatch = S('path', { fill: 'none', stroke: KHAKI, 'stroke-opacity': 0, 'stroke-width': 1 }, g);
+      fl.line = S('line', { stroke: KHAKI, 'stroke-opacity': 0, 'stroke-width': 1 }, g);
+      fl.lead = S('line', { stroke: KHAKI, 'stroke-opacity': 0, 'stroke-width': 1, 'stroke-dasharray': '1 3' }, g);
+      fl.node = S('circle', { r: 1.8, fill: KHAKI, 'fill-opacity': 0 }, g);
+      fl.mark = S('line', { stroke: GREEN, 'stroke-opacity': 0, 'stroke-width': 1.6 }, g); // where a settled action lands
+      fl.t1 = S('text', { class: 'af-t', 'text-anchor': 'middle' }, g);
+      fl.t2 = S('text', { class: 'af-t', 'text-anchor': 'middle' }, g);
+      return fl;
+    })() : null;
     const gBot = S('g', { class: 'lv-bottom' }, svg);   // what falls out under the stack
     let seed = 11 + id * 7;
     const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
@@ -317,7 +364,7 @@
 
     /* ---------------- 4 · geometry ---------------- */
     let wide = false, W = 1, Hh = 1, cx = 0, halfW = 150, Sc = 1, F0 = 19 * DEG, thick = 7, figH = 0, minH = 0;
-    let base = new Array(N).fill(0), rowC = new Array(N).fill(0), by = 0, readL = 0, readR = 0, readTop = 0, listL = 0, listR = 0;
+    let base = new Array(N).fill(0), rowC = new Array(N).fill(0), by = 0, fy = 0, readL = 0, readR = 0, readTop = 0, listL = 0, listR = 0, roomyB = false, roomyP = false;
     const view = { T: 45 * DEG, F: 19 * DEG, tT: 45 * DEG, tF: 19 * DEG };
     let geoDirty = true;
     const proj = (u, v, h) => {
@@ -358,17 +405,29 @@
         listL = lr.left - fr.left; listR = lr.right - fr.left;
         rowC = btns.map((b) => { const r = b.getBoundingClientRect(); return r.top - fr.top + r.height / 2; });
         const br = bRow.getBoundingClientRect(); by = br.top - fr.top + br.height / 2;
+        if (fRow) { const r = fRow.getBoundingClientRect(); fy = r.top - fr.top + r.height / 2; } // level with its label
         cx = (readR + listL) / 2; halfW = clamp((listL - readR) / 2 - 42, 96, 178);
         F0 = 19 * DEG; thick = 7; base = rowC.slice();
       } else {
         reserve();
         halfW = clamp(W * (W < 560 ? 0.29 : 0.27), 84, 196); cx = W * (W < 560 ? 0.39 : 0.38);
+        // the labels right of the stack (10 px mono caps, ~7.3 px a character): long ('↓ Execution is deterministic',
+        // '06 · Orchestrate') where they fit, short ('↓ Executes', '06') where not; the stack moves left, and on the
+        // narrowest screens shrinks, so that even the short ones keep 8 px from the edge
+        const wl = (s) => (s.length + 2) * 7.3, shortB = wl('Executes'), longB = Math.max(wl(noDot(UP.t)), wl(noDot(DN.t)));
+        const roomB = () => W - 8 - (cx + 1.16 * halfW + 12), slack = () => cx - 1.16 * halfW - 16;
+        if (roomB() < longB && roomB() + slack() >= longB) cx -= longB - roomB(); // a little to the left buys the long labels
+        if (roomB() < shortB) { cx = W - 8 - 12 - shortB - 1.16 * halfW; if (cx - 1.16 * halfW < 4) { halfW = (W - 24 - shortB) / 2.32; cx = 4 + 1.16 * halfW; } }
+        roomyB = roomB() >= longB;
+        roomyP = W - 8 - (cx + halfW + 12) >= Math.max(...plates.map((p) => wl(p.numLong) - 14));
         F0 = (W < 560 ? 22 : 18) * DEG; thick = W < 560 ? 6 : 7;
         const hh = halfW * Math.sin(F0), pitch = Math.max(30, hh * (W < 560 ? 0.92 : 0.86)), gap = pitch * 1.5, top = 30 + hh;
         base = []; for (let i = 0; i < N; i++) base.push(top + i * pitch + (i >= bIndex ? 2 * gap - pitch : 0));
         by = top + (bIndex - 1) * pitch + gap;
-        const need = Math.ceil(base[N - 1] + hh + thick + 34);
-        if (need !== figH) { figH = need; root.style.setProperty('--fig-h', figH + 'px'); }
+        let bottom = base[N - 1] + hh + thick;
+        if (floor) { fy = bottom + 12; bottom = fy + 10 + fitFloor() * 14; } else bottom += 10; // the floor and its label, under 08
+        const need = Math.ceil(bottom + 24);
+        if (need !== figH) { figH = need; inst.style.setProperty('--fig-h', figH + 'px'); }
         Hh = figH; rowC = base.slice();
       }
       Sc = halfW / Math.SQRT2;
@@ -377,6 +436,16 @@
       field.style.setProperty('--seam', f1(by) + 'px'); field.style.setProperty('--cx', f1(cx) + 'px');
       figTop = fig.getBoundingClientRect().top; navHc = navH();
       geoDirty = true;
+    }
+    // the floor's label under the drawing (narrow): one line if it fits, else two, split at the middle dot nearest the middle
+    let fLines = 0;
+    function fitFloor() {
+      floor.t1.textContent = floorTxt; floor.t2.textContent = '';
+      floor.w1 = floor.t1.getComputedTextLength(); floor.w2 = 0;
+      if (floor.w1 <= W - 28 || fParts.length < 2) return (fLines = 1);
+      floor.t1.textContent = fParts.slice(0, fMid).join(' · '); floor.t2.textContent = fParts.slice(fMid).join(' · ');
+      floor.w1 = floor.t1.getComputedTextLength(); floor.w2 = floor.t2.getComputedTextLength();
+      return (fLines = 2);
     }
 
     /* ---------------- 5 · state ---------------- */
@@ -404,19 +473,33 @@
       H('span', '', sl, above ? '↑ Above the boundary' : '↓ Below the boundary');
       H('span', '', sl, noDot(above ? UP.t : DN.t));
       sside.classList.toggle('is-below', !above);
-      scue.textContent = open === i ? '' : fineMQ.matches ? 'Click, or press Enter, to read more' : 'Tap to read more';
+      scue.textContent = open === i ? '' : spec ? (fineMQ.matches ? 'Click, or press Enter, to read its spec below' : 'Tap to read its spec below')
+        : fineMQ.matches ? 'Click, or press Enter, to read more' : 'Tap to read more';
       scue.hidden = open === i;
     }
-    function fillCard(i) {
-      fillSum(i);
-      sum.classList.remove('is-swap'); void sum.offsetWidth; sum.classList.add('is-swap');
-      measureCard();
+    /* One layer's summary gives way to the next out, then in, never both at once: the old one fades to nothing (90 ms), the
+       text changes, the new one rises in (220 ms). A key that arrives while that is under way (arrow keys held or tapped
+       in quick succession) changes the text at once, at full strength: one title, always legible. */
+    let swapTimer = 0, swapTo = -1, swapEnd = 0;
+    function swapNow(i) { swapTo = -1; clearTimeout(swapTimer); fillSum(i); sum.classList.remove('is-out', 'is-swap'); measureCard(); }
+    function swapIn(i) {
+      swapNow(i);
+      void sum.offsetWidth; sum.classList.add('is-swap');
+    }
+    function fillCard(i, showing) {
+      const now = performance.now();
+      if (reduced || !showing) { swapNow(i); return; }
+      if (swapTo >= 0 || now < swapEnd) { swapNow(i); swapEnd = now + 310; return; } // mid-swap: no waiting, no fading
+      swapTo = i; swapEnd = now + 310;
+      sum.classList.remove('is-swap'); sum.classList.add('is-out');
+      swapTimer = setTimeout(() => { if (swapTo >= 0) swapIn(hot >= 0 ? hot : swapTo); }, 90);
     }
     /* The instrument never changes height while you point around it: it reserves room for the tallest card once per layout
-       (and for the open layer's card while one is open), so the page below does not jump on hover. */
+       (and for the open layer's card while one is open), so the page below does not jump on hover. Its wide height is
+       already held in CSS (--arch-minh); this only adds room when a card needs more (--arch-cardh). */
     let peekMax = 0, openH = 0;
     function reserve() {
-      if (!wide) { if (minH) { minH = 0; root.style.removeProperty('--arch-minh'); } return; }
+      if (!wide) { if (minH) { minH = 0; inst.style.removeProperty('--arch-cardh'); } return; }
       const was = card.classList.contains('is-peek');
       card.classList.add('is-peek');
       peekMax = 0;
@@ -427,20 +510,24 @@
       if (hot >= 0) fillSum(hot);
       measureCard();
       const need = Math.ceil(readTop + Math.max(peekMax, openH) + 40);
-      if (Math.abs(need - minH) > 1) { minH = need; root.style.setProperty('--arch-minh', need + 'px'); }
+      if (Math.abs(need - minH) > 1) { minH = need; inst.style.setProperty('--arch-cardh', need + 'px'); }
     }
-    function setHot() {
+    let hotQ = 0; // a blur followed at once by a focus (arrow keys, Tab) must not drop the card for a frame in between
+    function setHot(deferred) {
+      if (deferred) { if (!hotQ) hotQ = requestAnimationFrame(() => { hotQ = 0; setHot(); }); return; }
       const h = hover >= 0 ? hover : focus >= 0 ? focus : open;
       if (h === hot) return;
+      const was = hot;
       hot = h;
-      root.classList.toggle('has-hot', hot >= 0 && wide);
+      inst.classList.toggle('has-hot', hot >= 0 && wide);
       btns.forEach((b, i) => b.classList.toggle('is-hot', i === hot));
       plates.forEach((p, i) => setA(p.num, 'class', 'ap-num' + (i === hot ? ' is-hot' : '')));
       card.classList.toggle('is-peek', hot !== open);
-      if (hot >= 0) { figTop = fig.getBoundingClientRect().top; fillCard(hot); }
+      if (hot >= 0) { figTop = fig.getBoundingClientRect().top; fillCard(hot, wide && was >= 0 && cardVis > 0.5); }
       kick();
     }
     function placePanels() {
+      if (spec) return; // the spec's entries stay where they are
       panels.forEach((p, i) => {
         if (wide && i === open) { if (p.parentNode !== card) card.appendChild(p); }
         else if (p.previousElementSibling !== heads[i]) heads[i].after(p);
@@ -450,18 +537,29 @@
       if (open >= 0) { btns[open].setAttribute('aria-expanded', 'false'); panels[open].hidden = true; }
       open = i;
       if (open >= 0) { btns[open].setAttribute('aria-expanded', 'true'); panels[open].hidden = false; }
-      root.classList.toggle('has-open', open >= 0);
+      inst.classList.toggle('has-open', open >= 0);
       placePanels();
       hot = -2; setHot();
       reserve();
       kick();
     }
+    // spec mode: a layer leads to its entry in the spec below; the entry takes focus and lights up
+    let litT = 0;
+    function jump(i) {
+      const e = items[i].el;
+      items.forEach((it, k) => it.el.classList.toggle('is-lit', k === i));
+      e.classList.remove('is-flash'); void e.offsetWidth; e.classList.add('is-flash');
+      clearTimeout(litT); litT = setTimeout(() => e.classList.remove('is-flash'), 2400);
+      e.scrollIntoView({ block: 'start', behavior: reduced ? 'instant' : 'smooth' });
+      e.focus({ preventScroll: true });
+    }
     function setMode(w) {
       wide = w;
-      root.classList.toggle('is-wide', wide); root.classList.toggle('is-narrow', !wide);
-      root.style.removeProperty('--arch-minh'); minH = 0;
+      inst.classList.toggle('is-wide', wide); inst.classList.toggle('is-narrow', !wide);
+      inst.style.removeProperty('--arch-cardh'); minH = 0;
       placePanels();
-      hint.textContent = wide && fineMQ.matches ? 'Point at a layer · ↑ ↓ to move · Enter to open' : fineMQ.matches ? 'Click a layer to open it' : 'Tap a layer to open it';
+      hint.textContent = spec ? (wide && fineMQ.matches ? 'Point at a layer · ↑ ↓ · Enter for its spec' : fineMQ.matches ? 'Click a plate for its spec' : 'Tap a plate for its spec')
+        : wide && fineMQ.matches ? 'Point at a layer · ↑ ↓ to move · Enter to open' : fineMQ.matches ? 'Click a layer to open it' : 'Tap a layer to open it';
       hot = -2; setHot();
       measure(); kick(true);
     }
@@ -471,9 +569,9 @@
     const hoverOut = (i) => { clearTimeout(hoverTimer); hoverTimer = setTimeout(() => { if (hover === i) { hover = -1; setHot(); } }, 110); };
     const isMouse = (e) => e.pointerType === 'mouse' || e.pointerType === 'pen';
     btns.forEach((b, i) => {
-      b.addEventListener('click', () => setOpen(open === i ? -1 : i));
+      b.addEventListener('click', () => { if (spec) jump(i); else setOpen(open === i ? -1 : i); });
       b.addEventListener('focus', () => { focus = i; setHot(); });
-      b.addEventListener('blur', () => { if (focus === i) { focus = -1; setHot(); } });
+      b.addEventListener('blur', () => { if (focus === i) { focus = -1; setHot(true); } });
       b.addEventListener('pointerenter', (e) => { if (isMouse(e)) hoverIn(i); });
       b.addEventListener('pointerleave', (e) => { if (isMouse(e)) hoverOut(i); });
       b.addEventListener('keydown', (e) => {
@@ -493,6 +591,7 @@
       p.hit.addEventListener('pointerenter', (e) => { if (isMouse(e)) hoverIn(i); });
       p.hit.addEventListener('pointerleave', (e) => { if (isMouse(e)) hoverOut(i); });
       p.hit.addEventListener('click', () => {
+        if (spec) { jump(i); return; }
         setOpen(open === i ? -1 : i);
         btns[i].focus({ preventScroll: true });
         if (open !== i || wide) return;
@@ -501,7 +600,7 @@
         if (top < nh + 4 || bottom > window.innerHeight - 8) window.scrollTo({ top: Math.max(0, window.scrollY + top - nh - 10), behavior: reduced ? 'auto' : 'smooth' });
       });
     });
-    root.addEventListener('pointermove', (e) => {
+    inst.addEventListener('pointermove', (e) => {
       if (!isMouse(e)) return;
       if (kbd) { // the pointer takes over from the keyboard: hover what it is on now (its enter event came while keys ruled)
         kbd = false;
@@ -514,11 +613,11 @@
       pointerOn = true; view.tT = (45 + px * 3.2) * DEG; view.tF = F0 + -py * 1.4 * DEG;
       kick();
     }, { passive: true });
-    root.addEventListener('pointerleave', () => { pointerOn = false; view.tT = 45 * DEG; view.tF = F0; kick(); });
+    inst.addEventListener('pointerleave', () => { pointerOn = false; view.tT = 45 * DEG; view.tF = F0; kick(); });
     motionBtn.addEventListener('click', () => {
       paused = !paused;
       motionBtn.textContent = paused ? 'Resume motion' : 'Pause motion';
-      root.classList.toggle('is-paused', paused);
+      inst.classList.toggle('is-paused', paused);
       kick();
     });
 
@@ -541,12 +640,13 @@
       }
       segs.push({ type: 'exit', at: N - 1, d: 0.95 });
       const g = S('g', null);
-      const f = { st, segs, s: 0, t: 0, reject: rnd() < 0.16, decided: false, kind: 'signal', g, lvl: null, alpha: 0, x: 0, y: 0, side: rnd() < 0.5 ? -1 : 1, ringR: 3.6, regT: -1 };
+      const f = { st, segs, s: 0, t: 0, reject: rnd() < 0.16, decided: false, kind: 'signal', g, lvl: null, alpha: 0, x: 0, y: 0, side: rnd() < 0.5 ? -1 : 1, ringR: 3.6, regT: -1, sqT: -1 };
       f.halo = S('circle', { r: 8, fill: IVORY, 'fill-opacity': 0.1 }, g);
       f.dot = S('circle', { r: 1.9, fill: IVORY }, g);
-      // one mark for the proposal and what it becomes: a ring (rx = half its size) that squares up as it crosses the boundary
+      // one mark for the proposal and what it becomes: a ring (rx = half its size), still a ring below the boundary, that
+      // squares up only on the last plate, as the swarm lab settles its own at 06 Settle
       f.mk = S('rect', { fill: GREEN, 'fill-opacity': 0, stroke: GREEN, 'stroke-width': 1.4, display: 'none' }, g);
-      // registration ticks: they close on the square as it lands on the grid below the boundary
+      // registration ticks: they close on the mark as it settles
       f.reg = S('path', { d: 'M-5.5 -2.5V-5.5H-2.5M2.5 -5.5H5.5V-2.5M5.5 2.5V5.5H2.5M-2.5 5.5H-5.5V2.5', fill: 'none', stroke: GREEN, 'stroke-width': 1, 'stroke-opacity': 0, 'vector-effect': NSS }, g);
       flows.push(f);
     }
@@ -596,18 +696,27 @@
           } else { // deterministic: straight, and it snaps in at the end
             e = p < 0.78 ? inout(p / 0.78) * 0.97 : 0.97 + 0.03 * ease3((p - 0.78) / 0.22); x = A[0] + (B[0] - A[0]) * e; y = A[1] + (B[1] - A[1]) * e;
           }
-          if (seg.from === council) { // the ring crosses the plane, squaring up as it goes, and lands on the grid as a settled square
-            setMark(f, ease3(clamp((e - 0.3) / 0.4, 0, 1)));
+          if (seg.from === council) { // the approved ring crosses the plane (it flashes) and lands on the grid below, a ring still
             const u = sa.u + (sb.u - sa.u) * e, v = sa.v + (sb.v - sa.v) * e;
             if (y < by + proj(u, v, 0)[1]) toLevel(f, 'B'); // still above the plane's surface
             else {
               toLevel(f, seg.to);
-              if (!f.crossed) { f.crossed = true; f.kind = 'settled'; f.regT = 0; bound.flash = 1; bound.ripT = 1; bound.ru = u; bound.rv = v; }
+              if (!f.crossed) { f.crossed = true; bound.flash = 1; bound.ripT = 1; bound.ru = u; bound.rv = v; }
             }
           } else toLevel(f, seg.to);
+        } else if (floor) { // exit: the settled square drops from the last plate to the floor, lands, and is taken in
+          const sN = f.st[N - 1], A = stationXY(N - 1, sN.u, sN.v, 0.03), q = clamp(p / 0.55, 0, 1), e = q * q;
+          x = A[0]; y = A[1] + (fy - 4 - A[1]) * e; toLevel(f, 'bottom');
+          if (q >= 1 && !f.landed) { f.landed = true; floor.land = 1; floor.lx = x; }
+          a = p < 0.62 ? 1 : 1 - (p - 0.62) / 0.38;
         } else { // exit, under the last plate
           const sN = f.st[N - 1], A = stationXY(N - 1, sN.u, sN.v, 0.03), B = stationXY(N - 1, sN.u, sN.v, -1.5), e = p * p;
           x = A[0] + (B[0] - A[0]) * e; y = A[1] + (B[1] - A[1]) * e; a = 1 - p; toLevel(f, 'bottom');
+        }
+        if (f.sqT >= 0) { // settling, on the last plate: the ring closes into a square in ~220 ms
+          f.sqT += dt;
+          setMark(f, ease3(Math.min(1, f.sqT / 0.22)));
+          if (f.sqT >= 0.22) f.sqT = -1;
         }
         if (f.regT >= 0) { // the snap: ticks close on the square in ~220 ms, then let go
           f.regT += dt;
@@ -624,7 +733,10 @@
     function onSeg(f, seg) {
       if (seg.type === 'dwell' && seg.at === 2 && f.kind === 'signal') setKind(f, 'proposal');
       if (seg.type === 'move' && seg.to === 2 && f.kind === 'signal') setKind(f, 'proposal');
-      if (seg.type === 'dwell' && seg.at === N - 1) permit = 1;
+      if (seg.type === 'dwell' && seg.at === N - 1) {
+        permit = 1;
+        if (f.kind === 'proposal' && f.decided) { f.kind = 'settled'; f.sqT = 0; f.regT = 0; } // the last plate settles it
+      }
       // the readout's In and Out tick as work reaches, and leaves, the layer you are looking at
       if (hot >= 0 && wide) {
         if (seg.type === 'dwell' && seg.at === hot) tick(sIn);
@@ -663,7 +775,7 @@
         if (Math.abs(view.T - view.tT) > 1e-4 || Math.abs(view.F - view.tF) > 1e-4) busy = true;
       }
       if (exStart >= 0 && ex < 1) { ex = reduced ? 1 : clamp((performance.now() - exStart) / 1300, 0, 1); if (ex < 1) busy = true; }
-      if (ex >= 1 && !root.classList.contains('is-ready')) root.classList.add('is-ready'); // the stack is open (a hook for tests)
+      if (ex >= 1 && !inst.classList.contains('is-ready')) inst.classList.add('is-ready'); // the stack is open (a hook for tests)
       const cvT = wide && hot >= 0 ? 1 : 0;
       cardVis = snap ? cvT : cardVis + (cvT - cardVis) * (1 - Math.exp(-dt * 11));
       if (Math.abs(cardVis - cvT) > 0.01) busy = true; else cardVis = cvT;
@@ -746,14 +858,42 @@
       setA(bound.lineR, 'x1', f1(cx + BR[0] + 8)); setA(bound.lineR, 'x2', f1(x1)); setA(bound.lineR, 'y1', f1(by)); setA(bound.lineR, 'y2', f1(by));
       setA(bound.line0, 'stroke-opacity', f3(0.5 * bl * (1 - cardVis))); setA(bound.lineL, 'stroke-opacity', f3(0.5 * bl)); setA(bound.lineR, 'stroke-opacity', f3(0.5 * bl));
       if (!wide) {
-        const roomy = W - (cx + BR[0] + 12) > 170;
+        const roomy = roomyB;
         setA(bound.tUp, 'x', f1(cx + BR[0] + 12)); setA(bound.tUp, 'y', f1(by - 8));
         setA(bound.tDn, 'x', f1(cx + BR[0] + 12)); setA(bound.tDn, 'y', f1(by + 16));
         setA(bound.tUp, 'opacity', f3(bl)); setA(bound.tDn, 'opacity', f3(bl));
         const up = '↑ ' + (roomy ? noDot(UP.t) : 'Decides'), dnT = '↓ ' + (roomy ? noDot(DN.t) : 'Executes');
         if (bound.tUp.textContent !== up) bound.tUp.textContent = up;
         if (bound.tDn.textContent !== dnT) bound.tDn.textContent = dnT;
-        plates.forEach((p, i) => { const t2 = roomy ? p.numLong : p.numShort; if (p.num.textContent !== t2) p.num.textContent = t2; setA(p.num, 'opacity', f3(clamp((exOf(i) - 0.8) / 0.2, 0, 1))); });
+        plates.forEach((p, i) => { const t2 = roomyP ? p.numLong : p.numShort; if (p.num.textContent !== t2) p.num.textContent = t2; setA(p.num, 'opacity', f3(clamp((exOf(i) - 0.8) / 0.2, 0, 1))); });
+      }
+      // the floor: a ground line under the stack, hatched beneath it as in a technical drawing; wide, a dotted leader
+      // carries it on to its row in the list; narrow, its label sits under it. A settled action lands on it with a mark.
+      if (floor) {
+        const fa = clamp((ex - 0.7) / 0.3, 0, 1), xa = cx - halfW * 1.3, xb = cx + halfW * 1.3;
+        setA(floor.line, 'x1', f1(xa)); setA(floor.line, 'x2', f1(xb)); setA(floor.line, 'y1', f1(fy)); setA(floor.line, 'y2', f1(fy));
+        setA(floor.line, 'stroke-opacity', f3(0.55 * fa));
+        const hk = `${f1(xa)} ${f1(xb)} ${f1(fy)}`;
+        if (floor.hk !== hk) {
+          floor.hk = hk;
+          let d = '';
+          for (let x = xa + 6; x <= xb - 2; x += 7) d += `M${f1(x)} ${f1(fy + 1.5)}l-5 5.5`;
+          setA(floor.hatch, 'd', d);
+        }
+        setA(floor.hatch, 'stroke-opacity', f3(0.3 * fa));
+        setA(floor.lead, 'display', wide ? 'inline' : 'none'); setA(floor.node, 'display', wide ? 'inline' : 'none');
+        if (wide) {
+          setA(floor.lead, 'x1', f1(xb + 6)); setA(floor.lead, 'x2', f1(listL - 6)); setA(floor.lead, 'y1', f1(fy)); setA(floor.lead, 'y2', f1(fy));
+          setA(floor.lead, 'stroke-opacity', f3(0.5 * fa));
+          setA(floor.node, 'cx', f1(listL - 4)); setA(floor.node, 'cy', f1(fy)); setA(floor.node, 'fill-opacity', f3(0.7 * fa));
+        } else {
+          const at = (w) => f1(clamp(cx, w / 2 + 14, W - w / 2 - 14));
+          setA(floor.t1, 'x', at(floor.w1 || 0)); setA(floor.t1, 'y', f1(fy + 19));
+          setA(floor.t2, 'x', at(floor.w2 || 0)); setA(floor.t2, 'y', f1(fy + 33));
+          setA(floor.t1, 'opacity', f3(fa)); setA(floor.t2, 'opacity', f3(fa));
+        }
+        setA(floor.mark, 'x1', f1(floor.lx - 9)); setA(floor.mark, 'x2', f1(floor.lx + 9)); setA(floor.mark, 'y1', f1(fy)); setA(floor.mark, 'y2', f1(fy));
+        setA(floor.mark, 'stroke-opacity', f3(0.95 * floor.land));
       }
       // leader lines: plate -> its button (wide), plate -> readout card (wide, the plate you point at)
       plates.forEach((p, i) => {
@@ -784,6 +924,7 @@
         flowStep(dt);
         pulse = Math.max(0, pulse - dt / 0.3); permit = Math.max(0, permit - dt / 0.55);
         bound.flash = Math.max(0, bound.flash - dt / 0.22); bound.ripT = Math.max(0, bound.ripT - dt / 0.6);
+        if (floor) floor.land = Math.max(0, floor.land - dt / 0.6);
         if ((stepT += dt) > 0.7) { stepT = 0; step++; }
       }
       const busy = animate(dt, false);
@@ -803,13 +944,13 @@
 
     /* ---------------- 9 · wiring ---------------- */
     setMode(wideMQ.matches);
-    root.classList.remove('is-building');
+    inst.classList.remove('is-building');
     motionBtn.hidden = reduced;
     wideMQ.addEventListener('change', (e) => setMode(e.matches));
     fineMQ.addEventListener('change', () => setMode(wideMQ.matches));
     reduceMQ.addEventListener('change', (e) => {
       reduced = e.matches; motionBtn.hidden = reduced;
-      if (reduced) { flows.splice(0).forEach((f) => f.g.remove()); pulse = permit = 0; bound.flash = bound.ripT = 0; ex = exStart >= 0 ? 1 : ex; }
+      if (reduced) { flows.splice(0).forEach((f) => f.g.remove()); pulse = permit = 0; bound.flash = bound.ripT = 0; if (floor) floor.land = 0; ex = exStart >= 0 ? 1 : ex; }
       kick(true);
     });
     // a new size is measured in the next frame, not inside the observer: measuring can resize the instrument (the room it
@@ -830,11 +971,13 @@
         if (visible && seen && exStart < 0) { exStart = performance.now(); started = true; if (reduced) ex = 1; }
       });
       kick();
-    }, { threshold: [0, 0.05, 0.1, 0.2, 0.3, 0.5] }).observe(root);
+    }, { threshold: [0, 0.05, 0.1, 0.2, 0.3, 0.5] }).observe(inst);
     document.addEventListener('visibilitychange', () => kick());
     window.addEventListener('scroll', () => { if (wide && hot >= 0 && visible) { figTop = fig.getBoundingClientRect().top; kick(); } }, { passive: true });
-    // printing: every layer's detail, inline, in order
-    window.addEventListener('beforeprint', () => { root.__wasWide = wide; panels.forEach((p) => { p.hidden = false; }); if (wide) { wide = false; root.classList.remove('is-wide'); root.classList.add('is-narrow'); placePanels(); } });
-    window.addEventListener('afterprint', () => { panels.forEach((p, i) => { p.hidden = i !== open; }); setMode(wideMQ.matches); });
+    // printing: every layer's detail, inline, in order (the spec prints as it stands; CSS leaves its stage out)
+    if (!spec) {
+      window.addEventListener('beforeprint', () => { panels.forEach((p) => { p.hidden = false; }); if (wide) { wide = false; inst.classList.remove('is-wide'); inst.classList.add('is-narrow'); placePanels(); } });
+      window.addEventListener('afterprint', () => { panels.forEach((p, i) => { p.hidden = i !== open; }); setMode(wideMQ.matches); });
+    }
   }
 })();
