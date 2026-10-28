@@ -2357,6 +2357,16 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
    ink, not paper. (:has() ends the rule and keys on the root's own child: no subtree invalidation.) */
 html:has(> body[data-nav="dark-start"]) { background: #0B110F; }
 
+/* ---------- Trust §01: each commitment carries its mark from the shared vocabulary (PG13) ----------
+   T-01 the council aperture (approve tick lit) · T-02 scope brackets around what never moves · T-03 record blocks on a
+   hairline · T-04 the mode dial · T-05 the boundary (jitter above, grid below) · T-06 the halt shutter. Ink on paper. */
+.tg { display: block; width: 24px; height: 24px; margin-top: 14px; color: var(--fg); overflow: visible; }
+.tg * { fill: none; stroke: currentColor; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.tg .tg-m { stroke-opacity: .55; }
+.tg .tg-d { stroke-dasharray: 2 2; }
+.tg .tg-a { stroke: var(--accent); stroke-width: 1.5; stroke-opacity: 1; }
+.tg .tg-f { fill: currentColor; fill-opacity: .82; stroke: none; }
+
 /* ---------- the closing band, the 404 and Company (PG10) ---------- */
 /* every page ends on the fine-bead globe: latitude rows of 1.2 px beads, back hemisphere culled, two orbits, one green
    ring (globe-fine.svg carries its own colours; the old chunky mark stays the brand mark in the bar) */
