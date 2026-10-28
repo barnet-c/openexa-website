@@ -1725,6 +1725,8 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .arch.is-wide .arch-list .arch-panel { display: none; }
 .arch.is-wide .arch-bound { height: 72px; min-height: 0; }
 .arch.is-wide .arch-floor { height: 64px; min-height: 0; }
+.arch.is-wide .arch-layer { height: 64px; } /* names fit in two lines at every wide width; the fallback font is held to two as well */
+.arch.is-wide .arch-layer .nm { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 /* narrow: the stack as a figure, the layers as an accordion under it (the spec: the figure alone; its plates lead down) */
 .arch.is-narrow .arch-fig { height: var(--fig-h, 380px); border-bottom: 1px solid var(--line); }
 .arch.is-narrow .arch-list { padding: 0 clamp(12px, 3vw, 22px) 6px; }
