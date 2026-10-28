@@ -75,7 +75,9 @@
   const TF = new Float32Array(NT), TC = new Uint8Array(NT);    // aperture ticks: flash level and colour (0 approve, 1 reject)
   const GF = new Float32Array(6);                               // gate flash when the followed proposal passes
 
-  let target = window.innerWidth < 600 ? 700 : 1800, strict = 0.12, halted = false, paused = false;
+  // a media query, not innerWidth: on a phone (viewport meta on) reading innerWidth while this script evaluates forces the
+  // page's first full style and layout here (about 0.4 s on a 4x-throttled phone); the lab reads no layout until it boots
+  let target = window.matchMedia('(max-width: 599.98px)').matches ? 700 : 1800, strict = 0.12, halted = false, paused = false;
   let popCap = 0;                                               // a device that cannot carry the population lowers it (0: no cap)
   const pop = () => (popCap && popCap < target ? popCap : target);
   let sim = 0, seq = 41000 + Math.floor(Math.random() * 9000), inflight = 0, spawnAcc = 0, railPh = 0, histT = 0, hHead = 0, pulse = 0, rejGlow = 0;
@@ -1432,6 +1434,9 @@
     if (reduced.matches) still(); else { reset(); camera(); warmStart(); inLoop = true; for (let k = 0; k < 30; k++) step(0.05, k > 22); inLoop = false; projectAll(); paint(); }
     stats(); // once, at the model's birth (a viewport away at most): the counters never hold a zero the model does not
     schedule();
+    // the labels are measured again once the fonts are in. Asked here, not while the script evaluates: reading
+    // document.fonts.ready forces the page's style and layout, which during evaluation is the page's whole first layout
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { measure(); fit(); hc.fill(0); camera(); projectAll(); paint(); });
   }
   let bootQueued = false;
   function wantBoot() { if (!booted && !bootQueued && (near || ledgerNear)) { bootQueued = true; requestAnimationFrame(() => { bootQueued = false; boot(); }); } }
@@ -1445,7 +1450,6 @@
   }).observe(cv);
   else window.addEventListener('resize', () => { if (booted) resize(); });
   (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { if (booted) resize(); watchRatio(); }, { once: true }); })();
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (booted) { measure(); fit(); hc.fill(0); camera(); projectAll(); paint(); } });
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => {
       onScreen = e.isIntersecting; root.classList.toggle('is-off', !onScreen);
