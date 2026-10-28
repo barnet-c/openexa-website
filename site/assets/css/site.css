@@ -2191,7 +2191,7 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
    Presentation only: site.js never writes a number into the page (no count-up from zero), so the text is the true value
    at every instant. The clip and the 6 px rise run on the numeral's own box; zero specificity, so a component's rules win. */
 @media (prefers-reduced-motion: no-preference) {
-  :where(.stats.will-reveal.is-in > div > .v, .crew-stats.will-reveal.is-in > div > b) {
+  :where(.stats.will-reveal.is-in:not(.is-cut) > div > .v, .crew-stats.will-reveal.is-in:not(.is-cut) > div > b) {
     animation: fig-rise .95s var(--ease) backwards; animation-delay: calc(var(--d, 0ms) + 150ms + var(--fig-i, 0) * 70ms);
   }
   :where(.stats, .crew-stats) > div:nth-child(2) { --fig-i: 1; }
@@ -2199,6 +2199,27 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
   :where(.stats, .crew-stats) > div:nth-child(4) { --fig-i: 3; }
 }
 @keyframes fig-rise { from { clip-path: inset(100% -.5em -.5em -.5em); transform: translateY(6px); } to { clip-path: inset(-.5em); transform: none; } }
+
+/* ---------- long jumps on the same page (site.js jumpTo): the destination arrives as a sheet over the still of where the
+   reader was, the overture's own hand-off: going down the page it rises from the bottom edge (paper rising over the
+   stage), going up it comes down from the top; the old view drifts a little the same way beneath it. No blend, so no
+   blank or grey frame at any instant; the bar (its own transition group) holds. ---------- */
+html[data-jump]::view-transition-old(root), html[data-jump]::view-transition-new(root) {
+  mix-blend-mode: normal; animation-duration: .38s; animation-timing-function: cubic-bezier(.22, .75, .2, 1); animation-fill-mode: both;
+}
+html[data-jump="down"]::view-transition-old(root) { animation-name: jump-under-up; }
+html[data-jump="down"]::view-transition-new(root) { animation-name: jump-sheet-up; box-shadow: 0 -28px 56px -28px rgba(8, 12, 10, .5); }
+html[data-jump="up"]::view-transition-old(root) { animation-name: jump-under-down; }
+html[data-jump="up"]::view-transition-new(root) { animation-name: jump-sheet-down; box-shadow: 0 28px 56px -28px rgba(8, 12, 10, .5); }
+@keyframes jump-sheet-up { from { transform: translateY(100%); } }
+@keyframes jump-under-up { to { transform: translateY(-16%); } }
+@keyframes jump-sheet-down { from { transform: translateY(-100%); } }
+@keyframes jump-under-down { to { transform: translateY(16%); } }
+html[data-jump]::view-transition-group(site-nav) { animation-duration: .3s; }
+/* the chapter list is gone before the still is taken (it would hang over the move) */
+html[data-jump] .nav-ch-panel { transition: none !important; }
+/* revealed at once (a jump's destination, a focused control): no transition for those two frames */
+.is-instant, .is-instant * { transition: none !important; }
 
 /* ---------- reduced motion: nothing slides; states still change ---------- */
 @media (prefers-reduced-motion: reduce) {

@@ -311,13 +311,15 @@
       if (!a) return;
       const c = chapters[+a.dataset.k];
       setPanel(false);
-      // the address changes natively (smooth where motion is welcome); focus follows the reader to the chapter
+      // focus follows the reader to the chapter (the next Tab continues inside it). A long jump cuts to it (jumpTo);
+      // a short hop is the browser's own anchor scroll, smooth where motion is welcome
       c.el.setAttribute('tabindex', '-1'); c.el.classList.add('nav-ch-target');
-      setTimeout(() => c.el.focus({ preventScroll: true }), 0);
+      const focus = () => c.el.focus({ preventScroll: true });
+      if (!jumpTo(c.el, a.hash, e, focus)) setTimeout(focus, 0);
     });
     $('.nav-ch-top', ui.wrap).addEventListener('click', e => {
       e.preventDefault(); setPanel(false, true);
-      window.scrollTo({ top: 0, behavior: reducedMQ.matches ? 'instant' : 'smooth' });
+      if (!jumpTo(null)) window.scrollTo({ top: 0, behavior: reducedMQ.matches ? 'instant' : 'smooth' });
     });
     document.addEventListener('pointerdown', e => { if (chOpen && !ui.wrap.contains(e.target)) setPanel(false); });
     ui.wrap.addEventListener('focusout', e => { if (chOpen && e.relatedTarget && !ui.wrap.contains(e.relatedTarget)) setPanel(false); });
@@ -369,6 +371,64 @@
     window.addEventListener('pageshow', e => { if (e.persisted) { setMenu(false); $$('.is-going', sheet).forEach(a => a.classList.remove('is-going')); } });
   }
   window.addEventListener('keydown', e => { if (e.key === 'Escape' && chOpen) setPanel(false, true); });
+
+  /* ---------------- long jumps: never through blank paper ----------------
+     A jump of more than 1.5 screens (a chapter from the list, Back to top, any link to a place on this page) used to
+     scroll smoothly through every section in between, whose reveals had not run: about a second of near-empty paper,
+     then a landing mid-reveal. It now cuts: the page lands at once (at the bar's edge, as an anchor jump does), all it
+     passed over is revealed without transition, and a same-document view transition dissolves the still of where the
+     reader was into the live destination, drifting in the jump's direction (the bar holds; never a blank frame).
+     Without view transitions, or with reduced motion, it is a plain instant cut. Short hops keep the native scroll. */
+  function cut(dir, land) {
+    const from = window.scrollY;
+    const go = () => {
+      land();
+      revealRange(Math.min(from, window.scrollY), Math.max(from, window.scrollY) + window.innerHeight);
+      if (nav) measure(); // the bar takes the destination's ground in the same frame
+      document.dispatchEvent(new CustomEvent('oxa:jump', { detail: { from, to: window.scrollY } }));
+    };
+    if (reducedMQ.matches || typeof document.startViewTransition !== 'function' || document.hidden) { go(); return; }
+    root.dataset.jump = dir > 0 ? 'down' : 'up';
+    let vt;
+    try { vt = document.startViewTransition(go); } catch (err) { delete root.dataset.jump; go(); return; }
+    vt.ready.catch(() => {}); vt.updateCallbackDone.catch(() => {});
+    vt.finished.catch(() => {}).then(() => { delete root.dataset.jump; });
+  }
+  // a jump to an element (null: the top) longer than 1.5 screens is handled here (returns true); a shorter one is not
+  function jumpTo(el, hash, e, after) {
+    const sp = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
+    const y0 = window.scrollY, max = Math.max(0, root.scrollHeight - window.innerHeight);
+    const to = el ? Math.max(0, Math.min(max, el.getBoundingClientRect().top + y0 - sp)) : 0;
+    if (Math.abs(to - y0) <= 1.5 * window.innerHeight) return false;
+    if (e) e.preventDefault();
+    cut(to - y0, () => {
+      // the address changes as an anchor jump's would, and so does everything that listens for it (the blog's filter)
+      if (hash && hash !== location.hash) {
+        const oldURL = location.href;
+        history.pushState(null, '', hash);
+        window.dispatchEvent(new HashChangeEvent('hashchange', { oldURL, newURL: location.href }));
+      }
+      if (el) el.scrollIntoView({ block: 'start', behavior: 'instant' });
+      else window.scrollTo({ top: 0, behavior: 'instant' });
+      if (after) after();
+    });
+    return true;
+  }
+  // any other link to a place on this page (the overture's "See the stack", Company's "Our thinking", ...)
+  document.addEventListener('click', e => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = e.target.closest && e.target.closest('a[href*="#"]');
+    if (!a || (a.target && a.target !== '_self') || a.closest('.nav-ch, .nav-sheet')) return;
+    const url = new URL(a.href, location.href);
+    if (url.origin !== location.origin || url.pathname !== location.pathname || url.search !== location.search || url.hash.length < 2) return;
+    const el = document.getElementById(decodeURIComponent(url.hash.slice(1)));
+    if (!el || el.closest('details:not([open])')) return; // the browser opens a closed <details> for its target
+    jumpTo(el, url.hash, e, () => {
+      // as after an anchor jump, the next Tab continues from the destination
+      if (!el.matches('a[href], button, input, select, textarea, [tabindex]')) { el.setAttribute('tabindex', '-1'); el.classList.add('nav-ch-target'); }
+      el.focus({ preventScroll: true });
+    });
+  });
 
   if (nav) {
     measure();
@@ -478,12 +538,34 @@
   /* ---------------- reveal on scroll ---------------- */
   $$('[data-stagger]').forEach(el => { Array.from(el.children).forEach((c, i) => c.style.setProperty('--i', i)); if (!el.hasAttribute('data-reveal')) el.setAttribute('data-reveal', ''); });
   const revealEls = $$('[data-reveal]');
+  let rio = null;
   if ('IntersectionObserver' in window && !prefersReduced) {
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } });
+    rio = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-in'); rio.unobserve(e.target); } });
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
-    revealEls.forEach(el => { el.classList.add('will-reveal'); io.observe(el); });
+    revealEls.forEach(el => { el.classList.add('will-reveal'); rio.observe(el); });
   } else revealEls.forEach(el => el.classList.add('is-in'));
+  // at once, with no transition: what a long jump passes over or lands on, and anything the keyboard focuses (focus
+  // never lands on something still invisible). .is-instant lasts two frames; .is-cut stays (a skipped entrance never
+  // plays later)
+  function revealNow(el) {
+    if (!el.classList.contains('will-reveal') || el.classList.contains('is-in')) return;
+    el.classList.add('is-instant', 'is-cut', 'is-in');
+    if (rio) rio.unobserve(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('is-instant')));
+  }
+  function revealRange(a, b) {
+    const y = window.scrollY;
+    revealEls.forEach(el => {
+      if (!el.classList.contains('will-reveal') || el.classList.contains('is-in')) return;
+      const r = el.getBoundingClientRect();
+      if ((r.width || r.height) && r.top + y < b && r.bottom + y > a) revealNow(el);
+    });
+  }
+  document.addEventListener('focusin', e => {
+    let el = e.target.closest && e.target.closest('.will-reveal:not(.is-in)');
+    while (el) { revealNow(el); el = el.parentElement && el.parentElement.closest('.will-reveal:not(.is-in)'); }
+  });
 
   /* ---------------- off-screen bands: their CSS loops stop ----------------
      Every top-level band of the page carries .is-offscreen while no part of it is on screen; v2:nav pauses every CSS
