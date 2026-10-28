@@ -1210,15 +1210,24 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .swarm-controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 18px; align-items: end; padding: 14px 18px 12px; }
 .swarm-controls label { display: grid; gap: 6px; font-family: var(--mono); font-size: .66rem; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-2); }
 .swarm-controls output { color: var(--accent); }
+.swarm-controls output::before { content: "· "; color: var(--fg-2); } /* the separator is drawn, so the label's text is its name ('Agents in this model') plus the value */
 .swarm-controls input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; margin: 0; cursor: pointer; font-size: 16px; }
 .swarm-controls input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--line-strong); }
 .swarm-controls input[type=range]::-moz-range-track { height: 1px; background: var(--line-strong); }
 .swarm-controls input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--paper); border: 3px solid #0B110F; box-shadow: 0 0 0 1px var(--line-strong); margin-top: -6.5px; transition: transform .2s var(--ease); }
 .swarm-controls input[type=range]::-moz-range-thumb { width: 8px; height: 8px; border-radius: 50%; background: var(--paper); border: 3px solid #0B110F; box-shadow: 0 0 0 1px var(--line-strong); }
 .swarm-controls input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); }
-.swarm-controls input[type=range]:focus-visible { outline: none; }
+/* focus: the track lights and a green ring circles the thumb; the outline is transparent, so it is drawn only where
+   forced colours (Windows contrast themes) give it the system colour, where the box-shadow ring is dropped */
+.swarm-controls input[type=range]:focus-visible { outline: 2px solid transparent; outline-offset: 4px; }
+.swarm-controls input[type=range]:focus-visible::-webkit-slider-runnable-track { background: var(--accent); }
+.swarm-controls input[type=range]:focus-visible::-moz-range-track { background: var(--accent); }
 .swarm-controls input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 2px var(--accent); }
 .swarm-controls input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 2px var(--accent); }
+@media (forced-colors: active) { /* the 1 px track is a background, which forced colours remove: draw it as a border */
+  .swarm-controls input[type=range]::-webkit-slider-runnable-track { height: 0; border-top: 1px solid CanvasText; }
+  .swarm-controls input[type=range]::-moz-range-track { height: 0; border-top: 1px solid CanvasText; }
+}
 .sw-btns { display: flex; flex-direction: column; align-items: stretch; gap: 4px; align-self: end; }
 .swarm-controls .halt { font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; min-width: 7.6em; min-height: 44px; padding: 10px 18px; border: 1px solid var(--reject); color: var(--reject); border-radius: 2px; transition: background .25s, color .25s; }
 .swarm-controls .halt:hover { background: var(--reject); color: #0B110F; }

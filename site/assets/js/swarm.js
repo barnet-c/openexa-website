@@ -1077,7 +1077,7 @@
       if (r.rec) { // the ledger's answer: a button that takes the reader to that record
         const btn = document.createElement('button');
         btn.type = 'button'; btn.className = 'sw-rec'; btn.dataset.swRec = r.rec.record; if (r.rec.seq !== null) btn.dataset.swSeq = r.rec.seq;
-        btn.setAttribute('aria-label', `Record ${r.rec.record}${r.rec.hash ? ', hash ' + r.rec.hash : ''}: show it in the ledger below`);
+        btn.setAttribute('aria-label', `record ${r.rec.record}${r.rec.hash ? ' · ' + r.rec.hash : ''}: show it in the ledger below`); // the visible text, then what it does
         btn.append(`record ${r.rec.record}${r.rec.hash ? ' · ' + r.rec.hash : ''} `);
         const ar = document.createElement('i'); ar.setAttribute('aria-hidden', 'true'); ar.textContent = '↓'; btn.append(ar);
         v.replaceChildren(btn);
