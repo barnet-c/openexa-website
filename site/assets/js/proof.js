@@ -105,9 +105,12 @@
   function buildTable(table) {
     let tb = table.tBodies[0];
     if (!tb) { tb = h('tbody'); table.append(tb); }
+    // each cell names its column (data-th): on phones the rows restack and the cells carry their own labels
+    const head = table.tHead && table.tHead.rows[0] ? Array.from(table.tHead.rows[0].cells, c => c.textContent.trim()) : [];
+    const TH = ['Session', 'NAV regime', 'Captured', 'Verification', 'Status'].map((k, j) => head[j] || k);
     const rows = sessions.map((s, i) => {
       const tr = h('tr');
-      const td = (cls, ...kids) => { const c = h('td', cls); c.append(...kids); tr.append(c); };
+      const td = (cls, ...kids) => { const c = h('td', cls); c.dataset.th = TH[tr.cells.length]; c.append(...kids); tr.append(c); };
       const mini = mute(h('i', 'pf-mini')); mini.dataset.side = String(s.side);
       td('lab', s.day); td(null, mini, s.regime); td('num', valueText(s)); td(null, s.confirmation);
       td(null, h('span', 'tag' + (s.settled ? ' on' : ''), s.status));
@@ -134,15 +137,20 @@
 
     // direct labels, in a gutter that shares the lanes' rows
     const gut = mute(h('div', 'pf-gut'));
-    const lab = (cls, k, note) => { const e = h('span', 'pf-y ' + cls); e.append(h('b', null, k)); if (note) e.append(h('small', null, note)); gut.append(e); return e; };
+    // a long label carries a short form too (.pf-ls), shown only where the gutter is narrowest (phones under ~340 px)
+    const lab = (cls, k, note, short) => {
+      const e = h('span', 'pf-y ' + cls), b = h('b');
+      if (short) b.append(h('span', 'pf-lw', k), h('span', 'pf-ls', short)); else b.textContent = k;
+      e.append(b); if (note) e.append(h('small', null, note)); gut.append(e); return e;
+    };
     lab('y-above', 'Above', 'exact value not published');
     lab('y-floor', 'Floor', floor + ' ' + unit + (per > 1 ? ' · 1 block = ' + per + ' bps' : ''));
     lab('y-zero', '0');
-    lab('y-prem', 'Premium').append(h('i', 'pf-n', String(C.premium)));
+    lab('y-prem', 'Premium', null, 'Prem.').append(h('i', 'pf-n', String(C.premium)));
     lab('y-nav', 'NAV');
-    lab('y-disc', 'Discount').append(h('i', 'pf-n', String(C.discount)));
+    lab('y-disc', 'Discount', null, 'Disc.').append(h('i', 'pf-n', String(C.discount)));
     lab('y-day', 'Day');
-    lab('y-ok', 'Confirmed');
+    lab('y-ok', 'Confirmed', null, 'Conf.');
 
     // the NAV regime as a trace between the two levels, one segment per session
     const Y = side => side > 0 ? 22 : side < 0 ? 78 : 50;

@@ -1720,11 +1720,12 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 }
 @supports (width: 1cqi) and (width: round(down, 10.5px, 1px)) { .pf { --b: round(down, clamp(9px, calc(var(--lane) * .34), 17px), 1px); } } /* whole pixels: crisp, even blocks */
 .pf-body { position: relative; display: grid; grid-template-columns: var(--gut) minmax(0, 1fr); }
-.pf-gut { position: relative; font-family: var(--mono); font-size: .58rem; line-height: 1.3; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+.pf-gut { position: relative; font-family: var(--mono); font-size: var(--mono-xs, .625rem); line-height: 1.3; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 .pf-y { position: absolute; left: 0; right: 10px; }
 .pf-y b { font-weight: 400; }
 .pf-y small { display: block; margin-top: 4px; font: .68rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); max-width: 15ch; }
 .pf-y .pf-n { font-style: normal; color: var(--fg); margin-left: .7em; }
+.pf-y .pf-ls { display: none; } /* a long label's short form, for the narrowest charts */
 .y-above { top: 0; }
 .y-floor { top: calc(var(--zg) + 7px); color: var(--fg-2); }
 .y-floor small { font: .7rem/1.3 var(--mono); letter-spacing: .02em; color: var(--fg); }
@@ -1734,7 +1735,20 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .y-disc { top: calc(var(--top) + var(--zr) * .78); transform: translateY(-50%); }
 .y-day { top: calc(var(--top) + var(--zr) + var(--zd) / 2); transform: translateY(-50%); }
 .y-ok { top: calc(var(--top) + var(--zr) + var(--zd) + var(--zo) / 2); transform: translateY(-50%); }
-@container (max-width: 540px) { .pf-y .pf-n { display: none; } .pf-y small { font-size: .62rem; } }
+@container (max-width: 540px) { .pf-y .pf-n { display: none; } .pf-y small { font-size: .625rem; } .pf-gut { letter-spacing: .06em; } .pf-y { right: 4px; } }
+/* phones under ~340 px: a narrower gutter keeps every lane (the tap target) at least 24 px wide; the long labels take
+   their short forms, and the note under 'Above' leaves it to the caption, which says the same */
+@container (max-width: 300px) {
+  .pf { --gut: 38px; }
+  .pf-gut { letter-spacing: .02em; }
+  .pf-y { right: 2px; }
+  .pf-y .pf-lw, .y-above small { display: none; }
+  .pf-y .pf-ls { display: inline; }
+  .y-floor small { font-size: var(--mono-xs, .625rem); letter-spacing: 0; white-space: nowrap; }
+}
+@supports not (width: 1cqi) {
+  @media (max-width: 340px) { .pf { --gut: 38px; } .pf-gut { letter-spacing: .02em; } .pf-y { right: 2px; } .pf-y .pf-lw, .y-above small, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { font-size: var(--mono-xs, .625rem); letter-spacing: 0; white-space: nowrap; } }
+}
 
 /* the floor (a lit hairline, from the gutter across every lane), the baseline and the NAV reference */
 .pf-floor, .pf-base, .pf-nav { position: absolute; right: 0; pointer-events: none; }
@@ -1797,7 +1811,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .pf-bracket::before { left: 0; } .pf-bracket::after { right: 0; }
 .pf-cells { display: grid; grid-template-columns: .8fr 1.1fr 1fr 1.45fr .8fr; column-gap: 12px; }
 .pf-cell { min-width: 0; padding-top: 18px; }
-.pf-k { display: block; font-family: var(--mono); font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+.pf-k { display: block; font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 .pf-v { display: block; margin-top: 10px; font-family: var(--serif); font-size: 1.35rem; font-size: clamp(1.2rem, 2.6cqi, 1.6rem); line-height: 1.05; letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; }
 .pf-s { display: block; margin-top: 7px; font-size: .74rem; line-height: 1.35; color: var(--fg-2); }
 @container (max-width: 660px) {
@@ -1850,13 +1864,14 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 @keyframes pf-lit { 0%, 100% { box-shadow: var(--pf-glow); } 30% { box-shadow: 0 0 22px 2px color-mix(in srgb, var(--accent) 70%, transparent); } }
 
 /* idle, only while on screen: a signal mote rises through each column's open blocks (the same for every session: it says
-   "above the floor", never how far), and a slow light passes along the floor */
+   "above the floor", never how far), and a slow light passes along the floor. Transform and opacity only; the loops run
+   only under .is-live (proof.js: in view, tab visible, motion allowed) and nav's .is-offscreen pauses them as well */
 .pf-g::before { content: ""; position: absolute; left: 50%; bottom: var(--g); width: 3px; height: 3px; margin-left: -1.5px; border-radius: .5px; background: var(--fg); opacity: 0; pointer-events: none; }
-.pf-floor::after { content: ""; position: absolute; top: -1px; left: -15%; width: 15%; height: 3px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--pf-sheen), transparent); opacity: 0; }
+.pf-floor::after { content: ""; position: absolute; top: -1px; left: 0; width: 15%; height: 3px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--pf-sheen), transparent); opacity: 0; transform: translateX(-100%); }
 .pf { --pf-sheen: rgba(30, 122, 90, .55); }
 .is-dark .pf { --pf-sheen: rgba(214, 255, 233, .75); }
 @keyframes pf-mote { 0% { transform: translateY(0); opacity: 0; } 7% { opacity: .9; } 40% { opacity: .45; } 50%, 100% { transform: translateY(calc(26px - var(--zg))); opacity: 0; } }
-@keyframes pf-sheen { 0% { left: -15%; opacity: 0; } 8% { opacity: 1; } 34% { opacity: 1; } 40%, 100% { left: 100%; opacity: 0; } }
+@keyframes pf-sheen { 0% { transform: translateX(-100%); opacity: 0; } 8% { opacity: 1; } 34% { opacity: 1; } 40%, 100% { transform: translateX(667%); opacity: 0; } } /* compositor only: 667% of its 15% = the floor's far end */
 @keyframes pf-rise { 0%, 100% { transform: translateY(0) rotate(45deg); } 50% { transform: translateY(-3px) rotate(45deg); } }
 .proof.is-live:not(.is-armed) .pf-g::before { animation: pf-mote 7.2s cubic-bezier(.3, .1, .4, 1) infinite; animation-delay: calc(var(--l) * -2.3s); }
 .proof.is-live:not(.is-armed) .pf-floor::after { animation: pf-sheen 9s cubic-bezier(.45, 0, .55, 1) 1s infinite; }
