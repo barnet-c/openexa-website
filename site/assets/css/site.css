@@ -2470,6 +2470,20 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
 }
 @media (min-width: 601px) and (max-width: 960px) { .orbit-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
+/* ---------- class rings and trait stacks wherever the classes are listed (home §01 Fig. 1.1, Lifecycles §01 and §02) ---------- */
+.card .n .lc-code { display: inline-flex; align-items: center; gap: 12px; }
+.card .n--ring { align-items: center; }
+.list-rule > li .k .lc-ring { margin: -4px 0 10px; }
+.card .n .lc-map { display: inline-flex; align-items: center; gap: 12px; text-align: right; }
+.lc-stack { flex: none; width: 48px; height: 46px; overflow: visible; }
+.lcp .st { fill: none; stroke: currentColor; stroke-width: 1; opacity: .38; }
+.lcp .st-on { fill: color-mix(in srgb, var(--accent) 18%, transparent); stroke: var(--accent); stroke-width: 1.3; }
+.lcp .st-b { fill: none; stroke: var(--accent); stroke-width: 1; stroke-dasharray: 2 2; opacity: .55; }
+.lcp .st-rec { fill: none; stroke: currentColor; stroke-width: 1; opacity: .3; }
+.lcp .st-blk { fill: currentColor; opacity: .3; }
+.lcp .st-rec.is-on { stroke: var(--accent); opacity: 1; }
+.lcp .st-blk.is-on { fill: var(--accent); opacity: 1; }
+
 @media (prefers-reduced-motion: reduce) {
   .dk-rec.is-new, .desk-head .live i.is-ping::after { animation: none; }
   .dl-ring, .dl-ring::before, .dl-gates li, .dl-gates li::before, .dl-gates li b { transition: none; }
