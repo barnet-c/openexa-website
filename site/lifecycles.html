@@ -188,8 +188,8 @@
                 <div><b data-gap-avg>0.0</b><span>Gap · bps</span></div>
               </div>
               <div class="desk-controls">
-                <label><span>Act past <output data-gap-thr-out>6</output> bps</span><input type="range" min="2" max="20" step="1" value="6" data-gap-thr aria-label="Threshold in basis points"></label>
-                <label><span>Agents in this model · <output data-gap-n-out>2k</output></span><input type="range" min="0" max="100" step="1" value="30" data-gap-n aria-label="Agents in this model"></label>
+                <label><span>Act past <output data-gap-thr-out aria-live="off">6 bps</output></span><input type="range" min="2" max="20" step="1" value="6" data-gap-thr aria-label="Act past threshold, in basis points"></label>
+                <label><span>Agents in this model <output data-gap-n-out aria-live="off">2k</output></span><input type="range" min="0" max="100" step="1" value="30" data-gap-n aria-label="Agents in this model"></label>
               </div>
               <p class="desk-note">Move the sliders. More agents close the gap sooner; a lower threshold works smaller gaps. The ledger fills itself.</p>
             </div>

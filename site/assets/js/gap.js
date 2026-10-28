@@ -141,7 +141,7 @@
     if (root.dataset.gapOpen !== open) root.dataset.gapOpen = open;
   }
   // the agent slider is log-scaled: screen readers announce what the outputs show, not the raw position
-  const showThr = () => { if (el.thrOut) el.thrOut.textContent = thr; if (el.thr) el.thr.setAttribute('aria-valuetext', `${thr} bps`); };
+  const showThr = () => { if (el.thrOut) el.thrOut.textContent = `${thr} bps`; if (el.thr) el.thr.setAttribute('aria-valuetext', `${thr} bps`); };
   const showN = () => { if (el.nOut) el.nOut.textContent = fmtAgents(agents); if (el.n) el.n.setAttribute('aria-valuetext', `${fmtAgents(agents)} agents`); };
   if (el.thr) { thr = +el.thr.value; el.thr.addEventListener('input', () => { thr = +el.thr.value; showThr(); if (reduced.matches) still(); else draw(); }); }
   if (el.n) {

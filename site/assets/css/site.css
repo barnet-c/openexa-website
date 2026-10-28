@@ -2584,6 +2584,8 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lcp .blk { fill: currentColor; opacity: .86; }
 .lcp text { font-family: var(--mono); font-weight: 500; letter-spacing: .12em; fill: var(--fg-3); }
 .lcp .t { fill: var(--fg-2); } .lcp .t1 { fill: var(--fg); } .lcp .tg { fill: var(--accent); } .lcp .tr { fill: var(--reject); }
+/* green words on paper-2 take the darker text green (5.28:1); strokes and fills keep the signal green */
+.is-paper-2 .lcp .tg { fill: var(--signal-ink, #186B4F); }
 
 /* ---------- the vertical lane: stations on one spine (home §03 under 961 px; Lifecycles §03 at every width) ----------
    Each station draws its own glyph (an inline SVG); the spine between them is CSS, so it stretches with the text beside
@@ -2712,6 +2714,10 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .desk-legend i.sq { width: 7px; height: 7px; border-radius: 1px; background: var(--accent); }
 .desk-stats span, .desk-controls label { font-size: var(--mono-xs, .625rem); letter-spacing: .12em; }
 .desk-side .desk-note { margin-top: auto; border-top: 0; }
+/* the agent count's separator is drawn, so the label's own words are exactly the slider's name (WCAG 2.5.3) */
+.desk-controls output[data-gap-n-out]::before { content: "\00b7\00a0"; color: var(--fg-2); }
+/* a focus ring a keyboard can see: 2 px, clear of the thumb */
+.desk-controls input[type=range]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 
 /* the lane beside the session: six stations on one spine; a followed action walks it, then squares up at 06 */
 .desk-lane { padding: 16px 20px 6px; border-top: 1px solid var(--line); }
@@ -2720,7 +2726,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 /* the boundary between 04 and 05 */
 .dl-gates::after { content: ""; position: absolute; left: calc(400% / 6); top: -2px; width: 1px; height: 19px; background: var(--accent); box-shadow: 0 0 6px 1px rgba(79, 203, 147, .35); }
 .dl-gates li { position: relative; padding-top: 24px; text-align: center; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); white-space: nowrap; transition: color .3s; }
-.dl-gates li b { display: block; font-weight: 500; color: rgba(245, 242, 236, .4); transition: color .3s; }
+.dl-gates li b { display: block; font-weight: 500; color: rgba(245, 242, 236, .6); transition: color .3s; } /* ~6.0:1 on the desk ground at 10 px */
 .dl-gates li::before { content: ""; position: absolute; left: 50%; top: 4px; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--desk-bg); box-shadow: inset 0 0 0 1px rgba(245, 242, 236, .6); transition: box-shadow .3s, background .3s; }
 .dl-gates li[data-g="4"]::before { top: 0; width: 15px; height: 15px; margin-left: -7.5px; background: var(--desk-bg) radial-gradient(circle, transparent 5px, rgba(245, 242, 236, .55) 5.5px, rgba(245, 242, 236, .55) 6px, transparent 6.5px); box-shadow: none; }
 .dl-gates li[data-g="5"]::before { top: 2px; width: 21px; height: 11px; margin-left: -10.5px; border-radius: 0; background: var(--desk-bg) repeating-linear-gradient(90deg, rgba(245, 242, 236, .55) 0 1px, transparent 1px 5px); box-shadow: none; }
