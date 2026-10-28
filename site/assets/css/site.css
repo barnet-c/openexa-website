@@ -2707,7 +2707,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 @keyframes dk-ping { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(3.2); } }
 .desk-follow { display: inline-flex; align-items: center; gap: 10px; margin-left: auto; min-height: 36px; padding: 8px 14px 8px 12px; border: 1px solid rgba(79, 203, 147, .55); border-radius: 2px; color: var(--accent); font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; transition: background .2s, color .2s, border-color .2s; }
 .desk-follow::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid currentColor; box-sizing: border-box; }
-.desk-follow:hover { background: rgba(79, 203, 147, .12); }
+@media (hover: hover) { .desk-follow:hover { background: rgba(79, 203, 147, .12); } } /* no sticky tint after a tap */
 .desk-follow[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #0B110F; }
 .desk-follow[aria-pressed="true"]::before { background: currentColor; border-radius: 1px; width: 8px; height: 8px; }
 .desk-follow:focus-visible, .desk .model-motion:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -2815,6 +2815,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .desk-controls input[type=range]::-webkit-slider-thumb { width: 22px; height: 22px; margin-top: -10.5px; border-width: 5px; }
   .desk-controls input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-width: 5px; }
   .desk-follow, .desk .model-motion { min-height: 44px; }
+  .lane-key .lk-btn { min-height: 44px; } /* the lane's gate buttons are finger-sized too */
 }
 /* ---------- Fig. 4.1, the orbit (Lifecycles §04): six class rings in plan view, the swarm at the centre ----------
    S1's ring styles (shared with the Lifecycles hero plate): LC-01 solid green; Next (LC-02/03) dashed ink; Roadmap
