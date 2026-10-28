@@ -705,16 +705,19 @@ LOADER_STATE = """(() => { const t = performance.now(), l = document.querySelect
   return [t, cs.display === 'none' || cs.visibility === 'hidden' || o < 0.05 ? 'hidden' : 'shown', +o.toFixed(3), cs.visibility]; })()"""
 
 
-# when the main thread was too busy to answer, the moment an animation (a CSS failsafe, a curtain transition) took the
-# loader's opacity under .05: from its own timing and keyframes (the compositor shows it on time; a poll sees it late)
+# when the main thread was too busy to answer, the moment an animation took the loader's opacity under .05, from its own
+# timing and keyframes. Only an animation the compositor can run by itself (keyframes of opacity / transform / filter
+# only) counts: it shows on time while scripts hold the main thread, so a poll sees it late. One that also animates
+# visibility or pointer-events runs on the main thread, so the reader sees what the poll sees.
 LOADER_ANIM = r"""(() => { const l = document.querySelector('.loader'); if (!l || !l.isConnected) return null;
   const bez = (x1, y1, x2, y2) => t => { let lo = 0, hi = 1, s = t; for (let i = 0; i < 24; i++) { s = (lo + hi) / 2; const x = 3 * (1 - s) ** 2 * s * x1 + 3 * (1 - s) * s * s * x2 + s ** 3; if (x < t) lo = s; else hi = s; }
     return 3 * (1 - s) ** 2 * s * y1 + 3 * (1 - s) * s * s * y2 + s ** 3; };
   const EASE = { linear: t => t, ease: bez(.25, .1, .25, 1), 'ease-in': bez(.42, 0, 1, 1), 'ease-out': bez(0, 0, .58, 1), 'ease-in-out': bez(.42, 0, .58, 1) };
   const easing = e => { const m = /cubic-bezier\(([^)]+)\)/.exec(e || ''); return m ? bez(...m[1].split(',').map(Number)) : EASE[e] || EASE.linear; };
   let best = null;
-  for (const a of l.getAnimations()) { const k = a.effect.getKeyframes().filter(f => f.opacity !== undefined), tm = a.effect.getComputedTiming();
-    if (!k.length || a.startTime == null) continue; const pts = [...k];
+  const OK = new Set(['opacity', 'transform', 'translate', 'rotate', 'scale', 'filter', 'offset', 'computedOffset', 'easing', 'composite']);
+  for (const a of l.getAnimations()) { const all = a.effect.getKeyframes(), k = all.filter(f => f.opacity !== undefined), tm = a.effect.getComputedTiming();
+    if (!k.length || a.startTime == null || all.some(f => Object.keys(f).some(p => !OK.has(p)))) continue; const pts = [...k];
     if (pts[0].computedOffset > 0) pts.unshift({ computedOffset: 0, opacity: getComputedStyle(l).opacity, easing: 'linear' });
     const at = p => { for (let i = 0; i < pts.length - 1; i++) { const a0 = pts[i], a1 = pts[i + 1]; if (p >= a0.computedOffset && p <= a1.computedOffset) { const u = a1.computedOffset > a0.computedOffset ? (p - a0.computedOffset) / (a1.computedOffset - a0.computedOffset) : 1; return +a0.opacity + (+a1.opacity - +a0.opacity) * easing(a0.easing)(u); } } return +pts[pts.length - 1].opacity; };
     const dur = +tm.duration || 0;
@@ -736,15 +739,15 @@ async def loader(b):
     while time.monotonic() < t_end:
         s = await pg.evaluate(LOADER_STATE)
         samples.append(s)
-        if s[1] == "hidden" and anim_at is None and len(samples) > 1 and s[0] - samples[-2][0] > 250:
-            anim_at = await pg.evaluate(LOADER_ANIM) or 0  # the page was busy before it answered: when did the fade really cross .05?
+        if s[1] == "shown": anim_at = await pg.evaluate(LOADER_ANIM)  # a compositor fade already scheduled, if any (read while it still exists)
         if s[1] == "removed" or s[0] > 9600: break
         await pg.wait_for_timeout(50)
     await ctx.close()
     first = lambda states: next((i for i, s in enumerate(samples) if s[1] in states), None)
     ih, ir = first(("hidden", "removed")), first(("removed",))
     t_seen = samples[ih][0] if ih is not None else None
-    t_hid = anim_at if t_seen is not None and ih and anim_at and samples[ih - 1][0] <= anim_at <= t_seen else t_seen
+    # the page was busy before it answered: a compositor fade scheduled before the gap crossed .05 when its timing says
+    t_hid = anim_at if t_seen is not None and ih and anim_at and t_seen - samples[ih - 1][0] > 250 and samples[ih - 1][0] <= anim_at <= t_seen else t_seen
     t_rem = samples[ir][0] if ir is not None else None
     gap = samples[ih][0] - samples[ih - 1][0] if ih else 0  # a long gap: the page could not answer (busy main thread)
     shown = [s for s in samples if s[1] == "shown"]
