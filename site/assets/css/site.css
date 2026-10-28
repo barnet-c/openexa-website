@@ -1925,10 +1925,11 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-links a:hover::after, .nav-links a:focus-visible::after, .nav-links a[aria-current="page"]::after { transform: scaleX(1); transform-origin: left; }
 .nav-ink { display: none; }
 /* where anchor positioning exists, the current page's underline is one element: it glides to the next page's link
-   during a page transition (it carries its own view-transition-name) */
+   during a page transition (it carries its own view-transition-name). The ink is the last child of .nav-links, so a
+   sibling selector finds the current link: no relational selector, no script, right from the first frame. */
 @supports (anchor-name: --a) {
   .nav-links a[aria-current="page"] { anchor-name: --nav-current; }
-  .nav-links:has(a[aria-current="page"]) .nav-ink {
+  .nav-links a[aria-current="page"] ~ .nav-ink {
     display: block; position: absolute; position-anchor: --nav-current; left: anchor(left); right: anchor(right);
     top: calc(anchor(bottom) - 5px); height: 1px; background: currentColor; pointer-events: none; view-transition-name: nav-ink;
   }
@@ -2088,13 +2089,9 @@ html { scroll-padding-top: var(--nav-h); }
 }
 @media (min-width: 961px) { .nav-sheet { display: none !important; } }
 @media (max-width: 380px) { .nav-ch-btn { letter-spacing: .12em; } }
-.nav-open { overflow: hidden; }
-/* the same open state without JavaScript, from the popover itself (one rule each: an unknown selector voids a list) */
-:root:has(.nav-sheet:popover-open) { overflow: hidden; }
-:root:has(.nav-sheet:popover-open) .nav { background: var(--ink); color: var(--paper); -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom-color: rgba(245, 242, 236, .08); --accent: var(--signal-bright); }
-:root:has(.nav-sheet:popover-open) .nav .brand .mark { color: var(--paper); }
-:root:has(.nav-sheet:popover-open) .nav-toggle span::before { transform: translateY(3.75px) rotate(45deg); }
-:root:has(.nav-sheet:popover-open) .nav-toggle span::after { transform: translateY(-3.75px) rotate(-45deg); }
+/* the open sheet: site.js mirrors the popover's state as body.nav-open and .nav--menu (one class change, no relational
+   selector watching the whole document); the script-less version of these rules is in the (scripting: none) block below */
+body.nav-open { overflow: hidden; }
 
 /* ---------- the loader: an aperture of fine ticks that fills with the real elapsed time, then lifts ---------- */
 .loader {
@@ -2207,6 +2204,14 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
 @media (scripting: none) {
   body[data-nav="dark-start"] .nav { background: rgba(12, 18, 16, .86); -webkit-backdrop-filter: saturate(150%) blur(16px); backdrop-filter: saturate(150%) blur(16px); }
   .loader { display: none; }
+  /* the open sheet, read from the popover itself (no script mirrors it here). Only here: a document-wide relational
+     selector restyles the whole page on every text change, so it must never apply while scripts run. One rule each: an
+     unknown selector voids a whole list. */
+  :root:has(.nav-sheet:popover-open) { overflow: hidden; }
+  :root:has(.nav-sheet:popover-open) .nav { background: var(--ink); color: var(--paper); -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom-color: rgba(245, 242, 236, .08); --accent: var(--signal-bright); }
+  :root:has(.nav-sheet:popover-open) .nav .brand .mark { color: var(--paper); }
+  :root:has(.nav-sheet:popover-open) .nav-toggle span::before { transform: translateY(3.75px) rotate(45deg); }
+  :root:has(.nav-sheet:popover-open) .nav-toggle span::after { transform: translateY(-3.75px) rotate(-45deg); }
 }
 
 /* ---------- print: the frame stays off the page ---------- */
