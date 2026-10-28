@@ -1,14 +1,21 @@
-/* OpenEXA — the swarm lab (home §03). An illustrative model, drawn in 3D on a 2D canvas (no WebGL needed).
+/* OpenEXA — the swarm lab (home §03, Platform §03). An illustrative model, drawn in 3D on a 2D canvas (no WebGL needed).
    Agents carry proposals left to right through six gates. Signals drift in and are picked up at 01 Signal; through
    02 Predict and 03 Decide agents estimate (they jitter), and at 03 each forms a proposal (a green ring). At 04 Approve the
    execution council, an aperture of fine ticks, approves or rejects against a risk limit you can tighten: the aperture
    closes, proposals queue at it, rejected ones fall away and fade. Past the council execution is deterministic: approved
    proposals snap onto five rails that advance in lockstep, settle at 06 as solid squares and are sealed into blocks on a
    hash-chained ledger line. Halt stops new proposals while open work drains. "Follow a proposal" (or click/tap an agent)
-   traces one proposal gate by gate until it settles or is rejected. Every counter is derived from the model's state.
-   Settled proposals are announced to the page: document 'oxa:settled' events, at most four a second, detail
-   {id, lane, ts, gate: 'settle', count, followed} (count = proposals settled since the previous event).
-   Paused off-screen (the model keeps a slow pulse so the ledger below still hears it) and in hidden tabs;
+   traces one proposal gate by gate until it settles or is rejected. Every counter is derived from the model's state;
+   'Settled / s' is an exponentially weighted rate of the model's own settlements (tau 0.8 s of model time).
+   The page hears the model through document events, both batched on one clock (at most four flushes a second):
+     'oxa:settled'  {id, lane, ts, gate: 'settle', count, followed}   proposals settled since the previous flush
+     'oxa:rejected' {id, ts, count, followed, gate: 'approve'}        proposals the council rejected since then
+   A ledger on the page ([data-ledger="live"], home §06) answers with 'oxa:recorded' {id, record, hash, seq, followed}; the
+   trace of a followed proposal then names that record, and its button scrolls the ledger into view and dispatches
+   'oxa:inspect' {record, seq, focus}. Without a ledger (Platform) the trace says so.
+   The model runs while the lab is on screen. Off screen it writes nothing to the DOM and steps (a 4 Hz pulse, nothing
+   drawn) only while the page's ledger is within a viewport or a followed proposal is still in flight; otherwise model
+   time stops: nothing is extrapolated. 'Pause motion' freezes it all; hidden tabs too.
    prefers-reduced-motion: no autonomous motion, every control re-renders a still study. */
 (function () {
   'use strict';
@@ -22,13 +29,14 @@
 
   const el = {
     n: $('[data-sw-n]'), nOut: $('[data-sw-n-out]'), strict: $('[data-sw-strict]'), strictOut: $('[data-sw-strict-out]'),
-    halt: $('[data-sw-halt]'), state: $('[data-sw-state]'), follow: $('[data-sw-follow]'),
+    halt: $('[data-sw-halt]'), state: $('[data-sw-state]'), follow: $('[data-sw-follow]'), motion: $('[data-sw-motion]'),
     inflight: $('[data-sw-inflight]'), recorded: $('[data-sw-recorded]'), rejected: $('[data-sw-rejected]'), rate: $('[data-sw-rate]'),
     gates: Array.from(root.querySelectorAll('[data-sw-gates] > li')), limit: $('[data-sw-limit]'), ledger: $('[data-sw-ledger]'),
     banner: $('[data-sw-banner]'), tag: $('[data-sw-agent]'), trace: $('[data-sw-callout]'), traceId: $('[data-sw-trace-id]'),
     traceState: $('[data-sw-trace-state]'), log: $('[data-sw-log]'), close: $('[data-sw-trace-close]'), say: $('[data-sw-say]'),
     hov: $('[data-sw-hover]'), bound: $('[data-sw-bound]'),
   };
+  const LEDGER = document.querySelector('[data-ledger="live"]'); // the page's own ledger (home §06); Platform has none
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const TAU = Math.PI * 2;
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -50,7 +58,9 @@
   const TRAIL = 5, TRAIL_DT = 0.042;                           // per-agent trail: five samples, 42 ms apart
   const CAP = 8200, MOTES = 220, NT = 96;                      // agent slots; incoming signals; ticks on the council aperture
   const DEAD = 0, FLOW = 1, PROP = 2, RAIL = 3, SETTLE = 4, REJECT = 5;
+  const TAU_R = 0.8;                                            // 'Settled / s': exponential weighting of settlements, model seconds
   const st = new Uint8Array(CAP), gate = new Uint8Array(CAP), lane = new Uint8Array(CAP), flag = new Uint8Array(CAP), hc = new Uint8Array(CAP);
+  const annR = new Uint8Array(CAP);                             // a followed rejection is announced when it lands, not at the decision
   const X = new Float32Array(CAP), Y = new Float32Array(CAP), Z = new Float32Array(CAP);
   const VX = new Float32Array(CAP), VY = new Float32Array(CAP), VZ = new Float32Array(CAP);
   const SX = new Float32Array(CAP), SY = new Float32Array(CAP), SZ = new Float32Array(CAP);
@@ -64,10 +74,12 @@
   const TF = new Float32Array(NT), TC = new Uint8Array(NT);    // aperture ticks: flash level and colour (0 approve, 1 reject)
   const GF = new Float32Array(6);                               // gate flash when the followed proposal passes
 
-  let target = window.innerWidth < 600 ? 700 : 1800, strict = 0.12, halted = false;
+  let target = window.innerWidth < 600 ? 700 : 1800, strict = 0.12, halted = false, paused = false;
+  let popCap = 0;                                               // a device that cannot carry the population lowers it (0: no cap)
+  const pop = () => (popCap && popCap < target ? popCap : target);
   let sim = 0, seq = 41000 + Math.floor(Math.random() * 9000), inflight = 0, spawnAcc = 0, railPh = 0, histT = 0, hHead = 0, pulse = 0, rejGlow = 0;
-  const S = { settled: 0, rejected: 0, win: [] };               // derived counters read these, nothing else
-  const ledger = []; let blockSeq = 1040 + Math.floor(Math.random() * 400), openPulse = 0;
+  const S = { settled: 0, rejected: 0, rate: 0 };               // derived counters read these, nothing else
+  const ledger = []; let openPulse = 0;
   // tightening the council closes its aperture: an iris that eases to its new opening (a click on the slider's track
   // must not snap the funnel and every agent in it); the entry gate's shutter eases closed on Halt the same way
   const AP_MAX = 0.19;
@@ -94,7 +106,7 @@
   }
   function spawnAt(x) {
     const i = alloc(); if (i < 0) return -1;
-    st[i] = FLOW; gate[i] = 0; hc[i] = 0; flag[i] = 0;
+    st[i] = FLOW; gate[i] = 0; hc[i] = 0; flag[i] = 0; annR[i] = 0;
     X[i] = x; RHO[i] = Math.sqrt(rnd()); PHI[i] = rnd() * TAU; PH[i] = rnd() * TAU;
     SPD[i] = 0.165 + rnd() * 0.085; RISK[i] = rnd(); T0[i] = 0; BORN[i] = sim; UID[i] = ++seq;
     for (let g = 0; g < 7; g++) GT[i * 7 + g] = UNSET;
@@ -107,8 +119,8 @@
     const limit = 1 - strict;
     // steady-state density: the rails run faster than the estimation field and carry only the approved share, so they
     // hold fewer agents per unit length; a uniform fill would flush a burst of settlements in the first seconds
-    const keepRail = clamp(0.2075 / V_RAIL * limit, 0, 1);
-    for (let k = 0; k < target; k++) {
+    const keepRail = clamp(0.2075 / V_RAIL * limit, 0, 1), n = pop();
+    for (let k = 0; k < n; k++) {
       let x = GX[0] - 0.08 + rnd() * (GX[5] - GX[0] + 0.06);
       if (x > GX[3] && rnd() > keepRail) x = GX[0] - 0.08 + rnd() * (GX[3] - GX[0] + 0.07);
       const i = spawnAt(x); if (i < 0) break;
@@ -134,8 +146,8 @@
     MS[m] = fresh ? rnd() : 0; MV[m] = 0.3 + rnd() * 0.32; MA[m] = 0.35 + rnd() * 0.45;
   }
   function reset() {
-    st.fill(0); hi = 0; nFree = 0; sim = 0; inflight = 0; spawnAcc = 0; railPh = 0; histT = 0; hHead = 0; pulse = 0; rejGlow = 0;
-    S.settled = S.rejected = 0; S.win.length = 0; ledger.length = 0; TF.fill(0); GF.fill(0); evPending = null;
+    st.fill(0); annR.fill(0); hi = 0; nFree = 0; sim = 0; inflight = 0; spawnAcc = 0; railPh = 0; histT = 0; hHead = 0; pulse = 0; rejGlow = 0;
+    S.settled = S.rejected = 0; S.rate = 0; ledger.length = 0; TF.fill(0); GF.fill(0); evPending = null; rjPending = null;
   }
 
   /* ---------------- following one proposal ---------------- */
@@ -143,8 +155,8 @@
     marks: [], verdict: '', endAt: 0, dim: 0, x: 0, y: 0, z: 0 };
   const isFollowed = (i) => follow.active && follow.i === i && follow.uid === UID[i];
 
-  /* ---------------- settled → ledger blocks + the page event (at most 4/s) ---------------- */
-  let evPending = null, evLast = -1e9, evTimer = 0;
+  /* ---------------- settled → ledger blocks; settled and rejected → the page's events (one clock, at most 4 flushes/s) ---------------- */
+  let evPending = null, rjPending = null, evLast = -1e9, evTimer = 0;
   function sealed(i) {
     const f = isFollowed(i);
     if (!evPending) evPending = { id: '', lane: 0, count: 0, followed: false };
@@ -152,19 +164,31 @@
     if (f || !evPending.followed) { evPending.id = pid(UID[i]); evPending.lane = lane[i] + 1; evPending.followed = f; }
     openPulse = 1;
   }
-  // the clock is read at dispatch, not the frame's timestamp, so listeners never see two events closer than 250 ms;
-  // a forced flush (a followed proposal in a still study) waits for its turn instead of breaking the limit
+  function refused(i) { // a rejection joins the next flush; the followed one names it
+    const f = isFollowed(i);
+    if (!rjPending) rjPending = { id: '', count: 0, followed: false };
+    rjPending.count++;
+    if (f || !rjPending.followed) { rjPending.id = pid(UID[i]); rjPending.followed = f; }
+  }
+  // the clock is read at dispatch, not the frame's timestamp, so listeners never see two flushes closer than 250 ms;
+  // a forced flush (a followed proposal in a still study) waits for its turn instead of breaking the limit. The trace
+  // learns of its proposal's flush before the event goes out, so a ledger that answers inside the event is heard.
   function flush(force) {
-    if (!evPending) return;
+    if (!evPending && !rjPending) return;
     const nowMs = performance.now(), wait = 250 - (nowMs - evLast);
     if (wait > 0) { if (force && !evTimer) evTimer = setTimeout(() => { evTimer = 0; flush(true); }, wait + 1); return; }
     evLast = nowMs;
-    const p = evPending; evPending = null;
-    const block = ++blockSeq;
-    ledger.push({ x: LX, n: p.count, t: sim, f: p.followed });
-    if (ledger.length > 64) ledger.shift();
-    if (p.followed) traceLedger(p.id, block);
-    document.dispatchEvent(new CustomEvent('oxa:settled', { detail: { id: p.id, lane: p.lane, ts: Date.now(), gate: 'settle', count: p.count, followed: p.followed } }));
+    const p = evPending, q = rjPending, ts = Date.now(); evPending = rjPending = null;
+    if (p) {
+      ledger.push({ x: LX, n: p.count, t: sim, f: p.followed });
+      if (ledger.length > 64) ledger.shift();
+      if (p.followed) traceFlushed(p.id, 'settled');
+      document.dispatchEvent(new CustomEvent('oxa:settled', { detail: { id: p.id, lane: p.lane, ts, gate: 'settle', count: p.count, followed: p.followed } }));
+    }
+    if (q) {
+      if (q.followed) traceFlushed(q.id, 'rejected');
+      document.dispatchEvent(new CustomEvent('oxa:rejected', { detail: { id: q.id, ts, count: q.count, followed: q.followed, gate: 'approve' } }));
+    }
   }
 
   /* ---------------- one step of the model ---------------- */
@@ -172,10 +196,11 @@
     sim += dt;
     apR += (apT - apR) * (1 - Math.exp(-dt * 5));
     shutK += ((halted ? 1 : 0) - shutK) * (1 - Math.exp(-dt * 8));
-    const limit = 1 - strict, cong = 0.1 + 1.05 * strict;
+    S.rate *= Math.exp(-dt / TAU_R);                             // each settlement below adds 1/tau: settlements per second, weighted
+    const limit = 1 - strict, cong = 0.1 + 1.05 * strict, n = pop();
     if (!halted) { // inflow keeps the lane near the population you chose
       const tEst = (GX[3] - GX[0]) / 0.2 * (1 + cong * 0.3) + (1 - strict) * (GX[5] - GX[3]) / V_RAIL;
-      spawnAcc += clamp(target / tEst + (target - inflight) * 0.9, 0, 1.6 * target / tEst) * dt; // a refill arrives as a wave
+      spawnAcc += clamp(n / tEst + (n - inflight) * 0.9, 0, 1.6 * n / tEst) * dt; // a refill arrives as a wave
       let k = Math.min(Math.floor(spawnAcc), 90); spawnAcc -= k; if (spawnAcc > 90) spawnAcc = 90;
       while (k-- > 0) { const i = spawnAt(GX[0] - 0.025 - rnd() * 0.08); if (i < 0) break; }
     } else spawnAcc = 0;
@@ -187,7 +212,8 @@
       if (s === DEAD) continue;
       if (s === FLOW || s === PROP) {
         const slow = 1 - cong * smooth(GX[3] - 0.22, GX[3], X[i]);   // the stricter the council, the longer each decision
-        X[i] += SPD[i] * dt * slow * (1 + 0.16 * Math.sin(sim * 1.3 + PH[i]));
+        // the proposal you follow estimates at twice the pace, so its council decision comes a few seconds after the click
+        X[i] += SPD[i] * dt * slow * (1 + 0.16 * Math.sin(sim * 1.3 + PH[i])) * (isFollowed(i) ? 2 : 1);
         flowPos(i);
         while (gate[i] < 4 && X[i] >= GX[gate[i]]) {
           const g = ++gate[i]; GT[i * 7 + g] = sim;
@@ -204,7 +230,7 @@
         if (gate[i] < 5 && X[i] >= GX[4]) { gate[i] = 5; GT[i * 7 + 5] = sim; if (isFollowed(i)) traceGate(i, 5); }
         if (X[i] >= GX[5]) {
           gate[i] = 6; GT[i * 7 + 6] = sim; st[i] = SETTLE; T0[i] = 0; SX[i] = X[i]; SY[i] = Y[i]; SZ[i] = Z[i];
-          S.settled++; S.win.push(sim);
+          S.settled++; S.rate += 1 / TAU_R;
           if (isFollowed(i)) traceGate(i, 6);
         } else fl++;
       } else if (s === SETTLE) {
@@ -225,7 +251,11 @@
         T0[i] += dt;
         if (!flag[i]) {
           VY[i] -= 1.35 * dt; X[i] += VX[i] * dt; Y[i] += VY[i] * dt; Z[i] += VZ[i] * dt;
-          if (Y[i] <= FLOOR) { Y[i] = FLOOR; flag[i] = 1; T0[i] = 0; rejGlow = Math.min(1, rejGlow + 0.05); if (isFollowed(i)) endFollow('rejected', i); }
+          if (Y[i] <= FLOOR) {
+            Y[i] = FLOOR; flag[i] = 1; T0[i] = 0; rejGlow = Math.min(1, rejGlow + 0.05);
+            if (annR[i]) { annR[i] = 0; refused(i); } // the followed rejection is announced once its fall is over
+            if (isFollowed(i)) endFollow('rejected', i);
+          }
         } else if (T0[i] > 1.5) { kill(i); continue; }
       }
     }
@@ -237,7 +267,6 @@
     pulse = Math.max(0, pulse - dt / 0.3); openPulse = Math.max(0, openPulse - dt / 0.25); rejGlow = Math.max(0, rejGlow - dt * 0.35);
     for (const b of ledger) b.x += V_LED * dt;
     while (ledger.length && ledger[0].x > 2.4) ledger.shift();
-    const cut = sim - 5; while (S.win.length && S.win[0] < cut) S.win.shift();
     if (follow.active) recordPath();
     if (project) {
       camera(); projectAll();
@@ -249,6 +278,7 @@
     const f = isFollowed(i);
     if (RISK[i] >= limit) {
       st[i] = REJECT; T0[i] = 0; flag[i] = 0; S.rejected++;
+      if (f) annR[i] = 1; else refused(i);
       // it falls away on the near side of the boundary (a rejected proposal never reaches the deterministic rails),
       // fanning outward in depth so the fall reads as a curtain in front of the council, not a bundle through it
       VX[i] = -0.02 - rnd() * 0.06; VY[i] = rnd() * 0.06; VZ[i] = Z[i] * 0.6 + (rnd() - 0.5) * 0.1;
@@ -362,6 +392,7 @@
   const bands = [new Int32Array(CAP), new Int32Array(CAP), new Int32Array(CAP)], bandN = [0, 0, 0];
   const cls = [new Int32Array(CAP), new Int32Array(CAP), new Int32Array(CAP)], clsN = [0, 0, 0];
   let lost = false, hover = -1, hoverUid = 0, mouse = null, pointerTouch = false;
+  let tcv = null, tctx = null, tdpr = 1; // the trails' own layer (see trailLayer), or none at DPR 1.25 and under
   const lbl = []; // gate label boxes this frame: {x, y, w, h, ax, ay, bottom}
 
   function seg(x0, y0, z0, x1, y1, z1) { proj(x0, y0, z0); ctx.moveTo(P_X, P_Y); proj(x1, y1, z1); ctx.lineTo(P_X, P_Y); }
@@ -560,34 +591,39 @@
       if (isFollowed(i)) continue;
       const c = s === FLOW ? 0 : s === REJECT ? 2 : 1; cls[c][clsN[c]++] = i;
     }
-    const hair = Math.min(1, 1 / dpr), boost = dpr > 1.4 ? 1.35 : 1;
+    // dense screens draw them on their own layer at 1.25 device px per CSS px, composited in one drawImage
+    const g = tctx || ctx, kd = tctx ? tdpr : dpr;
+    if (tctx) { tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.globalAlpha = 1; tctx.clearRect(0, 0, tcv.width, tcv.height); tctx.setTransform(tdpr, 0, 0, tdpr, 0, 0); }
+    const hair = Math.min(1, 1 / kd), boost = kd > 1.4 ? 1.35 : 1;
     const cols = [IV, GR, RD], base = [0.24 * boost, 0.34 * boost, 0.55 * boost], dim = 1 - 0.72 * follow.dim;
     const at = (i, k) => (i * TRAIL + ((hHead - k + TRAIL * 2) % TRAIL)) * 2; // k-th sample back from the newest
-    ctx.lineWidth = hair; ctx.lineCap = 'butt'; ctx.lineJoin = 'bevel';
+    g.lineWidth = hair; g.lineCap = 'butt'; g.lineJoin = 'bevel';
+    let drew = false;
     for (let c = 0; c < 3; c++) {
       const list = cls[c], n = clsN[c];
       for (let band = 0; band < 2; band++) {
         for (let part = 0; part < (quality === 2 ? 2 : 1); part++) {
-          ctx.beginPath(); let any = false;
+          g.beginPath(); let any = false;
           for (let j = 0; j < n; j++) {
             const i = list[j]; if ((PF[i] < 0.5 ? 1 : 0) !== band) continue;
             const h = hc[i];
             if (part === 0) { // head: now → 1 → 2 samples back
-              ctx.moveTo(PX[i], PY[i]); let o = at(i, 0); ctx.lineTo(HIST[o], HIST[o + 1]);
-              if (h > 1) { o = at(i, 1); ctx.lineTo(HIST[o], HIST[o + 1]); }
+              g.moveTo(PX[i], PY[i]); let o = at(i, 0); g.lineTo(HIST[o], HIST[o + 1]);
+              if (h > 1) { o = at(i, 1); g.lineTo(HIST[o], HIST[o + 1]); }
             } else if (h > 2) { // tail: 1 → 3 samples back
-              let o = at(i, 1); ctx.moveTo(HIST[o], HIST[o + 1]); o = at(i, 2); ctx.lineTo(HIST[o], HIST[o + 1]);
-              if (h > 3) { o = at(i, 3); ctx.lineTo(HIST[o], HIST[o + 1]); }
+              let o = at(i, 1); g.moveTo(HIST[o], HIST[o + 1]); o = at(i, 2); g.lineTo(HIST[o], HIST[o + 1]);
+              if (h > 3) { o = at(i, 3); g.lineTo(HIST[o], HIST[o + 1]); }
             } else continue;
             any = true;
           }
           if (!any) continue;
-          ctx.globalAlpha = Math.min(1, base[c] * (part ? 0.38 : 1) * (band ? 1 : 0.55) * dim);
-          ctx.strokeStyle = `rgb(${cols[c]})`; ctx.stroke();
+          g.globalAlpha = Math.min(1, base[c] * (part ? 0.38 : 1) * (band ? 1 : 0.55) * dim);
+          g.strokeStyle = `rgb(${cols[c]})`; g.stroke(); drew = true;
         }
       }
     }
-    ctx.globalAlpha = 1; ctx.lineWidth = 1;
+    g.globalAlpha = 1; g.lineWidth = 1;
+    if (tctx && drew) ctx.drawImage(tcv, 0, 0, W, H);
   }
   let LK = 'bead', LS = 1, LA = 1; // the look of one agent: sprite, size multiplier, alpha (module scope: no allocation per agent)
   function agentLook(i) {
@@ -734,11 +770,23 @@
     }
     placeTag(); placeHover();
   }
+  // the followed proposal's tag on the stage: its text is model state (TG), written to the DOM only while it is drawn
   let tagBox = null;
+  const TG = { b: '', s: '', cls: '', on: false, ver: 0, shown: -1, w: 120, h: 34 };
+  function tagSet(s, cls) { if (TG.s !== s || TG.cls !== cls) { TG.s = s; TG.cls = cls; TG.ver++; } }
   function placeTag() {
-    if (!el.tag || el.tag.hidden || !follow.show) { tagBox = null; return; }
+    if (!el.tag) return;
+    if (!TG.on || !follow.show) { if (!el.tag.hidden) el.tag.hidden = true; tagBox = null; return; }
+    if (TG.shown !== TG.ver || el.tag.hidden) { // a new verdict: write it, then measure it once (not every frame)
+      el.tag.hidden = false;
+      const b = el.tag.firstElementChild, s = el.tag.lastElementChild;
+      if (b && b.textContent !== TG.b) b.textContent = TG.b;
+      if (s && s.textContent !== TG.s) s.textContent = TG.s;
+      el.tag.classList.toggle('is-ok', TG.cls === 'ok'); el.tag.classList.toggle('is-bad', TG.cls === 'bad');
+      TG.w = el.tag.offsetWidth || 120; TG.h = el.tag.offsetHeight || 34; TG.shown = TG.ver;
+    }
     proj(follow.x, follow.y, follow.z);
-    const w = el.tag.offsetWidth || 120, h = el.tag.offsetHeight || 34, gap = narrow ? 16 : 26;
+    const w = TG.w, h = TG.h, gap = narrow ? 16 : 26;
     // the side with room; when neither side holds the whole tag (a long verdict on a phone) it is clamped into the
     // stage above the agent, and the leader rises straight to it
     const roomR = W - 6 - (P_X + gap), roomL = P_X - gap - 6;
@@ -746,9 +794,12 @@
     const x = clamp(side > 0 ? P_X + gap : P_X - gap - w, 6, Math.max(6, W - w - 6)), y = clamp(P_Y - h - 22, rowTop + rowH + 8, H - h - 6);
     setPos(el.tag, x, y); tagBox = { x, y, w, h, side };
   }
-  function hideTag() { if (el.tag) el.tag.hidden = true; tagBox = null; }
+  function hideTag() { TG.on = false; if (el.tag && !el.tag.hidden) el.tag.hidden = true; tagBox = null; }
 
-  /* ---------------- the trace (callout) ---------------- */
+  /* ---------------- the trace (callout) ----------------
+     The trace is a small model (T): one row per gate from the start (the ones still ahead are pending), then the
+     ledger. It is written to the DOM only while the lab is on screen; off screen a followed proposal can still finish
+     its journey (the model pulses) and the trace shows it when the lab is back. */
   const VERDICT = (i, g, limit) => {
     if (g === 1) return [`picked up · ${2 + (UID[i] % 4)} signals`, ''];
     if (g === 2) return ['estimate formed', ''];
@@ -757,90 +808,152 @@
     if (g === 5) return [`executed · rail ${lane[i] + 1}`, ''];
     return ['settled', 'ok'];
   };
-  function row(t, gname, verdict, kind) {
-    if (!el.log) return;
-    const li = document.createElement('li'); if (kind) li.className = 'is-' + kind;
-    const a = document.createElement('span'); a.className = 'sw-t'; a.textContent = t;
-    const b = document.createElement('b'); b.textContent = gname;
-    const c = document.createElement('span'); c.className = 'sw-v'; c.textContent = verdict;
-    li.append(a, b, c); el.log.appendChild(li);
-    return li;
-  }
   const fmtT = (s) => `${Math.max(0, s).toFixed(2)} s`;
   function t0Of(i) { const t = GT[i * 7 + 1]; return t > UNSET ? t : sim; } // back-dated crossings are negative: only UNSET means "not yet"
+  const T = { open: false, id: '', head: '', state: '', cls: '', rows: [], hit: 0, outcome: '', wait: false, waitT: 0 };
+  const rowOf = (k) => T.rows.find(r => r.k === k);
+  function setRow(k, t, v, cls, rec) { const r = rowOf(k); if (!r) return; r.t = t; r.v = v; r.cls = cls; r.rec = rec || null; r.ver++; }
+  function journeyRows() { // 01 … 06 and the ledger, all pending: they fill in as the proposal advances
+    const rows = [];
+    for (let g = 1; g <= 6; g++) rows.push({ k: 'g' + g, name: `0${g} ${GATE[g - 1]}`, t: null, v: '', cls: 'pend', rec: null, ver: 0 });
+    rows.push({ k: 'led', name: 'Ledger', t: null, v: '', cls: 'pend', rec: null, ver: 0 });
+    return rows;
+  }
   function traceGate(i, g) {
     const [v, kind] = VERDICT(i, g, 1 - strict);
-    row(fmtT(GT[i * 7 + g] - t0Of(i)), `0${g} ${GATE[g - 1]}`, v, kind);
+    setRow('g' + g, GT[i * 7 + g] - t0Of(i), v, kind);
+    if (g === 4 && kind === 'bad') { // a rejected proposal never reaches 05 or 06: its last rows are the floor and the record
+      const at = T.rows.findIndex(r => r.k === 'g5');
+      if (at >= 0) T.rows.splice(at, 2, { k: 'floor', name: 'Floor', t: null, v: '', cls: 'pend', rec: null, ver: 0 });
+    }
     follow.marks.push({ x: X[i], y: Y[i], z: Z[i], g, bad: kind === 'bad' });
-    GF[g - 1] = 1;
-    const li = el.gates[g - 1]; if (li) li.classList.add('is-hit');
+    GF[g - 1] = 1; T.hit |= 1 << (g - 1);
     tagText(i, g);
     if (g === 4) say(`${follow.id}: ${kind === 'bad' ? 'rejected' : 'approved'} by the council.`);
     if (g === 6) say(`${follow.id}: settled.`);
+    touch();
   }
-  function traceLedger(id, block) {
-    if (id !== follow.id) return;
-    const li = row(fmtT(sim - follow.t1), 'Ledger', follow.rec || `sealed in block ${block}`, 'ok');
-    if (li) li.dataset.swLedger = '';
-    say(`${id}: written to the ledger, block ${block}.`);
-    const s = el.tag && el.tag.querySelector('span'); if (s) s.textContent = `settled · block ${block}`;
-    if (reduced.matches) draw(); // a still study: re-place the tag (and its leader) for the longer text
+  // the followed proposal's announcement is going out: with a ledger on the page the trace waits for its record;
+  // without one it says so. The lab's own line drew it sealed (a canvas block, never named in words).
+  function traceFlushed(id, outcome) {
+    if (!T.open || id !== T.id) return;
+    const t = sim - follow.t1;
+    if (LEDGER) {
+      setRow('led', t, outcome === 'settled' ? 'sealing into the ledger…' : 'recording the rejection…', 'wait');
+      T.wait = true; clearTimeout(T.waitT);
+      T.waitT = setTimeout(() => { // no answer: say so, but keep listening (a late answer still fills it in)
+        T.waitT = 0; const r = rowOf('led');
+        if (T.wait && r && r.cls === 'wait') { setRow('led', r.t, outcome === 'settled' ? 'sealed · the ledger did not answer' : 'rejected · the ledger did not answer', 'ok'); touch(); }
+      }, 10000);
+      if (outcome === 'settled') tagSet('settled · sealing…', 'ok');
+    } else {
+      setRow('led', t, outcome === 'settled' ? 'sealed · no ledger on this page' : 'rejected · no ledger on this page', outcome === 'settled' ? 'ok' : 'bad');
+      if (outcome === 'settled') tagSet('settled · sealed', 'ok');
+      say(`${id}: ${outcome === 'settled' ? 'sealed' : 'rejected'}; there is no ledger on this page.`);
+    }
+    touch();
   }
   function tagText(i, g) {
-    if (!el.tag) return;
-    const b = el.tag.querySelector('b'), s = el.tag.querySelector('span');
-    if (b) b.textContent = follow.id;
-    if (s) s.textContent = st[i] === REJECT ? `rejected · risk ${RISK[i].toFixed(2)}` : g >= 6 ? 'settled' : g > 0 ? `${String(g).padStart(2, '0')} ${GATE[g - 1]}` : 'entering 01';
-    el.tag.classList.toggle('is-bad', st[i] === REJECT);
-    el.tag.classList.toggle('is-ok', g >= 6);
+    TG.b = follow.id; TG.on = true;
+    tagSet(st[i] === REJECT ? `rejected · risk ${RISK[i].toFixed(2)}` : g >= 6 ? 'settled' : g > 0 ? `${String(g).padStart(2, '0')} ${GATE[g - 1]}` : 'entering 01',
+      st[i] === REJECT ? 'bad' : g >= 6 ? 'ok' : '');
   }
-  function say(t) { if (el.say) el.say.textContent = t; }
-  // the ledger trace further down the page answers every announcement with 'oxa:recorded' {id, record, hash, seq}; when
-  // the answer is for the proposal in the trace, its last line becomes the record it was chained into and the first 8 hex
-  // of that record's hash. Off screen the ledger seals announcements every few seconds, so the answer can come after the
-  // drawn path has faded (follow.show is false by then): the open trace is what decides
+  let sayText = null;
+  function say(t) { sayText = t; touch(); }
+  // the ledger further down the page answers every announcement with 'oxa:recorded' {id, record, hash, seq, followed};
+  // when the answer is for the proposal in the trace, its ledger row becomes a button naming that record and the first
+  // 8 hex of its hash. The answer can come after the drawn path has faded: the open trace is what decides.
   document.addEventListener('oxa:recorded', (e) => {
     const d = e.detail;
-    if (!d || !d.record || !follow.id || d.id !== follow.id || !el.trace || el.trace.hidden) return;
-    const h = /^[0-9a-f]{8}/i.test(d.hash || '') ? d.hash.slice(0, 8).toLowerCase() : '';
-    follow.rec = `record ${d.record}${h ? ' · ' + h : ''}`;
-    const v = el.log && el.log.querySelector('[data-sw-ledger] .sw-v');
-    if (!v) return;
-    v.textContent = follow.rec;
-    const s = el.tag && !el.tag.hidden && el.tag.querySelector('span'); // its tag on the stage names the same record
-    if (s && /^settled/.test(s.textContent)) { s.textContent = `settled · record ${d.record}`; if (reduced.matches) draw(); }
-    say(`${d.id}: chained into the ledger below as record ${d.record}.`);
+    if (!d || !d.record || !T.open || !T.wait || d.id !== T.id) return;
+    T.wait = false; clearTimeout(T.waitT); T.waitT = 0;
+    const r = rowOf('led'), rec = String(d.record).slice(0, 12);
+    const hash = /^[0-9a-f]{8}/i.test(d.hash || '') ? d.hash.slice(0, 8).toLowerCase() : '';
+    setRow('led', r ? r.t : sim - follow.t1, '', 'rec', { record: rec, hash, seq: Number.isFinite(+d.seq) && d.seq !== null && d.seq !== '' ? +d.seq : null });
+    if (T.outcome !== 'rejected') tagSet(`settled · record ${rec}`, 'ok');
+    say(`${d.id}: ${T.outcome === 'rejected' ? 'its rejection is recorded' : 'sealed'} in the ledger below as record ${rec}.`);
+    touch();
   });
-  function setFollowButton() {
-    if (!el.follow) return;
-    el.follow.setAttribute('aria-pressed', follow.active ? 'true' : 'false');
-    el.follow.textContent = follow.active ? 'Stop following' : follow.verdict ? 'Follow another' : 'Follow a proposal';
+  // the record button: brings the ledger into view (centred under the nav) and asks it to show that record
+  function toLedger(rec, kbd) {
+    if (!LEDGER) return;
+    const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0;
+    const r = LEDGER.getBoundingClientRect(), room = window.innerHeight - navH;
+    const y = window.scrollY + r.top - navH - Math.max(0, (room - r.height) / 2);
+    window.scrollTo({ top: Math.max(0, Math.round(y)), behavior: reduced.matches ? 'auto' : 'smooth' });
+    document.dispatchEvent(new CustomEvent('oxa:inspect', { detail: { record: rec.record, seq: rec.seq, focus: !!kbd } }));
   }
+  if (el.log) el.log.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-sw-rec]'); if (!b) return;
+    const r = rowOf('led'); if (r && r.rec) toLedger(r.rec, e.detail === 0);
+  });
+
+  /* ---------------- writing the trace to the DOM (on screen only) ---------------- */
+  let inLoop = false, uiDirty = false;
+  function touch() { uiDirty = true; if (!inLoop && onScreen) syncUI(); }
+  function syncUI() {
+    uiDirty = false;
+    if (sayText !== null && el.say) { el.say.textContent = sayText; sayText = null; }
+    if (el.follow) {
+      const pressed = follow.active ? 'true' : 'false', label = follow.active ? 'Stop following' : T.outcome ? 'Follow another' : 'Follow a proposal';
+      if (el.follow.getAttribute('aria-pressed') !== pressed) el.follow.setAttribute('aria-pressed', pressed);
+      if (el.follow.textContent !== label) el.follow.textContent = label;
+    }
+    el.gates.forEach((li, g) => li.classList.toggle('is-hit', T.open && !!(T.hit & (1 << g))));
+    if (!el.trace) return;
+    if (el.trace.hidden === T.open) { el.trace.hidden = !T.open; root.classList.toggle('is-tracing', T.open); }
+    if (!T.open) return;
+    if (el.traceId && el.traceId.textContent !== T.head) el.traceId.textContent = T.head;
+    if (el.traceState) {
+      if (el.traceState.textContent !== T.state) el.traceState.textContent = T.state;
+      const c = 'sw-trace-state' + (T.cls ? ' ' + T.cls : ''); if (el.traceState.className !== c) el.traceState.className = c;
+    }
+    if (!el.log) return;
+    const keep = new Set(T.rows.map(r => r.k));
+    Array.from(el.log.children).forEach(li => { if (!keep.has(li.dataset.k)) li.remove(); });
+    T.rows.forEach((r, n) => {
+      let li = null;
+      for (const c of el.log.children) if (c.dataset.k === r.k) { li = c; break; }
+      if (!li) {
+        li = document.createElement('li'); li.dataset.k = r.k; li.__ver = -1;
+        const a = document.createElement('span'); a.className = 'sw-t';
+        const b = document.createElement('b'); b.textContent = r.name;
+        const c = document.createElement('span'); c.className = 'sw-v';
+        li.append(a, b, c);
+      }
+      if (el.log.children[n] !== li) el.log.insertBefore(li, el.log.children[n] || null);
+      if (li.__ver === r.ver) return;
+      const was = li.__cls; li.__ver = r.ver; li.__cls = r.cls;
+      li.className = (r.cls ? 'is-' + r.cls : '') + (was === 'pend' && r.cls !== 'pend' ? ' is-filled' : '');
+      li.children[0].textContent = r.t === null ? '—' : fmtT(r.t);
+      const v = li.children[2];
+      if (r.rec) { // the ledger's answer: a button that takes the reader to that record
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'sw-rec'; btn.dataset.swRec = r.rec.record; if (r.rec.seq !== null) btn.dataset.swSeq = r.rec.seq;
+        btn.setAttribute('aria-label', `Record ${r.rec.record}${r.rec.hash ? ', hash ' + r.rec.hash : ''}: show it in the ledger below`);
+        btn.append(`record ${r.rec.record}${r.rec.hash ? ' · ' + r.rec.hash : ''} `);
+        const ar = document.createElement('i'); ar.setAttribute('aria-hidden', 'true'); ar.textContent = '↓'; btn.append(ar);
+        v.replaceChildren(btn);
+      } else v.textContent = r.v;
+    });
+  }
+
+  /* ---------------- following ---------------- */
   function startFollow(i) {
     if (i < 0) {
-      if (el.trace) { el.trace.hidden = false; root.classList.add('is-tracing'); }
-      if (el.log) el.log.replaceChildren();
-      if (el.traceId) el.traceId.textContent = 'Nothing in flight';
-      if (el.traceState) { el.traceState.textContent = halted ? 'Halted' : 'Waiting'; el.traceState.className = 'sw-trace-state'; }
-      row('—', '—', halted ? 'resume to send new proposals' : 'no proposal in the lane yet', '');
+      clearTimeout(T.waitT);
+      Object.assign(T, { open: true, id: '', head: 'Nothing in flight', state: halted ? 'Halted' : 'Waiting', cls: '', hit: 0, outcome: '', wait: false, waitT: 0 });
+      T.rows = [{ k: 'none', name: '—', t: null, v: halted ? 'resume to send new proposals' : 'no proposal in the lane yet', cls: '', rec: null, ver: 1 }];
       say(halted ? 'Nothing in flight. Resume to send new proposals.' : 'No proposal in the lane yet.');
       return;
     }
-    el.gates.forEach(li => li.classList.remove('is-hit'));
-    Object.assign(follow, { active: true, show: true, i, uid: UID[i], id: pid(UID[i]), n: 0, pt: -1, marks: [], verdict: '', endAt: 0, x: X[i], y: Y[i], z: Z[i], t1: t0Of(i), rec: '' });
-    if (el.log) el.log.replaceChildren();
-    if (el.traceId) el.traceId.textContent = `Proposal ${follow.id}`;
-    if (el.traceState) { el.traceState.textContent = 'Live'; el.traceState.className = 'sw-trace-state is-live'; }
-    if (el.trace) { el.trace.hidden = false; root.classList.add('is-tracing'); }
-    // the gates it already passed, from its own record
-    for (let g = 1; g <= gate[i]; g++) {
-      const [v, kind] = VERDICT(i, g, 1 - strict);
-      row(fmtT(GT[i * 7 + g] - t0Of(i)), `0${g} ${GATE[g - 1]}`, v, kind);
-      const li = el.gates[g - 1]; if (li) li.classList.add('is-hit');
-    }
-    if (el.tag) { el.tag.hidden = false; tagText(i, gate[i]); }
+    clearTimeout(T.waitT);
+    Object.assign(follow, { active: true, show: true, i, uid: UID[i], id: pid(UID[i]), n: 0, pt: -1, marks: [], verdict: '', endAt: 0, x: X[i], y: Y[i], z: Z[i], t1: t0Of(i) });
+    Object.assign(T, { open: true, id: follow.id, head: `Proposal ${follow.id}`, state: 'In flight', cls: 'is-live', rows: journeyRows(), hit: 0, outcome: '', wait: false, waitT: 0 });
+    // the gates it already passed, from its own record (back-dated: its 01 line is when it really crossed 01)
+    for (let g = 1; g <= gate[i]; g++) { const [v, kind] = VERDICT(i, g, 1 - strict); setRow('g' + g, GT[i * 7 + g] - t0Of(i), v, kind); T.hit |= 1 << (g - 1); }
+    tagText(i, gate[i]);
     recordPath();
-    setFollowButton();
     say(`Following proposal ${follow.id}${gate[i] ? `, now past gate 0${gate[i]} ${GATE[gate[i] - 1]}` : ', entering gate 01 Signal'}.`);
     if (reduced.matches) settleStill();
   }
@@ -848,26 +961,32 @@
     if (!follow.active) return;
     follow.active = false; follow.verdict = verdict; follow.endAt = sim;
     follow.x = X[i]; follow.y = Y[i]; follow.z = Z[i];
-    if (el.traceState) { el.traceState.textContent = verdict === 'settled' ? 'Settled' : 'Rejected at 04'; el.traceState.className = 'sw-trace-state ' + (verdict === 'settled' ? 'is-ok' : 'is-bad'); }
-    if (el.tag) { const s = el.tag.querySelector('span'); if (s) s.textContent = verdict === 'settled' ? 'settled · sealing' : `rejected at 04 · risk ${RISK[i].toFixed(2)}`; el.tag.classList.toggle('is-ok', verdict === 'settled'); el.tag.classList.toggle('is-bad', verdict !== 'settled'); }
-    if (verdict === 'rejected') { row(fmtT(sim - follow.t1), 'Floor', 'fell away · not executed', 'bad'); say(`${follow.id}: rejected at gate 04, never executed.`); }
-    setFollowButton();
+    T.outcome = verdict; T.state = verdict === 'settled' ? 'Settled' : 'Rejected at 04'; T.cls = verdict === 'settled' ? 'is-ok' : 'is-bad';
+    if (verdict === 'rejected') {
+      tagSet(`rejected at 04 · risk ${RISK[i].toFixed(2)}`, 'bad');
+      setRow('floor', sim - follow.t1, 'fell away · not executed', 'bad');
+      say(`${follow.id}: rejected at gate 04, never executed.`);
+    } else { const r = rowOf('led'); if (r && r.cls === 'pend') tagSet('settled · sealing…', 'ok'); }
+    touch();
+  }
+  function clearFollow() { // the trace and the stage forget the followed proposal (nothing is announced)
+    follow.active = false; follow.show = false; follow.verdict = '';
+    clearTimeout(T.waitT); Object.assign(T, { open: false, id: '', rows: [], hit: 0, outcome: '', wait: false, waitT: 0 });
+    hideTag(); touch();
   }
   function stopFollow() {
-    follow.active = false; follow.show = false; follow.verdict = '';
-    hideTag(); el.gates.forEach(li => li.classList.remove('is-hit'));
-    if (el.trace) el.trace.hidden = true;
-    root.classList.remove('is-tracing');
-    setFollowButton();
+    clearFollow();
     say('Stopped following.');
     if (reduced.matches) still();
   }
-  // a fresh proposal near the front of the lane, so its whole journey is ahead of it
+  // a fresh proposal about 0.4 s (at the follow's own pace) before gate 02, so its decision comes soon after the click
   function pickFresh() {
     let best = -1, bs = -1e9;
     for (let i = 0; i < hi; i++) {
-      if (st[i] !== FLOW || gate[i] > 1) continue;
-      const s = -Math.abs(X[i] - (GX[0] - 0.01)) * 4 + Z[i] + rnd() * 0.12 - Math.abs(Y[i]) * 0.8;
+      if (st[i] !== FLOW || gate[i] !== 1) continue;
+      const lead = (GX[1] - X[i]) / (2 * SPD[i]);
+      if (lead < 0.12 || lead > 1.2) continue;
+      const s = -Math.abs(lead - 0.4) * 2.5 + Z[i] * 0.9 - Math.abs(Y[i]) * 0.9 + rnd() * 0.04;
       if (s > bs) { bs = s; best = i; }
     }
     if (best < 0) for (let i = 0; i < hi; i++) if ((st[i] === FLOW || st[i] === PROP || st[i] === RAIL) && (best < 0 || X[i] < X[best])) best = i;
@@ -909,29 +1028,47 @@
     setPos(t, px, y);
   }
 
-  /* ---------------- counters, all read from the model ---------------- */
+  /* ---------------- counters, all read from the model (written only while the lab is on screen) ---------------- */
   const fmt = (n) => n.toLocaleString('en-US');
   const fmtN = (n) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n));
+  const put = (node, s) => { if (node && node.textContent !== s) node.textContent = s; };
   function stats() {
-    if (el.inflight) el.inflight.textContent = fmt(inflight);
-    if (el.recorded) el.recorded.textContent = fmt(S.settled);
-    if (el.rejected) el.rejected.textContent = fmt(S.rejected);
-    const span = Math.min(5, Math.max(0.5, sim));
-    if (el.rate) el.rate.textContent = fmt(Math.round(S.win.length / span));
-    if (el.state) el.state.textContent = halted ? 'Halted' : reduced.matches ? 'Static study' : 'Running';
+    put(el.inflight, fmt(inflight));
+    put(el.recorded, fmt(S.settled));
+    put(el.rejected, fmt(S.rejected));
+    // halted and drained, nothing is settling: the weighted rate's tail is not shown as settlements
+    put(el.rate, fmt(halted && inflight === 0 ? 0 : Math.round(S.rate)));
+    put(el.state, reduced.matches ? (halted ? 'Halted' : 'Static study') : paused ? (halted ? 'Halted · paused' : 'Paused') : halted ? 'Halted' : 'Running');
     root.classList.toggle('is-halted', halted);
     if (el.banner) {
       const txt = !halted ? '' : inflight ? `Halted · no new proposals · ${fmt(inflight)} in flight, draining` : 'Halted · drained · nothing in flight';
       if (el.banner.textContent !== txt) { el.banner.textContent = txt; el.banner.hidden = !txt; if (txt) lw[7] = [el.banner.offsetWidth, el.banner.offsetHeight]; }
     }
   }
-  const showN = () => { if (el.nOut) el.nOut.textContent = fmtN(target); if (el.n) el.n.setAttribute('aria-valuetext', `${fmtN(target)} agents`); };
+  const showN = () => {
+    const capped = popCap && popCap < target, txt = capped ? `${fmtN(target)} · capped to ${fmtN(popCap)} on this device` : fmtN(target);
+    put(el.nOut, txt);
+    if (el.n) el.n.setAttribute('aria-valuetext', capped ? `${fmtN(target)} agents, capped to ${fmtN(popCap)} on this device` : `${fmtN(target)} agents`);
+  };
+  // the council's live state at 04: the share it approves and the risk it rejects (in this model risk is uniform on
+  // 0..1, so a limit of 0.88 approves 88% of proposals)
   const showStrict = () => {
     const pct = Math.round(strict * 100), lim = (1 - strict).toFixed(2);
-    if (el.strictOut) el.strictOut.textContent = `${pct}%`;
+    put(el.strictOut, `${pct}%`);
     if (el.strict) el.strict.setAttribute('aria-valuetext', `${pct}% rejected, risk limit ${lim}`);
-    if (el.limit) el.limit.textContent = strict > 0 ? `rejects risk > ${lim}` : 'approves every proposal';
+    if (el.limit) {
+      const a = el.limit.children[0], r = el.limit.children[2];
+      if (a && r) { put(a, strict > 0 ? `approves ${100 - pct}%` : 'approves every proposal'); put(r, strict > 0 ? `rejects risk > ${lim}` : ''); el.limit.classList.toggle('is-all', !(strict > 0)); }
+      else put(el.limit, strict > 0 ? `approves ${100 - pct}% · rejects risk > ${lim}` : 'approves every proposal');
+    }
   };
+  let flashA = null;
+  function flashRejected() { // a policy change shows first where its effect is counted
+    const n = el.rejected;
+    if (!n || reduced.matches || !n.animate) return;
+    if (flashA) flashA.cancel();
+    flashA = n.animate([{ color: '#D9675D' }, { color: '#D9675D', offset: 0.35 }], { duration: 900, easing: 'ease-out' });
+  }
 
   /* ---------------- controls ---------------- */
   if (el.n) {
@@ -942,7 +1079,7 @@
   if (el.strict) {
     el.strict.value = Math.round(strict * 100);
     el.strict.addEventListener('input', () => {
-      setStrict(el.strict.value / 100); showStrict();
+      setStrict(el.strict.value / 100); showStrict(); flashRejected();
       const li = el.gates[3]; // the council's label lights while its policy is being changed
       if (li) { li.classList.add('is-tuned'); clearTimeout(tuneT); tuneT = setTimeout(() => li.classList.remove('is-tuned'), 900); }
       if (reduced.matches) still(); else measureSoon();
@@ -952,12 +1089,22 @@
     el.halt.removeAttribute('aria-pressed'); // the label itself toggles
     el.halt.addEventListener('click', () => { halted = !halted; el.halt.textContent = halted ? 'Resume' : 'Halt'; stats(); if (reduced.matches) still(); else measureSoon(); });
   }
+  // Pause motion (WCAG 2.2.2): model time, drawing and the off-screen pulse all stop; the counters hold
+  if (el.motion) {
+    el.motion.hidden = reduced.matches;
+    el.motion.addEventListener('click', () => {
+      paused = !paused;
+      el.motion.textContent = paused ? 'Resume motion' : 'Pause motion'; // the label itself toggles (as the overture's)
+      root.classList.toggle('is-paused', paused);
+      stats(); schedule();
+    });
+  }
   if (el.follow) el.follow.addEventListener('click', () => { if (follow.active) stopFollow(); else startFollow(pickFresh()); });
   if (el.close) el.close.addEventListener('click', () => { stopFollow(); if (el.follow) el.follow.focus(); });
   // Escape stops following from inside the lab, and also after a click or tap on an agent (focus is then on the page
   // itself); it is left alone while another widget (the nav's chapter list, the menu) holds focus
   document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape' || e.defaultPrevented || !(follow.active || follow.show || (el.trace && !el.trace.hidden))) return;
+    if (e.key !== 'Escape' || e.defaultPrevented || !(follow.active || follow.show || T.open)) return;
     const t = e.target;
     if (!(root.contains(t) || !t || t === document.body || t === document.documentElement)) return;
     stopFollow(); if (el.follow) el.follow.focus({ preventScroll: true });
@@ -968,43 +1115,64 @@
     if (e.pointerType !== 'mouse') return;
     mouse = local(e); parT = clamp(mouse.x / W - 0.5, -0.5, 0.5);
     if (hoverHold && Math.hypot(mouse.x - hoverHold.x, mouse.y - hoverHold.y) > 8) hoverHold = null;
-    if (reduced.matches || !running()) { updateHover(); draw(); }
+    if (booted && (reduced.matches || !running())) { updateHover(); paint(); }
   });
-  cv.addEventListener('pointerleave', () => { mouse = null; hover = -1; parT = 0; cv.style.cursor = ''; placeHover(); if (reduced.matches) draw(); });
+  cv.addEventListener('pointerleave', () => { mouse = null; hover = -1; parT = 0; cv.style.cursor = ''; placeHover(); if (booted && !running()) paint(); });
   cv.addEventListener('click', (e) => {
+    if (!booted) return;
     const p = local(e);
     // a mouse click takes the agent the hover tag names (if it is still under the pointer); a tap searches a
     // finger-sized radius
     const named = !pointerTouch && live(hover) && UID[hover] === hoverUid && (PX[hover] - p.x) ** 2 + (PY[hover] - p.y) ** 2 < 484;
     const i = named ? hover : hitTest(p.x, p.y, pointerTouch ? 30 : 16);
-    if (i >= 0 && !isFollowed(i)) { hoverHold = p; startFollow(i); }
+    if (i >= 0 && !isFollowed(i)) { hoverHold = p; startFollow(i); if (!running()) paint(); }
   });
 
   /* ---------------- still studies (prefers-reduced-motion) ---------------- */
   function still() {
-    if (follow.show || follow.active) { follow.active = false; follow.show = false; hideTag(); el.gates.forEach(li => li.classList.remove('is-hit')); if (el.trace) el.trace.hidden = true; root.classList.remove('is-tracing'); setFollowButton(); }
+    clearFollow();
     seed = 11; reset(); apR = apT; shutK = halted ? 1 : 0; camera(); warmStart();
     const steps = halted ? 100 : 40; // halted: the lane has had five seconds to drain
+    inLoop = true;
     for (let k = 0; k < steps; k++) {
       step(0.05, k >= steps - TRAIL - 1);
       // the ledger line fills as it would have, block by block, but a still study announces nothing to the page
       if (k % 5 === 4 && evPending) { ledger.push({ x: LX, n: evPending.count, t: sim - 9, f: false }); evPending = null; } // blocks then drift right with the model
+      rjPending = null;
     }
-    evPending = null;
-    projectAll(); draw(); stats();
+    evPending = null; rjPending = null;
+    inLoop = false;
+    projectAll(); paint();
+    if (onScreen) { stats(); syncUI(); }
   }
-  // reduced motion: following computes the whole journey at once and shows it as a still
+  // reduced motion: following computes the whole journey at once and shows it as a still; only its outcome is announced
   function settleStill() {
     let guard = 0;
+    inLoop = true;
     while (follow.active && guard++ < 600) step(0.05, false);
-    if (evPending && evPending.followed) flush(true); else evPending = null;
+    const fe = evPending && evPending.followed ? evPending : null, fr = rjPending && rjPending.followed ? rjPending : null;
+    evPending = rjPending = null;
     for (let k = 0; k < TRAIL + 1; k++) step(0.03, true);
-    follow.endAt = sim; projectAll(); draw(); stats();
+    evPending = fe && Object.assign(fe, { count: 1 }); rjPending = fr && Object.assign(fr, { count: 1 });
+    flush(true);
+    inLoop = false;
+    follow.endAt = sim; projectAll(); paint(); stats(); syncUI();
   }
 
   /* ---------------- sizing, loops, visibility ---------------- */
   let measureQueued = false;
-  function measureSoon() { if (measureQueued) return; measureQueued = true; requestAnimationFrame(() => { measureQueued = false; measure(); }); }
+  function measureSoon() { if (measureQueued) return; measureQueued = true; requestAnimationFrame(() => { measureQueued = false; measure(); if (booted && !running()) paint(); }); }
+  // the trails' own layer: at most 1.25 device pixels per CSS pixel, composited onto the stage in one drawImage
+  // (thin, soft strokes lose nothing at that density, and they are most of the drawing cost at DPR 2-3)
+  function trailLayer() {
+    tdpr = Math.min(dpr, 1.25);
+    if (tdpr > dpr - 0.01) { tcv = null; tctx = null; return; }
+    if (!tcv) { tcv = document.createElement('canvas'); tctx = tcv.getContext('2d'); }
+    if (!tctx) { tcv = null; return; }
+    tcv.width = Math.round(W * tdpr); tcv.height = Math.round(H * tdpr);
+  }
+  let stale = false;
+  function paint() { if (onScreen && !lost) { stale = false; draw(); } else stale = true; } // nothing is drawn off screen
   function resize() {
     const r = cv.getBoundingClientRect(); // the canvas band, not the stage (on phones the trace flows below it)
     W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
@@ -1014,56 +1182,77 @@
     root.classList.toggle('is-narrow', narrow);
     root.classList.toggle('is-stacked', W < 820); // the trace flows under the canvas instead of over it
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    // a dense backing store (DPR 2+ or over 2 MP) starts without the estimation field's trails
+    const qStart = dpr >= 2 || cv.width * cv.height > 2e6 ? 1 : 2;
+    if (quality > qStart) { quality = qStart; root.dataset.swQuality = quality; }
+    trailLayer();
     if (rebuild) buildSprites();
     measure(); fit();
     hc.fill(0); // trails live in screen space
-    camera(); projectAll(); draw();
+    camera(); projectAll(); paint();
   }
-  let onScreen = false, frameId = 0, bgId = 0, last = performance.now(), ui = 0, booted = false;
-  // quality governor: a device that cannot hold the frame rate sheds trail work first (2 all trails · 1 proposals and
-  // rejections only · 0 none); it climbs back when frames are cheap again
-  let quality = 2, frameDt = 1 / 60, ema = 1 / 60, slowFor = 0, fastFor = 0;
-  function govern(rawDt) {
-    ema += (rawDt - ema) * 0.08;
-    if (ema > 0.038) { slowFor += rawDt; fastFor = 0; } else if (ema < 0.024) { fastFor += rawDt; slowFor = 0; } else { slowFor = 0; fastFor = 0; }
-    if (slowFor > 1.5 && quality > 0) { quality--; slowFor = 0; root.dataset.swQuality = quality; }
-    if (fastFor > 6 && quality < 2) { quality++; fastFor = 0; root.dataset.swQuality = quality; }
+  let onScreen = false, near = false, ledgerNear = false, frameId = 0, bgId = 0, last = performance.now(), ui = 0, booted = false;
+  // quality governor, driven by a frame-time EMA: above 20 ms a device sheds trail work (2 all trails · 1 proposals and
+  // rejections only · 0 none), and a level it had to leave is not tried again; at level 0, a device still under 30 fps
+  // carries fewer agents, a step at a time, and the Agents output says so
+  let quality = 2, qCeil = 2, frameDt = 1 / 60, ema = 1 / 60, workEma = 0, slowFor = 0, fastFor = 0, capFor = 0, coolFor = 0;
+  function govern(raw, work) {
+    ema += (raw - ema) * 0.1; workEma += (work - workEma) * 0.1; coolFor += raw;
+    if (ema > 0.020) { slowFor += raw; fastFor = 0; } else { slowFor = 0; fastFor = ema < 0.0185 && workEma < 0.006 ? fastFor + raw : 0; }
+    if (slowFor > 1 && quality > 0 && coolFor > 1.5) { quality--; qCeil = quality; slowFor = 0; coolFor = 0; root.dataset.swQuality = quality; }
+    else if (fastFor > 6 && quality < qCeil) { quality++; fastFor = 0; coolFor = 0; root.dataset.swQuality = quality; }
+    capFor = quality === 0 && ema > 1 / 30 ? capFor + raw : 0;
+    const floor = narrow ? 1200 : 1800, cur = pop();
+    if (capFor > 2 && cur > floor && inflight <= cur * 1.15) { // the last step has taken effect: the lane is down to it
+      popCap = Math.max(floor, Math.round(cur * 0.8 / 100) * 100); capFor = 0;
+      root.dataset.swCap = popCap; showN();
+    }
   }
-  const running = () => !reduced.matches && !document.hidden;
+  const running = () => !reduced.matches && !document.hidden && !paused;
+  // off screen the model steps only while the page's ledger is near, or a followed proposal has not finished
+  const followPending = () => !!((evPending && evPending.followed) || (rjPending && rjPending.followed));
+  const pulseOK = () => booted && running() && !onScreen && (ledgerNear || follow.active || followPending());
   function frame(now) {
     frameId = 0;
     if (!running() || !onScreen) return;
     const raw = Math.max(0, (now - last) / 1000), dt = Math.min(0.05, raw); last = now; frameDt = dt;
-    if (raw < 0.5) govern(raw);
+    const t0 = performance.now();
+    inLoop = true;
     step(dt, true);
     if (mouse) updateHover();
     draw(); flush(false);
+    inLoop = false;
+    if (uiDirty) syncUI();
     if ((ui += dt) > 0.15) { ui = 0; stats(); }
+    if (raw < 0.5) govern(raw, (performance.now() - t0) / 1000);
     frameId = requestAnimationFrame(frame);
   }
-  // off-screen the model keeps a slow pulse (four steps a second, nothing drawn) so the page still hears it settle
+  // the off-screen pulse: four model steps a second, nothing drawn, nothing written to the DOM
   function bg() {
     bgId = 0;
-    if (!running() || onScreen) return;
+    if (!pulseOK()) return;
     const now = performance.now(), dt = Math.min(0.5, (now - last) / 1000); last = now;
+    inLoop = true;
     for (let k = 0; k < 5; k++) step(dt / 5, false);
-    flush(false); stats();
+    flush(false);
+    inLoop = false;
     bgId = setTimeout(bg, 250);
   }
   function schedule() {
     cancelAnimationFrame(frameId); frameId = 0; clearTimeout(bgId); bgId = 0; last = performance.now();
-    if (!running() || !booted) return;
-    if (onScreen) { hc.fill(0); frameId = requestAnimationFrame(frame); } else bgId = setTimeout(bg, 250);
+    if (!booted || !running()) return;
+    if (onScreen) { hc.fill(0); frameId = requestAnimationFrame(frame); } else if (pulseOK()) bgId = setTimeout(bg, 250);
   }
+  // the model starts when the lab comes within a viewport, or when the ledger it feeds does
   function boot() {
     if (booted) return; booted = true;
-    resize();
-    if (reduced.matches) still(); else { reset(); camera(); warmStart(); for (let k = 0; k < 30; k++) step(0.05, k > 22); projectAll(); draw(); stats(); }
+    resize(); root.dataset.swQuality = quality;
+    if (reduced.matches) still(); else { reset(); camera(); warmStart(); inLoop = true; for (let k = 0; k < 30; k++) step(0.05, k > 22); inLoop = false; projectAll(); paint(); if (onScreen) stats(); }
     schedule();
   }
-  showN(); showStrict(); setFollowButton();
-  // first measure in a frame, not at script time: reading layout mid-load forced an extra full layout of the page
-  requestAnimationFrame(boot);
+  let bootQueued = false;
+  function wantBoot() { if (!booted && !bootQueued && (near || ledgerNear)) { bootQueued = true; requestAnimationFrame(() => { bootQueued = false; boot(); }); } }
+  showN(); showStrict();
   // a still study is re-run on resize (its trails live in screen space), except while it shows a followed proposal:
   // then the same moment is re-projected, so a rotated phone keeps the journey and its trace
   if ('ResizeObserver' in window) new ResizeObserver(([e]) => {
@@ -1073,11 +1262,18 @@
   }).observe(cv);
   else window.addEventListener('resize', () => { if (booted) resize(); });
   (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { if (booted) resize(); watchRatio(); }, { once: true }); })();
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (booted) { measure(); fit(); draw(); } });
-  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; schedule(); }, { rootMargin: '80px 0px' }).observe(stage);
-  else onScreen = true;
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (booted) { measure(); fit(); paint(); } });
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => {
+      onScreen = e.isIntersecting; root.classList.toggle('is-off', !onScreen);
+      if (onScreen && booted) { if (stale) { projectAll(); paint(); } stats(); if (uiDirty) syncUI(); }
+      schedule();
+    }, { rootMargin: '80px 0px' }).observe(stage);
+    new IntersectionObserver(([e]) => { near = e.isIntersecting; wantBoot(); }, { rootMargin: '100% 0px' }).observe(stage);
+    if (LEDGER) new IntersectionObserver(([e]) => { ledgerNear = e.isIntersecting; wantBoot(); if (!onScreen) schedule(); }, { rootMargin: '100% 0px' }).observe(LEDGER);
+  } else { onScreen = near = true; wantBoot(); }
   document.addEventListener('visibilitychange', schedule);
-  reduced.addEventListener('change', () => { if (!booted) return; if (reduced.matches) still(); schedule(); stats(); });
+  reduced.addEventListener('change', () => { if (el.motion) el.motion.hidden = reduced.matches; if (!booted) return; if (reduced.matches) still(); schedule(); if (onScreen) stats(); });
   cv.addEventListener('contextlost', () => { lost = true; });
-  cv.addEventListener('contextrestored', () => { lost = false; buildSprites(); draw(); });
+  cv.addEventListener('contextrestored', () => { lost = false; buildSprites(); paint(); });
 })();
