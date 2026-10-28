@@ -891,6 +891,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-lab.day { display: grid; justify-items: center; gap: 2px; padding: 3px 4px; min-width: 26px; line-height: 1.25; }
 .story-lab.day .rg { color: rgba(245, 242, 236, .7); } /* D and P read alike: regime is a label, not a rank */
 .story-lab.day.is-hot .k { color: var(--paper); }
+.story-lab.day.is-thin:not(:focus-visible), .story-ink .story-lab.is-thin { opacity: 0 !important; } /* columns too close for every tag: 01, 03 … 09 print */
 .story-lab.floor { color: rgba(245, 242, 236, .74); text-align: right; }
 .story-lab.navtag { color: rgba(245, 242, 236, .5); }
 .story-lab.sum { text-align: right; line-height: 1.8; color: rgba(245, 242, 236, .62); }
@@ -989,15 +990,16 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   .story-labels, .story-bar, .story-gl, .story-paper, .story-legend, .story-num, .story-coda { display: none; }
   .beat-fig { display: block; width: 100%; max-width: 440px; height: auto; margin-top: 34px; }
 }
-.no-webgl .story { height: auto; }
-.no-webgl .story-stage { position: relative; height: auto; min-height: 100svh; }
-.no-webgl .story-ui { position: relative; }
-.no-webgl .beat { position: relative; left: auto; right: auto; bottom: auto; opacity: 1; transform: none; pointer-events: auto; padding: clamp(56px, 9vh, 96px) 0; border-top: 1px solid rgba(245, 242, 236, .12); }
-.no-webgl .beat-0 { border-top: 0; padding-top: calc(var(--nav-h) + clamp(96px, 20vh, 220px)); }
-.no-webgl .beat .beat-text { pointer-events: auto; }
+.no-webgl .story, .story-tiny .story { height: auto; }
+.no-webgl .story-stage, .story-tiny .story-stage { position: relative; height: auto; min-height: 100svh; }
+.no-webgl .story-ui, .story-tiny .story-ui { position: relative; }
+.no-webgl .beat, .story-tiny .beat { position: relative; left: auto; right: auto; bottom: auto; opacity: 1; transform: none; pointer-events: auto; padding: clamp(56px, 9vh, 96px) 0; border-top: 1px solid rgba(245, 242, 236, .12); }
+.no-webgl .beat-0, .story-tiny .beat-0 { border-top: 0; padding-top: calc(var(--nav-h) + clamp(96px, 20vh, 220px)); }
+.no-webgl .beat .beat-text, .story-tiny .beat .beat-text { pointer-events: auto; }
 .no-webgl .beat [data-split] .wi { transform: none; }
-.no-webgl .story-labels, .no-webgl .story-bar, .no-webgl .story-gl, .no-webgl .story-paper, .no-webgl .story-legend, .no-webgl .story-num, .no-webgl .story-coda { display: none; }
-.no-webgl .beat-fig { display: block; width: 100%; max-width: 440px; height: auto; margin-top: 34px; }
+.no-webgl .story-labels, .no-webgl .story-bar, .no-webgl .story-gl, .no-webgl .story-paper, .no-webgl .story-legend, .no-webgl .story-num, .no-webgl .story-coda,
+.story-tiny .story-labels, .story-tiny .story-bar, .story-tiny .story-gl, .story-tiny .story-paper, .story-tiny .story-legend, .story-tiny .story-num, .story-tiny .story-coda { display: none; }
+.no-webgl .beat-fig, .story-tiny .beat-fig { display: block; width: 100%; max-width: 440px; height: auto; margin-top: 34px; }
 .no-webgl .story-2d { height: 100vh; height: 100svh; }
 @media (min-aspect-ratio: 23/20) and (min-width: 640px) {
   .no-webgl .beat-fig { position: absolute; right: 0; top: 50%; width: 38%; margin: 0; transform: translateY(-50%); }
@@ -1082,9 +1084,18 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 @media (max-width: 599.98px) {
   .story-lab.ring .n, .story-lab.layer .n { display: none; }
   .story-lab.ring { flex-direction: column; align-items: flex-start; gap: 3px; } /* code over status: a narrow column, so the rings can fill the width */
+  .story-lab.ring.is-row { flex-direction: row; align-items: center; gap: 8px; } /* a short phone: code beside status, so all six fit above the copy */
+  .story-lab.gate { min-height: 20px; } /* six gates above a short phone's copy (they take no pointer) */
 }
 @media (min-width: 600px) and (max-aspect-ratio: 23/20) { .story-lab { font-size: clamp(.625rem, .5rem + .4vw, .8rem); } }
 @media (max-width: 400px) { .hero-stats { grid-template-columns: repeat(2, auto); justify-content: start; gap: 12px 26px; } .story-lab.day { padding: 2px 0; min-width: 0; } }
+/* 400% zoom on a desktop (html.story-tiny: under 300 px of height; story.js): the static sequence above, without the 2D globe's
+   room and with every part of each beat shown; nothing is drawn */
+html.story-tiny .story .beat-0 { padding-top: calc(var(--nav-h) + 28px); }
+html.story-tiny .story .beat [data-split] .wi { transform: none; }
+html.story-tiny .story .beat-0 .hero-kicker { display: block; }
+html.story-tiny .story .beat-0 .hero-stats { display: grid; }
+html.story-tiny .story .story-coda { display: none; }
 @media (prefers-reduced-motion: reduce) { .story-bar .hero-scroll i { animation: none; opacity: .5; } .hero-stats .live { animation: none; } .story-lab, .story-leader, .story-node, .story-insp.is-on, .story-idx button, .story-num i { transition: none; } }
 /* print: the overture prints as its static sequence, ink on white (the stage, its instrument and its chrome stay off paper) */
 @media print {
