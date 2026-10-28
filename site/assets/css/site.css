@@ -1315,14 +1315,22 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .stats.sw-spec .v { font-size: clamp(2rem, 2.8vw, 2.75rem); }
 .stats.sw-spec .k { margin-top: 10px; }
 .stats.sw-spec .d { margin-top: 6px; font-size: .88rem; }
-.sw-legend .card { padding-top: clamp(24px, 2.4vw, 32px); }
+.sw-legend .card { display: flex; flex-direction: column; padding-top: clamp(24px, 2.4vw, 32px); }
+.sw-legend .card > p:not(.sw-at) { margin-bottom: 22px; }
+.sw-legend .card .n { gap: 12px; } /* narrow cards: the code never splits at its hyphen; the role name wraps, flush right */
+.sw-legend .card .n > span:first-child { flex: none; }
+.sw-legend .card .n > span:last-child { text-align: right; }
 .sw-legend .card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--sw-tint, var(--line-strong)); }
 .sw-role--1 { --sw-tint: rgba(245, 242, 236, .72); }
 .sw-role--2 { --sw-tint: var(--signal-bright); }
 .sw-role--3 { --sw-tint: repeating-linear-gradient(90deg, var(--signal-bright) 0 14px, transparent 14px 20px); }
 .sw-role--4 { --sw-tint: linear-gradient(90deg, var(--signal-bright), rgba(245, 242, 236, .86)); }
-.sw-legend .sw-at { display: flex; align-items: center; gap: 10px; margin-top: 18px; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
-.sw-at i { position: relative; flex: none; width: 26px; height: 10px; }
+/* each card's legend line is its footer: on one hairline across the row (pushed to the card's foot), 'In the lab' over
+   the gate names, which break only between gates */
+.sw-legend .sw-at { display: flex; align-items: flex-start; gap: 10px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
+.sw-at b { display: block; margin-top: 3px; font-weight: 500; color: var(--fg-2); }
+.sw-at b > span { white-space: nowrap; }
+.sw-at i { position: relative; flex: none; width: 26px; height: 10px; margin-top: 2px; }
 .sw-at i::before, .sw-at i::after { content: ""; position: absolute; top: 50%; box-sizing: border-box; }
 .sw-role--1 .sw-at i::before { left: 2px; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, var(--paper), rgba(245, 242, 236, .45)); }
 .sw-role--1 .sw-at i::after { left: 14px; width: 4px; height: 4px; margin-top: -2px; border-radius: 50%; background: rgba(245, 242, 236, .5); }
@@ -1331,6 +1339,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .sw-role--3 .sw-at i::after { left: 8px; width: 10px; height: 10px; margin-top: -5px; border: 1.5px solid var(--signal-bright); border-radius: 50%; background: #0E1512; }
 .sw-role--4 .sw-at i::before { left: 1px; width: 8px; height: 8px; margin-top: -4px; border-radius: 1.5px; background: var(--signal-bright); }
 .sw-role--4 .sw-at i::after { left: 12px; width: 14px; height: 6px; margin-top: -3px; border-radius: 1px; background: rgba(245, 242, 236, .92); }
+@media (min-width: 901px) and (max-width: 1099px) { .sw-legend .sw-at { min-height: calc(4.2em + 18px); } } /* four narrow cards: A-02's gates take two lines, so every footer keeps three and the hairlines stay on one line */
 @media (max-width: 900px) { .stats.sw-spec, .sw-legend.card-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .sw-legend.card-grid--4 { grid-template-columns: 1fr; } .stats.sw-spec .v { font-size: 1.9rem; } .stats.sw-spec .d { font-size: .82rem; } }
 
