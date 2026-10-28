@@ -578,8 +578,10 @@ em, .ital { font-style: italic; }
 @media (max-width: 960px) {
   .company-hero { min-height: 0; padding-top: calc(var(--nav-h) + 30px); }
   .company-hero .container { grid-template-columns: 1fr; gap: 26px; }
-  .company-sculpture { aspect-ratio: 1.2; margin-top: 12px; }
-  .company-sculpture .readout { position: static; margin-top: 12px; }
+  /* the plate keeps its 1.2 frame and the readout follows it (in flow, a static readout sat inside the frame's top edge) */
+  .company-sculpture { aspect-ratio: auto; padding-top: calc(100% / 1.2); margin-top: 12px; }
+  .company-sculpture .figure-stage, .company-sculpture .frame { bottom: auto; aspect-ratio: 1.2; }
+  .company-sculpture .readout { position: static; margin-top: 12px; flex-wrap: wrap; gap: 2px 16px; }
   .company-modes { margin-top: 26px; }
 }
 .timeline { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(18px, 2.4vw, 32px); }
