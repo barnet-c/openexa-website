@@ -31,6 +31,10 @@ from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE
 import asyncio, json, linecache, os, platform, re, subprocess, sys, time, traceback
 from pathlib import Path
 from playwright.async_api import async_playwright, expect
+# CI's runner is several times slower than a laptop: an expect() without its own timeout waits up to 20 s (Playwright's
+# default is 5 s; under 6x throttling on two cores the chain's SHA-256 recheck of 'REJECTED' took longer). The same
+# condition is asserted; only the patience changes. An expect() that names its own timeout (a deliberate 'at once') keeps it.
+expect.set_options(timeout=20000)
 
 BASE = "http://127.0.0.1:8125"  # the URL argument replaces it
 SWIFTSHADER_ARGS = ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]  # CI's renderer
