@@ -296,11 +296,11 @@
     for (let c = 0; c < NCOL; c++) {
       const list = byY.slice(c * perC, c === NCOL - 1 ? N_SURF : (c + 1) * perC);
       const nx = 4, nz = 3, ny = Math.ceil(list.length / (nx * nz)), x0 = COL_X(c), ss = SESSIONS[c];
-      const kind = !ss.above ? K.DIM : ss.regime === 'premium' ? K.GREEN : K.BRIGHT; // a session the record does not put above the floor stays dim
+      const above = ss.above; // one status for every session above the floor (a session the record does not put above it stays dim)
       list.sort((a, b) => R(a, 2) - R(b, 2)).forEach((q, j) => {
         const a = j % nx, b = Math.floor(j / nx) % nz, h = Math.floor(j / (nx * nz));
         const x = x0 + (a - (nx - 1) / 2) * 0.026, z = (b - (nz - 1) / 2) * 0.026, y = Y_FLOOR + 0.04 + (h + 0.5) / ny * H_COL;
-        set(4, q, x, y, z, code(M.COLUMN, kind, c));
+        set(4, q, x, y, z, code(M.COLUMN, !above ? K.DIM : R(q, 1) < 0.22 ? K.BRIGHT : K.IVORY, c));
         KEY[q * 4 + 3] = (c + 0.55 * (h / ny)) / (NCOL + 0.55);
       });
     }
@@ -696,13 +696,15 @@
   let W = 1, H = 1, dpr = 1, ratio = 0, stacked = false, compact = false, short = false, navH = 72, barH = 64, gutter = 24;
   // local extent seen from each scene's camera (w, h); portrait screens fit the globe to the sphere itself (its faint orbits may run wider)
   const EXT = [[2.9, 2.5], [3.3, 2.2], [2.75, 2.75], [2.55, 2.5], [3.8, 2.0]];
-  const EXT_ST = [[2.45, 2.12], [3.3, 2.0], null, null, null];
+  const EXT_ST = [[2.45, 2.12], [3.3, 2.7], null, null, null];
   const CENTER = [[0, 0, 0], [0, 0.04, 0], [0, -0.02, 0], [0.12, 0.08, 0], [0, Y_FLOOR + 0.6, 0]]; // S4 sits low: the floor line is where the paper will rise to
-  const CAM = [[0.13, 0.0], [0.6, -0.08], [0.5, -0.56], [0.3, -0.3], [0.12, 0.0]]; // elevation, azimuth
+  const CAM_W = [[0.13, 0.0], [0.6, -0.08], [0.5, -0.56], [0.3, -0.3], [0.12, 0.0]]; // elevation, azimuth
+  const CAM_ST = [[0.13, 0.0], [0.86, -0.08], [0.5, -0.56], [0.3, -0.3], [0.12, 0.0]]; // portrait: S1 seen from higher, to fill the tall frame
+  let CAM = CAM_W;
   const ROOM_W = [0, 250, 236, 214, 0]; // room kept on the right of the structure for its callouts (wide layouts)
   const ZONE = ['right', 'right', 'right', 'right', 'right']; // one horizon: every scene sits in the same band right of its copy
   // under the S4 floor, in CSS px: the records hang from it, then the NAV hairline with each session's regime tick, then the day tags
-  const U_REC = 6.5, U_NAV = 21, U_TICK = 7, U_DAY = 31, DAY_BAND = 66;
+  const U_REC = 6.5, U_NAV = 22, U_TICK = 10, U_DAY = 35, DAY_BAND = 70;
   const layouts = Array.from({ length: 5 }, () => ({ cx: 0, cy: 0, s: 1, rect: [0, 0, 0, 0] }));
   const beatRects = [], numFit = [0, 0, 0, 0], capH = [0, 0, 0, 0, 0], labelMaxW = [0, 0, 0, 0, 0];
   let storyTop = 0, run = 1, scrollY = 0, stageH = 1, lastP = NaN, floorW = 0, floorL = -COL_SPAN / 2 - 0.5, numGlyphH = 0;
@@ -758,7 +760,7 @@
   // the copy's mode, measured: compact on portrait screens that would leave a scene under 40% of the stage (the copy gives way, not
   // the structure), short on landscape phones; a beat whose copy would still reach the nav (or the index under it) drops its paragraph
   function setModes() {
-    stacked = stackedMQ.matches;
+    stacked = stackedMQ.matches; CAM = stacked ? CAM_ST : CAM_W;
     root.classList.remove('story-compact', 'story-short');
     beats.forEach(b => b.classList.remove('is-tight'));
     compact = stacked && H < 780; short = !stacked && H < 600;
@@ -773,6 +775,39 @@
     let tight = false;
     beats.forEach((b, i) => { if (beatRects[i] && beatRects[i].t < lim) { b.classList.add('is-tight'); tight = true; } });
     if (tight) measureLayout();
+  }
+  // the six rings' projected outline at scale s (offsets from the camera target's screen point), for S1's camera
+  const tmpV = new Float32Array(16), tmpP = new Float32Array(16), tmpVP = new Float32Array(16);
+  function ringOutline(s) {
+    const el = CAM[1][0], az = CAM[1][1], tc = [0, CENTER[1][1] * s, 0];
+    lookAt(tmpV, [tc[0] + Math.sin(az) * Math.cos(el) * CAM_D, tc[1] + Math.sin(el) * CAM_D, tc[2] + Math.cos(az) * Math.cos(el) * CAM_D], tc);
+    perspective(tmpP, FOV, W / H, 0.1, 40, 0, 0); mul(tmpVP, tmpP, tmpV);
+    const out = [];
+    for (let k = 0; k < 6; k++) for (let j = 0; j < 40; j++) {
+      const q = onLoop(RB[k], RINGS[k][0], j / 40 * TAU, 0), x = q[0] * s, y = q[1] * s, z = q[2] * s, v = tmpVP;
+      const cw = v[3] * x + v[7] * y + v[11] * z + v[15];
+      out.push(((v[0] * x + v[4] * y + v[8] * z + v[12]) / cw) * 0.5 * W, -((v[1] * x + v[5] * y + v[9] * z + v[13]) / cw) * 0.5 * H);
+    }
+    return out;
+  }
+  function fitRings(s0, x1, cy, br, pxu) {
+    const ok = (s) => {
+      const o = ringOutline(s);
+      let maxX = -1e9; for (let j = 0; j < o.length; j += 2) maxX = Math.max(maxX, o[j]);
+      const cx = x1 - 6 - maxX;
+      for (let j = 0; j < o.length; j += 2) {
+        const x = cx + o[j], y = cy + o[j + 1];
+        if (x < gutter || y < navH + 24 || y > H - barH - Math.max(18, capH[1] + 12)) return null;
+        if (x < br.r + 22 && y > br.t - 22) return null; // clear of the copy's corner (and of everything under it)
+      }
+      return { cx, minX: Math.min(...o.filter((_, j) => j % 2 === 0)) };
+    };
+    if (!ok(s0)) return null;
+    let lo = s0, hi = Math.min(s0 * 2.4, (W * 0.62) / (3.25 * pxu));
+    if (hi <= lo) return null;
+    for (let it = 0; it < 16; it++) { const m = (lo + hi) / 2; if (ok(m)) lo = m; else hi = m; }
+    const r = ok(lo);
+    return { s: lo, cx: r.cx, cy, x0: r.cx + r.minX };
   }
   function fitScenes() {
     const pxu = pxuOf(H);
@@ -803,6 +838,10 @@
       } else {
         s = Math.min((x1 - x0) / (ext[0] * pxu), (y1 - y0) / (ext[1] * pxu), (H * 0.74) / (ext[1] * pxu));
         cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
+        if (i === 1 && !stacked) { // on the horizon, or up to 6% of the stage above it if that buys the rings room over the copy
+          const f = [cy, cy - H * 0.06].map(c => fitRings(s, x1, c, br, pxu)).filter(Boolean).sort((p, q) => q.s - p.s)[0];
+          if (f) { s = f.s; cx = f.cx; x0 = f.x0; cy = f.cy; }
+        }
       }
       layouts[i] = { cx, cy, s, rect: [x0, y0, x1, y1] };
     }
@@ -1059,7 +1098,7 @@
         const nv = []; for (let u = x - step / 2; u < x + step / 2 - dash * 0.5; u += per) nv.push([u, yN, 0], [Math.min(u + dash, x + step / 2), yN, 0]);
         put('nv' + c, nv, 'pairs', C.ivory, 0.3 * nav, 1, k);
         const d = ss.regime === 'premium' ? 1 : -1;
-        put('rt' + c, [[x, yN + d * gap, 0], [x, yN + d * tk, 0]], false, C.ivory, 0.78 * nav, 1, k);
+        put('rt' + c, [[x, yN + d * gap, 0], [x, yN + d * tk, 0]], false, C.ivory, 0.9 * nav, 1.6, k);
       });
     }
     return out;
@@ -1154,7 +1193,8 @@
     lab.days = SESSIONS.map((s, c) => label(4, `<span class="k">${s.day}</span><span class="rg">${s.regime === 'premium' ? 'P' : 'D'}</span><span class="dt">Day ${s.day} · ${s.regime} · ${esc(valueT(s))} · ${s.confirmed ? 'broker-confirmed' : 'confirmation not stated'}</span>`,
       { cls: 'day' + (s.regime === 'premium' ? ' is-prem' : ''), kind: 'tag', group: c, side: 's', keep: true, col: c, dy: U_DAY - 6, info: [`Day ${s.day}`, capw(s.regime), `${s.above ? 'Above' : 'Not above'} the ${FLOOR_T} floor (${esc(valueT(s))}) · ${s.confirmed ? 'confirmed against the broker’s records' : 'confirmation not stated'}`], anchor: () => [COL_X(c), Y_FLOOR, 0] }));
     // the floor's tag sits on the line, left of column 01 (never across it); the summary sits over the columns where there is room
-    label(4, `<span>${FLOOR_T}</span> <span>floor</span>`, { cls: 'floor', kind: 'tag', floor: true, anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR, 0], side: 'nw' });
+    label(4, `<span>${FLOOR_T}</span> <span>floor</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.42, 0.6], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR, 0], side: 'nw' });
+    label(4, 'NAV', { cls: 'navtag', kind: 'tag', out: [0.05, 0.22], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR - l4(U_NAV), 0], side: 'w' }); // the regime ticks' baseline
     lab.sum = label(4, `<b>${N_ABOVE} of ${NCOL}</b> sessions above the ${FLOOR_T} floor<span class="sep"></span><span class="lg-p">${N_PREM} premium</span> · <span class="lg-d">${N_DISC} discount</span><span class="sep"></span><span class="lg-t">${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed</span>`, { cls: 'sum', kind: 'tag', sum: true, anchor: () => [COL_SPAN / 2 + 0.06, Y_FLOOR + H_COL + 0.26, 0], side: 'nw' });
   }
   // the inspector: one quiet box that shows the hovered or focused ring, layer or session
@@ -1200,7 +1240,8 @@
     l.el.addEventListener('pointerleave', e => { if (e.pointerType === 'touch' || !moved(e)) return; hoverPtr = null; setHover(); });
   });
   // a callout shows while its scene is near; on the way out the proof's day tags stay, so the rising paper turns them to ink
-  const vis = (sc, keep) => 1 - sstep(0.22, 0.4, Math.abs(sNow - sc)) - (sc === 4 && !keep ? sstep(0.15, 0.55, xNow) : 0);
+  const vis = (l) => 1 - sstep(0.22, 0.4, Math.abs(sNow - l.scene)) - (l.scene === 4 && !l.keep ? sstep((l.out || OUT4)[0], (l.out || OUT4)[1], xNow) : 0);
+  const OUT4 = [0.04, 0.2];
   // a session's own progress into S4 (its column's stagger): its day tag lands with it and, in reverse, leaves first
   const colIn = (c) => sNow >= 4 ? 1 : seg === 3 ? clamp(ease(stag(mRaw, (c + 0.55) / (NCOL + 0.55))), 0, 1) : 0;
   let tabScene = -1, shownHasInsp = null;
@@ -1231,7 +1272,7 @@
     const paperTop = H - paperH;
     const listCol = [];
     labels.forEach(l => {
-      let on = vis(l.scene, l.keep) > 0.5 && !((stacked || short) && l.wide); // portrait and short screens leave out the secondary notes
+      let on = vis(l) > 0.5 && !((stacked || short) && l.wide); // portrait and short screens leave out the secondary notes
       if (on && l.col != null) on = colIn(l.col) > 0.5;
       let x = 0, y = 0, tr = '';
       if (on && l.kind === 'cap') {

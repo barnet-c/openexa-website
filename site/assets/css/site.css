@@ -1007,6 +1007,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-lab.day .rg { color: rgba(245, 242, 236, .7); } /* D and P read alike: regime is a label, not a rank */
 .story-lab.day.is-hot .k { color: var(--paper); }
 .story-lab.floor { color: rgba(245, 242, 236, .74); text-align: right; }
+.story-lab.navtag { color: rgba(245, 242, 236, .5); }
 .story-lab.sum { text-align: right; line-height: 1.8; color: rgba(245, 242, 236, .62); }
 .story-lab.sum b { color: var(--paper); }
 .story-lab.sum .sep { display: block; }
@@ -1176,7 +1177,10 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 }
 @media (scripting: none) and (max-width: 639.98px), (scripting: none) and (max-aspect-ratio: 23/20) { .beat-0 { padding-top: calc(var(--nav-h) + 66vw + 48px); } }
 /* phones leave out the rings' and layers' names (the inspector has them); portrait tablets keep them, a little larger */
-@media (max-width: 599.98px) { .story-lab.ring .n, .story-lab.layer .n { display: none; } }
+@media (max-width: 599.98px) {
+  .story-lab.ring .n, .story-lab.layer .n { display: none; }
+  .story-lab.ring { flex-direction: column; align-items: flex-start; gap: 3px; } /* code over status: a narrow column, so the rings can fill the width */
+}
 @media (min-width: 600px) and (max-aspect-ratio: 23/20) { .story-lab { font-size: clamp(.625rem, .5rem + .4vw, .8rem); } }
 @media (max-width: 400px) { .hero-stats { grid-template-columns: repeat(2, auto); justify-content: start; gap: 12px 26px; } .story-lab.day { padding: 2px 0; min-width: 0; } }
 @media (prefers-reduced-motion: reduce) { .story-bar .hero-scroll i { animation: none; opacity: .5; } .hero-stats .live { animation: none; } .story-lab, .story-leader, .story-node, .story-insp, .story-idx button, .story-num i { transition: none; } }
