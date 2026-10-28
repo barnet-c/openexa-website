@@ -556,7 +556,10 @@
       lastSeal = performance.now();
       followedSeq = r.seq; pendingFollow = true;
       counts();
-      if (onScreen()) { flush(playing && !reduced, true); showFollowed(); }
+      // the record the swarm's trace now names is on the line at once (one small draw, no animation, even off screen);
+      // it is selected, centred and pulses when the reader is at the ledger
+      flush(onScreen() && playing && !reduced, true);
+      if (onScreen()) showFollowed();
       schedule();
     }
     // the followed record is selected the next time the ledger is in view (exempt from trimming while it is), and its
