@@ -1202,14 +1202,14 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 
 /* the trace of a followed proposal: over the stage's lower left; below the canvas on narrow screens. Every gate has its
    row from the start; the ones ahead are pending until the proposal reaches them */
-.sw-on .sw-trace:not([hidden]) { display: block; position: absolute; left: 16px; top: calc(var(--sw-h) - 16px); transform: translateY(-100%); width: min(420px, calc(100% - 32px)); border: 1px solid rgba(245, 242, 236, .2); background: rgba(11, 17, 15, .9); font-family: var(--mono); animation: sw-trace-in .35s var(--ease) both; }
+.sw-on .sw-trace:not([hidden]) { display: block; position: absolute; left: 16px; top: calc(var(--sw-h) - 16px); transform: translateY(-100%); width: min(388px, calc(100% - 32px)); border: 1px solid rgba(245, 242, 236, .2); background: rgba(11, 17, 15, .9); font-family: var(--mono); animation: sw-trace-in .35s var(--ease) both; }
 .sw-trace-head { display: flex; align-items: center; gap: 12px; padding: 6px 8px 6px 14px; border-bottom: 1px solid var(--line); font-size: var(--mono-xs, .625rem); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--paper); }
 .sw-trace-state { color: var(--fg-3); }
 .sw-trace-state.is-live { color: var(--accent); } .sw-trace-state.is-ok { color: var(--accent); } .sw-trace-state.is-bad { color: var(--reject-bright); }
 .sw-trace-close { margin-left: auto; min-height: 34px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 2px; color: var(--fg-2); font: inherit; letter-spacing: var(--track-label, .12em); text-transform: uppercase; }
 .sw-trace-close:hover { border-color: var(--line-strong); color: var(--paper); }
 .sw-log { margin: 0; padding: 3px 14px 7px; list-style: none; font-size: .64rem; line-height: 1.45; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
-.sw-log li { display: grid; grid-template-columns: 4.4em 9.2em minmax(0, 1fr); align-items: center; gap: 10px; min-height: 2.2em; padding: 3px 0; border-bottom: 1px solid rgba(245, 242, 236, .08); color: var(--fg-2); }
+.sw-log li { display: grid; grid-template-columns: 4.4em 8.4em minmax(0, 1fr); align-items: center; gap: 10px; min-height: 2.1em; padding: 2px 0; border-bottom: 1px solid rgba(245, 242, 236, .08); color: var(--fg-2); }
 .sw-log li:last-child { border-bottom: 0; }
 .sw-log .sw-t { color: var(--fg-3); text-align: right; }
 .sw-log b { font-weight: 500; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--paper); }
@@ -1227,7 +1227,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 @keyframes sw-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* counters + controls */
-.swarm-bar { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); border-top: 1px solid var(--line); }
+.swarm-bar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-top: 1px solid var(--line); }
 .swarm-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-right: 1px solid var(--line); }
 .swarm-stats > div { padding: 18px 18px 16px; border-right: 1px solid var(--line); } .swarm-stats > div:last-child { border-right: 0; }
 .swarm-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: 1.9rem; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }

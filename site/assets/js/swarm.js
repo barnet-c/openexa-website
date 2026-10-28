@@ -260,6 +260,7 @@
       }
     }
     inflight = fl;
+    if (halted && fl === 0) S.rate = 0; // drained: nothing can settle, so the weighted rate keeps no tail into a Resume
     // signals drifting in: data the agents pick up at 01 (nobody picks it up while halted: it fades at the closed gate)
     for (let m = 0; m < MOTES; m++) { MS[m] += MV[m] * dt / 1.05; if (MS[m] >= 1) mote(m, false); }
     for (let k = 0; k < NT; k++) if (TF[k] > 0) TF[k] = Math.max(0, TF[k] - dt / 0.32);
@@ -874,14 +875,26 @@
     say(`${d.id}: ${T.outcome === 'rejected' ? 'its rejection is recorded' : 'sealed'} in the ledger below as record ${rec}.`);
     touch();
   });
-  // the record button: brings the ledger into view (centred under the nav) and asks it to show that record
+  // the record button: brings the ledger into view (centred under the nav), then, once the scroll has landed (the
+  // ledger renders what it holds when it is in view), asks it to show that record
+  let inspectRaf = 0;
   function toLedger(rec, kbd) {
     if (!LEDGER) return;
     const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0;
     const r = LEDGER.getBoundingClientRect(), room = window.innerHeight - navH;
-    const y = window.scrollY + r.top - navH - Math.max(0, (room - r.height) / 2);
-    window.scrollTo({ top: Math.max(0, Math.round(y)), behavior: reduced.matches ? 'auto' : 'smooth' });
-    document.dispatchEvent(new CustomEvent('oxa:inspect', { detail: { record: rec.record, seq: rec.seq, focus: !!kbd } }));
+    const y = Math.max(0, Math.min(document.documentElement.scrollHeight - window.innerHeight, Math.round(window.scrollY + r.top - navH - Math.max(0, (room - r.height) / 2))));
+    window.scrollTo({ top: y, behavior: reduced.matches ? 'auto' : 'smooth' });
+    const t0 = performance.now(), y0 = window.scrollY; let lastY = y0, still = 0, moved = false;
+    cancelAnimationFrame(inspectRaf);
+    const land = () => { // landed: at the target, or stopped for four frames once it moved, or 1.6 s at most
+      const sy = window.scrollY, dt = performance.now() - t0;
+      if (Math.abs(sy - y0) > 1) moved = true;
+      still = Math.abs(sy - lastY) < 0.5 ? still + 1 : 0; lastY = sy;
+      if (Math.abs(sy - y) > 1.5 && (moved ? still < 4 : dt < 400) && dt < 1600) { inspectRaf = requestAnimationFrame(land); return; }
+      inspectRaf = 0;
+      document.dispatchEvent(new CustomEvent('oxa:inspect', { detail: { record: rec.record, seq: rec.seq, focus: !!kbd } }));
+    };
+    inspectRaf = requestAnimationFrame(land);
   }
   if (el.log) el.log.addEventListener('click', (e) => {
     const b = e.target.closest('[data-sw-rec]'); if (!b) return;
