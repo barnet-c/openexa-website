@@ -1,7 +1,7 @@
 {
  "access.html": {
   "date": "2026-10-28",
-  "sha": "f437b8a2e9a8cca1"
+  "sha": "b146a006013eea84"
  },
  "blog/an-optimization-algorithm-for-sparse-mean-reverting-portfolio-selection.html": {
   "date": "2026-10-28",
@@ -41,7 +41,7 @@
  },
  "blog/empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way.html": {
   "date": "2026-10-28",
-  "sha": "5bac49c8d60f5c22"
+  "sha": "7ee27b21c5c60c3a"
  },
  "blog/encoding-market-view-via-a-randomized-brownian-bridge.html": {
   "date": "2026-10-28",
@@ -57,11 +57,11 @@
  },
  "blog/in-search-gen-ai-business-model.html": {
   "date": "2026-10-28",
-  "sha": "5226f7f781b8f6dd"
+  "sha": "17c9d804a6990b8b"
  },
  "blog/index.html": {
   "date": "2026-10-28",
-  "sha": "eb52f66f4fd398c9"
+  "sha": "68233c6d7569b9e3"
  },
  "blog/leveraged-etfs-price-dynamics-and-options-valuation.html": {
   "date": "2026-10-28",
@@ -97,7 +97,7 @@
  },
  "blog/rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies.html": {
   "date": "2026-10-28",
-  "sha": "0eb20864d1090503"
+  "sha": "0d9e52d3489971d2"
  },
  "blog/stochastic-storage-cost-model-for-grains-futures.html": {
   "date": "2026-10-28",
@@ -105,7 +105,7 @@
  },
  "blog/tearsheet-how-to-use-tearsheet-in-the-face-of-volatile-crypto-and-bond-markets-as-a-means-of-capital-preservation-and-asset-appreciation.html": {
   "date": "2026-10-28",
-  "sha": "632d02b5189d73c0"
+  "sha": "61b839fd8fe1c702"
  },
  "blog/the-drawdown-risk-and-portfolio-concentration-of-sector-etfs.html": {
   "date": "2026-10-28",
@@ -125,7 +125,7 @@
  },
  "company.html": {
   "date": "2026-10-28",
-  "sha": "caa32da7720e86c1"
+  "sha": "556fa88a98b23e5d"
  },
  "evidence.html": {
   "date": "2026-10-28",
@@ -141,7 +141,7 @@
  },
  "platform.html": {
   "date": "2026-10-28",
-  "sha": "84304101229bb5d5"
+  "sha": "73cb34f00cf4d4d9"
  },
  "research.html": {
   "date": "2026-10-28",
@@ -189,6 +189,6 @@
  },
  "trust.html": {
   "date": "2026-10-28",
-  "sha": "1969c2bc240ba523"
+  "sha": "8abd90cd27c2c746"
  }
 }

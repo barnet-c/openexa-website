@@ -283,7 +283,7 @@ FEATURED = f'''    <section class="section is-paper-2 blog-series" id="series" d
           <div class="col-6"><h2 class="display-2" data-reveal data-split>{SERIES_NAME}: from business model to AI agents.</h2></div>
           <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Four posts by Ajit K Dubey, written in 2024. They set out where generative AI creates value, then work one financial use case end to end: relative value analysis, guardrails and tearsheets, and the AI copilots and autonomous agents they make possible. It's the line of thinking that became OpenEXA.</p><a class="link-arrow mt-3" href="{SERIES[0][0]}.html">Start with the introduction {ARROW}</a></div>
         </div>
-        <ol class="series-rail" data-reveal style="--d:120ms">
+        <ol class="series-rail" role="list" data-reveal style="--d:120ms">
 {chr(10).join(series_cards)}
         </ol>
       </div>
@@ -399,7 +399,7 @@ for p in order:
         crumb = f'<a href="index.html#series">{SERIES_NAME}</a>'
         meta_extra = f"<span>{esc(part)} · post {j + 1} of {len(SERIES)}</span>"
         items = "".join(f'<li{" aria-current=\"true\"" if s == p["slug"] else ""}><a href="{s}.html"><span>{i:02d}</span><span><b>{esc(pt)}</b>{esc(sh)}</span></a></li>' for i, (s, pt, sh) in enumerate(SERIES))
-        series_box = f'<div class="series-box"><div class="eyebrow mb-2">{SERIES_NAME}</div><ol>{items}</ol></div>'
+        series_box = f'<div class="series-box"><div class="eyebrow mb-2">{SERIES_NAME}</div><ol role="list">{items}</ol></div>'
         sp = SLUGS[SERIES[j - 1][0]] if j else None; sn = SLUGS[SERIES[j + 1][0]] if j + 1 < len(SERIES) else None
         pager = "".join([
             f"<a class='pager-card prev' href='{sp['slug']}.html'><span class='k'>← {esc(SERIES[j - 1][1])}</span><h3>{esc(sp['title'])}</h3><p>{fmt(sp['dt'])}</p></a>" if sp else f"<a class='pager-card prev' href='index.html#series'><span class='k'>← {SERIES_NAME}</span><h3>Four posts, from business model to AI agents.</h3><p>2024 · {series_minutes} min in total</p></a>",

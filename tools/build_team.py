@@ -125,11 +125,11 @@ SECTION = f'''    <!-- 03 THE TEAM -->
             </div>
           </div>
         </div>
-        <ol class="crew crew--team" aria-label="The OpenEXA team">
+        <ol class="crew crew--team" role="list" aria-label="The OpenEXA team">
 {team_html}
         </ol>
         <div class="crew-sub" data-reveal><h3 class="crew-sub-h">Advisors</h3><p>Operators, scholars and specialists who advise OpenEXA on strategy, AI and machine learning, compliance and risk, networks, distributed systems and the economics of financial markets.</p></div>
-        <ol class="crew crew--advisors" aria-label="OpenEXA advisors">
+        <ol class="crew crew--advisors" role="list" aria-label="OpenEXA advisors">
 {adv_html}
         </ol>
       </div>
