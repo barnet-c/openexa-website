@@ -76,7 +76,7 @@
   /* ---------------- hex digits that roll to their value ----------------
      One Text node per element (its data is rewritten, nothing is re-created) and one shared frame loop for every roll on
      the page; a roll that should not animate is written at its final value at once. */
-  const rolls = new Map(); let rollRaf = 0;
+  const rolls = new Map(); let rollRaf = 0, rollWake = 0;
   function textOf(el) {
     let t = el.firstChild;
     if (t && t.nodeType === 3 && t === el.lastChild) return t;
@@ -86,7 +86,15 @@
   function rollTo(el, to, delay, dur) {
     const t = textOf(el);
     rolls.set(t, { to, start: performance.now() + delay, dur });
-    if (!rollRaf) rollRaf = requestAnimationFrame(rollFrame);
+    rollNext(performance.now());
+  }
+  // frames run only while a roll is actually moving; until the next one is due the loop sleeps on a timer
+  function rollNext(now) {
+    if (rollRaf || !rolls.size) return;
+    let due = Infinity; rolls.forEach(r => { due = Math.min(due, r.start); });
+    clearTimeout(rollWake); rollWake = 0;
+    if (due - now > 24) rollWake = setTimeout(() => { rollWake = 0; rollNext(performance.now()); }, due - now - 16);
+    else rollRaf = requestAnimationFrame(rollFrame);
   }
   function rollFrame(now) {
     rollRaf = 0;
@@ -99,7 +107,7 @@
       for (let k = n; k < r.to.length; k++) s += HEX[Math.random() * 16 | 0];
       t.data = s;
     });
-    if (rolls.size) rollRaf = requestAnimationFrame(rollFrame);
+    rollNext(now);
   }
   function finishRolls(scope) { rolls.forEach((r, t) => { if (scope.contains(t)) { t.data = r.to; rolls.delete(t); } }); }
 
@@ -229,25 +237,27 @@
     const onScreen = () => visible && !document.hidden;
     const atEnd = () => view.scrollLeft >= maxScroll() - 6;
     function toEnd(smooth) { view.scrollTo({ left: maxScroll(), behavior: smooth && !reduced ? 'smooth' : 'auto' }); }
-    function reveal(li, smooth) { // horizontal only: never scroll the page under the reader
+    function reveal(li, smooth, centre) { // horizontal only: never scroll the page under the reader
       const pad = 36, x = leftOf(li), l = x - pad, r = x + G.col + pad, sl = view.scrollLeft;
       let to = null;
-      if (l < sl) to = l; else if (r > sl + G.w) to = r - G.w;
-      if (to !== null) view.scrollTo({ left: Math.max(0, to), behavior: smooth && !reduced ? 'smooth' : 'auto' });
+      if (centre) to = Math.min(maxScroll(), x + G.col / 2 - G.w / 2); // a record asked for by name sits mid-strip
+      else if (l < sl) to = l; else if (r > sl + G.w) to = r - G.w;
+      if (to !== null && Math.abs(to - sl) > 1) view.scrollTo({ left: Math.max(0, to), behavior: smooth && !reduced ? 'smooth' : 'auto' });
     }
     function follow(smooth = true) {
       sel = null; following = true;
+      intentUntil = 0; // an explicit return to the head outranks the tail of an earlier swipe: the glide is the view's own
       markSel();
       if (stream && rendered !== newest()) flush(false, true); // what was held back while paused joins the line
       stop(track.lastElementChild);
       toEnd(smooth); inspect(); state();
     }
-    function select(li, focus) {
+    function select(li, focus, centre) {
       if (!li || !els.has(+li.dataset.seq)) return;
       sel = +li.dataset.seq; following = false;
       markSel(); stop(li);
       if (focus && document.activeElement !== li) li.focus({ preventScroll: true });
-      reveal(li, true); inspect(); state();
+      reveal(li, true, centre); inspect(); state();
     }
     track.addEventListener('click', e => { const li = e.target.closest('.lt-rec'); if (li) select(li, true); });
     track.addEventListener('focusin', e => { const li = e.target.closest('.lt-rec'); if (li && +li.dataset.seq !== sel) select(li, false); });
@@ -278,7 +288,7 @@
       const sl = view.scrollLeft; // read first, then write
       edges(sl);
       if (sel === null) inspect(); else leader();
-      state();
+      pill(); // only the pill's count: a replay's or an audit's own status line stays as it is
     }
     let edgeL = null, edgeR = null;
     function edges(sl = view.scrollLeft) {
@@ -362,13 +372,15 @@
         if (ui.play.getAttribute('aria-label') !== label) ui.play.setAttribute('aria-label', label);
         ui.play.classList.toggle('is-paused', !playing);
       }
-      if (ui.latest) {
-        // the way back: shown whenever the view is not resting on the newest record, with how many records are newer
-        // than the last one wholly in view (records held back while paused included)
-        const held = newest() - rendered, show = stream && (!following || held > 0);
-        if (ui.latest.hidden === show) ui.latest.hidden = !show;
-        if (show && ui.fresh) { const lv = following ? null : inView(), n = newest() - (lv ? lv.seq : rendered); put(ui.fresh, n > 0 ? `+${n > 99 ? '99+' : n}` : ''); }
-      }
+      pill();
+    }
+    function pill() {
+      if (!ui.latest) return;
+      // the way back: shown whenever the view is not resting on the newest record, with how many records are newer
+      // than the last one wholly in view (records held back while paused included)
+      const held = newest() - rendered, show = stream && (!following || held > 0);
+      if (ui.latest.hidden === show) ui.latest.hidden = !show;
+      if (show && ui.fresh) { const lv = following ? null : inView(), n = newest() - (lv ? lv.seq : rendered); put(ui.fresh, n > 0 ? `+${n > 99 ? '99+' : n}` : ''); }
     }
     function counts() {
       put(ui.count, fmt(total));
@@ -552,7 +564,7 @@
       pendingFollow = false;
       const li = ensure(followedSeq);
       if (!li) return;
-      select(li, false);
+      select(li, false, true);
       pulseSoon(li);
     }
     function ensure(s) { // the record's column, drawing it first if it is held back or was trimmed from the window
@@ -592,19 +604,24 @@
       if (r.seq === followedSeq) pendingFollow = false;
       const li = ensure(r.seq);
       if (!li) return;
-      select(li, false);
+      select(li, true, true); // the reader asked for this record: keyboard focus lands on it too (the page glides, not jumps)
       pulseSoon(li);
     }
     if (stream) {
       document.addEventListener('oxa:settled', e => intake('settled', e));
       document.addEventListener('oxa:rejected', e => intake('rejected', e));
       document.addEventListener('oxa:inspect', inspectEvent);
-      // Escape anywhere on the page (outside another control) also returns a selected line to the running stream
+      // Escape anywhere on the page also returns a selected line to the running stream, unless a control that is on
+      // screen holds focus (it keeps its own Escape). After following a proposal, focus is usually still on the swarm's
+      // button, screens above: the reader's Escape is for the ledger they are looking at
       document.addEventListener('keydown', e => {
         if (e.key !== 'Escape' || e.defaultPrevented || sel === null || !onScreen()) return;
         const t = e.target;
         if (track.contains(t)) return; // the list handles its own Escape
-        if (t && t !== document.body && t !== document.documentElement && !root.contains(t)) return;
+        if (t && t !== document.body && t !== document.documentElement && !root.contains(t)) {
+          const b = t.getBoundingClientRect();
+          if (b.bottom > 0 && b.top < window.innerHeight) return;
+        }
         follow();
       });
     }
