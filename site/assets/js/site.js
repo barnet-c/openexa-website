@@ -165,7 +165,8 @@
     const old = ui.line, neu = lineFor(k);
     ui.line = neu;
     ui.roll.appendChild(neu);
-    if (first || !old || reducedMQ.matches || !neu.animate || document.hidden) return;
+    // a long jump (ours, or the swarm lab's record trip: html[data-jump]) lands with its readout: no roll
+    if (first || !old || reducedMQ.matches || !neu.animate || document.hidden || jumping || root.dataset.jump) return;
     old.style.cssText = 'position:absolute;left:0;top:4px;width:max-content';
     ui.roll.appendChild(old);
     const w1 = neu.getBoundingClientRect().width;
@@ -379,16 +380,36 @@
      transition, the page lands at once (at the bar's edge, as an anchor jump does), and a same-document view transition
      brings the live destination in as a sheet over the still of where the reader was: rising from the bottom edge going
      down the page, coming down from the top going up (v2:nav CSS; the bar holds; no blend, never a blank frame).
-     Without view transitions, or with reduced motion, it is a plain instant cut. Short hops keep the native scroll. */
+     Without view transitions, or with reduced motion, it is a plain instant cut. Short hops keep the native scroll.
+     The browser's still of the outgoing view holds nothing below about 16,384 CSS px of the document at any pixel ratio
+     (the sheet would slide over flat ink there; the incoming view is live and is not affected): a jump that leaves a
+     view reaching past VT_LIMIT is a plain cut, and what lands settles in from a dim start in .16 s (.is-landing). The
+     swarm's record trip applies the same limit. */
+  const VT_LIMIT = 16000;
+  let jumping = false;
+  function settle() {
+    const bands = $$('main > *, body > .footer').filter(el => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; });
+    bands.forEach(el => {
+      el.classList.remove('is-offscreen', 'is-landing'); // on screen now (the observer agrees a frame later)
+      void el.offsetWidth; // a second landing restarts the settle
+      el.classList.add('is-landing');
+      setTimeout(() => el.classList.remove('is-landing'), 400);
+    });
+  }
   function cut(to, land) {
     const from = window.scrollY;
+    // the chapter list is already closing: it goes at once (it would hang over the landing)
+    if (ui.wrap) { ui.wrap.classList.add('is-snap'); setTimeout(() => ui.wrap.classList.remove('is-snap'), 60); }
     const go = () => {
+      jumping = true;
       revealRange(Math.min(from, to), Math.max(from, to) + window.innerHeight); // first: an entrance offset would skew the landing
       land();
-      if (nav) measure(); // the bar takes the destination's ground in the same frame
+      if (nav) measure(); // the bar takes the destination's ground (and its readout) in the same frame
+      jumping = false;
       document.dispatchEvent(new CustomEvent('oxa:jump', { detail: { from, to: window.scrollY } }));
     };
     if (reducedMQ.matches || typeof document.startViewTransition !== 'function' || document.hidden) { go(); return; }
+    if (from + window.innerHeight > VT_LIMIT) { go(); settle(); return; }
     root.dataset.jump = to > from ? 'down' : 'up';
     let vt;
     try { vt = document.startViewTransition(go); } catch (err) { delete root.dataset.jump; go(); return; }
