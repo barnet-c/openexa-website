@@ -359,13 +359,16 @@
   function startFollow() {
     if (reduced.matches) { stillFollow(); return; }
     follow.state = 'waiting'; follow.act = null; follow.k = 0; follow.wt = 0; follow.waitT = 0;
-    setFollowButton(true); setLane(0); walkIntoView();
+    setFollowButton(true); setLane(0);
     say('Following the next action the model produces. Esc stops.');
     if (paused) togglePause();
     // a proposal already on the chart (a ring not yet settled) is the next action: walk it at once
     const open = !S.done && S.acts.find(a => !a.filled && !a.held);
     if (open) { open.held = true; follow.act = open; follow.state = 'walking'; follow.wt = 0; walk(1); }
-    stats(); requestFrame(); // otherwise the model runs fast to the next one; a closed session hands over at the next frame
+    stats();
+    // measured once the head reads 'Following an action' (on some widths the longer state wraps the head onto a new row)
+    walkIntoView();
+    requestFrame(); // otherwise the model runs fast to the next one; a closed session hands over at the next frame
   }
   function stopFollow(msg) {
     follow.timers.forEach(clearTimeout); follow.timers = [];
