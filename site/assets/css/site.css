@@ -3001,8 +3001,9 @@ html:has(> body[data-nav="dark-start"]) { background: #0B110F; }
 @media (min-width: 961px) { /* a canvas is a replaced element: it needs an explicit width; its trail fades before the h1 */
   .notfound-swarm { left: 45%; width: 55%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 26%); mask-image: linear-gradient(90deg, transparent, #000 26%); }
 }
-/* figure mode buttons need JavaScript: without it they are not offered at all */
-@media (scripting: none) { [data-figure-target], .company-modes { display: none; } }
+/* Company's figure mode buttons need JavaScript: without it they are not offered at all. Only .company-modes: the
+   research index's notes also carry data-figure-target, and they are links that must stay (PG-R2-1) */
+@media (scripting: none) { .company-modes { display: none; } }
 /* Company §04: the lifecycle loop gets its own band beside the h2 (it drew as a stray streak behind the grid). The stage
    element stays where it is in the markup (merge-safe); it is placed here, and the head row reserves its height. */
 @media (min-width: 961px) {
