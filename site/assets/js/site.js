@@ -691,22 +691,27 @@
     const ready = Promise.all([document.fonts ? document.fonts.ready : Promise.resolve(),
       document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true })), glReady]);
     const easeOut = t => 1 - Math.pow(1 - t, 3);
-    const t0 = performance.now(); // the count starts from the "00" already on screen; MIN and CAP count from navigation start
-    const early = t => 0.9 * (1 - Math.exp(-Math.max(0, t - t0) / 520)); // before readiness the count eases towards 90
+    // the dial has swept on its own (CSS) since the first paint: the count takes over from where it stands, and only now
+    // appears (never a frozen "00" while the script is on its way); the short version never shows a count
+    const idle = dial ? Math.min(0.6, parseFloat(getComputedStyle(dial).getPropertyValue('--lp')) || 0) : 0;
+    if (!seen) loader.classList.add('is-counting');
+    const t0 = performance.now(); // MIN and CAP count from navigation start
+    const early = t => idle + (0.9 - idle) * (1 - Math.exp(-Math.max(0, t - t0) / 520)); // before readiness the count eases towards 90
     let runFrom = 0, pFrom = 0, finishAt = 0, completed = false;
     const progressAt = (now) => finishAt && now >= runFrom ? pFrom + (1 - pFrom) * easeOut(clamp01((now - runFrom) / Math.max(1, OUT))) : early(now);
     const paint = (p) => {
       if (count) count.textContent = pad(Math.min(100, Math.round(p * 100)));
-      if (dial) dial.style.setProperty('--p', p.toFixed(4));
+      if (dial && !seen) dial.style.setProperty('--lp', p.toFixed(4));
     };
     const complete = () => {
       if (completed) return;
       completed = true;
       paint(1);
-      loader.classList.add('is-complete', 'is-done');
+      loader.classList.add('is-complete');
       document.body.classList.remove('is-loading');
       loaded();
-      setTimeout(() => loader.remove(), seen ? 600 : 1400);
+      // the decision reads for a beat (100, the aperture pulses green), then the curtain lifts
+      setTimeout(() => { loader.classList.add('is-done'); setTimeout(() => loader.remove(), seen ? 600 : 1150); }, seen ? 0 : 120);
     };
     const schedule = () => {
       if (finishAt) return;

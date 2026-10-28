@@ -2112,38 +2112,47 @@ body.nav-open { overflow: hidden; }
 .loader {
   position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; color: var(--paper);
   background: radial-gradient(90% 70% at 50% 46%, #13201b 0%, var(--ink) 58%, #0B110F 100%);
-  transition: transform 1s cubic-bezier(.76, 0, .24, 1) .16s, visibility 0s linear 1.2s;
-  animation: loader-failsafe .45s 3.4s forwards; /* lifted by site.js within ~2.4 s; without a working script it still goes */
+  transition: transform .9s cubic-bezier(.62, 0, .2, 1), visibility 0s linear .95s;
+  animation: loader-failsafe .45s 3.4s forwards; /* lifted by site.js within ~2.5 s; without a working script it still goes */
 }
 @keyframes loader-failsafe { to { opacity: 0; visibility: hidden; } }
 .loader.is-done { transform: translateY(-100%); visibility: hidden; }
 /* the curtain's lower edge is a hairline: the lift reads as a sheet being raised off the stage */
-.loader::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(245, 242, 236, .4) 30%, rgba(79, 203, 147, .55) 50%, rgba(245, 242, 236, .4) 70%, transparent); opacity: 0; transition: opacity .3s var(--ease) .16s; }
+.loader::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(245, 242, 236, .4) 30%, rgba(79, 203, 147, .55) 50%, rgba(245, 242, 236, .4) 70%, transparent); opacity: 0; transition: opacity .25s var(--ease); }
 .loader.is-done::after { opacity: 1; }
-.loader-inner { display: grid; justify-items: center; gap: 30px; transition: transform 1s cubic-bezier(.76, 0, .24, 1) .16s, opacity .5s var(--ease) .16s; }
+.loader-inner { display: grid; justify-items: center; gap: 30px; transition: transform .9s cubic-bezier(.62, 0, .2, 1), opacity .42s ease-in .26s; }
 .loader.is-done .loader-inner { transform: translateY(34vh); opacity: 0; }
-.loader-dial { --p: 0; position: relative; width: clamp(140px, 13vw, 176px); aspect-ratio: 1; display: grid; place-items: center; }
+/* the dial sweeps on its own from the first paint (before any script has arrived: never a frozen dial); site.js takes
+   over from where it is (.is-counting) and only then shows the count */
+@property --lp { syntax: "<number>"; inherits: true; initial-value: 0; }
+.loader-dial { --lp: 0; position: relative; width: clamp(140px, 13vw, 176px); aspect-ratio: 1; display: grid; place-items: center; animation: loader-idle 3.2s cubic-bezier(.2, .7, .2, 1) forwards; }
+@keyframes loader-idle { to { --lp: .26; } }
+.loader.is-counting .loader-dial { animation: none; }
+.loader-count { visibility: hidden; }
+.loader.is-counting .loader-count { visibility: visible; }
 .loader-ring {
   position: absolute; inset: 0; border-radius: 50%;
-  background: conic-gradient(rgba(245, 242, 236, .92) calc(var(--p) * 1turn), rgba(245, 242, 236, .16) 0);
+  background: conic-gradient(rgba(245, 242, 236, .92) calc(var(--lp) * 1turn), rgba(245, 242, 236, .16) 0);
   -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 10px), #000 calc(100% - 9px)), repeating-conic-gradient(#000 0 .7deg, transparent .7deg 5deg);
   -webkit-mask-composite: source-in;
   mask: radial-gradient(closest-side, transparent calc(100% - 10px), #000 calc(100% - 9px)), repeating-conic-gradient(#000 0 .7deg, transparent .7deg 5deg);
   mask-composite: intersect;
 }
 /* the leading tick: the signal */
-.loader-dial::before { content: ""; position: absolute; inset: -3px; border-radius: 50%; background: linear-gradient(var(--signal-bright), var(--signal-bright)) 50% 0 / 2px 14px no-repeat; transform: rotate(calc(var(--p) * 1turn)); opacity: .95; }
+.loader-dial::before { content: ""; position: absolute; inset: -3px; border-radius: 50%; background: linear-gradient(var(--signal-bright), var(--signal-bright)) 50% 0 / 2px 14px no-repeat; transform: rotate(calc(var(--lp) * 1turn)); opacity: .95; }
+/* site.js lifts the curtain 120 ms after 100 (the decision reads for a beat); it starts moving at once, and its content
+   stays legible until the stage is coming through, so no frame is an empty dark panel */
 .loader-dial::after { content: ""; position: absolute; inset: 23%; border-radius: 50%; border: 1px solid rgba(245, 242, 236, .1); }
 .loader .mark { width: 32%; height: 32%; color: var(--paper); opacity: .92; }
 .loader-count { font-family: var(--serif); font-size: clamp(2.6rem, 5vw, 3.9rem); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; min-width: 3ch; text-align: center; }
-.loader-lab { font-family: var(--mono); font-size: .62rem; letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .56); text-align: center; padding: 0 var(--gutter); }
+.loader-lab { font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .56); text-align: center; padding: 0 var(--gutter); }
 /* the decision: at 100 the aperture pulses once before the stage is revealed */
 .loader.is-complete .loader-dial { animation: loader-pulse .42s cubic-bezier(.2, .7, .2, 1) both; }
 .loader.is-complete .loader-ring { background: var(--signal-bright); transition: background .3s; }
 @keyframes loader-pulse { 40% { transform: scale(1.06); } to { transform: none; } }
 /* a later visit in the same session: no count, just the mark until the stage is ready */
 .loader.is-quick .loader-count, .loader.is-quick .loader-lab, .loader.is-quick .loader-dial::before { visibility: hidden; }
-.loader.is-quick .loader-ring { opacity: .35; }
+.loader.is-quick .loader-ring, .loader.is-quick .loader-dial::after { opacity: 0; }
 .loader.is-quick { transition: opacity .45s var(--ease), visibility 0s linear .45s; }
 .loader.is-quick.is-done { transform: none; opacity: 0; }
 .loader.is-quick.is-done .loader-inner { transform: none; }
@@ -2233,7 +2242,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .loader, .loader-inner { transition: opacity .4s var(--ease), visibility 0s linear .4s; }
   .loader.is-done { transform: none; opacity: 0; }
   .loader.is-done .loader-inner { transform: none; }
-  .loader.is-complete .loader-dial { animation: none; }
+  .loader.is-complete .loader-dial, .loader-dial { animation: none; }
   a.link-arrow, button.link-arrow { transition: none; }
 }
 
