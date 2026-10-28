@@ -1125,7 +1125,11 @@
   /* ---------------- counters, all read from the model (written only while the lab is on screen) ---------------- */
   const fmt = (n) => n.toLocaleString('en-US');
   const fmtN = (n) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n));
-  const put = (node, s) => { if (node && node.textContent !== s) node.textContent = s; };
+  const put = (node, s) => { // a lone text node is rewritten in place (no node swapped into the tree, no restyle)
+    if (!node) return;
+    const t = node.firstChild;
+    if (t && t.nodeType === 3 && !t.nextSibling) { if (t.data !== s) t.data = s; } else if (node.textContent !== s) node.textContent = s;
+  };
   function stats() {
     put(el.inflight, fmt(inflight));
     put(el.recorded, fmt(S.settled));
