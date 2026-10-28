@@ -1540,19 +1540,16 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .layers .layer-floor p { font-family: var(--mono); font-size: var(--mono-s, .6875rem); line-height: 1.6; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-2); }
 @media (max-width: 860px) { .layers .layer, .layers .layer-boundary { grid-template-columns: 1fr; gap: 14px; } .layers .layer-floor { grid-template-columns: auto minmax(0, 1fr); gap: 14px; } }
 
-/* ---------- the spec (Platform, data-arch-spec): the same list, laid out as a two-column spec sheet ----------
-   number and name + verb on the left; the paragraph, its chips and In -> Out on the right; the boundary row between 04 and
-   05; the floor under 08. The same rules hold before arch.js runs, after it and without it, so the entries never move. */
-.layers[data-arch-spec] { display: block; border: 0; --arch-gap: clamp(28px, 3.2vw, 48px); }
-[data-arch-spec] > .layer { position: relative; isolation: isolate; grid-template-columns: 56px minmax(0, 1fr) minmax(0, 2.2fr); gap: clamp(20px, 2.4vw, 36px); padding: clamp(24px, 2.6vw, 34px) 0; border-top: 1px solid var(--line); border-bottom: 0; background: none; transition: none; scroll-margin-top: 16px; }
+/* ---------- the spec (Platform, data-arch-spec): the same list, laid out as a spec sheet ----------
+   wide: number | name + verb, its scope (the chips) under it | what it does | In -> Out, on one grid for every row; the
+   boundary row between 04 and 05; the floor under 08. Narrower, the paragraph, chips and In -> Out stack in one column.
+   The same rules hold before arch.js runs, after it and without it, so the entries never move when it does. */
+.layers[data-arch-spec] { display: block; border: 0; --arch-gap: clamp(28px, 3.2vw, 48px); --spec-gap: clamp(20px, 2.4vw, 40px); }
+[data-arch-spec] > .layer { position: relative; isolation: isolate; grid-template-columns: 56px minmax(0, 1fr) minmax(0, 2.2fr); gap: var(--spec-gap); padding: clamp(24px, 2.6vw, 34px) 0; border-top: 1px solid var(--line); border-bottom: 0; background: none; transition: none; scroll-margin-top: 16px; }
 [data-arch-spec] > .layer:hover { background: none; }
 .arch--spec + .layer, [data-arch-spec] > .layer:first-child { border-top-color: var(--line-strong); }
 [data-arch-spec] > .layer .k { font-size: var(--mono-m, .75rem); color: var(--fg-3); padding-top: 9px; }
-[data-arch-spec] > .layer > div { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); grid-template-areas: "p io" "ul io"; column-gap: clamp(24px, 3vw, 48px); align-items: start; }
-[data-arch-spec] > .layer > div > p { grid-area: p; max-width: 64ch; line-height: 1.6; }
-[data-arch-spec] > .layer > div > ul { grid-area: ul; }
-[data-arch-spec] > .layer > div > .io { grid-area: io; margin: 4px 0 0; padding: 0 0 0 clamp(16px, 1.6vw, 24px); border-top: 0; border-left: 1px solid var(--line); gap: 14px; }
-[data-arch-spec] > .layer > div > .io > div { grid-template-columns: 1fr; gap: 4px; }
+[data-arch-spec] > .layer > div > p { max-width: 64ch; line-height: 1.6; }
 [data-arch-spec] > .layer > div > .io > div:last-child dt { color: color-mix(in srgb, var(--signal) 80%, var(--ink)); }
 [data-arch-spec] > .layer > div > .io > div:last-child dt::before { content: "\2192\00a0"; content: "\2192\00a0" / ""; }
 /* a layer the explorer leads to: a green rule beside it, and the entry lights for a moment */
@@ -1562,15 +1559,23 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 [data-arch-spec] > .layer.is-flash::after { animation: arch-lit 2.4s var(--ease) forwards; }
 [data-arch-spec] > .layer:focus { outline: none; } /* programmatic focus only (tabindex -1): the lit rule shows where it went */
 @keyframes arch-lit { 0% { opacity: 0; } 14% { opacity: 1; } 100% { opacity: 0; } }
-[data-arch-spec] > .layer-boundary { grid-template-columns: 56px minmax(0, 1fr) minmax(0, 2.2fr); gap: clamp(20px, 2.4vw, 36px); margin: 0 -14px; padding: 26px 14px; }
+[data-arch-spec] > .layer-boundary { grid-template-columns: 56px minmax(0, 1fr) minmax(0, 2.2fr); gap: var(--spec-gap); margin: 0 -14px; padding: 26px 14px; }
 [data-arch-spec] > .layer-boundary + .layer { border-top: 0; }
 [data-arch-spec] > .layer-boundary .k { padding-top: 9px; }
-[data-arch-spec] > .layer-floor { grid-template-columns: 56px minmax(0, 1fr); gap: clamp(20px, 2.4vw, 36px); margin-top: 0; padding: 20px 0 32px; }
-@media (min-width: 1100px) { [data-arch-spec] > .layer-boundary .lb-io { grid-template-columns: 1fr 1fr; gap: clamp(24px, 3vw, 48px); } }
-@media (max-width: 1099px) {
-  [data-arch-spec] > .layer > div { grid-template-columns: minmax(0, 1fr); grid-template-areas: "p" "ul" "io"; }
-  [data-arch-spec] > .layer > div > .io { margin-top: 18px; padding: 14px 0 0; border-left: 0; border-top: 1px solid var(--line); }
-  [data-arch-spec] > .layer > div > .io > div { grid-template-columns: 42px minmax(0, 1fr); gap: 12px; }
+[data-arch-spec] > .layer-floor { grid-template-columns: 56px minmax(0, 1fr); gap: var(--spec-gap); margin-top: 0; padding: 20px 0 32px; }
+@media (min-width: 1100px) {
+  [data-arch-spec] > .layer, [data-arch-spec] > .layer-boundary { grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1.55fr) minmax(0, 1fr); }
+  [data-arch-spec] > .layer { grid-template-rows: auto 1fr; row-gap: 18px; }
+  [data-arch-spec] > .layer > .k { grid-column: 1; grid-row: 1 / -1; }
+  [data-arch-spec] > .layer > h3 { grid-column: 2; grid-row: 1; }
+  /* the panel keeps its own box (the explorer leads to it) and lays its parts on the row's grid: chips under the name */
+  [data-arch-spec] > .layer > div { grid-column: 2 / -1; grid-row: 1 / -1; display: grid; grid-template-columns: subgrid; grid-template-rows: subgrid; pointer-events: none; }
+  [data-arch-spec] > .layer > div > * { pointer-events: auto; }
+  [data-arch-spec] > .layer > div > p { grid-column: 2; grid-row: 1 / -1; }
+  [data-arch-spec] > .layer > div > ul { grid-column: 1; grid-row: 2; align-self: start; margin-top: 0; }
+  [data-arch-spec] > .layer > div > .io { grid-column: 3; grid-row: 1 / -1; align-self: start; margin: 4px 0 0; padding: 0 0 0 clamp(16px, 1.6vw, 24px); border-top: 0; border-left: 1px solid var(--line); gap: 14px; }
+  [data-arch-spec] > .layer > div > .io > div { grid-template-columns: 1fr; gap: 4px; }
+  [data-arch-spec] > .layer-boundary .lb-io { grid-column: 3 / -1; grid-template-columns: subgrid; gap: var(--spec-gap); }
 }
 @media (max-width: 860px) {
   [data-arch-spec] > .layer, [data-arch-spec] > .layer-boundary { grid-template-columns: minmax(0, 1fr); gap: 10px; }
@@ -1582,11 +1587,11 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 
 /* ---------- room for the wide instrument, before arch.js builds it and after (deep links land where they should) ----------
    home: the list is held at the instrument's height until it becomes the instrument; Platform: the instrument's room is
-   held above the spec. If the script never runs, both give the room back after 4 s (and at once when it bails, .is-plain). */
+   held above the spec. If the script never runs, both give the room back after 10 s (and at once when it bails, .is-plain). */
 [data-arch] { --arch-minh: 790px; }
 @media (scripting: enabled) and (min-width: 1000px) {
-  .layers[data-arch]:not([data-arch-spec]):not(.is-plain) { height: var(--arch-minh); overflow: clip; animation: arch-unclip 0s 4s forwards; }
-  .layers[data-arch-spec]:not(.is-built):not(.is-plain)::before { content: ""; display: block; height: var(--arch-minh); margin-bottom: var(--arch-gap); animation: arch-unhold 0s 4s forwards; }
+  .layers[data-arch]:not([data-arch-spec]):not(.is-plain) { height: var(--arch-minh); overflow: clip; animation: arch-unclip 0s 10s forwards; }
+  .layers[data-arch-spec]:not(.is-built):not(.is-plain)::before { content: ""; display: block; height: var(--arch-minh); margin-bottom: var(--arch-gap); animation: arch-unhold 0s 10s forwards; }
 }
 @keyframes arch-unclip { to { height: auto; overflow: visible; } }
 @keyframes arch-unhold { to { height: 0; margin-bottom: 0; } }
@@ -1765,7 +1770,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .bnd-side .checks li:first-child { padding-top: 4px; }
 .bnd-side .checks li:first-child::before { top: 10px; }
 .bnd-side .checks li:last-child { border-bottom: 0; }
-.bnd-side::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.bnd-side::after { content: ""; position: absolute; inset: 0 44% 0 0; z-index: -1; pointer-events: none; } /* under the title, not the bullets */
 .bnd-side:not(.is-below)::after {
   background-image: radial-gradient(circle at 31% 42%, rgba(14, 21, 18, .34) .6px, transparent 1.3px), radial-gradient(circle at 74% 17%, rgba(14, 21, 18, .28) .6px, transparent 1.3px),
     radial-gradient(circle at 12% 81%, rgba(14, 21, 18, .26) .6px, transparent 1.3px), radial-gradient(circle at 58% 66%, rgba(14, 21, 18, .3) .6px, transparent 1.3px);
@@ -1773,15 +1778,16 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
   -webkit-mask-image: linear-gradient(to top, #000, transparent 75%); mask-image: linear-gradient(to top, #000, transparent 75%); }
 .bnd-side.is-below::after { background-image: radial-gradient(circle, rgba(14, 21, 18, .26) .7px, transparent 1.2px); background-size: 16px 16px; background-position: 8px 8px;
   -webkit-mask-image: linear-gradient(to bottom, #000, transparent 75%); mask-image: linear-gradient(to bottom, #000, transparent 75%); }
-.bnd-line.arch-bound { min-height: 84px; padding: 0; border-top: 0; font-size: var(--mono-s, .6875rem); color: var(--fg-2); }
-.bnd-line::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--signal); box-shadow: 0 0 10px rgba(30, 122, 90, .35); }
-.bnd-line .chip { border-color: var(--signal); background: var(--paper); color: color-mix(in srgb, var(--signal) 80%, var(--ink)); }
+.bnd-line.arch-bound { min-height: 104px; padding: 0; border-top: 0; font-size: var(--mono-s, .6875rem); color: var(--fg-2); }
+.bnd-line::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--signal); box-shadow: 0 0 0 .5px rgba(30, 122, 90, .2), 0 0 14px 1px rgba(30, 122, 90, .3); }
+.bnd-line .chip { padding: 7px 11px; border-color: var(--signal); background: var(--paper); color: color-mix(in srgb, var(--signal) 80%, var(--ink)); }
 .bnd-line .sides { gap: 22px; }
 .bnd-line .sides > span { background: none; }
 .bnd-line .sides > span:first-child { color: color-mix(in srgb, var(--signal) 80%, var(--ink)); }
 .bnd-line .sides > span:last-child { color: var(--fg-2); }
 @media (max-width: 860px) {
   .bnd-side { grid-template-columns: minmax(0, 1fr); grid-template-areas: "n" "h" "ul"; }
+  .bnd-side::after { inset: 0; }
   .bnd-side .checks { margin-top: 22px; }
   .bnd-side .checks li:first-child { padding-top: 12px; }
   .bnd-side .checks li:first-child::before { top: 18px; }
