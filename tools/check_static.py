@@ -14,8 +14,9 @@
   record's; research 09's figure reads its regimes from the record; the Proof hero plate draws one record per session;
 - craft guards: no :has() in site.css that restyles a subtree or keys on nothing (outside @media (scripting: none)),
   and none in the ledger and nav regions; 'Fig.' / 'Table' / 'Plate' labels unique on every hand-written page (the
-  overture's captions in story.js count for the home page); the misspelled blog placeholder referenced nowhere.
-    python tools/check_static.py
+  overture's captions in story.js count for the home page); the misspelled blog placeholder referenced nowhere; every
+  body cell of the Platform and Proof tables names its column (td[data-th]) for the phone restack.
+    python tools/check_static.py [--only=count_not_on_proof,regime_split,...]   (--only limits the round-1 guards)
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -380,16 +381,34 @@ def check_proof_plate():
     if "evidence.html" not in records: fail("evidence.html", "proof_plate: no #oxa-sessions record"); return
     c = counts_of(records["evidence.html"][0])
     s = records["evidence.html"][1]
-    hero = re.search(r'<section class="page-hero\b.*?</section>', s, re.S)
-    if not hero: fail("evidence.html", "proof_plate: no hero section"); return
-    rec, tick = len(re.findall(r"\sdata-plate-rec\b", hero[0])), len(re.findall(r"\sdata-plate-tick\b", hero[0]))
+    # the hero is the first <section> whose class names page-hero (any attribute order); the plate lives inside it
+    hero = re.search(r'<section\b(?=[^>]*\sclass="[^"]*\bpage-hero\b)[^>]*>.*?</section>', s, re.S)
+    if not hero: fail("evidence.html", "proof_plate: no hero section (section.page-hero)"); return
+    mark = lambda a: len(re.findall(r"\s%s(?=[\s=>/])" % a, hero[0]))
+    rec, tick = mark("data-plate-rec"), mark("data-plate-tick")
     if rec != c["total"]: fail("evidence.html", f"proof_plate: the hero plate has {rec} [data-plate-rec]; the record has {c['total']} sessions")
     if tick != c["confirmed"]: fail("evidence.html", f"proof_plate: the hero plate has {tick} [data-plate-tick]; the record has {c['confirmed']} broker-confirmed sessions")
 
 
+def check_table_th():
+    """Every body cell of every table in a .table-scroll on Platform and Proof names its column (td[data-th]), so the
+    phone restack (pages' <= 600 px rule keyed on td[data-th]) labels each value (PG5, PF4)."""
+    for rel in ("platform.html", "evidence.html"):
+        s = (ROOT / rel).read_text(encoding="utf-8")
+        boxes = re.findall(r'<div\b(?=[^>]*\sclass="[^"]*\btable-scroll\b)[^>]*>(.*?)</table>', s, re.S)
+        if not boxes: fail(rel, "table_th: no .table-scroll table"); continue
+        for k, box in enumerate(boxes, 1):
+            body = box.split("<tbody", 1)[-1]
+            cells = re.findall(r"<td\b[^>]*>", body)
+            bare = [c for c in cells if not re.search(r'\sdata-th="[^"]+"', c)]
+            if not cells: fail(rel, f"table_th: table {k} has no body cells")
+            elif bare: fail(rel, f"table_th: table {k}: {len(bare)} of {len(cells)} body cells carry no data-th:", bare[0][:80])
+
+
 GUARDS = [check_count_not_on_proof, check_count_static_final, check_regime_split, check_research09_regimes, check_has_guard,
-          check_has_regions, check_figure_labels, check_blog_placeholder, check_proof_plate]
+          check_has_regions, check_figure_labels, check_blog_placeholder, check_proof_plate, check_table_th]
 only = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--only=")), None)
+if "--only" in sys.argv[1:-1]: only = sys.argv[sys.argv.index("--only") + 1]
 for g in GUARDS:
     if only is None or g.__name__[len("check_"):] in only.split(","): g()
 
