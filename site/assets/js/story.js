@@ -477,9 +477,9 @@
     float fz = clamp((-mv.z - u_dist + u_fogR) / (2.0 * u_fogR), 0.0, 1.0);
     al *= mix(1.12, 0.26, fz);
     // at the globe's limb its foreshortened rows would stack into bright coils: smaller, fainter beads there
-    float onGlobe = step(0.5, mA) * step(mA, 1.5) * (1.0 - tc);
-    float limb = mix(1.0, mix(0.55, 1.0, smoothstep(0.05, 0.35, abs(Nv.z))), onGlobe);
-    al *= limb;
+    float onGlobe = step(0.5, mA) * step(mA, 1.5) * (1.0 - tc), ndv = smoothstep(0.04, 0.5, abs(Nv.z));
+    float limb = mix(1.0, mix(0.5, 1.0, ndv), onGlobe);
+    al *= mix(1.0, mix(0.3, 1.0, ndv), onGlobe);
     // the globe hides what is behind it
     if (u_occ.w > 0.0) {
       vec4 oc = u_view * vec4(u_occ.xyz, 1.0);
