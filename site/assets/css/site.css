@@ -1737,7 +1737,8 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .arch.is-narrow .arch-head { flex-wrap: wrap; row-gap: 8px; padding-top: 9px; padding-bottom: 10px; }
 .arch.is-narrow .arch-lab { flex: 1 1 14em; }
 .arch.is-narrow .arch-hint { margin-left: auto; }
-.arch.is-narrow .arch-legend { order: 3; flex: 1 1 100%; margin-left: 0; gap: 6px 14px; }
+.arch.is-narrow .arch-legend { order: 3; flex: 1 1 100%; margin-left: 0; gap: 6px 12px; }
+@media (max-width: 379px) { .arch.is-narrow .arch-legend > span:first-child { flex-basis: 100%; } } /* 'Illustrative' on a line of its own */
 @media (max-width: 1299px) { .arch.is-wide .arch-hint { display: none; } } /* below this the head would wrap */
 .arch.is-wide .arch-head > *, .arch.is-wide .arch-legend > span { white-space: nowrap; } /* one line: the wide height is fixed */
 .arch.is-wide .arch-legend { flex-wrap: nowrap; }

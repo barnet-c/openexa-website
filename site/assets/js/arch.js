@@ -364,7 +364,7 @@
 
     /* ---------------- 4 · geometry ---------------- */
     let wide = false, W = 1, Hh = 1, cx = 0, halfW = 150, Sc = 1, F0 = 19 * DEG, thick = 7, figH = 0, minH = 0;
-    let base = new Array(N).fill(0), rowC = new Array(N).fill(0), by = 0, fy = 0, readL = 0, readR = 0, readTop = 0, listL = 0, listR = 0;
+    let base = new Array(N).fill(0), rowC = new Array(N).fill(0), by = 0, fy = 0, readL = 0, readR = 0, readTop = 0, listL = 0, listR = 0, roomyB = false, roomyP = false;
     const view = { T: 45 * DEG, F: 19 * DEG, tT: 45 * DEG, tF: 19 * DEG };
     let geoDirty = true;
     const proj = (u, v, h) => {
@@ -411,6 +411,15 @@
       } else {
         reserve();
         halfW = clamp(W * (W < 560 ? 0.29 : 0.27), 84, 196); cx = W * (W < 560 ? 0.39 : 0.38);
+        // the labels right of the stack (10 px mono caps, ~7.3 px a character): long ('↓ Execution is deterministic',
+        // '06 · Orchestrate') where they fit, short ('↓ Executes', '06') where not; the stack moves left, and on the
+        // narrowest screens shrinks, so that even the short ones keep 8 px from the edge
+        const wl = (s) => (s.length + 2) * 7.3, shortB = wl('Executes'), longB = Math.max(wl(noDot(UP.t)), wl(noDot(DN.t)));
+        const roomB = () => W - 8 - (cx + 1.16 * halfW + 12), slack = () => cx - 1.16 * halfW - 16;
+        if (roomB() < longB && roomB() + slack() >= longB) cx -= longB - roomB(); // a little to the left buys the long labels
+        if (roomB() < shortB) { cx = W - 8 - 12 - shortB - 1.16 * halfW; if (cx - 1.16 * halfW < 4) { halfW = (W - 24 - shortB) / 2.32; cx = 4 + 1.16 * halfW; } }
+        roomyB = roomB() >= longB;
+        roomyP = W - 8 - (cx + halfW + 12) >= Math.max(...plates.map((p) => wl(p.numLong) - 14));
         F0 = (W < 560 ? 22 : 18) * DEG; thick = W < 560 ? 6 : 7;
         const hh = halfW * Math.sin(F0), pitch = Math.max(30, hh * (W < 560 ? 0.92 : 0.86)), gap = pitch * 1.5, top = 30 + hh;
         base = []; for (let i = 0; i < N; i++) base.push(top + i * pitch + (i >= bIndex ? 2 * gap - pitch : 0));
@@ -849,14 +858,14 @@
       setA(bound.lineR, 'x1', f1(cx + BR[0] + 8)); setA(bound.lineR, 'x2', f1(x1)); setA(bound.lineR, 'y1', f1(by)); setA(bound.lineR, 'y2', f1(by));
       setA(bound.line0, 'stroke-opacity', f3(0.5 * bl * (1 - cardVis))); setA(bound.lineL, 'stroke-opacity', f3(0.5 * bl)); setA(bound.lineR, 'stroke-opacity', f3(0.5 * bl));
       if (!wide) {
-        const roomy = W - (cx + BR[0] + 12) > 170;
+        const roomy = roomyB;
         setA(bound.tUp, 'x', f1(cx + BR[0] + 12)); setA(bound.tUp, 'y', f1(by - 8));
         setA(bound.tDn, 'x', f1(cx + BR[0] + 12)); setA(bound.tDn, 'y', f1(by + 16));
         setA(bound.tUp, 'opacity', f3(bl)); setA(bound.tDn, 'opacity', f3(bl));
         const up = '↑ ' + (roomy ? noDot(UP.t) : 'Decides'), dnT = '↓ ' + (roomy ? noDot(DN.t) : 'Executes');
         if (bound.tUp.textContent !== up) bound.tUp.textContent = up;
         if (bound.tDn.textContent !== dnT) bound.tDn.textContent = dnT;
-        plates.forEach((p, i) => { const t2 = roomy ? p.numLong : p.numShort; if (p.num.textContent !== t2) p.num.textContent = t2; setA(p.num, 'opacity', f3(clamp((exOf(i) - 0.8) / 0.2, 0, 1))); });
+        plates.forEach((p, i) => { const t2 = roomyP ? p.numLong : p.numShort; if (p.num.textContent !== t2) p.num.textContent = t2; setA(p.num, 'opacity', f3(clamp((exOf(i) - 0.8) / 0.2, 0, 1))); });
       }
       // the floor: a ground line under the stack, hatched beneath it as in a technical drawing; wide, a dotted leader
       // carries it on to its row in the list; narrow, its label sits under it. A settled action lands on it with a mark.
