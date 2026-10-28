@@ -548,11 +548,12 @@
   // at once, with no transition: what a long jump passes over or lands on, and anything the keyboard focuses (focus
   // never lands on something still invisible). .is-instant lasts two frames; .is-cut stays (a skipped entrance never
   // plays later)
+  const instant = el => { el.classList.add('is-instant'); requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('is-instant'))); };
   function revealNow(el) {
     if (!el.classList.contains('will-reveal') || el.classList.contains('is-in')) return;
-    el.classList.add('is-instant', 'is-cut', 'is-in');
+    el.classList.add('is-cut', 'is-in');
+    instant(el);
     if (rio) rio.unobserve(el);
-    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('is-instant')));
   }
   function revealRange(a, b) {
     const y = window.scrollY;
@@ -563,8 +564,14 @@
     });
   }
   document.addEventListener('focusin', e => {
-    let el = e.target.closest && e.target.closest('.will-reveal:not(.is-in)');
-    while (el) { revealNow(el); el = el.parentElement && el.parentElement.closest('.will-reveal:not(.is-in)'); }
+    // every reveal around the focused control: not started yet, or still fading in (the scroll that brought it near
+    // started it a moment ago): both are finished now
+    let el = e.target.closest && e.target.closest('.will-reveal');
+    while (el) {
+      if (!el.classList.contains('is-in')) revealNow(el);
+      else if (el.getAnimations && el.getAnimations({ subtree: true }).some(a => a.playState === 'running' && a.transitionProperty)) instant(el);
+      el = el.parentElement && el.parentElement.closest('.will-reveal');
+    }
   });
 
   /* ---------------- off-screen bands: their CSS loops stop ----------------

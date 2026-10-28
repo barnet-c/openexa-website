@@ -1927,6 +1927,7 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-links a { position: relative; padding: 10px 0; font-size: .9rem; font-weight: 500; letter-spacing: -0.005em; opacity: .8; transition: opacity .25s var(--ease); }
 .nav-links a::after { content: ""; position: absolute; left: 0; right: 0; bottom: 4px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: right; transition: transform .45s var(--ease); }
 .nav-links a:hover, .nav-links a:focus-visible, .nav-links a[aria-current="page"] { opacity: 1; }
+.nav-links a:focus-visible { transition: none; } /* keyboard focus is at full strength at once */
 .nav-links a:hover::after, .nav-links a:focus-visible::after, .nav-links a[aria-current="page"]::after { transform: scaleX(1); transform-origin: left; }
 .nav-ink { display: none; }
 /* where anchor positioning exists, the current page's underline is one element: it glides to the next page's link
@@ -2184,6 +2185,7 @@ a.link-arrow, button.link-arrow {
 a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.link-arrow:focus-visible { background-size: 100% 1px, 100% 1px; background-position: 0 100%, 0 100%; }
 :where(a.link-arrow, button.link-arrow):focus-visible { outline-offset: 5px; }
 :where(.form) :is(input, select, textarea):focus-visible { outline: none; border-bottom-color: var(--accent); box-shadow: 0 1px 0 0 var(--accent); }
+.footer ul li a:focus-visible { opacity: 1; } /* the footer's links rest at .85; a focused one is at full strength */
 .skip { position: fixed; left: 12px; top: 12px; z-index: 1001; padding: 11px 16px; border-radius: var(--r); background: var(--ink); color: var(--paper); font-size: .9rem; font-weight: 500; box-shadow: 0 0 0 2px var(--signal-bright); transform: translateY(calc(-100% - 24px)); transition: transform .3s var(--ease); }
 .skip:focus, .skip:focus-visible { left: 12px; transform: none; outline: none; }
 
