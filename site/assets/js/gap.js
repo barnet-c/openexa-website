@@ -287,10 +287,23 @@
     el.follow.setAttribute('aria-pressed', String(on)); // a toggle keeps its label; the pressed state says it is on
     root.classList.toggle('is-following', on);
   }
+  // the walk happens on the lane and lands in the ledger strip: when either is off screen as a follow starts (a phone, a
+  // short window, the desk scrolled half away), scroll the least that brings both in under the bar
+  function walkIntoView() {
+    const a = el.lane && (el.lane.closest('.desk-lane') || el.lane), z = (el.log && el.log.closest('.desk-ledger')) || a;
+    if (!a) return;
+    const top = Math.min(a.getBoundingClientRect().top, z.getBoundingClientRect().top);
+    const bottom = Math.max(a.getBoundingClientRect().bottom, z.getBoundingClientRect().bottom);
+    const lo = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0) + 12, hi = window.innerHeight - 12;
+    let dy = 0;
+    if (bottom - top > hi - lo || top < lo) dy = top - lo; // taller than the room: the lane first
+    else if (bottom > hi) dy = bottom - hi;
+    if (Math.abs(dy) > 1) window.scrollBy({ top: dy, behavior: reduced.matches ? 'instant' : 'smooth' });
+  }
   function startFollow() {
     if (reduced.matches) { stillFollow(); return; }
     follow.state = 'waiting'; follow.act = null; follow.k = 0; follow.wt = 0; follow.waitT = 0;
-    setFollowButton(true); setLane(0);
+    setFollowButton(true); setLane(0); walkIntoView();
     say('Following the next action the model produces. Esc stops.');
     if (paused) togglePause();
     if (S.done) S.done = performance.now() - 3400; // a closed session hands over quickly
@@ -322,7 +335,7 @@
     const a = [...S.acts].reverse().find(x => x.filled);
     follow.timers.forEach(clearTimeout); follow.timers = [];
     if (!a) { say('This session has no action to follow.'); return; }
-    follow.state = 'walking'; follow.act = a; setFollowButton(true); stats();
+    follow.state = 'walking'; follow.act = a; setFollowButton(true); stats(); walkIntoView();
     for (let k = 1; k <= 6; k++) follow.timers.push(setTimeout(() => { if (follow.act === a) walk(k); }, (k - 1) * STEP_MS));
     follow.timers.push(setTimeout(() => {
       if (follow.act !== a) return;

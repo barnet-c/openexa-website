@@ -2770,6 +2770,17 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .desk-kicker { order: -1; flex-basis: 100%; } /* the panel names itself illustrative on its own first line at every width */
   .desk-follow { margin-left: 0; }
 }
+/* phones and tablets: the lane and the ledger strip come straight after the chart, so a followed action walks down the
+   gates and lands its record where the reader is looking; the counters and the sliders follow them */
+@media (max-width: 960px) {
+  .desk { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "chart" "lane" "ledger" "side"; }
+  .desk-head { grid-area: head; }
+  .desk-body { display: contents; }
+  .desk-chart { grid-area: chart; border-right: 0; border-bottom: 0; }
+  .desk-lane { grid-area: lane; }
+  .desk-ledger { grid-area: ledger; }
+  .desk-side { grid-area: side; border-top: 1px solid var(--line); }
+}
 @media (max-width: 380px) { .desk-lane { padding-left: 6px; padding-right: 6px; } .dl-gates li { letter-spacing: .02em; } }
 @media (max-width: 600px) {
   .desk-head { column-gap: 10px; padding-right: 10px; }
