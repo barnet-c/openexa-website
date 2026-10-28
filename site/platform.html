@@ -182,25 +182,68 @@
       <div class="container">
         <div class="sec-head" data-reveal><span class="idx">03</span><span class="lab">The swarm</span><span class="aside">5,000 – 50,000 agents per lifecycle</span></div>
         <div class="grid">
-          <div class="col-5">
+          <div class="col-6">
             <h2 class="display-2" data-reveal>Thousands of narrow agents beat one wide one.</h2>
-            <p class="body-lg mt-3" data-reveal style="--d:80ms">A lifecycle is decomposed into hundreds of small, verifiable jobs. Each job gets an agent; each agent gets exactly the tools and permissions that job needs; the Council arbitrates. Nothing important depends on a single model's judgement — and every judgement is on the record.</p>
+          </div>
+          <div class="col-5 offset-7">
+            <p class="body-lg" data-reveal style="--d:80ms">A lifecycle is decomposed into hundreds of small, verifiable jobs. Each job gets an agent; each agent gets exactly the tools and permissions that job needs; the Council arbitrates. Nothing important depends on a single model's judgement — and every judgement is on the record.</p>
             <p class="body-lg mt-2" data-reveal style="--d:120ms"><b>The master–copy agent model.</b> One master agent is proven in production, then copied and specialized — a copy per asset, venue or customer — all reporting to the same Council, all sharing the same ledger.</p>
           </div>
-          <div class="col-6 offset-7">
-            <div class="stats stats--2" data-reveal style="--d:120ms">
-              <div><div class="v"><span data-count="50">50</span>k</div><div class="k">Agents at scale</div><div class="d">Elastic from 5,000 to 50,000 per lifecycle.</div></div>
-              <div><div class="v">8</div><div class="k">Layers</div><div class="d">From perception to permission.</div></div>
-              <div><div class="v">3</div><div class="k">Operating modes</div><div class="d">Automatic · with approval · manual.</div></div>
-              <div><div class="v">1</div><div class="k">Ledger</div><div class="d">Append-only. Hash-chained. Replayable.</div></div>
+        </div>
+        <div class="stats sw-spec" data-reveal style="--d:120ms">
+          <div><div class="v">50k</div><div class="k">Agents at scale</div><div class="d">Elastic from 5,000 to 50,000 per lifecycle.</div></div>
+          <div><div class="v">8</div><div class="k">Layers</div><div class="d">From perception to permission.</div></div>
+          <div><div class="v">3</div><div class="k">Operating modes</div><div class="d">Automatic · with approval · manual.</div></div>
+          <div><div class="v">1</div><div class="k">Ledger</div><div class="d">Append-only. Hash-chained. Replayable.</div></div>
+        </div>
+        <div class="swarm-live is-dark" data-swarm-live data-reveal role="group" aria-label="Swarm lab: an illustrative model of the swarm" aria-describedby="sw-cap">
+          <div class="sw-head">
+            <span class="sw-live"><i></i><span data-sw-state>Running</span></span>
+            <span class="sw-kicker">Swarm lab · illustrative model</span>
+            <ul class="sw-key" aria-label="Key"><li class="k-p">Proposal</li><li class="k-s">Settled</li><li class="k-r">Rejected</li><li class="k-b">Record</li></ul>
+            <button class="sw-follow" type="button" data-sw-follow aria-pressed="false" aria-controls="sw-trace">Follow a proposal</button>
+          </div>
+          <div class="sw-stage" data-sw-stage>
+            <canvas aria-hidden="true"></canvas>
+            <ol class="sw-gates" data-sw-gates aria-label="The six gates">
+              <li><b>01</b> <span>Signal</span> <small>Signals arrive; an agent picks them up.</small></li>
+              <li><b>02</b> <span>Predict</span> <small>Models estimate what happens next.</small></li>
+              <li><b>03</b> <span>Decide</span> <small>One agent forms one proposal.</small></li>
+              <li class="is-council"><b>04</b> <span>Approve</span> <small>The execution council approves or rejects against policy; rejected proposals fall away.</small> <i class="sw-limit" data-sw-limit aria-hidden="true"><span></span><span> · </span><span></span></i></li>
+              <li><b>05</b> <span>Execute</span> <small>Past the boundary, execution is deterministic: five rails, in lockstep.</small></li>
+              <li><b>06</b> <span>Settle</span> <small>Settled, then sealed into a hash-chained ledger.</small></li>
+            </ol>
+            <span class="sw-ledger" data-sw-ledger aria-hidden="true">Ledger<span> · hash-chained</span></span>
+            <span class="sw-bound" data-sw-bound aria-hidden="true">Boundary</span>
+            <span class="sw-banner" data-sw-banner aria-hidden="true" hidden></span>
+            <div class="sw-agent" data-sw-agent aria-hidden="true" hidden><b></b><span></span></div>
+            <div class="sw-hover" data-sw-hover aria-hidden="true" hidden><b></b><span>Click to follow</span></div>
+            <section class="sw-trace" id="sw-trace" data-sw-callout aria-label="Followed proposal" hidden>
+              <div class="sw-trace-head"><span data-sw-trace-id>Proposal</span><span class="sw-trace-state" data-sw-trace-state>In flight</span><button class="sw-trace-close" type="button" data-sw-trace-close aria-label="Stop following and close the trace">Close</button></div>
+              <ol class="sw-log" data-sw-log></ol>
+            </section>
+            <p class="sr-only" data-sw-say aria-live="polite"></p>
+          </div>
+          <div class="swarm-bar">
+            <div class="swarm-stats">
+              <div><b data-sw-inflight>0</b><span>In flight</span></div>
+              <div><b data-sw-recorded>0</b><span>Settled</span></div>
+              <div><b data-sw-rejected>0</b><span>Rejected</span></div>
+              <div><b data-sw-rate>0</b><span>Settled / s</span></div>
+            </div>
+            <div class="swarm-controls">
+              <label><span>Agents in this model · <output data-sw-n-out>1.8k</output></span><input type="range" min="0" max="100" step="1" value="52" data-sw-n aria-label="Agents in this model"></label>
+              <label><span>Council strictness · <output data-sw-strict-out>12%</output></span><input type="range" min="0" max="60" step="1" value="12" data-sw-strict aria-label="Council strictness"></label>
+              <div class="sw-btns"><button class="halt" type="button" data-sw-halt>Halt</button><button class="sw-motion" type="button" data-sw-motion hidden>Pause motion</button></div>
             </div>
           </div>
         </div>
-        <div class="card-grid card-grid--4 mt-5" data-reveal>
-          <div class="card"><div class="n"><span>A-01</span><span>Signal agents</span></div><h3 class="h4">Watch</h3><p>Real-time analysis across prices, NAV, baskets, borrow, venue depth — and, in other lifecycles, documents, meters and filings.</p></div>
-          <div class="card"><div class="n"><span>A-02</span><span>Strategy agents</span></div><h3 class="h4">Decide</h3><p>Create or redeem, size and timing — proposed under risk, policy and portfolio constraints, then submitted to the Council.</p></div>
-          <div class="card"><div class="n"><span>A-03</span><span>Execution agents</span></div><h3 class="h4">Act</h3><p>Route approved actions to clearing, OTC, dark-pool and HFT rails and dealer-brokers through the routing and execution layers.</p></div>
-          <div class="card"><div class="n"><span>A-04</span><span>Reconciliation agents</span></div><h3 class="h4">Prove</h3><p>Match fills to counterparty truth, raise discrepancies, and close the loop in the hash-chained ledger.</p></div>
+        <div class="figure-cap" id="sw-cap" data-reveal><span>Fig. 3.1 — The swarm lab · six gates · one council · counters read from the model</span><span>Illustrative · not production data · scaled down for your browser; a production swarm runs 5,000 – 50,000 agents</span></div>
+        <div class="card-grid card-grid--4 sw-legend mt-4" data-reveal>
+          <div class="card sw-role sw-role--1"><div class="n"><span>A-01</span><span>Signal agents</span></div><h3 class="h4">Watch</h3><p>Real-time analysis across prices, NAV, baskets, borrow, venue depth — and, in other lifecycles, documents, meters and filings.</p><p class="sw-at"><i aria-hidden="true"></i><span>In the lab <b>01 Signal</b></span></p></div>
+          <div class="card sw-role sw-role--2"><div class="n"><span>A-02</span><span>Strategy agents</span></div><h3 class="h4">Decide</h3><p>Create or redeem, size and timing — proposed under risk, policy and portfolio constraints, then submitted to the Council.</p><p class="sw-at"><i aria-hidden="true"></i><span>In the lab <b><span>02 Predict ·</span> <span>03 Decide</span></b></span></p></div>
+          <div class="card sw-role sw-role--3"><div class="n"><span>A-03</span><span>Execution agents</span></div><h3 class="h4">Act</h3><p>Route approved actions to clearing, OTC, dark-pool and HFT rails and dealer-brokers through the routing and execution layers.</p><p class="sw-at"><i aria-hidden="true"></i><span>In the lab <b>05 Execute</b></span></p></div>
+          <div class="card sw-role sw-role--4"><div class="n"><span>A-04</span><span>Reconciliation agents</span></div><h3 class="h4">Prove</h3><p>Match fills to counterparty truth, raise discrepancies, and close the loop in the hash-chained ledger.</p><p class="sw-at"><i aria-hidden="true"></i><span>In the lab <b><span>06 Settle ·</span> <span>ledger</span></b></span></p></div>
         </div>
       </div>
     </section>
@@ -316,6 +359,7 @@
     </div>
   </footer>
 
+  <script src="assets/js/swarm.js" defer></script>
   <script src="assets/js/arch.js" defer></script>
   <script src="assets/js/site.js" defer></script>
 </body>
