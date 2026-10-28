@@ -277,20 +277,41 @@
 
         <div class="grid mt-5 mb-3">
           <div class="col-6"><h2 class="display-3" data-reveal data-split>The swarm at work. Tighten the council and watch what happens.</h2></div>
-          <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Every dot is an agent carrying one proposal through the six gates. At <em>Approve</em> the execution council rejects against a policy you can tighten; rejected proposals fall out of the lane, settled ones land in the ledger. One switch halts everything while open work drains.</p></div>
+          <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Every point is an agent carrying one proposal through six gates. At <em>Approve</em> the execution council rejects against a risk limit you can tighten; rejected proposals fall away, approved ones cross onto deterministic rails, settle, and are sealed into a hash-chained ledger. Halt stops new proposals while open work drains. Follow any one of them, gate by gate.</p></div>
         </div>
-        <div class="swarm-live is-dark" data-swarm-live data-reveal style="--d:120ms" role="group" aria-label="Illustrative model of the swarm">
-          <div class="desk-head">
-            <span class="live"><i></i><span data-sw-state>Running</span></span>
-            <span class="hint">Every dot is an agent carrying one proposal · the council rejects at gate 04 · illustrative</span>
+        <div class="swarm-live is-dark" data-swarm-live data-reveal style="--d:120ms" role="group" aria-label="Swarm lab: an illustrative model of the swarm" aria-describedby="sw-cap">
+          <div class="sw-head">
+            <span class="sw-live"><i></i><span data-sw-state>Running</span></span>
+            <span class="sw-kicker">Swarm lab · illustrative model</span>
+            <button class="sw-follow" type="button" data-sw-follow aria-pressed="false" aria-controls="sw-trace">Follow a proposal</button>
           </div>
-          <canvas aria-hidden="true"></canvas>
+          <div class="sw-stage" data-sw-stage>
+            <canvas aria-hidden="true"></canvas>
+            <ol class="sw-gates" data-sw-gates aria-label="The six gates">
+              <li><b>01</b> <span>Signal</span> <small>Signals arrive; an agent picks them up.</small></li>
+              <li><b>02</b> <span>Predict</span> <small>Models estimate what happens next.</small></li>
+              <li><b>03</b> <span>Decide</span> <small>One agent forms one proposal.</small></li>
+              <li class="is-council"><b>04</b> <span>Approve</span> <small>The execution council approves or rejects against policy; rejected proposals fall away.</small> <i class="sw-limit" data-sw-limit aria-hidden="true"></i></li>
+              <li><b>05</b> <span>Execute</span> <small>Past the boundary, execution is deterministic: five rails, in lockstep.</small></li>
+              <li><b>06</b> <span>Settle</span> <small>Settled, then sealed into a hash-chained ledger.</small></li>
+            </ol>
+            <span class="sw-ledger" data-sw-ledger aria-hidden="true">Ledger<span> · hash-chained</span></span>
+            <span class="sw-bound" data-sw-bound aria-hidden="true">Boundary</span>
+            <span class="sw-banner" data-sw-banner aria-hidden="true" hidden></span>
+            <div class="sw-agent" data-sw-agent aria-hidden="true" hidden><b></b><span></span></div>
+            <div class="sw-hover" data-sw-hover aria-hidden="true" hidden><b></b><span>Click to follow</span></div>
+            <section class="sw-trace" id="sw-trace" data-sw-callout aria-label="Followed proposal" hidden>
+              <div class="sw-trace-head"><span data-sw-trace-id>Proposal</span><span class="sw-trace-state" data-sw-trace-state>Live</span><button class="sw-trace-close" type="button" data-sw-trace-close aria-label="Stop following and close the trace">Close</button></div>
+              <ol class="sw-log" data-sw-log></ol>
+            </section>
+            <p class="sr-only" data-sw-say aria-live="polite"></p>
+          </div>
           <div class="swarm-bar">
             <div class="swarm-stats">
               <div><b data-sw-inflight>0</b><span>In flight</span></div>
               <div><b data-sw-recorded>0</b><span>Settled</span></div>
               <div><b data-sw-rejected>0</b><span>Rejected</span></div>
-              <div><b data-sw-rate>0</b><span>Per second</span></div>
+              <div><b data-sw-rate>0</b><span>Settled / s</span></div>
             </div>
             <div class="swarm-controls">
               <label><span>Agents · <output data-sw-n-out>1.8k</output></span><input type="range" min="0" max="100" step="1" value="52" data-sw-n aria-label="Number of agents"></label>
@@ -299,7 +320,7 @@
             </div>
           </div>
         </div>
-        <div class="figure-cap" data-reveal><span>Fig. 03 — The swarm, live · six gates · one council</span><span>Illustrative · not production data</span></div>
+        <div class="figure-cap" id="sw-cap" data-reveal><span>Fig. 03 — The swarm lab · six gates · one council · counters read from the model</span><span>Illustrative · not production data</span></div>
         <div class="mt-4" data-reveal>
           <a class="link-arrow" href="lifecycles.html#lc01">Lifecycle 01 in depth <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
         </div>
