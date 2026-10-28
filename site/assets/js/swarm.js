@@ -935,7 +935,18 @@
   let recFocusT = -1e9;
   if (el.log) el.log.addEventListener('focusin', (e) => { if (e.target.closest('[data-sw-rec]')) recFocusT = performance.now(); });
   function trip(rec, kbd) {
-    const ask = () => document.dispatchEvent(new CustomEvent('oxa:inspect', { detail: { record: rec.record, seq: rec.seq, focus: !!kbd } }));
+    // the ledger is asked for the record once it has been told it is in view: two frames, and, for a ledger that draws
+    // what it held only when it comes into view, until its record is on the line (half a second at most)
+    const ask = () => {
+      let n = 0;
+      const drawn = () => rec.seq === null || !!LEDGER.querySelector(`.lt-rec[data-seq="${rec.seq}"]`);
+      const f = () => {
+        if (++n < 2 || (!drawn() && n < 30)) { inspectRaf = requestAnimationFrame(f); return; }
+        inspectRaf = 0;
+        document.dispatchEvent(new CustomEvent('oxa:inspect', { detail: { record: rec.record, seq: rec.seq, focus: !!kbd } }));
+      };
+      inspectRaf = requestAnimationFrame(f);
+    };
     const from = window.scrollY, y = ledgerY();
     if (Math.abs(y - from) > 1.5 * window.innerHeight) {
       const de = document.documentElement;
@@ -943,8 +954,8 @@
         revealPassed(Math.min(from, y), Math.max(from, y) + window.innerHeight);
         window.scrollTo({ top: ledgerY(), behavior: 'instant' }); // measured again: nothing on the way is mid-entrance now
         document.dispatchEvent(new CustomEvent('oxa:jump', { detail: { from, to: window.scrollY } }));
-        ask();
         hold();
+        ask();
       };
       if (reduced.matches || typeof document.startViewTransition !== 'function' || document.hidden) { go(); return; }
       de.dataset.jump = y > from ? 'down' : 'up';
