@@ -1744,7 +1744,8 @@
       idx.forEach((button, i) => button.addEventListener('click', () => goTo(i, true)));
       stage.addEventListener('keydown', onKey);
       // every beat stays in the accessibility tree; keyboard focus entering one brings the story to it
-      beats.forEach((b, i) => b.addEventListener('focusin', () => { if (running && Math.abs(sTarget - i) > 0.45) goTo(i); }));
+      // (on the way out, S4's copy has faded: Shift+Tab back from the first chapter brings the scene back with its buttons)
+      beats.forEach((b, i) => b.addEventListener('focusin', () => { if (running && (Math.abs(sTarget - i) > 0.45 || xTarget > 0.02)) goTo(i); }));
       if (motionButton) motionButton.addEventListener('click', () => { paused = !paused; updateMotion(); requestFrame(); });
       reducedMQ.addEventListener('change', () => { mouse.x = mouse.y = mouse.tx = mouse.ty = 0; updateMotion(); requestFrame(); });
       window.addEventListener('resize', () => resize());
