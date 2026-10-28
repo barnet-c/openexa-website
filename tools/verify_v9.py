@@ -7,17 +7,35 @@ Round 1 (v2) adds one named check per guard from the director's list; each asser
 sample (no tight wall-clock timings: those live in tools/verify_budget.py). Every check runs in its own context (a few
 share one homepage at 1440, each setting its own preconditions), and a failure names the check, the page, the viewport
 and the offending values; the run goes on to the next check and exits non-zero if any failed.
-    python tools/verify_v9.py [http://127.0.0.1:8125] [--only name1,name2] [--list]
+    python tools/verify_v9.py [http://127.0.0.1:8125] [--only name1,name2] [--list] [--swiftshader | --gpu]
+                              [--cpu-throttle N] [--cores N] [--check-timeout S] [--shards .github/workflows/checks.yml]
 The site's CSP has no 'unsafe-eval': conditions are polled with page.evaluate (until()), never wait_for_function(<string>).
+
+Round 2: CI (.github/workflows/checks.yml) runs this file in shards, one job per `--only` group, each with its own
+tools/serve.py; `--shards <workflow>` checks that every check sits in exactly one shard (the static job runs it).
+Reproducing CI on this machine. GitHub's ubuntu-latest runner renders WebGL with SwiftShader (no GPU) on 4 vCPUs that
+are several times slower than a laptop; reproduce that with
+    python tools/serve.py 8125                                     (another terminal)
+    python tools/verify_v9.py --swiftshader --cpu-throttle 4 [--only <a shard's list>]
+--swiftshader (the default; CI's renderer) launches Chromium on ANGLE's SwiftShader; --gpu uses the real GPU instead (local
+only, to compare). --cpu-throttle N slows every page's main thread N times (CDP Emulation.setCPUThrottlingRate, applied
+before the first navigation). --cores N pins the browser to N logical CPUs (inherited CPU affinity), as a small runner.
+Both modes are printed in the run header with the host's CPU load. Each check has a hard limit (--check-timeout, 420 s by
+default): a hung step becomes a named FAIL with the line it hung on, the check's contexts are closed (a leaked page running
+WebGL slows every later check), and the run goes on. Screenshots of moving instruments are clipped page screenshots taken
+after that instrument's Pause control (or two equal boxes), with animations disabled, never Locator.screenshot.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE
-import asyncio, json, re, sys, time, traceback
+import asyncio, json, linecache, os, platform, re, subprocess, sys, time, traceback
 from pathlib import Path
 from playwright.async_api import async_playwright, expect
 
 BASE = "http://127.0.0.1:8125"  # the URL argument replaces it
+SWIFTSHADER_ARGS = ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]  # CI's renderer
+GPU_ARGS = ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"]  # the real GPU (Windows; local comparison only)
+MODE = {"gl": "swiftshader", "throttle": 1.0, "cores": None, "check_timeout": 420.0}
 OUT = Path(str(SHOTS / 'v9'))
 OUT.mkdir(exist_ok=True)
 PAGES = ["index", "platform", "lifecycles", "evidence", "trust", "company", "research",
@@ -62,6 +80,109 @@ EFF = "const eff = (el, stop) => { let o = 1; for (let e = el; e && e !== stop &
 FRAMES = "const frames = n => new Promise(r => { const f = k => k ? requestAnimationFrame(() => f(k - 1)) : r(); f(n); });"
 SHARED = {}
 
+# ---------------------------------------------------------------- run modes: every page throttled, every context tracked
+OPEN = []      # the real contexts the running check opened; the runner closes whatever it leaves open
+CDP_KEEP = []  # the CDP sessions that hold each page's CPU throttling (a detached session would drop it)
+
+
+async def throttle_page(ctx, pg):
+    """--cpu-throttle N: slow this page's main thread N times, before its first navigation"""
+    if MODE["throttle"] > 1:
+        cdp = await ctx.new_cdp_session(pg)
+        await cdp.send("Emulation.setCPUThrottlingRate", {"rate": MODE["throttle"]})
+        CDP_KEEP.append(cdp)
+
+
+class ThrottledContext:
+    """a BrowserContext whose new pages run at the --cpu-throttle rate; everything else passes through"""
+    def __init__(self, ctx): self._ctx = ctx
+    def __getattr__(self, k): return getattr(self._ctx, k)
+    async def new_page(self):
+        pg = await self._ctx.new_page()
+        await throttle_page(self._ctx, pg)
+        return pg
+
+
+class TrackedBrowser:
+    """the Browser the checks get: its contexts are throttled and tracked, so the runner closes any a check leaves open"""
+    def __init__(self, b): self._b = b
+    def __getattr__(self, k): return getattr(self._b, k)
+    async def new_context(self, **kw):
+        c = await self._b.new_context(**kw)
+        OPEN.append(c)
+        return ThrottledContext(c)
+
+
+def host_load():
+    """the host's CPU load now (Windows: Win32_Processor LoadPercentage; elsewhere the 1-minute load average)"""
+    n = os.cpu_count() or 1
+    try:
+        if platform.system() == "Windows":
+            r = subprocess.run(["powershell", "-NoProfile", "-Command", "(Get-CimInstance Win32_Processor | Measure-Object -Property LoadPercentage -Average).Average"],
+                               capture_output=True, text=True, timeout=30)
+            return f"{n} logical CPUs, load {float(r.stdout.strip().splitlines()[0]):.0f}%"
+        la = os.getloadavg()[0]
+        return f"{n} logical CPUs, 1-min load average {la:.2f} ({la / n * 100:.0f}% of them)"
+    except Exception as e:
+        return f"{n} logical CPUs, load unknown ({type(e).__name__})"
+
+
+def pin_cores(n):
+    """--cores N: this process (and so the Playwright driver and Chromium it starts) runs on the last N logical CPUs"""
+    total = os.cpu_count() or 1
+    cpus = list(range(max(0, total - n), total))
+    if hasattr(os, "sched_setaffinity"): os.sched_setaffinity(0, set(cpus)); return cpus
+    if platform.system() == "Windows":
+        import ctypes
+        k32 = ctypes.windll.kernel32
+        k32.GetCurrentProcess.restype = ctypes.c_void_p
+        if k32.SetProcessAffinityMask(ctypes.c_void_p(k32.GetCurrentProcess()), ctypes.c_size_t(sum(1 << c for c in cpus))): return cpus
+    return None
+
+
+def launch_args():
+    return GPU_ARGS if MODE["gl"] == "gpu" else SWIFTSHADER_ARGS
+
+
+def mode_line():
+    gl = "real GPU (" + " ".join(GPU_ARGS) + ")" if MODE["gl"] == "gpu" else "SwiftShader (ANGLE; CI's software GL)"
+    th = f"{MODE['throttle']:g}x (CDP Emulation.setCPUThrottlingRate on every page)" if MODE["throttle"] > 1 else "off"
+    cores = f" · browser pinned to logical CPUs {MODE['cores']}" if MODE["cores"] else ""
+    return f"renderer {gl} · CPU throttle {th}{cores} · check limit {MODE['check_timeout']:.0f} s · host: {host_load()}"
+
+
+class CheckTimeout(Exception):
+    pass
+
+
+async def run_one(c, b):
+    """run one check under the hard limit; on a hang, name the line it hung on and cancel it"""
+    task = asyncio.ensure_future(c(b))
+    done, _ = await asyncio.wait({task}, timeout=MODE["check_timeout"])
+    if task in done: return task.result()
+    where = ""
+    for f in task.get_stack(limit=1):
+        where = f" at {Path(f.f_code.co_filename).name}:{f.f_lineno} `{linecache.getline(f.f_code.co_filename, f.f_lineno).strip()[:140]}`"
+    task.cancel()
+    await asyncio.wait({task}, timeout=20)
+    raise CheckTimeout(f"timed out after {MODE['check_timeout']:.0f} s{where}")
+
+
+async def close_leftovers(drop_shared=False):
+    """close every context the last check left open (the shared homepage stays unless it may be wedged); False if one hung"""
+    if drop_shared:
+        SHARED.clear()
+    keep = {id(v[0]._ctx) for v in SHARED.values() if isinstance(v[0], ThrottledContext)}
+    ok = True
+    for c in OPEN:
+        if id(c) in keep: continue
+        try: await asyncio.wait_for(c.close(), 25)
+        except asyncio.TimeoutError: ok = False
+        except Exception: pass
+    OPEN[:] = [c for c in OPEN if id(c) in keep]
+    if not OPEN: CDP_KEEP.clear()
+    return ok
+
 
 async def open_page(b, path, w, h, *, dpr=1, touch=False, reduced=False, js=True, init=None, errs=None, loaded=True):
     """a fresh context at w x h, the page loaded (for the home page: until the loader has finished)"""
@@ -90,25 +211,78 @@ async def to_top_settled(pg):
     return ok
 
 
-async def scene_rest(pg, n, timeout=12000):
-    """click the overture's index button for scene n and wait until it rests there (callouts no longer moving)"""
+# a frame counter the rest waits use (installed on demand): equal reads only count as 'at rest' when frames ran between
+# them, so a page whose frames take longer than the poll interval (CI's software GL) is never mistaken for one at rest
+FRAME_COUNTER = "(() => { if (window.__oxaF === undefined) { window.__oxaF = 0; const f = () => { window.__oxaF++; requestAnimationFrame(f); }; requestAnimationFrame(f); } return window.__oxaF; })()"
+SETTLED_SUPPORT = {}  # base URL -> whether its story.js exposes .story[data-settled] (OV-R2-1)
+
+
+async def has_settled(pg=None):
+    """does the overture under test expose .story[data-settled] (OV-R2-1)? Read once from its story.js"""
+    if BASE not in SETTLED_SUPPORT:
+        import urllib.request
+        try:
+            with urllib.request.urlopen(f"{BASE}/assets/js/story.js", timeout=30) as r: js = r.read().decode("utf-8", "replace")
+            SETTLED_SUPPORT[BASE] = bool(re.search(r"data-settled|dataset\.settled", js))
+        except Exception:
+            SETTLED_SUPPORT[BASE] = False
+    return SETTLED_SUPPORT[BASE]
+
+
+async def scene_rest(pg, n, timeout=None):
+    """click the overture's index button for scene n and wait until it rests there: the index on n, beat n whole and,
+    where the overture exposes it, .story[data-settled] (OV-R2-1); then the callouts unchanged across two reads with
+    at least two frames between them (round 2: under CI's software GL a frame can take longer than the poll, and three
+    equal reads with no frame between them passed a scene that was still moving). The limit is generous (30 s; 60 s
+    with --cpu-throttle): no wall-clock assertion here."""
+    timeout = timeout or (60000 if MODE["throttle"] > 1 else 30000)
+    settled = await has_settled(pg)
+    await pg.evaluate(FRAME_COUNTER)
     await pg.evaluate(f"document.querySelector('.story-idx [data-n=\"0{n}\"]').click()")
     snap = """(() => { const i = document.querySelector('.story-idx [aria-current]'); const b = document.querySelector('.beat-%d');
-      return JSON.stringify([i && i.dataset.n, +(+getComputedStyle(b).opacity).toFixed(2), [...document.querySelectorAll('.story-labels .story-lab.is-on')].map(l => l.style.transform + '|' + getComputedStyle(l).opacity)]); })()""" % n
-    t0, last, same = time.monotonic(), None, 0
+      return JSON.stringify([i && i.dataset.n, +(+getComputedStyle(b).opacity).toFixed(2), !!document.querySelector('.story[data-settled]'),
+        [...document.querySelectorAll('.story-labels .story-lab.is-on')].map(l => l.style.transform + '|' + getComputedStyle(l).opacity), window.__oxaF]); })()""" % n
+    t0, prev, same = time.monotonic(), None, 0
+    await pg.wait_for_timeout(250)  # the click's own frame
     while time.monotonic() - t0 < timeout / 1000:
-        s = await pg.evaluate(snap)
-        st = json.loads(s)
-        if st[0] == f"0{n}" and st[1] >= 0.95 and s == last: same += 1
-        else: same = 0
+        st = json.loads(await pg.evaluate(snap))
+        key, frames = json.dumps(st[:4]), st[4]
+        if not (st[0] == f"0{n}" and st[1] >= 0.95 and (st[2] or not settled)): same, prev = 0, (key, frames)
+        elif prev and key == prev[0]:
+            if frames - prev[1] >= 2: same, prev = same + 1, (key, frames)  # unchanged across frames: one step of rest
+        else: same, prev = 0, (key, frames)
         if same >= 2: return True
-        last = s
         await pg.wait_for_timeout(180)
     return False
 
 
 async def story_end(pg):
     return await pg.evaluate("(() => { const s = document.querySelector('.story'); return s.offsetTop + s.offsetHeight; })()")
+
+
+BOX = """(s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect();
+  const x0 = Math.max(0, r.left), y0 = Math.max(0, r.top), x1 = Math.min(innerWidth, r.right), y1 = Math.min(innerHeight, r.bottom);
+  return [x0, y0, x1 - x0, y1 - y0].map(v => Math.round(v * 2) / 2); }"""
+
+
+async def still_shot(pg, sel, path, pause=None):
+    """a screenshot of an instrument that may be moving (round 2, CI): press its Pause control if it has one showing,
+    wait for two equal boxes 150 ms apart, then a clipped page.screenshot with animations disabled; motion resumes
+    afterwards. Never Locator.screenshot, whose 'element is stable' wait never ends on a running instrument under
+    software GL (CI: 'waiting for element to be stable', 30 s). Returns whether it paused."""
+    await pg.evaluate("(s) => document.querySelector(s).scrollIntoView({block: 'center', behavior: 'instant'})", sel)
+    btn = pg.locator(pause).first if pause else None
+    paused = bool(btn and await btn.count() and await btn.is_visible())
+    if paused: await btn.click()
+    box, last = None, None
+    for _ in range(40):
+        box = await pg.evaluate(BOX, sel)
+        if box == last: break
+        last = box; await pg.wait_for_timeout(150)
+    if box and box[2] >= 1 and box[3] >= 1:
+        await pg.screenshot(path=str(path), clip={"x": box[0], "y": box[1], "width": box[2], "height": box[3]}, animations="disabled", timeout=60000)
+    if paused: await btn.click()
+    return paused
 
 
 # ---------------------------------------------------------------- the checks
@@ -233,7 +407,7 @@ async def home(b):
     gaps = [e2["at"] - e1["at"] for e1, e2 in zip(ev, ev[1:])]
     assert min(gaps) >= 245, ("oxa:settled closer than 250 ms", min(gaps))
     assert all(re.fullmatch(r"P-\d{5}", e["id"]) and 1 <= e["lane"] <= 5 and isinstance(e["ts"], (int, float)) for e in ev), ev[:3]
-    await pg.locator("[data-swarm-live]").screenshot(path=str(OUT / "swarm.png"))
+    await still_shot(pg, "[data-swarm-live]", OUT / "swarm.png", pause="[data-sw-motion]")  # round 2 (CI): never Locator.screenshot on the running lab
     await pg.locator("[data-sw-follow]").focus(); await pg.keyboard.press("Enter")
     await expect(pg.locator("[data-sw-follow]")).to_have_attribute("aria-pressed", "true")
     await expect(pg.locator("[data-sw-callout]")).to_be_visible()
@@ -275,7 +449,7 @@ async def home(b):
     await pg.locator(".chain-list li:nth-child(3) .ev").fill("REJECTED")
     await expect(pg.locator(".chain-list .is-broken")).to_have_count(6)
     await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain broken at record 03")
-    await pg.locator("[data-chain]").screenshot(path=str(OUT / "chain-broken.png"))
+    await still_shot(pg, "[data-chain]", OUT / "chain-broken.png")
     await pg.locator("[data-chain-restore]").click()
     await expect(pg.locator(".chain-list .is-broken")).to_have_count(0)
     await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain intact")
@@ -339,7 +513,7 @@ async def desk(b):
     await pg.wait_for_timeout(5000)
     info = await pg.evaluate("({time: document.querySelector('[data-gap-time]').textContent, log: document.querySelectorAll('.desk-log li').length, state: document.querySelector('[data-gap-state]').textContent})")
     assert info["time"] != "09:30 ET", info
-    await pg.locator("[data-gap]").screenshot(path=str(OUT / "desk.png"))
+    await still_shot(pg, "[data-gap]", OUT / "desk.png", pause="[data-gap-motion]")
     assert not errs, errs
     print("desk:", info)
     await ctx.close()
@@ -508,17 +682,47 @@ async def reduced_motion(b):
     print("reduced motion: explorer open and still (no motion control), stream paused, Trust verifies at once")
 
 
+# where the loader is, read in the page: [performance.now(), 'parsing' | 'shown' | 'hidden' | 'removed', opacity, visibility]
+LOADER_STATE = """(() => { const t = performance.now(), l = document.querySelector('.loader');
+  if (!l || !l.isConnected) return [t, document.readyState === 'loading' ? 'parsing' : 'removed', 0, ''];
+  const cs = getComputedStyle(l), o = +cs.opacity;
+  return [t, cs.display === 'none' || cs.visibility === 'hidden' || o < 0.05 ? 'hidden' : 'shown', +o.toFixed(3), cs.visibility]; })()"""
+
+
 @check
 async def loader(b):
-    """the loader finishes on elapsed time, not on frames: with requestAnimationFrame starved it still lifts"""
+    """the loader finishes on elapsed time, not on frames: with requestAnimationFrame starved it is not visible
+    (removed, or computed visibility hidden / opacity < .05) by 4.5 s after navigation, and removed by 9 s"""
+    # Round 2 (NV-R2-1, director's test list): 'removed by 4.5 s' became 'not visible by 4.5 s, removed by 9 s'. What a
+    # reader sees is the same criterion (no loader on screen after 4.5 s); the DOM removal may follow the late scripts.
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     await ctx.add_init_script("window.requestAnimationFrame = () => 0;")
     pg = await ctx.new_page()
     await pg.goto(f"{BASE}/index.html", wait_until="commit")
-    gone = await until(pg, "(() => { const l = document.querySelector('.loader'); return document.readyState !== 'loading' && (!l || !l.isConnected) ? performance.now() : 0; })()", 9000, 50)
-    assert gone and gone <= 4500, ("loader still up with requestAnimationFrame starved", gone)
+    samples, t_end = [], time.monotonic() + 60
+    while time.monotonic() < t_end:
+        s = await pg.evaluate(LOADER_STATE)
+        samples.append(s)
+        if s[1] == "removed" or s[0] > 9600: break
+        await pg.wait_for_timeout(50)
     await ctx.close()
-    print(f"loader: removed {gone / 1000:.1f}s after navigation with requestAnimationFrame starved")
+    first = lambda states: next((i for i, s in enumerate(samples) if s[1] in states), None)
+    ih, ir = first(("hidden", "removed")), first(("removed",))
+    t_hid = samples[ih][0] if ih is not None else None
+    t_rem = samples[ir][0] if ir is not None else None
+    gap = samples[ih][0] - samples[ih - 1][0] if ih else 0  # a long gap: the page could not answer (busy main thread)
+    shown = [s for s in samples if s[1] == "shown"]
+    detail = (f"not visible at {t_hid:.0f} ms" if t_hid is not None else f"still visible at {samples[-1][0]:.0f} ms (opacity {samples[-1][2]}, {samples[-1][3]})") + \
+             (f", removed at {t_rem:.0f} ms" if t_rem is not None else ", never removed") + f"; {len(samples)} samples, last visible one at {shown[-1][0]:.0f} ms" * bool(shown) + \
+             (f"; the page did not answer for {gap:.0f} ms before it was seen hidden" if gap > 400 else "")
+    assert t_hid is not None and t_hid <= 4500 and t_rem is not None and t_rem <= 9000, \
+        f"loader index.html@1440x900, requestAnimationFrame starved: {detail} (must be not visible by 4500 ms and removed by 9000 ms)"
+    print(f"loader: with requestAnimationFrame starved, {detail}")
+
+
+LINK_PAGES = ["index", "platform", "lifecycles", "evidence", "trust", "company", "access", "research"]
+LINKS = "(() => [...document.querySelectorAll('main a[href]')].filter(a => { const r = a.getBoundingClientRect(), cs = getComputedStyle(a); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && !a.closest('[hidden]'); }).length)()"
+POSTS = "(() => [...document.querySelectorAll('li.post a')].filter(a => { const r = a.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(a).visibility !== 'hidden'; }).length)()"
 
 
 @check
@@ -550,8 +754,27 @@ async def no_js(b):
     assert await pg.locator(".lt-rec").count() == 9
     await pg.goto(f"{BASE}/platform.html", wait_until="load")
     assert await pg.locator("#architecture .layers .layer").count() == 8
+    # Round 2 (PG-R2-1, director's test list): without JavaScript the reader keeps the links. On each hand-written page
+    # and research.html the visible a[href] in main are at least 90% of those with JavaScript; research.html shows its
+    # ten notes ('li.post a'), which a no-JS rule hid at 1a6b9fb
+    nojs = {}
+    for name in LINK_PAGES:
+        await pg.goto(f"{BASE}/{name}.html", wait_until="load")
+        nojs[name] = await pg.evaluate(LINKS)
+    await pg.goto(f"{BASE}/research.html", wait_until="load")
+    posts = await pg.evaluate(POSTS)
     await ctx.close()
-    print("fallbacks: readable without JS on every page (sessions list, ledger and chain records, six gates, eight layers with the boundary after 04, menu sheet as a popover, no loader)")
+    ctx = await b.new_context(viewport={"width": 390, "height": 844})
+    pg = await ctx.new_page(); pg.set_default_timeout(45000)
+    low = []
+    for name in LINK_PAGES:
+        await pg.goto(f"{BASE}/{name}.html", wait_until="load"); await pg.wait_for_timeout(900)
+        withjs = await pg.evaluate(LINKS)
+        if nojs[name] < 0.9 * withjs: low.append(f"{name}.html@390: {nojs[name]} visible links in main without JavaScript, {withjs} with it")
+    await ctx.close()
+    assert not low and posts == 10, f"no_js: {low}; research.html shows {posts} visible 'li.post a' without JavaScript (10 expected)"
+    print(f"fallbacks: readable without JS on every page (sessions list, ledger and chain records, six gates, eight layers with the boundary after 04, menu sheet as a popover, no loader); "
+          f"links kept without JS on {len(LINK_PAGES)} pages, research.html lists its {posts} notes")
 
 
 @check
@@ -764,16 +987,49 @@ PHONE_LAB = "(() => { " + EFF + """
   labs.forEach((l, i) => { obst.forEach(([n, bx]) => { if (ov(l.bx, bx)) issues.push(`'${l.t}' x ${n}`); });
     for (let j = i + 1; j < labs.length; j++) if (ov(l.bx, labs[j].bx)) issues.push(`'${l.t}' x '${labs[j].t}'`); });
   const c3 = labs.find(l => /^(Plate|Fig\\.)\\s*0?3\\b/.test(l.t));
-  return { issues, labs: labs.length, cap3: c3 ? { t: c3.t, inside: c3.bx.l >= 0 && c3.bx.t >= 0 && c3.bx.r <= innerWidth && c3.bx.b <= innerHeight, bx: [c3.bx.l, c3.bx.t, c3.bx.r, c3.bx.b].map(Math.round) } : null };
+  const days = [...document.querySelectorAll('.story-labels .story-lab.day')].filter(shown).map(l => box(l)).sort((a, b) => a.l - b.l);
+  return { issues, labs: labs.length, boxes: labs.map(l => [l.t, l.bx]), dayGaps: days.slice(1).map((d, k) => +(d.l - days[k].r).toFixed(1)),
+    cap3: c3 ? { t: c3.t, inside: c3.bx.l >= 0 && c3.bx.t >= 0 && c3.bx.r <= innerWidth && c3.bx.b <= innerHeight, bx: [c3.bx.l, c3.bx.t, c3.bx.r, c3.bx.b].map(Math.round) } : null };
 })()"""
-PHONES = [(390, 664), (375, 667), (360, 780), (320, 640), (844, 390)]
+PHONES = [(390, 664), (375, 667), (360, 780), (320, 640), (844, 390), (320, 568), (667, 375), (740, 360)]  # round 2 adds the last three
+INSP_BOX = r"""(tapped) => { const vis = el => { let o = 1; for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return 0; o *= +cs.opacity; } return o; };
+  const bx = el => { const r = el.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; };
+  const hit = (a, c) => Math.min(a[2], c[2]) - Math.max(a[0], c[0]) > 1 && Math.min(a[3], c[3]) - Math.max(a[1], c[1]) > 1;
+  const i = document.querySelector('.story-insp'); if (!i || !i.classList.contains('is-on') || vis(i) < 0.3) return null;
+  const ib = bx(i), out = [];
+  for (const s of ['.story-bar', '.story-idx', '.story-motion']) { const e = document.querySelector(s); if (e && vis(e) > 0.3 && hit(ib, bx(e))) out.push(s); }
+  document.querySelectorAll('.story-labels .story-lab').forEach((l, k) => { if (k !== tapped && vis(l) > 0.3 && l.getBoundingClientRect().width > 0 && hit(ib, bx(l))) out.push("'" + l.textContent.replace(/\s+/g, ' ').trim().slice(0, 20) + "'"); });
+  return { text: i.textContent.replace(/\s+/g, ' ').trim().slice(0, 30), box: ib.map(Math.round), hits: out }; }"""
+
+
+async def callout_pixels(pg, boxes):
+    """with .story-labels hidden (callouts and leaders), the share of stage pixels brighter than luminance 120 inside
+    each callout's box: [(text, share)] for the boxes at 2% or more"""
+    from PIL import Image
+    import io
+    await pg.evaluate("document.querySelector('.story-labels').style.visibility = 'hidden'")
+    await pg.wait_for_timeout(350)
+    img = Image.open(io.BytesIO(await pg.screenshot(animations="disabled"))).convert("L")
+    await pg.evaluate("document.querySelector('.story-labels').style.visibility = ''")
+    out = []
+    for t, bx in boxes:
+        c = img.crop((max(0, int(bx["l"])), max(0, int(bx["t"])), min(img.size[0], int(round(bx["r"]))), min(img.size[1], int(round(bx["b"])))))
+        n = c.size[0] * c.size[1]
+        if n <= 0: continue
+        lit = c.point(lambda v: 255 if v > 120 else 0).histogram()[255] / n
+        if lit >= 0.02: out.append((t[:24], f"{lit * 100:.1f}%"))
+    return out
 
 
 @check
 async def overture_phones(b):
-    """at 390x664, 375x667, 360x780, 320x640 and 844x390 with touch, at each scene's rest: no visible callout box crosses
-    the scene index, 'Pause motion', the nav, a visible beat's text or another callout; Plate 03's caption lies inside the
-    viewport and says 'Illustrative'"""
+    """at 390x664, 375x667, 360x780, 320x640, 844x390, 320x568, 667x375 and 740x360 with touch, at each scene's rest: no
+    visible callout box crosses the scene index, 'Pause motion', the nav, a visible beat's text or another callout; with
+    the callouts hidden, under 2% of the stage's pixels inside each callout's box are brighter than luminance 120 (no
+    structure under a callout); Plate 03's caption lies inside the viewport and says 'Illustrative'; at 320x640 adjacent
+    S4 day tags are at least 3 px apart; at 844x390 and 667x375, the inspector opened by tapping each S1 ring and S2
+    plate callout crosses none of .story-bar, .story-idx, .story-motion or another callout (OV1, OV10, D14; round 2:
+    OV-R2-1, OV-R2-4, OV-R2-5)"""
     bad = []
     for w, h in PHONES:
         ctx, pg = await open_page(b, "index.html", w, h, touch=True)
@@ -781,13 +1037,31 @@ async def overture_phones(b):
             if not await scene_rest(pg, i): bad.append(f"index.html@{w}x{h} scene 0{i}: did not come to rest")
             m = await pg.evaluate(PHONE_LAB)
             bad += [f"index.html@{w}x{h} scene 0{i}: {x}" for x in m["issues"]]
+            lit = await callout_pixels(pg, m["boxes"])
+            if lit: bad.append(f"index.html@{w}x{h} scene 0{i}: a structure under callouts (share of pixels > 120 in the box, callouts hidden): {lit[:4]}")
             if i == 3:
                 c = m["cap3"]
                 if not c: bad.append(f"index.html@{w}x{h} scene 03: no visible Plate 03 caption")
                 elif not c["inside"] or "Illustrative" not in c["t"]: bad.append(f"index.html@{w}x{h} scene 03: caption {c['t']!r} at {c['bx']} (inside: {c['inside']}; must lie in the viewport and say 'Illustrative')")
+            if i == 4 and (w, h) == (320, 640):
+                tight = [g for g in m["dayGaps"] if g < 3]
+                if tight: bad.append(f"index.html@320x640 scene 04: adjacent day tags closer than 3 px {len(tight)} times (gaps {m['dayGaps']})")
+            if i in (1, 2) and (w, h) in ((844, 390), (667, 375)):
+                sel = ".story-labels .story-lab.ring.is-on" if i == 1 else ".story-labels .story-lab.layer.is-on"
+                for k in range(await pg.locator(sel).count()):
+                    lab = pg.locator(sel).nth(k)
+                    bb = await lab.bounding_box()
+                    if not bb: continue
+                    idx = await lab.evaluate("l => [...document.querySelectorAll('.story-labels .story-lab')].indexOf(l)")
+                    await pg.touchscreen.tap(bb["x"] + bb["width"] * 0.3, bb["y"] + bb["height"] / 2)
+                    await until(pg, "!!document.querySelector('.story-insp.is-on')", 3000)
+                    await pg.wait_for_timeout(400)
+                    r = await pg.evaluate(INSP_BOX, idx)
+                    if r and r["hits"]: bad.append(f"index.html@{w}x{h} scene 0{i}: the inspector {r['text']!r} at {r['box']} (callout {k + 1} tapped) crosses {r['hits']}")
+                    await pg.touchscreen.tap(6, h * 0.5); await pg.wait_for_timeout(400)  # a tap on empty stage closes it
         await ctx.close()
     assert not bad, f"overture_phones: {len(bad)} problems:\n  " + "\n  ".join(bad[:30])
-    print(f"overture_phones: {len(PHONES)} phone viewports x 5 scenes, no callout over the index, the nav, the copy or another callout")
+    print(f"overture_phones: {len(PHONES)} phone viewports x 5 scenes, no callout over the index, the nav, the copy, a structure or another callout")
 
 
 # ---- S1 on a phone: a tap opens its own lifecycle; a swipe never inspects (OV2)
@@ -1189,6 +1463,693 @@ async def platform_lab(b):
     print(f"platform_lab: a running lab in Platform §03, marked {il[0]['t']!r}")
 
 
+# ================================================================ round 2 (v2) guards: the director's test list of 28 Oct
+# ---- the swarm lab: the trace says where its record went (SW-R2-1); gate labels never collide (SW-R2-2)
+TEXT_WATCH = r"""(pat) => { const hit = window.__tw = window.__tw || []; const re = new RegExp(pat, 'i');
+  const sel = ['#sw-trace', '[data-sw-callout]', '[data-sw-agent]', '[data-sw-say]'];
+  const look = () => sel.forEach(s => document.querySelectorAll(s).forEach(el => { const t = (el.textContent || '').replace(/\s+/g, ' '), m = re.exec(t);
+    if (m && hit.length < 12) hit.push(s + ': ...' + t.slice(Math.max(0, m.index - 40), m.index + 40)); }));
+  new MutationObserver(look).observe(document.querySelector('[data-swarm-live]'), { subtree: true, childList: true, characterData: true }); look(); }"""
+SET_RANGE = "([s, v]) => { const i = document.querySelector(s); i.value = String(v); i.dispatchEvent(new Event('input', {bubbles: true})); i.dispatchEvent(new Event('change', {bubbles: true})); }"
+TRACE_STATE = "(() => ((document.querySelector('[data-sw-trace-state]') || {}).textContent || '').trim())()"
+
+
+async def follow_once(pg, want=None, tries=1, limit=45000):
+    """press Follow and wait for the followed proposal's outcome ('Settled' / 'Rejected ...'), then 5 s for its record
+    step; with want='rejected' / 'settled', follow again (up to tries) until that outcome. Returns the outcomes seen."""
+    seen = []
+    for _ in range(tries):
+        await pg.locator("[data-swarm-live] [data-sw-follow]").click()
+        out = await until(pg, f"(() => {{ const s = {TRACE_STATE}; return /^(settled|rejected)/i.test(s) ? s : ''; }})()", limit, 250)
+        seen.append(out or "no outcome")
+        await pg.wait_for_timeout(5000)  # the outcome's announcement and the trace's ledger step
+        if not want or (out and out.lower().startswith(want)): break
+        if await pg.evaluate("(document.querySelector('[data-sw-follow]') || {}).getAttribute && document.querySelector('[data-sw-follow]').getAttribute('aria-pressed') === 'true'"):
+            await pg.locator("[data-swarm-live] [data-sw-follow]").click()  # stop before following the next one
+    return seen
+
+
+@check
+async def platform_trace(b):
+    """a followed proposal never says the page has no ledger while the lab draws one: on Platform (no inspectable
+    ledger) the trace, its stage tag and its live region never print 'no ledger', for a settled proposal at 1440 and 390
+    and a rejected one at 1440 (SW-R2-1); on home at 390 the trace still never prints 'block' (SW2)"""
+    bad = []
+    for path, (w, h), touch, wants in (("platform.html", (1440, 900), False, ("settled", "rejected")), ("platform.html", (390, 844), True, ("settled",)),
+                                         ("index.html", (390, 844), True, ("settled",))):
+        tag = f"{path}@{w}x{h}"
+        ctx, pg = await open_page(b, path, w, h, touch=touch)
+        await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
+        if not await until(pg, "+((document.querySelector('[data-sw-inflight]') || {}).textContent || '0').replace(/\\D/g, '') > 0", 25000, 200):
+            bad.append(f"{tag}: the lab never ran"); await ctx.close(); continue
+        await pg.evaluate(TEXT_WATCH, r"no ledger|\bblock\b" if path == "index.html" else r"no ledger")
+        await pg.mouse.move(2, 2)
+        for want in wants:
+            await pg.evaluate(SET_RANGE, ["[data-sw-strict]", 0 if want == "settled" else 60])
+            seen = await follow_once(pg, want, tries=1 if want == "settled" else 6)
+            log = re.sub(r"\s+", " ", await pg.evaluate("(document.querySelector('[data-sw-log]') || {}).textContent || ''"))
+            if not seen[-1].lower().startswith(want): bad.append(f"{tag}: no {want} proposal to follow (outcomes {seen})")
+            elif not re.search(r"seal|record|rejection|ledger", log, re.I): bad.append(f"{tag}: the {want} trace never reached its record step: {log[-140:]!r}")
+            if await pg.evaluate("document.querySelector('[data-sw-follow]').getAttribute('aria-pressed') === 'true'"):
+                await pg.locator("[data-swarm-live] [data-sw-follow]").click()
+        hits = await pg.evaluate("window.__tw")
+        if hits: bad.append(f"{tag}: {hits[:3]}")
+        await ctx.close()
+    assert not bad, "platform_trace:\n  " + "\n  ".join(bad)
+    print("platform_trace: Platform's trace never says 'no ledger' (settled at 1440 and 390, rejected at 1440); home's never says 'block'")
+
+
+GATE_BOXES = r"""(() => { const labs = [...document.querySelectorAll('[data-sw-gates] > li')].map(li => { const r = li.getBoundingClientRect(), cs = getComputedStyle(li);
+    return { t: li.textContent.replace(/\s+/g, ' ').trim().slice(0, 24), b: [r.left, r.top, r.right, r.bottom], v: r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' }; }).filter(l => l.v);
+  const ov = []; for (let i = 0; i < labs.length; i++) for (let j = i + 1; j < labs.length; j++) { const a = labs[i].b, c = labs[j].b;
+    const w = Math.min(a[2], c[2]) - Math.max(a[0], c[0]), h = Math.min(a[3], c[3]) - Math.max(a[1], c[1]);
+    if (w > 0.5 && h > 0.5) ov.push(`'${labs[i].t}' x '${labs[j].t}' (${w.toFixed(1)} x ${h.toFixed(1)} px)`); }
+  return { n: labs.length, ov }; })()"""
+
+
+@check
+async def lab_gate_labels(b):
+    """at 667x375, 844x390, 390x844 and 320x640 (touch), on home and Platform: no two [data-sw-gates] > li boxes of the
+    swarm lab intersect (no 'SIGN02ALPREDICT'; SW-R2-2: the label mode follows the measured fit)"""
+    bad, n = [], 0
+    for w, h in ((667, 375), (844, 390), (390, 844), (320, 640)):
+        for path in ("index.html", "platform.html"):
+            ctx, pg = await open_page(b, path, w, h, touch=True)
+            await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
+            await pg.evaluate("document.fonts.ready.then(() => 1)")
+            await until(pg, "document.querySelectorAll('[data-sw-gates] > li').length >= 6", 10000)
+            await pg.wait_for_timeout(1500)
+            m = await pg.evaluate(GATE_BOXES); n += 1
+            if m["n"] < 6: bad.append(f"{path}@{w}x{h}: only {m['n']} visible gate labels")
+            if m["ov"]: bad.append(f"{path}@{w}x{h}: {'; '.join(m['ov'][:4])}")
+            await ctx.close()
+    assert not bad, "lab_gate_labels:\n  " + "\n  ".join(bad)
+    print(f"lab_gate_labels: {n} layouts, no two gate labels intersect")
+
+
+# ---- the ledger: time only moves forward; digests add up (LG-R2-2, LG-R2-3)
+LEDGER_READ = r"""(() => [...document.querySelectorAll('[data-ledger=live] .lt-rec')].map(li => { const t = s => ((li.querySelector(s) || {}).textContent || '').replace(/\s+/g, ' ').trim();
+  return { id: t('.lt-id'), t: t('.lt-t'), ev: t('.lt-ev'), lc: t('.lt-lc'), sub: t('.lt-sub'), swarm: li.classList.contains('is-swarm') || /swarm|followed/i.test(t('.lt-lc')) }; }))()"""
+num = lambda s: int(s.replace(",", "")) if s else 0
+
+
+def digest_n(r):
+    """how many proposals a swarm record carries: 'SETTLED ×1,741' (LG-R2-3), else 'P-49000 +1,740 more' / 'proposal P-1' / '12 proposals'"""
+    m = re.search(r"×\s*([\d,]+)", r["ev"])
+    if m: return num(m[1])
+    m = re.search(r"\+([\d,]+) more", r["sub"])
+    if m: return num(m[1]) + 1
+    m = re.search(r"\b([\d,]+) proposals?\b", r["sub"])
+    return num(m[1]) if m else 1
+
+
+def stamp_ms(t):
+    m = re.fullmatch(r"(\d\d):(\d\d):(\d\d)(?:\.(\d{1,3}))?", t)
+    return None if not m else ((int(m[1]) * 60 + int(m[2])) * 60 + int(m[3])) * 1000 + int((m[4] or "0").ljust(3, "0"))
+
+
+@check
+async def ledger_time(b):
+    """home's live ledger at 1440, fed by the swarm lab (strictness 40%, so settled and rejected digests interleave):
+    across 40 consecutive new records the timestamps strictly increase (LG-R2-2), and the foot's swarm totals equal the
+    sum of n over the swarm digests seen (LG-R2-3; 'SETTLED xN' or the round-1 '+N more' wording)"""
+    ctx, pg = await open_page(b, "index.html", 1440, 900)
+    await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
+    ran = await until(pg, "+((document.querySelector('[data-sw-inflight]') || {}).textContent || '0').replace(/\\D/g, '') > 0", 25000, 200)
+    await pg.evaluate(SET_RANGE, ["[data-sw-strict]", 40])
+    first = {r["id"] for r in await pg.evaluate(LEDGER_READ)}  # the page's own excerpt: not part of the stream
+    await pg.wait_for_timeout(4000)
+    await pg.evaluate("document.querySelector('[data-ledger=live]').scrollIntoView({block: 'center', behavior: 'instant'})")
+    # follows from the ledger (the lab, off screen, keeps stepping while the ledger is near): a followed proposal's
+    # answer seals both waiting kinds at once, where a record stamped with its group's last announcement ran backwards
+    seen, order, t0, t_follow, follows = {}, [], time.monotonic(), 0, 0
+    while time.monotonic() - t0 < (180 if MODE["throttle"] > 1 else 120):
+        for r in await pg.evaluate(LEDGER_READ):
+            if r["id"] and r["id"] not in first and r["id"] not in seen: seen[r["id"]] = r; order.append(r["id"])
+        if len(order) >= 44 and follows >= 3: break
+        if time.monotonic() - t_follow > 9 and await pg.evaluate("(() => { const f = document.querySelector('[data-sw-follow]'); if (!f || f.getAttribute('aria-pressed') === 'true') return false; f.click(); return true; })()"):
+            t_follow, follows = time.monotonic(), follows + 1
+        await pg.wait_for_timeout(400)
+    foot = re.sub(r"\s+", " ", await pg.evaluate("(document.querySelector('[data-ledger=live] .lt-foot') || {}).textContent || ''"))
+    await ctx.close()
+    bad = []
+    if not ran: bad.append("the swarm lab never ran")
+    recs = [seen[i] for i in order]
+    if len(recs) < 40: bad.append(f"only {len(recs)} new records in {time.monotonic() - t0:.0f} s (40 needed)")
+    back = [(a["id"], a["t"], b2["id"], b2["t"]) for a, b2 in zip(recs, recs[1:]) if (stamp_ms(b2["t"]) or 0) <= (stamp_ms(a["t"]) or 0)]
+    if back: bad.append(f"{len(back)} of {len(recs) - 1} steps do not move forward in time, e.g. {back[:3]}")
+    if any(stamp_ms(r["t"]) is None for r in recs): bad.append(f"unreadable timestamps: {[r['t'] for r in recs if stamp_ms(r['t']) is None][:3]}")
+    dig = [r for r in seen.values() if r["swarm"]]
+    s_set = sum(digest_n(r) for r in dig if re.match(r"settled", r["ev"], re.I))
+    s_rej = sum(digest_n(r) for r in dig if re.match(r"rejected", r["ev"], re.I))
+    fs, fr = re.search(r"([\d,]+) settled", foot), re.search(r"([\d,]+) rejected", foot)
+    if not dig: bad.append("no swarm digests reached the ledger")
+    elif not fs: bad.append(f"the foot names no settled total: {foot!r}")
+    elif (num(fs[1]), num(fr[1]) if fr else 0) != (s_set, s_rej):
+        bad.append(f"the foot says {num(fs[1])} settled / {num(fr[1]) if fr else 0} rejected; the {len(dig)} digests carry {s_set} / {s_rej}: {foot!r}")
+    assert not bad, "ledger_time index.html@1440x900:\n  " + "\n  ".join(bad)
+    print(f"ledger_time: {len(recs)} consecutive records ({follows} follows) move forward in time; {len(dig)} digests carry {s_set} settled + {s_rej} rejected, as the foot says")
+
+
+# ---- the home page prints as text on white (OV-R2-6)
+PRINT_BEATS = r"""(() => { const out = [];
+  const lum = c => { const m = (c.match(/[\d.]+/g) || []).map(Number); if (m.length < 3) return null; const f = v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; };
+    return { L: .2126 * f(m[0]) + .7152 * f(m[1]) + .0722 * f(m[2]), a: m.length > 3 ? m[3] : 1 }; };
+  document.querySelectorAll('.story .beat').forEach((b, i) => b.querySelectorAll('.eyebrow, .hero-kicker, h1, h2, .body-lg, .hero-sub').forEach(el => {
+    let o = 1, hidden = false, bg = null, img = false;
+    for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const cs = getComputedStyle(e); o *= +cs.opacity; if (cs.visibility === 'hidden' || cs.display === 'none') hidden = true;
+      if (!bg) { const l = lum(cs.backgroundColor); if (l && l.a > 0.05) bg = l; } if (cs.backgroundImage !== 'none' && e !== document.documentElement && e !== document.body) img = true; }
+    const fg = lum(getComputedStyle(el).color), back = bg ? bg.L : 1, cr = fg ? (Math.max(fg.L, back) + .05) / (Math.min(fg.L, back) + .05) : 0;
+    const r = el.getBoundingClientRect();
+    out.push({ beat: i, el: el.tagName.toLowerCase() + '.' + String(el.className).split(' ')[0], t: el.textContent.trim().slice(0, 28), o: +o.toFixed(2), hidden, w: r.width,
+      fg: fg ? +fg.L.toFixed(3) : null, bg: +back.toFixed(3), img, cr: +cr.toFixed(1) }); }));
+  return out; })()"""
+
+
+@check
+async def print_home(b):
+    """printing /: every overture beat's eyebrow, h1/h2 and .body-lg (S0: its lede) prints at opacity 1, visible, as dark
+    text (at least 4.5:1) on white (no dark background colour or image behind it) (OV-R2-6)"""
+    ctx, pg = await open_page(b, "index.html", 1280, 900)
+    await pg.emulate_media(media="print"); await pg.wait_for_timeout(800)
+    els = await pg.evaluate(PRINT_BEATS)
+    await ctx.close()
+    bad = [e for e in els if e["o"] < 0.99 or e["hidden"] or not e["w"] or e["bg"] < 0.8 or e["img"] or e["cr"] < 4.5]
+    beats = {e["beat"] for e in els if e["el"].startswith(("h1", "h2"))} & {e["beat"] for e in els if re.search(r"eyebrow|kicker", e["el"])}
+    assert beats == set(range(5)) and not bad, f"print_home index.html@1280 (print): beats with an eyebrow and a headline {sorted(beats)}; {len(bad)} of {len(els)} overture text elements do not print as dark text on white (opacity 1, contrast >= 4.5, no dark background or image behind), e.g. {bad[:4]}"
+    print(f"print_home: {len(els)} overture text elements print at opacity 1, dark on white")
+
+
+# ---- 400% zoom: 320x256 reflows (PG-R2-5b, OV-R2-5c)
+@check
+async def reflow_400(b):
+    """at 320x256 (a 1280x1024 screen at 400%): no horizontal scroll on the seven hand-written pages
+    (scrollWidth <= 320), and the overture either shows its static sequence (html.story-tiny) or, at each scene's rest,
+    no visible callout crosses the copy"""
+    bad = []
+    for name in ("index", "platform", "lifecycles", "evidence", "trust", "company", "access"):
+        ctx, pg = await open_page(b, f"{name}.html", 320, 256)
+        await pg.wait_for_timeout(800)
+        sw = await pg.evaluate("document.documentElement.scrollWidth")
+        if sw > 320: bad.append(f"{name}.html@320x256: scrollWidth {sw}")
+        if name == "index" and not await pg.evaluate("document.documentElement.classList.contains('story-tiny')"):
+            for i in range(5):
+                if not await scene_rest(pg, i): bad.append(f"index.html@320x256 scene 0{i}: no story-tiny and the scene did not come to rest"); continue
+                m = await pg.evaluate(PHONE_LAB)
+                hits = [x for x in m["issues"] if " x beat " in x]
+                if hits: bad.append(f"index.html@320x256 scene 0{i} (no story-tiny): {hits[:3]}")
+        await ctx.close()
+    assert not bad, "reflow_400:\n  " + "\n  ".join(bad)
+    print("reflow_400: the seven pages reflow at 320x256; the overture is the static sequence or keeps its callouts off the copy")
+
+
+# ---- accessible names contain the visible label (WCAG 2.5.3; SW-R2-3, LC-R2-3, NV-R2-5)
+LIN_MARK = r"""(() => { const out = []; let k = 0;
+  const shown = el => { if (el.closest('[hidden], [inert], [aria-hidden="true"]')) return false; const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+    return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden'; };
+  // the text a sighted reader sees in an element: rendered text nodes (not display:none / visibility:hidden, not
+  // visually hidden, not inside an <output>, a live value); with stop, the text before the first <output> only
+  const seen = (root, stop) => { let s = ''; const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) { const p = n.parentElement; if (!p) continue;
+      if (p.closest('output')) { if (stop) break; continue; }
+      if (p.closest('input, select, textarea, svg, .sr-only, .visually-hidden')) continue;
+      if (p.checkVisibility && !p.checkVisibility({ visibilityProperty: true })) continue;
+      s += ' ' + n.textContent; }
+    return s; };
+  document.querySelectorAll('button, a[href], input:not([type=hidden]), select, textarea, summary, [role=button], [role=slider], [role=switch], [role=tab]').forEach(el => {
+    if (!shown(el)) return;
+    let vis = '';
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) {
+      if (/^(button|submit|reset)$/i.test(el.type)) vis = el.value;
+      else { const lab = el.labels && el.labels[0]; if (!lab) return;
+        vis = seen(lab, true); } } // a label with a live value reads up to it: 'Act past <output>6</output> bps' -> 'Act past'
+    else vis = seen(el, false);
+    el.setAttribute('data-lin', String(k)); out.push({ k: k++, tag: el.tagName.toLowerCase(), vis: vis.replace(/\s+/g, ' ').trim().slice(0, 120),
+      sel: el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/)[0] : '') +
+        [...el.attributes].filter(a => a.name.startsWith('data-') && a.name !== 'data-lin').slice(0, 1).map(a => `[${a.name}]`).join('') });
+  });
+  return out; })()"""
+# both sides lower-cased, with digits, punctuation and spaces removed ('01Signal IntelligencePerceive' in the rendered text
+# is '01 Signal Intelligence PERCEIVE' in the name)
+LIN_NORM = lambda s: re.sub(r"[^a-z]", "", (s or "").lower())
+
+
+async def names_by_mark(pg, cdp):
+    """the accessible name of every element marked data-lin, from Chromium's accessibility tree (CDP), by mark"""
+    await cdp.send("Accessibility.enable")
+    doc = await cdp.send("DOM.getDocument", {"depth": 0})
+    ids = (await cdp.send("DOM.querySelectorAll", {"nodeId": doc["root"]["nodeId"], "selector": "[data-lin]"}))["nodeIds"]
+    out = {}
+    for nid in ids:
+        attrs = (await cdp.send("DOM.getAttributes", {"nodeId": nid}))["attributes"]
+        k = dict(zip(attrs[::2], attrs[1::2])).get("data-lin")
+        ax = (await cdp.send("Accessibility.getPartialAXTree", {"nodeId": nid, "fetchRelatives": False}))["nodes"]
+        node = next((x for x in ax if not x.get("ignored")), None)
+        out[k] = None if node is None else (node.get("name") or {}).get("value", "")
+    return out
+
+
+@check
+async def label_in_name(b):
+    """on the seven hand-written pages at 1440, plus the lab's record button after a followed proposal settles: every
+    visible control's visible text (a label with an <output> read up to its value; digits and punctuation stripped on
+    both sides) is a case-insensitive substring of its accessible name (WCAG 2.5.3): the nav readout, the lab's sliders
+    and record button, the desk's threshold slider among them (NV-R2-5, SW-R2-3, LC-R2-3)"""
+    bad, n = [], 0
+    for name in ("index", "platform", "lifecycles", "evidence", "trust", "company", "access"):
+        ctx, pg = await open_page(b, f"{name}.html", 1440, 900)
+        cdp = await ctx.new_cdp_session(pg)
+        if name == "index":  # the record button exists once a followed proposal is answered by the ledger
+            await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
+            await until(pg, "+((document.querySelector('[data-sw-inflight]') || {}).textContent || '0').replace(/\\D/g, '') > 0", 25000, 200)
+            await pg.evaluate(SET_RANGE, ["[data-sw-strict]", 0]); await pg.mouse.move(2, 2)
+            await pg.locator("[data-swarm-live] [data-sw-follow]").click()
+            if not await until(pg, "!!document.querySelector('[data-sw-log] [data-sw-rec]')", 60000, 250): bad.append("index.html: no record button in the trace after 60 s (nothing to check)")
+        ctrls = await pg.evaluate(LIN_MARK)
+        names = await names_by_mark(pg, cdp)
+        for c in ctrls:
+            vis, name_ = LIN_NORM(c["vis"]), names.get(str(c["k"]))
+            if not vis or name_ is None: continue
+            n += 1
+            if vis not in LIN_NORM(name_): bad.append(f"{name}.html@1440 {c['sel']}: visible {c['vis']!r}, accessible name {name_!r}")
+        await ctx.close()
+    assert not bad, f"label_in_name: {len(bad)} of {n} controls:\n  " + "\n  ".join(bad[:24])
+    print(f"label_in_name: {n} visible controls on 7 pages carry their visible text in their accessible names")
+
+
+# ---- focus survives forced colours (SW-R2-3, NV-R2-4b, LC-R2-3)
+FOCUS_PREP = r"""(sel) => { const el = document.querySelector(sel); if (!el) return null; el.scrollIntoView({block: 'center', behavior: 'instant'});
+  const f = [...document.querySelectorAll('a[href], button:not([disabled]), input:not([type=hidden]), select, textarea, summary, [tabindex]:not([tabindex="-1"])')]
+    .filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && !e.closest('[inert], [hidden]'));
+  const i = f.indexOf(el); if (i > 0) f[i - 1].focus({preventScroll: true}); else document.activeElement && document.activeElement.blur && document.activeElement.blur();
+  return i; }"""
+
+
+def contrast(c1, c2):
+    def L(c):
+        f = lambda v: (v / 255) / 12.92 if v / 255 <= 0.04045 else ((v / 255 + 0.055) / 1.055) ** 2.4
+        return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2])
+    a, b2 = L(c1), L(c2)
+    return (max(a, b2) + 0.05) / (min(a, b2) + 0.05)
+
+
+@check
+async def forced_focus(b):
+    """in forced colours (Windows High Contrast), a Tab onto the lab's strictness slider (home), Access's #name and the
+    desk's threshold slider (Lifecycles) changes at least 100 pixels by 3:1 or more around the control (the focus ring
+    in the system colours; method of r2/a11y/focus_pix.py)"""
+    from PIL import Image
+    import io
+    bad, got = [], []
+    for path, sel in (("index.html", "[data-sw-strict]"), ("access.html", "#name"), ("lifecycles.html", "[data-gap-thr]")):
+        ctx = await b.new_context(viewport={"width": 1440, "height": 900}, forced_colors="active", reduced_motion="reduce")
+        pg = await ctx.new_page(); pg.set_default_timeout(45000)
+        await pg.goto(f"{BASE}/{path}", wait_until="load"); await until(pg, LOADED, 15000); await pg.wait_for_timeout(1200)
+        await pg.mouse.move(2, 898)
+        if await pg.evaluate(FOCUS_PREP, sel) is None: bad.append(f"{path}: no {sel}"); await ctx.close(); continue
+        await pg.wait_for_timeout(500); await pg.keyboard.press("Tab"); await pg.wait_for_timeout(600)
+        on = await pg.evaluate("(s) => document.activeElement === document.querySelector(s)", sel)
+        r = await pg.evaluate("(s) => { const r = document.querySelector(s).getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; }", sel)
+        x0, y0 = max(0, r[0] - 10), max(0, r[1] - 10)
+        clip = {"x": x0, "y": y0, "width": min(1440, r[0] + r[2] + 10) - x0, "height": min(900, r[1] + r[3] + 10) - y0}
+        fimg = Image.open(io.BytesIO(await pg.screenshot(clip=clip, animations="disabled"))).convert("RGB")
+        await pg.evaluate("document.activeElement && document.activeElement.blur()"); await pg.wait_for_timeout(600)
+        uimg = Image.open(io.BytesIO(await pg.screenshot(clip=clip, animations="disabled"))).convert("RGB")
+        await ctx.close()
+        fb, ub = fimg.tobytes(), uimg.tobytes()
+        fp, up = [tuple(fb[i:i + 3]) for i in range(0, len(fb), 3)], [tuple(ub[i:i + 3]) for i in range(0, len(ub), 3)]
+        changed = [(a, c) for a, c in zip(fp, up) if max(abs(a[0] - c[0]), abs(a[1] - c[1]), abs(a[2] - c[2])) > 10]
+        good = sum(1 for a, c in changed if contrast(a, c) >= 3)
+        got.append(f"{path} {sel}: {good}")
+        if not on: bad.append(f"{path}@1440 (forced colours): Tab did not land on {sel}")
+        elif good < 100: bad.append(f"{path}@1440 (forced colours): focusing {sel} changes {len(changed)} px, {good} of them by 3:1 or more (100 needed)")
+    assert not bad, "forced_focus:\n  " + "\n  ".join(bad)
+    print(f"forced_focus: focus shows in forced colours ({'; '.join(got)} px at 3:1)")
+
+
+# ---- no grey slab where a card grid has no card (PG-R2-2)
+SLAB = (14, 21, 18, 0.14)
+
+
+def slab_areas(img, bg, holes=()):
+    """the pixels of a 14%-ink fill over `bg` that sit in a 3x3 block (an area, not a 1 px rule), outside the boxes in
+    holes (images): (count, first (x, y), the fill's colour)"""
+    from PIL import Image, ImageChops, ImageDraw, ImageFilter
+    a = SLAB[3]; want = tuple(round(c * (1 - a) + s * a) for c, s in zip(bg, SLAB[:3]))
+    r_, g_, b_ = ImageChops.difference(img.convert("RGB"), Image.new("RGB", img.size, want)).split()
+    mask = ImageChops.lighter(ImageChops.lighter(r_, g_), b_).point(lambda v: 255 if v <= 3 else 0)
+    if holes:
+        d = ImageDraw.Draw(mask)
+        for x0, y0, x1, y1 in holes: d.rectangle([x0 - 1, y0 - 1, x1 + 1, y1 + 1], fill=0)
+    core = mask.filter(ImageFilter.MinFilter(3))
+    bbox = core.getbbox()
+    return (core.histogram()[255], bbox[:2] if bbox else None, want)
+
+
+GRID_CHUNK = r"""([sel, k, y0]) => { const g = document.querySelectorAll(sel)[k]; if (!g) return null; const r = g.getBoundingClientRect();
+  const top = 80, h = Math.min(r.height - y0, innerHeight - top); if (h < 4) return null;
+  window.scrollTo({top: r.top + scrollY + y0 - top, behavior: 'instant'}); const q = g.getBoundingClientRect();
+  const clip = { x: Math.max(0, q.left), y: top, width: Math.min(q.width, innerWidth - Math.max(0, q.left)), height: h };
+  const holes = [...g.querySelectorAll('img, picture, video, canvas, svg')].map(e => e.getBoundingClientRect()).filter(b => b.width && b.height)
+    .map(b => [b.left - clip.x, b.top - clip.y, b.right - clip.x, b.bottom - clip.y]);
+  return { clip, holes, more: y0 + h < r.height - 1 }; }"""
+
+
+async def grid_slabs(pg, sel, where, hold=False):
+    """the slab areas in every grid matching sel, chunk by chunk under the bar; with hold, animations are frozen at
+    their start (CDP Animation.setPlaybackRate 0) before the grid scrolls in, so the shot is t=0 of its reveal"""
+    from PIL import Image
+    import io
+    out, n = [], await pg.evaluate("(s) => document.querySelectorAll(s).length", sel)
+    for k in range(n):
+        y0 = 0
+        while True:
+            c = await pg.evaluate(GRID_CHUNK, [sel, k, y0])
+            if not c: break
+            await pg.wait_for_timeout(700 if hold else 300)
+            img = Image.open(io.BytesIO(await pg.screenshot(clip=c["clip"], animations="allow"))).convert("RGB")
+            for bg in ((245, 242, 236), (236, 232, 223)):
+                cnt, at, want = slab_areas(img, bg, c["holes"])
+                if cnt: out.append(f"{where} grid {k + 1} ({sel}): {cnt} px of {want} (14% ink over {bg}) in areas wider than a rule, first at ({c['clip']['x'] + at[0]:.0f}, {c['clip']['y'] + at[1]:.0f}) in the viewport")
+            if not c["more"]: break
+            y0 += c["clip"]["height"]
+    return out, n
+
+
+@check
+async def grid_slab(b):
+    """no grey slab: on /blog/ at 1440 (incomplete last rows) and on Trust §02 at t=0 of its reveal (animations held at
+    their start), no area of rgba(14,21,18,.14) over the paper wider than a rule (a 3x3 block; images excluded) shows in
+    a card grid (PG-R2-2: the rules are drawn on the cells, not as the container's background between them)"""
+    bad = []
+    ctx, pg = await open_page(b, "blog/index.html", 1440, 900, reduced=True)
+    out, n = await grid_slabs(pg, ".blog-grid", "blog/index.html@1440")
+    bad += out
+    if not n: bad.append("blog/index.html: no .blog-grid")
+    await ctx.close()
+    ctx, pg = await open_page(b, "trust.html", 1440, 900)
+    cdp = await ctx.new_cdp_session(pg)
+    await cdp.send("Animation.enable"); await cdp.send("Animation.setPlaybackRate", {"playbackRate": 0})
+    await pg.evaluate("(() => { const s = [...document.querySelectorAll('.sec-head .idx')].find(e => e.textContent.trim() === '02'); const g = s && s.closest('section').querySelector('.card-grid'); if (g) g.setAttribute('data-oxa-grid', ''); })()")
+    out, n = await grid_slabs(pg, "[data-oxa-grid]", "trust.html@1440 §02 at t=0 of its reveal", hold=True)
+    await cdp.send("Animation.setPlaybackRate", {"playbackRate": 1})
+    bad += out
+    if not n: bad.append("trust.html: no .card-grid in §02")
+    await ctx.close()
+    assert not bad, "grid_slab:\n  " + "\n  ".join(bad[:10])
+    print("grid_slab: no grey slab in the blog's grids or in Trust §02 before its cards arrive")
+
+
+# ---- the overture without its context (OV-R2-3a)
+LOSE = r"""(restore) => { const c = document.querySelector('canvas.story-gl'); if (!c) return 'no canvas.story-gl';
+  const gl = c.getContext('webgl2') || c.getContext('webgl'); const x = gl && gl.getExtension('WEBGL_lose_context'); if (!x) return 'no WEBGL_lose_context';
+  const R = window.__lost = { ev: 0, cls: 0, restored: 0 }; const root = document.documentElement;
+  c.addEventListener('webglcontextlost', () => { R.ev = performance.now(); }, { once: true });
+  new MutationObserver(() => { if (!R.cls && root.classList.contains('no-webgl')) R.cls = performance.now(); }).observe(root, { attributes: true, attributeFilter: ['class'] });
+  x.loseContext(); if (restore) setTimeout(() => { R.restored = performance.now(); x.restoreContext(); }, 600); return ''; }"""
+BEAT_READ = r"""(i) => { const b = document.querySelector('.beat-' + i); if (!b) return null; const eff = el => { let o = 1; for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return 0; o *= +cs.opacity; } return o; };
+  return [...b.querySelectorAll('.eyebrow, .hero-kicker, h1, h2, .body-lg')].map(e => { const r = e.getBoundingClientRect(); return { t: e.textContent.trim().slice(0, 24), o: +eff(e).toFixed(2), in: r.width > 0 && r.bottom > 0 && r.top < innerHeight }; }); }"""
+
+
+@check
+async def overture_ctx_lost(b):
+    """the overture's WebGL context lost and never restored: html.no-webgl within 3 s of the loss (page time) and beat 2
+    readable at S2 (its eyebrow, h2 and paragraph at opacity >= .9, on screen); lost and restored after 0.6 s: no
+    fallback, and every scene comes to rest as before (OV-R2-3a)"""
+    bad = []
+    ctx, pg = await open_page(b, "index.html", 1440, 900)
+    await pg.wait_for_timeout(1500)
+    err = await pg.evaluate(LOSE, False)
+    if err: bad.append(f"lost: {err}")
+    else:
+        await until(pg, "document.documentElement.classList.contains('no-webgl')", 10000, 100)
+        L = await pg.evaluate("window.__lost")
+        if not L["cls"]: bad.append(f"lost, not restored: no html.no-webgl {(await pg.evaluate('performance.now()') - L['ev']) / 1000:.1f} s after the loss (the stage freezes on S0)")
+        elif L["cls"] - L["ev"] > 3000: bad.append(f"lost, not restored: html.no-webgl came {L['cls'] - L['ev']:.0f} ms after the loss (3000 allowed)")
+        else:
+            idx = await pg.locator('.story-idx [data-n="02"]').count() and await pg.locator('.story-idx [data-n="02"]').is_visible()
+            if idx: await pg.evaluate("document.querySelector('.story-idx [data-n=\"02\"]').click()")
+            else: await pg.evaluate("document.querySelector('.beat-2').scrollIntoView({block: 'center', behavior: 'instant'})")
+            await pg.wait_for_timeout(2000)
+            r = await pg.evaluate(BEAT_READ, 2)
+            if not r or any(x["o"] < 0.9 or not x["in"] for x in r): bad.append(f"lost, not restored: beat 2 at S2 reads {r}")
+    await ctx.close()
+    ctx, pg = await open_page(b, "index.html", 1440, 900)
+    await pg.wait_for_timeout(1500)
+    err = await pg.evaluate(LOSE, True)
+    if err: bad.append(f"restored: {err}")
+    else:
+        await pg.wait_for_timeout(4000)
+        if await pg.evaluate("document.documentElement.classList.contains('no-webgl')"): bad.append("lost and restored after 0.6 s: the page fell back to no-WebGL anyway")
+        for i in range(5):
+            if not await scene_rest(pg, i): bad.append(f"lost and restored: scene 0{i} did not come to rest")
+    await ctx.close()
+    assert not bad, "overture_ctx_lost index.html@1440x900:\n  " + "\n  ".join(bad)
+    print("overture_ctx_lost: a lost context falls back within 3 s with beat 2 readable; a restored one recovers every scene")
+
+
+# ---- the overture comes to rest on one complete headline wherever the reader stops (OV-R2-2)
+TOTAL_U = 4.6  # story.js: four scenes plus the 0.6 exit, spread over the story's scroll run
+STORY_Y = """(s) => { const st = document.querySelector('.story'), stage = st.querySelector('.story-stage') || st.firstElementChild;
+  return Math.round(st.getBoundingClientRect().top + scrollY + Math.max(1, st.offsetHeight - (stage ? stage.offsetHeight : innerHeight)) * s / %s); }""" % TOTAL_U
+REST_STATE = "(() => { " + EFF + r""" const st = document.querySelector('.story');
+  return [...st.querySelectorAll('.beat')].map((b, i) => { const ws = [...b.querySelectorAll('h1 .wi, h2 .wi')];
+    const up = ws.filter(w => { const t = getComputedStyle(w).transform; const ty = !t || t === 'none' ? 0 : new DOMMatrixReadOnly(t).m42; return ty <= 0.06 * (w.offsetHeight || 1); }).length;
+    const body = b.querySelector('.body-lg, .hero-sub'), eye = b.querySelector('.eyebrow, .hero-kicker'); // S0's paragraph is its lede (.hero-sub)
+    return { i, n: ws.length, up, body: body ? +eff(body, st).toFixed(2) : null, eye: eye ? +eff(eye, st).toFixed(2) : 0 }; }); })()"""
+NUM_REC = "(() => { " + EFF + r""" const n = document.querySelector('.story-num'), st = document.querySelector('.story'); const R = window.__nr = { bad: [], n: 0, on: true };
+  const f = () => { R.n++; if (n) { const o = eff(n, st), t = ((n.querySelector('b') || n).textContent || '').trim(); if (o > 0.02 && /^0?0\b|^00/.test(t) && R.bad.length < 8) R.bad.push({ y: Math.round(scrollY), t: n.textContent.replace(/\s+/g, ' ').trim().slice(0, 30), o: +o.toFixed(2) }); }
+    if (R.on) requestAnimationFrame(f); }; requestAnimationFrame(f); })()"""
+
+
+async def touch_scroll(cdp, x, y, dy):
+    """a finger drag that rests before lifting (no fling); positive dy scrolls the page down (r2/motion/stopmid.py)"""
+    left = dy
+    while abs(left) > 4:
+        d = max(-380, min(380, left))
+        y0 = max(90, min(y + (abs(d) / 2 + 10 if d > 0 else -(abs(d) / 2 + 10)), 2 * y - 90))
+        await cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y0}]})
+        n = max(2, int(abs(d) / 20))
+        for k in range(1, n + 1):
+            await cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x, "y": y0 - (d + (16 if d > 0 else -16)) * k / n}]})
+            await asyncio.sleep(0.016)
+        await asyncio.sleep(0.15)
+        await cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+        await asyncio.sleep(0.05)
+        left -= d
+
+
+async def scroll_stopped(pg, limit=8000):
+    """until scrollY has not changed across three reads 120 ms apart"""
+    last, same, t0 = None, 0, time.monotonic()
+    while time.monotonic() - t0 < limit / 1000:
+        v = await pg.evaluate("scrollY")
+        same = same + 1 if v == last else 0
+        if same >= 2: return v
+        last = v; await pg.wait_for_timeout(120)
+    return last
+
+
+async def stop_at(pg, cdp, y, touch, w, h):
+    """move the page to y the way a reader does (wheel ticks, or a touch drag without fling) and stop"""
+    cur = await pg.evaluate("scrollY")
+    if touch:
+        await touch_scroll(cdp, w * 0.5, h * 0.55, y - cur)
+        cur = await scroll_stopped(pg)
+        if abs(y - cur) > 12: await touch_scroll(cdp, w * 0.5, h * 0.55, y - cur)
+    else:
+        await pg.mouse.move(w * 0.72, h * 0.55)
+        step = 100 if y > cur else -100
+        for _ in range(int(abs(y - cur) // 100)): await pg.mouse.wheel(0, step); await pg.wait_for_timeout(40)
+        rest = (y - cur) - int(abs(y - cur) // 100) * step
+        if abs(rest) >= 1: await pg.mouse.wheel(0, rest)
+    return await scroll_stopped(pg)
+
+
+@check
+async def overture_rest(b):
+    """where the reader stops, the copy settles: at 1440 (wheel) and 390x844 (touch), stopping at 25, 50 and 75% of each
+    of the four hand-overs, the frame 1 s later (or once .story[data-settled] is set) shows exactly one beat with every
+    headline word risen (translateY <= 6%) and its .body-lg (S0: its lede) at >= .9, and no other beat's eyebrow above .1; from S0 to S1
+    .story-num never shows '00' (every frame) (OV-R2-2)"""
+    bad, n = [], 0
+    for w, h, touch in ((1440, 900, False), (390, 844, True)):
+        tag = f"index.html@{w}x{h}" + (" touch" if touch else " wheel")
+        ctx, pg = await open_page(b, "index.html", w, h, touch=touch)
+        cdp = await ctx.new_cdp_session(pg)
+        settled = await has_settled(pg)
+        await scene_rest(pg, 0)
+        await pg.evaluate(NUM_REC)
+        await stop_at(pg, cdp, await pg.evaluate(STORY_Y, 1.0), touch, w, h)
+        await pg.wait_for_timeout(1200)
+        await pg.evaluate("window.__nr.on = false"); nr = await pg.evaluate("window.__nr")
+        if nr["bad"]: bad.append(f"{tag} S0 -> S1: .story-num shows '00' in {len(nr['bad'])}+ of {nr['n']} frames, e.g. {nr['bad'][:2]}")
+        for i in range(4):
+            for f in (0.25, 0.5, 0.75):
+                s = i + 0.32 + 0.36 * f
+                if not await scene_rest(pg, i): bad.append(f"{tag}: scene 0{i} did not come to rest before the stop at s={s:.2f}"); continue
+                y = await stop_at(pg, cdp, await pg.evaluate(STORY_Y, s), touch, w, h)
+                await pg.wait_for_timeout(1000)
+                if settled: await until(pg, "!!document.querySelector('.story[data-settled]')", 20000, 150)
+                st = await pg.evaluate(REST_STATE); n += 1
+                whole = [x["i"] for x in st if x["n"] and x["up"] == x["n"] and (x["body"] or 0) >= 0.9]
+                eyes = [(x["i"], x["eye"]) for x in st if x["i"] not in whole and x["eye"] > 0.1]
+                if len(whole) != 1 or eyes:
+                    bad.append(f"{tag} S{i}->S{i + 1} stop at {int(f * 100)}% (s={s:.2f}, y={y}): complete beats {whole}, other eyebrows {eyes}; "
+                               f"beats [words up/n, body, eyebrow] {[(x['up'], x['n'], x['body'], x['eye']) for x in st]}")
+        await ctx.close()
+    assert not bad, f"overture_rest: {len(bad)} problems ({n} stops):\n  " + "\n  ".join(bad[:16])
+    print(f"overture_rest: {n} stops mid-hand-over at 1440 (wheel) and 390 (touch) each settle on one complete headline; no '00'")
+
+
+# ---- the desk on a phone: the walk happens in view; a restart keeps its morning; the strip counts every fill (LC-R2-2, LC-R2-6)
+DESK = r"""(() => { const q = s => document.querySelector(s), t = s => ((q(s) || {}).textContent || '').replace(/\s+/g, ' ').trim(), num = s => +(t(s).replace(/[^\d]/g, '') || 0);
+  const more = q('[data-gap-log] .dk-more'), N = more ? +(((more.textContent.match(/([\d,]+)/) || [0, '0'])[1]).replace(/,/g, '')) : 0;
+  const lane = q('[data-gap-lane]'), r = lane ? lane.getBoundingClientRect() : null;
+  return { time: t('[data-gap-time]'), state: t('[data-gap-state]'), recs: [...document.querySelectorAll('[data-gap-log] > li')].filter(li => !li.classList.contains('dk-more')).length, more: N,
+    creates: num('[data-gap-creates]'), redeems: num('[data-gap-redeems]'), on: lane ? lane.dataset.on || '' : null, lane: r ? [Math.round(r.top), Math.round(r.bottom)] : null, vh: innerHeight }; })()"""
+mins = lambda t: (lambda m: int(m[1]) * 60 + int(m[2]) if m else None)(re.search(r"(\d\d):(\d\d)", t or ""))
+
+
+@check
+async def desk_phone_follow(b):
+    """the desk at 390x844 with touch, agents at the maximum and the threshold at its minimum: while 'Follow the next
+    action' walks its gates, [data-gap-lane] stays inside the viewport (LC-R2-2); the strip's records plus its '+N
+    earlier records' equal Creates + Redeems (read while paused, and at 'Session complete'; LC-R2-6a); Follow pressed
+    during 'Session complete' restarts the session at 11:00 ET or later with at least 3 records (LC-R2-6b)"""
+    bad = []
+    ctx, pg = await open_page(b, "lifecycles.html", 390, 844, touch=True)
+    await pg.evaluate("document.querySelector('[data-gap]').scrollIntoView({block: 'start', behavior: 'instant'})")
+    await pg.wait_for_timeout(800)
+    await pg.evaluate("(() => { const n = document.querySelector('[data-gap-n]'), t = document.querySelector('[data-gap-thr]'); for (const [i, v] of [[n, n.max], [t, t.min]]) { i.value = v; i.dispatchEvent(new Event('input', {bubbles: true})); i.dispatchEvent(new Event('change', {bubbles: true})); } })()")
+    await pg.wait_for_timeout(1500)
+    # (a) the walk, in view
+    await pg.evaluate("document.querySelector('[data-gap-follow]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(400)
+    await pg.locator("[data-gap-follow]").tap()
+    walk, t0 = [], time.monotonic()
+    while time.monotonic() - t0 < 40:
+        d = await pg.evaluate(DESK)
+        if d["on"]: walk.append(d)
+        if walk and d["state"] != "Following an action": break
+        await pg.wait_for_timeout(150)
+    if len(walk) < 3: bad.append(f"lifecycles.html@390x844: the follow walk was not seen ({len(walk)} samples with a lit gate in 40 s; state {d['state']!r})")
+    out = [(x["on"], x["lane"]) for x in walk if not x["lane"] or x["lane"][0] < 0 or x["lane"][1] > x["vh"]]
+    if out: bad.append(f"lifecycles.html@390x844: the lane leaves the viewport during the walk in {len(out)} of {len(walk)} samples, e.g. (gate, [top, bottom]) {out[:3]} (viewport 0-844)")
+    # (c) the strip accounts for every fill: read while paused (the counters and the strip from the same instant)
+    async def strip_vs_counts(when):
+        await pg.evaluate("document.querySelector('[data-gap-motion]').click()"); await pg.wait_for_timeout(400)
+        d = await pg.evaluate(DESK)
+        await pg.evaluate("document.querySelector('[data-gap-motion]').click()")
+        if d["recs"] + d["more"] != d["creates"] + d["redeems"]:
+            bad.append(f"lifecycles.html@390x844 {when}: the strip holds {d['recs']} records + '+{d['more']}' while Creates + Redeems read {d['creates']} + {d['redeems']} ({d['time']})")
+        return d
+    await strip_vs_counts("after the walk")
+    # to the end of the session
+    done = await until(pg, "(document.querySelector('[data-gap-state]') || {}).textContent === 'Session complete'", 240000 if MODE["throttle"] > 1 else 150000, 150)
+    if not done: bad.append(f"lifecycles.html@390x844: no 'Session complete' ({(await pg.evaluate(DESK))['time']})")
+    else:
+        d = await pg.evaluate(DESK)
+        if d["recs"] + d["more"] != d["creates"] + d["redeems"]:
+            bad.append(f"lifecycles.html@390x844 at 'Session complete': the strip holds {d['recs']} records + '+{d['more']}' while Creates + Redeems read {d['creates']} + {d['redeems']}")
+        # (b) Follow during 'Session complete': the restarted session opens warm
+        await pg.evaluate("document.querySelector('[data-gap-follow]').click()")
+        first, t0 = None, time.monotonic()
+        while time.monotonic() - t0 < 20:
+            d = await pg.evaluate(DESK)
+            if d["time"] and mins(d["time"]) is not None and mins(d["time"]) < 16 * 60: first = d; break
+            await pg.wait_for_timeout(100)
+        if not first: bad.append("lifecycles.html@390x844: Follow during 'Session complete' did not restart the session in 20 s")
+        elif mins(first["time"]) < 11 * 60 or first["recs"] < 3:
+            bad.append(f"lifecycles.html@390x844: Follow during 'Session complete' restarted the session at {first['time']} with {first['recs']} record(s) (>= 11:00 ET and >= 3 expected)")
+    await ctx.close()
+    assert not bad, "desk_phone_follow:\n  " + "\n  ".join(bad)
+    print("desk_phone_follow: the walk stays in view at 390, the strip accounts for every fill, a restart opens warm")
+
+
+# ---- long jumps on a phone: never a blank frame, an ink band or two readouts (NV-R2-2)
+VT_REC = r"""(() => { const R = window.__vt = { f: [], on: true }; const root = document.documentElement;
+  const pe = (n) => { try { const cs = getComputedStyle(root, n); return cs.display === 'none' ? 0 : +cs.opacity; } catch (e) { return -1; } };
+  const f = () => { const anims = document.getAnimations().filter(a => a.effect && a.effect.pseudoElement && a.effect.pseudoElement.startsWith('::view-transition'));
+    const names = [...new Set(anims.map(a => a.effect.pseudoElement))];
+    const vt = anims.length > 0, nav = names.some(n => /site-nav/.test(n));
+    R.f.push({ t: performance.timeOrigin + performance.now(), vt, old: vt && names.includes('::view-transition-old(site-nav)') ? pe('::view-transition-old(site-nav)') : (vt && nav ? pe('::view-transition-old(site-nav)') : 0),
+      neu: vt && nav ? pe('::view-transition-new(site-nav)') : 1, jump: root.dataset.jump || '' });
+    if (R.on && R.f.length < 900) requestAnimationFrame(f); }; requestAnimationFrame(f); })()"""
+
+
+def frame_issues(png, bar_h):
+    """for one screencast frame: (the lit share below the bar, the band: [first row, rows] of a run of at least 4
+    full-width rows of the ink root #0B110F (+-2) below the bar in a frame that also shows a paper view, else None).
+    The band sits between the bar and the paper on a jump up, and between the paper and the incoming sheet on a jump
+    down (1a6b9fb: rows 724-844 at 390 for 280 ms on 01 -> 06), so both places count."""
+    from PIL import Image, ImageChops
+    import io
+    im = Image.open(io.BytesIO(png)).convert("RGB")
+    W, H = im.size
+    below = im.crop((0, bar_h, W, H))
+    luma = below.convert("L")
+    lit = luma.point(lambda v: 255 if v > 64 else 0).histogram()[255] / max(1, below.size[0] * below.size[1])
+    r_, g_, b_ = ImageChops.difference(below, Image.new("RGB", below.size, (11, 17, 15))).split()
+    ink = ImageChops.lighter(ImageChops.lighter(r_, g_), b_).point(lambda v: 255 if v <= 2 else 0)
+    ink_rows = [v >= 0.98 * 255 for v in ink.resize((1, below.size[1]), Image.BOX).tobytes()]
+    paper = any(v >= 0.9 * 255 for v in luma.point(lambda v: 255 if v > 200 else 0).resize((1, below.size[1]), Image.BOX).tobytes())
+    band, run = None, 0
+    for y, full in enumerate(ink_rows + [False]):
+        if full: run += 1; continue
+        if run >= 4 and paper and band is None: band = [bar_h + y - run, run]
+        run = 0
+    return lit, band
+
+
+@check
+async def jump_touch(b):
+    """at 390x844 with touch, every screencast frame of Back to top (from the footer) and of a chapter jump from 01 to 06
+    on home: at least 2% lit pixels below the bar (no blank frame), no band (4+ full-width rows) of the ink root #0B110F
+    beside a paper view (between the bar and the paper, or between the paper and the incoming sheet), and one chapter
+    readout (never the old and the new bar both drawn) (NV-R2-2)"""
+    bad, summary = [], []
+    for case in ("top", "06"):
+        ctx, pg = await open_page(b, "index.html", 390, 844, touch=True)
+        cdp = await ctx.new_cdp_session(pg)
+        if case == "top": await pg.evaluate("window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'})")
+        else: await pg.evaluate("(() => { const a = document.querySelectorAll('.nav-ch-list a')[0]; const el = document.getElementById(decodeURIComponent(a.getAttribute('href').slice(1))); window.scrollTo({top: el.getBoundingClientRect().top + scrollY, behavior: 'instant'}); })()")
+        await pg.wait_for_timeout(1800)
+        await pg.locator(".nav-ch-btn").tap(); await pg.wait_for_timeout(700)
+        bar_h = int(await pg.evaluate("Math.ceil((document.querySelector('header.nav') || document.querySelector('.nav')).getBoundingClientRect().bottom)"))
+        frames = []
+        def on(ev):
+            frames.append((ev["metadata"].get("timestamp", 0) * 1000.0, ev["data"]))
+            asyncio.ensure_future(cdp.send("Page.screencastFrameAck", {"sessionId": ev["sessionId"]}))
+        cdp.on("Page.screencastFrame", on)
+        await cdp.send("Page.startScreencast", {"format": "png", "maxWidth": 390, "maxHeight": 844, "everyNthFrame": 1})
+        await pg.evaluate(VT_REC); await pg.wait_for_timeout(300)
+        t_click = await pg.evaluate("performance.timeOrigin + performance.now()")
+        target = ".nav-ch-top" if case == "top" else ".nav-ch-list a[href='#governance']"
+        if not await pg.locator(target).count(): bad.append(f"index.html@390x844 {case}: no {target}"); await ctx.close(); continue
+        await pg.locator(target).first.tap()
+        await pg.wait_for_timeout(2500 if MODE["throttle"] <= 1 else 6000)
+        await cdp.send("Page.stopScreencast")
+        await pg.evaluate("window.__vt.on = false"); vt = (await pg.evaluate("window.__vt"))["f"]
+        landed = await pg.evaluate("scrollY")
+        await ctx.close()
+        import base64
+        shots = [(t, base64.b64decode(d)) for t, d in frames if t >= t_click - 50]
+        name = "Back to top" if case == "top" else "chapter 01 -> 06"
+        if len(shots) < 3: bad.append(f"index.html@390x844 {name}: only {len(shots)} screencast frames after the tap")
+        dark, bands = [], []
+        for t, png in shots:
+            lit, band = frame_issues(png, bar_h)
+            if lit < 0.02: dark.append((int(t - t_click), f"{lit * 100:.1f}%"))
+            if band: bands.append((int(t - t_click), band))
+        two = [(int(x["t"] - t_click), x["old"], x["neu"]) for x in vt if x["vt"] and x["old"] > 0.05 and x["neu"] > 0.05]
+        if dark: bad.append(f"index.html@390x844 {name}: {len(dark)} of {len(shots)} frames have under 2% lit pixels below the bar, e.g. (ms, lit) {dark[:4]}")
+        if bands: bad.append(f"index.html@390x844 {name}: {len(bands)} frames show a band of the ink root #0B110F beside a paper view, e.g. (ms, [first row, rows]) {bands[:4]}")
+        if two: bad.append(f"index.html@390x844 {name}: the old and the new bar are both drawn in {len(two)} frames (two readouts), e.g. (ms, old opacity, new opacity) {two[:4]}")
+        summary.append(f"{name}: {len(shots)} frames, landed at {landed}")
+    assert not bad, "jump_touch:\n  " + "\n  ".join(bad)
+    print(f"jump_touch: {'; '.join(summary)}; every frame lit, no ink band, one readout")
+
+
 # ---------------------------------------------------------------- runner
 def parse_args(argv):
     base, only, listing, i = None, None, False, 0
@@ -1202,38 +2163,89 @@ def parse_args(argv):
     return base, ([n.strip() for n in only.split(",") if n.strip()] if only else None), listing
 
 
+def parse_modes(argv):
+    """the run modes (into MODE): --swiftshader | --gpu, --cpu-throttle N, --cores N, --check-timeout S; returns the
+    --shards workflow path, if any"""
+    shards = None
+    for i, a in enumerate(argv):
+        nxt = argv[i + 1] if i + 1 < len(argv) else ""
+        val = lambda name: a.split("=", 1)[1] if a.startswith(name + "=") else nxt if a == name else None
+        if a == "--gpu": MODE["gl"] = "gpu"
+        elif a == "--swiftshader": MODE["gl"] = "swiftshader"
+        elif val("--cpu-throttle") is not None: MODE["throttle"] = max(1.0, float(val("--cpu-throttle")))
+        elif val("--cores") is not None: MODE["cores"] = int(val("--cores"))
+        elif val("--check-timeout") is not None: MODE["check_timeout"] = float(val("--check-timeout"))
+        elif val("--shards") is not None: shards = val("--shards")
+    return shards
+
+
+def check_shards(path):
+    """every check sits in exactly one shard of the workflow's browser matrix ('- shard: NAME' followed by 'only: a,b,c');
+    prints the shards; exit status 1 if a check is in no shard or in two, or a shard names an unknown check"""
+    shards, cur = {}, None
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        m = re.match(r"\s*-\s*shard:\s*([\w-]+)\s*$", line)
+        if m: cur = m[1]; continue
+        m = re.match(r"\s*only:\s*([\w,\s]+?)\s*$", line)
+        if m and cur: shards[cur] = [n.strip() for n in m[1].split(",") if n.strip()]; cur = None
+    names = [c.__name__ for c in CHECKS]
+    seen = [(n, s) for s, lst in shards.items() for n in lst]
+    problems = [f"'{n}' is in no shard" for n in names if not any(x == n for x, _ in seen)]
+    problems += [f"'{n}' is listed {k} times: {[s for x, s in seen if x == n]}" for n in names for k in [sum(1 for x, _ in seen if x == n)] if k > 1]
+    problems += [f"shard '{s}' names an unknown check '{n}'" for n, s in seen if n not in names]
+    for s, lst in shards.items(): print(f"shard {s:14} {len(lst):2} checks: {', '.join(lst)}")
+    if not shards: problems.append(f"no '- shard:' / 'only:' matrix entries found in {path}")
+    for p in problems: print("SHARDS:", p)
+    print(f"shards: {len(names)} checks in {len(shards)} shards - {'OK' if not problems else f'{len(problems)} problem(s)'}")
+    return 1 if problems else 0
+
+
 async def main():
     global BASE
     base, only, listing = parse_args(sys.argv[1:])
+    shards = parse_modes(sys.argv[1:])
     if base: BASE = base
     names = [c.__name__ for c in CHECKS]
+    if shards: return check_shards(shards)
     if listing:
         for c in CHECKS: print(f"{c.__name__:24} {(c.__doc__ or '').strip().splitlines()[0]}")
         return 0
     unknown = [n for n in (only or []) if n not in names]
     if unknown: print("unknown check(s):", unknown, "- known:", ", ".join(names)); return 2
     todo = [c for c in CHECKS if only is None or c.__name__ in only]
-    failed = []
+    if MODE["cores"]: MODE["cores"] = pin_cores(MODE["cores"]) or f"(pinning to {MODE['cores']} failed)"
+    failed, t_run = [], time.monotonic()
     async with async_playwright() as p:
-        b = await p.chromium.launch(args=["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"])
+        raw = await p.chromium.launch(args=launch_args())
+        print(f"verify_v9 against {BASE}: {len(todo)} check(s) · {mode_line()} · Chromium {raw.version}", flush=True)
+        b = TrackedBrowser(raw)
         for c in todo:
-            t0 = time.monotonic()
+            t0, hung = time.monotonic(), False
             try:
-                await c(b)
+                await run_one(c, b)
                 print(f"PASS {c.__name__} ({time.monotonic() - t0:.0f}s)", flush=True)
             except Exception as e:
-                msg = str(e) if isinstance(e, AssertionError) and str(e) else "".join(traceback.format_exception_only(type(e), e)).strip()
+                hung = isinstance(e, CheckTimeout)
+                msg = str(e) if isinstance(e, (AssertionError, CheckTimeout)) and str(e) else "".join(traceback.format_exception_only(type(e), e)).strip()
                 failed.append(c.__name__)
                 print(f"FAIL {c.__name__} ({time.monotonic() - t0:.0f}s): {msg}", flush=True)
-                if not isinstance(e, AssertionError): traceback.print_exc(limit=3)
+                if not isinstance(e, (AssertionError, CheckTimeout)): traceback.print_exc(limit=3)
+            if not await close_leftovers(drop_shared=hung):
+                print(f"(a context of {c.__name__} would not close: restarting the browser)", flush=True)
+                try: await asyncio.wait_for(raw.close(), 30)
+                except Exception: pass
+                SHARED.clear(); OPEN.clear(); CDP_KEEP.clear()
+                raw = await p.chromium.launch(args=launch_args()); b = TrackedBrowser(raw)
         for ctx, pg in SHARED.values():
-            try: await ctx.close()
+            try: await asyncio.wait_for(ctx.close(), 25)
             except Exception: pass
-        await b.close()
+        try: await asyncio.wait_for(raw.close(), 30)
+        except Exception: pass
+    took = f"{time.monotonic() - t_run:.0f} s"
     if failed:
-        print(f"V9 CHECKS FAILED: {len(failed)} of {len(todo)}: {', '.join(failed)}")
+        print(f"V9 CHECKS FAILED: {len(failed)} of {len(todo)} in {took}: {', '.join(failed)}")
         return 1
-    print("V9 CHECKS PASSED")
+    print(f"V9 CHECKS PASSED: {len(todo)} in {took}")
     return 0
 
 if __name__ == "__main__":
