@@ -2692,7 +2692,9 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 }
 
 @media (max-width: 960px) { .lane .lane-v { max-width: 640px; margin-top: 8px; } .lane .figure-cap { margin-top: 26px; } }
-@media (max-width: 420px) { .lane-v { --lv-gw: 88px; --lv-x: 44px; } .lane-v > li { column-gap: 12px; } .lane-v .lv-g { width: 104px; margin-left: -8px; } .lane-v > .lv-bound { padding-left: calc(var(--lv-gw) + 12px); } }
+/* narrow phones: an 88 px column, the 104 px glyph drawn whole 8 px into the margin (max-width: none, or the base svg rule
+   squeezes it to 88 px and its spine drifts 8 px off the lane's) */
+@media (max-width: 420px) { .lane-v { --lv-gw: 88px; --lv-x: 44px; } .lane-v > li { column-gap: 12px; } .lane-v .lv-g { width: 104px; max-width: none; margin-left: -8px; } .lane-v > .lv-bound { padding-left: calc(var(--lv-gw) + 12px); } }
 @media (prefers-reduced-motion: reduce) { .lane .dr, .lane-v .dr, .lc-pipe .dr, .lane-h [data-g], .lane-v .lv-g { transition: none; } }
 
 /* ---------- the desk (gap.js; Lifecycles §03): a session on top, the lane beside it, the ledger under it ----------
