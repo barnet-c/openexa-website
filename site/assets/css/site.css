@@ -1805,7 +1805,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .proof.has-on .pf-lane:not(.is-on) :is(.pf-g, .pf-c, .pf-r, .pf-o) { opacity: .3; }
 
 /* the inspector: the summary, or one session's record; the bracket spans what it describes */
-.pf-read { position: relative; margin-top: 12px; border-top: 1px solid var(--line); }
+.pf-read { position: relative; margin-top: 12px; border-top: 1px solid var(--line); overflow-x: clip; } /* a pinned bracket that slides on a resize never widens the page */
 .pf-bracket { position: absolute; top: -1px; height: 2px; left: calc(var(--gut) + (100% - var(--gut)) * var(--i, 0) / var(--cols, 10)); width: calc((100% - var(--gut)) * var(--span, 10) / var(--cols, 10)); background: var(--accent); transition: left .42s var(--ease), width .42s var(--ease); }
 .pf-bracket::before, .pf-bracket::after { content: ""; position: absolute; top: -5px; width: 1px; height: 7px; background: var(--accent); }
 .pf-bracket::before { left: 0; } .pf-bracket::after { right: 0; }
@@ -1871,7 +1871,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .pf { --pf-sheen: rgba(30, 122, 90, .55); }
 .is-dark .pf { --pf-sheen: rgba(214, 255, 233, .75); }
 @keyframes pf-mote { 0% { transform: translateY(0); opacity: 0; } 7% { opacity: .9; } 40% { opacity: .45; } 50%, 100% { transform: translateY(calc(26px - var(--zg))); opacity: 0; } }
-@keyframes pf-sheen { 0% { transform: translateX(-100%); opacity: 0; } 8% { opacity: 1; } 34% { opacity: 1; } 40%, 100% { transform: translateX(667%); opacity: 0; } } /* compositor only: 667% of its 15% = the floor's far end */
+@keyframes pf-sheen { 0% { transform: translateX(-100%); opacity: 0; } 8% { opacity: 1; } 34% { opacity: 1; } 40%, 100% { transform: translateX(567%); opacity: 0; } } /* compositor only; at 567% of its own 15% its right edge rests on the floor's end, never past it */
 @keyframes pf-rise { 0%, 100% { transform: translateY(0) rotate(45deg); } 50% { transform: translateY(-3px) rotate(45deg); } }
 .proof.is-live:not(.is-armed) .pf-g::before { animation: pf-mote 7.2s cubic-bezier(.3, .1, .4, 1) infinite; animation-delay: calc(var(--l) * -2.3s); }
 .proof.is-live:not(.is-armed) .pf-floor::after { animation: pf-sheen 9s cubic-bezier(.45, 0, .55, 1) 1s infinite; }
