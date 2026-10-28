@@ -129,11 +129,11 @@
  },
  "evidence.html": {
   "date": "2026-10-27",
-  "sha": "9f13a3eca6459a5d"
+  "sha": "2364fff07ad0d18b"
  },
  "index.html": {
   "date": "2026-10-27",
-  "sha": "53d907b4b13897f4"
+  "sha": "805aeeabdfe44e33"
  },
  "lifecycles.html": {
   "date": "2026-10-27",
@@ -141,7 +141,7 @@
  },
  "platform.html": {
   "date": "2026-10-27",
-  "sha": "90b6d6ce7e2f461a"
+  "sha": "484fa4edb3247bf8"
  },
  "research.html": {
   "date": "2026-10-27",
@@ -181,7 +181,7 @@
  },
  "research/09-lifecycle-01-ten-sessions.html": {
   "date": "2026-10-27",
-  "sha": "2a4a8dbbc6f57686"
+  "sha": "65034ebbd5cb014e"
  },
  "research/10-master-and-copy.html": {
   "date": "2026-10-27",
@@ -189,6 +189,6 @@
  },
  "trust.html": {
   "date": "2026-10-27",
-  "sha": "aee21288911ac2f5"
+  "sha": "4300dfe8adb8a846"
  }
 }
