@@ -1884,6 +1884,11 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
    the homepage loader, page transitions, and the shared polish of controls and focus. Behaviour: site.js (nav · chapters
    · loader). Context selectors use :where() so a component's own rules always win over this global layer. */
 
+/* ---------- off-screen: a band of the page that is wholly out of view runs no CSS animation ----------
+   site.js toggles .is-offscreen on every main > section, main > div and the footer. Owners keep their infinite loops on
+   transform/opacity; this pauses them (and anything else) wherever nobody can see them. */
+.is-offscreen, .is-offscreen *, .is-offscreen *::before, .is-offscreen *::after { animation-play-state: paused !important; }
+
 /* ---------- rhythm & anchors: nothing scrolls or focuses under the fixed nav ---------- */
 :root { --nav-h: 72px; }
 @media (max-width: 960px) { :root { --nav-h: 64px; } }
@@ -1913,7 +1918,7 @@ html { scroll-padding-top: var(--nav-h); }
 .nav .brand { flex: none; }
 .nav .brand .mark { color: var(--brand-blue); transition: color .5s var(--ease); }
 .nav:not(.nav--solid) .brand .mark, .nav--dark .brand .mark, .nav--menu .brand .mark { color: var(--paper); }
-.nav .brand small { display: none; font-family: var(--mono); font-size: .62rem; letter-spacing: .16em; text-transform: uppercase; opacity: .62; margin-left: 4px; padding-left: 13px; border-left: 1px solid currentColor; }
+.nav .brand small { display: none; font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .16em; text-transform: uppercase; opacity: .62; margin-left: 4px; padding-left: 13px; border-left: 1px solid currentColor; }
 @media (min-width: 1100px) { .nav .brand small { display: inline; } }
 .nav.has-ch .brand small { display: none; }
 
@@ -1921,14 +1926,21 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-links { display: flex; align-items: center; gap: clamp(18px, 2.4vw, 34px); margin-left: auto; position: relative; }
 .nav-links a { position: relative; padding: 10px 0; font-size: .9rem; font-weight: 500; letter-spacing: -0.005em; opacity: .8; transition: opacity .25s var(--ease); }
 .nav-links a::after { content: ""; position: absolute; left: 0; right: 0; bottom: 4px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: right; transition: transform .45s var(--ease); }
-.nav-links a:hover, .nav-links a:focus-visible, .nav-links a[aria-current="page"] { opacity: 1; }
-.nav-links a:hover::after, .nav-links a:focus-visible::after, .nav-links a[aria-current="page"]::after { transform: scaleX(1); transform-origin: left; }
+.nav-links a:focus-visible, .nav-links a[aria-current="page"] { opacity: 1; }
+.nav-links a:focus-visible { transition: none; } /* keyboard focus is at full strength at once */
+.nav-links a:focus-visible::after, .nav-links a[aria-current="page"]::after { transform: scaleX(1); transform-origin: left; }
+/* hover states only where a pointer hovers (a tap must not leave a link lit) */
+@media (hover: hover) {
+  .nav-links a:hover { opacity: 1; }
+  .nav-links a:hover::after { transform: scaleX(1); transform-origin: left; }
+}
 .nav-ink { display: none; }
 /* where anchor positioning exists, the current page's underline is one element: it glides to the next page's link
-   during a page transition (it carries its own view-transition-name) */
+   during a page transition (it carries its own view-transition-name). The ink is the last child of .nav-links, so a
+   sibling selector finds the current link: no relational selector, no script, right from the first frame. */
 @supports (anchor-name: --a) {
   .nav-links a[aria-current="page"] { anchor-name: --nav-current; }
-  .nav-links:has(a[aria-current="page"]) .nav-ink {
+  .nav-links a[aria-current="page"] ~ .nav-ink {
     display: block; position: absolute; position-anchor: --nav-current; left: anchor(left); right: anchor(right);
     top: calc(anchor(bottom) - 5px); height: 1px; background: currentColor; pointer-events: none; view-transition-name: nav-ink;
   }
@@ -1945,7 +1957,7 @@ html { scroll-padding-top: var(--nav-h); }
 .nav--menu .nav-ch { opacity: 0; visibility: hidden; transition: opacity .2s var(--ease), visibility 0s linear .2s; } /* the sheet has the stage */
 .nav-ch-btn {
   position: relative; display: inline-flex; align-items: center; gap: 10px; min-width: 0; height: 44px; padding: 0 8px 0 13px;
-  font-family: var(--mono); font-size: .62rem; font-weight: 400; line-height: 1; letter-spacing: .16em; text-transform: uppercase;
+  font-family: var(--mono); font-size: var(--mono-xs, .625rem); font-weight: 400; line-height: 1; letter-spacing: .16em; text-transform: uppercase;
   color: inherit; border-radius: 2px; -webkit-tap-highlight-color: transparent;
 }
 .nav-ch-btn::before { content: ""; position: absolute; left: 0; top: 50%; width: 1px; height: 13px; margin-top: -6.5px; background: currentColor; opacity: .38; }
@@ -1955,9 +1967,19 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-ch-line { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: color-mix(in srgb, currentColor 68%, transparent); transition: color .25s var(--ease); }
 .nav-ch-line b { font-weight: 500; letter-spacing: .1em; color: var(--accent); font-variant-numeric: tabular-nums; margin-right: .2em; }
 .nav-ch-line .t-short { display: none; }
+/* the phone forms (site.js picks one per page from measured widths): the section's short label, or '§NN / total' */
+.nav-ch-line .t-sh, .nav-ch-line .t-of { display: none; }
+.nav-ch-line.is-short .t { display: none; }
+.nav-ch-line.is-short .t-sh { display: inline; }
+.nav-ch-line.is-compact .t, .nav-ch-line.is-compact .t-sh { display: none; }
+.nav-ch-line.is-compact .t-of { display: inline; }
+.nav-ch-line.is-compact b.is-num::before { content: "\00a7"; margin-right: .1em; }
+.nav-ch-measure { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; }
+.nav-ch-measure > .nav-ch-line { width: max-content; overflow: visible; }
 .nav-ch-caret { flex: none; width: 10px; height: 10px; opacity: .5; transition: transform .4s var(--ease), opacity .25s var(--ease); }
-.nav-ch-btn:hover .nav-ch-line, .nav-ch-btn:focus-visible .nav-ch-line, .nav-ch.is-open .nav-ch-line { color: currentColor; }
-.nav-ch-btn:hover .nav-ch-caret, .nav-ch.is-open .nav-ch-caret { opacity: 1; }
+.nav-ch-btn:focus-visible .nav-ch-line, .nav-ch.is-open .nav-ch-line { color: currentColor; }
+.nav-ch.is-open .nav-ch-caret { opacity: 1; }
+@media (hover: hover) { .nav-ch-btn:hover .nav-ch-line { color: currentColor; } .nav-ch-btn:hover .nav-ch-caret { opacity: 1; } }
 .nav-ch.is-open .nav-ch-caret { transform: rotate(180deg); }
 /* a narrow desktop keeps the number; the title is in the list */
 @media (min-width: 961px) and (max-width: 1099.98px) {
@@ -1980,27 +2002,28 @@ html { scroll-padding-top: var(--nav-h); }
   box-shadow: 0 30px 70px -26px rgba(0, 0, 0, .7), 0 0 0 1px rgba(0, 0, 0, .2);
 }
 .nav-ch.is-open .nav-ch-panel { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; }
-.nav-ch-head { display: flex; justify-content: space-between; gap: 16px; padding: 15px 20px 13px; font-family: var(--mono); font-size: .6rem; line-height: 1; letter-spacing: .14em; text-transform: uppercase; color: var(--p-fg-3); border-bottom: 1px solid var(--p-line); }
+.nav-ch-head { display: flex; justify-content: space-between; gap: 16px; padding: 15px 20px 13px; font-family: var(--mono); font-size: var(--mono-xs, .625rem); line-height: 1; letter-spacing: .14em; text-transform: uppercase; color: var(--p-fg-3); border-bottom: 1px solid var(--p-line); }
 .nav-ch-list { padding: 6px 0; }
 .nav-ch-list a {
   position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr) 44px; align-items: center; column-gap: 12px;
   min-height: 46px; padding: 8px 20px; transition: background-color .2s var(--ease);
 }
 .nav-ch-list a::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; background: var(--accent); transform: scaleY(0); transition: transform .35s var(--ease); }
-.nav-ch-list .n { font-family: var(--mono); font-size: .64rem; letter-spacing: .1em; color: var(--p-fg-3); font-variant-numeric: tabular-nums; transition: color .25s var(--ease); }
+.nav-ch-list .n { font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .1em; color: var(--p-fg-3); font-variant-numeric: tabular-nums; transition: color .25s var(--ease); }
 .nav-ch-list .t { font-family: var(--serif); font-size: 1.2rem; line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; transition: transform .35s var(--ease); }
 .nav-ch-list .p { position: relative; height: 1px; background: var(--p-line); overflow: hidden; }
 .nav-ch-list .p b { position: absolute; inset: 0; background: currentColor; opacity: .5; transform: scaleX(var(--p, 0)); transform-origin: left; }
-.nav-ch-list a:hover, .nav-ch-list a:focus-visible { background: var(--p-hover); }
-.nav-ch-list a:hover .t, .nav-ch-list a:focus-visible .t { transform: translateX(3px); }
+.nav-ch-list a:focus-visible { background: var(--p-hover); }
+.nav-ch-list a:focus-visible .t { transform: translateX(3px); }
+@media (hover: hover) { .nav-ch-list a:hover { background: var(--p-hover); } .nav-ch-list a:hover .t { transform: translateX(3px); } }
 .nav-ch-list a:focus-visible { outline-offset: -3px; }
 .nav-ch-list a[aria-current="true"]::before { transform: scaleY(1); }
 .nav-ch-list a[aria-current="true"] .n { color: var(--accent); }
 .nav-ch-list a[aria-current="true"] .p b { background: var(--accent); opacity: 1; }
-.nav-ch-top { display: flex; align-items: center; gap: 10px; margin: 2px 20px 0; padding: 12px 0 8px; border-top: 1px solid var(--p-line); font-family: var(--mono); font-size: .6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--p-fg-3); transition: color .25s var(--ease); }
+.nav-ch-top { display: flex; align-items: center; gap: 10px; margin: 2px 20px 0; padding: 12px 0 8px; border-top: 1px solid var(--p-line); font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .14em; text-transform: uppercase; color: var(--p-fg-3); transition: color .25s var(--ease); }
 .nav-ch-top svg { width: 10px; height: 10px; transition: transform .35s var(--ease); }
-.nav-ch-top:hover, .nav-ch-top:focus-visible { color: var(--p-fg); }
-.nav-ch-top:hover svg { transform: translateY(-2px); }
+.nav-ch-top:focus-visible { color: var(--p-fg); }
+@media (hover: hover) { .nav-ch-top:hover { color: var(--p-fg); } .nav-ch-top:hover svg { transform: translateY(-2px); } }
 
 /* ---------- progress: one hairline along the bar's lower edge, cut into the page's chapters ---------- */
 .nav-progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; display: flex; gap: 3px; pointer-events: none; }
@@ -2025,7 +2048,8 @@ html { scroll-padding-top: var(--nav-h); }
 /* ---------- the menu sheet (phones and tablets): a popover, so it opens without JavaScript too ---------- */
 .nav-sheet {
   position: fixed; inset: var(--nav-h) 0 0 0; width: auto; height: auto; max-width: none; max-height: none; margin: 0;
-  padding: clamp(18px, 4vh, 40px) var(--gutter) calc(24px + env(safe-area-inset-bottom)); border: 0; border-radius: 0;
+  padding: clamp(18px, 4vh, 40px) max(var(--gutter), env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left));
+  border: 0; border-radius: 0;
   background: var(--ink); color: var(--paper); overflow: auto; overscroll-behavior: contain;
   display: none; flex-direction: column; gap: 28px; z-index: 99;
 }
@@ -2040,23 +2064,29 @@ html { scroll-padding-top: var(--nav-h); }
   font-family: var(--serif); font-size: clamp(2rem, 8.4vw, 2.9rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--paper);
   transition: color .25s var(--ease), transform .45s var(--ease);
 }
-.nav-sheet-links .n { align-self: start; padding-top: .75em; font-family: var(--mono); font-size: .64rem; line-height: 1; letter-spacing: .12em; color: var(--fg-3); transition: color .25s var(--ease); }
+.nav-sheet-links .n { align-self: start; padding-top: .75em; font-family: var(--mono); font-size: var(--mono-xs, .625rem); line-height: 1; letter-spacing: .12em; color: var(--fg-3); transition: color .25s var(--ease); }
 .nav-sheet-links a::after { content: ""; width: 8px; height: 8px; border-radius: 50%; align-self: center; background: var(--accent); transform: scale(0); transition: transform .35s var(--ease); }
 .nav-sheet-links a[aria-current="page"] .n { color: var(--accent); }
 .nav-sheet-links a[aria-current="page"]::after, .nav-sheet-links a.is-going::after { transform: scale(1); }
-.nav-sheet-links a:hover, .nav-sheet-links a:focus-visible { transform: translateX(6px); }
+.nav-sheet-links a:focus-visible { transform: translateX(6px); }
+@media (hover: hover) { .nav-sheet-links a:hover { transform: translateX(6px); } }
 .nav-sheet-links a:active { color: var(--accent); }
 .nav-sheet .btn { align-self: flex-start; --btn-bg: var(--paper); --btn-fg: var(--ink); padding: 1.05em 1.6em; }
 .nav-sheet .btn[aria-current="page"] { --btn-bg: transparent; --btn-fg: var(--paper); border-color: var(--line-strong); }
-.nav-sheet-meta { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 20px; padding-top: 18px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+.nav-sheet-meta { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 20px; padding-top: 18px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
 .nav-live { display: inline-flex; align-items: center; gap: 9px; color: var(--fg-2); }
 .nav-live i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: nav-ping 2.2s ease-out infinite; }
 @keyframes nav-ping { 0% { box-shadow: 0 0 0 0 rgba(79, 203, 147, .55); } 100% { box-shadow: 0 0 0 9px rgba(79, 203, 147, 0); } }
-/* opening: the sheet fades in, its rows rise one after another */
-.nav-sheet { opacity: 0; transition: opacity .32s var(--ease), display .32s allow-discrete, overlay .32s allow-discrete; }
-.nav-open .nav-sheet { opacity: 1; }
-.nav-sheet:popover-open { opacity: 1; }
+/* opening: the sheet fades in, its rows rise one after another. Closing: the rows leave first, the opening's stagger
+   reversed, then the sheet lifts 8 px into the bar and fades in .15 s, so its links are never legible over the page */
+.nav-sheet { opacity: 0; transform: translateY(-8px); transition: opacity .15s var(--ease) .07s, transform .15s var(--ease) .07s, display .22s allow-discrete, overlay .22s allow-discrete; }
+.nav-open .nav-sheet { opacity: 1; transform: none; transition: opacity .32s var(--ease); }
+.nav-sheet:popover-open { opacity: 1; transform: none; transition: opacity .32s var(--ease), display .32s allow-discrete, overlay .32s allow-discrete; }
 @starting-style { .nav-sheet:popover-open { opacity: 0; } }
+.nav-sheet:not(:popover-open) :is(.nav-sheet-links li, .btn, .nav-sheet-meta) {
+  animation: none; opacity: 0; transform: translateY(-6px);
+  transition: opacity 80ms linear, transform 120ms var(--ease); transition-delay: calc((7 - var(--i, 0)) * 7ms);
+}
 .nav-sheet-links li, .nav-sheet .btn, .nav-sheet-meta { animation: sheet-rise .7s var(--ease) both; animation-delay: calc(70ms + var(--i, 0) * 45ms); }
 .nav-sheet-links li { --i: 0; } .nav-sheet-links li + li { --i: 1; } .nav-sheet-links li + li + li { --i: 2; } .nav-sheet-links li + li + li + li { --i: 3; }
 .nav-sheet-links li + li + li + li + li { --i: 4; } .nav-sheet-links li + li + li + li + li + li { --i: 5; }
@@ -2067,6 +2097,16 @@ html { scroll-padding-top: var(--nav-h); }
   .nav-sheet-links a { grid-template-columns: 64px minmax(0, 1fr) auto; font-size: clamp(2.8rem, 7.4vw, 4.2rem); padding-block: clamp(12px, 1.8vh, 20px); }
   .nav-sheet .btn { font-size: 1.02rem; }
 }
+/* a phone on its side: two columns of links, so every link and the button are on screen without scrolling */
+@media (max-height: 500px) and (max-width: 960px) {
+  .nav-sheet { padding-top: 14px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); gap: 14px; }
+  .nav-sheet-links { display: grid; grid-template-columns: 1fr 1fr; column-gap: clamp(24px, 5vw, 56px); border-top: 0; }
+  .nav-sheet-links li:nth-child(-n + 2) { border-top: 1px solid var(--line); }
+  .nav-sheet-links a { grid-template-columns: 40px minmax(0, 1fr) auto; min-height: 52px; padding-block: 6px; font-size: 1.8rem; }
+  .nav-sheet-links .n { padding-top: .6em; }
+  .nav-sheet .btn { font-size: .92rem; padding: .78em 1.3em; }
+  .nav-sheet-meta { padding-top: 10px; }
+}
 
 /* ---------- breakpoints: phones and tablets fold the links into the sheet ---------- */
 @media (max-width: 960px) {
@@ -2075,63 +2115,68 @@ html { scroll-padding-top: var(--nav-h); }
   .nav .container { gap: 16px; }
   .nav .brand { font-size: 1.45rem; gap: 10px; }
   .nav .brand .mark { width: 28px; height: 28px; }
-  .nav-ch { position: static; flex: 0 1 auto; margin-left: -6px; }
+  .nav-ch { position: static; flex: 1 1 auto; margin-left: -6px; } /* it takes the room up to the toggle: the line's room is measurable */
   .nav-ch-btn { padding-right: 4px; }
   .nav-ch-roll { max-width: none; }
   .nav-ch-line .t-wide { display: none; }
   .nav-ch-line.is-intro .t-short { display: inline; }
   .nav-ch-panel { left: 0; right: 0; top: 100%; width: auto; max-height: calc(100vh - var(--nav-h) - 12vh); max-height: calc(100svh - var(--nav-h) - 12svh); border-width: 0 0 1px; border-radius: 0; transform: translateY(-6px); transform-origin: top; }
-  .nav-ch-head, .nav-ch-list a { padding-left: var(--gutter); padding-right: var(--gutter); }
-  .nav-ch-top { margin-left: var(--gutter); margin-right: var(--gutter); }
+  .nav-ch-head, .nav-ch-list a { padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); }
+  .nav-ch-top { margin-left: max(var(--gutter), env(safe-area-inset-left)); margin-right: max(var(--gutter), env(safe-area-inset-right)); }
   .nav-ch-list .t { font-size: 1.35rem; }
   .nav-ch-list a { min-height: 52px; }
 }
 @media (min-width: 961px) { .nav-sheet { display: none !important; } }
-@media (max-width: 380px) { .nav-ch-btn { letter-spacing: .12em; } }
-.nav-open { overflow: hidden; }
-/* the same open state without JavaScript, from the popover itself (one rule each: an unknown selector voids a list) */
-:root:has(.nav-sheet:popover-open) { overflow: hidden; }
-:root:has(.nav-sheet:popover-open) .nav { background: var(--ink); color: var(--paper); -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom-color: rgba(245, 242, 236, .08); --accent: var(--signal-bright); }
-:root:has(.nav-sheet:popover-open) .nav .brand .mark { color: var(--paper); }
-:root:has(.nav-sheet:popover-open) .nav-toggle span::before { transform: translateY(3.75px) rotate(45deg); }
-:root:has(.nav-sheet:popover-open) .nav-toggle span::after { transform: translateY(-3.75px) rotate(-45deg); }
+@media (max-width: 430px) { .nav .container { gap: 10px; } .nav-ch-btn { letter-spacing: .09em; } }
+/* the open sheet: site.js mirrors the popover's state as body.nav-open and .nav--menu (one class change, no relational
+   selector watching the whole document); the script-less version of these rules is in the (scripting: none) block below */
+body.nav-open { overflow: hidden; }
 
 /* ---------- the loader: an aperture of fine ticks that fills with the real elapsed time, then lifts ---------- */
 .loader {
   position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; color: var(--paper);
   background: radial-gradient(90% 70% at 50% 46%, #13201b 0%, var(--ink) 58%, #0B110F 100%);
-  transition: transform 1s cubic-bezier(.76, 0, .24, 1) .16s, visibility 0s linear 1.2s;
-  animation: loader-failsafe .45s 3.4s forwards; /* lifted by site.js within ~2.4 s; without a working script it still goes */
+  transition: transform .9s cubic-bezier(.62, 0, .2, 1), visibility 0s linear .95s;
+  animation: loader-failsafe .45s 3.4s forwards; /* lifted by site.js within ~2.5 s; without a working script it still goes */
 }
 @keyframes loader-failsafe { to { opacity: 0; visibility: hidden; } }
+/* site.js lifts the curtain 120 ms after 100 (the decision reads for a beat); it starts moving at once, and its content
+   stays legible until the stage is coming through, so no frame is an empty dark panel */
 .loader.is-done { transform: translateY(-100%); visibility: hidden; }
 /* the curtain's lower edge is a hairline: the lift reads as a sheet being raised off the stage */
-.loader::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(245, 242, 236, .4) 30%, rgba(79, 203, 147, .55) 50%, rgba(245, 242, 236, .4) 70%, transparent); opacity: 0; transition: opacity .3s var(--ease) .16s; }
+.loader::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(245, 242, 236, .4) 30%, rgba(79, 203, 147, .55) 50%, rgba(245, 242, 236, .4) 70%, transparent); opacity: 0; transition: opacity .25s var(--ease); }
 .loader.is-done::after { opacity: 1; }
-.loader-inner { display: grid; justify-items: center; gap: 30px; transition: transform 1s cubic-bezier(.76, 0, .24, 1) .16s, opacity .5s var(--ease) .16s; }
+.loader-inner { display: grid; justify-items: center; gap: 30px; transition: transform .9s cubic-bezier(.62, 0, .2, 1), opacity .42s ease-in .26s; }
 .loader.is-done .loader-inner { transform: translateY(34vh); opacity: 0; }
-.loader-dial { --p: 0; position: relative; width: clamp(140px, 13vw, 176px); aspect-ratio: 1; display: grid; place-items: center; }
+/* the dial sweeps on its own from the first paint (before any script has arrived: never a frozen dial); site.js takes
+   over from where it is (.is-counting) and only then shows the count */
+@property --lp { syntax: "<number>"; inherits: true; initial-value: 0; }
+.loader-dial { --lp: 0; position: relative; width: clamp(140px, 13vw, 176px); aspect-ratio: 1; display: grid; place-items: center; animation: loader-idle 3.2s cubic-bezier(.2, .7, .2, 1) forwards; }
+@keyframes loader-idle { to { --lp: .26; } }
+.loader.is-counting .loader-dial { animation: none; }
+.loader-count { visibility: hidden; }
+.loader.is-counting .loader-count { visibility: visible; }
 .loader-ring {
   position: absolute; inset: 0; border-radius: 50%;
-  background: conic-gradient(rgba(245, 242, 236, .92) calc(var(--p) * 1turn), rgba(245, 242, 236, .16) 0);
+  background: conic-gradient(rgba(245, 242, 236, .92) calc(var(--lp) * 1turn), rgba(245, 242, 236, .16) 0);
   -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 10px), #000 calc(100% - 9px)), repeating-conic-gradient(#000 0 .7deg, transparent .7deg 5deg);
   -webkit-mask-composite: source-in;
   mask: radial-gradient(closest-side, transparent calc(100% - 10px), #000 calc(100% - 9px)), repeating-conic-gradient(#000 0 .7deg, transparent .7deg 5deg);
   mask-composite: intersect;
 }
 /* the leading tick: the signal */
-.loader-dial::before { content: ""; position: absolute; inset: -3px; border-radius: 50%; background: linear-gradient(var(--signal-bright), var(--signal-bright)) 50% 0 / 2px 14px no-repeat; transform: rotate(calc(var(--p) * 1turn)); opacity: .95; }
+.loader-dial::before { content: ""; position: absolute; inset: -3px; border-radius: 50%; background: linear-gradient(var(--signal-bright), var(--signal-bright)) 50% 0 / 2px 14px no-repeat; transform: rotate(calc(var(--lp) * 1turn)); opacity: .95; }
 .loader-dial::after { content: ""; position: absolute; inset: 23%; border-radius: 50%; border: 1px solid rgba(245, 242, 236, .1); }
 .loader .mark { width: 32%; height: 32%; color: var(--paper); opacity: .92; }
 .loader-count { font-family: var(--serif); font-size: clamp(2.6rem, 5vw, 3.9rem); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; min-width: 3ch; text-align: center; }
-.loader-lab { font-family: var(--mono); font-size: .62rem; letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .56); text-align: center; padding: 0 var(--gutter); }
+.loader-lab { font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .56); text-align: center; padding: 0 var(--gutter); }
 /* the decision: at 100 the aperture pulses once before the stage is revealed */
 .loader.is-complete .loader-dial { animation: loader-pulse .42s cubic-bezier(.2, .7, .2, 1) both; }
 .loader.is-complete .loader-ring { background: var(--signal-bright); transition: background .3s; }
 @keyframes loader-pulse { 40% { transform: scale(1.06); } to { transform: none; } }
-/* a later visit in the same session: no count, just the mark until the stage is ready */
+/* a later visit in the same session: the mark only, until the stage is ready (no count, no dial) */
 .loader.is-quick .loader-count, .loader.is-quick .loader-lab, .loader.is-quick .loader-dial::before { visibility: hidden; }
-.loader.is-quick .loader-ring { opacity: .35; }
+.loader.is-quick .loader-ring, .loader.is-quick .loader-dial::after { opacity: 0; }
 .loader.is-quick { transition: opacity .45s var(--ease), visibility 0s linear .45s; }
 .loader.is-quick.is-done { transform: none; opacity: 0; }
 .loader.is-quick.is-done .loader-inner { transform: none; }
@@ -2157,11 +2202,14 @@ body.is-loading { overflow: hidden; }
 /* ---------- controls: buttons, links, focus ---------- */
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 :where(.btn) { transition: transform .35s var(--ease), background-color .3s var(--ease), color .3s var(--ease), border-color .3s var(--ease), box-shadow .3s var(--ease); -webkit-tap-highlight-color: transparent; }
-:where(.btn):hover { background-color: color-mix(in srgb, var(--btn-bg) 90%, var(--btn-fg)); }
-:where(.btn--ghost):hover { background-color: color-mix(in srgb, var(--fg) 7%, transparent); }
+@media (hover: hover) {
+  :where(.btn):hover { background-color: color-mix(in srgb, var(--btn-bg) 90%, var(--btn-fg)); }
+  :where(.btn--ghost):hover { background-color: color-mix(in srgb, var(--fg) 7%, transparent); }
+  :where(.btn):hover .arr { transform: translateX(4px); }
+}
 :where(.btn):active { transform: translateY(1px) scale(.985); }
 :where(.btn) .arr { transition: transform .45s var(--ease); }
-:where(.btn):hover .arr, :where(.btn):focus-visible .arr { transform: translateX(4px); }
+:where(.btn):focus-visible .arr { transform: translateX(4px); }
 :where(.btn):focus-visible { outline-offset: 3px; }
 /* standalone arrow links: a hairline that draws in from the left on hover and leaves to the right */
 a.link-arrow, button.link-arrow {
@@ -2170,11 +2218,48 @@ a.link-arrow, button.link-arrow {
   background-repeat: no-repeat; background-size: 0 1px, 100% 1px; background-position: 100% 100%, 0 100%;
   transition: background-size .55s var(--ease), color .25s var(--ease);
 }
-a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.link-arrow:focus-visible { background-size: 100% 1px, 100% 1px; background-position: 0 100%, 0 100%; }
+a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 100% 1px, 100% 1px; background-position: 0 100%, 0 100%; }
+@media (hover: hover) { a.link-arrow:hover, button.link-arrow:hover { background-size: 100% 1px, 100% 1px; background-position: 0 100%, 0 100%; } }
 :where(a.link-arrow, button.link-arrow):focus-visible { outline-offset: 5px; }
 :where(.form) :is(input, select, textarea):focus-visible { outline: none; border-bottom-color: var(--accent); box-shadow: 0 1px 0 0 var(--accent); }
+.footer ul li a:focus-visible { opacity: 1; } /* the footer's links rest at .85; a focused one is at full strength */
 .skip { position: fixed; left: 12px; top: 12px; z-index: 1001; padding: 11px 16px; border-radius: var(--r); background: var(--ink); color: var(--paper); font-size: .9rem; font-weight: 500; box-shadow: 0 0 0 2px var(--signal-bright); transform: translateY(calc(-100% - 24px)); transition: transform .3s var(--ease); }
 .skip:focus, .skip:focus-visible { left: 12px; transform: none; outline: none; }
+
+/* ---------- figures: a stat row's numerals rise out of a mask as the row arrives ----------
+   Presentation only: site.js never writes a number into the page (no count-up from zero), so the text is the true value
+   at every instant. The clip and the 6 px rise run on the numeral's own box; zero specificity, so a component's rules win. */
+@media (prefers-reduced-motion: no-preference) {
+  :where(.stats.will-reveal.is-in:not(.is-cut) > div > .v, .crew-stats.will-reveal.is-in:not(.is-cut) > div > b) {
+    animation: fig-rise .95s var(--ease) backwards; animation-delay: calc(var(--d, 0ms) + 150ms + var(--fig-i, 0) * 70ms);
+  }
+  :where(.stats, .crew-stats) > div:nth-child(2) { --fig-i: 1; }
+  :where(.stats, .crew-stats) > div:nth-child(3) { --fig-i: 2; }
+  :where(.stats, .crew-stats) > div:nth-child(4) { --fig-i: 3; }
+}
+@keyframes fig-rise { from { clip-path: inset(100% -.5em -.5em -.5em); transform: translateY(6px); } to { clip-path: inset(-.5em); transform: none; } }
+
+/* ---------- long jumps on the same page (site.js jumpTo): the destination arrives as a sheet over the still of where the
+   reader was, the overture's own hand-off: going down the page it rises from the bottom edge (paper rising over the
+   stage), going up it comes down from the top; the old view drifts a little the same way beneath it. No blend, so no
+   blank or grey frame at any instant; the bar (its own transition group) holds. ---------- */
+html[data-jump]::view-transition-old(root), html[data-jump]::view-transition-new(root) {
+  mix-blend-mode: normal; animation-duration: .32s; animation-timing-function: cubic-bezier(.22, .75, .2, 1); animation-fill-mode: both;
+}
+html[data-jump="down"]::view-transition-old(root) { animation-name: jump-under-up; }
+html[data-jump="down"]::view-transition-new(root) { animation-name: jump-sheet-up; box-shadow: 0 -28px 56px -28px rgba(8, 12, 10, .5); }
+html[data-jump="up"]::view-transition-old(root) { animation-name: jump-under-down; }
+html[data-jump="up"]::view-transition-new(root) { animation-name: jump-sheet-down; box-shadow: 0 28px 56px -28px rgba(8, 12, 10, .5); }
+@keyframes jump-sheet-up { from { transform: translateY(100%); } }
+@keyframes jump-under-up { to { transform: translateY(-16%); } }
+@keyframes jump-sheet-down { from { transform: translateY(-100%); } }
+@keyframes jump-under-down { to { transform: translateY(16%); } }
+html[data-jump]::view-transition-group(site-nav) { animation-duration: .28s; }
+html[data-jump]::view-transition { pointer-events: none; } /* a click during the move reaches the page, already there */
+/* the chapter list is gone before the still is taken (it would hang over the move) */
+html[data-jump] .nav-ch-panel { transition: none !important; }
+/* revealed at once (a jump's destination, a focused control): no transition for those two frames */
+.is-instant, .is-instant * { transition: none !important; }
 
 /* ---------- reduced motion: nothing slides; states still change ---------- */
 @media (prefers-reduced-motion: reduce) {
@@ -2182,11 +2267,13 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
   .nav-ch-panel, .nav-sheet, .nav-toggle span::before, .nav-toggle span::after, .nav-links a::after, .nav-ch-caret, .nav-ch-list .t, .nav-sheet-links a { transition-property: opacity, visibility, background-color, color; }
   .nav-ch-panel { transform: none; }
   .nav-sheet-links li, .nav-sheet .btn, .nav-sheet-meta, .loader.is-done ~ .nav .container > * { animation: none; }
+  .nav-sheet { transform: none; } /* it fades, nothing drifts (two rules: an unknown selector would void a list) */
+  .nav-sheet:not(:popover-open) :is(.nav-sheet-links li, .btn, .nav-sheet-meta) { transform: none; }
   .nav-live i { animation: none; }
   .loader, .loader-inner { transition: opacity .4s var(--ease), visibility 0s linear .4s; }
   .loader.is-done { transform: none; opacity: 0; }
   .loader.is-done .loader-inner { transform: none; }
-  .loader.is-complete .loader-dial { animation: none; }
+  .loader.is-complete .loader-dial, .loader-dial { animation: none; }
   a.link-arrow, button.link-arrow { transition: none; }
 }
 
@@ -2194,10 +2281,18 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
 @media (scripting: none) {
   body[data-nav="dark-start"] .nav { background: rgba(12, 18, 16, .86); -webkit-backdrop-filter: saturate(150%) blur(16px); backdrop-filter: saturate(150%) blur(16px); }
   .loader { display: none; }
+  /* the open sheet, read from the popover itself (no script mirrors it here). Only here: a document-wide relational
+     selector restyles the whole page on every text change, so it must never apply while scripts run. One rule each: an
+     unknown selector voids a whole list. */
+  :root:has(.nav-sheet:popover-open) { overflow: hidden; }
+  :root:has(.nav-sheet:popover-open) .nav { background: var(--ink); color: var(--paper); -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom-color: rgba(245, 242, 236, .08); --accent: var(--signal-bright); }
+  :root:has(.nav-sheet:popover-open) .nav .brand .mark { color: var(--paper); }
+  :root:has(.nav-sheet:popover-open) .nav-toggle span::before { transform: translateY(3.75px) rotate(45deg); }
+  :root:has(.nav-sheet:popover-open) .nav-toggle span::after { transform: translateY(-3.75px) rotate(-45deg); }
 }
 
 /* ---------- print: the frame stays off the page ---------- */
-@media print { .nav-ch, .nav-progress, .nav-sheet { display: none !important; } }
+@media print { .nav-ch, .nav-progress, .nav-sheet { display: none !important; } :where(.stats, .crew-stats) * { animation: none !important; } }
 /* v2:nav:end */
 /* -------------------------------------------------------------------------- */
 

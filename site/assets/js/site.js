@@ -1,5 +1,5 @@
 /* OpenEXA — shared behaviour
-   nav (chapter readout, progress, menu sheet) · clocks · loader · kinetic type · manifesto · reveals · counters · forms
+   nav (chapter readout, progress, menu sheet) · clocks · loader · kinetic type · manifesto · reveals · forms
    · 2D swarm fallback */
 (function () {
   'use strict';
@@ -22,28 +22,37 @@
   const darkStart = document.body.dataset.nav === 'dark-start';
   const themeMeta = $('meta[name="theme-color"]');
   const story = $('.story');
+  const paper = story && $('.story-paper', story);
+  let paperTop = null, paperWatch = 0;
   const toggle = $('.nav-toggle');
   const sheet = $('.nav-sheet');
   let navH = 72, vh = window.innerHeight, maxScroll = 1, clearUntil = -1, bands = [], navRaf = 0, menuOpen = false;
 
   const pageKey = path => path.replace(/\/+$/, '').split('/').pop().replace(/\.html$/, '') || 'index';
   const here = pageKey(location.pathname);
+  const section = /\/research\/[^/]+$/.test(location.pathname) ? 'research' : here; // an article sits under Research
+  // marks the link to where the reader is; never removes a mark the page itself states (a research article's markup
+  // marks Research, and stripping it hid the current-page underline there)
   $$('.nav-links a, .nav-sheet a, .nav .btn').forEach(a => {
     const href = (a.getAttribute('href') || '').split(/[?#]/)[0];
-    if (href && pageKey(href) === here) a.setAttribute('aria-current', 'page');
-    else a.removeAttribute('aria-current');
+    if (href && (pageKey(href) === here || pageKey(href) === section)) a.setAttribute('aria-current', 'page');
   });
 
-  /* chapters: [data-chapter] sections, else numbered sections (.sec-head), else an article's table of contents */
+  /* chapters: [data-chapter] sections, else numbered sections (.sec-head), else an article's table of contents.
+     A chapter is named by its section's own label (.sec-head .lab), exactly as the page prints it; data-chapter-short
+     may abbreviate it in the phone bar, and only where the full label does not fit (fitModes) */
   const tagline = ($('.nav .brand small') || {}).textContent || '';
-  let chapters = $$('section[data-chapter]').map((el, i) => ({ el, n: el.dataset.n || pad(i + 1), title: el.dataset.chapter }));
+  const headOf = el => { const head = $('.sec-head', el); return head && head.closest('section') === el ? head : null; };
+  const labOf = el => { const lab = headOf(el) && $('.lab', headOf(el)); return lab ? lab.textContent.trim() : ''; };
+  const shortOf = el => (el.dataset.chapterShort || '').trim();
+  let chapters = $$('section[data-chapter]').map((el, i) => ({ el, n: el.dataset.n || pad(i + 1), title: labOf(el) || el.dataset.chapter, short: shortOf(el) }));
   if (chapters.length < 2) chapters = $$('main section').map(el => {
-    const head = $('.sec-head', el), idx = head && $('.idx', head), lab = head && $('.lab', head);
-    return idx && lab && head.closest('section') === el ? { el, n: idx.textContent.trim(), title: lab.textContent.trim() } : null;
+    const head = headOf(el), idx = head && $('.idx', head), lab = head && $('.lab', head);
+    return idx && lab ? { el, n: idx.textContent.trim(), title: lab.textContent.trim(), short: shortOf(el) } : null;
   }).filter(Boolean);
   if (chapters.length < 2) chapters = $$('.toc a[href^="#"]').map((a, i) => {
     const el = document.getElementById(decodeURIComponent(a.hash.slice(1)));
-    return el ? { el, n: pad(i + 1), title: a.textContent.trim(), scope: el.closest('article, .article') } : null;
+    return el ? { el, n: pad(i + 1), title: a.textContent.trim(), short: '', toc: true, scope: el.closest('article, .article') } : null;
   }).filter(Boolean);
   if (chapters.length < 2) chapters = [];
   if (!nav || !$('.brand', nav)) chapters = [];
@@ -85,8 +94,11 @@
     });
   }
 
-  /* the readout: the line rolls up to the next chapter (down when going back); its width follows */
-  function lineFor(k) {
+  /* the readout: the line rolls up to the next chapter (down when going back); its width follows. Each line carries the
+     label, its short form (if the section gives one) and a compact '§NN / total'; a mode class shows one of them */
+  const MODES = ['is-short', 'is-compact'];
+  const total = () => pad(Math.max(0, ...chapters.map(c => /^\d+$/.test(c.n) ? +c.n : 0)) || chapters.length);
+  function lineFor(k, mode) {
     const line = document.createElement('span');
     line.className = 'nav-ch-line';
     if (k < 0) {
@@ -94,11 +106,51 @@
       line.innerHTML = '<span class="t t-wide"></span><span class="t t-short">Index</span>';
       line.firstChild.textContent = tagline || 'Index';
     } else {
-      const b = document.createElement('b'), t = document.createElement('span');
-      b.textContent = chapters[k].n; t.className = 't'; t.textContent = chapters[k].title;
+      const c = chapters[k], b = document.createElement('b'), t = document.createElement('span');
+      b.textContent = c.n; if (/^\d+$/.test(c.n)) b.className = 'is-num';
+      t.className = 't'; t.textContent = c.title;
       line.append(b, ' ', t);
+      if (c.short && c.short !== c.title) { const s = document.createElement('span'); s.className = 't-sh'; s.textContent = c.short; line.append(s); }
+      if (b.className) { const o = document.createElement('span'); o.className = 't-of'; o.textContent = '/ ' + total(); line.append(o); }
+      const m = mode || c.mode || 'full';
+      if (m !== 'full') line.classList.add('is-' + m);
     }
     return line;
+  }
+  /* phones: the full label wherever it fits; else the section's short form; else '§NN / total'. Decided per page (when one
+     label needs the compact form, every chapter takes it, so the bar keeps one register), from the natural width of
+     every form in the readout's own type against the room the bar gives the line. Articles' headings go compact
+     under 600 px. Desktop keeps the label (961-1099 px shows the number only). */
+  const narrowMQ = window.matchMedia('(max-width: 960px)'), phoneMQ = window.matchMedia('(max-width: 600px)');
+  let fitKey = '';
+  function fitModes() {
+    if (!ui.roll || !live.length) return;
+    const key = [window.innerWidth, live.map(c => c.k).join(), document.fonts ? document.fonts.status : ''].join('|');
+    if (key === fitKey) return;
+    fitKey = key;
+    live.forEach(c => { c.mode = 'full'; });
+    if (narrowMQ.matches) {
+      const box = document.createElement('span'); box.className = 'nav-ch-measure'; box.setAttribute('aria-hidden', 'true');
+      const forms = [];
+      live.forEach(c => { forms.push([c, 'full', lineFor(c.k, 'full')]); if (c.short && c.short !== c.title) forms.push([c, 'short', lineFor(c.k, 'short')]); });
+      forms.forEach(f => box.appendChild(f[2]));
+      ui.btn.appendChild(box);
+      const avail = ui.wrap.getBoundingClientRect().width - (ui.btn.getBoundingClientRect().width - ui.roll.getBoundingClientRect().width) - 1;
+      const w = new Map(forms.map(([c, m, l]) => [c.k + m, l.getBoundingClientRect().width]));
+      box.remove();
+      let compact = false;
+      live.forEach(c => {
+        if (c.toc && phoneMQ.matches) { compact = true; c.fit = false; }
+        else if (w.get(c.k + 'full') <= avail) c.mode = 'full';
+        else if (w.has(c.k + 'short') && w.get(c.k + 'short') <= avail) c.mode = 'short';
+        else { compact = true; c.fit = false; }
+      });
+      // the compact form is a number: a chapter without one (the blog's featured series) keeps its label if it fits
+      if (compact) live.forEach(c => { if (/^\d+$/.test(c.n) || c.fit === false) c.mode = 'compact'; });
+      live.forEach(c => { delete c.fit; });
+    }
+    const c = chapters[shownK];
+    if (ui.line && c) { MODES.forEach(m => ui.line.classList.toggle(m, m === 'is-' + c.mode)); }
   }
   function showChapter(k) {
     if (!ui.roll || k === shownK) return;
@@ -147,7 +199,7 @@
     clearUntil = !darkStart ? -1 : pinned ? story.getBoundingClientRect().bottom + y - vh : 16;
     bands = $$('main > *, body > .footer').map(el => {
       const r = el.getBoundingClientRect();
-      return { top: r.top + y, bottom: r.bottom + y, dark: el.classList.contains('is-dark') };
+      return { el, top: r.top + y, bottom: r.bottom + y, dark: el.classList.contains('is-dark') };
     });
     const before = live.map(c => c.k).join();
     live = chapters.filter(c => c.el.getClientRects().length > 0);
@@ -174,6 +226,7 @@
       g.i.style.display = len < 2 ? 'none' : '';
       g.p = -1;
     });
+    fitModes();
     update();
   }
   const queue = () => { if (!navRaf) navRaf = requestAnimationFrame(() => { navRaf = 0; update(); }); };
@@ -182,10 +235,22 @@
     if (!nav) return;
     const y = window.scrollY;
     // the bar's surface: the ground of the section that meets its lower edge, so bar and section read as one
-    let dark = false;
+    let dark = false, band = null;
     const edge = y + navH + 1;
-    for (const b of bands) if (edge >= b.top && edge < b.bottom) { dark = b.dark; break; }
-    const clear = y <= clearUntil && !menuOpen;
+    for (const b of bands) if (edge >= b.top && edge < b.bottom) { dark = b.dark; band = b; break; }
+    // the overture's exit: its rising paper (.story-paper; hidden unless it rises) is paper under the bar as soon as its
+    // edge reaches the bar's lower edge, though the band beneath is the dark stage. The rise follows the scroll with the
+    // stage's inertia, so while the edge moves this looks again on the next frames.
+    let overPaper = false;
+    if (band && band.el === story && paper) {
+      const r = getComputedStyle(paper).visibility !== 'hidden' ? paper.getBoundingClientRect() : null;
+      overPaper = !!r && r.height > 0 && r.top <= navH + 1 && r.bottom > navH;
+      const top = r && r.height > 0 ? Math.round(r.top) : null;
+      if (top !== paperTop) { paperTop = top; paperWatch = 8; }
+      if (paperWatch > 0) { paperWatch--; queue(); }
+    } else { paperTop = null; paperWatch = 0; }
+    if (overPaper) dark = false;
+    const clear = y <= clearUntil && !menuOpen && !overPaper;
     nav.classList.toggle('nav--solid', !clear);
     nav.classList.toggle('nav--dark', dark);
     if (themeMeta) {
@@ -246,13 +311,15 @@
       if (!a) return;
       const c = chapters[+a.dataset.k];
       setPanel(false);
-      // the address changes natively (smooth where motion is welcome); focus follows the reader to the chapter
+      // focus follows the reader to the chapter (the next Tab continues inside it). A long jump cuts to it (jumpTo);
+      // a short hop is the browser's own anchor scroll, smooth where motion is welcome
       c.el.setAttribute('tabindex', '-1'); c.el.classList.add('nav-ch-target');
-      setTimeout(() => c.el.focus({ preventScroll: true }), 0);
+      const focus = () => c.el.focus({ preventScroll: true });
+      if (!jumpTo(c.el, a.hash, e, focus)) setTimeout(focus, 0);
     });
     $('.nav-ch-top', ui.wrap).addEventListener('click', e => {
       e.preventDefault(); setPanel(false, true);
-      window.scrollTo({ top: 0, behavior: reducedMQ.matches ? 'instant' : 'smooth' });
+      if (!jumpTo(null)) window.scrollTo({ top: 0, behavior: reducedMQ.matches ? 'instant' : 'smooth' });
     });
     document.addEventListener('pointerdown', e => { if (chOpen && !ui.wrap.contains(e.target)) setPanel(false); });
     ui.wrap.addEventListener('focusout', e => { if (chOpen && e.relatedTarget && !ui.wrap.contains(e.relatedTarget)) setPanel(false); });
@@ -305,6 +372,65 @@
   }
   window.addEventListener('keydown', e => { if (e.key === 'Escape' && chOpen) setPanel(false, true); });
 
+  /* ---------------- long jumps: never through blank paper ----------------
+     A jump of more than 1.5 screens (a chapter from the list, Back to top, any link to a place on this page) used to
+     scroll smoothly through every section in between, whose reveals had not run: about a second of near-empty paper,
+     then a landing mid-reveal. It now cuts: everything it passes over and the destination are revealed without
+     transition, the page lands at once (at the bar's edge, as an anchor jump does), and a same-document view transition
+     brings the live destination in as a sheet over the still of where the reader was: rising from the bottom edge going
+     down the page, coming down from the top going up (v2:nav CSS; the bar holds; no blend, never a blank frame).
+     Without view transitions, or with reduced motion, it is a plain instant cut. Short hops keep the native scroll. */
+  function cut(to, land) {
+    const from = window.scrollY;
+    const go = () => {
+      revealRange(Math.min(from, to), Math.max(from, to) + window.innerHeight); // first: an entrance offset would skew the landing
+      land();
+      if (nav) measure(); // the bar takes the destination's ground in the same frame
+      document.dispatchEvent(new CustomEvent('oxa:jump', { detail: { from, to: window.scrollY } }));
+    };
+    if (reducedMQ.matches || typeof document.startViewTransition !== 'function' || document.hidden) { go(); return; }
+    root.dataset.jump = to > from ? 'down' : 'up';
+    let vt;
+    try { vt = document.startViewTransition(go); } catch (err) { delete root.dataset.jump; go(); return; }
+    vt.ready.catch(() => {}); vt.updateCallbackDone.catch(() => {});
+    vt.finished.catch(() => {}).then(() => { delete root.dataset.jump; });
+  }
+  // a jump to an element (null: the top) longer than 1.5 screens is handled here (returns true); a shorter one is not
+  function jumpTo(el, hash, e, after) {
+    const sp = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
+    const y0 = window.scrollY, max = Math.max(0, root.scrollHeight - window.innerHeight);
+    const to = el ? Math.max(0, Math.min(max, el.getBoundingClientRect().top + y0 - sp)) : 0;
+    if (Math.abs(to - y0) <= 1.5 * window.innerHeight) return false;
+    if (e) e.preventDefault();
+    cut(to, () => {
+      // the address changes as an anchor jump's would, and so does everything that listens for it (the blog's filter)
+      if (hash && hash !== location.hash) {
+        const oldURL = location.href;
+        history.pushState(null, '', hash);
+        window.dispatchEvent(new HashChangeEvent('hashchange', { oldURL, newURL: location.href }));
+      }
+      if (el) el.scrollIntoView({ block: 'start', behavior: 'instant' });
+      else window.scrollTo({ top: 0, behavior: 'instant' });
+      if (after) after();
+    });
+    return true;
+  }
+  // any other link to a place on this page (the overture's "See the stack", Company's "Our thinking", ...)
+  document.addEventListener('click', e => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = e.target.closest && e.target.closest('a[href*="#"]');
+    if (!a || (a.target && a.target !== '_self') || a.closest('.nav-ch, .nav-sheet')) return;
+    const url = new URL(a.href, location.href);
+    if (url.origin !== location.origin || url.pathname !== location.pathname || url.search !== location.search || url.hash.length < 2) return;
+    const el = document.getElementById(decodeURIComponent(url.hash.slice(1)));
+    if (!el || el.closest('details:not([open])')) return; // the browser opens a closed <details> for its target
+    jumpTo(el, url.hash, e, () => {
+      // as after an anchor jump, the next Tab continues from the destination
+      if (!el.matches('a[href], button, input, select, textarea, [tabindex]')) { el.setAttribute('tabindex', '-1'); el.classList.add('nav-ch-target'); }
+      el.focus({ preventScroll: true });
+    });
+  });
+
   if (nav) {
     measure();
     window.addEventListener('scroll', queue, { passive: true });
@@ -315,6 +441,96 @@
     if ('ResizeObserver' in window) { let ro = 0; new ResizeObserver(() => { cancelAnimationFrame(ro); ro = requestAnimationFrame(measure); }).observe(document.body); }
     if (document.fonts) document.fonts.ready.then(measure);
   }
+  /* ---------------- the reader's place: kept through resizes, and a deep link's landing kept after late layout ----------------
+     The fluid gutters change computed paddings on every resize, which switches the browser's own scroll anchoring off:
+     a reader at Home 06 was moved by -868 to +3,006 px between widths. When scrolling settles this keeps a reading
+     anchor (the element at the bar's lower edge and its offset from the edge); after a resize that changed the width,
+     or the height while the reader was not scrolling, it scrolls back by the difference, and again as late layout
+     settles. Not inside the overture, which keeps its own scene. */
+  let anchor = null, settleUntil = 0, lastInput = 0, lastW = window.innerWidth;
+  const inFlow = el => { const p = getComputedStyle(el).position; return p !== 'fixed' && p !== 'sticky' && p !== 'absolute'; };
+  // where layout puts an element (viewport y), ignoring transforms: a reveal's entrance offset is not the place
+  const layoutTop = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y - window.scrollY; };
+  function pickAnchor() {
+    anchor = null;
+    if (!nav || !bands.length) return;
+    const line = navH + 8; // viewport y, just under the bar
+    const yDoc = window.scrollY + line;
+    const band = bands.find(b => yDoc >= b.top && yDoc < b.bottom);
+    if (!band || band.el === story) return;
+    let el = band.el;
+    for (let depth = 0; depth < 14; depth++) {
+      if (Math.abs(layoutTop(el) - navH) <= 24) break; // it starts at the bar's edge: it is the place
+      let straddle = null, next = null;
+      for (const ch of el.children) {
+        if (!(ch instanceof HTMLElement) || !ch.offsetHeight || !inFlow(ch)) continue;
+        const t = layoutTop(ch);
+        if (t <= line && t + ch.offsetHeight > line) { straddle = ch; break; }
+        if (t > line) { next = ch; break; }
+      }
+      if (straddle) { el = straddle; continue; }
+      // the line falls in a gap: inside a band or a section, the band/section itself is the place (its top is the
+      // chapter's start); inside content, the next block if it is near
+      if (next && el !== band.el && el.tagName !== 'SECTION' && layoutTop(next) - line < window.innerHeight * 0.25) el = next;
+      break;
+    }
+    anchor = { el, off: layoutTop(el) - navH };
+  }
+  function restoreAnchor() {
+    if (!anchor || !anchor.el.isConnected || performance.now() > settleUntil) return;
+    const d = layoutTop(anchor.el) - (navH + anchor.off);
+    if (Math.abs(d) > 0.5) window.scrollBy({ top: d, behavior: 'instant' });
+  }
+  if (nav) {
+    ['wheel', 'touchstart', 'touchmove', 'keydown', 'pointerdown'].forEach(t => window.addEventListener(t, () => { lastInput = performance.now(); settleUntil = 0; }, { passive: true, capture: true }));
+    let pickT = 0;
+    window.addEventListener('scroll', () => {
+      if (performance.now() < settleUntil) return; // our own correction, or the page settling after a resize
+      clearTimeout(pickT); pickT = setTimeout(pickAnchor, 160);
+    }, { passive: true });
+    window.addEventListener('resize', () => {
+      const w = window.innerWidth, widthChanged = w !== lastW;
+      lastW = w;
+      // a height-only change while the reader scrolls is a phone's toolbar: nothing moved under the reader
+      if (!anchor || (!widthChanged && performance.now() - lastInput < 800)) return;
+      settleUntil = performance.now() + 900;
+      navH = nav.offsetHeight || navH;
+      restoreAnchor();
+      requestAnimationFrame(() => { restoreAnchor(); requestAnimationFrame(restoreAnchor); });
+      [120, 300, 600, 880].forEach(ms => setTimeout(restoreAnchor, ms));
+    });
+    setTimeout(pickAnchor, 0);
+    document.addEventListener('oxa:jump', () => setTimeout(pickAnchor, 0));
+  }
+  // a deep link (#id) lands at the bar's edge once the layout has settled after load (components that build late,
+  // fonts, the overture's stage), unless the reader has already moved: two quiet frames with the same page height,
+  // then once more if the page still changes within 2.5 s
+  const deep = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  if (deep && nav) {
+    let quietFrom = 0, deepDone = false, alignedY = 0;
+    const realign = (h0, n) => requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (lastInput || deepDone) return;
+      const sp = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0, off = () => deep.getBoundingClientRect().top - sp;
+      // late layout moves the target while the page stays where it was; a page that has moved away from the target since
+      // (a script scrolled elsewhere) is someone else's: stop watching (moved and still on target: the browser's own anchoring)
+      if (Math.abs(window.scrollY - alignedY) > 2) { if (Math.abs(off()) > 2) { deepDone = true; return; } alignedY = window.scrollY; }
+      const h = root.scrollHeight;
+      if (h !== h0 && n < 60) { realign(h, n + 1); return; }
+      if (Math.abs(off()) > 1) deep.scrollIntoView({ block: 'start', behavior: 'instant' });
+      alignedY = window.scrollY;
+    }));
+    const start = () => {
+      quietFrom = performance.now();
+      alignedY = window.scrollY;
+      realign(root.scrollHeight, 0);
+      if ('ResizeObserver' in window) {
+        const ro = new ResizeObserver(() => { if (performance.now() - quietFrom < 2500 && !lastInput && !deepDone) realign(root.scrollHeight, 0); else ro.disconnect(); });
+        ro.observe(document.body);
+      }
+    };
+    if (document.readyState === 'complete') start(); else window.addEventListener('load', start, { once: true });
+  }
+
   const openLinkedDetails = () => {
     const target = document.getElementById(location.hash.slice(1));
     if (!target) return;
@@ -413,12 +629,49 @@
   /* ---------------- reveal on scroll ---------------- */
   $$('[data-stagger]').forEach(el => { Array.from(el.children).forEach((c, i) => c.style.setProperty('--i', i)); if (!el.hasAttribute('data-reveal')) el.setAttribute('data-reveal', ''); });
   const revealEls = $$('[data-reveal]');
+  let rio = null;
   if ('IntersectionObserver' in window && !prefersReduced) {
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } });
+    rio = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-in'); rio.unobserve(e.target); } });
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
-    revealEls.forEach(el => { el.classList.add('will-reveal'); io.observe(el); });
+    revealEls.forEach(el => { el.classList.add('will-reveal'); rio.observe(el); });
   } else revealEls.forEach(el => el.classList.add('is-in'));
+  // at once, with no transition: what a long jump passes over or lands on, and anything the keyboard focuses (focus
+  // never lands on something still invisible). .is-instant lasts two frames; .is-cut stays (a skipped entrance never
+  // plays later)
+  const instant = el => { el.classList.add('is-instant'); requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('is-instant'))); };
+  function revealNow(el) {
+    if (!el.classList.contains('will-reveal') || el.classList.contains('is-in')) return;
+    el.classList.add('is-cut', 'is-in');
+    instant(el);
+    if (rio) rio.unobserve(el);
+  }
+  function revealRange(a, b) {
+    const y = window.scrollY;
+    revealEls.forEach(el => {
+      if (!el.classList.contains('will-reveal') || el.classList.contains('is-in')) return;
+      const r = el.getBoundingClientRect();
+      if ((r.width || r.height) && r.top + y < b && r.bottom + y > a) revealNow(el);
+    });
+  }
+  document.addEventListener('focusin', e => {
+    // every reveal around the focused control: not started yet, or still fading in (the scroll that brought it near
+    // started it a moment ago): both are finished now
+    let el = e.target.closest && e.target.closest('.will-reveal');
+    while (el) {
+      if (!el.classList.contains('is-in')) revealNow(el);
+      else if (el.getAnimations && el.getAnimations({ subtree: true }).some(a => a.playState === 'running' && a.transitionProperty)) instant(el);
+      el = el.parentElement && el.parentElement.closest('.will-reveal');
+    }
+  });
+
+  /* ---------------- off-screen bands: their CSS loops stop ----------------
+     Every top-level band of the page carries .is-offscreen while no part of it is on screen; v2:nav pauses every CSS
+     animation inside it (owners keep their loops on transform/opacity). Nothing runs where nobody can see it. */
+  if ('IntersectionObserver' in window) {
+    const oio = new IntersectionObserver(entries => entries.forEach(e => e.target.classList.toggle('is-offscreen', !e.isIntersecting)));
+    $$('main > section, main > div, body > .footer').forEach(el => oio.observe(el));
+  }
 
   /* ---------------- preloader (homepage) ----------------
      Finishes on elapsed time and readiness, never on a count of frames: a throttled or starved requestAnimationFrame
@@ -444,22 +697,27 @@
     const ready = Promise.all([document.fonts ? document.fonts.ready : Promise.resolve(),
       document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true })), glReady]);
     const easeOut = t => 1 - Math.pow(1 - t, 3);
-    const t0 = performance.now(); // the count starts from the "00" already on screen; MIN and CAP count from navigation start
-    const early = t => 0.9 * (1 - Math.exp(-Math.max(0, t - t0) / 520)); // before readiness the count eases towards 90
+    // the dial has swept on its own (CSS) since the first paint: the count takes over from where it stands, and only now
+    // appears (never a frozen "00" while the script is on its way); the short version never shows a count
+    const idle = dial ? Math.min(0.6, parseFloat(getComputedStyle(dial).getPropertyValue('--lp')) || 0) : 0;
+    if (!seen) loader.classList.add('is-counting');
+    const t0 = performance.now(); // MIN and CAP count from navigation start
+    const early = t => idle + (0.9 - idle) * (1 - Math.exp(-Math.max(0, t - t0) / 520)); // before readiness the count eases towards 90
     let runFrom = 0, pFrom = 0, finishAt = 0, completed = false;
     const progressAt = (now) => finishAt && now >= runFrom ? pFrom + (1 - pFrom) * easeOut(clamp01((now - runFrom) / Math.max(1, OUT))) : early(now);
     const paint = (p) => {
       if (count) count.textContent = pad(Math.min(100, Math.round(p * 100)));
-      if (dial) dial.style.setProperty('--p', p.toFixed(4));
+      if (dial && !seen) dial.style.setProperty('--lp', p.toFixed(4));
     };
     const complete = () => {
       if (completed) return;
       completed = true;
       paint(1);
-      loader.classList.add('is-complete', 'is-done');
+      loader.classList.add('is-complete');
       document.body.classList.remove('is-loading');
       loaded();
-      setTimeout(() => loader.remove(), seen ? 600 : 1400);
+      // the decision reads for a beat (100, the aperture pulses green), then the curtain lifts
+      setTimeout(() => { loader.classList.add('is-done'); setTimeout(() => loader.remove(), seen ? 600 : 1150); }, seen ? 0 : 120);
     };
     const schedule = () => {
       if (finishAt) return;
@@ -475,27 +733,13 @@
     paint(progressAt(performance.now()));
     requestAnimationFrame(frame);
   } else loaded();
-  /* ---------------- count-up ---------------- */
-  // the HTML holds the real value (no-JS, screen readers); counters still below the fold are zeroed now and count up on arrival
-  const fmt = (n, dec) => n.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-  const countText = (el, k) => (el.dataset.prefix || '') + fmt(parseFloat(el.dataset.count) * k, parseInt(el.dataset.decimals || '0', 10)) + (el.dataset.suffix || '');
-  function countUp(el) {
-    const dur = 1400, t0 = performance.now(), ease = t => 1 - Math.pow(1 - t, 4);
-    (function step(now) { const p = Math.min(1, (now - t0) / dur); el.textContent = countText(el, ease(p)); if (p < 1) requestAnimationFrame(step); })(t0);
-  }
-  const counters = $$('[data-count]');
-  // printing: the legal disclosures (folded into a <details> above) and every counter's real value must reach the paper,
-  // whatever the reader has opened or scrolled past
-  window.addEventListener('beforeprint', () => {
-    $$('details.footer-legal').forEach(d => { d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; });
-    counters.forEach(c => { c.textContent = countText(c, 1); });
-  });
+  /* ---------------- figures: never counted, never rewritten ----------------
+     A number on this site is only ever shown at its true value: the HTML holds it and nothing here writes another one
+     into the DOM ([data-count] is inert; the count-up from zero is gone). A stat row's arrival is presentation only: its
+     numerals rise out of a mask as the row reveals (v2:nav CSS), the text untouched. */
+  // printing: the legal disclosures (folded into a <details> above) must reach the paper, whatever the reader has opened
+  window.addEventListener('beforeprint', () => $$('details.footer-legal').forEach(d => { d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; }));
   window.addEventListener('afterprint', () => $$('details.footer-legal').forEach(d => { d.open = d.dataset.wasOpen === '1'; }));
-  if (counters.length && 'IntersectionObserver' in window && !prefersReduced) {
-    const cio = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { countUp(e.target); cio.unobserve(e.target); } }); }, { threshold: 0.4 });
-    counters.filter(c => { const r = c.getBoundingClientRect(); return r.top < 0 || r.bottom > window.innerHeight; }) // wholly in view already: keep the value
-      .forEach(c => { c.textContent = countText(c, 0); cio.observe(c); });
-  }
 
   /* ---------------- forms (no backend: mailto handoff or configured endpoint) ---------------- */
   $$('form[data-access]').forEach(form => {
