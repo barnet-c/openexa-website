@@ -2627,6 +2627,11 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lane-v--steps p { margin-top: 8px; color: var(--fg-2); text-wrap: pretty; }
 .lane-v--steps > li[data-g="6"]::before { top: 44px; background: currentColor; opacity: .32; }
 .lane-v--steps > li[data-g="7"]::before { top: 10px; bottom: 26px; background: currentColor; opacity: .62; }
+/* the 'How it works' card travels beside the stations until 07 Reconcile, so the column beside the page's main diagram is
+   never empty paper; only where the window is tall enough to hold the whole card under the bar */
+@media (min-width: 1200px) and (min-height: 600px), (min-width: 961px) and (min-height: 680px) {
+  .lc-how > .card { position: sticky; top: calc(var(--nav-h) + 32px); }
+}
 /* ---------- Fig. 3.1, the lane (home §03) ---------- */
 .lane { margin: 0; }
 .lane-plate { display: none; }
