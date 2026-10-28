@@ -2865,9 +2865,10 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .pipe-svg .pp-s { display: none; font-size: clamp(17px, calc(62px - 5.6vw), 46px); fill: var(--fg); }
 .lc-tag { display: block; margin-bottom: 8px; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
 @media (max-width: 960px) {
-  /* the full labels give way to short P-labels; the empty label bands above and below are cropped */
-  .pipe-fig { overflow: hidden; aspect-ratio: 1200 / 236; }
-  .pipe-svg { margin-top: calc(-42 / 1200 * 100%); }
+  /* tablets: the full labels give way to short P-labels, set 8 px clear of every plate edge; the empty bands above and
+     below are cropped */
+  .pipe-fig { overflow: hidden; aspect-ratio: 1200 / 252; }
+  .pipe-svg { margin-top: calc(-26 / 1200 * 100%); }
   .pipe-svg .pp-l { display: none; }
   .pipe-svg .pp-s { display: inline; }
 }
@@ -2885,6 +2886,21 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lcp .st-blk { fill: currentColor; opacity: .3; }
 .lcp .st-rec.is-on { stroke: var(--accent); opacity: 1; }
 .lcp .st-blk.is-on { fill: var(--accent); opacity: 1; }
+/* phones: the same half of the lane as stations on one spine (home's and Lifecycles' .lane-v): the boundary, P-01 and
+   P-02 on 05's five rails, P-03 at 06 Settle, and the record line beside the rails taking a block from each checkpoint */
+.lane-v--pipe { display: none; }
+@media (max-width: 600px) {
+  .lc-pipe .pipe-fig { display: none; }
+  .lane-v--pipe { display: block; margin-bottom: 18px; }
+}
+.lane-v--pipe > .lv-bound { margin-top: 24px; }
+.lane-v.lane-v--pipe > .lv-bound::before { top: -24px; }
+.lane-v.lane-v--pipe > .lv-bound span::before { content: none; } /* one label, as on the plate: no arrow */
+.lane-v--pipe .lk-n { color: var(--fg-3); }
+.lane-v--pipe .lk-nm { color: var(--fg); }
+.lane-v--pipe .rec { opacity: .62; }
+.lane-v--pipe > .pv-1::after, .lane-v--pipe > .pv-2::after { content: ""; position: absolute; left: calc(var(--lv-x) + 37.5px); top: 0; bottom: 0; width: 1px; background: currentColor; opacity: .62; pointer-events: none; }
+.lane-v--pipe > .pv-1::after { top: 30px; }
 
 @media (prefers-reduced-motion: reduce) {
   .dk-rec.is-new, .desk-head .live i.is-ping::after { animation: none; }
