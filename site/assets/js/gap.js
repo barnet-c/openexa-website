@@ -284,8 +284,7 @@
   }
   function setFollowButton(on) {
     if (!el.follow) return;
-    el.follow.setAttribute('aria-pressed', String(on));
-    el.follow.textContent = on ? 'Stop following' : 'Follow the next action';
+    el.follow.setAttribute('aria-pressed', String(on)); // a toggle keeps its label; the pressed state says it is on
     root.classList.toggle('is-following', on);
   }
   function startFollow() {
