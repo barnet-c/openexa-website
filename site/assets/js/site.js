@@ -22,6 +22,8 @@
   const darkStart = document.body.dataset.nav === 'dark-start';
   const themeMeta = $('meta[name="theme-color"]');
   const story = $('.story');
+  const paper = story && $('.story-paper', story);
+  let paperTop = null, paperWatch = 0;
   const toggle = $('.nav-toggle');
   const sheet = $('.nav-sheet');
   let navH = 72, vh = window.innerHeight, maxScroll = 1, clearUntil = -1, bands = [], navRaf = 0, menuOpen = false;
@@ -197,7 +199,7 @@
     clearUntil = !darkStart ? -1 : pinned ? story.getBoundingClientRect().bottom + y - vh : 16;
     bands = $$('main > *, body > .footer').map(el => {
       const r = el.getBoundingClientRect();
-      return { top: r.top + y, bottom: r.bottom + y, dark: el.classList.contains('is-dark') };
+      return { el, top: r.top + y, bottom: r.bottom + y, dark: el.classList.contains('is-dark') };
     });
     const before = live.map(c => c.k).join();
     live = chapters.filter(c => c.el.getClientRects().length > 0);
@@ -233,10 +235,22 @@
     if (!nav) return;
     const y = window.scrollY;
     // the bar's surface: the ground of the section that meets its lower edge, so bar and section read as one
-    let dark = false;
+    let dark = false, band = null;
     const edge = y + navH + 1;
-    for (const b of bands) if (edge >= b.top && edge < b.bottom) { dark = b.dark; break; }
-    const clear = y <= clearUntil && !menuOpen;
+    for (const b of bands) if (edge >= b.top && edge < b.bottom) { dark = b.dark; band = b; break; }
+    // the overture's exit: its rising paper (.story-paper; hidden unless it rises) is paper under the bar as soon as its
+    // edge reaches the bar's lower edge, though the band beneath is the dark stage. The rise follows the scroll with the
+    // stage's inertia, so while the edge moves this looks again on the next frames.
+    let overPaper = false;
+    if (band && band.el === story && paper) {
+      const r = getComputedStyle(paper).visibility !== 'hidden' ? paper.getBoundingClientRect() : null;
+      overPaper = !!r && r.height > 0 && r.top <= navH + 1 && r.bottom > navH;
+      const top = r && r.height > 0 ? Math.round(r.top) : null;
+      if (top !== paperTop) { paperTop = top; paperWatch = 8; }
+      if (paperWatch > 0) { paperWatch--; queue(); }
+    } else { paperTop = null; paperWatch = 0; }
+    if (overPaper) dark = false;
+    const clear = y <= clearUntil && !menuOpen && !overPaper;
     nav.classList.toggle('nav--solid', !clear);
     nav.classList.toggle('nav--dark', dark);
     if (themeMeta) {
