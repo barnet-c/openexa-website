@@ -885,14 +885,15 @@
     frust(L.cy);
     if (seg === 3 && xNow > 0) { // the hand-off: while the columns drain into their records the floor line settles to where the paper meets it
       const f = project(0, Y_FLOOR * layouts[4].s, 0).y;
-      frust(L.cy + Math.max(0, H * FLOOR_END() - f) * (stacked ? sstep(0.46, 0.62, xeNow) : sstep(0, 0.35, xeNow))); // portrait: only once the copy below has gone
+      frust(L.cy + Math.max(0, H * FLOOR_END() - f) * (stacked ? sstep(EXIT.tall.cam[0], EXIT.tall.cam[1], xeNow) : sstep(0, 0.35, xeNow))); // portrait: it pushes the copy out
     }
   }
   const FLOOR_END = () => (stacked ? 0.7 : 0.76); // where the floor line, the paper's edge to be, ends on screen (share of the stage)
   // the way out, in shares of the exit. Wide (and short landscape): the columns drain while the proof settles to its final height,
-  // then the paper rises to the floor line; the headline stays above it. Portrait: the columns drain, then the proof's copy hands
-  // over to the coda (they never share a region), then the floor line settles into the space the copy left and the paper rises.
-  const EXIT = { wide: { paper: [0.35, 0.8], cap: [0.74, 0.9] }, tall: { copy: [0.36, 0.48], coda: [0.3, 0.42], paper: [0.6, 0.88], cap: [0.84, 0.96] } };
+  // then the paper rises to the floor line; the headline stays above it. Portrait: the columns drain, then the floor line settles,
+  // pushing the proof's copy down and out of the stage while the coda opens up above the line (they never share a region, and one
+  // of them is always up), then the paper rises to the line.
+  const EXIT = { wide: { paper: [0.35, 0.8], cap: [0.74, 0.9] }, tall: { cam: [0.3, 0.56], copy: [0.44, 0.58], coda: [0.4, 0.52], paper: [0.58, 0.86], cap: [0.84, 0.96] } };
   // the exit, column by column: each drains into its record, left to right, over the first third of the way out
   const drainOf = (c) => clamp((xeNow - 0.02 - 0.144 * c / Math.max(1, NCOL - 1)) / 0.17, 0, 1);
   const dcArr = new Float32Array(24);
@@ -1452,7 +1453,11 @@
       let dy = red ? 0 : (sNow - i) * -18;
       if (i === 4 && xe > 0) { // on the way out: the headline stays above the paper when it fits (wide screens); the rest gives way
         const br = beatRects[4] || { ht: 0, hb: 0 }, edge = H - paperH - 26, shift = Math.min(0, edge - br.hb);
-        if (lean) op *= 1 - sstep(X.copy[0], X.copy[1], xe); // portrait: the coda has the summary by then
+        if (lean) { // portrait: the settling floor (and the day tags under it) push the copy down; the coda has the summary by then
+          const fNow = project(0, Y_FLOOR * layouts[4].s, 0).y;
+          dy += Math.max(0, fNow + DAY_BAND + 10 - (br.t || H));
+          op *= 1 - sstep(X.copy[0], X.copy[1], xe);
+        }
         else { bo *= 1 - sstep(0.04, 0.3, xe); if (br.ht + shift >= navH + 14) dy += shift; else { op *= 1 - sstep(0.03, 0.3, xe); codaFallback = true; } }
       }
       if (i === 4 && ov > 0) { // as the stage scrolls away the copy finishes leaving before it reaches the nav's lower edge
@@ -1495,9 +1500,9 @@
     if (coda) {
       let co = 0, top = 0;
       if ((lean || codaFallback) && xe > 0) {
-        const fy = H * FLOOR_END();
-        top = stacked ? Math.max(navH + 14, (navH + fy - 40) / 2 - codaH / 2) : Math.max(navH + 14, fy - 34 - codaH);
-        co = red ? (xe > 0.5 ? 1 : 0) : lean ? sstep(X.coda[0], X.coda[1], xe) : sstep(0.22, 0.5, xe);
+        const fy = lean ? project(0, Y_FLOOR * layouts[4].s, 0).y : H * FLOOR_END(); // portrait: above the line as it settles
+        top = stacked ? Math.min((navH + fy - 16) / 2 - codaH / 2, fy - 48 - codaH) : Math.max(navH + 14, fy - 48 - codaH); // clear of the floor's tag and the ticks
+        co = red ? (xe > 0.5 ? 1 : 0) : lean ? sstep(X.coda[0], X.coda[1], xe) * sstep(navH + 6, navH + 24, top) : sstep(0.22, 0.5, xe);
         if (ov > 0) { const room0 = top - navH; co *= room0 <= 6 ? 0 : 1 - sstep(Math.max(0, room0 - 6 - Math.min(150, H * 0.2)), room0 - 6, ov); }
       }
       const v = co.toFixed(3), tr = `translate3d(0, ${(top + (red ? 0 : (1 - co) * 10)).toFixed(1)}px, 0)`;

@@ -1038,7 +1038,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-bar .hero-scroll { position: static; display: inline-flex; color: rgba(245, 242, 236, .5); transition: opacity .5s var(--ease); }
 .story-bar .hero-scroll i { height: 22px; }
 .story.is-scrolled .hero-scroll { opacity: 0; }
-.story.is-scrolled .hero-scroll i { animation-play-state: paused; } /* its loop (transform and opacity only) stops once it has gone */
+.story.is-scrolled .hero-scroll i, .story.is-scrolled .hero-stats .live { animation-play-state: paused; } /* their loops (transform, opacity) stop once S0 has gone */
 /* the hand-off: the columns drain into their records on the floor line; the paper rises to that line, which becomes its edge, and
    prints the records and the day tags in ink; its caption's rule runs on the chapters' container like every chapter rule */
 .story-paper { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; height: 0; overflow: hidden; visibility: hidden; background: var(--paper); color: var(--ink); pointer-events: none; }
