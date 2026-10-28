@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>OpenEXA — Infrastructure for agentic lifecycles</title>
   <meta name="description" content="OpenEXA is an AI agentic company. We build the end-to-end infrastructure on which swarms of domain-specific AI agents run the world's high-value lifecycles. Lifecycle 01, ETF creation and redemption, is live on real capital.">
   <meta property="og:title" content="OpenEXA — Infrastructure for agentic lifecycles">
@@ -410,37 +410,36 @@
         <div class="sec-head" data-reveal>
           <span class="idx">05</span><span class="lab">Why agents</span><span class="aside">Traditional vs. agentic operating model</span>
         </div>
-        <div class="grid">
-          <div class="col-4">
-            <h2 class="display-2" data-reveal data-split>90% of cost and risk, eliminated.</h2>
-            <p class="body-lg mt-3" data-reveal style="--d:80ms">Agents don't carry inventory and don't wait for a counterparty, so more than 80% of the traditional stack disappears outright. What remains — technology and management — is compressed by 67% and 50%. It is the same result in every lifecycle class: the economics change because the operator changed.</p>
+        <div class="grid mb-3">
+          <div class="col-6"><h2 class="display-2" data-reveal data-split>90% of cost and risk, eliminated.</h2></div>
+          <div class="col-5 offset-7">
+            <p class="body-lg" data-reveal style="--d:80ms">Agents don't carry inventory and don't wait for a counterparty, so more than 80% of the traditional stack disappears outright. What remains — technology and management — is compressed by 67% and 50%. We expect the same structure wherever a lifecycle carries inventory and counterparty exposure: the economics change because the operator changed.</p>
             <a class="link-arrow mt-3" href="evidence.html#economics" data-reveal style="--d:140ms">The operating model <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
           </div>
-          <div class="col-8" data-reveal style="--d:120ms">
-            <div class="compare">
-              <div class="head"><span>Metric</span></div>
-              <div class="head"><span>Traditional</span><b>Human-run</b></div>
-              <div class="head"><span>Agentic</span><b>OpenEXA</b></div>
-
-              <div class="wgt">Weight &gt; 80% of cost stack</div>
-              <div class="metric">Cost of carry<small>Interest on working capital</small></div>
-              <div class="trad">100% cost</div>
-              <div class="agent"><span class="bar"><i style="--w:100%"></i></span>Eliminated</div>
-              <div class="metric">Counterparty risk<small>Settlement and credit exposure</small></div>
-              <div class="trad">100% risk</div>
-              <div class="agent"><span class="bar"><i style="--w:100%"></i></span>Eliminated</div>
-
-              <div class="wgt">Weight &lt; 20% of cost stack</div>
-              <div class="metric">Technology + execution<small>Infrastructure, routing, reconciliation</small></div>
-              <div class="trad">High OpEx</div>
-              <div class="agent"><span class="bar"><i style="--w:67%"></i></span>67% reduced</div>
-              <div class="metric">Management + strategy<small>Research, oversight, operations</small></div>
-              <div class="trad">High fee</div>
-              <div class="agent"><span class="bar"><i style="--w:50%"></i></span>50% reduced</div>
+        </div>
+        <!-- the indexed stack, as on the Proof page (evidence §03): the same classes and weights -->
+        <div class="bars" data-reveal style="--d:120ms">
+          <div class="barrow">
+            <div class="barlab"><b>Traditional</b><span>Human-run · active</span></div>
+            <div class="bar">
+              <i style="--w:45%;--c:var(--graphite)"><span>Cost of carry</span></i>
+              <i style="--w:37%;--c:var(--slate)"><span>Counterparty risk</span></i>
+              <i style="--w:10%;--c:var(--khaki)" data-ink><span>Tech</span></i>
+              <i style="--w:8%;--c:var(--khaki-deep)" data-ink><span>Mgmt</span></i>
             </div>
-            <div class="figure-cap"><span>Fig. 05 — Cost and risk by component</span><span>Source: OpenEXA operating model</span></div>
+            <div class="barval">100</div>
+          </div>
+          <div class="barrow">
+            <div class="barlab"><b>Agentic</b><span>OpenEXA swarm</span></div>
+            <div class="bar">
+              <i style="--w:3.3%;--c:var(--khaki)"></i>
+              <i style="--w:4%;--c:var(--khaki-deep)"></i>
+              <em>Cost of carry — eliminated · Counterparty risk — eliminated</em>
+            </div>
+            <div class="barval acc">&lt;10</div>
           </div>
         </div>
+        <div class="figure-cap" data-reveal><span>Fig. 5.1 — Indexed cost &amp; risk stack, traditional = 100 (illustrative weights)</span><span>Source: OpenEXA operating model</span></div>
       </div>
     </section>
 

@@ -66,6 +66,11 @@ DESC = {
         "Employee stock options (ESOs) are an integral component of compensation in the US. In fact, almost all S&P 500 companies grant options to their top executives.",
 }
 ALT = json.load(open(DATA / "blog_alt.json", encoding="utf-8")) if (DATA / "blog_alt.json").exists() else {}  # body-image alt text, written by looking at each image
+# The old site's stand-in hero for research summaries: clip-art (a cap, a book and stars) over a misspelled
+# 'RESERCH IN FINANCE · BY OUR TEAM' (legacy content, as scraped). It is never published: those cards and post heroes
+# are drawn as typographic plates instead (.blog-card--plate, .post-hero--plate) - the collection label, the title and
+# a fine-bead globe mark, in the site's own type. Images inside article bodies are untouched.
+PLACEHOLDER = {"blog-028-649e320f57bee709f474e657-research-0fc3c7b1.webp"}
 
 def read(p): return io.open(p, encoding="utf-8").read()
 def write(p, s):
@@ -156,6 +161,11 @@ def thumb(name, sizes):
     if not ws: return f'<img src="{src}{name}" alt=""{size(name)} loading="lazy" decoding="async">'
     srcset = ", ".join([f"{src}{stem}-{t}w.webp {t}w" for t in ws] + [f"{src}{name} {d[0]}w"])
     return f'<img src="{src}{stem}-{ws[-1]}w.webp" srcset="{srcset}" sizes="{sizes}" alt=""{size(name)} loading="lazy" decoding="async">'
+def plate(p, cls):
+    """A typographic plate in place of the legacy placeholder image: the collection label, the title and the globe mark.
+    aria-hidden: the card's h3 / the page's h1 already say the title, and the label is the section the post sits in."""
+    return (f'<div class="{cls} blog-plate" aria-hidden="true"><span class="bp-k">{esc(LABEL[p["col"]])}</span>'
+            f'<span class="bp-t">{esc(p["title"])}</span><i class="bp-mark"></i></div>')
 
 if IMG.exists(): shutil.rmtree(IMG)  # rebuilt from the scraped originals every time
 IMG.mkdir(parents=True, exist_ok=True)
@@ -172,6 +182,7 @@ for p in kept:
     p["title"] = re.sub(r"\s+", " ", p["title"]).strip()
     for pat, rep in FIXES: p["title"] = re.sub(pat, rep, p["title"]); p["description"] = re.sub(pat, rep, p["description"])
     assert not FORBIDDEN.search(p["body"] + p["title"] + p["description"]), (p["slug"], FORBIDDEN.findall(p["body"]))
+    if p.get("hero_file") in PLACEHOLDER: p["hero_file"], p["plate"] = None, True
     if p.get("hero_file"):
         shutil.copyfile(OLD / "img" / p["hero_file"], IMG / p["hero_file"])
     words = len(plain(p["body"]).split())
@@ -200,7 +211,7 @@ def head(url, title, desc, kind="article", extra=""):
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{esc(title)}</title>
   <meta name="description" content="{esc(desc)}">
   <meta name="theme-color" content="#0E1512">
@@ -257,7 +268,7 @@ nav, foot = chrome()
 series_cards = []
 for i, (s, part, short) in enumerate(SERIES):
     p = SLUGS[s]
-    thumb_html = f'<div class="blog-thumb">{thumb(p["hero_file"], CARD_SIZES)}</div>' if p.get("hero_file") else ""
+    thumb_html = f'<div class="blog-thumb">{thumb(p["hero_file"], CARD_SIZES)}</div>' if p.get("hero_file") else plate(p, "blog-thumb") if p.get("plate") else ""
     series_cards.append(f'''          <li><a class="series-card" href="{s}.html">
             <span class="series-n">{i:02d}</span>{thumb_html}
             <div class="k"><span>{esc(part)} · {esc(short)}</span><span>{p["minutes"]} min</span></div>
@@ -284,8 +295,8 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     cards = []
     for p in by_col[k]:
         ext = p["stub"]
-        thumb_html = f'<div class="blog-thumb">{thumb(p["hero_file"], CARD_SIZES)}</div>' if p.get("hero_file") else ""
-        cards.append(f'''          <a class="blog-card" href="{esc(href(p))}"{' target="_blank" rel="noopener"' if ext else ''}>
+        thumb_html = f'<div class="blog-thumb">{thumb(p["hero_file"], CARD_SIZES)}</div>' if p.get("hero_file") else plate(p, "blog-thumb") if p.get("plate") else ""
+        cards.append(f'''          <a class="blog-card{' blog-card--plate' if p.get('plate') else ''}" href="{esc(href(p))}"{' target="_blank" rel="noopener"' if ext else ''}>
             {thumb_html}<div class="blog-card-body"><div class="k"><span>{fmt(p["dt"])}</span><span>{esc(p["author"])}</span></div>
             <h3>{esc(p["title"])}</h3><p>{esc(p["excerpt"])}</p>
             <span class="link-arrow">{("Read on " + re.sub(r"^www\.", "", re.search(r"//([^/]+)", p["source"]).group(1)) + " " + OUTB) if ext else (str(p["minutes"]) + " min read " + ARROW)}</span></div>
@@ -376,7 +387,8 @@ for p in order:
     side_links = [f'<a class="link-arrow" href="index.html#{p["col"]}">{esc(LABEL[p["col"]])} {ARROW}</a>', f'<a class="link-arrow" href="index.html">All posts {ARROW}</a>']
     if p["source"]: side_links.insert(0, f'<a class="link-arrow" href="{esc(p["source"])}" target="_blank" rel="noopener">Original on {esc(src_host)} {OUTB}</a>')
     if p["col"] == "markets": side_links.insert(1, f'<a class="link-arrow" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a>')
-    hero_img = f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt=""{size(p["hero_file"])} decoding="async"></figure>' if p.get("hero_file") else ""
+    hero_img = (f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt=""{size(p["hero_file"])} decoding="async"></figure>' if p.get("hero_file")
+                else plate(p, "post-hero--plate") if p.get("plate") else "")
     pager = "".join([
         f"<a class='pager-card prev' href='{prev['slug']}.html'><span class='k'>← Newer</span><h3>{esc(prev['title'])}</h3><p>{fmt(prev['dt'])}</p></a>" if prev else f"<a class='pager-card prev' href='index.html'><span class='k'>← The blog</span><h3>All {len(kept)} posts</h3><p>{esc(LABEL[p['col']])} and {len(COLLECTIONS) - 1} more collections.</p></a>",
         f"<a class='pager-card next' href='{nxt['slug']}.html'><span class='k'>Older →</span><h3>{esc(nxt['title'])}</h3><p>{fmt(nxt['dt'])}</p></a>" if nxt else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>Research →</span><h3>The thinking behind the swarm.</h3><p>Two research notes and an eight-part series.</p></a>",

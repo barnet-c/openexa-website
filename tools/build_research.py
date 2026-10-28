@@ -146,7 +146,7 @@ for i, post in enumerate(ordered):
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{H.escape(title)} — OpenEXA Research</title>
 {og("../", url, title + " — OpenEXA Research", dek)}
   {ld({"@type": "TechArticle", "@id": url + "#article", "headline": title, "description": dek, "url": url, "mainEntityOfPage": url,
@@ -232,7 +232,7 @@ index_page = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Research — OpenEXA · The thinking behind agentic lifecycles</title>
 {og("", url, "Research — OpenEXA", desc).replace('content="article"', 'content="website"')}
   {ld({"@type": "CollectionPage", "@id": url + "#webpage", "url": url, "name": "Research — OpenEXA", "description": desc,
