@@ -5,7 +5,8 @@
                           It listens on document for
                             'oxa:settled'  {id, lane, ts, gate:'settle', count, followed}
                             'oxa:rejected' {id, ts, count, followed, gate:'approve'}
-                            'oxa:inspect'  {record, seq}   (the swarm's trace asks to see a record: scroll, select, pulse)
+                            'oxa:inspect'  {record, seq, focus?}  (the swarm's trace asks to see a record: scroll,
+                                           select, pulse; focus moves to it unless focus is false)
                           and answers every announcement with 'oxa:recorded' {id, record, hash, seq, followed}.
                           In view, announcements are sealed into at most one record every 2 s; out of view, every 8 s.
                           A followed proposal is answered at once, in a record of its own, which is selected and pulses
@@ -592,7 +593,8 @@
       try { shift = new DOMMatrixReadOnly(getComputedStyle(root).transform).m42 || 0; } catch (e) { shift = 0; } // a reveal still rising
       const top = b.top - shift, avail = window.innerHeight - navH;
       const y = b.height <= avail - 24 ? top - navH - (avail - b.height) / 2 : top - navH - 12;
-      if (Math.abs(y) > 2) window.scrollTo({ top: Math.max(0, Math.round(window.scrollY + y)), behavior: reduced ? 'instant' : 'smooth' });
+      // the swarm's trace has usually centred it already (it dispatches once its own scroll has landed): no second nudge
+      if (Math.abs(y) > 24) window.scrollTo({ top: Math.max(0, Math.round(window.scrollY + y)), behavior: reduced ? 'instant' : 'smooth' });
     }
     function inspectEvent(e) {
       const d = (e && e.detail) || {};
@@ -604,7 +606,9 @@
       if (r.seq === followedSeq) pendingFollow = false;
       const li = ensure(r.seq);
       if (!li) return;
-      select(li, true, true); // the reader asked for this record: keyboard focus lands on it too (the page glides, not jumps)
+      // the reader asked for this record; keyboard focus follows when the request came from the keyboard ({focus: true}
+      // from the swarm's trace) or from a caller that does not say (the page glides, it never jumps)
+      select(li, d.focus !== false, true);
       pulseSoon(li);
     }
     if (stream) {
