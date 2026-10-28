@@ -676,66 +676,19 @@
     $$('main > section, main > div, body > .footer').forEach(el => oio.observe(el));
   }
 
-  /* ---------------- preloader (homepage) ----------------
-     Finishes on elapsed time and readiness, never on a count of frames: a throttled or starved requestAnimationFrame
-     (background tab, battery saver) only skips repaints of the count; timers lift the loader. performance.now() runs from
-     the start of navigation, so the count is the real time the visitor has waited. A second visit in the same session
-     gets the short version (the mark, no count) for as long as the stage needs and no longer. */
-  const loader = $('.loader');
+  /* ---------------- preloader: loader.js (the homepage loads it first among its scripts) ----------------
+     It runs the loader and marks the page loaded (html.is-loaded, 'oxa:loaded') when the curtain lifts. Every other
+     page is ready now; and should loader.js not have run (blocked, failed), its loader goes at once */
   const loaded = () => {
     $$('.beat-0 [data-split]').forEach(el => el.classList.add('is-in'));
     root.classList.add('is-loaded');
     document.dispatchEvent(new CustomEvent('oxa:loaded'));
   };
-  if (loader) {
-    let seen = false;
-    try { seen = sessionStorage.getItem('oxa:intro') === '1'; sessionStorage.setItem('oxa:intro', '1'); } catch (e) { /* storage off: full intro */ }
-    if (seen) loader.classList.add('is-quick');
-    document.body.classList.add('is-loading');
-    const MIN = seen ? 0 : 950, CAP = seen ? 1100 : 2000, OUT = seen ? 0 : 380; // ms from navigation start; OUT = the count's run to 100
-    const count = $('.loader-count', loader), dial = $('.loader-dial', loader);
-    // the overture draws its first frame (or falls back) after this script: lift once it has, never later than the cap
-    const glReady = !$('.story-gl') || ['gl-ready', 'no-webgl'].some(c => root.classList.contains(c)) ? Promise.resolve()
-      : new Promise(r => ['story:gl-ready', 'story:no-webgl'].forEach(t => document.addEventListener(t, r, { once: true })));
-    const ready = Promise.all([document.fonts ? document.fonts.ready : Promise.resolve(),
-      document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true })), glReady]);
-    const easeOut = t => 1 - Math.pow(1 - t, 3);
-    // the dial has swept on its own (CSS) since the first paint: the count takes over from where it stands, and only now
-    // appears (never a frozen "00" while the script is on its way); the short version never shows a count
-    const idle = dial ? Math.min(0.6, parseFloat(getComputedStyle(dial).getPropertyValue('--lp')) || 0) : 0;
-    if (!seen) loader.classList.add('is-counting');
-    const t0 = performance.now(); // MIN and CAP count from navigation start
-    const early = t => idle + (0.9 - idle) * (1 - Math.exp(-Math.max(0, t - t0) / 520)); // before readiness the count eases towards 90
-    let runFrom = 0, pFrom = 0, finishAt = 0, completed = false;
-    const progressAt = (now) => finishAt && now >= runFrom ? pFrom + (1 - pFrom) * easeOut(clamp01((now - runFrom) / Math.max(1, OUT))) : early(now);
-    const paint = (p) => {
-      if (count) count.textContent = pad(Math.min(100, Math.round(p * 100)));
-      if (dial && !seen) dial.style.setProperty('--lp', p.toFixed(4));
-    };
-    const complete = () => {
-      if (completed) return;
-      completed = true;
-      paint(1);
-      loader.classList.add('is-complete');
-      document.body.classList.remove('is-loading');
-      loaded();
-      // the decision reads for a beat (100, the aperture pulses green), then the curtain lifts
-      setTimeout(() => { loader.classList.add('is-done'); setTimeout(() => loader.remove(), seen ? 600 : 1150); }, seen ? 0 : 120);
-    };
-    const schedule = () => {
-      if (finishAt) return;
-      const now = performance.now();
-      runFrom = Math.max(now, MIN - OUT);
-      pFrom = early(runFrom);
-      finishAt = runFrom + OUT;
-      setTimeout(complete, Math.max(0, finishAt - now));
-    };
-    ready.then(schedule);
-    setTimeout(schedule, Math.max(0, CAP - performance.now())); // never hold the page hostage
-    const frame = () => { if (completed) return; paint(progressAt(performance.now())); requestAnimationFrame(frame); };
-    paint(progressAt(performance.now()));
-    requestAnimationFrame(frame);
-  } else loaded();
+  if (!root.classList.contains('is-loaded') && !document.body.classList.contains('is-loading')) {
+    const stray = $('.loader');
+    if (stray) stray.remove();
+    loaded();
+  }
   /* ---------------- figures: never counted, never rewritten ----------------
      A number on this site is only ever shown at its true value: the HTML holds it and nothing here writes another one
      into the DOM ([data-count] is inert; the count-up from zero is gone). A stat row's arrival is presentation only: its

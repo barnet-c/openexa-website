@@ -2394,12 +2394,16 @@ body.nav-open { overflow: hidden; }
   position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; color: var(--paper);
   background: radial-gradient(90% 70% at 50% 46%, #13201b 0%, var(--ink) 58%, #0B110F 100%);
   transition: transform .9s cubic-bezier(.62, 0, .2, 1), visibility 0s linear .95s;
-  animation: loader-failsafe .45s 3.4s forwards; /* lifted by site.js within ~2.5 s; without a working script it still goes */
+  /* the failsafe: gone 3 s after its first frame, whatever the scripts are doing. loader.js (the page's first script)
+     lifts the curtain well before, and removes the loader at 3 s after navigation if it has not lifted by then; this
+     covers a script that never ran */
+  animation: loader-failsafe .3s linear 3s forwards;
 }
-@keyframes loader-failsafe { to { opacity: 0; visibility: hidden; } }
-/* site.js lifts the curtain 120 ms after 100 (the decision reads for a beat); it starts moving at once, and its content
-   stays legible until the stage is coming through, so no frame is an empty dark panel */
-.loader.is-done { transform: translateY(-100%); visibility: hidden; }
+@keyframes loader-failsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+/* loader.js lifts the curtain 120 ms after 100 (the decision reads for a beat); it starts moving at once, and its content
+   stays legible until the stage is coming through, so no frame is an empty dark panel. The curtain replaces the failsafe
+   (loader.js never lifts it after the failsafe's moment) */
+.loader.is-done { transform: translateY(-100%); visibility: hidden; animation: none; }
 /* the curtain's lower edge is a hairline: the lift reads as a sheet being raised off the stage */
 .loader::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(245, 242, 236, .4) 30%, rgba(79, 203, 147, .55) 50%, rgba(245, 242, 236, .4) 70%, transparent); opacity: 0; transition: opacity .25s var(--ease); }
 .loader.is-done::after { opacity: 1; }
