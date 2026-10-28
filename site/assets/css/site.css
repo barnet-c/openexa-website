@@ -2701,6 +2701,309 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 /* -------------------------------------------------------------------------- */
 
 /* v2:lifecycle:start */
+/* ---------- the lifecycle plates: every lifecycle is one lane (lane.js; the drawings themselves need no script) ----------
+   The overture's S3 geometry engraved on paper: six gates, the council aperture, the boundary, five rails, settled squares
+   and the record line. Ink is currentColor at 1 px; --accent only where something is approved, settled or live; --reject
+   for rejects; khaki for roadmap. Home §03 Fig. 3.1 (an ink plate >= 961 px, its gate list as the legend; below 961 px the
+   list is the lane), Lifecycles §01-§04 (traits, classes, the seven steps, the desk, the orbit), Platform §04. */
+.lcp { overflow: visible; color: var(--fg); --lc-ground: var(--paper); }
+.is-paper-2 .lcp { --lc-ground: var(--paper-2); }
+.lcp path, .lcp rect, .lcp circle, .lcp ellipse { vector-effect: non-scaling-stroke; }
+.lcp .ln, .lcp .ln2, .lcp .ln3, .lcp .tk, .lcp .tk2, .lcp .ax, .lcp .ldr, .lcp .rec, .lcp .recd { fill: none; stroke: currentColor; stroke-width: 1; }
+.lcp .ln { opacity: .8; } .lcp .ln2 { opacity: .5; } .lcp .ln3 { opacity: .26; }
+.lcp .tk { stroke-dasharray: 1 2.4; opacity: .55; }
+.lcp .tk2 { opacity: .42; }
+.lcp .ax { stroke-dasharray: 1 4; opacity: .55; }
+.lcp .ldr { opacity: .2; }
+.lcp .rec { opacity: .72; } .lcp .recd { stroke-dasharray: 2 3; opacity: .45; }
+.lcp .g, .lcp .bd, .lcp .bd2 { fill: none; stroke: var(--accent); stroke-width: 1; }
+.lcp .gw, .lcp .rj { stroke-width: 1.6; }
+.lcp .ap { opacity: .6; }
+.lcp .bd { opacity: .9; } .lcp .bd2 { stroke-dasharray: 2 3; opacity: .4; }
+.lcp .bglow { fill: var(--accent); fill-opacity: .045; stroke: var(--accent); stroke-width: 7; stroke-opacity: .07; stroke-linejoin: round; }
+.lcp .rj { fill: none; stroke: var(--reject); }
+.lcp .rjd { fill: none; stroke: var(--reject); stroke-width: 1; stroke-dasharray: 2.5 3; opacity: .75; }
+.lcp .rjf { fill: var(--reject); }
+.lcp .mote { fill: currentColor; }
+.lcp .bead { fill: currentColor; opacity: .62; }
+.lcp .ring { fill: var(--lc-ground); stroke: var(--accent); stroke-width: 1.5; }
+.lcp .sq { fill: var(--accent); }
+.lcp .blk { fill: currentColor; opacity: .86; }
+.lcp text { font-family: var(--mono); font-weight: 500; letter-spacing: .12em; fill: var(--fg-3); }
+.lcp .t { fill: var(--fg-2); } .lcp .t1 { fill: var(--fg); } .lcp .tg { fill: var(--accent); } .lcp .tr { fill: var(--reject); }
+
+/* ---------- the vertical lane: stations on one spine (home §03 under 961 px; Lifecycles §03 at every width) ----------
+   Each station draws its own glyph (an inline SVG); the spine between them is CSS, so it stretches with the text beside
+   it: a dotted axis through 01-04, the green boundary, five rails through 05, the record line from 06 on. */
+.lane-v { --lv-gw: 104px; --lv-x: 52px; position: relative; margin: 0; padding: 0; list-style: none; }
+.lane-v > li { position: relative; display: grid; grid-template-columns: var(--lv-gw) minmax(0, 1fr); column-gap: 18px; align-content: start; min-height: 76px; padding: 0 0 20px; }
+.lane-v > li::before { content: ""; position: absolute; left: calc(var(--lv-x) - .5px); top: 0; bottom: 0; width: 1px; background: repeating-linear-gradient(180deg, currentColor 0 1px, transparent 1px 5px); opacity: .5; pointer-events: none; }
+.lane-v > li:first-child::before { top: 22px; }
+.lane-v .lv-g { grid-column: 1; grid-row: 1 / span 4; position: relative; z-index: 1; width: var(--lv-gw); height: auto; transition: transform .32s var(--ease); }
+.lane-v > li > :not(.lv-g) { grid-column: 2; }
+.lane-v .lk, .lane-v .lk-btn { display: block; padding: 6px 0 0; text-align: left; font-family: var(--mono); font-size: var(--mono-s, .6875rem); font-weight: 500; line-height: 1.5; letter-spacing: .12em; text-transform: uppercase; color: inherit; }
+.lane-v .lk-who { display: block; margin-top: 2px; font-weight: 400; letter-spacing: .1em; color: var(--fg-3); }
+.lane-v .lk-role { margin-top: 8px; max-width: 58ch; font-size: .95rem; line-height: 1.55; color: var(--fg-2); text-wrap: pretty; }
+.lane-v .lk-btn { width: 100%; border-radius: 2px; }
+.lane-v .lk-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 4px; }
+.lane-v > li.is-hot .lv-g { transform: translateY(-3px); }
+.lane-v > li.is-hot .lk-nm { color: var(--accent); }
+/* 05: five rails in lockstep instead of one axis */
+.lane-v > li[data-g="5"]::before { left: calc(var(--lv-x) - 20.5px); width: 41px; background: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 10px); opacity: .42; }
+/* 06: the rails come in and end in settled squares; from here down the spine is the record line */
+.lane-v > li[data-g="6"]::before { top: 52px; background: currentColor; opacity: .62; }
+.lane-v > li[data-g="6"]::after { content: ""; position: absolute; left: calc(var(--lv-x) - 20.5px); top: 0; width: 41px; height: 18px; background: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 10px); opacity: .42; pointer-events: none; }
+/* the boundary between 04 and 05: a green hairline plane across the lane */
+.lane-v > .lv-bound { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; min-height: 0; margin: 2px 0 22px; padding: 10px 0 0 calc(var(--lv-gw) + 18px); font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+.lane-v > .lv-bound::before { top: -22px; bottom: -22px; background: var(--accent); opacity: .7; }
+.lane-v > .lv-bound::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--accent); box-shadow: 0 0 0 .5px color-mix(in srgb, var(--accent) 30%, transparent), 0 0 10px 1px color-mix(in srgb, var(--accent) 22%, transparent); }
+.lane-v > .lv-bound span:first-child { color: var(--accent); }
+.lane-v > .lv-bound span:first-child::before { content: "\2191\00a0"; }
+.lane-v > .lv-bound span:last-child::before { content: "\2193\00a0"; }
+.lane-v > .lv-rec { min-height: 0; padding-bottom: 0; }
+.lane-v > .lv-rec::before { bottom: auto; height: 6px; background: currentColor; opacity: .62; }
+.lane-v > .lv-rec > span { align-self: center; font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+.lane-v .lv-g .tk2 { opacity: .5; }
+/* Lifecycles §03: the page's seven steps beside the stations; 06 settles, and the record line begins at 07 Reconcile */
+.lane-v--steps > li { padding-bottom: 26px; }
+.lane-v--steps h3 { padding-top: 2px; font-family: var(--serif); font-size: 1.35rem; font-weight: 400; line-height: 1.2; letter-spacing: -0.01em; }
+.lane-v--steps h3 .lk-n { display: block; margin-bottom: 4px; font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; color: var(--fg-3); }
+.lane-v--steps li[data-g="4"] h3 .lk-n, .lane-v--steps li[data-g="6"] h3 .lk-n { color: var(--accent); }
+.lane-v--steps p { margin-top: 8px; color: var(--fg-2); text-wrap: pretty; }
+.lane-v--steps > li[data-g="6"]::before { top: 44px; background: currentColor; opacity: .32; }
+.lane-v--steps > li[data-g="7"]::before { top: 10px; bottom: 26px; background: currentColor; opacity: .62; }
+/* ---------- Fig. 3.1, the lane (home §03) ---------- */
+.lane { margin: 0; }
+.lane-plate { display: none; }
+.lane .lk-n { color: var(--fg-3); }
+.lane .lk-nm { color: var(--fg); }
+/* the plate's labels scale with it: user units sized so they print at >= 10 px from 961 px up (and ~10.7 px at 1440) */
+.lane-h { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); }
+/* one draw-in when the plate is revealed; nothing loops */
+.lane .dr, .lane-v .dr, .lc-orbit .dr, .lc-pipe .dr { stroke-dasharray: 1 1; stroke-dashoffset: 0; }
+[data-reveal].will-reveal:not(.is-in) .dr { stroke-dashoffset: 1; }
+[data-reveal].is-in .dr { transition: stroke-dashoffset .78s cubic-bezier(.45, .05, .2, 1) var(--dd, 80ms); }
+.lane-h [data-g="2"] { --dd: 120ms; } .lane-h [data-g="3"] { --dd: 160ms; } .lane-h [data-g="4"] { --dd: 200ms; }
+.lane-h [data-g="5"] { --dd: 140ms; } .lane-h [data-g="6"] { --dd: 120ms; }
+/* a gate pointed at or focused is lifted: its plate rises a few pixels, the others step back */
+.lane-h [data-g] { transition: transform .32s var(--ease), opacity .32s var(--ease); }
+.lane[data-hot] .lane-h [data-g] { opacity: .42; }
+.lane[data-hot="1"] .lane-h [data-g="1"], .lane[data-hot="2"] .lane-h [data-g="2"], .lane[data-hot="3"] .lane-h [data-g="3"],
+.lane[data-hot="4"] .lane-h [data-g="4"], .lane[data-hot="5"] .lane-h [data-g="5"], .lane[data-hot="6"] .lane-h [data-g="6"] { opacity: 1; transform: translateY(-6px); }
+
+@media (min-width: 961px) {
+  .lane-plate { display: block; }
+  /* the gate list is the plate's legend: each item stands under its gate */
+  /* thirteen tracks in the plate's own units: each gate's item is 136 wide and centred under its gate (x = 110, 270,
+     430, 590, 888, 1026 of 1200, as drawn by the plate), so the legend is as tall as its tallest item */
+  .lane .lane-key { display: grid; grid-template-columns: minmax(0, 42fr) minmax(0, 136fr) minmax(0, 24fr) minmax(0, 136fr) minmax(0, 24fr) minmax(0, 136fr) minmax(0, 24fr) minmax(0, 136fr) minmax(0, 162fr) minmax(0, 136fr) minmax(0, 2fr) minmax(0, 136fr) minmax(0, 106fr); margin-top: 2px; }
+  .lane .lane-key > li { grid-row: 1; display: block; min-height: 0; padding: 0; text-align: center; }
+  .lane .lane-key > [data-g="1"] { grid-column: 2; } .lane .lane-key > [data-g="2"] { grid-column: 4; } .lane .lane-key > [data-g="3"] { grid-column: 6; }
+  .lane .lane-key > [data-g="4"] { grid-column: 8; } .lane .lane-key > [data-g="5"] { grid-column: 10; } .lane .lane-key > [data-g="6"] { grid-column: 12; }
+  .lane .lane-key > li::before, .lane .lane-key > li::after { display: none; }
+  .lane .lane-key > .lv-x, .lane .lane-key .lv-g { display: none; }
+  .lane .lane-key .lk, .lane .lane-key .lk-btn { display: block; width: 100%; padding: 8px 2px 6px; font-family: var(--mono); font-size: var(--mono-s, .6875rem); font-weight: 500; line-height: 1.45; letter-spacing: .12em; text-transform: uppercase; text-align: center; color: inherit; text-wrap: balance; }
+  .lane .lk-who { display: block; margin-top: 3px; font-weight: 400; color: var(--fg-3); letter-spacing: .1em; }
+  .lane .lk-role { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .lane .lk-btn { position: relative; border-radius: 2px; transition: color .25s var(--ease); }
+  .lane .lk-btn::before { content: ""; position: absolute; left: 50%; top: 0; width: 22px; height: 2px; margin-left: -11px; background: var(--accent); transform: scaleX(0); transition: transform .3s var(--ease); }
+  .lane li.is-hot .lk-btn::before { transform: scaleX(1); }
+  .lane li.is-hot .lk-nm { color: var(--accent); }
+  .lane .lk-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+  /* the role of the gate in hand, on one line under the legend */
+  .lane-role { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 14px; min-height: 3.1rem; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--fg-2); font-size: .98rem; line-height: 1.5; }
+  .lane-role b { font-family: var(--mono); font-size: var(--mono-s, .6875rem); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+  .lane-role:empty::before { content: "Point at a gate, or tab to it, for its role in the lane"; grid-column: 1 / -1; font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+  .lane .figure-cap { margin-top: 12px; }
+}
+.lane-role { display: none; }
+@media (min-width: 961px) { .lane.is-on .lane-role { display: grid; } }
+/* without script the legend says everything at once: three columns of described gates under the plate */
+@media (min-width: 961px) and (scripting: none) {
+  .lane .lane-key { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 32px; margin-top: 18px; }
+  .lane .lane-key > li[data-g] { grid-column: auto; grid-row: auto; text-align: left; padding: 14px 0 16px; border-top: 1px solid var(--line); }
+  .lane .lane-key .lk { text-align: left; }
+  .lane .lk { padding: 0; }
+  .lane .lk-who { display: inline; margin-left: .6em; }
+  .lane .lk-role { position: static; width: auto; height: auto; margin: 8px 0 0; overflow: visible; clip-path: none; white-space: normal; font-size: .9rem; line-height: 1.5; color: var(--fg-2); }
+}
+
+@media (max-width: 960px) { .lane .lane-v { max-width: 640px; margin-top: 8px; } .lane .figure-cap { margin-top: 26px; } }
+@media (max-width: 420px) { .lane-v { --lv-gw: 88px; --lv-x: 44px; } .lane-v > li { column-gap: 12px; } .lane-v .lv-g { width: 104px; margin-left: -8px; } .lane-v > .lv-bound { padding-left: calc(var(--lv-gw) + 12px); } }
+@media (prefers-reduced-motion: reduce) { .lane .dr, .lane-v .dr, .lc-pipe .dr, .lane-h [data-g], .lane-v .lv-g { transition: none; } }
+
+/* ---------- the desk (gap.js; Lifecycles §03): a session on top, the lane beside it, the ledger under it ----------
+   These rules supersede the base .desk-head .live i ping, .desk-log and the desk legend. Nothing loops: the state dot
+   pings once per proposal, and a record lands once. */
+.desk { --desk-bg: var(--ink-2); }
+.desk-head { flex-wrap: wrap; row-gap: 10px; min-height: 56px; padding: 10px 12px 10px 20px; }
+.desk-kicker { font-weight: 500; letter-spacing: .14em; color: var(--khaki); }
+.desk-head .live i { position: relative; animation: none; box-shadow: none; }
+.desk-head .live i::after { content: ""; position: absolute; inset: -1px; border-radius: 50%; border: 1px solid var(--accent); opacity: 0; }
+.desk-head .live i.is-ping::after { animation: dk-ping .7s cubic-bezier(.2, .7, .2, 1) 1; }
+@keyframes dk-ping { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(3.2); } }
+.desk-follow { display: inline-flex; align-items: center; gap: 10px; margin-left: auto; min-height: 36px; padding: 8px 14px 8px 12px; border: 1px solid rgba(79, 203, 147, .55); border-radius: 2px; color: var(--accent); font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; transition: background .2s, color .2s, border-color .2s; }
+.desk-follow::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid currentColor; box-sizing: border-box; }
+.desk-follow:hover { background: rgba(79, 203, 147, .12); }
+.desk-follow[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #0B110F; }
+.desk-follow[aria-pressed="true"]::before { background: currentColor; border-radius: 1px; width: 8px; height: 8px; }
+.desk-follow:focus-visible, .desk .model-motion:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.desk-follow + .model-motion { margin-left: 0; }
+.desk .model-motion { font-size: var(--mono-xs, .625rem); letter-spacing: .12em; }
+.desk-legend { font-size: var(--mono-xs, .625rem); letter-spacing: .12em; }
+.desk-legend i.dk-nav { width: 16px; height: 1px; background: repeating-linear-gradient(90deg, var(--khaki) 0 3px, transparent 3px 6px); }
+.desk-legend .desk-axis { margin-left: auto; letter-spacing: .08em; text-transform: none; }
+.desk-chart canvas { height: clamp(260px, 26vw, 360px); }
+.desk-legend i.band { height: 7px; border: 0; border-top: 1px solid var(--accent); background: linear-gradient(180deg, rgba(79, 203, 147, .3), rgba(79, 203, 147, 0)); }
+.desk-legend i.ring { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--accent); background: none; }
+.desk-legend i.sq { width: 7px; height: 7px; border-radius: 1px; background: var(--accent); }
+.desk-stats span, .desk-controls label { font-size: var(--mono-xs, .625rem); letter-spacing: .12em; }
+.desk-side .desk-note { margin-top: auto; border-top: 0; }
+
+/* the lane beside the session: six stations on one spine; a followed action walks it, then squares up at 06 */
+.desk-lane { padding: 16px 20px 6px; border-top: 1px solid var(--line); }
+.dl-gates { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+.dl-gates::before { content: ""; position: absolute; left: calc(100% / 12); right: calc(100% / 12); top: 7px; height: 1px; background: linear-gradient(90deg, rgba(245, 242, 236, .38) 0 50%, rgba(245, 242, 236, .5) 50%); }
+/* the boundary between 04 and 05 */
+.dl-gates::after { content: ""; position: absolute; left: calc(400% / 6); top: -2px; width: 1px; height: 19px; background: var(--accent); box-shadow: 0 0 6px 1px rgba(79, 203, 147, .35); }
+.dl-gates li { position: relative; padding-top: 24px; text-align: center; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); white-space: nowrap; transition: color .3s; }
+.dl-gates li b { display: block; font-weight: 500; color: rgba(245, 242, 236, .4); transition: color .3s; }
+.dl-gates li::before { content: ""; position: absolute; left: 50%; top: 4px; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--desk-bg); box-shadow: inset 0 0 0 1px rgba(245, 242, 236, .6); transition: box-shadow .3s, background .3s; }
+.dl-gates li[data-g="4"]::before { top: 0; width: 15px; height: 15px; margin-left: -7.5px; background: var(--desk-bg) radial-gradient(circle, transparent 5px, rgba(245, 242, 236, .55) 5.5px, rgba(245, 242, 236, .55) 6px, transparent 6.5px); box-shadow: none; }
+.dl-gates li[data-g="5"]::before { top: 2px; width: 21px; height: 11px; margin-left: -10.5px; border-radius: 0; background: var(--desk-bg) repeating-linear-gradient(90deg, rgba(245, 242, 236, .55) 0 1px, transparent 1px 5px); box-shadow: none; }
+.dl-gates li[data-g="6"]::before { border-radius: 1px; background: var(--accent); box-shadow: none; }
+.dl-gates li.is-past b, .dl-gates li.is-on b { color: var(--accent); }
+.dl-gates li.is-on { color: var(--paper); }
+.dl-gates li.is-past::before, .dl-gates li.is-on::before { box-shadow: inset 0 0 0 1px var(--accent); }
+.dl-gates li[data-g="4"].is-on::before, .dl-gates li[data-g="4"].is-past::before { background: var(--desk-bg) radial-gradient(circle, transparent 5px, var(--accent) 5.5px, var(--accent) 6px, transparent 6.5px); }
+.dl-gates li[data-g="5"].is-on::before, .dl-gates li[data-g="5"].is-past::before { background: var(--desk-bg) repeating-linear-gradient(90deg, var(--accent) 0 1px, transparent 1px 5px); }
+/* the followed proposal: a ring that moves station to station, and squares up at 06 (220 ms) */
+.dl-ring { position: absolute; left: 0; top: -6px; width: calc(100% / 6); height: 27px; pointer-events: none; opacity: 0; transform: translateX(calc((var(--k, 1) - 1) * 100%)); transition: transform .5s var(--ease), opacity .3s; }
+.dl-ring::before { content: ""; position: absolute; left: 50%; top: 0; width: 27px; height: 27px; margin-left: -13.5px; border-radius: 50%; border: 1.5px solid var(--accent); box-shadow: 0 0 0 4px rgba(79, 203, 147, .1); transition: border-radius .22s var(--ease), transform .22s var(--ease), background .22s; }
+.dl-gates[data-on] .dl-ring { opacity: 1; }
+.dl-gates[data-on="6"] .dl-ring::before { border-radius: 2px; transform: scale(.5); background: var(--accent); }
+.dl-say { min-height: 3.2em; margin: 14px 0 0; padding-top: 10px; border-top: 1px dashed rgba(245, 242, 236, .1); font-size: .9rem; line-height: 1.5; color: var(--fg-2); }
+.dl-say:empty::before { content: "Follow the next action to walk it down the six gates, into the ledger."; font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+.dl-say b { margin-right: .5em; font-family: var(--mono); font-size: var(--mono-xs, .625rem); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+
+/* the ledger strip: 12 px record blocks on one hairline, newest on the right; each link carries its record's hash */
+.desk-ledger { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 0 18px; padding: 14px 0 16px 20px; border-top: 1px solid var(--line); }
+.dl-k { margin: 0 0 3px; font: 500 var(--mono-xs, .625rem)/1.5 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg); }
+.dl-k span { display: block; font-weight: 400; color: var(--fg-3); }
+.desk .desk-log { display: flex; justify-content: flex-end; gap: 0; min-height: 48px; margin: 0; padding: 0 20px 0 0; overflow: hidden; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .1em; color: var(--fg-2); -webkit-mask-image: linear-gradient(90deg, transparent, #000 56px); mask-image: linear-gradient(90deg, transparent, #000 56px); }
+.desk .desk-log li { flex: none; display: block; width: 124px; padding: 0; border: 0; color: var(--fg-2); animation: none; }
+.desk .desk-log li:first-child { color: var(--fg-2); }
+.desk .desk-log li:last-child { width: 96px; }
+.dk-ev { display: block; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dk-ev b { font-weight: 500; letter-spacing: .1em; }
+.dk-rec.is-c .dk-ev b { color: var(--accent); } .dk-rec.is-r .dk-ev b { color: var(--khaki); }
+.dk-line { position: relative; display: block; height: 16px; margin-top: 8px; }
+.dk-blk { position: absolute; left: 0; top: 2px; width: 12px; height: 12px; background: var(--paper); }
+.dk-link { position: absolute; left: 12px; right: 0; top: 8px; height: 1px; background: rgba(245, 242, 236, .32); }
+.dk-h { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); padding: 0 5px; background: var(--desk-bg); font: var(--mono-xs, .625rem)/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
+.dk-h:empty { display: none; }
+.desk .desk-log li:last-child .dk-link { right: 30%; background: repeating-linear-gradient(90deg, rgba(245, 242, 236, .32) 0 3px, transparent 3px 7px); }
+.dk-rec.is-new { animation: dk-in .45s var(--ease) 1 both; }
+@keyframes dk-in { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+.dk-rec.is-followed .dk-blk { background: var(--accent); box-shadow: 0 0 0 3px var(--desk-bg), 0 0 0 4px rgba(79, 203, 147, .6), 0 0 14px rgba(79, 203, 147, .45); }
+.dk-rec.is-followed .dk-ev { color: var(--paper); }
+.desk-nojs { display: none; }
+@media (scripting: none) {
+  .desk, .desk-cap { display: none; }
+  .desk-nojs { display: block; max-width: 62ch; padding: 18px 20px; border: 1px dashed var(--line-strong); border-radius: var(--r); font-size: .95rem; color: var(--fg-2); }
+}
+@media (max-width: 900px) {
+  .desk-head { padding-left: 16px; }
+  .desk-kicker { order: -1; flex-basis: 100%; } /* the panel names itself illustrative on its own first line at every width */
+  .desk-follow { margin-left: 0; }
+}
+@media (max-width: 380px) { .desk-lane { padding-left: 6px; padding-right: 6px; } .dl-gates li { letter-spacing: .02em; } }
+@media (max-width: 600px) {
+  .desk-head { column-gap: 10px; padding-right: 10px; }
+  .desk-follow { gap: 8px; padding: 8px 10px; letter-spacing: .1em; }
+  .desk .model-motion { padding: 5px 8px; letter-spacing: .1em; }
+  .desk-lane { padding: 14px 10px 6px; }
+  .desk-ledger { grid-template-columns: 1fr; padding-left: 16px; row-gap: 10px; }
+  .desk .desk-log li { width: 112px; }
+}
+/* thumbs and tracks a finger can work: 44 px tall controls with 22 px thumbs on touch screens */
+@media (pointer: coarse) {
+  .desk-controls input[type=range] { height: 44px; }
+  .desk-controls input[type=range]::-webkit-slider-thumb { width: 22px; height: 22px; margin-top: -10.5px; border-width: 5px; }
+  .desk-controls input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-width: 5px; }
+  .desk-follow, .desk .model-motion { min-height: 44px; }
+}
+/* ---------- Fig. 4.1, the orbit (Lifecycles §04): six class rings in plan view, the swarm at the centre ----------
+   S1's ring styles (shared with the Lifecycles hero plate): LC-01 solid green; Next (LC-02/03) dashed ink; Roadmap
+   (LC-04-06) dotted khaki. Only a live opportunity is a filled green bead; the rest are hollow; an opportunity the page
+   names in no class is a neutral bead outside the rings. Wide screens read the callouts; the list is the same twelve. */
+.lc-orbit { margin: 48px 0 0; }
+.orbit-svg { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); }
+.lcp .orb-live { fill: none; stroke: var(--accent); stroke-width: 1.3; }
+.lcp .orb-next { fill: none; stroke: currentColor; stroke-width: 1; stroke-dasharray: 5 4; opacity: .62; }
+.lcp .orb-road { fill: none; stroke: var(--khaki-deep); stroke-width: 1.5; stroke-dasharray: .01 4.4; stroke-linecap: round; }
+.lcp .orb-bead { fill: var(--lc-ground); stroke: currentColor; stroke-width: 1.3; }
+.lcp .orb-bead.is-live { fill: var(--accent); stroke: var(--accent); }
+.lcp .orb-bead.is-road { stroke: var(--khaki-deep); }
+.lcp .orb-bead.is-free { stroke: var(--fg-3); stroke-dasharray: 2 2; }
+.lcp .orb-halo { fill: none; stroke: var(--accent); stroke-width: 1; opacity: .4; }
+.lcp .ldr2 { fill: none; stroke: currentColor; stroke-width: 1; opacity: .3; }
+.lcp .orb-swarm .mote { opacity: .55; }
+.orbit-svg text { paint-order: stroke; stroke: var(--lc-ground); stroke-width: 6px; stroke-linejoin: round; }
+.orbit-svg .orb-s { font-weight: 400; }
+.orbit-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; margin: 18px 0 0; padding: 0; list-style: none; }
+.orbit-list li { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.orbit-list .lc-ring { grid-row: span 2; }
+.orbit-list span { font: 500 var(--mono-s, .6875rem)/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg); }
+.orbit-list small { grid-column: 2; font: var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+.lc-ring { display: block; width: 28px; height: 28px; overflow: visible; }
+@media (min-width: 961px) {
+  .orbit-list { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@media (max-width: 960px) {
+  /* a smaller orbit: the rings only, cropped to their own square; the list carries the names */
+  .orbit-fig { max-width: 440px; margin: 0 auto; overflow: hidden; aspect-ratio: 1; }
+  /* tags print at >= 10 px from 320 px up: user units grow as the cropped orbit shrinks */
+  .orbit-svg { width: calc(1200 / 470 * 100%); max-width: none; margin: calc(-27 / 470 * 100%) 0 0 calc(-365 / 470 * 100%); font-size: clamp(11px, calc(29.9px - 3.94vw), 17.5px); }
+  .orbit-svg .orb-t, .orbit-svg .ldr2 { display: none; }
+}
+@media (min-width: 601px) and (max-width: 960px) { .orbit-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* ---------- Platform §04, Fig. 4.1: the deterministic half of the lane (gates 05 and 06, three checkpoints, the record line) ---------- */
+.lc-pipe { margin: 0 0 40px; }
+.pipe-svg { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); }
+.lcp .cp { fill: none; stroke: currentColor; stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
+.lcp .cpl { fill: none; stroke: currentColor; stroke-width: 1; stroke-dasharray: 1 3; opacity: .55; }
+.lcp .cpk { fill: none; stroke: currentColor; stroke-width: 1; opacity: .7; }
+.lcp .blk--dim { opacity: .3; }
+.pipe-svg .pp-s { display: none; font-size: clamp(17px, calc(62px - 5.6vw), 46px); fill: var(--fg); }
+.lc-tag { display: block; margin-bottom: 8px; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+@media (max-width: 960px) {
+  /* the full labels give way to short P-labels; the empty label bands above and below are cropped */
+  .pipe-fig { overflow: hidden; aspect-ratio: 1200 / 236; }
+  .pipe-svg { margin-top: calc(-42 / 1200 * 100%); }
+  .pipe-svg .pp-l { display: none; }
+  .pipe-svg .pp-s { display: inline; }
+}
+
+/* ---------- class rings and trait stacks wherever the classes are listed (home §01 Fig. 1.1, Lifecycles §01 and §02) ---------- */
+.card .n .lc-code { display: inline-flex; align-items: center; gap: 12px; }
+.card .n--ring { align-items: center; }
+.list-rule > li .k .lc-ring { margin: -4px 0 10px; }
+.card .n .lc-map { display: inline-flex; align-items: center; gap: 12px; text-align: right; }
+.lc-stack { flex: none; width: 48px; height: 46px; overflow: visible; }
+.lcp .st { fill: none; stroke: currentColor; stroke-width: 1; opacity: .38; }
+.lcp .st-on { fill: color-mix(in srgb, var(--accent) 18%, transparent); stroke: var(--accent); stroke-width: 1.3; }
+.lcp .st-b { fill: none; stroke: var(--accent); stroke-width: 1; stroke-dasharray: 2 2; opacity: .55; }
+.lcp .st-rec { fill: none; stroke: currentColor; stroke-width: 1; opacity: .3; }
+.lcp .st-blk { fill: currentColor; opacity: .3; }
+.lcp .st-rec.is-on { stroke: var(--accent); opacity: 1; }
+.lcp .st-blk.is-on { fill: var(--accent); opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dk-rec.is-new, .desk-head .live i.is-ping::after { animation: none; }
+  .dl-ring, .dl-ring::before, .dl-gates li, .dl-gates li::before, .dl-gates li b { transition: none; }
+}
 /* v2:lifecycle:end */
 
 /* v2:pages:start */
