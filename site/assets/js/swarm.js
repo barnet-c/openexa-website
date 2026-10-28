@@ -294,11 +294,14 @@
   /* ---------------- camera + projection (CPU, perspective) ---------------- */
   const cam = { yaw: -0.4, pitch: 0.2, D: 3.4, F: 500, cx: 0, cy: 0, cyw: 1, syw: 0, cp: 1, sp: 0, tx: 0.04, ty: -0.1, tz: 0, dmin: 3, dmax: 4, k0: 150 };
   const YAW = -0.4, PITCH = 0.2;
-  let par = 0, parT = 0, P_X = 0, P_Y = 0, P_D = 1;
+  let par = 0, parT = 0, P_X = 0, P_Y = 0, P_D = 1, breath = 1;
   function camera() {
     par += (parT - par) * 0.04;
-    const still = reduced.matches;
-    const yaw = YAW + (still ? 0 : 0.03 * Math.sin(sim * 0.11) + par * 0.05), pitch = PITCH + (still ? 0 : 0.012 * Math.sin(sim * 0.083));
+    // the camera's slow breathing is decoration: a device that had to drop every trail (quality 0) lets it ease out, so
+    // the projected labels come to rest and their transforms stop being rewritten every frame
+    breath += ((quality === 0 ? 0 : 1) - breath) * 0.03; if (breath < 0.002) breath = 0;
+    const still = reduced.matches, b = still ? 0 : breath;
+    const yaw = YAW + b * 0.03 * Math.sin(sim * 0.11) + (still ? 0 : par * 0.05), pitch = PITCH + b * 0.012 * Math.sin(sim * 0.083);
     cam.cyw = Math.cos(yaw); cam.syw = Math.sin(yaw); cam.cp = Math.cos(pitch); cam.sp = Math.sin(pitch);
   }
   function proj(x, y, z) {
@@ -1086,7 +1089,8 @@
   /* ---------------- controls ---------------- */
   if (el.n) {
     el.n.value = Math.round(Math.log(target / 500) / Math.log(12) * 100);
-    el.n.addEventListener('input', () => { target = Math.round(500 * Math.pow(12, el.n.value / 100) / 100) * 100; showN(); if (reduced.matches) still(); });
+    // a deliberate choice of population is measured afresh: the device cap (if any) is lifted until frames say otherwise
+    el.n.addEventListener('input', () => { target = Math.round(500 * Math.pow(12, el.n.value / 100) / 100) * 100; if (popCap) { popCap = 0; delete root.dataset.swCap; } showN(); if (reduced.matches) still(); });
   }
   let tuneT = 0;
   if (el.strict) {
@@ -1206,14 +1210,15 @@
   }
   let onScreen = false, near = false, ledgerNear = false, frameId = 0, bgId = 0, last = performance.now(), ui = 0, booted = false;
   // quality governor, driven by a frame-time EMA: above 20 ms a device sheds trail work (2 all trails · 1 proposals and
-  // rejections only · 0 none), and a level it had to leave is not tried again; at level 0, a device still under 30 fps
-  // carries fewer agents, a step at a time, and the Agents output says so
-  let quality = 2, qCeil = 2, frameDt = 1 / 60, ema = 1 / 60, workEma = 0, slowFor = 0, fastFor = 0, capFor = 0, coolFor = 0;
+  // rejections only · 0 none); it tries the level above again only after cheap frames for a while, and waits twice as
+  // long after each drop (a stall passes, a slow device is not made to stutter every few seconds); at level 0, a device
+  // still under 30 fps carries fewer agents, a step at a time, and the Agents output says so
+  let quality = 2, frameDt = 1 / 60, ema = 1 / 60, workEma = 0, slowFor = 0, fastFor = 0, capFor = 0, coolFor = 0, retry = 6;
   function govern(raw, work) {
     ema += (raw - ema) * 0.1; workEma += (work - workEma) * 0.1; coolFor += raw;
     if (ema > 0.020) { slowFor += raw; fastFor = 0; } else { slowFor = 0; fastFor = ema < 0.0185 && workEma < 0.006 ? fastFor + raw : 0; }
-    if (slowFor > 1 && quality > 0 && coolFor > 1.5) { quality--; qCeil = quality; slowFor = 0; coolFor = 0; root.dataset.swQuality = quality; }
-    else if (fastFor > 6 && quality < qCeil) { quality++; fastFor = 0; coolFor = 0; root.dataset.swQuality = quality; }
+    if (slowFor > 1 && quality > 0 && coolFor > 1.5) { quality--; retry = Math.min(96, retry * 2); slowFor = 0; coolFor = 0; root.dataset.swQuality = quality; }
+    else if (fastFor > retry && quality < 2) { quality++; fastFor = 0; coolFor = 0; root.dataset.swQuality = quality; }
     capFor = quality === 0 && ema > 1 / 30 ? capFor + raw : 0;
     const floor = narrow ? 1200 : 1800, cur = pop();
     if (capFor > 2 && cur > floor && inflight <= cur * 1.15) { // the last step has taken effect: the lane is down to it
