@@ -1241,7 +1241,7 @@
     l.el.addEventListener('pointerleave', e => { if (e.pointerType === 'touch' || !moved(e)) return; hoverPtr = null; setHover(); });
   });
   // a callout shows while its scene is near; on the way out the proof's day tags stay, so the rising paper turns them to ink
-  const vis = (l) => 1 - sstep(0.22, 0.4, Math.abs(sNow - l.scene)) - (l.scene === 4 && !l.keep ? sstep((l.out || OUT4)[0], (l.out || OUT4)[1], xNow) : 0);
+  const vis = (l) => 1 - sstep(0.22, 0.4, Math.abs((reducedMQ.matches ? Math.round(sNow) : sNow) - l.scene)) - (l.scene === 4 && !l.keep ? sstep((l.out || OUT4)[0], (l.out || OUT4)[1], xeNow) : 0); // reduced motion: they snap with their scene
   const OUT4 = [0.04, 0.2];
   // a session's own progress into S4 (its column's stagger): its day tag lands with it and, in reverse, leaves first
   const colIn = (c) => sNow >= 4 ? 1 : seg === 3 ? clamp(ease(stag(mRaw, (c + 0.55) / (NCOL + 0.55))), 0, 1) : 0;

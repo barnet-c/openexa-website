@@ -643,15 +643,15 @@
         for (let i = 0; i <= 160; i++) { const [x, y, z] = onOrbit(o, i / 160 * TAU); if (hidden(x, y, z)) { pen = false; continue; } if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; } }
         ctx.strokeStyle = rgba(oi ? IVORY : GREEN, oi ? 0.09 : 0.16); ctx.stroke();
       });
-      // the globe: ~1.2 px beads at 10-14% ivory, brighter facing the eye; beads of one alpha share one path (a few fills a frame)
+      // the globe: ~1.4 px beads, 12% ivory at the limb rising to ~32% facing the eye (fainter vanishes at 1x); beads of one alpha share one path
       const eb = new Map();
       sphere.forEach(pt => {
         const lo = pt.lo + spin, q = rot([Math.cos(pt.la) * Math.sin(lo), Math.sin(pt.la), Math.cos(pt.la) * Math.cos(lo)], tilt, 0, 0);
         if (q[2] <= 0.04) return;
-        const k = Math.round((0.10 + 0.04 * q[2]) * 100);
+        const k = Math.round((0.12 + 0.2 * Math.pow(q[2], 1.2)) * 100);
         let f = eb.get(k); if (!f) eb.set(k, f = []); f.push(cx + q[0] * R, cy + q[1] * R);
       });
-      eb.forEach((f, k) => { ctx.beginPath(); for (let i = 0; i < f.length; i += 2) { ctx.moveTo(f[i] + 0.6, f[i + 1]); ctx.arc(f[i], f[i + 1], 0.6, 0, TAU); } ctx.fillStyle = rgba(IVORY, k / 100); ctx.fill(); });
+      eb.forEach((f, k) => { ctx.beginPath(); for (let i = 0; i < f.length; i += 2) { ctx.moveTo(f[i] + 0.7, f[i + 1]); ctx.arc(f[i], f[i + 1], 0.7, 0, TAU); } ctx.fillStyle = rgba(IVORY, k / 100); ctx.fill(); });
       // one proposal: a green ring travelling the first orbit (it passes behind the globe)
       const [px, py, pz] = onOrbit(orbits[0], t * 0.32 + 1.1);
       if (!hidden(px, py, pz)) { ctx.beginPath(); ctx.arc(px, py, 3.4, 0, TAU); ctx.strokeStyle = rgba(GREEN, 0.9); ctx.lineWidth = 1.2; ctx.stroke(); }
