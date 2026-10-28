@@ -1884,6 +1884,11 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
    the homepage loader, page transitions, and the shared polish of controls and focus. Behaviour: site.js (nav · chapters
    · loader). Context selectors use :where() so a component's own rules always win over this global layer. */
 
+/* ---------- off-screen: a band of the page that is wholly out of view runs no CSS animation ----------
+   site.js toggles .is-offscreen on every main > section, main > div and the footer. Owners keep their infinite loops on
+   transform/opacity; this pauses them (and anything else) wherever nobody can see them. */
+.is-offscreen, .is-offscreen *, .is-offscreen *::before, .is-offscreen *::after { animation-play-state: paused !important; }
+
 /* ---------- rhythm & anchors: nothing scrolls or focuses under the fixed nav ---------- */
 :root { --nav-h: 72px; }
 @media (max-width: 960px) { :root { --nav-h: 64px; } }

@@ -422,6 +422,14 @@
     revealEls.forEach(el => { el.classList.add('will-reveal'); io.observe(el); });
   } else revealEls.forEach(el => el.classList.add('is-in'));
 
+  /* ---------------- off-screen bands: their CSS loops stop ----------------
+     Every top-level band of the page carries .is-offscreen while no part of it is on screen; v2:nav pauses every CSS
+     animation inside it (owners keep their loops on transform/opacity). Nothing runs where nobody can see it. */
+  if ('IntersectionObserver' in window) {
+    const oio = new IntersectionObserver(entries => entries.forEach(e => e.target.classList.toggle('is-offscreen', !e.isIntersecting)));
+    $$('main > section, main > div, body > .footer').forEach(el => oio.observe(el));
+  }
+
   /* ---------------- preloader (homepage) ----------------
      Finishes on elapsed time and readiness, never on a count of frames: a throttled or starved requestAnimationFrame
      (background tab, battery saver) only skips repaints of the count; timers lift the loader. performance.now() runs from
