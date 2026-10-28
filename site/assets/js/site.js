@@ -626,12 +626,18 @@
   /* ---------------- reveal on scroll ---------------- */
   $$('[data-stagger]').forEach(el => { Array.from(el.children).forEach((c, i) => c.style.setProperty('--i', i)); if (!el.hasAttribute('data-reveal')) el.setAttribute('data-reveal', ''); });
   const revealEls = $$('[data-reveal]');
-  let rio = null;
+  let rio = null, tio = null;
   if ('IntersectionObserver' in window && !prefersReduced) {
+    const show = el => { el.classList.add('is-in'); rio.unobserve(el); tio.unobserve(el); };
     rio = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-in'); rio.unobserve(e.target); } });
+      entries.forEach(e => { if (e.isIntersecting) show(e.target); });
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
-    revealEls.forEach(el => { el.classList.add('will-reveal'); rio.observe(el); });
+    // a block taller than the screen would wait for 8% of its own height and show blank paper until then (Platform's
+    // full spec: half a phone screen; past ~11 screens, at a large text size, never): it comes in once its top is in
+    tio = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting && e.boundingClientRect.height > (e.rootBounds ? e.rootBounds.height : window.innerHeight)) show(e.target); });
+    }, { rootMargin: '0px 0px -16% 0px', threshold: 0 });
+    revealEls.forEach(el => { el.classList.add('will-reveal'); rio.observe(el); tio.observe(el); });
   } else revealEls.forEach(el => el.classList.add('is-in'));
   // at once, with no transition: what a long jump passes over or lands on, and anything the keyboard focuses (focus
   // never lands on something still invisible). .is-instant lasts two frames; .is-cut stays (a skipped entrance never
@@ -641,7 +647,7 @@
     if (!el.classList.contains('will-reveal') || el.classList.contains('is-in')) return;
     el.classList.add('is-cut', 'is-in');
     instant(el);
-    if (rio) rio.unobserve(el);
+    if (rio) { rio.unobserve(el); tio.unobserve(el); }
   }
   function revealRange(a, b) {
     const y = window.scrollY;
