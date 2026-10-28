@@ -4,10 +4,13 @@
    at the crossing; a few session minutes later it fills, the ring squares up, the gap is pulled back, and the action is
    sealed as a record on the ledger strip (one block per record; each link carries the first 8 hex of the SHA-256 of the
    record it leaves, computed here, or no hex at all where the browser has no crypto.subtle).
-   The panel opens with the morning already run (to about 11:15 ET) and then runs on. Every counter is read from the
-   model's state. "Follow the next action" walks the next proposal down the six gates, one line per gate, and lands its
-   record in the strip. Off screen, in a hidden tab or paused, nothing runs. Under reduced motion the panel is a still of
-   the whole session; the sliders redraw it. Nothing here is market data. */
+   The panel opens with the day already run to about 13:30 ET (the trace covers most of the plot at first sight) and runs
+   on through the afternoon. Every counter is read from the model's state; the strip keeps the records it can show and
+   counts the rest in a leading '+N earlier records' line, so its records plus N always equal creates plus redeems.
+   "Follow the next action" runs the session quickly (but drawn, at most a session minute a frame) to the next proposal,
+   holds the model and walks that proposal down the six gates, one line per gate, then lands its record in the strip.
+   Off screen, in a hidden tab or paused, nothing runs. Under reduced motion the panel is a still of the whole session;
+   the sliders redraw it. Nothing here is market data. */
 (function () {
   'use strict';
   const root = document.querySelector('[data-gap]');
@@ -30,8 +33,8 @@
   const SPEED = 8.5;              // session minutes per real second
   const STEP = 0.25;              // integration step, minutes
   const KAPPA = 0.02, SIGMA = 2.1; // OU mean reversion / volatility (bps per √minute)
-  const WARM = 105;               // the panel opens at 11:15 ET with the morning drawn ...
-  const WARM_MAX = 170;           // ... and on an open proposal when one comes before 12:20
+  const WARM = 240;               // the panel opens at 13:30 ET with the day so far drawn ...
+  const WARM_MAX = 275;           // ... and on an open proposal when one comes before 14:05
   const FILL = 12;                // session minutes from proposal to fill
   let seed = 11;
   const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
@@ -45,7 +48,8 @@
   function reset() {
     S.t = 0; S.g = (rnd() - 0.5) * 6; S.samples = [[0, S.g]]; S.acts = []; S.cooldown = 0;
     S.creates = 0; S.redeems = 0; S.sumGap = 0; S.done = 0; S.nextJump = 20 + rnd() * 60;
-    if (el.log) el.log.replaceChildren();
+    dropped = 0; more = null;
+    if (el.log) { el.log.replaceChildren(); el.log.classList.remove('has-more'); }
   }
   // integrate the session by `mins` minutes (stops early once a followed proposal exists)
   function advance(mins) {
@@ -79,14 +83,26 @@
     S.sumGap += Math.abs(a.g);
     a.rec = record(a);
   }
-  // a session opens with its morning run: to 11:15 ET, then on to the next proposal (if one comes before 12:20)
+  // a session opens with the day so far run: to 13:30 ET, then on to the next proposal (if one comes before 14:05).
+  // A follow asked for while a session closed waits through it: following is suspended during the warm advance (so the
+  // new session is not cut short at its first proposal) and then picks up the open proposal, if the warm start left one.
   function warm() {
+    const keep = follow.state;
+    follow.state = 'idle';
     live = false;
     reset();
     advance(WARM);
+    // a waiting follow wants the next action: the warm start runs on to the next proposal (up to 15:00), not just 14:05
+    const upTo = keep === 'waiting' ? SESSION - 60 : WARM_MAX;
     let guard = 0;
-    while (!S.acts.some(a => !a.filled) && S.t < WARM_MAX && guard++ < 1000) advance(STEP);
+    while (!S.acts.some(a => !a.filled) && S.t < upTo && guard++ < 2000) advance(STEP);
     live = true;
+    follow.state = keep;
+    if (keep === 'waiting' && !follow.act) {
+      const open = S.acts.find(a => !a.filled);
+      if (open) { open.held = true; follow.act = open; }
+    }
+    trim();
   }
 
   /* ---------------- the ledger strip: records, chained by real SHA-256 where the browser has it ---------------- */
@@ -102,8 +118,10 @@
       const li = document.createElement('li');
       li.className = 'dk-rec ' + (a.create ? 'is-c' : 'is-r') + (live ? ' is-new' : '');
       const ev = document.createElement('span'); ev.className = 'dk-ev';
+      // one ink for both sides; the side is a glyph: ▲ price above NAV (create), ▼ below (redeem)
+      const side = document.createElement('i'); side.className = 'dk-side'; side.setAttribute('aria-hidden', 'true');
       const b = document.createElement('b'); b.textContent = rec.kind;
-      ev.append(b, ` · ${rec.clock}`);
+      ev.append(side, b, ` · ${rec.clock}`);
       const line = document.createElement('span'); line.className = 'dk-line'; line.setAttribute('aria-hidden', 'true');
       const blk = document.createElement('i'); blk.className = 'dk-blk';
       const link = document.createElement('span'); link.className = 'dk-link';
@@ -111,7 +129,7 @@
       link.append(h); line.append(blk, link);
       li.append(ev, line);
       el.log.append(li);
-      while (el.log.children.length > 40) el.log.firstElementChild.remove();
+      if (live) trim();
       rec.li = li; rec.h = h;
     }
     if (subtle) {
@@ -124,8 +142,35 @@
     }
     return rec;
   }
+  // the strip keeps as many records as it can show (the oldest of them may sit in the fade at its left edge) and counts
+  // the rest in a leading line, '+N earlier records': records kept + N = creates + redeems, always
+  let dropped = 0, more = null;
+  function capacity() {
+    const recs = el.log.querySelectorAll(':scope > .dk-rec');
+    const W = el.log.clientWidth - (parseFloat(getComputedStyle(el.log).paddingRight) || 0);
+    if (W <= 0 || !recs.length) return 40; // not laid out (hidden): keep a generous number until it is
+    const w = recs[0].offsetWidth || 124, wl = recs[recs.length - 1].offsetWidth || w;
+    return Math.max(2, 1 + Math.ceil(Math.max(0, W - wl) / w));
+  }
+  function trim() {
+    if (!el.log) return;
+    const recs = el.log.querySelectorAll(':scope > .dk-rec');
+    const n = recs.length - capacity();
+    for (let i = 0; i < n; i++) { recs[i].remove(); dropped++; }
+    if (!dropped) return;
+    if (!more) { more = document.createElement('li'); more.className = 'dk-more'; }
+    if (el.log.firstElementChild !== more) el.log.prepend(more);
+    more.dataset.n = dropped;
+    more.textContent = `+${dropped} earlier record${dropped === 1 ? '' : 's'}`;
+    el.log.classList.add('has-more');
+  }
 
   /* ---------------- ui ---------------- */
+  let shownClock = '';
+  function showClock() {
+    const c = `${clock(Math.min(SESSION, S.t))} ET`;
+    if (c !== shownClock && el.time) { el.time.textContent = c; shownClock = c; }
+  }
   const fmtAgents = (n) => n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n);
   let paused = false;
   function stats() {
@@ -133,7 +178,7 @@
     if (el.redeems) el.redeems.textContent = S.redeems;
     const n = S.creates + S.redeems;
     if (el.avg) el.avg.textContent = n ? (S.sumGap / n).toFixed(1) : '0.0';
-    if (el.time) el.time.textContent = `${clock(Math.min(SESSION, S.t))} ET`;
+    showClock();
     if (el.state) el.state.textContent = reduced.matches ? 'Static session' : follow.state !== 'idle' ? 'Following an action' : paused ? 'Model paused' : S.done ? 'Session complete' : 'Model running';
     root.classList.toggle('is-closed', !!S.done && follow.state === 'idle');
     // open proposals (rings on the chart), for tests and assistive tools: written only when it changes
@@ -174,7 +219,11 @@
     PADR = W < 600 ? 74 : 92;
     cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     draw();
+    // a narrower strip shows fewer records: the rest join the count, once the size has settled (a passing resize, such
+    // as a page capture's, never drops records)
+    clearTimeout(trimT); trimT = setTimeout(trim, 300);
   }
+  let trimT = 0;
   const ease = (p) => 1 - Math.pow(1 - p, 3);
   function mark(a, now) {
     // a proposal is a ring at its crossing; filled, it squares up over 220 ms and stays a settled square
@@ -198,23 +247,30 @@
     const now = performance.now();
     ctx.clearRect(0, 0, W, H);
     ctx.font = '500 10px "IBM Plex Mono", monospace'; ctx.textBaseline = 'middle';
+    // the labels on the right: the threshold's two keep a label's height clear of NAV's, and a grid value that would
+    // print under either of them is left out (its hairline stays)
+    const yT = yOf(thr), yB = yOf(-thr), x0 = PADL, x1 = W - PADR, LH = 13, yN = yOf(0);
+    const yTl = Math.min(yT, yN - LH), yBl = Math.max(yB, yN + LH);
     // grid + axes
-    for (const g of [-20, -10, 10, 20]) { ctx.strokeStyle = `rgba(${IVORY}, .07)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(PADL, yOf(g)); ctx.lineTo(W - PADR, yOf(g)); ctx.stroke(); ctx.fillStyle = `rgba(${IVORY}, .45)`; ctx.textAlign = 'left'; ctx.fillText(`${g > 0 ? '+' : '−'}${Math.abs(g)}`, W - PADR + 10, yOf(g)); }
+    for (const g of [-20, -10, 10, 20]) {
+      const y = yOf(g);
+      ctx.strokeStyle = `rgba(${IVORY}, .07)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(PADL, y); ctx.lineTo(W - PADR, y); ctx.stroke();
+      if (Math.abs(y - yTl) >= LH && Math.abs(y - yBl) >= LH) { ctx.fillStyle = `rgba(${IVORY}, .45)`; ctx.textAlign = 'left'; ctx.fillText(`${g > 0 ? '+' : '−'}${Math.abs(g)}`, W - PADR + 10, y); }
+    }
     ctx.textAlign = 'center'; ctx.fillStyle = `rgba(${IVORY}, .45)`;
     const every = W < 600 ? 2 : 1;
     for (let h = 10; h <= 16; h++) { const t = (h - 9.5) * 60; if ((h - 10) % every === 0) ctx.fillText(`${pad2(h)}:00`, xOf(t), H - 12); ctx.fillRect(xOf(t) - .5, H - PADB + 2, 1, 4); }
     // the threshold: two boundary hairlines, each with a soft glow band on the side the agents work
-    const yT = yOf(thr), yB = yOf(-thr), x0 = PADL, x1 = W - PADR;
     for (const [y, dir] of [[yT, -1], [yB, 1]]) {
       const gr = ctx.createLinearGradient(0, y, 0, y + dir * 16);
       gr.addColorStop(0, `rgba(${GREEN}, .16)`); gr.addColorStop(1, `rgba(${GREEN}, 0)`);
       ctx.fillStyle = gr; ctx.fillRect(x0, Math.min(y, y + dir * 16), x1 - x0, 16);
       ctx.strokeStyle = `rgba(${GREEN}, .75)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y + .5 * -dir); ctx.lineTo(x1, y + .5 * -dir); ctx.stroke();
     }
-    ctx.fillStyle = `rgba(${GREEN}, .9)`; ctx.textAlign = 'left'; ctx.fillText(`+${thr} create`, W - PADR + 10, yT); ctx.fillText(`−${thr} redeem`, W - PADR + 10, yB);
+    ctx.fillStyle = `rgba(${GREEN}, .9)`; ctx.textAlign = 'left'; ctx.fillText(`+${thr} create`, W - PADR + 10, yTl); ctx.fillText(`−${thr} redeem`, W - PADR + 10, yBl);
     // NAV: a dashed hairline
-    ctx.setLineDash([3, 4]); ctx.strokeStyle = `rgba(${KHAKI}, .9)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, Math.round(yOf(0)) + .5); ctx.lineTo(x1, Math.round(yOf(0)) + .5); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = `rgba(${KHAKI}, 1)`; ctx.fillText('NAV', W - PADR + 10, yOf(0));
+    ctx.setLineDash([3, 4]); ctx.strokeStyle = `rgba(${KHAKI}, .9)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, Math.round(yN) + .5); ctx.lineTo(x1, Math.round(yN) + .5); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = `rgba(${KHAKI}, 1)`; ctx.fillText('NAV', W - PADR + 10, yN);
     const s = S.samples;
     if (s.length > 1) {
       // worked gap: where price runs past the threshold, the swarm is at work
@@ -306,8 +362,10 @@
     setFollowButton(true); setLane(0); walkIntoView();
     say('Following the next action the model produces. Esc stops.');
     if (paused) togglePause();
-    if (S.done) S.done = performance.now() - 3400; // a closed session hands over quickly
-    stats(); requestFrame();
+    // a proposal already on the chart (a ring not yet settled) is the next action: walk it at once
+    const open = !S.done && S.acts.find(a => !a.filled && !a.held);
+    if (open) { open.held = true; follow.act = open; follow.state = 'walking'; follow.wt = 0; walk(1); }
+    stats(); requestFrame(); // otherwise the model runs fast to the next one; a closed session hands over at the next frame
   }
   function stopFollow(msg) {
     follow.timers.forEach(clearTimeout); follow.timers = [];
@@ -364,7 +422,7 @@
     live = false;
     reset();
     while (!S.done) advance(SESSION);
-    draw(); stats();
+    trim(); draw(); stats();
   }
   function requestFrame() {
     if (!frameId && !reduced.matches && !paused && visible && !document.hidden) frameId = requestAnimationFrame(frame);
@@ -376,10 +434,13 @@
     const raw = Math.min(0.25, Math.max(0, (now - last) / 1000)); last = now;
     const dt = Math.min(0.05, raw); // the model's step; the walk below keeps real time
     if (follow.state === 'waiting') {
-      follow.waitT += dt;
-      if (!S.done) advance(dt * SPEED * (follow.waitT > 1.2 ? 24 : 6));
-      else if (now - S.done > 4000) warm();
+      // run to the next proposal quickly but drawn: from 3x to 25x the model's speed over 300 ms, and never more than one
+      // session minute a frame, so the trace and the clock run on instead of jumping; a closed session restarts at once
+      follow.waitT += raw;
+      if (!S.done) advance(Math.min(1, dt * SPEED * (3 + 22 * Math.min(1, follow.waitT / 0.3))));
+      else warm();
       if (follow.act) { follow.state = 'walking'; follow.wt = 0; walk(1); }
+      uiTick = 1; // the clock is redrawn every frame while it runs fast
     } else if (follow.state === 'walking') {
       follow.wt += raw * 1000;
       const k = Math.min(6, 1 + Math.floor(follow.wt / STEP_MS));
@@ -389,6 +450,7 @@
     else if (now - S.done > 4000) warm();
     draw();
     if ((uiTick += dt) > 0.12) { uiTick = 0; stats(); }
+    else showClock(); // the clock moves a minute at a time, never two between frames
     requestFrame();
   }
   function togglePause() {

@@ -2754,13 +2754,19 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .desk-ledger { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 0 18px; padding: 14px 0 16px 20px; border-top: 1px solid var(--line); }
 .dl-k { margin: 0 0 3px; font: 500 var(--mono-xs, .625rem)/1.5 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg); }
 .dl-k span { display: block; font-weight: 400; color: var(--fg-3); }
-.desk .desk-log { display: flex; justify-content: flex-end; gap: 0; min-height: 48px; margin: 0; padding: 0 20px 0 0; overflow: hidden; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .1em; color: var(--fg-2); -webkit-mask-image: linear-gradient(90deg, transparent, #000 56px); mask-image: linear-gradient(90deg, transparent, #000 56px); }
+.desk .desk-log { position: relative; display: flex; justify-content: flex-end; gap: 0; min-height: 48px; margin: 0; padding: 0 20px 0 0; overflow: hidden; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .12em; color: var(--fg-2); -webkit-mask-image: linear-gradient(90deg, transparent, #000 56px); mask-image: linear-gradient(90deg, transparent, #000 56px); }
 .desk .desk-log li { flex: none; display: block; width: 124px; padding: 0; border: 0; color: var(--fg-2); animation: none; }
 .desk .desk-log li:first-child { color: var(--fg-2); }
-.desk .desk-log li:last-child { width: 96px; }
+.desk .desk-log li:last-child { width: 112px; }
+/* the records the strip cannot show are counted on a line of their own above it, clear of the fade */
+.desk .desk-log.has-more { padding-top: 22px; -webkit-mask-image: linear-gradient(#000, #000), linear-gradient(90deg, transparent, #000 56px); mask-image: linear-gradient(#000, #000), linear-gradient(90deg, transparent, #000 56px); -webkit-mask-size: 100% 22px, 100% 100%; mask-size: 100% 22px, 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.desk .desk-log li.dk-more { position: absolute; left: 0; top: 0; width: auto; font-weight: 400; color: var(--fg-3); white-space: nowrap; }
 .dk-ev { display: block; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.dk-ev b { font-weight: 500; letter-spacing: .1em; }
-.dk-rec.is-c .dk-ev b { color: var(--accent); } .dk-rec.is-r .dk-ev b { color: var(--khaki); }
+/* one ink for both sides (the regime is not a colour); the side is a glyph: ▲ above NAV (create), ▼ below (redeem) */
+.dk-ev b { font-weight: 500; letter-spacing: .12em; color: var(--fg); }
+.dk-side { display: inline-block; width: 7px; height: 6px; margin: 0 7px 1px 0; vertical-align: middle; background: var(--fg); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.dk-rec.is-r .dk-side { clip-path: polygon(0 0, 100% 0, 50% 100%); }
+@media (forced-colors: active) { .dk-side { forced-color-adjust: none; background: CanvasText; } }
 .dk-line { position: relative; display: block; height: 16px; margin-top: 8px; }
 .dk-blk { position: absolute; left: 0; top: 2px; width: 12px; height: 12px; background: var(--paper); }
 .dk-link { position: absolute; left: 12px; right: 0; top: 8px; height: 1px; background: rgba(245, 242, 236, .32); }
@@ -2799,7 +2805,6 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .desk .model-motion { padding: 5px 8px; letter-spacing: .1em; }
   .desk-lane { padding: 14px 10px 6px; }
   .desk-ledger { grid-template-columns: 1fr; padding-left: 16px; row-gap: 10px; }
-  .desk .desk-log li { width: 112px; }
 }
 /* thumbs and tracks a finger can work: 44 px tall controls with 22 px thumbs on touch screens */
 @media (pointer: coarse) {
