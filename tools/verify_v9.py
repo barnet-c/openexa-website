@@ -756,7 +756,10 @@ PHONE_LAB = "(() => { " + EFF + """
   const idx = document.querySelector('.story-idx'); if (idx && shown(idx)) obst.push(['the scene index', box(idx)]);
   const mo = document.querySelector('.story-motion'); if (mo && shown(mo)) obst.push(['Pause motion', box(mo)]);
   obst.push(['the nav', box(document.querySelector('header.nav') || document.querySelector('.nav'))]);
-  document.querySelectorAll('.story .beat').forEach((b, i) => { if (eff(b, document.documentElement) > 0.3) obst.push(['beat ' + i + ' text', box(b.querySelector('.beat-text') || b)]); });
+  // a beat's text: each visible part of its copy (eyebrow, headline, paragraph, buttons, figures), not the column's box,
+  // so a callout over the room a hidden paragraph leaves is not counted; a part shows at effective opacity > 0.3
+  document.querySelectorAll('.story .beat').forEach((b, i) => { if (eff(b, document.documentElement) <= 0.3) return;
+    b.querySelectorAll('.beat-text > *, .hero-stats').forEach(p => { if (p.getBoundingClientRect().height > 0 && eff(p, document.documentElement) > 0.3) obst.push(['beat ' + i + ' ' + (p.className || p.tagName.toLowerCase()).toString().split(' ')[0], box(p)]); }); });
   const issues = [];
   labs.forEach((l, i) => { obst.forEach(([n, bx]) => { if (ov(l.bx, bx)) issues.push(`'${l.t}' x ${n}`); });
     for (let j = i + 1; j < labs.length; j++) if (ov(l.bx, labs[j].bx)) issues.push(`'${l.t}' x '${labs[j].t}'`); });
