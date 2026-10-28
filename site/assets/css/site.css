@@ -240,9 +240,11 @@ em, .ital { font-style: italic; }
 .list-rule--3 > li { grid-template-columns: 56px 1fr 1fr; }
 @media (max-width: 760px) { .list-rule--3 > li { grid-template-columns: 56px 1fr; } .list-rule--3 > li > :last-child { grid-column: 2; } }
 
-.checks li { position: relative; padding: 12px 0 12px 36px; border-bottom: 1px solid var(--line); color: var(--fg-2); }
+/* a hairline list: a rule above the first item and under each, a short hairline dash where a radio dot stood (PG-R2-3) */
+.checks { border-top: 1px solid var(--line); }
+.checks li { position: relative; padding: 13px 0 13px 30px; border-bottom: 1px solid var(--line); color: var(--fg-2); }
 .checks li b { color: var(--fg); font-weight: 500; }
-.checks li::before { content: ""; position: absolute; left: 0; top: 18px; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--accent); background: radial-gradient(circle at center, var(--accent) 0 3px, transparent 3.5px); }
+.checks li::before { content: ""; position: absolute; left: 0; top: calc(13px + .8em); width: 14px; height: 1px; background: currentColor; opacity: .5; }
 
 /* ---------- stats ---------- */
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border-block: 1px solid var(--line); }
@@ -2915,7 +2917,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .hp-lab--n { color: var(--fg-3); font-weight: 400; letter-spacing: .04em; }
 .hp-lab--acc { color: var(--accent); }
 .hp-lab--rej { color: var(--reject); }
-.hp-lab--khaki { color: var(--khaki-deep); }
+.hp-lab--khaki { color: var(--khaki-ink); } /* text: 5.21:1 on paper (--khaki-deep, 3.6:1, stays on strokes) */
 .is-dark .hp-lab--khaki, .is-dark .hp-k { color: var(--khaki); stroke: var(--khaki); }
 .hp-cap { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); row-gap: 2px; }
 /* the staged reveal: the structure arrives with the figure, the accents (boundary, proposals, ticks) land after it */
@@ -3035,4 +3037,37 @@ html:has(> body[data-nav="dark-start"]) { background: #0B110F; }
 .class-row > .cr-next::before { border: 1.25px dashed var(--fg-2); transform: rotate(10deg); }
 @media (max-width: 960px) { .class-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .class-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .class-row > li { min-height: 96px; } }
+
+/* ---------- Platform §06 and §07: the last template chapters drawn as plates (PG-R2-3) ----------
+   Section plates use the hero plates' drawing classes (.hp-art, .hp-h, .hp-i, .hp-g, .hp-k, .hp-lab ...) and words
+   already on the page. §06: the h2 has its own row (columns 1-8), the copy beside it; Fig. 6.1, Trust's T-04 mode dial
+   at plate scale, sits beside Table 6.1. §07: one plate in two panels (supply streams enter the stack | the demand side
+   reads the record line out), Phase 03 parts in khaki; the two cards become hairline columns under it. Static, no loops. */
+.sec-plate { margin: 0; min-width: 0; }
+.sp-detent { stroke-opacity: .75; }
+.hp-h.sp-face { stroke-opacity: .72; }
+.sp-ptr { fill: none; stroke: currentColor; stroke-opacity: .85; stroke-width: 1.25; stroke-linecap: round; }
+.sp-kb circle { fill: var(--bg); stroke: var(--khaki-deep); stroke-width: 1.1; }
+.hp-k.sp-plumb { stroke-width: 1.1; stroke-dasharray: 0 6; stroke-opacity: .8; }
+.sp-rail { fill: none; stroke: var(--khaki-deep); stroke-width: 1; }
+.sp-read { fill: none; stroke: var(--khaki-deep); stroke-width: 1.6; }
+.modes-head { align-items: end; margin-bottom: clamp(36px, 4.4vw, 64px); }
+.modes-body { align-items: stretch; }
+/* the dial keeps to 300 px; its caption runs the column's width and shares Table 6.1's caption line */
+.sec-plate--dial { display: flex; flex-direction: column; }
+.sec-plate--dial > .hp-art { width: 100%; max-width: 300px; margin-bottom: 14px; }
+.sec-plate--dial > .hp-cap { margin-top: auto; }
+.sec-plate--market { margin: clamp(8px, 1.4vw, 20px) 0 clamp(30px, 3.6vw, 52px); }
+.sp-panels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.mkt-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-top: 1px solid var(--line-strong); }
+.mkt-col { min-width: 0; padding: clamp(22px, 2.4vw, 32px) clamp(20px, 3vw, 48px) 0 0; }
+.mkt-col + .mkt-col { padding-left: clamp(20px, 3vw, 48px); padding-right: 0; border-left: 1px solid var(--line); }
+.mkt-col > .n { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 26px; font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; color: var(--fg-3); }
+@media (max-width: 960px) { .sec-plate--dial { margin-bottom: 8px; } .sec-plate--dial > .hp-cap { margin-top: 14px; } }
+@media (max-width: 860px) {
+  .mkt-cols { grid-template-columns: minmax(0, 1fr); }
+  .mkt-col { padding-right: 0; }
+  .mkt-col + .mkt-col { margin-top: 44px; padding-left: 0; border-left: 0; border-top: 1px solid var(--line-strong); }
+}
+@media (max-width: 600px) { .sp-panels { grid-template-columns: minmax(0, 1fr); row-gap: 14px; } }
 /* v2:pages:end */
