@@ -375,20 +375,21 @@
   /* ---------------- long jumps: never through blank paper ----------------
      A jump of more than 1.5 screens (a chapter from the list, Back to top, any link to a place on this page) used to
      scroll smoothly through every section in between, whose reveals had not run: about a second of near-empty paper,
-     then a landing mid-reveal. It now cuts: the page lands at once (at the bar's edge, as an anchor jump does), all it
-     passed over is revealed without transition, and a same-document view transition dissolves the still of where the
-     reader was into the live destination, drifting in the jump's direction (the bar holds; never a blank frame).
+     then a landing mid-reveal. It now cuts: everything it passes over and the destination are revealed without
+     transition, the page lands at once (at the bar's edge, as an anchor jump does), and a same-document view transition
+     brings the live destination in as a sheet over the still of where the reader was: rising from the bottom edge going
+     down the page, coming down from the top going up (v2:nav CSS; the bar holds; no blend, never a blank frame).
      Without view transitions, or with reduced motion, it is a plain instant cut. Short hops keep the native scroll. */
-  function cut(dir, land) {
+  function cut(to, land) {
     const from = window.scrollY;
     const go = () => {
+      revealRange(Math.min(from, to), Math.max(from, to) + window.innerHeight); // first: an entrance offset would skew the landing
       land();
-      revealRange(Math.min(from, window.scrollY), Math.max(from, window.scrollY) + window.innerHeight);
       if (nav) measure(); // the bar takes the destination's ground in the same frame
       document.dispatchEvent(new CustomEvent('oxa:jump', { detail: { from, to: window.scrollY } }));
     };
     if (reducedMQ.matches || typeof document.startViewTransition !== 'function' || document.hidden) { go(); return; }
-    root.dataset.jump = dir > 0 ? 'down' : 'up';
+    root.dataset.jump = to > from ? 'down' : 'up';
     let vt;
     try { vt = document.startViewTransition(go); } catch (err) { delete root.dataset.jump; go(); return; }
     vt.ready.catch(() => {}); vt.updateCallbackDone.catch(() => {});
@@ -401,7 +402,7 @@
     const to = el ? Math.max(0, Math.min(max, el.getBoundingClientRect().top + y0 - sp)) : 0;
     if (Math.abs(to - y0) <= 1.5 * window.innerHeight) return false;
     if (e) e.preventDefault();
-    cut(to - y0, () => {
+    cut(to, () => {
       // the address changes as an anchor jump's would, and so does everything that listens for it (the blog's filter)
       if (hash && hash !== location.hash) {
         const oldURL = location.href;
@@ -506,19 +507,24 @@
   // then once more if the page still changes within 2.5 s
   const deep = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
   if (deep && nav) {
-    let quietFrom = 0;
+    let quietFrom = 0, deepDone = false, alignedY = 0;
     const realign = (h0, n) => requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (lastInput) return;
+      if (lastInput || deepDone) return;
+      const sp = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0, off = () => deep.getBoundingClientRect().top - sp;
+      // late layout moves the target while the page stays where it was; a page that has moved away from the target since
+      // (a script scrolled elsewhere) is someone else's: stop watching (moved and still on target: the browser's own anchoring)
+      if (Math.abs(window.scrollY - alignedY) > 2) { if (Math.abs(off()) > 2) { deepDone = true; return; } alignedY = window.scrollY; }
       const h = root.scrollHeight;
       if (h !== h0 && n < 60) { realign(h, n + 1); return; }
-      const sp = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
-      if (Math.abs(deep.getBoundingClientRect().top - sp) > 1) deep.scrollIntoView({ block: 'start', behavior: 'instant' });
+      if (Math.abs(off()) > 1) deep.scrollIntoView({ block: 'start', behavior: 'instant' });
+      alignedY = window.scrollY;
     }));
     const start = () => {
       quietFrom = performance.now();
+      alignedY = window.scrollY;
       realign(root.scrollHeight, 0);
       if ('ResizeObserver' in window) {
-        const ro = new ResizeObserver(() => { if (performance.now() - quietFrom < 2500 && !lastInput) realign(root.scrollHeight, 0); else ro.disconnect(); });
+        const ro = new ResizeObserver(() => { if (performance.now() - quietFrom < 2500 && !lastInput && !deepDone) realign(root.scrollHeight, 0); else ro.disconnect(); });
         ro.observe(document.body);
       }
     };
