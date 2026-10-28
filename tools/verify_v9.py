@@ -738,36 +738,116 @@ LOADER_ANIM = r"""(() => { const l = document.querySelector('.loader'); if (!l |
   return best; })()"""
 
 
+# the opacity steps of a @keyframes rule by name, from the page's style sheets: [[offsets], {property: value}] per keyframe
+KEYFRAMES = r"""(name) => { let out = null;
+  const walk = rules => { for (const r of rules) { if (r.type === CSSRule.KEYFRAMES_RULE && r.name === name) out = [...r.cssRules].map(k => [k.keyText.split(',').map(x => x.trim() === 'from' ? 0 : x.trim() === 'to' ? 100 : parseFloat(x)), Object.fromEntries([...k.style].map(p => [p, k.style.getPropertyValue(p)]))]);
+    else if (r.cssRules) walk(r.cssRules); } };
+  for (const s of document.styleSheets) { try { walk(s.cssRules); } catch (e) {} } return out; }"""
+COMPOSITED = {"opacity", "transform", "translate", "rotate", "scale", "filter", "backdrop-filter", "animation-timing-function"}
+
+
+def cubic(e):
+    """a CSS easing keyword or cubic-bezier() as a function of progress"""
+    pts = {"linear": None, "ease": (.25, .1, .25, 1), "ease-in": (.42, 0, 1, 1), "ease-out": (0, 0, .58, 1), "ease-in-out": (.42, 0, .58, 1)}
+    m = re.match(r"cubic-bezier\(([^)]+)\)", e or "")
+    p = tuple(float(v) for v in m[1].split(",")) if m else pts.get((e or "linear").strip(), None)
+    if not p: return lambda t: t
+    x1, y1, x2, y2 = p
+    def f(t):
+        lo, hi, s = 0.0, 1.0, t
+        for _ in range(30):
+            s = (lo + hi) / 2
+            x = 3 * (1 - s) ** 2 * s * x1 + 3 * (1 - s) * s * s * x2 + s ** 3
+            lo, hi = (s, hi) if x < t else (lo, s)
+        return 3 * (1 - s) ** 2 * s * y1 + 3 * (1 - s) * s * s * y2 + s ** 3
+    return f
+
+
+def fade_crossing(anim, kfs):
+    """for a CSS animation reported by CDP (Animation.animationStarted) and its @keyframes: (the document-timeline ms at
+    which it takes opacity under .05, or None; whether the compositor can run it alone; the other properties it animates)"""
+    src, steps = anim.get("source") or {}, []
+    easings = {float(k["offset"].rstrip("%")): k.get("easing") for k in ((src.get("keyframesRule") or {}).get("keyframes") or []) if k.get("offset", "").rstrip("%").replace(".", "", 1).isdigit()}
+    # an implicit 0% keyframe eases by the animation's timing function, which CDP repeats on every keyframe it lists
+    fn = easings.get(0.0) or (next(iter(easings.values())) if easings else "ease")
+    num = lambda v: float(v.strip().rstrip("%")) / (100 if v.strip().endswith("%") else 1)
+    for offs, props in kfs or []:
+        for o in offs:
+            if "opacity" in props: steps.append((o, num(props["opacity"]), easings.get(o, fn)))
+    others = sorted({p for _, props in kfs or [] for p in props} - COMPOSITED)
+    if not steps or anim.get("startTime") is None: return None, not others, others
+    steps.sort()
+    if steps[0][0] > 0: steps.insert(0, (0.0, 1.0, fn))  # the loader's own opacity is 1
+    if steps[-1][0] < 100: steps.append((100.0, 1.0, "linear"))
+    dur, delay = float(src.get("duration") or 0), float(src.get("delay") or 0)
+    for k in range(401):
+        p = k / 400 * 100
+        for (o0, v0, e0), (o1, v1, _) in zip(steps, steps[1:]):
+            if o0 <= p <= o1:
+                v = v0 + (v1 - v0) * cubic(e0)((p - o0) / (o1 - o0) if o1 > o0 else 1)
+                if v < 0.05: return anim["startTime"] + delay + dur * p / 100, not others, others
+                break
+    return None, not others, others
+
+
 @check
 async def loader(b):
     """the loader finishes on elapsed time, not on frames: with requestAnimationFrame starved it is not visible
     (removed, or computed visibility hidden / opacity < .05) by 4.5 s after navigation, and removed by 9 s"""
     # Round 2 (NV-R2-1, director's test list): 'removed by 4.5 s' became 'not visible by 4.5 s, removed by 9 s'. What a
     # reader sees is the same criterion (no loader on screen after 4.5 s); the DOM removal may follow the late scripts.
+    # While scripts hold the main thread the page cannot answer a poll, but the compositor still runs a fade whose
+    # keyframes animate only opacity (or transform/filter): such a fade is credited from its own timing (CDP's Animation
+    # domain gives its start, delay and duration; the page's style sheet its keyframes). A fade that also animates
+    # visibility or pointer-events runs on the main thread and freezes with it, so the reader sees what the poll sees.
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     await ctx.add_init_script("window.requestAnimationFrame = () => 0;")
     pg = await ctx.new_page()
+    cdp = await ctx.new_cdp_session(pg)
+    started = []
+    cdp.on("Animation.animationStarted", lambda e: started.append(e.get("animation") or {}))
+    await cdp.send("Animation.enable")
     await pg.goto(f"{BASE}/index.html", wait_until="commit")
-    samples, t_end, anim_at = [], time.monotonic() + 60, None
+    samples, t_end, anim_at, node = [], time.monotonic() + 60, None, None
     while time.monotonic() < t_end:
         s = await pg.evaluate(LOADER_STATE)
         samples.append(s)
-        if s[1] == "shown": anim_at = await pg.evaluate(LOADER_ANIM)  # a compositor fade already scheduled, if any (read while it still exists)
+        if s[1] in ("shown", "hidden"):
+            a = await pg.evaluate(LOADER_ANIM)  # a compositor fade's crossing, read while the loader still exists
+            if a is not None: anim_at = a if anim_at is None else min(anim_at, a)
+            if node is None:  # the loader's node, to know which of CDP's animations are its own
+                try:
+                    doc = await cdp.send("DOM.getDocument", {"depth": 0})
+                    q = await cdp.send("DOM.querySelector", {"nodeId": doc["root"]["nodeId"], "selector": ".loader"})
+                    if q.get("nodeId"): node = (await cdp.send("DOM.describeNode", {"nodeId": q["nodeId"]}))["node"]["backendNodeId"]
+                except Exception: pass
         if s[1] == "removed" or s[0] > 9600: break
         await pg.wait_for_timeout(50)
+    fades = []  # (name, start, crossing, compositor-only, other properties) of the loader's own CSS animations
+    for a in started:
+        if a.get("type") != "CSSAnimation" or node is None or (a.get("source") or {}).get("backendNodeId") != node: continue
+        try: kfs = await pg.evaluate(KEYFRAMES, a.get("name") or "")
+        except Exception: kfs = None
+        at, comp, others = fade_crossing(a, kfs)
+        if at is not None: fades.append((a.get("name"), a.get("startTime"), at, comp, others))
     await ctx.close()
     first = lambda states: next((i for i, s in enumerate(samples) if s[1] in states), None)
     ih, ir = first(("hidden", "removed")), first(("removed",))
     t_seen = samples[ih][0] if ih is not None else None
-    # the page was busy before it answered: a compositor fade scheduled before the gap crossed .05 when its timing says
-    t_hid = anim_at if t_seen is not None and ih and anim_at and t_seen - samples[ih - 1][0] > 250 and samples[ih - 1][0] <= anim_at <= t_seen else t_seen
+    shown = [s for s in samples if s[1] == "shown"]
+    last_shown = max((s[0] for s in samples[:ih] if s[1] == "shown"), default=0) if ih is not None else None
+    # credited: the earliest compositor-only crossing that no later poll contradicts (the page saw it shown afterwards)
+    cands = [x[2] for x in fades if x[3]] + ([anim_at] if anim_at is not None else [])
+    credit = min((c for c in cands if t_seen is not None and last_shown <= c <= t_seen), default=None)
+    t_hid = credit if credit is not None else t_seen
     t_rem = samples[ir][0] if ir is not None else None
     gap = samples[ih][0] - samples[ih - 1][0] if ih else 0  # a long gap: the page could not answer (busy main thread)
-    shown = [s for s in samples if s[1] == "shown"]
     detail = (f"not visible at {t_hid:.0f} ms" if t_hid is not None else f"still visible at {samples[-1][0]:.0f} ms (opacity {samples[-1][2]}, {samples[-1][3]})") + \
-             (f" (its fade crossed opacity .05 then; the page first answered at {t_seen:.0f} ms)" if t_hid is not None and t_hid != t_seen else "") + \
+             (f" (a compositor fade crossed opacity .05 then; the page first answered at {t_seen:.0f} ms)" if t_hid is not None and t_hid != t_seen else "") + \
              (f", removed at {t_rem:.0f} ms" if t_rem is not None else ", never removed") + f"; {len(samples)} samples, last visible one at {shown[-1][0]:.0f} ms" * bool(shown) + \
-             (f"; the page did not answer for {gap:.0f} ms before it was seen hidden" if gap > 400 else "")
+             (f"; the page did not answer for {gap:.0f} ms before it was seen hidden" if gap > 400 else "") + \
+             "".join(f"; its animation '{n}' started at {st:.0f} ms (the loader's first frame) and takes opacity under .05 at {at:.0f} ms, " +
+                     ("on the compositor" if comp else f"on the main thread (it also animates {', '.join(o)}), so it froze while scripts held the page") for n, st, at, comp, o in fades)
     assert t_hid is not None and t_hid <= 4500 and t_rem is not None and t_rem <= 9000, \
         f"loader index.html@1440x900, requestAnimationFrame starved: {detail} (must be not visible by 4500 ms and removed by 9000 ms)"
     print(f"loader: with requestAnimationFrame starved, {detail}")
@@ -1190,20 +1270,20 @@ async def overture_resize(b):
     .beat-4 whole (opacity >= 0.9)"""
     bad = []
     ctx, pg = await open_page(b, "index.html", 390, 844, touch=True)
-    await scene_rest(pg, 2)
+    rest = await scene_rest(pg, 2)
     seq = [await settled_scene(pg)]
     for w, h in ((844, 390), (390, 844)):
         await pg.set_viewport_size({"width": w, "height": h}); await pg.wait_for_timeout(600)
         seq.append(await settled_scene(pg))
-    if seq != ["02", "02", "02"]: bad.append(f"S2 at 390x844 -> 844x390 -> 390x844 reads scenes {seq}")
+    if seq != ["02", "02", "02"]: bad.append(f"S2 at 390x844 -> 844x390 -> 390x844 reads scenes {seq}" + ("" if rest else " (S2 never came to rest after its index click)"))
     await ctx.close()
     ctx, pg = await open_page(b, "index.html", 1440, 900)
-    await scene_rest(pg, 4)
+    rest = await scene_rest(pg, 4)
     s0 = await settled_scene(pg)
     await pg.set_viewport_size({"width": 768, "height": 1024}); await pg.wait_for_timeout(600)
     s1 = await settled_scene(pg)
     o4 = await pg.evaluate("+getComputedStyle(document.querySelector('.beat-4')).opacity")
-    if [s0, s1] != ["04", "04"] or o4 < 0.9: bad.append(f"S4 at 1440x900 -> 768x1024 reads scenes {[s0, s1]}, .beat-4 opacity {o4:.2f}")
+    if [s0, s1] != ["04", "04"] or o4 < 0.9: bad.append(f"S4 at 1440x900 -> 768x1024 reads scenes {[s0, s1]}, .beat-4 opacity {o4:.2f}" + ("" if rest else " (S4 never came to rest after its index click)"))
     await ctx.close()
     assert not bad, "overture_resize index.html:\n  " + "\n  ".join(bad)
     print("overture_resize: S2 survives a rotation and back; S4 survives 1440 -> 768")
@@ -1315,26 +1395,93 @@ PROOF_SAMPLER = """(dur) => { const host = document.querySelector('#proof [data-
   tick(); requestAnimationFrame(raf); return lanes.length; }"""
 
 
+# each counted block tagged with its lane (data-pe), and the moments the chart turns .is-in and drops .is-armed (which
+# ends any transition still running: proof.js's ENTRANCE_MS), on the page's clock
+PROOF_MARK = """(() => { const host = document.querySelector('#proof [data-proof-chart]'); const R = window.__pem = { inAt: null, cutAt: null }; let k = 0;
+  [...host.querySelectorAll('.pf-lane')].forEach((l, i) => l.querySelectorAll('.pf-c i:not(.is-void), .pf-g i').forEach(b => b.setAttribute('data-pe', i + ':' + (k++))));
+  new MutationObserver(() => { const c = host.classList, t = performance.now(); if (R.inAt === null && c.contains('is-in')) R.inAt = t; if (R.inAt !== null && R.cutAt === null && !c.contains('is-armed')) R.cutAt = t; })
+    .observe(host, { attributes: true, attributeFilter: ['class'] }); })()"""
+PROOF_FINAL = "(() => Object.fromEntries([...document.querySelectorAll('[data-pe]')].map(b => [b.dataset.pe, +getComputedStyle(b).opacity])))()"
+
+
+def lane_nodes(tree):
+    """backendNodeId -> its data-pe ('lane:block') for every element of a CDP DOM tree carrying one"""
+    out, stack = {}, [tree]
+    while stack:
+        n = stack.pop()
+        a = n.get("attributes") or []
+        d = dict(zip(a[::2], a[1::2]))
+        if "data-pe" in d: out[n.get("backendNodeId")] = d["data-pe"]
+        stack.extend(n.get("children") or [])
+    return out
+
+
+def entrance_timeline(started, lanes, finals, in_at, cut_at):
+    """the lit moment (opacity >= .5, the sampler's rule) of every counted block, from its opacity transition's own timing
+    (start, delay, duration, easing; a transition still running when .is-armed drops ends then); a block with no
+    transition is lit from .is-in, one whose final opacity is under .5 never. Returns (blocks with a transition,
+    [(t, counts per lane)] after every step)"""
+    tr = {}
+    for a in started:
+        src = a.get("source") or {}
+        if a.get("type") == "CSSTransition" and a.get("name") == "opacity" and src.get("backendNodeId") in lanes and a.get("startTime") is not None:
+            tr[src["backendNodeId"]] = a
+    lit, nlane = [], max([int(pe.split(":")[0]) for pe in lanes.values()], default=-1) + 1
+    for node, pe in lanes.items():
+        lane, target = int(pe.split(":")[0]), finals.get(pe, 1.0)
+        if target < 0.5: continue
+        a = tr.get(node)
+        if a is None: at = in_at
+        else:
+            src = a["source"]; ease = cubic(src.get("easing") or "linear")
+            p = next((k / 200 for k in range(201) if target * ease(k / 200) >= 0.5), 1.0)
+            at = a["startTime"] + float(src.get("delay") or 0) + float(src.get("duration") or 0) * p
+        if cut_at is not None and at is not None and at > cut_at: at = cut_at
+        if at is not None: lit.append((at, lane))
+    lit.sort()
+    counts, steps = [0] * nlane, []
+    for k, (t, lane) in enumerate(lit):
+        counts[lane] += 1
+        if k + 1 == len(lit) or lit[k + 1][0] > t + 0.5: steps.append((t, counts[:]))  # simultaneous lights are one step
+    return len(tr), steps
+
+
 @check
 async def proof_entrance(b):
     """arriving at home §04's chart from above at 1440 (about 38% of it in view), sampled every 50 ms for 1.5 s: the ten
-    lanes' lit block counts never differ by more than one (no staircase, no session below another); the entrance played"""
+    lanes' lit block counts never differ by more than one (no staircase, no session below another); the entrance played.
+    Round 2 (CI): the same invariant is also checked at every instant of the entrance rebuilt from each block's opacity
+    transition (CDP Animation domain), so a main thread too busy to sample during the 1.1 s entrance (CI's software GL
+    at 4x) neither hides a staircase nor fails a correct chart for want of a sample"""
     ctx, pg = await open_page(b, "index.html", 1440, 900)
+    cdp = await ctx.new_cdp_session(pg)
+    started = []
+    cdp.on("Animation.animationStarted", lambda e: started.append(e.get("animation") or {}))
     g = await pg.evaluate("(() => { const r = document.querySelector('#proof [data-proof-chart]').getBoundingClientRect(); return { top: r.top + scrollY, h: r.height }; })()")
     await pg.evaluate(f"window.scrollTo({{top: {g['top'] - 900 - 60}, behavior: 'instant'}})"); await pg.wait_for_timeout(700)
     pre = await pg.evaluate("document.querySelector('#proof [data-proof-chart]').classList.contains('is-in')")
+    await pg.evaluate(PROOF_MARK)
+    lanes = lane_nodes((await cdp.send("DOM.getDocument", {"depth": -1}))["root"])
+    await cdp.send("Animation.enable")
     n = await pg.evaluate(PROOF_SAMPLER, 1500)
     await pg.evaluate(f"window.scrollTo({{top: {g['top'] - 900 + g['h'] * 0.38:.0f}, behavior: 'instant'}})")
-    await until(pg, "window.__pe.done", 9000)
+    await until(pg, "window.__pe.done", 9000 if MODE["throttle"] <= 1 else 30000)
+    await pg.wait_for_timeout(1600)  # past ENTRANCE_MS: every block final
     s = (await pg.evaluate("window.__pe"))["s"]
+    mk, finals = await pg.evaluate("window.__pem"), await pg.evaluate(PROOF_FINAL)
     await ctx.close()
     total = max((sum(x["c"]) for x in s), default=0)
     spread = [(x["t"], max(x["c"]) - min(x["c"]), x["c"]) for x in s if x["c"]]
     worst = max(spread, key=lambda v: v[1]) if spread else None
-    played = any(0 < sum(x["c"]) < total for x in s)
-    assert n == 10 and not pre and played and worst and worst[1] <= 1, (f"proof_entrance index.html@1440x900: {n} lanes; revealed before arrival: {pre}; entrance observed: {played}; "
-                                                                         f"worst lane spread {worst[1] if worst else '?'} at {worst[0] if worst else '?'} ms: {worst[2] if worst else ''}")
-    print(f"proof_entrance: {len(s)} samples, lanes never differ by more than {worst[1]} block")
+    ntr, steps = entrance_timeline(started, lanes, finals, mk["inAt"], mk["cutAt"])
+    rworst = max(((t, max(c) - min(c), c) for t, c in steps), key=lambda v: v[1], default=None)
+    played = any(0 < sum(x["c"]) < total for x in s) or ntr > 0  # seen mid-way, or its transitions ran after the arrival
+    ok = n == 10 and not pre and played and worst and worst[1] <= 1 and (rworst is None or rworst[1] <= 1)
+    rel = lambda t: f"{t - mk['inAt']:.0f} ms after .is-in" if mk["inAt"] is not None else f"{t:.0f} ms"
+    assert ok, (f"proof_entrance index.html@1440x900: {n} lanes; revealed before arrival: {pre}; entrance observed: {played} ({ntr} block transitions); "
+                f"worst lane spread {worst[1] if worst else '?'} at {worst[0] if worst else '?'} ms in the samples: {worst[2] if worst else ''}; "
+                f"rebuilt from the transitions: worst spread {rworst[1] if rworst else '-'}" + (f" at {rel(rworst[0])}: {rworst[2]}" if rworst else ""))
+    print(f"proof_entrance: {len(s)} samples and {len(steps)} steps rebuilt from {ntr} block transitions; lanes never differ by more than {max(worst[1], rworst[1] if rworst else 0)} block")
 
 
 # ---- the lifecycle lane (LC1, LC2, D2) and the desk (LC2b)
@@ -1612,7 +1759,7 @@ num = lambda s: int(s.replace(",", "")) if s else 0
 
 def digest_n(r):
     """how many proposals a swarm record carries: 'SETTLED ×1,741' (LG-R2-3), else 'P-49000 +1,740 more' / 'proposal P-1' / '12 proposals'"""
-    m = re.search(r"×\s*([\d,]+)", r["ev"])
+    m = re.search(r"[×xX]\s*([\d,]+)", r["ev"])  # 'SETTLED ×1,741' (or a plain 'x'); no event word contains an x
     if m: return num(m[1])
     m = re.search(r"\+([\d,]+) more", r["sub"])
     if m: return num(m[1]) + 1
