@@ -2281,7 +2281,7 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
 /* the plate's labels scale with it: user units sized so they print at >= 10 px from 961 px up (and ~10.7 px at 1440) */
 .lane-h { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); }
 /* one draw-in when the plate is revealed; nothing loops */
-.lane .dr, .lc-orbit .dr, .lc-pipe .dr { stroke-dasharray: 1 1; stroke-dashoffset: 0; }
+.lane .dr, .lane-v .dr, .lc-orbit .dr, .lc-pipe .dr { stroke-dasharray: 1 1; stroke-dashoffset: 0; }
 [data-reveal].will-reveal:not(.is-in) .dr { stroke-dashoffset: 1; }
 [data-reveal].is-in .dr { transition: stroke-dashoffset .78s cubic-bezier(.45, .05, .2, 1) var(--dd, 80ms); }
 .lane-h [data-g="2"] { --dd: 120ms; } .lane-h [data-g="3"] { --dd: 160ms; } .lane-h [data-g="4"] { --dd: 200ms; }
@@ -2331,7 +2331,7 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
 
 @media (max-width: 960px) { .lane .lane-v { max-width: 640px; margin-top: 8px; } .lane .figure-cap { margin-top: 26px; } }
 @media (max-width: 420px) { .lane-v { --lv-gw: 88px; --lv-x: 44px; } .lane-v > li { column-gap: 12px; } .lane-v .lv-g { width: 104px; margin-left: -8px; } .lane-v > .lv-bound { padding-left: calc(var(--lv-gw) + 12px); } }
-@media (prefers-reduced-motion: reduce) { .lane .dr, .lane-h [data-g], .lane-v .lv-g { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .lane .dr, .lane-v .dr, .lc-pipe .dr, .lane-h [data-g], .lane-v .lv-g { transition: none; } }
 
 /* ---------- the desk (gap.js; Lifecycles §03): a session on top, the lane beside it, the ledger under it ----------
    These rules supersede the base .desk-head .live i ping, .desk-log and the desk legend. Nothing loops: the state dot
