@@ -1757,8 +1757,11 @@
       }, { passive: true });
       document.addEventListener('oxa:loaded', () => setTimeout(() => { relayReady = true; requestFrame(); }, 1500), { once: true }); // S0's headline entrance has run
       if (root.classList.contains('is-loaded')) setTimeout(() => { relayReady = true; requestFrame(); }, 1500);
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => resize(true));
-      window.addEventListener('load', () => resize(true), { once: true });
+      // late layout (fonts, load) refits the stage around the reader's place as the page has it now: a scroll that has not
+      // reached the scroll listener yet (a deep link's landing, a reload's restored place) is the place to keep
+      const refit = () => { scrollY = window.scrollY; sceneScroll(); resize(true); };
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+      window.addEventListener('load', refit, { once: true });
       // a mouse inspects what it moves over (only real moves: a still pointer the page scrolls under inspects nothing)
       stage.addEventListener('pointermove', e => {
         if (e.pointerType === 'touch' || !moved(e)) return; // touch: taps decide (below); a swipe never inspects
