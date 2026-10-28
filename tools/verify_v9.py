@@ -672,15 +672,17 @@ async def ledger_height(b):
 
 
 # ---- the overture: re-entry, the copy relay, the numeral (OV8, OV4)
-REENTRY_REC = """(() => { const r = window.__rec = []; const st = document.querySelector('.story'), b0 = document.querySelector('.beat-0');
-  const f = () => { const sr = st.getBoundingClientRect(); r.push({ y: Math.round(scrollY), on: sr.bottom > 0 && sr.top < innerHeight, b0: +getComputedStyle(b0).opacity });
+REENTRY_REC = """(() => { const r = window.__rec = []; const st = document.querySelector('.story'), beats = [...st.querySelectorAll('.beat')];
+  const f = () => { const sr = st.getBoundingClientRect(); r.push({ y: Math.round(scrollY), on: sr.bottom > 0 && sr.top < innerHeight, b: beats.map(b => +(+getComputedStyle(b).opacity).toFixed(2)) });
     if (window.__recOn) requestAnimationFrame(f); }; window.__recOn = true; requestAnimationFrame(f); })()"""
 
 
 @check
 async def overture_reentry(b):
     """from a settled S0, jump to story end + 500, wait 800 ms, then wheel back up (300 px, then 8 x 120 px into the
-    story): no frame with the stage on screen shows .beat-0 (opacity >= 0.05): no stale S0, no replay"""
+    story; the stage's destination is the S4 exit throughout): no frame with the stage on screen shows .beat-0, or any
+    beat but beat-4 (opacity >= 0.05): no stale scene, no replay. (Which stale scene the old code shows depends on the
+    frame rate, S0 on a GPU and S1-S3 under SwiftShader, so every beat but the destination's is watched.)"""
     pg = await shared_home(b)
     await to_top_settled(pg)
     end = await story_end(pg)
@@ -692,9 +694,9 @@ async def overture_reentry(b):
     await pg.evaluate("window.__recOn = false"); rec = await pg.evaluate("window.__rec")
     on = [r for r in rec if r["on"]]
     assert len(on) >= 3, f"overture_reentry index.html@1440x900: only {len(on)} frames with the stage on screen after wheeling back up ({len(rec)} frames)"
-    stale = [r for r in on if r["b0"] >= 0.05]
-    assert not stale, f"overture_reentry index.html@1440x900: {len(stale)} of {len(on)} on-screen frames show .beat-0 (stale S0 / replay), first {stale[:3]}"
-    print(f"overture_reentry: {len(on)} on-screen frames after re-entry, .beat-0 never visible")
+    stale = [r for r in on if any(o >= 0.05 for o in r["b"][:4])]
+    assert not stale, f"overture_reentry index.html@1440x900: {len(stale)} of {len(on)} on-screen frames show a beat other than the destination's (stale scene / replay; beat opacities 0-4), first {stale[:3]}"
+    print(f"overture_reentry: {len(on)} on-screen frames after re-entry, only the destination scene shown")
 
 
 RELAY_REC = "(() => { " + EFF + """ const story = document.querySelector('.story'), beats = [...story.querySelectorAll('.beat')];
@@ -902,7 +904,8 @@ async def swarm_rate(b):
 
 
 BLOCK_WATCH = """(() => { const hit = window.__blk = []; const sel = ['#sw-trace', '[data-sw-callout]', '[data-sw-agent]', '[data-sw-say]'];
-  const look = () => sel.forEach(s => document.querySelectorAll(s).forEach(el => { const t = el.textContent || ''; if (/\\bblock\\b/i.test(t) && hit.length < 10) hit.push(s + ': ' + t.replace(/\\s+/g, ' ').trim().slice(0, 90)); }));
+  const look = () => sel.forEach(s => document.querySelectorAll(s).forEach(el => { const t = (el.textContent || '').replace(/\\s+/g, ' '), m = /\\bblock\\b/i.exec(t);
+    if (m && hit.length < 10) hit.push(s + ': ...' + t.slice(Math.max(0, m.index - 40), m.index + 30)); }));
   new MutationObserver(look).observe(document.querySelector('[data-swarm-live]'), { subtree: true, childList: true, characterData: true }); look(); })()"""
 
 
@@ -968,12 +971,15 @@ async def ledger_wheel(b):
 
 
 # ---- the proof chart's entrance from above: all sessions rise together (PF2)
+# samples every 50 ms and on every animation frame, from before the arrival until 1.5 s after the chart turns .is-in
 PROOF_SAMPLER = """(dur) => { const host = document.querySelector('#proof [data-proof-chart]'); const lanes = [...host.querySelectorAll('.pf-lane')];
-  const S = window.__pe = { s: [], done: false }; const t0 = performance.now();
-  const tick = () => { S.s.push({ t: Math.round(performance.now() - t0), in: host.classList.contains('is-in'),
-      c: lanes.map(l => [...l.querySelectorAll('.pf-c i:not(.is-void), .pf-g i')].filter(i => +getComputedStyle(i).opacity >= 0.5).length) });
-    if (performance.now() - t0 < dur) setTimeout(tick, 50); else S.done = true; };
-  tick(); return lanes.length; }"""
+  const S = window.__pe = { s: [], done: false }; const t0 = performance.now(); let inAt = null;
+  const sample = () => { const now = performance.now(), isIn = host.classList.contains('is-in'); if (isIn && inAt === null) inAt = now;
+    S.s.push({ t: Math.round(now - t0), in: isIn, c: lanes.map(l => [...l.querySelectorAll('.pf-c i:not(.is-void), .pf-g i')].filter(i => +getComputedStyle(i).opacity >= 0.5).length) });
+    if (inAt === null ? now - t0 > 6000 : now - inAt > dur) S.done = true; };
+  const tick = () => { if (S.done) return; sample(); setTimeout(tick, 50); };
+  const raf = () => { if (S.done) return; sample(); requestAnimationFrame(raf); };
+  tick(); requestAnimationFrame(raf); return lanes.length; }"""
 
 
 @check
@@ -986,7 +992,7 @@ async def proof_entrance(b):
     pre = await pg.evaluate("document.querySelector('#proof [data-proof-chart]').classList.contains('is-in')")
     n = await pg.evaluate(PROOF_SAMPLER, 1500)
     await pg.evaluate(f"window.scrollTo({{top: {g['top'] - 900 + g['h'] * 0.38:.0f}, behavior: 'instant'}})")
-    await until(pg, "window.__pe.done", 6000)
+    await until(pg, "window.__pe.done", 9000)
     s = (await pg.evaluate("window.__pe"))["s"]
     await ctx.close()
     total = max((sum(x["c"]) for x in s), default=0)
