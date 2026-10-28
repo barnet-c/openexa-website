@@ -1084,7 +1084,18 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 @media (min-width: 600px) and (max-aspect-ratio: 23/20) { .story-lab { font-size: clamp(.625rem, .5rem + .4vw, .8rem); } }
 @media (max-width: 400px) { .hero-stats { grid-template-columns: repeat(2, auto); justify-content: start; gap: 12px 26px; } .story-lab.day { padding: 2px 0; min-width: 0; } }
 @media (prefers-reduced-motion: reduce) { .story-bar .hero-scroll i { animation: none; opacity: .5; } .hero-stats .live { animation: none; } .story-lab, .story-leader, .story-node, .story-insp.is-on, .story-idx button, .story-num i { transition: none; } }
-@media print { .story-bar, .story-paper, .story-insp, .story-leaders, .story-legend { display: none !important; } }
+/* print: the overture prints as its static sequence, ink on white (the stage, its instrument and its chrome stay off paper) */
+@media print {
+  .story-bar, .story-paper, .story-insp, .story-leaders, .story-legend { display: none !important; }
+  .story, .story-stage { height: auto !important; min-height: 0 !important; background: none !important; }
+  .story-gl, .story-2d, .story-labels, .story-num, .story-coda, .story-static-mark, .beat-fig { display: none !important; }
+  .story .beat { position: static !important; opacity: 1 !important; visibility: visible !important; transform: none !important; --eo: 1 !important; --w: 1 !important; --bo: 1 !important; }
+  .story .beat .beat-text > *, .story .beat-0 .hero-stats { visibility: visible !important; }
+  .story .beat .body-lg, .story .beat-0 .hero-sub { display: block !important; }
+  .story .beat-0 .hero-stats { display: grid !important; }
+  .story .beat [data-split] .wi { transform: none !important; }
+  .story, .story * { color: #000 !important; }
+}
 /* v2:overture:end */
 /* -------------------------------------------------------------------------- */
 /* v2:swarm:start */

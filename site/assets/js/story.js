@@ -1485,7 +1485,7 @@
   const shown = beats.map(() => ({ op: '', tr: '', on: null, eo: '', w: '', bo: '' }));
   const beatLinks = beats.map(b => Array.from(b.querySelectorAll('a[href], button')));
   let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownFill = [], shownCapO = '', shownGlyph = '', shownLabTr = '';
-  let paperH = 0, relay0 = false, relayReady = false, codaFallback = false;
+  let paperH = 0, relay0 = false, relayReady = false, codaFallback = false, shownBarOff = null;
   // the index follows the scroll position itself: immediate, and right even when frames are slow or throttled
   function syncIndex() {
     const ci = clamp(Math.round(sTarget), 0, 4);
@@ -1571,6 +1571,9 @@
     }
     const bo = (1 - sstep(0.08, 0.3, xe)).toFixed(3);
     if (bar && bo !== shownBar) { bar.style.opacity = shownBar = bo; bar.style.visibility = bo < 0.01 ? 'hidden' : ''; }
+    // a hidden bar is out of the tab order too (Shift+Tab back from chapter 01 goes to S4's buttons, which bring S4 back)
+    const barOff = +bo < 0.01;
+    if (barOff !== shownBarOff) { shownBarOff = barOff; idx.concat(motionButton || []).forEach(el => { if (barOff) el.setAttribute('tabindex', '-1'); else el.removeAttribute('tabindex'); }); }
     if (shownLeaving !== xe > 0.05) story.classList.toggle('is-leaving', shownLeaving = xe > 0.05); // the covered tags take no pointer
     // portrait and short landscape: while the proof's copy fades, its derived summary comes in above the floor (an end card, not an
     // empty sky), then finishes leaving before it could reach the nav
@@ -1777,7 +1780,10 @@
     handBack();
     lastGo = { i, t: performance.now() };
     window.scrollTo({ top: Math.round(sceneTop(i)), behavior: reducedMQ.matches ? 'instant' : 'smooth' });
-    if (announce && live) live.textContent = `Scene ${i + 1} of 5: ${SCENES[i]}`;
+    if (announce && live) { // in the index's own words: '01 · The work: Not tasks. Lifecycles.'
+      const h = beats[i] && beats[i].querySelector('h1, h2');
+      live.textContent = `${pad2(i)} · ${SCENES[i]}${h ? ': ' + h.textContent.replace(/\s+/g, ' ').trim() : ''}`;
+    }
   }
   function onKey(e) {
     if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
@@ -1794,10 +1800,11 @@
       const top = next ? next.getBoundingClientRect().top + window.scrollY - navH : storyTop + story.offsetHeight; // it lands at the nav's lower edge
       window.scrollTo({ top: Math.round(top), behavior: reducedMQ.matches ? 'instant' : 'smooth' });
       lastGo = { i: 5, t: performance.now() };
-      if (next) { // the keyboard goes on with the chapter it arrived at
-        if (!next.hasAttribute('tabindex')) next.setAttribute('tabindex', '-1');
-        next.classList.add('story-next-target');
-        next.focus({ preventScroll: true });
+      const head = next && (next.querySelector('h2') || next);
+      if (head) { // the keyboard goes on with the chapter it arrived at, from its headline
+        if (!head.hasAttribute('tabindex')) head.setAttribute('tabindex', '-1');
+        head.classList.add('story-next-target');
+        head.focus({ preventScroll: true });
       }
       return;
     }
@@ -1843,6 +1850,13 @@
       if (document.getElementById('story-keys')) stage.setAttribute('aria-describedby', 'story-keys');
       idx.forEach((button, i) => button.addEventListener('click', () => goTo(i, true)));
       stage.addEventListener('keydown', onKey);
+      // Escape closes the inspector wherever focus is, hovered or focused (WCAG 1.4.13); focus entering the bar while the stage
+      // is on its way out brings S4 back to rest, where the bar is whole
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && (hoverPtr || hoverFocus)) { hoverPtr = hoverFocus = null; setHover(); } });
+      if (bar) bar.addEventListener('focusin', () => { if (running && xTarget > 0.02) goTo(4); });
+      // Shift+Tab back from the first chapter lands on the stage itself (the hidden bar is out of the tab order): S4 comes back
+      // whole, so the focused stage shows a scene the arrow keys can step from, not the paper
+      stage.addEventListener('focusin', e => { if (e.target === stage && running && !tiny && xTarget > 0.02) goTo(4); });
       // every beat stays in the accessibility tree; keyboard focus entering one brings the story to it
       // (on the way out, S4's copy has faded: Shift+Tab back from the first chapter brings the scene back with its buttons)
       beats.forEach((b, i) => b.addEventListener('focusin', () => { if (running && (Math.abs(sTarget - i) > 0.45 || xTarget > 0.02)) goTo(i); }));
