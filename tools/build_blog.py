@@ -39,6 +39,9 @@ COLLECTIONS = [  # key, label, lede
 # Collection 04 "Municipal markets & commentary" (Barnet Sherman's columns and two OpenEXA posts) was removed on
 # 2026-09-29: Barnet is now a customer rather than part of the team. Its posts redirect to the blog index.
 REMOVED_COLLECTIONS = {"munis"}
+# short names for the phone bar's chapter readout (data-chapter-short; site.js uses them only where the label does not fit).
+# Each must fit the readout line at 360 px (126 px), or the whole bar falls back to '§NN / 03'
+SHORT = {"ai": "AI & agents", "markets": "Markets", "economics": "Economics"}
 def collection(p):
     a = p["author"]
     if a.startswith("Ajit"): return "ai"
@@ -302,7 +305,7 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
             <span class="link-arrow">{("Read on " + re.sub(r"^www\.", "", re.search(r"//([^/]+)", p["source"]).group(1)) + " " + OUTB) if ext else (str(p["minutes"]) + " min read " + ARROW)}</span></div>
           </a>''')
     more = f'<a class="link-arrow mt-3 scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a>' if k == "markets" else ""
-    sections.append(f'''    <section class="section{' is-paper-2' if n % 2 == 0 else ''} blog-collection" id="{k}" data-blog-collection="{k}">
+    sections.append(f'''    <section class="section{' is-paper-2' if n % 2 == 0 else ''} blog-collection" id="{k}" data-blog-collection="{k}" data-chapter-short="{esc(SHORT[k])}">
       <div class="container">
         <div class="sec-head" data-reveal><span class="idx">{n:02d}</span><span class="lab">{esc(label)}</span><span class="aside">{len(by_col[k])} posts · {span(by_col[k][-1]["dt"].year, by_col[k][0]["dt"].year)}</span></div>
         <div class="grid mb-3">

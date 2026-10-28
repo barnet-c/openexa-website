@@ -376,7 +376,7 @@ em, .ital { font-style: italic; }
 
 /* ---------- misc ---------- */
 .badge { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; padding: 7px 12px; border: 1px solid var(--line-strong); border-radius: 2px; color: var(--fg-2); }
-.badge i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s ease-in-out infinite; }
+.badge i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s ease-in-out 3; } /* three beats, then still (WCAG 2.2.2) */
 @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: .35 } }
 .figure-cap { font-family: var(--mono); font-size: .72rem; letter-spacing: .06em; color: var(--fg-3); margin-top: 16px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .mt-1 { margin-top: 12px } .mt-2 { margin-top: 24px } .mt-3 { margin-top: 40px } .mt-4 { margin-top: 64px } .mt-5 { margin-top: 96px }
@@ -461,7 +461,7 @@ em, .ital { font-style: italic; }
 
 /* ---------- 404 ---------- */
 .notfound { position: relative; min-height: 100svh; display: grid; align-items: center; padding: calc(var(--nav-h) + 40px) 0 80px; overflow: hidden; }
-.notfound-swarm { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: .8; }
+.notfound-swarm { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: 1; }
 .notfound .container { position: relative; z-index: 1; }
 .notfound .display-1 { max-width: 14ch; }
 .notfound .lede { max-width: 46ch; }
@@ -560,9 +560,12 @@ em, .ital { font-style: italic; }
 @media (max-width: 700px) { .pager { grid-template-columns: 1fr; } .pager-card.next { text-align: left; justify-items: start; } }
 
 /* ---------- homepage research chapter ---------- */
-.research-card { display: grid; align-content: start; } /* no hover lift: a lifted cell would ride over the grid's top rule */
+/* a column: the paragraph takes the free height, so every card's arrow sits on one line at the foot of its row (PG-R2-7).
+   No hover lift: a lifted cell would ride over the grid's top rule. */
+.research-card { display: flex; flex-direction: column; }
+.research-card > p { flex-grow: 1; }
 @media (hover: hover) { .research-card:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; } }
-.research-card .link-arrow { justify-self: start; font-family: var(--mono); font-size: .7rem; letter-spacing: var(--track-label); text-transform: uppercase; border-bottom: 0; color: var(--fg-3); }
+.research-card .link-arrow { align-self: flex-start; font-family: var(--mono); font-size: .7rem; letter-spacing: var(--track-label); text-transform: uppercase; border-bottom: 0; color: var(--fg-3); }
 @media (hover: hover) { .research-card:hover .link-arrow { color: var(--accent); } }
 
 /* ---------- company page ---------- */
@@ -3023,7 +3026,7 @@ html:has(> body[data-nav="dark-start"]) { background: #0B110F; }
 .cta-band .mark.globe { background: url("../img/globe-fine.svg") center / contain no-repeat; -webkit-mask: none; mask: none; }
 /* 404: the swarm's canvas keeps to the right half, so its labels never run under the lede */
 @media (min-width: 961px) { /* a canvas is a replaced element: it needs an explicit width; its trail fades before the h1 */
-  .notfound-swarm { left: 45%; width: 55%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 26%); mask-image: linear-gradient(90deg, transparent, #000 26%); }
+  .notfound-swarm { left: 45%; width: 55%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%); mask-image: linear-gradient(90deg, transparent, #000 10%); }
 }
 /* Company's figure mode buttons need JavaScript: without it they are not offered at all. Only .company-modes: the
    research index's notes also carry data-figure-target, and they are links that must stay (PG-R2-1) */
