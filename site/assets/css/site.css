@@ -2401,7 +2401,7 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
 .dk-line { position: relative; display: block; height: 16px; margin-top: 8px; }
 .dk-blk { position: absolute; left: 0; top: 2px; width: 12px; height: 12px; background: var(--paper); }
 .dk-link { position: absolute; left: 12px; right: 0; top: 8px; height: 1px; background: rgba(245, 242, 236, .32); }
-.dk-h { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); padding: 0 5px; background: var(--desk-bg); font: .6rem/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
+.dk-h { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); padding: 0 5px; background: var(--desk-bg); font: var(--mono-xs, .625rem)/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
 .dk-h:empty { display: none; }
 .desk .desk-log li:last-child .dk-link { right: 30%; background: repeating-linear-gradient(90deg, rgba(245, 242, 236, .32) 0 3px, transparent 3px 7px); }
 .dk-rec.is-new { animation: dk-in .45s var(--ease) 1 both; }
@@ -2418,13 +2418,12 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
   .desk-kicker { order: -1; flex-basis: 100%; } /* the panel names itself illustrative on its own first line at every width */
   .desk-follow { margin-left: 0; }
 }
+@media (max-width: 380px) { .desk-lane { padding-left: 6px; padding-right: 6px; } .dl-gates li { letter-spacing: .02em; } }
 @media (max-width: 600px) {
   .desk-head { column-gap: 10px; padding-right: 10px; }
   .desk-follow { gap: 8px; padding: 8px 10px; letter-spacing: .1em; }
   .desk .model-motion { padding: 5px 8px; letter-spacing: .1em; }
   .desk-lane { padding: 14px 10px 6px; }
-  .dl-gates li { font-size: .5625rem; letter-spacing: .06em; }
-  .dl-gates li b { font-size: var(--mono-xs, .625rem); letter-spacing: .1em; }
   .desk-ledger { grid-template-columns: 1fr; padding-left: 16px; row-gap: 10px; }
   .desk .desk-log li { width: 112px; }
 }
@@ -2465,7 +2464,8 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
 @media (max-width: 960px) {
   /* a smaller orbit: the rings only, cropped to their own square; the list carries the names */
   .orbit-fig { max-width: 440px; margin: 0 auto; overflow: hidden; aspect-ratio: 1; }
-  .orbit-svg { width: calc(1200 / 470 * 100%); max-width: none; margin: calc(-27 / 470 * 100%) 0 0 calc(-365 / 470 * 100%); font-size: 13.5px; }
+  /* tags print at >= 10 px from 320 px up: user units grow as the cropped orbit shrinks */
+  .orbit-svg { width: calc(1200 / 470 * 100%); max-width: none; margin: calc(-27 / 470 * 100%) 0 0 calc(-365 / 470 * 100%); font-size: clamp(11px, calc(29.9px - 3.94vw), 17.5px); }
   .orbit-svg .orb-t, .orbit-svg .ldr2 { display: none; }
 }
 @media (min-width: 601px) and (max-width: 960px) { .orbit-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -2477,7 +2477,7 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
 .lcp .cpl { fill: none; stroke: currentColor; stroke-width: 1; stroke-dasharray: 1 3; opacity: .55; }
 .lcp .cpk { fill: none; stroke: currentColor; stroke-width: 1; opacity: .7; }
 .lcp .blk--dim { opacity: .3; }
-.pipe-svg .pp-s { display: none; font-size: clamp(17px, calc(60px - 5.6vw), 36px); fill: var(--fg); }
+.pipe-svg .pp-s { display: none; font-size: clamp(17px, calc(62px - 5.6vw), 46px); fill: var(--fg); }
 .lc-tag { display: block; margin-bottom: 8px; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
 @media (max-width: 960px) {
   /* the full labels give way to short P-labels; the empty label bands above and below are cropped */
