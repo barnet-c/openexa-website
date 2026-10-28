@@ -82,6 +82,7 @@
     if (a.create) S.creates++; else S.redeems++;
     S.sumGap += Math.abs(a.g);
     a.rec = record(a);
+    fresh = true; // the counters are rewritten in the same frame as the strip, never a tick later
   }
   // a session opens with the day so far run: to 13:30 ET, then on to the next proposal (if one comes before 14:05).
   // A follow asked for while a session closed waits through it: following is suspended during the warm advance (so the
@@ -412,7 +413,7 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && follow.state !== 'idle') stopFollow('Stopped following.'); });
 
   /* ---------------- loop ---------------- */
-  let visible = false, last = performance.now(), uiTick = 0, frameId = 0;
+  let visible = false, last = performance.now(), uiTick = 0, frameId = 0, fresh = false;
   const motion = document.createElement('button');
   motion.type = 'button';
   motion.className = 'model-motion';
@@ -452,7 +453,7 @@
     } else if (!S.done) advance(dt * SPEED);
     else if (now - S.done > 4000) warm();
     draw();
-    if ((uiTick += dt) > 0.12) { uiTick = 0; stats(); }
+    if (fresh || (uiTick += dt) > 0.12) { uiTick = 0; fresh = false; stats(); }
     else showClock(); // the clock moves a minute at a time, never two between frames
     requestFrame();
   }
