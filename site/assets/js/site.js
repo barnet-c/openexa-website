@@ -452,6 +452,17 @@
     });
   });
 
+  /* ---------------- page transitions: leaving the overture holds its last frame ----------------
+     The browser's still of the outgoing page can miss the overture's WebGL stage (a full-screen white frame between two
+     dark pages): leaving while the stage is on screen skips the transition, so the page holds its last paint until the
+     next one paints. Every other exit keeps the cross-fade (v2:nav CSS). */
+  const stageEl = $('.story-stage');
+  if (stageEl) window.addEventListener('pageswap', e => {
+    if (!e.viewTransition) return;
+    const r = stageEl.getBoundingClientRect();
+    if (r.height > 0 && r.bottom > 0 && r.top < window.innerHeight) e.viewTransition.skipTransition();
+  });
+
   if (nav) {
     measure();
     window.addEventListener('scroll', queue, { passive: true });

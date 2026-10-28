@@ -2454,8 +2454,9 @@ body.is-loading { overflow: hidden; }
 @view-transition { navigation: auto; }
 .nav { view-transition-name: site-nav; }
 .loader ~ .nav { view-transition-name: none; } /* the homepage loader covers the bar until it lifts */
-/* out, then in: the outgoing page is gone before the incoming one is legible, so two headlines never double-expose */
-::view-transition-old(root) { animation: vt-leave .2s cubic-bezier(.4, 0, 1, 1) both; }
+/* out, then in: the outgoing page is gone (.13 s, falling fast) by the moment the incoming one starts, so two headlines
+   never double-expose */
+::view-transition-old(root) { animation: vt-leave .13s cubic-bezier(0, 0, .58, 1) both; }
 ::view-transition-new(root) { animation: vt-enter .56s var(--ease) .13s both; }
 ::view-transition-group(site-nav) { animation-duration: .45s; }
 ::view-transition-group(nav-ink) { animation-duration: .55s; animation-timing-function: var(--ease); }
