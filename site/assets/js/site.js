@@ -654,11 +654,30 @@
           NODES.forEach((n, i) => { const a = i / NODES.length * Math.PI * 2; const q = rot(rot([Math.cos(a) * ring.r, Math.sin(a) * ring.r, 0], ring.tiltX, 0, ring.rotZ), tilt, spin * 0.35, 0); const x = cx + q[0] * R, y = cy + q[1] * R; if (q[2] < 0 && Math.hypot(q[0], q[1]) < 1) return; const al = 0.35 + 0.45 * (q[2] + 1) / 2; ctx.fillStyle = rgba(IVORY, al * 0.9); ctx.fillRect(x - 0.5, y - 5, 1, 10); ctx.fillStyle = rgba(i === 5 ? GREEN : IVORY, al); ctx.textAlign = q[0] > 0 ? 'left' : 'right'; ctx.fillText(n.toUpperCase(), x + (q[0] > 0 ? 9 : -9), y); });
         }
       });
-      const drawAgent = (it) => { const { ag, z } = it; if (z < 0 && Math.hypot((it.x - cx) / R, (it.y - cy) / R) < 0.985) return; const depth = (z + 1) / 2; const base = ag.kind === 1 ? GREEN : ag.kind === 2 ? RED : (it.ring.labelled ? IVORY : KHAKI); const alpha = (0.22 + depth * 0.7) * (ag.kind === 2 ? 0.7 : 1); const sz = ag.size * (0.8 + depth * 0.9); if (ag.flash > 0) { ctx.beginPath(); ctx.arc(it.x, it.y, sz + 8 * ag.flash, 0, Math.PI * 2); ctx.strokeStyle = rgba(base, 0.55 * ag.flash); ctx.lineWidth = 1; ctx.stroke(); } ctx.beginPath(); ctx.arc(it.x, it.y, sz, 0, Math.PI * 2); ctx.fillStyle = rgba(base, alpha); ctx.fill(); };
-      behind.forEach(drawAgent);
-      const dotR = R * 0.021;
-      sphere.forEach(pt => { const lo = pt.lo + spin; const q = rot([Math.cos(pt.la) * Math.sin(lo), Math.sin(pt.la), Math.cos(pt.la) * Math.cos(lo)], tilt, 0, 0); if (q[2] <= 0.02) return; const px = cx + q[0] * R, py = cy + q[1] * R; const a = 0.07 + 0.40 * Math.pow(q[2], 1.6); ctx.save(); ctx.translate(px, py); ctx.rotate(Math.atan2(q[1], q[0])); ctx.beginPath(); ctx.ellipse(0, 0, Math.max(0.4, dotR * q[2]), dotR, 0, 0, Math.PI * 2); ctx.fillStyle = rgba(IVORY, a); ctx.fill(); ctx.restore(); });
-      front.forEach(drawAgent);
+      // dots of one colour and a similar alpha (steps of 1/24) share one path: ~60 fills a frame instead of ~800, which
+      // matters where this fallback runs: without WebGL, often on software raster
+      const TAU = Math.PI * 2, COLS = [IVORY, KHAKI, GREEN, RED], fills = new Map();
+      const drawAgents = (list) => {
+        list.forEach(it => {
+          const { ag, z } = it;
+          if (z < 0 && Math.hypot((it.x - cx) / R, (it.y - cy) / R) < 0.985) return;
+          const depth = (z + 1) / 2, ci = ag.kind === 1 ? 2 : ag.kind === 2 ? 3 : it.ring.labelled ? 0 : 1, sz = ag.size * (0.8 + depth * 0.9);
+          if (ag.flash > 0) { ctx.beginPath(); ctx.arc(it.x, it.y, sz + 8 * ag.flash, 0, TAU); ctx.strokeStyle = rgba(COLS[ci], 0.55 * ag.flash); ctx.lineWidth = 1; ctx.stroke(); }
+          const k = ci * 32 + Math.min(24, Math.round((0.22 + depth * 0.7) * (ag.kind === 2 ? 0.7 : 1) * 24));
+          let f = fills.get(k); if (!f) fills.set(k, f = []); f.push(it.x, it.y, sz);
+        });
+        fills.forEach((f, k) => { ctx.beginPath(); for (let i = 0; i < f.length; i += 3) { ctx.moveTo(f[i] + f[i + 2], f[i + 1]); ctx.arc(f[i], f[i + 1], f[i + 2], 0, TAU); } ctx.fillStyle = rgba(COLS[k >> 5], (k & 31) / 24); ctx.fill(); });
+        fills.clear();
+      };
+      drawAgents(behind);
+      const dotR = R * 0.021, eb = new Map();
+      sphere.forEach(pt => {
+        const lo = pt.lo + spin; const q = rot([Math.cos(pt.la) * Math.sin(lo), Math.sin(pt.la), Math.cos(pt.la) * Math.cos(lo)], tilt, 0, 0); if (q[2] <= 0.02) return;
+        const k = Math.round((0.07 + 0.40 * Math.pow(q[2], 1.6)) * 40);
+        let f = eb.get(k); if (!f) eb.set(k, f = []); f.push(cx + q[0] * R, cy + q[1] * R, Math.max(0.4, dotR * q[2]), Math.atan2(q[1], q[0]));
+      });
+      eb.forEach((f, k) => { ctx.beginPath(); for (let i = 0; i < f.length; i += 4) { const rx = f[i + 2], th = f[i + 3]; ctx.moveTo(f[i] + rx * Math.cos(th), f[i + 1] + rx * Math.sin(th)); ctx.ellipse(f[i], f[i + 1], rx, dotR, th, 0, TAU); } ctx.fillStyle = rgba(IVORY, k / 40); ctx.fill(); });
+      drawAgents(front);
       const g = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.12); g.addColorStop(0, rgba(IVORY, 0.05)); g.addColorStop(1, rgba(IVORY, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.12, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1;
     }
