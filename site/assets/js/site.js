@@ -440,6 +440,91 @@
     if ('ResizeObserver' in window) { let ro = 0; new ResizeObserver(() => { cancelAnimationFrame(ro); ro = requestAnimationFrame(measure); }).observe(document.body); }
     if (document.fonts) document.fonts.ready.then(measure);
   }
+  /* ---------------- the reader's place: kept through resizes, and a deep link's landing kept after late layout ----------------
+     The fluid gutters change computed paddings on every resize, which switches the browser's own scroll anchoring off:
+     a reader at Home 06 was moved by -868 to +3,006 px between widths. When scrolling settles this keeps a reading
+     anchor (the element at the bar's lower edge and its offset from the edge); after a resize that changed the width,
+     or the height while the reader was not scrolling, it scrolls back by the difference, and again as late layout
+     settles. Not inside the overture, which keeps its own scene. */
+  let anchor = null, settleUntil = 0, lastInput = 0, lastW = window.innerWidth;
+  const inFlow = el => { const p = getComputedStyle(el).position; return p !== 'fixed' && p !== 'sticky' && p !== 'absolute'; };
+  // where layout puts an element (viewport y), ignoring transforms: a reveal's entrance offset is not the place
+  const layoutTop = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y - window.scrollY; };
+  function pickAnchor() {
+    anchor = null;
+    if (!nav || !bands.length) return;
+    const line = navH + 8; // viewport y, just under the bar
+    const yDoc = window.scrollY + line;
+    const band = bands.find(b => yDoc >= b.top && yDoc < b.bottom);
+    if (!band || band.el === story) return;
+    let el = band.el;
+    for (let depth = 0; depth < 14; depth++) {
+      if (Math.abs(layoutTop(el) - navH) <= 24) break; // it starts at the bar's edge: it is the place
+      let straddle = null, next = null;
+      for (const ch of el.children) {
+        if (!(ch instanceof HTMLElement) || !ch.offsetHeight || !inFlow(ch)) continue;
+        const t = layoutTop(ch);
+        if (t <= line && t + ch.offsetHeight > line) { straddle = ch; break; }
+        if (t > line) { next = ch; break; }
+      }
+      if (straddle) { el = straddle; continue; }
+      // the line falls in a gap: inside a band or a section, the band/section itself is the place (its top is the
+      // chapter's start); inside content, the next block if it is near
+      if (next && el !== band.el && el.tagName !== 'SECTION' && layoutTop(next) - line < window.innerHeight * 0.25) el = next;
+      break;
+    }
+    anchor = { el, off: layoutTop(el) - navH };
+  }
+  function restoreAnchor() {
+    if (!anchor || !anchor.el.isConnected || performance.now() > settleUntil) return;
+    const d = layoutTop(anchor.el) - (navH + anchor.off);
+    if (Math.abs(d) > 0.5) window.scrollBy({ top: d, behavior: 'instant' });
+  }
+  if (nav) {
+    ['wheel', 'touchstart', 'touchmove', 'keydown', 'pointerdown'].forEach(t => window.addEventListener(t, () => { lastInput = performance.now(); settleUntil = 0; }, { passive: true, capture: true }));
+    let pickT = 0;
+    window.addEventListener('scroll', () => {
+      if (performance.now() < settleUntil) return; // our own correction, or the page settling after a resize
+      clearTimeout(pickT); pickT = setTimeout(pickAnchor, 160);
+    }, { passive: true });
+    window.addEventListener('resize', () => {
+      const w = window.innerWidth, widthChanged = w !== lastW;
+      lastW = w;
+      // a height-only change while the reader scrolls is a phone's toolbar: nothing moved under the reader
+      if (!anchor || (!widthChanged && performance.now() - lastInput < 800)) return;
+      settleUntil = performance.now() + 900;
+      navH = nav.offsetHeight || navH;
+      restoreAnchor();
+      requestAnimationFrame(() => { restoreAnchor(); requestAnimationFrame(restoreAnchor); });
+      [120, 300, 600, 880].forEach(ms => setTimeout(restoreAnchor, ms));
+    });
+    setTimeout(pickAnchor, 0);
+    document.addEventListener('oxa:jump', () => setTimeout(pickAnchor, 0));
+  }
+  // a deep link (#id) lands at the bar's edge once the layout has settled after load (components that build late,
+  // fonts, the overture's stage), unless the reader has already moved: two quiet frames with the same page height,
+  // then once more if the page still changes within 2.5 s
+  const deep = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  if (deep && nav) {
+    let quietFrom = 0;
+    const realign = (h0, n) => requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (lastInput) return;
+      const h = root.scrollHeight;
+      if (h !== h0 && n < 60) { realign(h, n + 1); return; }
+      const sp = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
+      if (Math.abs(deep.getBoundingClientRect().top - sp) > 1) deep.scrollIntoView({ block: 'start', behavior: 'instant' });
+    }));
+    const start = () => {
+      quietFrom = performance.now();
+      realign(root.scrollHeight, 0);
+      if ('ResizeObserver' in window) {
+        const ro = new ResizeObserver(() => { if (performance.now() - quietFrom < 2500 && !lastInput) realign(root.scrollHeight, 0); else ro.disconnect(); });
+        ro.observe(document.body);
+      }
+    };
+    if (document.readyState === 'complete') start(); else window.addEventListener('load', start, { once: true });
+  }
+
   const openLinkedDetails = () => {
     const target = document.getElementById(location.hash.slice(1));
     if (!target) return;
