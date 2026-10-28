@@ -102,7 +102,8 @@
 
   // orbits (S0) and lifecycle rings (S1) share their tilt azimuths so each orbit opens into its ring
   const ORBITS = [[1.24, 0.40, 0.35, 0.15], [1.31, -0.30, 1.40, -0.11], [1.38, 0.60, 2.20, 0.09], [1.46, -0.52, 3.05, -0.13], [1.54, 0.24, 4.10, 0.08], [1.62, -0.70, 5.20, -0.07]];
-  const RINGS = [[0.52, 0.03, 0.35, 0.30], [0.735, -0.025, 1.40, 0.22], [0.95, 0.03, 2.20, 0.18], [1.165, -0.02, 3.05, 0.15], [1.38, 0.025, 4.10, 0.12], [1.595, -0.03, 5.20, 0.10]];
+  // S1: each lifecycle ring on its own inclined plane (the orbits' tilts, alternating, 0.12-0.22 rad); LC-01 turns, Next drifts, Roadmap holds
+  const RINGS = [[0.52, 0.155, 0.35, 0.30], [0.735, -0.133, 1.40, 0.12], [0.95, 0.196, 2.20, 0.09], [1.165, -0.179, 3.05, 0], [1.38, 0.12, 4.10, 0], [1.595, -0.22, 5.20, 0]];
   function basis(tilt, az) {
     const sa = Math.sin(tilt), ca = Math.cos(tilt), sb = Math.sin(az), cb = Math.cos(az);
     return { U: [cb, 0, sb], V: [ca * sb, sa, -ca * cb], N: [-sb * sa, ca, cb * sa] };
@@ -137,7 +138,7 @@
   const I_ORB = N_SURF, I_SIG = I_ORB + N_ORB, I_DUST = I_SIG + N_SIG;
   // per-scene attribute: xyz + code (mode * 1000 + kind * 100 + group); modes and kinds are decoded in the vertex shader
   const M = { STATIC: 0, GLOBE: 1, ORBIT: 2, RING: 3, JITTER: 4, SIGIN: 5, FLOW: 6, FLOWREJ: 7, FALL: 8, DRIFT: 9, COLUMN: 10 };
-  const K = { IVORY: 0, KHAKI: 1, GREEN: 2, RED: 3, DUST: 4, MOTE: 5, DIM: 6, GDIM: 7, BRIGHT: 8 };
+  const K = { IVORY: 0, KHAKI: 1, GREEN: 2, RED: 3, DUST: 4, MOTE: 5, DIM: 6, GDIM: 7, BRIGHT: 8, KDIM: 9 };
   const code = (mode, kind, grp) => mode * 1000 + kind * 100 + (grp || 0);
   const F = Array.from({ length: 5 }, () => new Float32Array(N * 4));
   const RAND = new Float32Array(N * 4), KEY = new Float32Array(N * 4);
@@ -185,21 +186,21 @@
 
     /* ---- S1: six lifecycle rings (LC-01 green, solid; next: dashed ivory; roadmap: sparse khaki) ---- */
     const ringAng = new Float32Array(N_SURF), ringOf = new Uint8Array(N_SURF);
-    const dash = (k, th) => { // snap an angle into the ring's dash pattern, keeping the order of the agents
+    const dash = (k, th) => { // snap an angle into the ring's dash (Next) or dot (Roadmap) pattern, keeping the order of the agents
       if (k === 0) return th;
-      const n = k < 3 ? 72 : 44, duty = k < 3 ? 0.66 : 0.3, per = TAU / n, x = ((th % TAU) + TAU) % TAU;
+      const n = k < 3 ? 64 : 84, duty = k < 3 ? 0.55 : 0.1, per = TAU / n, x = ((th % TAU) + TAU) % TAU;
       const di = Math.floor(x / per); return di * per + (x - di * per) * duty;
     };
     for (let q = 0; q < N_SURF; q++) {
       const k = RING_OF_BAND[band[q]], [rr, , az] = RINGS[k];
       const th = dash(k, az - lam[q]); // the ring point that sits at the agent's longitude
       ringAng[q] = th; ringOf[q] = k;
-      const kind = k === 0 ? (R(q, 1) < 0.72 ? K.GREEN : K.BRIGHT) : k < 3 ? K.IVORY : K.KHAKI;
+      const kind = k === 0 ? (R(q, 1) < 0.72 ? K.GREEN : K.BRIGHT) : k < 3 ? (R(q, 1) < 0.3 ? K.IVORY : K.DUST) : (R(q, 1) < 0.3 ? K.KHAKI : K.KDIM);
       set(1, q, th, rr + gauss() * (k === 0 ? 0.022 : 0.014), gauss() * 0.006, code(M.RING, kind, k));
     }
     for (let q = 0; q < N_ORB; q++) {
       const ii = I_ORB + q, k = q % 6;
-      set(1, ii, dash(k, F[0][ii * 4]), RINGS[k][0] + gauss() * 0.006, gauss() * 0.004, code(M.RING, k === 0 ? K.GREEN : K.DIM, k));
+      set(1, ii, dash(k, F[0][ii * 4]), RINGS[k][0] + gauss() * 0.006, gauss() * 0.004, code(M.RING, k === 0 ? K.GREEN : k < 3 ? K.DUST : K.KDIM, k));
     }
     for (let q = 0; q < N_SIG; q++) {
       const ii = I_SIG + q, la = Math.asin(rnd() * 2 - 1), lo = rnd() * TAU, rr = 0.03 + rnd() * 0.07;
@@ -295,11 +296,11 @@
     for (let c = 0; c < NCOL; c++) {
       const list = byY.slice(c * perC, c === NCOL - 1 ? N_SURF : (c + 1) * perC);
       const nx = 4, nz = 3, ny = Math.ceil(list.length / (nx * nz)), x0 = COL_X(c), ss = SESSIONS[c];
-      const kind = !ss.above ? K.DIM : ss.regime === 'premium' ? K.GREEN : K.BRIGHT; // a session the record does not put above the floor stays dim
+      const above = ss.above; // one status for every session above the floor (a session the record does not put above it stays dim)
       list.sort((a, b) => R(a, 2) - R(b, 2)).forEach((q, j) => {
         const a = j % nx, b = Math.floor(j / nx) % nz, h = Math.floor(j / (nx * nz));
         const x = x0 + (a - (nx - 1) / 2) * 0.026, z = (b - (nz - 1) / 2) * 0.026, y = Y_FLOOR + 0.04 + (h + 0.5) / ny * H_COL;
-        set(4, q, x, y, z, code(M.COLUMN, kind, c));
+        set(4, q, x, y, z, code(M.COLUMN, !above ? K.DIM : R(q, 1) < 0.22 ? K.BRIGHT : K.IVORY, c));
         KEY[q * 4 + 3] = (c + 0.55 * (h / ny)) / (NCOL + 0.55);
       });
     }
@@ -326,6 +327,7 @@
   uniform vec3 u_liftDir, u_light;
   uniform vec3 u_rU[12]; uniform vec3 u_rV[12]; uniform float u_rW[12];
   uniform float u_hov[24]; uniform float u_hovOn, u_hovScene, u_sceneA, u_sceneB, u_hovLift;
+  uniform float u_dc[24];
   uniform vec4 u_occ;
   varying vec3 v_col; varying float v_a, v_size, v_soft, v_halo;
   const float PI = 3.14159265, TAU = 6.2831853;
@@ -337,8 +339,8 @@
     w *= pinch(y, ${GATE_GLSL[3]}, 0.06, 0.6) * pinch(y, ${GATE_GLSL[4]}, 0.05, 0.3) * pinch(y, ${GATE_GLSL[5]}, 0.05, 0.3);
     return w;
   }
-  vec3 resolve(vec4 s, out float kind, out float grp, out float al) {
-    float mode = floor(s.w / 1000.0 + 0.001);
+  vec3 resolve(vec4 s, out float kind, out float grp, out float al, out float mode) {
+    mode = floor(s.w / 1000.0 + 0.001);
     float rem = s.w - mode * 1000.0;
     kind = floor(rem / 100.0 + 0.001);
     grp = rem - kind * 100.0;
@@ -394,8 +396,16 @@
       float t = u_time;
       return s.xyz + 0.05 * vec3(sin(t * 0.13 + r.x * 6.28), sin(t * 0.11 + r.y * 6.28), cos(t * 0.09 + r.z * 6.28));
     }
-    // a session column: solid low, open at the top (no magnitude above the floor)
-    al = 1.0 - smoothstep(0.62, 1.0, (s.y - ${Y_FLOOR.toFixed(3)}) / ${H_COL.toFixed(3)}) * 0.78;
+    // a session column: solid low, open at the top (no magnitude above the floor). On the way out it drains into its record:
+    // the lowest agents go first, the rest follow down, each fading as it reaches the foot
+    float hN = (s.y - ${Y_FLOOR.toFixed(3)}) / ${H_COL.toFixed(3)};
+    al = 1.0 - smoothstep(0.62, 1.0, hN) * 0.78;
+    float dc = u_dc[int(clamp(grp, 0.0, 23.0) + 0.5)];
+    if (dc > 0.0) {
+      float pc = clamp(dc * 1.4 - hN * 0.4, 0.0, 1.0), e = pc * pc * (3.0 - 2.0 * pc);
+      al *= 1.0 - smoothstep(0.5, 1.0, pc);
+      return vec3(s.x, mix(s.y, ${(Y_FLOOR + 0.02).toFixed(3)}, e), s.z);
+    }
     return s.xyz;
   }
   vec3 kcol(float k) {
@@ -407,7 +417,8 @@
     if (k < 5.5) return vec3(0.93, 0.92, 0.88);
     if (k < 6.5) return vec3(0.86, 0.85, 0.81);
     if (k < 7.5) return vec3(0.33, 0.82, 0.60);
-    return vec3(0.99, 0.98, 0.95);
+    if (k < 8.5) return vec3(0.99, 0.98, 0.95);
+    return vec3(0.70, 0.67, 0.57);
   }
   // size, alpha, softness, halo weight per kind
   vec4 kprop(float k) {
@@ -419,13 +430,14 @@
     if (k < 5.5) return vec4(0.72, 0.55, 1.0, 0.25);
     if (k < 6.5) return vec4(0.82, 0.46, 0.0, 0.0);
     if (k < 7.5) return vec4(0.9, 0.62, 0.0, 0.6);
-    return vec4(1.15, 1.0, 0.0, 0.5);
+    if (k < 8.5) return vec4(1.15, 1.0, 0.0, 0.5);
+    return vec4(0.7, 0.2, 1.0, 0.0);
   }
   float easeSpring(float t) { float s = t * t * (3.0 - 2.0 * t); float u = s - 1.0; return 1.0 + ${C3.toFixed(3)} * u * u * u + ${C1.toFixed(3)} * u * u; }
   void main() {
-    float kA, gA, aA, kB, gB, aB;
-    vec3 A = resolve(a_from, kA, gA, aA) * u_sA;
-    vec3 B = resolve(a_to, kB, gB, aB) * u_sB;
+    float kA, gA, aA, kB, gB, aB, mA, mB;
+    vec3 A = resolve(a_from, kA, gA, aA, mA) * u_sA;
+    vec3 B = resolve(a_to, kB, gB, aB, mB) * u_sB;
     float key = u_keyIdx < 0.5 ? a_key.x : (u_keyIdx < 1.5 ? a_key.y : (u_keyIdx < 2.5 ? a_key.z : a_key.w));
     float t = clamp((u_m - key * u_spread) / (1.0 - u_spread), 0.0, 1.0);
     float te = easeSpring(t), tc = clamp(te, 0.0, 1.0), arc = sin(PI * tc);
@@ -464,6 +476,10 @@
     col = col * mix(0.62 + 0.5 * diff, 0.26 + 1.02 * diff, u_shade) + vec3(0.07, 0.20, 0.13) * diff * (1.0 - soft) * (1.0 + u_shade) + col * rim * (0.22 + 0.3 * u_shade);
     float fz = clamp((-mv.z - u_dist + u_fogR) / (2.0 * u_fogR), 0.0, 1.0);
     al *= mix(1.12, 0.26, fz);
+    // at the globe's limb its foreshortened rows would stack into bright coils: smaller, fainter beads there
+    float onGlobe = step(0.5, mA) * step(mA, 1.5) * (1.0 - tc), ndv = smoothstep(0.04, 0.5, abs(Nv.z));
+    float limb = mix(1.0, mix(0.5, 1.0, ndv), onGlobe);
+    al *= mix(1.0, mix(0.3, 1.0, ndv), onGlobe);
     // the globe hides what is behind it
     if (u_occ.w > 0.0) {
       vec4 oc = u_view * vec4(u_occ.xyz, 1.0);
@@ -480,7 +496,7 @@
     float ia = clamp(u_intro * 1.7 - a_key.x * 0.7, 0.0, 1.0);
     al *= ia;
     float persp = u_dist / max(0.2, -mv.z);
-    float size = pr.x * (1.55 + 1.15 * a_rand.x) * mix(0.82, 1.18, persp - 0.5) * (1.0 + 0.3 * h) * mix(1.1, 0.8, fz) * (0.55 + 0.45 * ia) * u_pr;
+    float size = pr.x * (1.55 + 1.15 * a_rand.x) * mix(0.82, 1.18, persp - 0.5) * (1.0 + 0.3 * h) * mix(1.1, 0.8, fz) * (0.55 + 0.45 * ia) * limb * u_pr;
     v_soft = soft; v_halo = 0.0;
     if (u_halo > 0.5) {
       float hw = max(glow, h * 0.6);
@@ -630,7 +646,7 @@
         if (!gl.getProgramParameter(p.prog, gl.LINK_STATUS)) throw new Error('story shader: ' + (gl.getShaderInfoLog(p.v) || gl.getShaderInfoLog(p.f) || gl.getProgramInfoLog(p.prog)));
       });
       Object.assign(P, progs);
-      bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ'], ['a_from', 'a_to', 'a_rand', 'a_key']);
+      bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ', 'u_dc'], ['a_from', 'a_to', 'a_rand', 'a_key']);
       bindProgram(P.line, ['u_view', 'u_proj', 'u_res', 'u_pr', 'u_dist', 'u_fogR', 'u_occ'], ['a_corner', 'a_p0', 'a_p1', 'a_col', 'a_w']);
       bindProgram(P.act, ['u_view', 'u_proj', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt'], ['a_pos', 'a_col', 'a_shp']);
       const buf = (data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage || gl.STATIC_DRAW); return b; };
@@ -677,74 +693,169 @@
   }
 
   /* ================= layout: each scene fitted into the frame the copy leaves free ================= */
-  let W = 1, H = 1, dpr = 1, ratio = 0, stacked = false, navH = 72, barH = 64, gutter = 24;
-  const EXT = [[2.9, 2.5], [3.45, 2.2], [2.75, 2.75], [2.55, 2.5], [3.8, 2.0]]; // local extent seen from each scene's camera (w, h)
+  let W = 1, H = 1, dpr = 1, ratio = 0, stacked = false, compact = false, short = false, navH = 72, barH = 64, gutter = 24;
+  // local extent seen from each scene's camera (w, h); portrait screens fit the globe to the sphere itself (its faint orbits may run wider)
+  const EXT = [[2.9, 2.5], [3.3, 2.2], [2.75, 2.75], [2.55, 2.5], [3.8, 2.0]];
+  const EXT_ST = [[2.45, 2.12], [3.3, 2.7], null, null, null];
   const CENTER = [[0, 0, 0], [0, 0.04, 0], [0, -0.02, 0], [0.12, 0.08, 0], [0, Y_FLOOR + 0.6, 0]]; // S4 sits low: the floor line is where the paper will rise to
-  const CAM = [[0.13, 0.0], [0.6, -0.08], [0.5, -0.56], [0.3, -0.3], [0.12, 0.0]]; // elevation, azimuth
+  const CAM_W = [[0.13, 0.0], [0.6, -0.08], [0.5, -0.56], [0.3, -0.3], [0.12, 0.0]]; // elevation, azimuth
+  const CAM_ST = [[0.13, 0.0], [0.86, -0.08], [0.5, -0.56], [0.3, -0.3], [0.12, 0.0]]; // portrait: S1 seen from higher, to fill the tall frame
+  let CAM = CAM_W;
   const ROOM_W = [0, 250, 236, 214, 0]; // room kept on the right of the structure for its callouts (wide layouts)
-  const ZONE = ['right', 'upper', 'right', 'right', 'right'];
+  const ZONE = ['right', 'right', 'right', 'right', 'right']; // one horizon: every scene sits in the same band right of its copy
+  // under the S4 floor, in CSS px: the records hang from it, then the NAV hairline with each session's regime tick, then the day tags
+  const U_REC = 6.5, U_NAV = 22, U_TICK = 10, U_DAY = 35, DAY_BAND = 70;
   const layouts = Array.from({ length: 5 }, () => ({ cx: 0, cy: 0, s: 1, rect: [0, 0, 0, 0] }));
-  const beatRects = [], numFit = [0, 0, 0, 0];
-  let storyTop = 0, run = 1, scrollY = 0;
-  function measure() {
+  const beatRects = [], numFit = [0, 0, 0, 0], capH = [0, 0, 0, 0, 0], labelMaxW = [0, 0, 0, 0, 0];
+  let storyTop = 0, run = 1, scrollY = 0, stageH = 1, lastP = NaN, floorW = 0, floorL = -COL_SPAN / 2 - 0.5, numGlyphH = 0;
+  const pxuOf = (h) => (h / 2) / (CAM_D * Math.tan(FOV / 2)); // CSS px per world unit at the target's depth
+  const l4 = (px) => px / Math.max(1e-4, layouts[4].s * pxuOf(H)); // S4 local units for a length in CSS px
+  // where the story sits and how long it pins: the stage is 100svh, so a phone's collapsing toolbar never changes the run
+  function measureScroll() {
     scrollY = window.scrollY;
     storyTop = story.getBoundingClientRect().top + scrollY;
-    run = Math.max(1, story.offsetHeight - window.innerHeight);
-    const cs = getComputedStyle(stage);
-    navH = parseFloat(cs.getPropertyValue('--nav-h')) || 72;
-    const bar = stage.querySelector('.story-bar');
-    barH = bar ? bar.offsetHeight : 64;
-    const cont = stage.querySelector('.story-ui .container');
-    gutter = (cont && parseFloat(getComputedStyle(cont).paddingLeft)) || 24; // --gutter is a clamp(): read it resolved
+    stageH = stage.offsetHeight || window.innerHeight;
+    run = Math.max(1, story.offsetHeight - stageH);
+  }
+  function measureBeats() {
     beats.forEach((b, i) => { // where each beat's copy sits, untransformed (offsets ignore the scroll-driven translate)
       let l = 1e9, r = -1e9, t = 1e9;
       b.querySelectorAll('.beat-text, .hero-stats').forEach(el => {
+        if (!el.offsetHeight) return; // a figure row the compact layout leaves out
         const x = el.offsetLeft + b.offsetLeft + b.offsetParent.offsetLeft, y = el.offsetTop + b.offsetTop;
         l = Math.min(l, x); r = Math.max(r, x + el.offsetWidth); t = Math.min(t, y);
       });
       const h2 = b.querySelector('h2, h1');
       beatRects[i] = { l, r, t, ht: h2 ? b.offsetTop + h2.offsetTop : t, hb: h2 ? b.offsetTop + h2.offsetTop + h2.offsetHeight : t };
     });
-    // the chapter mark sits above the copy column: per hand-over, the scale that keeps it clear of both scenes' copy (0: no room)
+  }
+  function measureLayout() {
+    const cs = getComputedStyle(stage);
+    navH = parseFloat(cs.getPropertyValue('--nav-h')) || 72;
+    const bar = stage.querySelector('.story-bar');
+    barH = bar ? bar.offsetHeight : 64;
+    const cont = stage.querySelector('.story-ui .container');
+    gutter = (cont && parseFloat(getComputedStyle(cont).paddingLeft)) || 24; // --gutter is a clamp(): read it resolved
+    measureBeats();
+    // the callouts' own sizes (captions wrap; portrait screens leave out the names): every frame keeps clear of them. On wide
+    // screens a caption wraps inside its scene's frame, never reaching back over the copy
+    labelMaxW.fill(0); capH.fill(0);
+    labels.forEach(l => {
+      if (l.kind === 'cap') { const br = beatRects[l.scene]; l.el.style.maxWidth = !stacked && br && br.r > 0 ? Math.max(180, W - gutter - (br.r + 28)) + 'px' : ''; }
+      l.w = l.el.offsetWidth; l.h = l.el.offsetHeight; l.tr = '';
+      if (l.kind === 'cap') capH[l.scene] = l.h;
+      else if (l.kind === 'list' && !((stacked || short) && l.wide)) labelMaxW[l.scene] = Math.max(labelMaxW[l.scene], l.w);
+      if (l.floor) floorW = l.w;
+    });
+    // the chapter mark sits above the copy column: per hand-over, the scale of its numeral that keeps it clear of both scenes' copy
     const cd = story.querySelector('.story-coda');
     codaH = cd ? cd.offsetHeight : 0;
-    const nm = story.querySelector('.story-num');
-    if (nm) {
-      const nh = nm.offsetHeight, nt = nm.offsetTop;
-      for (let a = 0; a < 4; a++) { const k = nh ? Math.min(1, (Math.min(beatRects[a].t, beatRects[a + 1].t) - nt - 18) / nh) : 0; numFit[a] = k < 0.42 ? 0 : k; }
+    const nm = story.querySelector('.story-num'), nb = nm && nm.querySelector('b'), ns = nm && nm.querySelector('span');
+    if (nm && nb && ns) {
+      const nt = nm.offsetTop, gh = nb.offsetHeight, lh = ns.offsetHeight + 4;
+      numGlyphH = gh;
+      for (let a = 0; a < 4; a++) { const k = gh ? Math.min(1, (Math.min(beatRects[a].t, beatRects[a + 1].t) - nt - 18 - lh) / gh) : 0; numFit[a] = k < 0.42 ? 0 : k; }
     }
   }
+  // the copy's mode, measured: compact on portrait screens that would leave a scene under 40% of the stage (the copy gives way, not
+  // the structure), short on landscape phones; a beat whose copy would still reach the nav (or the index under it) drops its paragraph
+  function setModes() {
+    stacked = stackedMQ.matches; CAM = stacked ? CAM_ST : CAM_W;
+    root.classList.remove('story-compact', 'story-short');
+    beats.forEach(b => b.classList.remove('is-tight'));
+    compact = stacked && (H < 780 || W < 600); short = !stacked && H < 600; // (a portrait phone is compact in CSS from the first paint)
+    if (stacked && !compact) {
+      measureLayout();
+      const top = navH + barH + Math.max(...capH) + 8;
+      compact = beatRects.some(br => br.t - 14 - top < 0.4 * H);
+    }
+    root.classList.toggle('story-compact', compact); root.classList.toggle('story-short', short);
+    measureLayout();
+    const lim = navH + (stacked ? barH : 0) + 6;
+    let tight = false;
+    beats.forEach((b, i) => { if (beatRects[i] && beatRects[i].t < lim) { b.classList.add('is-tight'); tight = true; } });
+    if (tight) measureLayout();
+  }
+  // the six rings' projected outline at scale s (offsets from the camera target's screen point), for S1's camera
+  const tmpV = new Float32Array(16), tmpP = new Float32Array(16), tmpVP = new Float32Array(16);
+  function ringOutline(s) {
+    const el = CAM[1][0], az = CAM[1][1], tc = [0, CENTER[1][1] * s, 0];
+    lookAt(tmpV, [tc[0] + Math.sin(az) * Math.cos(el) * CAM_D, tc[1] + Math.sin(el) * CAM_D, tc[2] + Math.cos(az) * Math.cos(el) * CAM_D], tc);
+    perspective(tmpP, FOV, W / H, 0.1, 40, 0, 0); mul(tmpVP, tmpP, tmpV);
+    const out = [];
+    for (let k = 0; k < 6; k++) for (let j = 0; j < 40; j++) {
+      const q = onLoop(RB[k], RINGS[k][0], j / 40 * TAU, 0), x = q[0] * s, y = q[1] * s, z = q[2] * s, v = tmpVP;
+      const cw = v[3] * x + v[7] * y + v[11] * z + v[15];
+      out.push(((v[0] * x + v[4] * y + v[8] * z + v[12]) / cw) * 0.5 * W, -((v[1] * x + v[5] * y + v[9] * z + v[13]) / cw) * 0.5 * H);
+    }
+    return out;
+  }
+  function fitRings(s0, x1, cy, br, pxu) {
+    const ok = (s) => {
+      const o = ringOutline(s);
+      let maxX = -1e9; for (let j = 0; j < o.length; j += 2) maxX = Math.max(maxX, o[j]);
+      const cx = x1 - 6 - maxX;
+      for (let j = 0; j < o.length; j += 2) {
+        const x = cx + o[j], y = cy + o[j + 1];
+        if (x < gutter || y < navH + 24 || y > H - barH - Math.max(18, capH[1] + 12)) return null;
+        if (x < br.r + 22 && y > br.t - 22) return null; // clear of the copy's corner (and of everything under it)
+      }
+      return { cx, minX: Math.min(...o.filter((_, j) => j % 2 === 0)) };
+    };
+    if (!ok(s0)) return null;
+    let lo = s0, hi = Math.min(s0 * 2.4, (W * 0.62) / (3.25 * pxu));
+    if (hi <= lo) return null;
+    for (let it = 0; it < 16; it++) { const m = (lo + hi) / 2; if (ok(m)) lo = m; else hi = m; }
+    const r = ok(lo);
+    return { s: lo, cx: r.cx, cy, x0: r.cx + r.minX };
+  }
   function fitScenes() {
-    stacked = stackedMQ.matches;
-    const pxu = (H / 2) / (CAM_D * Math.tan(FOV / 2));
+    const pxu = pxuOf(H);
     for (let i = 0; i < 5; i++) {
       const br = beatRects[i] && beatRects[i].r > 0 && beatRects[i].r < W ? beatRects[i] : { r: W * 0.46, t: H * 0.55 };
-      let x0, x1, y0, y1;
-      if (!stacked) { // right of this scene's copy (or, for the wide rings, above it), clear of the nav, the index and the callouts
+      const ext = (stacked && EXT_ST[i]) || EXT[i];
+      let x0, x1, y0, y1, s, cx, cy;
+      if (!stacked) { // right of this scene's copy, clear of the nav, the index and the callouts
         const room = Math.min(ROOM_W[i], W * 0.18);
         x1 = W - gutter - room; y0 = navH + 22;
         if (ZONE[i] === 'upper' && br.t - y0 > H * 0.36) { x0 = gutter + (W - 2 * gutter) * 0.3; y1 = br.t - 26; }
-        else { x0 = Math.min(br.r + 36, W * 0.56); y1 = H - barH - 18; }
+        else { x0 = Math.min(br.r + 36, W * 0.56); y1 = H - barH - Math.max(18, capH[i] + 12); } // above the scene's caption
         if (x1 - x0 < 240) x0 = x1 - 240;
-      } else { // above this scene's copy, under the index
-        const room = [0, 0.13, 0.15, 0.1, 0][i] * W;
-        x0 = gutter * 0.5; x1 = W - gutter * 0.5 - room; y0 = navH + barH + 6; y1 = Math.max(y0 + 120, Math.min(H * 0.8, br.t) - 14);
+      } else { // above this scene's copy, under the index and the scene's caption, never across the copy; the callouts keep their column
+        const room = Math.max([0, 0.13, 0.15, 0.1, 0][i] * W, labelMaxW[i] ? labelMaxW[i] + 28 : 0);
+        x0 = gutter * 0.5; x1 = W - gutter * 0.5 - room;
+        y0 = navH + barH + capH[i] + 8;
+        y1 = Math.min(Math.max(y0 + 120, Math.min(H * 0.8, br.t) - 14), br.t - 14);
       }
-      const rw = x1 - x0, rh = y1 - y0;
-      let s = Math.min(rw / (EXT[i][0] * pxu), rh / (EXT[i][1] * pxu));
-      s = Math.min(s, (H * 0.74) / (EXT[i][1] * pxu));
-      layouts[i] = { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, s, rect: [x0, y0, x1, y1] };
+      if (i === 4) { // the columns, the floor's tag left of column 01, and the band of records, NAV and day tags under the floor
+        const xa = x0 + floorW + 14;
+        s = Math.min((x1 - xa) / ((COL_SPAN + 0.24) * pxu), (y1 - y0 - DAY_BAND) / ((H_COL + 0.34) * pxu));
+        if (!stacked) s = Math.min(s, (H * 0.74) / (EXT[4][1] * pxu));
+        cx = (xa + x1) / 2;
+        const fy = stacked ? y1 - DAY_BAND : Math.min(y1 - DAY_BAND, (y0 + y1) / 2 + 0.6 * s * pxu);
+        cy = fy - 0.6 * s * pxu;
+        floorL = -COL_SPAN / 2 - 0.04 - (floorW + 10) / (s * pxu);
+      } else {
+        s = Math.min((x1 - x0) / (ext[0] * pxu), (y1 - y0) / (ext[1] * pxu), (H * 0.74) / (ext[1] * pxu));
+        cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
+        if (i === 1 && !stacked) { // on the horizon, or up to 6% of the stage above it if that buys the rings room over the copy
+          const f = [cy, cy - H * 0.06].map(c => fitRings(s, x1, c, br, pxu)).filter(Boolean).sort((p, q) => q.s - p.s)[0];
+          if (f) { s = f.s; cx = f.cx; x0 = f.x0; cy = f.cy; }
+        }
+      }
+      layouts[i] = { cx, cy, s, rect: [x0, y0, x1, y1] };
     }
   }
 
   /* ================= scene state ================= */
   // the clocks start mid-flow: the ledger already holds records, proposals are already in the lane (and a still frame — reduced motion — reads)
-  let sNow = 0, sTarget = 0, xNow = 0, xTarget = 0, time = 14.3, intro = 0, introStart = -1;
+  let sNow = 0, sTarget = 0, xNow = 0, xTarget = 0, xeNow = 0, time = 14.3, intro = 0, introStart = -1;
   let seg = 0, mRaw = 0, mE = 0, scale = [1, 1];
   let eye = [0, 0, CAM_D], target = [0, 0, 0], camD = CAM_D;
   const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
   function sceneScroll() {
-    const p = clamp((scrollY - storyTop) / run, 0, 1), u = p * TOTAL_U;
+    lastP = (scrollY - storyTop) / run; // the reader's place in the pinned run (a resize puts them back here)
+    const p = clamp(lastP, 0, 1), u = p * TOTAL_U;
     sTarget = Math.min(4, u); xTarget = clamp((u - 4) / EXIT_U, 0, 1);
   }
   // the morph state for the current pair of scenes: a hold at each end, the stagger in between
@@ -772,11 +883,20 @@
     lookAt(view, eye, target);
     const frust = (cy) => { perspective(proj, FOV, W / H, 0.1, 40, (L.cx / W) * 2 - 1, 1 - (cy / H) * 2); mul(vp, proj, view); };
     frust(L.cy);
-    if (seg === 3 && xNow > 0) { // the hand-off: the proof settles lower as the paper rises to meet it, so the paper is a page edge, not a wall
-      const f = project(0, Y_FLOOR * layouts[4].s, 0).y, xe = reducedMQ.matches ? (xNow > 0.5 ? 1 : 0) : xNow;
-      frust(L.cy + Math.max(0, H * (stacked ? 0.7 : 0.76) - f) * sstep(0, 0.7, xe));
+    if (seg === 3 && xNow > 0) { // the hand-off: while the columns drain into their records the floor line settles to where the paper meets it
+      const f = project(0, Y_FLOOR * layouts[4].s, 0).y;
+      frust(L.cy + Math.max(0, H * FLOOR_END() - f) * (stacked ? sstep(EXIT.tall.cam[0], EXIT.tall.cam[1], xeNow) : sstep(0, 0.35, xeNow))); // portrait: it pushes the copy out
     }
   }
+  const FLOOR_END = () => (stacked ? 0.7 : 0.76); // where the floor line, the paper's edge to be, ends on screen (share of the stage)
+  // the way out, in shares of the exit. Wide (and short landscape): the columns drain while the proof settles to its final height,
+  // then the paper rises to the floor line; the headline stays above it. Portrait: the columns drain, then the floor line settles,
+  // pushing the proof's copy down and out of the stage while the coda opens up above the line (they never share a region, and one
+  // of them is always up), then the paper rises to the line.
+  const EXIT = { wide: { paper: [0.35, 0.8], cap: [0.74, 0.9] }, tall: { cam: [0.3, 0.56], copy: [0.44, 0.58], coda: [0.4, 0.52], paper: [0.58, 0.86], cap: [0.84, 0.96] } };
+  // the exit, column by column: each drains into its record, left to right, over the first third of the way out
+  const drainOf = (c) => clamp((xeNow - 0.02 - 0.144 * c / Math.max(1, NCOL - 1)) / 0.17, 0, 1);
+  const dcArr = new Float32Array(24);
 
   /* ================= actors: proposals, decisions, settled squares, records, ticks ================= */
   const hash = (n) => { let x = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b); x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35); x ^= x >>> 16; return (x >>> 0) / 4294967296; };
@@ -809,7 +929,11 @@
         const x0 = (hash(cyc * 3 + j) - 0.5) * 1.0, z0 = (hash(cyc * 5 + j) - 0.5) * 0.6;
         let x, y, z, aux = 0, a = 1;
         if (ph < 0.5) { const u = ph / 0.5; y = lerp(PL_Y(0) + 0.08, 0.02, u); x = x0 + Math.sin(T * 2.3 + j) * 0.05; z = z0 + Math.cos(T * 1.9 + j) * 0.04; a = sstep(0, 0.08, u); }
-        else { const u = (ph - 0.5) / 0.5, st = Math.min(3, Math.floor(u * 4)), f = sstep(0.62, 1, u * 4 - st); y = lerp(PL_Y(4 + st) + 0.02, PL_Y(Math.min(7, 5 + st)) + 0.02, st < 3 ? f : 0); x = Math.round(x0 * 8) / 8; z = Math.round(z0 * 6) / 6; aux = sstep(0, 0.06, u); a = 1 - sstep(0.9, 1, u); }
+        else { // below it, it snaps to the grid and stays a ring; only on the last plate does it settle into the square
+          const u = (ph - 0.5) / 0.5, st = Math.min(3, Math.floor(u * 4)), f = sstep(0.62, 1, u * 4 - st);
+          y = lerp(PL_Y(4 + st) + 0.02, PL_Y(Math.min(7, 5 + st)) + 0.02, st < 3 ? f : 0); x = Math.round(x0 * 8) / 8; z = Math.round(z0 * 6) / 6;
+          aux = st < 3 ? 0 : sstep(0.15, 0.55, u * 4 - 3); a = 1 - sstep(0.9, 1, u);
+        }
         put('p' + j, x, y, z, C.green, a, 1, 9, 0.7, aux);
       }
     } else if (sc === 3) {
@@ -849,11 +973,14 @@
           put('r' + j, LEDGER_X0 + slot * LEDGER_DX, Y_LEDGER + 0.045, 0, C.ivory, a * 0.92, 2, 15, 0, 0);
         });
       }
-    } else { // S4: each session's record on the floor (the ledger, hash-linked) and its broker-confirmed tick on top
+    } else { // S4: one status for every session above the floor (ivory agents on a green settled square, the broker's tick on top);
+      // its record hangs from the floor line, hash-linked to the one before. On the way out each column drains into its record.
+      const rY = Y_FLOOR - l4(U_REC), tY = Y_FLOOR + l4(9);
       for (let c = 0; c < NCOL; c++) {
-        const x = COL_X(c), prem = SESSIONS[c].regime === 'premium';
-        put('r' + c, x, Y_FLOOR + 0.035, 0.04, prem ? C.green : C.ivory, 0.95, 2, 15, prem ? 0.5 : 0, 0);
-        if (SESSIONS[c].confirmed) put('t' + c, x, Y_FLOOR + H_COL + 0.1, 0, C.green, 0.95, 3, 12, 0.5, 0);
+        const x = COL_X(c), ss = SESSIONS[c], dc = drainOf(c), land = sstep(0.82, 1, dc);
+        put('r' + c, x, rY, 0, C.ivory, 0.95, 2, 15, 0.35 * Math.sin(PI * land), 0); // a brief light as the column lands in it
+        if (ss.above) put('s' + c, x, lerp(Y_FLOOR + l4(7), rY, sstep(0.7, 0.95, dc)), 0, C.green, 0.95 * (1 - sstep(0.86, 1, dc)), 1, 9, 0.6, 1);
+        if (ss.confirmed) put('t' + c, x, lerp(Y_FLOOR + H_COL + 0.1, tY, sstep(0.25, 1, dc)), 0, C.green, 0.95, 3, 12, 0.5, 0);
       }
     }
     return out;
@@ -871,7 +998,12 @@
       actData.set([p[0], p[1], p[2], col[0], col[1], col[2], a, shape, size, glow, aux], o); o += 11; nAct++;
     };
     nAct = 0;
-    const keyOf = (id) => id[0] === 'r' ? 0.25 + 0.5 * (parseInt(id.slice(1), 10) / 11) : id[0] === 't' ? 0.7 : 0.35;
+    // into S4 every column's actors keep its own stagger (record and square with its foot, tick with its top): they land with it
+    const keyOf = (id) => {
+      const n = parseInt(id.slice(1), 10);
+      if (seg === 3 && (id[0] === 'r' || id[0] === 's' || id[0] === 't')) return (n + (id[0] === 't' ? 0.55 : id[0] === 's' ? 0.12 : 0)) / (NCOL + 0.55);
+      return id[0] === 'r' ? 0.25 + 0.5 * (n / 11) : id[0] === 't' ? 0.7 : 0.35;
+    };
     actA.forEach((A, id) => {
       const B = actB.get(id), t = ease(stag(mRaw, keyOf(id)));
       if (B) {
@@ -894,7 +1026,7 @@
   const LIMB_N = 128, limbPts = Array.from({ length: LIMB_N }, () => [0, 0, 0]);
   const GEO = new Map(), geo = (k, fn) => { let g = GEO.get(k); if (!g) GEO.set(k, g = fn()); return g; }; // static shapes, built once
   function linesFor(sc, T, out) {
-    const put = (id, pts, closed, col, a, w, key, dy) => out.set(id, { pts, closed, col, a, w: w || 1, key: key == null ? 0.5 : key, dy: dy || 0 });
+    const put = (id, pts, closed, col, a, w, key, dy, dash) => out.set(id, { pts, closed, col, a, w: w || 1, key: key == null ? 0.5 : key, dy: dy || 0, dash: dash || 0 });
     if (sc === 0) {
       ORBITS.forEach((o, k) => { const pts = geo('o0' + k, () => Array.from({ length: LOOP_N }, (_, j) => onLoop(OB[k], o[0], j / LOOP_N * TAU, 0))); put('o' + k, pts, true, k === 0 ? C.green : C.ivory, k === 0 ? 0.2 : 0.1, 1, 0.12 + 0.5 * k / 6); });
       put('hz', [[-1.35, -1.3, 0], [1.35, -1.3, 0]], false, C.ivory, 0.07, 1, 0.9);
@@ -906,10 +1038,15 @@
       put('lg', limb, true, C.green, 0.075, 26, 0.02);
       put('lr', limb, true, C.ivory, 0.045, 1, 0.02);
     } else if (sc === 1) {
-      RINGS.forEach((o, k) => {
+      RINGS.forEach((o, k) => { // LC-01 solid green, Next dashed ivory, Roadmap dotted khaki
         const pts = geo('o1' + k, () => Array.from({ length: LOOP_N }, (_, j) => onLoop(RB[k], o[0], j / LOOP_N * TAU, 0)));
-        put('o' + k, pts, true, k === 0 ? C.green : k < 3 ? C.ivory : C.khaki, (k === 0 ? 0.42 : k < 3 ? 0.16 : 0.12) * (1 + 1.6 * hovFor(1, k)), 1 + 0.6 * hovFor(1, k), 0.15 + 0.6 * k / 6);
+        put('o' + k, pts, true, k === 0 ? C.green : k < 3 ? C.ivory : C.khaki, (k === 0 ? 0.42 : k < 3 ? 0.24 : 0.34) * (1 + 1.6 * hovFor(1, k)), 1 + 0.6 * hovFor(1, k), 0.15 + 0.6 * k / 6, 0, k === 0 ? 0 : k < 3 ? 1 : 2);
       });
+      // the green key light passing round the live ring: a soft arc and its bright core
+      const a0 = 2.1 + T * RINGS[0][3] * 1.7, arc = [];
+      for (let j = 0; j <= 22; j++) arc.push(onLoop(RB[0], RINGS[0][0], a0 + j / 22 * 1.05, 0));
+      put('kl', arc, false, C.green, 0.13, 7, 0.2);
+      put('kc', arc, false, C.green, 0.55, 1.3, 0.2);
       const tk = geo('tk1', () => { const t = []; for (let j = 0; j < 48; j++) { const a = j / 48 * TAU, l = j % 4 ? 0.03 : 0.07; t.push(onLoop(RB[0], RINGS[0][0] - 0.06, a, 0), onLoop(RB[0], RINGS[0][0] - 0.06 - l, a, 0)); } return t; });
       put('tk', tk, 'pairs', C.green, 0.32, 1, 0.3);
       put('hub', [[-0.07, 0, 0], [0.07, 0, 0], [0, 0, -0.07], [0, 0, 0.07], [0, -0.07, 0], [0, 0.07, 0]], 'pairs', C.ivory, 0.32, 1, 0.5);
@@ -951,11 +1088,19 @@
       }
       put('lane', [[LX, Y_TOP + 0.2, 0], [LX, Y_BOT, 0]], false, C.ivory, 0.05, 1, 0.5);
     } else {
-      put('hz', [[-COL_SPAN / 2 - 0.5, Y_FLOOR, 0], [COL_SPAN / 2 + 0.3, Y_FLOOR, 0]], false, C.ivory, 0.42 * (1 - 0.5 * sstep(0.5, 0.8, xNow)), 1, 0.9);
-      const hl = []; for (let c = 0; c < NCOL - 1; c++) hl.push([COL_X(c) + 0.06, Y_FLOOR + 0.035, 0.04], [COL_X(c + 1) - 0.06, Y_FLOOR + 0.035, 0.04]);
-      put('hl', hl, 'pairs', C.ivory, 0.45, 1, 0.4);
-      const tk = []; for (let c = 0; c < NCOL; c++) tk.push([COL_X(c), Y_FLOOR - 0.025, 0], [COL_X(c), Y_FLOOR - 0.06, 0]);
-      put('ft', tk, 'pairs', C.ivory, 0.4, 1, 0.6);
+      // the floor line (the paper's edge to be), the hash links between the records hanging from it, and under them the NAV hairline,
+      // dashed, with each session's regime as a short tick above it (premium) or below it (discount); each lands with its column
+      const step = COL_SPAN / NCOL, rY = Y_FLOOR - l4(U_REC), yN = Y_FLOOR - l4(U_NAV), tk = l4(U_TICK), gap = l4(2), nav = 1 - sstep(0.06, 0.3, xeNow);
+      put('hz', [[floorL, Y_FLOOR, 0], [COL_SPAN / 2 + 0.12, Y_FLOOR, 0]], false, C.ivory, 0.46, 1, 0.9);
+      const dash = l4(4), per = l4(9);
+      SESSIONS.forEach((ss, c) => {
+        const x = COL_X(c), k = (c + 0.1) / (NCOL + 0.55);
+        if (c < NCOL - 1) put('hl' + c, [[x + l4(8.5), rY, 0], [x + step - l4(8.5), rY, 0]], false, C.ivory, 0.45, 1, k);
+        const nv = []; for (let u = x - step / 2; u < x + step / 2 - dash * 0.5; u += per) nv.push([u, yN, 0], [Math.min(u + dash, x + step / 2), yN, 0]);
+        put('nv' + c, nv, 'pairs', C.ivory, 0.3 * nav, 1, k);
+        const d = ss.regime === 'premium' ? 1 : -1;
+        put('rt' + c, [[x, yN + d * gap, 0], [x, yN + d * tk, 0]], false, C.ivory, 0.9 * nav, 1.6, k);
+      });
     }
     return out;
   }
@@ -973,13 +1118,17 @@
       const P = A.pts, Q = B ? B.pts : null, n = P.length, pairs = A.closed === 'pairs';
       const segs = pairs ? n >> 1 : (A.closed ? n : n - 1);
       const dA = A.dy, dB = B ? B.dy : 0;
+      const dash = (B && t >= 0.5) ? B.dash : A.dash; // 1: dashed (two on, one off), 2: dotted (a short mark every other segment)
       for (let j = 0; j < segs && nLine < N_LINE_MAX; j++) {
+        if (dash === 1 && j % 3 === 2) continue;
+        if (dash === 2 && j % 2) continue;
         const i0 = pairs ? 2 * j : j, i1 = pairs ? 2 * j + 1 : (j + 1) % n;
         for (let e = 0; e < 2; e++) {
           const i = e ? i1 : i0, p = P[i], d = o + e * 3;
           if (Q) { const q = Q[i]; lineData[d] = lerp(p[0] * sA, q[0] * sB, t); lineData[d + 1] = lerp((p[1] + dA) * sA, (q[1] + dB) * sB, t); lineData[d + 2] = lerp(p[2] * sA, q[2] * sB, t); }
           else { const s = A.s; lineData[d] = p[0] * s; lineData[d + 1] = (p[1] + dA) * s; lineData[d + 2] = p[2] * s; }
         }
+        if (dash === 2) { const k = 0.28; for (let c = 0; c < 3; c++) lineData[o + 3 + c] = lineData[o + c] + (lineData[o + 3 + c] - lineData[o + c]) * k; }
         lineData[o + 6] = cr; lineData[o + 7] = cg; lineData[o + 8] = cb; lineData[o + 9] = a; lineData[o + 10] = w; o += 11; nLine++;
       }
     };
@@ -1014,21 +1163,24 @@
     if (labelHost) labelHost.appendChild(el);
     let path = null;
     if (opts.leader) { path = document.createElementNS(SVGNS, 'path'); path.setAttribute('class', 'story-leader ' + (opts.cls || '')); leaders.appendChild(path); }
+    let node = null;
+    if (opts.node) { node = document.createElementNS(SVGNS, 'circle'); node.setAttribute('r', '1.5'); node.setAttribute('class', 'story-node ' + (opts.cls || '')); leaders.appendChild(node); }
     const l = Object.assign({ el, path, scene, on: false, tr: '', d: '', w: 0, h: 0, y: 0 }, opts);
+    l.node = node; // (the option only asks for one)
     labels.push(l);
     return l;
   }
   const lab = {};
   if (labelHost) {
-    label(0, '<b>Fig. 00</b> The work, worldwide · every point is an agent', { cls: 'cap', kind: 'cap' });
-    label(1, '<b>Fig. 01</b> Six lifecycle classes · one infrastructure', { cls: 'cap', kind: 'cap' });
-    label(2, '<b>Fig. 02</b> Eight layers, read top to bottom · one boundary', { cls: 'cap', kind: 'cap' });
-    label(3, '<b>Fig. 03</b> Six gates · one council · one ledger · illustrative', { cls: 'cap', kind: 'cap' });
-    label(4, `<b>Fig. 04</b> ${REC.lifecycle} · ${NCOL} sessions · heights not to scale`, { cls: 'cap', kind: 'cap' });
+    // the plates' captions lead with what kind of picture they are; they wrap rather than run off a narrow screen
+    label(0, '<b>Plate 00</b> The work, worldwide · illustrative · each point stands for an agent', { cls: 'cap', kind: 'cap' });
+    label(1, '<b>Plate 01</b> Six lifecycle classes · one infrastructure', { cls: 'cap', kind: 'cap' });
+    label(2, '<b>Plate 02</b> Eight layers, read top to bottom · one boundary', { cls: 'cap', kind: 'cap' });
+    label(3, '<b>Plate 03</b> Illustrative · six gates · one council · one ledger', { cls: 'cap', kind: 'cap' });
+    label(4, `<b>Plate 04</b> ${REC.lifecycle} · ${NCOL} sessions · heights not to scale`, { cls: 'cap', kind: 'cap' });
     // S1: a column of callouts, one per ring, each anchored on the ring's front-right arc
     lab.rings = LC.map((c, k) => label(1, `<span class="k">${c[0]}</span><span class="n">${c[1]}</span><span class="st st-${c[2].toLowerCase()}">${c[2]}</span><span class="dt">${c[3]}: ${c[4]}</span>`,
-      { cls: 'ring' + (k === 0 ? ' is-live' : ''), kind: 'list', group: k, leader: true, info: [`${c[0]} · ${c[3]}`, c[2], c[4]], anchor: () => onLoop(RB[k], RINGS[k][0], RINGS[k][2] - 0.95, 0) }));
-    label(1, '<span class="n">One infrastructure</span>', { cls: 'note', kind: 'list', leader: true, anchor: () => [0.05, 0, 0], wide: true });
+      { cls: 'ring' + (k === 0 ? ' is-live' : ''), kind: 'list', group: k, leader: true, node: true, info: [`${c[0]} · ${c[3]}`, c[2], c[4]], anchorPx: (sc) => ringFlank(k, sc) }));
     // S2: the layers, top to bottom, and the boundary between 04 and 05
     lab.layers = LAYERS.map((l, p) => label(2, `<span class="k">${pad2(p + 1)}</span><span class="n">${l[0]}</span><span class="dt">${l[1]} · ${l[2]}</span>`,
       { cls: 'layer' + (p === 3 ? ' is-council' : ''), kind: 'list', group: p, leader: true, info: [`${pad2(p + 1)} · ${l[0]}`, l[1], `${l[2]} · ${p < 4 ? 'above' : 'below'} the boundary`], anchor: () => [PL_HX - 0.03, PL_Y(p) + hovFor(2, p) * 0.07, PL_HZ - 0.03] }));
@@ -1040,9 +1192,11 @@
     // S4: the sessions under their columns (from the data), the floor, the derived summary
     const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     lab.days = SESSIONS.map((s, c) => label(4, `<span class="k">${s.day}</span><span class="rg">${s.regime === 'premium' ? 'P' : 'D'}</span><span class="dt">Day ${s.day} · ${s.regime} · ${esc(valueT(s))} · ${s.confirmed ? 'broker-confirmed' : 'confirmation not stated'}</span>`,
-      { cls: 'day' + (s.regime === 'premium' ? ' is-prem' : ''), kind: 'tag', group: c, side: 's', keep: true, info: [`Day ${s.day}`, capw(s.regime), `${s.above ? 'Above' : 'Not above'} the ${FLOOR_T} floor (${esc(valueT(s))}) · ${s.confirmed ? 'confirmed against the broker’s records' : 'confirmation not stated'}`], anchor: () => [COL_X(c), Y_FLOOR - 0.07, 0] }));
-    label(4, `${FLOOR_T} floor`, { cls: 'floor', kind: 'tag', wide: true, anchor: () => [-COL_SPAN / 2 - 0.5, Y_FLOOR + 0.02, 0], side: 'ne' });
-    label(4, `<b>${N_ABOVE} of ${NCOL}</b> sessions above the ${FLOOR_T} floor<span class="sep"></span><span class="lg-p">${N_PREM} premium</span> · <span class="lg-d">${N_DISC} discount</span><span class="sep"></span><span class="lg-t">${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed</span>`, { cls: 'sum', kind: 'tag', anchor: () => [COL_SPAN / 2 + 0.06, Y_FLOOR + H_COL + 0.26, 0], side: 'nw' });
+      { cls: 'day' + (s.regime === 'premium' ? ' is-prem' : ''), kind: 'tag', group: c, side: 's', keep: true, col: c, dy: U_DAY - 6, info: [`Day ${s.day}`, capw(s.regime), `${s.above ? 'Above' : 'Not above'} the ${FLOOR_T} floor (${esc(valueT(s))}) · ${s.confirmed ? 'confirmed against the broker’s records' : 'confirmation not stated'}`], anchor: () => [COL_X(c), Y_FLOOR, 0] }));
+    // the floor's tag sits on the line, left of column 01 (never across it); the summary sits over the columns where there is room
+    label(4, `<span>${FLOOR_T}</span> <span>floor</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.42, 0.6], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR, 0], side: 'nw' });
+    label(4, 'NAV', { cls: 'navtag', kind: 'tag', out: [0.05, 0.22], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR - l4(U_NAV), 0], side: 'w' }); // the regime ticks' baseline
+    lab.sum = label(4, `<b>${N_ABOVE} of ${NCOL}</b> sessions above the ${FLOOR_T} floor<span class="sep"></span><span class="lg-p">${N_PREM} premium</span> · <span class="lg-d">${N_DISC} discount</span><span class="sep"></span><span class="lg-t">${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed</span>`, { cls: 'sum', kind: 'tag', sum: true, anchor: () => [COL_SPAN / 2 + 0.06, Y_FLOOR + H_COL + 0.26, 0], side: 'nw' });
   }
   // the inspector: one quiet box that shows the hovered or focused ring, layer or session
   const insp = document.createElement('div');
@@ -1067,24 +1221,45 @@
     if (hot && hot.info && hot !== inspFor) {
       const [t, s, d] = hot.info;
       insp.innerHTML = `<b>${t}</b><em>${s}</em> · ${d}`;
+      // portrait screens: the box sits left of the callout column, never under it
+      insp.style.maxWidth = stacked && hot.kind === 'list' && listX > 0 ? Math.max(160, Math.min(260, listX - 10 - gutter * 0.5)) + 'px' : '';
       inspW = insp.offsetWidth; inspH = insp.offsetHeight;
     }
     inspFor = hot;
-    insp.classList.toggle('is-on', !!hot);
     stage.classList.toggle('is-pointing', !!hoverPtr);
     requestFrame();
   }
+  // a pointer that has not moved (the page scrolled under it) never inspects: Chrome replays hover as content moves under a still mouse
+  const lastPtr = { x: NaN, y: NaN };
+  const moved = (e) => e.clientX !== lastPtr.x || e.clientY !== lastPtr.y;
   labels.forEach(l => {
     if (l.group == null) return;
     const on = () => { hoverFocus = { scene: l.scene, idx: l.group }; setHover(); };
     const off = () => { hoverFocus = null; setHover(); };
     l.el.addEventListener('focus', on); l.el.addEventListener('blur', off);
-    l.el.addEventListener('pointerenter', () => { hoverPtr = { scene: l.scene, idx: l.group }; setHover(); });
-    l.el.addEventListener('pointerleave', e => { if (e.pointerType === 'touch') return; hoverPtr = null; setHover(); });
+    l.el.addEventListener('pointerenter', e => { if (e.pointerType === 'touch' || !moved(e)) return; hoverPtr = { scene: l.scene, idx: l.group }; setHover(); }); // touch: taps decide
+    l.el.addEventListener('pointerleave', e => { if (e.pointerType === 'touch' || !moved(e)) return; hoverPtr = null; setHover(); });
   });
   // a callout shows while its scene is near; on the way out the proof's day tags stay, so the rising paper turns them to ink
-  const vis = (sc, keep) => 1 - sstep(0.22, 0.4, Math.abs(sNow - sc)) - (sc === 4 && !keep ? sstep(0.15, 0.55, xNow) : 0);
-  let tabScene = -1;
+  const vis = (l) => 1 - sstep(0.22, 0.4, Math.abs((reducedMQ.matches ? Math.round(sNow) : sNow) - l.scene)) - (l.scene === 4 && !l.keep ? sstep((l.out || OUT4)[0], (l.out || OUT4)[1], xeNow) : 0); // reduced motion: they snap with their scene
+  const OUT4 = [0.04, 0.2];
+  // a session's own progress into S4 (its column's stagger): its day tag lands with it and, in reverse, leaves first
+  const colIn = (c) => sNow >= 4 ? 1 : seg === 3 ? clamp(ease(stag(mRaw, (c + 0.55) / (NCOL + 0.55))), 0, 1) : 0;
+  let tabScene = -1, shownHasInsp = null;
+  // a ring's anchor: the point of its projected right flank nearest the angle that fans the six callouts out in order (LC-01 high on
+  // the inner ring, LC-06 low on the outer one), so every leader ends on its own ring and no two leaders cross
+  const FLANK = { x: 0, y: 0 };
+  function ringFlank(k, sc) {
+    const c = project(0, 0, 0), cx = c.x, cy = c.y, want = -0.95 + 1.9 * k / 5;
+    let best = 1e9, bx = cx, by = cy;
+    for (let j = 0; j < 96; j++) {
+      const q = onLoop(RB[k], RINGS[k][0], j / 96 * TAU, 0), p = project(q[0] * sc, q[1] * sc, q[2] * sc);
+      if (p.x <= cx) continue;
+      const d = Math.abs(Math.atan2(p.y - cy, p.x - cx) - want);
+      if (d < best) { best = d; bx = p.x; by = p.y; }
+    }
+    FLANK.x = bx; FLANK.y = by; return FLANK;
+  }
   function placeLabels() {
     if (!labelHost) return;
     const cur = Math.round(sNow), settledScene = Math.abs(sNow - cur) < 0.3 && xNow < 0.4 ? cur : -1;
@@ -1092,38 +1267,51 @@
       tabScene = settledScene;
       labels.forEach(l => { if (l.group == null) return; const on = l.scene === tabScene; l.el.tabIndex = on ? 0 : -1; if (on) l.el.removeAttribute('aria-hidden'); else l.el.setAttribute('aria-hidden', 'true'); });
       if (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('story-lab') && document.activeElement.tabIndex < 0) stage.focus({ preventScroll: true });
+      if (hoverPtr && hoverPtr.scene !== tabScene) { hoverPtr = null; setHover(); } // a new scene starts uninspected
     }
+    const tagTop = navH + barH + 6; // portrait: a tag never rises into the index (or its scene's caption) under the nav
+    const paperTop = H - paperH;
     const listCol = [];
     labels.forEach(l => {
-      const v = vis(l.scene, l.keep), on = v > 0.5 && !(stacked && l.wide); // portrait screens leave out the secondary notes
-      if (on !== l.on) { l.on = on; l.el.classList.toggle('is-on', on); if (l.path) l.path.classList.toggle('is-on', on); }
-      if (!on) return;
-      if (!l.w) { l.w = l.el.offsetWidth; l.h = l.el.offsetHeight; }
-      if (l.kind === 'cap') {
-        const L = layouts[l.scene], tr = stacked ? `translate(${(gutter).toFixed(1)}px, ${(L.rect[1] - 2).toFixed(1)}px)` : `translate(${(L.rect[2] + (l.scene === 0 || l.scene === 4 ? 0 : Math.min(ROOM_W[l.scene], W * 0.18)) - l.w).toFixed(1)}px, ${(H - barH - l.h - 6).toFixed(1)}px)`;
-        if (tr !== l.tr) l.el.style.transform = l.tr = tr;
-        return;
-      }
-      const sc = layouts[l.scene].s, a = l.anchor();
-      const pp = project(a[0] * sc, a[1] * sc, a[2] * sc);
-      l.ax = pp.x; l.ay = pp.y;
-      if (l.kind === 'list') listCol.push(l);
-      else {
-        let x = pp.x, y = pp.y;
-        const sd = l.side || 'c';
-        if (sd.includes('w')) x -= l.w + 8; else if (sd.includes('e')) x += 8; else x -= l.w / 2;
-        if (sd.includes('n')) y -= l.h + 6; else if (sd.includes('s')) y += 6; else y -= l.h / 2;
+      let on = vis(l) > 0.5 && !((stacked || short) && l.wide); // portrait and short screens leave out the secondary notes
+      if (on && l.col != null) on = colIn(l.col) > 0.5;
+      let x = 0, y = 0, tr = '';
+      if (on && l.kind === 'cap') {
+        const L = layouts[l.scene];
+        if (stacked) { x = gutter; y = navH + barH + 4; }
+        else { x = L.rect[2] + (l.scene === 0 || l.scene === 4 ? 0 : Math.min(ROOM_W[l.scene], W * 0.18)) - l.w; y = H - barH - l.h - 6; }
         x = clamp(x, 6, W - l.w - 6);
-        l.y = y;
-        const tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
-        if (tr !== l.tr) { l.el.style.transform = l.tr = tr; if (l.ink) l.ink.style.transform = tr; } // its ink copy on the paper sits exactly under it
+        tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+      } else if (on) {
+        const sc = layouts[l.scene].s, pp = l.anchorPx ? l.anchorPx(sc) : (a => project(a[0] * sc, a[1] * sc, a[2] * sc))(l.anchor());
+        l.ax = pp.x; l.ay = pp.y;
+        if (l.kind === 'list') listCol.push(l);
+        else {
+          x = pp.x; y = pp.y;
+          const sd = l.side || 'c';
+          if (sd.includes('w')) x -= l.w + 8; else if (sd.includes('e')) x += 8; else x -= l.w / 2;
+          if (sd.includes('n')) y -= l.h + 6; else if (sd.includes('s')) y += 6; else y -= l.h / 2;
+          y += l.dy || 0;
+          x = clamp(x, 6, W - l.w - 6);
+          y = Math.max(y, stacked ? tagTop + capH[l.scene] : navH + 6); // never under the nav (portrait: nor the index or the caption)
+          if (l.sum) { // the summary only where it clears the columns' tops; the copy, the coda and the paper's caption state it too
+            const s4 = layouts[4].s, top = project(0, (Y_FLOOR + H_COL + 0.2) * s4, 0).y;
+            if (y + l.h > top - 4) on = false;
+          }
+          l.y = y;
+          tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+          if (l.ink && tr !== l.inkTr) l.ink.style.transform = l.inkTr = tr; // its ink copy on the paper sits exactly under it
+          if (l.ink && paperH > 0.5 && y > paperTop - 2) on = false; // once the paper has it, its ink copy carries it
+        }
       }
+      if (on !== l.on) { l.on = on; l.el.classList.toggle('is-on', on); if (l.path) l.path.classList.toggle('is-on', on); if (l.node) l.node.classList.toggle('is-on', on); }
+      if (on && tr && tr !== l.tr) l.el.style.transform = l.tr = tr;
     });
     if (listCol.length) { // a column of callouts on the right of the structure; spread so they never touch
       listCol.sort((a, b) => a.ay - b.ay);
       const sc = listCol[0].scene, L = layouts[sc];
       const maxW = Math.max(...listCol.map(l => l.w)), colX = stacked ? W - gutter * 0.5 - maxW : Math.min(L.rect[2] + 22, W - gutter * 0.5 - maxW);
-      const gap = Math.max(...listCol.map(l => l.h)) + (stacked ? 2 : 6), top = navH + (stacked ? barH : 0) + 14, bottom = (stacked ? beatRects[sc].t - 10 : H - barH - 26);
+      const gap = Math.max(...listCol.map(l => l.h)) + (stacked || short ? 2 : 6), top = navH + (stacked ? barH + capH[sc] + 8 : 0) + 14, bottom = (stacked ? beatRects[sc].t - 10 : H - barH - capH[sc] - 16);
       let y = -1e9;
       listCol.forEach(l => { l.y = Math.max(l.ay - l.h / 2, y + gap); y = l.y; });
       const over = y + listCol[listCol.length - 1].h - bottom;
@@ -1137,15 +1325,22 @@
           const ly = l.y + l.h / 2, ex = colX - 6;
           const d = `M${l.ax.toFixed(1)} ${l.ay.toFixed(1)} L${(ex - 14).toFixed(1)} ${ly.toFixed(1)} L${ex.toFixed(1)} ${ly.toFixed(1)}`;
           if (d !== l.d) l.path.setAttribute('d', l.d = d);
+          if (l.node) { const c = `${l.ax.toFixed(1)},${l.ay.toFixed(1)}`; if (c !== l.nc) { l.nc = c; l.node.setAttribute('cx', l.ax.toFixed(1)); l.node.setAttribute('cy', l.ay.toFixed(1)); } }
         }
       });
       listX = colX; listBottom = listCol[listCol.length - 1].y + listCol[listCol.length - 1].h;
     }
-    const io = !!inspFor && inspFor.on;
-    insp.classList.toggle('is-on', io);
+    // the inspector: shown at rest only (never while the scenes move under it); on portrait screens just above the copy, under the
+    // structure, with the caption and the summary giving way to it
+    const io = !!inspFor && inspFor.on && Math.abs(sTarget - sNow) <= 0.02;
+    if (io !== shownHasInsp) { shownHasInsp = io; labelHost.classList.toggle('has-insp', io); insp.classList.toggle('is-on', io); }
     if (io) {
       let x, y;
-      if (stacked) { x = gutter * 0.5; y = navH + barH + 8; }
+      if (stacked) {
+        x = gutter * 0.5;
+        y = inspFor.kind === 'list' ? (beatRects[inspFor.scene] || { t: H }).t - inspH - 12 : navH + barH + 8;
+        y = clamp(y, navH + barH + (inspFor.kind === 'list' ? capH[inspFor.scene] : 0) + 8, H - inspH - 8);
+      }
       else if (inspFor.kind === 'list') { x = listX; y = listBottom + 18; }
       else { const sc = layouts[inspFor.scene].s, p = project(COL_X(inspFor.group) * sc, (Y_FLOOR + H_COL + 0.24) * sc, 0); x = p.x - inspW / 2; y = p.y - inspH - 12; }
       x = clamp(x, 8, W - inspW - 8); y = clamp(y, navH + 8, H - inspH - 8);
@@ -1214,10 +1409,19 @@
   let shownCoda = '', shownCodaTr = '', codaH = 0;
   const paperSum = story.querySelector('[data-story-sum]');
   if (paperSum) paperSum.textContent = `${N_ABOVE} of ${NCOL} above the ${FLOOR_T} floor · ${N_PREM} premium · ${N_DISC} discount · ${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed`;
-  const shown = beats.map(() => ({ op: '', tr: '', on: null }));
+  // the records, printed: as the paper reaches the floor line, the records hanging from it are uncovered in ink where they hung
+  const inkRecs = [];
+  let inkLink = null;
+  if (paperIn && lab.days) {
+    const ink = paperIn.querySelector('.story-ink');
+    inkLink = document.createElement('i'); inkLink.className = 'story-ink-link'; ink.appendChild(inkLink);
+    SESSIONS.forEach(() => { const e = document.createElement('i'); e.className = 'story-ink-rec'; ink.appendChild(e); inkRecs.push(e); });
+  }
+  let shownInk = '';
+  const shown = beats.map(() => ({ op: '', tr: '', on: null, eo: '', w: '', bo: '' }));
   const beatLinks = beats.map(b => Array.from(b.querySelectorAll('a[href], button')));
-  let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownXo = '', shownFill = [];
-  let paperH = 0;
+  let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownFill = [], shownCapO = '', shownGlyph = '', shownLabTr = '';
+  let paperH = 0, relay0 = false, relayReady = false, codaFallback = false;
   // the index follows the scroll position itself: immediate, and right even when frames are slow or throttled
   function syncIndex() {
     const ci = clamp(Math.round(sTarget), 0, 4);
@@ -1228,55 +1432,77 @@
     story.dataset.scene = String(ci);
   }
   function updateUI() {
-    const red = reducedMQ.matches, xe = red ? (xNow > 0.5 ? 1 : 0) : xNow;
+    const red = reducedMQ.matches, xe = xeNow;
     const ov = Math.max(0, scrollY - storyTop - run); // past the pin the stage leaves with the page
-    // the hand-off: the paper rises from the bottom edge to the ledger's floor line, which becomes its edge
+    const lean = stacked, X = stacked ? EXIT.tall : EXIT.wide; // portrait: on the way out the coda takes over from the proof's copy
+    codaFallback = false; // (short landscape: only if the headline cannot stay above the paper)
+    // the hand-off: once the columns have drained, the paper rises from the bottom edge to the floor line, which becomes its edge
     paperH = 0;
-    if (xe > 0 && seg === 3) paperH = Math.max(0, H - project(0, Y_FLOOR * layouts[4].s, 0).y - 1) * sstep(0.16, 0.8, xe);
+    if (xe > 0 && seg === 3) paperH = Math.max(0, H - project(0, Y_FLOOR * layouts[4].s, 0).y - 1) * sstep(X.paper[0], X.paper[1], xe);
     if (paper) { const v = paperH.toFixed(1); if (v !== shownPaper) { shownPaper = v; paper.style.height = v + 'px'; paper.style.visibility = paperH > 0.5 ? 'visible' : 'hidden'; } }
+    if (!relay0 && (relayReady || sNow > 0.3)) { relay0 = true; beats[0].classList.add('is-relay'); } // S0's headline hands over to the relay after its entrance
+    // the copy relay: every value is a function of the scroll position (d: 0 at rest, 0.5 halfway to the next scene), so a reverse
+    // scroll is the exact mirror. Out: paragraph, buttons and figures (.32→.42), then the headline's words (.38→.48, last word first),
+    // the eyebrow last. In: the eyebrow first (it crosses the outgoing one at the midpoint, so the slot is never empty), then the
+    // headline, then the paragraph. Never two paragraphs at once.
     beats.forEach((b, i) => {
-      const d = Math.abs(sNow - i);
-      let op = red ? (Math.round(sNow) === i ? 1 : 0) : 1 - sstep(stacked ? 0.42 : 0.38, 0.5, d); // each scene's copy holds for 76-84% of the scroll (reduced motion: it snaps with the scene)
-      let dy = red ? 0 : (sNow - i) * -24;
-      if (i === 4 && xe > 0) { // the headline stays above the paper when it fits; the rest gives way to it
+      const d = Math.abs(sNow - i), s = shown[i];
+      let op, eo, w, bo;
+      if (red) { op = Math.round(sNow) === i ? 1 : 0; eo = w = bo = 1; } // reduced motion: the scene's copy snaps with it, whole
+      else { eo = 1 - sstep(0.48, 0.54, d); w = 1 - sstep(0.38, 0.48, d); bo = 1 - sstep(0.32, 0.42, d); op = d < 0.56 ? 1 : 0; }
+      let dy = red ? 0 : (sNow - i) * -18;
+      if (i === 4 && xe > 0) { // on the way out: the headline stays above the paper when it fits (wide screens); the rest gives way
         const br = beatRects[4] || { ht: 0, hb: 0 }, edge = H - paperH - 26, shift = Math.min(0, edge - br.hb);
-        if (!stacked && br.ht + shift >= navH + 14) dy += shift; else op *= 1 - sstep(0.03, 0.3, xe);
-        const xo = (1 - sstep(0.04, 0.3, xe)).toFixed(3);
-        if (xo !== shownXo) b.style.setProperty('--xo', shownXo = xo);
+        if (lean) { // portrait: the settling floor (and the day tags under it) push the copy down; the coda has the summary by then
+          const fNow = project(0, Y_FLOOR * layouts[4].s, 0).y;
+          dy += Math.max(0, fNow + DAY_BAND + 10 - (br.t || H));
+          op *= 1 - sstep(X.copy[0], X.copy[1], xe);
+        }
+        else { bo *= 1 - sstep(0.04, 0.3, xe); if (br.ht + shift >= navH + 14) dy += shift; else { op *= 1 - sstep(0.03, 0.3, xe); codaFallback = true; } }
       }
       if (i === 4 && ov > 0) { // as the stage scrolls away the copy finishes leaving before it reaches the nav's lower edge
         const room0 = (beatRects[4] ? beatRects[4].t : 0) + dy - navH; // the room left above it when the stage starts to move
         const k = room0 <= 6 ? 0 : 1 - sstep(Math.max(0, room0 - 6 - Math.min(150, H * 0.2)), room0 - 6, ov);
         op *= k; if (!red) dy -= (1 - k) * 14;
       }
-      const s = shown[i], o = op.toFixed(3), tr = `translate3d(0, ${dy.toFixed(1)}px, 0)`;
+      const o = op.toFixed(3), tr = `translate3d(0, ${dy.toFixed(1)}px, 0)`, e = eo.toFixed(3), ww = w.toFixed(3), bb = bo.toFixed(3);
       if (s.op !== o) b.style.opacity = s.op = o;
       if (s.tr !== tr) b.style.transform = s.tr = tr;
-      if (s.on !== op > 0.5) b.classList.toggle('is-active', s.on = op > 0.5);
+      if (s.eo !== e) b.style.setProperty('--eo', s.eo = e);
+      if (s.w !== ww) b.style.setProperty('--w', s.w = ww);
+      if (s.bo !== bb) b.style.setProperty('--bo', s.bo = bb);
+      const act = op * bo > 0.5; // only a scene whose buttons are showing takes the pointer
+      if (s.on !== act) b.classList.toggle('is-active', s.on = act);
     });
     syncIndex();
     idx.forEach((button, i) => { const f = clamp(sNow - i + 0.5, 0, 1).toFixed(2); if (shownFill[i] !== f) button.style.setProperty('--fill', shownFill[i] = f); });
     if (shownScrolled !== sNow > 0.3) story.classList.toggle('is-scrolled', shownScrolled = sNow > 0.3);
-    // between two scenes, while the copy hands over, the scene numeral holds the column and rolls from this scene to the next
-    // (a chapter mark, never an empty frame; reduced motion: the copy snaps, nothing to bridge)
+    // the chapter mark: absent at rest, it rises only inside a hand-over (wide screens) and rolls from this scene's numeral to the next
     if (num) {
       const a = Math.min(3, Math.floor(sNow)), f = sNow - a;
-      const fit = numFit[a], op = red || stacked || !fit || sNow >= 4 || xNow > 0 ? 0 : 1 - sstep(0.06, 0.15, Math.abs(f - 0.5));
+      const fit = numFit[a], op = red || lean || short || !fit || sNow >= 4 || xNow > 0 ? 0 : sstep(0.42, 0.47, f) * (1 - sstep(0.53, 0.58, f));
       if (a !== shownNum) { shownNum = a; numRows[0][0].textContent = pad2(a); numRows[0][1].textContent = pad2(a + 1); numRows[1][0].textContent = SCENES[a]; numRows[1][1].textContent = SCENES[a + 1]; }
-      const v = op.toFixed(3), tr = red ? 'none' : `translate3d(0, ${((0.5 - f) * 24).toFixed(1)}px, 0) scale(${fit.toFixed(3)})`, roll = f < 0.5 ? '0' : '1'; // it rolls over as the scene passes halfway (a CSS spring), never rests between numbers
+      const v = op.toFixed(3), tr = red ? 'none' : `translate3d(0, ${((0.5 - f) * 24).toFixed(1)}px, 0)`, roll = f < 0.5 ? '0' : '1'; // it rolls over as the scene passes halfway (a CSS spring)
       if (v !== shownNumOp) { num.style.opacity = shownNumOp = v; }
-      if (tr !== shownNumTr) { num.style.transform = shownNumTr = tr; }
+      if (op > 0) { // only the numeral scales to the room above the copy; its label keeps its size and follows it up
+        if (tr !== shownNumTr) { num.style.transform = shownNumTr = tr; }
+        const g = `scale(${fit.toFixed(3)})`, lt = `translate3d(0, ${(-(1 - fit) * numGlyphH).toFixed(1)}px, 0)`;
+        if (g !== shownGlyph) numRows[0][0].parentNode.style.transform = shownGlyph = g;
+        if (lt !== shownLabTr) numRows[1][0].parentNode.style.transform = shownLabTr = lt;
+      }
       if (roll !== shownRoll) num.style.setProperty('--roll', shownRoll = roll);
     }
     const bo = (1 - sstep(0.08, 0.3, xe)).toFixed(3);
     if (bar && bo !== shownBar) { bar.style.opacity = shownBar = bo; bar.style.visibility = bo < 0.01 ? 'hidden' : ''; }
     if (shownLeaving !== xe > 0.05) story.classList.toggle('is-leaving', shownLeaving = xe > 0.05); // the covered tags take no pointer
+    // portrait and short landscape: while the proof's copy fades, its derived summary comes in above the floor (an end card, not an
+    // empty sky), then finishes leaving before it could reach the nav
     if (coda) {
       let co = 0, top = 0;
-      if (stacked && xe > 0) {
-        const pxu = (H / 2) / (CAM_D * Math.tan(FOV / 2)), colTop = H * 0.7 - (H_COL + 0.24) * layouts[4].s * pxu; // the ticks, once the proof has settled
-        top = Math.max(navH + 14, (navH + colTop) / 2 - codaH / 2);
-        co = red ? (xe > 0.5 ? 1 : 0) : sstep(0.42, 0.74, xe); // after the scene's own callouts have gone
+      if ((lean || codaFallback) && xe > 0) {
+        const fy = lean ? project(0, Y_FLOOR * layouts[4].s, 0).y : H * FLOOR_END(); // portrait: above the line as it settles
+        top = stacked ? Math.min((navH + fy - 16) / 2 - codaH / 2, fy - 48 - codaH) : Math.max(navH + 14, fy - 48 - codaH); // clear of the floor's tag and the ticks
+        co = red ? (xe > 0.5 ? 1 : 0) : lean ? sstep(X.coda[0], X.coda[1], xe) * sstep(navH + 6, navH + 24, top) : sstep(0.22, 0.5, xe);
         if (ov > 0) { const room0 = top - navH; co *= room0 <= 6 ? 0 : 1 - sstep(Math.max(0, room0 - 6 - Math.min(150, H * 0.2)), room0 - 6, ov); }
       }
       const v = co.toFixed(3), tr = `translate3d(0, ${(top + (red ? 0 : (1 - co) * 10)).toFixed(1)}px, 0)`;
@@ -1284,33 +1510,65 @@
       if (co > 0 && tr !== shownCodaTr) coda.style.transform = shownCodaTr = tr;
     }
     placeLabels();
-    // the paper's caption sits under the ink tags (stage coordinates: the paper uncovers it, it does not carry it)
-    if (paperCap && paperH > 0.5) {
-      let yb = 0;
-      if (lab.days) lab.days.forEach(l => { if (l.on && l.h) yb = Math.max(yb, l.y + l.h); });
-      if (!yb) yb = H - paperH + 30;
-      const cap = `translate3d(0, ${Math.round(yb + 16)}px, 0)`;
-      if (cap !== shownCap) paperCap.style.transform = shownCap = cap;
+    if (paperH > 0.5) {
+      // the records in ink, exactly where they hung from the floor line; the link between them is the ledger's hairline
+      if (inkRecs.length) {
+        const s4 = layouts[4].s, ry = project(0, (Y_FLOOR - l4(U_REC)) * s4, 0).y;
+        const xs = SESSIONS.map((ss, c) => project(COL_X(c) * s4, (Y_FLOOR - l4(U_REC)) * s4, 0).x);
+        const key = xs.map(v => v.toFixed(1)).join() + ry.toFixed(1);
+        if (key !== shownInk) {
+          shownInk = key;
+          inkRecs.forEach((e, c) => { e.style.transform = `translate(${(xs[c] - 7.5).toFixed(1)}px, ${(ry - 3.5).toFixed(1)}px)`; });
+          if (inkLink) { inkLink.style.transform = `translate(${xs[0].toFixed(1)}px, ${ry.toFixed(1)}px)`; inkLink.style.width = (xs[xs.length - 1] - xs[0]).toFixed(1) + 'px'; }
+        }
+      }
+      // the paper's caption sits under the ink tags (stage coordinates: the paper uncovers it, it does not carry it), and comes in last
+      if (paperCap) {
+        let yb = 0;
+        if (lab.days) lab.days.forEach(l => { if (l.inkTr && l.h) yb = Math.max(yb, l.y + l.h); });
+        if (!yb) yb = H - paperH + 30;
+        const cap = `translate3d(0, ${Math.round(yb + 16)}px, 0)`;
+        if (cap !== shownCap) paperCap.style.transform = shownCap = cap;
+        const co = (red ? 1 : sstep(X.cap[0], X.cap[1], xe)).toFixed(3);
+        if (co !== shownCapO) paperCap.style.opacity = shownCapO = co;
+      }
     }
   }
 
   /* ================= the frame ================= */
   let running = true, visible = true, paused = false, frameId = 0, t0 = performance.now(), simTime = 14.3, settledOnce = false, pointerDirty = false, ptr = null, firstFrame = -1;
   const PIXEL_BUDGET = 3840 * 2160;
+  // a resize or a rotation keeps the reader's scene: the run is in svh, so their place is a share of it, not a pixel offset
+  function readingPoint() {
+    if (!(lastP >= 0)) return null;
+    if (lastP <= 1) return { p: lastP };
+    const ov = (lastP - 1) * run / Math.max(1, stageH); // the stage leaving: how far, in stage heights
+    return ov < 1 ? { ov } : null;
+  }
+  function restore(k) {
+    if (!k) return;
+    const y = Math.round(storyTop + (k.p != null ? k.p * run : run + k.ov * stageH));
+    if (Math.abs(y - window.scrollY) > 1) window.scrollTo({ top: y, behavior: 'instant' });
+    scrollY = y;
+  }
   function resize(force) {
     if (lost || !ready) return;
-    measure();
     const w = stage.clientWidth, h = stage.clientHeight, r = window.devicePixelRatio || 1;
-    if (force === true || w !== W || h !== H || r !== ratio || stackedMQ.matches !== stacked) {
+    const sized = force === true || w !== W || h !== H || r !== ratio || stackedMQ.matches !== stacked;
+    const keep = readingPoint(); // before anything moves
+    if (sized) {
       W = w; H = h; ratio = r;
-      dpr = Math.min(3, r, Math.sqrt(PIXEL_BUDGET / Math.max(1, W * H)));
+      // phones (LITE) draw at most 2 device px per CSS px: the swarm reads the same, the GPU does less than half the work
+      dpr = Math.min(LITE ? 2 : 3, r, Math.sqrt(PIXEL_BUDGET / Math.max(1, W * H)));
       cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr);
       gl.viewport(0, 0, cv.width, cv.height);
       if (paperIn) paperIn.style.height = H + 'px'; // the paper's contents live in the stage's frame
       leaders.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      labels.forEach(l => { l.w = 0; l.tr = ''; });
+      setModes(); // the copy's mode first: the frames are fitted around the copy it leaves
     }
-    fitScenes();
+    measureScroll(); // the toolbar alone (stage unchanged): only the scroll geometry, the callouts keep their layout
+    if (sized) fitScenes();
+    restore(keep);
     sceneScroll();
     requestFrame();
   }
@@ -1330,6 +1588,8 @@
     gl.uniform1f(u.u_shade, lerp(SHADE[seg], SHADE[seg + 1], mE));
     gl.uniform1fv(u.u_hov, hov); gl.uniform1f(u.u_hovOn, hoverOn); gl.uniform1f(u.u_hovScene, hoverScene);
     gl.uniform1f(u.u_sceneA, seg); gl.uniform1f(u.u_sceneB, seg + 1);
+    for (let c = 0; c < NCOL; c++) dcArr[c] = seg === 3 && xeNow > 0 ? drainOf(c) : 0;
+    gl.uniform1fv(u.u_dc, dcArr);
     gl.uniform1f(u.u_hovLift, reducedMQ.matches ? 0 : 0.07 * scale[hoverScene === seg ? 0 : 1] * (hoverScene === 2 ? 1 : 0));
     const occ = seg === 0 ? (1 - sstep(0, 0.55, mRaw)) : 0;
     gl.uniform4f(u.u_occ, 0, 0, 0, occ * scale[0] * 0.995);
@@ -1387,14 +1647,16 @@
     if (red && introStart >= 0) intro = 1;
     // scroll with a little weight: the instrument follows, it does not snap (reduced motion: it does)
     if (red || !settledOnce) { sNow = sTarget; xNow = xTarget; settledOnce = true; }
-    else { const k = 1 - Math.exp(-dtS * 6.5); sNow += (sTarget - sNow) * k; xNow += (xTarget - xNow) * k; if (Math.abs(sTarget - sNow) < 0.0004) sNow = sTarget; if (Math.abs(xTarget - xNow) < 0.0004) xNow = xTarget; }
+    else { const k = 1 - Math.exp(-dtS * (performance.now() - lastGo.t < 1500 ? 10 : 6.5)); sNow += (sTarget - sNow) * k; xNow += (xTarget - xNow) * k; if (Math.abs(sTarget - sNow) < 0.0004) sNow = sTarget; if (Math.abs(xTarget - xNow) < 0.0004) xNow = xTarget; }
+    xeNow = red ? (xNow > 0.5 ? 1 : 0) : xNow;
     morphState();
     camera();
     if (pointerDirty) {
       pointerDirty = false;
       const h = ptr ? hitTest(ptr.x, ptr.y) : null;
       const same = (a, b) => (!a && !b) || (a && b && a.scene === b.scene && a.idx === b.idx);
-      if (!same(h, hoverPtr) && !(ptr && ptr.onLabel)) { hoverPtr = h; setHover(); }
+      if (ptr && ptr.tap) { if (!same(h, hoverPtr) || !h) { hoverPtr = h; setHover(); } ptr = null; } // a tap on empty stage closes it
+      else if (!same(h, hoverPtr) && !(ptr && ptr.onLabel)) { hoverPtr = h; setHover(); }
     }
     const kh = 1 - Math.exp(-dtS * (red ? 60 : 12));
     let hmax = 0;
@@ -1405,7 +1667,8 @@
     resetAttribs();
     if (ext) drawLines();
     resetAttribs();
-    drawBulk(true); drawBulk(false);
+    if (!(LITE && Math.abs(sTarget - sNow) > 0.02)) drawBulk(true); // phones skip the glow pass while the scenes are moving
+    drawBulk(false);
     resetAttribs();
     drawActors(false); drawActors(true);
     updateUI();
@@ -1425,7 +1688,7 @@
   let lastGo = { i: -1, t: 0 };
   function goTo(i, announce) {
     i = clamp(i, 0, 4);
-    measure();
+    measureScroll();
     lastGo = { i, t: performance.now() };
     window.scrollTo({ top: Math.round(sceneTop(i)), behavior: reducedMQ.matches ? 'instant' : 'smooth' });
     if (announce && live) live.textContent = `Scene ${i + 1} of 5: ${SCENES[i]}`;
@@ -1436,7 +1699,7 @@
     if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
     const d = e.key === 'ArrowRight' || e.key === 'PageDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'PageUp' ? -1 : 0;
     if (!d) return;
-    measure();
+    measureScroll();
     if (window.scrollY < storyTop - 4 || window.scrollY > storyTop + run + 4) return; // past the overture the keys scroll the page as usual
     const base = performance.now() - lastGo.t < 1200 ? lastGo.i : clamp(Math.round(sTarget + (xTarget > 0 ? 0.5 : 0)), 0, 4);
     if (d > 0 && base >= 4) { // past the last scene: through the hand-off to the first paper chapter
@@ -1461,7 +1724,8 @@
   function fail(err) {
     if (err) console.error(err);
     running = false; stopFrames();
-    beats.forEach(b => { b.style.opacity = b.style.transform = b.style.visibility = ''; b.classList.remove('is-active'); });
+    beats.forEach(b => { b.style.opacity = b.style.transform = b.style.visibility = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-relay', 'is-tight'); });
+    root.classList.remove('story-compact', 'story-short');
     beatLinks.forEach(list => list.forEach(el => el.removeAttribute('tabindex')));
     labels.forEach(l => l.el.remove()); leaders.remove();
     if (bar) bar.style.opacity = bar.style.visibility = '';
@@ -1486,24 +1750,47 @@
       window.addEventListener('resize', () => resize());
       stackedMQ.addEventListener('change', () => resize(true));
       (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
-      window.addEventListener('scroll', () => { scrollY = window.scrollY; sceneScroll(); syncIndex(); requestFrame(); }, { passive: true });
+      window.addEventListener('scroll', () => {
+        scrollY = window.scrollY; sceneScroll(); syncIndex();
+        if (!visible) { sNow = sTarget; xNow = xTarget; settledOnce = false; } // off-screen: the instrument is already where the reader will meet it
+        requestFrame();
+      }, { passive: true });
+      document.addEventListener('oxa:loaded', () => setTimeout(() => { relayReady = true; requestFrame(); }, 1500), { once: true }); // S0's headline entrance has run
+      if (root.classList.contains('is-loaded')) setTimeout(() => { relayReady = true; requestFrame(); }, 1500);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => resize(true));
       window.addEventListener('load', () => resize(true), { once: true });
+      // a mouse inspects what it moves over (only real moves: a still pointer the page scrolls under inspects nothing)
       stage.addEventListener('pointermove', e => {
+        if (e.pointerType === 'touch' || !moved(e)) return; // touch: taps decide (below); a swipe never inspects
+        lastPtr.x = e.clientX; lastPtr.y = e.clientY;
         const r = stage.getBoundingClientRect();
         const onCopy = !!(e.target.closest && e.target.closest('.beat-text, .hero-stats, .story-bar'));
         ptr = onCopy ? null : { x: e.clientX - r.left, y: e.clientY - r.top, onLabel: !!(e.target.closest && e.target.closest('.story-lab')) };
         pointerDirty = true;
-        if (!reducedMQ.matches && !paused && e.pointerType !== 'touch') { mouse.tx = (e.clientX / window.innerWidth - 0.5) * 2; mouse.ty = (e.clientY / window.innerHeight - 0.5) * 2; }
+        if (!reducedMQ.matches && !paused) { mouse.tx = (e.clientX / window.innerWidth - 0.5) * 2; mouse.ty = (e.clientY / window.innerHeight - 0.5) * 2; }
         requestFrame();
       }, { passive: true });
-      stage.addEventListener('pointerleave', e => { if (e.pointerType === 'touch') return; ptr = null; pointerDirty = true; mouse.tx = mouse.ty = 0; requestFrame(); }); // a tap's highlight stays until the next tap
-      stage.addEventListener('pointerdown', e => { // touch: a tap shows what is under the finger
-        if (e.pointerType !== 'touch') return;
+      stage.addEventListener('pointerleave', e => { if (e.pointerType === 'touch') return; ptr = null; pointerDirty = true; mouse.tx = mouse.ty = 0; requestFrame(); });
+      // touch: a tap (a short touch that hardly moved) shows what it landed on; a tapped callout always wins over the structure
+      // under it, a tap on empty stage closes the inspector, and a swipe (cancelled or moved) does nothing
+      let tap = null;
+      stage.addEventListener('pointerdown', e => { tap = e.pointerType === 'touch' ? { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId } : null; }, { passive: true });
+      stage.addEventListener('pointercancel', () => { tap = null; }, { passive: true });
+      stage.addEventListener('pointerup', e => {
+        const t = tap; tap = null;
+        if (!t || e.pointerType !== 'touch' || e.pointerId !== t.id) return;
+        if (Math.abs(e.clientX - t.x) >= 10 || Math.abs(e.clientY - t.y) >= 10 || performance.now() - t.t >= 450) return;
+        const hitLab = e.target.closest && e.target.closest('.story-lab'), l = hitLab && labels.find(x => x.el === hitLab);
+        if (l && l.group != null) { hoverPtr = { scene: l.scene, idx: l.group }; setHover(); return; }
+        if (e.target.closest && e.target.closest('.beat-text, .hero-stats, .story-bar, .story-insp')) return;
         const r = stage.getBoundingClientRect();
-        ptr = { x: e.clientX - r.left, y: e.clientY - r.top }; pointerDirty = true; requestFrame();
+        ptr = { x: e.clientX - r.left, y: e.clientY - r.top, tap: true }; pointerDirty = true; requestFrame();
       }, { passive: true });
-      if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) requestFrame(); else stopFrames(); }, { threshold: 0 }).observe(story);
+      if ('IntersectionObserver' in window) {
+        // visible: the loop runs; near (within 40% of a screen): the frame is brought up to the scroll before the stage can show
+        new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) requestFrame(); else stopFrames(); }, { threshold: 0 }).observe(story);
+        new IntersectionObserver(([e]) => { if (e.isIntersecting && running && ready && !lost) { scrollY = window.scrollY; sceneScroll(); sNow = sTarget; xNow = xTarget; settledOnce = false; stopFrames(); frame(performance.now(), true); } }, { rootMargin: '40% 0px 40% 0px', threshold: 0 }).observe(story);
+      }
       document.addEventListener('visibilitychange', () => { if (document.hidden) stopFrames(); else requestFrame(); });
     }
     resize(true);
