@@ -1435,6 +1435,8 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .chain-list > li.is-broken { background: rgba(217, 103, 93, .055); transition: none; }
 .chain-list > li.is-broken .i, .chain-list > li.is-broken .who, .chain-list > li.is-broken .ev, .chain-list > li.is-broken .what { color: var(--reject); transition: none; }
 .chain-list > li.is-broken .chain-node { background: transparent; box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 14px rgba(217, 103, 93, .45); transition: none; }
+/* healed: it turns back at once too (its block flares green); the status line counts what is red, and so does the eye */
+.chain-list > li.is-heal .i, .chain-list > li.is-heal .who, .chain-list > li.is-heal .ev, .chain-list > li.is-heal .what, .chain-list > li.is-heal .chain-node, .chain-list > li.is-heal .chain-link b { transition: none; }
 .chain-list > li.is-edited .chain-node { background: var(--reject); }
 .chain-list > li.is-broken .chain-seg::before, .chain-list > li.is-broken .chain-seg::after { background: var(--reject); box-shadow: 0 0 6px rgba(217, 103, 93, .6); }
 .chain-list > li.is-broken .chain-seg::before { transform: translateY(-2px); }
