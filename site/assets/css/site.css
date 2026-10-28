@@ -2267,6 +2267,8 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .nav-ch-panel, .nav-sheet, .nav-toggle span::before, .nav-toggle span::after, .nav-links a::after, .nav-ch-caret, .nav-ch-list .t, .nav-sheet-links a { transition-property: opacity, visibility, background-color, color; }
   .nav-ch-panel { transform: none; }
   .nav-sheet-links li, .nav-sheet .btn, .nav-sheet-meta, .loader.is-done ~ .nav .container > * { animation: none; }
+  .nav-sheet { transform: none; } /* it fades, nothing drifts (two rules: an unknown selector would void a list) */
+  .nav-sheet:not(:popover-open) :is(.nav-sheet-links li, .btn, .nav-sheet-meta) { transform: none; }
   .nav-live i { animation: none; }
   .loader, .loader-inner { transition: opacity .4s var(--ease), visibility 0s linear .4s; }
   .loader.is-done { transform: none; opacity: 0; }
