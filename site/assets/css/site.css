@@ -1757,7 +1757,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 
 /* the drawing */
 .arch-svg .ap-hit { pointer-events: all; cursor: pointer; }
-.arch-svg text { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; fill: rgba(245, 242, 236, .56); }
+.arch-svg text { font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: var(--track-label, .12em); text-transform: uppercase; fill: rgba(245, 242, 236, .56); }
 .arch-svg text.is-hot { fill: var(--signal-bright); }
 .arch-svg text.ab-t { fill: var(--signal-bright); }
 .arch-svg text.ab-t.is-below, .arch-svg text.af-t { fill: var(--khaki); }
