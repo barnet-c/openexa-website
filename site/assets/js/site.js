@@ -28,10 +28,12 @@
 
   const pageKey = path => path.replace(/\/+$/, '').split('/').pop().replace(/\.html$/, '') || 'index';
   const here = pageKey(location.pathname);
+  const section = /\/research\/[^/]+$/.test(location.pathname) ? 'research' : here; // an article sits under Research
+  // marks the link to where the reader is; never removes a mark the page itself states (a research article's markup
+  // marks Research, and stripping it hid the current-page underline there)
   $$('.nav-links a, .nav-sheet a, .nav .btn').forEach(a => {
     const href = (a.getAttribute('href') || '').split(/[?#]/)[0];
-    if (href && pageKey(href) === here) a.setAttribute('aria-current', 'page');
-    else a.removeAttribute('aria-current');
+    if (href && (pageKey(href) === here || pageKey(href) === section)) a.setAttribute('aria-current', 'page');
   });
 
   /* chapters: [data-chapter] sections, else numbered sections (.sec-head), else an article's table of contents */
