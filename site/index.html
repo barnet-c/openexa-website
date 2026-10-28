@@ -310,32 +310,50 @@
         <div class="sec-head" data-reveal>
           <span class="idx">04</span><span class="lab">Proof</span><span class="aside">Real trades · live capital</span>
         </div>
-        <div class="grid">
-          <div class="col-5">
+        <div class="proof-layout">
+          <div class="proof-copy">
             <span class="badge" data-reveal><i></i>Lifecycle 01 · live capital</span>
             <h2 class="display-2 mt-2" data-reveal data-split style="--d:60ms">Ten sessions. All above the floor. Confirmed by the broker.</h2>
             <p class="body-lg mt-3" data-reveal style="--d:120ms">Agents captured more than ten basis points in every session, in discount and premium regimes alike — the same swarm, the same gates, both sides of the NAV. Every fill is verified against the executing brokers' own confirmations.</p>
           </div>
-          <div class="col-7 offset-6" data-reveal style="--d:160ms">
-            <div class="eyebrow mb-2">Performance report · 10 sessions</div>
-            <div class="perf">
-              <div class="day" style="--i:0"><div class="d">Day 01</div><div class="v">&gt;10</div><div class="t">Discount</div></div>
-              <div class="day" style="--i:1"><div class="d">Day 02</div><div class="v">&gt;10</div><div class="t">Discount</div></div>
-              <div class="day" style="--i:2"><div class="d">Day 03</div><div class="v">&gt;10</div><div class="t p">Premium</div></div>
-              <div class="day" style="--i:3"><div class="d">Day 04</div><div class="v">&gt;10</div><div class="t p">Premium</div></div>
-              <div class="day" style="--i:4"><div class="d">Day 05</div><div class="v">&gt;10</div><div class="t p">Premium</div></div>
-              <div class="day" style="--i:5"><div class="d">Day 06</div><div class="v">&gt;10</div><div class="t p">Premium</div></div>
-              <div class="day" style="--i:6"><div class="d">Day 07</div><div class="v">&gt;10</div><div class="t">Discount</div></div>
-              <div class="day" style="--i:7"><div class="d">Day 08</div><div class="v">&gt;10</div><div class="t p">Premium</div></div>
-              <div class="day" style="--i:8"><div class="d">Day 09</div><div class="v">&gt;10</div><div class="t">Discount</div></div>
-              <div class="day" style="--i:9"><div class="d">Day 10</div><div class="v">&gt;10</div><div class="t">Discount</div></div>
+          <figure class="proof-fig">
+            <div class="eyebrow"><span>Performance report · <span data-proof="total">10</span> sessions</span></div>
+            <!-- The one record of the ten sessions. assets/js/proof.js draws the chart from it and derives every session count on
+                 this page; the overture can read it too. Edit the sessions here, then the static text below to match. -->
+            <script type="application/json" id="oxa-sessions">
+{"lifecycle": "Lifecycle 01", "unit": "bps", "floor": 10, "sessions": [
+  {"day": "Day 01", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 02", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 03", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 04", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 05", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 06", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 07", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 08", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 09", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 10", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"}
+]}
+            </script>
+            <div class="proof" data-proof-chart>
+              <ol class="proof-list">
+                <li><b>Day 01</b><span>&gt;10 bps</span><span>Discount</span></li>
+                <li><b>Day 02</b><span>&gt;10 bps</span><span>Discount</span></li>
+                <li><b>Day 03</b><span>&gt;10 bps</span><span>Premium</span></li>
+                <li><b>Day 04</b><span>&gt;10 bps</span><span>Premium</span></li>
+                <li><b>Day 05</b><span>&gt;10 bps</span><span>Premium</span></li>
+                <li><b>Day 06</b><span>&gt;10 bps</span><span>Premium</span></li>
+                <li><b>Day 07</b><span>&gt;10 bps</span><span>Discount</span></li>
+                <li><b>Day 08</b><span>&gt;10 bps</span><span>Premium</span></li>
+                <li><b>Day 09</b><span>&gt;10 bps</span><span>Discount</span></li>
+                <li><b>Day 10</b><span>&gt;10 bps</span><span>Discount</span></li>
+              </ol>
             </div>
-            <div class="figure-cap"><span>Fig. 04 — bps captured per session · floor 10 bps</span><span>Broker-confirmed · every session</span></div>
-          </div>
+            <figcaption class="figure-cap"><span>Fig. 04 — bps per session · one block per basis point</span><span>Broker-confirmed · every session</span></figcaption>
+          </figure>
         </div>
         <div class="stats mt-5" data-reveal>
-          <div><div class="v">&gt;<span data-count="10">10</span><small>bps</small></div><div class="k">Per session</div><div class="d">Floor observed in all ten sessions.</div></div>
-          <div><div class="v"><span data-count="10">10</span>/10</div><div class="k">Sessions above floor</div><div class="d">Six premium, four discount.</div></div>
+          <div><div class="v">&gt;<span data-count="10" data-proof="floor">10</span><small>bps</small></div><div class="k">Per session</div><div class="d">Floor observed in all <span data-proof="above" data-proof-as="words">ten</span> sessions.</div></div>
+          <div><div class="v"><span data-count="10" data-proof="above">10</span>/<span data-proof="total">10</span></div><div class="k">Sessions above floor</div><div class="d" data-proof="regimes">Five premium, five discount.</div></div>
           <div><div class="v"><span data-count="3">3</span></div><div class="k">Beta customers</div><div class="d">Running the lifecycle on their assets.</div></div>
           <div><div class="v"><span data-count="5">5</span></div><div class="k">Runs</div><div class="d">Lifecycle executions.</div></div>
         </div>
@@ -489,5 +507,6 @@
   <script src="assets/js/swarm.js" defer></script>
   <script src="assets/js/chain.js" defer></script>
   <script src="assets/js/site.js" defer></script>
+  <script src="assets/js/proof.js" defer></script>
 </body>
 </html>
