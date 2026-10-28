@@ -57,7 +57,7 @@ async def main():
 
         await pg.goto(f"{BASE}/", wait_until="load")
         await pg.wait_for_timeout(3000)
-        assert await pg.locator(".chapters a").count() == 7
+        assert await pg.locator(".nav-ch-list a").count() == 7 and await pg.locator(".chapters").count() == 0
         await pg.locator("#research").scroll_into_view_if_needed()
         await pg.wait_for_timeout(1200)
         await pg.screenshot(path=str(OUT / "home-research.png"))
