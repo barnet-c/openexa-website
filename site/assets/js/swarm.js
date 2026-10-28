@@ -1265,7 +1265,8 @@
   function boot() {
     if (booted) return; booted = true;
     resize(); root.dataset.swQuality = quality;
-    if (reduced.matches) still(); else { reset(); camera(); warmStart(); inLoop = true; for (let k = 0; k < 30; k++) step(0.05, k > 22); inLoop = false; projectAll(); paint(); if (onScreen) stats(); }
+    if (reduced.matches) still(); else { reset(); camera(); warmStart(); inLoop = true; for (let k = 0; k < 30; k++) step(0.05, k > 22); inLoop = false; projectAll(); paint(); }
+    stats(); // once, at the model's birth (a viewport away at most): the counters never hold a zero the model does not
     schedule();
   }
   let bootQueued = false;
