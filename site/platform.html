@@ -86,67 +86,52 @@
     <section class="section" id="architecture">
       <div class="container">
         <div class="sec-head" data-reveal><span class="idx">01</span><span class="lab">Architecture</span><span class="aside">Core infrastructure components · read top to bottom</span></div>
-        <div class="grid">
-          <div class="col-4">
-            <div class="sticky">
-              <h2 class="display-3" data-reveal>Perceive. Reason. Act. Govern. Optimize. Orchestrate. Connect. Permit.</h2>
-              <p class="body-lg mt-3" data-reveal style="--d:80ms">Each layer has one job and a hard boundary. That is what lets the system run tens of thousands of narrow agents at once without any of them becoming a black box — and what lets a new lifecycle reuse everything below the agents.</p>
-              <div class="stackviz mt-4" data-reveal style="--d:140ms" aria-hidden="true">
-                <div class="sv l1"><span>01</span>Signal Intelligence</div>
-                <div class="sv"><span>02</span>Model Layer · post-trained LLM</div>
-                <div class="sv l1"><span>03</span>Domain-Specific Agents · the swarm</div>
-                <div class="sv"><span>04</span>Execution Council</div>
-                <div class="sv"><span>05</span>Routing Layer</div>
-                <div class="sv"><span>06</span>Execution Layer</div>
-                <div class="sv l2"><span>07</span>MCP Server</div>
-                <div class="sv l2"><span>08</span>Authentication Layer</div>
-                <div class="sv rails"><span>—</span>Brokers · Clearing · OTC · Venues · Counterparties</div>
-              </div>
-            </div>
+        <div class="grid mb-3">
+          <div class="col-7"><h2 class="display-3" data-reveal>Perceive. Reason. Act. Govern. Optimize. Orchestrate. Connect. Permit.</h2></div>
+          <div class="col-4 offset-9"><p class="body-lg" data-reveal style="--d:80ms">Each layer has one job and a hard boundary. That is what lets the system run tens of thousands of narrow agents at once without any of them becoming a black box — and what lets a new lifecycle reuse everything below the agents.</p></div>
+        </div>
+        <!-- the architecture explorer (arch.js): without JavaScript this is the readable list -->
+        <div class="layers" data-arch data-arch-label="The agentic stack · exploded view" data-reveal style="--d:100ms">
+          <div class="layer" data-job="Watches the lifecycle's live data and keeps re-estimating risk, price and regime.">
+            <div class="k">01</div>
+            <h3>Signal Intelligence<small>Perceive</small></h3>
+            <div><p>Proprietary AI and ML models for risk and prediction. In Lifecycle 01 the create-and-redeem signal watches every ETF against its NAV, basket, borrow and venue depth, and captures short-lived discrepancies when execution latency is controlled and risk is properly managed. It never sleeps and never anchors.</p><ul><li>Risk model</li><li>Price model</li><li>Arb model</li><li>Regime detection</li><li>Continuous re-estimation</li></ul><dl class="io"><div><dt>In</dt><dd>Live lifecycle data: prices, NAV, baskets, borrow, venue depth</dd></div><div><dt>Out</dt><dd>Risk, price and regime estimates: the signal</dd></div></dl></div>
           </div>
-          <div class="col-8">
-            <div class="layers" data-reveal style="--d:100ms">
-              <div class="layer">
-                <div class="k">01</div>
-                <h3>Signal Intelligence<small>Perceive</small></h3>
-                <div><p>Proprietary AI and ML models for risk and prediction. In Lifecycle 01 the create-and-redeem signal watches every ETF against its NAV, basket, borrow and venue depth, and captures short-lived discrepancies when execution latency is controlled and risk is properly managed. It never sleeps and never anchors.</p><ul><li>Risk model</li><li>Price model</li><li>Arb model</li><li>Regime detection</li><li>Continuous re-estimation</li></ul></div>
-              </div>
-              <div class="layer">
-                <div class="k">02</div>
-                <h3>Model Layer<small>Reason</small></h3>
-                <div><p>A post-trained LLM tuned on the lifecycle's documents, rules, message formats and exception history — the substrate every domain agent reasons on. Tool use is bounded by the layers beneath it: the model can propose anything and execute nothing on its own.</p><ul><li>Post-trained LLM</li><li>Domain corpus</li><li>Bounded tool use</li><li>Evaluated per release</li></ul></div>
-              </div>
-              <div class="layer">
-                <div class="k">03</div>
-                <h3>Domain-Specific Agents<small>Act</small></h3>
-                <div><p>Proprietary, fully automated, domain-specific workflow agents. A one-click workflow creator builds custom execution workflows tailored to specific market conditions and regulatory requirements. Each agent does one narrow job — read a feed, score a gap, size an order, check a limit, match a fill — and the swarm does the rest.</p><ul><li>5,000 – 50,000 per lifecycle</li><li>One-click workflow creation</li><li>Exception management</li><li>Master–copy replication</li></ul></div>
-              </div>
-              <div class="layer">
-                <div class="k">04</div>
-                <h3>Execution Council<small>Govern</small></h3>
-                <div><p>The gate every proposal passes. The Council arbitrates when agents disagree, enforces policy and mandate limits, and returns approve or reject in milliseconds — or hands the decision to a human when the operating mode says so. Nothing reaches execution that did not pass.</p><ul><li>Approve / reject</li><li>Policy engine</li><li>Conflict arbitration</li><li>Human-in-the-loop optional</li></ul></div>
-              </div>
-              <div class="layer">
-                <div class="k">05</div>
-                <h3>Routing Layer<small>Optimize</small></h3>
-                <div><p>Continually optimizes execution flow for an efficient lifecycle. Routes each approved action across brokers, OTC desks, dark pools, exchanges and clearing rails on real-time conditions and historical performance — the cheapest, fastest, safest path for that action, right now.</p><ul><li>Smart order routing</li><li>Venue scoring</li><li>Cost of execution</li><li>Latency budget</li></ul></div>
-              </div>
-              <div class="layer">
-                <div class="k">06</div>
-                <h3>Execution Layer<small>Orchestrate</small></h3>
-                <div><p>Orchestrates the lifecycle end to end with deterministic state — validated, submitted, partial, filled, reconciled — plus retries, idempotency keys and reconciliation against counterparty truth. The execution layer stays algorithmic so that the intelligence above it can be audited against it.</p><ul><li>Order-state machine</li><li>Idempotent submission</li><li>Retries &amp; backoff</li><li>Reconciliation</li></ul></div>
-              </div>
-              <div class="layer">
-                <div class="k">07</div>
-                <h3>MCP Server<small>Connect</small></h3>
-                <div><p>A custom Model Context Protocol server and toolset deploy tools to the agents and provide authenticated connectivity to brokers, transfer agents, custodians, execution desks, exchanges and clearing. Deployed as secure, customer-scoped MCP servers — your rails, your context, nothing shared.</p><ul><li>Custom tools</li><li>Secure customer MCP servers</li><li>Broker &amp; custodian adapters</li><li>Real-time data pipe</li></ul></div>
-              </div>
-              <div class="layer">
-                <div class="k">08</div>
-                <h3>Authentication Layer<small>Permit</small></h3>
-                <div><p>Scoped, revocable permissions for every agent, tool and counterparty — exactly the permissions a workflow needs, and nothing more. Agents act inside limits you set. Custody never moves. Nothing in the system has withdrawal rights.</p><ul><li>Scoped API permissions</li><li>Revocable per agent</li><li>Never withdrawal rights</li><li>Role-based access</li></ul></div>
-              </div>
-            </div>
+          <div class="layer" data-job="The post-trained model every agent reasons on. It can propose anything and execute nothing on its own.">
+            <div class="k">02</div>
+            <h3>Model Layer<small>Reason</small></h3>
+            <div><p>A post-trained LLM tuned on the lifecycle's documents, rules, message formats and exception history — the substrate every domain agent reasons on. Tool use is bounded by the layers beneath it: the model can propose anything and execute nothing on its own.</p><ul><li>Post-trained LLM</li><li>Domain corpus</li><li>Bounded tool use</li><li>Evaluated per release</li></ul><dl class="io"><div><dt>In</dt><dd>Signals, plus the lifecycle's documents, rules, message formats and exception history</dd></div><div><dt>Out</dt><dd>Reasoning for every agent, with tool use bounded by the layers below</dd></div></dl></div>
+          </div>
+          <div class="layer" data-job="Thousands of narrow agents, each built for one job: read a feed, score a gap, size an order, check a limit, match a fill.">
+            <div class="k">03</div>
+            <h3>Domain-Specific Agents<small>Act</small></h3>
+            <div><p>Proprietary, fully automated, domain-specific workflow agents. A one-click workflow creator builds custom execution workflows tailored to specific market conditions and regulatory requirements. Each agent does one narrow job — read a feed, score a gap, size an order, check a limit, match a fill — and the swarm does the rest.</p><ul><li>5,000 – 50,000 per lifecycle</li><li>One-click workflow creation</li><li>Exception management</li><li>Master–copy replication</li></ul><dl class="io"><div><dt>In</dt><dd>Signals and reasoning, one narrow job per agent</dd></div><div><dt>Out</dt><dd>Proposals, submitted to the Council</dd></div></dl></div>
+          </div>
+          <div class="layer" data-job="The gate every proposal passes. It arbitrates between agents and enforces policy and mandate limits.">
+            <div class="k">04</div>
+            <h3>Execution Council<small>Govern</small></h3>
+            <div><p>The gate every proposal passes. The Council arbitrates when agents disagree, enforces policy and mandate limits, and returns approve or reject in milliseconds — or hands the decision to a human when the operating mode says so. Nothing reaches execution that did not pass.</p><ul><li>Approve / reject</li><li>Policy engine</li><li>Conflict arbitration</li><li>Human-in-the-loop optional</li></ul><dl class="io"><div><dt>In</dt><dd>Proposals, policy and mandate limits</dd></div><div><dt>Out</dt><dd>Approve or reject, in milliseconds, or a human decision when the operating mode requires one</dd></div></dl></div>
+          </div>
+          <div class="layer-boundary"><div class="k">—</div><p class="lb-t">The boundary<small>A typed schema: nothing crosses it without a decision</small></p><div class="lb-io"><p data-side="above"><b>Above · 01 – 04</b> <strong>Intelligence decides.</strong> Models, agents and the Council estimate, propose and decide.</p><p data-side="below"><b>Below · 05 – 08</b> <strong>Execution is deterministic.</strong> Rules, adapters and order state run only what the Council approved.</p></div></div>
+          <div class="layer" data-job="Finds the cheapest, fastest, safest path for each approved action, on live conditions and past performance.">
+            <div class="k">05</div>
+            <h3>Routing Layer<small>Optimize</small></h3>
+            <div><p>Continually optimizes execution flow for an efficient lifecycle. Routes each approved action across brokers, OTC desks, dark pools, exchanges and clearing rails on real-time conditions and historical performance — the cheapest, fastest, safest path for that action, right now.</p><ul><li>Smart order routing</li><li>Venue scoring</li><li>Cost of execution</li><li>Latency budget</li></ul><dl class="io"><div><dt>In</dt><dd>Approved actions, live venue and counterparty conditions</dd></div><div><dt>Out</dt><dd>A scored route for every action</dd></div></dl></div>
+          </div>
+          <div class="layer" data-job="Runs the lifecycle as a deterministic state machine, with retries, idempotency and reconciliation.">
+            <div class="k">06</div>
+            <h3>Execution Layer<small>Orchestrate</small></h3>
+            <div><p>Orchestrates the lifecycle end to end with deterministic state — validated, submitted, partial, filled, reconciled — plus retries, idempotency keys and reconciliation against counterparty truth. The execution layer stays algorithmic so that the intelligence above it can be audited against it.</p><ul><li>Order-state machine</li><li>Idempotent submission</li><li>Retries &amp; backoff</li><li>Reconciliation</li></ul><dl class="io"><div><dt>In</dt><dd>Routed actions</dd></div><div><dt>Out</dt><dd>Order state, validated to reconciled, matched against counterparty truth</dd></div></dl></div>
+          </div>
+          <div class="layer" data-job="Gives agents authenticated connectivity to the rails, through secure, customer-scoped MCP servers.">
+            <div class="k">07</div>
+            <h3>MCP Server<small>Connect</small></h3>
+            <div><p>A custom Model Context Protocol server and toolset deploy tools to the agents and provide authenticated connectivity to brokers, transfer agents, custodians, execution desks, exchanges and clearing. Deployed as secure, customer-scoped MCP servers — your rails, your context, nothing shared.</p><ul><li>Custom tools</li><li>Secure customer MCP servers</li><li>Broker &amp; custodian adapters</li><li>Real-time data pipe</li></ul><dl class="io"><div><dt>In</dt><dd>Tool calls from agents and the execution layer</dd></div><div><dt>Out</dt><dd>Authenticated connections to brokers, custodians and clearing</dd></div></dl></div>
+          </div>
+          <div class="layer" data-job="Grants every agent, tool and counterparty exactly the permissions its workflow needs, and nothing more.">
+            <div class="k">08</div>
+            <h3>Authentication Layer<small>Permit</small></h3>
+            <div><p>Scoped, revocable permissions for every agent, tool and counterparty — exactly the permissions a workflow needs, and nothing more. Agents act inside limits you set. Custody never moves. Nothing in the system has withdrawal rights.</p><ul><li>Scoped API permissions</li><li>Revocable per agent</li><li>Never withdrawal rights</li><li>Role-based access</li></ul><dl class="io"><div><dt>In</dt><dd>Every request from an agent, tool or counterparty</dd></div><div><dt>Out</dt><dd>Scoped, revocable permission; custody never moves</dd></div></dl></div>
           </div>
         </div>
       </div>
@@ -324,6 +309,7 @@
     </div>
   </footer>
 
+  <script src="assets/js/arch.js" defer></script>
   <script src="assets/js/site.js" defer></script>
 </body>
 </html>
