@@ -97,7 +97,10 @@
     },
     // 09 · Ten sessions above the floor
     sessions(N, rnd, g) {
-      const P = []; const regime = 'ddppppdpdd'; const per = Math.floor(N * 0.082);
+      // each column's NAV regime comes from the session record: data-regimes on the stage (p = premium, d = discount),
+      // written by build_research.py from #oxa-sessions. The literal is only the fallback (the research index's morph).
+      const rec = (document.querySelector('[data-figure][data-regimes]') || { dataset: {} }).dataset.regimes;
+      const P = []; const regime = /^[pd]{10}$/.test(rec || '') ? rec : 'ddppppdpdd'; const per = Math.floor(N * 0.082);
       for (let c = 0; c < 10; c++) { const x = -1.08 + c * 0.24; for (let i = 0; i < per; i++) { const u = rnd(); const y = u < 0.78 ? -0.7 + rnd() * 1.1 : -0.7 + 1.1 + Math.min(-Math.log(1 - rnd()) * 0.16, 0.5); P.push([x + (rnd() - 0.5) * 0.14, y, (rnd() - 0.5) * 0.1, regime[c] === 'p' ? 2 : 0]); } }
       for (let i = 0; i < N * 0.08; i++) P.push([(rnd() * 2 - 1) * 1.25, 0.4 + g() * 0.005, 0.07, 1]);
       while (P.length < N) P.push([(rnd() * 2 - 1) * 1.4, (rnd() * 2 - 1) * 0.9, -0.9 - rnd() * 0.6, 7]);

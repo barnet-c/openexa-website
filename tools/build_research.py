@@ -82,6 +82,14 @@ def slugify(t): return re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-")
 index_html = read(os.path.join(ROOT, "index.html"))
 NAV = re.search(r'  <header class="nav">.*?</header>\n  <div class="nav-menu">.*?\n  </div>\n', index_html, re.S).group(0)
 FOOTER = re.search(r'  <footer class="footer">.*?</footer>\n', index_html, re.S).group(0)
+# the Lifecycle 01 sessions: ONE record (#oxa-sessions, on the home and Proof pages) that the chart and every session count
+# are drawn from. The 'sessions' figure (note 09) reads each column's NAV regime from it: data-regimes on its stage, one
+# letter per session (p = premium, d = discount), so the note carries no second copy of the record. Its ten columns are
+# drawn for ten sessions: a record with another count needs that figure and the note looked at, so the build stops.
+SESSIONS = json.loads(re.search(r'<script type="application/json" id="oxa-sessions">(.*?)</script>', index_html, re.S).group(1))["sessions"]
+REGIMES = "".join({"prem": "p", "disc": "d"}.get(str(x.get("regime", "")).strip().lower()[:4], "?") for x in SESSIONS)
+assert len(REGIMES) == 10 and set(REGIMES) <= {"p", "d"}, f"#oxa-sessions: note 09's figure draws ten sessions, each premium or discount; the record gives {REGIMES!r}"
+def stage_data(fig): return f' data-regimes="{REGIMES}"' if fig == "sessions" else ""
 HEAD_LINKS = '''  <link rel="apple-touch-icon" href="{p}assets/img/apple-touch-icon.png">
   <link rel="manifest" href="{p}site.webmanifest">
   <link rel="icon" type="image/svg+xml" href="{p}assets/img/favicon.svg">
@@ -160,7 +168,7 @@ for i, post in enumerate(ordered):
 {nav}
   <main id="main">
     <section class="page-hero page-hero--dark is-dark grain article-hero">
-      <div class="figure-stage article-figure" data-figure="{post['fig']}" data-spin="0.10" aria-hidden="true"><canvas></canvas></div>
+      <div class="figure-stage article-figure" data-figure="{post['fig']}"{stage_data(post['fig'])} data-spin="0.10" aria-hidden="true"><canvas></canvas></div>
       <div class="container">
         <div class="article-hero-grid">
           <div>

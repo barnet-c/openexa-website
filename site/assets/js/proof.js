@@ -7,8 +7,8 @@
      [data-proof-chart]  the session chart (it replaces its static fallback; a [data-proof-fig] wrapper is un-hidden)
      [data-proof-table]  a table of the sessions: rows rebuilt from the record, linked to the chart on hover
      [data-proof="k"]    a derived count, k = total · above · premium · discount · confirmed · settled · floor, or "regimes"
-                         (the sentence "Five premium, five discount."); data-proof-as="words" | "Words" spells it out. On a
-                         [data-count] element the figure goes to data-count, so site.js counts up to the derived value.
+                         (the sentence "Five premium, five discount."); data-proof-as="words" | "Words" spells it out. It is
+                         written once, final: no count-up, so every frame, screen reader and in-page search reads the record.
    The static HTML says the same thing for readers without JavaScript. Nothing is invented: a value is drawn only as the
    record states it (">10" = above the floor, exact value not published) and a missing field reads "Not stated".
    The chart: one column per session, one block per basis point up to the floor and open blocks above it; the NAV regime
@@ -70,11 +70,7 @@
   };
   document.querySelectorAll('[data-proof]').forEach(el => {
     const text = derived(el.dataset.proof, el.dataset.proofAs);
-    if (text == null) return;
-    if (el.hasAttribute('data-count')) {           // site.js counts these up from data-count: hand it the derived figure
-      el.dataset.count = String(C[el.dataset.proof]);
-      if (el.textContent.trim() !== '0') el.textContent = text; // '0' = zeroed by site.js, waiting to count up on arrival
-    } else if (el.textContent !== text) el.textContent = text;
+    if (text != null && el.textContent !== text) el.textContent = text; // the final value only (the static text already is)
   });
 
   /* ---------------- helpers ---------------- */
@@ -109,9 +105,12 @@
   function buildTable(table) {
     let tb = table.tBodies[0];
     if (!tb) { tb = h('tbody'); table.append(tb); }
+    // each cell names its column (data-th): on phones the rows restack and the cells carry their own labels
+    const head = table.tHead && table.tHead.rows[0] ? Array.from(table.tHead.rows[0].cells, c => c.textContent.trim()) : [];
+    const TH = ['Session', 'NAV regime', 'Captured', 'Verification', 'Status'].map((k, j) => head[j] || k);
     const rows = sessions.map((s, i) => {
       const tr = h('tr');
-      const td = (cls, ...kids) => { const c = h('td', cls); c.append(...kids); tr.append(c); };
+      const td = (cls, ...kids) => { const c = h('td', cls); c.dataset.th = TH[tr.cells.length]; c.append(...kids); tr.append(c); };
       const mini = mute(h('i', 'pf-mini')); mini.dataset.side = String(s.side);
       td('lab', s.day); td(null, mini, s.regime); td('num', valueText(s)); td(null, s.confirmation);
       td(null, h('span', 'tag' + (s.settled ? ' on' : ''), s.status));
@@ -124,7 +123,7 @@
   }
 
   /* ---------------- the chart ---------------- */
-  const ENTRANCE_MS = 3400; // the CSS entrance ends by ~3.2 s; after it the delayed transitions are dropped
+  const ENTRANCE_MS = 1400; // the CSS entrance ends by ~1.1 s; then its delayed transitions are dropped
   function buildChart(host, n) {
     const N = sessions.length, id = 'oxa-proof-' + n;
     const per = floor <= 20 ? 1 : Math.ceil(floor / 10);   // basis points per block: one each, up to a 20 bps floor
@@ -138,15 +137,20 @@
 
     // direct labels, in a gutter that shares the lanes' rows
     const gut = mute(h('div', 'pf-gut'));
-    const lab = (cls, k, note) => { const e = h('span', 'pf-y ' + cls); e.append(h('b', null, k)); if (note) e.append(h('small', null, note)); gut.append(e); return e; };
+    // a long label carries a short form too (.pf-ls), shown only where the gutter is narrowest (phones under ~340 px)
+    const lab = (cls, k, note, short) => {
+      const e = h('span', 'pf-y ' + cls), b = h('b');
+      if (short) b.append(h('span', 'pf-lw', k), h('span', 'pf-ls', short)); else b.textContent = k;
+      e.append(b); if (note) e.append(h('small', null, note)); gut.append(e); return e;
+    };
     lab('y-above', 'Above', 'exact value not published');
     lab('y-floor', 'Floor', floor + ' ' + unit + (per > 1 ? ' · 1 block = ' + per + ' bps' : ''));
     lab('y-zero', '0');
-    lab('y-prem', 'Premium').append(h('i', 'pf-n', String(C.premium)));
+    lab('y-prem', 'Premium', null, 'Prem.').append(h('i', 'pf-n', String(C.premium)));
     lab('y-nav', 'NAV');
-    lab('y-disc', 'Discount').append(h('i', 'pf-n', String(C.discount)));
+    lab('y-disc', 'Discount', null, 'Disc.').append(h('i', 'pf-n', String(C.discount)));
     lab('y-day', 'Day');
-    lab('y-ok', 'Confirmed');
+    lab('y-ok', 'Confirmed', null, 'Conf.');
 
     // the NAV regime as a trace between the two levels, one segment per session
     const Y = side => side > 0 ? 22 : side < 0 ? 78 : 50;
@@ -258,22 +262,31 @@
     });
     render();
 
-    /* entrance once in view (not under reduced motion); idle motion only while visible */
+    /* entrance once, when it is reached from above and a quarter of it is in view (not under reduced motion); idle
+       motion only while visible */
     let inView = false, seen = false;
     const live = () => host.classList.toggle('is-live', inView && !document.hidden && !reduce.matches);
+    const whole = () => { // no entrance: the final state in one style change, with no transition on the way
+      host.classList.add('pf-now'); host.classList.remove('is-armed'); host.classList.add('is-in');
+      void host.offsetWidth;
+      requestAnimationFrame(() => host.classList.remove('pf-now'));
+    };
     if ('IntersectionObserver' in window && !reduce.matches) {
       host.classList.add('is-armed');
       new IntersectionObserver(entries => entries.forEach(e => {
         inView = e.isIntersecting;
         if (inView && !seen) {
-          seen = true;
-          // reached from below (scrolling up, or a reload mid-page): the lower rows would wait their turn blank — show it whole
-          if (e.boundingClientRect.top < 0) host.classList.remove('is-armed');
-          else setTimeout(() => host.classList.remove('is-armed'), ENTRANCE_MS);
-          host.classList.add('is-in');
+          // reached from below (scrolling up, a reload mid-page) or already more than half in view (a jump, a deep link):
+          // rows that wait their turn would be blank frames, so the chart is shown whole
+          if (e.boundingClientRect.top < 0 || e.intersectionRatio > 0.5) { seen = true; whole(); }
+          else if (e.intersectionRatio >= 0.24) {
+            seen = true;
+            host.classList.add('is-in');
+            setTimeout(() => host.classList.remove('is-armed'), ENTRANCE_MS);
+          }
         }
         live();
-      }), { threshold: 0.25 }).observe(host);
+      }), { threshold: [0, 0.25, 0.5] }).observe(host);
     } else {
       host.classList.add('is-in');
       if ('IntersectionObserver' in window) new IntersectionObserver(entries => entries.forEach(e => { inView = e.isIntersecting; live(); })).observe(host);
