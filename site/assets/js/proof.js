@@ -7,8 +7,8 @@
      [data-proof-chart]  the session chart (it replaces its static fallback; a [data-proof-fig] wrapper is un-hidden)
      [data-proof-table]  a table of the sessions: rows rebuilt from the record, linked to the chart on hover
      [data-proof="k"]    a derived count, k = total · above · premium · discount · confirmed · settled · floor, or "regimes"
-                         (the sentence "Five premium, five discount."); data-proof-as="words" | "Words" spells it out. On a
-                         [data-count] element the figure goes to data-count, so site.js counts up to the derived value.
+                         (the sentence "Five premium, five discount."); data-proof-as="words" | "Words" spells it out. It is
+                         written once, final: no count-up, so every frame, screen reader and in-page search reads the record.
    The static HTML says the same thing for readers without JavaScript. Nothing is invented: a value is drawn only as the
    record states it (">10" = above the floor, exact value not published) and a missing field reads "Not stated".
    The chart: one column per session, one block per basis point up to the floor and open blocks above it; the NAV regime
@@ -70,11 +70,7 @@
   };
   document.querySelectorAll('[data-proof]').forEach(el => {
     const text = derived(el.dataset.proof, el.dataset.proofAs);
-    if (text == null) return;
-    if (el.hasAttribute('data-count')) {           // site.js counts these up from data-count: hand it the derived figure
-      el.dataset.count = String(C[el.dataset.proof]);
-      if (el.textContent.trim() !== '0') el.textContent = text; // '0' = zeroed by site.js, waiting to count up on arrival
-    } else if (el.textContent !== text) el.textContent = text;
+    if (text != null && el.textContent !== text) el.textContent = text; // the final value only (the static text already is)
   });
 
   /* ---------------- helpers ---------------- */
