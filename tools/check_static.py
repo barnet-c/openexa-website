@@ -6,7 +6,9 @@
 - the sitemap lists exactly the indexable pages; both Atom feeds parse and link only to pages that exist;
 - staticwebapp.config.json parses and every redirect target that is a site path exists;
 - markup integrity on every page: no duplicate id, and every label for= / aria-labelledby / aria-describedby /
-  aria-controls points at an id that exists (a broken one silently mutes a control for screen readers).
+  aria-controls points at an id that exists (a broken one silently mutes a control for screen readers);
+- the Lifecycle 01 sessions: one #oxa-sessions record, identical on the home and Proof pages, and every static count,
+  list and table (what readers without JavaScript get) says what that record says; the retired 6/4 split nowhere.
     python tools/check_static.py
 """
 import sys as _sys, os as _os
@@ -79,6 +81,76 @@ try:
         target = r.get("redirect", "")
         if target.startswith("/") and not exists(target): fail("staticwebapp.config.json: redirect to a missing page", r["route"], "->", target)
 except ValueError as e: fail("staticwebapp.config.json does not parse:", e)
+
+# ---- the Lifecycle 01 sessions: ONE record (<script type="application/json" id="oxa-sessions"> on the home and Proof
+# pages) draws the chart and derives every session count (assets/js/proof.js, story.js). The static text that readers
+# without JavaScript get must say exactly what the record says, and the retired 6/4 split must not come back anywhere.
+NUMW = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty".split()
+words = lambda n: NUMW[n] if 0 <= n < len(NUMW) else str(n)
+capw = lambda t: t[:1].upper() + t[1:]
+records = {}
+for rel in ("index.html", "evidence.html"):
+    s = (ROOT / rel).read_text(encoding="utf-8")
+    found = re.findall(r'<script type="application/json" id="oxa-sessions">(.*?)</script>', s, re.S)
+    if len(found) != 1: fail(rel, "needs exactly one #oxa-sessions record, found", len(found)); continue
+    try: records[rel] = (json.loads(found[0]), s)
+    except ValueError as e: fail(rel, "#oxa-sessions does not parse:", e)
+if len(records) == 2 and records["index.html"][0] != records["evidence.html"][0]:
+    fail("#oxa-sessions: the home and Proof pages carry different records")
+for rel, (rec, s) in records.items():
+    S, floor, unit = rec.get("sessions"), rec.get("floor"), rec.get("unit") or "bps"
+    if not isinstance(S, list) or not S or not isinstance(floor, (int, float)) or floor <= 0:
+        fail(rel, "#oxa-sessions needs a list of sessions and a positive floor"); continue
+    def above(v):  # the rule proof.js and story.js apply: ">N" with N >= floor is above it; a bare N must exceed it
+        m = re.fullmatch(r"(>=|≥|>)?\s*(\d+(?:\.\d+)?)", str(v or "").strip())
+        return bool(m) and (float(m[2]) >= floor if m[1] == ">" else float(m[2]) > floor)
+    field = lambda x, k: str(x.get(k) or "").strip()
+    C = {"total": len(S), "above": sum(above(x.get("value")) for x in S),
+         "premium": sum(field(x, "regime").lower().startswith("prem") for x in S),
+         "discount": sum(field(x, "regime").lower().startswith("disc") for x in S),
+         "confirmed": sum(bool(re.search(r"confirm", field(x, "confirmation"), re.I)) and not re.search(r"pending|awaiting|unconfirm|^not\b", field(x, "confirmation"), re.I) for x in S),
+         "settled": sum(bool(re.fullmatch(r"settled", field(x, "status"), re.I)) for x in S), "floor": floor}
+    if C["premium"] + C["discount"] != C["total"]: fail(rel, "#oxa-sessions: every session needs a Premium or Discount regime")
+    if C["above"] != C["total"]: fail(rel, "#oxa-sessions: a session is not above the floor; the copy says every session is")
+    fmtn = lambda n: str(int(n)) if float(n).is_integer() else str(n)
+    def derived(key, as_):
+        if key == "regimes": return capw(words(C["premium"])) + " premium, " + words(C["discount"]) + " discount."
+        if key not in C: return None
+        n = C[key]
+        return words(int(n)) if as_ == "words" else capw(words(int(n))) if as_ == "Words" else fmtn(n)
+    for tag, text in re.findall(r'(<[a-z]+\b[^>]*\sdata-proof="[^"]*"[^>]*>)([^<]*)<', s):
+        key = re.search(r'\sdata-proof="([^"]*)"', tag)[1]
+        as_ = (re.search(r'\sdata-proof-as="([^"]*)"', tag) or [None, None])[1]
+        want = derived(key, as_)
+        if want is None: fail(rel, f'unknown data-proof="{key}"')
+        elif H.unescape(text).strip() != want: fail(rel, f'static data-proof="{key}" reads {text.strip()!r}; the record says {want!r}')
+        cnt = re.search(r'\sdata-count="([^"]*)"', tag)
+        if cnt and want is not None and cnt[1] != fmtn(C[key]): fail(rel, f'data-count="{cnt[1]}" on data-proof="{key}"; the record says {fmtn(C[key])}')
+    if rel == "index.html":
+        # the overture's copy (story.js derives the same words before it splits them)
+        n_all, n_ab = C["total"], C["above"]
+        story_n = {"every": "every one of " + words(n_all) if n_ab == n_all else words(n_ab) + " of " + words(n_all),
+                   "tally": capw(words(n_ab)) + " for " + words(n_all) + ".", "lifecycle": str(rec.get("lifecycle") or "")}
+        for tag, text in re.findall(r'(<[a-z]+\b[^>]*\sdata-story-n="[^"]*"[^>]*>)([^<]*)<', s):
+            key = re.search(r'\sdata-story-n="([^"]*)"', tag)[1]
+            as_ = (re.search(r'\sdata-story-as="([^"]*)"', tag) or [None, None])[1]
+            want = story_n.get(key) if key in story_n else derived(key, as_)
+            if want is None: fail(rel, f'unknown data-story-n="{key}"')
+            elif H.unescape(text).strip() != want: fail(rel, f'static data-story-n="{key}" reads {text.strip()!r}; the record says {want!r}')
+        rows = [tuple(H.unescape(c).strip() for c in r) for r in re.findall(r'<li><b>([^<]*)</b><span>([^<]*)</span><span>([^<]*)</span></li>', s.split('class="proof-list"', 1)[-1].split("</ol>", 1)[0])]
+        want_rows = [(field(x, "day"), field(x, "value") + " " + unit, field(x, "regime")) for x in S]
+        if rows != want_rows: fail(rel, "the no-JS session list (.proof-list) differs from #oxa-sessions:", rows[:3], "...")
+    if rel == "evidence.html":
+        body = s.split("data-proof-table", 1)[-1].split("</tbody>", 1)[0]
+        rows = [tuple(H.unescape(re.sub(r"<[^>]+>", "", c)).strip() for c in re.findall(r"<td[^>]*>(.*?)</td>", r, re.S)) for r in re.findall(r"<tr>(.*?)</tr>", body.split("<tbody>", 1)[-1], re.S)]
+        want_rows = [(field(x, "day"), field(x, "regime"), field(x, "value") + " " + unit, field(x, "confirmation"), field(x, "status")) for x in S]
+        if rows != want_rows: fail(rel, "the static session table differs from #oxa-sessions:", rows[:2], "...")
+    if C["premium"] or C["discount"]:
+        sentence = derived("regimes", None)
+        if sentence not in visible(s): fail(rel, "the visible text does not state the regime split", repr(sentence))
+for rel in pages:  # the 6/4 split was a mistake against the per-session table; it must not return in any page or note
+    t = visible((ROOT / rel).read_text(encoding="utf-8"))
+    if re.search(r"six premium|four discount|six sessions were in premium|four in discount", t, re.I): fail(rel, "states the retired six premium / four discount split")
 
 for f in fails: print("FAIL", f)
 print(f"check_static: {len(pages)} pages, {len(listed)} sitemap URLs - {'OK' if not fails else f'{len(fails)} problem(s)'}")
