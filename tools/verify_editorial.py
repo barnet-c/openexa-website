@@ -1,10 +1,25 @@
+"""Research, articles, Company and the homepage's research chapter in a browser (SwiftShader, as CI).
+    python tools/verify_editorial.py [http://127.0.0.1:8125]"""
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE
-import asyncio, json, sys
-from playwright.async_api import async_playwright, expect
+import asyncio, json, sys, time
+from playwright.async_api import async_playwright, expect, TimeoutError as PlaywrightTimeoutError
 OUT = str(SHOTS / 'v9')
-BASE = "http://127.0.0.1:8125"
+BASE = next((a.rstrip("/") for a in sys.argv[1:] if a.startswith("http")), "http://127.0.0.1:8125")
+
+async def figure_ready(pg, sel):
+    """the figure stage's ready flag; under SwiftShader the first WebGL frame can hold the page past Playwright's 30 s, so a
+    timed-out evaluate is retried once (and its time printed); the assertion on the flag is the caller's, unchanged"""
+    t0 = time.monotonic()
+    for attempt in (1, 2):
+        try:
+            ready = await pg.locator(sel).evaluate("el => el.classList.contains('figure-ready')", timeout=30000)
+            if attempt > 1: print(f"{sel}: figure evaluate answered on the retry, {time.monotonic() - t0:.1f}s after the first try")
+            return ready
+        except PlaywrightTimeoutError:
+            print(f"{sel}: figure evaluate timed out after {time.monotonic() - t0:.1f}s (attempt {attempt} of 2)")
+            if attempt == 2: raise
 
 async def main():
     async with async_playwright() as p:
@@ -16,7 +31,7 @@ async def main():
         pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
         # research index: figure ready, hover morphs
         await pg.goto(f"{BASE}/research.html", wait_until="load"); await pg.wait_for_timeout(2500)
-        assert await pg.locator("#research-figure").evaluate("el => el.classList.contains('figure-ready')"), "figure not ready"
+        assert await figure_ready(pg, "#research-figure"), "figure not ready"
         await pg.screenshot(path=f"{OUT}\\research-hero.png")
         await pg.locator(".posts-list .post").first.hover(); await pg.wait_for_timeout(1500)
         assert await pg.locator("#research-figure").get_attribute("data-figure-current") == "horizon"
