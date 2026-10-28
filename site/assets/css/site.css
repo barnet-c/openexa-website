@@ -2281,4 +2281,25 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
   .page-hero:not(.research-hero):not(.article-hero):not(.company-hero) { padding-top: calc(var(--nav-h) + 28px); }
   .page-hero--plate .display-1 { font-size: clamp(2.3rem, 10vh, 3rem); max-width: 22ch; }
 }
+
+/* ---------- blog: typographic plates in place of the legacy placeholder image (build_blog.py PLACEHOLDER) ----------
+   Paper-3 ground, the collection label in mono caps, the title in Instrument Serif, a fine-bead globe mark. The card's
+   plate keeps the thumbnail's 16:9 box; the post's plate opens the article column. aria-hidden: the title is the h3/h1. */
+.blog-plate { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; background: var(--paper-3); color: var(--ink); }
+.blog-plate .bp-k { font: 500 var(--mono-xs)/1.45 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--graphite); padding-right: 56px; }
+.blog-plate .bp-t {
+  font-family: var(--serif); font-weight: 400; font-style: italic; line-height: 1.06; letter-spacing: -0.012em; color: var(--ink);
+  max-width: 19ch; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
+}
+.blog-plate .bp-mark { position: absolute; display: block; background: currentColor; opacity: .5; -webkit-mask: url("../img/globe-mark.svg") center / contain no-repeat; mask: url("../img/globe-mark.svg") center / contain no-repeat; transition: transform .9s var(--ease), opacity .4s; }
+.blog-thumb.blog-plate { padding: clamp(16px, 1.7vw, 24px); }
+.blog-thumb.blog-plate .bp-t { font-size: clamp(1.3rem, 1.75vw, 1.65rem); }
+.blog-thumb.blog-plate .bp-mark { top: clamp(12px, 1.3vw, 18px); right: clamp(12px, 1.3vw, 18px); width: 40px; height: 40px; }
+@media (hover: hover) { .blog-card--plate:hover .bp-mark { transform: rotate(-28deg); opacity: .75; } }
+.blog-card--plate:focus-visible .bp-mark { transform: rotate(-28deg); opacity: .75; }
+.post-hero--plate { margin: 0 0 2.2em; min-height: clamp(220px, 21vw, 300px); padding: clamp(22px, 2.6vw, 36px); border: 1px solid var(--line); }
+.post-hero--plate .bp-t { font-size: clamp(1.75rem, 2.9vw, 2.6rem); max-width: 22ch; -webkit-line-clamp: 4; line-clamp: 4; }
+.post-hero--plate .bp-mark { top: clamp(18px, 2.2vw, 30px); right: clamp(18px, 2.2vw, 30px); width: 56px; height: 56px; }
+@media (max-width: 640px) { .post-hero--plate { min-height: 0; aspect-ratio: 16 / 10; } }
+@media (prefers-reduced-motion: reduce) { .blog-plate .bp-mark { transition: none; } }
 /* v2:pages:end */
