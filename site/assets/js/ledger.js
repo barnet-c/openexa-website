@@ -235,7 +235,6 @@
     /* ---- following the newest record, browsing, inspecting ---- */
     let following = true, intentUntil = 0, playing = stream && !reduced, visible = false;
     const onScreen = () => visible && !document.hidden;
-    const atEnd = () => view.scrollLeft >= maxScroll() - 6;
     function toEnd(smooth) { view.scrollTo({ left: maxScroll(), behavior: smooth && !reduced ? 'smooth' : 'auto' }); }
     function reveal(li, smooth, centre) { // horizontal only: never scroll the page under the reader
       const pad = 36, x = leftOf(li), l = x - pad, r = x + G.col + pad, sl = view.scrollLeft;
@@ -276,19 +275,20 @@
     view.addEventListener('touchstart', e => { const t = e.touches[0]; if (t) { tx = t.clientX; ty = t.clientY; } }, { passive: true });
     view.addEventListener('touchmove', e => { const t = e.touches[0]; if (t && Math.abs(t.clientX - tx) > Math.abs(t.clientY - ty)) intent(); }, { passive: true });
     view.addEventListener('pointerdown', e => { if (e.target === view) intent(); }, { passive: true });
-    let edgeRaf = 0;
+    // the scroll position is read once, in the scroll event (which runs before the frame's own writes), and handed on
+    let edgeRaf = 0, sl0 = 0;
     view.addEventListener('scroll', () => {
+      sl0 = view.scrollLeft;
       if (!edgeRaf) edgeRaf = requestAnimationFrame(scrolled);
       if (performance.now() > intentUntil) return;
-      if (atEnd()) { if (sel === null && !following) follow(false); }
+      if (sl0 >= maxScroll() - 6) { if (sel === null && !following) follow(false); }
       else if (following) { following = false; state(); }
     }, { passive: true });
     function scrolled() {
       edgeRaf = 0;
-      const sl = view.scrollLeft; // read first, then write
-      edges(sl);
-      if (sel === null) inspect(); else leader();
-      pill(); // only the pill's count: a replay's or an audit's own status line stays as it is
+      edges(sl0);
+      if (sel === null) inspect(sl0); else leader();
+      pill(sl0); // only the pill's count: a replay's or an audit's own status line stays as it is
     }
     let edgeL = null, edgeR = null;
     function edges(sl = view.scrollLeft) {
@@ -303,9 +303,8 @@
       el.replaceChildren(node('b', null, hex.slice(0, 8)), document.createTextNode(grouped(hex).slice(8)));
     }
     // the newest record wholly inside the view (the head while the view rests on it); never one that is not drawn
-    function inView() {
+    function inView(sl = view.scrollLeft) {
       const n = track.childElementCount; if (!n || G.col <= 0) return null;
-      const sl = view.scrollLeft;
       const i = Math.min(n - 1, Math.floor((sl + G.w + 1 - G.padL) / G.col) - 1);
       if (i < 0 || G.padL + i * G.col < sl - 1) return null;
       return bySeq(firstSeq() + i);
@@ -318,9 +317,9 @@
       return `Illustrative ${r.src === 'gen' ? 'generator' : 'excerpt'}${r.lc ? ' · ' + r.lc : ''}`;
     }
     let shown = '';
-    function inspect() {
+    function inspect(sl) {
       if (!F.rec || !recs.length) return;
-      const r = (sel !== null && bySeq(sel)) || inView() || bySeq(rendered);
+      const r = (sel !== null && bySeq(sel)) || inView(sl) || bySeq(rendered);
       if (!r) return;
       const after = bySeq(r.seq + 1), drawnAfter = after && after.seq <= rendered;
       const title = sel !== null ? (r.followed ? 'The proposal you followed' : 'Selected record') : 'Newest record in view';
@@ -374,13 +373,13 @@
       }
       pill();
     }
-    function pill() {
+    function pill(sl) {
       if (!ui.latest) return;
       // the way back: shown whenever the view is not resting on the newest record, with how many records are newer
       // than the last one wholly in view (records held back while paused included)
       const held = newest() - rendered, show = stream && (!following || held > 0);
       if (ui.latest.hidden === show) ui.latest.hidden = !show;
-      if (show && ui.fresh) { const lv = following ? null : inView(), n = newest() - (lv ? lv.seq : rendered); put(ui.fresh, n > 0 ? `+${n > 99 ? '99+' : n}` : ''); }
+      if (show && ui.fresh) { const lv = following ? null : inView(sl), n = newest() - (lv ? lv.seq : rendered); put(ui.fresh, n > 0 ? `+${n > 99 ? '99+' : n}` : ''); }
     }
     function counts() {
       put(ui.count, fmt(total));
