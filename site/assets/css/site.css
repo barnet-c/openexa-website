@@ -58,6 +58,14 @@
   --nav-h: 72px;
   --r: 3px;
   --ease: cubic-bezier(.2, .7, .2, 1);
+
+  /* mono micro-type: one scale for every mono label on the site. Nothing set uppercase goes below --mono-xs (10 px).
+     Owners' regions write var(--mono-xs, .625rem) etc. with literal fallbacks. */
+  --mono-xs: .625rem;
+  --mono-s: .6875rem;
+  --mono-m: .75rem;
+  --track-label: .12em;
+  --track-eyebrow: .14em;
 }
 
 /* ---------- reset ---------- */
