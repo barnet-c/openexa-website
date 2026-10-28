@@ -66,6 +66,8 @@
   if (fallback) fallback.remove();
   if (foot) foot.classList.remove('is-static');
   root.classList.add('chain-ready');
+  // its one loop (the broken status dot) runs only while the chain is on screen
+  if ('IntersectionObserver' in window) new IntersectionObserver(([en]) => root.classList.toggle('is-away', !en.isIntersecting)).observe(root);
   const stored = []; // the chain as it was written: [prevHash, hash] per record
   const want = []; // the hash each link is showing, or rolling towards
   let busy = false, pending = false, revision = 0;

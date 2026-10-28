@@ -1400,7 +1400,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .chain-status { display: inline-flex; align-items: center; gap: 9px; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--accent); transition: color .3s; }
 .chain-status i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .chain.is-broken .chain-status { color: var(--reject); }
-.chain.is-broken .chain-status i { animation: pulse 1s ease-in-out infinite; }
+.chain.is-broken:not(.is-away) .chain-status i { animation: pulse 1s ease-in-out infinite; }
 .chain-acts { display: inline-flex; gap: 8px; }
 .chain-restore { border-color: var(--reject); }
 .chain-restore:hover { border-color: var(--reject); background: var(--reject); color: var(--ink); }

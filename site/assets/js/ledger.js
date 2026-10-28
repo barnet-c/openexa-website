@@ -362,7 +362,7 @@
     function state(text) {
       flag('is-inspecting', sel !== null);
       flag('is-following', following);
-      flag('is-running', stream && playing && following);
+      flag('is-running', stream && playing && following && onScreen()); // its breathing loops run only while it is seen
       flag('is-paused', stream && !playing);
       const r = sel !== null ? bySeq(sel) : null;
       put(ui.state, text || (r ? `Inspecting ${r.id}` : stream ? (playing ? (following ? 'Running · illustrative stream' : 'Illustrative stream · browsing') : 'Paused · illustrative stream') : stateIdle));
@@ -473,6 +473,7 @@
         finishRolls(root);
         if (stream) { clearTimeout(sealTimer); sealTimer = 0; schedule(); }
       }
+      if (stream) state();
     }
     if (ui.play) ui.play.addEventListener('click', () => {
       playing = !playing;
@@ -719,7 +720,8 @@
     }
     edges(); counts(); inspect(); state();
     if ('IntersectionObserver' in window) {
-      new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }, { rootMargin: '80px 0px' }).observe(root);
+      // the stream runs only while some of it is on screen (no margin: nothing is drawn for a reader who cannot see it)
+      new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }).observe(root);
       // a pulse waits until the strip itself is on screen
       new IntersectionObserver(([en]) => { stripSeen = en.isIntersecting && en.intersectionRatio >= 0.55; if (stripSeen && pulseWant) pulseNow(); }, { threshold: [0, 0.6, 1] }).observe(view);
     } else { visible = true; stripSeen = true; wake(); }
