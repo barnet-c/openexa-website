@@ -2435,6 +2435,41 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
   .desk-controls input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-width: 5px; }
   .desk-follow, .desk .model-motion { min-height: 44px; }
 }
+/* ---------- Fig. 4.1, the orbit (Lifecycles §04): six class rings in plan view, the swarm at the centre ----------
+   S1's ring styles (shared with the Lifecycles hero plate): LC-01 solid green; Next (LC-02/03) dashed ink; Roadmap
+   (LC-04-06) dotted khaki. Only a live opportunity is a filled green bead; the rest are hollow; an opportunity the page
+   names in no class is a neutral bead outside the rings. Wide screens read the callouts; the list is the same twelve. */
+.lc-orbit { margin: 48px 0 0; }
+.orbit-svg { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); }
+.lcp .orb-live { fill: none; stroke: var(--accent); stroke-width: 1.3; }
+.lcp .orb-next { fill: none; stroke: currentColor; stroke-width: 1; stroke-dasharray: 5 4; opacity: .62; }
+.lcp .orb-road { fill: none; stroke: var(--khaki-deep); stroke-width: 1.5; stroke-dasharray: .01 4.4; stroke-linecap: round; }
+.lcp .orb-bead { fill: var(--lc-ground); stroke: currentColor; stroke-width: 1.3; }
+.lcp .orb-bead.is-live { fill: var(--accent); stroke: var(--accent); }
+.lcp .orb-bead.is-road { stroke: var(--khaki-deep); }
+.lcp .orb-bead.is-free { stroke: var(--fg-3); stroke-dasharray: 2 2; }
+.lcp .orb-halo { fill: none; stroke: var(--accent); stroke-width: 1; opacity: .4; }
+.lcp .ldr2 { fill: none; stroke: currentColor; stroke-width: 1; opacity: .3; }
+.lcp .orb-swarm .mote { opacity: .55; }
+.orbit-svg text { paint-order: stroke; stroke: var(--lc-ground); stroke-width: 6px; stroke-linejoin: round; }
+.orbit-svg .orb-s { font-weight: 400; }
+.orbit-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; margin: 18px 0 0; padding: 0; list-style: none; }
+.orbit-list li { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.orbit-list .lc-ring { grid-row: span 2; }
+.orbit-list span { font: 500 var(--mono-s, .6875rem)/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg); }
+.orbit-list small { grid-column: 2; font: var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+.lc-ring { display: block; width: 28px; height: 28px; overflow: visible; }
+@media (min-width: 961px) {
+  .orbit-list { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@media (max-width: 960px) {
+  /* a smaller orbit: the rings only, cropped to their own square; the list carries the names */
+  .orbit-fig { max-width: 440px; margin: 0 auto; overflow: hidden; aspect-ratio: 1; }
+  .orbit-svg { width: calc(1200 / 470 * 100%); max-width: none; margin: calc(-27 / 470 * 100%) 0 0 calc(-365 / 470 * 100%); font-size: 13.5px; }
+  .orbit-svg .orb-t, .orbit-svg .ldr2 { display: none; }
+}
+@media (min-width: 601px) and (max-width: 960px) { .orbit-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
 @media (prefers-reduced-motion: reduce) {
   .dk-rec.is-new, .desk-head .live i.is-ping::after { animation: none; }
   .dl-ring, .dl-ring::before, .dl-gates li, .dl-gates li::before, .dl-gates li b { transition: none; }
