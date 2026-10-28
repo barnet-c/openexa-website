@@ -120,7 +120,7 @@
   }
 
   /* ---------------- the chart ---------------- */
-  const ENTRANCE_MS = 3400; // the CSS entrance ends by ~3.2 s; after it the delayed transitions are dropped
+  const ENTRANCE_MS = 1400; // the CSS entrance ends by ~1.1 s; then its delayed transitions are dropped
   function buildChart(host, n) {
     const N = sessions.length, id = 'oxa-proof-' + n;
     const per = floor <= 20 ? 1 : Math.ceil(floor / 10);   // basis points per block: one each, up to a 20 bps floor
@@ -254,22 +254,31 @@
     });
     render();
 
-    /* entrance once in view (not under reduced motion); idle motion only while visible */
+    /* entrance once, when it is reached from above and a quarter of it is in view (not under reduced motion); idle
+       motion only while visible */
     let inView = false, seen = false;
     const live = () => host.classList.toggle('is-live', inView && !document.hidden && !reduce.matches);
+    const whole = () => { // no entrance: the final state in one style change, with no transition on the way
+      host.classList.add('pf-now'); host.classList.remove('is-armed'); host.classList.add('is-in');
+      void host.offsetWidth;
+      requestAnimationFrame(() => host.classList.remove('pf-now'));
+    };
     if ('IntersectionObserver' in window && !reduce.matches) {
       host.classList.add('is-armed');
       new IntersectionObserver(entries => entries.forEach(e => {
         inView = e.isIntersecting;
         if (inView && !seen) {
-          seen = true;
-          // reached from below (scrolling up, or a reload mid-page): the lower rows would wait their turn blank — show it whole
-          if (e.boundingClientRect.top < 0) host.classList.remove('is-armed');
-          else setTimeout(() => host.classList.remove('is-armed'), ENTRANCE_MS);
-          host.classList.add('is-in');
+          // reached from below (scrolling up, a reload mid-page) or already more than half in view (a jump, a deep link):
+          // rows that wait their turn would be blank frames, so the chart is shown whole
+          if (e.boundingClientRect.top < 0 || e.intersectionRatio > 0.5) { seen = true; whole(); }
+          else if (e.intersectionRatio >= 0.24) {
+            seen = true;
+            host.classList.add('is-in');
+            setTimeout(() => host.classList.remove('is-armed'), ENTRANCE_MS);
+          }
         }
         live();
-      }), { threshold: 0.25 }).observe(host);
+      }), { threshold: [0, 0.25, 0.5] }).observe(host);
     } else {
       host.classList.add('is-in');
       if ('IntersectionObserver' in window) new IntersectionObserver(entries => entries.forEach(e => { inView = e.isIntersecting; live(); })).observe(host);

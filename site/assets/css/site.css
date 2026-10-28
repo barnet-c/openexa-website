@@ -1818,29 +1818,34 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .pf-mini[data-side="1"]::after { top: 0; }
 .pf-mini[data-side="-1"]::after { top: 10px; }
 
-/* entrance (once, in view): the floor is drawn, records settle into columns and clear it, the regime and the ticks follow */
+/* entrance (once, reached from above): the floor is drawn and every session rises together, row by row (a row every 52 ms,
+   a 4 ms shimmer across the lanes), so no session ever stands below another; the floor lights as the last solid row
+   reaches it, and the open blocks above it follow. The regime trace, the days, the ticks and the inspector arrive at the
+   same time, left to right. All of it is done by ~1.1 s (proof.js drops .is-armed at 1.4 s). Reached from below, or
+   already more than half in view, the chart is shown whole (.pf-now: no transition at all for that one change). */
 @media screen {
+  .proof.pf-now, .proof.pf-now *, .proof.pf-now *::before, .proof.pf-now *::after { transition: none !important; animation: none !important; }
   .proof.is-armed:not(.is-in) .pf-floor { transform: scaleX(0); }
-  .proof.is-armed .pf-floor { transition: transform 1.05s cubic-bezier(.65, 0, .35, 1) .1s; }
-  .proof.is-armed.is-in .pf-floor { animation: pf-lit 1.6s ease-out 1.55s both; }
-  .proof.is-armed:not(.is-in) .pf-c i { opacity: 0; transform: translateY(-14px); }
-  .proof.is-armed .pf-c i { transition: opacity .18s linear, transform .46s cubic-bezier(.34, 1.56, .64, 1); transition-delay: calc(260ms + var(--l) * 62ms + var(--k) * 30ms); }
+  .proof.is-armed .pf-floor { transition: transform .5s cubic-bezier(.65, 0, .35, 1); }
+  .proof.is-armed.is-in .pf-floor { animation: pf-lit .3s ease-out .8s both; }
+  .proof.is-armed:not(.is-in) .pf-c i { opacity: 0; transform: translateY(-12px); }
+  .proof.is-armed .pf-c i { transition: opacity .12s linear, transform .28s cubic-bezier(.34, 1.56, .64, 1); transition-delay: calc(120ms + var(--k) * 52ms + var(--l) * 4ms); }
   .proof.is-armed:not(.is-in) .pf-g i { opacity: 0; transform: translateY(8px); }
-  .proof.is-armed .pf-g i { transition: opacity .55s var(--ease), transform .8s var(--ease); transition-delay: calc(560ms + var(--l) * 62ms + var(--n) * 30ms + var(--k) * 95ms); }
+  .proof.is-armed .pf-g i { transition: opacity .18s linear, transform .26s var(--ease); transition-delay: calc(120ms + (var(--n) + var(--k)) * 52ms + var(--l) * 4ms); }
   .proof.is-armed:not(.is-in) :is(.pf-gut, .pf-base, .pf-nav) { opacity: 0; }
-  .proof.is-armed :is(.pf-gut, .pf-base, .pf-nav) { transition: opacity .8s var(--ease) .15s; }
+  .proof.is-armed :is(.pf-gut, .pf-base, .pf-nav) { transition: opacity .45s var(--ease) 60ms; }
   .proof.is-armed:not(.is-in) .pf-g::after { opacity: 0; }
-  .proof.is-armed .pf-g::after { transition: opacity .6s var(--ease) calc(1000ms + var(--l) * 62ms); }
+  .proof.is-armed .pf-g::after { transition: opacity .22s var(--ease) calc(120ms + (var(--n) + var(--ng) - 1) * 52ms + var(--l) * 4ms); }
   .proof.is-armed:not(.is-in) .pf-trace { clip-path: inset(-4px 100% -4px 0); }
-  .proof.is-armed .pf-trace { transition: clip-path 1.3s cubic-bezier(.65, 0, .35, 1) 1.1s; }
+  .proof.is-armed .pf-trace { transition: clip-path .74s cubic-bezier(.65, 0, .35, 1) .2s; }
   .proof.is-armed:not(.is-in) .pf-r i { opacity: 0; transform: scale(.2); }
-  .proof.is-armed .pf-r i { transition: opacity .25s linear, transform .5s cubic-bezier(.34, 1.56, .64, 1); transition-delay: calc(1150ms + var(--l) * 125ms); }
+  .proof.is-armed .pf-r i { transition: opacity .18s linear, transform .28s cubic-bezier(.34, 1.56, .64, 1); transition-delay: calc(320ms + var(--l) * 48ms); }
   .proof.is-armed:not(.is-in) .pf-d { opacity: 0; }
-  .proof.is-armed .pf-d { transition: opacity .5s var(--ease) calc(1300ms + var(--l) * 60ms); }
+  .proof.is-armed .pf-d { transition: opacity .34s var(--ease) calc(260ms + var(--l) * 36ms); }
   .proof.is-armed:not(.is-in) .pf-o path { stroke-dashoffset: 1; }
-  .proof.is-armed .pf-o path { transition: stroke-dashoffset .45s var(--ease) calc(1700ms + var(--l) * 70ms); }
+  .proof.is-armed .pf-o path { transition: stroke-dashoffset .3s var(--ease) calc(380ms + var(--l) * 46ms); }
   .proof.is-armed:not(.is-in) .pf-read { opacity: 0; transform: translateY(8px); }
-  .proof.is-armed .pf-read { transition: opacity .8s var(--ease) 1.9s, transform .8s var(--ease) 1.9s; }
+  .proof.is-armed .pf-read { transition: opacity .6s var(--ease) .26s, transform .6s var(--ease) .26s; }
 }
 @keyframes pf-lit { 0%, 100% { box-shadow: var(--pf-glow); } 30% { box-shadow: 0 0 22px 2px color-mix(in srgb, var(--accent) 70%, transparent); } }
 
