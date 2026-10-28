@@ -90,8 +90,8 @@
           <div class="col-7"><h2 class="display-3" data-reveal>Perceive. Reason. Act. Govern. Optimize. Orchestrate. Connect. Permit.</h2></div>
           <div class="col-4 offset-9"><p class="body-lg" data-reveal style="--d:80ms">Each layer has one job and a hard boundary. That is what lets the system run tens of thousands of narrow agents at once without any of them becoming a black box — and what lets a new lifecycle reuse everything below the agents.</p></div>
         </div>
-        <!-- the architecture explorer (arch.js): without JavaScript this is the readable list -->
-        <div class="layers" data-arch data-arch-label="The agentic stack · exploded view" data-reveal style="--d:100ms">
+        <!-- the architecture explorer (arch.js) over the full spec (data-arch-spec: every layer stays readable); without JavaScript, the spec alone -->
+        <div class="layers" data-arch data-arch-spec data-arch-label="Fig. 1.1 — The agentic stack, exploded" data-reveal style="--d:100ms">
           <div class="layer" data-job="Watches the lifecycle's live data and keeps re-estimating risk, price and regime.">
             <div class="k">01</div>
             <h3>Signal Intelligence<small>Perceive</small></h3>
@@ -133,6 +133,7 @@
             <h3>Authentication Layer<small>Permit</small></h3>
             <div><p>Scoped, revocable permissions for every agent, tool and counterparty — exactly the permissions a workflow needs, and nothing more. Agents act inside limits you set. Custody never moves. Nothing in the system has withdrawal rights.</p><ul><li>Scoped API permissions</li><li>Revocable per agent</li><li>Never withdrawal rights</li><li>Role-based access</li></ul><dl class="io"><div><dt>In</dt><dd>Every request from an agent, tool or counterparty</dd></div><div><dt>Out</dt><dd>Scoped, revocable permission; custody never moves</dd></div></dl></div>
           </div>
+          <div class="layer-floor"><div class="k">—</div><p>Brokers · Clearing · OTC · Venues · Counterparties</p></div>
         </div>
       </div>
     </section>
@@ -144,27 +145,29 @@
         <div class="grid mb-3">
           <div class="col-7"><h2 class="display-2" data-reveal>Intelligence decides what, when and how much. Execution stays deterministic.</h2></div>
         </div>
-        <div class="two-col">
-          <div class="card" data-reveal>
-            <div class="n"><span>Deterministic</span><span>Layers 05 – 08</span></div>
-            <h3 class="display-3">Rules, adapters, order state.</h3>
-            <ul class="checks mt-3">
-              <li>Deterministic action rules with explicit pre-conditions</li>
-              <li>Adapters with retries, backoff and idempotency</li>
-              <li>State machine: validated → submitted → filled → reconciled</li>
-              <li>Reconciliation against counterparty truth</li>
-              <li>Market-hours gates and instrument-level constraints</li>
-            </ul>
-          </div>
-          <div class="card" data-reveal style="--d:80ms">
+        <!-- the stack's order: adaptive (01-04) above the boundary, deterministic (05-08) below it, as in §01 -->
+        <div class="bnd">
+          <div class="card bnd-side" data-reveal>
             <div class="n"><span>Adaptive</span><span>Layers 01 – 04</span></div>
             <h3 class="display-3">Models, agents, council.</h3>
-            <ul class="checks mt-3">
+            <ul class="checks">
               <li>Signal selection and parameter tuning per regime</li>
               <li>Risk-adjusted strategy rotation under portfolio-level constraints</li>
               <li>Anomaly detection across signals, venues and counterparties</li>
               <li>Arbitration between agents when their proposals conflict</li>
               <li>Only profitable, policy-compliant actions pass to execution</li>
+            </ul>
+          </div>
+          <div class="arch-bound bnd-line" data-reveal style="--d:60ms"><span class="chip">The boundary</span><span class="sides"><span><span class="sr-only">Above it: </span><span aria-hidden="true">↑ </span>Intelligence decides</span><span><span class="sr-only">Below it: </span><span aria-hidden="true">↓ </span>Execution is deterministic</span></span></div>
+          <div class="card bnd-side is-below" data-reveal style="--d:120ms">
+            <div class="n"><span>Deterministic</span><span>Layers 05 – 08</span></div>
+            <h3 class="display-3">Rules, adapters, order state.</h3>
+            <ul class="checks">
+              <li>Deterministic action rules with explicit pre-conditions</li>
+              <li>Adapters with retries, backoff and idempotency</li>
+              <li>State machine: validated → submitted → filled → reconciled</li>
+              <li>Reconciliation against counterparty truth</li>
+              <li>Market-hours gates and instrument-level constraints</li>
             </ul>
           </div>
         </div>
