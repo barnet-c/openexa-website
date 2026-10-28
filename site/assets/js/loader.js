@@ -6,19 +6,19 @@
    the start of navigation, so the count is the real time the visitor has waited. A later visit (in the same session, or
    arriving from another page of the site) gets the short version: the mark, no count, for as long as the stage needs and
    no longer.
-   The failsafe: 3 s after navigation the loader is gone. A fade on the document timeline (the compositor runs it, so
+   The failsafe: 2.3-2.6 s after navigation the loader is gone. A fade on the document timeline (the compositor runs it, so
    scripts that hold the main thread cannot delay it) takes it away at that moment unless the curtain has lifted; any
    step of this script that would run later than that removes the loader at once instead (no count, no curtain), so a
    late script never shows it again, and a timer removes it then whatever else is running. Without this script a CSS
-   animation (v2:nav) still fades it out 3 s after its first frame. While the loader is up, Tab stays on the skip link:
-   nothing hidden beneath the loader takes keyboard focus. (Nothing here forces a style or layout pass: the page is not
-   made inert and no animation is read back, either of which restyles or lays out the whole page inside this script.) */
+   animation (v2:nav) still fades it out 2.3-2.6 s after its first frame. While the loader is up, Tab stays on the skip link:
+   nothing hidden beneath the loader takes keyboard focus. (The page is not made inert, which would restyle all of it
+   twice on the loader's path; reading the loader's own animations needs only the styles its first frame computes.) */
 (function () {
   'use strict';
   const loader = document.querySelector('.loader');
   if (!loader) return;
   const root = document.documentElement, body = document.body;
-  const LATE = 3000; // ms from navigation start: the failsafe (v2:nav's .loader animation has the same delay)
+  const LATE = 2300; // ms from navigation start: the failsafe's moment (v2:nav's .loader fade starts 2.3 s into its clock)
   const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
   const pad = n => String(n).padStart(2, '0');
 
@@ -33,13 +33,14 @@
     document.dispatchEvent(new CustomEvent('oxa:loaded'));
   };
   let gone = false;
-  const drop = () => { // at once: no count, no curtain
+  const drop = () => { // at once: no count, no curtain (the page is told it is ready in the next task, so the loader's
+    // removal is not held up by everything that answers 'oxa:loaded' on a busy device)
     if (gone) return;
     gone = true;
     loader.remove();
     body.classList.remove('is-loading');
     hold(false);
-    if (!root.classList.contains('is-loaded')) loaded();
+    if (!root.classList.contains('is-loaded')) setTimeout(() => { if (!root.classList.contains('is-loaded')) loaded(); }, 0);
   };
   if (performance.now() >= LATE) { drop(); return; }
   // the failsafe on the navigation's clock: the CSS fade (v2:nav) runs from the loader's first frame; set to start at
@@ -57,7 +58,7 @@
   if (seen) loader.classList.add('is-quick');
   body.classList.add('is-loading');
   hold(true);
-  const MIN = seen ? 0 : 950, CAP = seen ? 1100 : 2000, OUT = seen ? 0 : 380; // ms from navigation start; OUT = the count's run to 100
+  const MIN = seen ? 0 : 950, CAP = seen ? 1100 : 1700, OUT = seen ? 0 : 380; // ms from navigation start; OUT = the count's run to 100
   const count = loader.querySelector('.loader-count'), dial = loader.querySelector('.loader-dial');
   // the overture draws its first frame (or falls back) after this script: lift once it has, never later than the cap
   const glReady = !document.querySelector('.story-gl') || ['gl-ready', 'no-webgl'].some(c => root.classList.contains(c)) ? Promise.resolve()
