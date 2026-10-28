@@ -469,18 +469,19 @@
       scue.hidden = open === i;
     }
     /* One layer's summary gives way to the next out, then in, never both at once: the old one fades to nothing (90 ms), the
-       text changes, the new one rises in (220 ms). A key that arrives while the old one is still fading swaps at once. */
-    let swapTimer = 0, swapTo = -1;
+       text changes, the new one rises in (220 ms). A key that arrives while that is under way (arrow keys held or tapped
+       in quick succession) changes the text at once, at full strength: one title, always legible. */
+    let swapTimer = 0, swapTo = -1, swapEnd = 0;
+    function swapNow(i) { swapTo = -1; clearTimeout(swapTimer); fillSum(i); sum.classList.remove('is-out', 'is-swap'); measureCard(); }
     function swapIn(i) {
-      swapTo = -1; clearTimeout(swapTimer);
-      fillSum(i);
-      sum.classList.remove('is-out', 'is-swap'); void sum.offsetWidth; sum.classList.add('is-swap');
-      measureCard();
+      swapNow(i);
+      void sum.offsetWidth; sum.classList.add('is-swap');
     }
     function fillCard(i, showing) {
-      if (reduced || !showing) { swapTo = -1; clearTimeout(swapTimer); fillSum(i); sum.classList.remove('is-out', 'is-swap'); measureCard(); return; }
-      if (swapTo >= 0) { swapIn(i); return; } // mid-fade: no waiting
-      swapTo = i;
+      const now = performance.now();
+      if (reduced || !showing) { swapNow(i); return; }
+      if (swapTo >= 0 || now < swapEnd) { swapNow(i); swapEnd = now + 310; return; } // mid-swap: no waiting, no fading
+      swapTo = i; swapEnd = now + 310;
       sum.classList.remove('is-swap'); sum.classList.add('is-out');
       swapTimer = setTimeout(() => { if (swapTo >= 0) swapIn(hot >= 0 ? hot : swapTo); }, 90);
     }
