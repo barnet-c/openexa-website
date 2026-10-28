@@ -267,6 +267,8 @@
       if (paperWatch > 0) { paperWatch--; queue(); }
     } else { paperTop = null; paperWatch = 0; }
     if (overPaper) dark = false;
+    // a dark-start page whose dark opening has scrolled away has a paper ground (overscroll below the footer is paper)
+    if (darkStart) { const opening = bands[0] && bands[0].dark ? bands[0] : null; root.classList.toggle('is-paper-root', !!opening && y >= opening.bottom); }
     const clear = y <= clearUntil && !menuOpen && !overPaper;
     nav.classList.toggle('nav--solid', !clear);
     nav.classList.toggle('nav--dark', dark);

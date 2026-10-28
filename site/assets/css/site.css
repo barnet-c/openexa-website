@@ -2387,6 +2387,23 @@ html { scroll-padding-top: var(--nav-h); }
 }
 @media (min-width: 961px) { .nav-sheet { display: none !important; } }
 @media (max-width: 430px) { .nav .container { gap: 10px; } .nav-ch-btn { letter-spacing: .09em; } }
+/* a phone on its side: the chapter list takes two columns (read down, then across) and the room the bar leaves, so
+   every chapter and Back to top are on screen without scrolling */
+@media (max-height: 500px) and (max-width: 960px) {
+  .nav-ch-panel { max-height: calc(100vh - var(--nav-h) - 16px); max-height: calc(100svh - var(--nav-h) - 16px); }
+  .nav-ch-head { padding-block: 11px 10px; }
+  .nav-ch-list { columns: 2; column-gap: 24px; padding-block: 4px; }
+  .nav-ch-list li { break-inside: avoid; }
+  .nav-ch-list a { min-height: 44px; padding-block: 5px; }
+  .nav-ch-list .t { font-size: 1.15rem; }
+  .nav-ch-top { padding-block: 10px 6px; }
+}
+/* the narrowest phones: the bar keeps the mark and gives the wordmark's room to the chapter readout, so the chapters
+   read as words, not '§NN / TT' (the link keeps its name, 'OpenEXA home') */
+@media (max-width: 359.98px) { .nav.has-ch .brand { font-size: 0; gap: 0; } }
+/* dark-start pages: once the dark opening has scrolled away, the page's ground is paper, so an overscroll below the
+   paper footer shows paper, not ink (site.js toggles the class; at the top the opening's ink is kept) */
+:root.is-paper-root { background: var(--paper); }
 /* the open sheet: site.js mirrors the popover's state as body.nav-open and .nav--menu (one class change, no relational
    selector watching the whole document); the script-less version of these rules is in the (scripting: none) block below */
 body.nav-open { overflow: hidden; }
