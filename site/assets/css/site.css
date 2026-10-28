@@ -2176,6 +2176,19 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
 .skip { position: fixed; left: 12px; top: 12px; z-index: 1001; padding: 11px 16px; border-radius: var(--r); background: var(--ink); color: var(--paper); font-size: .9rem; font-weight: 500; box-shadow: 0 0 0 2px var(--signal-bright); transform: translateY(calc(-100% - 24px)); transition: transform .3s var(--ease); }
 .skip:focus, .skip:focus-visible { left: 12px; transform: none; outline: none; }
 
+/* ---------- figures: a stat row's numerals rise out of a mask as the row arrives ----------
+   Presentation only: site.js never writes a number into the page (no count-up from zero), so the text is the true value
+   at every instant. The clip and the 6 px rise run on the numeral's own box; zero specificity, so a component's rules win. */
+@media (prefers-reduced-motion: no-preference) {
+  :where(.stats.will-reveal.is-in > div > .v, .crew-stats.will-reveal.is-in > div > b) {
+    animation: fig-rise .95s var(--ease) backwards; animation-delay: calc(var(--d, 0ms) + 150ms + var(--fig-i, 0) * 70ms);
+  }
+  :where(.stats, .crew-stats) > div:nth-child(2) { --fig-i: 1; }
+  :where(.stats, .crew-stats) > div:nth-child(3) { --fig-i: 2; }
+  :where(.stats, .crew-stats) > div:nth-child(4) { --fig-i: 3; }
+}
+@keyframes fig-rise { from { clip-path: inset(100% -.5em -.5em -.5em); transform: translateY(6px); } to { clip-path: inset(-.5em); transform: none; } }
+
 /* ---------- reduced motion: nothing slides; states still change ---------- */
 @media (prefers-reduced-motion: reduce) {
   @view-transition { navigation: none; }
@@ -2197,7 +2210,7 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
 }
 
 /* ---------- print: the frame stays off the page ---------- */
-@media print { .nav-ch, .nav-progress, .nav-sheet { display: none !important; } }
+@media print { .nav-ch, .nav-progress, .nav-sheet { display: none !important; } :where(.stats, .crew-stats) * { animation: none !important; } }
 /* v2:nav:end */
 /* -------------------------------------------------------------------------- */
 

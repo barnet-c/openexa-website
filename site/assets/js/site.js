@@ -1,5 +1,5 @@
 /* OpenEXA — shared behaviour
-   nav (chapter readout, progress, menu sheet) · clocks · loader · kinetic type · manifesto · reveals · counters · forms
+   nav (chapter readout, progress, menu sheet) · clocks · loader · kinetic type · manifesto · reveals · forms
    · 2D swarm fallback */
 (function () {
   'use strict';
@@ -475,27 +475,13 @@
     paint(progressAt(performance.now()));
     requestAnimationFrame(frame);
   } else loaded();
-  /* ---------------- count-up ---------------- */
-  // the HTML holds the real value (no-JS, screen readers); counters still below the fold are zeroed now and count up on arrival
-  const fmt = (n, dec) => n.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-  const countText = (el, k) => (el.dataset.prefix || '') + fmt(parseFloat(el.dataset.count) * k, parseInt(el.dataset.decimals || '0', 10)) + (el.dataset.suffix || '');
-  function countUp(el) {
-    const dur = 1400, t0 = performance.now(), ease = t => 1 - Math.pow(1 - t, 4);
-    (function step(now) { const p = Math.min(1, (now - t0) / dur); el.textContent = countText(el, ease(p)); if (p < 1) requestAnimationFrame(step); })(t0);
-  }
-  const counters = $$('[data-count]');
-  // printing: the legal disclosures (folded into a <details> above) and every counter's real value must reach the paper,
-  // whatever the reader has opened or scrolled past
-  window.addEventListener('beforeprint', () => {
-    $$('details.footer-legal').forEach(d => { d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; });
-    counters.forEach(c => { c.textContent = countText(c, 1); });
-  });
+  /* ---------------- figures: never counted, never rewritten ----------------
+     A number on this site is only ever shown at its true value: the HTML holds it and nothing here writes another one
+     into the DOM ([data-count] is inert; the count-up from zero is gone). A stat row's arrival is presentation only: its
+     numerals rise out of a mask as the row reveals (v2:nav CSS), the text untouched. */
+  // printing: the legal disclosures (folded into a <details> above) must reach the paper, whatever the reader has opened
+  window.addEventListener('beforeprint', () => $$('details.footer-legal').forEach(d => { d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; }));
   window.addEventListener('afterprint', () => $$('details.footer-legal').forEach(d => { d.open = d.dataset.wasOpen === '1'; }));
-  if (counters.length && 'IntersectionObserver' in window && !prefersReduced) {
-    const cio = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { countUp(e.target); cio.unobserve(e.target); } }); }, { threshold: 0.4 });
-    counters.filter(c => { const r = c.getBoundingClientRect(); return r.top < 0 || r.bottom > window.innerHeight; }) // wholly in view already: keep the value
-      .forEach(c => { c.textContent = countText(c, 0); cio.observe(c); });
-  }
 
   /* ---------------- forms (no backend: mailto handoff or configured endpoint) ---------------- */
   $$('form[data-access]').forEach(form => {
