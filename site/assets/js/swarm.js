@@ -737,7 +737,7 @@
   const setPos = (node, x, y) => { const v = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`; if (node.__t !== v) { node.style.transform = v; node.__t = v; } };
   function spread(row) { // 1-D: keep each label over its gate, push neighbours apart when they would touch
     if (!row.length) return;
-    row.sort((p, q) => p.x - q.x);
+    row.sort((p, q) => p.ax - q.ax); // gate order (by anchor): a wide label (04 with its policy line) must not jump a neighbour
     const gap = narrow ? 8 : 14, lo = 4, hiX = W - 4;
     for (let k = 0; k < row.length; k++) { const b = row[k]; b.x = Math.max(b.x, lo); if (k) b.x = Math.max(b.x, row[k - 1].x + row[k - 1].w + gap); }
     for (let k = row.length - 1; k >= 0; k--) { const b = row[k]; b.x = Math.min(b.x, (k === row.length - 1 ? hiX : row[k + 1].x - gap) - b.w); }

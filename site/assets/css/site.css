@@ -1211,6 +1211,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .sw-log { margin: 0; padding: 3px 14px 7px; list-style: none; font-size: .64rem; line-height: 1.45; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
 .sw-log li { display: grid; grid-template-columns: 4.4em 8.4em minmax(0, 1fr); align-items: center; gap: 10px; min-height: 2.1em; padding: 2px 0; border-bottom: 1px solid rgba(245, 242, 236, .08); color: var(--fg-2); }
 .sw-log li:last-child { border-bottom: 0; }
+.sw-log li[data-k="led"] { min-height: 34px; } /* the ledger row holds the record button's height from the start */
 .sw-log .sw-t { color: var(--fg-3); text-align: right; }
 .sw-log b { font-weight: 500; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--paper); }
 .sw-log .is-ok .sw-v, .sw-log .is-rec .sw-v { color: var(--accent); } .sw-log .is-bad .sw-v, .sw-log .is-bad b { color: var(--reject-bright); }
@@ -1275,7 +1276,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .sw-on.is-stacked .sw-trace:not([hidden]) { position: relative; left: auto; top: auto; transform: none; width: auto; border: 0; border-top: 1px solid var(--line); animation-name: sw-in; }
 /* in the flow the log keeps the height of a whole journey with its record button, so a rejection (one row fewer)
    does not move the counters and controls below */
-.sw-on.is-stacked .sw-log { min-height: 17.2em; }
+.sw-on.is-stacked .sw-log { min-height: calc(6 * 2.1em + 34px + 10px); }
 .sw-on.is-narrow .sw-gates li { letter-spacing: .1em; }
 .sw-on.is-narrow .sw-gates b { margin-right: .25em; }
 .sw-on.is-narrow .sw-ledger span { display: none; }
@@ -1286,7 +1287,8 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
   .swarm-controls input[type=range]::-moz-range-thumb { width: 16px; height: 16px; }
   .sw-on .sw-follow, .sw-trace-close, .sw-motion, .sw-rec { min-height: 44px; }
   .sw-rec { margin: 0; }
-  .sw-on.is-stacked .sw-log { min-height: 18.8em; }
+  .sw-log li[data-k="led"] { min-height: 48px; }
+  .sw-on.is-stacked .sw-log { min-height: calc(6 * 2.1em + 48px + 10px); }
 }
 /* phones held sideways: a shorter stage, the controls in two columns beside the counters, so the stage and the
    strictness slider are on screen together */
