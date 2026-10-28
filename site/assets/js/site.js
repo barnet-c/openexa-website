@@ -1,82 +1,320 @@
 /* OpenEXA — shared behaviour
-   nav · clocks · chapters · loader · kinetic type · manifesto · reveals · counters · forms · ledger stream · 2D swarm fallback */
+   nav (chapter readout, progress, menu sheet) · clocks · loader · kinetic type · manifesto · reveals · counters · forms
+   · ledger stream · 2D swarm fallback */
 (function () {
   'use strict';
 
   const CONTACT = document.body.dataset.contact || 'access@openexa.com'; // inbox for the access form — set data-contact on <body> of access.html
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reducedMQ = window.matchMedia('(prefers-reduced-motion: reduce)'); // read live where motion is optional
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const pad = (n) => String(n).padStart(2, '0');
+  const clamp01 = (v) => v < 0 ? 0 : v > 1 ? 1 : v;
+  const root = document.documentElement;
 
-  /* ---------------- nav ---------------- */
+  /* ---------------- nav: the frame of every page ----------------
+     The bar is transparent over a dark opening and otherwise glass that takes the ground of the section beneath it.
+     Pages with chapters (homepage [data-chapter] sections; numbered sections elsewhere; an article's headings) get a
+     readout beside the brand — number + title of the chapter being read, a list on click/Enter — and a progress hairline
+     along the bar's lower edge, cut into those chapters. Geometry is measured on resize/content change, never per frame. */
   const nav = $('.nav');
   const darkStart = document.body.dataset.nav === 'dark-start';
-  const progress = document.createElement('i'); progress.className = 'nav-progress'; if (nav) nav.appendChild(progress);
-  let lastY = window.scrollY, navRaf = 0;
-  const hero = $('.story, .hero, .page-hero--dark');
-  function updateNav() {
-    navRaf = 0;
-    if (!nav) return;
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    const y = window.scrollY;
-    progress.style.transform = `scaleX(${max > 0 ? Math.min(1, y / max) : 0})`;
-    // hide on the way down, return on the way up
-    const open = document.body.classList.contains('nav-open');
-    if (!open && y > 140 && y > lastY + 6) nav.classList.add('nav--hidden');
-    else if (open || y < lastY - 6 || y < 140) nav.classList.remove('nav--hidden');
-    lastY = y;
-    if (!darkStart) { nav.classList.add('nav--solid'); return; }
-    const staticStory = document.documentElement.classList.contains('no-webgl'); // beats stack and scroll under the nav
-    const threshold = hero && !staticStory ? hero.offsetHeight + hero.offsetTop - nav.offsetHeight - 8 : 40;
-    nav.classList.toggle('nav--solid', y > threshold || open);
-  }
-  updateNav();
-  const queueNav = () => { if (!navRaf) navRaf = requestAnimationFrame(updateNav); }; // at most once a frame
-  window.addEventListener('scroll', queueNav, { passive: true });
-  window.addEventListener('resize', queueNav);
-
+  const themeMeta = $('meta[name="theme-color"]');
+  const story = $('.story');
   const toggle = $('.nav-toggle');
-  const menu = $('.nav-menu');
-  if (toggle) {
-    if (menu) {
-      menu.id = 'site-menu';
-      menu.setAttribute('role', 'navigation');
-      menu.setAttribute('aria-label', 'Mobile');
-      toggle.setAttribute('aria-controls', menu.id);
-    }
-    const setMenu = (open) => {
-      document.body.classList.toggle('nav-open', open);
-      toggle.setAttribute('aria-expanded', String(open));
-      updateNav();
-    };
-    toggle.addEventListener('click', () => setMenu(!document.body.classList.contains('nav-open')));
-    $$('.nav-menu a').forEach(a => a.addEventListener('click', () => setMenu(false)));
-    document.addEventListener('keydown', e => {
-      if (!document.body.classList.contains('nav-open')) return;
-      if (e.key === 'Escape') {
-        setMenu(false);
-        toggle.focus();
-      } else if (e.key === 'Tab' && menu) {
-        const links = $$('a[href]', menu);
-        const last = links[links.length - 1];
-        if (e.shiftKey && document.activeElement === toggle && last) {
-          e.preventDefault(); last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault(); toggle.focus();
-        }
-      }
-    });
-    window.matchMedia('(min-width: 961px)').addEventListener('change', e => {
-      if (e.matches) setMenu(false);
-    });
-  }
+  const sheet = $('.nav-sheet');
+  let navH = 72, vh = window.innerHeight, maxScroll = 1, clearUntil = -1, bands = [], navRaf = 0, menuOpen = false;
+
   const pageKey = path => path.replace(/\/+$/, '').split('/').pop().replace(/\.html$/, '') || 'index';
   const here = pageKey(location.pathname);
-  $$('.nav-links a, .nav-menu a').forEach(a => {
+  $$('.nav-links a, .nav-sheet a, .nav .btn').forEach(a => {
     const href = (a.getAttribute('href') || '').split(/[?#]/)[0];
     if (href && pageKey(href) === here) a.setAttribute('aria-current', 'page');
     else a.removeAttribute('aria-current');
   });
+
+  /* chapters: [data-chapter] sections, else numbered sections (.sec-head), else an article's table of contents */
+  const tagline = ($('.nav .brand small') || {}).textContent || '';
+  let chapters = $$('section[data-chapter]').map((el, i) => ({ el, n: el.dataset.n || pad(i + 1), title: el.dataset.chapter }));
+  if (chapters.length < 2) chapters = $$('main section').map(el => {
+    const head = $('.sec-head', el), idx = head && $('.idx', head), lab = head && $('.lab', head);
+    return idx && lab && head.closest('section') === el ? { el, n: idx.textContent.trim(), title: lab.textContent.trim() } : null;
+  }).filter(Boolean);
+  if (chapters.length < 2) chapters = $$('.toc a[href^="#"]').map((a, i) => {
+    const el = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+    return el ? { el, n: pad(i + 1), title: a.textContent.trim(), scope: el.closest('article, .article') } : null;
+  }).filter(Boolean);
+  if (chapters.length < 2) chapters = [];
+  if (!nav || !$('.brand', nav)) chapters = [];
+  chapters.forEach((c, k) => {
+    c.k = k;
+    if (!c.el.id) { let id = 'chapter-' + (c.n.replace(/[^\w-]/g, '') || k); while (document.getElementById(id)) id += '-'; c.el.id = id; }
+  });
+  // an address that names a section given its id just now (the browser looked for it before this script ran)
+  if (chapters.length && location.hash && chapters.some(c => '#' + c.el.id === decodeURIComponent(location.hash)) && window.scrollY < 2) {
+    const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    requestAnimationFrame(() => target.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  }
+
+  let live = [], segs = [], current = -2, shownK = -3, chOpen = false;
+  const ui = {};
+  if (nav) {
+    // the hairline: intro · chapters · outro, each as long as the scroll it covers
+    ui.progress = document.createElement('div'); ui.progress.className = 'nav-progress'; ui.progress.setAttribute('aria-hidden', 'true');
+    nav.appendChild(ui.progress);
+  }
+  if (nav && chapters.length) {
+    const brand = $('.brand', nav);
+    nav.classList.add('has-ch');
+    const wrap = ui.wrap = document.createElement('div'); wrap.className = 'nav-ch';
+    wrap.innerHTML =
+      '<button class="nav-ch-btn" type="button" aria-expanded="false" aria-controls="nav-ch-panel"><span class="nav-ch-roll"></span>' +
+      '<svg class="nav-ch-caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.6l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></button>' +
+      '<div class="nav-ch-panel" id="nav-ch-panel"><div class="nav-ch-head"><span>On this page</span><span></span></div><ol class="nav-ch-list"></ol>' +
+      '<a class="nav-ch-top" href="#"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 8.5V1.8M2 4.6l3-3 3 3" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>Back to top</a></div>';
+    brand.after(wrap);
+    ui.btn = $('.nav-ch-btn', wrap); ui.roll = $('.nav-ch-roll', wrap); ui.panel = $('.nav-ch-panel', wrap); ui.list = $('.nav-ch-list', wrap);
+    $('.nav-ch-head span:last-child', wrap).textContent = pad(chapters.length) + ' chapters';
+    chapters.forEach(c => {
+      const li = document.createElement('li'), a = document.createElement('a');
+      a.href = '#' + c.el.id; a.dataset.k = c.k;
+      a.innerHTML = '<span class="n"></span><span class="t"></span><span class="p"><b></b></span>';
+      $('.n', a).textContent = c.n; $('.t', a).textContent = c.title;
+      li.appendChild(a); ui.list.appendChild(li); c.li = li; c.a = a; c.bar = $('.p b', a);
+    });
+  }
+
+  /* the readout: the line rolls up to the next chapter (down when going back); its width follows */
+  function lineFor(k) {
+    const line = document.createElement('span');
+    line.className = 'nav-ch-line';
+    if (k < 0) {
+      line.classList.add('is-intro');
+      line.innerHTML = '<span class="t t-wide"></span><span class="t t-short">Index</span>';
+      line.firstChild.textContent = tagline || 'Index';
+    } else {
+      const b = document.createElement('b'), t = document.createElement('span');
+      b.textContent = chapters[k].n; t.className = 't'; t.textContent = chapters[k].title;
+      line.append(b, ' ', t);
+    }
+    return line;
+  }
+  function showChapter(k) {
+    if (!ui.roll || k === shownK) return;
+    const dir = k > shownK ? 1 : -1, first = shownK === -3;
+    shownK = k;
+    const label = k < 0 ? `On this page: ${chapters.length} chapters` : `Chapter ${chapters[k].n}, ${chapters[k].title}. On this page: ${chapters.length} chapters`;
+    ui.btn.setAttribute('aria-label', label);
+    chapters.forEach(c => { if (c.k === k) c.a.setAttribute('aria-current', 'true'); else c.a.removeAttribute('aria-current'); });
+    if (ui.roll.getAnimations) ui.roll.getAnimations({ subtree: true }).forEach(a => a.cancel());
+    const w0 = first ? 0 : ui.roll.getBoundingClientRect().width; // the width on screen now, before anything leaves
+    Array.from(ui.roll.children).forEach(ch => ch.remove());
+    const old = ui.line, neu = lineFor(k);
+    ui.line = neu;
+    ui.roll.appendChild(neu);
+    if (first || !old || reducedMQ.matches || !neu.animate || document.hidden) return;
+    old.style.cssText = 'position:absolute;left:0;top:4px;width:max-content';
+    ui.roll.appendChild(old);
+    const w1 = neu.getBoundingClientRect().width;
+    const timing = { duration: 560, easing: 'cubic-bezier(.2, .7, .2, 1)' };
+    if (Math.abs(w1 - w0) > 1) ui.roll.animate([{ width: w0 + 'px' }, { width: w1 + 'px' }], timing);
+    old.animate([{ transform: 'none', opacity: 1 }, { transform: `translateY(${-dir * 120}%)`, opacity: 0 }], { ...timing, duration: 420, fill: 'forwards' })
+      .finished.then(() => old.remove(), () => old.remove());
+    neu.animate([{ transform: `translateY(${dir * 120}%)`, opacity: 0 }, { transform: 'none', opacity: 1 }], timing);
+  }
+
+  function buildSegments() {
+    ui.progress.textContent = '';
+    const parts = live.length ? ['edge', ...live, 'edge'] : ['page'];
+    segs = parts.map(part => {
+      const i = document.createElement('i'), b = document.createElement('b');
+      if (part === 'edge') i.className = 'is-edge';
+      i.appendChild(b); ui.progress.appendChild(i);
+      return { i, b, part, s: 0, e: 0, p: -1 };
+    });
+  }
+
+  /* geometry, in document coordinates */
+  function measure() {
+    if (!nav) return;
+    const y = window.scrollY;
+    vh = window.innerHeight; navH = nav.offsetHeight || 72;
+    maxScroll = Math.max(1, root.scrollHeight - vh);
+    const pinned = story && root.classList.contains('story-ready') && !root.classList.contains('no-webgl');
+    // over a pinned overture the bar stays clear until the stage starts to leave (its text then passes under glass, never
+    // under bare links); a static dark opening is clear only at the very top
+    clearUntil = !darkStart ? -1 : pinned ? story.getBoundingClientRect().bottom + y - vh : 16;
+    bands = $$('main > *, body > .footer').map(el => {
+      const r = el.getBoundingClientRect();
+      return { top: r.top + y, bottom: r.bottom + y, dark: el.classList.contains('is-dark') };
+    });
+    const before = live.map(c => c.k).join();
+    live = chapters.filter(c => c.el.getClientRects().length > 0);
+    chapters.forEach(c => { c.li.hidden = !live.includes(c); });
+    if (before !== live.map(c => c.k).join() || !segs.length) buildSegments();
+    const probe = navH + (vh - navH) * 0.3; // the reading line: a third of the way down below the bar
+    live.forEach(c => { const r = c.el.getBoundingClientRect(); c.top = r.top + y; c.bottom = r.bottom + y; });
+    live.forEach((c, i) => {
+      const next = live[i + 1];
+      const end = next ? next.top : c.scope ? c.scope.getBoundingClientRect().bottom + y : c.bottom;
+      c.s = Math.min(maxScroll, Math.max(0, c.top - probe));
+      c.e = Math.min(maxScroll, Math.max(c.s, end - probe));
+    });
+    if (live.length) {
+      const first = live[0], last = live[live.length - 1];
+      segs.forEach((g, j) => {
+        if (g.part === 'edge') { g.s = j === 0 ? 0 : last.e; g.e = j === 0 ? first.s : maxScroll; }
+        else { g.s = g.part.s; g.e = g.part.e; }
+      });
+    } else if (segs.length) { segs[0].s = 0; segs[0].e = maxScroll; }
+    segs.forEach(g => {
+      const len = g.e - g.s;
+      g.i.style.flexGrow = Math.max(0, len).toFixed(1);
+      g.i.style.display = len < 2 ? 'none' : '';
+      g.p = -1;
+    });
+    update();
+  }
+  const queue = () => { if (!navRaf) navRaf = requestAnimationFrame(() => { navRaf = 0; update(); }); };
+
+  function update() {
+    if (!nav) return;
+    const y = window.scrollY;
+    // the bar's surface: the ground of the section that meets its lower edge, so bar and section read as one
+    let dark = false;
+    const edge = y + navH + 1;
+    for (const b of bands) if (edge >= b.top && edge < b.bottom) { dark = b.dark; break; }
+    const clear = y <= clearUntil && !menuOpen;
+    nav.classList.toggle('nav--solid', !clear);
+    nav.classList.toggle('nav--dark', dark);
+    if (themeMeta) {
+      const ink = clear ? darkStart : dark || menuOpen;
+      const want = ink ? '#0E1512' : '#F5F2EC';
+      if (themeMeta.content !== want) themeMeta.content = want;
+    }
+    // the hairline
+    let on = -1;
+    segs.forEach((g, j) => {
+      const len = g.e - g.s;
+      const p = len > 0 ? clamp01((y - g.s) / len) : (y >= g.e ? 1 : 0);
+      if (Math.abs(p - g.p) > 0.001) { g.p = p; g.b.style.transform = `scaleX(${p.toFixed(4)})`; }
+      if (y >= g.s && (y < g.e || j === segs.length - 1)) on = j;
+    });
+    segs.forEach((g, j) => g.i.classList.toggle('is-on', j === on && g.p > 0 && live.length > 0)); // green marks a chapter
+    // the readout
+    if (!live.length) return;
+    let k = -1;
+    for (const c of live) if (y >= c.s) k = c.k;
+    live.forEach(c => {
+      const p = c.e > c.s ? clamp01((y - c.s) / (c.e - c.s)) : (y >= c.e ? 1 : 0);
+      if (Math.abs(p - (c.p || 0)) > 0.004 || c.p === undefined) { c.p = p; c.bar.style.setProperty('--p', p.toFixed(3)); }
+    });
+    if (k !== current) { current = k; showChapter(k); }
+  }
+
+  /* the chapter list */
+  function setPanel(open, refocus) {
+    if (!ui.wrap || open === chOpen) return;
+    chOpen = open;
+    ui.wrap.classList.toggle('is-open', open);
+    ui.btn.setAttribute('aria-expanded', String(open));
+    if (open && menuOpen) setMenu(false);
+    if (!open && refocus) ui.btn.focus();
+  }
+  const rows = () => live.map(c => c.a);
+  const focusRow = (i) => { const r = rows(); if (r.length) r[(i + r.length) % r.length].focus(); };
+  if (ui.wrap) {
+    ui.btn.addEventListener('click', () => setPanel(!chOpen));
+    ui.btn.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      e.preventDefault(); setPanel(true);
+      const i = live.findIndex(c => c.k === current);
+      focusRow(e.key === 'ArrowUp' ? live.length - 1 : Math.max(0, i));
+    });
+    ui.panel.addEventListener('keydown', e => {
+      const r = rows(), i = r.indexOf(document.activeElement);
+      if (e.key === 'Escape') { e.preventDefault(); setPanel(false, true); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); focusRow(i + 1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); focusRow(i < 0 ? r.length - 1 : i - 1); }
+      else if (e.key === 'Home') { e.preventDefault(); focusRow(0); }
+      else if (e.key === 'End') { e.preventDefault(); focusRow(r.length - 1); }
+    });
+    ui.btn.addEventListener('keydown', e => { if (e.key === 'Escape' && chOpen) { e.preventDefault(); setPanel(false); } });
+    ui.list.addEventListener('click', e => {
+      const a = e.target.closest('a');
+      if (!a) return;
+      const c = chapters[+a.dataset.k];
+      setPanel(false);
+      // the address changes natively (smooth where motion is welcome); focus follows the reader to the chapter
+      c.el.setAttribute('tabindex', '-1'); c.el.classList.add('nav-ch-target');
+      setTimeout(() => c.el.focus({ preventScroll: true }), 0);
+    });
+    $('.nav-ch-top', ui.wrap).addEventListener('click', e => {
+      e.preventDefault(); setPanel(false, true);
+      window.scrollTo({ top: 0, behavior: reducedMQ.matches ? 'instant' : 'smooth' });
+    });
+    document.addEventListener('pointerdown', e => { if (chOpen && !ui.wrap.contains(e.target)) setPanel(false); });
+    ui.wrap.addEventListener('focusout', e => { if (chOpen && e.relatedTarget && !ui.wrap.contains(e.relatedTarget)) setPanel(false); });
+  }
+
+  /* the menu sheet (phones, tablets): a popover — it opens without JavaScript; this adds focus care, the bar's state,
+     a fallback for browsers without the popover API, and keeps the page behind it inert */
+  const popover = !!(sheet && sheet.hasAttribute('popover') && typeof sheet.showPopover === 'function');
+  function syncMenu(open) {
+    if (open === menuOpen) return;
+    menuOpen = open;
+    document.body.classList.toggle('nav-open', open);
+    if (nav) nav.classList.toggle('nav--menu', open);
+    if (toggle) toggle.setAttribute('aria-expanded', String(open));
+    $$('body > main, body > .footer').forEach(el => { el.inert = open; });
+    if (open) setPanel(false);
+    update();
+  }
+  function setMenu(open) {
+    if (!sheet) return;
+    if (popover) { try { open ? sheet.showPopover() : sheet.hidePopover(); } catch (e) { /* already in that state */ } }
+    else syncMenu(open);
+  }
+  if (toggle && sheet) {
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-controls', sheet.id);
+    if (popover) sheet.addEventListener('beforetoggle', e => syncMenu(e.newState === 'open'));
+    else {
+      toggle.removeAttribute('popovertarget');
+      toggle.addEventListener('click', () => setMenu(!menuOpen));
+    }
+    // a link to another page leaves the sheet open, marked, so the page transition carries it away
+    $$('a', sheet).forEach(a => a.addEventListener('click', () => {
+      const href = a.getAttribute('href') || '';
+      if (href.startsWith('#') || pageKey(href.split(/[?#]/)[0]) === here) setMenu(false);
+      else a.classList.add('is-going');
+    }));
+    document.addEventListener('keydown', e => {
+      if (!menuOpen) return;
+      if (e.key === 'Escape' && !popover) { setMenu(false); toggle.focus(); }
+      else if (e.key === 'Tab') {
+        const items = $$('a[href], button', sheet).filter(el => el.getClientRects().length);
+        const last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === toggle && last) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); toggle.focus(); }
+      }
+    });
+    window.matchMedia('(min-width: 961px)').addEventListener('change', e => { if (e.matches) setMenu(false); });
+    window.addEventListener('pageshow', e => { if (e.persisted) { setMenu(false); $$('.is-going', sheet).forEach(a => a.classList.remove('is-going')); } });
+  }
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && chOpen) setPanel(false, true); });
+
+  if (nav) {
+    measure();
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', measure);
+    window.addEventListener('load', measure);
+    ['story:gl-ready', 'story:no-webgl', 'oxa:loaded'].forEach(t => document.addEventListener(t, measure));
+    // content that changes height (fonts, lazy images, opened details, filtered collections) moves every chapter
+    if ('ResizeObserver' in window) { let ro = 0; new ResizeObserver(() => { cancelAnimationFrame(ro); ro = requestAnimationFrame(measure); }).observe(document.body); }
+    if (document.fonts) document.fonts.ready.then(measure);
+  }
   const openLinkedDetails = () => {
     const target = document.getElementById(location.hash.slice(1));
     if (!target) return;
@@ -102,7 +340,6 @@
   }
 
   /* ---------------- clocks (footer) ---------------- */
-  const pad = (n) => String(n).padStart(2, '0');
   const clockFmt = (tz) => new Intl.DateTimeFormat('en-US', { timeZone: tz, hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const clocks = [];
   const bottom = $('.footer .bottom');
@@ -114,22 +351,6 @@
     clocks.push(() => { const now = new Date(); fmts.forEach(({ t, f }) => { t.textContent = f.format(now).replace(/^24/, '00'); t.dateTime = now.toISOString(); }); });
   }
   if (clocks.length) { const tick = () => clocks.forEach(fn => fn()); tick(); setInterval(tick, 1000); }
-
-  /* ---------------- chapters — a fixed index of the page, lit as you scroll ---------------- */
-  const chapterSecs = $$('section[data-chapter]');
-  if (chapterSecs.length > 2 && 'IntersectionObserver' in window) {
-    const rail = document.createElement('nav'); rail.className = 'chapters'; rail.setAttribute('aria-label', 'Chapters');
-    rail.innerHTML = chapterSecs.map((s, i) => `<a href="#${s.id}"><span>${s.dataset.chapter}</span><b>${pad(i + 1)}</b></a>`).join('');
-    document.body.appendChild(rail);
-    const links = $$('a', rail);
-    const cio = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) { const i = chapterSecs.indexOf(e.target); links.forEach((a, j) => a.classList.toggle('is-on', j === i)); } });
-    }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
-    chapterSecs.forEach(s => cio.observe(s));
-    const first = chapterSecs[0];
-    const showRail = () => rail.classList.toggle('is-on', window.scrollY > first.offsetTop - window.innerHeight * 0.6 && window.scrollY < document.documentElement.scrollHeight - window.innerHeight * 1.8);
-    showRail(); window.addEventListener('scroll', showRail, { passive: true });
-  }
 
   /* ---------------- manifesto — words light up as the paragraph passes through the viewport ---------------- */
   $$('[data-manifesto]').forEach(el => {
@@ -199,39 +420,61 @@
     revealEls.forEach(el => { el.classList.add('will-reveal'); io.observe(el); });
   } else revealEls.forEach(el => el.classList.add('is-in'));
 
-  /* ---------------- preloader (homepage) ---------------- */
+  /* ---------------- preloader (homepage) ----------------
+     Finishes on elapsed time and readiness, never on a count of frames: a throttled or starved requestAnimationFrame
+     (background tab, battery saver) only skips repaints of the count; timers lift the loader. performance.now() runs from
+     the start of navigation, so the count is the real time the visitor has waited. A second visit in the same session
+     gets the short version (the mark, no count) for as long as the stage needs and no longer. */
   const loader = $('.loader');
-  if (loader) {
-    document.body.classList.add('is-loading');
-    const count = $('.loader-count', loader), bar = $('.loader-bar i', loader);
-    let p = 0, done = false;
-    const t0 = performance.now();
-    // the overture's WebGL starts after first paint: lift the loader once it has drawn (or fallen back), never later than the cap
-    const glReady = !$('.story-gl') || ['gl-ready', 'no-webgl'].some(c => document.documentElement.classList.contains(c)) ? Promise.resolve()
-      : new Promise(r => ['story:gl-ready', 'story:no-webgl'].forEach(t => document.addEventListener(t, r, { once: true })));
-    // time-based, so a slow GPU never stretches the count: 0 → 92 in 1.1 s, then straight to 100 once the page is ready
-    const ready = Promise.all([document.fonts ? document.fonts.ready : Promise.resolve(), document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true })), glReady]);
-    const tick = (now) => {
-      const target = done ? 100 : Math.min(92, (now - t0) / 1100 * 92);
-      p += (target - p) * 0.18;
-      if (count) count.textContent = Math.round(p).toString().padStart(2, '0');
-      if (bar) bar.style.setProperty('--p', (p / 100).toFixed(3));
-      if (p > 99.4 && done) { finish(); return; }
-      requestAnimationFrame(tick);
-    };
-    const finish = () => {
-      if (count) count.textContent = '100';
-      loader.classList.add('is-done');
-      document.body.classList.remove('is-loading');
-      $$('.beat-0 [data-split]').forEach(el => el.classList.add('is-in'));
-      setTimeout(() => loader.remove(), 1200);
-    };
-    ready.then(() => { done = true; });
-    setTimeout(() => { done = true; }, 1800); // never hold the page hostage
-    if (prefersReduced) Promise.race([glReady, new Promise(r => setTimeout(r, 1800))]).then(finish); else requestAnimationFrame(tick);
-  } else {
+  const loaded = () => {
     $$('.beat-0 [data-split]').forEach(el => el.classList.add('is-in'));
-  }
+    root.classList.add('is-loaded');
+    document.dispatchEvent(new CustomEvent('oxa:loaded'));
+  };
+  if (loader) {
+    let seen = false;
+    try { seen = sessionStorage.getItem('oxa:intro') === '1'; sessionStorage.setItem('oxa:intro', '1'); } catch (e) { /* storage off: full intro */ }
+    if (seen) loader.classList.add('is-quick');
+    document.body.classList.add('is-loading');
+    const MIN = seen ? 0 : 950, CAP = seen ? 1100 : 2000, OUT = seen ? 0 : 380; // ms from navigation start; OUT = the count's run to 100
+    const count = $('.loader-count', loader), dial = $('.loader-dial', loader);
+    // the overture draws its first frame (or falls back) after this script: lift once it has, never later than the cap
+    const glReady = !$('.story-gl') || ['gl-ready', 'no-webgl'].some(c => root.classList.contains(c)) ? Promise.resolve()
+      : new Promise(r => ['story:gl-ready', 'story:no-webgl'].forEach(t => document.addEventListener(t, r, { once: true })));
+    const ready = Promise.all([document.fonts ? document.fonts.ready : Promise.resolve(),
+      document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true })), glReady]);
+    const easeOut = t => 1 - Math.pow(1 - t, 3);
+    const t0 = performance.now(); // the count starts from the "00" already on screen; MIN and CAP count from navigation start
+    const early = t => 0.9 * (1 - Math.exp(-Math.max(0, t - t0) / 520)); // before readiness the count eases towards 90
+    let runFrom = 0, pFrom = 0, finishAt = 0, completed = false;
+    const progressAt = (now) => finishAt && now >= runFrom ? pFrom + (1 - pFrom) * easeOut(clamp01((now - runFrom) / Math.max(1, OUT))) : early(now);
+    const paint = (p) => {
+      if (count) count.textContent = pad(Math.min(100, Math.round(p * 100)));
+      if (dial) dial.style.setProperty('--p', p.toFixed(4));
+    };
+    const complete = () => {
+      if (completed) return;
+      completed = true;
+      paint(1);
+      loader.classList.add('is-complete', 'is-done');
+      document.body.classList.remove('is-loading');
+      loaded();
+      setTimeout(() => loader.remove(), seen ? 600 : 1400);
+    };
+    const schedule = () => {
+      if (finishAt) return;
+      const now = performance.now();
+      runFrom = Math.max(now, MIN - OUT);
+      pFrom = early(runFrom);
+      finishAt = runFrom + OUT;
+      setTimeout(complete, Math.max(0, finishAt - now));
+    };
+    ready.then(schedule);
+    setTimeout(schedule, Math.max(0, CAP - performance.now())); // never hold the page hostage
+    const frame = () => { if (completed) return; paint(progressAt(performance.now())); requestAnimationFrame(frame); };
+    paint(progressAt(performance.now()));
+    requestAnimationFrame(frame);
+  } else loaded();
   /* ---------------- count-up ---------------- */
   // the HTML holds the real value (no-JS, screen readers); counters still below the fold are zeroed now and count up on arrival
   const fmt = (n, dec) => n.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
