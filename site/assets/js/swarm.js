@@ -6,7 +6,8 @@
    proposals snap onto five rails that advance in lockstep, settle at 06 as solid squares and are sealed into blocks on a
    hash-chained ledger line. Halt stops new proposals while open work drains. "Follow a proposal" (or click/tap an agent)
    traces one proposal gate by gate until it settles or is rejected. Every counter is derived from the model's state;
-   'Settled / s' is an exponentially weighted rate of the model's own settlements (tau 0.8 s of model time).
+   'Settled / s' is an exponentially weighted rate of the model's own settlements, folded once per rail tick (tau 1.6 s
+   of model time).
    The page hears the model through document events, both batched on one clock (at most four flushes a second):
      'oxa:settled'  {id, lane, ts, gate: 'settle', count, followed}   proposals settled since the previous flush
      'oxa:rejected' {id, ts, count, followed, gate: 'approve'}        proposals the council rejected since then
@@ -59,7 +60,10 @@
   const TRAIL = 5, TRAIL_DT = 0.042;                           // per-agent trail: five samples, 42 ms apart
   const CAP = 8200, MOTES = 220, NT = 96;                      // agent slots; incoming signals; ticks on the council aperture
   const DEAD = 0, FLOW = 1, PROP = 2, RAIL = 3, SETTLE = 4, REJECT = 5;
-  const TAU_R = 0.8;                                            // 'Settled / s': exponential weighting of settlements, model seconds
+  // 'Settled / s': the rails settle in bursts, one per lockstep tick, so the rate is folded once a tick (the tick's
+  // settlements per second) into a weighted mean with a time constant of 1.6 model seconds: no saw-tooth from the bursts,
+  // and a policy change reads as what it does (approved work still on the rails settles; then the rate falls)
+  const TAU_R = 1.6, A_R = 1 - Math.exp(-TICK / TAU_R);
   const st = new Uint8Array(CAP), gate = new Uint8Array(CAP), lane = new Uint8Array(CAP), flag = new Uint8Array(CAP), hc = new Uint8Array(CAP);
   const annR = new Uint8Array(CAP);                             // a followed rejection is announced when it lands, not at the decision
   const X = new Float32Array(CAP), Y = new Float32Array(CAP), Z = new Float32Array(CAP);
@@ -81,7 +85,7 @@
   let popCap = 0;                                               // a device that cannot carry the population lowers it (0: no cap)
   const pop = () => (popCap && popCap < target ? popCap : target);
   let sim = 0, seq = 41000 + Math.floor(Math.random() * 9000), inflight = 0, spawnAcc = 0, railPh = 0, histT = 0, hHead = 0, pulse = 0, rejGlow = 0;
-  const S = { settled: 0, rejected: 0, rate: 0 };               // derived counters read these, nothing else
+  const S = { settled: 0, rejected: 0, rate: 0, tick: 0, m: 0, k: 0 }; // derived counters read these, nothing else
   const ledger = []; let openPulse = 0;
   // tightening the council closes its aperture: an iris that eases to its new opening (a click on the slider's track
   // must not snap the funnel and every agent in it); the entry gate's shutter eases closed on Halt the same way
@@ -119,14 +123,19 @@
   function pickLane(i) { return clamp(Math.round(Y[i] / (apR + 1e-3) * 2.2 + 2 + (rnd() - 0.5) * 1.2), 0, 4); }
   // a lane already in steady state: agents placed along it with the history they would have had
   function warmStart() {
-    const limit = 1 - strict;
-    // steady-state density: the rails run faster than the estimation field and carry only the approved share, so they
-    // hold fewer agents per unit length; a uniform fill would flush a burst of settlements in the first seconds
-    const keepRail = clamp(0.2075 / V_RAIL * limit, 0, 1), n = pop();
+    const limit = 1 - strict, cong = 0.1 + 1.05 * strict, n = pop();
+    // steady-state density, so the first seconds settle at the lane's own rate instead of ringing toward it: the rails
+    // run faster than the estimation field and carry only the approved share, so they hold fewer agents per unit length
+    // (the field's harmonic mean speed is 0.2046); in the field, the council's slow zone and the slower agents hold more
+    const F0 = GX[0] - 0.08, F1 = GX[3] - 0.01, R0 = GX[3], R1 = GX[5] - 0.02, kRail = clamp(limit * 0.2046 / V_RAIL, 0, 1);
+    let slowZone = 0; for (let k = 0; k < 20; k++) { const u = (k + 0.5) / 20; slowZone += 0.011 * (1 / (1 - cong * u * u * (3 - 2 * u)) - 1); }
+    const pRail = (R1 - R0) * kRail / ((F1 - F0) + slowZone + (R1 - R0) * kRail);
     for (let k = 0; k < n; k++) {
-      let x = GX[0] - 0.08 + rnd() * (GX[5] - GX[0] + 0.06);
-      if (x > GX[3] && rnd() > keepRail) x = GX[0] - 0.08 + rnd() * (GX[3] - GX[0] + 0.07);
+      let x;
+      if (rnd() < pRail) x = R0 + rnd() * (R1 - R0);
+      else do { x = F0 + rnd() * (F1 - F0); } while (rnd() > (1 - cong) / (1 - cong * smooth(GX[3] - 0.22, GX[3], x)));
       const i = spawnAt(x); if (i < 0) break;
+      if (x < GX[3]) SPD[i] = 0.165 * Math.pow(0.25 / 0.165, rnd()); // the field holds its slower agents longer
       BORN[i] = sim - 5;
       // the gates it passed before the model began, back-dated at its own pace upstream and the rails' pace past the council
       while (gate[i] < 6 && X[i] >= GX[gate[i]]) {
@@ -150,7 +159,7 @@
   }
   function reset() {
     st.fill(0); annR.fill(0); hi = 0; nFree = 0; sim = 0; inflight = 0; spawnAcc = 0; railPh = 0; histT = 0; hHead = 0; pulse = 0; rejGlow = 0;
-    S.settled = S.rejected = 0; S.rate = 0; ledger.length = 0; TF.fill(0); GF.fill(0); evPending = null; rjPending = null;
+    S.settled = S.rejected = 0; S.rate = S.tick = S.m = S.k = 0; ledger.length = 0; TF.fill(0); GF.fill(0); evPending = null; rjPending = null;
   }
 
   /* ---------------- following one proposal ---------------- */
@@ -208,7 +217,6 @@
     sim += dt;
     apR += (apT - apR) * (1 - Math.exp(-dt * 5));
     shutK += ((halted ? 1 : 0) - shutK) * (1 - Math.exp(-dt * 8));
-    S.rate *= Math.exp(-dt / TAU_R);                             // each settlement below adds 1/tau: settlements per second, weighted
     const limit = 1 - strict, cong = 0.1 + 1.05 * strict, n = pop();
     if (!halted) { // inflow keeps the lane near the population you chose
       const tEst = (GX[3] - GX[0]) / 0.2 * (1 + cong * 0.3) + (1 - strict) * (GX[5] - GX[3]) / V_RAIL;
@@ -242,7 +250,7 @@
         if (gate[i] < 5 && X[i] >= GX[4]) { gate[i] = 5; GT[i * 7 + 5] = sim; if (isFollowed(i)) traceGate(i, 5); }
         if (X[i] >= GX[5]) {
           gate[i] = 6; GT[i * 7 + 6] = sim; st[i] = SETTLE; T0[i] = 0; SX[i] = X[i]; SY[i] = Y[i]; SZ[i] = Z[i];
-          S.settled++; S.rate += 1 / TAU_R;
+          S.settled++; S.tick++;
           if (isFollowed(i)) traceGate(i, 6);
         } else fl++;
       } else if (s === SETTLE) {
@@ -272,7 +280,8 @@
       }
     }
     inflight = fl;
-    if (halted && fl === 0) S.rate = 0; // drained: nothing can settle, so the weighted rate keeps no tail into a Resume
+    for (let k = Math.floor(railPh) - Math.floor(p0); k > 0; k--) foldRate(); // a rail tick ended in this step
+    if (halted && fl === 0) S.rate = S.tick = S.m = S.k = 0; // drained: nothing can settle, so the rate keeps no tail into a Resume
     // signals drifting in: data the agents pick up at 01 (nobody picks it up while halted: it fades at the closed gate)
     for (let m = 0; m < MOTES; m++) { MS[m] += MV[m] * dt / 1.05; if (MS[m] >= 1) mote(m, false); }
     for (let k = 0; k < NT; k++) if (TF[k] > 0) TF[k] = Math.max(0, TF[k] - dt / 0.32);
@@ -285,6 +294,10 @@
       camera(); projectAll();
       if (sim - histT >= TRAIL_DT) { histT = sim; sample(); }
     }
+  }
+  function foldRate() { // the tick's settlements per second into the weighted mean, bias-corrected while it is young
+    S.m += (S.tick / TICK - S.m) * A_R; S.k++; S.tick = 0;
+    S.rate = S.m / (1 - Math.pow(1 - A_R, S.k));
   }
   function decide(i, limit) {
     const ang = Math.atan2(Y[i], Z[i]), k = Math.floor(((ang / TAU) + 1) % 1 * NT);
