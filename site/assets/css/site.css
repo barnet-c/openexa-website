@@ -2303,4 +2303,12 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
 .post-hero--plate .bp-mark { top: clamp(18px, 2.2vw, 30px); right: clamp(18px, 2.2vw, 30px); width: 56px; height: 56px; }
 @media (max-width: 640px) { .post-hero--plate { min-height: 0; aspect-ratio: 16 / 10; } }
 @media (prefers-reduced-motion: reduce) { .blog-plate .bp-mark { transition: none; } }
+
+/* ---------- research notes (and blog posts): the hero figure no longer draws under the title and lede (PG4) ----------
+   CSS only: the notes' content, figures and colours are as they were. The stage starts at the page's centre line and
+   fades in over its first 14%, so no stroke crosses the h1 or the lede. */
+@media (min-width: 961px) {
+  .article-hero .figure-stage { left: 50%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%); mask-image: linear-gradient(90deg, transparent, #000 14%); }
+  .article-hero .lede { max-width: 40ch; }
+}
 /* v2:pages:end */
