@@ -2877,21 +2877,23 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
    the drawing), so they stay crisp and >= 10 px at every width. No loops: one staged fade on reveal, none without it. */
 .page-hero--plate { align-items: center; }
 .page-hero--plate > .hero-copy { grid-column: 1 / span 7; min-width: 0; }
-.page-hero--plate .display-1 { font-size: clamp(2.9rem, 6.2vw, 6.4rem); max-width: 14ch; }
-.page-hero--plate .lede { max-width: 44ch; }
+.page-hero--plate .display-1 { font-size: clamp(2.9rem, 6.2vw, 6.4rem); max-width: 17ch; }
+.page-hero--plate .hero-copy--long .display-1 { font-size: clamp(2.6rem, 5.3vw, 5.5rem); } /* Platform's three-clause h1 */
+.page-hero--plate .lede { max-width: 50ch; }
 .hero-plate { grid-column: 8 / -1; justify-self: end; width: 100%; max-width: 500px; min-width: 0; margin: 0; }
 .hp-art { position: relative; }
 .hp-art > svg { display: block; width: 100%; height: auto; overflow: visible; color: var(--fg); }
 .hp-art svg * { vector-effect: non-scaling-stroke; }
-.hp-h { fill: none; stroke: var(--line-strong); stroke-width: 1; }
-.hp-h.hp-strong { stroke: currentColor; stroke-opacity: .5; }
-.hp-faint { stroke: var(--line); }
+/* PG-R2-6: the engraving is drawn, not ghosted - hairlines at .45, lines at .75, the strong rule at .72 */
+.hp-h { fill: none; stroke: currentColor; stroke-opacity: .45; stroke-width: 1; }
+.hp-h.hp-strong { stroke: currentColor; stroke-opacity: .72; }
+.hp-faint { stroke: var(--line); stroke-opacity: 1; }
 .hp-dash { stroke-dasharray: 3 4; }
-.hp-i { fill: none; stroke: currentColor; stroke-opacity: .5; stroke-width: 1; }
-.hp-fine { stroke-opacity: .3; stroke-dasharray: 1 3; }
+.hp-i { fill: none; stroke: currentColor; stroke-opacity: .75; stroke-width: 1; }
+.hp-fine { stroke-opacity: .45; stroke-dasharray: 1 3; }
 .hp-ap { stroke-opacity: .42; }
-.hp-next { stroke-opacity: .6; stroke-dasharray: 6 4; }
-.hp-next2 { stroke-opacity: .5; }
+.hp-next { stroke-opacity: .75; stroke-dasharray: 6 4; }
+.hp-next2 { stroke-opacity: .62; }
 .hp-k { fill: none; stroke: var(--khaki-deep); stroke-width: 1.25; stroke-dasharray: 0 5.5; stroke-linecap: round; }
 .hp-d { fill: currentColor; }
 .hp-g { fill: none; stroke: var(--accent); stroke-width: 1.5; }
@@ -2926,7 +2928,17 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .hero-plate .hp-s1, .hero-plate .hp-s2 { transition: none; }
   .hero-plate.will-reveal:not(.is-in) .hp-s1, .hero-plate.will-reveal:not(.is-in) .hp-s2 { opacity: 1; }
 }
-@media (min-width: 1700px) { .hero-plate { max-width: 600px; } }
+/* PG-R2-6, 961 px and wider: the plate hangs from the h1's top (its 49 px = the eyebrow's line and the h1's margin;
+   the Proof hero opens on a 33 px badge) instead of centring on a tall copy column, and the band under the hero is
+   cut so §01's head enters at about 80% of the first screen: less air above the eyebrow, under the hero and above §01 */
+@media (min-width: 961px) {
+  .page-hero--plate { align-items: start; }
+  .page-hero--plate > .hero-plate { margin-top: 49px; }
+  .page-hero--plate > .hero-plate--records { margin-top: 55px; }
+  .page-hero:not(.page-hero--dark) { padding-top: calc(var(--nav-h) + clamp(48px, 5.6vw, 84px)); padding-bottom: clamp(20px, 2vw, 36px); }
+  .page-hero:not(.page-hero--dark) + .section { padding-top: clamp(56px, 5vw, 84px); }
+}
+@media (min-width: 1200px) { .hero-plate { max-width: 560px; } }
 @media (max-width: 960px) {
   .page-hero--plate { row-gap: clamp(28px, 6vw, 44px); }
   .page-hero--plate > .hero-copy, .hero-plate { grid-column: 1 / -1; }
