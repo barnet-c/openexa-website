@@ -2200,3 +2200,9 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
 @media print { .nav-ch, .nav-progress, .nav-sheet { display: none !important; } }
 /* v2:nav:end */
 /* -------------------------------------------------------------------------- */
+
+/* v2:lifecycle:start */
+/* v2:lifecycle:end */
+
+/* v2:pages:start */
+/* v2:pages:end */
