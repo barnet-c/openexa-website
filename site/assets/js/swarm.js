@@ -756,7 +756,14 @@
     });
     spread(top); spread(bot);
     for (const b of lbl) { setPos(b.li, b.x, b.y); b.lx = clamp(b.ax, b.x + 6, b.x + b.w - 6); }
-    if (el.ledger && lw[6]) { proj(LX + 0.04, 0, 0); setPos(el.ledger, clamp(P_X, 4, W - lw[6][0] - 4), P_Y + 12); }
+    if (el.ledger && lw[6]) {
+      // the ledger line runs on to the right at a slope the camera sets (parallax, breathing): the label hangs 12 px under
+      // the line's lowest point across its own width, so the right-hand blocks never sit on its text
+      proj(LX + 1, 0, 0); const ex = P_X, ey = P_Y;
+      proj(LX + 0.04, 0, 0);
+      const x = clamp(P_X, 4, W - lw[6][0] - 4), k = Math.abs(ex - P_X) > 1 ? (ey - P_Y) / (ex - P_X) : 0;
+      setPos(el.ledger, x, P_Y + Math.max(0, k * (x + lw[6][0] - P_X)) + 12);
+    }
     // the halt banner: bottom right on wide stages (the trace owns the bottom left), above the lower label row on phones
     if (el.banner && lw[7]) setPos(el.banner, narrow ? 8 : W - lw[7][0] - 14, narrow ? H - rowH - 18 - lw[7][1] : H - lw[7][1] - 14);
     // the boundary's name sits off the far end of its lit top edge, when it clears every gate label and leader
