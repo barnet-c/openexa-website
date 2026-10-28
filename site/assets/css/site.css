@@ -3012,13 +3012,19 @@ html:has(> body[data-nav="dark-start"]) { background: #0B110F; }
 
 /* ---------- Trust §01: each commitment carries its mark from the shared vocabulary (PG13) ----------
    T-01 the council aperture (approve tick lit) · T-02 scope brackets around what never moves · T-03 record blocks on a
-   hairline · T-04 the mode dial · T-05 the boundary (jitter above, grid below) · T-06 the halt shutter. Ink on paper. */
-.tg { display: block; width: 24px; height: 24px; margin-top: 14px; color: var(--fg); overflow: visible; }
-.tg * { fill: none; stroke: currentColor; stroke-width: 1; vector-effect: non-scaling-stroke; }
-.tg .tg-m { stroke-opacity: .55; }
-.tg .tg-d { stroke-dasharray: 2 2; }
-.tg .tg-a { stroke: var(--accent); stroke-width: 1.5; stroke-opacity: 1; }
-.tg .tg-f { fill: currentColor; fill-opacity: .82; stroke: none; }
+   hairline · T-04 the mode dial · T-05 the boundary (jitter above, grid below) · T-06 the halt shutter. Ink on paper.
+   Round 2 (PG-R2-3 extension): the marks at plate scale, 40 px with the secondary strokes at .7, and the same family on
+   Trust §02's six K-cards at 32 px, between the card's code row and its title: K-01 scope brackets, K-02 caps, K-03 the
+   market-hours window, K-04 the approval aperture, K-05 a reading tick on the record line, K-06 the halt shutter. Only
+   svg.tg: the lifecycle figures' <text class="tg"> labels are another class of the same name. */
+svg.tg { display: block; width: 24px; height: 24px; margin-top: 14px; color: var(--fg); overflow: visible; }
+svg.tg * { fill: none; stroke: currentColor; stroke-width: 1; vector-effect: non-scaling-stroke; }
+svg.tg .tg-m { stroke-opacity: .7; }
+svg.tg .tg-d { stroke-dasharray: 2 2; }
+svg.tg .tg-a { stroke: var(--accent); stroke-width: 1.5; stroke-opacity: 1; }
+svg.tg .tg-f { fill: currentColor; fill-opacity: .82; stroke: none; }
+.list-rule > li .k > svg.tg { width: 40px; height: 40px; }
+.card > svg.tg--k { width: 32px; height: 32px; margin: -6px 0 20px; }
 
 /* ---------- the closing band, the 404 and Company (PG10) ---------- */
 /* every page ends on the fine-bead globe: latitude rows of 1.2 px beads, back hemisphere culled, two orbits, one green
@@ -3047,7 +3053,7 @@ html:has(> body[data-nav="dark-start"]) { background: #0B110F; }
    roadmap dotted khaki). Replaces .wall here, so the retired .wall rules can go. */
 .class-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .class-row > li { display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 116px; padding: 20px 18px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg); font-family: var(--serif); font-size: 1.2rem; line-height: 1.15; letter-spacing: -0.01em; color: var(--fg-2); text-wrap: balance; }
-.class-row > li::before { content: ""; flex: none; width: 26px; height: 11px; border-radius: 50%; border: 1.5px dotted var(--khaki-deep); transform: rotate(-14deg); }
+.class-row > li::before { content: ""; flex: none; width: 56px; height: 24px; border-radius: 50%; border: 1.5px dotted var(--khaki-deep); transform: rotate(-14deg); } /* 56 px: the rings at plate scale (PG-R2-3 extension) */
 .class-row > .cr-live { color: var(--fg); }
 .class-row > .cr-live::before { border: 1.5px solid var(--accent); transform: rotate(-18deg); }
 .class-row > .cr-next::before { border: 1.25px dashed var(--fg-2); transform: rotate(10deg); }
