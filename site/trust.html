@@ -91,7 +91,7 @@
     <section class="section" data-chapter-short="Governance">
       <div class="container">
         <div class="sec-head" data-reveal role="heading" aria-level="2"><span class="idx">01</span><span class="lab">The governance model</span><span class="aside">Six commitments</span></div>
-        <ol class="list-rule list-rule--3" data-reveal>
+        <ol class="list-rule list-rule--3" role="list" data-reveal>
           <li><span class="k">T-01<svg class="tg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="tg-m" d="M18.6 12L21.6 12M18.1 14.53L20.87 15.67M16.67 16.67L18.79 18.79M14.53 18.1L15.67 20.87M9.47 18.1L8.33 20.87M7.33 16.67L5.21 18.79M5.9 14.53L3.13 15.67M5.4 12L2.4 12M5.9 9.47L3.13 8.33M7.33 7.33L5.21 5.21M9.47 5.9L8.33 3.13M12 5.4L12 2.4M14.53 5.9L15.67 3.13M16.67 7.33L18.79 5.21M18.1 9.47L20.87 8.33"/><path class="tg-a" d="M12 17.4V23"/></svg></span><div><h3>Every proposal passes the Council</h3><p>No agent executes its own idea. Proposals go to the Execution Council, which checks policy, limits and conflicts and returns approve or reject — automatically, or by handing the decision to a human.</p></div><div class="mono small muted">Propose → Council → approve / reject</div></li>
           <li><span class="k">T-02<svg class="tg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8.5 5H5v14h3.5M15.5 5H19v14h-3.5"/><rect class="tg-f" x="10.25" y="10.25" width="3.5" height="3.5" rx=".5"/></svg></span><div><h3>Custody never moves</h3><p>Assets stay in your brokerage account. Agents act through scoped API permissions — they can operate within your limits; they can never withdraw. Permissions are revocable per agent, instantly.</p></div><div class="mono small muted">Broker-held · scoped · revocable</div></li>
           <li><span class="k">T-03<svg class="tg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="tg-m" d="M1 15.5h22"/><rect class="tg-f" x="2.5" y="13.5" width="5" height="4" rx=".6"/><rect class="tg-f" x="9.5" y="13.5" width="5" height="4" rx=".6"/><rect class="tg-f" x="16.5" y="13.5" width="5" height="4" rx=".6"/></svg></span><div><h3>The ledger is the truth</h3><p>Append-only, hash-chained records preserve every proposal, Council decision, submission, fill and reconciliation — including the rejects. Nothing is edited after the fact; every record points at the one before it.</p></div><div class="mono small muted">Append-only · hash-chained · replayable</div></li>
@@ -189,7 +189,7 @@
         <div class="two-col">
           <div data-reveal>
             <div class="eyebrow mb-2">What the agents do</div>
-            <ul class="checks">
+            <ul class="list-hair" role="list">
               <li>Run selected lifecycles end to end — signal, decision, execution, settlement, reconciliation — under risk limits and Council governance.</li>
               <li>Give operators and investors real-time visibility into positions, NAV, strategy-level performance and every decision.</li>
               <li>Act through API permissions you grant and can revoke, with your broker as custodian throughout.</li>
@@ -198,7 +198,7 @@
           </div>
           <div data-reveal style="--d:80ms">
             <div class="eyebrow mb-2">What the agents do not do</div>
-            <ul class="checks">
+            <ul class="list-hair" role="list">
               <li>They do not custody funds. Ever.</li>
               <li>They do not promise guaranteed returns. Performance is market-dependent and capital is at risk.</li>
               <li>They do not hide decisions inside a model. The execution layer is deterministic and every action is attributable to an agent and a Council decision.</li>
