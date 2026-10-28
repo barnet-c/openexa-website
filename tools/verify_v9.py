@@ -163,6 +163,15 @@ class CheckTimeout(Exception):
     pass
 
 
+async def bounded(aw, what, limit=20):
+    """an input dispatch (CDP touch, a tap) that must answer within `limit` s: CI's run hung 25 minutes in overture_tap,
+    the first check that dispatches touches; a stuck dispatch now fails at once with its name instead of eating the job"""
+    try:
+        return await asyncio.wait_for(aw, limit)
+    except asyncio.TimeoutError:
+        raise AssertionError(f"{what} did not return in {limit} s (the renderer did not acknowledge the input)")
+
+
 async def run_one(c, b):
     """run one check under the hard limit; on a hang, name the line it hung on and cancel it"""
     task = asyncio.ensure_future(c(b))
@@ -1093,12 +1102,12 @@ async def overture_phones(b):
                     bb = await lab.bounding_box()
                     if not bb: continue
                     idx = await lab.evaluate("l => [...document.querySelectorAll('.story-labels .story-lab')].indexOf(l)")
-                    await pg.touchscreen.tap(bb["x"] + bb["width"] * 0.3, bb["y"] + bb["height"] / 2)
+                    await bounded(pg.touchscreen.tap(bb["x"] + bb["width"] * 0.3, bb["y"] + bb["height"] / 2), f"a tap on callout {k + 1} at {w}x{h}")
                     await until(pg, "!!document.querySelector('.story-insp.is-on')", 3000)
                     await pg.wait_for_timeout(400)
                     r = await pg.evaluate(INSP_BOX, idx)
                     if r and r["hits"]: bad.append(f"index.html@{w}x{h} scene 0{i}: the inspector {r['text']!r} at {r['box']} (callout {k + 1} tapped) crosses {r['hits']}")
-                    await pg.touchscreen.tap(6, h * 0.5); await pg.wait_for_timeout(400)  # a tap on empty stage closes it
+                    await bounded(pg.touchscreen.tap(6, h * 0.5), "a tap on empty stage"); await pg.wait_for_timeout(400)  # a tap on empty stage closes it
         await ctx.close()
     assert not bad, f"overture_phones: {len(bad)} problems:\n  " + "\n  ".join(bad[:30])
     print(f"overture_phones: {len(PHONES)} phone viewports x 5 scenes, no callout over the index, the nav, the copy, a structure or another callout")
@@ -1114,11 +1123,11 @@ INSP = "(() => { const i = document.querySelector('.story-insp'); return i && i.
 
 
 async def touch_drag(cdp, x0, y0, x1, y1, steps=10, dt=16):
-    await cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x0, "y": y0}]})
+    await bounded(cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x0, "y": y0}]}), "touchStart")
     for i in range(1, steps + 1):
-        await cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x0 + (x1 - x0) * i / steps, "y": y0 + (y1 - y0) * i / steps}]})
+        await bounded(cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x0 + (x1 - x0) * i / steps, "y": y0 + (y1 - y0) * i / steps}]}), "touchMove")
         await asyncio.sleep(dt / 1000)
-    await cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+    await bounded(cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []}), "touchEnd")
 
 
 @check
@@ -1143,7 +1152,7 @@ async def overture_tap(b):
         lab = pg.locator(".story-lab.ring.is-on").nth(k)
         code = re.search(r"LC-\d\d", (await lab.text_content()) or "")
         bb = await lab.bounding_box()
-        await pg.touchscreen.tap(bb["x"] + bb["width"] * 0.25, bb["y"] + bb["height"] / 2)
+        await bounded(pg.touchscreen.tap(bb["x"] + bb["width"] * 0.25, bb["y"] + bb["height"] / 2), f"a tap on ring callout {k + 1}")
         got = await until(pg, INSP, 1500)
         if code and got.startswith(code[0]): ok += 1
         else: bad.append(f"tapped {code[0] if code else '?'} at ({bb['x'] + bb['width'] * 0.25:.0f}, {bb['y'] + bb['height'] / 2:.0f}); the inspector reads {got[:40]!r}")
@@ -1968,13 +1977,13 @@ async def touch_scroll(cdp, x, y, dy):
     while abs(left) > 4:
         d = max(-380, min(380, left))
         y0 = max(90, min(y + (abs(d) / 2 + 10 if d > 0 else -(abs(d) / 2 + 10)), 2 * y - 90))
-        await cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y0}]})
+        await bounded(cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y0}]}), "touchStart")
         n = max(2, int(abs(d) / 20))
         for k in range(1, n + 1):
-            await cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x, "y": y0 - (d + (16 if d > 0 else -16)) * k / n}]})
+            await bounded(cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x, "y": y0 - (d + (16 if d > 0 else -16)) * k / n}]}), "touchMove")
             await asyncio.sleep(0.016)
         await asyncio.sleep(0.15)
-        await cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+        await bounded(cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []}), "touchEnd")
         await asyncio.sleep(0.05)
         left -= d
 
@@ -2067,7 +2076,7 @@ async def desk_phone_follow(b):
     await pg.wait_for_timeout(1500)
     # (a) the walk, in view
     await pg.evaluate("document.querySelector('[data-gap-follow]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(400)
-    await pg.locator("[data-gap-follow]").tap()
+    await bounded(pg.locator("[data-gap-follow]").tap(), "a tap on Follow the next action", 60)
     walk, t0 = [], time.monotonic()
     while time.monotonic() - t0 < 40:
         d = await pg.evaluate(DESK)
@@ -2160,7 +2169,7 @@ async def jump_touch(b):
         if case == "top": await pg.evaluate("window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'})")
         else: await pg.evaluate("(() => { const a = document.querySelectorAll('.nav-ch-list a')[0]; const el = document.getElementById(decodeURIComponent(a.getAttribute('href').slice(1))); window.scrollTo({top: el.getBoundingClientRect().top + scrollY, behavior: 'instant'}); })()")
         await pg.wait_for_timeout(1800)
-        await pg.locator(".nav-ch-btn").tap(); await pg.wait_for_timeout(700)
+        await bounded(pg.locator(".nav-ch-btn").tap(), "a tap on the chapter readout", 60); await pg.wait_for_timeout(700)
         bar_h = int(await pg.evaluate("Math.ceil((document.querySelector('header.nav') || document.querySelector('.nav')).getBoundingClientRect().bottom)"))
         frames = []
         def on(ev):
@@ -2172,7 +2181,7 @@ async def jump_touch(b):
         t_click = await pg.evaluate("performance.timeOrigin + performance.now()")
         target = ".nav-ch-top" if case == "top" else ".nav-ch-list a[href='#governance']"
         if not await pg.locator(target).count(): bad.append(f"index.html@390x844 {case}: no {target}"); await ctx.close(); continue
-        await pg.locator(target).first.tap()
+        await bounded(pg.locator(target).first.tap(), f"a tap on {target}", 60)
         await pg.wait_for_timeout(2500 if MODE["throttle"] <= 1 else 6000)
         await cdp.send("Page.stopScreencast")
         await pg.evaluate("window.__vt.on = false"); vt = (await pg.evaluate("window.__vt"))["f"]
