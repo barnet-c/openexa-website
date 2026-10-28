@@ -393,12 +393,26 @@
     }
     return c;
   }
-  function buildSprites() { for (const k of ['bead', 'red', 'ring', 'square', 'mote', 'halo', 'halor', 'haloi']) SPR[k] = SPR_SIZES.map(P => makeSprite(k, P)); }
-  function spr(kind, devPx) { const a = SPR[kind]; for (let j = 0; j < a.length; j++) if (SPR_SIZES[j] >= devPx) return a[j]; return a[a.length - 1]; }
+  // every sprite lives in one atlas (each kind at 8, 16, 32 and 64 px, 2 transparent px apart), so a frame's thousands
+  // of blits draw from one texture and the canvas batches them; a canvas per sprite costs a draw call per agent (on a
+  // software GL, as on a CI runner, the agents alone took about a third of a second a frame)
+  let ATLAS = null;
+  function buildSprites() {
+    const pad = 2, cellH = SPR_SIZES[SPR_SIZES.length - 1] + pad * 2, kinds = ['bead', 'red', 'ring', 'square', 'mote', 'halo', 'halor', 'haloi'];
+    const a = document.createElement('canvas'), g = a.getContext('2d');
+    a.width = SPR_SIZES.reduce((s, P) => s + P + pad * 2, 0); a.height = cellH * kinds.length;
+    kinds.forEach((k, r) => {
+      let x = pad; SPR[k] = [];
+      for (const P of SPR_SIZES) { if (g) g.drawImage(makeSprite(k, P), x, r * cellH + pad); SPR[k].push([x, r * cellH + pad, P]); x += P + pad * 2; }
+    });
+    ATLAS = a;
+  }
+  function spr(kind, devPx) { const a = SPR[kind]; for (let j = 0; j < a.length; j++) if (a[j][2] >= devPx) return a[j]; return a[a.length - 1]; }
   function blit(kind, x, y, size, alpha) {
     if (alpha <= 0.004 || size <= 0) return;
     ctx.globalAlpha = alpha > 1 ? 1 : alpha;
-    ctx.drawImage(spr(kind, size * dpr * 1.25), x - size / 2, y - size / 2, size, size);
+    const c = spr(kind, size * dpr * 1.25);
+    ctx.drawImage(ATLAS, c[0], c[1], c[2], c[2], x - size / 2, y - size / 2, size, size);
   }
 
   /* ---------------- drawing ---------------- */
@@ -417,7 +431,7 @@
     proj((x0 + x1) / 2, FLOOR, 0.3); const dz = Math.hypot(P_X - (ax + bx) / 2, P_Y - (ay + by) / 2);
     const w = Math.hypot(bx - ax, by - ay) * 1.25, h = Math.max(8, dz * 1.7);
     ctx.save(); ctx.translate((ax + bx) / 2, (ay + by) / 2); ctx.rotate(Math.atan2(by - ay, bx - ax));
-    ctx.globalAlpha = alpha; ctx.drawImage(spr(kind, 64), -w / 2, -h / 2, w, h); ctx.restore();
+    const c = spr(kind, 64); ctx.globalAlpha = alpha; ctx.drawImage(ATLAS, c[0], c[1], c[2], c[2], -w / 2, -h / 2, w, h); ctx.restore();
   }
   function draw() {
     if (lost) return;
@@ -1355,14 +1369,15 @@
   // rejections only · 0 none); it tries the level above again only after cheap frames for a while, and waits twice as
   // long after each drop (a stall passes, a slow device is not made to stutter every few seconds); at level 0, a device
   // still under 30 fps carries fewer agents, a step at a time, and the Agents output says so
-  let quality = 2, frameDt = 1 / 60, ema = 1 / 60, workEma = 0, slowFor = 0, fastFor = 0, capFor = 0, coolFor = 0, retry = 6;
+  let quality = 2, frameDt = 1 / 60, ema = 1 / 60, workEma = 0, slowFor = 0, fastFor = 0, capFor = 0, coolFor = 0, retry = 6, longRun = 0;
   function govern(raw, work) {
     ema += (raw - ema) * 0.1; workEma += (work - workEma) * 0.1; coolFor += raw;
     if (ema > 0.020) { slowFor += raw; fastFor = 0; } else { slowFor = 0; fastFor = ema < 0.0185 && workEma < 0.006 ? fastFor + raw : 0; }
     if (slowFor > 1 && quality > 0 && coolFor > 1.5) { quality--; retry = Math.min(96, retry * 2); slowFor = 0; coolFor = 0; root.dataset.swQuality = quality; }
     else if (fastFor > retry && quality < 2) { quality++; fastFor = 0; coolFor = 0; root.dataset.swQuality = quality; }
     capFor = quality === 0 && ema > 1 / 30 ? capFor + raw : 0;
-    const floor = narrow ? 1200 : 1800, cur = pop();
+    // the population floor keeps a wide lab full; a device still under 10 fps without trails may go lower
+    const floor = ema > 0.1 ? 500 : narrow ? 1200 : 1800, cur = pop();
     if (capFor > 2 && cur > floor && inflight <= cur * 1.15) { // the last step has taken effect: the lane is down to it
       popCap = Math.max(floor, Math.round(cur * 0.8 / 100) * 100); capFor = 0;
       root.dataset.swCap = popCap; showN();
@@ -1375,16 +1390,23 @@
   function frame(now) {
     frameId = 0;
     if (!running() || !onScreen) return;
-    const raw = Math.max(0, (now - last) / 1000), dt = Math.min(0.05, raw); last = now; frameDt = dt;
+    // model time keeps up with the clock down to 4 fps, in steps of 50 ms at most; a device that has run under 5 fps for a
+    // while (software GL on a small machine) keeps it down to 2 fps, so Halt still drains in about eleven seconds there.
+    // Below that a slower device sees a slower model, not a jumpier one; on a quick device a stall moves it 0.25 s at most
+    const raw = Math.max(0, (now - last) / 1000), dt = Math.min(ema > 0.2 ? 0.5 : 0.25, raw), sub = Math.max(1, Math.ceil(dt / 0.05 - 1e-6)); last = now; frameDt = dt;
     const t0 = performance.now();
     inLoop = true;
-    step(dt, true);
+    for (let k = 1; k <= sub; k++) step(dt / sub, k === sub);
     if (mouse) updateHover();
     draw(); flush(false);
     inLoop = false;
     if (uiDirty) syncUI();
     if ((ui += dt) > 0.15) { ui = 0; stats(); }
-    if (raw < 0.5) govern(raw, (performance.now() - t0) / 1000);
+    // a frame of half a second or more is a stall (a busy page, a tab coming back) and is left out, unless the next one
+    // is as long: then it is the device (software GL on a small machine draws a frame in seconds) and it counts in full,
+    // so the lab sheds its trails and agents instead of holding every frame for good
+    if (raw < 0.5) { longRun = 0; govern(raw, (performance.now() - t0) / 1000); }
+    else if (++longRun > 1) govern(raw, (performance.now() - t0) / 1000);
     frameId = requestAnimationFrame(frame);
   }
   // the off-screen pulse: four model steps a second, nothing drawn, nothing written to the DOM
