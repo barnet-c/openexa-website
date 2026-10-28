@@ -2488,8 +2488,33 @@ a.link-arrow, button.link-arrow {
 a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 100% 1px, 100% 1px; background-position: 0 100%, 0 100%; }
 @media (hover: hover) { a.link-arrow:hover, button.link-arrow:hover { background-size: 100% 1px, 100% 1px; background-position: 0 100%, 0 100%; } }
 :where(a.link-arrow, button.link-arrow):focus-visible { outline-offset: 5px; }
-:where(.form) :is(input, select, textarea):focus-visible { outline: none; border-bottom-color: var(--accent); box-shadow: 0 1px 0 0 var(--accent); }
+/* form fields keep their underline focus; the transparent outline is what forced colours (Windows High Contrast) paint
+   in the system's highlight colour, where the box-shadow is dropped */
+:where(.form) :is(input, select, textarea):focus-visible { outline: 2px solid transparent; outline-offset: 2px; border-bottom-color: var(--accent); box-shadow: 0 1px 0 0 var(--accent); }
 .footer ul li a:focus-visible { opacity: 1; } /* the footer's links rest at .85; a focused one is at full strength */
+
+/* ---------- figure stages (figure.js): Pause motion (WCAG 2.2.2) ----------
+   The overture's control, on every point-cloud stage figure.js runs outside the research pages: Company's plate (top
+   right, inside its frame), Company §04's loop (the top right of its box), the blog's heroes (the hero's lower right;
+   on phones the top right of the figure band). It is offered only while the stage moves (figure.js hides it). */
+.figure-motion {
+  position: absolute; z-index: 3; display: inline-flex; align-items: center; min-height: 44px; padding: 0 2px;
+  font: var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58);
+  transition: color .25s var(--ease); -webkit-tap-highlight-color: transparent;
+}
+.figure-motion[hidden] { display: none; }
+.figure-motion:focus-visible { color: var(--paper); outline-offset: 0; }
+@media (hover: hover) { .figure-motion:hover { color: var(--signal-bright); } }
+.company-sculpture > .figure-motion { top: 2px; right: 22px; }
+:is(.research-hero, .article-hero) > .figure-motion { right: max(var(--gutter), env(safe-area-inset-right), calc((100% - var(--max)) / 2 + var(--gutter))); bottom: 10px; }
+#constants > .figure-motion { right: max(var(--gutter), calc((100% - var(--max)) / 2 + var(--gutter))); bottom: 18px; } /* without anchor positioning: the band's lower right */
+@supports (anchor-name: --a) {
+  #constants > .figure-stage { anchor-name: --oxa-constants-figure; }
+  #constants > .figure-motion { position-anchor: --oxa-constants-figure; top: anchor(top); right: anchor(right); bottom: auto; }
+}
+@media (max-width: 960px) {
+  :is(.research-hero, .article-hero) > .figure-motion { top: calc(var(--nav-h) + 4px); bottom: auto; }
+}
 .skip { position: fixed; left: 12px; top: 12px; z-index: 1001; padding: 11px 16px; border-radius: var(--r); background: var(--ink); color: var(--paper); font-size: .9rem; font-weight: 500; box-shadow: 0 0 0 2px var(--signal-bright); transform: translateY(calc(-100% - 24px)); transition: transform .3s var(--ease); }
 .skip:focus, .skip:focus-visible { left: 12px; transform: none; outline: none; }
 
@@ -2569,7 +2594,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 }
 
 /* ---------- print: the frame stays off the page ---------- */
-@media print { .nav-ch, .nav-progress, .nav-sheet { display: none !important; } :where(.stats, .crew-stats) * { animation: none !important; } }
+@media print { .nav-ch, .nav-progress, .nav-sheet, .figure-motion { display: none !important; } :where(.stats, .crew-stats) * { animation: none !important; } }
 /* v2:nav:end */
 /* -------------------------------------------------------------------------- */
 
