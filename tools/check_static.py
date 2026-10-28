@@ -245,9 +245,9 @@ def check_research09_regimes():
         if lit != want: fail("assets/js/figure.js", f"research09_regimes: the fallback regime literal {lit!r} differs from the record {want!r}")
 
 
-def css_style_rules(css):
-    """(selector list, enclosing at-rule preludes) for every style rule; comments and strings are skipped"""
-    css = re.sub(r"/\*.*?\*/", " ", css, flags=re.S)
+def css_style_rules(css, first_line=1):
+    """(selector list, enclosing at-rule preludes, line) for every style rule; comments and strings are skipped"""
+    css = re.sub(r"/\*.*?\*/", lambda m: re.sub(r"[^\n]", " ", m[0]), css, flags=re.S)  # same length: offsets keep their lines
     out, stack, i, n, start = [], [], 0, len(css), 0
     def skip_string(j):
         q = css[j]; j += 1
@@ -263,7 +263,8 @@ def css_style_rules(css):
             while j < n and depth:
                 if css[j] in "\"'": j = skip_string(j); continue
                 depth += {"{": 1, "}": -1}.get(css[j], 0); j += 1
-            out.append((prelude, list(stack))); i = start = j; continue
+            lead = len(css[start:i]) - len(css[start:i].lstrip())
+            out.append((prelude, list(stack), first_line + css.count("\n", 0, start + lead))); i = start = j; continue
         if ch == "}":
             if stack: stack.pop()
             i += 1; start = i; continue
@@ -310,7 +311,7 @@ def check_has_guard():
     Rules that end in the :has() itself stay allowed ('.seg label:has(input:checked)'). (LG1, NV2: one footer-clock tick
     restyled 1,108 of 2,440 elements on the home page.)"""
     css = (ROOT / "assets/css/site.css").read_text(encoding="utf-8")
-    for prelude, ats in css_style_rules(css):
+    for prelude, ats, _line in css_style_rules(css):
         if ":has(" not in prelude: continue
         if any(re.search(r"\(\s*scripting\s*:\s*none\s*\)", a) for a in ats): continue
         sels, _ = split_top(prelude, ",")
@@ -335,7 +336,7 @@ def check_has_regions():
     for region in ("ledger", "nav"):
         m = re.search(r"/\* v2:%s:start \*/(.*?)/\* v2:%s:end \*/" % (region, region), css, re.S)
         if not m: fail("assets/css/site.css", f"has_regions: the v2:{region} region markers are missing"); continue
-        for prelude, ats in css_style_rules(m[1]):
+        for prelude, ats, _line in css_style_rules(m[1]):
             if ":has(" not in prelude: continue
             if region == "nav" and any(re.search(r"\(\s*scripting\s*:\s*none\s*\)", a) for a in ats): continue
             fail("assets/css/site.css", f"has_regions: ':has(' in v2:{region}" + (" outside @media (scripting: none)" if region == "nav" else "") + f": {prelude[:110]!r}")
@@ -405,8 +406,91 @@ def check_table_th():
             elif bare: fail(rel, f"table_th: table {k}: {len(bare)} of {len(cells)} body cells carry no data-th:", bare[0][:80])
 
 
+# ---- round-2 guards (director's test list, 28 Oct) ----
+def check_hover_guard():
+    """Every ':hover' selector inside a v2 region of site.css (/* v2:<owner>:start */ ... end) sits inside
+    @media (hover: hover), so a tap never leaves a stuck hover state on touch screens ('Follow a proposal' kept its green
+    fill after Stop). ':not(:hover)' dimming counts too. Base rules outside the regions stay as pages gated them in round 1.
+    (cross: hover gating, every owner; SW-R2-7, LG-R2-5, LC-R2-7, AR-R2-5, OV-R2-11.)"""
+    css = (ROOT / "assets/css/site.css").read_text(encoding="utf-8")
+    regions = list(re.finditer(r"/\* v2:([\w-]+):start \*/(.*?)/\* v2:\1:end \*/", css, re.S))
+    if not regions: fail("assets/css/site.css", "hover_guard: no v2 region markers"); return
+    for m in regions:
+        first = css.count("\n", 0, m.start(2)) + 1
+        for prelude, ats, line in css_style_rules(m[2], first):
+            if ":hover" not in prelude or any(re.search(r"\(\s*hover\s*:\s*hover\s*\)", a) for a in ats): continue
+            sels, _ = split_top(prelude, ",")
+            for sel in (x.strip() for x in sels if ":hover" in x):
+                fail("assets/css/site.css", f"hover_guard: v2:{m[1]} line {line}: {sel[:110]!r} is outside @media (hover: hover)" + (f" (inside {ats})" if ats else ""))
+
+
+WEIGHT = {"assets/css/site.css": 66000, "index.html scripts": 151000}  # gzip -9 bytes: 28 Oct's size plus 10%
+
+
+def check_weight():
+    """Transfer weight cannot grow unnoticed while the CSS split is deferred: gzip -9 of site.css <= 66,000 bytes and the
+    sum of gzip -9 over the scripts index.html loads (<script src>) <= 151,000 bytes: 59,799 and 137,253 at 1a6b9fb,
+    plus 10% (director's test list; _cross 'rejected': the split is deferred)."""
+    import gzip
+    gz = lambda rel: len(gzip.compress((ROOT / rel).read_bytes(), 9))
+    css = gz("assets/css/site.css")
+    if css > WEIGHT["assets/css/site.css"]: fail("assets/css/site.css", f"weight: gzip {css:,} bytes; budget {WEIGHT['assets/css/site.css']:,} (1a6b9fb's 59,799 + 10%)")
+    s = (ROOT / "index.html").read_text(encoding="utf-8")
+    srcs = [u.split("?")[0].lstrip("/") for u in re.findall(r'<script\b[^>]*\ssrc="([^"]+)"', s)]
+    missing = [u for u in srcs if not (ROOT / u).is_file()]
+    if missing: fail("index.html", "weight: scripts not found:", missing)
+    js = {u: gz(u) for u in srcs if (ROOT / u).is_file()}
+    total = sum(js.values())
+    if total > WEIGHT["index.html scripts"]:
+        fail("index.html", f"weight: its {len(js)} scripts are {total:,} bytes gzipped; budget {WEIGHT['index.html scripts']:,} (1a6b9fb's 137,253 + 10%):",
+             ", ".join(f"{Path(u).name} {n:,}" for u, n in sorted(js.items(), key=lambda kv: -kv[1])))
+
+
+def check_story_fallback():
+    """story.js's fallback table (used only when #oxa-sessions cannot be read) is the record too: its regime literal
+    (/'([PD]{10})'.split/) equals the record's regimes in order (figure.js's literal is research09_regimes'; D15)."""
+    if not RECORD: fail("story_fallback: no #oxa-sessions record"); return
+    want = counts_of(RECORD)["regimes"].upper()
+    js = (ROOT / "assets/js/story.js").read_text(encoding="utf-8")
+    lits = re.findall(r"'([PD]{%d})'\.split" % len(want), js, re.I)
+    if not lits: fail("assets/js/story.js", f"story_fallback: no fallback regime literal of {len(want)} P/D letters followed by .split (the record has {len(want)} sessions)")
+    for lit in lits:
+        if lit.upper() != want: fail("assets/js/story.js", f"story_fallback: the fallback literal {lit!r} differs from the record {want!r}")
+
+
+COST_DEFS = ["working capital", "credit exposure", "routing, reconciliation", "oversight, operations"]
+
+
+def check_cost_definitions():
+    """Production's definitions of the four cost components are back on both pages that draw the cost figure (D1, PF-R2-1):
+    the visible text (no JavaScript needed) of index.html and evidence.html each contains 'working capital', 'credit
+    exposure', 'routing, reconciliation' and 'oversight, operations' (case-insensitive)."""
+    for rel in ("index.html", "evidence.html"):
+        t = re.sub(r"\s+", " ", visible((ROOT / rel).read_text(encoding="utf-8"))).lower()
+        missing = [d for d in COST_DEFS if d not in t]
+        if missing: fail(rel, f"cost_definitions: production's cost definitions missing from the visible text: {missing}")
+
+
+def chapter(s, idx):
+    """the markup of the chapter whose sec-head index reads idx, up to the next chapter's sec-head (or '')"""
+    parts = re.split(r'(?=<span class="idx">\d\d</span>)', s)
+    hit = [p for p in parts if p.startswith(f'<span class="idx">{idx}</span>')]
+    return hit[0] if hit else ""
+
+
+def check_platform04():
+    """Platform §04 agrees with its h2 'Every action passes three gates.' (D3): no tag or drawing label in the chapter
+    reads 'Gate 05' (or 'Gate 06'); the tags say 'In 05 · Execute' / 'In 06 · Settle' (LC-R2-1)."""
+    s = (ROOT / "platform.html").read_text(encoding="utf-8")
+    sec = chapter(s, "04")
+    if not sec: fail("platform.html", "platform04: no §04 (sec-head idx 04)"); return
+    hits = sorted(set(m[0] for m in re.finditer(r"(?i)\bgate\s+0[56]\b[^<]{0,14}", H.unescape(sec))))
+    if hits: fail("platform.html", f"platform04: §04 still labels gates by number: {hits}")
+
+
 GUARDS = [check_count_not_on_proof, check_count_static_final, check_regime_split, check_research09_regimes, check_has_guard,
-          check_has_regions, check_figure_labels, check_blog_placeholder, check_proof_plate, check_table_th]
+          check_has_regions, check_figure_labels, check_blog_placeholder, check_proof_plate, check_table_th,
+          check_hover_guard, check_weight, check_story_fallback, check_cost_definitions, check_platform04]
 only = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--only=")), None)
 if "--only" in sys.argv[1:-1]: only = sys.argv[sys.argv.index("--only") + 1]
 for g in GUARDS:
