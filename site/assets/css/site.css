@@ -2244,7 +2244,7 @@ a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 1
    stage), going up it comes down from the top; the old view drifts a little the same way beneath it. No blend, so no
    blank or grey frame at any instant; the bar (its own transition group) holds. ---------- */
 html[data-jump]::view-transition-old(root), html[data-jump]::view-transition-new(root) {
-  mix-blend-mode: normal; animation-duration: .38s; animation-timing-function: cubic-bezier(.22, .75, .2, 1); animation-fill-mode: both;
+  mix-blend-mode: normal; animation-duration: .32s; animation-timing-function: cubic-bezier(.22, .75, .2, 1); animation-fill-mode: both;
 }
 html[data-jump="down"]::view-transition-old(root) { animation-name: jump-under-up; }
 html[data-jump="down"]::view-transition-new(root) { animation-name: jump-sheet-up; box-shadow: 0 -28px 56px -28px rgba(8, 12, 10, .5); }
@@ -2254,7 +2254,7 @@ html[data-jump="up"]::view-transition-new(root) { animation-name: jump-sheet-dow
 @keyframes jump-under-up { to { transform: translateY(-16%); } }
 @keyframes jump-sheet-down { from { transform: translateY(-100%); } }
 @keyframes jump-under-down { to { transform: translateY(16%); } }
-html[data-jump]::view-transition-group(site-nav) { animation-duration: .3s; }
+html[data-jump]::view-transition-group(site-nav) { animation-duration: .28s; }
 html[data-jump]::view-transition { pointer-events: none; } /* a click during the move reaches the page, already there */
 /* the chapter list is gone before the still is taken (it would hang over the move) */
 html[data-jump] .nav-ch-panel { transition: none !important; }
