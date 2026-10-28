@@ -36,6 +36,11 @@
   --reject: #B4443C;
   --reject-bright: #D9675D;   /* reject on dark grounds, as --signal-bright is the green's: 4.7:1 where #B4443C was 2.95:1 */
   --brand-blue: #4A5FC1;
+  /* TEXT ONLY, on paper grounds (WCAG AA): green and khaki words. Strokes, fills and marks keep --signal / --khaki-deep;
+     dark grounds keep --accent (--signal-bright) and --khaki. Owners' regions write var(--signal-ink, #186B4F) and
+     var(--khaki-ink, #6B6551) with literal fallbacks. */
+  --signal-ink: #186B4F;   /* 5.77:1 on paper, 5.28:1 on paper-2 (#1E7A5A is 4.31:1 on paper-2) */
+  --khaki-ink: #6B6551;    /* 5.21:1 on paper, 4.76:1 on paper-2 (#857F66 is 3.6:1 on paper) */
 
   /* scoped tokens (swap in dark sections) */
   --bg: var(--paper);
