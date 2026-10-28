@@ -5,7 +5,9 @@ name: Checks
 #
 # The browser checks run in parallel shards (round 2): one job per group of verify_v9 checks, each with its own
 # tools/serve.py, plus verify_editorial in a job of its own. Every shard has a 25-minute limit and none stops the others
-# (fail-fast: false). The static job checks that every verify_v9 check sits in exactly one shard (verify_v9.py --shards).
+# (fail-fast: false). They start with the static job rather than after it, so one run reports every failing check and
+# takes as long as its slowest shard. The static job checks that every verify_v9 check sits in exactly one shard
+# (verify_v9.py --shards).
 # To reproduce a shard on a PC, under CI's conditions (software GL, a slow CPU):
 #   python tools/serve.py 8125                                   (another terminal)
 #   python tools/verify_v9.py --swiftshader --cpu-throttle 4 --only <that shard's list>
@@ -54,7 +56,6 @@ jobs:
 
   browser:
     name: verify_v9 · ${{ matrix.shard }}
-    needs: static
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
@@ -103,7 +104,6 @@ jobs:
 
   editorial:
     name: verify_editorial
-    needs: static
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
