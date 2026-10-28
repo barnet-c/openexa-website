@@ -1951,7 +1951,7 @@ html { scroll-padding-top: var(--nav-h); }
 .nav--menu .nav-ch { opacity: 0; visibility: hidden; transition: opacity .2s var(--ease), visibility 0s linear .2s; } /* the sheet has the stage */
 .nav-ch-btn {
   position: relative; display: inline-flex; align-items: center; gap: 10px; min-width: 0; height: 44px; padding: 0 8px 0 13px;
-  font-family: var(--mono); font-size: .62rem; font-weight: 400; line-height: 1; letter-spacing: .16em; text-transform: uppercase;
+  font-family: var(--mono); font-size: var(--mono-xs, .625rem); font-weight: 400; line-height: 1; letter-spacing: .16em; text-transform: uppercase;
   color: inherit; border-radius: 2px; -webkit-tap-highlight-color: transparent;
 }
 .nav-ch-btn::before { content: ""; position: absolute; left: 0; top: 50%; width: 1px; height: 13px; margin-top: -6.5px; background: currentColor; opacity: .38; }
@@ -1961,6 +1961,15 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-ch-line { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: color-mix(in srgb, currentColor 68%, transparent); transition: color .25s var(--ease); }
 .nav-ch-line b { font-weight: 500; letter-spacing: .1em; color: var(--accent); font-variant-numeric: tabular-nums; margin-right: .2em; }
 .nav-ch-line .t-short { display: none; }
+/* the phone forms (site.js picks one per page from measured widths): the section's short label, or '§NN / total' */
+.nav-ch-line .t-sh, .nav-ch-line .t-of { display: none; }
+.nav-ch-line.is-short .t { display: none; }
+.nav-ch-line.is-short .t-sh { display: inline; }
+.nav-ch-line.is-compact .t, .nav-ch-line.is-compact .t-sh { display: none; }
+.nav-ch-line.is-compact .t-of { display: inline; }
+.nav-ch-line.is-compact b.is-num::before { content: "\00a7"; margin-right: .1em; }
+.nav-ch-measure { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; }
+.nav-ch-measure > .nav-ch-line { width: max-content; overflow: visible; }
 .nav-ch-caret { flex: none; width: 10px; height: 10px; opacity: .5; transition: transform .4s var(--ease), opacity .25s var(--ease); }
 .nav-ch-btn:hover .nav-ch-line, .nav-ch-btn:focus-visible .nav-ch-line, .nav-ch.is-open .nav-ch-line { color: currentColor; }
 .nav-ch-btn:hover .nav-ch-caret, .nav-ch.is-open .nav-ch-caret { opacity: 1; }
@@ -2081,7 +2090,7 @@ html { scroll-padding-top: var(--nav-h); }
   .nav .container { gap: 16px; }
   .nav .brand { font-size: 1.45rem; gap: 10px; }
   .nav .brand .mark { width: 28px; height: 28px; }
-  .nav-ch { position: static; flex: 0 1 auto; margin-left: -6px; }
+  .nav-ch { position: static; flex: 1 1 auto; margin-left: -6px; } /* it takes the room up to the toggle: the line's room is measurable */
   .nav-ch-btn { padding-right: 4px; }
   .nav-ch-roll { max-width: none; }
   .nav-ch-line .t-wide { display: none; }
@@ -2093,7 +2102,7 @@ html { scroll-padding-top: var(--nav-h); }
   .nav-ch-list a { min-height: 52px; }
 }
 @media (min-width: 961px) { .nav-sheet { display: none !important; } }
-@media (max-width: 380px) { .nav-ch-btn { letter-spacing: .12em; } }
+@media (max-width: 430px) { .nav .container { gap: 10px; } .nav-ch-btn { letter-spacing: .09em; } }
 /* the open sheet: site.js mirrors the popover's state as body.nav-open and .nav--menu (one class change, no relational
    selector watching the whole document); the script-less version of these rules is in the (scripting: none) block below */
 body.nav-open { overflow: hidden; }

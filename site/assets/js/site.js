@@ -36,16 +36,21 @@
     if (href && (pageKey(href) === here || pageKey(href) === section)) a.setAttribute('aria-current', 'page');
   });
 
-  /* chapters: [data-chapter] sections, else numbered sections (.sec-head), else an article's table of contents */
+  /* chapters: [data-chapter] sections, else numbered sections (.sec-head), else an article's table of contents.
+     A chapter is named by its section's own label (.sec-head .lab), exactly as the page prints it; data-chapter-short
+     may abbreviate it in the phone bar, and only where the full label does not fit (fitModes) */
   const tagline = ($('.nav .brand small') || {}).textContent || '';
-  let chapters = $$('section[data-chapter]').map((el, i) => ({ el, n: el.dataset.n || pad(i + 1), title: el.dataset.chapter }));
+  const headOf = el => { const head = $('.sec-head', el); return head && head.closest('section') === el ? head : null; };
+  const labOf = el => { const lab = headOf(el) && $('.lab', headOf(el)); return lab ? lab.textContent.trim() : ''; };
+  const shortOf = el => (el.dataset.chapterShort || '').trim();
+  let chapters = $$('section[data-chapter]').map((el, i) => ({ el, n: el.dataset.n || pad(i + 1), title: labOf(el) || el.dataset.chapter, short: shortOf(el) }));
   if (chapters.length < 2) chapters = $$('main section').map(el => {
-    const head = $('.sec-head', el), idx = head && $('.idx', head), lab = head && $('.lab', head);
-    return idx && lab && head.closest('section') === el ? { el, n: idx.textContent.trim(), title: lab.textContent.trim() } : null;
+    const head = headOf(el), idx = head && $('.idx', head), lab = head && $('.lab', head);
+    return idx && lab ? { el, n: idx.textContent.trim(), title: lab.textContent.trim(), short: shortOf(el) } : null;
   }).filter(Boolean);
   if (chapters.length < 2) chapters = $$('.toc a[href^="#"]').map((a, i) => {
     const el = document.getElementById(decodeURIComponent(a.hash.slice(1)));
-    return el ? { el, n: pad(i + 1), title: a.textContent.trim(), scope: el.closest('article, .article') } : null;
+    return el ? { el, n: pad(i + 1), title: a.textContent.trim(), short: '', toc: true, scope: el.closest('article, .article') } : null;
   }).filter(Boolean);
   if (chapters.length < 2) chapters = [];
   if (!nav || !$('.brand', nav)) chapters = [];
@@ -87,8 +92,11 @@
     });
   }
 
-  /* the readout: the line rolls up to the next chapter (down when going back); its width follows */
-  function lineFor(k) {
+  /* the readout: the line rolls up to the next chapter (down when going back); its width follows. Each line carries the
+     label, its short form (if the section gives one) and a compact '§NN / total'; a mode class shows one of them */
+  const MODES = ['is-short', 'is-compact'];
+  const total = () => pad(Math.max(0, ...chapters.map(c => /^\d+$/.test(c.n) ? +c.n : 0)) || chapters.length);
+  function lineFor(k, mode) {
     const line = document.createElement('span');
     line.className = 'nav-ch-line';
     if (k < 0) {
@@ -96,11 +104,51 @@
       line.innerHTML = '<span class="t t-wide"></span><span class="t t-short">Index</span>';
       line.firstChild.textContent = tagline || 'Index';
     } else {
-      const b = document.createElement('b'), t = document.createElement('span');
-      b.textContent = chapters[k].n; t.className = 't'; t.textContent = chapters[k].title;
+      const c = chapters[k], b = document.createElement('b'), t = document.createElement('span');
+      b.textContent = c.n; if (/^\d+$/.test(c.n)) b.className = 'is-num';
+      t.className = 't'; t.textContent = c.title;
       line.append(b, ' ', t);
+      if (c.short && c.short !== c.title) { const s = document.createElement('span'); s.className = 't-sh'; s.textContent = c.short; line.append(s); }
+      if (b.className) { const o = document.createElement('span'); o.className = 't-of'; o.textContent = '/ ' + total(); line.append(o); }
+      const m = mode || c.mode || 'full';
+      if (m !== 'full') line.classList.add('is-' + m);
     }
     return line;
+  }
+  /* phones: the full label wherever it fits; else the section's short form; else '§NN / total'. Decided per page (when one
+     label needs the compact form, every chapter takes it, so the bar keeps one register), from the natural width of
+     every form in the readout's own type against the room the bar gives the line. Articles' headings go compact
+     under 600 px. Desktop keeps the label (961-1099 px shows the number only). */
+  const narrowMQ = window.matchMedia('(max-width: 960px)'), phoneMQ = window.matchMedia('(max-width: 600px)');
+  let fitKey = '';
+  function fitModes() {
+    if (!ui.roll || !live.length) return;
+    const key = [window.innerWidth, live.map(c => c.k).join(), document.fonts ? document.fonts.status : ''].join('|');
+    if (key === fitKey) return;
+    fitKey = key;
+    live.forEach(c => { c.mode = 'full'; });
+    if (narrowMQ.matches) {
+      const box = document.createElement('span'); box.className = 'nav-ch-measure'; box.setAttribute('aria-hidden', 'true');
+      const forms = [];
+      live.forEach(c => { forms.push([c, 'full', lineFor(c.k, 'full')]); if (c.short && c.short !== c.title) forms.push([c, 'short', lineFor(c.k, 'short')]); });
+      forms.forEach(f => box.appendChild(f[2]));
+      ui.btn.appendChild(box);
+      const avail = ui.wrap.getBoundingClientRect().width - (ui.btn.getBoundingClientRect().width - ui.roll.getBoundingClientRect().width) - 1;
+      const w = new Map(forms.map(([c, m, l]) => [c.k + m, l.getBoundingClientRect().width]));
+      box.remove();
+      let compact = false;
+      live.forEach(c => {
+        if (c.toc && phoneMQ.matches) { compact = true; c.fit = false; }
+        else if (w.get(c.k + 'full') <= avail) c.mode = 'full';
+        else if (w.has(c.k + 'short') && w.get(c.k + 'short') <= avail) c.mode = 'short';
+        else { compact = true; c.fit = false; }
+      });
+      // the compact form is a number: a chapter without one (the blog's featured series) keeps its label if it fits
+      if (compact) live.forEach(c => { if (/^\d+$/.test(c.n) || c.fit === false) c.mode = 'compact'; });
+      live.forEach(c => { delete c.fit; });
+    }
+    const c = chapters[shownK];
+    if (ui.line && c) { MODES.forEach(m => ui.line.classList.toggle(m, m === 'is-' + c.mode)); }
   }
   function showChapter(k) {
     if (!ui.roll || k === shownK) return;
@@ -176,6 +224,7 @@
       g.i.style.display = len < 2 ? 'none' : '';
       g.p = -1;
     });
+    fitModes();
     update();
   }
   const queue = () => { if (!navRaf) navRaf = requestAnimationFrame(() => { navRaf = 0; update(); }); };
