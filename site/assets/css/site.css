@@ -770,8 +770,8 @@ em, .ital { font-style: italic; }
 .crew h3 { font-family: var(--serif); font-weight: 400; font-size: clamp(1.6rem, 2.1vw, 1.9rem); line-height: 1.05; letter-spacing: -0.01em; margin: 10px 0 0; }
 .crew p { color: var(--fg-2); font-size: .95rem; line-height: 1.55; margin-top: 12px; max-width: 40ch; }
 .crew .links { margin-top: auto; padding-top: 18px; display: flex; gap: 18px; font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; }
-.crew .links a { border-bottom: 1px solid var(--line-strong); transition: border-color .3s var(--ease), color .3s var(--ease); }
-.crew .links a:hover { border-color: var(--fg); }
+.crew .links a { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 0; text-decoration: underline; text-decoration-color: var(--line-strong); text-decoration-thickness: 1px; text-underline-offset: 4px; transition: text-decoration-color .3s var(--ease), color .3s var(--ease); }
+.crew .links a:hover { text-decoration-color: var(--fg); }
 .crew > li::after { content: ""; position: absolute; right: -40px; bottom: -40px; width: 160px; height: 160px; border-radius: 50%; border: 1px solid var(--line-strong); opacity: 0; transform: scale(.6); transition: opacity .6s var(--ease), transform .8s var(--ease); pointer-events: none; }
 .crew > li:hover::after { opacity: 1; transform: scale(1); }
 .crew-stats { display: flex; gap: clamp(22px, 3vw, 40px); margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line); }
@@ -883,7 +883,7 @@ em, .ital { font-style: italic; }
 .crew-bio { padding-top: 14px; animation: crew-open .45s var(--ease); }
 .crew-bio p { font-size: .88rem; line-height: 1.62; color: var(--fg-2); margin: 0 0 .9em; max-width: 60ch; }
 @keyframes crew-open { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-.crew .links { flex-wrap: wrap; row-gap: 8px; margin-top: 14px; padding-top: 0; }
+.crew .links { flex-wrap: wrap; row-gap: 0; margin-top: 8px; padding-top: 0; }
 .crew-sub { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; align-items: end; margin: clamp(48px, 6vw, 80px) 0 22px; padding-top: 22px; border-top: 1px solid var(--line-strong); }
 .crew-sub-h { font-family: var(--serif); font-weight: 400; font-size: clamp(1.9rem, 3vw, 2.6rem); line-height: 1.05; letter-spacing: -0.015em; margin: 0; }
 .crew-sub p { color: var(--fg-2); max-width: 56ch; margin: 0; }
@@ -2328,4 +2328,27 @@ a.link-arrow:hover, a.link-arrow:focus-visible, button.link-arrow:hover, button.
   .table-scroll > .ledger td[data-th]::before { content: attr(data-th); display: block; margin-bottom: 3px; font: 500 var(--mono-xs)/1.4 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); }
   .table-scroll > .ledger td[data-th]:first-child::before { display: none; }
 }
+
+/* ---------- the closing band, the 404 and Company (PG10) ---------- */
+/* every page ends on the fine-bead globe: latitude rows of 1.2 px beads, back hemisphere culled, two orbits, one green
+   ring (globe-fine.svg carries its own colours; the old chunky mark stays the brand mark in the bar) */
+.cta-band .mark.globe { background: url("../img/globe-fine.svg") center / contain no-repeat; -webkit-mask: none; mask: none; }
+/* 404: the swarm's canvas keeps to the right half, so its labels never run under the lede */
+@media (min-width: 961px) { /* a canvas is a replaced element: it needs an explicit width; its trail fades before the h1 */
+  .notfound-swarm { left: 45%; width: 55%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 26%); mask-image: linear-gradient(90deg, transparent, #000 26%); }
+}
+/* figure mode buttons need JavaScript: without it they are not offered at all */
+@media (scripting: none) { [data-figure-target], .company-modes { display: none; } }
+/* Company §04: the lifecycle loop gets its own band beside the h2 (it drew as a stray streak behind the grid). The stage
+   element stays where it is in the markup (merge-safe); it is placed here, and the head row reserves its height. */
+@media (min-width: 961px) {
+  #constants > .figure-stage {
+    left: auto !important; opacity: 1 !important; bottom: auto; width: min(440px, 33vw); height: min(380px, 28.5vw);
+    right: max(var(--gutter), calc((100% - var(--max)) / 2 + var(--gutter)));
+    top: calc(clamp(72px, 10vw, 150px) + clamp(2rem, 3vw, 2.6rem) + 21px + clamp(36px, 5vw, 72px));
+  }
+  .constants-head { min-height: calc(min(380px, 28.5vw) + 40px); }
+  .constants-head > .constants-cap { grid-column: 8 / -1; justify-self: end; align-self: end; width: min(440px, 33vw); justify-content: space-between; margin: 0; padding-top: 10px; border-top: 1px solid var(--line); }
+}
+@media (max-width: 960px) { #constants > .figure-stage, .constants-cap { display: none !important; } }
 /* v2:pages:end */
