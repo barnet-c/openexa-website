@@ -165,14 +165,15 @@
         </div>
         <div class="desk is-dark" data-gap data-reveal style="--d:120ms" role="group" aria-label="Illustrative model of one trading session">
           <div class="desk-head">
-            <span class="live"><i></i><span data-gap-state>Session live</span></span>
+            <span class="desk-kicker">Illustrative · not market data</span>
+            <span class="live"><i></i><span data-gap-state>Model running</span></span>
             <span class="t" data-gap-time>09:30 ET</span>
-            <span class="hint">One session, simulated · price minus NAV in basis points · not market data</span>
+            <button class="desk-follow" type="button" data-gap-follow aria-pressed="false" hidden>Follow the next action</button>
           </div>
           <div class="desk-body">
             <div class="desk-chart">
               <canvas data-gap-canvas aria-hidden="true"></canvas>
-              <div class="desk-legend"><span><i class="ivory"></i>Price</span><span><i class="khaki"></i>NAV</span><span><i class="green"></i>Agents act</span><span><i class="band"></i>Threshold</span></div>
+              <div class="desk-legend"><span><i class="ivory"></i>Price</span><span><i class="dk-nav"></i>NAV</span><span><i class="band"></i>Threshold</span><span><i class="ring"></i>Proposal</span><span><i class="sq"></i>Settled</span><span class="desk-axis">One session, simulated · price minus NAV in basis points</span></div>
             </div>
             <div class="desk-side">
               <div class="desk-stats">
@@ -182,14 +183,31 @@
               </div>
               <div class="desk-controls">
                 <label><span>Act past <output data-gap-thr-out>6</output> bps</span><input type="range" min="2" max="20" step="1" value="6" data-gap-thr aria-label="Threshold in basis points"></label>
-                <label><span>Agents on this fund · <output data-gap-n-out>2k</output></span><input type="range" min="0" max="100" step="1" value="30" data-gap-n aria-label="Number of agents"></label>
+                <label><span>Agents in this model · <output data-gap-n-out>2k</output></span><input type="range" min="0" max="100" step="1" value="30" data-gap-n aria-label="Agents in this model"></label>
               </div>
-              <ol class="desk-log" data-gap-log aria-live="off" aria-label="Agent actions"></ol>
               <p class="desk-note">Move the sliders. More agents close the gap sooner; a lower threshold works smaller gaps. The ledger fills itself.</p>
             </div>
           </div>
+          <!-- the lane beside the session: a followed action walks it gate by gate -->
+          <div class="desk-lane">
+            <ol class="dl-gates" data-gap-lane aria-label="The six gates">
+              <li data-g="1"><b>01</b> Signal</li>
+              <li data-g="2"><b>02</b> Predict</li>
+              <li data-g="3"><b>03</b> Decide</li>
+              <li data-g="4"><b>04</b> Approve</li>
+              <li data-g="5"><b>05</b> Execute</li>
+              <li data-g="6"><b>06</b> Settle</li>
+            </ol>
+            <p class="dl-say" data-gap-say aria-live="polite"></p>
+          </div>
+          <!-- the ledger strip: one block per record, newest on the right; each link carries the SHA-256 of the record it leaves -->
+          <div class="desk-ledger">
+            <p class="dl-k">Ledger<span>this session · hash-chained</span></p>
+            <ol class="desk-log" data-gap-log aria-live="off" aria-label="Records of this session"></ol>
+          </div>
         </div>
-        <div class="figure-cap" data-reveal><span>Fig. 02 — The desk · one simulated session of Lifecycle 01</span><span>Illustrative · draws nothing from any feed</span></div>
+        <p class="desk-nojs">The desk is an illustrative model that runs in the browser. Without JavaScript, the seven steps above describe the same lifecycle.</p>
+        <div class="figure-cap desk-cap" data-reveal><span>Fig. 3.1 — The desk · one simulated session of Lifecycle 01</span><span>Illustrative · draws nothing from any feed</span></div>
         <div class="mt-4" data-reveal>
           <a class="link-arrow" href="evidence.html">Ten sessions of proof <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
         </div>
@@ -247,6 +265,7 @@
     </div>
   </footer>
 
+  <script src="assets/js/lane.js" defer></script>
   <script src="assets/js/gap.js" defer></script>
   <script src="assets/js/site.js" defer></script>
 </body>
