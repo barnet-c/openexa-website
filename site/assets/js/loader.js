@@ -6,9 +6,10 @@
    the start of navigation, so the count is the real time the visitor has waited. A later visit (in the same session, or
    arriving from another page of the site) gets the short version: the mark, no count, for as long as the stage needs and
    no longer.
-   The failsafe: 3 s after navigation the loader is gone. Any step of this script that would run later than that, on a
-   device too busy to lift the loader in time, removes the loader at once instead (no count, no curtain), so a late
-   script never shows it again; a timer removes it at that moment whatever else is running. Without this script a CSS
+   The failsafe: 3 s after navigation the loader is gone. A fade on the document timeline (the compositor runs it, so
+   scripts that hold the main thread cannot delay it) takes it away at that moment unless the curtain has lifted; any
+   step of this script that would run later than that removes the loader at once instead (no count, no curtain), so a
+   late script never shows it again, and a timer removes it then whatever else is running. Without this script a CSS
    animation (v2:nav) still fades it out 3 s after its first frame. While the loader is up, Tab stays on the skip link:
    nothing hidden beneath the loader takes keyboard focus. (Nothing here forces a style or layout pass: the page is not
    made inert and no animation is read back, either of which restyles or lays out the whole page inside this script.) */
@@ -41,6 +42,13 @@
     if (!root.classList.contains('is-loaded')) loaded();
   };
   if (performance.now() >= LATE) { drop(); return; }
+  // the failsafe on the navigation's clock: the CSS fade (v2:nav) runs from the loader's first frame; set to start at
+  // the start of navigation (the document timeline's zero), it takes the loader away at LATE. It runs from the first
+  // frame on, so the compositor plays it, and the scripts after this one cannot hold it up by holding the main thread
+  try {
+    const fs = loader.getAnimations().find(a => a.animationName === 'loader-failsafe');
+    if (fs && (fs.startTime === null || fs.startTime > 0)) fs.startTime = 0;
+  } catch (e) { /* no Web Animations: the CSS clock stands */ }
 
   let seen = false;
   try { seen = sessionStorage.getItem('oxa:intro') === '1'; sessionStorage.setItem('oxa:intro', '1'); } catch (e) { /* storage off: full intro */ }
