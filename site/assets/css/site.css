@@ -1065,6 +1065,22 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-compact .beat .body-lg, .story-compact .beat-0 .hero-sub { margin-top: 10px; font-size: .86rem; line-height: 1.5; }
 .story-compact .beat .hero-cta, .story-short .beat .hero-cta { flex-wrap: nowrap; gap: 10px; margin-top: 14px; }
 .story-compact .beat .hero-cta .btn, .story-short .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
+/* a portrait phone is always compact: the same rules from the first paint, so nothing shifts when story.js arrives (CLS) */
+@media (scripting: enabled) and (max-width: 599.98px) {
+  html:not(.no-webgl) .story-legend, html:not(.no-webgl) .beat-0 .hero-stats { display: none; }
+  html:not(.no-webgl) .beat h2 { font-size: clamp(1.55rem, 6.4vw, 2.1rem); }
+  html:not(.no-webgl) .beat-0 .display-1 { font-size: clamp(2.1rem, 8.8vw, 3.4rem); }
+  html:not(.no-webgl) .beat-0 .hero-kicker { margin-bottom: 8px; font-size: .95rem; }
+  html:not(.no-webgl) .beat .eyebrow { margin-bottom: 8px; }
+  html:not(.no-webgl) .beat .body-lg, html:not(.no-webgl) .beat-0 .hero-sub { margin-top: 10px; font-size: .86rem; line-height: 1.5; }
+  html:not(.no-webgl) .beat .hero-cta { flex-wrap: nowrap; gap: 10px; margin-top: 14px; }
+  html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
+}
+/* a landscape phone is short from the first paint too */
+@media (scripting: enabled) and (max-height: 599.98px) and (min-aspect-ratio: 23/20) {
+  html:not(.no-webgl) .beat .hero-cta { flex-wrap: nowrap; gap: 10px; margin-top: 14px; }
+  html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
+}
 .story-short .beat-4 .body-lg { display: none; } /* its callouts and the paper's caption carry the record */
 .beat.is-tight .body-lg, .beat-0.is-tight .hero-sub { display: none; }
 .story-short .story-lab.floor span { display: block; } /* two short lines, left of column 01 */

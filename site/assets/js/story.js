@@ -763,7 +763,7 @@
     stacked = stackedMQ.matches; CAM = stacked ? CAM_ST : CAM_W;
     root.classList.remove('story-compact', 'story-short');
     beats.forEach(b => b.classList.remove('is-tight'));
-    compact = stacked && H < 780; short = !stacked && H < 600;
+    compact = stacked && (H < 780 || W < 600); short = !stacked && H < 600; // (a portrait phone is compact in CSS from the first paint)
     if (stacked && !compact) {
       measureLayout();
       const top = navH + barH + Math.max(...capH) + 8;
