@@ -410,34 +410,95 @@
           <span class="idx">06</span><span class="lab">Trust &amp; governance</span><span class="aside">Autonomous, not unaccountable</span>
         </div>
         <div class="grid">
-          <div class="col-4">
+          <div class="col-5">
             <h2 class="display-2" data-reveal data-split>Every agent acts on the record.</h2>
-            <p class="body-lg mt-3" data-reveal style="--d:80ms">Autonomy is a dial, not a leap. Agents propose; the execution council approves or rejects against your policy; scoped permissions bound what any agent can touch; and every transition is written to a ledger you can replay.</p>
-            <ul class="checks mt-3" data-reveal style="--d:120ms">
-              <li><b>Council</b> — approve / reject on every proposal, human optional</li>
-              <li><b>Permissions</b> — scoped, revocable; custody never moves</li>
-              <li><b>Ledger</b> — append-only, hash-chained, replayable</li>
-              <li><b>Modes</b> — automatic · with approval · manual, per lifecycle</li>
-              <li><b>Halt</b> — database-backed, available in every mode</li>
-            </ul>
+          </div>
+          <div class="col-6 offset-7">
+            <p class="body-lg" data-reveal style="--d:80ms">Autonomy is a dial, not a leap. Agents propose; the execution council approves or rejects against your policy; scoped permissions bound what any agent can touch; and every transition is written to a ledger you can replay.</p>
             <a class="link-arrow mt-3" href="trust.html" data-reveal style="--d:140ms">The governance model <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
           </div>
-          <div class="col-8">
-            <div class="ledger-stream is-dark" data-ledger-stream data-reveal>
-              <div class="head"><span>Agent log · hash-chained</span><span class="live"><i></i>Illustrative stream</span></div>
-              <div class="body" aria-live="off"></div>
-              <div class="foot"><span>Every record references its predecessor · nothing is edited after the fact</span><span><span data-stream-count>0</span> records</span></div>
-            </div>
+        </div>
+        <ul class="gov-spec mt-4" data-reveal style="--d:120ms">
+          <li><b>Council</b><span class="sr-only"> — </span><span>approve / reject on every proposal, human optional</span></li>
+          <li><b>Permissions</b><span class="sr-only"> — </span><span>scoped, revocable; custody never moves</span></li>
+          <li><b>Ledger</b><span class="sr-only"> — </span><span>append-only, hash-chained, replayable</span></li>
+          <li><b>Modes</b><span class="sr-only"> — </span><span>automatic · with approval · manual, per lifecycle</span></li>
+          <li><b>Halt</b><span class="sr-only"> — </span><span>database-backed, available in every mode</span></li>
+        </ul>
 
-            <!-- the chain: real SHA-256, editable, breaks visibly -->
-            <div class="chain mt-3 is-dark" data-chain data-reveal style="--d:80ms">
+        <!-- the ledger trace: records on one hairline, each link carrying the hash of the record before (ledger.js) -->
+        <div class="lt is-dark mt-4" data-ledger="live" data-ledger-stream data-reveal role="group" aria-label="Agent log, hash-chained (illustrative)">
+          <div class="lt-head">
+            <span class="lt-title">Agent log · hash-chained</span>
+            <span class="lt-state"><i></i><span data-lt-state>Illustrative stream</span></span>
+            <span class="lt-ctrl">
+              <button type="button" class="lt-btn" data-lt-play hidden>Pause</button>
+            </span>
+          </div>
+          <div class="lt-stage">
+          <button type="button" class="lt-latest" data-lt-latest hidden>Latest <span data-lt-new></span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></button>
+          <div class="lt-view">
+            <ol class="lt-track" aria-label="Ledger records, oldest first">
+              <li class="ln lt-rec" data-d="agent=domain:a-0797 · lifecycle=L-6646 · next step"><span class="lt-meta"><span class="lt-id">#4f1f</span><span class="lt-lc">L-6646</span></span><b class="lt-ev">PROPOSED</b><span class="lt-sub">domain agent a-0797</span><time class="lt-t">09:31:03.902</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="L-6646 · schema checked · inputs complete · scope checked"><span class="lt-meta"><span class="lt-id">#4f20</span><span class="lt-lc">L-6646</span></span><b class="lt-ev">VALIDATED</b><span class="lt-sub">schema · inputs · scope</span><time class="lt-t">09:31:04.118</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="council · policy v7 · bounded action"><span class="lt-meta"><span class="lt-id">#4f21</span><span class="lt-lc">L-6646</span></span><b class="lt-ev">APPROVED</b><span class="lt-sub">council · policy v7</span><time class="lt-t">09:31:04.203</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="agent=exec:e-0962 · tool=workflow-01 · idempotent"><span class="lt-meta"><span class="lt-id">#4f22</span><span class="lt-lc">L-6646</span></span><b class="lt-ev">SUBMITTED</b><span class="lt-sub">exec agent e-0962</span><time class="lt-t">09:31:04.377</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="L-6646 · action confirmed · receipt attached"><span class="lt-meta"><span class="lt-id">#4f23</span><span class="lt-lc">L-6646</span></span><b class="lt-ev">COMPLETED</b><span class="lt-sub">action confirmed</span><time class="lt-t">09:31:05.910</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec is-settled" data-d="agent=records:r-0400 · previous hash linked"><span class="lt-meta"><span class="lt-id">#4f24</span><span class="lt-lc">L-6646</span></span><b class="lt-ev">SETTLED</b><span class="lt-sub">records agent r-0400</span><time class="lt-t">09:31:06.442</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="agent=domain:a-0922 · lifecycle=L-2801 · next step"><span class="lt-meta"><span class="lt-id">#4f25</span><span class="lt-lc">L-2801</span></span><b class="lt-ev">PROPOSED</b><span class="lt-sub">domain agent a-0922</span><time class="lt-t">09:31:07.615</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="L-2801 · schema checked · inputs complete · scope checked"><span class="lt-meta"><span class="lt-id">#4f26</span><span class="lt-lc">L-2801</span></span><b class="lt-ev">VALIDATED</b><span class="lt-sub">schema · inputs · scope</span><time class="lt-t">09:31:08.837</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+            </ol>
+          </div>
+          </div>
+          <div class="lt-insp" data-lt-insp hidden>
+            <dl>
+              <div><dt>Record</dt><dd data-f="rec">—</dd></div>
+              <div><dt>Event</dt><dd data-f="ev">—</dd></div>
+              <div><dt>Detail</dt><dd data-f="d">—</dd></div>
+              <div data-f-row="src" hidden><dt>Source</dt><dd data-f="src">—</dd></div>
+            </dl>
+            <dl>
+              <div><dt>Prev hash</dt><dd><code data-f="prev">—</code><span class="lt-check" data-f="prevok"></span></dd></div>
+              <div><dt>Hash</dt><dd><code data-f="hash">—</code><span class="lt-check" data-f="next"></span></dd></div>
+            </dl>
+          </div>
+          <i class="lt-leader" aria-hidden="true"></i>
+          <div class="lt-foot"><span>Every record references its predecessor · nothing is edited after the fact</span><span><span data-stream-count>8</span> records<span data-lt-swarm hidden></span></span></div>
+        </div>
+        <div class="figure-cap" data-reveal><span>Fig. 06 — The ledger, live · select any record to inspect its hash links</span><span>Illustrative records · real SHA-256, computed in your browser</span></div>
+
+        <!-- the chain: real SHA-256, editable, breaks visibly (chain.js) -->
+        <div class="grid mt-5 chain-row">
+          <div class="col-4">
+            <h3 class="display-3" data-reveal>Try to change the past.</h3>
+            <p class="body-lg mt-2" data-reveal style="--d:60ms">Eight records from one proposal, each hashed with SHA-256 over its contents and the hash before it. Click any event or detail and type: that record and every one after it stop verifying, in red, because the chain no longer agrees with itself.</p>
+            <ul class="chain-key mt-3" data-reveal style="--d:100ms" aria-label="How to read the chain">
+              <li><i class="k-node" aria-hidden="true"></i><span><b>Record</b> One transition: who acted and what happened. Its event and detail are editable here.</span></li>
+              <li><i class="k-link" aria-hidden="true"></i><span><b>Link</b> The record’s SHA-256. The next record stores it as its previous hash.</span></li>
+              <li><i class="k-snap" aria-hidden="true"></i><span><b>Snapped link</b> A stored hash that no longer matches. Every record after it fails.</span></li>
+            </ul>
+          </div>
+          <div class="col-8">
+            <div class="chain is-dark" data-chain data-reveal style="--d:80ms">
               <div class="chain-head">
-                <span class="eyebrow eyebrow--bare">Try to change the past</span>
-                <span class="chain-status" data-chain-status role="status"><i></i>Preparing the chain</span>
+                <span class="chain-status" data-chain-status role="status"><i></i>Eight records · one chain</span>
+                <span class="chain-acts">
+                  <button type="button" class="chain-try" data-chain-try hidden>Alter record 03</button>
+                  <button type="button" class="chain-restore" data-chain-restore hidden>Restore the original records</button>
+                </span>
               </div>
-              <p class="chain-note">Eight records from one proposal, each hashed with SHA-256 over its contents and the hash before it. Click any event or detail and type: that record and every one after it stop verifying, in red, because the chain no longer agrees with itself.</p>
-              <ol class="chain-list" data-chain-list><li class="chain-fallback">Enable JavaScript to try this illustrative SHA-256 chain.</li></ol>
-              <div class="chain-foot"><span>SHA-256 in your browser · first 8 hex of each hash shown</span><button type="button" class="chain-restore" data-chain-restore hidden>Restore the original records</button></div>
+              <p class="chain-genesis"><i aria-hidden="true"></i>Genesis · previous hash 00000000</p>
+              <ol class="chain-list" data-chain-list>
+                <li><span class="i">01</span><span class="who">A-0412</span><b class="ev">PROPOSED</b><span class="what">lifecycle L-01 · next step</span></li>
+                <li><span class="i">02</span><span class="who">A-0412</span><b class="ev">VALIDATED</b><span class="what">schema ok · inputs complete</span></li>
+                <li><span class="i">03</span><span class="who">COUNCIL</span><b class="ev">APPROVED</b><span class="what">policy v7 · scoped action</span></li>
+                <li><span class="i">04</span><span class="who">A-0412</span><b class="ev">SUBMITTED</b><span class="what">registry tool · key 9f3c</span></li>
+                <li><span class="i">05</span><span class="who">A-0412</span><b class="ev">RECEIVED</b><span class="what">source receipt attached</span></li>
+                <li><span class="i">06</span><span class="who">A-0412</span><b class="ev">EXECUTED</b><span class="what">action complete · result stored</span></li>
+                <li><span class="i">07</span><span class="who">A-0891</span><b class="ev">RECONCILED</b><span class="what">source receipt ↔ internal record</span></li>
+                <li><span class="i">08</span><span class="who">A-0412</span><b class="ev">SETTLED</b><span class="what">confirmed · appended · chained</span></li>
+              </ol>
+              <div class="chain-foot"><span>SHA-256 in your browser · first 8 hex of each hash shown</span><span class="chain-fallback" data-chain-fallback>Turn on JavaScript to hash these records and try to change one.</span></div>
             </div>
           </div>
         </div>
@@ -505,6 +566,7 @@
 
   <script src="assets/js/story.js" defer></script>
   <script src="assets/js/swarm.js" defer></script>
+  <script src="assets/js/ledger.js" defer></script>
   <script src="assets/js/chain.js" defer></script>
   <script src="assets/js/site.js" defer></script>
   <script src="assets/js/proof.js" defer></script>
