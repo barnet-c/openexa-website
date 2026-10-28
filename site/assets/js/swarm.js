@@ -336,8 +336,8 @@
       if (hc[i] < TRAIL) hc[i]++;
     }
   }
-  // fit the scene into the stage: labels above, a little air below
-  let W = 1, H = 1, dpr = 1, narrow = false, rowTop = 14, rowH = 30;
+  // fit the scene into the stage: labels above, a little air below (two rows of labels: room above and below)
+  let W = 1, H = 1, dpr = 1, narrow = false, tight = false, rowTop = 14, rowH = 30, botH = 0;
   function fit() {
     camera();
     const keep = { cx: cam.cx, cy: cam.cy, F: cam.F };
@@ -348,7 +348,7 @@
     // phones crop the runway and the ledger's tail so the gates get the width
     pts.push([GX[0] - (narrow ? 0.06 : 0.3), 0, 0], [LX + (narrow ? 0.1 : 0.3), 0, 0], [XR, FLOOR, 0.2], [XR, FLOOR, -0.2]);
     for (const p of pts) { proj(p[0], p[1], p[2]); x0 = Math.min(x0, P_X); x1 = Math.max(x1, P_X); y0 = Math.min(y0, P_Y); y1 = Math.max(y1, P_Y); d0 = Math.min(d0, P_D); d1 = Math.max(d1, P_D); }
-    const padT = narrow ? rowTop + rowH + 18 : rowTop + rowH + 26, padB = narrow ? rowH + 22 : 16, padX = narrow ? 4 : 10;
+    const padT = narrow ? rowTop + rowH + 18 : rowTop + rowH + 26, padB = narrow ? botH + 22 : 16, padX = narrow ? 4 : 10;
     const aw = W - padX * 2, ah = H - padT - padB;
     cam.F = Math.min(aw / (x1 - x0), ah / (y1 - y0));
     cam.cx = padX + (aw - (x1 - x0) * cam.F) / 2 - x0 * cam.F; cam.cy = padT + (ah - (y1 - y0) * cam.F) / 2 - y0 * cam.F;
@@ -738,18 +738,44 @@
 
   /* ---------------- DOM labels, projected from 3D anchors ---------------- */
   const lw = [];
+  // The labels' layout is chosen by measured fit, at any stage size: one row when all six fit side by side with 14 px
+  // gaps in the wide type, else two rows in the narrow type (02 04 06 above the lane, 01 03 05 below). The wide widths
+  // are read with the wide type on (the narrow class is lifted for that one read, inside this task: nothing is painted
+  // in between). Going back to one row needs 72 px to spare, so a policy line that grows by a few characters while the
+  // council is tuned never flips the layout back and forth. Returns true when the mode changed (the camera refits).
+  // In two rows, a stage too small for 02 · 04 · 06 side by side (320 px) breaks 04's policy line in two ('rejects risk' /
+  // '> 0.88'), so its upper row keeps 8 px between labels.
   function measure() {
+    const was = narrow, wasT = tight;
+    if (wasT) root.classList.remove('is-tight');
+    if (was) root.classList.remove('is-narrow');
+    let need = 14 * (el.gates.length - 1);
+    for (const li of el.gates) need += li.offsetWidth;
+    narrow = W < 560 || need > W - 8 - (was ? 72 : 0);
+    tight = false;
+    if (narrow) {
+      root.classList.add('is-narrow');
+      const g = el.gates, up = g.length === 6 ? g[1].offsetWidth + g[3].offsetWidth + g[5].offsetWidth + 16 : 0;
+      tight = up > W - 8 - (wasT ? 24 : 0);
+      if (tight) root.classList.add('is-tight');
+    }
+    const rows = narrow ? '2' : '1'; if (root.dataset.swRows !== rows) root.dataset.swRows = rows;
     el.gates.forEach((li, g) => { lw[g] = [li.offsetWidth, li.offsetHeight]; });
     if (el.ledger) lw[6] = [el.ledger.offsetWidth, el.ledger.offsetHeight];
     if (el.banner) lw[7] = [el.banner.offsetWidth, el.banner.offsetHeight];
     if (el.bound) lw[8] = [el.bound.offsetWidth, el.bound.offsetHeight];
-    rowH = Math.max(24, ...el.gates.map((li, g) => (lw[g] ? lw[g][1] : 24)));
+    // the row heights: in two rows the lower one (01 03 05) holds single lines; 04's policy line is in the upper one
+    const h = (g) => (lw[g] ? lw[g][1] : 24);
+    rowH = Math.max(24, ...el.gates.map((li, g) => (!narrow || g % 2 ? h(g) : 0)));
+    botH = narrow ? Math.max(16, ...el.gates.map((li, g) => (g % 2 ? 0 : h(g)))) : 0;
+    return narrow !== was || tight !== wasT;
   }
   const setPos = (node, x, y) => { const v = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`; if (node.__t !== v) { node.style.transform = v; node.__t = v; } };
   function spread(row) { // 1-D: keep each label over its gate, push neighbours apart when they would touch
     if (!row.length) return;
     row.sort((p, q) => p.ax - q.ax); // gate order (by anchor): a wide label (04 with its policy line) must not jump a neighbour
-    const gap = narrow ? 8 : 14, lo = 4, hiX = W - 4;
+    let tw = 0; for (const b of row) tw += b.w;
+    const gap = tw + 14 * (row.length - 1) <= W - 8 ? 14 : 8, lo = 4, hiX = W - 4; // 14 px apart where the row has the room
     for (let k = 0; k < row.length; k++) { const b = row[k]; b.x = Math.max(b.x, lo); if (k) b.x = Math.max(b.x, row[k - 1].x + row[k - 1].w + gap); }
     for (let k = row.length - 1; k >= 0; k--) { const b = row[k]; b.x = Math.min(b.x, (k === row.length - 1 ? hiX : row[k + 1].x - gap) - b.w); }
     row[0].x = Math.max(row[0].x, lo);
@@ -759,7 +785,7 @@
     const top = [], bot = [];
     el.gates.forEach((li, g) => {
       const [hy] = frameDims(g), w = (lw[g] || [80])[0], h = (lw[g] || [0, 24])[1];
-      const bottom = narrow && g % 2 === 0;                      // phones: 01 03 05 below the lane, 02 04 06 above
+      const bottom = narrow && g % 2 === 0;                      // two rows: 01 03 05 below the lane, 02 04 06 above
       if (g === 3) proj(GX[3], apR + 0.09, 0); else proj(GX[g], bottom ? -hy : hy, 0);
       const b = { li, g, x: P_X - w / 2, y: bottom ? H - h - 10 : rowTop, w, h, ax: P_X, ay: P_Y, bottom,
         c: g === 5 || g === 3 ? GR : halted && g === 0 ? KH : IV, a: li.classList.contains('is-hit') ? 0.7 : g === 3 ? 0.42 : 0.26 };
@@ -775,8 +801,8 @@
       const x = clamp(P_X, 4, W - lw[6][0] - 4), k = Math.abs(ex - P_X) > 1 ? (ey - P_Y) / (ex - P_X) : 0;
       setPos(el.ledger, x, P_Y + Math.max(0, k * (x + lw[6][0] - P_X)) + 12);
     }
-    // the halt banner: bottom right on wide stages (the trace owns the bottom left), above the lower label row on phones
-    if (el.banner && lw[7]) setPos(el.banner, narrow ? 8 : W - lw[7][0] - 14, narrow ? H - rowH - 18 - lw[7][1] : H - lw[7][1] - 14);
+    // the halt banner: bottom right on wide stages (the trace owns the bottom left), above the lower label row in two rows
+    if (el.banner && lw[7]) setPos(el.banner, narrow ? 8 : W - lw[7][0] - 14, narrow ? H - botH - 18 - lw[7][1] : H - lw[7][1] - 14);
     // the boundary's name sits off the far end of its lit top edge, when it clears every gate label and leader
     if (el.bound && lw[8]) {
       proj(XB, BHY, -BHZ);
@@ -1289,7 +1315,14 @@
 
   /* ---------------- sizing, loops, visibility ---------------- */
   let measureQueued = false;
-  function measureSoon() { if (measureQueued) return; measureQueued = true; requestAnimationFrame(() => { measureQueued = false; measure(); if (booted && !running()) paint(); }); }
+  function measureSoon() {
+    if (measureQueued || !booted) return; measureQueued = true;
+    requestAnimationFrame(() => { // a label that no longer fits its row changes the layout, and the camera refits it
+      measureQueued = false;
+      if (measure()) { fit(); hc.fill(0); camera(); projectAll(); }
+      if (!running()) paint();
+    });
+  }
   // the trails' own layer: at most 1.25 device pixels per CSS pixel, composited onto the stage in one drawImage
   // (thin, soft strokes lose nothing at that density, and they are most of the drawing cost at DPR 2-3)
   function trailLayer() {
@@ -1306,8 +1339,6 @@
     W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
     const ndpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(3840 * 2160 / (W * H)));
     const rebuild = ndpr !== dpr || !SPR.bead; dpr = ndpr;
-    narrow = W < 560;
-    root.classList.toggle('is-narrow', narrow);
     root.classList.toggle('is-stacked', W < 820); // the trace flows under the canvas instead of over it
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     // a dense backing store (DPR 2+ or over 2 MP) starts without the estimation field's trails
@@ -1392,7 +1423,7 @@
   }).observe(cv);
   else window.addEventListener('resize', () => { if (booted) resize(); });
   (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { if (booted) resize(); watchRatio(); }, { once: true }); })();
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (booted) { measure(); fit(); paint(); } });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (booted) { measure(); fit(); hc.fill(0); camera(); projectAll(); paint(); } });
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => {
       onScreen = e.isIntersecting; root.classList.toggle('is-off', !onScreen);
