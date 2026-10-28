@@ -2389,4 +2389,14 @@ html:has(> body[data-nav="dark-start"]) { background: #0B110F; }
   .constants-head > .constants-cap { grid-column: 8 / -1; justify-self: end; align-self: end; width: min(440px, 33vw); justify-content: space-between; margin: 0; padding-top: 10px; border-top: 1px solid var(--line); }
 }
 @media (max-width: 960px) { #constants > .figure-stage, .constants-cap { display: none !important; } }
+/* Company §05: the six lifecycle classes, each under an inclined ring in the S1 code (LC-01 solid green, next dashed,
+   roadmap dotted khaki). Replaces .wall here, so the retired .wall rules can go. */
+.class-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.class-row > li { display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 116px; padding: 20px 18px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg); font-family: var(--serif); font-size: 1.2rem; line-height: 1.15; letter-spacing: -0.01em; color: var(--fg-2); text-wrap: balance; }
+.class-row > li::before { content: ""; flex: none; width: 26px; height: 11px; border-radius: 50%; border: 1.5px dotted var(--khaki-deep); transform: rotate(-14deg); }
+.class-row > .cr-live { color: var(--fg); }
+.class-row > .cr-live::before { border: 1.5px solid var(--accent); transform: rotate(-18deg); }
+.class-row > .cr-next::before { border: 1.25px dashed var(--fg-2); transform: rotate(10deg); }
+@media (max-width: 960px) { .class-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .class-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .class-row > li { min-height: 96px; } }
 /* v2:pages:end */
