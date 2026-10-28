@@ -203,12 +203,12 @@
           <div class="sw-head">
             <span class="sw-live"><i></i><span data-sw-state>Running</span></span>
             <span class="sw-kicker">Swarm lab · illustrative model</span>
-            <ul class="sw-key" aria-label="Key"><li class="k-p">Proposal</li><li class="k-s">Settled</li><li class="k-r">Rejected</li><li class="k-b">Record</li></ul>
+            <ul class="sw-key" role="list" aria-label="Key"><li class="k-p">Proposal</li><li class="k-s">Settled</li><li class="k-r">Rejected</li><li class="k-b">Record</li></ul>
             <button class="sw-follow" type="button" data-sw-follow aria-pressed="false" aria-controls="sw-trace">Follow a proposal</button>
           </div>
           <div class="sw-stage" data-sw-stage>
             <canvas aria-hidden="true"></canvas>
-            <ol class="sw-gates" data-sw-gates aria-label="The six gates">
+            <ol class="sw-gates" data-sw-gates role="list" aria-label="The six gates">
               <li><b>01</b> <span>Signal</span> <small>Signals arrive; an agent picks them up.</small></li>
               <li><b>02</b> <span>Predict</span> <small>Models estimate what happens next.</small></li>
               <li><b>03</b> <span>Decide</span> <small>One agent forms one proposal.</small></li>
@@ -223,7 +223,7 @@
             <div class="sw-hover" data-sw-hover aria-hidden="true" hidden><b></b><span>Click to follow</span></div>
             <section class="sw-trace" id="sw-trace" data-sw-callout aria-label="Followed proposal" hidden>
               <div class="sw-trace-head"><span data-sw-trace-id>Proposal</span><span class="sw-trace-state" data-sw-trace-state>In flight</span><button class="sw-trace-close" type="button" data-sw-trace-close aria-label="Stop following and close the trace">Close</button></div>
-              <ol class="sw-log" data-sw-log></ol>
+              <ol class="sw-log" data-sw-log role="list"></ol>
             </section>
             <p class="sr-only" data-sw-say aria-live="polite"></p>
           </div>
@@ -244,7 +244,7 @@
         <div class="figure-cap" id="sw-cap" data-reveal><span>Fig. 3.1 — The swarm lab · six gates · one council · counters read from the model</span><span>Illustrative · not production data · scaled down for your browser; a production swarm runs 5,000 – 50,000 agents</span></div>
         <div class="card-grid card-grid--4 sw-legend mt-4" data-reveal>
           <div class="card sw-role sw-role--1"><div class="n"><span>A-01</span><span>Signal agents</span></div><h3 class="h4">Watch</h3><p>Real-time analysis across prices, NAV, baskets, borrow, venue depth — and, in other lifecycles, documents, meters and filings.</p><p class="sw-at"><i aria-hidden="true"></i><span>In the lab <b>01 Signal</b></span></p></div>
-          <div class="card sw-role sw-role--2"><div class="n"><span>A-02</span><span>Strategy agents</span></div><h3 class="h4">Decide</h3><p>Create or redeem, size and timing — proposed under risk, policy and portfolio constraints, then submitted to the Council.</p><p class="sw-at"><i aria-hidden="true"></i><span>In the lab <b><span>02 Predict ·</span> <span>03 Decide</span></b></span></p></div>
+          <div class="card sw-role sw-role--2"><div class="n"><span>A-02</span><span>Strategy agents</span></div><h3 class="h4">Decide</h3><p>Create or redeem, size and timing — proposed under risk, policy and portfolio constraints, then submitted to the Council.</p><p class="sw-at"><i aria-hidden="true"></i><span>In the lab <b>03 Decide</b></span></p></div>
           <div class="card sw-role sw-role--3"><div class="n"><span>A-03</span><span>Execution agents</span></div><h3 class="h4">Act</h3><p>Route approved actions to clearing, OTC, dark-pool and HFT rails and dealer-brokers through the routing and execution layers.</p><p class="sw-at"><i aria-hidden="true"></i><span>In the lab <b>05 Execute</b></span></p></div>
           <div class="card sw-role sw-role--4"><div class="n"><span>A-04</span><span>Reconciliation agents</span></div><h3 class="h4">Prove</h3><p>Match fills to counterparty truth, raise discrepancies, and close the loop in the hash-chained ledger.</p><p class="sw-at"><i aria-hidden="true"></i><span>In the lab <b><span>06 Settle ·</span> <span>ledger</span></b></span></p></div>
         </div>

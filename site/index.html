@@ -272,12 +272,12 @@
           <div class="sw-head">
             <span class="sw-live"><i></i><span data-sw-state>Running</span></span>
             <span class="sw-kicker">Swarm lab · illustrative model</span>
-            <ul class="sw-key" aria-label="Key"><li class="k-p">Proposal</li><li class="k-s">Settled</li><li class="k-r">Rejected</li><li class="k-b">Record</li></ul>
+            <ul class="sw-key" role="list" aria-label="Key"><li class="k-p">Proposal</li><li class="k-s">Settled</li><li class="k-r">Rejected</li><li class="k-b">Record</li></ul>
             <button class="sw-follow" type="button" data-sw-follow aria-pressed="false" aria-controls="sw-trace">Follow a proposal</button>
           </div>
           <div class="sw-stage" data-sw-stage>
             <canvas aria-hidden="true"></canvas>
-            <ol class="sw-gates" data-sw-gates aria-label="The six gates">
+            <ol class="sw-gates" data-sw-gates role="list" aria-label="The six gates">
               <li><b>01</b> <span>Signal</span> <small>Signals arrive; an agent picks them up.</small></li>
               <li><b>02</b> <span>Predict</span> <small>Models estimate what happens next.</small></li>
               <li><b>03</b> <span>Decide</span> <small>One agent forms one proposal.</small></li>
@@ -292,7 +292,7 @@
             <div class="sw-hover" data-sw-hover aria-hidden="true" hidden><b></b><span>Click to follow</span></div>
             <section class="sw-trace" id="sw-trace" data-sw-callout aria-label="Followed proposal" hidden>
               <div class="sw-trace-head"><span data-sw-trace-id>Proposal</span><span class="sw-trace-state" data-sw-trace-state>In flight</span><button class="sw-trace-close" type="button" data-sw-trace-close aria-label="Stop following and close the trace">Close</button></div>
-              <ol class="sw-log" data-sw-log></ol>
+              <ol class="sw-log" data-sw-log role="list"></ol>
             </section>
             <p class="sr-only" data-sw-say aria-live="polite"></p>
           </div>
