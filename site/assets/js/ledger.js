@@ -1,12 +1,19 @@
 /* OpenEXA — the ledger trace.
    Records sit on one hairline. The link out of each record carries that record's SHA-256, and the next record stores
    the same hash as its "previous hash": that is the whole idea of a hash-chained ledger, drawn literally.
-   [data-ledger="live"]   (home §06) streams an illustrative lifecycle and appends every proposal the swarm on the
-                          page settles (document event 'oxa:settled', detail {id, lane, ts}); it answers each one with
-                          'oxa:recorded' (detail {id, record, hash, seq}).
+   [data-ledger="live"]   (home §06) runs an illustrative lifecycle and records what the swarm lab on the page decides.
+                          It listens on document for
+                            'oxa:settled'  {id, lane, ts, gate:'settle', count, followed}
+                            'oxa:rejected' {id, ts, count, followed, gate:'approve'}
+                            'oxa:inspect'  {record, seq}   (the swarm's trace asks to see a record: scroll, select, pulse)
+                          and answers every announcement with 'oxa:recorded' {id, record, hash, seq, followed}.
+                          In view, announcements are sealed into at most one record every 2 s; out of view, every 8 s.
+                          A followed proposal is answered at once, in a record of its own, which is selected and pulses
+                          the next time the ledger is in view.
    [data-ledger="replay"] (Trust §03) holds a fixed excerpt that can be replayed and verified.
    Select any record (click, tap, or arrow keys once the list has focus) to inspect its id, event and both hash links.
-   The records are illustrative; every hash is real SHA-256, computed here in the browser. */
+   The records are illustrative; every hash is real SHA-256, computed here in the browser. Every count on the panel is
+   read from the records themselves. */
 (function () {
   'use strict';
   const roots = Array.from(document.querySelectorAll('[data-ledger]'));
@@ -57,31 +64,65 @@
   const grouped = hex => hex.match(/.{8}/g).join(' ');
   const HEX = '0123456789abcdef';
   const clean = v => String(v).replace(/[^\w:.#-]/g, '').slice(0, 16);
+  const fmt = n => n.toLocaleString('en-US');
   const TOOLS = ['source-01', 'registry-02', 'workflow-01', 'records-03'];
   const REASONS = ['permission missing', 'approval required', 'input outside policy'];
   const tone = ev => (/^(SETTLED|RECONCILED)$/.test(ev) ? ' is-settled' : ev === 'REJECTED' ? ' is-rejected' : '');
   // the swarm's timestamp may be epoch ms or a performance.now() reading; anything else is stamped on arrival
   const stamp = ts => { const n = Number(ts); if (!Number.isFinite(n) || n < 0) return clock(); return clock(new Date(n > 1e12 ? n : (performance.timeOrigin || Date.now() - performance.now()) + n)); };
+  // DOM writes only when something changed: a text that is already right is never written again
+  const put = (el, text) => { if (el && el.textContent !== text) el.textContent = text; };
+
+  /* ---------------- hex digits that roll to their value ----------------
+     One Text node per element (its data is rewritten, nothing is re-created) and one shared frame loop for every roll on
+     the page; a roll that should not animate is written at its final value at once. */
+  const rolls = new Map(); let rollRaf = 0;
+  function textOf(el) {
+    let t = el.firstChild;
+    if (t && t.nodeType === 3 && t === el.lastChild) return t;
+    const s = el.textContent; el.textContent = ''; t = document.createTextNode(s); el.append(t);
+    return t;
+  }
+  function rollTo(el, to, delay, dur) {
+    const t = textOf(el);
+    rolls.set(t, { to, start: performance.now() + delay, dur });
+    if (!rollRaf) rollRaf = requestAnimationFrame(rollFrame);
+  }
+  function rollFrame(now) {
+    rollRaf = 0;
+    rolls.forEach((r, t) => {
+      if (now < r.start) return;
+      const p = Math.min(1, (now - r.start) / r.dur);
+      if (p >= 1) { t.data = r.to; rolls.delete(t); return; }
+      const n = Math.floor(p * r.to.length);
+      let s = r.to.slice(0, n);
+      for (let k = n; k < r.to.length; k++) s += HEX[Math.random() * 16 | 0];
+      t.data = s;
+    });
+    if (rolls.size) rollRaf = requestAnimationFrame(rollFrame);
+  }
+  function finishRolls(scope) { rolls.forEach((r, t) => { if (scope.contains(t)) { t.data = r.to; rolls.delete(t); } }); }
 
   roots.forEach(root => { try { trace(root); } catch (error) { console.error('OpenEXA ledger trace could not start.', error); } });
 
   function trace(root) {
-    const live = root.dataset.ledger !== 'replay';
+    const stream = root.dataset.ledger !== 'replay';
     const view = root.querySelector('.lt-view'), track = root.querySelector('.lt-track');
     if (!view || !track) return;
     const q = s => root.querySelector(s);
-    const ui = { state: q('[data-lt-state]'), play: q('[data-lt-play]'), latest: q('[data-lt-latest]'), fresh: q('[data-lt-new]'),
+    const ui = { state: q('[data-lt-state]'), ctrl: q('.lt-ctrl'), play: q('[data-lt-play]'), latest: q('[data-lt-latest]'), fresh: q('[data-lt-new]'),
       replay: q('[data-lt-replay]'), verify: q('[data-lt-verify]'), count: q('[data-stream-count]'), swarm: q('[data-lt-swarm]'),
       insp: q('[data-lt-insp]'), leader: q('.lt-leader') };
+    ui.playText = ui.play && ui.play.querySelector('span');
     const field = name => root.querySelector(`[data-f="${name}"]`);
-    const F = { rec: field('rec'), ev: field('ev'), d: field('d'), src: field('src'), prev: field('prev'), prevok: field('prevok'), hash: field('hash'), next: field('next') };
-    const srcRow = root.querySelector('[data-f-row="src"]');
+    const F = { k: field('k'), rec: field('rec'), ev: field('ev'), d: field('d'), src: field('src'), prev: field('prev'), prevok: field('prevok'), hash: field('hash'), next: field('next') };
     let reduced = motionQuery.matches;
 
-    /* ---- the chain, in memory: newest last; the DOM shows a window onto it ---- */
-    const CAP = 240, DOM_CAP = 36;
+    /* ---- the chain, in memory: newest last; the DOM shows a contiguous window onto it ---- */
+    const CAP = 400, DOM_CAP = 36;
     const recs = [], els = new Map();
-    let seq = 0, total = 0, fromSwarm = 0, nextId = 0x4f21;
+    let seq = 0, total = 0, nextId = 0x4f21;
+    const sw = { recs: 0, settled: 0, rejected: 0 }; // records from the swarm, and the proposals they carry
     const excerpt = Array.from(track.querySelectorAll('.lt-rec')).map(li => {
       const t = s => { const n = li.querySelector(s); return n ? n.textContent.trim() : ''; };
       return { id: t('.lt-id'), lc: t('.lt-lc'), ev: t('.lt-ev').toUpperCase(), sub: t('.lt-sub'), d: li.dataset.d || t('.lt-sub'), t: t('.lt-t'), src: 'excerpt' };
@@ -97,8 +138,9 @@
       if (recs.length > CAP) recs.shift();
       return r;
     }
-    const bySeq = s => { const i = s - recs[0].seq; return i >= 0 && i < recs.length ? recs[i] : null; };
-    if (live) { // the excerpt in the page is the start of today's stream: stamp it as just written
+    const bySeq = s => { if (!recs.length) return null; const i = s - recs[0].seq; return i >= 0 && i < recs.length ? recs[i] : null; };
+    const newest = () => (recs.length ? recs[recs.length - 1].seq : 0);
+    if (stream) { // the excerpt in the page is the start of today's stream: stamp it as just written
       const now = Date.now();
       excerpt.forEach((r, i) => { r.t = clock(new Date(now - (excerpt.length - i) * 1150 - 600)); });
     }
@@ -119,80 +161,91 @@
     }
     track.setAttribute('role', 'listbox');
     track.setAttribute('aria-orientation', 'horizontal');
-    let rendered = 0;
-    function rebuild() {
+    let rendered = 0; // the newest record in the DOM
+    const firstSeq = () => (track.firstElementChild ? +track.firstElementChild.dataset.seq : 0);
+    // the window: the newest DOM_CAP records, reaching back far enough to keep a selection (or a given record) in it
+    function rebuild(from) {
       els.clear();
-      const keep = recs.slice(-DOM_CAP);
+      const lo = Math.min(from || Infinity, sel !== null ? sel - 1 : Infinity, newest() - DOM_CAP + 1);
+      const keep = recs.filter(r => r.seq >= lo);
       track.replaceChildren(...keep.map(build));
       rendered = keep.length ? keep[keep.length - 1].seq : 0;
+      selLi = beforeLi = null;
       markHead();
       if (sel !== null && !els.has(sel)) sel = null;
-      if (sel !== null) els.get(sel).classList.add('is-sel'), els.get(sel).setAttribute('aria-selected', 'true');
+      markSel();
       stop(sel !== null ? els.get(sel) : track.lastElementChild);
     }
-    // a new record's hash resolves on its link, digit by digit, as the link forms (the chain below does the same)
-    function roll(el, to, delay, dur = 420) {
-      cancelAnimationFrame(el._roll);
-      if (reduced) { el.textContent = to; return; }
-      const start = performance.now() + delay;
-      const step = now => {
-        if (now >= start) {
-          const p = Math.min(1, (now - start) / dur), n = Math.floor(p * to.length);
-          el.textContent = to.slice(0, n) + Array.from({ length: to.length - n }, () => HEX[Math.random() * 16 | 0]).join('');
-          if (p >= 1) { el.textContent = to; return; }
-        }
-        el._roll = requestAnimationFrame(step);
-      };
-      el._roll = requestAnimationFrame(step);
-    }
+    // a new record's hash resolves on its link, digit by digit, as the link forms (the chain below does the same). Only
+    // the newest record rolls, and only while it is on screen and the stream is running
     function landed(li) {
       li.classList.add('is-new'); setTimeout(() => li.classList.remove('is-new'), 1300);
-      const tag = li.querySelector('.lt-tag'); if (tag) roll(tag, tag.textContent, 380);
+      const tag = li.querySelector('.lt-tag');
+      if (tag && onScreen() && (playing || !stream)) rollTo(tag, tag.textContent, 380, 420);
     }
-    // columns are sized so a whole number of records fills the view: no record is ever cut in half at rest
-    const MIN_COL = live ? 136 : 122;
+    // columns are sized so a whole number of records fills the view: no record is ever cut in half at rest. Every
+    // horizontal position is then arithmetic on these numbers: the scroll path never measures the DOM
+    const MIN_COL = stream ? 136 : 122;
+    const G = { col: 148, padL: 28, padR: 28, w: 0 };
     function fit() {
-      const cs = getComputedStyle(track), avail = view.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const cs = getComputedStyle(track);
+      G.padL = parseFloat(cs.paddingLeft) || 0; G.padR = parseFloat(cs.paddingRight) || 0; G.w = view.clientWidth;
+      const avail = G.w - G.padL - G.padR;
       if (avail <= 0) return;
       // a phone still shows three live records and two whole links; an excerpt keeps two wider columns, read in full
-      const min = window.innerWidth < 600 ? (live ? 100 : 136) : MIN_COL;
+      const min = window.innerWidth < 600 ? (stream ? 100 : 136) : MIN_COL;
       let n = Math.max(2, Math.floor(avail / min));
-      if (!live) n = Math.min(n, Math.max(2, recs.length));
-      root.style.setProperty('--lt-col', (Math.floor(avail / n * 10) / 10) + 'px');
+      if (!stream) n = Math.min(n, Math.max(2, recs.length));
+      G.col = Math.floor(avail / n * 10) / 10;
+      root.style.setProperty('--lt-col', G.col + 'px');
     }
+    const maxScroll = () => Math.max(0, Math.round(G.padL + G.padR + track.childElementCount * G.col - G.w));
+    const leftOf = li => G.padL + (+li.dataset.seq - firstSeq()) * G.col;
+    let headLi = null;
     function markHead() {
-      track.querySelectorAll('.is-head').forEach(li => li.classList.remove('is-head'));
-      if (track.lastElementChild) track.lastElementChild.classList.add('is-head');
+      const li = track.lastElementChild;
+      if (headLi && headLi !== li) headLi.classList.remove('is-head');
+      if (li) li.classList.add('is-head');
+      headLi = li;
     }
     let tabStop = null;
     function stop(li) { // roving tabindex: the list is one tab stop
       if (tabStop && tabStop !== li) tabStop.tabIndex = -1;
       tabStop = li || null; if (tabStop) tabStop.tabIndex = 0;
     }
+    // the selected record, and the record before it, whose outgoing link is the selected record's previous hash
+    let sel = null, selLi = null, beforeLi = null;
+    function markSel() {
+      const li = sel !== null ? els.get(sel) || null : null, before = li ? li.previousElementSibling : null;
+      if (selLi && selLi !== li) { selLi.classList.remove('is-sel'); selLi.setAttribute('aria-selected', 'false'); }
+      if (beforeLi && beforeLi !== before) beforeLi.classList.remove('is-before-sel');
+      if (li && li !== selLi) { li.classList.add('is-sel'); li.setAttribute('aria-selected', 'true'); }
+      if (before && before !== beforeLi) before.classList.add('is-before-sel');
+      selLi = li; beforeLi = before;
+    }
 
     /* ---- following the newest record, browsing, inspecting ---- */
-    let following = true, sel = null, unseen = 0, intentUntil = 0, playing = live && !reduced, visible = false;
-    const maxScroll = () => view.scrollWidth - view.clientWidth;
+    let following = true, intentUntil = 0, playing = stream && !reduced, visible = false;
+    const onScreen = () => visible && !document.hidden;
     const atEnd = () => view.scrollLeft >= maxScroll() - 6;
     function toEnd(smooth) { view.scrollTo({ left: maxScroll(), behavior: smooth && !reduced ? 'smooth' : 'auto' }); }
     function reveal(li, smooth) { // horizontal only: never scroll the page under the reader
-      const pad = 36, l = li.offsetLeft - pad, r = li.offsetLeft + li.offsetWidth + pad;
+      const pad = 36, x = leftOf(li), l = x - pad, r = x + G.col + pad, sl = view.scrollLeft;
       let to = null;
-      if (l < view.scrollLeft) to = l; else if (r > view.scrollLeft + view.clientWidth) to = r - view.clientWidth;
-      if (to !== null) view.scrollTo({ left: to, behavior: smooth && !reduced ? 'smooth' : 'auto' });
+      if (l < sl) to = l; else if (r > sl + G.w) to = r - G.w;
+      if (to !== null) view.scrollTo({ left: Math.max(0, to), behavior: smooth && !reduced ? 'smooth' : 'auto' });
     }
     function follow(smooth = true) {
-      if (sel !== null && els.has(sel)) { const o = els.get(sel); o.classList.remove('is-sel'); o.setAttribute('aria-selected', 'false'); }
-      sel = null; following = true; unseen = 0;
+      sel = null; following = true;
+      markSel();
+      if (stream && rendered !== newest()) flush(false, true); // what was held back while paused joins the line
       stop(track.lastElementChild);
       toEnd(smooth); inspect(); state();
     }
     function select(li, focus) {
       if (!li || !els.has(+li.dataset.seq)) return;
-      if (sel !== null && els.has(sel)) { const o = els.get(sel); o.classList.remove('is-sel'); o.setAttribute('aria-selected', 'false'); }
       sel = +li.dataset.seq; following = false;
-      li.classList.add('is-sel'); li.setAttribute('aria-selected', 'true');
-      stop(li);
+      markSel(); stop(li);
       if (focus && document.activeElement !== li) li.focus({ preventScroll: true });
       reveal(li, true); inspect(); state();
     }
@@ -204,126 +257,158 @@
       if (go !== undefined) { e.preventDefault(); if (go) select(go, true); return; }
       if (e.key === 'Escape') { e.preventDefault(); follow(); const b = [ui.play, ui.replay, ui.latest].find(x => x && !x.hidden); if (b) b.focus(); }
     });
-    // only a person's own swipe, wheel or drag decides whether the view stops following the head
+    // only a person's own sideways gesture decides that the view stops following the head: a horizontal wheel or trackpad
+    // swipe (or shift + wheel), a horizontal touch drag, or a press on the strip's own scrollbar. A vertical page scroll
+    // that happens to pass over the strip never does, so the strip's own glide to a new record stays the strip's
     const intent = () => { intentUntil = performance.now() + 900; };
-    ['wheel', 'touchstart', 'pointerdown'].forEach(t => view.addEventListener(t, intent, { passive: true }));
+    view.addEventListener('wheel', e => { if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) intent(); }, { passive: true });
+    let tx = 0, ty = 0;
+    view.addEventListener('touchstart', e => { const t = e.touches[0]; if (t) { tx = t.clientX; ty = t.clientY; } }, { passive: true });
+    view.addEventListener('touchmove', e => { const t = e.touches[0]; if (t && Math.abs(t.clientX - tx) > Math.abs(t.clientY - ty)) intent(); }, { passive: true });
+    view.addEventListener('pointerdown', e => { if (e.target === view) intent(); }, { passive: true });
     let edgeRaf = 0;
     view.addEventListener('scroll', () => {
-      if (!edgeRaf) edgeRaf = requestAnimationFrame(() => { edgeRaf = 0; edges(); if (sel === null && !following) inspect(); else leader(); });
+      if (!edgeRaf) edgeRaf = requestAnimationFrame(scrolled);
       if (performance.now() > intentUntil) return;
       if (atEnd()) { if (sel === null && !following) follow(false); }
-      else if (following) { following = false; unseen = 0; state(); }
+      else if (following) { following = false; state(); }
     }, { passive: true });
-    function edges() {
-      const m = maxScroll();
-      root.classList.toggle('has-left', view.scrollLeft > 4);
-      root.classList.toggle('has-right', view.scrollLeft < m - 4);
+    function scrolled() {
+      edgeRaf = 0;
+      const sl = view.scrollLeft; // read first, then write
+      edges(sl);
+      if (sel === null) inspect(); else leader();
+      state();
+    }
+    let edgeL = null, edgeR = null;
+    function edges(sl = view.scrollLeft) {
+      const m = maxScroll(), l = sl > 4, r = sl < m - 4;
+      if (l !== edgeL) root.classList.toggle('has-left', (edgeL = l));
+      if (r !== edgeR) root.classList.toggle('has-right', (edgeR = r));
     }
 
-    /* ---- the inspector: id, event, detail, and both hash links of one record ---- */
+    /* ---- the inspector: id, event, detail, source, and both hash links of one record ---- */
     function hexInto(el, hex) {
       // the first eight hex are the ones written on the links
       el.replaceChildren(node('b', null, hex.slice(0, 8)), document.createTextNode(grouped(hex).slice(8)));
     }
-    // with nothing selected the inspector describes what the reader is looking at: the head while the view follows it,
-    // otherwise the newest record wholly in view (on a phone the excerpt opens at its start, and so does the inspector)
+    // the newest record wholly inside the view (the head while the view rests on it); never one that is not drawn
     function inView() {
-      const left = view.scrollLeft - 2, right = view.scrollLeft + view.clientWidth + 2;
-      for (let li = track.lastElementChild; li; li = li.previousElementSibling) {
-        if (li.offsetLeft >= left && li.offsetLeft + li.offsetWidth - 18 <= right) return bySeq(+li.dataset.seq);
+      const n = track.childElementCount; if (!n || G.col <= 0) return null;
+      const sl = view.scrollLeft;
+      const i = Math.min(n - 1, Math.floor((sl + G.w + 1 - G.padL) / G.col) - 1);
+      if (i < 0 || G.padL + i * G.col < sl - 1) return null;
+      return bySeq(firstSeq() + i);
+    }
+    function sourceOf(r) {
+      if (r.src === 'swarm') {
+        const who = r.pid ? `proposal ${r.pid}${r.n > 1 ? ` + ${fmt(r.n - 1)} more` : ''}` : `${fmt(r.n)} proposal${r.n > 1 ? 's' : ''}`;
+        return `The swarm above · ${who}${r.lane ? ' · ' + r.lane : ''}${r.rej ? ' · rejected at 04 Approve' : ''}${r.followed ? ' · the proposal you followed' : ''}`;
       }
-      return null;
+      return `Illustrative ${r.src === 'gen' ? 'generator' : 'excerpt'}${r.lc ? ' · ' + r.lc : ''}`;
     }
     let shown = '';
     function inspect() {
-      if (!ui.insp || !recs.length) return;
-      const r = (sel !== null && bySeq(sel)) || (!following && inView()) || bySeq(rendered) || recs[recs.length - 1];
-      const key = `${r.seq}/${recs[recs.length - 1].seq}`;
+      if (!F.rec || !recs.length) return;
+      const r = (sel !== null && bySeq(sel)) || inView() || bySeq(rendered);
+      if (!r) return;
+      const after = bySeq(r.seq + 1), drawnAfter = after && after.seq <= rendered;
+      const title = sel !== null ? (r.followed ? 'The proposal you followed' : 'Selected record') : 'Newest record in view';
+      const key = `${r.seq}|${title}|${after ? (drawnAfter ? 'd' : 'b') : 'n'}`;
       if (key === shown) { leader(); return; }
       shown = key;
-      F.rec.textContent = `${r.id} · ${r.t}`;
-      F.ev.textContent = r.ev; F.ev.className = 'lt-insp-ev' + tone(r.ev);
-      F.d.textContent = r.d;
-      if (srcRow) srcRow.hidden = r.src !== 'swarm';
-      if (F.src && r.src === 'swarm') F.src.textContent = `The swarm above · proposal ${r.pid}${r.n > 1 ? ` + ${r.n - 1} more` : ''}${r.lane ? ' · ' + r.lane : ''}${r.followed ? ' · the proposal you followed' : ''}`;
+      if (F.k) { put(F.k, title); F.k.classList.toggle('is-followed', sel !== null && !!r.followed); }
+      put(F.rec, `${r.id} · ${r.t}`);
+      put(F.ev, r.ev); F.ev.className = 'lt-insp-ev' + tone(r.ev);
+      put(F.d, r.d);
+      if (F.src) put(F.src, sourceOf(r));
       hexInto(F.prev, r.prev); hexInto(F.hash, r.hash);
       // real checks, not labels: the stored link equals the previous record's hash; this hash recomputes from the content
-      const before = bySeq(r.seq - 1), after = bySeq(r.seq + 1);
-      const linkOk = before ? before.hash === r.prev : r.prev === genesis || r.seq > 1;
+      const before = bySeq(r.seq - 1);
+      const linkOk = before ? before.hash === r.prev : r.seq === 1 ? r.prev === genesis : true;
       const selfOk = sha256(r.prev + '|' + body(r)) === r.hash;
-      F.prevok.textContent = !linkOk ? '✗ does not match the record before' : before ? `✓ the hash of ${before.id}` : r.seq === 1 ? '✓ genesis of this ledger' : '✓ the hash of the record before';
+      put(F.prevok, !linkOk ? '✗ does not match the record before' : before ? `✓ the hash of ${before.id}` : r.seq === 1 ? '✓ genesis of this ledger' : '✓ the hash of the record before');
       F.prevok.classList.toggle('is-bad', !linkOk);
-      F.next.textContent = !selfOk ? '✗ does not recompute from this record' : after ? `✓ recomputes · stored as previous hash by ${after.id}` : live ? '✓ recomputes · awaiting the next record' : '✓ recomputes · last record of this excerpt';
+      put(F.next, !selfOk ? '✗ does not recompute from this record' : drawnAfter ? `✓ recomputes · stored as previous hash by ${after.id}` : after ? '✓ recomputes · stored by the next record' : stream ? '✓ recomputes · awaiting the next record' : '✓ recomputes · last record of this excerpt');
       F.next.classList.toggle('is-bad', !selfOk);
-      ui.insp.classList.toggle('is-swarm', r.src === 'swarm');
       leader();
     }
+    let leaderOn = false;
     function leader() {
       if (!ui.leader) return;
       const li = sel !== null ? els.get(sel) : null;
-      if (!li || !ui.insp || ui.insp.hidden) { ui.leader.classList.remove('is-on'); return; }
+      if (!li || !ui.insp || ui.insp.hidden) { if (leaderOn) { ui.leader.classList.remove('is-on'); leaderOn = false; } return; }
       const n = li.querySelector('.lt-node').getBoundingClientRect(), v = view.getBoundingClientRect(), r = root.getBoundingClientRect(), i = ui.insp.getBoundingClientRect();
       const on = n.left >= v.left + 8 && n.right <= v.right - 8;
       ui.leader.style.setProperty('--x', (n.left + n.width / 2 - r.left - 0.5).toFixed(1) + 'px');
       ui.leader.style.setProperty('--y', (n.bottom - r.top + 3).toFixed(1) + 'px');
       ui.leader.style.setProperty('--h', Math.max(0, i.top - n.bottom - 3).toFixed(1) + 'px');
-      ui.leader.classList.toggle('is-on', on);
+      if (on !== leaderOn) { ui.leader.classList.toggle('is-on', on); leaderOn = on; }
     }
 
     /* ---- status line, controls, counters: all derived from state ---- */
+    const flags = {};
+    function flag(name, on) { if (flags[name] !== on) { flags[name] = on; root.classList.toggle(name, on); } }
     function state(text) {
-      root.classList.toggle('is-inspecting', sel !== null);
-      root.classList.toggle('is-following', following);
-      root.classList.toggle('is-live', live && playing && following);
-      root.classList.toggle('is-paused', live && !playing);
-      if (ui.state) {
-        const r = sel !== null ? bySeq(sel) : null;
-        ui.state.textContent = text || (r ? `Inspecting ${r.id}` : live ? (playing ? (following ? 'Live · illustrative stream' : 'Illustrative stream · browsing') : 'Paused · illustrative stream') : stateIdle);
+      flag('is-inspecting', sel !== null);
+      flag('is-following', following);
+      flag('is-running', stream && playing && following);
+      flag('is-paused', stream && !playing);
+      const r = sel !== null ? bySeq(sel) : null;
+      put(ui.state, text || (r ? `Inspecting ${r.id}` : stream ? (playing ? (following ? 'Running · illustrative stream' : 'Illustrative stream · browsing') : 'Paused · illustrative stream') : stateIdle));
+      if (ui.play) {
+        put(ui.playText, playing ? 'Pause' : 'Play');
+        const label = playing ? 'Pause the stream' : 'Play the stream';
+        if (ui.play.getAttribute('aria-label') !== label) ui.play.setAttribute('aria-label', label);
+        ui.play.classList.toggle('is-paused', !playing);
       }
-      if (ui.play) { ui.play.hidden = !live; ui.play.textContent = playing ? 'Pause' : 'Play'; ui.play.setAttribute('aria-label', playing ? 'Pause the stream' : 'Play the stream'); }
       if (ui.latest) {
-        ui.latest.hidden = following;
-        if (ui.fresh) ui.fresh.textContent = unseen ? `+${unseen > 99 ? '99+' : unseen}` : '';
+        // the way back: shown whenever the view is not resting on the newest record, with how many records are newer
+        // than the last one wholly in view (records held back while paused included)
+        const held = newest() - rendered, show = stream && (!following || held > 0);
+        if (ui.latest.hidden === show) ui.latest.hidden = !show;
+        if (show && ui.fresh) { const lv = following ? null : inView(), n = newest() - (lv ? lv.seq : rendered); put(ui.fresh, n > 0 ? `+${n > 99 ? '99+' : n}` : ''); }
       }
-      leader();
     }
     function counts() {
-      if (ui.count) ui.count.textContent = total.toLocaleString('en-US');
-      if (ui.swarm) { ui.swarm.hidden = !fromSwarm; ui.swarm.textContent = ` · ${fromSwarm.toLocaleString('en-US')} from the swarm above`; }
+      put(ui.count, fmt(total));
+      if (ui.swarm) {
+        if (ui.swarm.hidden !== !sw.recs) ui.swarm.hidden = !sw.recs;
+        if (sw.recs) put(ui.swarm, ` · ${fmt(sw.recs)} from the swarm above, carrying ${fmt(sw.settled)} settled${sw.rejected ? ` and ${fmt(sw.rejected)} rejected` : ''} proposals`);
+      }
     }
 
     /* ---- appending: new columns land on the line, the link to them forms, the view glides to the head ---- */
     let lastFlush = 0, flushTimer = 0;
-    function flush(animate) {
+    function flush(animate, force) {
       lastFlush = performance.now();
-      if (!recs.length || recs[recs.length - 1].seq === rendered) return;
+      if (!recs.length || newest() === rendered) return;
+      // paused: the records are written, hashed and counted, but nothing is drawn until the reader asks for them
+      if (stream && !playing && !force) { counts(); state(); return; }
       const fresh = recs.filter(r => r.seq > rendered);
       if (!rendered || fresh.length > 8 || !track.lastElementChild) { rebuild(); if (following) toEnd(false); }
       else {
-        const was = track.lastElementChild;
-        fresh.forEach((r, i) => { const li = build(r); if (animate && !reduced && i >= fresh.length - 2) landed(li); track.append(li); });
-        if (animate && !reduced) { was.classList.add('is-linking'); setTimeout(() => was.classList.remove('is-linking'), 1400); }
+        const was = track.lastElementChild, play = animate && !reduced && onScreen();
+        fresh.forEach((r, i) => { const li = build(r); track.append(li); if (play && i === fresh.length - 1) landed(li); });
+        if (play) { was.classList.add('is-linking'); setTimeout(() => was.classList.remove('is-linking'), 1400); }
         rendered = fresh[fresh.length - 1].seq;
         markHead(); trim();
-        // a paused stream holds still: records still append (the ledger never drops one), the view stays where it is
-        // and the Latest pill counts what arrived
-        if (following && playing) { stop(track.lastElementChild); toEnd(animate); }
-        else { following = false; unseen += fresh.length; }
+        if (following) { stop(track.lastElementChild); toEnd(play); }
       }
-      edges(); counts(); if (following) inspect(); state();
+      edges(); counts(); inspect(); state();
     }
     function trim() { // keep the DOM small; compensate the scroll so nothing on screen moves
       let removed = 0;
-      while (track.children.length > DOM_CAP) {
+      while (track.childElementCount > DOM_CAP) {
         const first = track.firstElementChild;
-        if (first === document.activeElement || +first.dataset.seq === sel) break;
-        removed += first.offsetWidth; els.delete(+first.dataset.seq); first.remove();
+        if (first === document.activeElement || first === selLi || first === beforeLi) break;
+        els.delete(+first.dataset.seq); first.remove(); removed += G.col;
       }
       if (removed) view.scrollLeft = Math.max(0, view.scrollLeft - removed);
     }
-    function soon() { // the swarm can settle many proposals a second: the line takes them in at a readable pace
+    function soon() { // the line takes records in at a readable pace
       if (flushTimer) return;
-      flushTimer = setTimeout(() => { flushTimer = 0; if (visible && !document.hidden) flush(true); }, Math.max(0, 420 - (performance.now() - lastFlush)));
+      flushTimer = setTimeout(() => { flushTimer = 0; if (onScreen()) flush(true); }, Math.max(0, 420 - (performance.now() - lastFlush)));
     }
 
     /* ---- live: the illustrative lifecycle generator ---- */
@@ -347,7 +432,7 @@
         { ev: 'SETTLED', lc, sub: `records agent r-${r}`, d: `agent=records:r-${r} · previous hash linked` });
       return steps;
     }
-    if (live && excerpt.length) { // the page's excerpt may end mid-lifecycle: the stream picks that lifecycle up where it stopped
+    if (stream && excerpt.length) { // the page's excerpt may end mid-lifecycle: the stream picks that lifecycle up where it stopped
       const last = excerpt[excerpt.length - 1], done = recs.filter(r => r.lc === last.lc).map(r => r.ev);
       cycles = recs.some(r => r.lc !== last.lc) ? 1 : 0;
       if (last.lc && !/^(SETTLED|REJECTED)$/.test(last.ev)) queue = lifecycle(last.lc).filter(s => !done.includes(s.ev));
@@ -355,69 +440,173 @@
     const newId = () => '#' + (nextId++ & 0xffff).toString(16).padStart(4, '0');
     function tick() {
       timer = 0;
-      if (!playing || !visible || document.hidden) return;
+      if (!playing || !onScreen()) return;
       if (!queue.length) queue = lifecycle();
       write(Object.assign({ id: newId(), t: clock(), src: 'gen' }, queue.shift()));
       flush(true);
       timer = setTimeout(tick, queue.length ? 950 + Math.random() * 500 : 1900 + Math.random() * 900);
     }
     function wake() {
-      if (visible && !document.hidden) {
-        // what the swarm settled while the line was out of view arrives as one sealed block (a few stragglers stay single)
-        if (live && inbox.length) { if (inbox.length > 2) seal(); else { clearTimeout(sealTimer); sealTimer = 0; drain(); } }
+      if (onScreen()) {
+        if (stream) { // what the swarm decided while the line was out of view arrives now, sealed
+          clearTimeout(sealTimer); sealTimer = 0;
+          if (inbox.settled.length || inbox.rejected.length) { sealOne(); lastSeal = performance.now(); }
+          schedule();
+        }
         flush(false);
-        if (live && playing && !timer) timer = setTimeout(tick, 1100);
-      } else { clearTimeout(timer); timer = 0; }
+        if (pendingFollow) showFollowed();
+        if (stream && playing && !timer) timer = setTimeout(tick, 1100);
+      } else {
+        clearTimeout(timer); timer = 0;
+        finishRolls(root);
+        if (stream) { clearTimeout(sealTimer); sealTimer = 0; schedule(); }
+      }
     }
     if (ui.play) ui.play.addEventListener('click', () => {
       playing = !playing;
-      if (playing) { follow(); clearTimeout(timer); timer = setTimeout(tick, 350); } else { clearTimeout(timer); timer = 0; }
+      clearTimeout(timer); timer = 0;
+      if (playing) { follow(); timer = setTimeout(tick, 350); }
       state();
     });
     if (ui.latest) ui.latest.addEventListener('click', () => follow());
 
-    /* ---- live: proposals settled by the swarm become records ----
-       In view, every announcement is one record. Out of view (the visitor is watching the swarm), announcements are
-       sealed together into one block every few seconds, so the line never fills with a wall of identical records; a
-       block names the proposal it carries (the followed one first) and how many more, and no id is ever invented. */
-    const SEAL_MS = 8000;
-    let inbox = [], draining = false, sealTimer = 0;
+    /* ---- live: what the swarm decides becomes records ----
+       Announcements are sealed into blocks: in view at most one record every 2 s (so the lifecycle's own records stay
+       readable), out of view one every 8 s (nothing is drawn there). A block names the proposal it carries and how many
+       more; no id is ever invented. Settled and rejected proposals are sealed apart: a block is one or the other. The
+       proposal the visitor followed never waits: what was announced before it is sealed first, then it is written in a
+       record of its own and answered at once. */
+    const SEAL_MS = 8000, SEAL_MS_IN_VIEW = 2000;
+    const inbox = { settled: [], rejected: [] };
+    let sealTimer = 0, lastSeal = -Infinity, followedSeq = 0, pendingFollow = false;
     const laneOf = v => v == null || v === '' ? null : typeof v === 'number' ? (Number.isInteger(v) ? v : +v.toFixed(2)) : clean(v);
-    const countOf = d => Math.min(9999, Math.max(1, Math.floor(Number(d.count)) || 1)); // detail.count: settlements in one announcement
-    if (live) document.addEventListener('oxa:settled', e => {
-      if (!e || !e.detail) return;
-      inbox.push(e.detail);
-      if (visible && !document.hidden) { if (!draining) { draining = true; queueMicrotask(drain); } } // never inside the swarm's frame
-      else if (!sealTimer) sealTimer = setTimeout(seal, SEAL_MS);
-    });
-    function settle(group) { // one record for one or more announcements
-      const key = group.find(d => d.followed === true) || group[group.length - 1];
-      const pid = typeof key.id === 'number' ? 'P-' + key.id : clean(key.id || '') || '—';
-      const n = group.reduce((s, d) => s + countOf(d), 0), followed = key.followed === true;
-      const lanes = Array.from(new Set(group.map(d => laneOf(d.lane)).filter(v => v !== null)));
+    const countOf = d => Math.min(99999, Math.max(1, Math.floor(Number(d.count)) || 1)); // detail.count: proposals in one announcement
+    const pidOf = id => typeof id === 'number' ? 'P-' + id : clean(id || '');
+    function intake(kind, e) {
+      const d = e && e.detail;
+      if (!d || typeof d !== 'object') return;
+      const a = { id: d.id, lane: kind === 'settled' ? d.lane : null, ts: d.ts, count: countOf(d), followed: d.followed === true, at: performance.now() };
+      if (a.followed) { queueMicrotask(() => followedIn(a, kind)); return; } // never inside the swarm's frame, but at once
+      inbox[kind].push(a);
+      schedule();
+    }
+    function schedule() {
+      if (sealTimer || (!inbox.settled.length && !inbox.rejected.length)) return;
+      // even a zero wait goes through a timer: announcements dispatched together are sealed together
+      const wait = onScreen() ? Math.max(0, SEAL_MS_IN_VIEW - (performance.now() - lastSeal)) : SEAL_MS;
+      sealTimer = setTimeout(sealDue, wait);
+    }
+    function sealDue() {
+      sealTimer = 0;
+      if (onScreen()) { sealOne(); counts(); soon(); }
+      else { ['settled', 'rejected'].forEach(k => { if (inbox[k].length) record(take(k), k); }); }
+      lastSeal = performance.now();
+      schedule();
+    }
+    const take = k => { const g = inbox[k]; inbox[k] = []; return g; };
+    function sealOne() { // the kind that has waited longest
+      const s = inbox.settled, j = inbox.rejected;
+      const k = !s.length ? 'rejected' : !j.length ? 'settled' : s[0].at <= j[0].at ? 'settled' : 'rejected';
+      if (inbox[k].length) record(take(k), k);
+    }
+    function record(group, kind) { // one record for one or more announcements of one kind
+      const rej = kind === 'rejected';
+      const named = group.filter(a => a.id != null && a.id !== '');
+      const key = named.find(a => a.followed) || named[named.length - 1] || null;
+      const pid = key ? pidOf(key.id) : '', followed = !!(key && key.followed);
+      const n = group.reduce((s, a) => s + a.count, 0);
+      const lanes = Array.from(new Set(group.map(a => laneOf(a.lane)).filter(v => v !== null)));
       const nums = lanes.every(v => typeof v === 'number') ? lanes.slice().sort((a, b) => a - b) : null;
       const lane = !lanes.length ? '' : lanes.length === 1 ? `lane ${lanes[0]}` : nums ? `lanes ${nums[0]}–${nums[nums.length - 1]}` : `${lanes.length} lanes`;
-      const sealed = group.length > 1;
-      const r = write({ id: newId(), t: stamp(group[group.length - 1].ts), ev: 'SETTLED', lc: followed ? 'Followed' : 'Swarm',
-        sub: n > 1 ? `${pid} +${n - 1} more${lane ? ' · ' + lane : ''}` : `proposal ${pid}${lane ? ' · ' + lane : ''}`,
-        d: (n > 1 ? `${pid}${followed ? ' (followed)' : ''} and ${n - 1} more settled in the swarm above` : `proposal ${pid} settled in the swarm above`) +
-          (sealed ? ' · sealed as one block' : '') + ' · chained here',
-        src: 'swarm', pid, lane, n, followed });
-      fromSwarm++;
-      group.forEach(d => document.dispatchEvent(new CustomEvent('oxa:recorded', { detail: { id: d.id, record: r.id, hash: r.hash, seq: r.seq } })));
+      const tail = rej ? 'rejected at 04' : lane;
+      const what = pid ? (n > 1 ? `${pid} +${fmt(n - 1)} more` : `proposal ${pid}`) : `${fmt(n)} proposal${n > 1 ? 's' : ''}`;
+      const verb = rej ? 'rejected by the council at 04 Approve in the swarm above' : 'settled in the swarm above';
+      const d = (pid ? (n > 1 ? `${pid}${followed ? ' (followed)' : ''} and ${fmt(n - 1)} more ${verb}` : `proposal ${pid} ${verb}`)
+        : `${fmt(n)} proposal${n > 1 ? 's' : ''} ${verb}, in the batch of the one you followed`)
+        + (group.length > 1 ? ' · sealed as one block' : '') + (rej ? ' · not executed · recorded' : ' · chained here');
+      const r = write({ id: newId(), t: stamp(group[group.length - 1].ts), ev: rej ? 'REJECTED' : 'SETTLED', lc: followed ? 'Followed' : 'Swarm',
+        sub: what + (tail ? ' · ' + tail : ''), d, src: 'swarm', pid, lane, n, followed, rej });
+      sw.recs++; if (rej) sw.rejected += n; else sw.settled += n;
+      named.forEach(a => document.dispatchEvent(new CustomEvent('oxa:recorded', { detail: { id: a.id, record: r.id, hash: r.hash, seq: r.seq, followed: a.followed } })));
+      return r;
     }
-    function drain() {
-      draining = false;
-      const batch = inbox; inbox = [];
-      batch.forEach(d => settle([d]));
-      counts();
-      if (visible && !document.hidden) soon();
-    }
-    function seal() {
+    function followedIn(a, kind) {
       clearTimeout(sealTimer); sealTimer = 0;
-      if (!inbox.length) return;
-      const batch = inbox; inbox = [];
-      settle(batch); counts();
+      // the rest of its batch (settled or rejected in the same announcement) rides with the block sealed just before it,
+      // or, when nothing is waiting, with the next one
+      const rest = a.count > 1 ? { id: null, lane: null, ts: a.ts, count: a.count - 1, followed: false, at: a.at } : null;
+      const restNow = !!rest && inbox[kind].length > 0;
+      if (restNow) inbox[kind].push(rest);
+      ['settled', 'rejected'].forEach(k => { if (inbox[k].length) record(take(k), k); });
+      const r = record([Object.assign({}, a, { count: 1 })], kind);
+      if (rest && !restNow) inbox[kind].push(rest);
+      lastSeal = performance.now();
+      followedSeq = r.seq; pendingFollow = true;
+      counts();
+      if (onScreen()) { flush(playing && !reduced, true); showFollowed(); }
+      schedule();
+    }
+    // the followed record is selected the next time the ledger is in view (exempt from trimming while it is), and its
+    // block pulses once the strip is actually on screen; Escape or Latest returns to the running line
+    function showFollowed() {
+      pendingFollow = false;
+      const li = ensure(followedSeq);
+      if (!li) return;
+      select(li, false);
+      pulseSoon(li);
+    }
+    function ensure(s) { // the record's column, drawing it first if it is held back or was trimmed from the window
+      if (els.has(s)) return els.get(s);
+      if (!bySeq(s)) return null;
+      if (s > rendered) flush(false, true);
+      if (!els.has(s)) rebuild(s - 2);
+      return els.get(s) || null;
+    }
+    let pulseLi = null, pulseTimer = 0, pulseWant = 0, stripSeen = false;
+    function pulseSoon(li) { pulseWant = +li.dataset.seq; if (stripSeen) pulseNow(); }
+    function pulseNow() {
+      const li = els.get(pulseWant); pulseWant = 0;
+      if (!li || reduced) return;
+      clearTimeout(pulseTimer);
+      if (pulseLi) pulseLi.classList.remove('is-pulse');
+      void li.offsetWidth; // the same record may pulse again: restart its animation
+      li.classList.add('is-pulse'); pulseLi = li;
+      pulseTimer = setTimeout(() => { li.classList.remove('is-pulse'); if (pulseLi === li) pulseLi = null; }, 1600);
+    }
+    // the swarm's trace asks to see a record: bring the ledger to the middle of the screen below the bar, select, pulse
+    function bringIntoView() {
+      const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 72;
+      let b = root.getBoundingClientRect(), shift = 0;
+      try { shift = new DOMMatrixReadOnly(getComputedStyle(root).transform).m42 || 0; } catch (e) { shift = 0; } // a reveal still rising
+      const top = b.top - shift, avail = window.innerHeight - navH;
+      const y = b.height <= avail - 24 ? top - navH - (avail - b.height) / 2 : top - navH - 12;
+      if (Math.abs(y) > 2) window.scrollTo({ top: Math.max(0, Math.round(window.scrollY + y)), behavior: reduced ? 'instant' : 'smooth' });
+    }
+    function inspectEvent(e) {
+      const d = (e && e.detail) || {};
+      const s = Math.floor(Number(d.seq)), id = typeof d.record === 'string' ? d.record.trim().toLowerCase() : '';
+      let r = Number.isFinite(s) ? bySeq(s) : null;
+      if (id && (!r || r.id !== id)) { for (let i = recs.length - 1; i >= 0; i--) if (recs[i].id === id) { r = recs[i]; break; } }
+      bringIntoView();
+      if (!r) { state(`${id || 'That record'} is no longer held here`); return; }
+      if (r.seq === followedSeq) pendingFollow = false;
+      const li = ensure(r.seq);
+      if (!li) return;
+      select(li, false);
+      pulseSoon(li);
+    }
+    if (stream) {
+      document.addEventListener('oxa:settled', e => intake('settled', e));
+      document.addEventListener('oxa:rejected', e => intake('rejected', e));
+      document.addEventListener('oxa:inspect', inspectEvent);
+      // Escape anywhere on the page (outside another control) also returns a selected line to the running stream
+      document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape' || e.defaultPrevented || sel === null || !onScreen()) return;
+        const t = e.target;
+        if (track.contains(t)) return; // the list handles its own Escape
+        if (t && t !== document.body && t !== document.documentElement && !root.contains(t)) return;
+        follow();
+      });
     }
 
     /* ---- replay: the excerpt writes itself again, at its own rhythm ---- */
@@ -434,7 +623,7 @@
       return ok;
     }
     const n0 = recs.length, ok0 = verified();
-    const stateIdle = live ? '' : ok0 === n0 ? `Chain ✓ · ${n0} records verify` : `${n0 - ok0} of ${n0} records fail verification`;
+    const stateIdle = stream ? '' : ok0 === n0 ? `Chain ✓ · ${n0} records verify` : `${n0 - ok0} of ${n0} records fail verification`;
     let replaying = 0;
     function replay() {
       clearTimeout(replaying);
@@ -443,7 +632,7 @@
       if (!all.length) return;
       if (sel !== null) follow(false);
       following = true; // the view and the inspector follow the record being written
-      els.clear(); track.replaceChildren(); rendered = 0;
+      els.clear(); track.replaceChildren(); rendered = 0; selLi = beforeLi = headLi = null;
       let i = 0;
       const next = () => {
         const r = all[i++];
@@ -475,7 +664,7 @@
     }
     function verify() {
       // an audit walks every link from the first record to the last, so the selection steps aside and the strip pans along
-      if (sel !== null) { const o = els.get(sel); if (o) { o.classList.remove('is-sel'); o.setAttribute('aria-selected', 'false'); } sel = null; }
+      if (sel !== null) { sel = null; markSel(); }
       following = false; inspect(); // the inspector rides along with the sweep
       sweep.forEach(clearTimeout); sweep = [];
       if (replaying) { clearTimeout(replaying); replaying = 0; whole(); inspect(); } // a replay in progress completes at once
@@ -493,6 +682,9 @@
     }
     if (ui.replay) { ui.replay.hidden = false; ui.replay.addEventListener('click', replay); }
     if (ui.verify) { ui.verify.hidden = false; ui.verify.addEventListener('click', verify); }
+    if (ui.play) ui.play.hidden = !stream;
+    // the controls' container shows only when it holds a control (no selector has to ask the document)
+    if (ui.ctrl) ui.ctrl.hidden = ![ui.play, ui.replay, ui.verify].some(b => b && !b.hidden && ui.ctrl.contains(b));
 
     function whole() { // the excerpt, all of it, with its long waits marked on the links
       rebuild();
@@ -501,21 +693,28 @@
 
     /* ---- start ---- */
     fit();
-    if (live) rebuild(); else { following = false; whole(); }
+    if (stream) rebuild(); else { following = false; whole(); }
     if (ui.insp) ui.insp.hidden = false;
     root.classList.add('lt-ready');
-    if (live) {
+    if (stream) {
       root.classList.add('is-stream');
-      requestAnimationFrame(() => toEnd(false));
+      requestAnimationFrame(() => { toEnd(false); edges(); });
     }
     edges(); counts(); inspect(); state();
-    if ('IntersectionObserver' in window) new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }, { rootMargin: '80px 0px' }).observe(root);
-    else { visible = true; wake(); }
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }, { rootMargin: '80px 0px' }).observe(root);
+      // a pulse waits until the strip itself is on screen
+      new IntersectionObserver(([en]) => { stripSeen = en.isIntersecting && en.intersectionRatio >= 0.55; if (stripSeen && pulseWant) pulseNow(); }, { threshold: [0, 0.6, 1] }).observe(view);
+    } else { visible = true; stripSeen = true; wake(); }
     document.addEventListener('visibilitychange', wake);
     let fitRaf = 0;
     window.addEventListener('resize', () => {
       if (fitRaf) return;
-      fitRaf = requestAnimationFrame(() => { fitRaf = 0; fit(); if (following) toEnd(false); else if (sel !== null && els.has(sel)) reveal(els.get(sel), false); edges(); leader(); });
+      fitRaf = requestAnimationFrame(() => {
+        fitRaf = 0; fit();
+        if (following) toEnd(false); else if (sel !== null && els.has(sel)) reveal(els.get(sel), false);
+        edges(); inspect(); leader();
+      });
     });
     motionQuery.addEventListener('change', e => { reduced = e.matches; if (reduced && playing) { playing = false; clearTimeout(timer); timer = 0; state(); } });
   }

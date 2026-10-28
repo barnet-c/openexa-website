@@ -1248,60 +1248,67 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 /* v2:swarm:end */
 /* -------------------------------------------------------------------------- */
 /* v2:ledger:start */
-/* ---------- the ledger trace (ledger.js): records on one hairline; the link out of each record carries its hash ---------- */
+/* ---------- the ledger trace (ledger.js): records on one hairline; the link out of each record carries its hash ----------
+   Nothing here asks the document a question (no relational selectors): every state is a class that ledger.js sets on the
+   one element it concerns, so a record landing restyles that record and nothing else. */
 .lt {
   --fg: var(--paper); --fg-2: rgba(245, 242, 236, .78); --fg-3: rgba(245, 242, 236, .56);
   --line: rgba(245, 242, 236, .14); --line-strong: rgba(245, 242, 236, .32);
   --accent: var(--signal-bright); --reject: var(--reject-bright);
-  --lt-bg: var(--ink-2); --lt-col: 148px;
+  --lt-bg: var(--ink-2); --lt-col: 148px; --lt-bleed: 16px; --lt-pr: 18px;
   position: relative; color: var(--fg); background: var(--lt-bg); border: 1px solid var(--line-strong); border-radius: var(--r); overflow: hidden;
 }
-.lt-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 20px; min-height: 56px; padding: 10px 12px 10px 20px; border-bottom: 1px solid var(--line); font: 500 .64rem/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); }
-.lt-title { color: var(--fg-2); }
-.lt-state { display: inline-flex; align-items: center; gap: 9px; margin-left: auto; color: var(--accent); letter-spacing: .12em; transition: color .3s; }
+/* the head is a grid: the state text, the Latest pill and the buttons change without ever re-wrapping it or changing its height */
+.lt-head { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "title latest state ctrl"; align-items: center; gap: 6px 20px; min-height: 56px; padding: 10px 12px 10px 20px; border-bottom: 1px solid var(--line); font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); }
+.lt-title { grid-area: title; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); }
+.lt-state { grid-area: state; justify-self: end; display: inline-flex; align-items: center; gap: 9px; min-width: 0; max-width: 100%; color: var(--accent); letter-spacing: var(--track-label, .12em); transition: color .3s; }
+.lt-state > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lt-state i { flex: none; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.lt.is-live .lt-state i { animation: lt-breathe 2.4s ease-in-out infinite; }
+.lt.is-running .lt-state i { animation: lt-breathe 2.4s ease-in-out infinite; }
 .lt.is-paused .lt-state, .lt.is-inspecting .lt-state { color: var(--fg-2); }
 .lt.is-inspecting .lt-state i { background: transparent; box-shadow: inset 0 0 0 1px currentColor; }
-.lt-ctrl { display: inline-flex; gap: 8px; }
-.lt-ctrl:not(:has(> :not([hidden]))) { display: none; }
-.lt-btn, .chain-try, .chain-restore { display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 13px; border: 1px solid var(--line-strong); border-radius: 2px; font: 500 .62rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg); white-space: nowrap; transition: border-color .25s, color .25s, background .25s; }
+.lt-ctrl { grid-area: ctrl; display: inline-flex; gap: 8px; }
+.lt-btn, .chain-try, .chain-restore { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 34px; padding: 0 13px; border: 1px solid var(--line-strong); border-radius: 2px; font: 500 var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); white-space: nowrap; transition: border-color .25s, color .25s, background .25s; }
 .lt-btn:hover, .chain-try:hover { border-color: var(--accent); color: var(--accent); }
 .lt-btn:focus-visible, .chain-try:focus-visible, .chain-restore:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .lt-btn svg { flex: none; width: 13px; height: 13px; }
-/* back to the head of the chain: a pill where new records arrive, so the head of the panel never re-wraps */
-.lt-stage { position: relative; }
-.lt-latest { position: absolute; right: 14px; top: 50%; z-index: 3; display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 12px; border: 1px solid var(--accent); border-radius: 17px; background: var(--lt-bg); box-shadow: 0 0 0 6px var(--lt-bg); font: 500 .62rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); transform: translateY(-50%); animation: lt-fade .3s var(--ease) backwards; transition: background .25s, color .25s; }
+.lt-btn .i-play, .lt-btn.is-paused .i-pause { display: none; }
+.lt-btn.is-paused .i-play { display: inline; }
+/* back to the newest record: a pill in the head row, never over the records */
+.lt-latest { grid-area: latest; justify-self: start; display: inline-flex; align-items: center; gap: 7px; min-height: 30px; padding: 0 11px; border: 1px solid var(--accent); border-radius: 15px; font: 500 var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--accent); white-space: nowrap; animation: lt-fade .3s var(--ease) backwards; transition: background .25s, color .25s; }
 .lt-latest:hover { background: var(--accent); color: var(--ink); }
 .lt-latest:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.lt-latest svg { width: 13px; height: 13px; }
-.lt-latest span:not(:empty) { padding: 3px 5px 2px; border-radius: 1px; background: var(--accent); color: var(--ink); letter-spacing: .04em; }
+.lt-latest svg { flex: none; width: 13px; height: 13px; }
+.lt-latest span:not(:empty) { min-width: 3ch; padding: 3px 5px 2px; border-radius: 1px; background: var(--accent); color: var(--ink); letter-spacing: .04em; text-align: center; }
 .lt-latest:hover span:not(:empty) { background: var(--ink); color: var(--accent); }
 
+.lt-stage { position: relative; }
 .lt-view { position: relative; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; }
 .lt-view::-webkit-scrollbar { display: none; }
 .lt.has-left .lt-view { -webkit-mask-image: linear-gradient(90deg, transparent 4px, #000 40px); mask-image: linear-gradient(90deg, transparent 4px, #000 40px); }
 .lt.has-right .lt-view { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent calc(100% - 4px)); mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent calc(100% - 4px)); }
 .lt.has-left.has-right .lt-view { -webkit-mask-image: linear-gradient(90deg, transparent 4px, #000 40px, #000 calc(100% - 40px), transparent calc(100% - 4px)); mask-image: linear-gradient(90deg, transparent 4px, #000 40px, #000 calc(100% - 40px), transparent calc(100% - 4px)); }
-.lt-track { position: relative; display: flex; width: max-content; min-width: 100%; margin: 0; padding: 28px 28px 22px; list-style: none; }
+.lt-track { position: relative; display: flex; width: max-content; min-width: 100%; margin: 0; padding: 16px 28px 12px; list-style: none; }
 
-/* one record = one column standing on the line */
-.lt-rec { flex: none; position: relative; isolation: isolate; width: var(--lt-col); padding-right: 18px; cursor: pointer; outline: none; transition: opacity .35s var(--ease); -webkit-tap-highlight-color: transparent; }
+/* one record = one column standing on the line. A column is contained (layout, style, paint): a record that lands,
+   rolls its hash or lights up restyles, re-lays and repaints itself and nothing else. Its box reaches var(--lt-bleed)
+   back over the column before it, so a ring, a halo or a pulse round its block is never cut by its own edge. */
+.lt-rec { flex: none; position: relative; isolation: isolate; contain: layout style paint; width: calc(var(--lt-col) + var(--lt-bleed)); margin-left: calc(var(--lt-bleed) * -1); padding: 12px var(--lt-pr) 10px var(--lt-bleed); cursor: pointer; outline: none; transition: opacity .35s var(--ease); -webkit-tap-highlight-color: transparent; }
 /* pointing at a record lifts its block off the panel; the link row below stays on the line */
-.lt-rec::after { content: ""; position: absolute; z-index: -1; inset: -12px 6px 34px -10px; border-radius: 2px; background: rgba(245, 242, 236, .045); opacity: 0; transition: opacity .25s var(--ease); pointer-events: none; }
+.lt-rec::after { content: ""; position: absolute; z-index: -1; inset: 0 6px 44px 6px; border-radius: 2px; background: rgba(245, 242, 236, .045); opacity: 0; transition: opacity .25s var(--ease); pointer-events: none; }
 .lt-rec:hover::after, .lt-rec.is-sel::after { opacity: 1; }
-.lt-meta { display: flex; justify-content: space-between; gap: 10px; font: 500 .62rem/1.4 var(--mono); letter-spacing: .08em; color: var(--fg-3); white-space: nowrap; }
+.lt-meta { display: flex; justify-content: space-between; gap: 10px; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .08em; color: var(--fg-3); white-space: nowrap; }
 .lt-lc { overflow: hidden; text-overflow: ellipsis; opacity: .85; text-transform: uppercase; }
-.lt-ev { display: block; margin-top: 10px; font: 500 .76rem/1.25 var(--mono); letter-spacing: .1em; color: var(--fg); white-space: nowrap; }
-.lt-sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.9em; margin-top: 6px; font: .66rem/1.45 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
+.lt-ev { display: block; margin-top: 10px; font: 500 var(--mono-m, .75rem)/1.25 var(--mono); letter-spacing: .1em; color: var(--fg); white-space: nowrap; }
+.lt-sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.9em; margin-top: 6px; font: var(--mono-s, .6875rem)/1.45 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
 .lt--excerpt .lt-sub { -webkit-line-clamp: 3; min-height: 4.35em; } /* the excerpt is read in full: nothing in it is cut */
-.lt-t { display: block; margin-top: 8px; font: .6rem/1.3 var(--mono); letter-spacing: .03em; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.lt-t { display: block; margin-top: 8px; font: var(--mono-xs, .625rem)/1.3 var(--mono); letter-spacing: .03em; color: var(--fg-3); font-variant-numeric: tabular-nums; }
 /* the line: a 12 px block per record, and out of it the link that carries the record's SHA-256 (first 8 hex) */
-.lt-line { position: relative; display: block; height: 24px; margin: 14px -18px 0 0; }
+.lt-line { position: relative; display: block; height: 24px; margin: 14px calc(var(--lt-pr) * -1) 0 0; }
 .lt-node { position: absolute; left: 0; top: 6px; width: 12px; height: 12px; background: var(--fg); transition: transform .3s var(--ease), box-shadow .3s var(--ease), background .3s; }
 .lt-seg { position: absolute; left: 12px; right: 0; top: 12px; height: 1px; background: var(--line-strong); transform-origin: 0 50%; }
-.lt-tag { position: absolute; left: calc(50% + 6px); top: 12px; transform: translate(-50%, -50%); padding: 2px 6px; background: var(--lt-bg); font: .6rem/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-2); white-space: nowrap; font-variant-numeric: tabular-nums; transition: color .3s; }
-.lt-gap { position: absolute; left: calc(50% + 6px); top: 23px; transform: translateX(-50%); font: .54rem/1 var(--mono); letter-spacing: .1em; color: var(--khaki); white-space: nowrap; }
+.lt-tag { position: absolute; left: calc(50% + 6px); top: 12px; transform: translate(-50%, -50%); padding: 2px 6px; background: var(--lt-bg); font: var(--mono-xs, .625rem)/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-2); white-space: nowrap; font-variant-numeric: tabular-nums; transition: color .3s; }
+.lt-gap { position: absolute; left: calc(50% + 6px); top: 21px; transform: translateX(-50%); font: var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: .1em; color: var(--khaki); white-space: nowrap; }
 .lt-rec.is-settled .lt-node { background: var(--accent); }
 .lt-rec.is-settled .lt-ev { color: var(--accent); }
 .lt-rec.is-rejected .lt-node { background: transparent; box-shadow: inset 0 0 0 1.5px var(--reject); }
@@ -1309,42 +1316,57 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .lt-rec.is-swarm .lt-lc { color: var(--khaki); opacity: 1; }
 /* the proposal the visitor followed through the gates above lands here marked as theirs */
 .lt-rec.is-followed .lt-lc { color: var(--accent); }
-.lt-rec.is-followed .lt-node { box-shadow: 0 0 0 3px var(--lt-bg), 0 0 0 4px rgba(79, 203, 147, .5), 0 0 16px rgba(79, 203, 147, .45); }
+.lt-rec.is-followed .lt-node { box-shadow: 0 0 0 3px var(--lt-bg), 0 0 0 4px rgba(79, 203, 147, .5), 0 0 14px rgba(79, 203, 147, .45); }
+.lt-rec.is-followed.is-rejected .lt-node { box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 0 3px var(--lt-bg), 0 0 0 4px rgba(79, 203, 147, .5), 0 0 14px rgba(79, 203, 147, .45); }
 /* the newest record: its hash is out, the link waits for the next record to store it */
 .lt-rec.is-head .lt-seg { right: 24%; background: repeating-linear-gradient(90deg, var(--line-strong) 0 3px, transparent 3px 7px); -webkit-mask-image: linear-gradient(90deg, #000 35%, transparent); mask-image: linear-gradient(90deg, #000 35%, transparent); }
 .lt-rec.is-head .lt-tag { left: calc(36% + 6px); color: var(--fg-3); }
-.lt.is-live .lt-rec.is-head .lt-seg { animation: lt-await 2.4s ease-in-out infinite; }
-/* inspecting: the chosen record and both of its hash links stay lit; everything else steps back */
+.lt.is-running .lt-rec.is-head .lt-seg { animation: lt-await 2.4s ease-in-out infinite; }
+/* inspecting: the chosen record and both of its hash links stay lit (the link into it is drawn by the record before it,
+   marked .is-before-sel by ledger.js); everything else steps back */
 .lt-rec:hover .lt-node, .lt-rec.is-sel .lt-node { transform: scale(1.25); }
 .lt.is-inspecting .lt-rec:not(.is-sel):not(:hover) > :not(.lt-line) { opacity: .34; }
-.lt.is-inspecting .lt-rec:not(.is-sel):not(:hover):not(:has(+ .is-sel)) .lt-line { opacity: .34; }
+.lt.is-inspecting .lt-rec:not(.is-sel):not(:hover):not(.is-before-sel) .lt-line { opacity: .34; }
 .lt-rec.is-sel .lt-node { box-shadow: 0 0 0 3px var(--lt-bg), 0 0 0 4px var(--accent); }
 .lt-rec.is-sel.is-rejected .lt-node { box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 0 3px var(--lt-bg), 0 0 0 4px var(--accent); }
-.lt-rec.is-sel .lt-seg { background: var(--accent); }
-.lt-rec:has(+ .is-sel) .lt-seg { background: var(--accent); }
+.lt-rec.is-sel.is-followed .lt-node { box-shadow: 0 0 0 3px var(--lt-bg), 0 0 0 4px var(--accent), 0 0 14px rgba(79, 203, 147, .5); }
+.lt-rec.is-sel.is-followed.is-rejected .lt-node { box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 0 3px var(--lt-bg), 0 0 0 4px var(--accent), 0 0 14px rgba(79, 203, 147, .5); }
+.lt-rec.is-sel .lt-seg, .lt-rec.is-before-sel .lt-seg { background: var(--accent); }
 .lt-rec.is-sel.is-head .lt-seg { background: repeating-linear-gradient(90deg, var(--accent) 0 3px, transparent 3px 7px); }
-.lt-rec.is-sel .lt-tag { color: var(--accent); }
-.lt-rec:has(+ .is-sel) .lt-tag { color: var(--accent); }
+.lt-rec.is-sel .lt-tag, .lt-rec.is-before-sel .lt-tag { color: var(--accent); }
 .lt-rec > :not(.lt-line) { transition: opacity .35s var(--ease); }
-.lt-rec:focus-visible::before { content: ""; position: absolute; inset: -12px 6px -4px -10px; border: 1px solid var(--accent); border-radius: 2px; pointer-events: none; }
+.lt-rec:focus-visible::before { content: ""; position: absolute; inset: 0 6px 6px 6px; border: 1px solid var(--accent); border-radius: 2px; pointer-events: none; }
+/* arriving at a record from the swarm's trace (or the proposal you followed): its block rings out twice, a square
+   wave in the block's own shape (transform and opacity only) */
+.lt-node::after { content: ""; position: absolute; inset: -4px; border: 1.5px solid var(--accent); opacity: 0; pointer-events: none; }
+.lt-rec.is-rejected .lt-node::after { border-color: var(--reject); }
+.lt-rec.is-pulse .lt-node::after { animation: lt-ping .75s cubic-bezier(.2, .7, .3, 1) 2; }
 
-/* the inspector: one record, both of its links, checked in the browser */
-.lt-insp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 12px 56px; padding: 20px 20px 22px; border-top: 1px solid var(--line); }
+/* the inspector: one record, both of its links, checked in the browser. Every field keeps a fixed number of lines
+   whatever record it describes, so the panel never changes height under the reader */
+.lt-insp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 10px 56px; padding: 14px 20px 22px; border-top: 1px solid var(--line); }
+.lt-insp-k { grid-column: 1 / -1; margin: 0; font: 500 var(--mono-xs, .625rem)/1.6 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .3s; }
+.lt-insp-k.is-followed { color: var(--accent); }
 .lt-insp dl { display: grid; align-content: start; gap: 9px; margin: 0; }
 .lt-insp dl > div { display: grid; grid-template-columns: 6.4rem minmax(0, 1fr); gap: 14px; align-items: baseline; }
-.lt-insp dt { font: 500 .58rem/1.7 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); }
-.lt-insp dd { min-width: 0; margin: 0; font: .7rem/1.65 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
+.lt-insp dt { font: 500 var(--mono-xs, .625rem)/1.75 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); white-space: nowrap; }
+.lt-insp dd { min-width: 0; margin: 0; font: var(--mono-s, .6875rem)/1.65 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
+.lt-insp [data-f="rec"], .lt-insp [data-f="ev"] { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lt-insp [data-f="d"], .lt-insp [data-f="src"] { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; height: 3.3em; }
 .lt-insp .lt-insp-ev { font-weight: 500; letter-spacing: .1em; color: var(--fg); }
 .lt-insp .lt-insp-ev.is-settled { color: var(--accent); }
 .lt-insp .lt-insp-ev.is-rejected { color: var(--reject); }
 .lt-insp code { font: inherit; letter-spacing: .02em; word-spacing: .2em; color: var(--fg-3); }
 .lt-insp code b { font-weight: 500; color: var(--fg); }
-.lt-check { display: block; margin-top: 2px; font-size: .62rem; letter-spacing: .04em; color: var(--accent); }
+.lt-check { display: block; height: 1.6em; margin-top: 2px; font-size: var(--mono-xs, .625rem); line-height: 1.6; letter-spacing: .04em; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lt-check.is-bad { color: var(--reject); }
 .lt-leader { position: absolute; left: var(--x, 0); top: var(--y, 0); z-index: 2; width: 1px; height: var(--h, 0); background: linear-gradient(var(--accent), rgba(79, 203, 147, .35)); opacity: 0; pointer-events: none; transition: opacity .25s; }
 .lt-leader::after { content: ""; position: absolute; left: -2px; bottom: -3px; width: 5px; height: 5px; background: var(--accent); }
 .lt-leader.is-on { opacity: 1; }
-.lt-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 18px; padding: 12px 20px; border-top: 1px solid var(--line); font: .62rem/1.5 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
+.lt-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 18px; padding: 12px 20px; border-top: 1px solid var(--line); font: var(--mono-xs, .625rem)/1.5 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
+/* the stream's tally has its own line, with room reserved for its longest form at each width */
+.lt[data-ledger="live"] .lt-foot { display: grid; justify-content: stretch; gap: 4px; }
+.lt-counts { min-height: 1.5em; color: var(--fg-2); }
 
 /* motion: a record lands (settle snap), the link to it forms, verification sweeps the links */
 @keyframes lt-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
@@ -1355,6 +1377,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 @keyframes lt-form { 0% { transform: scaleX(.38); background: var(--accent); } 55% { transform: none; background: var(--accent); } 100% { background: var(--line-strong); } }
 @keyframes lt-lit { 0%, 50% { color: var(--accent); } 100% { color: var(--fg-3); } }
 @keyframes lt-ok { 0% { background: var(--accent); box-shadow: 0 0 8px rgba(79, 203, 147, .9); } 100% { background: var(--line-strong); box-shadow: none; } }
+@keyframes lt-ping { 0% { opacity: .95; transform: scale(.7); } 100% { opacity: 0; transform: scale(2.1); } }
 /* fill-mode backwards only: once a record has landed, its resting state (dimmed, selected, linked) is the stylesheet's */
 .lt-rec.is-new > :not(.lt-line) { animation: lt-rise .55s var(--ease) backwards; }
 .lt-rec.is-new > .lt-ev { animation-delay: .05s; } .lt-rec.is-new > .lt-sub { animation-delay: .1s; } .lt-rec.is-new > .lt-t { animation-delay: .14s; }
@@ -1368,70 +1391,72 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .lt-rec.is-verified .lt-seg { animation: lt-ok 1.2s var(--ease) backwards; }
 .lt-rec.is-verified .lt-tag { animation: lt-lit 1.2s var(--ease) backwards; }
 
-/* ---------- the chain (chain.js): eight records on a vertical hairline; edit one and every link below it snaps ---------- */
+/* ---------- the chain (chain.js): eight records on a vertical hairline; edit one and every link below it snaps ----------
+   chain.js walks the break (and the healing) down the line itself, one record every 110 ms, so the status line counts
+   exactly the records that are red on screen */
 .chain { --lt-bg: var(--ink-2); position: relative; color: var(--fg); background: var(--ink-2); border: 1px solid var(--line-strong); border-radius: var(--r); transition: border-color .5s var(--ease); }
 .chain.is-broken { border-color: rgba(217, 103, 93, .55); }
 .chain-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; min-height: 56px; padding: 10px 12px 10px 20px; border-bottom: 1px solid var(--line); }
-.chain-status { display: inline-flex; align-items: center; gap: 9px; font: 500 .64rem/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); transition: color .3s; }
+.chain-status { display: inline-flex; align-items: center; gap: 9px; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--accent); transition: color .3s; }
 .chain-status i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .chain.is-broken .chain-status { color: var(--reject); }
 .chain.is-broken .chain-status i { animation: pulse 1s ease-in-out infinite; }
 .chain-acts { display: inline-flex; gap: 8px; }
-.chain-acts:not(:has(> :not([hidden]))) { display: none; }
 .chain-restore { border-color: var(--reject); }
 .chain-restore:hover { border-color: var(--reject); background: var(--reject); color: var(--ink); }
-.chain-genesis { position: relative; display: flex; align-items: center; gap: 14px; margin: 0; padding: 18px 20px 0; font: 500 .58rem/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+.chain-genesis { position: relative; display: flex; align-items: center; gap: 14px; margin: 0; padding: 18px 20px 0; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 .chain-genesis i { position: relative; flex: none; width: 11px; height: 11px; margin-left: 9px; border: 1px solid var(--line-strong); }
 .chain-genesis i::after { content: ""; position: absolute; left: 4px; top: 12px; width: 1px; height: 18px; background: var(--line-strong); }
-.chain-list { margin: 0; padding: 4px 20px 8px; list-style: none; font: .72rem/1.6 var(--mono); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
-.chain-list > li { --dl: calc(var(--k, 0) * 110ms); position: relative; display: grid; grid-template-columns: 2.4em 6.2em 9.4em minmax(0, 1fr) auto; column-gap: 14px; align-items: baseline; padding: 8px 12px 32px 44px; border-radius: 2px; color: var(--fg-2); transition: background .45s var(--ease) var(--dl); }
-.chain-list .i, .chain-list .who { color: var(--fg-3); transition: color .35s var(--dl); }
-.chain-list .ev { justify-self: start; max-width: 100%; font-weight: 500; letter-spacing: .08em; color: var(--fg); transition: color .35s var(--dl), box-shadow .25s, background .25s; }
-.chain-list .what { justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); transition: color .35s var(--dl), box-shadow .25s, background .25s; }
+.chain-list { margin: 0; padding: 4px 20px 8px; list-style: none; font: var(--mono-m, .75rem)/1.6 var(--mono); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.chain-list > li { position: relative; display: grid; grid-template-columns: 2.4em 6.2em 9.4em minmax(0, 1fr) auto; column-gap: 14px; align-items: baseline; padding: 8px 12px 32px 44px; border-radius: 2px; color: var(--fg-2); transition: background .45s var(--ease); }
+.chain-list .i, .chain-list .who { color: var(--fg-3); transition: color .35s; }
+.chain-list .ev { justify-self: start; max-width: 100%; font-weight: 500; letter-spacing: .08em; color: var(--fg); transition: color .35s, box-shadow .25s, background .25s; }
+.chain-list .what { justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); transition: color .35s, box-shadow .25s, background .25s; }
 .chain-list [contenteditable] { outline: none; border-radius: 1px; cursor: text; box-shadow: inset 0 -1px 0 transparent; }
 .chain-list [contenteditable]:hover { box-shadow: inset 0 -1px 0 var(--line-strong); }
 .chain-list [contenteditable]:focus { box-shadow: inset 0 -1px 0 var(--accent); background: rgba(245, 242, 236, .07); }
-.chain-node { position: absolute; left: 9px; top: 13px; width: 11px; height: 11px; background: var(--fg); transition: background .3s var(--dl), box-shadow .3s var(--dl); }
+.chain-node { position: absolute; left: 9px; top: 13px; width: 11px; height: 11px; background: var(--fg); transition: background .3s, box-shadow .3s; }
 .chain-seg { position: absolute; left: 14px; top: 27px; bottom: -10px; width: 1px; }
-.chain-seg::before, .chain-seg::after { content: ""; position: absolute; left: 0; width: 1px; height: calc(50% - 1px); background: var(--line-strong); transition: transform .55s cubic-bezier(.3, 1.6, .45, 1) calc(var(--dl) + 55ms), background .3s calc(var(--dl) + 55ms), box-shadow .3s calc(var(--dl) + 55ms); }
+.chain-seg::before, .chain-seg::after { content: ""; position: absolute; left: 0; width: 1px; height: calc(50% - 1px); background: var(--line-strong); transition: transform .55s cubic-bezier(.3, 1.6, .45, 1) 55ms, background .3s 55ms, box-shadow .3s 55ms; }
 .chain-seg::before { top: 0; } .chain-seg::after { bottom: 0; }
-.chain-link { position: absolute; left: 44px; bottom: 9px; display: flex; align-items: center; font: .62rem/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
-.chain-link::before { content: ""; position: absolute; left: -26px; top: 50%; width: 18px; height: 1px; background: var(--line); transition: background .3s calc(var(--dl) + 55ms); }
-.chain-link b { font-weight: 400; color: var(--accent); transition: color .3s calc(var(--dl) + 55ms); }
+.chain-link { position: absolute; left: 44px; bottom: 9px; display: flex; align-items: center; font: var(--mono-xs, .625rem)/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
+.chain-link::before { content: ""; position: absolute; left: -26px; top: 50%; width: 18px; height: 1px; background: var(--line); transition: background .3s 55ms; }
+.chain-link b { font-weight: 400; color: var(--accent); transition: color .3s 55ms; }
 /* the hash this link stored when the chain was written: it slides out, struck through, only when the break reaches it */
 .chain-link s { display: block; max-width: 0; margin-right: 0; overflow: hidden; white-space: nowrap; opacity: 0; visibility: hidden; color: var(--fg-3); text-decoration-color: rgba(217, 103, 93, .9);
-  transition: max-width .34s var(--ease) calc(var(--dl) + 40ms), margin .34s var(--ease) calc(var(--dl) + 40ms), opacity .2s var(--ease) calc(var(--dl) + 40ms), visibility 0s linear calc(var(--dl) + 380ms); }
+  transition: max-width .34s var(--ease) 40ms, margin .34s var(--ease) 40ms, opacity .2s var(--ease) 40ms, visibility 0s linear 380ms; }
 .chain-list > li.is-broken .chain-link s { max-width: 10ch; margin-right: 8px; opacity: 1; visibility: visible;
-  transition: max-width .36s var(--ease) calc(var(--dl) + 55ms), margin .36s var(--ease) calc(var(--dl) + 55ms), opacity .3s var(--ease) calc(var(--dl) + 150ms), visibility 0s linear calc(var(--dl) + 55ms); }
-.chain-flag { align-self: center; font: 500 .54rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--reject); border: 1px solid rgba(217, 103, 93, .55); padding: 4px 6px 3px; animation: lt-fade .3s var(--ease) both; }
+  transition: max-width .36s var(--ease) 55ms, margin .36s var(--ease) 55ms, opacity .3s var(--ease) 150ms, visibility 0s linear 55ms; }
+.chain-flag { align-self: center; font: 500 var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--reject); border: 1px solid rgba(217, 103, 93, .55); padding: 4px 6px 3px; animation: lt-fade .3s var(--ease) both; }
 /* the last record's hash waits for a record that does not exist yet */
 .chain-list > li:last-child .chain-seg { bottom: 4px; }
 .chain-list > li:last-child .chain-seg::before, .chain-list > li:last-child .chain-seg::after { background: repeating-linear-gradient(var(--line-strong) 0 3px, transparent 3px 6px); }
-/* broken: the record turns, then the link out of it snaps — record by record, down the line */
-.chain-list > li.is-broken { background: rgba(217, 103, 93, .055); }
-.chain-list > li.is-broken .i, .chain-list > li.is-broken .who, .chain-list > li.is-broken .ev, .chain-list > li.is-broken .what { color: var(--reject); }
-.chain-list > li.is-broken .chain-node { background: transparent; box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 14px rgba(217, 103, 93, .45); }
+/* broken: the record turns at once as the break reaches it (its block flares), then the link out of it snaps */
+.chain-list > li.is-broken { background: rgba(217, 103, 93, .055); transition: none; }
+.chain-list > li.is-broken .i, .chain-list > li.is-broken .who, .chain-list > li.is-broken .ev, .chain-list > li.is-broken .what { color: var(--reject); transition: none; }
+.chain-list > li.is-broken .chain-node { background: transparent; box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 14px rgba(217, 103, 93, .45); transition: none; }
 .chain-list > li.is-edited .chain-node { background: var(--reject); }
-.chain-list > li.is-broken .chain-seg::before, .chain-list > li.is-broken .chain-seg::after { background: var(--reject); box-shadow: 0 0 6px rgba(217, 103, 93, .75); }
+.chain-list > li.is-broken .chain-seg::before, .chain-list > li.is-broken .chain-seg::after { background: var(--reject); box-shadow: 0 0 6px rgba(217, 103, 93, .6); }
 .chain-list > li.is-broken .chain-seg::before { transform: translateY(-2px); }
 .chain-list > li.is-broken .chain-seg::after { transform: translate(5px, 3px); }
 .chain-list > li.is-broken:last-child .chain-seg::before, .chain-list > li.is-broken:last-child .chain-seg::after { background: repeating-linear-gradient(var(--reject) 0 3px, transparent 3px 6px); }
 .chain-list > li.is-broken .chain-link b { color: var(--reject); }
 .chain-list > li.is-broken .chain-link::before { background: rgba(217, 103, 93, .5); }
-/* the cascade: as the break reaches each record its block flares and its link surges red, record by record; restore
-   sends the same pulse down in green */
-@keyframes chain-pop { 32% { transform: scale(1.8); box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 0 5px rgba(217, 103, 93, .2), 0 0 26px rgba(217, 103, 93, .95); } 100% { transform: none; } }
-@keyframes chain-surge { 0% { background: var(--line-strong); box-shadow: none; } 28% { background: #ff9b90; box-shadow: 0 0 10px rgba(255, 128, 112, .95); } }
-@keyframes chain-heal { 32% { transform: scale(1.55); background: var(--accent); box-shadow: 0 0 0 5px rgba(79, 203, 147, .16), 0 0 22px rgba(79, 203, 147, .85); } 100% { transform: none; } }
-@keyframes chain-mend { 28% { background: var(--accent); box-shadow: 0 0 9px rgba(79, 203, 147, .9); } }
-.chain-list > li.is-broken .chain-node { animation: chain-pop .62s cubic-bezier(.2, .8, .3, 1) var(--dl) backwards; }
-.chain-list > li.is-broken .chain-seg::before, .chain-list > li.is-broken .chain-seg::after { animation: chain-surge .85s var(--ease) calc(var(--dl) + 55ms) backwards; }
-.chain-list > li.is-heal .chain-node { animation: chain-heal .62s cubic-bezier(.2, .8, .3, 1) var(--dl) backwards; }
-.chain-list > li.is-heal .chain-seg::before, .chain-list > li.is-heal .chain-seg::after { animation: chain-mend .85s var(--ease) calc(var(--dl) + 55ms) backwards; }.chain-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; padding: 12px 20px; border-top: 1px solid var(--line); font: .62rem/1.5 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
+/* the cascade: as the break reaches each record its block flares and its link surges red; restore sends the same
+   pulse down in green. Every colour is the palette's own red (#D9675D on dark) or green */
+@keyframes chain-pop { 32% { transform: scale(1.8); box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 0 5px rgba(217, 103, 93, .2), 0 0 16px rgba(217, 103, 93, .6); } 100% { transform: none; } }
+@keyframes chain-surge { 0% { background: var(--line-strong); box-shadow: none; } 28% { background: var(--reject-bright, #D9675D); box-shadow: 0 0 8px rgba(217, 103, 93, .55); } }
+@keyframes chain-heal { 32% { transform: scale(1.55); background: var(--accent); box-shadow: 0 0 0 5px rgba(79, 203, 147, .16), 0 0 18px rgba(79, 203, 147, .6); } 100% { transform: none; } }
+@keyframes chain-mend { 28% { background: var(--accent); box-shadow: 0 0 8px rgba(79, 203, 147, .6); } }
+.chain-list > li.is-broken .chain-node { animation: chain-pop .62s cubic-bezier(.2, .8, .3, 1) backwards; }
+.chain-list > li.is-broken .chain-seg::before, .chain-list > li.is-broken .chain-seg::after { animation: chain-surge .85s var(--ease) 55ms backwards; }
+.chain-list > li.is-heal .chain-node { animation: chain-heal .62s cubic-bezier(.2, .8, .3, 1) backwards; }
+.chain-list > li.is-heal .chain-seg::before, .chain-list > li.is-heal .chain-seg::after { animation: chain-mend .85s var(--ease) 55ms backwards; }
+.chain-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; padding: 12px 20px; border-top: 1px solid var(--line); font: var(--mono-xs, .625rem)/1.5 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
 .chain-fallback { color: var(--fg-2); }
 /* before the hashes exist (no JavaScript, or the first frames): the same spine and blocks, nothing claimed as verified */
 .chain:not(.chain-ready) .chain-status { color: var(--fg-3); }
-.chain-foot:has(.chain-fallback) > span:first-child { display: none; } /* no hashes are shown until the browser computes them */
+.chain-foot.is-static > span:first-child { display: none; } /* no hashes are shown until the browser computes them */
 .chain:not(.chain-ready) .chain-list > li { padding-bottom: 16px; }
 .chain:not(.chain-ready) .chain-list > li::before { content: ""; position: absolute; left: 9px; top: 13px; width: 11px; height: 11px; background: var(--fg); }
 .chain:not(.chain-ready) .chain-list > li::after { content: ""; position: absolute; left: 14px; top: 27px; bottom: -10px; width: 1px; background: var(--line-strong); }
@@ -1442,7 +1467,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 .gov-spec { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--line-strong); }
 .gov-spec li { padding: 18px 22px 2px 0; color: var(--fg-2); font-size: .95rem; line-height: 1.5; }
 .gov-spec li + li { padding-left: 22px; border-left: 1px solid var(--line); }
-.gov-spec b { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font: 500 .68rem/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg); }
+.gov-spec b { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font: 500 var(--mono-s, .6875rem)/1.4 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); }
 .gov-spec b::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--accent); background: radial-gradient(circle at center, var(--accent) 0 2px, transparent 2.5px); }
 .gov-spec span { display: block; }
 @media (max-width: 960px) {
@@ -1457,7 +1482,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 /* the key: the chain's three marks, drawn in ink on paper */
 .chain-key { border-top: 1px solid var(--line); }
 .chain-key li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: .92rem; line-height: 1.5; color: var(--fg-2); }
-.chain-key b { display: block; margin-bottom: 2px; font: 500 .66rem/1.6 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg); }
+.chain-key b { display: block; margin-bottom: 2px; font: 500 var(--mono-s, .6875rem)/1.6 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); }
 .chain-key i { position: relative; display: block; width: 28px; height: 34px; }
 .chain-key .k-node::before { content: ""; position: absolute; left: 8px; top: 4px; width: 11px; height: 11px; background: var(--ink); }
 .chain-key .k-link::before { content: ""; position: absolute; left: 13px; top: 0; bottom: 0; width: 1px; background: var(--fg-3); }
@@ -1467,10 +1492,12 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 
 @media (max-width: 960px) {
   .lt-insp { grid-template-columns: minmax(0, 1fr); gap: 9px; }
-  /* the status gets its own row: its length can change without moving anything else */
-  .lt-head { row-gap: 6px; padding-bottom: 12px; }
-  .lt-title { order: 1; } .lt-ctrl { order: 2; margin-left: auto; } .lt-state { order: 3; flex-basis: 100%; margin-left: 0; }
+  /* the head's first row is the title, the Latest pill and the controls; the state has a row of its own */
+  .lt-head { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "title latest ctrl" "state state state"; column-gap: 10px; padding-bottom: 12px; }
+  .lt-state { justify-self: start; }
+  .lt--excerpt .lt-title { white-space: normal; } /* a fixed title: it may wrap, nothing beside it ever changes */
 }
+@media (max-width: 799px) { .lt-counts { min-height: 3em; } }
 @media (max-width: 760px) {
   .chain-list { padding: 2px 12px 6px; }
   .chain-list > li { grid-template-columns: 2.4em minmax(0, 1fr) auto; grid-template-areas: "i who flag" "i ev ev" "i what what"; row-gap: 2px; padding: 8px 8px 32px 36px; }
@@ -1481,17 +1508,29 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
   .chain-head { padding: 10px 10px 10px 14px; } .chain-foot { padding: 11px 14px; }
 }
 @media (max-width: 600px) {
-  .lt { --lt-col: 106px; }
-  .lt-head { gap: 6px 10px; padding: 10px 10px 12px 14px; }
-  .lt-btn--ico { width: 36px; padding: 0; justify-content: center; }
+  .lt { --lt-col: 106px; --lt-pr: 12px; }
+  .lt-head { padding: 10px 10px 12px 14px; }
+  .lt-btn--ico { width: 36px; padding: 0; }
   .lt-btn--ico span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .lt-latest { right: 10px; }
-  .lt-track { padding: 24px 18px 18px; }
-  .lt-rec { padding-right: 12px; }
-  .lt-line { margin-right: -12px; }
-  .lt-insp { padding: 16px 14px 18px; }
+  .lt-track { padding: 12px 18px 8px; }
+  .lt-insp { padding: 12px 14px 18px; }
   .lt-insp dl > div { grid-template-columns: 5.2rem minmax(0, 1fr); gap: 10px; }
+  /* on a phone a check may need two lines: it always has room for two */
+  .lt-check { height: 3.2em; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .lt-foot { padding: 11px 14px; }
+}
+@media (max-width: 420px) { .lt-title-x { display: none; } } /* "Agent log": the head keeps one row on a phone */
+@media (max-width: 400px) { .lt-counts { min-height: 4.5em; } }
+@media (max-width: 360px) {
+  .lt-latest svg { display: none; }
+  .lt-state { letter-spacing: .06em; }
+}
+/* touch: every control is at least 44 px, and the chain's editable fields are 16 px so a phone never zooms on focus */
+@media (pointer: coarse) {
+  .lt-btn, .lt-latest, .chain-try, .chain-restore { min-height: 44px; }
+  .lt-latest { border-radius: 22px; }
+  .lt-btn--ico { min-width: 44px; }
+  .chain-list [contenteditable] { font-size: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lt, .lt *, .lt *::before, .lt *::after, .chain, .chain *, .chain *::before, .chain *::after { animation: none !important; transition: none !important; }
@@ -1499,7 +1538,7 @@ html:not(.story-ready) .beat-fig, .no-webgl .beat-fig { display: block; width: 1
 @media print {
   .lt-view { overflow: visible !important; -webkit-mask-image: none !important; mask-image: none !important; }
   .lt-track { flex-wrap: wrap; width: auto; row-gap: 6mm; }
-  .lt-insp, .lt-leader, .lt-ctrl { display: none !important; }
+  .lt-insp, .lt-leader, .lt-ctrl, .lt-latest { display: none !important; }
 }
 /* v2:ledger:end */
 /* -------------------------------------------------------------------------- */

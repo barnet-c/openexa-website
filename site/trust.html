@@ -137,7 +137,7 @@
           <div class="lt-head">
             <span class="lt-title">Lifecycle 01 · IBIT · create</span>
             <span class="lt-state"><i></i><span data-lt-state>Illustrative excerpt</span></span>
-            <span class="lt-ctrl">
+            <span class="lt-ctrl" hidden>
               <button type="button" class="lt-btn lt-btn--ico" data-lt-replay hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M13.2 8.6A5.2 5.2 0 1 1 11.7 4.3"/><path d="M12.4 1.6v3.2H9.2"/></svg><span>Replay</span></button>
               <button type="button" class="lt-btn lt-btn--ico" data-lt-verify hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 8.4l3.4 3.3 7.6-7.6"/></svg><span>Verify the chain</span></button>
             </span>
@@ -158,6 +158,7 @@
           </div>
           </div>
           <div class="lt-insp" data-lt-insp hidden>
+            <p class="lt-insp-k" data-f="k">Newest record in view</p>
             <dl>
               <div><dt>Record</dt><dd data-f="rec">—</dd></div>
               <div><dt>Event</dt><dd data-f="ev">—</dd></div>
@@ -171,6 +172,7 @@
           <i class="lt-leader" aria-hidden="true"></i>
           <div class="lt-foot"><span>Illustrative log excerpt · rejects are recorded too</span><span>Every record references its predecessor's hash</span></div>
         </div>
+        <div class="figure-cap" data-reveal><span>Fig. 3.1 — The ledger, replayed · select any record to inspect its hash links</span><span>Illustrative excerpt · real SHA-256, computed in your browser</span></div>
       </div>
     </section>
 
