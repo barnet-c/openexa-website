@@ -20,7 +20,10 @@ are several times slower than a laptop; reproduce that with
 --swiftshader (the default; CI's renderer) launches Chromium on ANGLE's SwiftShader; --gpu uses the real GPU instead (local
 only, to compare). --cpu-throttle N slows every page's main thread N times (CDP Emulation.setCPUThrottlingRate, applied
 before the first navigation). --cores N pins the browser to N logical CPUs (inherited CPU affinity), as a small runner.
-Both modes are printed in the run header with the host's CPU load. Each check has a hard limit (--check-timeout, 600 s by
+Both modes are printed in the run header with the host's CPU load. Calibrated against CI run 40731155926 (1a6b9fb): with
+--cpu-throttle 4 this PC reproduced its 'home' failure (Locator.screenshot, 'waiting for element to be stable'), its
+load-dependent loader (5-7.7 s) and the overture's labels never coming to rest on phones; a shard's CI time is about
+1.2x its local --swiftshader --cpu-throttle 4 time plus a minute of set-up. Each check has a hard limit (--check-timeout, 600 s by
 default; 1200 s for the two long overture checks): a hung step becomes a named FAIL with the line it hung on, the check's contexts are closed (a leaked page running
 WebGL slows every later check), and the run goes on. Screenshots of moving instruments are clipped page screenshots taken
 after that instrument's Pause control (or two equal boxes), with animations disabled, never Locator.screenshot.
@@ -104,9 +107,12 @@ class ThrottledContext:
     def __getattr__(self, k): return getattr(self._ctx, k)
     async def new_page(self):
         pg = await self._ctx.new_page()
-        # a navigation may take long on a slow runner (CI) or a loaded PC: 90 s, as open_page has always allowed
-        # (Playwright's 30 s default failed home's first goto at 100% host load); a check's own limit still bounds it
+        # a navigation or an action (a screenshot, a click, a locator read) may take long on a slow runner (CI) or a
+        # loaded PC: 90 s each (Playwright's 30 s defaults failed home's first goto at 100% host load, and on the
+        # round-2 merge at 4x a full-page screenshot in `pages` and a locator read in `no_js`); patience only, every
+        # condition is the same, and a check's own limit still bounds it
         pg.set_default_navigation_timeout(90000)
+        pg.set_default_timeout(90000)
         await throttle_page(self._ctx, pg)
         return pg
 
@@ -215,7 +221,6 @@ async def open_page(b, path, w, h, *, dpr=1, touch=False, reduced=False, js=True
                               reduced_motion="reduce" if reduced else "no-preference", java_script_enabled=js)
     if init: await ctx.add_init_script(init)
     pg = await ctx.new_page()
-    pg.set_default_timeout(45000); pg.set_default_navigation_timeout(90000)
     if errs is not None: pg.on("pageerror", lambda e: errs.append("PAGEERROR " + str(e)))
     await pg.goto(f"{BASE}/{path}", wait_until="load")
     if js and loaded: await until(pg, LOADED, 15000)
@@ -901,7 +906,7 @@ async def no_js(b):
     posts = await pg.evaluate(POSTS)
     await ctx.close()
     ctx = await b.new_context(viewport={"width": 390, "height": 844})
-    pg = await ctx.new_page(); pg.set_default_timeout(45000)
+    pg = await ctx.new_page()
     low = []
     for name in LINK_PAGES:
         await pg.goto(f"{BASE}/{name}.html", wait_until="load"); await pg.wait_for_timeout(900)
@@ -1974,7 +1979,7 @@ async def forced_focus(b):
     bad, got = [], []
     for path, sel in (("index.html", "[data-sw-strict]"), ("access.html", "#name"), ("lifecycles.html", "[data-gap-thr]")):
         ctx = await b.new_context(viewport={"width": 1440, "height": 900}, forced_colors="active", reduced_motion="reduce")
-        pg = await ctx.new_page(); pg.set_default_timeout(45000)
+        pg = await ctx.new_page()
         await pg.goto(f"{BASE}/{path}", wait_until="load"); await until(pg, LOADED, 15000); await pg.wait_for_timeout(1200)
         await pg.mouse.move(2, 898)
         if await pg.evaluate(FOCUS_PREP, sel) is None: bad.append(f"{path}: no {sel}"); await ctx.close(); continue
