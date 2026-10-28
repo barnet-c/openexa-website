@@ -54,7 +54,7 @@
 
   /* rhythm */
   --gutter: clamp(20px, 4vw, 56px);
-  --max: 1320px;
+  --max: clamp(1320px, 70vw, 1600px); /* wide screens get a wider column (rem stays put: fitted instruments keep their size) */
   --nav-h: 72px;
   --r: 3px;
   --ease: cubic-bezier(.2, .7, .2, 1);
@@ -235,6 +235,7 @@ em, .ital { font-style: italic; }
 .card-grid--3 { grid-template-columns: repeat(3, 1fr); }
 .card-grid--4 { grid-template-columns: repeat(4, 1fr); }
 @media (max-width: 960px) { .card-grid--3, .card-grid--4 { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 601px) and (max-width: 960px) { .card-grid--3 > :last-child:nth-child(odd) { grid-column: 1 / -1; } } /* no lone card beside an empty cell */
 @media (max-width: 600px) { .card-grid--2, .card-grid--3, .card-grid--4 { grid-template-columns: 1fr; } }
 
 .list-rule { border-top: 1px solid var(--line); }
@@ -515,7 +516,7 @@ em, .ital { font-style: italic; }
 
 /* ---------- chapters: giant numerals (the chapter readout lives in the nav: v2:nav region) ---------- */
 .section[data-n] { overflow: clip; }
-.section[data-n]::before { content: attr(data-n); position: absolute; right: -0.04em; top: -0.08em; font-family: var(--serif); font-size: clamp(11rem, 26vw, 24rem); line-height: 1; letter-spacing: -0.06em; color: var(--fg); opacity: .035; pointer-events: none; user-select: none; font-variant-numeric: tabular-nums; }
+.section[data-n]::before { content: attr(data-n); position: absolute; right: max(-0.04em, calc((100% - var(--max)) / 2 - .3em)); top: -0.08em; font-family: var(--serif); font-size: clamp(11rem, 26vw, 24rem); line-height: 1; letter-spacing: -0.06em; color: var(--fg); opacity: .035; pointer-events: none; user-select: none; font-variant-numeric: tabular-nums; }
 
 .gates--compact > div { padding: 18px 16px 20px; } .gates--compact h3 { font-size: 1.25rem; font-weight: 400; } .gates--compact p { font-size: .82rem; }
 
