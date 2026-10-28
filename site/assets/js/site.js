@@ -600,9 +600,6 @@
     window.addEventListener('scroll', onScroll, { passive: true }); window.addEventListener('resize', onScroll); update();
   });
 
-  /* ---------------- ticker ---------------- */
-  $$('.ticker-track').forEach(t => { const ul = $('ul', t); if (ul && t.children.length === 1) { const copy = ul.cloneNode(true); copy.setAttribute('aria-hidden', 'true'); t.appendChild(copy); } }); // the copy only closes the loop: read once
-
   /* ---------------- kinetic split text ---------------- */
   function splitWords(el) {
     let i = 0;
