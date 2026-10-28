@@ -706,7 +706,7 @@
   // under the S4 floor, in CSS px: the records hang from it, then the NAV hairline with each session's regime tick, then the day tags
   const U_REC = 6.5, U_NAV = 22, U_TICK = 10, U_DAY = 35, DAY_BAND = 70;
   const layouts = Array.from({ length: 5 }, () => ({ cx: 0, cy: 0, s: 1, rect: [0, 0, 0, 0] }));
-  const beatRects = [], numFit = [0, 0, 0, 0], capH = [0, 0, 0, 0, 0], labelMaxW = [0, 0, 0, 0, 0];
+  const beatRects = [], numFit = [0, 0, 0, 0], capH = [0, 0, 0, 0, 0], labelMaxW = [0, 0, 0, 0, 0], roomOf = [0, 0, 0, 0, 0];
   let storyTop = 0, run = 1, scrollY = 0, stageH = 1, storyH = 1, lastP = NaN, floorW = 0, floorL = -COL_SPAN / 2 - 0.5, numGlyphH = 0;
   // the stage shows below the nav's bar: past the pin the stage leaves with the page, and once its last pixels are under the
   // opaque bar nothing of it can be seen, so nothing is drawn (scrolling back up starts the loop again)
@@ -747,12 +747,28 @@
     // the callouts' own sizes (captions wrap; portrait screens leave out the names): every frame keeps clear of them. On wide
     // screens a caption wraps inside its scene's frame, never reaching back over the copy
     labelMaxW.fill(0); capH.fill(0);
-    labels.forEach(l => {
-      if (l.kind === 'cap') { const br = beatRects[l.scene]; l.el.style.maxWidth = !stacked && br && br.r > 0 ? Math.max(180, W - gutter - (br.r + 28)) + 'px' : ''; }
+    const sizeLabel = (l) => {
       l.w = l.el.offsetWidth; l.h = l.el.offsetHeight; l.tr = '';
       if (l.kind === 'cap') capH[l.scene] = l.h;
       else if (l.kind === 'list' && !((stacked || short) && l.wide)) labelMaxW[l.scene] = Math.max(labelMaxW[l.scene], l.w);
       if (l.floor) floorW = l.w;
+    };
+    labels.forEach(l => {
+      if (l.terse) { l.terse = false; l.el.classList.remove('is-terse'); }
+      if (l.kind === 'cap') { const br = beatRects[l.scene]; l.el.style.maxWidth = !stacked && br && br.r > 0 ? Math.max(180, W - gutter - (br.r + 28)) + 'px' : ''; }
+      sizeLabel(l);
+    });
+    // short landscape: the callouts keep a measured column of their own right of the structure (OV-R2-4). Where the rings' or the
+    // layers' names would cost the structure more than a fifth of its size, that scene's callouts show their codes (and status)
+    // only; the inspector, the copy and the screen-reader text keep the names
+    if (!stacked && short) [1, 2].forEach(i => {
+      const br = beatRects[i] && beatRects[i].r > 0 ? beatRects[i] : { r: W * 0.46 }, ext = EXT[i];
+      const needW = Math.min(H - barH - Math.max(18, capH[i] + 12) - (navH + 22), H * 0.74) * ext[0] / ext[1]; // its width at its height-bound size
+      const size = () => Math.max(0, Math.min(W - gutter - (labelMaxW[i] + 28) - Math.min(br.r + 36, W * 0.56), needW)); // clear of the copy
+      const setTerse = (on) => { labelMaxW[i] = 0; labels.forEach(l => { if (l.scene !== i || l.kind !== 'list') return; if (l.group != null) { l.terse = on; l.el.classList.toggle('is-terse', on); } sizeLabel(l); }); };
+      const named = size();
+      setTerse(true);
+      if (named >= 0.8 * size()) setTerse(false);
     });
     // the chapter mark sits above the copy column: per hand-over, the scale of its numeral that keeps it clear of both scenes' copy
     const cd = story.querySelector('.story-coda');
@@ -801,7 +817,7 @@
     const ok = (s) => {
       const o = ringOutline(s);
       let maxX = -1e9; for (let j = 0; j < o.length; j += 2) maxX = Math.max(maxX, o[j]);
-      const cx = x1 - 6 - maxX;
+      const cx = x1 - 8 - maxX; // the outer ring's right edge 8 px short of the callouts' room
       for (let j = 0; j < o.length; j += 2) {
         const x = cx + o[j], y = cy + o[j + 1];
         if (x < gutter || y < navH + 24 || y > H - barH - Math.max(18, capH[1] + 12)) return null;
@@ -809,9 +825,9 @@
       }
       return { cx, minX: Math.min(...o.filter((_, j) => j % 2 === 0)) };
     };
-    if (!ok(s0)) return null;
-    let lo = s0, hi = Math.min(s0 * 2.4, (W * 0.62) / (3.25 * pxu));
-    if (hi <= lo) return null;
+    // the largest ring set that keeps every rule (smaller than the frame's first guess too: a short screen's copy corner)
+    let lo = s0 * 0.25, hi = Math.max(s0, Math.min(s0 * 2.4, (W * 0.62) / (3.25 * pxu)));
+    if (!ok(lo)) return null;
     for (let it = 0; it < 16; it++) { const m = (lo + hi) / 2; if (ok(m)) lo = m; else hi = m; }
     const r = ok(lo);
     return { s: lo, cx: r.cx, cy, x0: r.cx + r.minX };
@@ -823,13 +839,15 @@
       const ext = (stacked && EXT_ST[i]) || EXT[i];
       let x0, x1, y0, y1, s, cx, cy;
       if (!stacked) { // right of this scene's copy, clear of the nav, the index and the callouts
-        const room = Math.min(ROOM_W[i], W * 0.18);
+        let room = Math.min(ROOM_W[i], W * 0.18);
+        if (short && i >= 1 && i <= 3 && labelMaxW[i]) room = Math.max(room, labelMaxW[i] + 28); // short landscape: the callouts' measured column
+        roomOf[i] = room;
         x1 = W - gutter - room; y0 = navH + 22;
         if (ZONE[i] === 'upper' && br.t - y0 > H * 0.36) { x0 = gutter + (W - 2 * gutter) * 0.3; y1 = br.t - 26; }
         else { x0 = Math.min(br.r + 36, W * 0.56); y1 = H - barH - Math.max(18, capH[i] + 12); } // above the scene's caption
         if (x1 - x0 < 240) x0 = x1 - 240;
       } else { // above this scene's copy, under the index and the scene's caption, never across the copy; the callouts keep their column
-        const room = Math.max([0, 0.13, 0.15, 0.1, 0][i] * W, labelMaxW[i] ? labelMaxW[i] + 28 : 0);
+        const room = roomOf[i] = Math.max([0, 0.13, 0.15, 0.1, 0][i] * W, labelMaxW[i] ? labelMaxW[i] + 28 : 0);
         x0 = gutter * 0.5; x1 = W - gutter * 0.5 - room;
         y0 = navH + barH + capH[i] + 8;
         y1 = Math.min(Math.max(y0 + 120, Math.min(H * 0.8, br.t) - 14), br.t - 14);
@@ -1261,8 +1279,10 @@
     if (hot && hot.info && hot !== inspFor) {
       const [t, s, d] = hot.info;
       insp.innerHTML = `<b>${t}</b><em>${s}</em> · ${d}`;
-      // portrait screens: the box sits left of the callout column, never under it
-      insp.style.maxWidth = stacked && hot.kind === 'list' && listX > 0 ? Math.max(160, Math.min(260, listX - 10 - gutter * 0.5)) + 'px' : '';
+      // portrait screens: the box sits left of the callout column, never under it; short landscape: between the copy and the column
+      const brS = beatRects[hot.scene];
+      insp.style.maxWidth = hot.kind !== 'list' || !(listX > 0) ? '' : stacked ? Math.max(160, Math.min(260, listX - 10 - gutter * 0.5)) + 'px'
+        : short && brS && brS.r > 0 ? Math.max(160, Math.min(260, listX - 16 - (brS.r + 12))) + 'px' : '';
       inspW = insp.offsetWidth; inspH = insp.offsetHeight;
     }
     inspFor = hot;
@@ -1332,7 +1352,7 @@
       if (on && l.kind === 'cap') {
         const L = layouts[l.scene];
         if (stacked) { x = gutter; y = navH + barH + 4; }
-        else { x = L.rect[2] + (l.scene === 0 || l.scene === 4 ? 0 : Math.min(ROOM_W[l.scene], W * 0.18)) - l.w; y = H - barH - l.h - 6; }
+        else { x = L.rect[2] + roomOf[l.scene] - l.w; y = H - barH - l.h - 6; }
         x = clamp(x, 6, W - l.w - 6);
         tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
       } else if (on) {
@@ -1405,9 +1425,19 @@
         y = inspFor.kind === 'list' ? (beatRects[inspFor.scene] || { t: H }).t - inspH - 12 : navH + barH + 8;
         y = clamp(y, navH + barH + (inspFor.kind === 'list' ? capH[inspFor.scene] : 0) + 8, H - inspH - 8);
       }
-      else if (inspFor.kind === 'list') { x = listX; y = listBottom + 18; }
+      else if (inspFor.kind === 'list') {
+        // wide and short landscape: never over the scene index or Pause motion (the bar), never over another callout. Under the
+        // callouts' column where it has room above the bar (wide screens); else beside the column, level with its callout, over
+        // the structure but clear of the copy; else under the nav, over the copy column's empty top
+        const lim = H - barH - inspH - 8, br = beatRects[inspFor.scene] || { r: 0, t: H };
+        x = listX; y = listBottom + 18;
+        if (y > lim || x + inspW > W - 8) {
+          x = listX - 16 - inspW; y = clamp(inspFor.y + inspFor.h / 2 - inspH / 2, navH + 8, lim);
+          if (x < br.r + 12 && y + inspH > br.t - 8 && navH + 8 + inspH <= br.t - 8) { x = gutter; y = navH + 8; }
+        }
+      }
       else { const sc = layouts[inspFor.scene].s, p = project(COL_X(inspFor.group) * sc, (Y_FLOOR + H_COL + 0.24) * sc, 0); x = p.x - inspW / 2; y = p.y - inspH - 12; }
-      x = clamp(x, 8, W - inspW - 8); y = clamp(y, navH + 8, H - inspH - 8);
+      x = clamp(x, 8, W - inspW - 8); y = clamp(y, navH + 8, H - (stacked ? 0 : barH) - inspH - 8);
       const tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
       if (tr !== inspTr) insp.style.transform = inspTr = tr;
     }
