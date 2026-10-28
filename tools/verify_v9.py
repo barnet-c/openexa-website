@@ -1199,7 +1199,11 @@ async def overture_phones(b):
                     elif r["hits"]: bad.append(f"index.html@{w}x{h} scene 0{i}: the inspector {r['text']!r} at {r['box']} (callout {k + 1} tapped) crosses {r['hits']}")
                     await bounded(pg.touchscreen.tap(6, h * 0.5), "a tap on empty stage"); await pg.wait_for_timeout(400)  # a tap on empty stage closes it
         await ctx.close()
-    assert not bad, f"overture_phones: {len(bad)} problems:\n  " + "\n  ".join(bad[:30])
+    by = {}
+    for x in bad:
+        m = re.match(r"index\.html@(\S+) scene 0(\d)", x)
+        if m: by[f"{m[1]} S{m[2]}"] = by.get(f"{m[1]} S{m[2]}", 0) + 1
+    assert not bad, f"overture_phones: {len(bad)} problems (by viewport and scene: {', '.join(f'{k} {v}' for k, v in by.items())}):\n  " + "\n  ".join(bad[:30])
     print(f"overture_phones: {len(PHONES)} phone viewports x 5 scenes, no callout over the index, the nav, the copy, a structure or another callout")
 
 
