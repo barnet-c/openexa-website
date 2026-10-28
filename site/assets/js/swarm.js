@@ -900,9 +900,41 @@
       requestAnimationFrame(() => requestAnimationFrame(() => n.classList.remove('is-instant')));
     });
   }
+  // the landing holds while the page settles: a smooth scroll still under way when the trip began (the focus that
+  // brought the button into view, with Enter pressed at once) carries on after the cut and would leave the ledger up to
+  // a few dozen px off centre. For at most 0.7 s the ledger is kept where it landed; the reader's own wheel, touch, key
+  // or pointer ends the hold at once.
+  let holdRaf = 0;
+  const HOLD_END = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
+  function unhold() { cancelAnimationFrame(holdRaf); holdRaf = 0; HOLD_END.forEach((k) => window.removeEventListener(k, unhold, true)); }
+  function hold() {
+    unhold();
+    HOLD_END.forEach((k) => window.addEventListener(k, unhold, { capture: true, passive: true }));
+    const t0 = performance.now(); let calm = 0;
+    const f = () => {
+      const y = ledgerY(), dt = performance.now() - t0;
+      if (Math.abs(window.scrollY - y) > 1) { window.scrollTo({ top: y, behavior: 'instant' }); calm = 0; } else calm++;
+      if (dt < 700 && (calm < 8 || dt < 300)) holdRaf = requestAnimationFrame(f); else unhold();
+    };
+    holdRaf = requestAnimationFrame(f);
+  }
   function toLedger(rec, kbd) {
     if (!LEDGER) return;
-    cancelAnimationFrame(inspectRaf); inspectRaf = 0;
+    cancelAnimationFrame(inspectRaf); inspectRaf = 0; unhold();
+    // a scroll still under way (the focus that brought the button into view, a wheel's glide) finishes first: a cut
+    // taken mid-glide is undone by the glide's remaining frames. Two still frames, and 0.12 s after the button took
+    // keyboard focus (its scroll into view starts a frame or two late); half a second at most.
+    let sy = window.scrollY, still = 0; const t0 = performance.now();
+    const settle = () => {
+      const y = window.scrollY, now = performance.now(); still = Math.abs(y - sy) < 0.5 ? still + 1 : 0; sy = y;
+      if ((still < 2 || (kbd && now - recFocusT < 120)) && now - t0 < 500) { inspectRaf = requestAnimationFrame(settle); return; }
+      inspectRaf = 0; trip(rec, kbd);
+    };
+    inspectRaf = requestAnimationFrame(settle);
+  }
+  let recFocusT = -1e9;
+  if (el.log) el.log.addEventListener('focusin', (e) => { if (e.target.closest('[data-sw-rec]')) recFocusT = performance.now(); });
+  function trip(rec, kbd) {
     const ask = () => document.dispatchEvent(new CustomEvent('oxa:inspect', { detail: { record: rec.record, seq: rec.seq, focus: !!kbd } }));
     const from = window.scrollY, y = ledgerY();
     if (Math.abs(y - from) > 1.5 * window.innerHeight) {
@@ -912,6 +944,7 @@
         window.scrollTo({ top: ledgerY(), behavior: 'instant' }); // measured again: nothing on the way is mid-entrance now
         document.dispatchEvent(new CustomEvent('oxa:jump', { detail: { from, to: window.scrollY } }));
         ask();
+        hold();
       };
       if (reduced.matches || typeof document.startViewTransition !== 'function' || document.hidden) { go(); return; }
       de.dataset.jump = y > from ? 'down' : 'up';
