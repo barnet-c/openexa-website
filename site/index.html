@@ -171,7 +171,7 @@
           <li class="up"><b>Infrastructure</b> for agentic lifecycles · signal → decision → execution → settlement → audit</li>
           <li><b>Swarm</b> 5,000 – 50,000 domain-specific agents per lifecycle</li>
           <li><b>Lifecycle 01</b> ETF creation &amp; redemption · live on real capital</li>
-          <li><b>Proof</b> &gt;10 bps per session · ten consecutive sessions · broker-confirmed</li>
+          <li><b>Proof</b> <span>&gt;<span data-proof="floor">10</span> bps per session · <span data-proof="total" data-proof-as="words">ten</span> consecutive sessions · broker-confirmed</span></li>
           <li><b>Economics</b> 90% of cost &amp; risk eliminated by agents</li>
           <li><b>Governance</b> execution council · scoped permissions · hash-chained ledger</li>
           <li><b>Next</b> six lifecycle classes · one infrastructure</li>
@@ -354,8 +354,8 @@
         <div class="proof-layout">
           <div class="proof-copy">
             <span class="badge" data-reveal><i></i>Lifecycle 01 · live capital</span>
-            <h2 class="display-2 mt-2" data-reveal data-split style="--d:60ms">Ten sessions. All above the floor. Confirmed by the broker.</h2>
-            <p class="body-lg mt-3" data-reveal style="--d:120ms">Agents captured more than ten basis points in every session, in discount and premium regimes alike — the same swarm, the same gates, both sides of the NAV. Every fill is verified against the executing brokers' own confirmations.</p>
+            <h2 class="display-2 mt-2" data-reveal data-split style="--d:60ms"><span data-proof="total" data-proof-as="Words">Ten</span> sessions. All above the floor. Confirmed by the broker.</h2>
+            <p class="body-lg mt-3" data-reveal style="--d:120ms">Agents captured more than <span data-proof="floor" data-proof-as="words">ten</span> basis points in every session, in discount and premium regimes alike — the same swarm, the same gates, both sides of the NAV. Every fill is verified against the executing brokers' own confirmations.</p>
           </div>
           <figure class="proof-fig">
             <div class="eyebrow"><span>Performance report · <span data-proof="total">10</span> sessions</span></div>
@@ -610,7 +610,7 @@
   <script src="assets/js/ledger.js" defer></script>
   <script src="assets/js/chain.js" defer></script>
   <script src="assets/js/arch.js" defer></script>
-  <script src="assets/js/site.js" defer></script>
   <script src="assets/js/proof.js" defer></script>
+  <script src="assets/js/site.js" defer></script>
 </body>
 </html>

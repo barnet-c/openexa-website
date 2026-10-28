@@ -764,6 +764,7 @@
     const b = document.createElement('b'); b.textContent = gname;
     const c = document.createElement('span'); c.className = 'sw-v'; c.textContent = verdict;
     li.append(a, b, c); el.log.appendChild(li);
+    return li;
   }
   const fmtT = (s) => `${Math.max(0, s).toFixed(2)} s`;
   function t0Of(i) { const t = GT[i * 7 + 1]; return t > UNSET ? t : sim; } // back-dated crossings are negative: only UNSET means "not yet"
@@ -779,7 +780,8 @@
   }
   function traceLedger(id, block) {
     if (id !== follow.id) return;
-    row(fmtT(sim - follow.t1), 'Ledger', `sealed in block ${block}`, 'ok');
+    const li = row(fmtT(sim - follow.t1), 'Ledger', follow.rec || `sealed in block ${block}`, 'ok');
+    if (li) li.dataset.swLedger = '';
     say(`${id}: written to the ledger, block ${block}.`);
     const s = el.tag && el.tag.querySelector('span'); if (s) s.textContent = `settled · block ${block}`;
     if (reduced.matches) draw(); // a still study: re-place the tag (and its leader) for the longer text
@@ -793,6 +795,19 @@
     el.tag.classList.toggle('is-ok', g >= 6);
   }
   function say(t) { if (el.say) el.say.textContent = t; }
+  // the ledger trace further down the page answers every announcement with 'oxa:recorded' {id, record, hash, seq}; when
+  // the answer is for the proposal being followed, its last line becomes the record it was chained into and the first
+  // 8 hex of that record's hash (off screen the ledger seals announcements every few seconds, so this can come later)
+  document.addEventListener('oxa:recorded', (e) => {
+    const d = e.detail;
+    if (!d || !follow.show || !follow.id || d.id !== follow.id || !d.record) return;
+    const h = /^[0-9a-f]{8}/i.test(d.hash || '') ? d.hash.slice(0, 8).toLowerCase() : '';
+    follow.rec = `record ${d.record}${h ? ' · ' + h : ''}`;
+    const v = el.log && el.log.querySelector('[data-sw-ledger] .sw-v');
+    if (!v) return;
+    v.textContent = follow.rec;
+    say(`${d.id}: chained into the ledger below as record ${d.record}.`);
+  });
   function setFollowButton() {
     if (!el.follow) return;
     el.follow.setAttribute('aria-pressed', follow.active ? 'true' : 'false');
@@ -809,7 +824,7 @@
       return;
     }
     el.gates.forEach(li => li.classList.remove('is-hit'));
-    Object.assign(follow, { active: true, show: true, i, uid: UID[i], id: pid(UID[i]), n: 0, pt: -1, marks: [], verdict: '', endAt: 0, x: X[i], y: Y[i], z: Z[i], t1: t0Of(i) });
+    Object.assign(follow, { active: true, show: true, i, uid: UID[i], id: pid(UID[i]), n: 0, pt: -1, marks: [], verdict: '', endAt: 0, x: X[i], y: Y[i], z: Z[i], t1: t0Of(i), rec: '' });
     if (el.log) el.log.replaceChildren();
     if (el.traceId) el.traceId.textContent = `Proposal ${follow.id}`;
     if (el.traceState) { el.traceState.textContent = 'Live'; el.traceState.className = 'sw-trace-state is-live'; }
