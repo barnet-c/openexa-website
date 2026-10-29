@@ -3101,12 +3101,13 @@ svg.tg .tg-f { fill: currentColor; fill-opacity: .82; stroke: none; }
 /* ---------- Company hero on landscape phones (PG-R2-4) ----------
    Under 961 px the hero stacks and the stage takes its height from its width (777 x 647 at 844 x 390), so the figure
    was never seen with its headline. On short, wide screens the copy and the stage sit side by side, as the plate heroes
-   do: the stage keeps its 1.2 frame, at most the viewport's height under the bar (less 32 px) and at most 46vw wide, and
-   the readout still follows the frame (1a6b9fb). */
+   do: the stage keeps its 1.2 frame, at most 46vw wide and at most the viewport's height under the bar less 32 px and
+   less the two readout lines that follow the frame (1a6b9fb): 'Plate · The swarm as one body / Illustrative ·
+   interactive' must be on screen whenever the figure is (D14), so the stage gives up 48 px for it. */
 @media (max-width: 960px) and (max-height: 520px) and (min-width: 600px) {
   .company-hero { padding-top: calc(var(--nav-h) + 16px); padding-bottom: 28px; }
   .company-hero .container {
-    --co-w: min(calc((100svh - var(--nav-h) - 32px) * 1.2), 46vw); --co-h: calc(var(--co-w) / 1.2);
+    --co-w: min(calc((100svh - var(--nav-h) - 80px) * 1.2), 46vw); --co-h: calc(var(--co-w) / 1.2);
     grid-template-columns: minmax(0, 1fr) var(--co-w); gap: 24px; align-items: start;
   }
   .company-hero .display-1 { font-size: clamp(2.2rem, 10vh, 3rem); }
