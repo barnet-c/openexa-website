@@ -127,7 +127,7 @@
             </figure>
             <div data-reveal>
               <div class="table-scroll" role="region" aria-labelledby="pf-table-cap" tabindex="0">
-                <table class="ledger proof-table" data-proof-table>
+                <table class="ledger proof-table" data-proof-table aria-labelledby="pf-table-cap">
                 <thead><tr><th>Session</th><th>NAV regime</th><th class="num">Captured</th><th>Verification</th><th>Status</th></tr></thead>
                 <tbody>
                   <tr><td class="lab" data-th="Session">Day 01</td><td data-th="NAV regime"><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num" data-th="Captured">&gt;10 bps</td><td data-th="Verification">Broker confirmation</td><td data-th="Status"><span class="tag on">Settled</span></td></tr>
@@ -158,26 +158,27 @@
           <div class="col-6"><h2 class="display-2" data-reveal>Not our numbers. The broker's.</h2></div>
           <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Each session is documented by the executing broker's own trade confirmation and matched line by line to the agents' hash-chained ledger. Confirmations and reconciliation reports are available to qualified institutions and partners on request.</p></div>
         </div>
-        <div class="card-grid card-grid--3 mt-4">
-          <div class="card" data-reveal>
-            <div class="n"><span>V-01</span><span>Confirmation</span></div>
+        <!-- the three documents as three records on one hash line (a block per document, the link drawn, no hash text) -->
+        <ol class="pf-docs mt-4">
+          <li class="pf-doc" data-reveal>
+            <div class="pf-n"><span>V-01</span><span>Confirmation</span></div>
             <h3 class="display-3">Broker confirmations</h3>
             <p class="mt-2">Trade confirmation reports from the executing brokers, covering every create-and-redeem session and matched line by line to the ledger.</p>
             <div class="mt-3"><a class="link-arrow" href="access.html">Request documents<span class="sr-only">: broker confirmations</span> <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
-          </div>
-          <div class="card" data-reveal style="--d:80ms">
-            <div class="n"><span>V-02</span><span>Confirmation</span></div>
+          </li>
+          <li class="pf-doc" data-reveal style="--d:80ms">
+            <div class="pf-n"><span>V-02</span><span>Confirmation</span></div>
             <h3 class="display-3">Reconciliation reports</h3>
             <p class="mt-2">Internal record against counterparty record for every session — including the exceptions and how each was resolved — reconciled to the same append-only ledger.</p>
             <div class="mt-3"><a class="link-arrow" href="access.html">Request documents<span class="sr-only">: reconciliation reports</span> <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
-          </div>
-          <div class="card" data-reveal style="--d:160ms">
-            <div class="n"><span>V-03</span><span>Ledger</span></div>
+          </li>
+          <li class="pf-doc" data-reveal style="--d:160ms">
+            <div class="pf-n"><span>V-03</span><span>Ledger</span></div>
             <h3 class="display-3">The agents' own record</h3>
             <p class="mt-2">Every proposal, Council decision, submission, fill and reconciliation — including the rejects — hash-chained and replayable end to end.</p>
             <div class="mt-3"><a class="link-arrow" href="trust.html">How the ledger works <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
-          </div>
-        </div>
+          </li>
+        </ol>
       </div>
     </section>
 
@@ -189,39 +190,45 @@
           <div class="col-6"><h2 class="display-2" data-reveal>Two components eliminated. Two compressed. The operator changed.</h2></div>
           <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Cost of carry and counterparty risk carry more than 80% of the weight in a human-run operation. Agents don't hold inventory and don't wait on a counterparty, so both go to zero. Technology and management — the remaining fifth — are cut by 67% and 50%.</p></div>
         </div>
-        <div class="bars" data-reveal style="--d:120ms">
-          <div class="barrow">
-            <div class="barlab"><b>Traditional</b><span>Human-run · active</span></div>
-            <div class="bar">
-              <i style="--w:45%;--c:var(--graphite)"><span>Cost of carry</span></i>
-              <i style="--w:37%;--c:var(--slate)"><span>Counterparty risk</span></i>
-              <i style="--w:10%;--c:var(--khaki)" data-ink><span>Tech</span></i>
-              <i style="--w:8%;--c:var(--khaki-deep)" data-ink><span>Mgmt</span></i>
+        <!-- the indexed stack, as on home §05: the same markup and weights (proof.js draws the index blocks) -->
+        <figure class="cost" data-cost>
+          <div class="cost-rows" data-reveal style="--d:120ms">
+            <div class="cost-row">
+              <div class="cost-lab"><b>Traditional</b><span>Human-run · active</span></div>
+              <div class="cost-bar">
+                <i style="--w:45%;--c:var(--ink)"><span>Cost of carry</span></i>
+                <i style="--w:37%;--c:var(--slate)"><span>Counterparty risk</span></i>
+                <i style="--w:10%;--c:var(--khaki-deep)"><span>Tech</span></i>
+                <i style="--w:8%;--c:var(--khaki)"><span>Mgmt</span></i>
+              </div>
+              <div class="cost-val">100</div>
             </div>
-            <div class="barval">100</div>
-          </div>
-          <div class="barrow">
-            <div class="barlab"><b>Agentic</b><span>OpenEXA swarm</span></div>
-            <div class="bar">
-              <i style="--w:3.3%;--c:var(--khaki)"></i>
-              <i style="--w:4%;--c:var(--khaki-deep)"></i>
-              <em>Cost of carry — eliminated · Counterparty risk — eliminated</em>
+            <div class="cost-row">
+              <div class="cost-lab"><b>Agentic</b><span>OpenEXA swarm</span></div>
+              <div class="cost-bar">
+                <i class="cost-gone" style="--w:82%"><em>Cost of carry — eliminated · Counterparty risk — eliminated</em></i>
+                <i style="--w:3.3%;--c:var(--khaki-deep)"></i>
+                <i style="--w:4%;--c:var(--khaki)"></i>
+              </div>
+              <div class="cost-val is-acc">&lt;10</div>
             </div>
-            <div class="barval acc">&lt;10</div>
           </div>
-        </div>
-        <div class="figure-cap" data-reveal><span>Fig. 3.1 — Indexed cost &amp; risk stack, traditional = 100 (illustrative weights)</span><span>Source: OpenEXA operating model</span></div>
-        <div class="compare mt-5" data-reveal>
-          <div class="head"><span>Metric</span></div>
-          <div class="head"><span>Traditional</span><b>Human-run</b></div>
-          <div class="head"><span>Agentic</span><b>OpenEXA</b></div>
-          <div class="wgt">Weight &gt; 80% of cost stack</div>
-          <div class="metric">Cost of carry<small>Interest cost</small></div><div class="trad">100% cost</div><div class="agent"><span class="bar"><i style="--w:100%"></i></span>Eliminated</div>
-          <div class="metric">Counterparty risk<small>Settlement &amp; credit exposure</small></div><div class="trad">100% risk</div><div class="agent"><span class="bar"><i style="--w:100%"></i></span>Eliminated</div>
-          <div class="wgt">Weight &lt; 20% of cost stack</div>
-          <div class="metric">Technology + execution cost</div><div class="trad">High OpEx</div><div class="agent"><span class="bar"><i style="--w:67%"></i></span>67% reduced</div>
-          <div class="metric">Management + strategy cost</div><div class="trad">High fee</div><div class="agent"><span class="bar"><i style="--w:50%"></i></span>50% reduced</div>
-        </div>
+          <figcaption class="figure-cap" data-reveal><span>Fig. 3.1 — Indexed cost &amp; risk stack, traditional = 100 (illustrative weights)</span><span>Source: OpenEXA operating model</span></figcaption>
+        </figure>
+        <!-- each component, defined in production's words (home's definitions for all four), and what agents do to it -->
+        <table class="cost-cmp mt-5" data-reveal>
+          <thead><tr><th scope="col">Metric</th><th scope="col">Traditional <b>Human-run</b></th><th scope="col">Agentic <b>OpenEXA</b></th></tr></thead>
+          <tbody>
+            <tr class="cmp-g"><th scope="rowgroup" colspan="3">Weight &gt; 80% of cost stack</th></tr>
+            <tr><th scope="row">Cost of carry<small>Interest on working capital</small></th><td data-th="Traditional">100% cost</td><td data-th="Agentic">Eliminated</td></tr>
+            <tr><th scope="row">Counterparty risk<small>Settlement &amp; credit exposure</small></th><td data-th="Traditional">100% risk</td><td data-th="Agentic">Eliminated</td></tr>
+          </tbody>
+          <tbody>
+            <tr class="cmp-g"><th scope="rowgroup" colspan="3">Weight &lt; 20% of cost stack</th></tr>
+            <tr><th scope="row">Technology + execution cost<small>Infrastructure, routing, reconciliation</small></th><td data-th="Traditional">High OpEx</td><td data-th="Agentic">67% reduced</td></tr>
+            <tr><th scope="row">Management + strategy cost<small>Research, oversight, operations</small></th><td data-th="Traditional">High fee</td><td data-th="Agentic">50% reduced</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 

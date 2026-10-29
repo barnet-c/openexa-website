@@ -299,3 +299,62 @@
   document.querySelectorAll('table[data-proof-table]').forEach(buildTable);
   document.querySelectorAll('[data-proof-chart]').forEach((host, i) => buildChart(host, i + 1));
 })();
+
+/* The cost figure (home §05 Fig. 5.1 · Proof §03 Fig. 3.1): each .cost-bar of a [data-cost] figure is drawn as index
+   blocks, one per point of its runs' --w weights (the first bar, traditional, must sum to 100), in grid order column by
+   column so a component stays one run. On a later bar a .cost-gone run stands for the whole components it covers (dashed
+   hollow blocks); every other run keeps its component's place in the first bar: the weight it states is solid (a
+   fraction fills part of a block) and the rest of the place is hollow. The blocks restate the markup's weights and
+   nothing else; if they do not add up, the flat runs stay as written. */
+(function () {
+  'use strict';
+  const weight = el => parseFloat(el.style.getPropertyValue('--w'));
+  const runsOf = bar => Array.from(bar.children).filter(e => e.tagName === 'I');
+  document.querySelectorAll('[data-cost]').forEach(fig => {
+    const bars = Array.from(fig.querySelectorAll('.cost-bar'));
+    const base = bars.length ? runsOf(bars[0]).map(weight) : [];
+    if (!base.length || base.some(v => !(v > 0)) || Math.abs(base.reduce((a, b) => a + b, 0) - 100) > 0.01) return;
+    const plans = bars.map((bar, n) => {
+      const out = [];
+      let slot = 0, x = 0;
+      for (const run of runsOf(bar)) {
+        const v = weight(run), c = run.style.getPropertyValue('--c');
+        if (!(v > 0)) return null;
+        run.style.setProperty('--x', x + '%'); x += v;
+        if (n === 0) { out.push({ n: v, solid: v, c }); slot++; }
+        else if (run.classList.contains('cost-gone')) {
+          let left = v;
+          while (left > 0.01 && slot < base.length) left -= base[slot++];
+          if (Math.abs(left) > 0.01) return null;
+          out.push({ n: v, gone: true });
+        } else {
+          if (slot >= base.length || v > base[slot] + 0.01) return null;
+          out.push({ n: base[slot++], solid: v, c });
+        }
+      }
+      return out;
+    });
+    if (plans.some(p => !p)) return;
+    bars.forEach((bar, n) => {
+      const grid = document.createElement('span');
+      grid.className = 'cost-blk';
+      grid.setAttribute('aria-hidden', 'true');
+      let j = 0;
+      plans[n].forEach(r => {
+        for (let k = 0; k < Math.round(r.n); k++) {
+          const b = document.createElement('i'), fill = r.solid - k;
+          b.style.setProperty('--j', j++);
+          if (r.gone) b.className = 'is-gone';
+          else {
+            b.style.setProperty('--c', r.c);
+            if (fill <= 0) b.className = 'is-rest';
+            else if (fill < 1) { b.className = 'is-part'; b.style.setProperty('--f', Math.round(fill * 100) + '%'); }
+          }
+          grid.append(b);
+        }
+      });
+      bar.append(grid);
+      bar.classList.add('is-blocks');
+    });
+  });
+})();
