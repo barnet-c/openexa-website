@@ -9,6 +9,9 @@
   if (!stages.length) return;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const narrow = () => window.innerWidth < 760;
+  // a 'Pause motion' control on every stage that moves (WCAG 2.2.2), except on the research pages, which stay as they
+  // are until the owner decides (D9)
+  const pausable = !/^\/research(\.html|\/|$)/.test(location.pathname);
 
   /* ---------------- geometry helpers (deterministic) ---------------- */
   function makeRng(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
@@ -241,14 +244,14 @@
     const proj = new Float32Array(16), view = new Float32Array(16);
     let W = 1, H = 1, dpr = 1, time = 0, mix = 1, current = initial, spinBase = parseFloat(stage.dataset.spin || '0.12');
     const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
-    let frameId = 0, visible = true, lost = false, last = performance.now();
+    let frameId = 0, visible = true, lost = false, last = performance.now(), paused = false, motionBtn = null;
     const scale = parseFloat(stage.dataset.scale || '1');
     // render at the device's full resolution (up to 3x), within a UHD pixel budget so a large stage on a 3x display stays fluid
     const PIXEL_BUDGET = 3840 * 2160;
     function resize() { if (!prog || lost) return; const r = cv.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height); dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / (W * H))); cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); gl.viewport(0, 0, cv.width, cv.height); perspective(proj, 0.62, W / H, 0.1, 30); gl.uniform1f(U.u_pr, dpr); draw(true); }
     function draw(force) {
       const now = performance.now(); const dt = Math.min(0.05, (now - last) / 1000); last = now;
-      const moving = !reduced.matches;
+      const moving = !reduced.matches && !paused;
       if (moving) { time += dt; mouse.x += (mouse.tx - mouse.x) * 0.05; mouse.y += (mouse.ty - mouse.y) * 0.05; }
       if (mix < 1) mix = Math.min(1, mix + dt * 0.9);
       const ang = mouse.x * 0.35, elev = 0.35 + mouse.y * 0.25;
@@ -261,9 +264,27 @@
       stage.classList.add('figure-ready');
       if (!force && (moving || mix < 1)) request();
     }
-    function frame() { frameId = 0; if (!visible || document.hidden || lost) return; draw(false); }
-    function request() { if (!frameId && prog && visible && !document.hidden && !lost) frameId = requestAnimationFrame(frame); }
+    function frame() { frameId = 0; if (!visible || document.hidden || lost || paused) return; draw(false); }
+    function request() { if (!frameId && prog && visible && !document.hidden && !lost && !paused) frameId = requestAnimationFrame(frame); }
     function stop() { cancelAnimationFrame(frameId); frameId = 0; last = performance.now(); }
+    /* Pause motion: the stage's loop stops at once (no frame is requested until Resume) and the figure holds its last
+       frame; a mode chosen meanwhile is drawn once, in place. The control is offered while the stage moves: not under
+       reduced motion, not for the static fallback, not while the stage is not laid out (Company §04 on phones). Its
+       label says what it will do (as the overture's), so it carries no pressed state. */
+    function syncMotion() { if (motionBtn) motionBtn.hidden = reduced.matches || lost || !stage.getClientRects().length; }
+    function setPaused(p) {
+      paused = p;
+      if (motionBtn) motionBtn.textContent = p ? 'Resume motion' : 'Pause motion';
+      if (p) stop(); else { last = performance.now(); request(); }
+    }
+    function addMotion() {
+      if (!pausable || motionBtn || !stage.parentElement) return;
+      motionBtn = document.createElement('button');
+      motionBtn.type = 'button'; motionBtn.className = 'figure-motion'; motionBtn.textContent = 'Pause motion';
+      motionBtn.addEventListener('click', () => setPaused(!paused));
+      stage.parentElement.appendChild(motionBtn); // after the stage's own content: the page's text comes first in the Tab order
+      syncMotion();
+    }
     stage.__figure = {
       show(name) {
         if (!FORMS[name] || name === current) return;
@@ -272,22 +293,24 @@
         // the current target becomes the origin; snapping mid-morph is invisible at these speeds
         gl.bindBuffer(gl.ARRAY_BUFFER, bufA); gl.bufferData(gl.ARRAY_BUFFER, build(current), gl.DYNAMIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, bufB); gl.bufferData(gl.ARRAY_BUFFER, build(name), gl.DYNAMIC_DRAW);
-        current = name; mix = 0; request();
+        current = name;
+        if (paused) { mix = 1; if (visible && !document.hidden) draw(true); } // paused: the new formation, in place, in one frame
+        else { mix = 0; request(); }
       },
     };
     stage.dataset.figureCurrent = initial;
     // a lost context shows the static mark; a restored one is rebuilt in place and carries on
-    cv.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; prog = null; stop(); stage.classList.add('no-figure'); });
-    cv.addEventListener('webglcontextrestored', () => { lost = false; setup(() => { stage.classList.remove('no-figure'); resize(); request(); }); });
+    cv.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; prog = null; stop(); stage.classList.add('no-figure'); syncMotion(); });
+    cv.addEventListener('webglcontextrestored', () => { lost = false; setup(() => { stage.classList.remove('no-figure'); resize(); request(); syncMotion(); }); });
     if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) request(); else stop(); }, { threshold: 0 }).observe(stage);
     document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else request(); });
-    reduced.addEventListener('change', () => { mouse.tx = mouse.ty = 0; request(); });
-    if ('ResizeObserver' in window) new ResizeObserver(() => resize()).observe(stage); else window.addEventListener('resize', resize);
+    reduced.addEventListener('change', () => { mouse.tx = mouse.ty = 0; request(); syncMotion(); });
+    if ('ResizeObserver' in window) new ResizeObserver(() => { resize(); syncMotion(); }).observe(stage); else window.addEventListener('resize', () => { resize(); syncMotion(); });
     // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
     (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
     stage.addEventListener('pointermove', e => { if (reduced.matches || e.pointerType === 'touch') return; const r = stage.getBoundingClientRect(); mouse.tx = (e.clientX - r.left) / r.width - 0.5; mouse.ty = (e.clientY - r.top) / r.height - 0.5; }, { passive: true });
     stage.addEventListener('pointerleave', () => { mouse.tx = mouse.ty = 0; });
-    setup(() => { resize(); request(); });
+    setup(() => { resize(); request(); addMotion(); });
   }
   // after the first paint, one stage per task: context creation and shader compilation never hold up a frame
   requestAnimationFrame(() => stages.forEach(s => setTimeout(() => init(s), 0)));

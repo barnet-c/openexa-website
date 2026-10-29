@@ -151,13 +151,29 @@
     }
     const c = chapters[shownK];
     if (ui.line && c) { MODES.forEach(m => ui.line.classList.toggle(m, m === 'is-' + c.mode)); }
+    nameReadout();
+  }
+  /* the readout's accessible name starts with exactly what it shows (WCAG 2.5.3: a speech user says what they see), then
+     the chapter's full label where the bar shows less, then the page's count */
+  const midMQ = window.matchMedia('(min-width: 961px) and (max-width: 1099.98px)'), wideMQ = window.matchMedia('(min-width: 1100px)');
+  function shownText(k) {
+    if (k < 0) return wideMQ.matches && tagline ? tagline : 'Index';
+    const c = chapters[k];
+    if (midMQ.matches) return c.n; // a narrow desktop shows the number only
+    if (c.mode === 'short' && c.short) return `${c.n} ${c.short}`;
+    if (c.mode === 'compact' && /^\d+$/.test(c.n)) return `§${c.n} / ${total()}`;
+    return `${c.n} ${c.title}`;
+  }
+  function nameReadout() {
+    if (!ui.btn || shownK < -1) return;
+    const shown = shownText(shownK), full = shownK < 0 ? shown : `${chapters[shownK].n} ${chapters[shownK].title}`;
+    ui.btn.setAttribute('aria-label', `${shown}${full === shown ? '' : ' · ' + chapters[shownK].title} · on this page: ${chapters.length} chapters`);
   }
   function showChapter(k) {
     if (!ui.roll || k === shownK) return;
     const dir = k > shownK ? 1 : -1, first = shownK === -3;
     shownK = k;
-    const label = k < 0 ? `On this page: ${chapters.length} chapters` : `Chapter ${chapters[k].n}, ${chapters[k].title}. On this page: ${chapters.length} chapters`;
-    ui.btn.setAttribute('aria-label', label);
+    nameReadout();
     chapters.forEach(c => { if (c.k === k) c.a.setAttribute('aria-current', 'true'); else c.a.removeAttribute('aria-current'); });
     if (ui.roll.getAnimations) ui.roll.getAnimations({ subtree: true }).forEach(a => a.cancel());
     const w0 = first ? 0 : ui.roll.getBoundingClientRect().width; // the width on screen now, before anything leaves
@@ -165,7 +181,8 @@
     const old = ui.line, neu = lineFor(k);
     ui.line = neu;
     ui.roll.appendChild(neu);
-    if (first || !old || reducedMQ.matches || !neu.animate || document.hidden) return;
+    // a long jump (ours, or the swarm lab's record trip: html[data-jump]) lands with its readout: no roll
+    if (first || !old || reducedMQ.matches || !neu.animate || document.hidden || jumping || root.dataset.jump) return;
     old.style.cssText = 'position:absolute;left:0;top:4px;width:max-content';
     ui.roll.appendChild(old);
     const w1 = neu.getBoundingClientRect().width;
@@ -250,6 +267,8 @@
       if (paperWatch > 0) { paperWatch--; queue(); }
     } else { paperTop = null; paperWatch = 0; }
     if (overPaper) dark = false;
+    // a dark-start page whose dark opening has scrolled away has a paper ground (overscroll below the footer is paper)
+    if (darkStart) { const opening = bands[0] && bands[0].dark ? bands[0] : null; root.classList.toggle('is-paper-root', !!opening && y >= opening.bottom); }
     const clear = y <= clearUntil && !menuOpen && !overPaper;
     nav.classList.toggle('nav--solid', !clear);
     nav.classList.toggle('nav--dark', dark);
@@ -311,10 +330,10 @@
       if (!a) return;
       const c = chapters[+a.dataset.k];
       setPanel(false);
-      // focus follows the reader to the chapter (the next Tab continues inside it). A long jump cuts to it (jumpTo);
-      // a short hop is the browser's own anchor scroll, smooth where motion is welcome
-      c.el.setAttribute('tabindex', '-1'); c.el.classList.add('nav-ch-target');
-      const focus = () => c.el.focus({ preventScroll: true });
+      // focus follows the reader to the chapter, onto its heading (a named place: a screen reader announces it; the next
+      // Tab continues inside the chapter). A long jump cuts to it (jumpTo); a short hop is the browser's own anchor
+      // scroll, smooth where motion is welcome
+      const focus = () => focusInto(c.el);
       if (!jumpTo(c.el, a.hash, e, focus)) setTimeout(focus, 0);
     });
     $('.nav-ch-top', ui.wrap).addEventListener('click', e => {
@@ -379,16 +398,36 @@
      transition, the page lands at once (at the bar's edge, as an anchor jump does), and a same-document view transition
      brings the live destination in as a sheet over the still of where the reader was: rising from the bottom edge going
      down the page, coming down from the top going up (v2:nav CSS; the bar holds; no blend, never a blank frame).
-     Without view transitions, or with reduced motion, it is a plain instant cut. Short hops keep the native scroll. */
+     Without view transitions, or with reduced motion, it is a plain instant cut. Short hops keep the native scroll.
+     The browser's still of the outgoing view holds nothing below about 16,384 CSS px of the document at any pixel ratio
+     (the sheet would slide over flat ink there; the incoming view is live and is not affected): a jump that leaves a
+     view reaching past VT_LIMIT is a plain cut, and what lands settles in from a dim start in .16 s (.is-landing). The
+     swarm's record trip applies the same limit. */
+  const VT_LIMIT = 16000;
+  let jumping = false;
+  function settle() {
+    const bands = $$('main > *, body > .footer').filter(el => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; });
+    bands.forEach(el => {
+      el.classList.remove('is-offscreen', 'is-landing'); // on screen now (the observer agrees a frame later)
+      void el.offsetWidth; // a second landing restarts the settle
+      el.classList.add('is-landing');
+      setTimeout(() => el.classList.remove('is-landing'), 400);
+    });
+  }
   function cut(to, land) {
     const from = window.scrollY;
+    // the chapter list is already closing: it goes at once (it would hang over the landing)
+    if (ui.wrap) { ui.wrap.classList.add('is-snap'); setTimeout(() => ui.wrap.classList.remove('is-snap'), 60); }
     const go = () => {
+      jumping = true;
       revealRange(Math.min(from, to), Math.max(from, to) + window.innerHeight); // first: an entrance offset would skew the landing
       land();
-      if (nav) measure(); // the bar takes the destination's ground in the same frame
+      if (nav) measure(); // the bar takes the destination's ground (and its readout) in the same frame
+      jumping = false;
       document.dispatchEvent(new CustomEvent('oxa:jump', { detail: { from, to: window.scrollY } }));
     };
     if (reducedMQ.matches || typeof document.startViewTransition !== 'function' || document.hidden) { go(); return; }
+    if (from + window.innerHeight > VT_LIMIT) { go(); settle(); return; }
     root.dataset.jump = to > from ? 'down' : 'up';
     let vt;
     try { vt = document.startViewTransition(go); } catch (err) { delete root.dataset.jump; go(); return; }
@@ -424,11 +463,29 @@
     if (url.origin !== location.origin || url.pathname !== location.pathname || url.search !== location.search || url.hash.length < 2) return;
     const el = document.getElementById(decodeURIComponent(url.hash.slice(1)));
     if (!el || el.closest('details:not([open])')) return; // the browser opens a closed <details> for its target
-    jumpTo(el, url.hash, e, () => {
-      // as after an anchor jump, the next Tab continues from the destination
-      if (!el.matches('a[href], button, input, select, textarea, [tabindex]')) { el.setAttribute('tabindex', '-1'); el.classList.add('nav-ch-target'); }
-      el.focus({ preventScroll: true });
-    });
+    jumpTo(el, url.hash, e, () => focusInto(el)); // as after an anchor jump, the next Tab continues from the destination
+  });
+  // where focus lands after a jump: a control or an element that takes focus itself; a section, by its heading (an
+  // unnamed section announces nothing); anything else made focusable for the moment (tabindex -1, no ring)
+  function focusInto(el) {
+    let t = el;
+    if (el.tagName === 'SECTION') {
+      const h = $$('h2', el).find(x => x.getClientRects().length && x.closest('section') === el);
+      if (h) t = h;
+    }
+    if (!t.matches('a[href], button, input, select, textarea, summary, [tabindex]')) { t.setAttribute('tabindex', '-1'); t.classList.add('nav-ch-target'); }
+    t.focus({ preventScroll: true });
+  }
+
+  /* ---------------- page transitions: leaving the overture holds its last frame ----------------
+     The browser's still of the outgoing page can miss the overture's WebGL stage (a full-screen white frame between two
+     dark pages): leaving while the stage is on screen skips the transition, so the page holds its last paint until the
+     next one paints. Every other exit keeps the cross-fade (v2:nav CSS). */
+  const stageEl = $('.story-stage');
+  if (stageEl) window.addEventListener('pageswap', e => {
+    if (!e.viewTransition) return;
+    const r = stageEl.getBoundingClientRect();
+    if (r.height > 0 && r.bottom > 0 && r.top < window.innerHeight) e.viewTransition.skipTransition();
   });
 
   if (nav) {
@@ -676,66 +733,19 @@
     $$('main > section, main > div, body > .footer').forEach(el => oio.observe(el));
   }
 
-  /* ---------------- preloader (homepage) ----------------
-     Finishes on elapsed time and readiness, never on a count of frames: a throttled or starved requestAnimationFrame
-     (background tab, battery saver) only skips repaints of the count; timers lift the loader. performance.now() runs from
-     the start of navigation, so the count is the real time the visitor has waited. A second visit in the same session
-     gets the short version (the mark, no count) for as long as the stage needs and no longer. */
-  const loader = $('.loader');
+  /* ---------------- preloader: loader.js (the homepage loads it first among its scripts) ----------------
+     It runs the loader and marks the page loaded (html.is-loaded, 'oxa:loaded') when the curtain lifts. Every other
+     page is ready now; and should loader.js not have run (blocked, failed), its loader goes at once */
   const loaded = () => {
     $$('.beat-0 [data-split]').forEach(el => el.classList.add('is-in'));
     root.classList.add('is-loaded');
     document.dispatchEvent(new CustomEvent('oxa:loaded'));
   };
-  if (loader) {
-    let seen = false;
-    try { seen = sessionStorage.getItem('oxa:intro') === '1'; sessionStorage.setItem('oxa:intro', '1'); } catch (e) { /* storage off: full intro */ }
-    if (seen) loader.classList.add('is-quick');
-    document.body.classList.add('is-loading');
-    const MIN = seen ? 0 : 950, CAP = seen ? 1100 : 2000, OUT = seen ? 0 : 380; // ms from navigation start; OUT = the count's run to 100
-    const count = $('.loader-count', loader), dial = $('.loader-dial', loader);
-    // the overture draws its first frame (or falls back) after this script: lift once it has, never later than the cap
-    const glReady = !$('.story-gl') || ['gl-ready', 'no-webgl'].some(c => root.classList.contains(c)) ? Promise.resolve()
-      : new Promise(r => ['story:gl-ready', 'story:no-webgl'].forEach(t => document.addEventListener(t, r, { once: true })));
-    const ready = Promise.all([document.fonts ? document.fonts.ready : Promise.resolve(),
-      document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true })), glReady]);
-    const easeOut = t => 1 - Math.pow(1 - t, 3);
-    // the dial has swept on its own (CSS) since the first paint: the count takes over from where it stands, and only now
-    // appears (never a frozen "00" while the script is on its way); the short version never shows a count
-    const idle = dial ? Math.min(0.6, parseFloat(getComputedStyle(dial).getPropertyValue('--lp')) || 0) : 0;
-    if (!seen) loader.classList.add('is-counting');
-    const t0 = performance.now(); // MIN and CAP count from navigation start
-    const early = t => idle + (0.9 - idle) * (1 - Math.exp(-Math.max(0, t - t0) / 520)); // before readiness the count eases towards 90
-    let runFrom = 0, pFrom = 0, finishAt = 0, completed = false;
-    const progressAt = (now) => finishAt && now >= runFrom ? pFrom + (1 - pFrom) * easeOut(clamp01((now - runFrom) / Math.max(1, OUT))) : early(now);
-    const paint = (p) => {
-      if (count) count.textContent = pad(Math.min(100, Math.round(p * 100)));
-      if (dial && !seen) dial.style.setProperty('--lp', p.toFixed(4));
-    };
-    const complete = () => {
-      if (completed) return;
-      completed = true;
-      paint(1);
-      loader.classList.add('is-complete');
-      document.body.classList.remove('is-loading');
-      loaded();
-      // the decision reads for a beat (100, the aperture pulses green), then the curtain lifts
-      setTimeout(() => { loader.classList.add('is-done'); setTimeout(() => loader.remove(), seen ? 600 : 1150); }, seen ? 0 : 120);
-    };
-    const schedule = () => {
-      if (finishAt) return;
-      const now = performance.now();
-      runFrom = Math.max(now, MIN - OUT);
-      pFrom = early(runFrom);
-      finishAt = runFrom + OUT;
-      setTimeout(complete, Math.max(0, finishAt - now));
-    };
-    ready.then(schedule);
-    setTimeout(schedule, Math.max(0, CAP - performance.now())); // never hold the page hostage
-    const frame = () => { if (completed) return; paint(progressAt(performance.now())); requestAnimationFrame(frame); };
-    paint(progressAt(performance.now()));
-    requestAnimationFrame(frame);
-  } else loaded();
+  if (!root.classList.contains('is-loaded') && !document.body.classList.contains('is-loading')) {
+    const stray = $('.loader');
+    if (stray) stray.remove();
+    loaded();
+  }
   /* ---------------- figures: never counted, never rewritten ----------------
      A number on this site is only ever shown at its true value: the HTML holds it and nothing here writes another one
      into the DOM ([data-count] is inert; the count-up from zero is gone). A stat row's arrival is presentation only: its

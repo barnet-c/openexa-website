@@ -2277,6 +2277,8 @@ html { scroll-padding-top: var(--nav-h); }
   position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr) 44px; align-items: center; column-gap: 12px;
   min-height: 46px; padding: 8px 20px; transition: background-color .2s var(--ease);
 }
+/* a tap leaves no highlight (it would be baked into a jump's still); focus-visible keeps its own state */
+.nav-ch-list a, .nav-ch-top, .nav-sheet a { -webkit-tap-highlight-color: transparent; }
 .nav-ch-list a::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; background: var(--accent); transform: scaleY(0); transition: transform .35s var(--ease); }
 .nav-ch-list .n { font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .1em; color: var(--p-fg-3); font-variant-numeric: tabular-nums; transition: color .25s var(--ease); }
 .nav-ch-list .t { font-family: var(--serif); font-size: 1.2rem; line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; transition: transform .35s var(--ease); }
@@ -2344,8 +2346,10 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-sheet .btn[aria-current="page"] { --btn-bg: transparent; --btn-fg: var(--paper); border-color: var(--line-strong); }
 .nav-sheet-meta { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 20px; padding-top: 18px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
 .nav-live { display: inline-flex; align-items: center; gap: 9px; color: var(--fg-2); }
-.nav-live i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: nav-ping 2.2s ease-out infinite; }
-@keyframes nav-ping { 0% { box-shadow: 0 0 0 0 rgba(79, 203, 147, .55); } 100% { box-shadow: 0 0 0 9px rgba(79, 203, 147, 0); } }
+/* the live dot pings twice as the sheet opens, then rests (a finite loop, WCAG 2.2.2; on transform and opacity only) */
+.nav-live i { position: relative; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.nav-live i::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: rgba(79, 203, 147, .55); opacity: 0; animation: nav-ping 2.2s ease-out 2; }
+@keyframes nav-ping { from { transform: scale(1); opacity: 1; } to { transform: scale(4); opacity: 0; } }
 /* opening: the sheet fades in, its rows rise one after another. Closing: the rows leave first, the opening's stagger
    reversed, then the sheet lifts 8 px into the bar and fades in .15 s, so its links are never legible over the page */
 .nav-sheet { opacity: 0; transform: translateY(-8px); transition: opacity .15s var(--ease) .07s, transform .15s var(--ease) .07s, display .22s allow-discrete, overlay .22s allow-discrete; }
@@ -2397,6 +2401,23 @@ html { scroll-padding-top: var(--nav-h); }
 }
 @media (min-width: 961px) { .nav-sheet { display: none !important; } }
 @media (max-width: 430px) { .nav .container { gap: 10px; } .nav-ch-btn { letter-spacing: .09em; } }
+/* a phone on its side: the chapter list takes two columns (read down, then across) and the room the bar leaves, so
+   every chapter and Back to top are on screen without scrolling */
+@media (max-height: 500px) and (max-width: 960px) {
+  .nav-ch-panel { max-height: calc(100vh - var(--nav-h) - 16px); max-height: calc(100svh - var(--nav-h) - 16px); }
+  .nav-ch-head { padding-block: 11px 10px; }
+  .nav-ch-list { columns: 2; column-gap: 24px; padding-block: 4px; }
+  .nav-ch-list li { break-inside: avoid; }
+  .nav-ch-list a { min-height: 44px; padding-block: 5px; }
+  .nav-ch-list .t { font-size: 1.15rem; }
+  .nav-ch-top { padding-block: 10px 6px; }
+}
+/* the narrowest phones: the bar keeps the mark and gives the wordmark's room to the chapter readout, so the chapters
+   read as words, not '§NN / TT' (the link keeps its name, 'OpenEXA home') */
+@media (max-width: 359.98px) { .nav.has-ch .brand { font-size: 0; gap: 0; } }
+/* dark-start pages: once the dark opening has scrolled away, the page's ground is paper, so an overscroll below the
+   paper footer shows paper, not ink (site.js toggles the class; at the top the opening's ink is kept) */
+:root.is-paper-root { background: var(--paper); }
 /* the open sheet: site.js mirrors the popover's state as body.nav-open and .nav--menu (one class change, no relational
    selector watching the whole document); the script-less version of these rules is in the (scripting: none) block below */
 body.nav-open { overflow: hidden; }
@@ -2406,12 +2427,19 @@ body.nav-open { overflow: hidden; }
   position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; color: var(--paper);
   background: radial-gradient(90% 70% at 50% 46%, #13201b 0%, var(--ink) 58%, #0B110F 100%);
   transition: transform .9s cubic-bezier(.62, 0, .2, 1), visibility 0s linear .95s;
-  animation: loader-failsafe .45s 3.4s forwards; /* lifted by site.js within ~2.5 s; without a working script it still goes */
+  /* the failsafe: gone 2.3-2.6 s after its first frame, whatever the scripts are doing (loader.js, the page's first
+     script, sets this clock to the start of navigation, lifts the curtain well before, and removes the loader at 2.3 s if
+     it has not lifted by then). The fade animates opacity alone and runs from the first frame with no delay, so the compositor
+     plays it while scripts hold the main thread (a delayed animation, or a keyframe of visibility, waits for the main
+     thread); visibility and pointer-events follow in a second, instant animation */
+  animation: loader-failsafe 2.6s linear forwards, loader-failsafe-off 0s linear 2.6s forwards;
 }
-@keyframes loader-failsafe { to { opacity: 0; visibility: hidden; } }
-/* site.js lifts the curtain 120 ms after 100 (the decision reads for a beat); it starts moving at once, and its content
-   stays legible until the stage is coming through, so no frame is an empty dark panel */
-.loader.is-done { transform: translateY(-100%); visibility: hidden; }
+@keyframes loader-failsafe { 0%, 88.46% { opacity: 1; } to { opacity: 0; } }
+@keyframes loader-failsafe-off { to { visibility: hidden; pointer-events: none; } }
+/* loader.js lifts the curtain 120 ms after 100 (the decision reads for a beat); it starts moving at once, and its content
+   stays legible until the stage is coming through, so no frame is an empty dark panel. The curtain replaces the failsafe
+   (loader.js never lifts it after the failsafe's moment) */
+.loader.is-done { transform: translateY(-100%); visibility: hidden; animation: none; }
 /* the curtain's lower edge is a hairline: the lift reads as a sheet being raised off the stage */
 .loader::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(245, 242, 236, .4) 30%, rgba(79, 203, 147, .55) 50%, rgba(245, 242, 236, .4) 70%, transparent); opacity: 0; transition: opacity .25s var(--ease); }
 .loader.is-done::after { opacity: 1; }
@@ -2447,7 +2475,10 @@ body.nav-open { overflow: hidden; }
 .loader.is-quick .loader-count, .loader.is-quick .loader-lab, .loader.is-quick .loader-dial::before { visibility: hidden; }
 .loader.is-quick .loader-ring, .loader.is-quick .loader-dial::after { opacity: 0; }
 .loader.is-quick { transition: opacity .45s var(--ease), visibility 0s linear .45s; }
-.loader.is-quick.is-done { transform: none; opacity: 0; }
+/* its fade is an animation, not a transition: the failsafe animates opacity from the first frame, and a transition does
+   not start on a property an animation drives in the same style change (the mark cut out at once) */
+.loader.is-quick.is-done { transform: none; opacity: 0; animation: loader-out .45s var(--ease) both; }
+@keyframes loader-out { from { opacity: 1; } to { opacity: 0; } }
 .loader.is-quick.is-done .loader-inner { transform: none; }
 body.is-loading { overflow: hidden; }
 /* as the curtain lifts, the bar's contents arrive */
@@ -2460,8 +2491,9 @@ body.is-loading { overflow: hidden; }
 @view-transition { navigation: auto; }
 .nav { view-transition-name: site-nav; }
 .loader ~ .nav { view-transition-name: none; } /* the homepage loader covers the bar until it lifts */
-/* out, then in: the outgoing page is gone before the incoming one is legible, so two headlines never double-expose */
-::view-transition-old(root) { animation: vt-leave .2s cubic-bezier(.4, 0, 1, 1) both; }
+/* out, then in: the outgoing page is gone (.13 s, falling fast) by the moment the incoming one starts, so two headlines
+   never double-expose */
+::view-transition-old(root) { animation: vt-leave .13s cubic-bezier(0, 0, .58, 1) both; }
 ::view-transition-new(root) { animation: vt-enter .56s var(--ease) .13s both; }
 ::view-transition-group(site-nav) { animation-duration: .45s; }
 ::view-transition-group(nav-ink) { animation-duration: .55s; animation-timing-function: var(--ease); }
@@ -2490,8 +2522,33 @@ a.link-arrow, button.link-arrow {
 a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 100% 1px, 100% 1px; background-position: 0 100%, 0 100%; }
 @media (hover: hover) { a.link-arrow:hover, button.link-arrow:hover { background-size: 100% 1px, 100% 1px; background-position: 0 100%, 0 100%; } }
 :where(a.link-arrow, button.link-arrow):focus-visible { outline-offset: 5px; }
-:where(.form) :is(input, select, textarea):focus-visible { outline: none; border-bottom-color: var(--accent); box-shadow: 0 1px 0 0 var(--accent); }
+/* form fields keep their underline focus; the transparent outline is what forced colours (Windows High Contrast) paint
+   in the system's highlight colour, where the box-shadow is dropped */
+:where(.form) :is(input, select, textarea):focus-visible { outline: 2px solid transparent; outline-offset: 2px; border-bottom-color: var(--accent); box-shadow: 0 1px 0 0 var(--accent); }
 .footer ul li a:focus-visible { opacity: 1; } /* the footer's links rest at .85; a focused one is at full strength */
+
+/* ---------- figure stages (figure.js): Pause motion (WCAG 2.2.2) ----------
+   The overture's control, on every point-cloud stage figure.js runs outside the research pages: Company's plate (top
+   right, inside its frame), Company §04's loop (the top right of its box), the blog's heroes (the hero's lower right;
+   on phones the top right of the figure band). It is offered only while the stage moves (figure.js hides it). */
+.figure-motion {
+  position: absolute; z-index: 3; display: inline-flex; align-items: center; min-height: 44px; padding: 0 2px;
+  font: var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58);
+  transition: color .25s var(--ease); -webkit-tap-highlight-color: transparent;
+}
+.figure-motion[hidden] { display: none; }
+.figure-motion:focus-visible { color: var(--paper); outline-offset: 0; }
+@media (hover: hover) { .figure-motion:hover { color: var(--signal-bright); } }
+.company-sculpture > .figure-motion { top: 2px; right: 22px; }
+:is(.research-hero, .article-hero) > .figure-motion { right: max(var(--gutter), env(safe-area-inset-right), calc((100% - var(--max)) / 2 + var(--gutter))); bottom: 10px; }
+#constants > .figure-motion { right: max(var(--gutter), calc((100% - var(--max)) / 2 + var(--gutter))); bottom: 18px; } /* without anchor positioning: the band's lower right */
+@supports (anchor-name: --a) {
+  #constants > .figure-stage { anchor-name: --oxa-constants-figure; }
+  #constants > .figure-motion { position-anchor: --oxa-constants-figure; top: anchor(top); right: anchor(right); bottom: auto; }
+}
+@media (max-width: 960px) {
+  :is(.research-hero, .article-hero) > .figure-motion { top: calc(var(--nav-h) + 4px); bottom: auto; }
+}
 .skip { position: fixed; left: 12px; top: 12px; z-index: 1001; padding: 11px 16px; border-radius: var(--r); background: var(--ink); color: var(--paper); font-size: .9rem; font-weight: 500; box-shadow: 0 0 0 2px var(--signal-bright); transform: translateY(calc(-100% - 24px)); transition: transform .3s var(--ease); }
 .skip:focus, .skip:focus-visible { left: 12px; transform: none; outline: none; }
 
@@ -2512,8 +2569,10 @@ a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 1
    reader was, the overture's own hand-off: going down the page it rises from the bottom edge (paper rising over the
    stage), going up it comes down from the top; the old view drifts a little the same way beneath it. No blend, so no
    blank or grey frame at any instant; the bar (its own transition group) holds. ---------- */
+/* both views move from the same instant (the page transition's .13 s delay on the incoming view would open a gap onto
+   the root's ink between them) */
 html[data-jump]::view-transition-old(root), html[data-jump]::view-transition-new(root) {
-  mix-blend-mode: normal; animation-duration: .32s; animation-timing-function: cubic-bezier(.22, .75, .2, 1); animation-fill-mode: both;
+  mix-blend-mode: normal; animation-duration: .32s; animation-delay: 0s; animation-timing-function: cubic-bezier(.22, .75, .2, 1); animation-fill-mode: both;
 }
 html[data-jump="down"]::view-transition-old(root) { animation-name: jump-under-up; }
 html[data-jump="down"]::view-transition-new(root) { animation-name: jump-sheet-up; box-shadow: 0 -28px 56px -28px rgba(8, 12, 10, .5); }
@@ -2523,10 +2582,18 @@ html[data-jump="up"]::view-transition-new(root) { animation-name: jump-sheet-dow
 @keyframes jump-under-up { to { transform: translateY(-16%); } }
 @keyframes jump-sheet-down { from { transform: translateY(-100%); } }
 @keyframes jump-under-down { to { transform: translateY(16%); } }
-html[data-jump]::view-transition-group(site-nav) { animation-duration: .28s; }
+/* the bar takes the destination's state at once: one bar, one readout, never two cross-fading over a grey one */
+html[data-jump]::view-transition-group(site-nav) { animation: none; }
+html[data-jump]::view-transition-old(site-nav) { display: none; }
+html[data-jump]::view-transition-new(site-nav) { animation: none; }
 html[data-jump]::view-transition { pointer-events: none; } /* a click during the move reaches the page, already there */
+/* past the browser's capture limit (site.js cut()) a jump is a plain cut: what lands settles in from a dim start, never
+   from nothing (a frame of bare ground would be a blank still) */
+.is-landing > * { animation: jump-land .16s cubic-bezier(.22, .75, .2, 1) both; }
+@keyframes jump-land { from { opacity: .7; } }
 /* the chapter list is gone before the still is taken (it would hang over the move) */
 html[data-jump] .nav-ch-panel { transition: none !important; }
+.nav-ch.is-snap .nav-ch-panel { transition: none !important; } /* the same for a plain cut (no transition, no data-jump) */
 /* revealed at once (a jump's destination, a focused control): no transition for those two frames */
 .is-instant, .is-instant * { transition: none !important; }
 
@@ -2538,9 +2605,9 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .nav-sheet-links li, .nav-sheet .btn, .nav-sheet-meta, .loader.is-done ~ .nav .container > * { animation: none; }
   .nav-sheet { transform: none; } /* it fades, nothing drifts (two rules: an unknown selector would void a list) */
   .nav-sheet:not(:popover-open) :is(.nav-sheet-links li, .btn, .nav-sheet-meta) { transform: none; }
-  .nav-live i { animation: none; }
+  .nav-live i::after { animation: none; }
   .loader, .loader-inner { transition: opacity .4s var(--ease), visibility 0s linear .4s; }
-  .loader.is-done { transform: none; opacity: 0; }
+  .loader.is-done { transform: none; opacity: 0; animation: loader-out .4s var(--ease) both; }
   .loader.is-done .loader-inner { transform: none; }
   .loader.is-complete .loader-dial, .loader-dial { animation: none; }
   a.link-arrow, button.link-arrow { transition: none; }
@@ -2561,7 +2628,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 }
 
 /* ---------- print: the frame stays off the page ---------- */
-@media print { .nav-ch, .nav-progress, .nav-sheet { display: none !important; } :where(.stats, .crew-stats) * { animation: none !important; } }
+@media print { .nav-ch, .nav-progress, .nav-sheet, .figure-motion { display: none !important; } :where(.stats, .crew-stats) * { animation: none !important; } }
 /* v2:nav:end */
 /* -------------------------------------------------------------------------- */
 
