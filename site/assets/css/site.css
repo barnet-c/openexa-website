@@ -826,6 +826,7 @@ em, .ital { font-style: italic; }
 .beat-0 .hero-sub { max-width: 44ch; }
 .beat .eyebrow { margin-bottom: 18px; color: rgba(245, 242, 236, .62); }
 .beat h2 { max-width: 15ch; text-wrap: balance; }
+.beat h2 .nb { white-space: nowrap; } /* 'One autonomous' stays on one line */
 .beat .body-lg { margin-top: 22px; max-width: 46ch; font-size: 1.04rem; line-height: 1.62; }
 .beat .hero-cta { margin-top: 30px; }
 .hero-stats { display: grid; grid-template-columns: 1fr 1fr .8fr 1.45fr; gap: 20px; margin-top: 34px; padding-top: 20px; border-top: 1px solid rgba(245, 242, 236, .14); max-width: min(52%, 640px); }
@@ -924,7 +925,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-bar .hero-scroll { position: static; display: inline-flex; color: rgba(245, 242, 236, .5); transition: opacity .5s var(--ease); }
 .story-bar .hero-scroll i { height: 22px; }
 .story.is-scrolled .hero-scroll { opacity: 0; }
-.story.is-scrolled .hero-scroll i, .story.is-scrolled .hero-stats .live { animation-play-state: paused; } /* their loops (transform, opacity) stop once S0 has gone */
+.story.is-scrolled .hero-scroll i, .story.is-scrolled .hero-stats .live, .story.is-paused .hero-scroll i, .story.is-paused .hero-stats .live { animation-play-state: paused; } /* their loops (transform, opacity) stop once S0 has gone, and with Pause motion */
 /* the hand-off: the columns drain into their records on the floor line; the paper rises to that line, which becomes its edge, and
    prints the records and the day tags in ink; its caption's rule runs on the chapters' container like every chapter rule */
 .story-paper { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; height: 0; overflow: hidden; visibility: hidden; background: var(--paper); color: var(--ink); pointer-events: none; }
@@ -963,6 +964,23 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
 }
 /* a landscape phone is short from the first paint too */
+/* tall phones: the overture's type closer to the chapters that follow (body 15 px), and S0 says what is live: the fourth hero
+   stat alone, as one mono line with its live dot (the copy still gives way, .is-tight, wherever a beat would reach the index).
+   From the first paint on a phone (nothing shifts when story.js arrives), and under html.story-compact on wider portrait screens */
+@media (scripting: enabled) and (max-width: 599.98px) and (min-height: 740px) {
+  html:not(.no-webgl) .beat .body-lg { font-size: .94rem; }
+  html:not(.no-webgl) .beat h2 { font-size: clamp(1.7rem, 7vw, 2.2rem); }
+  html:not(.no-webgl) .beat-0 .hero-stats { display: block; max-width: 100%; margin-top: 16px; padding-top: 12px; }
+  html:not(.no-webgl) .beat-0 .hero-stats > div:not(:last-child) { display: none; }
+  html:not(.no-webgl) .beat-0 .hero-stats > div:last-child { display: flex; align-items: baseline; gap: 10px; }
+  html:not(.no-webgl) .beat-0 .hero-stats > div:last-child b { flex: none; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .12em; color: var(--paper); }
+  html:not(.no-webgl) .beat-0 .hero-stats > div:last-child .live { width: 5px; height: 5px; margin-left: 7px; vertical-align: .15em; }
+  html:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { margin-top: 0; }
+}
+@media (min-width: 600px) and (min-height: 740px) {
+  html.story-compact:not(.no-webgl) .beat .body-lg { font-size: .94rem; }
+  html.story-compact:not(.no-webgl) .beat h2 { font-size: clamp(1.7rem, 7vw, 2.2rem); }
+}
 @media (scripting: enabled) and (max-height: 599.98px) and (min-aspect-ratio: 23/20) {
   html:not(.no-webgl) .beat .hero-cta { flex-wrap: nowrap; gap: 10px; margin-top: 14px; }
   html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
@@ -1037,8 +1055,9 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   .beat .eyebrow { margin-bottom: 8px; }
   .beat-0 .hero-kicker, .beat-0 .hero-stats, .story-legend { display: none; }
   .beat-0 .display-1 { font-size: clamp(1.9rem, 10vh, 3.4rem); }
-  .beat h2 { font-size: clamp(1.4rem, 7.5vh, 2.4rem); max-width: 24ch; }
+  .beat h2 { font-size: clamp(1.35rem, 3.4vw, 1.7rem); max-width: 24ch; } /* a smaller short scale: the paragraphs keep their place (.is-tight only if a beat still reaches the nav) */
   .beat .body-lg, .beat-0 .hero-sub { margin-top: 10px; font-size: .86rem; line-height: 1.45; }
+  .beat .body-lg { font-size: .8rem; line-height: 1.42; }
   .beat .hero-cta, .beat-0 .hero-cta { margin-top: 14px; }
   .story-idx button .t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .story-coda { right: auto; width: min(44%, 520px); }
@@ -1086,6 +1105,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   .story-lab.ring { flex-direction: column; align-items: flex-start; gap: 3px; } /* code over status: a narrow column, so the rings can fill the width */
   .story-lab.ring.is-row { flex-direction: row; align-items: center; gap: 8px; } /* a short phone: code beside status, so all six fit above the copy */
   .story-lab.gate { min-height: 20px; } /* six gates above a short phone's copy (they take no pointer) */
+  .story-lab.layer::after, .story-lab.day::after { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 24px); height: max(100%, 24px); transform: translate(-50%, -50%); } /* a 24 px hit area */
 }
 @media (min-width: 600px) and (max-aspect-ratio: 23/20) { .story-lab { font-size: clamp(.625rem, .5rem + .4vw, .8rem); } }
 @media (max-width: 400px) { .hero-stats { grid-template-columns: repeat(2, auto); justify-content: start; gap: 12px 26px; } .story-lab.day { padding: 2px 0; min-width: 0; } }

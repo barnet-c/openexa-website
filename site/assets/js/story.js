@@ -881,7 +881,12 @@
         // the day tags: where the columns stand closer than a tag and its 3 px of air, every other tag is left out (01, 03 … 09
         // print; all ten stay focusable and in the screen-reader text, and each shows itself when focused)
         dayPitch = COL_SPAN / NCOL * s * pxu;
-        if (lab.days) lab.days.forEach((l, c) => { const th = dayPitch < 18 && c % 2 === 1; l.el.classList.toggle('is-thin', th); if (l.ink) l.ink.classList.toggle('is-thin', th); });
+        if (lab.days) lab.days.forEach((l, c) => {
+          const th = dayPitch < 18 && c % 2 === 1; l.el.classList.toggle('is-thin', th); if (l.ink) l.ink.classList.toggle('is-thin', th);
+          // phones: each tag as wide as 24 px where the columns leave it 3 px of air (a pointer target, 2.5.8), measured again
+          const mw = W < 600 ? clamp(Math.floor(dayPitch - 3), 14, 24) + 'px' : '';
+          if (l.el.style.minWidth !== mw) { l.el.style.minWidth = mw; if (l.ink) l.ink.style.minWidth = mw; l.w = l.el.offsetWidth; }
+        });
         cx = (xa + x1) / 2;
         const fy = stacked ? y1 - DAY_BAND : Math.min(y1 - DAY_BAND, (y0 + y1) / 2 + 0.6 * s * pxu);
         cy = fy - 0.6 * s * pxu;
@@ -1370,6 +1375,15 @@
     }
     FLANK.x = bx; FLANK.y = by; return FLANK;
   }
+  // a ring's other right-flank points, nearest the one it chose first (where its leader would pass over another ring's node)
+  function flankAlts(k, sc, x0, y0) {
+    const c = project(0, 0, 0), cx = c.x, out = [];
+    for (let j = 0; j < 96; j++) {
+      const q = onLoop(RB[k], RINGS[k][0], j / 96 * TAU, 0), p = project(q[0] * sc, q[1] * sc, q[2] * sc);
+      if (p.x > cx) out.push([p.x, p.y, Math.hypot(p.x - x0, p.y - y0)]);
+    }
+    return out.sort((u, v) => u[2] - v[2]);
+  }
   function placeLabels() {
     if (!labelHost) return;
     const settledScene = labelScene >= 0 && xNow < 0.4 ? labelScene : -1;
@@ -1437,6 +1451,15 @@
       // portrait: a callout that would still reach the copy (a short screen, a long list) is left out; the inspector and the
       // screen-reader list keep it
       if (stacked) listCol.forEach(l => { if (l.y + l.h > beatRects[sc].t - 8) l.a = 0; });
+      // S1: no leader passes within 6 px of another ring's node; a leader that would steps its own node along its ring's flank
+      if (sc === 1) for (let pass = 0; pass < 2; pass++) listCol.forEach(l => {
+        if (!l.a) return;
+        const ly = l.y + l.h / 2, ex = colX - 20;
+        const clear = (x, y) => listCol.every(o => o === l || !o.a || segDist(o.ax, o.ay, x, y, ex, ly) >= 6);
+        if (clear(l.ax, l.ay)) return;
+        const alt = flankAlts(l.group, L.s, l.ax, l.ay).find(q => q[2] < 60 && clear(q[0], q[1]));
+        if (alt) { l.ax = alt[0]; l.ay = alt[1]; }
+      });
       listCol.forEach(l => {
         if (!l.a) return;
         const tr = `translate(${colX.toFixed(1)}px, ${l.y.toFixed(1)}px)`;
@@ -1999,7 +2022,7 @@
       // every beat stays in the accessibility tree; keyboard focus entering one brings the story to it
       // (on the way out, S4's copy has faded: Shift+Tab back from the first chapter brings the scene back with its buttons)
       beats.forEach((b, i) => b.addEventListener('focusin', () => { if (running && !tiny && (Math.abs(sTarget - i) > 0.45 || xTarget > 0.02)) goTo(i); }));
-      if (motionButton) motionButton.addEventListener('click', () => { paused = !paused; updateMotion(); requestFrame(); });
+      if (motionButton) motionButton.addEventListener('click', () => { paused = !paused; story.classList.toggle('is-paused', paused); updateMotion(); requestFrame(); }); // (the CSS loops too: the scroll cue, the live dot)
       reducedMQ.addEventListener('change', () => { mouse.x = mouse.y = mouse.tx = mouse.ty = 0; updateMotion(); requestFrame(); });
       window.addEventListener('resize', () => resize());
       stackedMQ.addEventListener('change', () => resize(true));
