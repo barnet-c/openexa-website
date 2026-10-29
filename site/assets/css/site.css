@@ -1368,7 +1368,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .lt-rec::after { content: ""; position: absolute; z-index: -1; inset: 0 6px 44px 6px; border-radius: 2px; background: rgba(245, 242, 236, .045); opacity: 0; transition: opacity .25s var(--ease); pointer-events: none; }
 .lt-rec:hover::after, .lt-rec.is-sel::after { opacity: 1; }
 .lt-meta { display: flex; justify-content: space-between; gap: 10px; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .08em; color: var(--fg-3); white-space: nowrap; }
-.lt-lc { overflow: hidden; text-overflow: ellipsis; opacity: .85; text-transform: uppercase; }
+.lt-lc { overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; } /* fg-3 at full strength: 5.4:1 on the panel */
 .lt-ev { display: block; margin-top: 10px; font: 500 var(--mono-m, .75rem)/1.25 var(--mono); letter-spacing: .1em; color: var(--fg); white-space: nowrap; }
 .lt-sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.9em; margin-top: 6px; font: var(--mono-s, .6875rem)/1.45 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
 .lt--excerpt .lt-sub { -webkit-line-clamp: 3; min-height: 4.35em; } /* the excerpt is read in full: nothing in it is cut */
@@ -1383,7 +1383,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .lt-rec.is-settled .lt-ev { color: var(--accent); }
 .lt-rec.is-rejected .lt-node { background: transparent; box-shadow: inset 0 0 0 1.5px var(--reject); }
 .lt-rec.is-rejected .lt-ev { color: var(--reject); }
-.lt-rec.is-swarm .lt-lc { color: var(--khaki); opacity: 1; }
+.lt-rec.is-swarm .lt-lc { color: var(--khaki); }
 /* the proposal the visitor followed through the gates above lands here marked as theirs */
 .lt-rec.is-followed .lt-lc { color: var(--accent); }
 .lt-rec.is-followed .lt-node { box-shadow: 0 0 0 3px var(--lt-bg), 0 0 0 4px rgba(79, 203, 147, .5), 0 0 14px rgba(79, 203, 147, .45); }
