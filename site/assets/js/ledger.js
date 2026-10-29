@@ -8,9 +8,11 @@
                             'oxa:inspect'  {record, seq, focus?}  (the swarm's trace asks to see a record: scroll,
                                            select, pulse; focus moves to it unless focus is false)
                           and answers every announcement with 'oxa:recorded' {id, record, hash, seq, followed}.
-                          In view, announcements are sealed into at most one record every 2 s; out of view, every 8 s.
-                          A followed proposal is answered at once, in a record of its own, which is selected and pulses
-                          the next time the ledger is in view.
+                          In view, announcements are sealed into at most one row every 2 s; out of view, every 8 s. Such
+                          a row is a digest of many settlements (or rejections) and says so: 'SETTLED ×1,741', tagged
+                          'Swarm digest'. A followed proposal is answered at once, in a record of its own (n = 1), which
+                          is selected and pulses the next time the ledger is in view. Every record is stamped when it is
+                          written, later than the one before it.
    [data-ledger="replay"] (Trust §03) holds a fixed excerpt that can be replayed and verified.
    Select any record (click, tap, or arrow keys once the list has focus) to inspect its id, event and both hash links.
    The records are illustrative; every hash is real SHA-256, computed here in the browser. Every count on the panel is
@@ -135,7 +137,7 @@
     const CAP = 400, DOM_CAP = 36;
     const recs = [], els = new Map();
     let seq = 0, total = 0, nextId = 0x4f21;
-    const sw = { recs: 0, settled: 0, rejected: 0 }; // records from the swarm, and the proposals they carry
+    const sw = { digests: 0, followed: 0, settled: 0, rejected: 0 }; // rows from the swarm, and the proposals they carry
     const excerpt = Array.from(track.querySelectorAll('.lt-rec')).map(li => {
       const t = s => { const n = li.querySelector(s); return n ? n.textContent.trim() : ''; };
       return { id: t('.lt-id'), lc: t('.lt-lc'), ev: t('.lt-ev').toUpperCase(), sub: t('.lt-sub'), d: li.dataset.d || t('.lt-sub'), t: t('.lt-t'), src: 'excerpt' };
@@ -167,11 +169,14 @@
       const li = node('li', 'ln lt-rec' + tone(r.ev) + (r.src === 'swarm' ? ' is-swarm' : '') + (r.followed ? ' is-followed' : ''));
       li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false'); li.tabIndex = -1;
       li.dataset.seq = r.seq;
-      li.setAttribute('aria-label', `${r.id}, ${r.ev}, ${r.d}, ${r.t}`);
+      li.setAttribute('aria-label', r.digest ? `${r.id}, swarm digest, ${r.d}, ${r.t}` : `${r.id}, ${r.ev}, ${r.d}, ${r.t}${r.followed ? ', the proposal you followed' : ''}`);
       const meta = node('span', 'lt-meta'); meta.append(node('span', 'lt-id', r.id), node('span', 'lt-lc', r.lc || ''));
       const line = node('span', 'lt-line'); line.setAttribute('aria-hidden', 'true');
       line.append(node('i', 'lt-node'), node('i', 'lt-seg'), node('span', 'lt-tag', r.hash.slice(0, 8)));
-      li.append(meta, node('b', 'lt-ev', r.ev), node('span', 'lt-sub', r.sub), node('time', 'lt-t', r.t), line);
+      // a digest's count is data beside its event word: 'SETTLED ×1,741'
+      const ev = node('b', 'lt-ev', r.digest ? r.kind + ' ' : r.ev);
+      if (r.digest) ev.append(node('span', 'lt-n', r.ev.slice(r.kind.length + 1)));
+      li.append(meta, ev, node('span', 'lt-sub', r.sub), node('time', 'lt-t', r.t), line);
       els.set(r.seq, li);
       return li;
     }
@@ -201,15 +206,16 @@
     }
     // columns are sized so a whole number of records fills the view: no record is ever cut in half at rest. Every
     // horizontal position is then arithmetic on these numbers: the scroll path never measures the DOM
-    const MIN_COL = stream ? 136 : 122;
+    const MIN_COL = stream ? 146 : 122;
     const G = { col: 148, padL: 28, padR: 28, w: 0 };
     function fit() {
       const cs = getComputedStyle(track);
       G.padL = parseFloat(cs.paddingLeft) || 0; G.padR = parseFloat(cs.paddingRight) || 0; G.w = view.clientWidth;
       const avail = G.w - G.padL - G.padR;
       if (avail <= 0) return;
-      // a phone still shows three live records and two whole links; an excerpt keeps two wider columns, read in full
-      const min = window.innerWidth < 600 ? (stream ? 100 : 136) : MIN_COL;
+      // a live column holds a digest's longest lines beside the id ('#4f2a  SWARM DIGEST', 'REJECTED ×1,741'), so a phone
+      // shows two records and the whole link between them; an excerpt keeps two wider columns, read in full
+      const min = window.innerWidth < 600 ? (stream ? 140 : 136) : MIN_COL;
       let n = Math.max(2, Math.floor(avail / min));
       if (!stream) n = Math.min(n, Math.max(2, recs.length));
       G.col = Math.floor(avail / n * 10) / 10;
@@ -245,11 +251,12 @@
     const onScreen = () => visible && !document.hidden;
     function toEnd(smooth) { view.scrollTo({ left: maxScroll(), behavior: smooth && !reduced ? 'smooth' : 'auto' }); }
     function reveal(li, smooth, centre) { // horizontal only: never scroll the page under the reader
-      const pad = 36, x = leftOf(li), l = x - pad, r = x + G.col + pad, sl = view.scrollLeft;
+      const pad = 36, x = leftOf(li), l = x - pad, r = x + G.col + pad, sl = view.scrollLeft, m = maxScroll();
       let to = null;
-      if (centre) to = Math.min(maxScroll(), x + G.col / 2 - G.w / 2); // a record asked for by name sits mid-strip
+      // a record asked for by name sits mid-strip, on whole columns (with an even number of them, just off the middle)
+      if (centre) to = m - Math.round((m - (x + G.col / 2 - G.w / 2)) / G.col) * G.col;
       else if (l < sl) to = l; else if (r > sl + G.w) to = r - G.w;
-      if (to !== null && Math.abs(to - sl) > 1) view.scrollTo({ left: Math.max(0, to), behavior: smooth && !reduced ? 'smooth' : 'auto' });
+      if (to !== null) { to = Math.max(0, Math.min(m, to)); if (Math.abs(to - sl) > 1) view.scrollTo({ left: to, behavior: smooth && !reduced ? 'smooth' : 'auto' }); }
     }
     function follow(smooth = true) {
       sel = null; following = true;
@@ -317,13 +324,7 @@
       if (i < 0 || G.padL + i * G.col < sl - 1) return null;
       return bySeq(firstSeq() + i);
     }
-    function sourceOf(r) {
-      if (r.src === 'swarm') {
-        const who = r.pid ? `proposal ${r.pid}${r.n > 1 ? ` + ${fmt(r.n - 1)} more` : ''}` : `${fmt(r.n)} proposal${r.n > 1 ? 's' : ''}`;
-        return `The swarm above · ${who}${r.lane ? ' · ' + r.lane : ''}${r.rej ? ' · rejected at 04 Approve' : ''}${r.followed ? ' · the proposal you followed' : ''}`;
-      }
-      return `Illustrative ${r.src === 'gen' ? 'generator' : 'excerpt'}${r.lc ? ' · ' + r.lc : ''}`;
-    }
+    const sourceOf = r => (r.src === 'swarm' ? r.from : `Illustrative ${r.src === 'gen' ? 'generator' : 'excerpt'}${r.lc ? ' · ' + r.lc : ''}`);
     let shown = '';
     function inspect(sl) {
       if (!F.rec || !recs.length) return;
@@ -391,9 +392,13 @@
     }
     function counts() {
       put(ui.count, fmt(total));
+      // 'N records · M swarm digests [and F followed], covering S settled and R rejected proposals': S and R are summed
+      // from the rows' own counts, the followed proposals' included
+      const rows = sw.digests + sw.followed;
       if (ui.swarm) {
-        if (ui.swarm.hidden !== !sw.recs) ui.swarm.hidden = !sw.recs;
-        if (sw.recs) put(ui.swarm, ` · ${fmt(sw.recs)} from the swarm above, carrying ${fmt(sw.settled)} settled${sw.rejected ? ` and ${fmt(sw.rejected)} rejected` : ''} proposals`);
+        if (ui.swarm.hidden !== !rows) ui.swarm.hidden = !rows;
+        if (rows) put(ui.swarm, ` · ${[sw.digests ? `${fmt(sw.digests)} swarm digest${sw.digests > 1 ? 's' : ''}` : '', sw.followed ? `${fmt(sw.followed)} followed` : ''].filter(Boolean).join(' and ')}`
+          + `${sw.followed ? ',' : ''} covering ${[sw.settled || !sw.rejected ? `${fmt(sw.settled)} settled` : '', sw.rejected ? `${fmt(sw.rejected)} rejected` : ''].filter(Boolean).join(' and ')} proposal${sw.settled + sw.rejected === 1 ? '' : 's'}`);
       }
     }
 
@@ -537,20 +542,26 @@
       const n = group.reduce((s, a) => s + a.count, 0);
       const lanes = Array.from(new Set(group.map(a => laneOf(a.lane)).filter(v => v !== null)));
       const nums = lanes.every(v => typeof v === 'number') ? lanes.slice().sort((a, b) => a - b) : null;
-      const lane = !lanes.length ? '' : lanes.length === 1 ? `lane ${lanes[0]}` : nums ? `lanes ${nums[0]}–${nums[nums.length - 1]}` : `${lanes.length} lanes`;
-      const tail = rej ? 'rejected at 04' : lane;
-      const what = pid ? (n > 1 ? `${pid} +${fmt(n - 1)} more` : `proposal ${pid}`) : `${fmt(n)} proposal${n > 1 ? 's' : ''}`;
-      const verb = rej ? 'rejected by the council at 04 Approve in the swarm above' : 'settled in the swarm above';
-      // the record is stamped when it is sealed; the window its announcements came in stays in its detail
-      let lo = Infinity, hi = -Infinity;
-      group.forEach(a => { let v = epoch(a.ts); if (!Number.isFinite(v)) v = epoch(a.at); if (v < lo) lo = v; if (v > hi) hi = v; });
-      const a0 = tenths(lo), a1 = tenths(hi), span = a0 === a1 ? `at ${a0}` : `between ${a0} and ${a1}`;
-      const d = (pid ? (n > 1 ? `${pid}${followed ? ' (followed)' : ''} and ${fmt(n - 1)} more ${verb}` : `proposal ${pid} ${verb}`)
-        : `${fmt(n)} proposal${n > 1 ? 's' : ''} ${verb}, in the batch of the one you followed`)
-        + ` ${span}` + (group.length > 1 ? ' · sealed as one block' : '') + (rej ? ' · not executed · recorded' : ' · chained here');
-      const r = write({ id: newId(), t: later(), ev: rej ? 'REJECTED' : 'SETTLED', lc: followed ? 'Followed' : 'Swarm',
-        sub: what + (tail ? ' · ' + tail : ''), d, src: 'swarm', pid, lane, n, followed, rej });
-      sw.recs++; if (rej) sw.rejected += n; else sw.settled += n;
+      // (no-break spaces keep 'lanes 1–4', 'incl. P-49000' and 'at 04 Approve' whole when a column wraps them)
+      const lane = !lanes.length ? '' : lanes.length === 1 ? `lane ${lanes[0]}` : nums ? `lanes ${nums[0]}–${nums[nums.length - 1]}` : `${lanes.length} lanes`;
+      const KIND = rej ? 'REJECTED' : 'SETTLED', at = !rej && lane ? ' · ' + lane : '';
+      let f;
+      if (followed) { // the proposal the visitor followed: a record of its own (n = 1)
+        f = { ev: KIND, lc: 'Followed', sub: `proposal ${pid}${rej ? ' · rejected at 04' : at}`,
+          d: rej ? `proposal ${pid} rejected by the council at 04 Approve · not executed · recorded` : `proposal ${pid} settled in the swarm above · chained here`,
+          from: `The swarm above · ${pid}${at} · the proposal you followed` };
+      } else { // a digest: every proposal of one kind announced since the last seal, as one row. It is stamped when it is
+        // sealed; the window its announcements came in stays in its detail
+        let lo = Infinity, hi = -Infinity;
+        group.forEach(a => { let v = epoch(a.ts); if (!Number.isFinite(v)) v = epoch(a.at); if (v < lo) lo = v; if (v > hi) hi = v; });
+        const a0 = tenths(lo), a1 = tenths(hi), who = pid ? `incl. ${pid}` : 'followed batch';
+        f = { ev: `${KIND} ×${fmt(n)}`, kind: KIND, digest: true, lc: 'Swarm digest', sub: who + (rej ? ' · at 04 Approve' : at),
+          d: `${fmt(n)} ${rej ? 'rejected by the council' : 'settled in the swarm above'} ${a0 === a1 ? `at ${a0}` : `between ${a0} and ${a1}`}`,
+          from: `Swarm digest, shown here as one row · ${pid ? who : 'the rest of the followed batch'}${at}` };
+      }
+      const r = write(Object.assign({ id: newId(), t: later(), src: 'swarm', pid, lane, n, followed, rej }, f));
+      if (followed) sw.followed++; else sw.digests++;
+      if (rej) sw.rejected += n; else sw.settled += n;
       named.forEach(a => document.dispatchEvent(new CustomEvent('oxa:recorded', { detail: { id: a.id, record: r.id, hash: r.hash, seq: r.seq, followed: a.followed } })));
       return r;
     }
