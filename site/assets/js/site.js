@@ -13,11 +13,7 @@
   const clamp01 = (v) => v < 0 ? 0 : v > 1 ? 1 : v;
   const root = document.documentElement;
 
-  /* ---------------- nav: the frame of every page ----------------
-     The bar is transparent over a dark opening and otherwise glass that takes the ground of the section beneath it.
-     Pages with chapters (homepage [data-chapter] sections; numbered sections elsewhere; an article's headings) get a
-     readout beside the brand — number + title of the chapter being read, a list on click/Enter — and a progress hairline
-     along the bar's lower edge, cut into those chapters. Geometry is measured on resize/content change, never per frame. */
+  /* ---------------- nav: the frame of every page ---------------- */
   const nav = $('.nav');
   const darkStart = document.body.dataset.nav === 'dark-start';
   const themeMeta = $('meta[name="theme-color"]');
@@ -31,16 +27,13 @@
   const pageKey = path => path.replace(/\/+$/, '').split('/').pop().replace(/\.html$/, '') || 'index';
   const here = pageKey(location.pathname);
   const section = /\/research\/[^/]+$/.test(location.pathname) ? 'research' : here; // an article sits under Research
-  // marks the link to where the reader is; never removes a mark the page itself states (a research article's markup
-  // marks Research, and stripping it hid the current-page underline there)
+  // marks the link to where the reader is; never removes a mark the page itself states
   $$('.nav-links a, .nav-sheet a, .nav .btn').forEach(a => {
     const href = (a.getAttribute('href') || '').split(/[?#]/)[0];
     if (href && (pageKey(href) === here || pageKey(href) === section)) a.setAttribute('aria-current', 'page');
   });
 
-  /* chapters: [data-chapter] sections, else numbered sections (.sec-head), else an article's table of contents.
-     A chapter is named by its section's own label (.sec-head .lab), exactly as the page prints it; data-chapter-short
-     may abbreviate it in the phone bar, and only where the full label does not fit (fitModes) */
+  /* chapters: [data-chapter] sections, else numbered sections (.sec-head), else an article's table of contents. */
   const tagline = ($('.nav .brand small') || {}).textContent || '';
   const headOf = el => { const head = $('.sec-head', el); return head && head.closest('section') === el ? head : null; };
   const labOf = el => { const lab = headOf(el) && $('.lab', headOf(el)); return lab ? lab.textContent.trim() : ''; };
@@ -60,7 +53,7 @@
     c.k = k;
     if (!c.el.id) { let id = 'chapter-' + (c.n.replace(/[^\w-]/g, '') || k); while (document.getElementById(id)) id += '-'; c.el.id = id; }
   });
-  // an address that names a section given its id just now (the browser looked for it before this script ran)
+  // an address that names a section given its id just now
   if (chapters.length && location.hash && chapters.some(c => '#' + c.el.id === decodeURIComponent(location.hash)) && window.scrollY < 2) {
     const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
     requestAnimationFrame(() => target.scrollIntoView({ block: 'start', behavior: 'instant' }));
@@ -94,8 +87,7 @@
     });
   }
 
-  /* the readout: the line rolls up to the next chapter (down when going back); its width follows. Each line carries the
-     label, its short form (if the section gives one) and a compact '§NN / total'; a mode class shows one of them */
+  /* the readout: the line rolls up to the next chapter (down when going back); its width follows. */
   const MODES = ['is-short', 'is-compact'];
   const total = () => pad(Math.max(0, ...chapters.map(c => /^\d+$/.test(c.n) ? +c.n : 0)) || chapters.length);
   function lineFor(k, mode) {
@@ -117,10 +109,7 @@
     }
     return line;
   }
-  /* phones: the full label wherever it fits; else the section's short form; else '§NN / total'. Decided per page (when one
-     label needs the compact form, every chapter takes it, so the bar keeps one register), from the natural width of
-     every form in the readout's own type against the room the bar gives the line. Articles' headings go compact
-     under 600 px. Desktop keeps the label (961-1099 px shows the number only). */
+  /* phones: the full label wherever it fits; else the section's short form; else '§NN / total'. */
   const narrowMQ = window.matchMedia('(max-width: 960px)'), phoneMQ = window.matchMedia('(max-width: 600px)');
   let fitKey = '';
   function fitModes() {
@@ -145,7 +134,7 @@
         else if (w.has(c.k + 'short') && w.get(c.k + 'short') <= avail) c.mode = 'short';
         else { compact = true; c.fit = false; }
       });
-      // the compact form is a number: a chapter without one (the blog's featured series) keeps its label if it fits
+      // the compact form is a number: a chapter without one
       if (compact) live.forEach(c => { if (/^\d+$/.test(c.n) || c.fit === false) c.mode = 'compact'; });
       live.forEach(c => { delete c.fit; });
     }
@@ -153,8 +142,7 @@
     if (ui.line && c) { MODES.forEach(m => ui.line.classList.toggle(m, m === 'is-' + c.mode)); }
     nameReadout();
   }
-  /* the readout's accessible name starts with exactly what it shows (WCAG 2.5.3: a speech user says what they see), then
-     the chapter's full label where the bar shows less, then the page's count */
+  /* the readout's accessible name starts with exactly what it shows */
   const midMQ = window.matchMedia('(min-width: 961px) and (max-width: 1099.98px)'), wideMQ = window.matchMedia('(min-width: 1100px)');
   function shownText(k) {
     if (k < 0) return wideMQ.matches && tagline ? tagline : 'Index';
@@ -211,8 +199,7 @@
     vh = window.innerHeight; navH = nav.offsetHeight || 72;
     maxScroll = Math.max(1, root.scrollHeight - vh);
     const pinned = story && root.classList.contains('story-ready') && !root.classList.contains('no-webgl');
-    // over a pinned overture the bar stays clear until the stage starts to leave (its text then passes under glass, never
-    // under bare links); a static dark opening is clear only at the very top
+    // over a pinned overture the bar stays clear until the stage starts to leave
     clearUntil = !darkStart ? -1 : pinned ? story.getBoundingClientRect().bottom + y - vh : 16;
     bands = $$('main > *, body > .footer').map(el => {
       const r = el.getBoundingClientRect();
@@ -251,13 +238,11 @@
   function update() {
     if (!nav) return;
     const y = window.scrollY;
-    // the bar's surface: the ground of the section that meets its lower edge, so bar and section read as one
+    // the bar's surface: the ground of the section that meets its lower edge
     let dark = false, band = null;
     const edge = y + navH + 1;
     for (const b of bands) if (edge >= b.top && edge < b.bottom) { dark = b.dark; band = b; break; }
-    // the overture's exit: its rising paper (.story-paper; hidden unless it rises) is paper under the bar as soon as its
-    // edge reaches the bar's lower edge, though the band beneath is the dark stage. The rise follows the scroll with the
-    // stage's inertia, so while the edge moves this looks again on the next frames.
+    // the overture's exit: its rising paper
     let overPaper = false;
     if (band && band.el === story && paper) {
       const r = getComputedStyle(paper).visibility !== 'hidden' ? paper.getBoundingClientRect() : null;
@@ -267,7 +252,7 @@
       if (paperWatch > 0) { paperWatch--; queue(); }
     } else { paperTop = null; paperWatch = 0; }
     if (overPaper) dark = false;
-    // a dark-start page whose dark opening has scrolled away has a paper ground (overscroll below the footer is paper)
+    // a dark-start page whose dark opening has scrolled away has a paper ground
     if (darkStart) { const opening = bands[0] && bands[0].dark ? bands[0] : null; root.classList.toggle('is-paper-root', !!opening && y >= opening.bottom); }
     const clear = y <= clearUntil && !menuOpen && !overPaper;
     nav.classList.toggle('nav--solid', !clear);
@@ -330,9 +315,7 @@
       if (!a) return;
       const c = chapters[+a.dataset.k];
       setPanel(false);
-      // focus follows the reader to the chapter, onto its heading (a named place: a screen reader announces it; the next
-      // Tab continues inside the chapter). A long jump cuts to it (jumpTo); a short hop is the browser's own anchor
-      // scroll, smooth where motion is welcome
+      // focus follows the reader to the chapter, onto its heading
       const focus = () => focusInto(c.el);
       if (!jumpTo(c.el, a.hash, e, focus)) setTimeout(focus, 0);
     });
@@ -344,8 +327,7 @@
     ui.wrap.addEventListener('focusout', e => { if (chOpen && e.relatedTarget && !ui.wrap.contains(e.relatedTarget)) setPanel(false); });
   }
 
-  /* the menu sheet (phones, tablets): a popover — it opens without JavaScript; this adds focus care, the bar's state,
-     a fallback for browsers without the popover API, and keeps the page behind it inert */
+  /* the menu sheet (phones, tablets): a popover — it opens without JavaScript */
   const popover = !!(sheet && sheet.hasAttribute('popover') && typeof sheet.showPopover === 'function');
   function syncMenu(open) {
     if (open === menuOpen) return;
@@ -391,18 +373,7 @@
   }
   window.addEventListener('keydown', e => { if (e.key === 'Escape' && chOpen) setPanel(false, true); });
 
-  /* ---------------- long jumps: never through blank paper ----------------
-     A jump of more than 1.5 screens (a chapter from the list, Back to top, any link to a place on this page) used to
-     scroll smoothly through every section in between, whose reveals had not run: about a second of near-empty paper,
-     then a landing mid-reveal. It now cuts: everything it passes over and the destination are revealed without
-     transition, the page lands at once (at the bar's edge, as an anchor jump does), and a same-document view transition
-     brings the live destination in as a sheet over the still of where the reader was: rising from the bottom edge going
-     down the page, coming down from the top going up (v2:nav CSS; the bar holds; no blend, never a blank frame).
-     Without view transitions, or with reduced motion, it is a plain instant cut. Short hops keep the native scroll.
-     The browser's still of the outgoing view holds nothing below about 16,384 CSS px of the document at any pixel ratio
-     (the sheet would slide over flat ink there; the incoming view is live and is not affected): a jump that leaves a
-     view reaching past VT_LIMIT is a plain cut, and what lands settles in from a dim start in .16 s (.is-landing). The
-     swarm's record trip applies the same limit. */
+  /* ---------------- long jumps: never through blank paper ---------------- */
   const VT_LIMIT = 16000;
   let jumping = false;
   function settle() {
@@ -434,7 +405,7 @@
     vt.ready.catch(() => {}); vt.updateCallbackDone.catch(() => {});
     vt.finished.catch(() => {}).then(() => { delete root.dataset.jump; });
   }
-  // a jump to an element (null: the top) longer than 1.5 screens is handled here (returns true); a shorter one is not
+  // a jump to an element (null: the top) longer than 1.5 screens is handled here (returns true)
   function jumpTo(el, hash, e, after) {
     const sp = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
     const y0 = window.scrollY, max = Math.max(0, root.scrollHeight - window.innerHeight);
@@ -442,7 +413,7 @@
     if (Math.abs(to - y0) <= 1.5 * window.innerHeight) return false;
     if (e) e.preventDefault();
     cut(to, () => {
-      // the address changes as an anchor jump's would, and so does everything that listens for it (the blog's filter)
+      // the address changes as an anchor jump's would, and so does everything that listens for it
       if (hash && hash !== location.hash) {
         const oldURL = location.href;
         history.pushState(null, '', hash);
@@ -454,7 +425,7 @@
     });
     return true;
   }
-  // any other link to a place on this page (the overture's "See the stack", Company's "Our thinking", ...)
+  // any other link to a place on this page
   document.addEventListener('click', e => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     const a = e.target.closest && e.target.closest('a[href*="#"]');
@@ -465,8 +436,7 @@
     if (!el || el.closest('details:not([open])')) return; // the browser opens a closed <details> for its target
     jumpTo(el, url.hash, e, () => focusInto(el)); // as after an anchor jump, the next Tab continues from the destination
   });
-  // where focus lands after a jump: a control or an element that takes focus itself; a section, by its heading (an
-  // unnamed section announces nothing); anything else made focusable for the moment (tabindex -1, no ring)
+  // where focus lands after a jump: a control or an element that takes focus itself
   function focusInto(el) {
     let t = el;
     if (el.tagName === 'SECTION') {
@@ -477,10 +447,7 @@
     t.focus({ preventScroll: true });
   }
 
-  /* ---------------- page transitions: leaving the overture holds its last frame ----------------
-     The browser's still of the outgoing page can miss the overture's WebGL stage (a full-screen white frame between two
-     dark pages): leaving while the stage is on screen skips the transition, so the page holds its last paint until the
-     next one paints. Every other exit keeps the cross-fade (v2:nav CSS). */
+  /* ---------------- page transitions: leaving the overture holds its last frame ---------------- */
   const stageEl = $('.story-stage');
   if (stageEl) window.addEventListener('pageswap', e => {
     if (!e.viewTransition) return;
@@ -494,19 +461,14 @@
     window.addEventListener('resize', measure);
     window.addEventListener('load', measure);
     ['story:gl-ready', 'story:no-webgl', 'oxa:loaded'].forEach(t => document.addEventListener(t, measure));
-    // content that changes height (fonts, lazy images, opened details, filtered collections) moves every chapter
+    // content that changes height
     if ('ResizeObserver' in window) { let ro = 0; new ResizeObserver(() => { cancelAnimationFrame(ro); ro = requestAnimationFrame(measure); }).observe(document.body); }
     if (document.fonts) document.fonts.ready.then(measure);
   }
-  /* ---------------- the reader's place: kept through resizes, and a deep link's landing kept after late layout ----------------
-     The fluid gutters change computed paddings on every resize, which switches the browser's own scroll anchoring off:
-     a reader at Home 06 was moved by -868 to +3,006 px between widths. When scrolling settles this keeps a reading
-     anchor (the element at the bar's lower edge and its offset from the edge); after a resize that changed the width,
-     or the height while the reader was not scrolling, it scrolls back by the difference, and again as late layout
-     settles. Not inside the overture, which keeps its own scene. */
+  /* ---------------- the reader's place: kept through resizes, and a deep link's landing kept after late layout ---------------- */
   let anchor = null, settleUntil = 0, lastInput = 0, lastW = window.innerWidth;
   const inFlow = el => { const p = getComputedStyle(el).position; return p !== 'fixed' && p !== 'sticky' && p !== 'absolute'; };
-  // where layout puts an element (viewport y), ignoring transforms: a reveal's entrance offset is not the place
+  // where layout puts an element (viewport y), ignoring transforms
   const layoutTop = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y - window.scrollY; };
   function pickAnchor() {
     anchor = null;
@@ -526,8 +488,7 @@
         if (t > line) { next = ch; break; }
       }
       if (straddle) { el = straddle; continue; }
-      // the line falls in a gap: inside a band or a section, the band/section itself is the place (its top is the
-      // chapter's start); inside content, the next block if it is near
+      // the line falls in a gap: inside a band or a section, the band/section itself is the place
       if (next && el !== band.el && el.tagName !== 'SECTION' && layoutTop(next) - line < window.innerHeight * 0.25) el = next;
       break;
     }
@@ -559,17 +520,14 @@
     setTimeout(pickAnchor, 0);
     document.addEventListener('oxa:jump', () => setTimeout(pickAnchor, 0));
   }
-  // a deep link (#id) lands at the bar's edge once the layout has settled after load (components that build late,
-  // fonts, the overture's stage), unless the reader has already moved: two quiet frames with the same page height,
-  // then once more if the page still changes within 2.5 s
+  // a deep link (#id) lands at the bar's edge once the layout has settled after load
   const deep = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
   if (deep && nav) {
     let quietFrom = 0, deepDone = false, alignedY = 0;
     const realign = (h0, n) => requestAnimationFrame(() => requestAnimationFrame(() => {
       if (lastInput || deepDone) return;
       const sp = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0, off = () => deep.getBoundingClientRect().top - sp;
-      // late layout moves the target while the page stays where it was; a page that has moved away from the target since
-      // (a script scrolled elsewhere) is someone else's: stop watching (moved and still on target: the browser's own anchoring)
+      // late layout moves the target while the page stays where it was
       if (Math.abs(window.scrollY - alignedY) > 2) { if (Math.abs(off()) > 2) { deepDone = true; return; } alignedY = window.scrollY; }
       const h = root.scrollHeight;
       if (h !== h0 && n < 60) { realign(h, n + 1); return; }
@@ -689,16 +647,13 @@
     rio = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) show(e.target); });
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
-    // a block taller than the screen would wait for 8% of its own height and show blank paper until then (Platform's
-    // full spec: half a phone screen; past ~11 screens, at a large text size, never): it comes in once its top is in
+    // a block taller than the screen would wait for 8% of its own height and show blank paper until then
     tio = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting && e.boundingClientRect.height > (e.rootBounds ? e.rootBounds.height : window.innerHeight)) show(e.target); });
     }, { rootMargin: '0px 0px -16% 0px', threshold: 0 });
     revealEls.forEach(el => { el.classList.add('will-reveal'); rio.observe(el); tio.observe(el); });
   } else revealEls.forEach(el => el.classList.add('is-in'));
-  // at once, with no transition: what a long jump passes over or lands on, and anything the keyboard focuses (focus
-  // never lands on something still invisible). .is-instant lasts two frames; .is-cut stays (a skipped entrance never
-  // plays later)
+  // at once, with no transition: what a long jump passes over or lands on
   const instant = el => { el.classList.add('is-instant'); requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('is-instant'))); };
   function revealNow(el) {
     if (!el.classList.contains('will-reveal') || el.classList.contains('is-in')) return;
@@ -715,8 +670,7 @@
     });
   }
   document.addEventListener('focusin', e => {
-    // every reveal around the focused control: not started yet, or still fading in (the scroll that brought it near
-    // started it a moment ago): both are finished now
+    // every reveal around the focused control: not started yet, or still fading in
     let el = e.target.closest && e.target.closest('.will-reveal');
     while (el) {
       if (!el.classList.contains('is-in')) revealNow(el);
@@ -725,17 +679,13 @@
     }
   });
 
-  /* ---------------- off-screen bands: their CSS loops stop ----------------
-     Every top-level band of the page carries .is-offscreen while no part of it is on screen; v2:nav pauses every CSS
-     animation inside it (owners keep their loops on transform/opacity). Nothing runs where nobody can see it. */
+  /* ---------------- off-screen bands: their CSS loops stop ---------------- */
   if ('IntersectionObserver' in window) {
     const oio = new IntersectionObserver(entries => entries.forEach(e => e.target.classList.toggle('is-offscreen', !e.isIntersecting)));
     $$('main > section, main > div, body > .footer').forEach(el => oio.observe(el));
   }
 
-  /* ---------------- preloader: loader.js (the homepage loads it first among its scripts) ----------------
-     It runs the loader and marks the page loaded (html.is-loaded, 'oxa:loaded') when the curtain lifts. Every other
-     page is ready now; and should loader.js not have run (blocked, failed), its loader goes at once */
+  /* ---------------- preloader: loader.js (the homepage loads it first among its scripts) ---------------- */
   const loaded = () => {
     $$('.beat-0 [data-split]').forEach(el => el.classList.add('is-in'));
     root.classList.add('is-loaded');
@@ -746,11 +696,8 @@
     if (stray) stray.remove();
     loaded();
   }
-  /* ---------------- figures: never counted, never rewritten ----------------
-     A number on this site is only ever shown at its true value: the HTML holds it and nothing here writes another one
-     into the DOM ([data-count] is inert; the count-up from zero is gone). A stat row's arrival is presentation only: its
-     numerals rise out of a mask as the row reveals (v2:nav CSS), the text untouched. */
-  // printing: the legal disclosures (folded into a <details> above) must reach the paper, whatever the reader has opened
+  /* ---------------- figures: never counted, never rewritten ---------------- */
+  // printing: the legal disclosures (folded into a <details> above) must reach the paper
   window.addEventListener('beforeprint', () => $$('details.footer-legal').forEach(d => { d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; }));
   window.addEventListener('afterprint', () => $$('details.footer-legal').forEach(d => { d.open = d.dataset.wasOpen === '1'; }));
 
@@ -817,7 +764,7 @@
           showError('The email draft could not be prepared. Please reload and try again.');
           return;
         }
-        // Windows mail handlers cut mailto URLs past ~2,000 characters, even mid-escape: shorten the message (then, if need be, the body) to fit
+        // Windows mail handlers cut mailto URLs past ~2,000 characters, even mid-escape
         const head = `mailto:${CONTACT}?subject=${encodeURIComponent('OpenEXA introduction - ' + data.interest)}&body=`;
         const fits = s => (head + encodeURIComponent(s)).length <= 1900;
         const bodyWith = msg => Object.entries(data).map(([key, value]) => `${key}: ${key === 'message' ? msg : value}`).join('\r\n');
@@ -862,14 +809,7 @@
   });
 
   /* ---------------- 2D swarm (interior heroes & no-WebGL fallback) ---------------- */
-  // The overture's globe drawn flat: the 404 and, when WebGL is missing, S0. Latitude rows of beads, larger and brighter where
-  // they face the eye (the far side is never drawn); two thin orbits; one green proposal ring on the first, and one red reject
-  // mote that drops from the ring on a dashed path and fades, as the 404's own line says ('REJECTED · gate 04 ... logged').
-  // It takes the largest free room beside, below or above the copy, so no stroke crosses the h1 or the lede and nothing runs
-  // under the bar. It drifts for 5 s and settles into a composed still (the loop stops: WCAG 2.2.2); a pointer moving over
-  // the globe wakes it for another 5 s. Nothing runs off screen, in a hidden tab or under reduced motion (one still is drawn).
-  // Contract: canvas[data-swarm] carries data-globe (where it went: beside, below, above, under or behind) and data-still
-  // while it rests, so a test can wait for a still frame.
+  // The overture's globe drawn flat: the 404 and, when WebGL is missing, S0.
   const canvas = $('canvas[data-swarm]');
   const inStory = canvas && canvas.closest('.story');
   // story.js decides on WebGL after first paint, so its fallback can arrive after this script has run
@@ -881,17 +821,15 @@
     if (!ctx) return;
     cv.hidden = false;
     const story = cv.closest('.story');
-    // the copy it keeps clear of: S0's beat text and figures, or the 404's eyebrow, h1, lede, buttons and log
+    // the copy it keeps clear of: S0's beat text and figures, or the 404's eyebrow, h1, lede
     const copy = story ? $$('.beat-0 .beat-text > *, .beat-0 .hero-stats', story) : $$('.container > *', cv.parentElement);
     const strict = story ? [] : copy.filter(el => el.matches('h1, .lede')); // never under these, whatever the room
     const IVORY = [245, 242, 236], GREEN = [79, 203, 147], RED = [217, 103, 93], TAU = Math.PI * 2;
     const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
     const orbits = [{ r: 1.34, tiltX: 1.16, rotZ: -0.36 }, { r: 1.6, tiltX: 1.42, rotZ: 0.52 }];
-    // up to 3x within a UHD budget, no side past 4096 px: a tall fallback stage stays under iOS Safari's ~16 MP canvas limit
+    // up to 3x within a UHD budget, no side past 4096 px
     const PIXEL_BUDGET = 3840 * 2160;
-    // the drift: a clock (tau, in seconds of motion) that runs only while awake. A wake eases in (RAMP s), cruises, and eases
-    // out (EASE s) onto a composed still: the ring in front, a reject part-way down its path. A reject leaves the ring every
-    // P s of clock and falls for FALL s.
+    // the drift: a clock (tau, in seconds of motion) that runs only while awake.
     const WAKE = 5000, RAMP = 0.6, EASE = 1.5, P = 4, FALL = 2.6, PHASE = 0.3;
     let W = 0, H = 0, dpr = 1, G = null, sphere = [], visible = true, frameId = 0, tau = 0, plan = null, last = 0;
     const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
@@ -900,14 +838,14 @@
     const onOrbit = (o, a, v) => { const q = rot(rot([Math.cos(a) * o.r, Math.sin(a) * o.r, 0], o.tiltX, 0, o.rotZ), v.tilt, v.spin * 0.3, 0); return [G.cx + q[0] * G.R, G.cy + q[1] * G.R, q[2]]; };
     const hidden = (x, y, z) => z < 0 && Math.hypot((x - G.cx) / G.R, (y - G.cy) / G.R) < 0.99; // behind the globe
     const ringAt = (tt) => onOrbit(orbits[0], tt * 0.32 + 1.1, view(tt));
-    // the reject that leaves the ring at clock te: where it starts, its sideways drift and its drop (inside its room)
+    // the reject that leaves the ring at clock te: where it starts, its sideways drift and its drop
     function reject(te) {
       const [x0, y0, z0] = ringAt(te);
       if (hidden(x0, y0, z0) || x0 < 12 || x0 > W - 12) return null;
       const drop = Math.min(G.R * 0.5, G.floor - y0 - 10);
       return drop < G.R * 0.22 ? null : { x0, y0, dx: (x0 >= G.cx ? 1 : -1) * G.R * 0.14, drop };
     }
-    // a composed still: the ring in front and on the canvas, the latest reject well clear of it, part-way down its path
+    // a composed still: the ring in front and on the canvas, the latest reject well clear of it
     function good(tt) {
       const te = Math.floor((tt - PHASE) / P) * P + PHASE, u = (tt - te) / FALL;
       if (u < 0.55 || u > 0.68 || !reject(te)) return false;
@@ -915,8 +853,7 @@
       return !hidden(x, y, z) && x > 16 && x < W - 16 && y > G.top && y < G.floor;
     }
     const goodFrom = (t0) => { for (let tt = t0; tt < t0 + 3 * P; tt += 0.02) if (good(tt)) return tt; return t0; };
-    // the copy in the canvas's coordinates: across, its lines (an h1's box is wider than its words); down, its boxes as laid
-    // out, before any entrance transform (a reveal starts 16 px low, split words a line low)
+    // the copy in the canvas's coordinates: across, its lines (an h1's box is wider than its words)
     function extent(els, cr) {
       let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
       els.forEach(el => {
@@ -928,7 +865,7 @@
       });
       return l < Infinity ? { l, t, r, b } : null;
     }
-    // the copy's lines, padded: where a globe set behind the copy leaves a gap, so no mark runs under a word
+    // the copy's lines, padded: where a globe set behind the copy leaves a gap
     function holes(els, cr) {
       const out = [];
       els.forEach(el => {
@@ -951,7 +888,7 @@
       if (story && wide) g = { mode: 'beside', R: Math.min(W * 0.20, H * 0.30), cx: W * 0.735, cy: H * 0.42, floor: H - 12, alpha: 1 };
       else if (wide || !C) g = beside(Math.min(W * 0.30, H * 0.36));
       else {
-        // full width: the largest of the rooms beside, below and above the copy (orbits may leave the canvas, never enter the copy)
+        // full width: the largest of the rooms beside, below and above the copy
         const cap = story ? W * 0.40 : Math.min(W * 0.30, H * 0.36);
         const room = (y0, y1, mode) => ({ mode, R: Math.min(cap, (y1 - y0) / 2), cy: (y0 + y1) / 2, floor: y1, alpha: 1 });
         const side = beside(cap), pick = [side, room(C.b + gap, H - 12, 'below'), room(top, C.t - gap, 'above')].reduce((a, b) => (b.R > a.R ? b : a));
@@ -964,7 +901,7 @@
       }
       g.top = top; g.bead = W < 600 ? 1.6 : 1.25; // a bead's radius at mid depth (it grows toward the eye)
       G = g; cv.dataset.globe = g.mode;
-      // the beads: about 12 px apart whatever the globe's size, so a small globe is not a grey disc and a large one not sparse
+      // the beads: about 12 px apart whatever the globe's size
       const sp = W < 600 ? 12.5 : 11.5, rows = Math.max(14, Math.min(64, Math.round(2.93 * g.R / sp) + 1)), eq = Math.round(TAU * g.R / sp);
       sphere = [];
       for (let r = 0; r < rows; r++) { const la = (84 - 168 * r / (rows - 1)) * Math.PI / 180, n = Math.max(8, Math.round(eq * Math.cos(la))); for (let k = 0; k < n; k++) sphere.push({ la, lo: (k + (r % 2) * 0.5) / n * TAU }); }
@@ -986,8 +923,7 @@
         for (let i = 0; i <= 180; i++) { const [x, y, z] = onOrbit(o, i / 180 * TAU, v); if (hidden(x, y, z) || out(x, y)) { pen = false; continue; } if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; } }
         ctx.strokeStyle = rgba(oi ? IVORY : GREEN, oi ? 0.16 : 0.26); ctx.stroke();
       });
-      // the globe: beads at .22 alpha at the limb rising to .6 facing the eye, and from .75x to 1.35x their size; beads of one
-      // alpha share one path
+      // the globe: beads at .22 alpha at the limb rising to .6 facing the eye
       const eb = new Map();
       sphere.forEach(pt => {
         const lo = pt.lo + v.spin, q = rot([Math.cos(pt.la) * Math.sin(lo), Math.sin(pt.la), Math.cos(pt.la) * Math.cos(lo)], v.tilt, 0, 0);
@@ -996,7 +932,7 @@
         let f = eb.get(k); if (!f) eb.set(k, f = []); f.push(cx + q[0] * R, cy + q[1] * R, bead * (0.75 + 0.6 * q[2]));
       });
       eb.forEach((f, k) => { ctx.beginPath(); for (let i = 0; i < f.length; i += 3) { ctx.moveTo(f[i] + f[i + 2], f[i + 1]); ctx.arc(f[i], f[i + 1], f[i + 2], 0, TAU); } ctx.fillStyle = rgba(IVORY, k / 50); ctx.fill(); });
-      // the latest reject: a dashed fall from where it left the ring, the mote on it, both fading as it drops
+      // the latest reject: a dashed fall from where it left the ring, the mote on it
       const te = Math.floor((tau - PHASE) / P) * P + PHASE, u = (tau - te) / FALL, rj = u >= 0 && u <= 1 ? reject(te) : null;
       if (rj) {
         const fade = u < 0.7 ? 1 : Math.max(0, 1 - (u - 0.7) / 0.3), at = (s) => [rj.x0 + rj.dx * s, rj.y0 + rj.drop * Math.pow(s, 1.6)];
@@ -1010,7 +946,7 @@
       if (!hidden(px, py, pz) && !out(px, py)) { ctx.beginPath(); ctx.arc(px, py, small ? 4.2 : 3.6, 0, TAU); ctx.strokeStyle = rgba(GREEN, 0.95); ctx.lineWidth = 1.3; ctx.stroke(); }
       ctx.globalAlpha = 1;
     }
-    // a wake, from now: ease in from the current speed, cruise, ease out onto the next composed still at least 5 s away
+    // a wake, from now: ease in from the current speed, cruise
     const speedAt = (p, t) => { const d = (t - p.t0) / 1000; if (d < RAMP) return p.s0 + (1 - p.s0) * d / RAMP; const x = (p.tEnd - t) / 1000 / EASE; return x >= 1 ? 1 : Math.max(0, x * x); };
     function tauAt(p, t) {
       if (t >= p.tEnd) return p.tauEnd;
@@ -1033,7 +969,7 @@
       tau = tauAt(plan, now); draw();
       if (now < plan.tEnd) frameId = requestAnimationFrame(frame); else cv.dataset.still = '';
     }
-    // run while awake and in sight; at rest (or a wake that ended out of sight), the still it was heading for, drawn once
+    // run while awake and in sight; at rest (or a wake that ended out of sight)
     function request() {
       if (frameId || !visible || document.hidden || !plan) return;
       if (!rests()) { last = performance.now(); frameId = requestAnimationFrame(frame); return; }
@@ -1041,7 +977,7 @@
       cv.dataset.still = '';
     }
     function stop() { cancelAnimationFrame(frameId); frameId = 0; }
-    // placed again (a resize, a new pixel ratio, the copy's face arriving); at rest it keeps to a composed still
+    // placed again (a resize, a new pixel ratio, the copy's face arriving)
     function relayout() {
       place();
       if (rests()) { tau = goodFrom(plan ? plan.tauEnd : tau); if (plan) plan.tauEnd = tau; } else tau = tauAt(plan, performance.now());
@@ -1057,14 +993,14 @@
     window.addEventListener('resize', resize);
     if (document.fonts) document.fonts.ready.then(relayout); // the copy's lines move when its face arrives
     setTimeout(relayout, 1800); // and once the copy's entrance is over (the split h1's words rise a line)
-    // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
+    // a move to a display with another pixel ratio changes no CSS size
     (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
     if (prefersReduced) { cv.dataset.still = ''; return; }
     // the first wake starts at once, from rest, and lands on that still 5 s later
     const t0 = performance.now(), still = tau;
     plan = { t0, s0: 0, tau0: still - (RAMP / 2 + (WAKE / 1000 - RAMP - EASE) + EASE / 3), tauEnd: still, tEnd: t0 + WAKE };
     tau = plan.tau0; draw();
-    // a pointer moving over the globe tilts it toward itself and keeps it awake for another 5 s (re-planned at most 4x a second)
+    // a pointer moving over the globe tilts it toward itself and keeps it awake for another 5 s
     window.addEventListener('pointermove', (e) => {
       if (!G) return; const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
       if (x < 0 || y < 0 || x > r.width || y > r.height || Math.hypot(x - G.cx, y - G.cy) > G.R * 1.7) return;

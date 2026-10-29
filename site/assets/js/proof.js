@@ -138,7 +138,7 @@
 
     // direct labels, in a gutter that shares the lanes' rows
     const gut = mute(h('div', 'pf-gut'));
-    // a long label carries a short form too (.pf-ls), shown only where the gutter is narrowest (phones under ~340 px)
+    // a long label carries a short form too (.pf-ls), shown only where the gutter is narrowest
     const lab = (cls, k, note, short) => {
       const e = h('span', 'pf-y ' + cls), b = h('b');
       if (short) b.append(h('span', 'pf-lw', k), h('span', 'pf-ls', short)); else b.textContent = k;
@@ -195,9 +195,7 @@
     const body = h('div', 'pf-body');
     body.append(gut, plot, mute(h('i', 'pf-floor')), mute(h('i', 'pf-base')), mute(h('i', 'pf-nav')));
 
-    // the inspector: the summary, or the record of the session in hand. Where the section already states the summary in
-    // its own stats row (home §04), the chart does not print it again: there the summary is the listbox's description
-    // only, and each option carries its session's record (its name)
+    // the inspector: the summary, or the record of the session in hand.
     const sec = host.closest('section');
     const read = sec && sec.querySelector('.stats') ? null : mute(h('div', 'pf-read'));
     const bracket = h('i', 'pf-bracket');
@@ -268,9 +266,7 @@
     });
     render();
 
-    /* entrance once, when it is reached from above and a quarter of it is in view (not under reduced motion). Nothing in
-       the chart loops: after the entrance one light passes along the floor, and every animation is paused while the
-       chart is off screen (.is-away) */
+    /* entrance once, when it is reached from above and a quarter of it is in view (not under reduced motion). */
     let inView = false, seen = false;
     const away = () => host.classList.toggle('is-away', !inView);
     const whole = () => { // no entrance: the final state in one style change, with no transition on the way
@@ -283,8 +279,7 @@
       new IntersectionObserver(entries => entries.forEach(e => {
         inView = e.isIntersecting;
         if (inView && !seen) {
-          // reached from below (scrolling up, a reload mid-page) or already more than half in view (a jump, a deep link):
-          // rows that wait their turn would be blank frames, so the chart is shown whole
+          // reached from below (scrolling up, a reload mid-page) or already more than half in view
           if (e.boundingClientRect.top < 0 || e.intersectionRatio > 0.5) { seen = true; whole(); }
           else if (e.intersectionRatio >= 0.24) {
             seen = true;
@@ -306,12 +301,7 @@
   document.querySelectorAll('[data-proof-chart]').forEach((host, i) => buildChart(host, i + 1));
 })();
 
-/* The cost figure (home §05 Fig. 5.1 · Proof §03 Fig. 3.1): each .cost-bar of a [data-cost] figure is drawn as index
-   blocks, one per point of its runs' --w weights (the first bar, traditional, must sum to 100), in grid order column by
-   column so a component stays one run. On a later bar a .cost-gone run stands for the whole components it covers (dashed
-   hollow blocks); every other run keeps its component's place in the first bar (--s, if stated, must agree): the weight
-   it states is solid (a fraction fills part of a block) and the rest of the place is hollow. The blocks restate the markup's weights and
-   nothing else; if they do not add up, the flat runs stay as written. */
+/* The cost figure (home §05 Fig. 5.1 · Proof §03 Fig. 3.1) */
 (function () {
   'use strict';
   const weight = el => parseFloat(el.style.getPropertyValue('--w'));

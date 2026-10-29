@@ -22,7 +22,7 @@
   const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
   const pad = n => String(n).padStart(2, '0');
 
-  // the page beneath the loader takes no keyboard focus until it lifts: Tab stays on the skip link (it shows above it)
+  // the page beneath the loader takes no keyboard focus until it lifts
   const skip = document.querySelector('.skip');
   const trap = e => { if (e.key === 'Tab' && skip) { e.preventDefault(); skip.focus(); } };
   const hold = on => { if (on) document.addEventListener('keydown', trap, true); else document.removeEventListener('keydown', trap, true); };
@@ -43,9 +43,7 @@
     if (!root.classList.contains('is-loaded')) setTimeout(() => { if (!root.classList.contains('is-loaded')) loaded(); }, 0);
   };
   if (performance.now() >= LATE) { drop(); return; }
-  // the failsafe on the navigation's clock: the CSS fade (v2:nav) runs from the loader's first frame; set to start at
-  // the start of navigation (the document timeline's zero), it takes the loader away at LATE. It runs from the first
-  // frame on, so the compositor plays it, and the scripts after this one cannot hold it up by holding the main thread
+  // the failsafe on the navigation's clock: the CSS fade (v2:nav) runs from the loader's first frame
   try {
     const fs = loader.getAnimations().find(a => a.animationName === 'loader-failsafe');
     if (fs && (fs.startTime === null || fs.startTime > 0)) fs.startTime = 0;
@@ -60,7 +58,7 @@
   hold(true);
   const MIN = seen ? 0 : 950, CAP = seen ? 1100 : 1700, OUT = seen ? 0 : 380; // ms from navigation start; OUT = the count's run to 100
   const count = loader.querySelector('.loader-count'), dial = loader.querySelector('.loader-dial');
-  // the overture draws its first frame (or falls back) after this script: lift once it has, never later than the cap
+  // the overture draws its first frame (or falls back) after this script
   const glReady = !document.querySelector('.story-gl') || ['gl-ready', 'no-webgl'].some(c => root.classList.contains(c)) ? Promise.resolve()
     : new Promise(r => ['story:gl-ready', 'story:no-webgl'].forEach(t => document.addEventListener(t, r, { once: true })));
   // the fonts are asked for after load: asking earlier makes the browser lay out the whole page inside this script
@@ -68,8 +66,7 @@
     (document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true })))
       .then(() => document.fonts ? document.fonts.ready : null)]);
   const easeOut = t => 1 - Math.pow(1 - t, 3);
-  // the dial has swept on its own (CSS) since the first paint: the count takes over from where it stands, and only now
-  // appears (never a frozen "00" while the script is on its way); the short version never shows a count
+  // the dial has swept on its own (CSS) since the first paint
   const idle = dial ? Math.min(0.6, parseFloat(getComputedStyle(dial).getPropertyValue('--lp')) || 0) : 0;
   if (!seen) loader.classList.add('is-counting');
   const t0 = performance.now(); // MIN and CAP count from navigation start
@@ -81,8 +78,7 @@
     if (count) count.textContent = pad(Math.min(100, Math.round(p * 100)));
     if (dial && !seen) dial.style.setProperty('--lp', p.toFixed(4));
   };
-  // the curtain: it starts moving at once and takes over from the CSS failsafe (.is-done stops it); hidden .95 s later,
-  // removed at 1.15 s. Only ever before the failsafe's moment: no curtain after it
+  // the curtain: it starts moving at once and takes over from the CSS failsafe (.is-done stops it)
   const lift = () => {
     if (gone) return;
     if (performance.now() >= LATE) { drop(); return; }

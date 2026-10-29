@@ -25,7 +25,7 @@
   if (!roots.length) return;
   const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  /* ---------------- SHA-256 (FIPS 180-4) over UTF-8, synchronous: records are hashed the moment they exist ---------------- */
+  /* ---------------- SHA-256 (FIPS 180-4) over UTF-8, synchronous ---------------- */
   const K = new Uint32Array([
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -74,15 +74,13 @@
   const REASONS = ['permission missing', 'approval required', 'input outside policy'];
   // an event is a word, sometimes followed by a count ('SETTLED ×1,741'): its colour follows the word
   const tone = ev => { const w = String(ev).split(' ')[0]; return /^(SETTLED|RECONCILED)$/.test(w) ? ' is-settled' : w === 'REJECTED' ? ' is-rejected' : ''; };
-  // the swarm's timestamp may be epoch ms or a performance.now() reading; anything else is not a time (NaN)
+  // the swarm's timestamp may be epoch ms or a performance.now() reading
   const epoch = ts => { const n = Number(ts); return !Number.isFinite(n) || n < 0 ? NaN : n > 1e12 ? n : (performance.timeOrigin || Date.now() - performance.now()) + n; };
   const tenths = ms => clock(new Date(ms)).slice(0, 10); // '10:12:31.9'
   // DOM writes only when something changed: a text that is already right is never written again
   const put = (el, text) => { if (el && el.textContent !== text) el.textContent = text; };
 
-  /* ---------------- hex digits that roll to their value ----------------
-     One Text node per element (its data is rewritten, nothing is re-created) and one shared frame loop for every roll on
-     the page; a roll that should not animate is written at its final value at once. */
+  /* ---------------- hex digits that roll to their value ---------------- */
   const rolls = new Map(); let rollRaf = 0, rollWake = 0;
   function textOf(el) {
     let t = el.firstChild;
@@ -95,7 +93,7 @@
     rolls.set(t, { to, start: performance.now() + delay, dur });
     rollNext(performance.now());
   }
-  // frames run only while a roll is actually moving; until the next one is due the loop sleeps on a timer
+  // frames run only while a roll is actually moving
   function rollNext(now) {
     if (rollRaf || !rolls.size) return;
     let due = Infinity; rolls.forEach(r => { due = Math.min(due, r.start); });
@@ -147,8 +145,7 @@
     if (excerpt.length) nextId = (parseInt(excerpt[excerpt.length - 1].id.replace(/[^0-9a-f]/gi, ''), 16) || 0x4f20) + 1;
     let genesis = '', head = '', inited = false, stateIdle = '';
     const body = r => [r.id, r.t, r.ev, r.sub, r.d].join('|');
-    // the chain is hashed when it is first needed (a record, the strip, a request) or once the page is idle: nothing is
-    // hashed while the page loads. Until then the page's own records and status line stand as written
+    // the chain is hashed when it is first needed
     function init() {
       if (inited) return;
       inited = true;
@@ -168,7 +165,7 @@
     }
     const bySeq = s => { if (!recs.length) return null; const i = s - recs[0].seq; return i >= 0 && i < recs.length ? recs[i] : null; };
     const newest = () => (recs.length ? recs[recs.length - 1].seq : 0);
-    // time only moves forward along the line: a record is stamped when it is written, at least 1 ms after the one before
+    // time only moves forward along the line: a record is stamped when it is written
     let lastMs = 0;
     const later = () => clock(new Date(lastMs = Math.max(Date.now(), lastMs + 1)));
     if (stream) { // the excerpt in the page is the start of today's stream: stamp it as just written
@@ -194,7 +191,7 @@
     }
     let rendered = 0; // the newest record in the DOM
     const firstSeq = () => (track.firstElementChild ? +track.firstElementChild.dataset.seq : 0);
-    // the window: the newest DOM_CAP records, reaching back far enough to keep a selection (or a given record) in it
+    // the window: the newest DOM_CAP records, reaching back far enough to keep a selection
     function rebuild(from) {
       els.clear();
       const lo = Math.min(from || Infinity, sel !== null ? sel - 1 : Infinity, newest() - DOM_CAP + 1);
@@ -207,15 +204,13 @@
       markSel();
       stop(sel !== null ? els.get(sel) : track.lastElementChild);
     }
-    // a new record's hash resolves on its link, digit by digit, as the link forms (the chain below does the same). Only
-    // the newest record rolls, and only while it is on screen and the stream is running
+    // a new record's hash resolves on its link, digit by digit, as the link forms (the chain below does the same).
     function landed(li) {
       li.classList.add('is-new'); setTimeout(() => li.classList.remove('is-new'), 1300);
       const tag = li.querySelector('.lt-tag');
       if (tag && onScreen() && (playing || !stream)) rollTo(tag, tag.textContent, 380, 420);
     }
-    // columns are sized so a whole number of records fills the view: no record is ever cut in half at rest. Every
-    // horizontal position is then arithmetic on these numbers: the scroll path never measures the DOM
+    // columns are sized so a whole number of records fills the view: no record is ever cut in half at rest.
     const MIN_COL = stream ? 146 : 122;
     const G = { col: 148, padL: 28, padR: 28, w: 0 };
     function fit() {
@@ -223,8 +218,7 @@
       G.padL = parseFloat(cs.paddingLeft) || 0; G.padR = parseFloat(cs.paddingRight) || 0; G.w = view.clientWidth;
       const avail = G.w - G.padL - G.padR;
       if (avail <= 0) return;
-      // a live column holds a digest's longest lines beside the id ('#4f2a  SWARM DIGEST', 'REJECTED ×1,741'), so a phone
-      // shows two records and the whole link between them; an excerpt keeps two wider columns, read in full
+      // a live column holds a digest's longest lines beside the id
       const min = window.innerWidth < 600 ? (stream ? 140 : 136) : MIN_COL;
       let n = Math.max(2, Math.floor(avail / min));
       if (!stream) n = Math.min(n, Math.max(2, recs.length));
@@ -245,7 +239,7 @@
       if (tabStop && tabStop !== li) tabStop.tabIndex = -1;
       tabStop = li || null; if (tabStop) tabStop.tabIndex = 0;
     }
-    // the selected record, and the record before it, whose outgoing link is the selected record's previous hash
+    // the selected record, and the record before it
     let sel = null, selLi = null, beforeLi = null;
     function markSel() {
       const li = sel !== null ? els.get(sel) || null : null, before = li ? li.previousElementSibling : null;
@@ -259,8 +253,7 @@
     /* ---- following the newest record, browsing, inspecting ---- */
     let following = true, intentUntil = 0, playing = stream && !reduced, visible = false;
     const onScreen = () => visible && !document.hidden;
-    // gliding back to the head (Latest, Escape, a new record): the inspector waits for the glide to land and is written
-    // once, rather than naming each record that passes the view's edge on the way
+    // gliding back to the head (Latest, Escape, a new record)
     let gliding = 0;
     function toEnd(smooth) {
       const to = maxScroll(), go = smooth && !reduced && Math.abs(to - view.scrollLeft) > 1;
@@ -271,7 +264,7 @@
     function reveal(li, smooth, centre) { // horizontal only: never scroll the page under the reader
       const pad = 36, x = leftOf(li), l = x - pad, r = x + G.col + pad, sl = view.scrollLeft, m = maxScroll();
       let to = null;
-      // a record asked for by name sits mid-strip, on whole columns (with an even number of them, just off the middle)
+      // a record asked for by name sits mid-strip, on whole columns
       if (centre) to = m - Math.round((m - (x + G.col / 2 - G.w / 2)) / G.col) * G.col;
       else if (l < sl) to = l; else if (r > sl + G.w) to = r - G.w;
       if (to !== null) { to = Math.max(0, Math.min(m, to)); if (Math.abs(to - sl) > 1) view.scrollTo({ left: to, behavior: smooth && !reduced ? 'smooth' : 'auto' }); }
@@ -301,16 +294,14 @@
       if (go !== undefined) { e.preventDefault(); if (go) select(go, true); return; }
       if (e.key === 'Escape') { e.preventDefault(); follow(); const b = [ui.play, ui.replay, ui.latest].find(x => x && !x.hidden); if (b) b.focus(); }
     });
-    // only a person's own sideways gesture decides that the view stops following the head: a horizontal wheel or trackpad
-    // swipe (or shift + wheel), a horizontal touch drag, or a press on the strip's own scrollbar. A vertical page scroll
-    // that happens to pass over the strip never does, so the strip's own glide to a new record stays the strip's
+    // only a person's own sideways gesture decides that the view stops following the head
     const intent = () => { intentUntil = performance.now() + 900; };
     view.addEventListener('wheel', e => { if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) intent(); }, { passive: true });
     let tx = 0, ty = 0;
     view.addEventListener('touchstart', e => { const t = e.touches[0]; if (t) { tx = t.clientX; ty = t.clientY; } }, { passive: true });
     view.addEventListener('touchmove', e => { const t = e.touches[0]; if (t && Math.abs(t.clientX - tx) > Math.abs(t.clientY - ty)) intent(); }, { passive: true });
     view.addEventListener('pointerdown', e => { if (e.target === view) intent(); }, { passive: true });
-    // the scroll position is read once, in the scroll event (which runs before the frame's own writes), and handed on
+    // the scroll position is read once, in the scroll event (which runs before the frame's own writes)
     let edgeRaf = 0, sl0 = 0;
     view.addEventListener('scroll', () => {
       sl0 = view.scrollLeft;
@@ -339,7 +330,7 @@
       // the first eight hex are the ones written on the links
       el.replaceChildren(node('b', null, hex.slice(0, 8)), document.createTextNode(grouped(hex).slice(8)));
     }
-    // the newest record wholly inside the view (the head while the view rests on it); never one that is not drawn
+    // the newest record wholly inside the view (the head while the view rests on it)
     function inView(sl = view.scrollLeft) {
       const n = track.childElementCount; if (!n || G.col <= 0) return null;
       const i = Math.min(n - 1, Math.floor((sl + G.w + 1 - G.padL) / G.col) - 1);
@@ -363,7 +354,7 @@
       put(F.d, r.d);
       if (F.src) put(F.src, sourceOf(r));
       hexInto(F.prev, r.prev); hexInto(F.hash, r.hash);
-      // real checks, not labels: the stored link equals the previous record's hash; this hash recomputes from the content
+      // real checks, not labels: the stored link equals the previous record's hash
       const before = bySeq(r.seq - 1);
       const linkOk = before ? before.hash === r.prev : r.seq === 1 ? r.prev === genesis : true;
       const selfOk = sha256(r.prev + '|' + body(r)) === r.hash;
@@ -406,16 +397,14 @@
     }
     function pill(sl) {
       if (!ui.latest) return;
-      // the way back: shown whenever the view is not resting on the newest record, with how many records are newer
-      // than the last one wholly in view (records held back while paused included)
+      // the way back: shown whenever the view is not resting on the newest record
       const held = newest() - rendered, show = stream && (!following || held > 0);
       if (ui.latest.hidden === show) ui.latest.hidden = !show;
       if (show && ui.fresh) { const lv = following ? null : inView(sl), n = newest() - (lv ? lv.seq : rendered); put(ui.fresh, n > 0 ? `+${n > 99 ? '99+' : n}` : ''); }
     }
     function counts() {
       put(ui.count, fmt(total));
-      // 'N records · M swarm digests [and F followed], covering S settled and R rejected proposals': S and R are summed
-      // from the rows' own counts, the followed proposals' included
+      // 'N records · M swarm digests [and F followed], covering S settled and R rejected proposals'
       const rows = sw.digests + sw.followed;
       if (ui.swarm) {
         if (ui.swarm.hidden !== !rows) ui.swarm.hidden = !rows;
@@ -424,12 +413,12 @@
       }
     }
 
-    /* ---- appending: new columns land on the line, the link to them forms, the view glides to the head ---- */
+    /* ---- appending: new columns land on the line, the link to them forms ---- */
     let lastFlush = 0, flushTimer = 0;
     function flush(animate, force) {
       lastFlush = performance.now();
       if (!recs.length || newest() === rendered) return;
-      // paused: the records are written, hashed and counted, but nothing is drawn until the reader asks for them
+      // paused: the records are written, hashed and counted
       if (stream && !playing && !force) { counts(); state(); return; }
       const fresh = recs.filter(r => r.seq > rendered);
       if (!rendered || fresh.length > 8 || !track.lastElementChild) { rebuild(); if (following) toEnd(false); }
@@ -517,12 +506,7 @@
     });
     if (ui.latest) ui.latest.addEventListener('click', () => follow());
 
-    /* ---- live: what the swarm decides becomes records ----
-       Announcements are sealed into blocks: in view at most one record every 2 s (so the lifecycle's own records stay
-       readable), out of view one every 8 s (nothing is drawn there). A block names the proposal it carries and how many
-       more; no id is ever invented. Settled and rejected proposals are sealed apart: a block is one or the other. The
-       proposal the visitor followed never waits: what was announced before it is sealed first, then it is written in a
-       record of its own and answered at once. */
+    /* ---- live: what the swarm decides becomes records ---- */
     const SEAL_MS = 8000, SEAL_MS_IN_VIEW = 2000;
     const inbox = { settled: [], rejected: [] };
     let sealTimer = 0, lastSeal = -Infinity, followedSeq = 0, pendingFollow = false;
@@ -572,7 +556,7 @@
         f = { ev: KIND, lc: 'Followed', sub: `proposal ${pid}${rej ? ' · rejected at 04' : at}`,
           d: rej ? `proposal ${pid} rejected by the council at 04 Approve · not executed · recorded` : `proposal ${pid} settled in the swarm above · chained here`,
           from: `The swarm above · ${pid}${at} · the proposal you followed` };
-      } else { // a digest: every proposal of one kind announced since the last seal, as one row. It is stamped when it is
+      } else { // a digest: every proposal of one kind announced since the last seal, as one row.
         // sealed; the window its announcements came in stays in its detail
         let lo = Infinity, hi = -Infinity;
         group.forEach(a => { let v = epoch(a.ts); if (!Number.isFinite(v)) v = epoch(a.at); if (v < lo) lo = v; if (v > hi) hi = v; });
@@ -589,8 +573,7 @@
     }
     function followedIn(a, kind) {
       clearTimeout(sealTimer); sealTimer = 0;
-      // the rest of its batch (settled or rejected in the same announcement) rides with the block sealed just before it,
-      // or, when nothing is waiting, with the next one
+      // the rest of its batch (settled or rejected in the same announcement) rides with the block sealed just before it
       const rest = a.count > 1 ? { id: null, lane: null, ts: a.ts, count: a.count - 1, followed: false, at: a.at } : null;
       const restNow = !!rest && inbox[kind].length > 0;
       if (restNow) inbox[kind].push(rest);
@@ -600,14 +583,12 @@
       lastSeal = performance.now();
       followedSeq = r.seq; pendingFollow = true;
       counts();
-      // the record the swarm's trace now names is on the line at once (one small draw, no animation, even off screen);
-      // it is selected, centred and pulses when the reader is at the ledger
+      // the record the swarm's trace now names is on the line at once
       flush(onScreen() && playing && !reduced, true);
       if (onScreen()) showFollowed();
       schedule();
     }
-    // the followed record is selected the next time the ledger is in view (exempt from trimming while it is), and its
-    // block pulses once the strip is actually on screen; Escape or Latest returns to the running line
+    // the followed record is selected the next time the ledger is in view
     function showFollowed() {
       pendingFollow = false;
       const li = ensure(followedSeq);
@@ -633,14 +614,14 @@
       li.classList.add('is-pulse'); pulseLi = li;
       pulseTimer = setTimeout(() => { li.classList.remove('is-pulse'); if (pulseLi === li) pulseLi = null; }, 1600);
     }
-    // the swarm's trace asks to see a record: bring the ledger to the middle of the screen below the bar, select, pulse
+    // the swarm's trace asks to see a record: bring the ledger to the middle of the screen below the bar
     function bringIntoView() {
       const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 72;
       let b = root.getBoundingClientRect(), shift = 0;
       try { shift = new DOMMatrixReadOnly(getComputedStyle(root).transform).m42 || 0; } catch (e) { shift = 0; } // a reveal still rising
       const top = b.top - shift, avail = window.innerHeight - navH;
       const y = b.height <= avail - 24 ? top - navH - (avail - b.height) / 2 : top - navH - 12;
-      // the swarm's trace has usually centred it already (it dispatches once its own scroll has landed): no second nudge
+      // the swarm's trace has usually centred it already (it dispatches once its own scroll has landed)
       if (Math.abs(y) > 24) window.scrollTo({ top: Math.max(0, Math.round(window.scrollY + y)), behavior: reduced ? 'instant' : 'smooth' });
     }
     function inspectEvent(e) {
@@ -654,8 +635,7 @@
       if (r.seq === followedSeq) pendingFollow = false;
       const li = ensure(r.seq);
       if (!li) return;
-      // the reader asked for this record; keyboard focus follows when the request came from the keyboard ({focus: true}
-      // from the swarm's trace) or from a caller that does not say (the page glides, it never jumps)
+      // the reader asked for this record; keyboard focus follows when the request came from the keyboard
       select(li, d.focus !== false, true);
       pulseSoon(li);
     }
@@ -663,9 +643,7 @@
       document.addEventListener('oxa:settled', e => intake('settled', e));
       document.addEventListener('oxa:rejected', e => intake('rejected', e));
       document.addEventListener('oxa:inspect', inspectEvent);
-      // Escape anywhere on the page also returns a selected line to the running stream, unless a control that is on
-      // screen holds focus (it keeps its own Escape). After following a proposal, focus is usually still on the swarm's
-      // button, screens above: the reader's Escape is for the ledger they are looking at
+      // Escape anywhere on the page also returns a selected line to the running stream
       document.addEventListener('keydown', e => {
         if (e.key !== 'Escape' || e.defaultPrevented || sel === null || !onScreen()) return;
         const t = e.target;
@@ -730,7 +708,7 @@
       glideRaf = requestAnimationFrame(step);
     }
     function verify() {
-      // an audit walks every link from the first record to the last, so the selection steps aside and the strip pans along
+      // an audit walks every link from the first record to the last
       if (sel !== null) { sel = null; markSel(); }
       following = false; inspect(); // the inspector rides along with the sweep
       sweep.forEach(clearTimeout); sweep = [];
@@ -758,10 +736,7 @@
       Array.from(track.children).forEach((li, i, all) => { if (i) gapMark(all[i - 1], bySeq(+all[i - 1].dataset.seq), bySeq(+li.dataset.seq)); });
     }
 
-    /* ---- start: the controls and the intake now; the chain once the page is idle (or first needed); the strip, the
-       only part that reads layout, when the panel comes within 1.5 viewports, or at once when the reader, a followed
-       proposal or the swarm's trace needs it. Until then the page's own records stand on the line, and what the swarm
-       announces is sealed and answered, not drawn */
+    /* ---- start: the controls and the intake now; the chain once the page is idle (or first needed) */
     if (!stream) following = false;
     if (ui.insp) ui.insp.hidden = false;
     if ('requestIdleCallback' in window) requestIdleCallback(init, { timeout: 1500 }); else setTimeout(init, 400);
@@ -780,7 +755,7 @@
       }
       edges(); counts(); inspect(); state();
       if ('IntersectionObserver' in window) {
-        // the stream runs only while some of it is on screen (no margin: nothing is drawn for a reader who cannot see it)
+        // the stream runs only while some of it is on screen
         new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }).observe(root);
         // a pulse waits until the strip itself is on screen
         new IntersectionObserver(([en]) => { stripSeen = en.isIntersecting && en.intersectionRatio >= 0.55; if (stripSeen && pulseWant) pulseNow(); }, { threshold: [0, 0.6, 1] }).observe(view);

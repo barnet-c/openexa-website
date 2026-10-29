@@ -23,7 +23,7 @@
   const pad2 = (n) => String(n).padStart(2, '0');
   const NUMW = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty'.split(' ');
   const words = (n) => NUMW[n] || String(n), capw = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  // without the page's <script type="application/json" id="oxa-sessions">: the per-session table as published, the same record
+  // without the page's <script type="application/json" id="oxa-sessions">
   const TABLE = { lifecycle: 'Lifecycle 01', unit: 'bps', floor: 10, sessions: 'DDPPPPDPDD'.split('').map((c, i) => ({ day: 'Day ' + pad2(i + 1), regime: c === 'P' ? 'Premium' : 'Discount', value: '>10', confirmation: 'Broker confirmation', status: 'Settled' })) };
   const REC = (() => {
     const str = (v) => (v == null ? '' : String(v)).trim();
@@ -50,7 +50,7 @@
   const count = (f) => SESSIONS.filter(f).length;
   const N_PREM = count(s => s.regime === 'premium'), N_DISC = NCOL - N_PREM, N_ABOVE = count(s => s.above), N_CONF = count(s => s.confirmed);
   const valueT = (s) => s.value ? `${s.value} ${UNIT}` : 'value not stated'; // only what the record states: ">10 bps"
-  // every count in the overture's copy is derived from the record: [data-story-n="total|above|premium|discount|floor|confirmed|every|tally|lifecycle"]
+  // every count in the overture's copy is derived from the record
   const derive = (k, as) => {
     if (k === 'every') return N_ABOVE === NCOL ? 'every one of ' + words(NCOL) : words(N_ABOVE) + ' of ' + words(NCOL);
     if (k === 'lifecycle') return REC.lifecycle;
@@ -63,7 +63,7 @@
   const stage = story.querySelector('.story-stage');
   const cv = story.querySelector('canvas.story-gl');
   const reducedMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
-  // static beats; site.js runs the 2D swarm behind them (it listens for this event when WebGL fails after it has run)
+  // static beats; site.js runs the 2D swarm behind them
   const fallback = () => { root.classList.remove('story-ready', 'gl-ready'); root.classList.add('no-webgl'); story.setAttribute('data-settled', ''); document.dispatchEvent(new Event('story:no-webgl')); }; // (static: always at rest)
   if (!cv || !stage || !window.WebGLRenderingContext) { fallback(); return; }
   root.classList.add('story-ready');
@@ -93,16 +93,16 @@
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
   const lerp = (a, b, t) => a + (b - a) * t;
   const sstep = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-  // the morph's easing, mirrored in the vertex shader: smooth in, a light spring over the target, settled at 1
+  // the morph's easing, mirrored in the vertex shader
   const C1 = 0.8, C3 = C1 + 1;
   const ease = (t) => { const s = t * t * (3 - 2 * t), u = s - 1; return 1 + C3 * u * u * u + C1 * u * u; };
   const stag = (m, key) => { const sp = SPREADS[seg] || 0.42; return clamp((m - key * sp) / (1 - sp), 0, 1); };
-  // how far apart the structure's parts set off: the globe unwraps band by band (wide), the columns fill one by one
+  // how far apart the structure's parts set off: the globe unwraps band by band (wide)
   const HOLD = 0.1, SPREADS = [0.6, 0.46, 0.42, 0.5], EXIT_U = 0.6, TOTAL_U = 4 + EXIT_U;
 
   // orbits (S0) and lifecycle rings (S1) share their tilt azimuths so each orbit opens into its ring
   const ORBITS = [[1.24, 0.40, 0.35, 0.15], [1.31, -0.30, 1.40, -0.11], [1.38, 0.60, 2.20, 0.09], [1.46, -0.52, 3.05, -0.13], [1.54, 0.24, 4.10, 0.08], [1.62, -0.70, 5.20, -0.07]];
-  // S1: each lifecycle ring on its own inclined plane (the orbits' tilts, alternating, 0.12-0.22 rad); LC-01 turns, Next drifts, Roadmap holds
+  // S1: each lifecycle ring on its own inclined plane (the orbits' tilts, alternating, 0.12-0.22 rad)
   const RINGS = [[0.52, 0.155, 0.35, 0.30], [0.735, -0.133, 1.40, 0.12], [0.95, 0.196, 2.20, 0.09], [1.165, -0.179, 3.05, 0], [1.38, 0.12, 4.10, 0], [1.595, -0.22, 5.20, 0]];
   function basis(tilt, az) {
     const sa = Math.sin(tilt), ca = Math.cos(tilt), sb = Math.sin(az), cb = Math.cos(az);
@@ -124,7 +124,7 @@
     }
     return [dx * t, dz * t];
   }
-  // S3: the lane (side view of the same layers), six gates, the council at gate 04, the ledger along the bottom
+  // S3: the lane (side view of the same layers), six gates, the council at gate 04
   const LX = -0.62, Y_TOP = 1.14, Y_BOT = -0.9, GATE_Y = [0.86, 0.56, 0.26, -0.04, -0.34, -0.64], COUNCIL = 3, Y_LEDGER = -1.0;
   const GATE_HX = 0.5, GATE_HZ = 0.27, AP_R = 0.3, LEDGER_X0 = LX + 0.36, LEDGER_DX = 0.17, LEDGER_N = 10;
   const GATE_OF_PLATE = [0, 1, 2, 3, 4, 4, 5, 5];
@@ -136,7 +136,7 @@
   const N_SURF = LITE ? 5400 : 10800, N_ORB = LITE ? 760 : 1500, N_SIG = LITE ? 520 : 960, N_DUST = LITE ? 520 : 1000;
   const N = N_SURF + N_ORB + N_SIG + N_DUST;
   const I_ORB = N_SURF, I_SIG = I_ORB + N_ORB, I_DUST = I_SIG + N_SIG;
-  // per-scene attribute: xyz + code (mode * 1000 + kind * 100 + group); modes and kinds are decoded in the vertex shader
+  // per-scene attribute: xyz + code (mode * 1000 + kind * 100 + group)
   const M = { STATIC: 0, GLOBE: 1, ORBIT: 2, RING: 3, JITTER: 4, SIGIN: 5, FLOW: 6, FLOWREJ: 7, FALL: 8, DRIFT: 9, COLUMN: 10 };
   const K = { IVORY: 0, KHAKI: 1, GREEN: 2, RED: 3, DUST: 4, MOTE: 5, DIM: 6, GDIM: 7, BRIGHT: 8, KDIM: 9 };
   const code = (mode, kind, grp) => mode * 1000 + kind * 100 + (grp || 0);
@@ -252,7 +252,7 @@
       KEY[ii * 4 + 2] = rnd();
     }
 
-    /* ---- S3: the side view — layers become gates, agents become the stream, the boundary becomes the council aperture ---- */
+    /* ---- S3: the side view — layers become gates, agents become the stream ---- */
     const gateLists = [[], [], [], [], [], []];
     const stream = [];
     for (let q = 0; q < N_SURF; q++) {
@@ -698,7 +698,7 @@
 
   /* ================= layout: each scene fitted into the frame the copy leaves free ================= */
   let W = 1, H = 1, dpr = 1, ratio = 0, stacked = false, compact = false, short = false, tiny = false, navH = 72, barH = 64, gutter = 24;
-  // local extent seen from each scene's camera (w, h); portrait screens fit the globe to the sphere itself (its faint orbits may run wider)
+  // local extent seen from each scene's camera (w, h)
   const EXT = [[2.9, 2.5], [3.3, 2.2], [2.75, 2.75], [2.55, 2.5], [3.8, 2.0]];
   const EXT_ST = [[2.45, 2.12], [3.3, 2.7], null, null, null];
   const CENTER = [[0, 0, 0], [0, 0.04, 0], [0, -0.02, 0], [0.12, 0.08, 0], [0, Y_FLOOR + 0.6, 0]]; // S4 sits low: the floor line is where the paper will rise to
@@ -707,19 +707,18 @@
   let CAM = CAM_W;
   const ROOM_W = [0, 250, 236, 214, 0]; // room kept on the right of the structure for its callouts (wide layouts)
   const ZONE = ['right', 'right', 'right', 'right', 'right']; // one horizon: every scene sits in the same band right of its copy
-  // under the S4 floor, in CSS px: the records hang from it, then the NAV hairline with each session's regime tick, then the day tags
+  // under the S4 floor, in CSS px: the records hang from it
   const U_REC = 6.5, U_NAV = 22, U_TICK = 10, U_DAY = 35, DAY_BAND = 70;
   const MIN_FRAME = [0, 120, 110, 120, DAY_BAND + 90]; // portrait: the least frame each structure reads in (S0's globe always keeps its lede)
   let dayPitch = 99;
   const layouts = Array.from({ length: 5 }, () => ({ cx: 0, cy: 0, s: 1, rect: [0, 0, 0, 0] }));
   const beatRects = [], numFit = [0, 0, 0, 0], capH = [0, 0, 0, 0, 0], labelMaxW = [0, 0, 0, 0, 0], roomOf = [0, 0, 0, 0, 0];
   let storyTop = 0, run = 1, scrollY = 0, stageH = 1, storyH = 1, lastP = NaN, floorW = 0, floorL = -COL_SPAN / 2 - 0.5, numGlyphH = 0;
-  // the stage shows below the nav's bar: past the pin the stage leaves with the page, and once its last pixels are under the
-  // opaque bar nothing of it can be seen, so nothing is drawn (scrolling back up starts the loop again)
+  // the stage shows below the nav's bar: past the pin the stage leaves with the page
   let belowBar = true;
   const pxuOf = (h) => (h / 2) / (CAM_D * Math.tan(FOV / 2)); // CSS px per world unit at the target's depth
   const l4 = (px) => px / Math.max(1e-4, layouts[4].s * pxuOf(H)); // S4 local units for a length in CSS px
-  // where the story sits and how long it pins: the stage is 100svh, so a phone's collapsing toolbar never changes the run
+  // where the story sits and how long it pins: the stage is 100svh
   function measureScroll() {
     scrollY = window.scrollY;
     storyTop = story.getBoundingClientRect().top + scrollY;
@@ -750,8 +749,7 @@
     const cont = stage.querySelector('.story-ui .container');
     gutter = (cont && parseFloat(getComputedStyle(cont).paddingLeft)) || 24; // --gutter is a clamp(): read it resolved
     measureBeats();
-    // the callouts' own sizes (captions wrap; portrait screens leave out the names): every frame keeps clear of them. On wide
-    // screens a caption wraps inside its scene's frame, never reaching back over the copy
+    // the callouts' own sizes (captions wrap; portrait screens leave out the names): every frame keeps clear of them.
     labelMaxW.fill(0); capH.fill(0);
     const sizeLabel = (l) => {
       l.w = l.el.offsetWidth; l.h = l.el.offsetHeight; l.tr = '';
@@ -765,9 +763,7 @@
       if (l.kind === 'cap') { const br = beatRects[l.scene]; l.el.style.maxWidth = !stacked && br && br.r > 0 ? Math.max(180, W - gutter - (br.r + 28)) + 'px' : ''; }
       sizeLabel(l);
     });
-    // short landscape: the callouts keep a measured column of their own right of the structure (OV-R2-4). Where the rings' or the
-    // layers' names would cost the structure more than a fifth of its size, that scene's callouts show their codes (and status)
-    // only; the inspector, the copy and the screen-reader text keep the names
+    // short landscape: the callouts keep a measured column of their own right of the structure (OV-R2-4).
     if (!stacked && short) [1, 2].forEach(i => {
       const br = beatRects[i] && beatRects[i].r > 0 ? beatRects[i] : { r: W * 0.46 }, ext = EXT[i];
       const needW = Math.min(H - barH - Math.max(18, capH[i] + 12) - (navH + 22), H * 0.74) * ext[0] / ext[1]; // its width at its height-bound size
@@ -777,13 +773,12 @@
       setTerse(true);
       if (named >= 0.8 * size()) setTerse(false);
     });
-    // portrait phones stack each ring callout's code over its status (a narrow column, so the rings fill the width); where six of
-    // them would not fit between the caption and the copy that way, they go code beside status, half as tall
+    // portrait phones stack each ring callout's code over its status
     if (stacked && lab.rings && beatRects[1]) {
       const avail = beatRects[1].t - 18 - (navH + barH + capH[1] + 22), hMax = Math.max(...lab.rings.map(l => l.h));
       if (lab.rings.length * (hMax + 2) > avail) { labelMaxW[1] = 0; labels.forEach(l => { if (l.scene !== 1 || l.kind !== 'list') return; if (l.group != null) { l.row = true; l.el.classList.add('is-row'); } sizeLabel(l); }); }
     }
-    // the chapter mark sits above the copy column: per hand-over, the scale of its numeral that keeps it clear of both scenes' copy
+    // the chapter mark sits above the copy column: per hand-over
     const cd = story.querySelector('.story-coda');
     codaH = cd ? cd.offsetHeight : 0;
     const nm = story.querySelector('.story-num'), nb = nm && nm.querySelector('b'), ns = nm && nm.querySelector('span');
@@ -793,8 +788,7 @@
       for (let a = 0; a < 4; a++) { const k = gh ? Math.min(1, (Math.min(beatRects[a].t, beatRects[a + 1].t) - nt - 18 - lh) / gh) : 0; numFit[a] = k < 0.42 ? 0 : k; }
     }
   }
-  // the copy's mode, measured: compact on portrait screens that would leave a scene under 40% of the stage (the copy gives way, not
-  // the structure), short on landscape phones; a beat whose copy would still reach the nav (or the index under it) drops its paragraph
+  // the copy's mode, measured: compact on portrait screens that would leave a scene under 40% of the stage
   function setModes() {
     stacked = stackedMQ.matches; CAM = stacked ? CAM_ST : CAM_W;
     root.classList.remove('story-compact', 'story-short');
@@ -810,8 +804,7 @@
     const lim = navH + (stacked ? barH : 0) + 6;
     let tight = false;
     beats.forEach((b, i) => { if (beatRects[i] && beatRects[i].t < lim) { b.classList.add('is-tight'); tight = true; } });
-    // portrait: a scene whose frame above its copy would be too small for its structure drops its paragraph too (a 320 px phone's
-    // S4: the columns and the band of records, NAV and day tags under the floor need DAY_BAND + 90 px; the page's §04 states it)
+    // portrait: a scene whose frame above its copy would be too small for its structure drops its paragraph too
     if (stacked) beats.forEach((b, i) => {
       const br = beatRects[i];
       if (!br || !MIN_FRAME[i] || b.classList.contains('is-tight')) return;
@@ -819,7 +812,7 @@
     });
     if (tight) measureLayout();
   }
-  // the six rings' projected outline at scale s (offsets from the camera target's screen point), for S1's camera
+  // the six rings' projected outline at scale s (offsets from the camera target's screen point)
   const tmpV = new Float32Array(16), tmpP = new Float32Array(16), tmpVP = new Float32Array(16);
   function ringOutline(s) {
     const el = CAM[1][0], az = CAM[1][1], tc = [0, CENTER[1][1] * s, 0];
@@ -845,7 +838,7 @@
       }
       return { cx, minX: Math.min(...o.filter((_, j) => j % 2 === 0)) };
     };
-    // the largest ring set that keeps every rule (smaller than the frame's first guess too: a short screen's copy corner)
+    // the largest ring set that keeps every rule
     let lo = s0 * 0.25, hi = Math.max(s0, Math.min(s0 * 2.4, (W * 0.62) / (3.25 * pxu)));
     if (!ok(lo)) return null;
     for (let it = 0; it < 16; it++) { const m = (lo + hi) / 2; if (ok(m)) lo = m; else hi = m; }
@@ -865,25 +858,23 @@
         x1 = W - gutter - room; y0 = navH + 22;
         if (ZONE[i] === 'upper' && br.t - y0 > H * 0.36) { x0 = gutter + (W - 2 * gutter) * 0.3; y1 = br.t - 26; }
         else { x0 = Math.min(br.r + 36, W * 0.56); y1 = H - barH - Math.max(18, capH[i] + 12); } // above the scene's caption
-        // at least 240 px for the structure, except across the copy: short landscape keeps its paragraphs beside the structure, so
-        // there the structure gives way (it never runs under the copy's lines)
+        // at least 240 px for the structure, except across the copy
         if (x1 - x0 < 240) x0 = Math.max(x1 - 240, short && br.t < y1 ? br.r + 16 : -1e9);
-      } else { // above this scene's copy, under the index and the scene's caption, never across the copy; the callouts keep their column
+      } else { // above this scene's copy, under the index and the scene's caption, never across the copy
         const room = roomOf[i] = Math.max([0, 0.13, 0.15, 0.1, 0][i] * W, labelMaxW[i] ? labelMaxW[i] + 28 : 0);
         x0 = gutter * 0.5; x1 = W - gutter * 0.5 - room;
         y0 = navH + barH + capH[i] + 8;
         y1 = Math.min(Math.max(y0 + 120, Math.min(H * 0.8, br.t) - 14), br.t - 14);
       }
-      if (i === 4) { // the columns, the floor's tag left of column 01, and the band of records, NAV and day tags under the floor
+      if (i === 4) { // the columns, the floor's tag left of column 01, and the band of records
         const xa = x0 + floorW + 14;
         s = Math.max(0.05, Math.min((x1 - xa) / ((COL_SPAN + 0.24) * pxu), (y1 - y0 - DAY_BAND) / ((H_COL + 0.34) * pxu)));
         if (!stacked) s = Math.min(s, (H * 0.74) / (EXT[4][1] * pxu));
-        // the day tags: where the columns stand closer than a tag and its 3 px of air, every other tag is left out (01, 03 … 09
-        // print; all ten stay focusable and in the screen-reader text, and each shows itself when focused)
+        // the day tags: where the columns stand closer than a tag and its 3 px of air
         dayPitch = COL_SPAN / NCOL * s * pxu;
         if (lab.days) lab.days.forEach((l, c) => {
           const th = dayPitch < 18 && c % 2 === 1; l.el.classList.toggle('is-thin', th); if (l.ink) l.ink.classList.toggle('is-thin', th);
-          // phones: each tag as wide as 24 px where the columns leave it 3 px of air (a pointer target, 2.5.8), measured again
+          // phones: each tag as wide as 24 px where the columns leave it 3 px of air (a pointer target, 2.5.8)
           const mw = W < 600 ? clamp(Math.floor(dayPitch - 3), 14, 24) + 'px' : '';
           if (l.el.style.minWidth !== mw) { l.el.style.minWidth = mw; if (l.ink) l.ink.style.minWidth = mw; l.w = l.el.offsetWidth; }
         });
@@ -904,25 +895,22 @@
   }
 
   /* ================= scene state ================= */
-  // the clocks start mid-flow: the ledger already holds records, proposals are already in the lane (and a still frame — reduced motion — reads)
+  // the clocks start mid-flow: the ledger already holds records, proposals are already in the lane
   let sNow = 0, sTarget = 0, xNow = 0, xTarget = 0, xeNow = 0, time = 14.3, intro = 0, introStart = -1;
   let seg = 0, mRaw = 0, mE = 0, scale = [1, 1];
-  // the copy's own position. It follows the structure (sNow) while the reader scrolls; once the reader stops mid-hand-over it
-  // eases to the nearest whole scene (the rest resolver), so the copy always settles to one complete scene. The scroll
-  // position is never moved; any new input hands the copy back to the structure (it chases it, no jump).
+  // the copy's own position.
   let copyS = 0, copyMode = 'follow', copyFrom = 0, copyTo = 0, copyT0 = 0, lastInput = -1e9, touchDown = false, idleTimer = 0, sDir = 1;
   const COPY_IDLE = 160, COPY_EASE = 280, COPY_TAU = 0.12;
-  // the relay's parts for a beat at distance d from the copy's position: eyebrow, headline words, paragraph (and buttons, key,
-  // figures), the beat itself. A paragraph under 8% is not drawn at all (no ghost text)
+  // the relay's parts for a beat at distance d from the copy's position
   const relayAt = (d) => { let bo = 1 - sstep(0.32, 0.42, d); if (bo < 0.08) bo = 0; return { eo: 1 - sstep(0.48, 0.54, d), w: 1 - sstep(0.38, 0.48, d), bo, op: d < 0.56 ? 1 : 0 }; };
-  // mid-hand-over: some beat partly shown, or two beats up at once (the resolver settles exactly these states)
+  // mid-hand-over: some beat partly shown, or two beats up at once
   const part = (v) => v > 0.002 && v < 0.998;
   function relayMid(c) {
     let up = 0;
     for (let i = 0; i < 5; i++) { const r = relayAt(Math.abs(c - i)); if (!r.op) continue; up++; if (part(r.eo) || part(r.w) || part(r.bo)) return true; }
     return up > 1;
   }
-  function handBack() { // any scroll input: the copy goes back to following the structure, and the resolver looks again once idle
+  function handBack() { // any scroll input: the copy goes back to following the structure
     lastInput = performance.now();
     if (copyMode === 'resolve' || copyMode === 'rest') copyMode = 'chase';
     clearTimeout(idleTimer); idleTimer = setTimeout(requestFrame, COPY_IDLE + 20); // frames may have stopped (paused, settled)
@@ -978,12 +966,9 @@
     }
   }
   const FLOOR_END = () => (stacked ? 0.7 : 0.76); // where the floor line, the paper's edge to be, ends on screen (share of the stage)
-  // the way out, in shares of the exit. Wide (and short landscape): the columns drain while the proof settles to its final height,
-  // then the paper rises to the floor line; the headline stays above it. Portrait: the columns drain, then the floor line settles,
-  // pushing the proof's copy down and out of the stage while the coda opens up above the line (they never share a region, and one
-  // of them is always up), then the paper rises to the line.
+  // the way out, in shares of the exit.
   const EXIT = { wide: { paper: [0.35, 0.8], cap: [0.74, 0.9] }, tall: { cam: [0.3, 0.56], copy: [0.3, 0.42], coda: [0.46, 0.56], paper: [0.58, 0.86], cap: [0.84, 0.96] } }; // (portrait: the proof's copy has gone before the coda opens: one headline at a time)
-  // the exit, column by column: each drains into its record, left to right, over the first third of the way out
+  // the exit, column by column: each drains into its record, left to right
   const drainOf = (c) => clamp((xeNow - 0.02 - 0.144 * c / Math.max(1, NCOL - 1)) / 0.17, 0, 1);
   const dcArr = new Float32Array(24);
 
@@ -1018,7 +1003,7 @@
         const x0 = (hash(cyc * 3 + j) - 0.5) * 1.0, z0 = (hash(cyc * 5 + j) - 0.5) * 0.6;
         let x, y, z, aux = 0, a = 1;
         if (ph < 0.5) { const u = ph / 0.5; y = lerp(PL_Y(0) + 0.08, 0.02, u); x = x0 + Math.sin(T * 2.3 + j) * 0.05; z = z0 + Math.cos(T * 1.9 + j) * 0.04; a = sstep(0, 0.08, u); }
-        else { // below it, it snaps to the grid and stays a ring; only on the last plate does it settle into the square
+        else { // below it, it snaps to the grid and stays a ring
           const u = (ph - 0.5) / 0.5, st = Math.min(3, Math.floor(u * 4)), f = sstep(0.62, 1, u * 4 - st);
           y = lerp(PL_Y(4 + st) + 0.02, PL_Y(Math.min(7, 5 + st)) + 0.02, st < 3 ? f : 0); x = Math.round(x0 * 8) / 8; z = Math.round(z0 * 6) / 6;
           aux = st < 3 ? 0 : sstep(0.15, 0.55, u * 4 - 3); a = 1 - sstep(0.9, 1, u);
@@ -1062,8 +1047,8 @@
           put('r' + j, LEDGER_X0 + slot * LEDGER_DX, Y_LEDGER + 0.045, 0, C.ivory, a * 0.92, 2, 15, 0, 0);
         });
       }
-    } else { // S4: one status for every session above the floor (ivory agents on a green settled square, the broker's tick on top);
-      // its record hangs from the floor line, hash-linked to the one before. On the way out each column drains into its record.
+    } else { // S4: one status for every session above the floor
+      // its record hangs from the floor line, hash-linked to the one before.
       const rY = Y_FLOOR - l4(U_REC), tY = Y_FLOOR + l4(9);
       for (let c = 0; c < NCOL; c++) {
         const x = COL_X(c), ss = SESSIONS[c], dc = drainOf(c), land = sstep(0.82, 1, dc);
@@ -1087,7 +1072,7 @@
       actData.set([p[0], p[1], p[2], col[0], col[1], col[2], a, shape, size, glow, aux], o); o += 11; nAct++;
     };
     nAct = 0;
-    // into S4 every column's actors keep its own stagger (record and square with its foot, tick with its top): they land with it
+    // into S4 every column's actors keep its own stagger
     const keyOf = (id) => {
       const n = parseInt(id.slice(1), 10);
       if (seg === 3 && (id[0] === 'r' || id[0] === 's' || id[0] === 't')) return (n + (id[0] === 't' ? 0.55 : id[0] === 's' ? 0.4 : 0.3)) / (NCOL + 0.55); // (the record lands with its column's middle, not its first agents)
@@ -1105,16 +1090,15 @@
       if (actA.has(id)) return;
       const t = clamp(ease(stag(mRaw, keyOf(id))), 0, 1);
       const rise = id[0] === 'r' || id[0] === 't' ? (1 - t) * -0.25 : 0;
-      // into S4 a column's settled square and broker tick only come up once its own agents have nearly formed it (never over a
-      // column that is still a spray), and in reverse they leave with it, first
+      // into S4 a column's settled square and broker tick only come up once its own agents have nearly formed it
       const k = seg === 3 && (id[0] === 's' || id[0] === 't') ? sstep(0.6, 0.95, colMorph(parseInt(id.slice(1), 10))) : 1;
       emit([B.p[0] * sB, (B.p[1] + rise) * sB, B.p[2] * sB], B.col, B.a * clamp(t * 1.4 - 0.2, 0, 1) * k, B.shape, B.size, B.glow, B.aux);
     });
   }
-  // a session column's own progress into S4 (the stagger of its agents' lower half: SPREADS[3] spreads the columns left to right)
+  // a session column's own progress into S4
   const colMorph = (c) => seg === 3 ? stag(mRaw, (c + 0.22) / (NCOL + 0.55)) : 1;
 
-  /* ================= hairlines: orbits, rings, layer rims, the boundary, gates, the aperture, the ledger, hash links ================= */
+  /* ================= hairlines: orbits, rings, layer rims, the boundary, gates, the aperture ================= */
   const LOOP_N = LITE ? 72 : 112;
   const loopAngles = (az) => Array.from({ length: LOOP_N }, (_, j) => az - j / LOOP_N * TAU); // world angles shared by every loop shape
   const LIMB_N = 128, limbPts = Array.from({ length: LIMB_N }, () => [0, 0, 0]);
@@ -1124,7 +1108,7 @@
     if (sc === 0) {
       ORBITS.forEach((o, k) => { const pts = geo('o0' + k, () => Array.from({ length: LOOP_N }, (_, j) => onLoop(OB[k], o[0], j / LOOP_N * TAU, 0))); put('o' + k, pts, true, k === 0 ? C.green : C.ivory, k === 0 ? 0.2 : 0.1, 1, 0.12 + 0.5 * k / 6); });
       put('hz', [[-1.35, -1.3, 0], [1.35, -1.3, 0]], false, C.ivory, 0.07, 1, 0.9);
-      // the silhouette of a unit sphere seen from the eye: a circle of radius sqrt(1 - k²), k²/… toward the eye (k = scale / distance)
+      // the silhouette of a unit sphere seen from the eye
       const k = clamp(scale[0] / CAM_D, 0, 0.9), rl = Math.sqrt(1 - k * k), e = [eye[0] - target[0], eye[1] - target[1], eye[2] - target[2]], el = Math.hypot(e[0], e[1], e[2]) || 1;
       const Rv = [view[0], view[4], view[8]], Uv = [view[1], view[5], view[9]], c = [e[0] / el * k, e[1] / el * k, e[2] / el * k];
       const limb = limbPts;
@@ -1182,8 +1166,7 @@
       }
       put('lane', [[LX, Y_TOP + 0.2, 0], [LX, Y_BOT, 0]], false, C.ivory, 0.05, 1, 0.5);
     } else {
-      // the floor line (the paper's edge to be), the hash links between the records hanging from it, and under them the NAV hairline,
-      // dashed, with each session's regime as a short tick above it (premium) or below it (discount); each lands with its column
+      // the floor line (the paper's edge to be), the hash links between the records hanging from it
       const step = COL_SPAN / NCOL, rY = Y_FLOOR - l4(U_REC), yN = Y_FLOOR - l4(U_NAV), tk = l4(U_TICK), gap = l4(2), nav = 1 - sstep(0.06, 0.3, xeNow);
       put('hz', [[floorL, Y_FLOOR, 0], [COL_SPAN / 2 + 0.12, Y_FLOOR, 0]], false, C.ivory, 0.46, 1, 0.9);
       const dash = l4(4), per = l4(9);
@@ -1239,20 +1222,20 @@
     linB.forEach((B, id) => {
       if (linA.has(id)) return;
       const t = clamp(ease(stag(mRaw, B.key)), 0, 1);
-      // a column's regime tick, its stretch of the NAV hairline and its hash link land with the column (as its square and tick do)
+      // a column's regime tick, its stretch of the NAV hairline and its hash link land with the column
       const k = seg === 3 && /^(rt|nv|hl)\d/.test(id) ? sstep(0.6, 0.95, colMorph(parseInt(id.slice(2), 10))) : 1;
       B.s = sB; emit(B, null, 0, B.col[0], B.col[1], B.col[2], B.a * t * k, B.w);
     });
   }
 
-  /* ================= callouts: DOM labels projected from 3D anchors, leader lines, hover and focus ================= */
+  /* ================= callouts: DOM labels projected from 3D anchors, leader lines ================= */
   const labelHost = story.querySelector('.story-labels');
   const SVGNS = 'http://www.w3.org/2000/svg';
   const leaders = document.createElementNS(SVGNS, 'svg');
   leaders.setAttribute('class', 'story-leaders'); leaders.setAttribute('aria-hidden', 'true'); leaders.setAttribute('focusable', 'false');
   if (labelHost) labelHost.appendChild(leaders);
   const labels = [], capOf = []; // (capOf: each scene's caption)
-  // kind: 'list' (a right-hand column with leaders), 'tag' (at its anchor), 'cap' (the scene's figure caption)
+  // kind: 'list' (a right-hand column with leaders), 'tag' (at its anchor), 'cap'
   function label(scene, html, opts) {
     const interactive = !!opts.group || opts.group === 0;
     const el = document.createElement(interactive ? 'button' : 'div');
@@ -1273,7 +1256,7 @@
   }
   const lab = {};
   if (labelHost) {
-    // the plates' captions lead with what kind of picture they are; they wrap rather than run off a narrow screen
+    // the plates' captions lead with what kind of picture they are
     label(0, '<b>Plate 00</b> The work, worldwide · illustrative · each point stands for an agent', { cls: 'cap', kind: 'cap' });
     label(1, '<b>Plate 01</b> Six lifecycle classes · one infrastructure', { cls: 'cap', kind: 'cap' });
     label(2, '<b>Plate 02</b> Eight layers, read top to bottom · one boundary', { cls: 'cap', kind: 'cap' });
@@ -1294,7 +1277,7 @@
     const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     lab.days = SESSIONS.map((s, c) => label(4, `<span class="k">${s.day}</span><span class="rg">${s.regime === 'premium' ? 'P' : 'D'}</span><span class="dt">Day ${s.day} · ${s.regime} · ${esc(valueT(s))} · ${s.confirmed ? 'broker-confirmed' : 'confirmation not stated'}</span>`,
       { cls: 'day' + (s.regime === 'premium' ? ' is-prem' : ''), kind: 'tag', group: c, side: 's', keep: true, col: c, dy: U_DAY - 6, info: [`Day ${s.day}`, capw(s.regime), `${s.above ? 'Above' : 'Not above'} the ${FLOOR_T} floor (${esc(valueT(s))}) · ${s.confirmed ? 'confirmed against the broker’s records' : 'confirmation not stated'}`], anchor: () => [COL_X(c), Y_FLOOR, 0] }));
-    // the floor's tag sits on the line, left of column 01 (never across it); the summary sits over the columns where there is room
+    // the floor's tag sits on the line, left of column 01 (never across it)
     label(4, `<span>${FLOOR_T}</span> <span>floor</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.42, 0.6], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR, 0], side: 'nw' });
     label(4, 'NAV', { cls: 'navtag', kind: 'tag', out: [0.05, 0.22], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR - l4(U_NAV), 0], side: 'w' }); // the regime ticks' baseline
     lab.sum = label(4, `<b>${N_ABOVE} of ${NCOL}</b> sessions above the ${FLOOR_T} floor<span class="sep"></span><span class="lg-p">${N_PREM} premium</span> · <span class="lg-d">${N_DISC} discount</span><span class="sep"></span><span class="lg-t">${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed</span>`, { cls: 'sum', kind: 'tag', sum: true, anchor: () => [COL_SPAN / 2 + 0.06, Y_FLOOR + H_COL + 0.26, 0], side: 'nw' });
@@ -1322,7 +1305,7 @@
     if (hot && hot.info && hot !== inspFor) {
       const [t, s, d] = hot.info;
       insp.innerHTML = `<b>${t}</b><em>${s}</em> · ${d}`;
-      // portrait screens: the box sits left of the callout column, never under it; short landscape: between the copy and the column
+      // portrait screens: the box sits left of the callout column, never under it
       const brS = beatRects[hot.scene];
       insp.style.maxWidth = hot.kind !== 'list' || !(listX > 0) ? '' : stacked ? Math.max(160, Math.min(260, listX - 10 - gutter * 0.5)) + 'px'
         : short && brS && brS.r > 0 ? Math.max(160, Math.min(260, listX - 16 - (brS.r + 12))) + 'px' : '';
@@ -1332,7 +1315,7 @@
     stage.classList.toggle('is-pointing', !!hoverPtr);
     requestFrame();
   }
-  // a pointer that has not moved (the page scrolled under it) never inspects: Chrome replays hover as content moves under a still mouse
+  // a pointer that has not moved (the page scrolled under it) never inspects
   const lastPtr = { x: NaN, y: NaN };
   const moved = (e) => e.clientX !== lastPtr.x || e.clientY !== lastPtr.y;
   labels.forEach(l => {
@@ -1358,11 +1341,10 @@
   }
   const vis = (l) => { if (l.scene !== labelScene) return 0; const o = l.sum && !stacked ? EXIT.wide.cap : l.out || OUT4; return labA * (l.scene === 4 && !l.keep ? 1 - sstep(o[0], o[1], xeNow) : 1); };
   const OUT4 = [0.04, 0.2]; // (wide screens keep the derived summary on the way out until the paper's caption takes it over)
-  // a session's own progress into S4 (its column's stagger): its day tag lands with it and, in reverse, leaves first
+  // a session's own progress into S4 (its column's stagger)
   const colIn = (c) => sNow >= 4 ? 1 : seg === 3 ? clamp(ease(stag(mRaw, (c + 0.55) / (NCOL + 0.55))), 0, 1) : 0;
   let tabScene = -1, shownHasInsp = null;
-  // a ring's anchor: the point of its projected right flank nearest the angle that fans the six callouts out in order (LC-01 high on
-  // the inner ring, LC-06 low on the outer one), so every leader ends on its own ring and no two leaders cross
+  // a ring's anchor: the point of its projected right flank nearest the angle that fans the six callouts out in order
   const FLANK = { x: 0, y: 0 };
   function ringFlank(k, sc) {
     const c = project(0, 0, 0), cx = c.x, cy = c.y, want = -0.95 + 1.9 * k / 5;
@@ -1375,7 +1357,7 @@
     }
     FLANK.x = bx; FLANK.y = by; return FLANK;
   }
-  // a ring's other right-flank points, nearest the one it chose first (where its leader would pass over another ring's node)
+  // a ring's other right-flank points, nearest the one it chose first
   function flankAlts(k, sc, x0, y0) {
     const c = project(0, 0, 0), cx = c.x, out = [];
     for (let j = 0; j < 96; j++) {
@@ -1419,7 +1401,7 @@
           y += l.dy || 0;
           x = clamp(x, 6, W - l.w - 6);
           y = Math.max(y, stacked ? tagTop + capH[l.scene] : navH + 6); // never under the nav (portrait: nor the index or the caption)
-          if (l.sum) { // the summary only where it clears the columns' tops; the copy, the coda and the paper's caption state it too
+          if (l.sum) { // the summary only where it clears the columns' tops
             const s4 = layouts[4].s, top = project(0, (Y_FLOOR + H_COL + 0.2) * s4, 0).y;
             const k = stacked ? 0 : sstep(0.33, 0.5, xeNow); // wide, on the way out: once the columns have drained it settles 48 px over the floor line
             if (k > 0) y = lerp(y, project(0, Y_FLOOR * s4, 0).y - 48 - l.h, k);
@@ -1440,7 +1422,7 @@
       const maxW = Math.max(...listCol.map(l => l.w)), colX = stacked ? W - gutter * 0.5 - maxW : Math.min(L.rect[2] + 22, W - gutter * 0.5 - maxW);
       const gap = Math.max(...listCol.map(l => l.h)) + (stacked || short ? 2 : 6), top = navH + (stacked ? barH + capH[sc] + 22 : short ? 8 : 14);
       let bottom = stacked ? beatRects[sc].t - 10 : H - barH - capH[sc] - (short ? 12 : 16);
-      // landscape: should the column not fit above its scene's caption (a short window at a high zoom), the caption steps aside for it
+      // landscape: should the column not fit above its scene's caption (a short window at a high zoom)
       if (!stacked && capH[sc] && capOf[sc] && (listCol.length - 1) * gap + listCol[listCol.length - 1].h > bottom - top) { bottom = H - barH - 12; capOf[sc].a = 0; }
       let y = -1e9;
       listCol.forEach(l => { l.y = Math.max(l.ay - l.h / 2, y + gap); y = l.y; });
@@ -1448,10 +1430,9 @@
       if (over > 0) { listCol.forEach(l => { l.y -= over; }); }
       for (let j = 1; j < listCol.length; j++) if (listCol[j].y < listCol[j - 1].y + gap) listCol[j].y = listCol[j - 1].y + gap;
       if (listCol[0].y < top) { const d = top - listCol[0].y; listCol.forEach(l => { l.y += d; }); }
-      // portrait: a callout that would still reach the copy (a short screen, a long list) is left out; the inspector and the
-      // screen-reader list keep it
+      // portrait: a callout that would still reach the copy (a short screen, a long list) is left out
       if (stacked) listCol.forEach(l => { if (l.y + l.h > beatRects[sc].t - 8) l.a = 0; });
-      // S1: no leader passes within 6 px of another ring's node; a leader that would steps its own node along its ring's flank
+      // S1: no leader passes within 6 px of another ring's node
       if (sc === 1) for (let pass = 0; pass < 2; pass++) listCol.forEach(l => {
         if (!l.a) return;
         const ly = l.y + l.h / 2, ex = colX - 20;
@@ -1480,8 +1461,7 @@
       const ov = l.a.toFixed(2);
       if (ov !== l.ov) { l.ov = ov; l.el.style.opacity = ov; if (l.path) l.path.style.opacity = ov; if (l.node) l.node.style.opacity = ov; }
     });
-    // the inspector: shown at rest only (never while the scenes move under it); on portrait screens just above the copy, under the
-    // structure, with the caption and the summary giving way to it
+    // the inspector: shown at rest only (never while the scenes move under it)
     const io = !!inspFor && inspFor.on && Math.abs(sTarget - sNow) <= 0.02;
     if (io !== shownHasInsp) { shownHasInsp = io; labelHost.classList.toggle('has-insp', io); insp.classList.toggle('is-on', io); }
     if (io) {
@@ -1492,9 +1472,7 @@
         y = clamp(y, navH + barH + (inspFor.kind === 'list' ? capH[inspFor.scene] : 0) + 8, H - inspH - 8);
       }
       else if (inspFor.kind === 'list') {
-        // wide and short landscape: never over the scene index or Pause motion (the bar), never over another callout. Under the
-        // callouts' column where it has room above the bar (wide screens); else beside the column, level with its callout, over
-        // the structure but clear of the copy; else under the nav, over the copy column's empty top
+        // wide and short landscape: never over the scene index or Pause motion (the bar), never over another callout.
         const lim = H - barH - inspH - 8, br = beatRects[inspFor.scene] || { r: 0, t: H };
         x = listX; y = listBottom + 18;
         if (y > lim || x + inspW > W - 8) {
@@ -1550,13 +1528,13 @@
   const motionButton = story.querySelector('[data-story-motion]');
   const live = story.querySelector('[data-story-live]');
   const bar = story.querySelector('.story-bar');
-  // the chapter mark: two stacked lines (this scene, the next) for the numeral and for the name, rolled like a counter
+  // the chapter mark: two stacked lines (this scene, the next) for the numeral and for the name
   const num = story.querySelector('.story-num');
   const numRows = num ? ['b', 'span'].map(t => { const el = num.querySelector(t); el.textContent = ''; return [0, 1].map(() => el.appendChild(document.createElement('i'))); }) : null;
   let shownNum = -1, shownNumOp = '', shownNumTr = '', shownRoll = '';
   const paper = story.querySelector('.story-paper');
   const paperIn = paper && paper.querySelector('.story-paper-in'), paperCap = paperIn && paperIn.querySelector('.container');
-  // the paper's copy of the proof's day tags, in ink: the rising edge uncovers each one exactly where its tag stood
+  // the paper's copy of the proof's day tags, in ink
   if (paperIn && lab.days) {
     const ink = document.createElement('div');
     ink.className = 'story-ink';
@@ -1564,12 +1542,12 @@
     paperIn.insertBefore(ink, paperIn.firstChild);
   }
   let shownCap = '', shownLeaving = null;
-  // portrait screens: as the paper covers the copy, the proof's statement reappears above the columns (an end card, not an empty sky)
+  // portrait screens: as the paper covers the copy, the proof's statement reappears above the columns
   const coda = story.querySelector('.story-coda'), codaS = coda && coda.querySelector('.story-coda-s');
   let shownCoda = '', shownCodaTr = '', shownCodaS = '', codaH = 0;
   const paperSum = story.querySelector('[data-story-sum]');
   if (paperSum) paperSum.textContent = `${N_ABOVE} of ${NCOL} above the ${FLOOR_T} floor · ${N_PREM} premium · ${N_DISC} discount · ${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed`;
-  // the records, printed: as the paper reaches the floor line, the records hanging from it are uncovered in ink where they hung
+  // the records, printed: as the paper reaches the floor line
   const inkRecs = [];
   let inkLink = null;
   if (paperIn && lab.days) {
@@ -1582,7 +1560,7 @@
   const beatLinks = beats.map(b => Array.from(b.querySelectorAll('a[href], button')));
   let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownFill = [], shownCapO = '', shownGlyph = '', shownLabTr = '';
   let paperH = 0, relay0 = false, relayReady = false, codaFallback = false, shownBarOff = null;
-  // the index follows the scroll position itself: immediate, and right even when frames are slow or throttled
+  // the index follows the scroll position itself: immediate
   function syncIndex() {
     const ci = clamp(Math.round(sTarget), 0, 4);
     if (shownIdx === ci) return;
@@ -1594,8 +1572,7 @@
   function updateUI(now) {
     const red = reducedMQ.matches, xe = xeNow;
     const cs = red ? Math.round(sNow) : copyS; // where the copy is (reduced motion: it snaps with its scene)
-    // the callouts' scene for this frame, from the same state as the copy; when they show, the copy they keep clear of is measured
-    // now (before this frame's writes, so the read is cheap), not taken from the last refit
+    // the callouts' scene for this frame, from the same state as the copy
     const ls = sceneOfLabels();
     if (ls !== labelScene) { labelScene = ls; labOnT = now || performance.now(); labA = 0; }
     if (labelScene >= 0) { labA = red ? 1 : clamp(((now || performance.now()) - labOnT) / LAB_IN, 0, 1); measureBeat(labelScene); } else labA = 0;
@@ -1607,10 +1584,7 @@
     if (xe > 0 && seg === 3) paperH = Math.max(0, H - project(0, Y_FLOOR * layouts[4].s, 0).y - 1) * sstep(X.paper[0], X.paper[1], xe);
     if (paper) { const v = paperH.toFixed(1); if (v !== shownPaper) { shownPaper = v; paper.style.height = v + 'px'; paper.style.visibility = paperH > 0.5 ? 'visible' : 'hidden'; } }
     if (!relay0 && (relayReady || sNow > 0.3)) { relay0 = true; beats[0].classList.add('is-relay'); } // S0's headline hands over to the relay after its entrance
-    // the copy relay: every value is a function of the scroll position (d: 0 at rest, 0.5 halfway to the next scene), so a reverse
-    // scroll is the exact mirror. Out: paragraph, buttons and figures (.32→.42), then the headline's words (.38→.48, last word first),
-    // the eyebrow last. In: the eyebrow first (it crosses the outgoing one at the midpoint, so the slot is never empty), then the
-    // headline, then the paragraph. Never two paragraphs at once.
+    // the copy relay: every value is a function of the scroll position
     beats.forEach((b, i) => {
       const d = Math.abs(cs - i), s = shown[i];
       let op, eo, w, bo;
@@ -1619,7 +1593,7 @@
       let dy = red ? 0 : (cs - i) * -18;
       if (i === 4 && xe > 0) { // on the way out: the headline stays above the paper when it fits (wide screens); the rest gives way
         const br = beatRects[4] || { ht: 0, hb: 0 }, edge = H - paperH - 26, shift = Math.min(0, edge - br.hb);
-        if (lean) { // portrait: the settling floor (and the day tags under it) push the copy down; the coda has the summary by then
+        if (lean) { // portrait: the settling floor (and the day tags under it) push the copy down
           const fNow = project(0, Y_FLOOR * layouts[4].s, 0).y;
           dy += Math.max(0, fNow + DAY_BAND + 10 - (br.t || H));
           op *= 1 - sstep(X.copy[0], X.copy[1], xe);
@@ -1646,8 +1620,7 @@
     syncIndex();
     idx.forEach((button, i) => { const f = clamp(sNow - i + 0.5, 0, 1).toFixed(2); if (shownFill[i] !== f) button.style.setProperty('--fill', shownFill[i] = f); });
     if (shownScrolled !== sNow > 0.3) story.classList.toggle('is-scrolled', shownScrolled = sNow > 0.3);
-    // the chapter mark: absent at rest, it rises only inside a hand-over (wide screens) and shows the scene the reader is heading
-    // into, for the whole window (no roll from the outgoing one). The cover has no number: back into S0 there is none
+    // the chapter mark: absent at rest, it rises only inside a hand-over
     if (num) {
       const a = Math.min(3, Math.floor(cs)), f = cs - a;
       const fit = numFit[a];
@@ -1667,12 +1640,11 @@
     }
     const bo = (1 - sstep(0.08, 0.3, xe)).toFixed(3);
     if (bar && bo !== shownBar) { bar.style.opacity = shownBar = bo; bar.style.visibility = bo < 0.01 ? 'hidden' : ''; }
-    // a hidden bar is out of the tab order too (Shift+Tab back from chapter 01 goes to S4's buttons, which bring S4 back)
+    // a hidden bar is out of the tab order too
     const barOff = +bo < 0.01;
     if (barOff !== shownBarOff) { shownBarOff = barOff; idx.concat(motionButton || []).forEach(el => { if (barOff) el.setAttribute('tabindex', '-1'); else el.removeAttribute('tabindex'); }); }
     if (shownLeaving !== xe > 0.05) story.classList.toggle('is-leaving', shownLeaving = xe > 0.05); // the covered tags take no pointer
-    // portrait and short landscape: while the proof's copy fades, its derived summary comes in above the floor (an end card, not an
-    // empty sky), then finishes leaving before it could reach the nav
+    // portrait and short landscape: while the proof's copy fades
     if (coda) {
       let co = 0, top = 0;
       if ((lean || codaFallback) && xe > 0) {
@@ -1690,7 +1662,7 @@
     }
     placeLabels();
     if (paperH > 0.5) {
-      // the records in ink, exactly where they hung from the floor line; the link between them is the ledger's hairline
+      // the records in ink, exactly where they hung from the floor line
       if (inkRecs.length) {
         const s4 = layouts[4].s, ry = project(0, (Y_FLOOR - l4(U_REC)) * s4, 0).y;
         const xs = SESSIONS.map((ss, c) => project(COL_X(c) * s4, (Y_FLOOR - l4(U_REC)) * s4, 0).x);
@@ -1701,7 +1673,7 @@
           if (inkLink) { inkLink.style.transform = `translate(${xs[0].toFixed(1)}px, ${ry.toFixed(1)}px)`; inkLink.style.width = (xs[xs.length - 1] - xs[0]).toFixed(1) + 'px'; }
         }
       }
-      // the paper's caption sits under the ink tags (stage coordinates: the paper uncovers it, it does not carry it), and comes in last
+      // the paper's caption sits under the ink tags
       if (paperCap) {
         let yb = 0;
         if (lab.days) lab.days.forEach(l => { if (l.inkTr && l.h) yb = Math.max(yb, l.y + l.h); });
@@ -1717,7 +1689,7 @@
   /* ================= the frame ================= */
   let running = true, visible = true, paused = false, frameId = 0, t0 = performance.now(), simTime = 14.3, settledOnce = false, pointerDirty = false, ptr = null, firstFrame = -1;
   const PIXEL_BUDGET = 3840 * 2160;
-  // a resize or a rotation keeps the reader's scene: the run is in svh, so their place is a share of it, not a pixel offset
+  // a resize or a rotation keeps the reader's scene
   function readingPoint() {
     if (!(lastP >= 0)) return null;
     if (lastP <= 1) return { p: lastP };
@@ -1730,9 +1702,7 @@
     if (Math.abs(y - window.scrollY) > 1) window.scrollTo({ top: y, behavior: 'instant' });
     scrollY = y;
   }
-  // 400% zoom on a desktop (320x256, 360x225, 480x270; WCAG 1.4.10): under 300 px of height the overture is its designed static
-  // sequence (html.story-tiny, the no-WebGL layout without the 2D globe) and draws nothing; no phone is that short in either
-  // orientation. Entering or leaving it keeps the reader on the scene (or the place below the overture) they were at
+  // 400% zoom on a desktop
   let tinyBack = null, tinyPlace = null;
   function pinnedPlace() { // the reader's place in the pinned run
     if (!(lastP === lastP)) { measureScroll(); scrollY = window.scrollY; sceneScroll(); }
@@ -1798,7 +1768,7 @@
     const keep = tinyBack ? null : readingPoint(); // before anything moves
     if (sized) {
       W = w; H = h; ratio = r;
-      // phones (LITE) draw at most 2 device px per CSS px: the swarm reads the same, the GPU does less than half the work
+      // phones (LITE) draw at most 2 device px per CSS px
       dpr = Math.min(LITE ? 2 : 3, r, Math.sqrt(PIXEL_BUDGET / Math.max(1, W * H)));
       cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr);
       gl.viewport(0, 0, cv.width, cv.height);
@@ -1877,7 +1847,7 @@
     frameId = 0;
     if (!running || lost || !ready || tiny) return;
     const raw = Math.max(0, (now - t0) / 1000), dt = Math.min(0.05, raw); t0 = now;
-    const dtS = Math.min(1, raw); // the scroll's weight runs on real time: a slow frame (software GL, a busy machine) lands where the reader is
+    const dtS = Math.min(1, raw); // the scroll's weight runs on real time: a slow frame
     if (!((visible && belowBar && !document.hidden) || initial)) return;
     const red = reducedMQ.matches, moving = !red && !paused;
     if (moving) { time += dt; simTime += dt; mouse.x += (mouse.tx - mouse.x) * (1 - Math.exp(-dt * 3)); mouse.y += (mouse.ty - mouse.y) * (1 - Math.exp(-dt * 3)); }
@@ -1914,8 +1884,7 @@
     resetAttribs();
     drawActors(false); if (!SOFT) drawActors(true);
     updateUI(now);
-    // settled: the structure and the exit have arrived, the copy rests on one whole scene and its callouts are fully up. Tests
-    // wait on .story[data-settled]; any scroll removes it at once
+    // settled: the structure and the exit have arrived, the copy rests on one whole scene and its callouts are fully up.
     const settled = Math.abs(sTarget - sNow) < 0.002 && Math.abs(xTarget - xNow) < 0.002 && copyResting() && labA >= 1 && intro >= 1;
     if (settled !== shownSettled) { shownSettled = settled; if (settled) story.setAttribute('data-settled', ''); else story.removeAttribute('data-settled'); }
     const changing = Math.abs(sTarget - sNow) > 0.0004 || Math.abs(xTarget - xNow) > 0.0004 || hov.some((v, i) => Math.abs(v - hovT[i]) > 0.002) || (intro < 1 && introStart >= 0) || introStart < 0
@@ -1975,10 +1944,10 @@
     goTo(base + d, true);
   }
 
-  // WebGL failed to start (or to come back): stop, clear what the loop wrote, hand over to the static beats
+  // WebGL failed to start (or to come back): stop, clear what the loop wrote
   function fail(err) {
     if (err) console.error(err);
-    // where the reader is, before the page reflows into the static sequence: a scene of the overture, or a place below it
+    // where the reader is, before the page reflows into the static sequence
     let at = null, below = null;
     if (wired && lastP === lastP && !tiny) {
       measureScroll();
@@ -1998,7 +1967,7 @@
     insp.remove();
     stage.removeAttribute('tabindex'); stage.removeAttribute('aria-describedby');
     fallback();
-    // the static sequence is ~3 screens shorter: keep the reader on the scene (or the place below the overture) they were at
+    // the static sequence is ~3 screens shorter: keep the reader on the scene
     if (at != null || below != null) {
       const top = at != null ? (at === 0 ? storyTop : beats[at].getBoundingClientRect().top + window.scrollY - navH) : story.getBoundingClientRect().top + window.scrollY + story.offsetHeight + below;
       window.scrollTo({ top: Math.max(0, Math.round(top)), behavior: 'instant' });
@@ -2012,15 +1981,12 @@
       if (document.getElementById('story-keys')) stage.setAttribute('aria-describedby', 'story-keys');
       idx.forEach((button, i) => button.addEventListener('click', () => goTo(i, true)));
       stage.addEventListener('keydown', onKey);
-      // Escape closes the inspector wherever focus is, hovered or focused (WCAG 1.4.13); focus entering the bar while the stage
-      // is on its way out brings S4 back to rest, where the bar is whole
+      // Escape closes the inspector wherever focus is, hovered or focused (WCAG 1.4.13)
       document.addEventListener('keydown', e => { if (e.key === 'Escape' && (hoverPtr || hoverFocus)) { hoverPtr = hoverFocus = null; setHover(); } });
       if (bar) bar.addEventListener('focusin', () => { if (running && xTarget > 0.02) goTo(4); });
-      // Shift+Tab back from the first chapter lands on the stage itself (the hidden bar is out of the tab order): S4 comes back
-      // whole, so the focused stage shows a scene the arrow keys can step from, not the paper
+      // Shift+Tab back from the first chapter lands on the stage itself
       stage.addEventListener('focusin', e => { if (e.target === stage && running && !tiny && xTarget > 0.02) goTo(4); });
       // every beat stays in the accessibility tree; keyboard focus entering one brings the story to it
-      // (on the way out, S4's copy has faded: Shift+Tab back from the first chapter brings the scene back with its buttons)
       beats.forEach((b, i) => b.addEventListener('focusin', () => { if (running && !tiny && (Math.abs(sTarget - i) > 0.45 || xTarget > 0.02)) goTo(i); }));
       if (motionButton) motionButton.addEventListener('click', () => { paused = !paused; story.classList.toggle('is-paused', paused); updateMotion(); requestFrame(); }); // (the CSS loops too: the scroll cue, the live dot)
       reducedMQ.addEventListener('change', () => { mouse.x = mouse.y = mouse.tx = mouse.ty = 0; updateMotion(); requestFrame(); });
@@ -2036,7 +2002,7 @@
         if (wasBelow && !belowBar && running && ready) { sNow = sTarget; xNow = xTarget; copyS = sNow; copyMode = 'follow'; stopFrames(); frame(performance.now(), true); } // its last pixels go under the bar: leave it finished
         requestFrame();
       }, { passive: true });
-      // the rest resolver's inputs: a wheel, a finger down (no resolve while one is), a key (goTo hands back too)
+      // the rest resolver's inputs: a wheel, a finger down (no resolve while one is), a key
       window.addEventListener('wheel', handBack, { passive: true });
       window.addEventListener('touchstart', () => { touchDown = true; handBack(); }, { passive: true, capture: true });
       window.addEventListener('touchmove', handBack, { passive: true, capture: true });
@@ -2044,9 +2010,7 @@
       window.addEventListener('touchend', lift, { passive: true, capture: true });
       window.addEventListener('touchcancel', lift, { passive: true, capture: true });
       document.addEventListener('oxa:loaded', () => setTimeout(() => { relayReady = true; requestFrame(); }, 1500), { once: true }); // S0's headline entrance has run
-      // a long jump (site.js dispatches this inside the view transition's update, right after landing): when it lands on the
-      // overture, the scene is set and drawn now, so the incoming view already shows the destination with its structure (never
-      // the copy before the globe, never a rewind from where the reader left it)
+      // a long jump (site.js dispatches this inside the view transition's update, right after landing)
       document.addEventListener('oxa:jump', () => {
         if (!running || lost || !ready || tiny) return;
         measureScroll(); sceneScroll(); syncIndex();
@@ -2055,12 +2019,11 @@
         stopFrames(); frame(performance.now(), true);
       });
       if (root.classList.contains('is-loaded')) setTimeout(() => { relayReady = true; requestFrame(); }, 1500);
-      // late layout (fonts, load) refits the stage around the reader's place as the page has it now: a scroll that has not
-      // reached the scroll listener yet (a deep link's landing, a reload's restored place) is the place to keep
+      // late layout (fonts, load) refits the stage around the reader's place as the page has it now
       const refit = () => { scrollY = window.scrollY; sceneScroll(); resize(true); };
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
       window.addEventListener('load', refit, { once: true });
-      // a mouse inspects what it moves over (only real moves: a still pointer the page scrolls under inspects nothing)
+      // a mouse inspects what it moves over
       stage.addEventListener('pointermove', e => {
         if (e.pointerType === 'touch' || !moved(e)) return; // touch: taps decide (below); a swipe never inspects
         lastPtr.x = e.clientX; lastPtr.y = e.clientY;
@@ -2072,8 +2035,7 @@
         requestFrame();
       }, { passive: true });
       stage.addEventListener('pointerleave', e => { if (e.pointerType === 'touch') return; ptr = null; pointerDirty = true; mouse.tx = mouse.ty = 0; requestFrame(); });
-      // touch: a tap (a short touch that hardly moved) shows what it landed on; a tapped callout always wins over the structure
-      // under it, a tap on empty stage closes the inspector, and a swipe (cancelled or moved) does nothing
+      // touch: a tap (a short touch that hardly moved) shows what it landed on
       let tap = null;
       stage.addEventListener('pointerdown', e => { tap = e.pointerType === 'touch' ? { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId } : null; }, { passive: true });
       stage.addEventListener('pointercancel', () => { tap = null; }, { passive: true });
@@ -2088,7 +2050,7 @@
         ptr = { x: e.clientX - r.left, y: e.clientY - r.top, tap: true }; pointerDirty = true; requestFrame();
       }, { passive: true });
       if ('IntersectionObserver' in window) {
-        // visible: the loop runs; near (within 40% of a screen): the frame is brought up to the scroll before the stage can show
+        // visible: the loop runs; near (within 40% of a screen)
         new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) requestFrame(); else stopFrames(); }, { threshold: 0 }).observe(story);
         new IntersectionObserver(([e]) => { if (e.isIntersecting && running && ready && !lost && !tiny) { scrollY = window.scrollY; sceneScroll(); sNow = sTarget; xNow = xTarget; settledOnce = false; stopFrames(); frame(performance.now(), true); } }, { rootMargin: '40% 0px 40% 0px', threshold: 0 }).observe(story);
       }
@@ -2100,8 +2062,7 @@
     frame(performance.now(), true);
     root.classList.add('gl-ready'); document.dispatchEvent(new Event('story:gl-ready')); // the loader waits for this (capped)
   }
-  // the GPU dropped the context: nothing is drawn, the copy and the index keep following the reader (callouts hidden). If the
-  // browser does not hand it back within 2.5 s, the designed static sequence takes over (with site.js's 2D globe)
+  // the GPU dropped the context: nothing is drawn, the copy and the index keep following the reader (callouts hidden).
   let lostTimer = 0;
   function uiNoGL() {
     if (!running || !wired || tiny) return;
@@ -2111,9 +2072,7 @@
   function start() {
     try { gl = cv.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: true, powerPreference: 'high-performance' }); } catch (e) { gl = null; }
     if (!gl) { fail(); return; }
-    // a software renderer (no GPU: SwiftShader, llvmpipe; a VM, a remote desktop, a blocklisted driver) draws every pixel on the
-    // CPU: the stage drops its grain blend and the glow pass, and while it rests its slow motion runs at ~20 fps. Scrolling still
-    // draws every frame, and every scene, label and fallback is the same
+    // a software renderer
     try { const dbg = gl.getExtension('WEBGL_debug_renderer_info'); SOFT = /swiftshader|llvmpipe|softpipe|software|basic render/i.test(String(gl.getParameter(dbg ? dbg.UNMASKED_RENDERER_WEBGL : gl.RENDERER))); } catch (e) { SOFT = false; }
     if (SOFT) stage.classList.remove('grain');
     cv.addEventListener('webglcontextlost', e => {

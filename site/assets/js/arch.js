@@ -98,7 +98,7 @@
     const noDot = (s) => s.replace(/[.\s]+$/, '');
 
     /* ---------------- 2 · the instrument ---------------- */
-    // inst is the instrument: the list itself (it becomes the explorer), or, in spec mode, a stage above the list (which stays)
+    // inst is the instrument: the list itself (it becomes the explorer), or, in spec mode
     const inst = spec ? document.createElement('div') : root;
     if (!spec) root.classList.remove('layers');
     inst.classList.add('arch', 'is-building');
@@ -115,7 +115,7 @@
     const bodyEl = H('div', 'arch-body');
     const fig = H('div', 'arch-fig', bodyEl);
     fig.setAttribute('aria-hidden', 'true');
-    // the ground on either side of the boundary: scattered motes above it (estimation), a lattice below it (determinism)
+    // the ground on either side of the boundary: scattered motes above it (estimation)
     const field = H('div', 'arch-field', fig);
     H('i', 'af-up', field); H('i', 'af-dn', field);
     const svg = S('svg', { class: 'arch-svg', focusable: 'false' }, fig);
@@ -132,7 +132,7 @@
       return g;
     };
     items.forEach((it, i) => {
-      // spec mode: the entries below carry the headings, so the stage's layers are plain buttons that lead to them
+      // spec mode: the entries below carry the headings
       const hd = H(spec ? 'div' : 'h3', 'arch-h', list);
       const b = H('button', 'arch-layer', hd);
       b.type = 'button'; b.id = `${pre}-b${i + 1}`;
@@ -169,8 +169,7 @@
         });
       }
     });
-    // the floor under 08: the rails the stack connects to (wide: a row in the list, level with the floor line it labels);
-    // when it needs two lines, they break at the middle dot nearest the middle, never leaving a dot at a line's end
+    // the floor under 08: the rails the stack connects to
     const fParts = floorTxt.split(' · ');
     let fMid = 1;
     for (let j = 1, bd = Infinity; j < fParts.length; j++) { const d = Math.abs(fParts.slice(0, j).join(' · ').length - floorTxt.length / 2); if (d < bd) { bd = d; fMid = j; } }
@@ -208,7 +207,7 @@
     const gBead = grad('radialGradient', 'bead', { cx: 0.36, cy: 0.34, r: 0.72 }, [[0, IVORY, 1], [0.55, IVORY, 0.78], [1, IVORY, 0.28]]);
     const gPlane = grad('radialGradient', 'plane', { cx: 0.5, cy: 0.5, r: 0.5 }, [[0, GREEN, 0.2], [0.7, GREEN, 0.06], [1, GREEN, 0]]);
     const gAtt = grad('radialGradient', 'att', { cx: 0.5, cy: 0.5, r: 0.5 }, [[0, GREEN, 0.42], [1, GREEN, 0]]);
-    // the floor under the stack: a ground line with the hatching of a technical drawing, labelled with what lies there
+    // the floor under the stack: a ground line with the hatching of a technical drawing
     const floor = floorTxt ? (() => {
       const g = S('g', { class: 'af' }, svg);
       const fl = { g, land: 0, lx: 0 };
@@ -225,7 +224,7 @@
     let seed = 11 + id * 7;
     const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
 
-    // plates, drawn lowest first so the upper ones cover them; each level has an "above" group for travelling work
+    // plates, drawn lowest first so the upper ones cover them
     const plates = items.map((it, i) => ({ i, above: i < bIndex, off: { x: 0, v: 0 }, heat: { x: 0, v: 0 }, fade: { x: 0, v: 0 }, beads: [] }));
     const levels = {};
     const order = [];
@@ -240,13 +239,11 @@
       else buildPlate(plates[key], lv);
       levels[key] = S('g', { class: 'lv-above' }, svg);
     });
-    // the explosion lines of a technical drawing: dashed, from each plate's visible corners down to the next plate's
-    // (the left, front and right corners are never covered by another plate, so one path drawn over the stack is right)
+    // the explosion lines of a technical drawing: dashed
     const guides = S('path', { class: 'guides', fill: 'none', stroke: IVORY, 'stroke-opacity': 0, 'stroke-width': 1, 'stroke-dasharray': '2 3' }, svg);
     svg.appendChild(gLead);
     const gFront = S('g', { class: 'lv-front' }, svg);
-    // pointer targets, one per plate, held at the plates' resting places: a plate that lifts under the pointer never
-    // slides out from under it (no hover flicker); the upper plates' targets sit on top, as their plates do
+    // pointer targets, one per plate, held at the plates' resting places
     const gHit = S('g', { class: 'hits' }, svg);
     for (let i = N - 1; i >= 0; i--) plates[i].hit = S('polygon', { class: 'ap-hit', fill: 'transparent' }, gHit);
 
@@ -296,7 +293,7 @@
     const cardLead = S('polyline', { fill: 'none', stroke: IVORY, 'stroke-opacity': 0, 'stroke-width': 1 }, gLead);
     const cardNode = S('circle', { r: 2.2, fill: GREEN, 'fill-opacity': 0 }, gLead);
 
-    /* each plate's surface, in its own plane coordinates (u, v in -1..1), so the projection foreshortens it for free */
+    /* each plate's surface, in its own plane coordinates (u, v in -1..1) */
     function pattern(p) {
       const g = p.pat, i = p.i, role = N === 8 ? i : (p.above ? (i === bIndex - 1 ? 3 : 2) : 5);
       const line = (d, o, c, extra) => S('path', Object.assign({ d, fill: 'none', stroke: c || IVORY, 'stroke-opacity': o, 'vector-effect': NSS }, extra || {}), g);
@@ -347,7 +344,7 @@
         line('M-.75 -1V1M-.5 -1V1M-.25 -1V1M0 -1V1M.25 -1V1M.5 -1V1M.75 -1V1M-1 -.75H1M-1 -.5H1M-1 -.25H1M-1 0H1M-1 .25H1M-1 .5H1M-1 .75H1', 0.05);
         line('M0 0H-.5V-1M0 0V-.5H-1M0 0V.5H-1M0 0H.75V-1', 0.32, KHAKI);
         line('M0 0H.25V-.5H.5V-1', 0.95, GREEN, { 'stroke-width': 1.4 });
-        // the nodes; on the scored path, green outlines (a filled green square is the settled mark, and that is 08's alone)
+        // the nodes; on the scored path, green outlines
         [[0, 0], [-0.5, 0], [0, -0.5], [0, 0.5], [0.75, 0], [0.25, 0], [0.25, -0.5], [0.5, -0.5]].forEach(([u, v], k) => sq(u, v, 0.045, k > 4 || k === 0 ? { fill: GREEN, 'fill-opacity': 0.12, stroke: GREEN, 'stroke-opacity': 0.95, 'vector-effect': NSS } : { fill: KHAKI, 'fill-opacity': 0.6 }));
         line('M-.5 -1V-1.1M-1 -.5H-1.1M-1 .5H-1.1M.75 -1V-1.1M.5 -1V-1.1', 0.55, IVORY);
       } else if (role === 5) { // Execution Layer: a state machine; one step at a time, on the grid
@@ -418,9 +415,7 @@
       } else {
         reserve();
         halfW = clamp(W * (W < 560 ? 0.29 : 0.27), 84, 196); cx = W * (W < 560 ? 0.39 : 0.38);
-        // the labels right of the stack (10 px mono caps, ~7.3 px a character): long ('↓ Execution is deterministic',
-        // '06 · Orchestrate') where they fit, short ('↓ Executes', '06') where not; the stack moves left, and on the
-        // narrowest screens shrinks, so that even the short ones keep 8 px from the edge
+        // the labels right of the stack (10 px mono caps, ~7.3 px a character)
         const wl = (s) => (s.length + 2) * 7.3, shortB = wl('Executes'), longB = Math.max(wl(noDot(UP.t)), wl(noDot(DN.t)));
         const roomB = () => W - 8 - (cx + 1.16 * halfW + 12), slack = () => cx - 1.16 * halfW - 16;
         if (roomB() < longB && roomB() + slack() >= longB) cx -= longB - roomB(); // a little to the left buys the long labels
@@ -444,7 +439,7 @@
       figTop = fig.getBoundingClientRect().top; navHc = navH();
       geoDirty = true;
     }
-    // the floor's label under the drawing (narrow): one line if it fits, else two, split at the middle dot nearest the middle
+    // the floor's label under the drawing (narrow): one line if it fits, else two
     let fLines = 0;
     function fitFloor() {
       floor.t1.textContent = floorTxt; floor.t2.textContent = '';
@@ -487,9 +482,7 @@
         : fineMQ.matches ? 'Click, or press Enter, to read more' : 'Tap to read more';
       scue.hidden = open === i;
     }
-    /* One layer's summary gives way to the next out, then in, never both at once: the old one fades to nothing (90 ms), the
-       text changes, the new one rises in (220 ms). A key that arrives while that is under way (arrow keys held or tapped
-       in quick succession) changes the text at once, at full strength: one title, always legible. */
+    /* One layer's summary gives way to the next out, then in, never both at once */
     let swapTimer = 0, swapTo = -1, swapEnd = 0;
     function swapNow(i) { swapTo = -1; clearTimeout(swapTimer); fillSum(i); sum.classList.remove('is-out', 'is-swap'); measureCard(); }
     function swapIn(i) {
@@ -504,9 +497,7 @@
       sum.classList.remove('is-swap'); sum.classList.add('is-out');
       swapTimer = setTimeout(() => { if (swapTo >= 0) swapIn(hot >= 0 ? hot : swapTo); }, 90);
     }
-    /* The instrument never changes height while you point around it: it reserves room for the tallest card once per layout
-       (and for the open layer's card while one is open), so the page below does not jump on hover. Its wide height is
-       already held in CSS (--arch-minh); this only adds room when a card needs more (--arch-cardh). */
+    /* The instrument never changes height while you point around it */
     let peekMax = 0, openH = 0;
     function reserve() {
       if (!wide) { if (minH) { minH = 0; inst.style.removeProperty('--arch-cardh'); } return; }
@@ -613,7 +604,7 @@
     });
     inst.addEventListener('pointermove', (e) => {
       if (!isMouse(e)) return;
-      if (kbd) { // the pointer takes over from the keyboard: hover what it is on now (its enter event came while keys ruled)
+      if (kbd) { // the pointer takes over from the keyboard: hover what it is on now
         kbd = false;
         const b = e.target.closest ? e.target.closest('.arch-layer') : null, i = b ? btns.indexOf(b) : plates.findIndex((p) => p.hit === e.target);
         if (i >= 0) hoverIn(i);
@@ -625,7 +616,7 @@
       kick();
     }, { passive: true });
     inst.addEventListener('pointerleave', () => { pointerOn = false; view.tT = 45 * DEG; view.tF = F0; kick(); });
-    // what keeps it awake: a pointer or focus in it; 8 s after the last of them it stops, and either one wakes it
+    // what keeps it awake: a pointer or focus in it
     const wake = () => { lastActive = performance.now(); kick(); };
     inst.addEventListener('pointerenter', () => { pointerIn = true; wake(); });
     inst.addEventListener('pointerleave', () => { pointerIn = false; lastActive = performance.now(); });
@@ -660,8 +651,7 @@
       const f = { st, segs, s: 0, t: 0, reject: rnd() < 0.16, decided: false, kind: 'signal', g, lvl: null, alpha: 0, x: 0, y: 0, side: rnd() < 0.5 ? -1 : 1, ringR: 3.6, regT: -1, sqT: -1 };
       f.halo = S('circle', { r: 8, fill: IVORY, 'fill-opacity': 0.1 }, g);
       f.dot = S('circle', { r: 1.9, fill: IVORY }, g);
-      // one mark for the proposal and what it becomes: a ring (rx = half its size), still a ring below the boundary, that
-      // squares up only on the last plate, as the swarm lab settles its own at 06 Settle
+      // one mark for the proposal and what it becomes
       f.mk = S('rect', { fill: GREEN, 'fill-opacity': 0, stroke: GREEN, 'stroke-width': 1.4, display: 'none' }, g);
       // registration ticks: they close on the mark as it settles
       f.reg = S('path', { d: 'M-5.5 -2.5V-5.5H-2.5M2.5 -5.5H5.5V-2.5M5.5 2.5V5.5H2.5M-2.5 5.5H-5.5V2.5', fill: 'none', stroke: GREEN, 'stroke-width': 1, 'stroke-opacity': 0, 'vector-effect': NSS }, g);
@@ -773,7 +763,7 @@
       plates.forEach((p, i) => {
         p.tOff = hot < 0 ? 0 : i === hot ? -14 : i < hot ? -9 : 9;
         p.tHeat = i === hot ? 1 : 0;
-        // only the plate right above overlaps the lifted one (not across the boundary's gap): it turns to glass; the rest step back
+        // only the plate right above overlaps the lifted one (not across the boundary's gap)
         p.tFade = hot < 0 || i === hot ? 0 : i === hot - 1 && hot !== bIndex ? 1 : 0.5;
       });
     }
@@ -840,8 +830,7 @@
         setA(p.key, 'stroke-opacity', f3((0.16 + 0.66 * h) * (1 - 0.5 * f))); // the green key light, from the upper left
         setA(p.pat, 'opacity', f3((0.74 + 0.26 * h) * vis));
         setA(p.bead, 'opacity', f3((0.8 + 0.2 * h) * vis));
-        // beads: estimation above the boundary. Bead by bead only on the plate you point at; with someone at the instrument
-        // the other plates' beads drift as three groups, one transform each; nobody at it, they hold still (the flow runs)
+        // beads: estimation above the boundary.
         if (p.beads.length) {
           const own = i === hot && !reduced && !paused, sway = !own && engaged && !reduced && !paused;
           if (own || beadsDirty) placeBeads(p, t);
@@ -850,8 +839,7 @@
         }
         if (p.att && (engaged || i === hot)) { setA(p.att, 'cx', f3(0.42 * Math.sin(t * 0.31 + 0.4))); setA(p.att, 'cy', f3(0.38 * Math.sin(t * 0.23 + 1.3))); }
         if (p.ticks) { setA(p.ticks, 'stroke-opacity', f3(0.5 + 0.45 * pulse)); setA(p.pulse, 'r', f3(0.5 + 0.28 * (1 - pulse))); setA(p.pulse, 'stroke-opacity', f3(0.75 * pulse)); }
-        // 06's state machine and 07's ports light as green outlines over a faint tint: the filled green square is the settled
-        // proposal's mark, and only on 08
+        // 06's state machine and 07's ports light as green outlines over a faint tint
         if (p.cells) p.cells.forEach((c) => { const on = (step + c.r * 2) % 5, lit = c.c === on; setA(c.el, 'fill-opacity', lit ? '0.12' : c.c < on ? '0.06' : '0'); setA(c.el, 'stroke', lit ? GREEN : KHAKI); setA(c.el, 'stroke-opacity', lit ? '0.95' : '0.5'); });
         if (p.ports) p.ports.forEach((e, k) => { const lit = step % 3 === k; setA(e, 'fill-opacity', lit ? '0.12' : '0'); setA(e, 'stroke', lit ? GREEN : KHAKI); setA(e, 'stroke-opacity', lit ? '0.95' : '0.7'); });
         if (p.permit) setA(p.permit, 'fill-opacity', f3(0.3 + 0.65 * permit));
@@ -895,8 +883,7 @@
         if (bound.tDn.textContent !== dnT) bound.tDn.textContent = dnT;
         plates.forEach((p, i) => { const t2 = roomyP ? p.numLong : p.numShort; if (p.num.textContent !== t2) p.num.textContent = t2; setA(p.num, 'opacity', f3(clamp((exOf(i) - 0.8) / 0.2, 0, 1))); });
       }
-      // the floor: a ground line under the stack, hatched beneath it as in a technical drawing; wide, a dotted leader
-      // carries it on to its row in the list; narrow, its label sits under it. A settled action lands on it with a mark.
+      // the floor: a ground line under the stack, hatched beneath it as in a technical drawing
       if (floor) {
         const fa = clamp((ex - 0.7) / 0.3, 0, 1), xa = cx - halfW * 1.3, xb = cx + halfW * 1.3;
         setA(floor.line, 'x1', f1(xa)); setA(floor.line, 'x2', f1(xb)); setA(floor.line, 'y1', f1(fy)); setA(floor.line, 'y2', f1(fy));
@@ -944,12 +931,11 @@
       setA(ov, 'data-in', ex >= 0.9 ? '1' : '0');
       beadsDirty = false;
     }
-    // awake: a pointer or focus in the instrument, or under 8 s since the last of them (or since it came into view)
+    // awake: a pointer or focus in the instrument, or under 8 s since the last of them
     const awake = (now) => pointerIn || focusIn || now - lastActive < 8000;
     function frame(now) {
       raf = 0;
-      // at rest (no plate pointed at, nothing settling) it is drawn at 20 Hz, or 30 with someone at it: the frames between
-      // do nothing
+      // at rest (no plate pointed at, nothing settling) it is drawn at 20 Hz, or 30 with someone at it
       const df = lastF ? now - lastF : 0; lastF = now;
       if (hot < 0 && !wasBusy) {
         restAcc = Math.min(1, restAcc + df * (pointerIn || focusIn ? 0.031 : 0.021));
@@ -960,8 +946,7 @@
       const ambient = !reduced && !paused && started && awake(now);
       if (ambient) {
         t += dt;
-        // the stack is already at work when it opens: the flow is run 5 s ahead, unseen, so a proposal settles on 08 within
-        // the first seconds instead of after the 8 s it would take from empty (and before the instrument goes idle)
+        // the stack is already at work when it opens: the flow is run 5 s ahead, unseen
         if (ex >= 1 && !prerolled) { prerolled = true; for (let k = 0; k < 100; k++) flowStep(0.05); pulse = permit = 0; bound.flash = bound.ripT = 0; if (floor) floor.land = 0; }
         flowStep(dt);
         pulse = Math.max(0, pulse - dt / 0.3); permit = Math.max(0, permit - dt / 0.55);
@@ -996,8 +981,7 @@
       if (reduced) { flows.splice(0).forEach((f) => f.g.remove()); pulse = permit = 0; bound.flash = bound.ripT = 0; if (floor) floor.land = 0; ex = exStart >= 0 ? 1 : ex; }
       kick(true);
     });
-    // a new size is measured in the next frame, not inside the observer: measuring can resize the instrument (the room it
-    // reserves for the card), and resizing an observed box inside its own callback is a ResizeObserver loop
+    // a new size is measured in the next frame, not inside the observer
     let roQueued = false;
     const ro = new ResizeObserver(() => {
       if (roQueued) return;
@@ -1010,7 +994,7 @@
       entries.forEach((e) => {
         if (e.isIntersecting && !visible) lastActive = performance.now(); // back in view: awake again
         visible = e.isIntersecting;
-        // open the stack once a fair part of it is on screen (a tall instrument on a short screen never reaches a fixed ratio)
+        // open the stack once a fair part of it is on screen
         const seen = e.intersectionRect.height >= Math.min(window.innerHeight * 0.32, e.boundingClientRect.height * 0.3);
         if (visible && seen && exStart < 0) { exStart = performance.now(); started = true; if (reduced) ex = 1; }
       });
@@ -1018,7 +1002,7 @@
     }, { threshold: [0, 0.05, 0.1, 0.2, 0.3, 0.5] }).observe(inst);
     document.addEventListener('visibilitychange', () => kick());
     window.addEventListener('scroll', () => { if (wide && hot >= 0 && visible) { figTop = fig.getBoundingClientRect().top; kick(); } }, { passive: true });
-    // printing: every layer's detail, inline, in order (the spec prints as it stands; CSS leaves its stage out)
+    // printing: every layer's detail, inline, in order
     if (!spec) {
       window.addEventListener('beforeprint', () => { panels.forEach((p) => { p.hidden = false; }); if (wide) { wide = false; inst.classList.remove('is-wide'); inst.classList.add('is-narrow'); placePanels(); } });
       window.addEventListener('afterprint', () => { panels.forEach((p, i) => { p.hidden = i !== open; }); setMode(wideMQ.matches); });

@@ -36,9 +36,7 @@
   --reject: #B4443C;
   --reject-bright: #D9675D;   /* reject on dark grounds, as --signal-bright is the green's: 4.7:1 where #B4443C was 2.95:1 */
   --brand-blue: #4A5FC1;
-  /* TEXT ONLY, on paper grounds (WCAG AA): green and khaki words. Strokes, fills and marks keep --signal / --khaki-deep;
-     dark grounds keep --accent (--signal-bright) and --khaki. Owners' regions write var(--signal-ink, #186B4F) and
-     var(--khaki-ink, #6B6551) with literal fallbacks. */
+  /* TEXT ONLY, on paper grounds (WCAG AA): green and khaki words. */
   --signal-ink: #186B4F;   /* 5.77:1 on paper, 5.28:1 on paper-2 (#1E7A5A is 4.31:1 on paper-2) */
   --khaki-ink: #6B6551;    /* 5.21:1 on paper, 4.76:1 on paper-2 (#857F66 is 3.6:1 on paper) */
 
@@ -64,8 +62,7 @@
   --r: 3px;
   --ease: cubic-bezier(.2, .7, .2, 1);
 
-  /* mono micro-type: one scale for every mono label on the site. Nothing set uppercase goes below --mono-xs (10 px).
-     Owners' regions write var(--mono-xs, .625rem) etc. with literal fallbacks. */
+  /* mono micro-type: one scale for every mono label on the site. */
   --mono-xs: .625rem;
   --mono-s: .6875rem;
   --mono-m: .75rem;
@@ -88,7 +85,7 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   font-feature-settings: "cv11", "ss01";
-  font-synthesis-weight: none; /* Instrument Serif ships one 400 face and Plex Mono stops at 500: never fake a bold (italic synthesis stays on) */
+  font-synthesis-weight: none; /* Instrument Serif ships one 400 face and Plex Mono stops at 500 */
 }
 img, svg, canvas { display: block; max-width: 100%; }
 a { color: inherit; text-decoration: none; }
@@ -218,10 +215,7 @@ em, .ital { font-style: italic; }
 .card .n { font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; color: var(--fg-3); margin-bottom: 26px; display: flex; justify-content: space-between; }
 .card h3 { margin-bottom: 12px; font-weight: 400; }
 .card p { color: var(--fg-2); font-size: .98rem; }
-/* hairline grids draw their rules on the cells (the container the top and left edge, each cell its right and bottom
-   edge), never as a grey container showing through 1 px gaps: an empty cell of a short last row is plain paper, and a
-   cell waiting for its reveal leaves paper, not a grey slab. The same scheme: .pager, .constants, .crew, .blog-grid,
-   .series-rail, .class-row. */
+/* hairline grids draw their rules on the cells */
 .card-grid { display: grid; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .card-grid > * { border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .card-grid > .card { border-radius: 0; }
@@ -527,8 +521,7 @@ em, .ital { font-style: italic; }
 @media (max-width: 700px) { .pager { grid-template-columns: 1fr; } .pager-card.next { text-align: left; justify-items: start; } }
 
 /* ---------- homepage research chapter ---------- */
-/* a column: the paragraph takes the free height, so every card's arrow sits on one line at the foot of its row (PG-R2-7).
-   No hover lift: a lifted cell would ride over the grid's top rule. */
+/* a column: the paragraph takes the free height, so every card's arrow sits on one line at the foot of its row (PG-R2-7). */
 .research-card { display: flex; flex-direction: column; }
 .research-card > p { flex-grow: 1; }
 @media (hover: hover) { .research-card:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; } }
@@ -557,7 +550,7 @@ em, .ital { font-style: italic; }
 @media (max-width: 960px) {
   .company-hero { min-height: 0; padding-top: calc(var(--nav-h) + 30px); }
   .company-hero .container { grid-template-columns: 1fr; gap: 26px; }
-  /* the plate keeps its 1.2 frame and the readout follows it (in flow, a static readout sat inside the frame's top edge) */
+  /* the plate keeps its 1.2 frame and the readout follows it */
   .company-sculpture { aspect-ratio: auto; padding-top: calc(100% / 1.2); margin-top: 12px; }
   .company-sculpture .figure-stage, .company-sculpture .frame { bottom: auto; aspect-ratio: 1.2; }
   .company-sculpture .readout { position: static; margin-top: 12px; flex-wrap: wrap; gap: 2px 16px; }
@@ -593,9 +586,7 @@ em, .ital { font-style: italic; }
 .manifesto em .mw.is-lit { color: var(--accent); }
 .manifesto.is-lg { font-size: clamp(1.9rem, 4.1vw, 3.9rem); line-height: 1.16; }
 
-/* ---------- the team (company page only) ----------
-   Six portraits on the paper. Each sits in a disc over a faint point grid - the swarm, at rest - in warm monochrome
-   that comes to colour when you point at it. Hairline cells, mono index, serif name: the same grammar as the constants. */
+/* ---------- the team (company page only) ---------- */
 .crew { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .crew > li { background: var(--bg); padding: clamp(24px, 2.8vw, 40px); position: relative; overflow: hidden; display: flex; flex-direction: column; }
 .crew .n { font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); display: flex; justify-content: space-between; gap: 16px; }
@@ -626,9 +617,7 @@ em, .ital { font-style: italic; }
 @media (max-width: 1080px) { .crew { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .crew { grid-template-columns: 1fr; } .crew .ph { width: 148px; height: 148px; } .crew-stats { flex-wrap: wrap; } }
 @media (prefers-reduced-motion: reduce) { .crew .ph img, .crew .ph::before, .crew .ph .ring, .crew > li::after { transition: none; } }
-/* ---------- the blog (research/blog) ----------
-   An archive, set in the same grammar as Research: a sticky row of collection chips, hairline card grids with
-   warm-monochrome thumbnails that come to colour on hover, and article pages that reuse the research typography. */
+/* ---------- the blog (research/blog) ---------- */
 .blog-hero { min-height: 62svh; }
 .blog-hero .eyebrow a, .blog-post-hero .eyebrow a { border-bottom: 1px solid rgba(245, 242, 236, .28); transition: border-color .3s var(--ease); }
 @media (hover: hover) { .blog-hero .eyebrow a:hover, .blog-post-hero .eyebrow a:hover { border-color: currentColor; } }
@@ -679,9 +668,7 @@ em, .ital { font-style: italic; }
 @media (max-width: 1080px) { .blog-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .blog-grid { grid-template-columns: 1fr; } .blog-hero { min-height: 0; } }
 @media (prefers-reduced-motion: reduce) { .blog-thumb img, .blog-card::after { transition: none; } }
-/* ---------- featured series (blog) ----------
-   Four posts read in order: a rail of numbered cards joined by one hairline, the part named above each title.
-   On a post, the series sits at the top of the side column with the current part marked. */
+/* ---------- featured series (blog) ---------- */
 .series-rail { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); counter-reset: none; }
 .series-rail > li { background: var(--bg); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; }
 .series-card { position: relative; display: flex; flex-direction: column; width: 100%; padding: clamp(20px, 2vw, 28px); transition: background .35s var(--ease); }
@@ -713,8 +700,7 @@ em, .ital { font-style: italic; }
 @media (max-width: 1080px) { .series-rail { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .series-rail { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .series-card::after { transition: none; } }
-/* ---------- team v2: ten people + advisors, full descriptions ----------
-   Hairlines are drawn per cell (not by a grey grid background) so a short last row stays clean. */
+/* ---------- team v2: ten people + advisors, full descriptions ---------- */
 .crew { align-items: start; }
 .crew > li { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); align-self: stretch; }
 .crew--team { grid-template-columns: repeat(5, 1fr); }
@@ -744,7 +730,7 @@ em, .ital { font-style: italic; }
 @media (max-width: 860px) { .crew--team { grid-template-columns: repeat(2, 1fr); } .crew-sub { grid-template-columns: 1fr; } }
 @media (max-width: 560px) { .crew--team, .crew--advisors { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .crew-bio { animation: none; } .crew-more summary::after { transition: none; } }
-/* ---------- print: pages, research notes and posts print as clean documents (ink on white, everything revealed) ---------- */
+/* ---------- print: pages, research notes and posts print as clean documents ---------- */
 @media print {
   @page { margin: 16mm 15mm; }
   html, body { background: #fff !important; color: #000 !important; }
@@ -791,11 +777,10 @@ em, .ital { font-style: italic; }
 .beat { position: absolute; left: var(--gutter); right: var(--gutter); bottom: calc(var(--story-bar-h) + clamp(18px, 3.6vh, 40px)); opacity: 0; pointer-events: none; will-change: opacity, transform; }
 .beat-0 { opacity: 1; } /* the opening scene holds from the first paint; story.js takes over every beat's opacity */
 .beat.is-active .beat-text, .beat.is-active .hero-stats { pointer-events: auto; }
-/* the copy relay (story.js): each part of a beat follows the scroll position. --eo the eyebrow, --w the headline's words, --bo the
-   paragraph, buttons, key and figures. No timers, so a reverse scroll is the exact mirror and a headline always leads its scene. */
+/* the copy relay (story.js): each part of a beat follows the scroll position. --eo the eyebrow */
 .beat .eyebrow, .beat-0 .hero-kicker { opacity: var(--eo, 1); }
 .beat .body-lg, .beat-0 .hero-sub, .beat .hero-cta, .beat .story-legend, .beat-0 .hero-stats { opacity: var(--bo, 1); }
-/* at 0 the paragraph, buttons, key and figures are not there at all: no ghost text, no invisible hit target */
+/* at 0 the paragraph, buttons, key and figures are not there at all */
 .beat.is-bo0 .body-lg, .beat.is-bo0 .hero-sub, .beat.is-bo0 .hero-cta, .beat.is-bo0 .story-legend, .beat.is-bo0 .hero-stats { visibility: hidden; }
 .story-ready .beat:not(.beat-0) [data-split] .wi, .story-ready .beat-0.is-relay [data-split] .wi { transform: translateY(calc((1 - clamp(0, var(--w, 1) * 1.5 - var(--i, 0) * .05, 1)) * 112%)); transition: none; }
 .beat-text { max-width: min(44%, 560px); }
@@ -811,7 +796,7 @@ em, .ital { font-style: italic; }
 .hero-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: clamp(1.5rem, 2.1vw, 2.05rem); line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
 .hero-stats b em { font-style: normal; color: var(--signal-bright); }
 .hero-stats span { display: block; margin-top: 9px; font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58); line-height: 1.4; }
-/* Lifecycle 01: a numeral like its neighbours, with the live dot (opacity only, paused off-screen by the nav's .is-offscreen) */
+/* Lifecycle 01: a numeral like its neighbours, with the live dot */
 .hero-stats .live { display: inline-block; width: 6px; height: 6px; margin-left: 9px; border-radius: 50%; background: var(--signal-bright); vertical-align: .62em; animation: pulse 2s ease-in-out infinite; }
 /* the chapter mark: absent at rest; inside a hand-over the incoming scene's numeral rises above the copy column and rolls over */
 .story-num { position: absolute; left: var(--gutter); top: calc(var(--nav-h) + clamp(16px, 4.5vh, 48px)); opacity: 0; pointer-events: none; color: var(--paper); will-change: opacity, transform; }
@@ -837,8 +822,7 @@ em, .ital { font-style: italic; }
 /* callouts: DOM text projected from the instrument, with leader lines */
 .story-labels { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
 .story-leaders { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-/* callouts, leaders and nodes take their opacity from story.js, from the same frame state as the copy: no opacity transition can
-   keep one up after its copy has gone */
+/* callouts, leaders and nodes take their opacity from story.js */
 .story-leader { fill: none; stroke: rgba(245, 242, 236, .3); stroke-width: 1; opacity: 0; transition: stroke .25s; }
 .story-leader.is-live, .story-leader.is-council, .story-leader.bound { stroke: rgba(79, 203, 147, .5); }
 .story-leader.is-hot { stroke: rgba(245, 242, 236, .75); }
@@ -904,8 +888,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-bar .hero-scroll i { height: 22px; }
 .story.is-scrolled .hero-scroll { opacity: 0; }
 .story.is-scrolled .hero-scroll i, .story.is-scrolled .hero-stats .live, .story.is-paused .hero-scroll i, .story.is-paused .hero-stats .live { animation-play-state: paused; } /* their loops (transform, opacity) stop once S0 has gone, and with Pause motion */
-/* the hand-off: the columns drain into their records on the floor line; the paper rises to that line, which becomes its edge, and
-   prints the records and the day tags in ink; its caption's rule runs on the chapters' container like every chapter rule */
+/* the hand-off: the columns drain into their records on the floor line */
 .story-paper { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; height: 0; overflow: hidden; visibility: hidden; background: var(--paper); color: var(--ink); pointer-events: none; }
 .story-paper-in { position: absolute; left: 0; right: 0; bottom: 0; height: 100vh; height: 100svh; } /* the stage's frame: the paper uncovers what is here, it does not carry it */
 .story-paper-in > .container { position: absolute; left: 0; right: 0; top: 0; }
@@ -920,8 +903,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-next-target:focus { outline: none; } /* the chapter the keys stepped into from the last scene: focus moves there, no ring on the section */
 .story-paper-cap { display: flex; justify-content: space-between; gap: 6px 24px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--rule-strong); font: .7rem/1.5 var(--mono); letter-spacing: .06em; color: var(--slate); }
 
-/* the layout modes story.js measures. Compact: a portrait screen whose copy would leave a scene under 40% of the stage — the copy
-   gives way, not the structure. Short: a landscape phone. A beat whose copy would still reach the nav drops its paragraph (.is-tight). */
+/* the layout modes story.js measures. */
 .story-compact .story-legend, .story-compact .beat-0 .hero-stats { display: none; }
 .story-compact .beat h2 { font-size: clamp(1.55rem, 6.4vw, 2.1rem); }
 .story-compact .beat-0 .display-1 { font-size: clamp(2.1rem, 8.8vw, 3.4rem); }
@@ -930,7 +912,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-compact .beat .body-lg, .story-compact .beat-0 .hero-sub { margin-top: 10px; font-size: .86rem; line-height: 1.5; }
 .story-compact .beat .hero-cta, .story-short .beat .hero-cta { flex-wrap: nowrap; gap: 10px; margin-top: 14px; }
 .story-compact .beat .hero-cta .btn, .story-short .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
-/* a portrait phone is always compact: the same rules from the first paint, so nothing shifts when story.js arrives (CLS) */
+/* a portrait phone is always compact: the same rules from the first paint */
 @media (scripting: enabled) and (max-width: 599.98px) {
   html:not(.no-webgl) .story-legend, html:not(.no-webgl) .beat-0 .hero-stats { display: none; }
   html:not(.no-webgl) .beat h2 { font-size: clamp(1.55rem, 6.4vw, 2.1rem); }
@@ -942,9 +924,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
 }
 /* a landscape phone is short from the first paint too */
-/* tall phones: the overture's type closer to the chapters that follow (body 15 px), and S0 says what is live: the fourth hero
-   stat alone, as one mono line with its live dot (the copy still gives way, .is-tight, wherever a beat would reach the index).
-   From the first paint on a phone (nothing shifts when story.js arrives), and under html.story-compact on wider portrait screens */
+/* tall phones: the overture's type closer to the chapters that follow (body 15 px) */
 @media (scripting: enabled) and (max-width: 599.98px) and (min-height: 740px) {
   html:not(.no-webgl) .beat .body-lg { font-size: .94rem; }
   html:not(.no-webgl) .beat h2 { font-size: clamp(1.7rem, 7vw, 2.2rem); }
@@ -970,9 +950,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-short .story-lab.day { padding: 2px 0; min-width: 0; }
 .story-short .story-lab.layer, .story-short .story-lab.bound { min-height: 20px; } /* nine rows beside the stack from 360 px of height */
 
-/* without JavaScript, and when WebGL is unavailable (site.js then draws the 2D swarm behind the first beat), the beats read as a
-   sequence. With JavaScript the pinned stage holds from the first paint, so nothing shifts when story.js arrives; should it never
-   arrive (and nothing else take over), the same sequence takes over after 4 s. */
+/* without JavaScript, and when WebGL is unavailable */
 .story-static-mark { position: absolute; top: calc(var(--nav-h) + 64px); right: 9%; width: min(32%, 440px); opacity: .5; pointer-events: none; }
 .story-ready .story-static-mark, .no-webgl .story-static-mark { display: none; }
 .beat-fig { display: none; }
@@ -1003,9 +981,9 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 @media (scripting: none) and (min-aspect-ratio: 23/20) and (min-width: 640px) {
   .beat-fig { position: absolute; right: 0; top: 50%; width: min(46vw, 560px); max-width: none; margin: 0; transform: translateY(-50%); }
 }
-/* wide screens: site.js's 2D globe gets a canvas of its own on the right (960 px or more keeps its wide layout), clear of the copy */
+/* wide screens: site.js's 2D globe gets a canvas of its own on the right */
 @media (min-aspect-ratio: 23/20) and (min-width: 1200px) { .no-webgl .story-2d { left: auto; right: 0; width: max(960px, 56%); } }
-/* the safety net: JavaScript on, but story.js never ran (a failed download): after 4 s the static sequence */
+/* the safety net: JavaScript on, but story.js never ran (a failed download) */
 @media (scripting: enabled) {
   html:not(.story-ready):not(.no-webgl) .story { animation: story-static-h 1ms 4s forwards; }
   html:not(.story-ready):not(.no-webgl) .story-stage { animation: story-static-stage 1ms 4s forwards; }
@@ -1033,7 +1011,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   .beat .eyebrow { margin-bottom: 8px; }
   .beat-0 .hero-kicker, .beat-0 .hero-stats, .story-legend { display: none; }
   .beat-0 .display-1 { font-size: clamp(1.9rem, 10vh, 3.4rem); }
-  .beat h2 { font-size: clamp(1.35rem, 3.4vw, 1.7rem); max-width: 24ch; } /* a smaller short scale: the paragraphs keep their place (.is-tight only if a beat still reaches the nav) */
+  .beat h2 { font-size: clamp(1.35rem, 3.4vw, 1.7rem); max-width: 24ch; } /* a smaller short scale: the paragraphs keep their place */
   .beat .body-lg, .beat-0 .hero-sub { margin-top: 10px; font-size: .86rem; line-height: 1.45; }
   .beat .body-lg { font-size: .8rem; line-height: 1.42; }
   .beat .hero-cta, .beat-0 .hero-cta { margin-top: 14px; }
@@ -1077,7 +1055,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   .no-webgl .beat-0 { padding-top: calc(var(--nav-h) + 66vw + 48px); }
 }
 @media (scripting: none) and (max-width: 639.98px), (scripting: none) and (max-aspect-ratio: 23/20) { .beat-0 { padding-top: calc(var(--nav-h) + 66vw + 48px); } }
-/* phones leave out the rings' and layers' names (the inspector has them); portrait tablets keep them, a little larger */
+/* phones leave out the rings' and layers' names (the inspector has them) */
 @media (max-width: 599.98px) {
   .story-lab.ring .n, .story-lab.layer .n { display: none; }
   .story-lab.ring { flex-direction: column; align-items: flex-start; gap: 3px; } /* code over status: a narrow column, so the rings can fill the width */
@@ -1087,15 +1065,14 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 }
 @media (min-width: 600px) and (max-aspect-ratio: 23/20) { .story-lab { font-size: clamp(.625rem, .5rem + .4vw, .8rem); } }
 @media (max-width: 400px) { .hero-stats { grid-template-columns: repeat(2, auto); justify-content: start; gap: 12px 26px; } .story-lab.day { padding: 2px 0; min-width: 0; } }
-/* 400% zoom on a desktop (html.story-tiny: under 300 px of height; story.js): the static sequence above, without the 2D globe's
-   room and with every part of each beat shown; nothing is drawn */
+/* 400% zoom on a desktop */
 html.story-tiny .story .beat-0 { padding-top: calc(var(--nav-h) + 28px); }
 html.story-tiny .story .beat [data-split] .wi { transform: none; }
 html.story-tiny .story .beat-0 .hero-kicker { display: block; }
 html.story-tiny .story .beat-0 .hero-stats { display: grid; }
 html.story-tiny .story .story-coda { display: none; }
 @media (prefers-reduced-motion: reduce) { .story-bar .hero-scroll i { animation: none; opacity: .5; } .hero-stats .live { animation: none; } .story-lab, .story-leader, .story-node, .story-insp.is-on, .story-idx button, .story-num i { transition: none; } }
-/* print: the overture prints as its static sequence, ink on white (the stage, its instrument and its chrome stay off paper) */
+/* print: the overture prints as its static sequence, ink on white */
 @media print {
   .story-bar, .story-paper, .story-insp, .story-leaders, .story-legend { display: none !important; }
   .story, .story-stage { height: auto !important; min-height: 0 !important; background: none !important; }
@@ -1118,8 +1095,7 @@ html.story-tiny .story .story-coda { display: none; }
 .sw-head { display: flex; align-items: center; gap: 10px 22px; flex-wrap: wrap; min-height: 56px; padding: 8px 12px 8px 20px; border-bottom: 1px solid var(--line); font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 .sw-live, .sw-follow, .sw-key, .sw-on .sw-gates small, .sw-limit, .sw-ledger, .sw-bound, .sw-banner, .sw-agent, .sw-hover, .sw-trace, .swarm-live:not(.sw-on) .swarm-bar { display: none; }
 .sw-on .sw-live { display: inline-flex; align-items: center; gap: 9px; color: var(--accent); min-width: 8.5em; }
-/* the running light: a ring that grows and fades (transform and opacity only); it stops when the lab is halted,
-   paused or off screen (the engine sets .is-off; the nav's .is-offscreen pauses it too) */
+/* the running light: a ring that grows and fades (transform and opacity only) */
 .sw-live i { position: relative; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .sw-live i::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: currentColor; opacity: 0; animation: sw-ping 1.8s ease-out infinite; }
 @keyframes sw-ping { 0% { transform: scale(1); opacity: .5; } 70%, 100% { transform: scale(2.4); opacity: 0; } }
@@ -1142,7 +1118,7 @@ html.story-tiny .story .story-coda { display: none; }
 .sw-follow[aria-pressed="true"]::before { background: currentColor; border-radius: 1px; width: 8px; height: 8px; }
 .sw-follow:focus-visible, .sw-trace-close:focus-visible, .swarm-live .halt:focus-visible, .sw-motion:focus-visible, .sw-rec:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* the stage: the canvas fills a fixed band at the top (--sw-h); on narrow screens the trace flows below it */
+/* the stage: the canvas fills a fixed band at the top (--sw-h) */
 .sw-stage { --sw-h: clamp(330px, calc(32vw + 70px), 560px); position: relative; background: radial-gradient(110% 95% at 6% 0%, rgba(30, 122, 90, .17), rgba(30, 122, 90, 0) 56%), radial-gradient(70% 60% at 52% 46%, rgba(245, 242, 236, .025), rgba(245, 242, 236, 0) 70%), linear-gradient(180deg, #0E1512 0%, #0B110F 100%); }
 .sw-on .sw-stage { padding-top: var(--sw-h); }
 .sw-stage canvas { display: none; }
@@ -1172,7 +1148,7 @@ html.story-tiny .story .story-coda { display: none; }
 .sw-on .sw-gates li.is-hit b { color: var(--accent); } .sw-on .sw-gates li.is-hit span { color: var(--paper); }
 .sw-on .sw-gates small { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .swarm-live.is-halted .sw-gates li:first-child, .swarm-live.is-halted .sw-gates li:first-child b { color: var(--khaki); }
-/* the council's live state at 04: what it approves, what it rejects (one line; on phones only the risk limit) */
+/* the council's live state at 04: what it approves, what it rejects */
 .sw-on .sw-limit { display: block; margin-top: 2px; font-style: normal; font-size: var(--mono-xs, .625rem); letter-spacing: .04em; text-transform: none; color: rgba(245, 242, 236, .62); transition: color .45s; }
 .sw-limit.is-all > span:nth-child(n+2) { display: none; }
 .sw-on .sw-gates li.is-tuned .sw-limit { color: var(--accent); transition-duration: .1s; }
@@ -1193,8 +1169,7 @@ html.story-tiny .story .story-coda { display: none; }
 .sw-on .sw-hover:not([hidden]) { display: block; position: absolute; left: 0; top: 0; padding: 5px 9px 6px; border-left: 1px solid var(--accent); background: rgba(11, 17, 15, .82); white-space: nowrap; pointer-events: none; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: rgba(245, 242, 236, .66); will-change: transform; }
 .sw-hover b { display: block; font-weight: 500; color: var(--paper); }
 
-/* the trace of a followed proposal: over the stage's lower left; below the canvas on narrow screens. Every gate has its
-   row from the start; the ones ahead are pending until the proposal reaches them */
+/* the trace of a followed proposal: over the stage's lower left; below the canvas on narrow screens. */
 .sw-on .sw-trace:not([hidden]) { display: block; position: absolute; left: 16px; top: calc(var(--sw-h) - 16px); transform: translateY(-100%); width: min(388px, calc(100% - 32px)); border: 1px solid rgba(245, 242, 236, .2); background: rgba(11, 17, 15, .9); font-family: var(--mono); animation: sw-trace-in .35s var(--ease) both; }
 .sw-trace-head { display: flex; align-items: center; gap: 12px; padding: 6px 8px 6px 14px; border-bottom: 1px solid var(--line); font-size: var(--mono-xs, .625rem); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--paper); }
 .sw-trace-state { color: var(--fg-3); }
@@ -1222,7 +1197,7 @@ html.story-tiny .story .story-coda { display: none; }
 @media (hover: hover) { .sw-rec:hover { background: rgba(79, 203, 147, .12); border-color: var(--accent); } }
 .sw-rec i { font-style: normal; transition: transform .25s var(--ease); }
 @media (hover: hover) { .sw-rec:hover i { transform: translateY(2px); } }
-/* pressed (pointer down, Enter or Space): it fills at once and its arrow nudges down, ahead of the trip to the ledger */
+/* pressed (pointer down, Enter or Space): it fills at once and its arrow nudges down */
 .sw-rec.is-going { background: var(--accent); border-color: var(--accent); color: #0B110F; transition-duration: 0s; }
 .sw-rec.is-going i { transform: translateY(4px); transition-duration: .12s; }
 @keyframes sw-trace-in { from { opacity: 0; transform: translateY(calc(-100% + 6px)); } to { opacity: 1; transform: translateY(-100%); } }
@@ -1244,8 +1219,7 @@ html.story-tiny .story .story-coda { display: none; }
 .swarm-controls input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--paper); border: 3px solid #0B110F; box-shadow: 0 0 0 1px var(--line-strong); margin-top: -6.5px; transition: transform .2s var(--ease); }
 .swarm-controls input[type=range]::-moz-range-thumb { width: 8px; height: 8px; border-radius: 50%; background: var(--paper); border: 3px solid #0B110F; box-shadow: 0 0 0 1px var(--line-strong); }
 @media (hover: hover) { .swarm-controls input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); } }
-/* focus: the track lights and a green ring circles the thumb; the outline is transparent, so it is drawn only where
-   forced colours (Windows contrast themes) give it the system colour, where the box-shadow ring is dropped */
+/* focus: the track lights and a green ring circles the thumb */
 .swarm-controls input[type=range]:focus-visible { outline: 2px solid transparent; outline-offset: 4px; }
 .swarm-controls input[type=range]:focus-visible::-webkit-slider-runnable-track { background: var(--accent); }
 .swarm-controls input[type=range]:focus-visible::-moz-range-track { background: var(--accent); }
@@ -1281,11 +1255,9 @@ html.story-tiny .story .story-coda { display: none; }
   .swarm-stats > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
 }
 @media (max-width: 420px) { .swarm-controls { grid-template-columns: 1fr; } }
-/* set by the engine from the stage's own width: under 820px the trace flows under the canvas; under 560px the
-   labels split into two rows (02 04 06 above the lane, 01 03 05 below) and tighten */
+/* set by the engine from the stage's own width: under 820px the trace flows under the canvas */
 .sw-on.is-stacked .sw-trace:not([hidden]) { position: relative; left: auto; top: auto; transform: none; width: auto; border: 0; border-top: 1px solid var(--line); animation-name: sw-in; }
-/* in the flow the log keeps the height of a whole journey with its record button, so a rejection (one row fewer)
-   does not move the counters and controls below */
+/* in the flow the log keeps the height of a whole journey with its record button, so a rejection */
 .sw-on.is-stacked .sw-log { min-height: calc(6 * 2.1em + 34px + 10px); }
 .sw-on.is-narrow .sw-gates li { letter-spacing: .1em; }
 .sw-on.is-narrow .sw-gates b { margin-right: .25em; }
@@ -1301,8 +1273,7 @@ html.story-tiny .story .story-coda { display: none; }
   .sw-log li[data-k="led"] { min-height: 48px; }
   .sw-on.is-stacked .sw-log { min-height: calc(6 * 2.1em + 48px + 10px); }
 }
-/* phones held sideways: a shorter stage, the controls in two columns beside the counters, so the stage and the
-   strictness slider are on screen together */
+/* phones held sideways: a shorter stage, the controls in two columns beside the counters */
 @media (max-height: 500px) and (min-aspect-ratio: 23/20) {
   .sw-stage { --sw-h: 52vh; }
   @supports (height: 1svh) { .sw-stage { --sw-h: 52svh; } }
@@ -1318,8 +1289,7 @@ html.story-tiny .story .story-coda { display: none; }
   .swarm-controls .sw-btns { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
 }
 
-/* Platform §03: the swarm's four facts as one compact static row (final values in the markup, no count-up), and the
-   four agent roles as the lab's legend: each card's top rule takes the colour of what that role carries in the lab */
+/* Platform §03: the swarm's four facts as one compact static row */
 .stats.sw-spec { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: clamp(36px, 4.5vw, 64px) 0 clamp(28px, 3vw, 40px); }
 .stats.sw-spec > div { padding: clamp(16px, 1.6vw, 22px) clamp(14px, 1.6vw, 22px); }
 .stats.sw-spec .v { font-size: clamp(2rem, 2.8vw, 2.75rem); }
@@ -1335,8 +1305,7 @@ html.story-tiny .story .story-coda { display: none; }
 .sw-role--2 { --sw-tint: var(--signal-bright); }
 .sw-role--3 { --sw-tint: repeating-linear-gradient(90deg, var(--signal-bright) 0 14px, transparent 14px 20px); }
 .sw-role--4 { --sw-tint: linear-gradient(90deg, var(--signal-bright), rgba(245, 242, 236, .86)); }
-/* each card's legend line is its footer: on one hairline across the row (pushed to the card's foot), 'In the lab' over
-   the gate names, which break only between gates */
+/* each card's legend line is its footer: on one hairline across the row (pushed to the card's foot) */
 .sw-legend .sw-at { display: flex; align-items: flex-start; gap: 10px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 .sw-at b { display: block; margin-top: 3px; font-weight: 500; color: var(--fg-2); }
 .sw-at b > span { white-space: nowrap; }
@@ -1349,7 +1318,7 @@ html.story-tiny .story .story-coda { display: none; }
 .sw-role--3 .sw-at i::after { left: 8px; width: 10px; height: 10px; margin-top: -5px; border: 1.5px solid var(--signal-bright); border-radius: 50%; background: #0E1512; }
 .sw-role--4 .sw-at i::before { left: 1px; width: 8px; height: 8px; margin-top: -4px; border-radius: 1.5px; background: var(--signal-bright); }
 .sw-role--4 .sw-at i::after { left: 12px; width: 14px; height: 6px; margin-top: -3px; border-radius: 1px; background: rgba(245, 242, 236, .92); }
-@media (min-width: 901px) and (max-width: 1099px) { .sw-legend .sw-at { min-height: calc(4.2em + 18px); } } /* four narrow cards: A-04's gates may take two lines, so every footer keeps three and the hairlines stay on one line */
+@media (min-width: 901px) and (max-width: 1099px) { .sw-legend .sw-at { min-height: calc(4.2em + 18px); } } /* four narrow cards: A-04's gates may take two lines */
 @media (max-width: 900px) { .stats.sw-spec, .sw-legend.card-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .sw-legend.card-grid--4 { grid-template-columns: 1fr; } .stats.sw-spec .v { font-size: 1.9rem; } .stats.sw-spec .d { font-size: .82rem; } }
 
@@ -1413,8 +1382,7 @@ html.story-tiny .story .story-coda { display: none; }
 .lt.has-left.has-right .lt-view { -webkit-mask-image: linear-gradient(90deg, transparent 4px, #000 40px, #000 calc(100% - 40px), transparent calc(100% - 4px)); mask-image: linear-gradient(90deg, transparent 4px, #000 40px, #000 calc(100% - 40px), transparent calc(100% - 4px)); }
 .lt-track { position: relative; display: flex; width: max-content; min-width: 100%; margin: 0; padding: 16px 28px 12px; list-style: none; }
 
-/* one record = one contained column on the line; its box reaches --lt-bleed back over the column before it, so a ring
-   or pulse round its block is never cut */
+/* one record = one contained column on the line */
 .lt-rec { flex: none; position: relative; isolation: isolate; contain: layout style paint; width: calc(var(--lt-col) + var(--lt-bleed)); margin-left: calc(var(--lt-bleed) * -1); padding: 12px var(--lt-pr) 10px var(--lt-bleed); cursor: pointer; outline: none; transition: opacity .35s var(--ease); -webkit-tap-highlight-color: transparent; }
 /* pointing at a record lifts its block off the panel; the link row below stays on the line */
 .lt-rec::after { content: ""; position: absolute; z-index: -1; inset: 0 6px 44px 6px; border-radius: 2px; background: rgba(245, 242, 236, .045); opacity: 0; transition: opacity .25s var(--ease); pointer-events: none; }
@@ -1427,7 +1395,7 @@ html.story-tiny .story .story-coda { display: none; }
 .lt-sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.9em; margin-top: 6px; font: var(--mono-s, .6875rem)/1.45 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
 .lt--excerpt .lt-sub { -webkit-line-clamp: 3; min-height: 4.35em; } /* the excerpt is read in full: nothing in it is cut */
 .lt-t { display: block; margin-top: 8px; font: var(--mono-xs, .625rem)/1.3 var(--mono); letter-spacing: .03em; color: var(--fg-3); font-variant-numeric: tabular-nums; }
-/* the line: a 12 px block per record, and out of it the link that carries the record's SHA-256 (first 8 hex) */
+/* the line: a 12 px block per record, and out of it the link that carries the record's SHA-256 */
 .lt-line { position: relative; display: block; height: 24px; margin: 14px calc(var(--lt-pr) * -1) 0 0; }
 .lt-node { position: absolute; left: 0; top: 6px; width: 12px; height: 12px; background: var(--fg); transition: transform .3s var(--ease), box-shadow .3s var(--ease), background .3s; }
 .lt-seg { position: absolute; left: 12px; right: 0; top: 12px; height: 1px; background: var(--line-strong); transform-origin: 0 50%; }
@@ -1446,7 +1414,7 @@ html.story-tiny .story .story-coda { display: none; }
 .lt-rec.is-head .lt-seg { right: 24%; background: repeating-linear-gradient(90deg, var(--line-strong) 0 3px, transparent 3px 7px); -webkit-mask-image: linear-gradient(90deg, #000 35%, transparent); mask-image: linear-gradient(90deg, #000 35%, transparent); }
 .lt-rec.is-head .lt-tag { left: calc(36% + 6px); color: var(--fg-3); }
 .lt.is-running .lt-rec.is-head .lt-seg { animation: lt-await 2.4s ease-in-out infinite; }
-/* inspecting: the chosen record and both of its links (the one into it drawn by .is-before-sel) stay lit */
+/* inspecting: the chosen record and both of its links */
 .lt-rec.is-sel .lt-node { transform: scale(1.25); }
 .lt.is-inspecting .lt-rec:not(.is-sel) > :not(.lt-line) { opacity: .34; }
 .lt.is-inspecting .lt-rec:not(.is-sel):not(.is-before-sel) .lt-line { opacity: .34; }
@@ -1485,8 +1453,7 @@ html.story-tiny .story .story-coda { display: none; }
 .lt-insp code b { font-weight: 500; color: var(--fg); }
 .lt-check { display: block; height: var(--lt-chk, 1.6em); margin-top: 2px; font-size: var(--mono-xs, .625rem); line-height: 1.6; letter-spacing: .04em; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lt-check.is-bad { color: var(--reject); }
-/* the fixed lines hold only at rest. Inspecting a record, every field shows all of its text (WCAG 1.4.12 spacing too),
-   keeping at least its resting height */
+/* the fixed lines hold only at rest. */
 .lt.is-inspecting .lt-sub, .lt.is-inspecting .lt-insp [data-f="d"], .lt.is-inspecting .lt-insp [data-f="src"], .lt.is-inspecting .lt-check { display: block; height: auto; overflow: visible; }
 .lt.is-inspecting .lt-insp [data-f="d"], .lt.is-inspecting .lt-insp [data-f="src"] { min-height: 3.3em; }
 .lt.is-inspecting .lt-check { min-height: var(--lt-chk, 1.6em); }
@@ -1509,7 +1476,7 @@ html.story-tiny .story .story-coda { display: none; }
 @keyframes lt-lit { 0%, 50% { color: var(--accent); } 100% { color: var(--fg-3); } }
 @keyframes lt-ok { 0% { background: var(--accent); box-shadow: 0 0 8px rgba(79, 203, 147, .9); } 100% { background: var(--line-strong); box-shadow: none; } }
 @keyframes lt-ping { 0% { opacity: .95; transform: scale(.7); } 100% { opacity: 0; transform: scale(2.1); } }
-/* fill-mode backwards only: once a record has landed, its resting state (dimmed, selected, linked) is the stylesheet's */
+/* fill-mode backwards only: once a record has landed, its resting state */
 .lt-rec.is-new > :not(.lt-line) { animation: lt-rise .55s var(--ease) backwards; }
 .lt-rec.is-new > .lt-ev { animation-delay: .05s; } .lt-rec.is-new > .lt-sub { animation-delay: .1s; } .lt-rec.is-new > .lt-t { animation-delay: .14s; }
 .lt-rec.is-new .lt-node { animation: lt-snap .34s cubic-bezier(.3, .7, .3, 1) .24s backwards; }
@@ -1522,7 +1489,7 @@ html.story-tiny .story .story-coda { display: none; }
 .lt-rec.is-verified .lt-seg { animation: lt-ok 1.2s var(--ease) backwards; }
 .lt-rec.is-verified .lt-tag { animation: lt-lit 1.2s var(--ease) backwards; }
 
-/* ---------- the chain (chain.js): edit a record and every link below it snaps, one record every 110 ms ---------- */
+/* ---------- the chain (chain.js): edit a record and every link below it snaps ---------- */
 .chain { --lt-bg: var(--ink-2); position: relative; color: var(--fg); background: var(--ink-2); border: 1px solid var(--line-strong); border-radius: var(--r); transition: border-color .5s var(--ease); }
 .chain.is-broken { border-color: rgba(217, 103, 93, .55); }
 .chain-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; min-height: 56px; padding: 10px 12px 10px 20px; border-bottom: 1px solid var(--line); }
@@ -1551,7 +1518,7 @@ html.story-tiny .story .story-coda { display: none; }
 .chain-link { position: absolute; left: 44px; bottom: 9px; display: flex; align-items: center; font: var(--mono-xs, .625rem)/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
 .chain-link::before { content: ""; position: absolute; left: -26px; top: 50%; width: 18px; height: 1px; background: var(--line); transition: background .3s 55ms; }
 .chain-link b { font-weight: 400; color: var(--accent); transition: color .3s 55ms; }
-/* the hash this link stored when the chain was written: it slides out, struck through, only when the break reaches it */
+/* the hash this link stored when the chain was written */
 .chain-link s { display: block; max-width: 0; margin-right: 0; overflow: hidden; white-space: nowrap; opacity: 0; visibility: hidden; color: var(--fg-3); text-decoration-color: rgba(217, 103, 93, .9);
   transition: max-width .34s var(--ease) 40ms, margin .34s var(--ease) 40ms, opacity .2s var(--ease) 40ms, visibility 0s linear 380ms; }
 .chain-list > li.is-broken .chain-link s { max-width: 10ch; margin-right: 8px; opacity: 1; visibility: visible;
@@ -1560,11 +1527,11 @@ html.story-tiny .story .story-coda { display: none; }
 /* the last record's hash waits for a record that does not exist yet */
 .chain-list > li:last-child .chain-seg { bottom: 4px; }
 .chain-list > li:last-child .chain-seg::before, .chain-list > li:last-child .chain-seg::after { background: repeating-linear-gradient(var(--line-strong) 0 3px, transparent 3px 6px); }
-/* broken: the record turns at once as the break reaches it (its block flares), then the link out of it snaps */
+/* broken: the record turns at once as the break reaches it (its block flares) */
 .chain-list > li.is-broken { background: rgba(217, 103, 93, .055); transition: none; }
 .chain-list > li.is-broken .i, .chain-list > li.is-broken .who, .chain-list > li.is-broken .ev, .chain-list > li.is-broken .what { color: var(--reject); transition: none; }
 .chain-list > li.is-broken .chain-node { background: transparent; box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 14px rgba(217, 103, 93, .45); transition: none; }
-/* healed: it turns back at once too (its block flares green); the status line counts what is red, and so does the eye */
+/* healed: it turns back at once too (its block flares green) */
 .chain-list > li.is-heal .i, .chain-list > li.is-heal .who, .chain-list > li.is-heal .ev, .chain-list > li.is-heal .what, .chain-list > li.is-heal .chain-node, .chain-list > li.is-heal .chain-link b { transition: none; }
 .chain-list > li.is-edited .chain-node { background: var(--reject); }
 .chain-list > li.is-broken .chain-seg::before, .chain-list > li.is-broken .chain-seg::after { background: var(--reject); box-shadow: 0 0 6px rgba(217, 103, 93, .6); }
@@ -1584,7 +1551,7 @@ html.story-tiny .story .story-coda { display: none; }
 .chain-list > li.is-heal .chain-seg::before, .chain-list > li.is-heal .chain-seg::after { animation: chain-mend .85s var(--ease) 55ms backwards; }
 .chain-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; padding: 12px 20px; border-top: 1px solid var(--line); font: var(--mono-xs, .625rem)/1.5 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
 .chain-fallback { color: var(--fg-2); }
-/* before the hashes exist (no JavaScript, or the first frames): the same spine and blocks, nothing claimed as verified */
+/* before the hashes exist (no JavaScript, or the first frames) */
 .chain:not(.chain-ready) .chain-status { color: var(--fg-3); }
 .chain-foot.is-static > span:first-child { display: none; } /* no hashes are shown until the browser computes them */
 .chain:not(.chain-ready) .chain-list > li { padding-bottom: 16px; }
@@ -1708,17 +1675,14 @@ html.story-tiny .story .story-coda { display: none; }
 .layers .lb-io p { color: var(--fg-2); }
 .layers .lb-io b { display: block; font-family: var(--mono); font-weight: 500; font-size: var(--mono-s, .6875rem); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: color-mix(in srgb, var(--signal) 80%, var(--ink)); margin-bottom: 4px; }
 .layers .lb-io strong { font-weight: 600; color: var(--fg); }
-/* the floor under 08: what the stack stands on, drawn as the ground of a technical drawing (a hatched strip) */
+/* the floor under 08: what the stack stands on, drawn as the ground of a technical drawing */
 .layers .layer-floor { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 28px; align-items: baseline; padding: 18px clamp(22px, 3vw, 40px) 30px; border-top: 1px solid var(--line-strong); margin-top: -1px;
   background: repeating-linear-gradient(-45deg, transparent 0 5px, var(--line-strong) 5px 6px) left bottom / 100% 11px no-repeat; }
 .layers .layer-floor .k { padding-top: 0; }
 .layers .layer-floor p { font-family: var(--mono); font-size: var(--mono-s, .6875rem); line-height: 1.6; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-2); }
 @media (max-width: 860px) { .layers .layer, .layers .layer-boundary { grid-template-columns: 1fr; gap: 14px; } .layers .layer-floor { grid-template-columns: auto minmax(0, 1fr); gap: 14px; } }
 
-/* ---------- the spec (Platform, data-arch-spec): the same list, laid out as a spec sheet ----------
-   wide: number | name + verb, its scope (the chips) under it | what it does | In -> Out, on one grid for every row; the
-   boundary row between 04 and 05; the floor under 08. Narrower, the paragraph, chips and In -> Out stack in one column.
-   The same rules hold before arch.js runs, after it and without it, so the entries never move when it does. */
+/* ---------- the spec (Platform, data-arch-spec): the same list, laid out as a spec sheet ---------- */
 .layers[data-arch-spec] { display: block; border: 0; --arch-gap: clamp(28px, 3.2vw, 48px); --spec-gap: clamp(20px, 2.4vw, 40px); }
 [data-arch-spec] > .layer { position: relative; isolation: isolate; grid-template-columns: 56px minmax(0, 1fr) minmax(0, 2.2fr); gap: var(--spec-gap); padding: clamp(24px, 2.6vw, 34px) 0; border-top: 1px solid var(--line); border-bottom: 0; background: none; transition: none; scroll-margin-top: 16px; }
 @media (hover: hover) { [data-arch-spec] > .layer:hover { background: none; } }
@@ -1743,7 +1707,7 @@ html.story-tiny .story .story-coda { display: none; }
   [data-arch-spec] > .layer { grid-template-rows: auto 1fr; row-gap: 18px; }
   [data-arch-spec] > .layer > .k { grid-column: 1; grid-row: 1 / -1; }
   [data-arch-spec] > .layer > h3 { grid-column: 2; grid-row: 1; }
-  /* the panel keeps its own box (the explorer leads to it) and lays its parts on the row's grid: chips under the name */
+  /* the panel keeps its own box (the explorer leads to it) and lays its parts on the row's grid */
   [data-arch-spec] > .layer > div { grid-column: 2 / -1; grid-row: 1 / -1; display: grid; grid-template-columns: subgrid; grid-template-rows: subgrid; pointer-events: none; }
   [data-arch-spec] > .layer > div > * { pointer-events: auto; }
   [data-arch-spec] > .layer > div > p { grid-column: 2; grid-row: 1 / -1; }
@@ -1760,9 +1724,7 @@ html.story-tiny .story .story-coda { display: none; }
   [data-arch-spec] > .layer::after { inset: 0 -10px; }
 }
 
-/* ---------- room for the wide instrument, before arch.js builds it and after (deep links land where they should) ----------
-   home: the list is held at the instrument's height until it becomes the instrument; Platform: the instrument's room is
-   held above the spec. If the script never runs, both give the room back after 10 s (and at once when it bails, .is-plain). */
+/* ---------- room for the wide instrument, before arch.js builds it and after (deep links land where they should) ---------- */
 [data-arch] { --arch-minh: 790px; }
 @media (scripting: enabled) and (min-width: 1000px) {
   .layers[data-arch]:not([data-arch-spec]):not(.is-plain) { height: var(--arch-minh); overflow: clip; animation: arch-unclip 0s 10s forwards; }
@@ -1796,7 +1758,7 @@ html.story-tiny .story .story-coda { display: none; }
 .arch-body { position: relative; }
 .arch-fig { position: relative; }
 .arch-svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
-/* the ground either side of the boundary (static): scattered motes above it, estimation; a lattice below it, determinism */
+/* the ground either side of the boundary (static): scattered motes above it, estimation */
 .arch-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; will-change: transform; }
 .arch-field i { position: absolute; left: 0; right: 0; }
 .arch-field .af-up { top: 0; height: var(--seam, 50%); opacity: .5;
@@ -1824,7 +1786,7 @@ html.story-tiny .story .story-coda { display: none; }
 .arch-layer.is-hot::before, .arch-layer[aria-expanded="true"]::before { transform: scaleY(1); }
 .arch-layer[aria-expanded="true"] { color: var(--fg); }
 .arch-list > :last-child { border-bottom: 1px solid var(--line); }
-/* the boundary row: the line of the plane runs through it (also Platform §02's drawn boundary, .bnd-line, on paper) */
+/* the boundary row: the line of the plane runs through it */
 .arch-bound { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 58px; padding: 0 6px 0 16px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: var(--mono-xs, .625rem); line-height: 1.4; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 .arch-bound .chip { position: relative; z-index: 1; flex: none; padding: 5px 8px; border: 1px solid rgba(79, 203, 147, .6); border-radius: 2px; background: var(--a-ground); color: var(--accent); white-space: nowrap; }
 .arch-bound .sides { position: relative; z-index: 1; display: grid; gap: 14px; justify-items: end; text-align: right; }
@@ -1833,12 +1795,12 @@ html.story-tiny .story .story-coda { display: none; }
 .arch .arch-bound .sides > span:last-child { color: var(--khaki); }
 .arch-list { container-type: inline-size; }
 @container (max-width: 340px) { .arch-bound .sides { gap: 8px; } .arch-bound .sides > span { white-space: normal; text-wrap: balance; } }
-/* the floor row (wide): level with the floor line under the stack; narrow, the drawing labels the floor and this row is for screen readers */
+/* the floor row (wide): level with the floor line under the stack */
 .arch-floor { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 6px 0 16px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: var(--mono-xs, .625rem); line-height: 1.45; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--khaki); }
 .arch-floor .gl { flex: none; width: 30px; height: 7px; border-top: 1px solid rgba(172, 166, 142, .75); background: repeating-linear-gradient(-45deg, transparent 0 3px, rgba(172, 166, 142, .5) 3px 4px); }
 .arch-floor .fa, .arch-floor .fb { white-space: nowrap; }
 @container (max-width: 399px) { .arch-floor .fs { display: none; } .arch-floor .fa, .arch-floor .fb { display: block; } }
-/* a layer's detail: inline under its button on narrow screens, in the readout on wide ones (the explorer, not the spec) */
+/* a layer's detail: inline under its button on narrow screens, in the readout on wide ones */
 .arch .arch-panel { padding: 2px 6px 24px 58px; }
 .arch .arch-panel > p { color: var(--fg-2); font-size: .98rem; line-height: 1.6; max-width: 62ch; }
 .arch .arch-panel ul { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1852,8 +1814,7 @@ html.story-tiny .story .story-coda { display: none; }
 .arch-glyph { flex: none; display: block; }
 .arch .arch-panel > .arch-side.is-below { color: var(--khaki); }
 
-/* the readout (wide only): the overview straddles the boundary; the card follows the layer you point at. One gives way to
-   the other out, then in (90 ms out, 220 ms in), so their words never print over each other. */
+/* the readout (wide only): the overview straddles the boundary; the card follows the layer you point at. */
 .arch-read { position: relative; }
 .arch-ov { position: absolute; left: 0; right: 0; top: 0; height: 0; transition: opacity .22s var(--ease) .09s; }
 .arch-ov > div { position: absolute; left: 0; right: 0; max-width: 34ch; }
@@ -1886,13 +1847,12 @@ html.story-tiny .story .story-coda { display: none; }
 @keyframes arch-swap { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .arch-card .arch-panel { padding: 16px 0 0; margin-top: 16px; border-top: 1px solid var(--line); }
 .arch-card .arch-panel > p { font-size: .94rem; line-height: 1.58; }
-/* the card's summary already shows In -> Out and the side of the boundary; the panel keeps them for screen readers
-   (the summary is aria-hidden), visually hidden rather than display: none */
+/* the card's summary already shows In -> Out and the side of the boundary */
 .arch-card .arch-panel .io, .arch-card .arch-panel .arch-side { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .arch-card.is-peek .arch-panel { display: none; }
 .arch-card:not(.is-peek) .sum-job { display: none; } /* open: the full text below replaces the one-line job */
 
-/* wide: readout | stack | buttons; its height is --arch-minh (the floor row and the boundary row are fixed for that) */
+/* wide: readout | stack | buttons; its height is --arch-minh */
 .arch.is-wide { display: flex; flex-direction: column; min-height: var(--arch-minh, 790px); }
 .arch.is-wide .arch-body { flex: 1 0 auto; display: grid; grid-template-columns: minmax(196px, .92fr) minmax(280px, 1.24fr) minmax(268px, 1.04fr); column-gap: clamp(18px, 2.2vw, 28px); align-items: start; padding: 58px clamp(16px, 1.9vw, 26px) 30px clamp(22px, 2.5vw, 34px); min-height: var(--arch-cardh, 0px); }
 .arch.is-wide .arch-fig { position: absolute; inset: 0; z-index: 0; }
@@ -1903,7 +1863,7 @@ html.story-tiny .story .story-coda { display: none; }
 .arch.is-wide .arch-floor { height: 64px; min-height: 0; }
 .arch.is-wide .arch-layer { height: 64px; } /* names fit in two lines at every wide width; the fallback font is held to two as well */
 .arch.is-wide .arch-layer .nm { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-/* narrow: the stack as a figure, the layers as an accordion under it (the spec: the figure alone; its plates lead down) */
+/* narrow: the stack as a figure, the layers as an accordion under it */
 .arch.is-narrow .arch-fig { height: var(--fig-h, 380px); border-bottom: 1px solid var(--line); }
 .arch.is-narrow .arch-list { padding: 0 clamp(12px, 3vw, 22px) 6px; }
 .arch.is-narrow .arch-list > .arch-h:first-child .arch-layer { border-top: 0; }
@@ -1911,7 +1871,7 @@ html.story-tiny .story .story-coda { display: none; }
 .arch.is-narrow .arch-floor { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .arch--spec.is-narrow .arch-list { display: none; }
 .arch--spec.is-narrow .arch-fig { border-bottom: 0; }
-/* narrow head: the label and the motion control, then the legend with its 'Illustrative' on a line of its own */
+/* narrow head: the label and the motion control */
 .arch.is-narrow .arch-head { flex-wrap: wrap; row-gap: 8px; padding-top: 9px; padding-bottom: 10px; }
 .arch.is-narrow .arch-lab { flex: 1 1 14em; }
 .arch.is-narrow .arch-hint { margin-left: auto; }
@@ -1939,8 +1899,7 @@ html.story-tiny .story .story-coda { display: none; }
 .arch-svg text.ab-t.is-below, .arch-svg text.af-t { fill: var(--khaki); }
 .arch.is-wide .arch-svg text.ap-num, .arch.is-wide .arch-svg text.ab-t, .arch.is-wide .arch-svg text.af-t { display: none; }
 
-/* ---------- Platform §02, One boundary: adaptive above, deterministic below, the explorer's boundary drawn between ----------
-   The ground of each side is the explorer's: scattered motes above the line (estimation), a lattice below it (determinism). */
+/* ---------- Platform §02, One boundary: adaptive above, deterministic below, the explorer's boundary drawn between ---------- */
 .bnd { display: grid; }
 .bnd-side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); grid-template-areas: "n n" "h ul"; column-gap: clamp(28px, 4vw, 72px); align-items: start; isolation: isolate; overflow: hidden; }
 .bnd-side .n { grid-area: n; }
@@ -1974,11 +1933,7 @@ html.story-tiny .story .story-coda { display: none; }
 }
 @media (max-width: 480px) { .bnd-line .sides > span { white-space: normal; } .bnd-line.arch-bound { min-height: 96px; } }
 
-/* ---------- Platform §05, Deployment: three spec columns, each under a static plate ----------
-   No boxes: each column opens on a hairline (the §01 spec's rule), then its code and tag, title and words. Above it, a plate
-   in the house line style, drawn with the hero plates' classes (.hp-art, .hp-h, .hp-i, .hp-g, .hp-lab): ink hairlines at
-   1 px, --accent only for what is live, labels in the column's own words. Static SVG: the same without JavaScript and
-   under reduced motion. 601-1099 px: each plate sits beside its column; up to 600 px, above it at 120 px. */
+/* ---------- Platform §05, Deployment: three spec columns, each under a static plate ---------- */
 .dpl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 44px clamp(24px, 3vw, 48px); }
 .dpl-col { min-width: 0; }
 .dpl-plate { width: 100%; max-width: 400px; margin: 0 0 22px; }
@@ -2001,7 +1956,7 @@ html.story-tiny .story .story-coda { display: none; }
   [data-arch-spec] > .layer::before { transition: none; }
   [data-arch-spec] > .layer.is-flash::after { animation: none; }
 }
-/* print: the explorer prints as the list it was built from, eight layers in ink on white, with no reserved height */
+/* print: the explorer prints as the list it was built from, eight layers in ink on white */
 @media print {
   .arch { --fg: #0E1512; --fg-2: #2B302D; --fg-3: #555; --line: #bbb; --line-strong: #888; --accent: #1E7A5A; --a-ground: #fff;
     background: none !important; border-color: #bbb !important; color: #0E1512 !important; }
@@ -2035,7 +1990,7 @@ html.story-tiny .story .story-coda { display: none; }
 .proof-list b { font-weight: 500; color: var(--fg); }
 @media (max-width: 520px) { .proof-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
-/* the chart: a gutter of direct labels + one lane per session; every row height is shared, so labels meet their marks */
+/* the chart: a gutter of direct labels + one lane per session */
 .proof { container-type: inline-size; position: relative; }
 .pf {
   --gut: 76px; --b: 12px; --g: 2px; --zr: 72px; /* without container units: fixed sizes that fit any width from 320 px */
@@ -2068,8 +2023,7 @@ html.story-tiny .story .story-coda { display: none; }
 .y-day { top: calc(var(--top) + var(--zr) + var(--zd) / 2); transform: translateY(-50%); }
 .y-ok { top: calc(var(--top) + var(--zr) + var(--zd) + var(--zo) / 2); transform: translateY(-50%); }
 @container (max-width: 540px) { .pf-y .pf-n { display: none; } .pf-y small { font-size: .625rem; } .pf-gut { letter-spacing: .06em; } .pf-y { right: 4px; } }
-/* phones under ~340 px: a narrower gutter keeps every lane (the tap target) at least 24 px wide; the long labels take
-   their short forms, and the note under 'Above' leaves it to the caption, which says the same */
+/* phones under ~340 px: a narrower gutter keeps every lane (the tap target) at least 24 px wide */
 @container (max-width: 300px) {
   .pf { --gut: 38px; }
   .pf-gut { letter-spacing: .02em; }
@@ -2108,7 +2062,7 @@ html.story-tiny .story .story-coda { display: none; }
 .pf-lane.is-on::before { opacity: .065; }
 .pf-lane:focus-visible::after { box-shadow: inset 0 0 0 2px var(--accent); }
 
-/* blocks: solid up to the floor (one per basis point), open above it — the exact value is not published */
+/* blocks: solid up to the floor (one per basis point), open above it */
 .pf-g, .pf-c { position: relative; z-index: 1; display: flex; flex-direction: column-reverse; align-items: center; gap: var(--g); transition: opacity .3s var(--ease); }
 .pf-g { justify-content: flex-start; padding-bottom: var(--g); }
 .pf-c { padding-top: var(--g); }
@@ -2164,11 +2118,7 @@ html.story-tiny .story .story-coda { display: none; }
 .pf-mini[data-side="1"]::after { top: 0; }
 .pf-mini[data-side="-1"]::after { top: 10px; }
 
-/* entrance (once, reached from above): the floor is drawn and every session rises together, row by row (a row every 52 ms,
-   a 4 ms shimmer across the lanes), so no session ever stands below another; the floor lights as the last solid row
-   reaches it, and the open blocks above it follow. The regime trace, the days, the ticks and the inspector arrive at the
-   same time, left to right. All of it is done by ~1.1 s (proof.js drops .is-armed at 1.4 s). Reached from below, or
-   already more than half in view, the chart is shown whole (.pf-now: no transition at all for that one change). */
+/* entrance (once, reached from above): the floor is drawn and every session rises together */
 @media screen {
   .proof.pf-now, .proof.pf-now *, .proof.pf-now *::before, .proof.pf-now *::after { transition: none !important; animation: none !important; }
   .proof.is-armed:not(.is-in) .pf-floor { transform: scaleX(0); }
@@ -2195,9 +2145,7 @@ html.story-tiny .story .story-coda { display: none; }
 }
 @keyframes pf-lit { 0%, 100% { box-shadow: var(--pf-glow); } 30% { box-shadow: 0 0 22px 2px color-mix(in srgb, var(--accent) 70%, transparent); } }
 
-/* no loops: once the entrance is done, one light passes along the floor (1.2-2.8 s after arrival), and the session in
-   hand nods its chevron twice. Every lane draws the same marks, so a still never singles a session out. Transform and
-   opacity only, paused while the chart is off screen (.is-away, proof.js) */
+/* no loops: once the entrance is done, one light passes along the floor (1.2-2.8 s after arrival) */
 .pf-floor::after { content: ""; position: absolute; top: -1px; left: 0; width: 15%; height: 3px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--pf-sheen), transparent); opacity: 0; transform: translateX(-100%); }
 .pf { --pf-sheen: rgba(30, 122, 90, .55); }
 .is-dark .pf { --pf-sheen: rgba(214, 255, 233, .75); }
@@ -2206,7 +2154,7 @@ html.story-tiny .story .story-coda { display: none; }
 .proof.is-in .pf-floor::after { animation: pf-sheen 1.6s cubic-bezier(.45, 0, .55, 1) 1.2s both; }
 .proof .pf-lane.is-on .pf-g::after { animation: pf-rise 1.5s ease-in-out 2; }
 .proof.is-away :is(.pf-floor, .pf-g)::after { animation-play-state: paused; }
-/* the session in hand counts itself up to the floor, one basis point at a time (an event, not idle motion) */
+/* the session in hand counts itself up to the floor, one basis point at a time */
 @keyframes pf-count { 0%, 100% { filter: none; } 35% { filter: brightness(1.75) saturate(1.1); } }
 .proof:not(.is-armed) .pf-lane.is-on .pf-c i:not(.is-void) { animation: pf-count .5s ease-out both; animation-delay: calc(var(--k) * 26ms); }
 @media (prefers-reduced-motion: reduce) { .proof *, .proof *::before, .proof *::after { animation: none !important; transition: none !important; } }
@@ -2228,8 +2176,7 @@ html.story-tiny .story .story-coda { display: none; }
   .proof .pf-lane:focus-visible::after { box-shadow: inset 0 0 0 2px Highlight; }
 }
 
-/* ---------- the cost figure (home Fig. 5.1, Proof Fig. 3.1): 100 index blocks per bar from the --w weights (proof.js;
-   flat runs without it), column by column; leaders above; eliminated = dashed, compressed = hollow ---------- */
+/* ---------- the cost figure (home Fig. 5.1, Proof Fig. 3.1) ---------- */
 .cost { container: cost / inline-size; }
 .cost-rows { display: grid; gap: 26px; }
 .cost-row { display: grid; grid-template-columns: 200px minmax(0, 1fr) 64px; column-gap: 20px; align-items: end; padding-top: 34px; }
@@ -2300,7 +2247,7 @@ html.story-tiny .story .story-coda { display: none; }
   .cost-cmp td::before { content: attr(data-th); display: block; margin-bottom: 3px; font: var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 }
 
-/* the three documents (Proof §02): records on one hash line (no hash text), hairline columns; vertical under 900 px */
+/* the three documents (Proof §02): records on one hash line (no hash text), hairline columns */
 .pf-docs { --cg: clamp(28px, 3.6vw, 56px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--cg); }
 .pf-doc { position: relative; padding-top: 36px; }
 .pf-doc::after { content: ""; position: absolute; left: 0; top: 0; width: 13px; height: 13px; border-radius: 1px; background: var(--fg); transition: transform .4s var(--ease) calc(var(--d, 0ms) + 120ms); }
@@ -2339,9 +2286,7 @@ html.story-tiny .story .story-coda { display: none; }
    the homepage loader, page transitions, and the shared polish of controls and focus. Behaviour: site.js (nav · chapters
    · loader). Context selectors use :where() so a component's own rules always win over this global layer. */
 
-/* ---------- off-screen: a band of the page that is wholly out of view runs no CSS animation ----------
-   site.js toggles .is-offscreen on every main > section, main > div and the footer. Owners keep their infinite loops on
-   transform/opacity; this pauses them (and anything else) wherever nobody can see them. */
+/* ---------- off-screen: a band of the page that is wholly out of view runs no CSS animation ---------- */
 .is-offscreen, .is-offscreen *, .is-offscreen *::before, .is-offscreen *::after { animation-play-state: paused !important; }
 
 /* ---------- rhythm & anchors: nothing scrolls or focuses under the fixed nav ---------- */
@@ -2390,9 +2335,7 @@ html { scroll-padding-top: var(--nav-h); }
   .nav-links a:hover::after { transform: scaleX(1); transform-origin: left; }
 }
 .nav-ink { display: none; }
-/* where anchor positioning exists, the current page's underline is one element: it glides to the next page's link
-   during a page transition (it carries its own view-transition-name). The ink is the last child of .nav-links, so a
-   sibling selector finds the current link: no relational selector, no script, right from the first frame. */
+/* where anchor positioning exists, the current page's underline is one element */
 @supports (anchor-name: --a) {
   .nav-links a[aria-current="page"] { anchor-name: --nav-current; }
   .nav-links a[aria-current="page"] ~ .nav-ink {
@@ -2407,7 +2350,7 @@ html { scroll-padding-top: var(--nav-h); }
 /* on the access page the call to action is where you are: it steps back to an outline */
 .nav .btn[aria-current="page"] { --btn-bg: transparent; --btn-fg: currentColor; border-color: currentColor; }
 
-/* ---------- chapter readout: number + title of the chapter being read, a list on click/Enter ---------- */
+/* ---------- chapter readout: number + title of the chapter being read ---------- */
 .nav-ch { position: relative; display: flex; align-items: center; align-self: stretch; min-width: 0; margin-left: -8px; transition: opacity .3s var(--ease), visibility 0s; }
 .nav--menu .nav-ch { opacity: 0; visibility: hidden; transition: opacity .2s var(--ease), visibility 0s linear .2s; } /* the sheet has the stage */
 .nav-ch-btn {
@@ -2422,7 +2365,7 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-ch-line { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: color-mix(in srgb, currentColor 68%, transparent); transition: color .25s var(--ease); }
 .nav-ch-line b { font-weight: 500; letter-spacing: .1em; color: var(--accent); font-variant-numeric: tabular-nums; margin-right: .2em; }
 .nav-ch-line .t-short { display: none; }
-/* the phone forms (site.js picks one per page from measured widths): the section's short label, or '§NN / total' */
+/* the phone forms (site.js picks one per page from measured widths) */
 .nav-ch-line .t-sh, .nav-ch-line .t-of { display: none; }
 .nav-ch-line.is-short .t { display: none; }
 .nav-ch-line.is-short .t-sh { display: inline; }
@@ -2482,7 +2425,7 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-ch-top:focus-visible { color: var(--p-fg); }
 @media (hover: hover) { .nav-ch-top:hover { color: var(--p-fg); } .nav-ch-top:hover svg { transform: translateY(-2px); } }
 
-/* ---------- progress: one hairline along the bar's lower edge, cut into the page's chapters ---------- */
+/* ---------- progress: one hairline along the bar's lower edge ---------- */
 .nav-progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; display: flex; gap: 3px; pointer-events: none; }
 .nav-progress i { position: relative; flex: 1 1 0; min-width: 0; background: var(--nav-line); transition: background-color .5s var(--ease); }
 /* a fine tick where each chapter begins: the bar reads as a scale of the page */
@@ -2502,7 +2445,7 @@ html { scroll-padding-top: var(--nav-h); }
 .nav--menu .nav-toggle span::before { transform: translateY(3.75px) rotate(45deg); }
 .nav--menu .nav-toggle span::after { transform: translateY(-3.75px) rotate(-45deg); }
 
-/* ---------- the menu sheet (phones and tablets): a popover, so it opens without JavaScript too ---------- */
+/* ---------- the menu sheet (phones and tablets) ---------- */
 .nav-sheet {
   position: fixed; inset: var(--nav-h) 0 0 0; width: auto; height: auto; max-width: none; max-height: none; margin: 0;
   padding: clamp(18px, 4vh, 40px) max(var(--gutter), env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left));
@@ -2532,12 +2475,11 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-sheet .btn[aria-current="page"] { --btn-bg: transparent; --btn-fg: var(--paper); border-color: var(--line-strong); }
 .nav-sheet-meta { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 20px; padding-top: 18px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
 .nav-live { display: inline-flex; align-items: center; gap: 9px; color: var(--fg-2); }
-/* the live dot pings twice as the sheet opens, then rests (a finite loop, WCAG 2.2.2; on transform and opacity only) */
+/* the live dot pings twice as the sheet opens, then rests */
 .nav-live i { position: relative; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .nav-live i::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: rgba(79, 203, 147, .55); opacity: 0; animation: nav-ping 2.2s ease-out 2; }
 @keyframes nav-ping { from { transform: scale(1); opacity: 1; } to { transform: scale(4); opacity: 0; } }
-/* opening: the sheet fades in, its rows rise one after another. Closing: the rows leave first, the opening's stagger
-   reversed, then the sheet lifts 8 px into the bar and fades in .15 s, so its links are never legible over the page */
+/* opening: the sheet fades in, its rows rise one after another. */
 .nav-sheet { opacity: 0; transform: translateY(-8px); transition: opacity .15s var(--ease) .07s, transform .15s var(--ease) .07s, display .22s allow-discrete, overlay .22s allow-discrete; }
 .nav-open .nav-sheet { opacity: 1; transform: none; transition: opacity .32s var(--ease); }
 .nav-sheet:popover-open { opacity: 1; transform: none; transition: opacity .32s var(--ease), display .32s allow-discrete, overlay .32s allow-discrete; }
@@ -2587,8 +2529,7 @@ html { scroll-padding-top: var(--nav-h); }
 }
 @media (min-width: 961px) { .nav-sheet { display: none !important; } }
 @media (max-width: 430px) { .nav .container { gap: 10px; } .nav-ch-btn { letter-spacing: .09em; } }
-/* a phone on its side: the chapter list takes two columns (read down, then across) and the room the bar leaves, so
-   every chapter and Back to top are on screen without scrolling */
+/* a phone on its side: the chapter list takes two columns */
 @media (max-height: 500px) and (max-width: 960px) {
   .nav-ch-panel { max-height: calc(100vh - var(--nav-h) - 16px); max-height: calc(100svh - var(--nav-h) - 16px); }
   .nav-ch-head { padding-block: 11px 10px; }
@@ -2598,41 +2539,31 @@ html { scroll-padding-top: var(--nav-h); }
   .nav-ch-list .t { font-size: 1.15rem; }
   .nav-ch-top { padding-block: 10px 6px; }
 }
-/* the narrowest phones: the bar keeps the mark and gives the wordmark's room to the chapter readout, so the chapters
-   read as words, not '§NN / TT' (the link keeps its name, 'OpenEXA home') */
+/* the narrowest phones: the bar keeps the mark and gives the wordmark's room to the chapter readout */
 @media (max-width: 359.98px) { .nav.has-ch .brand { font-size: 0; gap: 0; } }
-/* dark-start pages: once the dark opening has scrolled away, the page's ground is paper, so an overscroll below the
-   paper footer shows paper, not ink (site.js toggles the class; at the top the opening's ink is kept) */
+/* dark-start pages: once the dark opening has scrolled away, the page's ground is paper */
 :root.is-paper-root { background: var(--paper); }
-/* the open sheet: site.js mirrors the popover's state as body.nav-open and .nav--menu (one class change, no relational
-   selector watching the whole document); the script-less version of these rules is in the (scripting: none) block below */
+/* the open sheet: site.js mirrors the popover's state as body.nav-open and .nav--menu */
 body.nav-open { overflow: hidden; }
 
-/* ---------- the loader: an aperture of fine ticks that fills with the real elapsed time, then lifts ---------- */
+/* ---------- the loader: an aperture of fine ticks that fills with the real elapsed time ---------- */
 .loader {
   position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; color: var(--paper);
   background: radial-gradient(90% 70% at 50% 46%, #13201b 0%, var(--ink) 58%, #0B110F 100%);
   transition: transform .9s cubic-bezier(.62, 0, .2, 1), visibility 0s linear .95s;
-  /* the failsafe: gone 2.3-2.6 s after its first frame, whatever the scripts are doing (loader.js, the page's first
-     script, sets this clock to the start of navigation, lifts the curtain well before, and removes the loader at 2.3 s if
-     it has not lifted by then). The fade animates opacity alone and runs from the first frame with no delay, so the compositor
-     plays it while scripts hold the main thread (a delayed animation, or a keyframe of visibility, waits for the main
-     thread); visibility and pointer-events follow in a second, instant animation */
+  /* the failsafe: gone 2.3-2.6 s after its first frame, whatever the scripts are doing */
   animation: loader-failsafe 2.6s linear forwards, loader-failsafe-off 0s linear 2.6s forwards;
 }
 @keyframes loader-failsafe { 0%, 88.46% { opacity: 1; } to { opacity: 0; } }
 @keyframes loader-failsafe-off { to { visibility: hidden; pointer-events: none; } }
-/* loader.js lifts the curtain 120 ms after 100 (the decision reads for a beat); it starts moving at once, and its content
-   stays legible until the stage is coming through, so no frame is an empty dark panel. The curtain replaces the failsafe
-   (loader.js never lifts it after the failsafe's moment) */
+/* loader.js lifts the curtain 120 ms after 100 (the decision reads for a beat) */
 .loader.is-done { transform: translateY(-100%); visibility: hidden; animation: none; }
 /* the curtain's lower edge is a hairline: the lift reads as a sheet being raised off the stage */
 .loader::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(245, 242, 236, .4) 30%, rgba(79, 203, 147, .55) 50%, rgba(245, 242, 236, .4) 70%, transparent); opacity: 0; transition: opacity .25s var(--ease); }
 .loader.is-done::after { opacity: 1; }
 .loader-inner { display: grid; justify-items: center; gap: 30px; transition: transform .9s cubic-bezier(.62, 0, .2, 1), opacity .42s ease-in .26s; }
 .loader.is-done .loader-inner { transform: translateY(34vh); opacity: 0; }
-/* the dial sweeps on its own from the first paint (before any script has arrived: never a frozen dial); site.js takes
-   over from where it is (.is-counting) and only then shows the count */
+/* the dial sweeps on its own from the first paint */
 @property --lp { syntax: "<number>"; inherits: true; initial-value: 0; }
 .loader-dial { --lp: 0; position: relative; width: clamp(140px, 13vw, 176px); aspect-ratio: 1; display: grid; place-items: center; animation: loader-idle 3.2s cubic-bezier(.2, .7, .2, 1) forwards; }
 @keyframes loader-idle { to { --lp: .26; } }
@@ -2661,8 +2592,7 @@ body.nav-open { overflow: hidden; }
 .loader.is-quick .loader-count, .loader.is-quick .loader-lab, .loader.is-quick .loader-dial::before { visibility: hidden; }
 .loader.is-quick .loader-ring, .loader.is-quick .loader-dial::after { opacity: 0; }
 .loader.is-quick { transition: opacity .45s var(--ease), visibility 0s linear .45s; }
-/* its fade is an animation, not a transition: the failsafe animates opacity from the first frame, and a transition does
-   not start on a property an animation drives in the same style change (the mark cut out at once) */
+/* its fade is an animation, not a transition: the failsafe animates opacity from the first frame */
 .loader.is-quick.is-done { transform: none; opacity: 0; animation: loader-out .45s var(--ease) both; }
 @keyframes loader-out { from { opacity: 1; } to { opacity: 0; } }
 .loader.is-quick.is-done .loader-inner { transform: none; }
@@ -2677,8 +2607,7 @@ body.is-loading { overflow: hidden; }
 @view-transition { navigation: auto; }
 .nav { view-transition-name: site-nav; }
 .loader ~ .nav { view-transition-name: none; } /* the homepage loader covers the bar until it lifts */
-/* out, then in: the outgoing page is gone (.13 s, falling fast) by the moment the incoming one starts, so two headlines
-   never double-expose */
+/* out, then in: the outgoing page is gone */
 ::view-transition-old(root) { animation: vt-leave .13s cubic-bezier(0, 0, .58, 1) both; }
 ::view-transition-new(root) { animation: vt-enter .56s var(--ease) .13s both; }
 ::view-transition-group(site-nav) { animation-duration: .45s; }
@@ -2708,15 +2637,11 @@ a.link-arrow, button.link-arrow {
 a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 100% 1px, 100% 1px; background-position: 0 100%, 0 100%; }
 @media (hover: hover) { a.link-arrow:hover, button.link-arrow:hover { background-size: 100% 1px, 100% 1px; background-position: 0 100%, 0 100%; } }
 :where(a.link-arrow, button.link-arrow):focus-visible { outline-offset: 5px; }
-/* form fields keep their underline focus; the transparent outline is what forced colours (Windows High Contrast) paint
-   in the system's highlight colour, where the box-shadow is dropped */
+/* form fields keep their underline focus; the transparent outline is what forced colours */
 :where(.form) :is(input, select, textarea):focus-visible { outline: 2px solid transparent; outline-offset: 2px; border-bottom-color: var(--accent); box-shadow: 0 1px 0 0 var(--accent); }
 .footer ul li a:focus-visible { opacity: 1; } /* the footer's links rest at .85; a focused one is at full strength */
 
-/* ---------- figure stages (figure.js): Pause motion (WCAG 2.2.2) ----------
-   The overture's control, on every point-cloud stage figure.js runs outside the research pages: Company's plate (top
-   right, inside its frame), Company §04's loop (the top right of its box), the blog's heroes (the hero's lower right;
-   on phones the top right of the figure band). It is offered only while the stage moves (figure.js hides it). */
+/* ---------- figure stages (figure.js): Pause motion (WCAG 2.2.2) ---------- */
 .figure-motion {
   position: absolute; z-index: 3; display: inline-flex; align-items: center; min-height: 44px; padding: 0 2px;
   font: var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58);
@@ -2738,9 +2663,7 @@ a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 1
 .skip { position: fixed; left: 12px; top: 12px; z-index: 1001; padding: 11px 16px; border-radius: var(--r); background: var(--ink); color: var(--paper); font-size: .9rem; font-weight: 500; box-shadow: 0 0 0 2px var(--signal-bright); transform: translateY(calc(-100% - 24px)); transition: transform .3s var(--ease); }
 .skip:focus, .skip:focus-visible { left: 12px; transform: none; outline: none; }
 
-/* ---------- figures: a stat row's numerals rise out of a mask as the row arrives ----------
-   Presentation only: site.js never writes a number into the page (no count-up from zero), so the text is the true value
-   at every instant. The clip and the 6 px rise run on the numeral's own box; zero specificity, so a component's rules win. */
+/* ---------- figures: a stat row's numerals rise out of a mask as the row arrives ---------- */
 @media (prefers-reduced-motion: no-preference) {
   :where(.stats.will-reveal.is-in:not(.is-cut) > div > .v, .crew-stats.will-reveal.is-in:not(.is-cut) > div > b) {
     animation: fig-rise .95s var(--ease) backwards; animation-delay: calc(var(--d, 0ms) + 150ms + var(--fig-i, 0) * 70ms);
@@ -2751,10 +2674,7 @@ a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 1
 }
 @keyframes fig-rise { from { clip-path: inset(100% -.5em -.5em -.5em); transform: translateY(6px); } to { clip-path: inset(-.5em); transform: none; } }
 
-/* ---------- long jumps on the same page (site.js jumpTo): the destination arrives as a sheet over the still of where the
-   reader was, the overture's own hand-off: going down the page it rises from the bottom edge (paper rising over the
-   stage), going up it comes down from the top; the old view drifts a little the same way beneath it. No blend, so no
-   blank or grey frame at any instant; the bar (its own transition group) holds. ---------- */
+/* ---------- long jumps on the same page (site.js jumpTo) ---------- */
 /* both views move from the same instant (the page transition's .13 s delay on the incoming view would open a gap onto
    the root's ink between them) */
 html[data-jump]::view-transition-old(root), html[data-jump]::view-transition-new(root) {
@@ -2768,13 +2688,12 @@ html[data-jump="up"]::view-transition-new(root) { animation-name: jump-sheet-dow
 @keyframes jump-under-up { to { transform: translateY(-16%); } }
 @keyframes jump-sheet-down { from { transform: translateY(-100%); } }
 @keyframes jump-under-down { to { transform: translateY(16%); } }
-/* the bar takes the destination's state at once: one bar, one readout, never two cross-fading over a grey one */
+/* the bar takes the destination's state at once */
 html[data-jump]::view-transition-group(site-nav) { animation: none; }
 html[data-jump]::view-transition-old(site-nav) { display: none; }
 html[data-jump]::view-transition-new(site-nav) { animation: none; }
 html[data-jump]::view-transition { pointer-events: none; } /* a click during the move reaches the page, already there */
-/* past the browser's capture limit (site.js cut()) a jump is a plain cut: what lands settles in from a dim start, never
-   from nothing (a frame of bare ground would be a blank still) */
+/* past the browser's capture limit (site.js cut()) a jump is a plain cut */
 .is-landing > * { animation: jump-land .16s cubic-bezier(.22, .75, .2, 1) both; }
 @keyframes jump-land { from { opacity: .7; } }
 /* the chapter list is gone before the still is taken (it would hang over the move) */
@@ -2799,13 +2718,11 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   a.link-arrow, button.link-arrow { transition: none; }
 }
 
-/* ---------- without JavaScript: dark-start pages keep a legible bar; the loader never shows (after its own rules) ---------- */
+/* ---------- without JavaScript: dark-start pages keep a legible bar ---------- */
 @media (scripting: none) {
   body[data-nav="dark-start"] .nav { background: rgba(12, 18, 16, .86); -webkit-backdrop-filter: saturate(150%) blur(16px); backdrop-filter: saturate(150%) blur(16px); }
   .loader { display: none; }
-  /* the open sheet, read from the popover itself (no script mirrors it here). Only here: a document-wide relational
-     selector restyles the whole page on every text change, so it must never apply while scripts run. One rule each: an
-     unknown selector voids a whole list. */
+  /* the open sheet, read from the popover itself (no script mirrors it here). */
   :root:has(.nav-sheet:popover-open) { overflow: hidden; }
   :root:has(.nav-sheet:popover-open) .nav { background: var(--ink); color: var(--paper); -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom-color: rgba(245, 242, 236, .08); --accent: var(--signal-bright); }
   :root:has(.nav-sheet:popover-open) .nav .brand .mark { color: var(--paper); }
@@ -2852,9 +2769,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 /* green words on paper-2 take the darker text green (5.28:1); strokes and fills keep the signal green */
 .is-paper-2 .lcp .tg { fill: var(--signal-ink, #186B4F); }
 
-/* ---------- the vertical lane: stations on one spine (home §03 under 961 px; Lifecycles §03 at every width) ----------
-   Each station draws its own glyph (an inline SVG); the spine between them is CSS, so it stretches with the text beside
-   it: a dotted axis through 01-04, the green boundary, five rails through 05, the record line from 06 on. */
+/* ---------- the vertical lane: stations on one spine (home §03 under 961 px; Lifecycles §03 at every width) ---------- */
 .lane-v { --lv-gw: 104px; --lv-x: 52px; position: relative; margin: 0; padding: 0; list-style: none; }
 .lane-v > li { position: relative; display: grid; grid-template-columns: var(--lv-gw) minmax(0, 1fr); column-gap: 18px; align-content: start; min-height: 76px; padding: 0 0 20px; }
 .lane-v > li::before { content: ""; position: absolute; left: calc(var(--lv-x) - .5px); top: 0; bottom: 0; width: 1px; background: repeating-linear-gradient(180deg, currentColor 0 1px, transparent 1px 5px); opacity: .5; pointer-events: none; }
@@ -2884,7 +2799,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lane-v > .lv-rec::before { bottom: auto; height: 6px; background: currentColor; opacity: .62; }
 .lane-v > .lv-rec > span { align-self: center; font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
 .lane-v .lv-g .tk2 { opacity: .5; }
-/* Lifecycles §03: the page's seven steps beside the stations; 06 settles, and the record line begins at 07 Reconcile */
+/* Lifecycles §03: the page's seven steps beside the stations */
 .lane-v--steps > li { padding-bottom: 26px; }
 .lane-v--steps h3 { padding-top: 2px; font-family: var(--serif); font-size: 1.35rem; font-weight: 400; line-height: 1.2; letter-spacing: -0.01em; }
 .lane-v--steps h3 .lk-n { display: block; margin-bottom: 4px; font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; color: var(--fg-3); }
@@ -2892,8 +2807,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lane-v--steps p { margin-top: 8px; color: var(--fg-2); text-wrap: pretty; }
 .lane-v--steps > li[data-g="6"]::before { top: 44px; background: currentColor; opacity: .32; }
 .lane-v--steps > li[data-g="7"]::before { top: 10px; bottom: 26px; background: currentColor; opacity: .62; }
-/* the 'How it works' card travels beside the stations until 07 Reconcile, so the column beside the page's main diagram is
-   never empty paper; only where the window is tall enough to hold the whole card under the bar */
+/* the 'How it works' card travels beside the stations until 07 Reconcile */
 @media (min-width: 1200px) and (min-height: 600px), (min-width: 961px) and (min-height: 680px) {
   .lc-how > .card { position: sticky; top: calc(var(--nav-h) + 32px); }
 }
@@ -2902,9 +2816,9 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lane-plate { display: none; }
 .lane .lk-n { color: var(--fg-3); }
 .lane .lk-nm { color: var(--fg); }
-/* the plate's labels scale with it: user units sized so they print at >= 10 px from 961 px up (and ~10.7 px at 1440) */
+/* the plate's labels scale with it: user units sized so they print at >= 10 px from 961 px up */
 .lane-h { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); }
-/* the council's aperture, the boundary plane and the approved path carry 1.4 px, so the plate reads at a glance */
+/* the council's aperture, the boundary plane and the approved path carry 1.4 px */
 .lane-h .ap-r, .lane-h .g:not(.gw), .lane-h .bd { stroke-width: 1.4; }
 /* one draw-in when the plate is revealed; nothing loops */
 .lane .dr, .lane-v .dr, .lc-orbit .dr, .lc-pipe .dr { stroke-dasharray: 1 1; stroke-dashoffset: 0; }
@@ -2921,9 +2835,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 @media (min-width: 961px) {
   .lane-plate { display: block; }
   /* the gate list is the plate's legend: each item stands under its gate */
-  /* eleven tracks in the plate's own units: each gate's item is centred under its gate (x = 110, 270, 430, 590, 888,
-     1026 of 1200, as drawn by the plate); 04 and 05 take the room beside them (184 and 164 wide) so their parties set in
-     two lines, not three, and the legend stays one even row under the plate */
+  /* eleven tracks in the plate's own units: each gate's item is centred under its gate */
   .lane .lane-key { display: grid; grid-template-columns: minmax(0, 42fr) minmax(0, 136fr) minmax(0, 24fr) minmax(0, 136fr) minmax(0, 24fr) minmax(0, 136fr) minmax(0, 184fr) minmax(0, 124fr) minmax(0, 164fr) minmax(0, 112fr) minmax(0, 118fr); margin-top: 2px; }
   .lane .lane-key > li { grid-row: 1; display: block; min-height: 0; padding: 0; text-align: center; }
   .lane .lane-key > [data-g="1"] { grid-column: 2; } .lane .lane-key > [data-g="2"] { grid-column: 4; } .lane .lane-key > [data-g="3"] { grid-column: 6; }
@@ -2957,14 +2869,11 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 }
 
 @media (max-width: 960px) { .lane .lane-v { max-width: 640px; margin-top: 8px; } .lane .figure-cap { margin-top: 26px; } }
-/* narrow phones: an 88 px column, the 104 px glyph drawn whole 8 px into the margin (max-width: none, or the base svg rule
-   squeezes it to 88 px and its spine drifts 8 px off the lane's) */
+/* narrow phones: an 88 px column, the 104 px glyph drawn whole 8 px into the margin */
 @media (max-width: 420px) { .lane-v { --lv-gw: 88px; --lv-x: 44px; } .lane-v > li { column-gap: 12px; } .lane-v .lv-g { width: 104px; max-width: none; margin-left: -8px; } .lane-v > .lv-bound { padding-left: calc(var(--lv-gw) + 12px); } }
 @media (prefers-reduced-motion: reduce) { .lane .dr, .lane-v .dr, .lc-pipe .dr, .lane-h [data-g], .lane-v .lv-g { transition: none; } }
 
-/* ---------- the desk (gap.js; Lifecycles §03): a session on top, the lane beside it, the ledger under it ----------
-   These rules supersede the base .desk-head .live i ping, .desk-log and the desk legend. Nothing loops: the state dot
-   pings once per proposal, and a record lands once. */
+/* ---------- the desk (gap.js; Lifecycles §03): a session on top, the lane beside it, the ledger under it ---------- */
 .desk { --desk-bg: var(--ink-2); }
 .desk-head { flex-wrap: wrap; row-gap: 10px; min-height: 56px; padding: 10px 12px 10px 20px; }
 .desk-kicker { font-weight: 500; letter-spacing: .14em; color: var(--khaki); }
@@ -2989,12 +2898,12 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .desk-legend i.sq { width: 7px; height: 7px; border-radius: 1px; background: var(--accent); }
 .desk-stats span, .desk-controls label { font-size: var(--mono-xs, .625rem); letter-spacing: .12em; }
 .desk-side .desk-note { margin-top: auto; border-top: 0; }
-/* the agent count's separator is drawn, so the label's own words are exactly the slider's name (WCAG 2.5.3) */
+/* the agent count's separator is drawn, so the label's own words are exactly the slider's name */
 .desk-controls output[data-gap-n-out]::before { content: "\00b7\00a0"; color: var(--fg-2); }
 /* a focus ring a keyboard can see: 2 px, clear of the thumb */
 .desk-controls input[type=range]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 
-/* the lane beside the session: six stations on one spine; a followed action walks it, then squares up at 06 */
+/* the lane beside the session: six stations on one spine */
 .desk-lane { padding: 16px 20px 6px; border-top: 1px solid var(--line); }
 .dl-gates { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
 .dl-gates::before { content: ""; position: absolute; left: calc(100% / 12); right: calc(100% / 12); top: 7px; height: 1px; background: linear-gradient(90deg, rgba(245, 242, 236, .38) 0 50%, rgba(245, 242, 236, .5) 50%); }
@@ -3020,7 +2929,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .dl-say:empty::before { content: "Follow the next action to walk it down the six gates, into the ledger."; font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
 .dl-say b { margin-right: .5em; font-family: var(--mono); font-size: var(--mono-xs, .625rem); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
 
-/* the ledger strip: 12 px record blocks on one hairline, newest on the right; each link carries its record's hash */
+/* the ledger strip: 12 px record blocks on one hairline, newest on the right */
 .desk-ledger { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 0 18px; padding: 14px 0 16px 20px; border-top: 1px solid var(--line); }
 .dl-k { margin: 0 0 3px; font: 500 var(--mono-xs, .625rem)/1.5 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg); }
 .dl-k span { display: block; font-weight: 400; color: var(--fg-3); }
@@ -3032,7 +2941,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .desk .desk-log.has-more { padding-top: 22px; -webkit-mask-image: linear-gradient(#000, #000), linear-gradient(90deg, transparent, #000 56px); mask-image: linear-gradient(#000, #000), linear-gradient(90deg, transparent, #000 56px); -webkit-mask-size: 100% 22px, 100% 100%; mask-size: 100% 22px, 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
 .desk .desk-log li.dk-more { position: absolute; left: 0; top: 0; width: auto; font-weight: 400; color: var(--fg-3); white-space: nowrap; }
 .dk-ev { display: block; white-space: nowrap; font-variant-numeric: tabular-nums; }
-/* one ink for both sides (the regime is not a colour); the side is a glyph: ▲ above NAV (create), ▼ below (redeem) */
+/* one ink for both sides (the regime is not a colour) */
 .dk-ev b { font-weight: 500; letter-spacing: .12em; color: var(--fg); }
 .dk-side { display: inline-block; width: 7px; height: 6px; margin: 0 7px 1px 0; vertical-align: middle; background: var(--fg); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .dk-rec.is-r .dk-side { clip-path: polygon(0 0, 100% 0, 50% 100%); }
@@ -3057,8 +2966,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .desk-kicker { order: -1; flex-basis: 100%; } /* the panel names itself illustrative on its own first line at every width */
   .desk-follow { margin-left: 0; }
 }
-/* phones and tablets: the lane and the ledger strip come straight after the chart, so a followed action walks down the
-   gates and lands its record where the reader is looking; the counters and the sliders follow them */
+/* phones and tablets: the lane and the ledger strip come straight after the chart */
 @media (max-width: 960px) {
   .desk { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "chart" "lane" "ledger" "side"; }
   .desk-head { grid-area: head; }
@@ -3081,9 +2989,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .desk-chart canvas { height: max(150px, 52vh); }
   @supports (height: 1svh) { .desk-chart canvas { height: max(150px, 52svh); } }
 }
-/* phones held sideways: the counters and both sliders beside the chart, so the session and its controls are on screen
-   together (as the swarm lab does sideways); the lane and the ledger strip run full width under them. Not under 540 px
-   wide (400% zoom: 320 x 256), where a side column would leave the chart no room */
+/* phones held sideways: the counters and both sliders beside the chart */
 @media (min-width: 540px) and (max-width: 960px) and (max-height: 500px) and (min-aspect-ratio: 23/20) {
   .desk { grid-template-columns: minmax(0, 1fr) minmax(224px, 36%); grid-template-areas: "head head" "chart side" "lane lane" "ledger ledger"; }
   .desk-chart { padding-top: 12px; border-right: 1px solid var(--line); }
@@ -3102,10 +3008,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .desk-follow, .desk .model-motion { min-height: 44px; }
   .lane-key .lk-btn { min-height: 44px; } /* the lane's gate buttons are finger-sized too */
 }
-/* ---------- Fig. 4.1, the orbit (Lifecycles §04): six class rings in plan view, the swarm at the centre ----------
-   S1's ring styles (shared with the Lifecycles hero plate): LC-01 solid green; Next (LC-02/03) dashed ink; Roadmap
-   (LC-04-06) dotted khaki. Only a live opportunity is a filled green bead; the rest are hollow; an opportunity the page
-   names in no class is a neutral bead outside the rings. Wide screens read the callouts; the list is the same twelve. */
+/* ---------- Fig. 4.1, the orbit (Lifecycles §04): six class rings in plan view, the swarm at the centre ---------- */
 .lc-orbit { margin: 48px 0 0; }
 .orbit-svg { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); }
 .lcp .orb-live { fill: none; stroke: var(--accent); stroke-width: 1.3; }
@@ -3138,7 +3041,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 }
 @media (min-width: 601px) and (max-width: 960px) { .orbit-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
-/* ---------- Platform §04, Fig. 4.1: the deterministic half of the lane (gates 05 and 06, three checkpoints, the record line) ---------- */
+/* ---------- Platform §04, Fig. 4.1: the deterministic half of the lane ---------- */
 .lc-pipe { margin: 0 0 40px; }
 .pipe-svg { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); }
 .lcp .cp { fill: none; stroke: currentColor; stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
@@ -3148,15 +3051,13 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .pipe-svg .pp-s { display: none; font-size: clamp(17px, calc(62px - 5.6vw), 46px); fill: var(--fg); }
 .lc-tag { display: block; margin-bottom: 8px; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
 @media (max-width: 960px) {
-  /* tablets: the full labels give way to short P-labels, set 8 px clear of every plate edge; the empty bands above and
-     below are cropped */
+  /* tablets: the full labels give way to short P-labels, set 8 px clear of every plate edge */
   .pipe-fig { overflow: hidden; aspect-ratio: 1200 / 252; }
   .pipe-svg { margin-top: calc(-26 / 1200 * 100%); }
   .pipe-svg .pp-l { display: none; }
   .pipe-svg .pp-s { display: inline; }
 }
-/* phones: the same half of the lane as stations on one spine (home's and Lifecycles' .lane-v): the boundary, P-01 and
-   P-02 on 05's five rails, P-03 at 06 Settle, and the record line beside the rails taking a block from each checkpoint */
+/* phones: the same half of the lane as stations on one spine (home's and Lifecycles' .lane-v) */
 .lane-v--pipe { display: none; }
 @media (max-width: 600px) {
   .lc-pipe .pipe-fig { display: none; }
@@ -3171,7 +3072,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lane-v--pipe > .pv-1::after, .lane-v--pipe > .pv-2::after { content: ""; position: absolute; left: calc(var(--lv-x) + 37.5px); top: 0; bottom: 0; width: 1px; background: currentColor; opacity: .62; pointer-events: none; }
 .lane-v--pipe > .pv-1::after { top: 30px; }
 
-/* ---------- class rings and trait stacks wherever the classes are listed (home §01 Fig. 1.1, Lifecycles §01 and §02) ---------- */
+/* ---------- class rings and trait stacks wherever the classes are listed ---------- */
 .card .n .lc-code { display: inline-flex; align-items: center; gap: 12px; }
 .card .n--ring { align-items: center; }
 .list-rule > li .k .lc-ring { margin: -4px 0 10px; }
@@ -3207,7 +3108,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .hp-art { position: relative; }
 .hp-art > svg { display: block; width: 100%; height: auto; overflow: visible; color: var(--fg); }
 .hp-art svg * { vector-effect: non-scaling-stroke; }
-/* PG-R2-6: the engraving is drawn, not ghosted - hairlines at .45, lines at .75, the strong rule at .72 */
+/* PG-R2-6: the engraving is drawn, not ghosted - hairlines at .45, lines at .75 */
 .hp-h { fill: none; stroke: currentColor; stroke-opacity: .45; stroke-width: 1; }
 .hp-h.hp-strong { stroke: currentColor; stroke-opacity: .72; }
 .hp-faint { stroke: var(--line); stroke-opacity: 1; }
@@ -3243,7 +3144,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .hp-lab--khaki { color: var(--khaki-ink); } /* text: 5.21:1 on paper (--khaki-deep, 3.6:1, stays on strokes) */
 .is-dark .hp-lab--khaki, .is-dark .hp-k { color: var(--khaki); stroke: var(--khaki); }
 .hp-cap { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); row-gap: 2px; }
-/* the staged reveal: the structure arrives with the figure, the accents (boundary, proposals, ticks) land after it */
+/* the staged reveal: the structure arrives with the figure, the accents */
 .hero-plate .hp-s1, .hero-plate .hp-s2 { transition: opacity .9s var(--ease); }
 .hero-plate .hp-s2 { transition-delay: .5s; }
 .hero-plate.will-reveal:not(.is-in) .hp-s1, .hero-plate.will-reveal:not(.is-in) .hp-s2 { opacity: 0; }
@@ -3251,9 +3152,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .hero-plate .hp-s1, .hero-plate .hp-s2 { transition: none; }
   .hero-plate.will-reveal:not(.is-in) .hp-s1, .hero-plate.will-reveal:not(.is-in) .hp-s2 { opacity: 1; }
 }
-/* PG-R2-6, 961 px and wider: the plate hangs from the h1's top (its 49 px = the eyebrow's line and the h1's margin;
-   the Proof hero opens on a 33 px badge) instead of centring on a tall copy column, and the band under the hero is
-   cut so §01's head enters at about 80% of the first screen: less air above the eyebrow, under the hero and above §01 */
+/* PG-R2-6, 961 px and wider: the plate hangs from the h1's top */
 @media (min-width: 961px) {
   .page-hero--plate { align-items: start; }
   .page-hero--plate > .hero-plate { margin-top: 49px; }
@@ -3267,8 +3166,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .page-hero--plate > .hero-copy, .hero-plate { grid-column: 1 / -1; }
   .hero-plate { justify-self: start; max-width: min(100%, 520px, calc(45svh * var(--hp-ar, 1.3))); }
 }
-/* landscape phones: the hero copy must not fill the whole screen before the plate. From 600 px wide only: a narrow,
-   short window (320 x 256, 400% zoom) keeps the stacked plate, so nothing is pushed past the viewport (WCAG 1.4.10) */
+/* landscape phones: the hero copy must not fill the whole screen before the plate. */
 @media (max-width: 960px) and (max-height: 520px) and (min-width: 600px) and (orientation: landscape) {
   .page-hero:not(.research-hero):not(.article-hero):not(.company-hero) { padding-top: calc(var(--nav-h) + 28px); }
   .page-hero--plate .display-1 { font-size: clamp(2.3rem, 10vh, 3rem); max-width: 22ch; }
@@ -3277,11 +3175,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .page-hero--plate > .hero-plate { grid-column: 8 / -1; justify-self: end; max-width: 100%; }
 }
 
-/* ---------- blog: plates in place of the legacy placeholder image (build_blog.py PLACEHOLDER) ----------
-   Paper-3 ground, the collection label in mono caps over the collection's mark at plate scale (Market structure &
-   economics: six inclined rings in ink, one green; a collection without a drawn mark: the fine-bead globe). No title:
-   the card's h3 sits right under the plate (PG-R2-8). The plate keeps the thumbnail's 16:9 box; posts carry none.
-   aria-hidden: the label names the section the card is in. The constellation turns 6 degrees on hover, once. */
+/* ---------- blog: plates in place of the legacy placeholder image (build_blog.py PLACEHOLDER) ---------- */
 .blog-plate { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; background: var(--paper-3); color: var(--ink); }
 .blog-plate .bp-k { position: relative; font: 500 var(--mono-xs)/1.45 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--graphite); padding-right: 56px; }
 .blog-plate .bp-rings { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
@@ -3297,18 +3191,13 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .blog-card--plate:focus-visible .bp-mark { transform: rotate(-28deg); opacity: .75; }
 @media (prefers-reduced-motion: reduce) { .blog-plate .bp-mark, .bp-rings > g { transition: none; } }
 
-/* ---------- research notes (and blog posts): the hero figure no longer draws under the title and lede (PG4) ----------
-   CSS only: the notes' content, figures and colours are as they were. The stage starts at the page's centre line and
-   fades in over its first 14%, so no stroke crosses the h1 or the lede. */
+/* ---------- research notes (and blog posts): the hero figure no longer draws under the title and lede (PG4) ---------- */
 @media (min-width: 961px) {
   .article-hero .figure-stage { left: 50%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%); mask-image: linear-gradient(90deg, transparent, #000 14%); }
   .article-hero .lede { max-width: 40ch; }
 }
 
-/* ---------- phone tables: restacked, never clipped (PG5; the proof owner writes data-th on its table and rows) ----------
-   Under 601 px each row of a .ledger table becomes a block: its first cell is the row's title across the width, the
-   others pair up in two columns, each under its column's name (td[data-th]); a last cell left alone takes the width.
-   The thead stays in the accessibility tree, visually hidden. */
+/* ---------- phone tables: restacked, never clipped (PG5; the proof owner writes data-th on its table and rows) ---------- */
 @media (max-width: 600px) {
   .table-scroll > .ledger { display: block; min-width: 0; }
   .table-scroll > .ledger > thead { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -3318,24 +3207,15 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .table-scroll > .ledger > tbody > tr > td { display: block; min-width: 0; border: 0; padding: 0; text-align: left; overflow-wrap: anywhere; }
   .table-scroll > .ledger > tbody > tr > td:first-child { grid-column: 1 / -1; padding-bottom: 4px; }
   .table-scroll > .ledger > tbody > tr > td:last-child:nth-child(even) { grid-column: 1 / -1; }
-  /* the label is decoration for sighted readers (the thead still names each column): empty alt text, so a screen
-     reader does not read "Who approves" into every cell. The first line is the fallback where '/ ""' is unknown. */
+  /* the label is decoration for sighted readers (the thead still names each column) */
   .table-scroll > .ledger td[data-th]::before { content: attr(data-th); content: attr(data-th) / ""; display: block; margin-bottom: 3px; font: 500 var(--mono-xs)/1.4 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); }
   .table-scroll > .ledger td[data-th]:first-child::before { display: none; }
 }
 
-/* ---------- touch devices (PG12) ----------
-   Pages that open dark paint the root dark too, so iOS overscroll and the landscape safe areas beside a dark band are
-   ink, not paper. (:has() ends the rule and keys on the root's own child: no subtree invalidation.) */
+/* ---------- touch devices (PG12) ---------- */
 html:has(> body[data-nav="dark-start"]) { background: #0B110F; }
 
-/* ---------- Trust §01: each commitment carries its mark from the shared vocabulary (PG13) ----------
-   T-01 the council aperture (approve tick lit) · T-02 scope brackets around what never moves · T-03 record blocks on a
-   hairline · T-04 the mode dial · T-05 the boundary (jitter above, grid below) · T-06 the halt shutter. Ink on paper.
-   Round 2 (PG-R2-3 extension): the marks at plate scale, 40 px with the secondary strokes at .7, and the same family on
-   Trust §02's six K-cards at 32 px, between the card's code row and its title: K-01 scope brackets, K-02 caps, K-03 the
-   market-hours window, K-04 the approval aperture, K-05 a reading tick on the record line, K-06 the halt shutter. Only
-   svg.tg: the lifecycle figures' <text class="tg"> labels are another class of the same name. */
+/* ---------- Trust §01: each commitment carries its mark from the shared vocabulary (PG13) ---------- */
 svg.tg { display: block; width: 24px; height: 24px; margin-top: 14px; color: var(--fg); overflow: visible; }
 svg.tg * { fill: none; stroke: currentColor; stroke-width: 1; vector-effect: non-scaling-stroke; }
 svg.tg .tg-m { stroke-opacity: .7; }
@@ -3346,18 +3226,15 @@ svg.tg .tg-f { fill: currentColor; fill-opacity: .82; stroke: none; }
 .card > svg.tg--k { width: 32px; height: 32px; margin: -6px 0 20px; }
 
 /* ---------- the closing band, the 404 and Company (PG10) ---------- */
-/* every page ends on the fine-bead globe: latitude rows of 1.2 px beads, back hemisphere culled, two orbits, one green
-   ring (globe-fine.svg carries its own colours; the old chunky mark stays the brand mark in the bar) */
+/* every page ends on the fine-bead globe: latitude rows of 1.2 px beads, back hemisphere culled */
 .cta-band .mark.globe { background: url("../img/globe-fine.svg") center / contain no-repeat; -webkit-mask: none; mask: none; }
 /* 404: the swarm's canvas keeps to the right half, so its labels never run under the lede */
 @media (min-width: 961px) { /* a canvas is a replaced element: it needs an explicit width; its trail fades before the h1 */
   .notfound-swarm { left: 45%; width: 55%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%); mask-image: linear-gradient(90deg, transparent, #000 10%); }
 }
-/* Company's figure mode buttons need JavaScript: without it they are not offered at all. Only .company-modes: the
-   research index's notes also carry data-figure-target, and they are links that must stay (PG-R2-1) */
+/* Company's figure mode buttons need JavaScript: without it they are not offered at all. */
 @media (scripting: none) { .company-modes { display: none; } }
-/* Company §04: the lifecycle loop gets its own band beside the h2 (it drew as a stray streak behind the grid). The stage
-   element stays where it is in the markup (merge-safe); it is placed here, and the head row reserves its height. */
+/* Company §04: the lifecycle loop gets its own band beside the h2 (it drew as a stray streak behind the grid). */
 @media (min-width: 961px) {
   #constants > .figure-stage {
     left: auto !important; opacity: 1 !important; bottom: auto; width: min(440px, 33vw); height: min(380px, 28.5vw);
@@ -3368,8 +3245,7 @@ svg.tg .tg-f { fill: currentColor; fill-opacity: .82; stroke: none; }
   .constants-head > .constants-cap { grid-column: 8 / -1; justify-self: end; align-self: end; width: min(440px, 33vw); justify-content: space-between; margin: 0; padding-top: 10px; border-top: 1px solid var(--line); }
 }
 @media (max-width: 960px) { #constants > .figure-stage, .constants-cap { display: none !important; } }
-/* Company §05: the six lifecycle classes, each under an inclined ring in the S1 code (LC-01 solid green, next dashed,
-   roadmap dotted khaki). Replaces .wall here, so the retired .wall rules can go. */
+/* Company §05: the six lifecycle classes, each under an inclined ring in the S1 code */
 .class-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .class-row > li { display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 116px; padding: 20px 18px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg); font-family: var(--serif); font-size: 1.2rem; line-height: 1.15; letter-spacing: -0.01em; color: var(--fg-2); text-wrap: balance; }
 .class-row > li::before { content: ""; flex: none; width: 56px; height: 24px; border-radius: 50%; border: 1.5px dotted var(--khaki-deep); transform: rotate(-14deg); } /* 56 px: the rings at plate scale (PG-R2-3 extension) */
@@ -3379,11 +3255,7 @@ svg.tg .tg-f { fill: currentColor; fill-opacity: .82; stroke: none; }
 @media (max-width: 960px) { .class-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .class-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .class-row > li { min-height: 96px; } }
 
-/* ---------- Platform §06 and §07: the last template chapters drawn as plates (PG-R2-3) ----------
-   Section plates use the hero plates' drawing classes (.hp-art, .hp-h, .hp-i, .hp-g, .hp-k, .hp-lab ...) and words
-   already on the page. §06: the h2 has its own row (columns 1-8), the copy beside it; Fig. 6.1, Trust's T-04 mode dial
-   at plate scale, sits beside Table 6.1. §07: one plate in two panels (supply streams enter the stack | the demand side
-   reads the record line out), Phase 03 parts in khaki; the two cards become hairline columns under it. Static, no loops. */
+/* ---------- Platform §06 and §07: the last template chapters drawn as plates (PG-R2-3) ---------- */
 .sec-plate { margin: 0; min-width: 0; }
 .sp-detent { stroke-opacity: .75; }
 .hp-h.sp-face { stroke-opacity: .72; }
@@ -3403,8 +3275,7 @@ svg.tg .tg-f { fill: currentColor; fill-opacity: .82; stroke: none; }
 .mkt-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-top: 1px solid var(--line-strong); }
 .mkt-col { min-width: 0; padding: clamp(22px, 2.4vw, 32px) clamp(20px, 3vw, 48px) 0 0; }
 .mkt-col + .mkt-col { padding-left: clamp(20px, 3vw, 48px); padding-right: 0; border-left: 1px solid var(--line); }
-/* a hairline list (Platform §07, Trust §04): a rule above the first item and under each, a short hairline dash at the
-   first line where the green radio dot of .checks stood (.checks stays for Platform §02, which arch tunes) */
+/* a hairline list (Platform §07, Trust §04): a rule above the first item and under each */
 .list-hair { border-top: 1px solid var(--line); }
 .list-hair > li { position: relative; padding: 13px 0 13px 30px; border-bottom: 1px solid var(--line); color: var(--fg-2); }
 .list-hair > li::before { content: ""; position: absolute; left: 0; top: calc(13px + .8em); width: 14px; height: 1px; background: currentColor; opacity: .5; }
@@ -3417,12 +3288,7 @@ svg.tg .tg-f { fill: currentColor; fill-opacity: .82; stroke: none; }
 }
 @media (max-width: 600px) { .sp-panels { grid-template-columns: minmax(0, 1fr); row-gap: 14px; } }
 
-/* ---------- Company hero on landscape phones (PG-R2-4) ----------
-   Under 961 px the hero stacks and the stage takes its height from its width (777 x 647 at 844 x 390), so the figure
-   was never seen with its headline. On short, wide screens the copy and the stage sit side by side, as the plate heroes
-   do: the stage keeps its 1.2 frame, at most 46vw wide and at most the viewport's height under the bar less 32 px and
-   less the two readout lines that follow the frame (1a6b9fb): 'Plate · The swarm as one body / Illustrative ·
-   interactive' must be on screen whenever the figure is (D14), so the stage gives up 48 px for it. */
+/* ---------- Company hero on landscape phones (PG-R2-4) ---------- */
 @media (max-width: 960px) and (max-height: 520px) and (min-width: 600px) {
   .company-hero { padding-top: calc(var(--nav-h) + 16px); padding-bottom: 28px; }
   .company-hero .container {

@@ -60,9 +60,7 @@
   const TRAIL = 5, TRAIL_DT = 0.042;                           // per-agent trail: five samples, 42 ms apart
   const CAP = 8200, MOTES = 220, NT = 96;                      // agent slots; incoming signals; ticks on the council aperture
   const DEAD = 0, FLOW = 1, PROP = 2, RAIL = 3, SETTLE = 4, REJECT = 5;
-  // 'Settled / s': the rails settle in bursts, one per lockstep tick, so the rate is folded once a tick (the tick's
-  // settlements per second) into a weighted mean with a time constant of 1.6 model seconds: no saw-tooth from the bursts,
-  // and a policy change reads as what it does (approved work still on the rails settles; then the rate falls)
+  // 'Settled / s': the rails settle in bursts, one per lockstep tick
   const TAU_R = 1.6, A_R = 1 - Math.exp(-TICK / TAU_R);
   const st = new Uint8Array(CAP), gate = new Uint8Array(CAP), lane = new Uint8Array(CAP), flag = new Uint8Array(CAP), hc = new Uint8Array(CAP);
   const annR = new Uint8Array(CAP);                             // a followed rejection is announced when it lands, not at the decision
@@ -87,8 +85,7 @@
   let sim = 0, seq = 41000 + Math.floor(Math.random() * 9000), inflight = 0, spawnAcc = 0, railPh = 0, histT = 0, hHead = 0, pulse = 0, rejGlow = 0;
   const S = { settled: 0, rejected: 0, rate: 0, tick: 0, m: 0, k: 0 }; // derived counters read these, nothing else
   const ledger = []; let openPulse = 0;
-  // tightening the council closes its aperture: an iris that eases to its new opening (a click on the slider's track
-  // must not snap the funnel and every agent in it); the entry gate's shutter eases closed on Halt the same way
+  // tightening the council closes its aperture: an iris that eases to its new opening
   const AP_MAX = 0.19;
   let apR = 0.18, apT = 0.18, shutK = 0;
   const setStrict = (v, snap) => { strict = v; apT = AP_MAX - 0.12 * (v / 0.6); if (snap) apR = apT; };
@@ -124,9 +121,7 @@
   // a lane already in steady state: agents placed along it with the history they would have had
   function warmStart() {
     const limit = 1 - strict, cong = 0.1 + 1.05 * strict, n = pop();
-    // steady-state density, so the first seconds settle at the lane's own rate instead of ringing toward it: the rails
-    // run faster than the estimation field and carry only the approved share, so they hold fewer agents per unit length
-    // (the field's harmonic mean speed is 0.2046); in the field, the council's slow zone and the slower agents hold more
+    // steady-state density, so the first seconds settle at the lane's own rate instead of ringing toward it
     const F0 = GX[0] - 0.08, F1 = GX[3] - 0.01, R0 = GX[3], R1 = GX[5] - 0.02, kRail = clamp(limit * 0.2046 / V_RAIL, 0, 1);
     let slowZone = 0; for (let k = 0; k < 20; k++) { const u = (k + 0.5) / 20; slowZone += 0.011 * (1 / (1 - cong * u * u * (3 - 2 * u)) - 1); }
     const pRail = (R1 - R0) * kRail / ((F1 - F0) + slowZone + (R1 - R0) * kRail);
@@ -167,7 +162,7 @@
     marks: [], verdict: '', endAt: 0, dim: 0, x: 0, y: 0, z: 0 };
   const isFollowed = (i) => follow.active && follow.i === i && follow.uid === UID[i];
 
-  /* ---------------- settled → ledger blocks; settled and rejected → the page's events (one clock, at most 4 flushes/s) ---------------- */
+  /* ---------------- settled → ledger blocks; settled and rejected → the page's events ---------------- */
   let evPending = null, rjPending = null, evLast = -1e9, evTimer = 0;
   function sealed(i) {
     const f = isFollowed(i);
@@ -182,9 +177,7 @@
     rjPending.count++;
     if (f || !rjPending.followed) { rjPending.id = pid(UID[i]); rjPending.followed = f; }
   }
-  // the clock is read at dispatch, not the frame's timestamp, so listeners never see two flushes closer than 250 ms;
-  // a forced flush (a followed proposal in a still study) waits for its turn instead of breaking the limit. The trace
-  // learns of its proposal's flush before the event goes out, so a ledger that answers inside the event is heard.
+  // the clock is read at dispatch, not the frame's timestamp
   function flush(force) {
     if (!evPending && !rjPending) return;
     const nowMs = performance.now(), wait = 250 - (nowMs - evLast);
@@ -199,8 +192,7 @@
     }
     if (q) {
       if (q.followed) {
-        // the rejection you followed is logged on the lab's own ledger line, as a record of its own (red): the newest
-        // block, so a settled digest sealed in the same flush steps one place along the line (it is not drawn yet)
+        // the rejection you followed is logged on the lab's own ledger line, as a record of its own (red)
         const b = ledger[ledger.length - 1];
         if (p && b && b.t === sim) b.x += 0.03;
         ledger.push({ x: LX, n: 1, t: sim, f: true, r: true });
@@ -232,7 +224,7 @@
       if (s === DEAD) continue;
       if (s === FLOW || s === PROP) {
         const slow = 1 - cong * smooth(GX[3] - 0.22, GX[3], X[i]);   // the stricter the council, the longer each decision
-        // the proposal you follow estimates at twice the pace, so its council decision comes a few seconds after the click
+        // the proposal you follow estimates at twice the pace
         X[i] += SPD[i] * dt * slow * (1 + 0.16 * Math.sin(sim * 1.3 + PH[i])) * (isFollowed(i) ? 2 : 1);
         flowPos(i);
         while (gate[i] < 4 && X[i] >= GX[gate[i]]) {
@@ -282,7 +274,7 @@
     inflight = fl;
     for (let k = Math.floor(railPh) - Math.floor(p0); k > 0; k--) foldRate(); // a rail tick ended in this step
     if (halted && fl === 0) S.rate = S.tick = S.m = S.k = 0; // drained: nothing can settle, so the rate keeps no tail into a Resume
-    // signals drifting in: data the agents pick up at 01 (nobody picks it up while halted: it fades at the closed gate)
+    // signals drifting in: data the agents pick up at 01
     for (let m = 0; m < MOTES; m++) { MS[m] += MV[m] * dt / 1.05; if (MS[m] >= 1) mote(m, false); }
     for (let k = 0; k < NT; k++) if (TF[k] > 0) TF[k] = Math.max(0, TF[k] - dt / 0.32);
     for (let g = 0; g < 6; g++) if (GF[g] > 0) GF[g] = Math.max(0, GF[g] - dt / 0.9);
@@ -305,8 +297,7 @@
     if (RISK[i] >= limit) {
       st[i] = REJECT; T0[i] = 0; flag[i] = 0; S.rejected++;
       if (f) annR[i] = 1; else refused(i);
-      // it falls away on the near side of the boundary (a rejected proposal never reaches the deterministic rails),
-      // fanning outward in depth so the fall reads as a curtain in front of the council, not a bundle through it
+      // it falls away on the near side of the boundary
       VX[i] = -0.02 - rnd() * 0.06; VY[i] = rnd() * 0.06; VZ[i] = Z[i] * 0.6 + (rnd() - 0.5) * 0.1;
       TF[k] = 1; TC[k] = 1;
     } else {
@@ -322,8 +313,7 @@
   let par = 0, parT = 0, P_X = 0, P_Y = 0, P_D = 1, breath = 1;
   function camera() {
     par += (parT - par) * 0.04;
-    // the camera's slow breathing is decoration: a device that had to drop every trail (quality 0) lets it ease out, so
-    // the projected labels come to rest and their transforms stop being rewritten every frame
+    // the camera's slow breathing is decoration: a device that had to drop every trail
     breath += ((quality === 0 ? 0 : 1) - breath) * 0.03; if (breath < 0.002) breath = 0;
     const still = reduced.matches, b = still ? 0 : breath;
     const yaw = YAW + b * 0.03 * Math.sin(sim * 0.11) + (still ? 0 : par * 0.05), pitch = PITCH + b * 0.012 * Math.sin(sim * 0.083);
@@ -351,7 +341,7 @@
       if (hc[i] < TRAIL) hc[i]++;
     }
   }
-  // fit the scene into the stage: labels above, a little air below (two rows of labels: room above and below)
+  // fit the scene into the stage: labels above, a little air below
   let W = 1, H = 1, dpr = 1, narrow = false, tight = false, rowTop = 14, rowH = 30, botH = 0;
   function fit() {
     camera();
@@ -408,9 +398,7 @@
     }
     return c;
   }
-  // every sprite lives in one atlas (each kind at 8, 16, 32 and 64 px, 2 transparent px apart), so a frame's thousands
-  // of blits draw from one texture and the canvas batches them; a canvas per sprite costs a draw call per agent (on a
-  // software GL, as on a CI runner, the agents alone took about a third of a second a frame)
+  // every sprite lives in one atlas (each kind at 8, 16, 32 and 64 px, 2 transparent px apart)
   let ATLAS = null;
   function buildSprites() {
     const pad = 2, cellH = SPR_SIZES[SPR_SIZES.length - 1] + pad * 2, kinds = ['bead', 'red', 'ring', 'square', 'mote', 'halo', 'halor', 'haloi'];
@@ -439,7 +427,7 @@
   const lbl = []; // gate label boxes this frame: {x, y, w, h, ax, ay, bottom}
 
   function seg(x0, y0, z0, x1, y1, z1) { proj(x0, y0, z0); ctx.moveTo(P_X, P_Y); proj(x1, y1, z1); ctx.lineTo(P_X, P_Y); }
-  // a soft light pool on the floor between x0 and x1: one stretched gradient sprite, turned to lie along the lane
+  // a soft light pool on the floor between x0 and x1
   function pool(x0, x1, kind, alpha) {
     if (alpha <= 0.004) return;
     proj(x0, FLOOR, 0); const ax = P_X, ay = P_Y; proj(x1, FLOOR, 0); const bx = P_X, by = P_Y;
@@ -471,7 +459,7 @@
     ctx.beginPath();
     for (let g = 0; g < 6; g++) seg(GX[g], FLOOR, -0.39, GX[g], FLOOR, 0.39);
     ctx.strokeStyle = `rgba(${IV},.075)`; ctx.stroke();
-    // the lane lights the floor under it: a soft ivory pool under the estimation field, a green one under the rails
+    // the lane lights the floor under it: a soft ivory pool under the estimation field
     ctx.globalCompositeOperation = 'lighter';
     pool(GX[0] - 0.1, GX[3], 'haloi', 0.05 * clamp(inflight / Math.max(1, target), 0.15, 1)); // a drained lane leaves the floor dark
     pool(GX[3] + 0.1, LX, 'halo', 0.06);
@@ -485,7 +473,7 @@
     }
   }
   function drawLedger() {
-    // the ledger line: hairline from the open block out of frame; blocks sealed at most four a second, linked by hairlines
+    // the ledger line: hairline from the open block out of frame
     ctx.lineWidth = 1;
     ctx.beginPath(); seg(LX, 0, 0, 2.6, 0, 0); ctx.strokeStyle = `rgba(${IV},.2)`; ctx.stroke();
     const k = cam.k0;
@@ -535,8 +523,7 @@
       ctx.strokeStyle = `rgba(${col},${((g === 5 ? 0.62 : 0.36 + 0.39 * k) + 0.4 * f).toFixed(3)})`; ctx.lineWidth = 1 + 0.4 * f; ctx.stroke(); ctx.lineWidth = 1;
     }
   }
-  // the boundary: a glowing hairline plane just past the council. Upstream agents jitter (estimation); downstream they
-  // run on a grid (deterministic code). Intelligence decides, execution is deterministic.
+  // the boundary: a glowing hairline plane just past the council.
   const XB = GX[3] + 0.075, BHY = 0.34, BHZ = 0.3;
   function drawBoundary() {
     const hy = BHY, hz = BHZ;
@@ -626,7 +613,6 @@
   }
   function drawTrails() {
     // two polylines per agent (a bright head, a dim tail), batched by colour and depth band: 12 strokes for every trail.
-    // Butt caps and bevel joins: round ones tessellate a cap per segment and cost more than everything else drawn.
     if (quality === 0) return;
     clsN[0] = clsN[1] = clsN[2] = 0;
     for (let i = 0; i < hi; i++) {
@@ -769,13 +755,7 @@
 
   /* ---------------- DOM labels, projected from 3D anchors ---------------- */
   const lw = [];
-  // The labels' layout is chosen by measured fit, at any stage size: one row when all six fit side by side with 14 px
-  // gaps in the wide type, else two rows in the narrow type (02 04 06 above the lane, 01 03 05 below). The wide widths
-  // are read with the wide type on (the narrow class is lifted for that one read, inside this task: nothing is painted
-  // in between). Going back to one row needs 72 px to spare, so a policy line that grows by a few characters while the
-  // council is tuned never flips the layout back and forth. Returns true when the mode changed (the camera refits).
-  // In two rows, a stage too small for 02 · 04 · 06 side by side (320 px) breaks 04's policy line in two ('rejects risk' /
-  // '> 0.88'), so its upper row keeps 8 px between labels.
+  // The labels' layout is chosen by measured fit, at any stage size
   function measure() {
     const was = narrow, wasT = tight;
     if (wasT) root.classList.remove('is-tight');
@@ -795,7 +775,7 @@
     if (el.ledger) lw[6] = [el.ledger.offsetWidth, el.ledger.offsetHeight];
     if (el.banner) lw[7] = [el.banner.offsetWidth, el.banner.offsetHeight];
     if (el.bound) lw[8] = [el.bound.offsetWidth, el.bound.offsetHeight];
-    // the row heights: in two rows the lower one (01 03 05) holds single lines; 04's policy line is in the upper one
+    // the row heights: in two rows the lower one (01 03 05) holds single lines
     const h = (g) => (lw[g] ? lw[g][1] : 24);
     rowH = Math.max(24, ...el.gates.map((li, g) => (!narrow || g % 2 ? h(g) : 0)));
     botH = narrow ? Math.max(16, ...el.gates.map((li, g) => (g % 2 ? 0 : h(g)))) : 0;
@@ -825,16 +805,15 @@
     spread(top); spread(bot);
     for (const b of lbl) { setPos(b.li, b.x, b.y); b.lx = clamp(b.ax, b.x + 6, b.x + b.w - 6); }
     if (el.ledger && lw[6]) {
-      // the ledger line runs on to the right at a slope the camera sets (parallax, breathing): the label hangs 12 px under
-      // the line's lowest point across its own width, so the right-hand blocks never sit on its text
+      // the ledger line runs on to the right at a slope the camera sets (parallax, breathing)
       proj(LX + 1, 0, 0); const ex = P_X, ey = P_Y;
       proj(LX + 0.04, 0, 0);
       const x = clamp(P_X, 4, W - lw[6][0] - 4), k = Math.abs(ex - P_X) > 1 ? (ey - P_Y) / (ex - P_X) : 0;
       setPos(el.ledger, x, P_Y + Math.max(0, k * (x + lw[6][0] - P_X)) + 12);
     }
-    // the halt banner: bottom right on wide stages (the trace owns the bottom left), above the lower label row in two rows
+    // the halt banner: bottom right on wide stages (the trace owns the bottom left)
     if (el.banner && lw[7]) setPos(el.banner, narrow ? 8 : W - lw[7][0] - 14, narrow ? H - botH - 18 - lw[7][1] : H - lw[7][1] - 14);
-    // the boundary's name sits off the far end of its lit top edge, when it clears every gate label and leader
+    // the boundary's name sits off the far end of its lit top edge
     if (el.bound && lw[8]) {
       proj(XB, BHY, -BHZ);
       const w = lw[8][0], h = lw[8][1], x = P_X + 8, y = P_Y - h + 2;
@@ -849,7 +828,7 @@
     }
     placeTag(); placeHover();
   }
-  // the followed proposal's tag on the stage: its text is model state (TG), written to the DOM only while it is drawn
+  // the followed proposal's tag on the stage: its text is model state (TG)
   let tagBox = null;
   const TG = { b: '', s: '', cls: '', on: false, ver: 0, shown: -1, w: 120, h: 34 };
   function tagSet(s, cls) { if (TG.s !== s || TG.cls !== cls) { TG.s = s; TG.cls = cls; TG.ver++; } }
@@ -866,8 +845,7 @@
     }
     proj(follow.x, follow.y, follow.z);
     const w = TG.w, h = TG.h, gap = narrow ? 16 : 26;
-    // the side with room; when neither side holds the whole tag (a long verdict on a phone) it is clamped into the
-    // stage above the agent, and the leader rises straight to it
+    // the side with room; when neither side holds the whole tag
     const roomR = W - 6 - (P_X + gap), roomL = P_X - gap - 6;
     const side = roomR >= w ? 1 : roomL >= w ? -1 : roomR >= roomL ? 1 : -1;
     const x = clamp(side > 0 ? P_X + gap : P_X - gap - w, 6, Math.max(6, W - w - 6)), y = clamp(P_Y - h - 22, rowTop + rowH + 8, H - h - 6);
@@ -875,10 +853,7 @@
   }
   function hideTag() { TG.on = false; if (el.tag && !el.tag.hidden) el.tag.hidden = true; tagBox = null; }
 
-  /* ---------------- the trace (callout) ----------------
-     The trace is a small model (T): one row per gate from the start (the ones still ahead are pending), then the
-     ledger. It is written to the DOM only while the lab is on screen; off screen a followed proposal can still finish
-     its journey (the model pulses) and the trace shows it when the lab is back. */
+  /* ---------------- the trace (callout) ---------------- */
   const VERDICT = (i, g, limit) => {
     if (g === 1) return [`picked up · ${2 + (UID[i] % 4)} signals`, ''];
     if (g === 2) return ['estimate formed', ''];
@@ -912,9 +887,7 @@
     if (g === 6) say(`${follow.id}: settled.`);
     touch();
   }
-  // the followed proposal's announcement is going out: with a ledger on the page the trace waits for its record;
-  // without one (Platform) the trace names what the lab itself drew: the block on its own ledger line (green for a
-  // settlement, red for the rejection), and the screen reader hears where the inspectable ledger is
+  // the followed proposal's announcement is going out
   function traceFlushed(id, outcome) {
     if (!T.open || id !== T.id) return;
     const t = sim - follow.t1;
@@ -942,9 +915,7 @@
   }
   let sayText = null;
   function say(t) { sayText = t; touch(); }
-  // the ledger further down the page answers every announcement with 'oxa:recorded' {id, record, hash, seq, followed};
-  // when the answer is for the proposal in the trace, its ledger row becomes a button naming that record and the first
-  // 8 hex of its hash. The answer can come after the drawn path has faded: the open trace is what decides.
+  // the ledger further down the page answers every announcement with 'oxa:recorded' {id, record, hash
   document.addEventListener('oxa:recorded', (e) => {
     const d = e.detail;
     if (!d || !d.record || !T.open || !T.wait || d.id !== T.id) return;
@@ -956,20 +927,14 @@
     say(`${d.id}: ${T.outcome === 'rejected' ? 'its rejection is recorded' : 'sealed'} in the ledger below as record ${rec}.`);
     touch();
   });
-  // the record button: brings the ledger into view (centred under the nav), then, once the page has landed (the
-  // ledger renders what it holds when it is in view), asks it to show that record. The ledger is screens below the lab,
-  // so the trip is taken the way the site takes every long jump (site.js, nav): what it passes over and lands on is
-  // revealed at once (no half-revealed paper streams past, and the landing is measured without an entrance offset), the
-  // page lands at once, and where same-document view transitions exist the ledger comes in as a sheet over a still of
-  // the lab (html[data-jump], styled by the nav's CSS); reduced motion or no view transitions: a plain cut. Then
-  // 'oxa:jump' {from, to}, as after any long jump. A hop of 1.5 screens or less glides.
+  // the record button: brings the ledger into view (centred under the nav), then
   let inspectRaf = 0;
   function ledgerY() { // the scroll position that centres the ledger in the room under the bar (top-aligned when taller)
     const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0;
     const r = LEDGER.getBoundingClientRect(), room = window.innerHeight - navH;
     return Math.max(0, Math.min(document.documentElement.scrollHeight - window.innerHeight, Math.round(window.scrollY + r.top - navH - Math.max(0, (room - r.height) / 2))));
   }
-  function revealPassed(a, b) { // site.js's reveal classes: .is-in shows, .is-cut marks a skipped entrance, .is-instant drops transitions for two frames
+  function revealPassed(a, b) { // site.js's reveal classes: .is-in shows, .is-cut marks a skipped entrance
     const y = window.scrollY;
     document.querySelectorAll('.will-reveal:not(.is-in)').forEach((n) => {
       const r = n.getBoundingClientRect();
@@ -978,10 +943,7 @@
       requestAnimationFrame(() => requestAnimationFrame(() => n.classList.remove('is-instant')));
     });
   }
-  // the landing holds while the page settles: a smooth scroll still under way when the trip began (the focus that
-  // brought the button into view, with Enter pressed at once) carries on after the cut and would leave the ledger up to
-  // a few dozen px off centre. For at most 0.7 s the ledger is kept where it landed; the reader's own wheel, touch, key
-  // or pointer ends the hold at once.
+  // the landing holds while the page settles: a smooth scroll still under way when the trip began
   let holdRaf = 0;
   const HOLD_END = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
   function unhold() { cancelAnimationFrame(holdRaf); holdRaf = 0; HOLD_END.forEach((k) => window.removeEventListener(k, unhold, true)); }
@@ -999,10 +961,7 @@
   function toLedger(rec, kbd) {
     if (!LEDGER) return;
     cancelAnimationFrame(inspectRaf); inspectRaf = 0; unhold();
-    // the trip starts on the next frame, unless a scroll is still under way (the focus that brought the button into
-    // view, a wheel's glide): a cut taken mid-glide is undone by the glide's remaining frames, so that finishes first
-    // (two still frames). After the button took keyboard focus, 0.12 s (its scroll into view starts a frame or two
-    // late); half a second at most.
+    // the trip starts on the next frame, unless a scroll is still under way
     const t0 = performance.now();
     let sy = window.scrollY, still = 0, need = t0 - scrollT < 120 ? 2 : 1;
     const settle = () => {
@@ -1017,9 +976,7 @@
   let recFocusT = -1e9, scrollT = -1e9;
   window.addEventListener('scroll', () => { scrollT = performance.now(); }, { passive: true });
   if (el.log) el.log.addEventListener('focusin', (e) => { if (e.target.closest('[data-sw-rec]')) recFocusT = performance.now(); });
-  // the record button answers the hand at once: pressed (pointer down, Enter or Space) it fills and its arrow nudges
-  // down (.is-going) while the trip gets under way; the fill lets go once the ledger has been asked for the record, or
-  // when a press never became a click
+  // the record button answers the hand at once: pressed
   let goingB = null, goingT = 0;
   function going(b, on, after) {
     clearTimeout(goingT); goingT = 0;
@@ -1033,8 +990,7 @@
     el.log.addEventListener('keydown', (e) => { const b = e.target.closest('[data-sw-rec]'); if (b && (e.key === 'Enter' || e.key === ' ')) going(b, true, 900); });
   }
   function trip(rec, kbd) {
-    // the ledger is asked for the record once it has been told it is in view: two frames, and, for a ledger that draws
-    // what it held only when it comes into view, until its record is on the line (half a second at most)
+    // the ledger is asked for the record once it has been told it is in view
     const ask = () => {
       let n = 0;
       const drawn = () => rec.seq === null || !!LEDGER.querySelector(`.lt-rec[data-seq="${rec.seq}"]`);
@@ -1057,8 +1013,7 @@
         ask();
       };
       if (reduced.matches || typeof document.startViewTransition !== 'function' || document.hidden) { go(); return; }
-      // the nav's rule (site.js VT_LIMIT): the browser's still of the outgoing view holds nothing below about 16,384 px,
-      // so a trip that leaves a view reaching past 16,000 px is a plain cut, and what lands settles in (.is-landing, v2:nav)
+      // the nav's rule (site.js VT_LIMIT): the browser's still of the outgoing view holds nothing below about 16,384 px
       if (from + window.innerHeight > VT_LIMIT) { go(); landing(); return; }
       de.dataset.jump = y > from ? 'down' : 'up';
       let vt;
@@ -1160,7 +1115,7 @@
     clearTimeout(T.waitT);
     Object.assign(follow, { active: true, show: true, i, uid: UID[i], id: pid(UID[i]), n: 0, pt: -1, marks: [], verdict: '', endAt: 0, x: X[i], y: Y[i], z: Z[i], t1: t0Of(i) });
     Object.assign(T, { open: true, id: follow.id, head: `Proposal ${follow.id}`, state: 'In flight', cls: 'is-live', rows: journeyRows(), hit: 0, outcome: '', wait: false, waitT: 0 });
-    // the gates it already passed, from its own record (back-dated: its 01 line is when it really crossed 01)
+    // the gates it already passed, from its own record
     for (let g = 1; g <= gate[i]; g++) { const [v, kind] = VERDICT(i, g, 1 - strict); setRow('g' + g, GT[i * 7 + g] - t0Of(i), v, kind); T.hit |= 1 << (g - 1); }
     tagText(i, gate[i]);
     recordPath();
@@ -1189,7 +1144,7 @@
     say('Stopped following.');
     if (reduced.matches) still();
   }
-  // a fresh proposal about 0.4 s (at the follow's own pace) before gate 02, so its decision comes soon after the click
+  // a fresh proposal about 0.4 s (at the follow's own pace) before gate 02
   function pickFresh() {
     let best = -1, bs = -1e9;
     for (let i = 0; i < hi; i++) {
@@ -1212,16 +1167,14 @@
     }
     return best;
   }
-  // the agent under the mouse, with hysteresis: it stays the hovered one while it is within 22 px of the pointer, so
-  // the hover tag does not flicker between neighbours as the lane flows under a resting cursor
+  // the agent under the mouse, with hysteresis: it stays the hovered one while it is within 22 px of the pointer
   function updateHover() {
     if (!mouse) { hover = -1; return; }
     const keep = live(hover) && UID[hover] === hoverUid && (PX[hover] - mouse.x) ** 2 + (PY[hover] - mouse.y) ** 2 < 484;
     if (!keep) { hover = hitTest(mouse.x, mouse.y, 14); hoverUid = hover >= 0 ? UID[hover] : 0; }
     cv.style.cursor = hover >= 0 ? 'pointer' : '';
   }
-  // the hover tag never covers the followed proposal's tag: it takes the other side, or steps aside; right after a click
-  // it waits for the pointer to move, so the new follow is not crowded by a tag for its neighbour
+  // the hover tag never covers the followed proposal's tag: it takes the other side, or steps aside
   let hoverHold = null;
   const hits = (x, y, w, h, b) => b && x < b.x + b.w + 6 && x + w > b.x - 6 && y < b.y + b.h + 6 && y + h > b.y - 6;
   function placeHover() {
@@ -1239,16 +1192,11 @@
   }
 
   /* ---------------- roles (Platform: data-sw-view="roles") ---------------- */
-  // The legend's four agent roles right above the lab (A-01 ... A-04, .sw-role--1..4). Pointing at a card, or focusing its
-  // 'In the lab' line (a button once the lab runs), lights that role in the lab: its agents grow a little and its gate
-  // label lights (01 Signal, 03 Decide, 05 Execute, 06 Settle), while every other agent, the signals and the trails step
-  // back. Pressing the line keeps the role lit (aria-pressed) until it is pressed again or Escape; on a phone, where the
-  // lab is a screen above its legend, the press also brings the lab into view. The model is untouched: the counters,
-  // the events and the trace read exactly the same with or without a lit role.
+  // The legend's four agent roles right above the lab
   const ROLE_GATE = [-1, 0, 2, 4, 5];
   let role = 0, roleWas = 0, roleK = 0, roleHov = 0, roleFoc = 0, rolePin = 0;
   const roleBtns = [];
-  function inRole(i, k) { // 1 signal agents (up to gate 02), 2 strategy agents (proposals, 03 to 04), 3 execution (the rails), 4 reconciliation (settling into the ledger)
+  function inRole(i, k) { // 1 signal agents (up to gate 02), 2 strategy agents (proposals, 03 to 04), 3 execution (the rails)
     const s = st[i];
     return k === 1 ? s === FLOW && gate[i] <= 1 : k === 2 ? s === PROP : k === 3 ? s === RAIL : k === 4 ? s === SETTLE : true;
   }
@@ -1283,7 +1231,7 @@
     });
   }
 
-  /* ---------------- counters, all read from the model (written only while the lab is on screen) ---------------- */
+  /* ---------------- counters, all read from the model ---------------- */
   const fmt = (n) => n.toLocaleString('en-US');
   const fmtN = (n) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n));
   const put = (node, s) => { // a lone text node is rewritten in place (no node swapped into the tree, no restyle)
@@ -1309,8 +1257,7 @@
     put(el.nOut, txt);
     if (el.n) el.n.setAttribute('aria-valuetext', capped ? `${fmtN(target)} agents, capped to ${fmtN(popCap)} on this device` : `${fmtN(target)} agents`);
   };
-  // the council's live state at 04: the share it approves and the risk it rejects (in this model risk is uniform on
-  // 0..1, so a limit of 0.88 approves 88% of proposals)
+  // the council's live state at 04: the share it approves and the risk it rejects
   const showStrict = () => {
     const pct = Math.round(strict * 100), lim = (1 - strict).toFixed(2);
     put(el.strictOut, `${pct}%`);
@@ -1332,7 +1279,7 @@
   /* ---------------- controls ---------------- */
   if (el.n) {
     el.n.value = Math.round(Math.log(target / 500) / Math.log(12) * 100);
-    // a deliberate choice of population is measured afresh: the device cap (if any) is lifted until frames say otherwise
+    // a deliberate choice of population is measured afresh
     el.n.addEventListener('input', () => { target = Math.round(500 * Math.pow(12, el.n.value / 100) / 100) * 100; if (popCap) { popCap = 0; delete root.dataset.swCap; } showN(); if (reduced.matches) still(); });
   }
   let tuneT = 0;
@@ -1361,9 +1308,7 @@
   }
   if (el.follow) el.follow.addEventListener('click', () => { if (follow.active) stopFollow(); else startFollow(pickFresh()); });
   if (el.close) el.close.addEventListener('click', () => { stopFollow(); if (el.follow) el.follow.focus(); });
-  // Escape stops following from inside the lab, and also after a click or tap on an agent (focus is then on the page
-  // itself); it is left alone while another widget (the nav's chapter list, the menu) holds focus, and while no part of
-  // the lab is on screen (after the record button's trip focus may still sit on that button: Escape is then the ledger's)
+  // Escape stops following from inside the lab, and also after a click or tap on an agent
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape' || e.defaultPrevented || !(follow.active || follow.show || T.open)) return;
     const box = root.getBoundingClientRect(); if (box.bottom <= 0 || box.top >= window.innerHeight) return;
@@ -1383,8 +1328,7 @@
   cv.addEventListener('click', (e) => {
     if (!booted) return;
     const p = local(e);
-    // a mouse click takes the agent the hover tag names (if it is still under the pointer); a tap searches a
-    // finger-sized radius
+    // a mouse click takes the agent the hover tag names (if it is still under the pointer)
     const named = !pointerTouch && live(hover) && UID[hover] === hoverUid && (PX[hover] - p.x) ** 2 + (PY[hover] - p.y) ** 2 < 484;
     const i = named ? hover : hitTest(p.x, p.y, pointerTouch ? 30 : 16);
     if (i >= 0 && !isFollowed(i)) { hoverHold = p; startFollow(i); if (!running()) paint(); }
@@ -1398,7 +1342,7 @@
     inLoop = true;
     for (let k = 0; k < steps; k++) {
       step(0.05, k >= steps - TRAIL - 1);
-      // the ledger line fills as it would have, block by block, but a still study announces nothing to the page
+      // the ledger line fills as it would have, block by block
       if (k % 5 === 4 && evPending) { ledger.push({ x: LX, n: evPending.count, t: sim - 9, f: false }); evPending = null; } // blocks then drift right with the model
       rjPending = null;
     }
@@ -1407,7 +1351,7 @@
     projectAll(); paint();
     if (onScreen) { stats(); syncUI(); }
   }
-  // reduced motion: following computes the whole journey at once and shows it as a still; only its outcome is announced
+  // reduced motion: following computes the whole journey at once and shows it as a still
   function settleStill() {
     let guard = 0;
     inLoop = true;
@@ -1431,8 +1375,7 @@
       if (!running()) paint();
     });
   }
-  // the trails' own layer: at most 1.25 device pixels per CSS pixel, composited onto the stage in one drawImage
-  // (thin, soft strokes lose nothing at that density, and they are most of the drawing cost at DPR 2-3)
+  // the trails' own layer: at most 1.25 device pixels per CSS pixel
   function trailLayer() {
     tdpr = Math.min(dpr, 1.25);
     if (tdpr > dpr - 0.01) { tcv = null; tctx = null; return; }
@@ -1459,10 +1402,7 @@
     camera(); projectAll(); paint();
   }
   let onScreen = false, near = false, ledgerNear = false, frameId = 0, bgId = 0, last = performance.now(), ui = 0, booted = false;
-  // quality governor, driven by a frame-time EMA: above 20 ms a device sheds trail work (2 all trails · 1 proposals and
-  // rejections only · 0 none); it tries the level above again only after cheap frames for a while, and waits twice as
-  // long after each drop (a stall passes, a slow device is not made to stutter every few seconds); at level 0, a device
-  // still under 30 fps carries fewer agents, a step at a time, and the Agents output says so
+  // quality governor, driven by a frame-time EMA: above 20 ms a device sheds trail work
   let quality = 2, frameDt = 1 / 60, ema = 1 / 60, workEma = 0, slowFor = 0, fastFor = 0, capFor = 0, coolFor = 0, retry = 6, longRun = 0;
   function govern(raw, work) {
     ema += (raw - ema) * 0.1; workEma += (work - workEma) * 0.1; coolFor += raw;
@@ -1478,15 +1418,13 @@
     }
   }
   const running = () => !reduced.matches && !document.hidden && !paused;
-  // off screen the model steps only while the page's ledger is near, or a followed proposal has not finished
+  // off screen the model steps only while the page's ledger is near
   const followPending = () => !!((evPending && evPending.followed) || (rjPending && rjPending.followed));
   const pulseOK = () => booted && running() && !onScreen && (ledgerNear || follow.active || followPending());
   function frame(now) {
     frameId = 0;
     if (!running() || !onScreen) return;
-    // model time keeps up with the clock down to 4 fps, in steps of 50 ms at most; a device that has run under 5 fps for a
-    // while (software GL on a small machine) keeps it down to 2 fps, so Halt still drains in about eleven seconds there.
-    // Below that a slower device sees a slower model, not a jumpier one; on a quick device a stall moves it 0.25 s at most
+    // model time keeps up with the clock down to 4 fps, in steps of 50 ms at most
     const raw = Math.max(0, (now - last) / 1000), dt = Math.min(ema > 0.2 ? 0.5 : 0.25, raw), sub = Math.max(1, Math.ceil(dt / 0.05 - 1e-6)); last = now; frameDt = dt;
     const t0 = performance.now();
     inLoop = true;
@@ -1496,9 +1434,7 @@
     inLoop = false;
     if (uiDirty) syncUI();
     if ((ui += dt) > 0.15) { ui = 0; stats(); }
-    // a frame of half a second or more is a stall (a busy page, a tab coming back) and is left out, unless the next one
-    // is as long: then it is the device (software GL on a small machine draws a frame in seconds) and it counts in full,
-    // so the lab sheds its trails and agents instead of holding every frame for good
+    // a frame of half a second or more is a stall (a busy page, a tab coming back) and is left out
     if (raw < 0.5) { longRun = 0; govern(raw, (performance.now() - t0) / 1000); }
     else if (++longRun > 1) govern(raw, (performance.now() - t0) / 1000);
     frameId = requestAnimationFrame(frame);
@@ -1524,17 +1460,15 @@
     if (booted) return; booted = true;
     resize(); root.dataset.swQuality = quality;
     if (reduced.matches) still(); else { reset(); camera(); warmStart(); inLoop = true; for (let k = 0; k < 30; k++) step(0.05, k > 22); inLoop = false; projectAll(); paint(); }
-    stats(); // once, at the model's birth (a viewport away at most): the counters never hold a zero the model does not
+    stats(); // once, at the model's birth (a viewport away at most)
     schedule();
-    // the labels are measured again once the fonts are in. Asked here, not while the script evaluates: reading
-    // document.fonts.ready forces the page's style and layout, which during evaluation is the page's whole first layout
+    // the labels are measured again once the fonts are in.
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { measure(); fit(); hc.fill(0); camera(); projectAll(); paint(); });
   }
   let bootQueued = false;
   function wantBoot() { if (!booted && !bootQueued && (near || ledgerNear)) { bootQueued = true; requestAnimationFrame(() => { bootQueued = false; boot(); }); } }
   showN(); showStrict();
-  // a still study is re-run on resize (its trails live in screen space), except while it shows a followed proposal:
-  // then the same moment is re-projected, so a rotated phone keeps the journey and its trace
+  // a still study is re-run on resize (its trails live in screen space)
   if ('ResizeObserver' in window) new ResizeObserver(([e]) => {
     if (!booted) return;
     const r = e && e.contentRect; if (r && Math.round(r.width) === W && Math.round(r.height) === H) return; // its first report repeats boot's size
