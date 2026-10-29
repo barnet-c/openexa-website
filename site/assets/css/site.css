@@ -1318,9 +1318,8 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 /* v2:swarm:end */
 /* -------------------------------------------------------------------------- */
 /* v2:ledger:start */
-/* ---------- the ledger trace (ledger.js): records on one hairline; the link out of each record carries its hash ----------
-   Nothing here asks the document a question (no relational selectors): every state is a class that ledger.js sets on the
-   one element it concerns, so a record landing restyles that record and nothing else. */
+/* ---------- the ledger trace (ledger.js): records on one hairline, each link carrying a hash. No relational selectors:
+   every state is a class ledger.js sets on the one element it concerns ---------- */
 .lt {
   --fg: var(--paper); --fg-2: rgba(245, 242, 236, .78); --fg-3: rgba(245, 242, 236, .56);
   --line: rgba(245, 242, 236, .14); --line-strong: rgba(245, 242, 236, .32);
@@ -1328,7 +1327,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   --lt-bg: var(--ink-2); --lt-col: 148px; --lt-bleed: 16px; --lt-pr: 18px;
   position: relative; color: var(--fg); background: var(--lt-bg); border: 1px solid var(--line-strong); border-radius: var(--r); overflow: hidden;
 }
-/* the head is a grid: the state text, the Latest pill and the buttons change without ever re-wrapping it or changing its height */
+/* the head is a grid: what changes in it never re-wraps it */
 .lt-head { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "title latest state ctrl"; align-items: center; gap: 6px 20px; min-height: 56px; padding: 10px 12px 10px 20px; border-bottom: 1px solid var(--line); font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); }
 .lt-title { grid-area: title; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); }
 .lt-state { grid-area: state; justify-self: end; display: inline-flex; align-items: center; gap: 9px; min-width: 0; max-width: 100%; color: var(--accent); letter-spacing: var(--track-label, .12em); transition: color .3s; }
@@ -1360,9 +1359,8 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .lt.has-left.has-right .lt-view { -webkit-mask-image: linear-gradient(90deg, transparent 4px, #000 40px, #000 calc(100% - 40px), transparent calc(100% - 4px)); mask-image: linear-gradient(90deg, transparent 4px, #000 40px, #000 calc(100% - 40px), transparent calc(100% - 4px)); }
 .lt-track { position: relative; display: flex; width: max-content; min-width: 100%; margin: 0; padding: 16px 28px 12px; list-style: none; }
 
-/* one record = one column standing on the line. A column is contained (layout, style, paint): a record that lands,
-   rolls its hash or lights up restyles, re-lays and repaints itself and nothing else. Its box reaches var(--lt-bleed)
-   back over the column before it, so a ring, a halo or a pulse round its block is never cut by its own edge. */
+/* one record = one contained column on the line; its box reaches --lt-bleed back over the column before it, so a ring
+   or pulse round its block is never cut */
 .lt-rec { flex: none; position: relative; isolation: isolate; contain: layout style paint; width: calc(var(--lt-col) + var(--lt-bleed)); margin-left: calc(var(--lt-bleed) * -1); padding: 12px var(--lt-pr) 10px var(--lt-bleed); cursor: pointer; outline: none; transition: opacity .35s var(--ease); -webkit-tap-highlight-color: transparent; }
 /* pointing at a record lifts its block off the panel; the link row below stays on the line */
 .lt-rec::after { content: ""; position: absolute; z-index: -1; inset: 0 6px 44px 6px; border-radius: 2px; background: rgba(245, 242, 236, .045); opacity: 0; transition: opacity .25s var(--ease); pointer-events: none; }
@@ -1394,8 +1392,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .lt-rec.is-head .lt-seg { right: 24%; background: repeating-linear-gradient(90deg, var(--line-strong) 0 3px, transparent 3px 7px); -webkit-mask-image: linear-gradient(90deg, #000 35%, transparent); mask-image: linear-gradient(90deg, #000 35%, transparent); }
 .lt-rec.is-head .lt-tag { left: calc(36% + 6px); color: var(--fg-3); }
 .lt.is-running .lt-rec.is-head .lt-seg { animation: lt-await 2.4s ease-in-out infinite; }
-/* inspecting: the chosen record and both of its hash links stay lit (the link into it is drawn by the record before it,
-   marked .is-before-sel by ledger.js); everything else steps back */
+/* inspecting: the chosen record and both of its links (the one into it drawn by .is-before-sel) stay lit */
 .lt-rec.is-sel .lt-node { transform: scale(1.25); }
 .lt.is-inspecting .lt-rec:not(.is-sel) > :not(.lt-line) { opacity: .34; }
 .lt.is-inspecting .lt-rec:not(.is-sel):not(.is-before-sel) .lt-line { opacity: .34; }
@@ -1412,14 +1409,12 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .lt-rec.is-sel .lt-tag, .lt-rec.is-before-sel .lt-tag { color: var(--accent); }
 .lt-rec > :not(.lt-line) { transition: opacity .35s var(--ease); }
 .lt-rec:focus-visible::before { content: ""; position: absolute; inset: 0 6px 6px 6px; border: 1px solid var(--accent); border-radius: 2px; pointer-events: none; }
-/* arriving at a record from the swarm's trace (or the proposal you followed): its block rings out twice, a square
-   wave in the block's own shape (transform and opacity only) */
+/* a record asked for (or followed) rings out twice: transform and opacity only */
 .lt-node::after { content: ""; position: absolute; inset: -4px; border: 1.5px solid var(--accent); opacity: 0; pointer-events: none; }
 .lt-rec.is-rejected .lt-node::after { border-color: var(--reject); }
 .lt-rec.is-pulse .lt-node::after { animation: lt-ping .75s cubic-bezier(.2, .7, .3, 1) 2; }
 
-/* the inspector: one record, both of its links, checked in the browser. Every field keeps a fixed number of lines
-   whatever record it describes, so the panel never changes height under the reader */
+/* the inspector: at rest every field keeps a fixed number of lines, so the panel never changes height */
 .lt-insp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 10px 56px; padding: 14px 20px 22px; border-top: 1px solid var(--line); }
 .lt-insp-k { grid-column: 1 / -1; margin: 0; font: 500 var(--mono-xs, .625rem)/1.6 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .3s; }
 .lt-insp-k.is-followed { color: var(--accent); }
@@ -1473,9 +1468,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .lt-rec.is-verified .lt-seg { animation: lt-ok 1.2s var(--ease) backwards; }
 .lt-rec.is-verified .lt-tag { animation: lt-lit 1.2s var(--ease) backwards; }
 
-/* ---------- the chain (chain.js): eight records on a vertical hairline; edit one and every link below it snaps ----------
-   chain.js walks the break (and the healing) down the line itself, one record every 110 ms, so the status line counts
-   exactly the records that are red on screen */
+/* ---------- the chain (chain.js): edit a record and every link below it snaps, one record every 110 ms ---------- */
 .chain { --lt-bg: var(--ink-2); position: relative; color: var(--fg); background: var(--ink-2); border: 1px solid var(--line-strong); border-radius: var(--r); transition: border-color .5s var(--ease); }
 .chain.is-broken { border-color: rgba(217, 103, 93, .55); }
 .chain-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; min-height: 56px; padding: 10px 12px 10px 20px; border-bottom: 1px solid var(--line); }
@@ -1526,8 +1519,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .chain-list > li.is-broken:last-child .chain-seg::before, .chain-list > li.is-broken:last-child .chain-seg::after { background: repeating-linear-gradient(var(--reject) 0 3px, transparent 3px 6px); }
 .chain-list > li.is-broken .chain-link b { color: var(--reject); }
 .chain-list > li.is-broken .chain-link::before { background: rgba(217, 103, 93, .5); }
-/* the cascade: as the break reaches each record its block flares and its link surges red; restore sends the same
-   pulse down in green. Every colour is the palette's own red (#D9675D on dark) or green */
+/* the cascade: red down the line as it breaks, green as it heals (the palette's own colours) */
 @keyframes chain-pop { 32% { transform: scale(1.8); box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 0 5px rgba(217, 103, 93, .2), 0 0 16px rgba(217, 103, 93, .6); } 100% { transform: none; } }
 @keyframes chain-surge { 0% { background: var(--line-strong); box-shadow: none; } 28% { background: var(--reject-bright, #D9675D); box-shadow: 0 0 8px rgba(217, 103, 93, .55); } }
 @keyframes chain-heal { 32% { transform: scale(1.55); background: var(--accent); box-shadow: 0 0 0 5px rgba(79, 203, 147, .16), 0 0 18px rgba(79, 203, 147, .6); } 100% { transform: none; } }
