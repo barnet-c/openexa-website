@@ -1908,6 +1908,27 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 }
 @media (max-width: 480px) { .bnd-line .sides > span { white-space: normal; } .bnd-line.arch-bound { min-height: 96px; } }
 
+/* ---------- Platform §05, Deployment: three spec columns, each under a static plate ----------
+   No boxes: each column opens on a hairline (the §01 spec's rule), then its code and tag, title and words. Above it, a plate
+   in the house line style, drawn with the hero plates' classes (.hp-art, .hp-h, .hp-i, .hp-g, .hp-lab): ink hairlines at
+   1 px, --accent only for what is live, labels in the column's own words. Static SVG: the same without JavaScript and
+   under reduced motion. 601-1099 px: each plate sits beside its column; up to 600 px, above it at 120 px. */
+.dpl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 44px clamp(24px, 3vw, 48px); }
+.dpl-col { min-width: 0; }
+.dpl-plate { width: 100%; max-width: 400px; margin: 0 0 22px; }
+.dpl-plate .dp-tick { stroke-opacity: .42; } /* scale ticks and sleepers: solid, quieter than the lines they measure */
+.dpl-col .n { display: flex; justify-content: space-between; gap: 12px; padding-top: 16px; border-top: 1px solid var(--line-strong); font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; color: var(--fg-3); }
+.dpl-col h3 { margin: 22px 0 12px; font-weight: 400; }
+.dpl-col p { max-width: 46ch; font-size: .98rem; color: var(--fg-2); }
+#mcp { padding-bottom: clamp(64px, 7vw, 112px); } /* the row ends the section: no tall empty band under it */
+@media (min-width: 601px) and (max-width: 1099px) {
+  .dpl { grid-template-columns: minmax(0, 1fr); }
+  .dpl-col { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: clamp(24px, 4vw, 48px); }
+  .dpl-plate { grid-column: 1; grid-row: 1 / -1; align-self: start; margin: 0; } /* its box is the drawing's: the labels are placed in it */
+  .dpl-col > :not(.dpl-plate) { grid-column: 2; }
+}
+@media (max-width: 600px) { .dpl { grid-template-columns: minmax(0, 1fr); row-gap: 40px; } .dpl-plate { max-width: 320px; margin-bottom: 18px; } }
+
 @media (prefers-reduced-motion: reduce) {
   .arch-layer, .arch-layer::before, .arch-layer::after, .arch-card, .arch-ov, .arch-motion, .arch-sum.is-out { transition: none; }
   .arch-sum.is-swap { animation: none; }
