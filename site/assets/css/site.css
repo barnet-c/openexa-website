@@ -1171,7 +1171,7 @@ html.story-tiny .story .story-coda { display: none; }
 .sw-key .k-b::before { width: 14px; height: 6px; background: rgba(245, 242, 236, .92); border-radius: 1px; }
 .sw-on .sw-follow { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 14px 8px 12px; border: 1px solid rgba(79, 203, 147, .55); border-radius: 2px; color: var(--accent); font: inherit; letter-spacing: var(--track-label, .12em); text-transform: uppercase; transition: background .2s, color .2s, border-color .2s; }
 .sw-follow::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid currentColor; box-sizing: border-box; }
-.sw-follow:hover { background: rgba(79, 203, 147, .12); }
+@media (hover: hover) { .sw-follow:hover { background: rgba(79, 203, 147, .12); } }
 .sw-follow[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #0B110F; }
 .sw-follow[aria-pressed="true"]::before { background: currentColor; border-radius: 1px; width: 8px; height: 8px; }
 .sw-follow:focus-visible, .sw-trace-close:focus-visible, .swarm-live .halt:focus-visible, .sw-motion:focus-visible, .sw-rec:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -1211,6 +1211,8 @@ html.story-tiny .story .story-coda { display: none; }
 .sw-limit.is-all > span:nth-child(n+2) { display: none; }
 .sw-on .sw-gates li.is-tuned .sw-limit { color: var(--accent); transition-duration: .1s; }
 .sw-on.is-narrow .sw-limit:not(.is-all) > span:nth-child(-n+2) { display: none; }
+.sw-on.is-tight .sw-limit { white-space: normal; max-width: 13ch; } /* 320 px: 'rejects risk' / '> 0.88' (mono: 13ch holds 12 characters) */
+.sw-on.is-tight .sw-limit.is-all { max-width: 15ch; } /* 'approves every' / 'proposal' */
 .sw-on .sw-bound { display: block; position: absolute; left: 0; top: 0; white-space: nowrap; pointer-events: none; font: 500 var(--mono-xs, .625rem)/1.3 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(79, 203, 147, .72); will-change: transform; }
 .sw-on .sw-bound.is-off { visibility: hidden; }
 .sw-on .sw-ledger, .sw-on .sw-banner:not([hidden]), .sw-on .sw-agent:not([hidden]) { display: block; position: absolute; left: 0; top: 0; white-space: nowrap; pointer-events: none; font: 500 var(--mono-xs, .625rem)/1.35 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; will-change: transform; }
@@ -1232,13 +1234,18 @@ html.story-tiny .story .story-coda { display: none; }
 .sw-trace-state { color: var(--fg-3); }
 .sw-trace-state.is-live { color: var(--accent); } .sw-trace-state.is-ok { color: var(--accent); } .sw-trace-state.is-bad { color: var(--reject-bright); }
 .sw-trace-close { margin-left: auto; min-height: 34px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 2px; color: var(--fg-2); font: inherit; letter-spacing: var(--track-label, .12em); text-transform: uppercase; }
-.sw-trace-close:hover { border-color: var(--line-strong); color: var(--paper); }
+@media (hover: hover) { .sw-trace-close:hover { border-color: var(--line-strong); color: var(--paper); } }
 .sw-log { margin: 0; padding: 3px 14px 7px; list-style: none; font-size: .64rem; line-height: 1.45; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
 .sw-log li { display: grid; grid-template-columns: 4.4em 8.4em minmax(0, 1fr); align-items: center; gap: 10px; min-height: 2.1em; padding: 2px 0; border-bottom: 1px solid rgba(245, 242, 236, .08); color: var(--fg-2); }
 .sw-log li:last-child { border-bottom: 0; }
 .sw-log li[data-k="led"] { min-height: 34px; } /* the ledger row holds the record button's height from the start */
 .sw-log .sw-t { color: var(--fg-3); text-align: right; }
+.sw-log .sw-v { text-wrap: balance; } /* a two-line verdict breaks evenly, never leaving one word on its own line */
 .sw-log b { font-weight: 500; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--paper); }
+/* a page without a ledger (Platform): the Ledger row's name leads to the inspectable ledger on the home page */
+.sw-led-a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, currentColor 50%, transparent); }
+.sw-led-a i { font-style: normal; }
+.sw-led-a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sw-log .is-ok .sw-v, .sw-log .is-rec .sw-v { color: var(--accent); } .sw-log .is-bad .sw-v, .sw-log .is-bad b { color: var(--reject-bright); }
 .sw-log li.is-pend { opacity: .4; } .sw-log li.is-pend b, .sw-log li.is-pend .sw-t { color: var(--fg-3); }
 .sw-log li.is-wait .sw-v { color: rgba(79, 203, 147, .78); }
@@ -1246,9 +1253,12 @@ html.story-tiny .story .story-coda { display: none; }
 @keyframes sw-fill { from { opacity: .4; } to { opacity: 1; } }
 /* the ledger's answer: the record it was chained into, one click from the ledger itself */
 .sw-rec { display: inline-flex; align-items: center; gap: 8px; min-height: 30px; margin: -3px 0; padding: 3px 10px; border: 1px solid rgba(79, 203, 147, .5); border-radius: 2px; color: var(--accent); font: inherit; letter-spacing: .03em; cursor: pointer; transition: background .2s, border-color .2s; }
-.sw-rec:hover { background: rgba(79, 203, 147, .12); border-color: var(--accent); }
+@media (hover: hover) { .sw-rec:hover { background: rgba(79, 203, 147, .12); border-color: var(--accent); } }
 .sw-rec i { font-style: normal; transition: transform .25s var(--ease); }
-.sw-rec:hover i { transform: translateY(2px); }
+@media (hover: hover) { .sw-rec:hover i { transform: translateY(2px); } }
+/* pressed (pointer down, Enter or Space): it fills at once and its arrow nudges down, ahead of the trip to the ledger */
+.sw-rec.is-going { background: var(--accent); border-color: var(--accent); color: #0B110F; transition-duration: 0s; }
+.sw-rec.is-going i { transform: translateY(4px); transition-duration: .12s; }
 @keyframes sw-trace-in { from { opacity: 0; transform: translateY(calc(-100% + 6px)); } to { opacity: 1; transform: translateY(-100%); } }
 @keyframes sw-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
@@ -1261,22 +1271,31 @@ html.story-tiny .story .story-coda { display: none; }
 .swarm-controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 18px; align-items: end; padding: 14px 18px 12px; }
 .swarm-controls label { display: grid; gap: 6px; font-family: var(--mono); font-size: .66rem; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-2); }
 .swarm-controls output { color: var(--accent); }
+.swarm-controls output::before { content: "· "; color: var(--fg-2); } /* the separator is drawn, so the label's text is its name ('Agents in this model') plus the value */
 .swarm-controls input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; margin: 0; cursor: pointer; font-size: 16px; }
 .swarm-controls input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--line-strong); }
 .swarm-controls input[type=range]::-moz-range-track { height: 1px; background: var(--line-strong); }
 .swarm-controls input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--paper); border: 3px solid #0B110F; box-shadow: 0 0 0 1px var(--line-strong); margin-top: -6.5px; transition: transform .2s var(--ease); }
 .swarm-controls input[type=range]::-moz-range-thumb { width: 8px; height: 8px; border-radius: 50%; background: var(--paper); border: 3px solid #0B110F; box-shadow: 0 0 0 1px var(--line-strong); }
-.swarm-controls input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); }
-.swarm-controls input[type=range]:focus-visible { outline: none; }
+@media (hover: hover) { .swarm-controls input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); } }
+/* focus: the track lights and a green ring circles the thumb; the outline is transparent, so it is drawn only where
+   forced colours (Windows contrast themes) give it the system colour, where the box-shadow ring is dropped */
+.swarm-controls input[type=range]:focus-visible { outline: 2px solid transparent; outline-offset: 4px; }
+.swarm-controls input[type=range]:focus-visible::-webkit-slider-runnable-track { background: var(--accent); }
+.swarm-controls input[type=range]:focus-visible::-moz-range-track { background: var(--accent); }
 .swarm-controls input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 2px var(--accent); }
 .swarm-controls input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 2px var(--accent); }
+@media (forced-colors: active) { /* the 1 px track is a background, which forced colours remove: draw it as a border */
+  .swarm-controls input[type=range]::-webkit-slider-runnable-track { height: 0; border-top: 1px solid CanvasText; }
+  .swarm-controls input[type=range]::-moz-range-track { height: 0; border-top: 1px solid CanvasText; }
+}
 .sw-btns { display: flex; flex-direction: column; align-items: stretch; gap: 4px; align-self: end; }
 .swarm-controls .halt { font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; min-width: 7.6em; min-height: 44px; padding: 10px 18px; border: 1px solid var(--reject); color: var(--reject); border-radius: 2px; transition: background .25s, color .25s; }
-.swarm-controls .halt:hover { background: var(--reject); color: #0B110F; }
+@media (hover: hover) { .swarm-controls .halt:hover { background: var(--reject); color: #0B110F; } }
 .swarm-live.is-halted .halt { background: var(--paper); color: #0B110F; border-color: var(--paper); }
 /* Pause motion: the overture's control, in the lab's own row */
 .sw-motion { min-height: 30px; padding: 2px 4px; font: var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: rgba(245, 242, 236, .58); white-space: nowrap; }
-.sw-motion:hover { color: var(--signal-bright); }
+@media (hover: hover) { .sw-motion:hover { color: var(--signal-bright); } }
 .sw-motion[hidden] { display: none; }
 @media (max-width: 1100px) { .swarm-bar { grid-template-columns: 1fr; } .swarm-stats { border-right: 0; border-bottom: 1px solid var(--line); } }
 @media (max-width: 980px) { .sw-on .sw-key { order: 5; flex-basis: 100%; margin: 0; } .sw-on .sw-follow { margin-left: auto; } }
@@ -1364,7 +1383,7 @@ html.story-tiny .story .story-coda { display: none; }
 .sw-role--3 .sw-at i::after { left: 8px; width: 10px; height: 10px; margin-top: -5px; border: 1.5px solid var(--signal-bright); border-radius: 50%; background: #0E1512; }
 .sw-role--4 .sw-at i::before { left: 1px; width: 8px; height: 8px; margin-top: -4px; border-radius: 1.5px; background: var(--signal-bright); }
 .sw-role--4 .sw-at i::after { left: 12px; width: 14px; height: 6px; margin-top: -3px; border-radius: 1px; background: rgba(245, 242, 236, .92); }
-@media (min-width: 901px) and (max-width: 1099px) { .sw-legend .sw-at { min-height: calc(4.2em + 18px); } } /* four narrow cards: A-02's gates take two lines, so every footer keeps three and the hairlines stay on one line */
+@media (min-width: 901px) and (max-width: 1099px) { .sw-legend .sw-at { min-height: calc(4.2em + 18px); } } /* four narrow cards: A-04's gates may take two lines, so every footer keeps three and the hairlines stay on one line */
 @media (max-width: 900px) { .stats.sw-spec, .sw-legend.card-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .sw-legend.card-grid--4 { grid-template-columns: 1fr; } .stats.sw-spec .v { font-size: 1.9rem; } .stats.sw-spec .d { font-size: .82rem; } }
 
@@ -1373,6 +1392,17 @@ html.story-tiny .story .story-coda { display: none; }
   .sw-on .sw-trace:not([hidden]), .sw-log li.is-filled { animation: none; }
   .sw-rec i { transition: none; }
 }
+/* Platform's roles view: a legend card lights its role in the lab, the other gates' labels step back */
+.sw-legend + .swarm-live { margin-top: clamp(20px, 2.4vw, 32px); } /* Platform: the four roles stand right above the lab they light */
+.sw-on[data-sw-view="roles"] .sw-gates li { transition: opacity .25s var(--ease); }
+.sw-on[data-sw-role] .sw-gates li:not(.is-role) { opacity: .34; }
+.sw-on[data-sw-role] .sw-gates li.is-role b, .sw-on[data-sw-role] .sw-gates li.is-role > span { color: var(--signal-bright); }
+.sw-at-b { display: flex; align-items: flex-start; gap: 10px; width: 100%; margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; text-align: left; cursor: pointer; }
+.sw-at-b:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
+.sw-at-b[aria-pressed="true"] b, .sw-at-b:focus-visible b { color: var(--signal-bright); }
+@media (hover: hover) { .sw-role:hover .sw-at b { color: var(--paper); } .sw-role:hover .sw-at-b[aria-pressed="true"] b { color: var(--signal-bright); } }
+@media (pointer: coarse) { .sw-at-b { min-height: 44px; } }
+@media (forced-colors: active) { .sw-at-b:focus-visible { outline-color: Highlight; } }
 /* v2:swarm:end */
 /* -------------------------------------------------------------------------- */
 /* v2:ledger:start */
