@@ -249,7 +249,15 @@
     /* ---- following the newest record, browsing, inspecting ---- */
     let following = true, intentUntil = 0, playing = stream && !reduced, visible = false;
     const onScreen = () => visible && !document.hidden;
-    function toEnd(smooth) { view.scrollTo({ left: maxScroll(), behavior: smooth && !reduced ? 'smooth' : 'auto' }); }
+    // gliding back to the head (Latest, Escape, a new record): the inspector waits for the glide to land and is written
+    // once, rather than naming each record that passes the view's edge on the way
+    let gliding = 0;
+    function toEnd(smooth) {
+      const to = maxScroll(), go = smooth && !reduced && Math.abs(to - view.scrollLeft) > 1;
+      clearTimeout(gliding); gliding = go ? setTimeout(glideDone, 1200) : 0;
+      view.scrollTo({ left: to, behavior: go ? 'smooth' : 'auto' });
+    }
+    function glideDone() { if (!gliding) return; clearTimeout(gliding); gliding = 0; inspect(); pill(); }
     function reveal(li, smooth, centre) { // horizontal only: never scroll the page under the reader
       const pad = 36, x = leftOf(li), l = x - pad, r = x + G.col + pad, sl = view.scrollLeft, m = maxScroll();
       let to = null;
@@ -269,9 +277,11 @@
     function select(li, focus, centre) {
       if (!li || !els.has(+li.dataset.seq)) return;
       sel = +li.dataset.seq; following = false;
+      clearTimeout(gliding); gliding = 0;
       markSel(); stop(li);
+      inspect(); // the checks that describe the option are written before focus lands on it
       if (focus && document.activeElement !== li) li.focus({ preventScroll: true });
-      reveal(li, true, centre); inspect(); state();
+      reveal(li, true, centre); state();
     }
     track.addEventListener('click', e => { const li = e.target.closest('.lt-rec'); if (li) select(li, true); });
     track.addEventListener('focusin', e => { const li = e.target.closest('.lt-rec'); if (li && +li.dataset.seq !== sel) select(li, false); });
@@ -299,9 +309,11 @@
       if (sl0 >= maxScroll() - 6) { if (sel === null && !following) follow(false); }
       else if (following) { following = false; state(); }
     }, { passive: true });
+    view.addEventListener('scrollend', glideDone, { passive: true });
     function scrolled() {
       edgeRaf = 0;
       edges(sl0);
+      if (gliding) { if (Math.abs(sl0 - maxScroll()) <= 1) glideDone(); return; }
       if (sel === null) inspect(sl0); else leader();
       pill(sl0); // only the pill's count: a replay's or an audit's own status line stays as it is
     }
@@ -327,7 +339,7 @@
     const sourceOf = r => (r.src === 'swarm' ? r.from : `Illustrative ${r.src === 'gen' ? 'generator' : 'excerpt'}${r.lc ? ' · ' + r.lc : ''}`);
     let shown = '';
     function inspect(sl) {
-      if (!F.rec || !recs.length) return;
+      if (!F.rec || !recs.length || (gliding && sel === null)) return; // a glide to the head is described when it lands
       const r = (sel !== null && bySeq(sel)) || inView(sl) || bySeq(rendered);
       if (!r) return;
       const after = bySeq(r.seq + 1), drawnAfter = after && after.seq <= rendered;
