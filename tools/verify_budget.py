@@ -342,14 +342,22 @@ async def swarm_phone_fps(b):
     await pg.wait_for_timeout(1500)
     await pg.evaluate("(() => { const s = document.querySelector('[data-sw-n]'); s.value = s.max; s.dispatchEvent(new Event('input', {bubbles: true})); s.dispatchEvent(new Event('change', {bubbles: true})); })()")
     await cdp.send("Emulation.setCPUThrottlingRate", {"rate": 4})
-    # round 2: the governor sheds trails, then population, in steps; wait (up to 30 s) until its cap holds for 5 s
-    t0, last, since = time.monotonic(), None, time.monotonic()
+    # round 2: the governor sheds trails, then population, in steps; wait (up to 30 s) until its cap holds for 5 s.
+    # The hold counts only while the lane carries the population it is held to (in flight within 15 % of the cap, or of
+    # the slider's target while uncapped): the governor judges a step once the lane is down to it, so before the lane has
+    # filled (about 5 s after the slider moves) an unchanged output means it has not acted yet, not that it settled
+    LAB = r"""(() => { const t = s => (document.querySelector(s) || {}).textContent || '', out = t('[data-sw-n-out]');
+      const m = [...out.matchAll(/([\d.,]+)\s*(k?)\b/g)].pop(), pop = m ? parseFloat(m[1].replace(/,/g, '')) * (m[2] ? 1000 : 1) : 0;
+      return { out, pop, fl: +(t('[data-sw-inflight]').replace(/\D/g, '') || 0) }; })()"""
+    t0, last, since = time.monotonic(), None, None
     while time.monotonic() - t0 < 30:
-        out = await pg.evaluate("(document.querySelector('[data-sw-n-out]') || {}).textContent || ''")
-        if out != last: last, since = out, time.monotonic()
-        elif time.monotonic() - since >= 5: break
+        s = await pg.evaluate(LAB)
+        full = s["pop"] > 0 and abs(s["fl"] - s["pop"]) <= 0.15 * s["pop"]
+        if s["out"] != last or not full: last, since = s["out"], (time.monotonic() if full else None)
+        elif since is None: since = time.monotonic()
+        if since is not None and time.monotonic() - since >= 5: break
         await pg.wait_for_timeout(500)
-    settled = f"settled after {time.monotonic() - t0:.0f} s" if time.monotonic() - since >= 5 else "still moving after 30 s"
+    settled = f"settled after {time.monotonic() - t0:.0f} s" if since is not None and time.monotonic() - since >= 5 else "still moving after 30 s"
     r = await pg.evaluate("""() => new Promise(res => { let n = 0; const t0 = performance.now(); const f = t => { n++; if (t - t0 < 4000) requestAnimationFrame(f); else res({ n, ms: t - t0 }); }; requestAnimationFrame(f); })""")
     await cdp.send("Emulation.setCPUThrottlingRate", {"rate": 1})
     await ctx.close()
