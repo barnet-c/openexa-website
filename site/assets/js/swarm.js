@@ -1239,7 +1239,7 @@
   }
 
   /* ---------------- roles (Platform: data-sw-view="roles") ---------------- */
-  // The legend's four agent roles under the lab (A-01 ... A-04, .sw-role--1..4). Pointing at a card, or focusing its
+  // The legend's four agent roles right above the lab (A-01 ... A-04, .sw-role--1..4). Pointing at a card, or focusing its
   // 'In the lab' line (a button once the lab runs), lights that role in the lab: its agents grow a little and its gate
   // label lights (01 Signal, 03 Decide, 05 Execute, 06 Settle), while every other agent, the signals and the trails step
   // back. Pressing the line keeps the role lit (aria-pressed) until it is pressed again or Escape; on a phone, where the
