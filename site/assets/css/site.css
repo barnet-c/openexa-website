@@ -2133,10 +2133,8 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   .proof .pf-lane:focus-visible::after { box-shadow: inset 0 0 0 2px Highlight; }
 }
 
-/* ---------- the cost figure (home Fig. 5.1, Proof Fig. 3.1): each bar is 100 index blocks, one per point of the indexed
-   stack (traditional = 100), in two rows of 50 (four of 25 on narrow screens), filled column by column so a component is
-   one run. proof.js draws the blocks from the --w weights; without it the runs stay flat. Labels hang on hairline leaders
-   above each bar; the eliminated span is dashed and hollow, what agents compress is hollow, what remains is solid. ---------- */
+/* ---------- the cost figure (home Fig. 5.1, Proof Fig. 3.1): 100 index blocks per bar from the --w weights (proof.js;
+   flat runs without it), column by column; leaders above; eliminated = dashed, compressed = hollow ---------- */
 .cost { container: cost / inline-size; }
 .cost-rows { display: grid; gap: 26px; }
 .cost-row { display: grid; grid-template-columns: 200px minmax(0, 1fr) 64px; column-gap: 20px; align-items: end; padding-top: 34px; }
@@ -2148,7 +2146,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .cost-bar { --cols: 50; --rows: 2; --g: 3px; --bw: calc((100cqi - (var(--cols) - 1) * var(--g)) / var(--cols));
   position: relative; display: flex; container-type: inline-size; }
 .cost-bar > i { position: relative; flex: none; width: var(--w); height: calc(var(--rows) * var(--bw) + (var(--rows) - 1) * var(--g)); font-style: normal; background: var(--c); box-shadow: inset 0 0 0 1px rgba(14, 21, 18, .5); }
-.cost-bar:not(.is-blocks) > i { margin-right: calc(var(--s, var(--w)) - var(--w)); } /* a compressed run keeps its place (--s) */
+.cost-bar:not(.is-blocks) > i { margin-right: calc(var(--s, var(--w)) - var(--w)); }
 .cost-bar:not(.is-blocks) > i + i { width: calc(var(--w) - 2px); margin-left: 2px; }
 .cost-bar > .cost-gone { background: none; box-shadow: none; border: 1px dashed rgba(14, 21, 18, .34); }
 .cost-bar.is-blocks > i { position: absolute; top: 0; bottom: 0; left: var(--x); height: auto; background: none; box-shadow: none; }
@@ -2156,7 +2154,6 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .cost-bar > i:last-of-type > span { left: auto; right: 0; padding: 0 7px 9px 0; border: 0; border-right: 1px solid var(--line-strong); }
 .cost-gone em { position: absolute; left: 0; right: 0; bottom: 100%; padding-bottom: 12px; }
 .cost-gone em::before { content: ""; position: absolute; left: 0; right: 0; bottom: 3px; height: 5px; border: 1px solid var(--line-strong); border-bottom: 0; }
-/* the blocks: in grid order, column by column */
 .cost-blk { display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--rows), var(--bw)); grid-auto-columns: var(--bw); gap: var(--g); width: 100%; }
 .cost-blk i { background: var(--c); box-shadow: inset 0 0 0 1px rgba(14, 21, 18, .55); border-radius: 1px; }
 .cost-blk .is-part { background: linear-gradient(90deg, var(--c) var(--f), transparent 0); }
@@ -2176,10 +2173,10 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   .cost-bar { --cols: 25; --rows: 4; --g: 2px; }
   .cost-bar > i > span { letter-spacing: .02em; }
   .cost-row:first-child .cost-bar { margin-top: 52px; }
-  .cost-bar > i:nth-of-type(even) > span { padding-bottom: 27px; } /* two tiers: no label meets another or crosses a leader */
+  .cost-bar > i:nth-of-type(even) > span { padding-bottom: 27px; } /* two tiers */
   .cost-row + .cost-row .cost-bar { margin-top: 48px; }
 }
-/* the key (home): production's definitions, grouped by weight */
+/* the key (home): production's definitions */
 .cost-key { display: grid; grid-template-columns: 1fr 1fr; gap: 22px clamp(20px, 2.4vw, 32px); margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--line); letter-spacing: .02em; }
 .ck-h { margin-bottom: 10px; letter-spacing: var(--track-label, .12em); }
 .cost-key dl { display: grid; grid-template-columns: 1fr 1fr; gap: 0 clamp(16px, 2vw, 28px); margin: 0; }
@@ -2188,7 +2185,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .cost-key dt i { position: absolute; left: 0; top: 3px; width: 9px; height: 9px; background: var(--c); box-shadow: inset 0 0 0 1px rgba(14, 21, 18, .55); border-radius: 1px; }
 @container cost (max-width: 560px) { .cost-key { grid-template-columns: minmax(0, 1fr); } }
 
-/* the comparison (Proof §03): a hairline list, metric and definition · traditional · agentic */
+/* the comparison (Proof §03): a hairline list */
 .cost-cmp { width: 100%; border-collapse: collapse; }
 .cost-cmp th, .cost-cmp td { padding: 16px 16px 16px 0; text-align: left; vertical-align: baseline; border-bottom: 1px solid var(--line); font-weight: 400; }
 .cost-cmp thead th, .cmp-g th { font: var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
@@ -2208,13 +2205,12 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   .cost-cmp td::before { content: attr(data-th); display: block; margin-bottom: 3px; font: var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 }
 
-/* the three documents (Proof §02): three records on one hash line, a block per document and the link drawn (no hash
-   text: nothing here is a real hash); hairline columns, no boxes. Under 900 px the line runs down the left. */
+/* the three documents (Proof §02): records on one hash line (no hash text), hairline columns; vertical under 900 px */
 .pf-docs { --cg: clamp(28px, 3.6vw, 56px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--cg); }
 .pf-doc { position: relative; padding-top: 36px; }
 .pf-doc::after { content: ""; position: absolute; left: 0; top: 0; width: 13px; height: 13px; border-radius: 1px; background: var(--fg); transition: transform .4s var(--ease) calc(var(--d, 0ms) + 120ms); }
 .pf-doc::before { content: ""; position: absolute; left: 13px; top: 6px; width: calc(100% + var(--cg) - 13px); height: 1px; background: var(--line-strong); transform-origin: 0 0; transition: transform .8s var(--ease) calc(var(--d, 0ms) + 260ms); }
-.pf-doc:last-child::before { width: 38%; background: repeating-linear-gradient(90deg, var(--line-strong) 0 3px, transparent 3px 7px); -webkit-mask-image: linear-gradient(90deg, #000 30%, transparent); mask-image: linear-gradient(90deg, #000 30%, transparent); } /* the newest record: its link waits for the next */
+.pf-doc:last-child::before { width: 38%; background: repeating-linear-gradient(90deg, var(--line-strong) 0 3px, transparent 3px 7px); -webkit-mask-image: linear-gradient(90deg, #000 30%, transparent); mask-image: linear-gradient(90deg, #000 30%, transparent); }
 .pf-doc.will-reveal:not(.is-in)::before { transform: scaleX(0); }
 .pf-doc.will-reveal:not(.is-in)::after { transform: scale(0); }
 .pf-doc:is(.is-cut, .is-instant)::before, .pf-doc:is(.is-cut, .is-instant)::after { transition: none; }
