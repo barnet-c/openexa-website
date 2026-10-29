@@ -2334,8 +2334,10 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-sheet .btn[aria-current="page"] { --btn-bg: transparent; --btn-fg: var(--paper); border-color: var(--line-strong); }
 .nav-sheet-meta { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 20px; padding-top: 18px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
 .nav-live { display: inline-flex; align-items: center; gap: 9px; color: var(--fg-2); }
-.nav-live i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: nav-ping 2.2s ease-out infinite; }
-@keyframes nav-ping { 0% { box-shadow: 0 0 0 0 rgba(79, 203, 147, .55); } 100% { box-shadow: 0 0 0 9px rgba(79, 203, 147, 0); } }
+/* the live dot pings twice as the sheet opens, then rests (a finite loop, WCAG 2.2.2; on transform and opacity only) */
+.nav-live i { position: relative; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.nav-live i::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: rgba(79, 203, 147, .55); opacity: 0; animation: nav-ping 2.2s ease-out 2; }
+@keyframes nav-ping { from { transform: scale(1); opacity: 1; } to { transform: scale(4); opacity: 0; } }
 /* opening: the sheet fades in, its rows rise one after another. Closing: the rows leave first, the opening's stagger
    reversed, then the sheet lifts 8 px into the bar and fades in .15 s, so its links are never legible over the page */
 .nav-sheet { opacity: 0; transform: translateY(-8px); transition: opacity .15s var(--ease) .07s, transform .15s var(--ease) .07s, display .22s allow-discrete, overlay .22s allow-discrete; }
@@ -2591,7 +2593,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .nav-sheet-links li, .nav-sheet .btn, .nav-sheet-meta, .loader.is-done ~ .nav .container > * { animation: none; }
   .nav-sheet { transform: none; } /* it fades, nothing drifts (two rules: an unknown selector would void a list) */
   .nav-sheet:not(:popover-open) :is(.nav-sheet-links li, .btn, .nav-sheet-meta) { transform: none; }
-  .nav-live i { animation: none; }
+  .nav-live i::after { animation: none; }
   .loader, .loader-inner { transition: opacity .4s var(--ease), visibility 0s linear .4s; }
   .loader.is-done { transform: none; opacity: 0; animation: loader-out .4s var(--ease) both; }
   .loader.is-done .loader-inner { transform: none; }
