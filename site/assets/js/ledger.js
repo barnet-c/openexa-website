@@ -8,10 +8,14 @@
                             'oxa:inspect'  {record, seq, focus?}  (the swarm's trace asks to see a record: scroll,
                                            select, pulse; focus moves to it unless focus is false)
                           and answers every announcement with 'oxa:recorded' {id, record, hash, seq, followed}.
-                          In view, announcements are sealed into at most one record every 2 s; out of view, every 8 s.
-                          A followed proposal is answered at once, in a record of its own, which is selected and pulses
-                          the next time the ledger is in view.
+                          In view, announcements are sealed into at most one row every 2 s; out of view, every 8 s. Such
+                          a row is a digest of many settlements (or rejections) and says so: 'SETTLED ×1,741', tagged
+                          'Swarm digest'. A followed proposal is answered at once, in a record of its own (n = 1), which
+                          is selected and pulses the next time the ledger is in view. Every record is stamped when it is
+                          written, later than the one before it.
    [data-ledger="replay"] (Trust §03) holds a fixed excerpt that can be replayed and verified.
+   The chain, the state line and the intake start with the page; the strip is drawn (the one step that reads layout)
+   when the panel comes within 1.5 viewports, or at once when the reader, a followed proposal or 'oxa:inspect' needs it.
    Select any record (click, tap, or arrow keys once the list has focus) to inspect its id, event and both hash links.
    The records are illustrative; every hash is real SHA-256, computed here in the browser. Every count on the panel is
    read from the records themselves. */
@@ -68,9 +72,11 @@
   const fmt = n => n.toLocaleString('en-US');
   const TOOLS = ['source-01', 'registry-02', 'workflow-01', 'records-03'];
   const REASONS = ['permission missing', 'approval required', 'input outside policy'];
-  const tone = ev => (/^(SETTLED|RECONCILED)$/.test(ev) ? ' is-settled' : ev === 'REJECTED' ? ' is-rejected' : '');
-  // the swarm's timestamp may be epoch ms or a performance.now() reading; anything else is stamped on arrival
-  const stamp = ts => { const n = Number(ts); if (!Number.isFinite(n) || n < 0) return clock(); return clock(new Date(n > 1e12 ? n : (performance.timeOrigin || Date.now() - performance.now()) + n)); };
+  // an event is a word, sometimes followed by a count ('SETTLED ×1,741'): its colour follows the word
+  const tone = ev => { const w = String(ev).split(' ')[0]; return /^(SETTLED|RECONCILED)$/.test(w) ? ' is-settled' : w === 'REJECTED' ? ' is-rejected' : ''; };
+  // the swarm's timestamp may be epoch ms or a performance.now() reading; anything else is not a time (NaN)
+  const epoch = ts => { const n = Number(ts); return !Number.isFinite(n) || n < 0 ? NaN : n > 1e12 ? n : (performance.timeOrigin || Date.now() - performance.now()) + n; };
+  const tenths = ms => clock(new Date(ms)).slice(0, 10); // '10:12:31.9'
   // DOM writes only when something changed: a text that is already right is never written again
   const put = (el, text) => { if (el && el.textContent !== text) el.textContent = text; };
 
@@ -125,22 +131,35 @@
     ui.playText = ui.play && ui.play.querySelector('span');
     const field = name => root.querySelector(`[data-f="${name}"]`);
     const F = { k: field('k'), rec: field('rec'), ev: field('ev'), d: field('d'), src: field('src'), prev: field('prev'), prevok: field('prevok'), hash: field('hash'), next: field('next') };
-    let reduced = motionQuery.matches;
+    // the selected record is described by its two checks, so a screen reader hears whether it verifies
+    const described = [F.prevok, F.next].filter(Boolean).map(el => el.id || (el.id = `lt-${root.dataset.ledger || 'log'}-${el.dataset.f}`)).join(' ');
+    let reduced = motionQuery.matches, mounted = false, fitRaf = 0; // mounted: the strip is drawn (see start, below)
 
     /* ---- the chain, in memory: newest last; the DOM shows a contiguous window onto it ---- */
     const CAP = 400, DOM_CAP = 36;
     const recs = [], els = new Map();
     let seq = 0, total = 0, nextId = 0x4f21;
-    const sw = { recs: 0, settled: 0, rejected: 0 }; // records from the swarm, and the proposals they carry
+    const sw = { digests: 0, followed: 0, settled: 0, rejected: 0 }; // rows from the swarm, and the proposals they carry
     const excerpt = Array.from(track.querySelectorAll('.lt-rec')).map(li => {
       const t = s => { const n = li.querySelector(s); return n ? n.textContent.trim() : ''; };
       return { id: t('.lt-id'), lc: t('.lt-lc'), ev: t('.lt-ev').toUpperCase(), sub: t('.lt-sub'), d: li.dataset.d || t('.lt-sub'), t: t('.lt-t'), src: 'excerpt' };
     }).filter(r => r.id && r.ev);
     if (excerpt.length) nextId = (parseInt(excerpt[excerpt.length - 1].id.replace(/[^0-9a-f]/gi, ''), 16) || 0x4f20) + 1;
-    const genesis = sha256('genesis|' + (excerpt[0] ? excerpt[0].id : '#4f20'));
-    let head = genesis;
+    let genesis = '', head = '', inited = false, stateIdle = '';
     const body = r => [r.id, r.t, r.ev, r.sub, r.d].join('|');
+    // the chain is hashed when it is first needed (a record, the strip, a request) or once the page is idle: nothing is
+    // hashed while the page loads. Until then the page's own records and status line stand as written
+    function init() {
+      if (inited) return;
+      inited = true;
+      head = genesis = sha256('genesis|' + (excerpt[0] ? excerpt[0].id : '#4f20'));
+      excerpt.forEach(write);
+      if (!stream) { const n = recs.length, ok = verified(); stateIdle = ok === n ? `Chain ✓ · ${n} records verify` : `${n - ok} of ${n} records fail verification`; }
+      rendered = newest();
+      counts(); state();
+    }
     function write(r) {
+      if (!inited) init();
       r.seq = ++seq; r.prev = head; r.prevId = recs.length ? recs[recs.length - 1].id : null;
       r.hash = sha256(r.prev + '|' + body(r));
       head = r.hash; recs.push(r); total++;
@@ -149,27 +168,30 @@
     }
     const bySeq = s => { if (!recs.length) return null; const i = s - recs[0].seq; return i >= 0 && i < recs.length ? recs[i] : null; };
     const newest = () => (recs.length ? recs[recs.length - 1].seq : 0);
+    // time only moves forward along the line: a record is stamped when it is written, at least 1 ms after the one before
+    let lastMs = 0;
+    const later = () => clock(new Date(lastMs = Math.max(Date.now(), lastMs + 1)));
     if (stream) { // the excerpt in the page is the start of today's stream: stamp it as just written
       const now = Date.now();
-      excerpt.forEach((r, i) => { r.t = clock(new Date(now - (excerpt.length - i) * 1150 - 600)); });
+      excerpt.forEach((r, i) => { r.t = clock(new Date(lastMs = now - (excerpt.length - i) * 1150 - 600)); });
     }
-    excerpt.forEach(write);
 
     /* ---- one record = one column on the line ---- */
     function build(r) {
       const li = node('li', 'ln lt-rec' + tone(r.ev) + (r.src === 'swarm' ? ' is-swarm' : '') + (r.followed ? ' is-followed' : ''));
       li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false'); li.tabIndex = -1;
       li.dataset.seq = r.seq;
-      li.setAttribute('aria-label', `${r.id}, ${r.ev}, ${r.d}, ${r.t}`);
+      li.setAttribute('aria-label', r.digest ? `${r.id}, swarm digest, ${r.d}, ${r.t}` : `${r.id}, ${r.ev}, ${r.d}, ${r.t}${r.followed ? ', the proposal you followed' : ''}`);
       const meta = node('span', 'lt-meta'); meta.append(node('span', 'lt-id', r.id), node('span', 'lt-lc', r.lc || ''));
       const line = node('span', 'lt-line'); line.setAttribute('aria-hidden', 'true');
       line.append(node('i', 'lt-node'), node('i', 'lt-seg'), node('span', 'lt-tag', r.hash.slice(0, 8)));
-      li.append(meta, node('b', 'lt-ev', r.ev), node('span', 'lt-sub', r.sub), node('time', 'lt-t', r.t), line);
+      // a digest's count is data beside its event word: 'SETTLED ×1,741'
+      const ev = node('b', 'lt-ev', r.digest ? r.kind + ' ' : r.ev);
+      if (r.digest) ev.append(node('span', 'lt-n', r.ev.slice(r.kind.length + 1)));
+      li.append(meta, ev, node('span', 'lt-sub', r.sub), node('time', 'lt-t', r.t), line);
       els.set(r.seq, li);
       return li;
     }
-    track.setAttribute('role', 'listbox');
-    track.setAttribute('aria-orientation', 'horizontal');
     let rendered = 0; // the newest record in the DOM
     const firstSeq = () => (track.firstElementChild ? +track.firstElementChild.dataset.seq : 0);
     // the window: the newest DOM_CAP records, reaching back far enough to keep a selection (or a given record) in it
@@ -194,15 +216,16 @@
     }
     // columns are sized so a whole number of records fills the view: no record is ever cut in half at rest. Every
     // horizontal position is then arithmetic on these numbers: the scroll path never measures the DOM
-    const MIN_COL = stream ? 136 : 122;
+    const MIN_COL = stream ? 146 : 122;
     const G = { col: 148, padL: 28, padR: 28, w: 0 };
     function fit() {
       const cs = getComputedStyle(track);
       G.padL = parseFloat(cs.paddingLeft) || 0; G.padR = parseFloat(cs.paddingRight) || 0; G.w = view.clientWidth;
       const avail = G.w - G.padL - G.padR;
       if (avail <= 0) return;
-      // a phone still shows three live records and two whole links; an excerpt keeps two wider columns, read in full
-      const min = window.innerWidth < 600 ? (stream ? 100 : 136) : MIN_COL;
+      // a live column holds a digest's longest lines beside the id ('#4f2a  SWARM DIGEST', 'REJECTED ×1,741'), so a phone
+      // shows two records and the whole link between them; an excerpt keeps two wider columns, read in full
+      const min = window.innerWidth < 600 ? (stream ? 140 : 136) : MIN_COL;
       let n = Math.max(2, Math.floor(avail / min));
       if (!stream) n = Math.min(n, Math.max(2, recs.length));
       G.col = Math.floor(avail / n * 10) / 10;
@@ -226,9 +249,9 @@
     let sel = null, selLi = null, beforeLi = null;
     function markSel() {
       const li = sel !== null ? els.get(sel) || null : null, before = li ? li.previousElementSibling : null;
-      if (selLi && selLi !== li) { selLi.classList.remove('is-sel'); selLi.setAttribute('aria-selected', 'false'); }
+      if (selLi && selLi !== li) { selLi.classList.remove('is-sel'); selLi.setAttribute('aria-selected', 'false'); selLi.removeAttribute('aria-describedby'); }
       if (beforeLi && beforeLi !== before) beforeLi.classList.remove('is-before-sel');
-      if (li && li !== selLi) { li.classList.add('is-sel'); li.setAttribute('aria-selected', 'true'); }
+      if (li && li !== selLi) { li.classList.add('is-sel'); li.setAttribute('aria-selected', 'true'); if (described) li.setAttribute('aria-describedby', described); }
       if (before && before !== beforeLi) before.classList.add('is-before-sel');
       selLi = li; beforeLi = before;
     }
@@ -236,13 +259,22 @@
     /* ---- following the newest record, browsing, inspecting ---- */
     let following = true, intentUntil = 0, playing = stream && !reduced, visible = false;
     const onScreen = () => visible && !document.hidden;
-    function toEnd(smooth) { view.scrollTo({ left: maxScroll(), behavior: smooth && !reduced ? 'smooth' : 'auto' }); }
+    // gliding back to the head (Latest, Escape, a new record): the inspector waits for the glide to land and is written
+    // once, rather than naming each record that passes the view's edge on the way
+    let gliding = 0;
+    function toEnd(smooth) {
+      const to = maxScroll(), go = smooth && !reduced && Math.abs(to - view.scrollLeft) > 1;
+      clearTimeout(gliding); gliding = go ? setTimeout(glideDone, 1200) : 0;
+      view.scrollTo({ left: to, behavior: go ? 'smooth' : 'auto' });
+    }
+    function glideDone() { if (!gliding) return; clearTimeout(gliding); gliding = 0; inspect(); pill(); }
     function reveal(li, smooth, centre) { // horizontal only: never scroll the page under the reader
-      const pad = 36, x = leftOf(li), l = x - pad, r = x + G.col + pad, sl = view.scrollLeft;
+      const pad = 36, x = leftOf(li), l = x - pad, r = x + G.col + pad, sl = view.scrollLeft, m = maxScroll();
       let to = null;
-      if (centre) to = Math.min(maxScroll(), x + G.col / 2 - G.w / 2); // a record asked for by name sits mid-strip
+      // a record asked for by name sits mid-strip, on whole columns (with an even number of them, just off the middle)
+      if (centre) to = m - Math.round((m - (x + G.col / 2 - G.w / 2)) / G.col) * G.col;
       else if (l < sl) to = l; else if (r > sl + G.w) to = r - G.w;
-      if (to !== null && Math.abs(to - sl) > 1) view.scrollTo({ left: Math.max(0, to), behavior: smooth && !reduced ? 'smooth' : 'auto' });
+      if (to !== null) { to = Math.max(0, Math.min(m, to)); if (Math.abs(to - sl) > 1) view.scrollTo({ left: to, behavior: smooth && !reduced ? 'smooth' : 'auto' }); }
     }
     function follow(smooth = true) {
       sel = null; following = true;
@@ -255,9 +287,11 @@
     function select(li, focus, centre) {
       if (!li || !els.has(+li.dataset.seq)) return;
       sel = +li.dataset.seq; following = false;
+      clearTimeout(gliding); gliding = 0;
       markSel(); stop(li);
+      inspect(); // the checks that describe the option are written before focus lands on it
       if (focus && document.activeElement !== li) li.focus({ preventScroll: true });
-      reveal(li, true, centre); inspect(); state();
+      reveal(li, true, centre); state();
     }
     track.addEventListener('click', e => { const li = e.target.closest('.lt-rec'); if (li) select(li, true); });
     track.addEventListener('focusin', e => { const li = e.target.closest('.lt-rec'); if (li && +li.dataset.seq !== sel) select(li, false); });
@@ -285,9 +319,11 @@
       if (sl0 >= maxScroll() - 6) { if (sel === null && !following) follow(false); }
       else if (following) { following = false; state(); }
     }, { passive: true });
+    view.addEventListener('scrollend', glideDone, { passive: true });
     function scrolled() {
       edgeRaf = 0;
       edges(sl0);
+      if (gliding) { if (Math.abs(sl0 - maxScroll()) <= 1) glideDone(); return; }
       if (sel === null) inspect(sl0); else leader();
       pill(sl0); // only the pill's count: a replay's or an audit's own status line stays as it is
     }
@@ -310,16 +346,10 @@
       if (i < 0 || G.padL + i * G.col < sl - 1) return null;
       return bySeq(firstSeq() + i);
     }
-    function sourceOf(r) {
-      if (r.src === 'swarm') {
-        const who = r.pid ? `proposal ${r.pid}${r.n > 1 ? ` + ${fmt(r.n - 1)} more` : ''}` : `${fmt(r.n)} proposal${r.n > 1 ? 's' : ''}`;
-        return `The swarm above · ${who}${r.lane ? ' · ' + r.lane : ''}${r.rej ? ' · rejected at 04 Approve' : ''}${r.followed ? ' · the proposal you followed' : ''}`;
-      }
-      return `Illustrative ${r.src === 'gen' ? 'generator' : 'excerpt'}${r.lc ? ' · ' + r.lc : ''}`;
-    }
+    const sourceOf = r => (r.src === 'swarm' ? r.from : `Illustrative ${r.src === 'gen' ? 'generator' : 'excerpt'}${r.lc ? ' · ' + r.lc : ''}`);
     let shown = '';
     function inspect(sl) {
-      if (!F.rec || !recs.length) return;
+      if (!F.rec || !recs.length || (gliding && sel === null)) return; // a glide to the head is described when it lands
       const r = (sel !== null && bySeq(sel)) || inView(sl) || bySeq(rendered);
       if (!r) return;
       const after = bySeq(r.seq + 1), drawnAfter = after && after.seq <= rendered;
@@ -384,9 +414,13 @@
     }
     function counts() {
       put(ui.count, fmt(total));
+      // 'N records · M swarm digests [and F followed], covering S settled and R rejected proposals': S and R are summed
+      // from the rows' own counts, the followed proposals' included
+      const rows = sw.digests + sw.followed;
       if (ui.swarm) {
-        if (ui.swarm.hidden !== !sw.recs) ui.swarm.hidden = !sw.recs;
-        if (sw.recs) put(ui.swarm, ` · ${fmt(sw.recs)} from the swarm above, carrying ${fmt(sw.settled)} settled${sw.rejected ? ` and ${fmt(sw.rejected)} rejected` : ''} proposals`);
+        if (ui.swarm.hidden !== !rows) ui.swarm.hidden = !rows;
+        if (rows) put(ui.swarm, ` · ${[sw.digests ? `${fmt(sw.digests)} swarm digest${sw.digests > 1 ? 's' : ''}` : '', sw.followed ? `${fmt(sw.followed)} followed` : ''].filter(Boolean).join(' and ')}`
+          + `${sw.followed ? ',' : ''} covering ${[sw.settled || !sw.rejected ? `${fmt(sw.settled)} settled` : '', sw.rejected ? `${fmt(sw.rejected)} rejected` : ''].filter(Boolean).join(' and ')} proposal${sw.settled + sw.rejected === 1 ? '' : 's'}`);
       }
     }
 
@@ -445,8 +479,8 @@
       return steps;
     }
     if (stream && excerpt.length) { // the page's excerpt may end mid-lifecycle: the stream picks that lifecycle up where it stopped
-      const last = excerpt[excerpt.length - 1], done = recs.filter(r => r.lc === last.lc).map(r => r.ev);
-      cycles = recs.some(r => r.lc !== last.lc) ? 1 : 0;
+      const last = excerpt[excerpt.length - 1], done = excerpt.filter(r => r.lc === last.lc).map(r => r.ev);
+      cycles = excerpt.some(r => r.lc !== last.lc) ? 1 : 0;
       if (last.lc && !/^(SETTLED|REJECTED)$/.test(last.ev)) queue = lifecycle(last.lc).filter(s => !done.includes(s.ev));
     }
     const newId = () => '#' + (nextId++ & 0xffff).toString(16).padStart(4, '0');
@@ -454,7 +488,7 @@
       timer = 0;
       if (!playing || !onScreen()) return;
       if (!queue.length) queue = lifecycle();
-      write(Object.assign({ id: newId(), t: clock(), src: 'gen' }, queue.shift()));
+      write(Object.assign({ id: newId(), t: later(), src: 'gen' }, queue.shift()));
       flush(true);
       timer = setTimeout(tick, queue.length ? 950 + Math.random() * 500 : 1900 + Math.random() * 900);
     }
@@ -499,7 +533,7 @@
       const d = e && e.detail;
       if (!d || typeof d !== 'object') return;
       const a = { id: d.id, lane: kind === 'settled' ? d.lane : null, ts: d.ts, count: countOf(d), followed: d.followed === true, at: performance.now() };
-      if (a.followed) { queueMicrotask(() => followedIn(a, kind)); return; } // never inside the swarm's frame, but at once
+      if (a.followed) { queueMicrotask(() => { mount(); followedIn(a, kind); }); return; } // never inside the swarm's frame, but at once
       inbox[kind].push(a);
       schedule();
     }
@@ -511,7 +545,7 @@
     }
     function sealDue() {
       sealTimer = 0;
-      if (onScreen()) { sealOne(); counts(); soon(); }
+      if (onScreen()) { sealOne(); soon(); } // the foot counts the row when the line draws it (flush), not before
       else { ['settled', 'rejected'].forEach(k => { if (inbox[k].length) record(take(k), k); }); }
       lastSeal = performance.now();
       schedule();
@@ -530,16 +564,26 @@
       const n = group.reduce((s, a) => s + a.count, 0);
       const lanes = Array.from(new Set(group.map(a => laneOf(a.lane)).filter(v => v !== null)));
       const nums = lanes.every(v => typeof v === 'number') ? lanes.slice().sort((a, b) => a - b) : null;
-      const lane = !lanes.length ? '' : lanes.length === 1 ? `lane ${lanes[0]}` : nums ? `lanes ${nums[0]}–${nums[nums.length - 1]}` : `${lanes.length} lanes`;
-      const tail = rej ? 'rejected at 04' : lane;
-      const what = pid ? (n > 1 ? `${pid} +${fmt(n - 1)} more` : `proposal ${pid}`) : `${fmt(n)} proposal${n > 1 ? 's' : ''}`;
-      const verb = rej ? 'rejected by the council at 04 Approve in the swarm above' : 'settled in the swarm above';
-      const d = (pid ? (n > 1 ? `${pid}${followed ? ' (followed)' : ''} and ${fmt(n - 1)} more ${verb}` : `proposal ${pid} ${verb}`)
-        : `${fmt(n)} proposal${n > 1 ? 's' : ''} ${verb}, in the batch of the one you followed`)
-        + (group.length > 1 ? ' · sealed as one block' : '') + (rej ? ' · not executed · recorded' : ' · chained here');
-      const r = write({ id: newId(), t: stamp(group[group.length - 1].ts), ev: rej ? 'REJECTED' : 'SETTLED', lc: followed ? 'Followed' : 'Swarm',
-        sub: what + (tail ? ' · ' + tail : ''), d, src: 'swarm', pid, lane, n, followed, rej });
-      sw.recs++; if (rej) sw.rejected += n; else sw.settled += n;
+      // (no-break spaces keep 'lanes 1–4', 'incl. P-49000' and 'at 04 Approve' whole when a column wraps them)
+      const lane = !lanes.length ? '' : lanes.length === 1 ? `lane ${lanes[0]}` : nums ? `lanes ${nums[0]}–${nums[nums.length - 1]}` : `${lanes.length} lanes`;
+      const KIND = rej ? 'REJECTED' : 'SETTLED', at = !rej && lane ? ' · ' + lane : '';
+      let f;
+      if (followed) { // the proposal the visitor followed: a record of its own (n = 1)
+        f = { ev: KIND, lc: 'Followed', sub: `proposal ${pid}${rej ? ' · rejected at 04' : at}`,
+          d: rej ? `proposal ${pid} rejected by the council at 04 Approve · not executed · recorded` : `proposal ${pid} settled in the swarm above · chained here`,
+          from: `The swarm above · ${pid}${at} · the proposal you followed` };
+      } else { // a digest: every proposal of one kind announced since the last seal, as one row. It is stamped when it is
+        // sealed; the window its announcements came in stays in its detail
+        let lo = Infinity, hi = -Infinity;
+        group.forEach(a => { let v = epoch(a.ts); if (!Number.isFinite(v)) v = epoch(a.at); if (v < lo) lo = v; if (v > hi) hi = v; });
+        const a0 = tenths(lo), a1 = tenths(hi), who = pid ? `incl. ${pid}` : 'followed batch';
+        f = { ev: `${KIND} ×${fmt(n)}`, kind: KIND, digest: true, lc: 'Swarm digest', sub: who + (rej ? ' · at 04 Approve' : at),
+          d: `${fmt(n)} ${rej ? 'rejected by the council' : 'settled in the swarm above'} ${a0 === a1 ? `at ${a0}` : `between ${a0} and ${a1}`}`,
+          from: `Swarm digest, shown here as one row · ${pid ? who : 'the rest of the followed batch'}${at}` };
+      }
+      const r = write(Object.assign({ id: newId(), t: later(), src: 'swarm', pid, lane, n, followed, rej }, f));
+      if (followed) sw.followed++; else sw.digests++;
+      if (rej) sw.rejected += n; else sw.settled += n;
       named.forEach(a => document.dispatchEvent(new CustomEvent('oxa:recorded', { detail: { id: a.id, record: r.id, hash: r.hash, seq: r.seq, followed: a.followed } })));
       return r;
     }
@@ -600,6 +644,7 @@
       if (Math.abs(y) > 24) window.scrollTo({ top: Math.max(0, Math.round(window.scrollY + y)), behavior: reduced ? 'instant' : 'smooth' });
     }
     function inspectEvent(e) {
+      mount();
       const d = (e && e.detail) || {};
       const s = Math.floor(Number(d.seq)), id = typeof d.record === 'string' ? d.record.trim().toLowerCase() : '';
       let r = Number.isFinite(s) ? bySeq(s) : null;
@@ -646,8 +691,6 @@
       recs.forEach(r => { if (r.prev === prev && sha256(r.prev + '|' + body(r)) === r.hash) ok++; prev = r.hash; });
       return ok;
     }
-    const n0 = recs.length, ok0 = verified();
-    const stateIdle = stream ? '' : ok0 === n0 ? `Chain ✓ · ${n0} records verify` : `${n0 - ok0} of ${n0} records fail verification`;
     let replaying = 0;
     function replay() {
       clearTimeout(replaying);
@@ -715,32 +758,49 @@
       Array.from(track.children).forEach((li, i, all) => { if (i) gapMark(all[i - 1], bySeq(+all[i - 1].dataset.seq), bySeq(+li.dataset.seq)); });
     }
 
-    /* ---- start ---- */
-    fit();
-    if (stream) rebuild(); else { following = false; whole(); }
+    /* ---- start: the controls and the intake now; the chain once the page is idle (or first needed); the strip, the
+       only part that reads layout, when the panel comes within 1.5 viewports, or at once when the reader, a followed
+       proposal or the swarm's trace needs it. Until then the page's own records stand on the line, and what the swarm
+       announces is sealed and answered, not drawn */
+    if (!stream) following = false;
     if (ui.insp) ui.insp.hidden = false;
-    root.classList.add('lt-ready');
-    if (stream) {
-      root.classList.add('is-stream');
-      requestAnimationFrame(() => { toEnd(false); edges(); });
-    }
-    edges(); counts(); inspect(); state();
-    if ('IntersectionObserver' in window) {
-      // the stream runs only while some of it is on screen (no margin: nothing is drawn for a reader who cannot see it)
-      new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }).observe(root);
-      // a pulse waits until the strip itself is on screen
-      new IntersectionObserver(([en]) => { stripSeen = en.isIntersecting && en.intersectionRatio >= 0.55; if (stripSeen && pulseWant) pulseNow(); }, { threshold: [0, 0.6, 1] }).observe(view);
-    } else { visible = true; stripSeen = true; wake(); }
-    document.addEventListener('visibilitychange', wake);
-    let fitRaf = 0;
-    window.addEventListener('resize', () => {
-      if (fitRaf) return;
-      fitRaf = requestAnimationFrame(() => {
-        fitRaf = 0; fit();
-        if (following) toEnd(false); else if (sel !== null && els.has(sel)) reveal(els.get(sel), false);
-        edges(); inspect(); leader();
+    if ('requestIdleCallback' in window) requestIdleCallback(init, { timeout: 1500 }); else setTimeout(init, 400);
+    function mount() {
+      if (mounted) return;
+      mounted = true;
+      init();
+      track.setAttribute('role', 'listbox');
+      track.setAttribute('aria-orientation', 'horizontal');
+      fit();
+      if (stream) rebuild(); else whole();
+      root.classList.add('lt-ready');
+      if (stream) {
+        root.classList.add('is-stream');
+        requestAnimationFrame(() => { toEnd(false); edges(); });
+      }
+      edges(); counts(); inspect(); state();
+      if ('IntersectionObserver' in window) {
+        // the stream runs only while some of it is on screen (no margin: nothing is drawn for a reader who cannot see it)
+        new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }).observe(root);
+        // a pulse waits until the strip itself is on screen
+        new IntersectionObserver(([en]) => { stripSeen = en.isIntersecting && en.intersectionRatio >= 0.55; if (stripSeen && pulseWant) pulseNow(); }, { threshold: [0, 0.6, 1] }).observe(view);
+      } else { visible = true; stripSeen = true; wake(); }
+      document.addEventListener('visibilitychange', wake);
+      window.addEventListener('resize', () => {
+        if (fitRaf) return;
+        fitRaf = requestAnimationFrame(() => {
+          fitRaf = 0; fit();
+          if (following) toEnd(false); else if (sel !== null && els.has(sel)) reveal(els.get(sel), false);
+          edges(); inspect(); leader();
+        });
       });
-    });
+    }
+    // a press, a key or focus inside the panel draws it first, before its own handlers run
+    ['pointerdown', 'focusin', 'keydown', 'click'].forEach(t => root.addEventListener(t, mount, true));
+    if ('IntersectionObserver' in window) {
+      const near = new IntersectionObserver(([en]) => { if (en.isIntersecting) { near.disconnect(); mount(); } }, { rootMargin: '150% 0px' });
+      near.observe(root);
+    } else mount();
     motionQuery.addEventListener('change', e => { reduced = e.matches; if (reduced && playing) { playing = false; clearTimeout(timer); timer = 0; state(); } });
   }
 })();

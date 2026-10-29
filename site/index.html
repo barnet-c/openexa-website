@@ -431,7 +431,7 @@
             <a class="link-arrow mt-3" href="trust.html" data-reveal style="--d:140ms">The governance model <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
           </div>
         </div>
-        <ul class="gov-spec mt-4" data-reveal style="--d:120ms">
+        <ul class="gov-spec mt-4" role="list" data-reveal style="--d:120ms">
           <li><b>Council</b><span class="sr-only"> — </span><span>approve / reject on every proposal, human optional</span></li>
           <li><b>Permissions</b><span class="sr-only"> — </span><span>scoped, revocable; custody never moves</span></li>
           <li><b>Ledger</b><span class="sr-only"> — </span><span>append-only, hash-chained, replayable</span></li>
@@ -486,7 +486,7 @@
           <div class="col-4">
             <h3 class="display-3" data-reveal>Try to change the past.</h3>
             <p class="body-lg mt-2" data-reveal style="--d:60ms">Eight records from one proposal, each hashed with SHA-256 over its contents and the hash before it. Click any event or detail and type: that record and every one after it stop verifying, in red, because the chain no longer agrees with itself.</p>
-            <ul class="chain-key mt-3" data-reveal style="--d:100ms" aria-label="How to read the chain">
+            <ul class="chain-key mt-3" role="list" data-reveal style="--d:100ms" aria-label="How to read the chain">
               <li><i class="k-node" aria-hidden="true"></i><span><b>Record</b> One transition: who acted and what happened. Its event and detail are editable here.</span></li>
               <li><i class="k-link" aria-hidden="true"></i><span><b>Link</b> The record’s SHA-256. The next record stores it as its previous hash.</span></li>
               <li><i class="k-snap" aria-hidden="true"></i><span><b>Snapped link</b> A stored hash that no longer matches. Every record after it fails.</span></li>
@@ -503,7 +503,7 @@
                 </span>
               </div>
               <p class="chain-genesis"><i aria-hidden="true"></i>Genesis · previous hash 00000000</p>
-              <ol class="chain-list" data-chain-list>
+              <ol class="chain-list" role="list" data-chain-list>
                 <li><span class="i">01</span><span class="who">A-0412</span><b class="ev">PROPOSED</b><span class="what">lifecycle L-01 · next step</span></li>
                 <li><span class="i">02</span><span class="who">A-0412</span><b class="ev">VALIDATED</b><span class="what">schema ok · inputs complete</span></li>
                 <li><span class="i">03</span><span class="who">COUNCIL</span><b class="ev">APPROVED</b><span class="what">policy v7 · scoped action</span></li>

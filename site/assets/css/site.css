@@ -1406,9 +1406,8 @@ html.story-tiny .story .story-coda { display: none; }
 /* v2:swarm:end */
 /* -------------------------------------------------------------------------- */
 /* v2:ledger:start */
-/* ---------- the ledger trace (ledger.js): records on one hairline; the link out of each record carries its hash ----------
-   Nothing here asks the document a question (no relational selectors): every state is a class that ledger.js sets on the
-   one element it concerns, so a record landing restyles that record and nothing else. */
+/* ---------- the ledger trace (ledger.js): records on one hairline, each link carrying a hash. No relational selectors:
+   every state is a class ledger.js sets on the one element it concerns ---------- */
 .lt {
   --fg: var(--paper); --fg-2: rgba(245, 242, 236, .78); --fg-3: rgba(245, 242, 236, .56);
   --line: rgba(245, 242, 236, .14); --line-strong: rgba(245, 242, 236, .32);
@@ -1416,7 +1415,7 @@ html.story-tiny .story .story-coda { display: none; }
   --lt-bg: var(--ink-2); --lt-col: 148px; --lt-bleed: 16px; --lt-pr: 18px;
   position: relative; color: var(--fg); background: var(--lt-bg); border: 1px solid var(--line-strong); border-radius: var(--r); overflow: hidden;
 }
-/* the head is a grid: the state text, the Latest pill and the buttons change without ever re-wrapping it or changing its height */
+/* the head is a grid: what changes in it never re-wraps it */
 .lt-head { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "title latest state ctrl"; align-items: center; gap: 6px 20px; min-height: 56px; padding: 10px 12px 10px 20px; border-bottom: 1px solid var(--line); font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); }
 .lt-title { grid-area: title; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); }
 .lt-state { grid-area: state; justify-self: end; display: inline-flex; align-items: center; gap: 9px; min-width: 0; max-width: 100%; color: var(--accent); letter-spacing: var(--track-label, .12em); transition: color .3s; }
@@ -1427,18 +1426,18 @@ html.story-tiny .story .story-coda { display: none; }
 .lt.is-inspecting .lt-state i { background: transparent; box-shadow: inset 0 0 0 1px currentColor; }
 .lt-ctrl { grid-area: ctrl; display: inline-flex; gap: 8px; }
 .lt-btn, .chain-try, .chain-restore { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 34px; padding: 0 13px; border: 1px solid var(--line-strong); border-radius: 2px; font: 500 var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); white-space: nowrap; transition: border-color .25s, color .25s, background .25s; }
-.lt-btn:hover, .chain-try:hover { border-color: var(--accent); color: var(--accent); }
+@media (hover: hover) { .lt-btn:hover, .chain-try:hover { border-color: var(--accent); color: var(--accent); } } /* a tap never leaves a hover look behind */
 .lt-btn:focus-visible, .chain-try:focus-visible, .chain-restore:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .lt-btn svg { flex: none; width: 13px; height: 13px; }
 .lt-btn .i-play, .lt-btn.is-paused .i-pause { display: none; }
 .lt-btn.is-paused .i-play { display: inline; }
 /* back to the newest record: a pill in the head row, never over the records */
 .lt-latest { grid-area: latest; justify-self: start; display: inline-flex; align-items: center; gap: 7px; min-height: 30px; padding: 0 11px; border: 1px solid var(--accent); border-radius: 15px; font: 500 var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--accent); white-space: nowrap; animation: lt-fade .3s var(--ease) backwards; transition: background .25s, color .25s; }
-.lt-latest:hover { background: var(--accent); color: var(--ink); }
+@media (hover: hover) { .lt-latest:hover { background: var(--accent); color: var(--ink); } }
 .lt-latest:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .lt-latest svg { flex: none; width: 13px; height: 13px; }
 .lt-latest span:not(:empty) { min-width: 3ch; padding: 3px 5px 2px; border-radius: 1px; background: var(--accent); color: var(--ink); letter-spacing: .04em; text-align: center; }
-.lt-latest:hover span:not(:empty) { background: var(--ink); color: var(--accent); }
+@media (hover: hover) { .lt-latest:hover span:not(:empty) { background: var(--ink); color: var(--accent); } }
 
 .lt-stage { position: relative; }
 .lt-view { position: relative; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; }
@@ -1448,16 +1447,17 @@ html.story-tiny .story .story-coda { display: none; }
 .lt.has-left.has-right .lt-view { -webkit-mask-image: linear-gradient(90deg, transparent 4px, #000 40px, #000 calc(100% - 40px), transparent calc(100% - 4px)); mask-image: linear-gradient(90deg, transparent 4px, #000 40px, #000 calc(100% - 40px), transparent calc(100% - 4px)); }
 .lt-track { position: relative; display: flex; width: max-content; min-width: 100%; margin: 0; padding: 16px 28px 12px; list-style: none; }
 
-/* one record = one column standing on the line. A column is contained (layout, style, paint): a record that lands,
-   rolls its hash or lights up restyles, re-lays and repaints itself and nothing else. Its box reaches var(--lt-bleed)
-   back over the column before it, so a ring, a halo or a pulse round its block is never cut by its own edge. */
+/* one record = one contained column on the line; its box reaches --lt-bleed back over the column before it, so a ring
+   or pulse round its block is never cut */
 .lt-rec { flex: none; position: relative; isolation: isolate; contain: layout style paint; width: calc(var(--lt-col) + var(--lt-bleed)); margin-left: calc(var(--lt-bleed) * -1); padding: 12px var(--lt-pr) 10px var(--lt-bleed); cursor: pointer; outline: none; transition: opacity .35s var(--ease); -webkit-tap-highlight-color: transparent; }
 /* pointing at a record lifts its block off the panel; the link row below stays on the line */
 .lt-rec::after { content: ""; position: absolute; z-index: -1; inset: 0 6px 44px 6px; border-radius: 2px; background: rgba(245, 242, 236, .045); opacity: 0; transition: opacity .25s var(--ease); pointer-events: none; }
-.lt-rec:hover::after, .lt-rec.is-sel::after { opacity: 1; }
+.lt-rec.is-sel::after { opacity: 1; }
+@media (hover: hover) { .lt-rec:hover::after { opacity: 1; } }
 .lt-meta { display: flex; justify-content: space-between; gap: 10px; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .08em; color: var(--fg-3); white-space: nowrap; }
-.lt-lc { overflow: hidden; text-overflow: ellipsis; opacity: .85; text-transform: uppercase; }
+.lt-lc { overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; } /* fg-3 at full strength: 5.4:1 on the panel */
 .lt-ev { display: block; margin-top: 10px; font: 500 var(--mono-m, .75rem)/1.25 var(--mono); letter-spacing: .1em; color: var(--fg); white-space: nowrap; }
+.lt-n { font-size: var(--mono-s, .6875rem); font-weight: 400; letter-spacing: .02em; font-variant-numeric: tabular-nums; } /* a digest's count */
 .lt-sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.9em; margin-top: 6px; font: var(--mono-s, .6875rem)/1.45 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
 .lt--excerpt .lt-sub { -webkit-line-clamp: 3; min-height: 4.35em; } /* the excerpt is read in full: nothing in it is cut */
 .lt-t { display: block; margin-top: 8px; font: var(--mono-xs, .625rem)/1.3 var(--mono); letter-spacing: .03em; color: var(--fg-3); font-variant-numeric: tabular-nums; }
@@ -1471,7 +1471,7 @@ html.story-tiny .story .story-coda { display: none; }
 .lt-rec.is-settled .lt-ev { color: var(--accent); }
 .lt-rec.is-rejected .lt-node { background: transparent; box-shadow: inset 0 0 0 1.5px var(--reject); }
 .lt-rec.is-rejected .lt-ev { color: var(--reject); }
-.lt-rec.is-swarm .lt-lc { color: var(--khaki); opacity: 1; }
+.lt-rec.is-swarm .lt-lc { color: var(--khaki); }
 /* the proposal the visitor followed through the gates above lands here marked as theirs */
 .lt-rec.is-followed .lt-lc { color: var(--accent); }
 .lt-rec.is-followed .lt-node { box-shadow: 0 0 0 3px var(--lt-bg), 0 0 0 4px rgba(79, 203, 147, .5), 0 0 14px rgba(79, 203, 147, .45); }
@@ -1480,11 +1480,14 @@ html.story-tiny .story .story-coda { display: none; }
 .lt-rec.is-head .lt-seg { right: 24%; background: repeating-linear-gradient(90deg, var(--line-strong) 0 3px, transparent 3px 7px); -webkit-mask-image: linear-gradient(90deg, #000 35%, transparent); mask-image: linear-gradient(90deg, #000 35%, transparent); }
 .lt-rec.is-head .lt-tag { left: calc(36% + 6px); color: var(--fg-3); }
 .lt.is-running .lt-rec.is-head .lt-seg { animation: lt-await 2.4s ease-in-out infinite; }
-/* inspecting: the chosen record and both of its hash links stay lit (the link into it is drawn by the record before it,
-   marked .is-before-sel by ledger.js); everything else steps back */
-.lt-rec:hover .lt-node, .lt-rec.is-sel .lt-node { transform: scale(1.25); }
-.lt.is-inspecting .lt-rec:not(.is-sel):not(:hover) > :not(.lt-line) { opacity: .34; }
-.lt.is-inspecting .lt-rec:not(.is-sel):not(:hover):not(.is-before-sel) .lt-line { opacity: .34; }
+/* inspecting: the chosen record and both of its links (the one into it drawn by .is-before-sel) stay lit */
+.lt-rec.is-sel .lt-node { transform: scale(1.25); }
+.lt.is-inspecting .lt-rec:not(.is-sel) > :not(.lt-line) { opacity: .34; }
+.lt.is-inspecting .lt-rec:not(.is-sel):not(.is-before-sel) .lt-line { opacity: .34; }
+@media (hover: hover) { /* a pointer over a stepped-back record brings it forward */
+  .lt-rec:hover .lt-node { transform: scale(1.25); }
+  .lt.is-inspecting .lt-rec:not(.is-sel):hover > :not(.lt-line), .lt.is-inspecting .lt-rec:not(.is-sel):not(.is-before-sel):hover .lt-line { opacity: 1; }
+}
 .lt-rec.is-sel .lt-node { box-shadow: 0 0 0 3px var(--lt-bg), 0 0 0 4px var(--accent); }
 .lt-rec.is-sel.is-rejected .lt-node { box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 0 3px var(--lt-bg), 0 0 0 4px var(--accent); }
 .lt-rec.is-sel.is-followed .lt-node { box-shadow: 0 0 0 3px var(--lt-bg), 0 0 0 4px var(--accent), 0 0 14px rgba(79, 203, 147, .5); }
@@ -1494,14 +1497,12 @@ html.story-tiny .story .story-coda { display: none; }
 .lt-rec.is-sel .lt-tag, .lt-rec.is-before-sel .lt-tag { color: var(--accent); }
 .lt-rec > :not(.lt-line) { transition: opacity .35s var(--ease); }
 .lt-rec:focus-visible::before { content: ""; position: absolute; inset: 0 6px 6px 6px; border: 1px solid var(--accent); border-radius: 2px; pointer-events: none; }
-/* arriving at a record from the swarm's trace (or the proposal you followed): its block rings out twice, a square
-   wave in the block's own shape (transform and opacity only) */
+/* a record asked for (or followed) rings out twice: transform and opacity only */
 .lt-node::after { content: ""; position: absolute; inset: -4px; border: 1.5px solid var(--accent); opacity: 0; pointer-events: none; }
 .lt-rec.is-rejected .lt-node::after { border-color: var(--reject); }
 .lt-rec.is-pulse .lt-node::after { animation: lt-ping .75s cubic-bezier(.2, .7, .3, 1) 2; }
 
-/* the inspector: one record, both of its links, checked in the browser. Every field keeps a fixed number of lines
-   whatever record it describes, so the panel never changes height under the reader */
+/* the inspector: at rest every field keeps a fixed number of lines, so the panel never changes height */
 .lt-insp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 10px 56px; padding: 14px 20px 22px; border-top: 1px solid var(--line); }
 .lt-insp-k { grid-column: 1 / -1; margin: 0; font: 500 var(--mono-xs, .625rem)/1.6 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .3s; }
 .lt-insp-k.is-followed { color: var(--accent); }
@@ -1516,8 +1517,14 @@ html.story-tiny .story .story-coda { display: none; }
 .lt-insp .lt-insp-ev.is-rejected { color: var(--reject); }
 .lt-insp code { font: inherit; letter-spacing: .02em; word-spacing: .2em; color: var(--fg-3); }
 .lt-insp code b { font-weight: 500; color: var(--fg); }
-.lt-check { display: block; height: 1.6em; margin-top: 2px; font-size: var(--mono-xs, .625rem); line-height: 1.6; letter-spacing: .04em; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lt-check { display: block; height: var(--lt-chk, 1.6em); margin-top: 2px; font-size: var(--mono-xs, .625rem); line-height: 1.6; letter-spacing: .04em; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lt-check.is-bad { color: var(--reject); }
+/* the fixed lines hold only at rest. Inspecting a record, every field shows all of its text (WCAG 1.4.12 spacing too),
+   keeping at least its resting height */
+.lt.is-inspecting .lt-sub, .lt.is-inspecting .lt-insp [data-f="d"], .lt.is-inspecting .lt-insp [data-f="src"], .lt.is-inspecting .lt-check { display: block; height: auto; overflow: visible; }
+.lt.is-inspecting .lt-insp [data-f="d"], .lt.is-inspecting .lt-insp [data-f="src"] { min-height: 3.3em; }
+.lt.is-inspecting .lt-check { min-height: var(--lt-chk, 1.6em); }
+.lt.is-inspecting :is(.lt-lc, .lt-ev, .lt-insp-k, .lt-check, .lt-insp [data-f="rec"], .lt-insp [data-f="ev"]) { white-space: normal; overflow: visible; }
 .lt-leader { position: absolute; left: var(--x, 0); top: var(--y, 0); z-index: 2; width: 1px; height: var(--h, 0); background: linear-gradient(var(--accent), rgba(79, 203, 147, .35)); opacity: 0; pointer-events: none; transition: opacity .25s; }
 .lt-leader::after { content: ""; position: absolute; left: -2px; bottom: -3px; width: 5px; height: 5px; background: var(--accent); }
 .lt-leader.is-on { opacity: 1; }
@@ -1549,9 +1556,7 @@ html.story-tiny .story .story-coda { display: none; }
 .lt-rec.is-verified .lt-seg { animation: lt-ok 1.2s var(--ease) backwards; }
 .lt-rec.is-verified .lt-tag { animation: lt-lit 1.2s var(--ease) backwards; }
 
-/* ---------- the chain (chain.js): eight records on a vertical hairline; edit one and every link below it snaps ----------
-   chain.js walks the break (and the healing) down the line itself, one record every 110 ms, so the status line counts
-   exactly the records that are red on screen */
+/* ---------- the chain (chain.js): edit a record and every link below it snaps, one record every 110 ms ---------- */
 .chain { --lt-bg: var(--ink-2); position: relative; color: var(--fg); background: var(--ink-2); border: 1px solid var(--line-strong); border-radius: var(--r); transition: border-color .5s var(--ease); }
 .chain.is-broken { border-color: rgba(217, 103, 93, .55); }
 .chain-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; min-height: 56px; padding: 10px 12px 10px 20px; border-bottom: 1px solid var(--line); }
@@ -1561,7 +1566,7 @@ html.story-tiny .story .story-coda { display: none; }
 .chain.is-broken:not(.is-away) .chain-status i { animation: pulse 1s ease-in-out infinite; }
 .chain-acts { display: inline-flex; gap: 8px; }
 .chain-restore { border-color: var(--reject); }
-.chain-restore:hover { border-color: var(--reject); background: var(--reject); color: var(--ink); }
+@media (hover: hover) { .chain-restore:hover { border-color: var(--reject); background: var(--reject); color: var(--ink); } }
 .chain-genesis { position: relative; display: flex; align-items: center; gap: 14px; margin: 0; padding: 18px 20px 0; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 .chain-genesis i { position: relative; flex: none; width: 11px; height: 11px; margin-left: 9px; border: 1px solid var(--line-strong); }
 .chain-genesis i::after { content: ""; position: absolute; left: 4px; top: 12px; width: 1px; height: 18px; background: var(--line-strong); }
@@ -1571,7 +1576,7 @@ html.story-tiny .story .story-coda { display: none; }
 .chain-list .ev { justify-self: start; max-width: 100%; font-weight: 500; letter-spacing: .08em; color: var(--fg); transition: color .35s, box-shadow .25s, background .25s; }
 .chain-list .what { justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); transition: color .35s, box-shadow .25s, background .25s; }
 .chain-list [contenteditable] { outline: none; border-radius: 1px; cursor: text; box-shadow: inset 0 -1px 0 transparent; }
-.chain-list [contenteditable]:hover { box-shadow: inset 0 -1px 0 var(--line-strong); }
+@media (hover: hover) { .chain-list [contenteditable]:hover { box-shadow: inset 0 -1px 0 var(--line-strong); } }
 .chain-list [contenteditable]:focus { box-shadow: inset 0 -1px 0 var(--accent); background: rgba(245, 242, 236, .07); }
 .chain-node { position: absolute; left: 9px; top: 13px; width: 11px; height: 11px; background: var(--fg); transition: background .3s, box-shadow .3s; }
 .chain-seg { position: absolute; left: 14px; top: 27px; bottom: -10px; width: 1px; }
@@ -1602,8 +1607,7 @@ html.story-tiny .story .story-coda { display: none; }
 .chain-list > li.is-broken:last-child .chain-seg::before, .chain-list > li.is-broken:last-child .chain-seg::after { background: repeating-linear-gradient(var(--reject) 0 3px, transparent 3px 6px); }
 .chain-list > li.is-broken .chain-link b { color: var(--reject); }
 .chain-list > li.is-broken .chain-link::before { background: rgba(217, 103, 93, .5); }
-/* the cascade: as the break reaches each record its block flares and its link surges red; restore sends the same
-   pulse down in green. Every colour is the palette's own red (#D9675D on dark) or green */
+/* the cascade: red down the line as it breaks, green as it heals (the palette's own colours) */
 @keyframes chain-pop { 32% { transform: scale(1.8); box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 0 5px rgba(217, 103, 93, .2), 0 0 16px rgba(217, 103, 93, .6); } 100% { transform: none; } }
 @keyframes chain-surge { 0% { background: var(--line-strong); box-shadow: none; } 28% { background: var(--reject-bright, #D9675D); box-shadow: 0 0 8px rgba(217, 103, 93, .55); } }
 @keyframes chain-heal { 32% { transform: scale(1.55); background: var(--accent); box-shadow: 0 0 0 5px rgba(79, 203, 147, .16), 0 0 18px rgba(79, 203, 147, .6); } 100% { transform: none; } }
@@ -1676,7 +1680,7 @@ html.story-tiny .story .story-coda { display: none; }
   .lt-insp { padding: 12px 14px 18px; }
   .lt-insp dl > div { grid-template-columns: 5.2rem minmax(0, 1fr); gap: 10px; }
   /* on a phone a check may need two lines: it always has room for two */
-  .lt-check { height: 3.2em; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .lt-check { --lt-chk: 3.2em; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .lt-foot { padding: 11px 14px; }
 }
 @media (max-width: 420px) { .lt-title-x { display: none; } } /* "Agent log": the head keeps one row on a phone */
@@ -1684,6 +1688,12 @@ html.story-tiny .story .story-coda { display: none; }
 @media (max-width: 360px) {
   .lt-latest svg { display: none; }
   .lt-state { letter-spacing: .06em; }
+}
+/* the narrowest phones: a tag such as 'Swarm digest' sits under the record's id, never cut beside it */
+@media (max-width: 359px) {
+  .lt-track { padding-left: 14px; padding-right: 14px; }
+  .lt-meta { flex-direction: column; gap: 0; }
+  .lt-ev { letter-spacing: .06em; }
 }
 /* touch: every control is at least 44 px, and the chain's editable fields are 16 px so a phone never zooms on focus */
 @media (pointer: coarse) {
