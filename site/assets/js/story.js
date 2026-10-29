@@ -1081,7 +1081,7 @@
     // into S4 every column's actors keep its own stagger (record and square with its foot, tick with its top): they land with it
     const keyOf = (id) => {
       const n = parseInt(id.slice(1), 10);
-      if (seg === 3 && (id[0] === 'r' || id[0] === 's' || id[0] === 't')) return (n + (id[0] === 't' ? 0.55 : id[0] === 's' ? 0.12 : 0)) / (NCOL + 0.55);
+      if (seg === 3 && (id[0] === 'r' || id[0] === 's' || id[0] === 't')) return (n + (id[0] === 't' ? 0.55 : id[0] === 's' ? 0.4 : 0.3)) / (NCOL + 0.55); // (the record lands with its column's middle, not its first agents)
       return id[0] === 'r' ? 0.25 + 0.5 * (n / 11) : id[0] === 't' ? 0.7 : 0.35;
     };
     actA.forEach((A, id) => {
@@ -1096,9 +1096,14 @@
       if (actA.has(id)) return;
       const t = clamp(ease(stag(mRaw, keyOf(id))), 0, 1);
       const rise = id[0] === 'r' || id[0] === 't' ? (1 - t) * -0.25 : 0;
-      emit([B.p[0] * sB, (B.p[1] + rise) * sB, B.p[2] * sB], B.col, B.a * clamp(t * 1.4 - 0.2, 0, 1), B.shape, B.size, B.glow, B.aux);
+      // into S4 a column's settled square and broker tick only come up once its own agents have nearly formed it (never over a
+      // column that is still a spray), and in reverse they leave with it, first
+      const k = seg === 3 && (id[0] === 's' || id[0] === 't') ? sstep(0.6, 0.95, colMorph(parseInt(id.slice(1), 10))) : 1;
+      emit([B.p[0] * sB, (B.p[1] + rise) * sB, B.p[2] * sB], B.col, B.a * clamp(t * 1.4 - 0.2, 0, 1) * k, B.shape, B.size, B.glow, B.aux);
     });
   }
+  // a session column's own progress into S4 (the stagger of its agents' lower half: SPREADS[3] spreads the columns left to right)
+  const colMorph = (c) => seg === 3 ? stag(mRaw, (c + 0.22) / (NCOL + 0.55)) : 1;
 
   /* ================= hairlines: orbits, rings, layer rims, the boundary, gates, the aperture, the ledger, hash links ================= */
   const LOOP_N = LITE ? 72 : 112;
@@ -1222,7 +1227,13 @@
         if (B) { B.s = sB; emit(B, null, 0, B.col[0], B.col[1], B.col[2], B.a * tc, B.w); }
       }
     });
-    linB.forEach((B, id) => { if (!linA.has(id)) { const t = clamp(ease(stag(mRaw, B.key)), 0, 1); B.s = sB; emit(B, null, 0, B.col[0], B.col[1], B.col[2], B.a * t, B.w); } });
+    linB.forEach((B, id) => {
+      if (linA.has(id)) return;
+      const t = clamp(ease(stag(mRaw, B.key)), 0, 1);
+      // a column's regime tick, its stretch of the NAV hairline and its hash link land with the column (as its square and tick do)
+      const k = seg === 3 && /^(rt|nv|hl)\d/.test(id) ? sstep(0.6, 0.95, colMorph(parseInt(id.slice(2), 10))) : 1;
+      B.s = sB; emit(B, null, 0, B.col[0], B.col[1], B.col[2], B.a * t * k, B.w);
+    });
   }
 
   /* ================= callouts: DOM labels projected from 3D anchors, leader lines, hover and focus ================= */
