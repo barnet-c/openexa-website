@@ -68,9 +68,11 @@
   const fmt = n => n.toLocaleString('en-US');
   const TOOLS = ['source-01', 'registry-02', 'workflow-01', 'records-03'];
   const REASONS = ['permission missing', 'approval required', 'input outside policy'];
-  const tone = ev => (/^(SETTLED|RECONCILED)$/.test(ev) ? ' is-settled' : ev === 'REJECTED' ? ' is-rejected' : '');
-  // the swarm's timestamp may be epoch ms or a performance.now() reading; anything else is stamped on arrival
-  const stamp = ts => { const n = Number(ts); if (!Number.isFinite(n) || n < 0) return clock(); return clock(new Date(n > 1e12 ? n : (performance.timeOrigin || Date.now() - performance.now()) + n)); };
+  // an event is a word, sometimes followed by a count ('SETTLED ×1,741'): its colour follows the word
+  const tone = ev => { const w = String(ev).split(' ')[0]; return /^(SETTLED|RECONCILED)$/.test(w) ? ' is-settled' : w === 'REJECTED' ? ' is-rejected' : ''; };
+  // the swarm's timestamp may be epoch ms or a performance.now() reading; anything else is not a time (NaN)
+  const epoch = ts => { const n = Number(ts); return !Number.isFinite(n) || n < 0 ? NaN : n > 1e12 ? n : (performance.timeOrigin || Date.now() - performance.now()) + n; };
+  const tenths = ms => clock(new Date(ms)).slice(0, 10); // '10:12:31.9'
   // DOM writes only when something changed: a text that is already right is never written again
   const put = (el, text) => { if (el && el.textContent !== text) el.textContent = text; };
 
@@ -125,6 +127,8 @@
     ui.playText = ui.play && ui.play.querySelector('span');
     const field = name => root.querySelector(`[data-f="${name}"]`);
     const F = { k: field('k'), rec: field('rec'), ev: field('ev'), d: field('d'), src: field('src'), prev: field('prev'), prevok: field('prevok'), hash: field('hash'), next: field('next') };
+    // the selected record is described by its two checks, so a screen reader hears whether it verifies
+    const described = [F.prevok, F.next].filter(Boolean).map(el => el.id || (el.id = `lt-${root.dataset.ledger || 'log'}-${el.dataset.f}`)).join(' ');
     let reduced = motionQuery.matches;
 
     /* ---- the chain, in memory: newest last; the DOM shows a contiguous window onto it ---- */
@@ -149,9 +153,12 @@
     }
     const bySeq = s => { if (!recs.length) return null; const i = s - recs[0].seq; return i >= 0 && i < recs.length ? recs[i] : null; };
     const newest = () => (recs.length ? recs[recs.length - 1].seq : 0);
+    // time only moves forward along the line: a record is stamped when it is written, at least 1 ms after the one before
+    let lastMs = 0;
+    const later = () => clock(new Date(lastMs = Math.max(Date.now(), lastMs + 1)));
     if (stream) { // the excerpt in the page is the start of today's stream: stamp it as just written
       const now = Date.now();
-      excerpt.forEach((r, i) => { r.t = clock(new Date(now - (excerpt.length - i) * 1150 - 600)); });
+      excerpt.forEach((r, i) => { r.t = clock(new Date(lastMs = now - (excerpt.length - i) * 1150 - 600)); });
     }
     excerpt.forEach(write);
 
@@ -454,7 +461,7 @@
       timer = 0;
       if (!playing || !onScreen()) return;
       if (!queue.length) queue = lifecycle();
-      write(Object.assign({ id: newId(), t: clock(), src: 'gen' }, queue.shift()));
+      write(Object.assign({ id: newId(), t: later(), src: 'gen' }, queue.shift()));
       flush(true);
       timer = setTimeout(tick, queue.length ? 950 + Math.random() * 500 : 1900 + Math.random() * 900);
     }
@@ -534,10 +541,14 @@
       const tail = rej ? 'rejected at 04' : lane;
       const what = pid ? (n > 1 ? `${pid} +${fmt(n - 1)} more` : `proposal ${pid}`) : `${fmt(n)} proposal${n > 1 ? 's' : ''}`;
       const verb = rej ? 'rejected by the council at 04 Approve in the swarm above' : 'settled in the swarm above';
+      // the record is stamped when it is sealed; the window its announcements came in stays in its detail
+      let lo = Infinity, hi = -Infinity;
+      group.forEach(a => { let v = epoch(a.ts); if (!Number.isFinite(v)) v = epoch(a.at); if (v < lo) lo = v; if (v > hi) hi = v; });
+      const a0 = tenths(lo), a1 = tenths(hi), span = a0 === a1 ? `at ${a0}` : `between ${a0} and ${a1}`;
       const d = (pid ? (n > 1 ? `${pid}${followed ? ' (followed)' : ''} and ${fmt(n - 1)} more ${verb}` : `proposal ${pid} ${verb}`)
         : `${fmt(n)} proposal${n > 1 ? 's' : ''} ${verb}, in the batch of the one you followed`)
-        + (group.length > 1 ? ' · sealed as one block' : '') + (rej ? ' · not executed · recorded' : ' · chained here');
-      const r = write({ id: newId(), t: stamp(group[group.length - 1].ts), ev: rej ? 'REJECTED' : 'SETTLED', lc: followed ? 'Followed' : 'Swarm',
+        + ` ${span}` + (group.length > 1 ? ' · sealed as one block' : '') + (rej ? ' · not executed · recorded' : ' · chained here');
+      const r = write({ id: newId(), t: later(), ev: rej ? 'REJECTED' : 'SETTLED', lc: followed ? 'Followed' : 'Swarm',
         sub: what + (tail ? ' · ' + tail : ''), d, src: 'swarm', pid, lane, n, followed, rej });
       sw.recs++; if (rej) sw.rejected += n; else sw.settled += n;
       named.forEach(a => document.dispatchEvent(new CustomEvent('oxa:recorded', { detail: { id: a.id, record: r.id, hash: r.hash, seq: r.seq, followed: a.followed } })));
