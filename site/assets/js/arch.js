@@ -342,7 +342,8 @@
         line('M-.75 -1V1M-.5 -1V1M-.25 -1V1M0 -1V1M.25 -1V1M.5 -1V1M.75 -1V1M-1 -.75H1M-1 -.5H1M-1 -.25H1M-1 0H1M-1 .25H1M-1 .5H1M-1 .75H1', 0.05);
         line('M0 0H-.5V-1M0 0V-.5H-1M0 0V.5H-1M0 0H.75V-1', 0.32, KHAKI);
         line('M0 0H.25V-.5H.5V-1', 0.95, GREEN, { 'stroke-width': 1.4 });
-        [[0, 0], [-0.5, 0], [0, -0.5], [0, 0.5], [0.75, 0], [0.25, 0], [0.25, -0.5], [0.5, -0.5]].forEach(([u, v], k) => sq(u, v, 0.045, { fill: k > 4 || k === 0 ? GREEN : KHAKI, 'fill-opacity': k > 4 || k === 0 ? 0.95 : 0.6 }));
+        // the nodes; on the scored path, green outlines (a filled green square is the settled mark, and that is 08's alone)
+        [[0, 0], [-0.5, 0], [0, -0.5], [0, 0.5], [0.75, 0], [0.25, 0], [0.25, -0.5], [0.5, -0.5]].forEach(([u, v], k) => sq(u, v, 0.045, k > 4 || k === 0 ? { fill: GREEN, 'fill-opacity': 0.12, stroke: GREEN, 'stroke-opacity': 0.95, 'vector-effect': NSS } : { fill: KHAKI, 'fill-opacity': 0.6 }));
         line('M-.5 -1V-1.1M-1 -.5H-1.1M-1 .5H-1.1M.75 -1V-1.1M.5 -1V-1.1', 0.55, IVORY);
       } else if (role === 5) { // Execution Layer: a state machine; one step at a time, on the grid
         p.cells = [];
@@ -824,8 +825,10 @@
         });
         if (p.att) { setA(p.att, 'cx', f3(0.42 * Math.sin(t * 0.31 + 0.4))); setA(p.att, 'cy', f3(0.38 * Math.sin(t * 0.23 + 1.3))); }
         if (p.ticks) { setA(p.ticks, 'stroke-opacity', f3(0.5 + 0.45 * pulse)); setA(p.pulse, 'r', f3(0.5 + 0.28 * (1 - pulse))); setA(p.pulse, 'stroke-opacity', f3(0.75 * pulse)); }
-        if (p.cells) p.cells.forEach((c) => { const on = (step + c.r * 2) % 5; setA(c.el, 'fill-opacity', c.c === on ? '0.95' : c.c < on ? '0.16' : '0'); });
-        if (p.ports) p.ports.forEach((e, k) => setA(e, 'fill-opacity', step % 3 === k ? '0.9' : '0'));
+        // 06's state machine and 07's ports light as green outlines over a faint tint: the filled green square is the settled
+        // proposal's mark, and only on 08
+        if (p.cells) p.cells.forEach((c) => { const on = (step + c.r * 2) % 5, lit = c.c === on; setA(c.el, 'fill-opacity', lit ? '0.12' : c.c < on ? '0.06' : '0'); setA(c.el, 'stroke', lit ? GREEN : KHAKI); setA(c.el, 'stroke-opacity', lit ? '0.95' : '0.5'); });
+        if (p.ports) p.ports.forEach((e, k) => { const lit = step % 3 === k; setA(e, 'fill-opacity', lit ? '0.12' : '0'); setA(e, 'stroke', lit ? GREEN : KHAKI); setA(e, 'stroke-opacity', lit ? '0.95' : '0.7'); });
         if (p.permit) setA(p.permit, 'fill-opacity', f3(0.3 + 0.65 * permit));
         // labels (narrow): numbers beside the plates
         const xr = cx + C[0] + 12;

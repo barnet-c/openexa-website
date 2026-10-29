@@ -1890,7 +1890,8 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
     radial-gradient(circle at 12% 81%, rgba(14, 21, 18, .26) .6px, transparent 1.3px), radial-gradient(circle at 58% 66%, rgba(14, 21, 18, .3) .6px, transparent 1.3px);
   background-size: 23px 29px, 37px 31px, 41px 47px, 53px 43px;
   -webkit-mask-image: linear-gradient(to top, #000, transparent 75%); mask-image: linear-gradient(to top, #000, transparent 75%); }
-.bnd-side.is-below::after { background-image: radial-gradient(circle, rgba(14, 21, 18, .26) .7px, transparent 1.2px); background-size: 16px 16px; background-position: 8px 8px;
+.bnd-side.is-below::after { top: 3.5rem; /* under the label row: no dot prints through 'Deterministic' */
+  background-image: radial-gradient(circle, rgba(14, 21, 18, .26) .7px, transparent 1.2px); background-size: 16px 16px; background-position: 8px 8px;
   -webkit-mask-image: linear-gradient(to bottom, #000, transparent 75%); mask-image: linear-gradient(to bottom, #000, transparent 75%); }
 .bnd-line.arch-bound { min-height: 104px; padding: 0; border-top: 0; font-size: var(--mono-s, .6875rem); color: var(--fg-2); }
 .bnd-line::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--signal); box-shadow: 0 0 0 .5px rgba(30, 122, 90, .2), 0 0 14px 1px rgba(30, 122, 90, .3); }
