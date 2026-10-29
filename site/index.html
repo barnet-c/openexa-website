@@ -390,29 +390,48 @@
             <a class="link-arrow mt-3" href="evidence.html#economics" data-reveal style="--d:140ms">The operating model <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
           </div>
         </div>
-        <!-- the indexed stack, as on the Proof page (evidence §03): the same classes and weights -->
-        <div class="bars" data-reveal style="--d:120ms">
-          <div class="barrow">
-            <div class="barlab"><b>Traditional</b><span>Human-run · active</span></div>
-            <div class="bar">
-              <i style="--w:45%;--c:var(--graphite)"><span>Cost of carry</span></i>
-              <i style="--w:37%;--c:var(--slate)"><span>Counterparty risk</span></i>
-              <i style="--w:10%;--c:var(--khaki)" data-ink><span>Tech</span></i>
-              <i style="--w:8%;--c:var(--khaki-deep)" data-ink><span>Mgmt</span></i>
+        <!-- the indexed stack, as on the Proof page (evidence §03): the same markup and weights. proof.js draws each bar as
+             100 index blocks from the --w weights (one block per point, traditional = 100); without it the runs stay flat -->
+        <figure class="cost" data-cost>
+          <div class="cost-rows" data-reveal style="--d:120ms">
+            <div class="cost-row">
+              <div class="cost-lab"><b>Traditional</b><span>Human-run · active</span></div>
+              <div class="cost-bar">
+                <i style="--w:45%;--c:var(--ink)"><span>Cost of carry</span></i>
+                <i style="--w:37%;--c:var(--slate)"><span>Counterparty risk</span></i>
+                <i style="--w:10%;--c:var(--khaki-deep)"><span>Tech</span></i>
+                <i style="--w:8%;--c:var(--khaki)"><span>Mgmt</span></i>
+              </div>
+              <div class="cost-val">100</div>
             </div>
-            <div class="barval">100</div>
-          </div>
-          <div class="barrow">
-            <div class="barlab"><b>Agentic</b><span>OpenEXA swarm</span></div>
-            <div class="bar">
-              <i style="--w:3.3%;--c:var(--khaki)"></i>
-              <i style="--w:4%;--c:var(--khaki-deep)"></i>
-              <em>Cost of carry — eliminated · Counterparty risk — eliminated</em>
+            <div class="cost-row">
+              <div class="cost-lab"><b>Agentic</b><span>OpenEXA swarm</span></div>
+              <div class="cost-bar">
+                <i class="cost-gone" style="--w:82%"><em>Cost of carry — eliminated · Counterparty risk — eliminated</em></i>
+                <i style="--w:3.3%;--s:10%;--c:var(--khaki-deep)"></i>
+                <i style="--w:4%;--s:8%;--c:var(--khaki)"></i>
+              </div>
+              <div class="cost-val is-acc">&lt;10</div>
             </div>
-            <div class="barval acc">&lt;10</div>
           </div>
-        </div>
-        <div class="figure-cap" data-reveal><span>Fig. 5.1 — Indexed cost &amp; risk stack, traditional = 100 (illustrative weights)</span><span>Source: OpenEXA operating model</span></div>
+          <div class="cost-key" data-reveal style="--d:160ms">
+            <div class="ck-g">
+              <p class="ck-h">Weight &gt; 80% of cost stack</p>
+              <dl>
+                <div><dt><i style="--c:var(--ink)"></i>Cost of carry</dt><dd>Interest on working capital</dd></div>
+                <div><dt><i style="--c:var(--slate)"></i>Counterparty risk</dt><dd>Settlement and credit exposure</dd></div>
+              </dl>
+            </div>
+            <div class="ck-g">
+              <p class="ck-h">Weight &lt; 20% of cost stack</p>
+              <dl>
+                <div><dt><i style="--c:var(--khaki-deep)"></i>Technology + execution</dt><dd>Infrastructure, routing, reconciliation</dd></div>
+                <div><dt><i style="--c:var(--khaki)"></i>Management + strategy</dt><dd>Research, oversight, operations</dd></div>
+              </dl>
+            </div>
+          </div>
+          <figcaption class="figure-cap" data-reveal><span>Fig. 5.1 — Indexed cost &amp; risk stack, traditional = 100 (illustrative weights)</span><span>Source: OpenEXA operating model</span></figcaption>
+        </figure>
       </div>
     </section>
 
