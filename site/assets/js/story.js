@@ -973,7 +973,7 @@
   // then the paper rises to the floor line; the headline stays above it. Portrait: the columns drain, then the floor line settles,
   // pushing the proof's copy down and out of the stage while the coda opens up above the line (they never share a region, and one
   // of them is always up), then the paper rises to the line.
-  const EXIT = { wide: { paper: [0.35, 0.8], cap: [0.74, 0.9] }, tall: { cam: [0.3, 0.56], copy: [0.44, 0.58], coda: [0.4, 0.52], paper: [0.58, 0.86], cap: [0.84, 0.96] } };
+  const EXIT = { wide: { paper: [0.35, 0.8], cap: [0.74, 0.9] }, tall: { cam: [0.3, 0.56], copy: [0.3, 0.42], coda: [0.46, 0.56], paper: [0.58, 0.86], cap: [0.84, 0.96] } }; // (portrait: the proof's copy has gone before the coda opens: one headline at a time)
   // the exit, column by column: each drains into its record, left to right, over the first third of the way out
   const drainOf = (c) => clamp((xeNow - 0.02 - 0.144 * c / Math.max(1, NCOL - 1)) / 0.17, 0, 1);
   const dcArr = new Float32Array(24);
@@ -1336,8 +1336,8 @@
     const sm = seg + mRaw; // the structure's own position (reduced motion: it snaps with the scene)
     return Math.abs(sm - ci) < 0.02 ? ci : -1;
   }
-  const vis = (l) => l.scene !== labelScene ? 0 : labA * (l.scene === 4 && !l.keep ? 1 - sstep((l.out || OUT4)[0], (l.out || OUT4)[1], xeNow) : 1);
-  const OUT4 = [0.04, 0.2];
+  const vis = (l) => { if (l.scene !== labelScene) return 0; const o = l.sum && !stacked ? EXIT.wide.cap : l.out || OUT4; return labA * (l.scene === 4 && !l.keep ? 1 - sstep(o[0], o[1], xeNow) : 1); };
+  const OUT4 = [0.04, 0.2]; // (wide screens keep the derived summary on the way out until the paper's caption takes it over)
   // a session's own progress into S4 (its column's stagger): its day tag lands with it and, in reverse, leaves first
   const colIn = (c) => sNow >= 4 ? 1 : seg === 3 ? clamp(ease(stag(mRaw, (c + 0.55) / (NCOL + 0.55))), 0, 1) : 0;
   let tabScene = -1, shownHasInsp = null;
@@ -1392,7 +1392,9 @@
           y = Math.max(y, stacked ? tagTop + capH[l.scene] : navH + 6); // never under the nav (portrait: nor the index or the caption)
           if (l.sum) { // the summary only where it clears the columns' tops; the copy, the coda and the paper's caption state it too
             const s4 = layouts[4].s, top = project(0, (Y_FLOOR + H_COL + 0.2) * s4, 0).y;
-            if (y + l.h > top - 4) on = false;
+            const k = stacked ? 0 : sstep(0.33, 0.5, xeNow); // wide, on the way out: once the columns have drained it settles 48 px over the floor line
+            if (k > 0) y = lerp(y, project(0, Y_FLOOR * s4, 0).y - 48 - l.h, k);
+            else if (y + l.h > top - 4) on = false;
           }
           l.y = y;
           tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
@@ -1525,8 +1527,8 @@
   }
   let shownCap = '', shownLeaving = null;
   // portrait screens: as the paper covers the copy, the proof's statement reappears above the columns (an end card, not an empty sky)
-  const coda = story.querySelector('.story-coda');
-  let shownCoda = '', shownCodaTr = '', codaH = 0;
+  const coda = story.querySelector('.story-coda'), codaS = coda && coda.querySelector('.story-coda-s');
+  let shownCoda = '', shownCodaTr = '', shownCodaS = '', codaH = 0;
   const paperSum = story.querySelector('[data-story-sum]');
   if (paperSum) paperSum.textContent = `${N_ABOVE} of ${NCOL} above the ${FLOOR_T} floor · ${N_PREM} premium · ${N_DISC} discount · ${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed`;
   // the records, printed: as the paper reaches the floor line, the records hanging from it are uncovered in ink where they hung
@@ -1644,6 +1646,9 @@
       const v = co.toFixed(3), tr = `translate3d(0, ${(top + (red ? 0 : (1 - co) * 10)).toFixed(1)}px, 0)`;
       if (v !== shownCoda) coda.style.opacity = shownCoda = v;
       if (co > 0 && tr !== shownCodaTr) coda.style.transform = shownCodaTr = tr;
+      // portrait: its summary line gives way as the paper's caption, which states the same, comes in
+      const vs = (lean && xe > 0 ? 1 - (red ? (xe > 0.5 ? 1 : 0) : sstep(X.cap[0], X.cap[1], xe)) : 1).toFixed(3);
+      if (codaS && vs !== shownCodaS) codaS.style.opacity = shownCodaS = vs;
     }
     placeLabels();
     if (paperH > 0.5) {
@@ -1716,7 +1721,7 @@
   function invalidate() { // every cached write is made again by the next frame
     shown.forEach(s => { s.op = s.tr = s.eo = s.w = s.bo = ''; s.on = s.gone = null; });
     shownIdx = shownNum = labelScene = tabScene = -1; shownBarOff = shownLeaving = shownScrolled = shownHasInsp = null;
-    shownBar = shownPaper = shownNumOp = shownNumTr = shownGlyph = shownLabTr = shownRoll = shownCoda = shownCodaTr = shownCap = shownCapO = shownInk = inspTr = '';
+    shownBar = shownPaper = shownNumOp = shownNumTr = shownGlyph = shownLabTr = shownRoll = shownCoda = shownCodaTr = shownCodaS = shownCap = shownCapO = shownInk = inspTr = '';
     labels.forEach(l => { l.tr = l.ov = l.d = l.nc = l.inkTr = ''; l.on = null; });
   }
   function setTiny(on) {

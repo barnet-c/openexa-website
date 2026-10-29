@@ -844,7 +844,6 @@ em, .ital { font-style: italic; }
 .story-num span i { height: 1.4em; }
 /* portrait and short landscape screens: the proof's derived summary over the floor while the paper takes the copy's place */
 .story-coda { position: absolute; left: var(--gutter); right: var(--gutter); top: 0; display: none; opacity: 0; pointer-events: none; will-change: opacity, transform; }
-.story-coda .eyebrow { margin-bottom: 12px; color: rgba(245, 242, 236, .62); }
 .story-coda-t { font: 400 clamp(1.9rem, 7.6vw, 3.1rem)/1.04 var(--serif); letter-spacing: -0.02em; color: var(--paper); text-wrap: balance; }
 .story-coda-s { margin-top: 12px; font: var(--mono-xs, .625rem)/1.6 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .66); }
 /* the role-coded vocabulary, as a key */
