@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Research — OpenEXA · The thinking behind agentic lifecycles</title>
   <meta name="description" content="Ten notes on the research behind swarm-based agentic lifecycles: compounding error and decomposition, post-training a model to a rulebook, the execution council, the hash-chained ledger, and ten sessions on real capital.">
   <meta name="theme-color" content="#0E1512">
@@ -12,26 +12,31 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="Research — OpenEXA · The thinking behind agentic lifecycles">
   <meta property="og:description" content="Ten notes on the research behind swarm-based agentic lifecycles: compounding error and decomposition, post-training a model to a rulebook, the execution council, the hash-chained ledger, and ten sessions on real capital.">
-  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image" content="https://www.openexa.com/assets/img/og/research.jpg">
+  <meta property="og:image:alt" content="Research — OpenEXA · The thinking behind agentic lifecycles">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Research — OpenEXA · The thinking behind agentic lifecycles">
   <meta name="twitter:description" content="Ten notes on the research behind swarm-based agentic lifecycles: compounding error and decomposition, post-training a model to a rulebook, the execution council, the hash-chained ledger, and ten sessions on real capital.">
-  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og/research.jpg">
+  <meta name="robots" content="max-image-preview:large">
+  <link rel="alternate" type="application/atom+xml" title="OpenEXA Blog" href="/blog/feed.xml">
+  <link rel="alternate" type="application/atom+xml" title="OpenEXA Research" href="/research/feed.xml">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/css/site.css">
+  <script type="application/ld+json" id="ld-research">{"@context":"https://schema.org","@graph":[{"@type":"CollectionPage","@id":"https://www.openexa.com/research.html#webpage","url":"https://www.openexa.com/research.html","name":"Research — OpenEXA","description":"Ten notes on the research behind swarm-based agentic lifecycles: compounding error and decomposition, post-training a model to a rulebook, the execution council, the hash-chained ledger, and ten sessions on real capital.","isPartOf":{"@type":"WebSite","@id":"https://www.openexa.com/#website","name":"OpenEXA","url":"https://www.openexa.com/"},"primaryImageOfPage":"https://www.openexa.com/assets/img/og/research.jpg","inLanguage":"en","mainEntity":{"@type":"ItemList","itemListElement":[{"@type":"ListItem","position":1,"url":"https://www.openexa.com/research/01-compounding-error.html","name":"Compounding Error and the Case for Decomposition. A Research Note on Agent Architecture"},{"@type":"ListItem","position":2,"url":"https://www.openexa.com/research/02-post-training-and-audit.html","name":"Specializing a Model to a Rulebook and Proving What It Did. A Research Note on Post-Training and Audit"},{"@type":"ListItem","position":3,"url":"https://www.openexa.com/research/03-not-tasks-lifecycles.html","name":"Not Tasks. Lifecycles. Why We Stopped Building Assistants"},{"@type":"ListItem","position":4,"url":"https://www.openexa.com/research/04-five-thousand-small-agents.html","name":"Why Five Thousand Small Agents Beat One Large One"},{"@type":"ListItem","position":5,"url":"https://www.openexa.com/research/05-agents-decide-code-executes.html","name":"Agents Decide. Code Executes. The One Boundary That Matters"},{"@type":"ListItem","position":6,"url":"https://www.openexa.com/research/06-post-training-on-a-rulebook.html","name":"Post-Training a Model on a Rulebook, Not on the Internet"},{"@type":"ListItem","position":7,"url":"https://www.openexa.com/research/07-the-execution-council.html","name":"The Execution Council. Governance in Milliseconds"},{"@type":"ListItem","position":8,"url":"https://www.openexa.com/research/08-a-ledger-nobody-can-edit.html","name":"A Ledger Nobody Can Edit. Hash Chains as Audit Infrastructure"},{"@type":"ListItem","position":9,"url":"https://www.openexa.com/research/09-lifecycle-01-ten-sessions.html","name":"Lifecycle 01. What Ten Sessions on Real Markets Taught Us"},{"@type":"ListItem","position":10,"url":"https://www.openexa.com/research/10-master-and-copy.html","name":"Master and Copy. How a Proven Agent Becomes a Platform"}]}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenEXA","item":"https://www.openexa.com/"},{"@type":"ListItem","position":2,"name":"Research","item":"https://www.openexa.com/research.html"}]}]}</script>
 </head>
 <body data-nav="dark-start" class="research-page">
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="nav">
     <div class="container">
-      <a class="brand" href="index.html" aria-label="OpenEXA home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <a class="brand" href="index.html" aria-label="OpenEXA, Agentic infrastructure, home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
       <nav class="nav-links" aria-label="Primary">
         <a href="platform.html">Platform</a>
         <a href="lifecycles.html">Lifecycles</a>
@@ -39,19 +44,25 @@
         <a href="trust.html">Trust</a>
         <a href="research.html" aria-current="page">Research</a>
         <a href="company.html">Company</a>
+        <i class="nav-ink" aria-hidden="true"></i>
       </nav>
       <a class="btn btn--sm" href="access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
-      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
+      <button class="nav-toggle" type="button" popovertarget="site-menu" aria-label="Menu"><span></span></button>
     </div>
   </header>
   <div class="nav-menu">
-    <a href="platform.html">Platform</a>
-    <a href="lifecycles.html">Lifecycles</a>
-    <a href="evidence.html">Proof</a>
-    <a href="trust.html">Trust</a>
-    <a href="research.html" aria-current="page">Research</a>
-    <a href="company.html">Company</a>
-    <a class="btn" href="access.html">Request access</a>
+    <nav class="nav-sheet is-dark grain" id="site-menu" popover aria-label="Menu">
+      <ol class="nav-sheet-links">
+        <li><a href="platform.html"><span class="n" aria-hidden="true">01</span>Platform</a></li>
+        <li><a href="lifecycles.html"><span class="n" aria-hidden="true">02</span>Lifecycles</a></li>
+        <li><a href="evidence.html"><span class="n" aria-hidden="true">03</span>Proof</a></li>
+        <li><a href="trust.html"><span class="n" aria-hidden="true">04</span>Trust</a></li>
+        <li><a href="research.html"><span class="n" aria-hidden="true">05</span>Research</a></li>
+        <li><a href="company.html"><span class="n" aria-hidden="true">06</span>Company</a></li>
+      </ol>
+      <a class="btn" href="access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <p class="nav-sheet-meta"><span class="nav-live"><i></i>Lifecycle 01 · live on real capital</span><span>Seattle, WA</span></p>
+    </nav>
   </div>
 
   <main id="main">
@@ -71,7 +82,7 @@
 
     <section class="section" id="notes">
       <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">01</span><span class="lab">Research notes</span><span class="aside">Start here · the argument from first principles</span></div>
+        <div class="sec-head" data-reveal role="heading" aria-level="2"><span class="idx">01</span><span class="lab">Research notes</span><span class="aside">Start here · the argument from first principles</span></div>
         <ol class="posts-list" data-reveal>
           <li class="post" data-figure-target="horizon" data-figure-stage="research-figure">
             <a href="research/01-compounding-error.html">
@@ -253,9 +264,9 @@
           <a class="brand" href="index.html"><i class="mark"></i>OpenEXA</a>
           <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
         </div>
-        <div><h4>Product</h4><ul><li><a href="platform.html">Platform</a></li><li><a href="lifecycles.html">Lifecycles</a></li><li><a href="evidence.html">Proof</a></li><li><a href="trust.html">Trust &amp; governance</a></li></ul></div>
-        <div><h4>Company</h4><ul><li><a href="company.html">About OpenEXA</a></li><li><a href="research.html">Research</a></li><li><a href="blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
-        <div><h4>Access</h4><ul><li><a href="access.html">Request access</a></li><li><a href="access.html#managers">For managers</a></li><li><a href="access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+        <div><h2>Product</h2><ul><li><a href="platform.html">Platform</a></li><li><a href="lifecycles.html">Lifecycles</a></li><li><a href="evidence.html">Proof</a></li><li><a href="trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h2>Company</h2><ul><li><a href="company.html">About OpenEXA</a></li><li><a href="research.html">Research</a></li><li><a href="blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk <span aria-hidden="true">↗</span></a></li></ul></div>
+        <div><h2>Access</h2><ul><li><a href="access.html">Request access</a></li><li><a href="access.html#managers">For managers</a></li><li><a href="access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
       </div>
       <div class="disc">
         <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>

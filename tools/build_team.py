@@ -10,6 +10,10 @@ Changes from the source, deliberately:
   - Julius's short line drops "Crypto" from "AML & Crypto Risk"; John's surname follows his bio and LinkedIn (Schuster).
   - 2026-10-02: John Schuster, Subuddh Parekh, Abhishek Sinha, Dr. Julius E. Ekeroma and Dipit Nanawati moved from the
     team to the advisors (Ajit's request). The team is the five leaders; the advisors are eight.
+  - 2026-10-27: three typos in the scraped bios are corrected (FIX), and Philip's link, labelled "LinkedIn" on the old
+    About page, is his UW faculty page, so it reads "Faculty page".
+  - 2026-10-28: the stats are plain final values (no data-count: no number is ever shown counting up), the X link reads
+    "X (Twitter)", and generic link labels carry the person's name for screen readers, so every link name is unique.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -32,6 +36,9 @@ DROP = [  # sentences removed from bios (old crypto-business positioning)
     "Currently, Shalabh is passionate about pursuing the field of AI Crypto, where he aims to bridge traditional Wall Street assets into crypto markets.",
     "Shalabh is uniquely positioned to explore innovative ways of integrating AI with crypto.",
     "His ultimate goal is to help drive the mainstream adoption of crypto by leveraging the power of AI and Blockchain.",
+]
+FIX = [  # typos in the scraped bios
+    ("reuses state capital", "reuses staked capital"), ("to reduces", "to reduce"), ("from the Caltech", "from Caltech"),
 ]
 # (slug, display name, source name, title, short line, v1 photo or None, extra links)
 TEAM = [
@@ -82,18 +89,22 @@ def bio(src_name):
     out = []
     for para in old[src_name]["bio"]:
         for s in DROP: para = para.replace(s, "")
+        for a, b in FIX: para = para.replace(a, b)
         para = re.sub(r"\s{2,}", " ", para).strip()
         if para: out.append(f"<p>{H.escape(para, quote=False)}</p>")
     return "".join(out)
-def links(src_name, extra):
-    ls = [(("X" if t.startswith("X") else t), u) for t, u in old[src_name]["links"]] + extra
-    return "".join(f'<a href="{H.escape(u)}"' + ('' if u.startswith("blog/") else ' target="_blank" rel="noopener"') + f'>{H.escape(t)}</a>' for t, u in ls)
+GENERIC = {"LinkedIn", "X (Twitter)", "Faculty page"}  # labels shared by several cards: the person's name follows for screen readers
+def links(src_name, extra, name):
+    ls = [(("X (Twitter)" if t.startswith("X") else t), u) for t, u in old[src_name]["links"]] + extra
+    ls = [("Faculty page" if t == "LinkedIn" and "linkedin.com" not in u else t, u) for t, u in ls]  # Philip's "LinkedIn" is his UW page
+    return "".join(f'<a href="{H.escape(u)}"' + ('' if u.startswith("blog/") else ' target="_blank" rel="noopener"') + f'>{H.escape(t)}'
+                   + (f'<span class="sr-only"> — {H.escape(name)}</span>' if t in GENERIC else '') + '</a>' for t, u in ls)
 def cards(people, prefix, cols):
     items, report = [], []
     for i, (slug, name, src, title, short, v1, extra) in enumerate(people):
         where, h = portrait(slug, src, v1); report.append((name, where, h))
-        l = links(src, extra)
-        items.append(f'''          <li data-reveal style="--d:{60 + (i % cols) * 60}ms"><div class="n"><span>{prefix}-{i + 1:02d}</span></div><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{slug}.webp" alt="{H.escape(name)}" width="560" height="560" loading="lazy" decoding="async"></div><div class="role">{H.escape(title)}</div><h3>{H.escape(name)}</h3><p>{H.escape(short, quote=False)}</p>{f'<div class="links">{l}</div>' if l else ''}<details class="crew-more"><summary>Read full description</summary><div class="crew-bio">{bio(src)}</div></details></li>''')
+        l = links(src, extra, name)
+        items.append(f'''          <li data-reveal style="--d:{60 + (i % cols) * 60}ms"><div class="n"><span>{prefix}-{i + 1:02d}</span></div><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{slug}.webp" alt="{H.escape(name)}" width="560" height="560" loading="lazy" decoding="async"></div><div class="role">{H.escape(title)}</div><h3>{H.escape(name)}</h3><p>{H.escape(short, quote=False)}</p>{f'<div class="links">{l}</div>' if l else ''}<details class="crew-more"><summary>Read full description<span class="sr-only"> for {H.escape(name)}</span></summary><div class="crew-bio">{bio(src)}</div></details></li>''')
     return "\n".join(items), report
 
 WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"]
@@ -108,17 +119,17 @@ SECTION = f'''    <!-- 03 THE TEAM -->
           <div class="col-5 offset-7">
             <p class="body-lg" data-reveal style="--d:80ms">{WORDS[len(TEAM)]} people build the agents that run Lifecycle 01, guided by {WORDS[len(ADVISORS)].lower()} advisors from technology, finance and the academy. Between them, they have built and led work at Google, Microsoft, Amazon, PayPal, Goldman Sachs, Bank of America and JPMorgan Chase, with deep experience in AI, capital markets and financial innovation.</p>
             <div class="crew-stats" data-reveal style="--d:140ms">
-              <div><b data-count="{len(TEAM)}">{len(TEAM)}</b><span>Team members</span></div>
-              <div><b data-count="{len(ADVISORS)}">{len(ADVISORS)}</b><span>Advisors</span></div>
-              <div><b data-count="100" data-suffix="+">100+</b><span>Research papers</span></div>
+              <div><b>{len(TEAM)}</b><span>Team members</span></div>
+              <div><b>{len(ADVISORS)}</b><span>Advisors</span></div>
+              <div><b>100+</b><span>Research papers</span></div>
             </div>
           </div>
         </div>
-        <ol class="crew crew--team" aria-label="The OpenEXA team">
+        <ol class="crew crew--team" role="list" aria-label="The OpenEXA team">
 {team_html}
         </ol>
         <div class="crew-sub" data-reveal><h3 class="crew-sub-h">Advisors</h3><p>Operators, scholars and specialists who advise OpenEXA on strategy, AI and machine learning, compliance and risk, networks, distributed systems and the economics of financial markets.</p></div>
-        <ol class="crew crew--advisors" aria-label="OpenEXA advisors">
+        <ol class="crew crew--advisors" role="list" aria-label="OpenEXA advisors">
 {adv_html}
         </ol>
       </div>

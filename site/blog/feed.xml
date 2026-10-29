@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+  <title>OpenEXA Blog</title>
+  <subtitle>AI agents in finance, financial markets research and market structure.</subtitle>
+  <link rel="self" type="application/atom+xml" href="https://www.openexa.com/blog/feed.xml"/>
+  <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/"/>
+  <id>https://www.openexa.com/blog/</id>
+  <updated>2024-06-30T00:00:00Z</updated>
+  <author><name>OpenEXA</name><uri>https://www.openexa.com/</uri></author>
+  <icon>https://www.openexa.com/assets/img/icon-192.png</icon>
+  <logo>https://www.openexa.com/assets/img/icon-512.png</logo>
+  <entry>
+    <title>AI Agents in Finance: How Relative Value Analysis and Tearsheets Pave the Way for AI Copilots and Autonomous Intelligent Agents</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way.html"/>
+    <id>https://www.openexa.com/blog/empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way.html</id>
+    <published>2024-06-30T00:00:00Z</published>
+    <updated>2024-06-30T00:00:00Z</updated>
+    <author><name>Ajit K Dubey</name></author>
+    <summary>Unlocking the Future: How Relative Value Analysis and Tearsheets Pave the Way for AI Copilots and Autonomous Intelligent Agents</summary>
+  </entry>
+  <entry>
+    <title>Unveiling the Vital Role of Credit in the Financial System. Why Banks Exist?</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/why-banks-exist-unveiling-the-vital-role-of-credit-in-the-financial-system.html"/>
+    <id>https://www.openexa.com/blog/why-banks-exist-unveiling-the-vital-role-of-credit-in-the-financial-system.html</id>
+    <published>2024-06-17T00:00:00Z</published>
+    <updated>2024-06-17T00:00:00Z</updated>
+    <author><name>Ajit K Dubey</name></author>
+    <summary>The commonality between banks lies in their core function of credit or lending. </summary>
+  </entry>
+  <entry>
+    <title>AI Guardrails, Precise Boundary and Tearsheets can Transform Value Creation in Financial Markets</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/tearsheet-how-to-use-tearsheet-in-the-face-of-volatile-crypto-and-bond-markets-as-a-means-of-capital-preservation-and-asset-appreciation.html"/>
+    <id>https://www.openexa.com/blog/tearsheet-how-to-use-tearsheet-in-the-face-of-volatile-crypto-and-bond-markets-as-a-means-of-capital-preservation-and-asset-appreciation.html</id>
+    <published>2024-06-15T00:00:00Z</published>
+    <updated>2024-06-15T00:00:00Z</updated>
+    <author><name>Ajit K Dubey</name></author>
+    <summary>Unveiling the Power of Generative Models: Transforming Relative Value Analysis with Tearsheets&#x27; Unmatched Accuracy</summary>
+  </entry>
+  <entry>
+    <title>The Impact of Generative AI Models: Revolutionizing Relative Value Analysis in Securities Markets</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies.html"/>
+    <id>https://www.openexa.com/blog/rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies.html</id>
+    <published>2024-06-01T00:00:00Z</published>
+    <updated>2024-06-01T00:00:00Z</updated>
+    <author><name>Ajit K Dubey</name></author>
+    <summary>The Impact of Generative Models: Revolutionizing Relative Value Analysis in Securities Markets</summary>
+  </entry>
+  <entry>
+    <title>Unlocking Gen-AI&#x27;s True Potential: The Next Phase of Monumental Value Creation</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/in-search-gen-ai-business-model.html"/>
+    <id>https://www.openexa.com/blog/in-search-gen-ai-business-model.html</id>
+    <published>2024-05-17T00:00:00Z</published>
+    <updated>2024-05-17T00:00:00Z</updated>
+    <author><name>Ajit K Dubey</name></author>
+    <summary>In Search of the Gen-AI Business Model. | The Next Phase of Gen-AI&#x27;s Monumental Value Creation.</summary>
+  </entry>
+  <entry>
+    <title>The Labor Market for Bankers and Regulators</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/the-labor-market-for-bankers-and-regulators.html"/>
+    <id>https://www.openexa.com/blog/the-labor-market-for-bankers-and-regulators.html</id>
+    <published>2023-07-06T00:00:00Z</published>
+    <updated>2023-07-06T00:00:00Z</updated>
+    <author><name>Philip Bond, Ph.D.</name></author>
+    <summary>Who becomes a financial regulator and who becomes a banker?</summary>
+  </entry>
+  <entry>
+    <title>Automation, financial frictions, and the long-run labor share</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/automation-financial-frictions-and-the-long-run-labor-share.html"/>
+    <id>https://www.openexa.com/blog/automation-financial-frictions-and-the-long-run-labor-share.html</id>
+    <published>2022-11-18T00:00:00Z</published>
+    <updated>2022-11-18T00:00:00Z</updated>
+    <author><name>Philip Bond, Ph.D.</name></author>
+    <summary>Does automation benefit or harm workers? Will complete automation drive the labor share to zero?</summary>
+  </entry>
+  <entry>
+    <title>ESG: A panacea for market power?</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/esg-a-panacea-for-market-power.html"/>
+    <id>https://www.openexa.com/blog/esg-a-panacea-for-market-power.html</id>
+    <published>2022-11-16T00:00:00Z</published>
+    <updated>2022-11-16T00:00:00Z</updated>
+    <author><name>Philip Bond, Ph.D.</name></author>
+    <summary>Equilibrium of product/labor markets when firms adopt ESG. And equilibrium in ESG policies. Focuses on the S part of ESG.</summary>
+  </entry>
+  <entry>
+    <title>Multiscale Analysis &amp; Volatility Asymmetry of Cryptocurrency Prices</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/multiscale-analysis-volatility-asymmetry-of-cryptocurrency-prices.html"/>
+    <id>https://www.openexa.com/blog/multiscale-analysis-volatility-asymmetry-of-cryptocurrency-prices.html</id>
+    <published>2022-09-01T00:00:00Z</published>
+    <updated>2022-09-01T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>Adaptive complementary ensemble empirical mode decomposition (ACE-EMD) for non-stationary time series</summary>
+  </entry>
+  <entry>
+    <title>Leveraged ETFs - Price Dynamics and Options Valuation</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/leveraged-etfs-price-dynamics-and-options-valuation.html"/>
+    <id>https://www.openexa.com/blog/leveraged-etfs-price-dynamics-and-options-valuation.html</id>
+    <published>2022-06-11T00:00:00Z</published>
+    <updated>2022-06-11T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>The ETF industry now consists of more than 2,000 funds with well over $4 trillion in assets.</summary>
+  </entry>
+  <entry>
+    <title>Modern Trends in Financial Engineering</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/modern-trends-in-financial-engineering.html"/>
+    <id>https://www.openexa.com/blog/modern-trends-in-financial-engineering.html</id>
+    <published>2022-05-17T00:00:00Z</published>
+    <updated>2022-05-17T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.</summary>
+  </entry>
+  <entry>
+    <title>Examining the Drawdown Risk of Sector ETFs - 2022</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/examining-the-drawdown-risk-of-sector-etfs-2022.html"/>
+    <id>https://www.openexa.com/blog/examining-the-drawdown-risk-of-sector-etfs-2022.html</id>
+    <published>2022-04-24T00:00:00Z</published>
+    <updated>2022-04-24T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>A drawdown measures the distance (in %) of the portfolio value from its peak, reflecting its downside risk.</summary>
+  </entry>
+  <entry>
+    <title>Optimal Execution for High Frequency Trading</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/optimal-execution-for-high-frequency-trading.html"/>
+    <id>https://www.openexa.com/blog/optimal-execution-for-high-frequency-trading.html</id>
+    <published>2022-04-22T00:00:00Z</published>
+    <updated>2022-04-22T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>In high-frequency trading, large buy (or sell) orders may cause other traders to raise (or lower) their offered price. </summary>
+  </entry>
+  <entry>
+    <title>Stochastic Storage Cost Model for Grains Futures</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/stochastic-storage-cost-model-for-grains-futures.html"/>
+    <id>https://www.openexa.com/blog/stochastic-storage-cost-model-for-grains-futures.html</id>
+    <published>2022-03-13T00:00:00Z</published>
+    <updated>2022-03-13T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>The world is experiencing the biggest supply shock to global grains markets in recent history. Prices of various crops have skyrocketed.</summary>
+  </entry>
+  <entry>
+    <title>Dynamic Estimation of Stochastic Gold Exposure</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/dynamic-estimation-of-stochastic-gold-exposure.html"/>
+    <id>https://www.openexa.com/blog/dynamic-estimation-of-stochastic-gold-exposure.html</id>
+    <published>2022-02-09T00:00:00Z</published>
+    <updated>2022-02-09T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>Gold is often viewed as a safe haven asset or a hedge against market turmoil, currency depreciation, and other economic or political events.</summary>
+  </entry>
+  <entry>
+    <title>Encoding Market View via a Randomized Brownian Bridge</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/encoding-market-view-via-a-randomized-brownian-bridge.html"/>
+    <id>https://www.openexa.com/blog/encoding-market-view-via-a-randomized-brownian-bridge.html</id>
+    <published>2021-11-03T00:00:00Z</published>
+    <updated>2021-11-03T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>Trading decisions often depend on the trader&#x27;s subjective belief of the distribution of the asset price on a given future date.</summary>
+  </entry>
+  <entry>
+    <title>Multiscale Decomposition and Analysis of Sector ETF Price Dynamics</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/multiscale-decomposition-and-analysis-of-sector-etf-price-dynamics.html"/>
+    <id>https://www.openexa.com/blog/multiscale-decomposition-and-analysis-of-sector-etf-price-dynamics.html</id>
+    <published>2021-10-19T00:00:00Z</published>
+    <updated>2021-10-19T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>Asset prices are driven by factors of different timescales, ranging from long-term market regimes to short-term fluctuations.</summary>
+  </entry>
+  <entry>
+    <title>Dynamic Futures Portfolio in a Regime-Switching Market</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/dynamic-futures-portfolio-in-a-regime-switching-market.html"/>
+    <id>https://www.openexa.com/blog/dynamic-futures-portfolio-in-a-regime-switching-market.html</id>
+    <published>2021-08-24T00:00:00Z</published>
+    <updated>2021-08-24T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>Asset prices are often seen as being dependent on market conditions. Market regimes may change suddenly and persist for a period of time.</summary>
+  </entry>
+  <entry>
+    <title>Dynamic Futures Portfolio Under a Multifactor Gaussian Framework</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/dynamic-futures-portfolio-under-a-multifactor-gaussian-framework.html"/>
+    <id>https://www.openexa.com/blog/dynamic-futures-portfolio-under-a-multifactor-gaussian-framework.html</id>
+    <published>2021-08-16T00:00:00Z</published>
+    <updated>2021-08-16T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>Futures are standardized exchange-traded bilateral contracts of agreement to buy or sell an asset at a pre-determined price at a time in future.</summary>
+  </entry>
+  <entry>
+    <title>Multiscale Financial Signal Processing</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/multiscale-financial-signal-processing.html"/>
+    <id>https://www.openexa.com/blog/multiscale-financial-signal-processing.html</id>
+    <published>2021-05-08T00:00:00Z</published>
+    <updated>2021-05-08T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>Market observations and empirical studies have shown that asset prices are often driven by multiscale factors in the short term.</summary>
+  </entry>
+  <entry>
+    <title>Cardinality-Constrained Portfolios: Optimization Approach &amp; Algorithm</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/cardinality-constrained-portfolios-optimization-approach-algorithm.html"/>
+    <id>https://www.openexa.com/blog/cardinality-constrained-portfolios-optimization-approach-algorithm.html</id>
+    <published>2021-02-07T00:00:00Z</published>
+    <updated>2021-02-07T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>Every portfolio can be partitioned into multiple asset groups defined by asset classes, sectors, styles, and other features. </summary>
+  </entry>
+  <entry>
+    <title>Employee Stock Options - Exercise Timing, Hedging, and Valuation</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/employee-stock-options-exercise-timing-hedging-and-valuation.html"/>
+    <id>https://www.openexa.com/blog/employee-stock-options-exercise-timing-hedging-and-valuation.html</id>
+    <published>2020-11-14T00:00:00Z</published>
+    <updated>2020-11-14T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>Employee stock options (ESOs) are an integral component of compensation in the US. In fact, almost all S&amp;P 500 companies grant options to their top executives.</summary>
+  </entry>
+  <entry>
+    <title>An Optimization Algorithm for Sparse Mean-Reverting Portfolio Selection</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/an-optimization-algorithm-for-sparse-mean-reverting-portfolio-selection.html"/>
+    <id>https://www.openexa.com/blog/an-optimization-algorithm-for-sparse-mean-reverting-portfolio-selection.html</id>
+    <published>2020-10-21T00:00:00Z</published>
+    <updated>2020-10-21T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>We study an approach that combines statistical learning and optimization to construct portfolios.</summary>
+  </entry>
+  <entry>
+    <title>The Drawdown Risk and Portfolio Concentration of Sector ETFs</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/the-drawdown-risk-and-portfolio-concentration-of-sector-etfs.html"/>
+    <id>https://www.openexa.com/blog/the-drawdown-risk-and-portfolio-concentration-of-sector-etfs.html</id>
+    <published>2020-10-08T00:00:00Z</published>
+    <updated>2020-10-08T00:00:00Z</updated>
+    <author><name>Tim Leung, Ph.D.</name></author>
+    <summary>A drawdown measures the distance (in %) of the portfolio value from its peak, reflecting its downside risk. </summary>
+  </entry>
+  <entry>
+    <title>Ordering information content using the quantile function.</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/ordering-information-content-using-the-quantile-function.html"/>
+    <id>https://www.openexa.com/blog/ordering-information-content-using-the-quantile-function.html</id>
+    <published>2019-07-01T00:00:00Z</published>
+    <updated>2019-07-01T00:00:00Z</updated>
+    <author><name>Philip Bond, Ph.D.</name></author>
+    <summary>Lehmann&#x27;s (1988) information ordering is equivalent to single-crossing of the quantile function.</summary>
+  </entry>
+  <entry>
+    <title>Buying high and selling low: Stock repurchases and persistent asymmetric information</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/buying-high-and-selling-low-stock-repurchases-and-persistent-asymmetric-information.html"/>
+    <id>https://www.openexa.com/blog/buying-high-and-selling-low-stock-repurchases-and-persistent-asymmetric-information.html</id>
+    <published>2016-05-30T00:00:00Z</published>
+    <updated>2016-05-30T00:00:00Z</updated>
+    <author><name>Philip Bond, Ph.D.</name></author>
+    <summary>Analyzes a dynamic version of Myers and Majluf&#x27;s classic model. Equilibria feature repurchases, even though all firms want to raise cash.</summary>
+  </entry>
+  <entry>
+    <title>Contracting in the presence of judicial agency</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/contracting-in-the-presence-of-judicial-agency.html"/>
+    <id>https://www.openexa.com/blog/contracting-in-the-presence-of-judicial-agency.html</id>
+    <published>2012-09-13T00:00:00Z</published>
+    <updated>2012-09-13T00:00:00Z</updated>
+    <author><name>Philip Bond, Ph.D.</name></author>
+    <summary>Judges have agency conflicts too. How does this affect contracting?</summary>
+  </entry>
+  <entry>
+    <title>The real effects of financial markets</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/the-real-effects-of-financial-markets.html"/>
+    <id>https://www.openexa.com/blog/the-real-effects-of-financial-markets.html</id>
+    <published>2012-07-11T00:00:00Z</published>
+    <updated>2012-07-11T00:00:00Z</updated>
+    <author><name>Philip Bond, Ph.D.</name></author>
+    <summary>An essential topic in financial economics is investigating whether financial markets exert an influence on the actual economy.</summary>
+  </entry>
+  <entry>
+    <title>Predatory mortgage lending</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/blog/predatory-mortgage-lending.html"/>
+    <id>https://www.openexa.com/blog/predatory-mortgage-lending.html</id>
+    <published>2008-07-01T00:00:00Z</published>
+    <updated>2008-07-01T00:00:00Z</updated>
+    <author><name>Philip Bond, Ph.D.</name></author>
+    <summary>Predatory lending can arise even in the absence of lender fraud and borrower confusion.</summary>
+  </entry>
+</feed>

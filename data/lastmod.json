@@ -1,0 +1,194 @@
+{
+ "access.html": {
+  "date": "2026-10-29",
+  "sha": "12985afa8982f2ee"
+ },
+ "blog/an-optimization-algorithm-for-sparse-mean-reverting-portfolio-selection.html": {
+  "date": "2026-10-29",
+  "sha": "966752daac13ecd6"
+ },
+ "blog/automation-financial-frictions-and-the-long-run-labor-share.html": {
+  "date": "2026-10-29",
+  "sha": "2fc8bb606d86e920"
+ },
+ "blog/buying-high-and-selling-low-stock-repurchases-and-persistent-asymmetric-information.html": {
+  "date": "2026-10-29",
+  "sha": "ea6fea28eaecdf06"
+ },
+ "blog/cardinality-constrained-portfolios-optimization-approach-algorithm.html": {
+  "date": "2026-10-29",
+  "sha": "dd4acd21916fd8e0"
+ },
+ "blog/contracting-in-the-presence-of-judicial-agency.html": {
+  "date": "2026-10-29",
+  "sha": "651664d63316f2d6"
+ },
+ "blog/dynamic-estimation-of-stochastic-gold-exposure.html": {
+  "date": "2026-10-29",
+  "sha": "9f9b685d5e72a99b"
+ },
+ "blog/dynamic-futures-portfolio-in-a-regime-switching-market.html": {
+  "date": "2026-10-29",
+  "sha": "1b046e22c184dac4"
+ },
+ "blog/dynamic-futures-portfolio-under-a-multifactor-gaussian-framework.html": {
+  "date": "2026-10-29",
+  "sha": "d54702dc37f9aa40"
+ },
+ "blog/employee-stock-options-exercise-timing-hedging-and-valuation.html": {
+  "date": "2026-10-29",
+  "sha": "23795b40be7fa257"
+ },
+ "blog/empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way.html": {
+  "date": "2026-10-29",
+  "sha": "2d1d19cae440bc56"
+ },
+ "blog/encoding-market-view-via-a-randomized-brownian-bridge.html": {
+  "date": "2026-10-29",
+  "sha": "8507c37e111f169e"
+ },
+ "blog/esg-a-panacea-for-market-power.html": {
+  "date": "2026-10-29",
+  "sha": "1641d90d7155c716"
+ },
+ "blog/examining-the-drawdown-risk-of-sector-etfs-2022.html": {
+  "date": "2026-10-29",
+  "sha": "4e8bcc233426c109"
+ },
+ "blog/in-search-gen-ai-business-model.html": {
+  "date": "2026-10-29",
+  "sha": "5f7fe141edb5ba0c"
+ },
+ "blog/index.html": {
+  "date": "2026-10-29",
+  "sha": "91148cc86f4bd641"
+ },
+ "blog/leveraged-etfs-price-dynamics-and-options-valuation.html": {
+  "date": "2026-10-29",
+  "sha": "2a7815f0eddae517"
+ },
+ "blog/modern-trends-in-financial-engineering.html": {
+  "date": "2026-10-29",
+  "sha": "33732d023277914b"
+ },
+ "blog/multiscale-analysis-volatility-asymmetry-of-cryptocurrency-prices.html": {
+  "date": "2026-10-29",
+  "sha": "b65f1f61ad8a13fa"
+ },
+ "blog/multiscale-decomposition-and-analysis-of-sector-etf-price-dynamics.html": {
+  "date": "2026-10-29",
+  "sha": "7a9e6355e8557565"
+ },
+ "blog/multiscale-financial-signal-processing.html": {
+  "date": "2026-10-29",
+  "sha": "dbe249263df83478"
+ },
+ "blog/optimal-execution-for-high-frequency-trading.html": {
+  "date": "2026-10-29",
+  "sha": "654181d08cda9d80"
+ },
+ "blog/ordering-information-content-using-the-quantile-function.html": {
+  "date": "2026-10-29",
+  "sha": "450d4d88a5fa3395"
+ },
+ "blog/predatory-mortgage-lending.html": {
+  "date": "2026-10-29",
+  "sha": "e737736c6a8af618"
+ },
+ "blog/rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies.html": {
+  "date": "2026-10-29",
+  "sha": "e3b45f6fd2edc19e"
+ },
+ "blog/stochastic-storage-cost-model-for-grains-futures.html": {
+  "date": "2026-10-29",
+  "sha": "912861366bed73ab"
+ },
+ "blog/tearsheet-how-to-use-tearsheet-in-the-face-of-volatile-crypto-and-bond-markets-as-a-means-of-capital-preservation-and-asset-appreciation.html": {
+  "date": "2026-10-29",
+  "sha": "a740f2e9b89e31a6"
+ },
+ "blog/the-drawdown-risk-and-portfolio-concentration-of-sector-etfs.html": {
+  "date": "2026-10-29",
+  "sha": "a9cf02769521edb8"
+ },
+ "blog/the-labor-market-for-bankers-and-regulators.html": {
+  "date": "2026-10-29",
+  "sha": "a5a1949d424beded"
+ },
+ "blog/the-real-effects-of-financial-markets.html": {
+  "date": "2026-10-29",
+  "sha": "e245eb96215db50a"
+ },
+ "blog/why-banks-exist-unveiling-the-vital-role-of-credit-in-the-financial-system.html": {
+  "date": "2026-10-29",
+  "sha": "2c12668c79a362fc"
+ },
+ "company.html": {
+  "date": "2026-10-29",
+  "sha": "bcf8b7474aff9024"
+ },
+ "evidence.html": {
+  "date": "2026-10-29",
+  "sha": "ca2579655a889bd8"
+ },
+ "index.html": {
+  "date": "2026-10-29",
+  "sha": "60daf05e4c6ba2e8"
+ },
+ "lifecycles.html": {
+  "date": "2026-10-29",
+  "sha": "c6ec2e425e363939"
+ },
+ "platform.html": {
+  "date": "2026-10-29",
+  "sha": "74e0fad6a740505a"
+ },
+ "research.html": {
+  "date": "2026-10-29",
+  "sha": "08abe17ac3280a7a"
+ },
+ "research/01-compounding-error.html": {
+  "date": "2026-10-29",
+  "sha": "56f4c87e6b004bfe"
+ },
+ "research/02-post-training-and-audit.html": {
+  "date": "2026-10-29",
+  "sha": "34dbaba8befc3b52"
+ },
+ "research/03-not-tasks-lifecycles.html": {
+  "date": "2026-10-29",
+  "sha": "cd67813b3042cb54"
+ },
+ "research/04-five-thousand-small-agents.html": {
+  "date": "2026-10-29",
+  "sha": "3a22eb28cd850da1"
+ },
+ "research/05-agents-decide-code-executes.html": {
+  "date": "2026-10-29",
+  "sha": "bcaf275023131e22"
+ },
+ "research/06-post-training-on-a-rulebook.html": {
+  "date": "2026-10-29",
+  "sha": "ef01edc1fb123faa"
+ },
+ "research/07-the-execution-council.html": {
+  "date": "2026-10-29",
+  "sha": "be3b21e5773a3dfc"
+ },
+ "research/08-a-ledger-nobody-can-edit.html": {
+  "date": "2026-10-29",
+  "sha": "d512b0f8d419c363"
+ },
+ "research/09-lifecycle-01-ten-sessions.html": {
+  "date": "2026-10-29",
+  "sha": "66cf4afda44279ce"
+ },
+ "research/10-master-and-copy.html": {
+  "date": "2026-10-29",
+  "sha": "11768a8859b72b22"
+ },
+ "trust.html": {
+  "date": "2026-10-29",
+  "sha": "7978e4acfc9a3f66"
+ }
+}

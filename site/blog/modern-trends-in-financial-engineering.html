@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Modern Trends in Financial Engineering — OpenEXA Blog</title>
   <meta name="description" content="Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.">
   <meta name="theme-color" content="#0E1512">
@@ -12,27 +12,31 @@
   <meta property="og:type" content="article">
   <meta property="og:title" content="Modern Trends in Financial Engineering — OpenEXA Blog">
   <meta property="og:description" content="Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.">
-  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image" content="https://www.openexa.com/assets/img/og/blog-modern-trends-in-financial-engineering.jpg">
+  <meta property="og:image:alt" content="Modern Trends in Financial Engineering — OpenEXA Blog">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Modern Trends in Financial Engineering — OpenEXA Blog">
   <meta name="twitter:description" content="Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.">
-  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og/blog-modern-trends-in-financial-engineering.jpg">
+  <meta name="robots" content="max-image-preview:large">
+  <link rel="alternate" type="application/atom+xml" title="OpenEXA Blog" href="/blog/feed.xml">
+  <link rel="alternate" type="application/atom+xml" title="OpenEXA Research" href="/research/feed.xml">
   <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
   <link rel="manifest" href="../site.webmanifest">
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="../assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="../assets/css/site.css">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Modern Trends in Financial Engineering", "description": "Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.", "url": "https://www.openexa.com/blog/modern-trends-in-financial-engineering.html", "datePublished": "2022-05-17", "author": {"@type": "Person", "name": "Tim Leung, Ph.D."}, "publisher": {"@type": "Organization", "name": "OpenEXA", "url": "https://www.openexa.com/"}, "isPartOf": {"@type": "Blog", "name": "OpenEXA Blog", "url": "https://www.openexa.com/blog/"}, "isBasedOn": "https://timleungresearch.medium.com/modern-trends-in-financial-engineering-987d28db1d83"}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BlogPosting","@id":"https://www.openexa.com/blog/modern-trends-in-financial-engineering.html#article","headline":"Modern Trends in Financial Engineering","description":"Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.","url":"https://www.openexa.com/blog/modern-trends-in-financial-engineering.html","mainEntityOfPage":"https://www.openexa.com/blog/modern-trends-in-financial-engineering.html","datePublished":"2022-05-17","inLanguage":"en","image":["https://www.openexa.com/assets/img/og/blog-modern-trends-in-financial-engineering.jpg"],"author":{"@type":"Person","name":"Tim Leung","url":"https://www.openexa.com/company.html#team","honorificSuffix":"Ph.D."},"publisher":{"@type":"Organization","@id":"https://www.openexa.com/#organization","name":"OpenEXA","url":"https://www.openexa.com/","logo":{"@type":"ImageObject","url":"https://www.openexa.com/assets/img/icon-512.png","width":512,"height":512}},"isPartOf":{"@type":"Blog","@id":"https://www.openexa.com/blog/#blog","name":"OpenEXA Blog","url":"https://www.openexa.com/blog/"},"articleSection":"Financial markets research","timeRequired":"PT3M","isBasedOn":"https://timleungresearch.medium.com/modern-trends-in-financial-engineering-987d28db1d83"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenEXA","item":"https://www.openexa.com/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://www.openexa.com/blog/"},{"@type":"ListItem","position":3,"name":"Modern Trends in Financial Engineering","item":"https://www.openexa.com/blog/modern-trends-in-financial-engineering.html"}]}]}</script>
 </head>
 <body data-nav="dark-start" class="article-page blog-post">
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="nav">
     <div class="container">
-      <a class="brand" href="../index.html" aria-label="OpenEXA home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <a class="brand" href="../index.html" aria-label="OpenEXA, Agentic infrastructure, home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
       <nav class="nav-links" aria-label="Primary">
         <a href="../platform.html">Platform</a>
         <a href="../lifecycles.html">Lifecycles</a>
@@ -40,19 +44,25 @@
         <a href="../trust.html">Trust</a>
         <a href="../research.html">Research</a>
         <a href="../company.html">Company</a>
+        <i class="nav-ink" aria-hidden="true"></i>
       </nav>
       <a class="btn btn--sm" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
-      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
+      <button class="nav-toggle" type="button" popovertarget="site-menu" aria-label="Menu"><span></span></button>
     </div>
   </header>
   <div class="nav-menu">
-    <a href="../platform.html">Platform</a>
-    <a href="../lifecycles.html">Lifecycles</a>
-    <a href="../evidence.html">Proof</a>
-    <a href="../trust.html">Trust</a>
-    <a href="../research.html">Research</a>
-    <a href="../company.html">Company</a>
-    <a class="btn" href="../access.html">Request access</a>
+    <nav class="nav-sheet is-dark grain" id="site-menu" popover aria-label="Menu">
+      <ol class="nav-sheet-links">
+        <li><a href="../platform.html"><span class="n" aria-hidden="true">01</span>Platform</a></li>
+        <li><a href="../lifecycles.html"><span class="n" aria-hidden="true">02</span>Lifecycles</a></li>
+        <li><a href="../evidence.html"><span class="n" aria-hidden="true">03</span>Proof</a></li>
+        <li><a href="../trust.html"><span class="n" aria-hidden="true">04</span>Trust</a></li>
+        <li><a href="../research.html"><span class="n" aria-hidden="true">05</span>Research</a></li>
+        <li><a href="../company.html"><span class="n" aria-hidden="true">06</span>Company</a></li>
+      </ol>
+      <a class="btn" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <p class="nav-sheet-meta"><span class="nav-live"><i></i>Lifecycle 01 · live on real capital</span><span>Seattle, WA</span></p>
+    </nav>
   </div>
 
   <main id="main">
@@ -68,15 +78,15 @@
     <section class="section article-body-section">
       <div class="container">
         <div class="grid">
-          <aside class="col-3 article-side">
+          <div class="col-3 article-side">
             <div class="sticky blog-side">
               
               <div class="eyebrow mb-2">Financial markets research</div>
               <a class="link-arrow" href="https://timleungresearch.medium.com/modern-trends-in-financial-engineering-987d28db1d83" target="_blank" rel="noopener">Original on timleungresearch.medium.com <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"/></svg></a><a class="link-arrow" href="https://scholar.google.com/citations?user=P40aOHIAAAAJ" target="_blank" rel="noopener">More on financial markets research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"/></svg></a><a class="link-arrow" href="index.html#markets">Financial markets research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a><a class="link-arrow" href="index.html">All posts <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
             </div>
-          </aside>
+          </div>
           <article class="col-7 offset-5 article blog-article">
-            <figure class="blog-hero-img"><img src="../assets/img/blog/blog-011-64988751a675d07f98ffa0f3-5-4c920221.webp" alt="" decoding="async"></figure>
+            <figure class="blog-hero-img"><img src="../assets/img/blog/blog-011-64988751a675d07f98ffa0f3-5-4c920221.webp" alt="" width="1000" height="667" decoding="async"></figure>
             <p>This new book series, <strong>Modern Trends in Financial Engineering</strong>, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.</p><p>The series' objective is to provide cutting-edge mathematical tools and practical financial insights for both academics and professionals in Financial Engineering. The modern trends are motivated by recent market phenomena, new regulations, financial innovations, advanced trading systems and risk management strategies.</p><p>The series will serve as a convenient medium for researchers, including professors, graduate students, and practitioners, to track the frontier research and latest advances in the field of Financial Engineering/Quantitative Finance.</p><p>Here are some volumes in the series (with free book chapters):</p><p><strong>Volume 1: Optimal Mean Reversion Trading</strong>: <em>Mathematical Analysis and Practical Applications</em></p><p>Authors: Tim Leung &amp; Xin Li (<em>Columbia University</em>)</p><p>This book provides a systematic study to the practical problem of optimal trading in the presence of mean-reverting price dynamics. It is self-contained and organized in its presentation, and provides rigorous mathematical analysis as well as computational methods for trading ETFs, options, futures on commodities or volatility indices, and credit risk derivatives.</p><p>It offers a rigorous financial engineering approach that combines novel analytical methodologies and applications to a wide array of real-world examples. Various practical aspects of trading problems, such as model estimation, risk premium, risk constraints, and transaction costs, are also discussed.</p><p>The explanations in the book are detailed enough to capture the interest of the curious student or researcher, and complete enough to give the necessary background material for further exploration into the subject and related literature.</p><p>This book will be a useful tool for anyone interested in financial engineering, particularly algorithmic trading and commodity trading, and would like to understand the mathematically optimal strategies.</p>
             <div class="article-end"><span class="mark" aria-hidden="true"></span><span>Originally published on openexa.com, May 17, 2022. A summary of work first published on timleungresearch.medium.com.</span></div>
           </article>
@@ -85,7 +95,7 @@
     </section>
 
     <section class="section is-paper-2 section--tight">
-      <div class="container"><div class="pager"><a class='pager-card prev' href='leveraged-etfs-price-dynamics-and-options-valuation.html'><span class='k'>← Newer</span><h3>Leveraged ETFs - Price Dynamics and Options Valuation</h3><p>Jun 11, 2022</p></a><a class='pager-card next' href='examining-the-drawdown-risk-of-sector-etfs-2022.html'><span class='k'>Older →</span><h3>Examining the Drawdown Risk of Sector ETFs - 2022</h3><p>Apr 24, 2022</p></a></div></div>
+      <div class="container"><h2 class="sr-only">More posts</h2><div class="pager"><a class='pager-card prev' href='leveraged-etfs-price-dynamics-and-options-valuation.html'><span class='k'>← Newer</span><h3>Leveraged ETFs - Price Dynamics and Options Valuation</h3><p>Jun 11, 2022</p></a><a class='pager-card next' href='examining-the-drawdown-risk-of-sector-etfs-2022.html'><span class='k'>Older →</span><h3>Examining the Drawdown Risk of Sector ETFs - 2022</h3><p>Apr 24, 2022</p></a></div></div>
     </section>
   </main>
 
@@ -96,9 +106,9 @@
           <a class="brand" href="../index.html"><i class="mark"></i>OpenEXA</a>
           <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
         </div>
-        <div><h4>Product</h4><ul><li><a href="../platform.html">Platform</a></li><li><a href="../lifecycles.html">Lifecycles</a></li><li><a href="../evidence.html">Proof</a></li><li><a href="../trust.html">Trust &amp; governance</a></li></ul></div>
-        <div><h4>Company</h4><ul><li><a href="../company.html">About OpenEXA</a></li><li><a href="../research.html">Research</a></li><li><a href="../blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
-        <div><h4>Access</h4><ul><li><a href="../access.html">Request access</a></li><li><a href="../access.html#managers">For managers</a></li><li><a href="../access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+        <div><h2>Product</h2><ul><li><a href="../platform.html">Platform</a></li><li><a href="../lifecycles.html">Lifecycles</a></li><li><a href="../evidence.html">Proof</a></li><li><a href="../trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h2>Company</h2><ul><li><a href="../company.html">About OpenEXA</a></li><li><a href="../research.html">Research</a></li><li><a href="../blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk <span aria-hidden="true">↗</span></a></li></ul></div>
+        <div><h2>Access</h2><ul><li><a href="../access.html">Request access</a></li><li><a href="../access.html#managers">For managers</a></li><li><a href="../access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
       </div>
       <div class="disc">
         <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>

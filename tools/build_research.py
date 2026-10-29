@@ -1,6 +1,7 @@
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
-from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE
+from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
+from meta import HOME, ORG, WEBSITE, FEED_LINKS, ROBOTS, ld, crumbs, atom
 # -*- coding: utf-8 -*-
 """Build the OpenEXA research section from openexa-research-blogs.md:
    research.html (index) + research/NN-slug.html (ten articles), in the requested order 9 · 10 · 1 … 8."""
@@ -27,7 +28,16 @@ FIXES = [
     ("Every fill in our ten live sessions was confirmed through TradeStation or Interactive Brokers before it entered the ledger.",
      "Every fill in our ten live sessions was confirmed by the executing broker before it entered the ledger."),
     ("The execution layer routed to NASDAQ and NYSE.", "The execution layer routed each action to the venue and counterparty the routing layer scored best."),
+    # 2026-10-27: a unit slip (5% a year is ~$0.0002 a day per dollar - a ten-thousandth of a dollar, not of a cent) and
+    # the site-wide rule "Trillions", never $22 trillion
+    ("a dollar earns roughly two ten-thousandths of a cent per day", "a dollar earns roughly two ten-thousandths of a dollar per day"),
+    ("roughly seventeen thousand ETFs holding about twenty-two trillion dollars.", "roughly seventeen thousand ETFs holding trillions of dollars."),
+    # 2026-10-27: the regime split follows the per-session record (Days 03-06 and 08 premium; 01, 02, 07, 09 and 10
+    # discount) that the homepage and the Proof page draw from (#oxa-sessions); the source note says six and four
+    ("Six sessions were in premium regimes, four in discount regimes.", "Five sessions were in premium regimes, five in discount regimes."),
 ]
+PUBLISHED = "2026-09-21"  # the research section went live with v10 (docs/site-history.md); the markdown has no dates
+SERIES_LD = {"@type": "CreativeWorkSeries", "@id": HOME + "research.html#series", "name": "OpenEXA Research", "url": HOME + "research.html"}
 
 def read(p): return io.open(p, encoding="utf-8").read()
 def write(p, s):
@@ -57,7 +67,7 @@ for num, body in zip(chunks[0::2], chunks[1::2]):
         if para.startswith("### "): blocks.append(("h", para[4:].strip()))
         else: blocks.append(("p", " ".join(l.strip() for l in para.split("\n"))))
     words = sum(len(t.split()) for k, t in blocks if k == "p") + (len(dek.split()) if dek else 0)
-    posts[int(num)] = {"num": int(num), "title": title, "dek": dek, "blocks": blocks, "minutes": max(3, round(words / 210))}
+    posts[int(num)] = {"num": int(num), "title": title, "dek": dek, "blocks": blocks, "words": words, "minutes": max(3, round(words / 210))}
 assert sorted(posts) == list(range(1, 11)), sorted(posts)
 
 def inline(t):
@@ -72,11 +82,19 @@ def slugify(t): return re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-")
 index_html = read(os.path.join(ROOT, "index.html"))
 NAV = re.search(r'  <header class="nav">.*?</header>\n  <div class="nav-menu">.*?\n  </div>\n', index_html, re.S).group(0)
 FOOTER = re.search(r'  <footer class="footer">.*?</footer>\n', index_html, re.S).group(0)
+# the Lifecycle 01 sessions: ONE record (#oxa-sessions, on the home and Proof pages) that the chart and every session count
+# are drawn from. The 'sessions' figure (note 09) reads each column's NAV regime from it: data-regimes on its stage, one
+# letter per session (p = premium, d = discount), so the note carries no second copy of the record. Its ten columns are
+# drawn for ten sessions: a record with another count needs that figure and the note looked at, so the build stops.
+SESSIONS = json.loads(re.search(r'<script type="application/json" id="oxa-sessions">(.*?)</script>', index_html, re.S).group(1))["sessions"]
+REGIMES = "".join({"prem": "p", "disc": "d"}.get(str(x.get("regime", "")).strip().lower()[:4], "?") for x in SESSIONS)
+assert len(REGIMES) == 10 and set(REGIMES) <= {"p", "d"}, f"#oxa-sessions: note 09's figure draws ten sessions, each premium or discount; the record gives {REGIMES!r}"
+def stage_data(fig): return f' data-regimes="{REGIMES}"' if fig == "sessions" else ""
 HEAD_LINKS = '''  <link rel="apple-touch-icon" href="{p}assets/img/apple-touch-icon.png">
   <link rel="manifest" href="{p}site.webmanifest">
   <link rel="icon" type="image/svg+xml" href="{p}assets/img/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="{p}assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{p}assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{p}assets/css/site.css">'''
 ARROW = '<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg>'
 OUTB = '<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"/></svg>'
@@ -98,13 +116,17 @@ def og(prefix, url, title, desc):
   <meta property="og:type" content="article">
   <meta property="og:title" content="{H.escape(title, quote=True)}">
   <meta property="og:description" content="{H.escape(desc, quote=True)}">
-  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image" content="{og_image(url)}">
+  <meta property="og:image:alt" content="{H.escape(title, quote=True)}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{H.escape(title, quote=True)}">
   <meta name="twitter:description" content="{H.escape(desc, quote=True)}">
-  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta name="twitter:image" content="{og_image(url)}">
+  {ROBOTS}
+  {FEED_LINKS[0]}
+  {FEED_LINKS[1]}
 {HEAD_LINKS.format(p=prefix)}'''
 
 # ---------------- articles ----------------
@@ -132,10 +154,13 @@ for i, post in enumerate(ordered):
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{H.escape(title)} — OpenEXA Research</title>
 {og("../", url, title + " — OpenEXA Research", dek)}
-  <script type="application/ld+json">{{"@context":"https://schema.org","@type":"TechArticle","headline":{json.dumps(title)},"description":{json.dumps(dek)},"url":"{url}","isPartOf":{{"@type":"Blog","name":"OpenEXA Research","url":"https://www.openexa.com/research.html"}},"publisher":{{"@type":"Organization","name":"OpenEXA","url":"https://www.openexa.com/"}},"author":{{"@type":"Organization","name":"OpenEXA"}},"wordCount":{post["minutes"] * 210}}}</script>
+  {ld({"@type": "TechArticle", "@id": url + "#article", "headline": title, "description": dek, "url": url, "mainEntityOfPage": url,
+        "datePublished": PUBLISHED, "inLanguage": "en", "image": [og_image(url)], "author": ORG, "publisher": ORG,
+        "isPartOf": SERIES_LD, "position": post["order"], "wordCount": post["words"], "timeRequired": f"PT{post['minutes']}M"},
+       crumbs(("Research", HOME + "research.html"), (title, url)))}
 </head>
 <body data-nav="dark-start" class="article-page">
   <a class="skip" href="#main">Skip to content</a>
@@ -143,7 +168,7 @@ for i, post in enumerate(ordered):
 {nav}
   <main id="main">
     <section class="page-hero page-hero--dark is-dark grain article-hero">
-      <div class="figure-stage article-figure" data-figure="{post['fig']}" data-spin="0.10" aria-hidden="true"><canvas></canvas></div>
+      <div class="figure-stage article-figure" data-figure="{post['fig']}"{stage_data(post['fig'])} data-spin="0.10" aria-hidden="true"><canvas></canvas></div>
       <div class="container">
         <div class="article-hero-grid">
           <div>
@@ -159,13 +184,13 @@ for i, post in enumerate(ordered):
     <section class="section article-body-section">
       <div class="container">
         <div class="grid">
-          <aside class="col-3 article-side">
+          <nav class="col-3 article-side" aria-label="In this note">
             <div class="sticky">
               <div class="eyebrow mb-2">In this note</div>
               <ol class="toc" data-toc>{toc}</ol>
               <div class="article-share mt-3"><a class="link-arrow" href="../research.html">All research {ARROW}</a></div>
             </div>
-          </aside>
+          </nav>
           <article class="col-7 offset-5 article">
             {"".join(body)}
             <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder's notes · {post['order']:02d} / {len(ordered):02d}</span></div>
@@ -215,9 +240,14 @@ index_page = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Research — OpenEXA · The thinking behind agentic lifecycles</title>
 {og("", url, "Research — OpenEXA", desc).replace('content="article"', 'content="website"')}
+  {ld({"@type": "CollectionPage", "@id": url + "#webpage", "url": url, "name": "Research — OpenEXA", "description": desc,
+       "isPartOf": WEBSITE, "primaryImageOfPage": og_image(url), "inLanguage": "en",
+       "mainEntity": {"@type": "ItemList", "itemListElement": [
+           {"@type": "ListItem", "position": p["order"], "url": HOME + p["file"], "name": p["title"]} for p in ordered]}},
+      crumbs(("Research", url)), id="ld-research")}
 </head>
 <body data-nav="dark-start" class="research-page">
   <a class="skip" href="#main">Skip to content</a>
@@ -240,7 +270,7 @@ index_page = f'''<!DOCTYPE html>
 
     <section class="section" id="notes">
       <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">01</span><span class="lab">Research notes</span><span class="aside">Start here · the argument from first principles</span></div>
+        <div class="sec-head" data-reveal role="heading" aria-level="2"><span class="idx">01</span><span class="lab">Research notes</span><span class="aside">Start here · the argument from first principles</span></div>
         <ol class="posts-list" data-reveal>
 {chr(10).join(rows[:2])}
         </ol>
@@ -313,6 +343,10 @@ index_page = f'''<!DOCTYPE html>
 '''
 write(os.path.join(ROOT, "research.html"), index_page)
 print("wrote research.html")
+atom(os.path.join(OUT_DIR, "feed.xml"), "OpenEXA Research", "Research notes and the series behind OpenEXA's agentic infrastructure.",
+     url, [{"url": HOME + p["file"], "title": p["title"], "published": PUBLISHED, "updated": PUBLISHED, "author": "OpenEXA",
+            "summary": p["short"]} for p in ordered])
+print("wrote research/feed.xml")
 
 # homepage teaser cards (three featured) → printed for the caller to insert
 featured = [ordered[0], ordered[1], ordered[2]]

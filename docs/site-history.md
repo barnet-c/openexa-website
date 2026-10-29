@@ -227,3 +227,124 @@ At Ajit's request Victor moves to the advisors and Subuddh to the team, each tak
 the team (kicker `SME - AI & ML`, his old About-page label) and Victor is A-05 among the advisors (kicker `Advisor - Strategy &
 Technology`, from his old label `Strategy & Tech`, so no advisor card carries `Chief Product`). Counts stay 5 and 8.
 `verify_v9.py` pins both orders and the slot numbers.
+
+## The 27 Oct pass: speed, sharing, search, security, accessibility and tooling
+
+One branch (`next-level`), every change regenerated through the tools and checked in a real browser. Nothing the owner
+decided was undone; what a visitor can see differently is listed at the end.
+
+**Speed and privacy.** The three typefaces are self-hosted (`site/assets/fonts/`, the same WOFF2 files and subsets
+Google Fonts served, OFL licences alongside; `tools/vendor_fonts.py`), and two are preloaded. First paint no longer
+waits on a four-hop chain through fonts.googleapis.com, and no visitor's IP goes to Google. The research and company figures start their WebGL after first
+paint; the homepage overture starts under its loader and no longer forces a full page layout on every frame
+(it read layout per label per frame). Blog images carry their dimensions, so pages don't
+jump as they load. Fonts and blog images are cached for 30 days, other images for 7 days and portraits for 1.
+
+**Sharing.** Every page has its own 1200x630 share card (`tools/build_og.py`, 48 cards) in the original card's design:
+the page's own headline and description, set in the site's fonts. No names appear on cards.
+
+**Search.** schema.org graphs on every page (Organization + WebSite on the home page, WebPage / AboutPage /
+ContactPage with breadcrumbs, TechArticle for the research notes, BlogPosting for the posts; `tools/meta.py`), Atom
+feeds at `/blog/feed.xml` and `/research/feed.xml`, `/favicon.ico`, a maskable manifest icon, and sitemap dates that
+follow each page's real last change (`data/lastmod.json`).
+
+**Security.** `staticwebapp.config.json` sends a strict Content-Security-Policy (same-origin only, now that nothing
+loads from a third party), Permissions-Policy and X-Frame-Options. Without JavaScript the
+access form can no longer submit its fields in a URL.
+
+**Accessibility.** The access form's four options are reachable by keyboard and screen reader (they were
+`display:none`); focus is visible on the checkbox, chapter rail and sliders; sliders announce what they show; the
+overture's five beats are reachable by screen readers and keyboards; counters hold real values without JavaScript;
+the desk log no longer announces every simulated action; 22 blog images lost a placeholder alt text.
+
+**Robustness.** The overture and figures survive WebGL context loss and follow display-scaling changes; the no-WebGL
+2D fallback actually shows; a shader failure falls back instead of throwing; the homepage loader fades by itself if
+JavaScript never runs.
+
+**Copy.** Research 04's yield-per-day figure was off by 100x (a ten-thousandth of a dollar, not of a cent); research
+09 says "trillions" per the site rule; the overture's proof label says "sessions", not "runs"; the Proof bar label
+reads "<10"; the illustrative ledger's approver is `operator:op-02`; the Access footer link reads "Trust &
+governance"; three bio typos; Philip Bond's faculty-page link is labelled as such; a dead calculator removed.
+
+**Tooling.** `tools/serve.py` previews `site/` the way Azure serves it (headers, CSP, redirects, clean URLs);
+`tools/check_static.py` checks the content rules and metadata on all 50 pages without a browser; the rules live in
+`tools/rules.py`; `.github/workflows/checks.yml` reruns the generators, both static checks and the browser suites on
+every pull request; `tools/requirements.txt` pins the Python packages.
+
+**Visible differences.** The slate grey used for captions and metadata is about 4% darker (`#6F736F` -> `#666966`,
+WCAG AA contrast), in a commit of its own. Keyboard users see focus rings where there were none. Visitors without
+WebGL now see the 2D swarm instead of a blank stage. Everything else looks as it did.
+
+**Second pass (27 Oct, early morning).**
+- *Instant page loads:* a `Speculation-Rules` header makes Chrome and Edge prefetch a page's HTML when its link is
+  hovered (prefetch only, no early script).
+- *Print:* pages, research notes and posts print as ink-on-white documents with everything revealed and the
+  interactive pieces dropped.
+- *Blog:* all 29 article figures (charts, tables, formulas, screenshots) have alt text written from the images
+  themselves (`data/blog_alt.json`). Three broken excerpts from the old site's data are replaced with each post's own
+  words. Card images come in 480/800 px versions through `srcset`, so card images on a 1x desktop drop from 2.1 MB to
+  0.5 MB.
+- *Accessibility:*
+  - Footer headings are `<h2>`.
+  - The research sidebar is a labelled `<nav>`; other `<aside>`s are plain `<div>`s.
+  - Labelled widgets have roles.
+  - The bio buttons name their person.
+  - Reject red on dark grounds swaps to `--reject-bright`, as the green does.
+  - Heading skips are fixed.
+  - Result: axe-core finds 20 issues on the 11 key pages, down from 528. What remains is the decorative wordmark, the
+    nav tagline and the brand green on a selected form option.
+- *Performance:* split-text words no longer keep a GPU layer each.
+- *Checks:* `check_static.py` also fails a build on duplicate ids and on label/ARIA references to missing ids.
+
+## v2: the instruments (27–29 Oct)
+
+The same branch (`next-level`, still a draft pull request) carries a second, larger pass: the homepage overture, the
+swarm, the ledger, the architecture explorer, the lifecycle figures and the proof were rebuilt as instruments that
+show the system working, then refined twice after independent reviews. Colours, type and voice are unchanged. Every
+illustrative simulation is labelled as such, and every counter or outcome it shows is read from its own model state.
+
+**The overture (home, `story.js`).** One structure carries the opening's five scenes: the globe of agents (00), the
+six lifecycle classes as rings with LC-01 live (01), the eight-layer stack with its boundary (02), the stack seen side
+on as one lane of six gates (03) and the ten sessions of Lifecycle 01 (04), whose numbers come from the page's own
+session record (`#oxa-sessions`: 10 of 10 above the 10 bps floor, 5 premium, 5 discount). Copy, callouts and the
+scene index follow the same state in the same frame, and the copy comes to rest on a whole scene when the reader
+stops (the scroll position never moves). Without WebGL, after a lost GPU context and in print the opening is a static
+sequence of plates; under reduced motion its scenes change without animation. Short landscape phones, 320 px screens
+and 400% zoom each have a composed layout.
+
+**The swarm lab (home §03, Platform §03, `swarm.js`).** Proposals enter at the top, pass six gates and meet the
+execution council at gate 04; rejections fall away, and settled actions become records on the lab's ledger line. The
+council's strictness and the population are controls; Halt stops new proposals and lets open work drain. Follow a
+proposal (or click an agent) to trace it gate by gate; once it settles, its record button takes you to the same
+record in the homepage ledger. On Platform the lab lights the agent role cards it runs (signal, strategy, execution
+and reconciliation agents). A slow device sheds trails first, then caps the population, and says so.
+
+**The ledger (home §06, Trust, `ledger.js`, `chain.js`).** Records are hash-linked to the one before. The swarm's
+settlements arrive as digests (one row per batch, with its count and time window), a followed proposal is marked as
+such, and time only moves forward. "Try to change the past" lets a visitor edit any of eight SHA-256-linked records
+and watch that record and every later one stop verifying.
+
+**The architecture explorer (Platform §02, home §02, `arch.js`).** The eight layers open by keyboard, pointer or
+touch, with the boundary between decision and execution drawn; at rest only the proposal flow moves, and it stops
+after eight idle seconds. Platform §05–§07 gained plates in the house style, and the 404 page shows the globe
+rejecting an unknown route.
+
+**Lifecycles (`lane.js`, `gap.js`).** The seven steps as one lane; the desk, an illustrative trading session that
+opens at about 13:30 ET with the morning drawn and logs every action to its own ledger strip; and the orbit of where
+the swarm goes next, placing only the classes the site's own copy names.
+
+**Proof (`proof.js`).** The cost figure is drawn as index blocks with the definitions the homepage uses; Proof §02
+draws the agents' ledger, the broker's confirmations and the reconciliation reports on one record line.
+
+**Navigation (`site.js`, `loader.js`).** A chapter readout in the bar names where you are; long jumps never show a
+blank frame; page exits hold their last frame; the homepage loader lifts on the compositor even when the page is too
+busy to run its scripts. Moving figures have a Pause motion control (WCAG 2.2.2), except in the research notes, which
+are unchanged.
+
+**Checks.** `.github/workflows/checks.yml` runs the browser suites in parallel shards (nine `verify_v9` groups and
+`verify_editorial`) with WebGL on SwiftShader and 2D canvases on the CPU, as on a device without a GPU, each with a
+25-minute limit. `verify_v9.py --swiftshader --cores 4` (or `--cpu-throttle 4`) reproduces CI's conditions on a PC;
+`--gpu` uses the real GPU. `check_static.py` adds guards for the page weight
+budget (site.css at most 66,000 bytes gzipped, the homepage's scripts at most 151,000), hover rules gated by
+`(hover: hover)`, the overture's static fallback, cost definitions, figure labels and table headers.
+`verify_budget.py` (local, real GPU) holds the frame-time and main-thread budgets.

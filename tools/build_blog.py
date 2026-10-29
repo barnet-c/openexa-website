@@ -8,7 +8,8 @@ site/staticwebapp.config.json (old site pages, held-back posts, trailing slashes
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
-from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE
+from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
+from meta import HOME, ORG, FEED_LINKS, ROBOTS, ld, crumbs, atom
 import html as H, io, json, os, re, shutil
 from datetime import datetime
 from pathlib import Path
@@ -38,6 +39,9 @@ COLLECTIONS = [  # key, label, lede
 # Collection 04 "Municipal markets & commentary" (Barnet Sherman's columns and two OpenEXA posts) was removed on
 # 2026-09-29: Barnet is now a customer rather than part of the team. Its posts redirect to the blog index.
 REMOVED_COLLECTIONS = {"munis"}
+# short names for the phone bar's chapter readout (data-chapter-short; site.js uses them only where the label does not fit).
+# Each must fit the readout line at 360 px (126 px), or the whole bar falls back to '§NN / 03'
+SHORT = {"ai": "AI & agents", "markets": "Markets", "economics": "Economics"}
 def collection(p):
     a = p["author"]
     if a.startswith("Ajit"): return "ai"
@@ -54,6 +58,22 @@ FIXES = [
     (r",? such as Interactive Brokers,?", ""),
 ]
 FORBIDDEN = re.compile(r"NASDAQ|NYSE|TradeStation|Interactive Brokers|DTCC", re.I)
+# descriptions broken in the old site's data (they feed the cards, meta descriptions and feeds), replaced with each
+# post's own words: one cut off mid-word, one copied from another post, one that was just the book's title
+DESC = {
+    "buying-high-and-selling-low-stock-repurchases-and-persistent-asymmetric-information":
+        "Analyzes a dynamic version of Myers and Majluf's classic model. Equilibria feature repurchases, even though all firms want to raise cash.",
+    "the-real-effects-of-financial-markets":
+        "An essential topic in financial economics is investigating whether financial markets exert an influence on the actual economy.",
+    "employee-stock-options-exercise-timing-hedging-and-valuation":
+        "Employee stock options (ESOs) are an integral component of compensation in the US. In fact, almost all S&P 500 companies grant options to their top executives.",
+}
+ALT = json.load(open(DATA / "blog_alt.json", encoding="utf-8")) if (DATA / "blog_alt.json").exists() else {}  # body-image alt text, written by looking at each image
+# The old site's stand-in hero for research summaries: clip-art (a cap, a book and stars) over a misspelled
+# 'RESERCH IN FINANCE · BY OUR TEAM' (legacy content, as scraped). It is never published: those cards are drawn as
+# plates instead (.blog-card--plate: the collection label over the collection's mark), and those posts open on their
+# article hero with no image. Images inside article bodies are untouched.
+PLACEHOLDER = {"blog-028-649e320f57bee709f474e657-research-0fc3c7b1.webp"}
 
 def read(p): return io.open(p, encoding="utf-8").read()
 def write(p, s):
@@ -97,14 +117,69 @@ def clean_body(p):
     assert not re.search(r'href="/', b), (p["slug"], re.findall(r'href="(/[^"]*)"', b))
     def img(m):
         src = m.group(1); alt = (re.search(r'alt="([^"]*)"', m.group(0)) or [None, ""])[1]
+        if alt == "__wf_reserved_inherit": alt = ""  # a Webflow placeholder, not a description: screen readers read it out
         name = src.rsplit("/", 1)[-1]
+        alt = alt or ALT.get(name, "")
         shutil.copyfile(OLD / "img" / name, IMG / name) if (OLD / "img" / name).exists() else None
-        return f'<img src="../assets/img/blog/{name}" alt="{esc(alt)}" loading="lazy" decoding="async">'
+        return f'<img src="../assets/img/blog/{name}" alt="{esc(alt)}"{size(name)} loading="lazy" decoding="async">'
     b = re.sub(r'<img[^>]*src="(/graphics/[^"]+)"[^>]*>', img, b)
     b = re.sub(r"<figure>\s*(<img[^>]+>)\s*</figure>", r"<figure>\1</figure>", b)
     b = re.sub(r"<p>\s*(<img[^>]+>)\s*</p>", r"<figure>\1</figure>", b)
     b = re.sub(r"(?<!<figure>)(<img[^>]+>)(?!</figure>)", r"<figure>\1</figure>", b)
+    levels = [int(n) for n in re.findall(r"<h([2-6])[\s>]", b)]
+    if levels and min(levels) > 2:  # no h2 under the page's h1: shift the post's headings up, class keeps the old look
+        k = min(levels) - 2
+        assert not re.search(r"<h[3-6]\s", b), (p["slug"], "heading with attributes")
+        b = re.sub(r"<h([3-6])>", lambda m: f'<h{int(m.group(1)) - k} class="h{m.group(1)}">', b)
+        b = re.sub(r"</h([3-6])>", lambda m: f"</h{int(m.group(1)) - k}>", b)
     return b.strip()
+
+def dims(name):
+    """(width, height) of a blog image as optimise() will leave it (at most 1800 px wide), or None."""
+    from PIL import Image
+    if not (OLD / "img" / name).exists(): return None
+    w, h = Image.open(OLD / "img" / name).size
+    return (1800, round(h * 1800 / w)) if w > 1800 else (w, h)
+def size(name):
+    """width/height attributes for a blog image, so the page reserves its box."""
+    d = dims(name)
+    return f' width="{d[0]}" height="{d[1]}"' if d else ""
+# card-size copies of each hero image for the blog cards' srcset: a card is ~440 px wide, a hero up to 1800
+THUMB_W = (480, 800)
+# one sizes value for the cards and the (smaller) series rail, so a post shown in both loads the same file once
+CARD_SIZES = "(max-width: 640px) calc(100vw - 40px), (max-width: 1080px) calc(50vw - 40px), min(440px, 31vw)"
+def card_widths(name):
+    """Widths of the card-size copies made for a hero: none for transparent images (a lossy copy comes out larger than
+    the original) or for images wider than the 16:9 card (object-fit: cover crops them, so they need full width)."""
+    from PIL import Image
+    d = dims(name)
+    if not d: return []
+    im = Image.open(OLD / "img" / name)
+    if im.mode in ("RGBA", "LA", "P") or d[0] / d[1] > 16 / 9 * 1.02: return []
+    return [t for t in THUMB_W if t < d[0]]
+def thumb(name, sizes):
+    d = dims(name); stem = name.rsplit(".", 1)[0]
+    ws = card_widths(name)
+    src = f"{PFX}assets/img/blog/"
+    if not ws: return f'<img src="{src}{name}" alt=""{size(name)} loading="lazy" decoding="async">'
+    srcset = ", ".join([f"{src}{stem}-{t}w.webp {t}w" for t in ws] + [f"{src}{name} {d[0]}w"])
+    return f'<img src="{src}{stem}-{ws[-1]}w.webp" srcset="{srcset}" sizes="{sizes}" alt=""{size(name)} loading="lazy" decoding="async">'
+# The collection's mark at plate scale (round 2, PG-R2-8): Market structure & economics draws six inclined rings in ink,
+# one green, the rings Company §05 and the Lifecycles plate draw; the constellation turns a few degrees from card to card
+# (by the post's place in its collection), so a row of plates reads as one family, not one picture pasted. A collection
+# without a drawn mark keeps the fine-bead globe.
+RINGS = ((58, 23, -18), (86, 30, 13), (112, 46, -6), (138, 44, 17), (162, 64, -11), (186, 60, 4))  # rx, ry, tilt
+def mark(p):
+    if p["col"] != "economics": return '<i class="bp-mark"></i>'
+    cx, cy, turn = 212, 130, (-8, -2, 4, 10)[[q["slug"] for q in by_col[p["col"]]].index(p["slug"]) % 4]
+    green, k_ = ' class="g"', .72  # .72: the constellation keeps clear of the plate's edges and of its label
+    rings = "".join(f'<ellipse{green if k == 0 else ""} cx="{cx}" cy="{cy}" rx="{rx * k_:g}" ry="{ry * k_:g}" transform="rotate({rot + turn} {cx} {cy})"/>'
+                    for k, (rx, ry, rot) in enumerate(RINGS))
+    return f'<svg class="bp-rings" viewBox="0 0 400 225" focusable="false"><g>{rings}</g></svg>'
+def plate(p, cls):
+    """A plate in place of the legacy placeholder image: the collection label over the collection's mark. No title: the
+    card's h3 says it right under the plate. aria-hidden: the label is the section the post sits in."""
+    return f'<div class="{cls} blog-plate" aria-hidden="true"><span class="bp-k">{esc(LABEL[p["col"]])}</span>{mark(p)}</div>'
 
 if IMG.exists(): shutil.rmtree(IMG)  # rebuilt from the scraped originals every time
 IMG.mkdir(parents=True, exist_ok=True)
@@ -117,9 +192,11 @@ for p in kept:
             req = urllib.request.Request("https://www.openexa.com" + src, headers={"User-Agent": "Mozilla/5.0 openexa-archive/1.0"})
             (OLD / "img" / name).write_bytes(urllib.request.urlopen(req, timeout=40).read())
     p["body"] = clean_body(p)
+    p["description"] = DESC.get(p["slug"], p["description"])
     p["title"] = re.sub(r"\s+", " ", p["title"]).strip()
     for pat, rep in FIXES: p["title"] = re.sub(pat, rep, p["title"]); p["description"] = re.sub(pat, rep, p["description"])
     assert not FORBIDDEN.search(p["body"] + p["title"] + p["description"]), (p["slug"], FORBIDDEN.findall(p["body"]))
+    if p.get("hero_file") in PLACEHOLDER: p["hero_file"], p["plate"] = None, True
     if p.get("hero_file"):
         shutil.copyfile(OLD / "img" / p["hero_file"], IMG / p["hero_file"])
     words = len(plain(p["body"]).split())
@@ -148,7 +225,7 @@ def head(url, title, desc, kind="article", extra=""):
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{esc(title)}</title>
   <meta name="description" content="{esc(desc)}">
   <meta name="theme-color" content="#0E1512">
@@ -158,18 +235,22 @@ def head(url, title, desc, kind="article", extra=""):
   <meta property="og:type" content="{kind}">
   <meta property="og:title" content="{esc(title)}">
   <meta property="og:description" content="{esc(desc)}">
-  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:image" content="{og_image(url)}">
+  <meta property="og:image:alt" content="{esc(title)}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{esc(title)}">
   <meta name="twitter:description" content="{esc(desc)}">
-  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta name="twitter:image" content="{og_image(url)}">
+  {ROBOTS}
+  {FEED_LINKS[0]}
+  {FEED_LINKS[1]}
   <link rel="apple-touch-icon" href="{PFX}assets/img/apple-touch-icon.png">
   <link rel="manifest" href="{PFX}site.webmanifest">
   <link rel="icon" type="image/svg+xml" href="{PFX}assets/img/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="{PFX}assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{PFX}assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{PFX}assets/css/site.css">
 {extra}</head>'''
 span = lambda a, b: f"{a}" if a == b else f"{a}–{b}"
@@ -177,6 +258,14 @@ fmt = lambda d: d.strftime("%b %-d, %Y") if os.name != "nt" else d.strftime("%b 
 LABEL = {k: l for k, l, _ in COLLECTIONS}
 FIG = {"ai": "swarm", "markets": "horizon", "economics": "council", "munis": "ledger"}  # figure.js formations
 BASE = "https://www.openexa.com/blog/"
+BLOG_LD = {"@type": "Blog", "@id": BASE + "#blog", "name": "OpenEXA Blog", "url": BASE}
+def person(byline):
+    """schema.org author for a byline ("Tim Leung, Ph.D." -> a Person with the credential as honorificSuffix)."""
+    if byline == "OpenEXA": return ORG
+    m = re.match(r"^(.*?), *(Ph[.]D[.])$", byline)
+    who = {"@type": "Person", "name": m.group(1) if m else byline, "url": HOME + "company.html#team"}
+    if m: who["honorificSuffix"] = m.group(2)
+    return who
 def href(p): return p["source"] if p["stub"] else f'{p["slug"]}.html'
 
 # the 2024 Gen-AI series (Ajit): an introduction and a three-part finance series that cross-link one another
@@ -193,9 +282,9 @@ nav, foot = chrome()
 series_cards = []
 for i, (s, part, short) in enumerate(SERIES):
     p = SLUGS[s]
-    thumb = f'<div class="blog-thumb"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt="" loading="lazy" decoding="async"></div>' if p.get("hero_file") else ""
+    thumb_html = f'<div class="blog-thumb">{thumb(p["hero_file"], CARD_SIZES)}</div>' if p.get("hero_file") else plate(p, "blog-thumb") if p.get("plate") else ""
     series_cards.append(f'''          <li><a class="series-card" href="{s}.html">
-            <span class="series-n">{i:02d}</span>{thumb}
+            <span class="series-n">{i:02d}</span>{thumb_html}
             <div class="k"><span>{esc(part)} · {esc(short)}</span><span>{p["minutes"]} min</span></div>
             <h3>{esc(p["title"])}</h3>
             <span class="link-arrow">{fmt(p["dt"])} {ARROW}</span>
@@ -208,7 +297,7 @@ FEATURED = f'''    <section class="section is-paper-2 blog-series" id="series" d
           <div class="col-6"><h2 class="display-2" data-reveal data-split>{SERIES_NAME}: from business model to AI agents.</h2></div>
           <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Four posts by Ajit K Dubey, written in 2024. They set out where generative AI creates value, then work one financial use case end to end: relative value analysis, guardrails and tearsheets, and the AI copilots and autonomous agents they make possible. It's the line of thinking that became OpenEXA.</p><a class="link-arrow mt-3" href="{SERIES[0][0]}.html">Start with the introduction {ARROW}</a></div>
         </div>
-        <ol class="series-rail" data-reveal style="--d:120ms">
+        <ol class="series-rail" role="list" data-reveal style="--d:120ms">
 {chr(10).join(series_cards)}
         </ol>
       </div>
@@ -220,14 +309,14 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     cards = []
     for p in by_col[k]:
         ext = p["stub"]
-        thumb = f'<div class="blog-thumb"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt="" loading="lazy" decoding="async"></div>' if p.get("hero_file") else ""
-        cards.append(f'''          <a class="blog-card" href="{esc(href(p))}"{' target="_blank" rel="noopener"' if ext else ''}>
-            {thumb}<div class="blog-card-body"><div class="k"><span>{fmt(p["dt"])}</span><span>{esc(p["author"])}</span></div>
+        thumb_html = f'<div class="blog-thumb">{thumb(p["hero_file"], CARD_SIZES)}</div>' if p.get("hero_file") else plate(p, "blog-thumb") if p.get("plate") else ""
+        cards.append(f'''          <a class="blog-card{' blog-card--plate' if p.get('plate') else ''}" href="{esc(href(p))}"{' target="_blank" rel="noopener"' if ext else ''}>
+            {thumb_html}<div class="blog-card-body"><div class="k"><span>{fmt(p["dt"])}</span><span>{esc(p["author"])}</span></div>
             <h3>{esc(p["title"])}</h3><p>{esc(p["excerpt"])}</p>
             <span class="link-arrow">{("Read on " + re.sub(r"^www\.", "", re.search(r"//([^/]+)", p["source"]).group(1)) + " " + OUTB) if ext else (str(p["minutes"]) + " min read " + ARROW)}</span></div>
           </a>''')
     more = f'<a class="link-arrow mt-3 scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a>' if k == "markets" else ""
-    sections.append(f'''    <section class="section{' is-paper-2' if n % 2 == 0 else ''} blog-collection" id="{k}" data-blog-collection="{k}">
+    sections.append(f'''    <section class="section{' is-paper-2' if n % 2 == 0 else ''} blog-collection" id="{k}" data-blog-collection="{k}" data-chapter-short="{esc(SHORT[k])}">
       <div class="container">
         <div class="sec-head" data-reveal><span class="idx">{n:02d}</span><span class="lab">{esc(label)}</span><span class="aside">{len(by_col[k])} posts · {span(by_col[k][-1]["dt"].year, by_col[k][0]["dt"].year)}</span></div>
         <div class="grid mb-3">
@@ -241,7 +330,11 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     </section>''')
 years = sorted(p["dt"].year for p in kept)
 desc = f"The OpenEXA blog: {len(kept)} posts from {years[0]} to {years[-1]} on AI agents in finance, financial markets research and market structure."
-page = head(BASE, "Blog — OpenEXA", desc, "website").replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
+blog_ld = ld(dict(BLOG_LD, description=desc, inLanguage="en", publisher=ORG, blogPost=[
+    {"@type": "BlogPosting", "headline": p["title"], "url": BASE + p["slug"] + ".html", "datePublished": p["dt"].strftime("%Y-%m-%d"),
+     "author": person(p["author"])} for p in sorted(kept, key=lambda p: p["dt"], reverse=True) if not p["stub"]]),
+    crumbs(("Blog", BASE)))
+page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n").replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
 <body data-nav="dark-start" class="blog-page">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -300,14 +393,18 @@ for p in order:
     i = sib.index(p); prev = sib[i - 1] if i else None; nxt = sib[i + 1] if i + 1 < len(sib) else None
     src_host = re.sub(r"^www\.", "", re.search(r"//([^/]+)", p["source"]).group(1)) if p["source"] else ""
     url = BASE + p["slug"] + ".html"
-    ld = {"@context": "https://schema.org", "@type": "BlogPosting", "headline": p["title"], "description": p["excerpt"], "url": url,
-          "datePublished": p["dt"].strftime("%Y-%m-%d"), "author": {"@type": "Person" if p["author"] != "OpenEXA" else "Organization", "name": p["author"]},
-          "publisher": {"@type": "Organization", "name": "OpenEXA", "url": "https://www.openexa.com/"}, "isPartOf": {"@type": "Blog", "name": "OpenEXA Blog", "url": BASE}}
-    if p["source"]: ld["isBasedOn"] = p["source"]
+    post_ld = {"@type": "BlogPosting", "@id": url + "#article", "headline": p["title"], "description": p["excerpt"], "url": url,
+               "mainEntityOfPage": url, "datePublished": p["dt"].strftime("%Y-%m-%d"), "inLanguage": "en", "image": [og_image(url)],
+               "author": person(p["author"]), "publisher": ORG, "isPartOf": BLOG_LD, "articleSection": LABEL[p["col"]],
+               "timeRequired": f"PT{p['minutes']}M"}
+    if p["source"]: post_ld["isBasedOn"] = p["source"]
     side_links = [f'<a class="link-arrow" href="index.html#{p["col"]}">{esc(LABEL[p["col"]])} {ARROW}</a>', f'<a class="link-arrow" href="index.html">All posts {ARROW}</a>']
     if p["source"]: side_links.insert(0, f'<a class="link-arrow" href="{esc(p["source"])}" target="_blank" rel="noopener">Original on {esc(src_host)} {OUTB}</a>')
     if p["col"] == "markets": side_links.insert(1, f'<a class="link-arrow" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a>')
-    hero_img = f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt="" decoding="async"></figure>' if p.get("hero_file") else ""
+    # a plate post opens on its dark article hero alone (it carries the figure): no plate repeating the h1, and no empty
+    # line where the image would stand (PG-R2-8)
+    hero_img = (f'            <figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt=""{size(p["hero_file"])} decoding="async"></figure>\n' if p.get("hero_file")
+                else "")
     pager = "".join([
         f"<a class='pager-card prev' href='{prev['slug']}.html'><span class='k'>← Newer</span><h3>{esc(prev['title'])}</h3><p>{fmt(prev['dt'])}</p></a>" if prev else f"<a class='pager-card prev' href='index.html'><span class='k'>← The blog</span><h3>All {len(kept)} posts</h3><p>{esc(LABEL[p['col']])} and {len(COLLECTIONS) - 1} more collections.</p></a>",
         f"<a class='pager-card next' href='{nxt['slug']}.html'><span class='k'>Older →</span><h3>{esc(nxt['title'])}</h3><p>{fmt(nxt['dt'])}</p></a>" if nxt else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>Research →</span><h3>The thinking behind the swarm.</h3><p>Two research notes and an eight-part series.</p></a>",
@@ -318,15 +415,16 @@ for p in order:
         crumb = f'<a href="index.html#series">{SERIES_NAME}</a>'
         meta_extra = f"<span>{esc(part)} · post {j + 1} of {len(SERIES)}</span>"
         items = "".join(f'<li{" aria-current=\"true\"" if s == p["slug"] else ""}><a href="{s}.html"><span>{i:02d}</span><span><b>{esc(pt)}</b>{esc(sh)}</span></a></li>' for i, (s, pt, sh) in enumerate(SERIES))
-        series_box = f'<div class="series-box"><div class="eyebrow mb-2">{SERIES_NAME}</div><ol>{items}</ol></div>'
+        series_box = f'<div class="series-box"><div class="eyebrow mb-2">{SERIES_NAME}</div><ol role="list">{items}</ol></div>'
         sp = SLUGS[SERIES[j - 1][0]] if j else None; sn = SLUGS[SERIES[j + 1][0]] if j + 1 < len(SERIES) else None
         pager = "".join([
             f"<a class='pager-card prev' href='{sp['slug']}.html'><span class='k'>← {esc(SERIES[j - 1][1])}</span><h3>{esc(sp['title'])}</h3><p>{fmt(sp['dt'])}</p></a>" if sp else f"<a class='pager-card prev' href='index.html#series'><span class='k'>← {SERIES_NAME}</span><h3>Four posts, from business model to AI agents.</h3><p>2024 · {series_minutes} min in total</p></a>",
             f"<a class='pager-card next' href='{sn['slug']}.html'><span class='k'>{esc(SERIES[j + 1][1])} →</span><h3>{esc(sn['title'])}</h3><p>{fmt(sn['dt'])}</p></a>" if sn else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>What came next →</span><h3>The thinking behind the swarm.</h3><p>The research notes and eight-part series behind OpenEXA's agentic infrastructure.</p></a>",
         ])
-        ld["isPartOf"] = {"@type": "CreativeWorkSeries", "name": f"{SERIES_NAME} - OpenEXA Blog", "url": BASE + "#series"}; ld["position"] = j
+        post_ld["isPartOf"] = [BLOG_LD, {"@type": "CreativeWorkSeries", "name": f"{SERIES_NAME} - OpenEXA Blog", "url": BASE + "#series"}]
+        post_ld["position"] = j + 1
     note = f"Originally published on openexa.com, {fmt(p['dt'])}." + (f" A summary of work first published on {src_host}." if p["source"] else "")
-    page = head(url, f'{p["title"]} — OpenEXA Blog', p["excerpt"], "article", f'  <script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n') + f'''
+    page = head(url, f'{p["title"]} — OpenEXA Blog', p["excerpt"], "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (p["title"], url)))}\n') + f'''
 <body data-nav="dark-start" class="article-page blog-post">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -344,16 +442,15 @@ for p in order:
     <section class="section article-body-section">
       <div class="container">
         <div class="grid">
-          <aside class="col-3 article-side">
+          <div class="col-3 article-side">
             <div class="sticky blog-side">
               {series_box}
               <div class="eyebrow mb-2">{esc(LABEL[p["col"]])}</div>
               {"".join(side_links)}
             </div>
-          </aside>
+          </div>
           <article class="col-7 offset-5 article blog-article">
-            {hero_img}
-            {p["body"]}
+{hero_img}            {p["body"]}
             <div class="article-end"><span class="mark" aria-hidden="true"></span><span>{esc(note)}</span></div>
           </article>
         </div>
@@ -361,7 +458,7 @@ for p in order:
     </section>
 
     <section class="section is-paper-2 section--tight">
-      <div class="container"><div class="pager">{pager}</div></div>
+      <div class="container"><h2 class="sr-only">More posts</h2><div class="pager">{pager}</div></div>
     </section>
   </main>
 
@@ -372,12 +469,15 @@ for p in order:
 </html>
 '''
     write(OUT / f'{p["slug"]}.html', page)
+atom(OUT / "feed.xml", "OpenEXA Blog", "AI agents in finance, financial markets research and market structure.", BASE,
+     [{"url": BASE + p["slug"] + ".html", "title": p["title"], "published": p["dt"].strftime("%Y-%m-%d"), "updated": p["dt"].strftime("%Y-%m-%d"),
+       "author": p["author"], "summary": p["excerpt"]} for p in sorted(kept, key=lambda p: p["dt"], reverse=True) if not p["stub"]])
 
 # ---------------- summary for the research index ----------------
 json.dump({"total": len(kept), "years": [years[0], years[-1]],
            "series": {"name": SERIES_NAME, "first": SERIES[0][0], "count": len(SERIES), "minutes": series_minutes},
            "collections": [{"key": k, "label": l, "count": len(by_col[k]), "years": [by_col[k][-1]["dt"].year, by_col[k][0]["dt"].year], "lede": lede} for k, l, lede in COLLECTIONS]},
-          open(FILES / "blog_summary.json", "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+          open(FILES / "blog_summary.json", "w", encoding="utf-8", newline="\n"), indent=2, ensure_ascii=False)
 
 # ---------------- routes for Azure Static Web Apps (site/staticwebapp.config.json) ----------------
 # Azure serves /company as company.html and /blog as blog/index.html on its own. These rules only cover URLs that
@@ -404,13 +504,42 @@ for p in posts:
     else: routes.append(rd(f"/blog/{s}", f"/blog/{s}.html"))
 _norm = [r["route"].rstrip("/").rstrip("*").lower() for r in routes]
 assert len(set(_norm)) == len(_norm), "Azure rejects routes that differ only by a trailing slash"
+# Security headers for every response. Nothing inline executes (the JSON-LD blocks are data, which CSP does not govern)
+# and every font, image and script is same-origin, so the policy is strict; the pages' style="" attributes (and the
+# ones the engines set) need style-src-attr. form-action 'none': the access form only builds a mailto draft in JS, and
+# without JS it must not submit itself (its fields would land in a GET URL). Add a form endpoint's origin to
+# connect-src if one is ever configured (data-endpoint, see site.js). No Cross-Origin-Opener-Policy: it makes Lighthouse
+# (and so PageSpeed Insights) fail with NO_NAVSTART, and a static site with no sessions gains next to nothing from it.
+CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; "
+       "img-src 'self' data:; connect-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'none'; "
+       "frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests")
+HEADERS = {
+    "Content-Security-Policy": CSP,
+    "Permissions-Policy": "accelerometer=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), "
+                          "hid=(), magnetometer=(), microphone=(), midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=()",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "same-origin",
+    "X-Content-Type-Options": "nosniff",
+    # instant navigation: Chrome/Edge prefetch a page's HTML when a link is hovered (prefetch only - no script runs early)
+    "Speculation-Rules": '"/speculation.specrules"',
+}
+# Longer caching for assets whose content rarely changes; HTML, CSS and JS keep Azure's revalidate-after-30 s default
+# because their URLs carry no version. Most specific first: the first matching route wins.
+CACHE = [
+    ("/assets/fonts/*", "public, max-age=2592000, stale-while-revalidate=86400"),   # rename the files if the fonts change
+    ("/assets/img/blog/*", "public, max-age=2592000, stale-while-revalidate=86400"),
+    ("/assets/img/team/*", "public, max-age=86400, stale-while-revalidate=604800"),
+    ("/assets/img/og/*", "public, max-age=604800, stale-while-revalidate=86400"),
+    ("/assets/img/*", "public, max-age=604800, stale-while-revalidate=86400"),
+]
 CONFIG = {
-    "routes": routes,
+    "routes": [{"route": r, "headers": {"Cache-Control": c}} for r, c in CACHE] + routes,
     "responseOverrides": {"404": {"rewrite": "/404.html", "statusCode": 404}},
-    "mimeTypes": {".webmanifest": "application/manifest+json"},
+    "globalHeaders": HEADERS,
+    "mimeTypes": {".webmanifest": "application/manifest+json", ".specrules": "application/speculationrules+json"},
 }
 ONE = lambda o: json.dumps(o, ensure_ascii=False, separators=(", ", ": "))  # one route per line: compact but diffable
-io.open(ROOT / "staticwebapp.config.json", "w", encoding="utf-8", newline="\n").write("{\n  \"routes\": [\n" + ",\n".join("    " + ONE(r) for r in routes) + "\n  ],\n  \"responseOverrides\": " + ONE(CONFIG["responseOverrides"]) + ",\n  \"mimeTypes\": " + ONE(CONFIG["mimeTypes"]) + "\n}\n")
+io.open(ROOT / "staticwebapp.config.json", "w", encoding="utf-8", newline="\n").write("{\n  \"routes\": [\n" + ",\n".join("    " + ONE(r) for r in CONFIG["routes"]) + "\n  ],\n" + "".join(f'  "{k}": {ONE(CONFIG[k])},\n' for k in ("responseOverrides", "globalHeaders")) + "  \"mimeTypes\": " + ONE(CONFIG["mimeTypes"]) + "\n}\n")
 if (ROOT / "_redirects").exists(): (ROOT / "_redirects").unlink()  # Netlify-only; Azure would serve it as a public file
 # the same old-URL map, for tools/verify_redirects.py
 rules = []
@@ -422,7 +551,7 @@ for p in posts:
     else: rules.append(f"/blog/{s}/  /blog/{s}.html  301")
 for p in kept: rules.append(f'/research/blog/{p["slug"]}.html  /blog/{p["slug"]}.html  301')
 rules.append("/research/blog/  /blog/  301")
-(FILES / "blog_redirects.txt").write_text("\n".join(rules) + "\n", encoding="utf-8")
+(FILES / "blog_redirects.txt").write_text("\n".join(rules) + "\n", encoding="utf-8", newline="\n")
 
 # ---------------- image optimisation (in place; deterministic) ----------------
 from PIL import Image
@@ -438,6 +567,11 @@ def optimise(path):
     if tmp.stat().st_size < path.stat().st_size: tmp.replace(path)
     else: tmp.unlink()
 for f in IMG.iterdir(): optimise(f)
+for p in kept:  # the card-size copies thumb() refers to
+    if not p.get("hero_file"): continue
+    im = Image.open(IMG / p["hero_file"]).convert("RGB"); w, h = im.size; stem = p["hero_file"].rsplit(".", 1)[0]
+    for t in card_widths(p["hero_file"]):
+        im.resize((t, round(h * t / w)), Image.LANCZOS).save(IMG / f"{stem}-{t}w.webp", "WEBP", quality=82, method=6)
 
 # ---------------- report ----------------
 imgs = list(IMG.iterdir())

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+  <title>OpenEXA Research</title>
+  <subtitle>Research notes and the series behind OpenEXA&#x27;s agentic infrastructure.</subtitle>
+  <link rel="self" type="application/atom+xml" href="https://www.openexa.com/research/feed.xml"/>
+  <link rel="alternate" type="text/html" href="https://www.openexa.com/research.html"/>
+  <id>https://www.openexa.com/research.html</id>
+  <updated>2026-09-21T00:00:00Z</updated>
+  <author><name>OpenEXA</name><uri>https://www.openexa.com/</uri></author>
+  <icon>https://www.openexa.com/assets/img/icon-192.png</icon>
+  <logo>https://www.openexa.com/assets/img/icon-512.png</logo>
+  <entry>
+    <title>Compounding Error and the Case for Decomposition. A Research Note on Agent Architecture</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/research/01-compounding-error.html"/>
+    <id>https://www.openexa.com/research/01-compounding-error.html</id>
+    <published>2026-09-21T00:00:00Z</published>
+    <updated>2026-09-21T00:00:00Z</updated>
+    <author><name>OpenEXA</name></author>
+    <summary>Why long-horizon autonomous work must be decomposed into narrow agents behind a deterministic boundary.</summary>
+  </entry>
+  <entry>
+    <title>Specializing a Model to a Rulebook and Proving What It Did. A Research Note on Post-Training and Audit</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/research/02-post-training-and-audit.html"/>
+    <id>https://www.openexa.com/research/02-post-training-and-audit.html</id>
+    <published>2026-09-21T00:00:00Z</published>
+    <updated>2026-09-21T00:00:00Z</updated>
+    <author><name>OpenEXA</name></author>
+    <summary>How a general model comes to follow one rulebook, and how a hash-chained ledger proves what it did.</summary>
+  </entry>
+  <entry>
+    <title>Not Tasks. Lifecycles. Why We Stopped Building Assistants</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/research/03-not-tasks-lifecycles.html"/>
+    <id>https://www.openexa.com/research/03-not-tasks-lifecycles.html</id>
+    <published>2026-09-21T00:00:00Z</published>
+    <updated>2026-09-21T00:00:00Z</updated>
+    <author><name>OpenEXA</name></author>
+    <summary>Why we stopped building assistants and changed the unit of work to the lifecycle.</summary>
+  </entry>
+  <entry>
+    <title>Why Five Thousand Small Agents Beat One Large One</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/research/04-five-thousand-small-agents.html"/>
+    <id>https://www.openexa.com/research/04-five-thousand-small-agents.html</id>
+    <published>2026-09-21T00:00:00Z</published>
+    <updated>2026-09-21T00:00:00Z</updated>
+    <author><name>OpenEXA</name></author>
+    <summary>Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.</summary>
+  </entry>
+  <entry>
+    <title>Agents Decide. Code Executes. The One Boundary That Matters</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/research/05-agents-decide-code-executes.html"/>
+    <id>https://www.openexa.com/research/05-agents-decide-code-executes.html</id>
+    <published>2026-09-21T00:00:00Z</published>
+    <updated>2026-09-21T00:00:00Z</updated>
+    <author><name>OpenEXA</name></author>
+    <summary>Eight layers, one boundary. The top four estimate; the bottom four are deterministic code.</summary>
+  </entry>
+  <entry>
+    <title>Post-Training a Model on a Rulebook, Not on the Internet</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/research/06-post-training-on-a-rulebook.html"/>
+    <id>https://www.openexa.com/research/06-post-training-on-a-rulebook.html</id>
+    <published>2026-09-21T00:00:00Z</published>
+    <updated>2026-09-21T00:00:00Z</updated>
+    <author><name>OpenEXA</name></author>
+    <summary>Closing the gap between a model that knows finance and one that knows this lifecycle.</summary>
+  </entry>
+  <entry>
+    <title>The Execution Council. Governance in Milliseconds</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/research/07-the-execution-council.html"/>
+    <id>https://www.openexa.com/research/07-the-execution-council.html</id>
+    <published>2026-09-21T00:00:00Z</published>
+    <updated>2026-09-21T00:00:00Z</updated>
+    <author><name>OpenEXA</name></author>
+    <summary>Governance in milliseconds: what the council checks, three operating modes, and the kill switch.</summary>
+  </entry>
+  <entry>
+    <title>A Ledger Nobody Can Edit. Hash Chains as Audit Infrastructure</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/research/08-a-ledger-nobody-can-edit.html"/>
+    <id>https://www.openexa.com/research/08-a-ledger-nobody-can-edit.html</id>
+    <published>2026-09-21T00:00:00Z</published>
+    <updated>2026-09-21T00:00:00Z</updated>
+    <author><name>OpenEXA</name></author>
+    <summary>Append-only, hash-chained, replayable. Why a record an administrator can edit is only a claim.</summary>
+  </entry>
+  <entry>
+    <title>Lifecycle 01. What Ten Sessions on Real Markets Taught Us</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/research/09-lifecycle-01-ten-sessions.html"/>
+    <id>https://www.openexa.com/research/09-lifecycle-01-ten-sessions.html</id>
+    <published>2026-09-21T00:00:00Z</published>
+    <updated>2026-09-21T00:00:00Z</updated>
+    <author><name>OpenEXA</name></author>
+    <summary>What ten live sessions on real capital showed, precisely what they did not, and where the cost goes.</summary>
+  </entry>
+  <entry>
+    <title>Master and Copy. How a Proven Agent Becomes a Platform</title>
+    <link rel="alternate" type="text/html" href="https://www.openexa.com/research/10-master-and-copy.html"/>
+    <id>https://www.openexa.com/research/10-master-and-copy.html</id>
+    <published>2026-09-21T00:00:00Z</published>
+    <updated>2026-09-21T00:00:00Z</updated>
+    <author><name>OpenEXA</name></author>
+    <summary>How a proven agent becomes a platform: prove one, master and copy, then open the rails.</summary>
+  </entry>
+</feed>

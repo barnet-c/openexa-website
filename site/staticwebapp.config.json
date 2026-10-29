@@ -1,5 +1,10 @@
 {
   "routes": [
+    {"route": "/assets/fonts/*", "headers": {"Cache-Control": "public, max-age=2592000, stale-while-revalidate=86400"}},
+    {"route": "/assets/img/blog/*", "headers": {"Cache-Control": "public, max-age=2592000, stale-while-revalidate=86400"}},
+    {"route": "/assets/img/team/*", "headers": {"Cache-Control": "public, max-age=86400, stale-while-revalidate=604800"}},
+    {"route": "/assets/img/og/*", "headers": {"Cache-Control": "public, max-age=604800, stale-while-revalidate=86400"}},
+    {"route": "/assets/img/*", "headers": {"Cache-Control": "public, max-age=604800, stale-while-revalidate=86400"}},
     {"route": "/strategies", "redirect": "/lifecycles", "statusCode": 301},
     {"route": "/trust-risk", "redirect": "/trust", "statusCode": 301},
     {"route": "/status", "redirect": "/evidence", "statusCode": 301},
@@ -89,5 +94,6 @@
     {"route": "/blog/history-of-ai-and-cryptocurrency", "redirect": "/blog/", "statusCode": 301}
   ],
   "responseOverrides": {"404": {"rewrite": "/404.html", "statusCode": 404}},
-  "mimeTypes": {".webmanifest": "application/manifest+json"}
+  "globalHeaders": {"Content-Security-Policy": "default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests", "Permissions-Policy": "accelerometer=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), hid=(), magnetometer=(), microphone=(), midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=()", "X-Frame-Options": "DENY", "Referrer-Policy": "same-origin", "X-Content-Type-Options": "nosniff", "Speculation-Rules": "\"/speculation.specrules\""},
+  "mimeTypes": {".webmanifest": "application/manifest+json", ".specrules": "application/speculationrules+json"}
 }

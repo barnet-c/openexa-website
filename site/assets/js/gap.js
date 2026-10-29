@@ -1,88 +1,211 @@
-/* OpenEXA — the desk: an illustrative model of one trading session.
+/* OpenEXA — the desk: an illustrative model of one trading session of Lifecycle 01 (Lifecycles §03).
    The gap (price minus NAV, in basis points) wanders as an Ornstein–Uhlenbeck process with occasional flow shocks.
-   Whenever it runs past the threshold, an agent acts: create above NAV, redeem below, pulling the gap back toward zero.
-   Nothing here is market data. */
+   Whenever it runs past the threshold a strategy agent proposes: create above NAV, redeem below. The proposal is a ring
+   at the crossing; a few session minutes later it fills, the ring squares up, the gap is pulled back, and the action is
+   sealed as a record on the ledger strip (one block per record; each link carries the first 8 hex of the SHA-256 of the
+   record it leaves, computed here, or no hex at all where the browser has no crypto.subtle).
+   The panel opens with the day already run to about 13:30 ET (the trace covers most of the plot at first sight) and runs
+   on through the afternoon. Every counter is read from the model's state; the strip keeps the records it can show and
+   counts the rest in a leading '+N earlier records' line, so its records plus N always equal creates plus redeems.
+   "Follow the next action" runs the session quickly (but drawn, at most a session minute a frame) to the next proposal,
+   holds the model and walks that proposal down the six gates, one line per gate, then lands its record in the strip.
+   Off screen, in a hidden tab or paused, nothing runs. Under reduced motion the panel is a still of the whole session;
+   the sliders redraw it. Nothing here is market data. */
 (function () {
   'use strict';
   const root = document.querySelector('[data-gap]');
   if (!root) return;
   const cv = root.querySelector('[data-gap-canvas]');
-  const ctx = cv.getContext('2d');
+  const ctx = cv && cv.getContext('2d');
+  if (!ctx) return;
   const $ = (s) => root.querySelector(s);
   const el = {
     time: $('[data-gap-time]'), creates: $('[data-gap-creates]'), redeems: $('[data-gap-redeems]'), avg: $('[data-gap-avg]'),
     log: $('[data-gap-log]'), thr: $('[data-gap-thr]'), thrOut: $('[data-gap-thr-out]'), n: $('[data-gap-n]'), nOut: $('[data-gap-n-out]'),
-    state: $('[data-gap-state]'),
+    state: $('[data-gap-state]'), follow: $('[data-gap-follow]'), lane: $('[data-gap-lane]'), say: $('[data-gap-say]'),
+    dot: $('.desk-head .live i'),
   };
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const IVORY = '245, 242, 236', KHAKI = '172, 166, 142', GREEN = '79, 203, 147';
+  const IVORY = '245, 242, 236', KHAKI = '172, 166, 142', GREEN = '79, 203, 147', GROUND = '27, 34, 31';
 
   /* ---------------- model ---------------- */
   const SESSION = 390;            // minutes, 09:30 → 16:00 ET
-  const SPEED = 8.5;              // session minutes per real second → one session ≈ 45 s
+  const SPEED = 8.5;              // session minutes per real second
   const STEP = 0.25;              // integration step, minutes
   const KAPPA = 0.02, SIGMA = 2.1; // OU mean reversion / volatility (bps per √minute)
+  const WARM = 240;               // the panel opens at 13:30 ET with the day so far drawn ...
+  const WARM_MAX = 275;           // ... and on an open proposal when one comes before 14:05
+  const FILL = 12;                // session minutes from proposal to fill
   let seed = 11;
   const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
   const randn = () => { let u = 0, v = 0; while (u === 0) u = rnd(); while (v === 0) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185 * v); };
 
-  let thr = 6, agents = 2000;
-  const S = { t: 0, g: 0, samples: [], actions: [], marks: [], cooldown: 0, creates: 0, redeems: 0, sumGap: 0, done: 0, nextJump: 0 };
-  function reset() {
-    S.t = 0; S.g = (rnd() - 0.5) * 6; S.samples = [[0, S.g]]; S.actions = []; S.marks = []; S.cooldown = 0;
-    S.creates = 0; S.redeems = 0; S.sumGap = 0; S.done = 0; S.nextJump = 20 + rnd() * 60;
-  }
+  let thr = 6, agents = 2000, live = false;
+  const S = { t: 0, g: 0, samples: [], acts: [], cooldown: 0, creates: 0, redeems: 0, sumGap: 0, done: 0, nextJump: 0 };
   const cooldownFor = () => { const f = Math.log10(agents / 500) / 2; return 42 - 38 * Math.min(1, Math.max(0, f)); }; // 500 agents: every ~40 min · 50,000: every ~4 min
   const pullFor = () => 0.45 + 0.4 * Math.min(1, Math.max(0, Math.log10(agents / 500) / 2));
 
-  function step(dt) {
-    let left = dt * SPEED;
+  function reset() {
+    S.t = 0; S.g = (rnd() - 0.5) * 6; S.samples = [[0, S.g]]; S.acts = []; S.cooldown = 0;
+    S.creates = 0; S.redeems = 0; S.sumGap = 0; S.done = 0; S.nextJump = 20 + rnd() * 60;
+    dropped = 0; more = null;
+    if (el.log) { el.log.replaceChildren(); el.log.classList.remove('has-more'); }
+  }
+  // integrate the session by `mins` minutes (stops early once a followed proposal exists)
+  function advance(mins) {
+    let left = mins;
     while (left > 0 && S.t < SESSION) {
       const h = Math.min(STEP, left); left -= h;
       S.g += -KAPPA * S.g * h + SIGMA * Math.sqrt(h) * randn();
       if (S.t >= S.nextJump) { S.g += (rnd() < 0.5 ? -1 : 1) * (6 + rnd() * 9); S.nextJump = S.t + 30 + rnd() * 70; }
       S.t += h; S.cooldown -= h;
-      if (Math.abs(S.g) > thr && S.cooldown <= 0) act();
+      for (const a of S.acts) if (!a.filled && !a.held && S.t >= a.tf) fill(a);
+      if (Math.abs(S.g) > thr && S.cooldown <= 0) propose();
       if (S.samples[S.samples.length - 1][0] < S.t - 0.5) S.samples.push([S.t, S.g]);
+      if (follow.state === 'waiting' && follow.act) break;
     }
-    if (S.t >= SESSION && !S.done) { S.done = performance.now(); S.samples.push([SESSION, S.g]); }
+    if (S.t >= SESSION && !S.done) {
+      S.acts.forEach(a => { if (!a.filled && !a.held) fill(a); }); // the close fills what is still open
+      S.done = performance.now(); S.samples.push([SESSION, S.g]);
+    }
   }
-  function act() {
-    const create = S.g > 0, gap = Math.abs(S.g);
-    const shares = Math.round((25 + rnd() * 175) / 5) * 5000;
-    S.actions.push({ t: S.t, g: S.g, create, shares, at: performance.now() });
-    S.marks.push({ t: S.t, create });
-    if (create) S.creates++; else S.redeems++;
-    S.sumGap += gap;
-    S.g -= S.g * pullFor();
+  function propose() {
+    const a = { t: S.t, g: S.g, create: S.g > 0, tf: S.t + FILL, filled: false, at: 0, held: false, followed: false, rec: null };
+    S.acts.push(a);
     S.cooldown = cooldownFor() * (0.6 + rnd() * 0.8);
-    log(S.t, create, shares, gap);
+    if (follow.state === 'waiting' && !follow.act) { a.held = true; follow.act = a; }
+    if (live) ping();
+  }
+  function fill(a) {
+    a.filled = true; a.at = live ? performance.now() : 0;
+    S.g -= S.g * pullFor();
+    if (a.create) S.creates++; else S.redeems++;
+    S.sumGap += Math.abs(a.g);
+    a.rec = record(a);
+    fresh = true; // the counters are rewritten in the same frame as the strip, never a tick later
+  }
+  // a session opens with the day so far run: to 13:30 ET, then on to the next proposal (if one comes before 14:05).
+  // A follow asked for while a session closed waits through it: following is suspended during the warm advance (so the
+  // new session is not cut short at its first proposal) and then picks up the open proposal, if the warm start left one.
+  function warm() {
+    const keep = follow.state;
+    follow.state = 'idle';
+    live = false;
+    reset();
+    advance(WARM);
+    // a waiting follow wants the next action: the warm start runs on to the next proposal (up to 15:00), not just 14:05
+    const upTo = keep === 'waiting' ? SESSION - 60 : WARM_MAX;
+    let guard = 0;
+    while (!S.acts.some(a => !a.filled) && S.t < upTo && guard++ < 2000) advance(STEP);
+    live = true;
+    follow.state = keep;
+    if (keep === 'waiting' && !follow.act) {
+      const open = S.acts.find(a => !a.filled);
+      if (open) { open.held = true; follow.act = open; }
+    }
+    trim();
+  }
+
+  /* ---------------- the ledger strip: records, chained by real SHA-256 where the browser has it ---------------- */
+  const subtle = window.crypto && window.crypto.subtle && window.isSecureContext ? window.crypto.subtle : null;
+  const GENESIS = '0'.repeat(64);
+  let chain = Promise.resolve(GENESIS), seq = 0;
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const clock = (m) => { const total = 9 * 60 + 30 + m; return `${pad2(Math.floor(total / 60))}:${pad2(Math.floor(total % 60))}`; };
+  const hexOf = (buf) => Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, '0')).join('');
+  function record(a) {
+    const rec = { seq: ++seq, kind: a.create ? 'CREATE' : 'REDEEM', clock: clock(a.t), gap: `${a.create ? '+' : '-'}${Math.abs(a.g).toFixed(1)}`, hash: null, li: null, h: null };
+    if (el.log) {
+      const li = document.createElement('li');
+      li.className = 'dk-rec ' + (a.create ? 'is-c' : 'is-r') + (live ? ' is-new' : '');
+      const ev = document.createElement('span'); ev.className = 'dk-ev';
+      // one ink for both sides; the side is a glyph: ▲ price above NAV (create), ▼ below (redeem)
+      const side = document.createElement('i'); side.className = 'dk-side'; side.setAttribute('aria-hidden', 'true');
+      const b = document.createElement('b'); b.textContent = rec.kind;
+      ev.append(side, b, ` · ${rec.clock}`);
+      const line = document.createElement('span'); line.className = 'dk-line'; line.setAttribute('aria-hidden', 'true');
+      const blk = document.createElement('i'); blk.className = 'dk-blk';
+      const link = document.createElement('span'); link.className = 'dk-link';
+      const h = document.createElement('span'); h.className = 'dk-h';
+      link.append(h); line.append(blk, link);
+      li.append(ev, line);
+      el.log.append(li);
+      if (live) trim();
+      rec.li = li; rec.h = h;
+    }
+    if (subtle) {
+      const body = `OXA-DESK|${rec.seq}|${rec.kind}|${rec.clock}|${rec.gap}`;
+      chain = chain.then(prev => subtle.digest('SHA-256', new TextEncoder().encode(`${body}|${prev}`)).then(buf => {
+        rec.hash = hexOf(buf);
+        if (rec.h) rec.h.textContent = rec.hash.slice(0, 8);
+        return rec.hash;
+      })).catch(() => GENESIS);
+    }
+    return rec;
+  }
+  // the strip keeps as many records as it can show (the oldest of them may sit in the fade at its left edge) and counts
+  // the rest in a leading line, '+N earlier records': records kept + N = creates + redeems, always
+  let dropped = 0, more = null;
+  function capacity() {
+    const recs = el.log.querySelectorAll(':scope > .dk-rec');
+    const W = el.log.clientWidth - (parseFloat(getComputedStyle(el.log).paddingRight) || 0);
+    if (W <= 0 || !recs.length) return 40; // not laid out (hidden): keep a generous number until it is
+    const w = recs[0].offsetWidth || 124, wl = recs[recs.length - 1].offsetWidth || w;
+    return Math.max(2, 1 + Math.ceil(Math.max(0, W - wl) / w));
+  }
+  function trim() {
+    if (!el.log) return;
+    const recs = el.log.querySelectorAll(':scope > .dk-rec');
+    const n = recs.length - capacity();
+    for (let i = 0; i < n; i++) { recs[i].remove(); dropped++; }
+    if (!dropped) return;
+    if (!more) { more = document.createElement('li'); more.className = 'dk-more'; }
+    if (el.log.firstElementChild !== more) el.log.prepend(more);
+    more.dataset.n = dropped;
+    more.textContent = `+${dropped} earlier record${dropped === 1 ? '' : 's'}`;
+    el.log.classList.add('has-more');
   }
 
   /* ---------------- ui ---------------- */
-  const pad2 = (n) => String(n).padStart(2, '0');
-  const clock = (m) => { const total = 9 * 60 + 30 + m; return `${pad2(Math.floor(total / 60))}:${pad2(Math.floor(total % 60))}`; };
-  function log(t, create, shares, gap) {
-    if (!el.log) return;
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="t">${clock(t)}</span><b class="${create ? 'c' : 'r'}">${create ? 'CREATE' : 'REDEEM'}</b><span>${shares.toLocaleString('en-US')} sh</span><span class="g">${create ? '+' : '−'}${gap.toFixed(1)} bps</span>`;
-    el.log.prepend(li);
-    while (el.log.children.length > 7) el.log.lastElementChild.remove();
+  let shownClock = '';
+  function showClock() {
+    const c = `${clock(Math.min(SESSION, S.t))} ET`;
+    if (c !== shownClock && el.time) { el.time.textContent = c; shownClock = c; }
   }
+  const fmtAgents = (n) => n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n);
+  let paused = false;
   function stats() {
     if (el.creates) el.creates.textContent = S.creates;
     if (el.redeems) el.redeems.textContent = S.redeems;
     const n = S.creates + S.redeems;
     if (el.avg) el.avg.textContent = n ? (S.sumGap / n).toFixed(1) : '0.0';
-    if (el.time) el.time.textContent = `${clock(Math.min(SESSION, S.t))} ET`;
-    if (el.state) el.state.textContent = reduced.matches ? 'Static session' : paused ? 'Model paused' : S.done ? 'Session complete' : 'Model running';
-    root.classList.toggle('is-closed', !!S.done);
+    showClock();
+    if (el.state) el.state.textContent = reduced.matches ? 'Static session' : follow.state !== 'idle' ? 'Following an action' : paused ? 'Model paused' : S.done ? 'Session complete' : 'Model running';
+    root.classList.toggle('is-closed', !!S.done && follow.state === 'idle');
+    // open proposals (rings on the chart), for tests and assistive tools: written only when it changes
+    const open = String(S.acts.filter(a => !a.filled).length);
+    if (root.dataset.gapOpen !== open) root.dataset.gapOpen = open;
   }
-  const fmtAgents = (n) => n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n);
-  if (el.thr) el.thr.addEventListener('input', () => { thr = +el.thr.value; if (el.thrOut) el.thrOut.textContent = thr; if (reduced.matches) staticStudy(); else draw(); });
-  if (el.n) el.n.addEventListener('input', () => { agents = Math.round(500 * Math.pow(100, el.n.value / 100) / 100) * 100; if (el.nOut) el.nOut.textContent = fmtAgents(agents); if (reduced.matches) staticStudy(); });
-  if (el.thrOut) el.thrOut.textContent = thr;
-  if (el.nOut) el.nOut.textContent = fmtAgents(agents);
+  // the agent slider is log-scaled: screen readers announce what the outputs show, not the raw position
+  const showThr = () => { if (el.thrOut) el.thrOut.textContent = `${thr} bps`; if (el.thr) el.thr.setAttribute('aria-valuetext', `${thr} bps`); };
+  const showN = () => { if (el.nOut) el.nOut.textContent = fmtAgents(agents); if (el.n) el.n.setAttribute('aria-valuetext', `${fmtAgents(agents)} agents`); };
+  if (el.thr) { thr = +el.thr.value; el.thr.addEventListener('input', () => { thr = +el.thr.value; showThr(); if (reduced.matches) still(); else draw(); }); }
+  if (el.n) {
+    const read = () => Math.round(500 * Math.pow(100, el.n.value / 100) / 100) * 100;
+    agents = read();
+    el.n.addEventListener('input', () => { agents = read(); showN(); if (reduced.matches) still(); });
+  }
+  showThr(); showN();
+  // the state dot pings once when an agent proposes (an event, not a loop)
+  let pingT = 0;
+  function ping() {
+    if (!el.dot) return;
+    el.dot.classList.remove('is-ping');
+    clearTimeout(pingT);
+    void el.dot.offsetWidth;
+    el.dot.classList.add('is-ping');
+    pingT = setTimeout(() => el.dot.classList.remove('is-ping'), 700);
+  }
 
   /* ---------------- drawing ---------------- */
   let W = 0, H = 0, dpr = 1, hover = null;
@@ -97,29 +220,62 @@
     PADR = W < 600 ? 74 : 92;
     cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     draw();
+    // a narrower strip shows fewer records: the rest join the count, once the size has settled (a passing resize, such
+    // as a page capture's, never drops records)
+    clearTimeout(trimT); trimT = setTimeout(trim, 300);
+  }
+  let trimT = 0;
+  const ease = (p) => 1 - Math.pow(1 - p, 3);
+  function mark(a, now) {
+    // a proposal is a ring at its crossing; filled, it squares up over 220 ms and stays a settled square
+    const x = xOf(a.t), y = yOf(a.g);
+    const p = a.filled ? (a.at ? Math.min(1, (now - a.at) / 220) : 1) : 0, e = ease(p);
+    const s = 11 - 3.4 * e, r = (s / 2) * (1 - e) + 1 * e;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x - s / 2, y - s / 2, s, s, r);
+    else if (e < 0.5) ctx.arc(x, y, s / 2, 0, 6.283);
+    else ctx.rect(x - s / 2, y - s / 2, s, s);
+    ctx.fillStyle = `rgba(${GROUND}, 1)`; ctx.fill();
+    if (e > 0) { ctx.fillStyle = `rgba(${GREEN}, ${0.92 * e})`; ctx.fill(); }
+    ctx.lineWidth = 1.5; ctx.strokeStyle = `rgba(${GREEN}, ${1 - 0.6 * e})`; ctx.stroke();
+    if (a.followed || a === follow.act) {
+      ctx.lineWidth = 1; ctx.strokeStyle = `rgba(${GREEN}, .55)`;
+      ctx.beginPath(); ctx.arc(x, y, 13, 0, 6.283); ctx.stroke();
+      ctx.strokeStyle = `rgba(${GREEN}, .2)`; ctx.beginPath(); ctx.arc(x, y, 19, 0, 6.283); ctx.stroke();
+    }
   }
   function draw() {
+    const now = performance.now();
     ctx.clearRect(0, 0, W, H);
     ctx.font = '500 10px "IBM Plex Mono", monospace'; ctx.textBaseline = 'middle';
+    // the labels on the right: the threshold's two keep a label's height clear of NAV's, and a grid value that would
+    // print under either of them is left out (its hairline stays)
+    const yT = yOf(thr), yB = yOf(-thr), x0 = PADL, x1 = W - PADR, LH = 13, yN = yOf(0);
+    const yTl = Math.min(yT, yN - LH), yBl = Math.max(yB, yN + LH);
     // grid + axes
-    for (const g of [-20, -10, 10, 20]) { ctx.strokeStyle = `rgba(${IVORY}, .07)`; ctx.beginPath(); ctx.moveTo(PADL, yOf(g)); ctx.lineTo(W - PADR, yOf(g)); ctx.stroke(); ctx.fillStyle = `rgba(${IVORY}, .4)`; ctx.textAlign = 'left'; ctx.fillText(`${g > 0 ? '+' : '−'}${Math.abs(g)}`, W - PADR + 10, yOf(g)); }
-    ctx.textAlign = 'center'; ctx.fillStyle = `rgba(${IVORY}, .4)`;
+    for (const g of [-20, -10, 10, 20]) {
+      const y = yOf(g);
+      ctx.strokeStyle = `rgba(${IVORY}, .07)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(PADL, y); ctx.lineTo(W - PADR, y); ctx.stroke();
+      if (Math.abs(y - yTl) >= LH && Math.abs(y - yBl) >= LH) { ctx.fillStyle = `rgba(${IVORY}, .45)`; ctx.textAlign = 'left'; ctx.fillText(`${g > 0 ? '+' : '−'}${Math.abs(g)}`, W - PADR + 10, y); }
+    }
+    ctx.textAlign = 'center'; ctx.fillStyle = `rgba(${IVORY}, .45)`;
     const every = W < 600 ? 2 : 1;
     for (let h = 10; h <= 16; h++) { const t = (h - 9.5) * 60; if ((h - 10) % every === 0) ctx.fillText(`${pad2(h)}:00`, xOf(t), H - 12); ctx.fillRect(xOf(t) - .5, H - PADB + 2, 1, 4); }
-    // threshold band
-    const yT = yOf(thr), yB = yOf(-thr);
-    ctx.fillStyle = `rgba(${GREEN}, .035)`; ctx.fillRect(PADL, yT, W - PADL - PADR, yB - yT);
-    ctx.setLineDash([3, 5]); ctx.strokeStyle = `rgba(${GREEN}, .35)`;
-    for (const y of [yT, yB]) { ctx.beginPath(); ctx.moveTo(PADL, y); ctx.lineTo(W - PADR, y); ctx.stroke(); }
-    ctx.setLineDash([]);
-    ctx.fillStyle = `rgba(${GREEN}, .8)`; ctx.textAlign = 'left'; ctx.fillText(`+${thr} create`, W - PADR + 10, yT); ctx.fillText(`−${thr} redeem`, W - PADR + 10, yB);
-    // NAV
-    ctx.strokeStyle = `rgba(${KHAKI}, .9)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(PADL, yOf(0)); ctx.lineTo(W - PADR, yOf(0)); ctx.stroke();
-    ctx.fillStyle = `rgba(${KHAKI}, 1)`; ctx.fillText('NAV', W - PADR + 10, yOf(0));
-    // worked gap: shade between threshold and price where the swarm is active
+    // the threshold: two boundary hairlines, each with a soft glow band on the side the agents work
+    for (const [y, dir] of [[yT, -1], [yB, 1]]) {
+      const gr = ctx.createLinearGradient(0, y, 0, y + dir * 16);
+      gr.addColorStop(0, `rgba(${GREEN}, .16)`); gr.addColorStop(1, `rgba(${GREEN}, 0)`);
+      ctx.fillStyle = gr; ctx.fillRect(x0, Math.min(y, y + dir * 16), x1 - x0, 16);
+      ctx.strokeStyle = `rgba(${GREEN}, .75)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y + .5 * -dir); ctx.lineTo(x1, y + .5 * -dir); ctx.stroke();
+    }
+    ctx.fillStyle = `rgba(${GREEN}, .9)`; ctx.textAlign = 'left'; ctx.fillText(`+${thr} create`, W - PADR + 10, yTl); ctx.fillText(`−${thr} redeem`, W - PADR + 10, yBl);
+    // NAV: a dashed hairline
+    ctx.setLineDash([3, 4]); ctx.strokeStyle = `rgba(${KHAKI}, .9)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, Math.round(yN) + .5); ctx.lineTo(x1, Math.round(yN) + .5); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = `rgba(${KHAKI}, 1)`; ctx.fillText('NAV', W - PADR + 10, yN);
     const s = S.samples;
     if (s.length > 1) {
-      ctx.fillStyle = `rgba(${GREEN}, .16)`;
+      // worked gap: where price runs past the threshold, the swarm is at work
+      ctx.fillStyle = `rgba(${GREEN}, .13)`;
       for (let i = 1; i < s.length; i++) {
         const [t0, g0] = s[i - 1], [t1, g1] = s[i];
         if (Math.abs(g0) > thr && Math.abs(g1) > thr && Math.sign(g0) === Math.sign(g1)) {
@@ -127,36 +283,19 @@
           ctx.beginPath(); ctx.moveTo(xOf(t0), base); ctx.lineTo(xOf(t0), yOf(g0)); ctx.lineTo(xOf(t1), yOf(g1)); ctx.lineTo(xOf(t1), base); ctx.closePath(); ctx.fill();
         }
       }
-      // price path
+      // price
       ctx.strokeStyle = `rgba(${IVORY}, .92)`; ctx.lineWidth = 1.4; ctx.lineJoin = 'round'; ctx.beginPath();
       s.forEach(([t, g], i) => { i ? ctx.lineTo(xOf(t), yOf(g)) : ctx.moveTo(xOf(t), yOf(g)); });
       ctx.stroke();
-      // settled marks on NAV
-      S.marks.forEach(m => { ctx.fillStyle = `rgba(${GREEN}, .9)`; ctx.fillRect(xOf(m.t) - 1, yOf(0) - (m.create ? 5 : 0), 2, 5); });
-      // live head
+      // the head of the session
       const [lt, lg] = s[s.length - 1];
-      if (!S.done) { const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300); ctx.fillStyle = `rgba(${IVORY}, ${0.25 * pulse})`; ctx.beginPath(); ctx.arc(xOf(lt), yOf(lg), 7 + 3 * pulse, 0, 6.283); ctx.fill(); }
+      if (!S.done) { ctx.fillStyle = `rgba(${IVORY}, .16)`; ctx.beginPath(); ctx.arc(xOf(lt), yOf(lg), 8, 0, 6.283); ctx.fill(); }
       ctx.fillStyle = `rgba(${IVORY}, 1)`; ctx.beginPath(); ctx.arc(xOf(lt), yOf(lg), 2.6, 0, 6.283); ctx.fill();
     }
-    // agents in flight: fall from the price to NAV, then a ripple on the line
-    const now = performance.now();
-    S.actions.forEach(a => {
-      const age = (now - a.at) / 1000; if (age > 1.6) return;
-      const x = xOf(a.t), y0 = yOf(a.g), y1 = yOf(0);
-      if (age < 0.7) {
-        const p = age / 0.7, e = 1 - Math.pow(1 - p, 3);
-        const y = y0 + (y1 - y0) * e;
-        ctx.strokeStyle = `rgba(${GREEN}, ${0.5 * (1 - p)})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y); ctx.stroke();
-        ctx.fillStyle = `rgba(${GREEN}, 1)`; ctx.beginPath(); ctx.arc(x, y, 3.2, 0, 6.283); ctx.fill();
-        ctx.fillStyle = `rgba(${GREEN}, .35)`; ctx.beginPath(); ctx.arc(x, y, 7, 0, 6.283); ctx.fill();
-      } else {
-        const p = (age - 0.7) / 0.9;
-        ctx.strokeStyle = `rgba(${GREEN}, ${0.7 * (1 - p)})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y1, 4 + 16 * p, 0, 6.283); ctx.stroke();
-      }
-      if (age < 1.2) { ctx.fillStyle = `rgba(${GREEN}, ${Math.min(1, 2 - age * 1.6)})`; ctx.textAlign = 'center'; ctx.fillText(a.create ? 'CREATE' : 'REDEEM', x, (a.create ? y0 - 12 : y0 + 12)); }
-    });
+    // proposals and settled actions, at their crossings
+    S.acts.forEach(a => mark(a, now));
     // hover readout
-    if (hover && s.length > 1) {
+    if (hover !== null && s.length > 1) {
       const t = Math.min(SESSION, Math.max(0, (hover - PADL) / (W - PADL - PADR) * SESSION));
       if (t <= s[s.length - 1][0]) {
         let lo = 0, hi = s.length - 1; while (lo < hi) { const mid = (lo + hi) >> 1; if (s[mid][0] < t) lo = mid + 1; else hi = mid; }
@@ -172,22 +311,122 @@
     }
   }
 
+  /* ---------------- follow the next action: one proposal, walked down the six gates ---------------- */
+  const follow = { state: 'idle', act: null, k: 0, wt: 0, waitT: 0, timers: [] };
+  const STEP_MS = 1000;
+  const GATES = ['Signal', 'Predict', 'Decide', 'Approve', 'Execute', 'Settle'];
+  function lineFor(k, a) {
+    const side = a.create ? 'above' : 'below', what = a.create ? 'a create' : 'a redeem';
+    return [
+      `${clock(a.t)} ET: price runs ${Math.abs(a.g).toFixed(1)} bps ${side} NAV, past the ${thr} bps threshold.`,
+      'Models score the persistence of the gap and the risk of moving against it.',
+      `A strategy agent proposes ${what}: price is ${side} NAV.`,
+      'The execution council approves it, against policy.',
+      'Past the boundary, execution agents route it across the rails.',
+      'Settled, matched to broker truth and hash-chained into the ledger.',
+    ][k - 1];
+  }
+  let ring = null;
+  if (el.lane) { ring = document.createElement('i'); ring.className = 'dl-ring'; ring.setAttribute('aria-hidden', 'true'); el.lane.append(ring); }
+  function setLane(k) {
+    if (!el.lane) return;
+    if (k) { el.lane.dataset.on = k; el.lane.style.setProperty('--k', k); } else delete el.lane.dataset.on;
+    el.lane.querySelectorAll('li').forEach(li => { const g = +li.dataset.g; li.classList.toggle('is-past', !!k && g < k); li.classList.toggle('is-on', g === k); });
+  }
+  function say(text, gate) {
+    if (!el.say) return;
+    el.say.replaceChildren();
+    if (gate) { const b = document.createElement('b'); b.textContent = `${pad2(gate)} ${GATES[gate - 1]}`; el.say.append(b, ' '); }
+    el.say.append(text);
+  }
+  function setFollowButton(on) {
+    if (!el.follow) return;
+    el.follow.setAttribute('aria-pressed', String(on)); // a toggle keeps its label; the pressed state says it is on
+    root.classList.toggle('is-following', on);
+  }
+  // the walk happens on the lane and lands in the ledger strip: when either is off screen as a follow starts (a phone, a
+  // short window, the desk scrolled half away), scroll the least that brings both in under the bar
+  function walkIntoView() {
+    const a = el.lane && (el.lane.closest('.desk-lane') || el.lane), z = (el.log && el.log.closest('.desk-ledger')) || a;
+    if (!a) return;
+    const top = Math.min(a.getBoundingClientRect().top, z.getBoundingClientRect().top);
+    const bottom = Math.max(a.getBoundingClientRect().bottom, z.getBoundingClientRect().bottom);
+    const lo = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0) + 12, hi = window.innerHeight - 12;
+    let dy = 0;
+    if (bottom - top > hi - lo || top < lo) dy = top - lo; // taller than the room: the lane first
+    else if (bottom > hi) dy = bottom - hi;
+    if (Math.abs(dy) > 1) window.scrollBy({ top: dy, behavior: reduced.matches ? 'instant' : 'smooth' });
+  }
+  function startFollow() {
+    if (reduced.matches) { stillFollow(); return; }
+    follow.state = 'waiting'; follow.act = null; follow.k = 0; follow.wt = 0; follow.waitT = 0;
+    setFollowButton(true); setLane(0);
+    say('Following the next action the model produces. Esc stops.');
+    if (paused) togglePause();
+    // a proposal already on the chart (a ring not yet settled) is the next action: walk it at once
+    const open = !S.done && S.acts.find(a => !a.filled && !a.held);
+    if (open) { open.held = true; follow.act = open; follow.state = 'walking'; follow.wt = 0; walk(1); }
+    stats();
+    // measured once the head reads 'Following an action' (on some widths the longer state wraps the head onto a new row)
+    walkIntoView();
+    requestFrame(); // otherwise the model runs fast to the next one; a closed session hands over at the next frame
+  }
+  function stopFollow(msg) {
+    follow.timers.forEach(clearTimeout); follow.timers = [];
+    if (follow.act && !follow.act.filled) { follow.act.held = false; follow.act.followed = false; }
+    follow.state = 'idle'; follow.act = null; follow.k = 0;
+    setFollowButton(false); setLane(0);
+    if (msg) say(msg);
+    stats(); draw(); requestFrame();
+  }
+  function walk(k) {
+    follow.k = k; setLane(k); say(lineFor(k, follow.act), k);
+  }
+  function land() {
+    const a = follow.act;
+    a.held = false; a.followed = true;
+    fill(a);
+    if (a.rec && a.rec.li) a.rec.li.classList.add('is-followed');
+    follow.state = 'idle'; follow.act = null;
+    setFollowButton(false);
+    follow.timers.push(setTimeout(() => { if (follow.state === 'idle') setLane(0); }, 1600));
+    stats();
+  }
+  // under reduced motion the panel is a still: the follow walks its last action through the gates without motion
+  function stillFollow() {
+    const a = [...S.acts].reverse().find(x => x.filled);
+    follow.timers.forEach(clearTimeout); follow.timers = [];
+    if (!a) { say('This session has no action to follow.'); return; }
+    follow.state = 'walking'; follow.act = a; setFollowButton(true); stats(); walkIntoView();
+    for (let k = 1; k <= 6; k++) follow.timers.push(setTimeout(() => { if (follow.act === a) walk(k); }, (k - 1) * STEP_MS));
+    follow.timers.push(setTimeout(() => {
+      if (follow.act !== a) return;
+      root.querySelectorAll('.dk-rec.is-followed').forEach(li => li.classList.remove('is-followed'));
+      if (a.rec && a.rec.li) a.rec.li.classList.add('is-followed');
+      follow.state = 'idle'; follow.act = null; setFollowButton(false); stats();
+    }, 6 * STEP_MS));
+  }
+  if (el.follow) {
+    el.follow.hidden = false;
+    el.follow.addEventListener('click', () => { if (follow.state === 'idle') startFollow(); else stopFollow('Stopped following.'); });
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && follow.state !== 'idle') stopFollow('Stopped following.'); });
+
   /* ---------------- loop ---------------- */
-  let visible = false, last = performance.now(), uiTick = 0, frameId = 0, paused = false;
+  let visible = false, last = performance.now(), uiTick = 0, frameId = 0, fresh = false;
   const motion = document.createElement('button');
   motion.type = 'button';
   motion.className = 'model-motion';
   motion.dataset.gapMotion = '';
-  motion.setAttribute('aria-pressed', 'false');
-  motion.textContent = 'Pause model';
+  motion.textContent = 'Pause model'; // the label itself toggles: no aria-pressed
   const head = root.querySelector('.desk-head');
   if (head) head.appendChild(motion);
-  function staticStudy() {
-    seed = 11;
+  function still() {
+    seed = 11; seq = 0; chain = Promise.resolve(GENESIS);
+    live = false;
     reset();
-    if (el.log) el.log.replaceChildren();
-    while (!S.done) step(1);
-    draw(); stats();
+    while (!S.done) advance(SESSION);
+    trim(); draw(); stats();
   }
   function requestFrame() {
     if (!frameId && !reduced.matches && !paused && visible && !document.hidden) frameId = requestAnimationFrame(frame);
@@ -196,29 +435,44 @@
   function frame(now) {
     frameId = 0;
     if (reduced.matches || paused || !visible || document.hidden) return;
-    const dt = Math.min(0.05, (now - last) / 1000); last = now;
-    if (visible && !document.hidden) {
-      if (!S.done) step(dt);
-      else if (now - S.done > 4000) { reset(); if (el.log) el.log.innerHTML = ''; }
-      draw();
-      if ((uiTick += dt) > 0.12) { uiTick = 0; stats(); }
-    }
+    const raw = Math.min(0.25, Math.max(0, (now - last) / 1000)); last = now;
+    const dt = Math.min(0.05, raw); // the model's step; the walk below keeps real time
+    if (follow.state === 'waiting') {
+      // run to the next proposal quickly but drawn: from 3x to 25x the model's speed over 300 ms, and never more than one
+      // session minute a frame, so the trace and the clock run on instead of jumping; a closed session restarts at once
+      follow.waitT += raw;
+      if (!S.done) advance(Math.min(1, dt * SPEED * (3 + 22 * Math.min(1, follow.waitT / 0.3))));
+      else warm();
+      if (follow.act) { follow.state = 'walking'; follow.wt = 0; walk(1); }
+      uiTick = 1; // the clock is redrawn every frame while it runs fast
+    } else if (follow.state === 'walking') {
+      follow.wt += raw * 1000;
+      const k = Math.min(6, 1 + Math.floor(follow.wt / STEP_MS));
+      if (k > follow.k) walk(k);
+      if (follow.wt >= 6 * STEP_MS) land();
+    } else if (!S.done) advance(dt * SPEED);
+    else if (now - S.done > 4000) warm();
+    draw();
+    if (fresh || (uiTick += dt) > 0.12) { uiTick = 0; fresh = false; stats(); }
+    else showClock(); // the clock moves a minute at a time, never two between frames
     requestFrame();
   }
-  motion.addEventListener('click', () => {
+  function togglePause() {
     paused = !paused;
     motion.textContent = paused ? 'Resume model' : 'Pause model';
-    motion.setAttribute('aria-pressed', String(paused));
     if (paused) stopFrames(); else requestFrame();
     draw(); stats();
-  });
+  }
+  motion.addEventListener('click', togglePause);
   cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); hover = e.clientX - r.left; if (reduced.matches || paused) draw(); }, { passive: true });
   cv.addEventListener('pointerleave', () => { hover = null; if (reduced.matches || paused) draw(); });
-  reset();
+
   resize();
   motion.hidden = reduced.matches;
-  if (reduced.matches) staticStudy(); else stats();
+  if (reduced.matches) still(); else { warm(); draw(); stats(); }
   window.addEventListener('resize', resize);
+  // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
+  (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
   if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => {
     visible = e.isIntersecting; last = performance.now();
     if (visible) requestFrame(); else stopFrames();
@@ -226,9 +480,10 @@
   else visible = true;
   reduced.addEventListener('change', () => {
     stopFrames();
+    if (follow.state !== 'idle') stopFollow();
     motion.hidden = reduced.matches;
-    if (reduced.matches) staticStudy(); else { reset(); if (el.log) el.log.replaceChildren(); requestFrame(); }
-    stats();
+    if (reduced.matches) still(); else { warm(); requestFrame(); }
+    draw(); stats();
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopFrames(); else requestFrame(); });
   requestFrame();
