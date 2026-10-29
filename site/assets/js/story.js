@@ -781,6 +781,7 @@
     // the chapter mark sits above the copy column: per hand-over
     const cd = story.querySelector('.story-coda');
     codaH = cd ? cd.offsetHeight : 0;
+    paperCapH = paperCap ? paperCap.offsetHeight : 0;
     const nm = story.querySelector('.story-num'), nb = nm && nm.querySelector('b'), ns = nm && nm.querySelector('span');
     if (nm && nb && ns) {
       const nt = nm.offsetTop, gh = nb.offsetHeight, lh = ns.offsetHeight + 4;
@@ -1541,7 +1542,7 @@
     lab.days.forEach(l => { const e = document.createElement('div'); e.className = l.el.className; e.innerHTML = l.el.innerHTML; ink.appendChild(e); l.ink = e; });
     paperIn.insertBefore(ink, paperIn.firstChild);
   }
-  let shownCap = '', shownLeaving = null;
+  let shownCap = '', shownLeaving = null, paperCapH = 0;
   // portrait screens: as the paper covers the copy, the proof's statement reappears above the columns
   const coda = story.querySelector('.story-coda'), codaS = coda && coda.querySelector('.story-coda-s');
   let shownCoda = '', shownCodaTr = '', shownCodaS = '', codaH = 0;
@@ -1673,14 +1674,15 @@
           if (inkLink) { inkLink.style.transform = `translate(${xs[0].toFixed(1)}px, ${ry.toFixed(1)}px)`; inkLink.style.width = (xs[xs.length - 1] - xs[0]).toFixed(1) + 'px'; }
         }
       }
-      // the paper's caption sits under the ink tags
+      // the paper's caption sits under the ink tags; where it would not fit whole above the stage's lower edge (short
+      // landscape) it is left out, as the stage would cut it through its letters
       if (paperCap) {
         let yb = 0;
         if (lab.days) lab.days.forEach(l => { if (l.inkTr && l.h) yb = Math.max(yb, l.y + l.h); });
         if (!yb) yb = H - paperH + 30;
-        const cap = `translate3d(0, ${Math.round(yb + 16)}px, 0)`;
+        const capY = Math.round(yb + 16), cap = `translate3d(0, ${capY}px, 0)`;
         if (cap !== shownCap) paperCap.style.transform = shownCap = cap;
-        const co = (red ? 1 : sstep(X.cap[0], X.cap[1], xe)).toFixed(3);
+        const co = (capY + paperCapH > H ? 0 : red ? 1 : sstep(X.cap[0], X.cap[1], xe)).toFixed(3);
         if (co !== shownCapO) paperCap.style.opacity = shownCapO = co;
       }
     }
