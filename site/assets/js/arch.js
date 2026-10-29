@@ -12,7 +12,11 @@
    to each plate's grid below it, still a ring, until the last plate settles it as a square that drops to the floor;
    rejected, it falls away. The readout card follows the plate you point at and keeps itself on screen; it swaps one layer
    for the next out, then in, never both at once. Motion runs only on screen in a visible tab, stops on request, never
-   starts under reduced motion.
+   starts under reduced motion. At rest it is cheap: nobody at it, only the proposal's flow runs, drawn at 20 Hz; a
+   pointer or focus in it adds the beads' drift at 30 Hz (each plate's beads as three groups, one transform each), and
+   bead by bead, at full rate, only on the plate you point at. With no pointer or focus in it for 8 s it stops; a pointer,
+   focus, or its coming back into view wakes it. Nothing reads layout while the script runs: the geometry is taken in the
+   first frame after the build.
    The wide instrument's height is set in CSS (--arch-minh), before and after this script builds it, so the page under it
    never moves when it does. */
 (function () {
@@ -259,6 +263,7 @@
       p.key = S('line', { stroke: GREEN, 'stroke-width': 1.2, 'stroke-opacity': 0 }, g);
       p.rim = S('polyline', { fill: 'none', stroke: IVORY, 'stroke-width': 1, 'stroke-linejoin': 'round' }, g);
       p.bead = S('g', { class: 'ap-beads' }, g);
+      p.bg = [S('g', null, p.bead), S('g', null, p.bead), S('g', null, p.bead)]; // the beads drift in three groups
       p.num = S('text', { class: 'ap-num', 'dominant-baseline': 'middle' }, lv);
       p.num.textContent = items[p.i].num + (items[p.i].verb ? ' · ' + items[p.i].verb : '');
       p.numShort = items[p.i].num;
@@ -299,7 +304,7 @@
       const beadsAt = (n, spread, rMin, rMax, amp, h0) => {
         for (let k = 0; k < n; k++) {
           const b = { u0: (rnd() - 0.5) * 2 * spread, v0: (rnd() - 0.5) * 2 * spread, h0: h0 + rnd() * 0.05, a: amp * (0.6 + rnd() * 0.8), w1: 2.4 + rnd() * 3.2, w2: 2 + rnd() * 3.6, p1: rnd() * 6.28, p2: rnd() * 6.28 };
-          b.el = S('circle', { r: f1(rMin + rnd() * (rMax - rMin)), fill: gBead, 'fill-opacity': f3(0.55 + rnd() * 0.45) }, p.bead);
+          b.el = S('circle', { r: f1(rMin + rnd() * (rMax - rMin)), fill: gBead, 'fill-opacity': f3(0.55 + rnd() * 0.45) }, p.bg[p.beads.length % 3]);
           p.beads.push(b);
         }
       };
@@ -309,7 +314,7 @@
         S('circle', { r: 0.05, fill: GREEN, 'fill-opacity': 0.8 }, g);
         for (let k = 0; k < 20; k++) {
           const b = { mote: true, a: rnd() * 6.283, sp: 0.16 + rnd() * 0.18, ph: rnd(), h0: 0.03 };
-          b.el = S('circle', { r: f1(1 + rnd() * 0.8), fill: IVORY, 'fill-opacity': 0 }, p.bead);
+          b.el = S('circle', { r: f1(1 + rnd() * 0.8), fill: IVORY, 'fill-opacity': 0 }, p.bg[p.beads.length % 3]);
           p.beads.push(b);
         }
       } else if (role === 1) { // Model Layer: a matrix of learned weights, and attention wandering over it
@@ -323,7 +328,7 @@
         beadsAt(52, 0.84, 1.3, 2.3, 0.032, 0.02);
         for (let k = 0; k < 5; k++) {
           const b = { u0: (rnd() - 0.5) * 1.5, v0: (rnd() - 0.5) * 1.5, h0: 0.06, a: 0.04, w1: 1.6 + rnd(), w2: 1.4 + rnd(), p1: rnd() * 6.28, p2: rnd() * 6.28 };
-          b.el = S('circle', { r: 3.2, fill: 'none', stroke: GREEN, 'stroke-width': 1.2, 'stroke-opacity': 0.9 }, p.bead);
+          b.el = S('circle', { r: 3.2, fill: 'none', stroke: GREEN, 'stroke-width': 1.2, 'stroke-opacity': 0.9 }, p.bg[p.beads.length % 3]);
           p.beads.push(b);
         }
       } else if (role === 3) { // Execution Council: the aperture; it pulses once per decision
@@ -335,7 +340,7 @@
         S('circle', { r: 0.045, fill: GREEN }, g);
         for (let k = 0; k < 9; k++) {
           const a = k / 9 * 6.283 + 0.3, b = { u0: Math.cos(a) * 0.72, v0: Math.sin(a) * 0.72, h0: 0.04, a: 0.03, w1: 2.6 + rnd() * 2, w2: 2.2 + rnd() * 2, p1: rnd() * 6.28, p2: rnd() * 6.28 };
-          b.el = S('circle', { r: 2.8, fill: 'none', stroke: GREEN, 'stroke-width': 1.1, 'stroke-opacity': 0.75 }, p.bead);
+          b.el = S('circle', { r: 2.8, fill: 'none', stroke: GREEN, 'stroke-width': 1.1, 'stroke-opacity': 0.75 }, p.bg[p.beads.length % 3]);
           p.beads.push(b);
         }
       } else if (role === 4) { // Routing Layer: Manhattan routes from the hub to the rails; the scored best path in green
@@ -392,6 +397,7 @@
       const k = 1.16, bp = pts([proj(-k, k, 0), proj(k, k, 0), proj(k, -k, 0), proj(-k, -k, 0)]);
       [bound.fill, bound.glow1, bound.glow2, bound.core].forEach((e) => setA(e, 'points', bp));
       setA(bound.pat, 'transform', m);
+      beadsDirty = true; // a new projection: every bead is placed again
     }
     function measure() {
       let fr = fig.getBoundingClientRect();
@@ -452,11 +458,13 @@
     /* ---------------- 5 · state ---------------- */
     let hover = -1, focus = -1, open = -1, hot = -2, kbd = false, hoverTimer = 0, pointerOn = false;
     let reduced = reduceMQ.matches, paused = false, visible = false, started = false, exStart = -1, ex = 0, t = 0;
+    let beadsDirty = true, pointerIn = false, focusIn = false, lastActive = performance.now(), wasBusy = true; // for the idle stop
+    let restAcc = 1, lastF = 0; // frames owed at the rest rate: 20 a second with nobody at the instrument, 30 with someone
     const cardY = { x: 0, v: 0 };
     let cardTop = 0, cardH = 0, titleOff = 0, cardVis = 0, figTop = 0, navHc = 72;
     const measureCard = () => { cardH = card.offsetHeight; titleOff = snm.offsetTop + snm.offsetHeight / 2; };
-    // at rest the stack breathes: a slow wave runs down it, a pixel or two
-    const plateY = (i) => by + (base[i] - by) * exOf(i) + plates[i].off.x + (reduced ? 0 : 1.4 * Math.sin(t * 1.15 - i * 0.55) * (1 - plates[i].heat.x));
+    // at rest the plates hold still (the beads, the flow and the Council's pulse carry the motion)
+    const plateY = (i) => by + (base[i] - by) * exOf(i) + plates[i].off.x;
     const exOf = (i) => {
       if (ex >= 1) return 1;
       const d = Math.abs(i - (bIndex - 0.5)) * 0.06; // the stack opens from the boundary outward
@@ -554,7 +562,7 @@
       e.scrollIntoView({ block: 'start', behavior: reduced ? 'instant' : 'smooth' });
       e.focus({ preventScroll: true });
     }
-    function setMode(w) {
+    function setMode(w, defer) {
       wide = w;
       inst.classList.toggle('is-wide', wide); inst.classList.toggle('is-narrow', !wide);
       inst.style.removeProperty('--arch-cardh'); minH = 0;
@@ -562,7 +570,8 @@
       hint.textContent = spec ? (wide && fineMQ.matches ? 'Point at a layer · ↑ ↓ · Enter for its spec' : fineMQ.matches ? 'Click a plate for its spec' : 'Tap a plate for its spec')
         : wide && fineMQ.matches ? 'Point at a layer · ↑ ↓ to move · Enter to open' : fineMQ.matches ? 'Click a layer to open it' : 'Tap a layer to open it';
       hot = -2; setHot();
-      measure(); kick(true);
+      if (defer) requestAnimationFrame(() => { measure(); kick(true); }); // the build reads no layout: geometry in its first frame
+      else { measure(); kick(true); }
     }
 
     /* ---------------- 6 · input ---------------- */
@@ -615,6 +624,12 @@
       kick();
     }, { passive: true });
     inst.addEventListener('pointerleave', () => { pointerOn = false; view.tT = 45 * DEG; view.tF = F0; kick(); });
+    // what keeps it awake: a pointer or focus in it; 8 s after the last of them it stops, and either one wakes it
+    const wake = () => { lastActive = performance.now(); kick(); };
+    inst.addEventListener('pointerenter', () => { pointerIn = true; wake(); });
+    inst.addEventListener('pointerleave', () => { pointerIn = false; lastActive = performance.now(); });
+    inst.addEventListener('focusin', () => { focusIn = true; wake(); });
+    inst.addEventListener('focusout', (e) => { if (!inst.contains(e.relatedTarget)) { focusIn = false; lastActive = performance.now(); } });
     motionBtn.addEventListener('click', () => {
       paused = !paused;
       motionBtn.textContent = paused ? 'Resume motion' : 'Pause motion';
@@ -794,8 +809,23 @@
       } else card.__placed = false;
       return busy;
     }
+    function placeBeads(p, tt) { // each bead where its own motion has it at time tt
+      p.beads.forEach((b) => {
+        let u, v, hh;
+        if (b.mote) {
+          const ph = (tt * b.sp + b.ph) % 1, r = 0.95 - ph * 0.86;
+          u = Math.cos(b.a) * r; v = Math.sin(b.a) * r; hh = b.h0;
+          setA(b.el, 'fill-opacity', f3(Math.min(1, ph * 5, (1 - ph) * 3) * 0.75));
+        } else {
+          u = b.u0 + b.a * Math.sin(b.w1 * tt + b.p1); v = b.v0 + b.a * Math.cos(b.w2 * tt + b.p2); hh = b.h0 + 0.015 * Math.sin(b.w1 * 0.6 * tt + b.p2);
+        }
+        const q = proj(u, v, hh);
+        setA(b.el, 'cx', f1(q[0])); setA(b.el, 'cy', f1(q[1]));
+      });
+    }
     function render() {
       if (geoDirty) { shape(); geoDirty = false; }
+      const engaged = pointerIn || focusIn; // someone at the instrument
       const C = proj(1, -1, 0), A = proj(-1, 1, 0);
       plates.forEach((p, i) => {
         const y = plateY(i), f = p.fade.x, h = p.heat.x, vis = 1 - 0.62 * f;
@@ -809,21 +839,15 @@
         setA(p.key, 'stroke-opacity', f3((0.16 + 0.66 * h) * (1 - 0.5 * f))); // the green key light, from the upper left
         setA(p.pat, 'opacity', f3((0.74 + 0.26 * h) * vis));
         setA(p.bead, 'opacity', f3((0.8 + 0.2 * h) * vis));
-        // beads: estimation above the boundary
-        p.beads.forEach((b, k) => {
-          let u, v, hh;
-          if (b.mote) {
-            const ph = (t * b.sp + b.ph) % 1, r = 0.95 - ph * 0.86;
-            u = Math.cos(b.a) * r; v = Math.sin(b.a) * r; hh = b.h0;
-            setA(b.el, 'fill-opacity', f3(Math.min(1, ph * 5, (1 - ph) * 3) * 0.75));
-          } else {
-            const tt = t;
-            u = b.u0 + b.a * Math.sin(b.w1 * tt + b.p1); v = b.v0 + b.a * Math.cos(b.w2 * tt + b.p2); hh = b.h0 + 0.015 * Math.sin(b.w1 * 0.6 * tt + b.p2);
-          }
-          const q = proj(u, v, hh);
-          setA(b.el, 'cx', f1(q[0])); setA(b.el, 'cy', f1(q[1]));
-        });
-        if (p.att) { setA(p.att, 'cx', f3(0.42 * Math.sin(t * 0.31 + 0.4))); setA(p.att, 'cy', f3(0.38 * Math.sin(t * 0.23 + 1.3))); }
+        // beads: estimation above the boundary. Bead by bead only on the plate you point at; with someone at the instrument
+        // the other plates' beads drift as three groups, one transform each; nobody at it, they hold still (the flow runs)
+        if (p.beads.length) {
+          const own = i === hot && !reduced && !paused, sway = !own && engaged && !reduced && !paused;
+          if (own || beadsDirty) placeBeads(p, t);
+          p.bg.forEach((bg, k) => setA(bg, 'transform', !sway ? 'translate(0 0)'
+            : `translate(${f1(Sc * 0.022 * Math.sin(t * (0.9 + 0.35 * k) + k * 2.1 + i))} ${f1(Sc * 0.014 * Math.cos(t * (0.75 + 0.3 * k) + k * 1.3 + i))})`));
+        }
+        if (p.att && (engaged || i === hot)) { setA(p.att, 'cx', f3(0.42 * Math.sin(t * 0.31 + 0.4))); setA(p.att, 'cy', f3(0.38 * Math.sin(t * 0.23 + 1.3))); }
         if (p.ticks) { setA(p.ticks, 'stroke-opacity', f3(0.5 + 0.45 * pulse)); setA(p.pulse, 'r', f3(0.5 + 0.28 * (1 - pulse))); setA(p.pulse, 'stroke-opacity', f3(0.75 * pulse)); }
         // 06's state machine and 07's ports light as green outlines over a faint tint: the filled green square is the settled
         // proposal's mark, and only on 08
@@ -917,11 +941,22 @@
       } else { setA(cardLead, 'stroke-opacity', '0'); setA(cardNode, 'fill-opacity', '0'); }
       if (wide) { const ovT = `translateY(${f1(by - readTop)}px)`; if (ov.style.transform !== ovT) ov.style.transform = ovT; }
       setA(ov, 'data-in', ex >= 0.9 ? '1' : '0');
+      beadsDirty = false;
     }
+    // awake: a pointer or focus in the instrument, or under 8 s since the last of them (or since it came into view)
+    const awake = (now) => pointerIn || focusIn || now - lastActive < 8000;
     function frame(now) {
       raf = 0;
+      // at rest (no plate pointed at, nothing settling) it is drawn at 20 Hz, or 30 with someone at it: the frames between
+      // do nothing
+      const df = lastF ? now - lastF : 0; lastF = now;
+      if (hot < 0 && !wasBusy) {
+        restAcc = Math.min(1, restAcc + df * (pointerIn || focusIn ? 0.031 : 0.021));
+        if (restAcc < 1) { raf = requestAnimationFrame(frame); return; }
+        restAcc -= 1;
+      } else restAcc = 1;
       const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
-      const ambient = !reduced && !paused && started;
+      const ambient = !reduced && !paused && started && awake(now);
       if (ambient) {
         t += dt;
         flowStep(dt);
@@ -931,6 +966,7 @@
         if ((stepT += dt) > 0.7) { stepT = 0; step++; }
       }
       const busy = animate(dt, false);
+      wasBusy = busy;
       render();
       if ((ambient || busy) && visible && !document.hidden) raf = requestAnimationFrame(frame);
     }
@@ -942,11 +978,11 @@
         return;
       }
       if (force) { animate(0, false); render(); } // a new layout: draw it now, the springs carry on in the loop
-      if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); }
+      if (!raf) { last = lastF = performance.now(); raf = requestAnimationFrame(frame); }
     }
 
     /* ---------------- 9 · wiring ---------------- */
-    setMode(wideMQ.matches);
+    setMode(wideMQ.matches, true);
     inst.classList.remove('is-building');
     motionBtn.hidden = reduced;
     wideMQ.addEventListener('change', (e) => setMode(e.matches));
@@ -968,6 +1004,7 @@
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { measure(); measureCard(); kick(true); });
     new IntersectionObserver((entries) => {
       entries.forEach((e) => {
+        if (e.isIntersecting && !visible) lastActive = performance.now(); // back in view: awake again
         visible = e.isIntersecting;
         // open the stack once a fair part of it is on screen (a tall instrument on a short screen never reaches a fixed ratio)
         const seen = e.intersectionRect.height >= Math.min(window.innerHeight * 0.32, e.boundingClientRect.height * 0.3);
