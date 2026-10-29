@@ -239,9 +239,9 @@
     let sel = null, selLi = null, beforeLi = null;
     function markSel() {
       const li = sel !== null ? els.get(sel) || null : null, before = li ? li.previousElementSibling : null;
-      if (selLi && selLi !== li) { selLi.classList.remove('is-sel'); selLi.setAttribute('aria-selected', 'false'); }
+      if (selLi && selLi !== li) { selLi.classList.remove('is-sel'); selLi.setAttribute('aria-selected', 'false'); selLi.removeAttribute('aria-describedby'); }
       if (beforeLi && beforeLi !== before) beforeLi.classList.remove('is-before-sel');
-      if (li && li !== selLi) { li.classList.add('is-sel'); li.setAttribute('aria-selected', 'true'); }
+      if (li && li !== selLi) { li.classList.add('is-sel'); li.setAttribute('aria-selected', 'true'); if (described) li.setAttribute('aria-describedby', described); }
       if (before && before !== beforeLi) before.classList.add('is-before-sel');
       selLi = li; beforeLi = before;
     }

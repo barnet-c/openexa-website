@@ -1339,18 +1339,18 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .lt.is-inspecting .lt-state i { background: transparent; box-shadow: inset 0 0 0 1px currentColor; }
 .lt-ctrl { grid-area: ctrl; display: inline-flex; gap: 8px; }
 .lt-btn, .chain-try, .chain-restore { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 34px; padding: 0 13px; border: 1px solid var(--line-strong); border-radius: 2px; font: 500 var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); white-space: nowrap; transition: border-color .25s, color .25s, background .25s; }
-.lt-btn:hover, .chain-try:hover { border-color: var(--accent); color: var(--accent); }
+@media (hover: hover) { .lt-btn:hover, .chain-try:hover { border-color: var(--accent); color: var(--accent); } } /* a tap never leaves a hover look behind */
 .lt-btn:focus-visible, .chain-try:focus-visible, .chain-restore:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .lt-btn svg { flex: none; width: 13px; height: 13px; }
 .lt-btn .i-play, .lt-btn.is-paused .i-pause { display: none; }
 .lt-btn.is-paused .i-play { display: inline; }
 /* back to the newest record: a pill in the head row, never over the records */
 .lt-latest { grid-area: latest; justify-self: start; display: inline-flex; align-items: center; gap: 7px; min-height: 30px; padding: 0 11px; border: 1px solid var(--accent); border-radius: 15px; font: 500 var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--accent); white-space: nowrap; animation: lt-fade .3s var(--ease) backwards; transition: background .25s, color .25s; }
-.lt-latest:hover { background: var(--accent); color: var(--ink); }
+@media (hover: hover) { .lt-latest:hover { background: var(--accent); color: var(--ink); } }
 .lt-latest:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .lt-latest svg { flex: none; width: 13px; height: 13px; }
 .lt-latest span:not(:empty) { min-width: 3ch; padding: 3px 5px 2px; border-radius: 1px; background: var(--accent); color: var(--ink); letter-spacing: .04em; text-align: center; }
-.lt-latest:hover span:not(:empty) { background: var(--ink); color: var(--accent); }
+@media (hover: hover) { .lt-latest:hover span:not(:empty) { background: var(--ink); color: var(--accent); } }
 
 .lt-stage { position: relative; }
 .lt-view { position: relative; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; }
@@ -1366,7 +1366,8 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .lt-rec { flex: none; position: relative; isolation: isolate; contain: layout style paint; width: calc(var(--lt-col) + var(--lt-bleed)); margin-left: calc(var(--lt-bleed) * -1); padding: 12px var(--lt-pr) 10px var(--lt-bleed); cursor: pointer; outline: none; transition: opacity .35s var(--ease); -webkit-tap-highlight-color: transparent; }
 /* pointing at a record lifts its block off the panel; the link row below stays on the line */
 .lt-rec::after { content: ""; position: absolute; z-index: -1; inset: 0 6px 44px 6px; border-radius: 2px; background: rgba(245, 242, 236, .045); opacity: 0; transition: opacity .25s var(--ease); pointer-events: none; }
-.lt-rec:hover::after, .lt-rec.is-sel::after { opacity: 1; }
+.lt-rec.is-sel::after { opacity: 1; }
+@media (hover: hover) { .lt-rec:hover::after { opacity: 1; } }
 .lt-meta { display: flex; justify-content: space-between; gap: 10px; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: .08em; color: var(--fg-3); white-space: nowrap; }
 .lt-lc { overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; } /* fg-3 at full strength: 5.4:1 on the panel */
 .lt-ev { display: block; margin-top: 10px; font: 500 var(--mono-m, .75rem)/1.25 var(--mono); letter-spacing: .1em; color: var(--fg); white-space: nowrap; }
@@ -1395,9 +1396,13 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .lt.is-running .lt-rec.is-head .lt-seg { animation: lt-await 2.4s ease-in-out infinite; }
 /* inspecting: the chosen record and both of its hash links stay lit (the link into it is drawn by the record before it,
    marked .is-before-sel by ledger.js); everything else steps back */
-.lt-rec:hover .lt-node, .lt-rec.is-sel .lt-node { transform: scale(1.25); }
-.lt.is-inspecting .lt-rec:not(.is-sel):not(:hover) > :not(.lt-line) { opacity: .34; }
-.lt.is-inspecting .lt-rec:not(.is-sel):not(:hover):not(.is-before-sel) .lt-line { opacity: .34; }
+.lt-rec.is-sel .lt-node { transform: scale(1.25); }
+.lt.is-inspecting .lt-rec:not(.is-sel) > :not(.lt-line) { opacity: .34; }
+.lt.is-inspecting .lt-rec:not(.is-sel):not(.is-before-sel) .lt-line { opacity: .34; }
+@media (hover: hover) { /* a pointer over a stepped-back record brings it forward */
+  .lt-rec:hover .lt-node { transform: scale(1.25); }
+  .lt.is-inspecting .lt-rec:not(.is-sel):hover > :not(.lt-line), .lt.is-inspecting .lt-rec:not(.is-sel):not(.is-before-sel):hover .lt-line { opacity: 1; }
+}
 .lt-rec.is-sel .lt-node { box-shadow: 0 0 0 3px var(--lt-bg), 0 0 0 4px var(--accent); }
 .lt-rec.is-sel.is-rejected .lt-node { box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 0 3px var(--lt-bg), 0 0 0 4px var(--accent); }
 .lt-rec.is-sel.is-followed .lt-node { box-shadow: 0 0 0 3px var(--lt-bg), 0 0 0 4px var(--accent), 0 0 14px rgba(79, 203, 147, .5); }
@@ -1429,8 +1434,14 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .lt-insp .lt-insp-ev.is-rejected { color: var(--reject); }
 .lt-insp code { font: inherit; letter-spacing: .02em; word-spacing: .2em; color: var(--fg-3); }
 .lt-insp code b { font-weight: 500; color: var(--fg); }
-.lt-check { display: block; height: 1.6em; margin-top: 2px; font-size: var(--mono-xs, .625rem); line-height: 1.6; letter-spacing: .04em; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lt-check { display: block; height: var(--lt-chk, 1.6em); margin-top: 2px; font-size: var(--mono-xs, .625rem); line-height: 1.6; letter-spacing: .04em; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lt-check.is-bad { color: var(--reject); }
+/* the fixed lines hold only at rest. Inspecting a record, every field shows all of its text (WCAG 1.4.12 spacing too),
+   keeping at least its resting height */
+.lt.is-inspecting .lt-sub, .lt.is-inspecting .lt-insp [data-f="d"], .lt.is-inspecting .lt-insp [data-f="src"], .lt.is-inspecting .lt-check { display: block; height: auto; overflow: visible; }
+.lt.is-inspecting .lt-insp [data-f="d"], .lt.is-inspecting .lt-insp [data-f="src"] { min-height: 3.3em; }
+.lt.is-inspecting .lt-check { min-height: var(--lt-chk, 1.6em); }
+.lt.is-inspecting :is(.lt-lc, .lt-ev, .lt-insp-k, .lt-check, .lt-insp [data-f="rec"], .lt-insp [data-f="ev"]) { white-space: normal; overflow: visible; }
 .lt-leader { position: absolute; left: var(--x, 0); top: var(--y, 0); z-index: 2; width: 1px; height: var(--h, 0); background: linear-gradient(var(--accent), rgba(79, 203, 147, .35)); opacity: 0; pointer-events: none; transition: opacity .25s; }
 .lt-leader::after { content: ""; position: absolute; left: -2px; bottom: -3px; width: 5px; height: 5px; background: var(--accent); }
 .lt-leader.is-on { opacity: 1; }
@@ -1474,7 +1485,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .chain.is-broken:not(.is-away) .chain-status i { animation: pulse 1s ease-in-out infinite; }
 .chain-acts { display: inline-flex; gap: 8px; }
 .chain-restore { border-color: var(--reject); }
-.chain-restore:hover { border-color: var(--reject); background: var(--reject); color: var(--ink); }
+@media (hover: hover) { .chain-restore:hover { border-color: var(--reject); background: var(--reject); color: var(--ink); } }
 .chain-genesis { position: relative; display: flex; align-items: center; gap: 14px; margin: 0; padding: 18px 20px 0; font: 500 var(--mono-xs, .625rem)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 .chain-genesis i { position: relative; flex: none; width: 11px; height: 11px; margin-left: 9px; border: 1px solid var(--line-strong); }
 .chain-genesis i::after { content: ""; position: absolute; left: 4px; top: 12px; width: 1px; height: 18px; background: var(--line-strong); }
@@ -1484,7 +1495,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .chain-list .ev { justify-self: start; max-width: 100%; font-weight: 500; letter-spacing: .08em; color: var(--fg); transition: color .35s, box-shadow .25s, background .25s; }
 .chain-list .what { justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); transition: color .35s, box-shadow .25s, background .25s; }
 .chain-list [contenteditable] { outline: none; border-radius: 1px; cursor: text; box-shadow: inset 0 -1px 0 transparent; }
-.chain-list [contenteditable]:hover { box-shadow: inset 0 -1px 0 var(--line-strong); }
+@media (hover: hover) { .chain-list [contenteditable]:hover { box-shadow: inset 0 -1px 0 var(--line-strong); } }
 .chain-list [contenteditable]:focus { box-shadow: inset 0 -1px 0 var(--accent); background: rgba(245, 242, 236, .07); }
 .chain-node { position: absolute; left: 9px; top: 13px; width: 11px; height: 11px; background: var(--fg); transition: background .3s, box-shadow .3s; }
 .chain-seg { position: absolute; left: 14px; top: 27px; bottom: -10px; width: 1px; }
@@ -1589,7 +1600,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   .lt-insp { padding: 12px 14px 18px; }
   .lt-insp dl > div { grid-template-columns: 5.2rem minmax(0, 1fr); gap: 10px; }
   /* on a phone a check may need two lines: it always has room for two */
-  .lt-check { height: 3.2em; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .lt-check { --lt-chk: 3.2em; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .lt-foot { padding: 11px 14px; }
 }
 @media (max-width: 420px) { .lt-title-x { display: none; } } /* "Agent log": the head keeps one row on a phone */
