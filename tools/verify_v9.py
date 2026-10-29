@@ -1807,7 +1807,12 @@ async def ledger_time(b):
         if time.monotonic() - t_follow > 9 and await pg.evaluate("(() => { const f = document.querySelector('[data-sw-follow]'); if (!f || f.getAttribute('aria-pressed') === 'true') return false; f.click(); return true; })()"):
             t_follow, follows = time.monotonic(), follows + 1
         await pg.wait_for_timeout(400)
-    foot = re.sub(r"\s+", " ", await pg.evaluate("(document.querySelector('[data-ledger=live] .lt-foot') || {}).textContent || ''"))
+    # the last rows and the foot in one read: a row drawn between two reads would count in the foot and not in the rows
+    # (at 4x the loop ends on its time limit, 400 ms after its last read; ledger.md's note to the tests owner)
+    rows, foot = await pg.evaluate(f"[{LEDGER_READ}, (document.querySelector('[data-ledger=live] .lt-foot') || {{}}).textContent || '']")
+    for r in rows:
+        if r["id"] and r["id"] not in first and r["id"] not in seen: seen[r["id"]] = r; order.append(r["id"])
+    foot = re.sub(r"\s+", " ", foot)
     await ctx.close()
     bad = []
     if not ran: bad.append("the swarm lab never ran")
