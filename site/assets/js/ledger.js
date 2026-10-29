@@ -14,6 +14,8 @@
                           is selected and pulses the next time the ledger is in view. Every record is stamped when it is
                           written, later than the one before it.
    [data-ledger="replay"] (Trust §03) holds a fixed excerpt that can be replayed and verified.
+   The chain, the state line and the intake start with the page; the strip is drawn (the one step that reads layout)
+   when the panel comes within 1.5 viewports, or at once when the reader, a followed proposal or 'oxa:inspect' needs it.
    Select any record (click, tap, or arrow keys once the list has focus) to inspect its id, event and both hash links.
    The records are illustrative; every hash is real SHA-256, computed here in the browser. Every count on the panel is
    read from the records themselves. */
@@ -131,7 +133,7 @@
     const F = { k: field('k'), rec: field('rec'), ev: field('ev'), d: field('d'), src: field('src'), prev: field('prev'), prevok: field('prevok'), hash: field('hash'), next: field('next') };
     // the selected record is described by its two checks, so a screen reader hears whether it verifies
     const described = [F.prevok, F.next].filter(Boolean).map(el => el.id || (el.id = `lt-${root.dataset.ledger || 'log'}-${el.dataset.f}`)).join(' ');
-    let reduced = motionQuery.matches;
+    let reduced = motionQuery.matches, mounted = false, fitRaf = 0; // mounted: the strip is drawn (see start, below)
 
     /* ---- the chain, in memory: newest last; the DOM shows a contiguous window onto it ---- */
     const CAP = 400, DOM_CAP = 36;
@@ -143,10 +145,21 @@
       return { id: t('.lt-id'), lc: t('.lt-lc'), ev: t('.lt-ev').toUpperCase(), sub: t('.lt-sub'), d: li.dataset.d || t('.lt-sub'), t: t('.lt-t'), src: 'excerpt' };
     }).filter(r => r.id && r.ev);
     if (excerpt.length) nextId = (parseInt(excerpt[excerpt.length - 1].id.replace(/[^0-9a-f]/gi, ''), 16) || 0x4f20) + 1;
-    const genesis = sha256('genesis|' + (excerpt[0] ? excerpt[0].id : '#4f20'));
-    let head = genesis;
+    let genesis = '', head = '', inited = false, stateIdle = '';
     const body = r => [r.id, r.t, r.ev, r.sub, r.d].join('|');
+    // the chain is hashed when it is first needed (a record, the strip, a request) or once the page is idle: nothing is
+    // hashed while the page loads. Until then the page's own records and status line stand as written
+    function init() {
+      if (inited) return;
+      inited = true;
+      head = genesis = sha256('genesis|' + (excerpt[0] ? excerpt[0].id : '#4f20'));
+      excerpt.forEach(write);
+      if (!stream) { const n = recs.length, ok = verified(); stateIdle = ok === n ? `Chain ✓ · ${n} records verify` : `${n - ok} of ${n} records fail verification`; }
+      rendered = newest();
+      counts(); state();
+    }
     function write(r) {
+      if (!inited) init();
       r.seq = ++seq; r.prev = head; r.prevId = recs.length ? recs[recs.length - 1].id : null;
       r.hash = sha256(r.prev + '|' + body(r));
       head = r.hash; recs.push(r); total++;
@@ -162,7 +175,6 @@
       const now = Date.now();
       excerpt.forEach((r, i) => { r.t = clock(new Date(lastMs = now - (excerpt.length - i) * 1150 - 600)); });
     }
-    excerpt.forEach(write);
 
     /* ---- one record = one column on the line ---- */
     function build(r) {
@@ -180,8 +192,6 @@
       els.set(r.seq, li);
       return li;
     }
-    track.setAttribute('role', 'listbox');
-    track.setAttribute('aria-orientation', 'horizontal');
     let rendered = 0; // the newest record in the DOM
     const firstSeq = () => (track.firstElementChild ? +track.firstElementChild.dataset.seq : 0);
     // the window: the newest DOM_CAP records, reaching back far enough to keep a selection (or a given record) in it
@@ -469,8 +479,8 @@
       return steps;
     }
     if (stream && excerpt.length) { // the page's excerpt may end mid-lifecycle: the stream picks that lifecycle up where it stopped
-      const last = excerpt[excerpt.length - 1], done = recs.filter(r => r.lc === last.lc).map(r => r.ev);
-      cycles = recs.some(r => r.lc !== last.lc) ? 1 : 0;
+      const last = excerpt[excerpt.length - 1], done = excerpt.filter(r => r.lc === last.lc).map(r => r.ev);
+      cycles = excerpt.some(r => r.lc !== last.lc) ? 1 : 0;
       if (last.lc && !/^(SETTLED|REJECTED)$/.test(last.ev)) queue = lifecycle(last.lc).filter(s => !done.includes(s.ev));
     }
     const newId = () => '#' + (nextId++ & 0xffff).toString(16).padStart(4, '0');
@@ -523,7 +533,7 @@
       const d = e && e.detail;
       if (!d || typeof d !== 'object') return;
       const a = { id: d.id, lane: kind === 'settled' ? d.lane : null, ts: d.ts, count: countOf(d), followed: d.followed === true, at: performance.now() };
-      if (a.followed) { queueMicrotask(() => followedIn(a, kind)); return; } // never inside the swarm's frame, but at once
+      if (a.followed) { queueMicrotask(() => { mount(); followedIn(a, kind); }); return; } // never inside the swarm's frame, but at once
       inbox[kind].push(a);
       schedule();
     }
@@ -535,7 +545,7 @@
     }
     function sealDue() {
       sealTimer = 0;
-      if (onScreen()) { sealOne(); counts(); soon(); }
+      if (onScreen()) { sealOne(); soon(); } // the foot counts the row when the line draws it (flush), not before
       else { ['settled', 'rejected'].forEach(k => { if (inbox[k].length) record(take(k), k); }); }
       lastSeal = performance.now();
       schedule();
@@ -634,6 +644,7 @@
       if (Math.abs(y) > 24) window.scrollTo({ top: Math.max(0, Math.round(window.scrollY + y)), behavior: reduced ? 'instant' : 'smooth' });
     }
     function inspectEvent(e) {
+      mount();
       const d = (e && e.detail) || {};
       const s = Math.floor(Number(d.seq)), id = typeof d.record === 'string' ? d.record.trim().toLowerCase() : '';
       let r = Number.isFinite(s) ? bySeq(s) : null;
@@ -680,8 +691,6 @@
       recs.forEach(r => { if (r.prev === prev && sha256(r.prev + '|' + body(r)) === r.hash) ok++; prev = r.hash; });
       return ok;
     }
-    const n0 = recs.length, ok0 = verified();
-    const stateIdle = stream ? '' : ok0 === n0 ? `Chain ✓ · ${n0} records verify` : `${n0 - ok0} of ${n0} records fail verification`;
     let replaying = 0;
     function replay() {
       clearTimeout(replaying);
@@ -749,32 +758,49 @@
       Array.from(track.children).forEach((li, i, all) => { if (i) gapMark(all[i - 1], bySeq(+all[i - 1].dataset.seq), bySeq(+li.dataset.seq)); });
     }
 
-    /* ---- start ---- */
-    fit();
-    if (stream) rebuild(); else { following = false; whole(); }
+    /* ---- start: the controls and the intake now; the chain once the page is idle (or first needed); the strip, the
+       only part that reads layout, when the panel comes within 1.5 viewports, or at once when the reader, a followed
+       proposal or the swarm's trace needs it. Until then the page's own records stand on the line, and what the swarm
+       announces is sealed and answered, not drawn */
+    if (!stream) following = false;
     if (ui.insp) ui.insp.hidden = false;
-    root.classList.add('lt-ready');
-    if (stream) {
-      root.classList.add('is-stream');
-      requestAnimationFrame(() => { toEnd(false); edges(); });
-    }
-    edges(); counts(); inspect(); state();
-    if ('IntersectionObserver' in window) {
-      // the stream runs only while some of it is on screen (no margin: nothing is drawn for a reader who cannot see it)
-      new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }).observe(root);
-      // a pulse waits until the strip itself is on screen
-      new IntersectionObserver(([en]) => { stripSeen = en.isIntersecting && en.intersectionRatio >= 0.55; if (stripSeen && pulseWant) pulseNow(); }, { threshold: [0, 0.6, 1] }).observe(view);
-    } else { visible = true; stripSeen = true; wake(); }
-    document.addEventListener('visibilitychange', wake);
-    let fitRaf = 0;
-    window.addEventListener('resize', () => {
-      if (fitRaf) return;
-      fitRaf = requestAnimationFrame(() => {
-        fitRaf = 0; fit();
-        if (following) toEnd(false); else if (sel !== null && els.has(sel)) reveal(els.get(sel), false);
-        edges(); inspect(); leader();
+    if ('requestIdleCallback' in window) requestIdleCallback(init, { timeout: 1500 }); else setTimeout(init, 400);
+    function mount() {
+      if (mounted) return;
+      mounted = true;
+      init();
+      track.setAttribute('role', 'listbox');
+      track.setAttribute('aria-orientation', 'horizontal');
+      fit();
+      if (stream) rebuild(); else whole();
+      root.classList.add('lt-ready');
+      if (stream) {
+        root.classList.add('is-stream');
+        requestAnimationFrame(() => { toEnd(false); edges(); });
+      }
+      edges(); counts(); inspect(); state();
+      if ('IntersectionObserver' in window) {
+        // the stream runs only while some of it is on screen (no margin: nothing is drawn for a reader who cannot see it)
+        new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }).observe(root);
+        // a pulse waits until the strip itself is on screen
+        new IntersectionObserver(([en]) => { stripSeen = en.isIntersecting && en.intersectionRatio >= 0.55; if (stripSeen && pulseWant) pulseNow(); }, { threshold: [0, 0.6, 1] }).observe(view);
+      } else { visible = true; stripSeen = true; wake(); }
+      document.addEventListener('visibilitychange', wake);
+      window.addEventListener('resize', () => {
+        if (fitRaf) return;
+        fitRaf = requestAnimationFrame(() => {
+          fitRaf = 0; fit();
+          if (following) toEnd(false); else if (sel !== null && els.has(sel)) reveal(els.get(sel), false);
+          edges(); inspect(); leader();
+        });
       });
-    });
+    }
+    // a press, a key or focus inside the panel draws it first, before its own handlers run
+    ['pointerdown', 'focusin', 'keydown', 'click'].forEach(t => root.addEventListener(t, mount, true));
+    if ('IntersectionObserver' in window) {
+      const near = new IntersectionObserver(([en]) => { if (en.isIntersecting) { near.disconnect(); mount(); } }, { rootMargin: '150% 0px' });
+      near.observe(root);
+    } else mount();
     motionQuery.addEventListener('change', e => { reduced = e.matches; if (reduced && playing) { playing = false; clearTimeout(timer); timer = 0; state(); } });
   }
 })();
