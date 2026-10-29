@@ -2461,7 +2461,10 @@ body.nav-open { overflow: hidden; }
 .loader.is-quick .loader-count, .loader.is-quick .loader-lab, .loader.is-quick .loader-dial::before { visibility: hidden; }
 .loader.is-quick .loader-ring, .loader.is-quick .loader-dial::after { opacity: 0; }
 .loader.is-quick { transition: opacity .45s var(--ease), visibility 0s linear .45s; }
-.loader.is-quick.is-done { transform: none; opacity: 0; }
+/* its fade is an animation, not a transition: the failsafe animates opacity from the first frame, and a transition does
+   not start on a property an animation drives in the same style change (the mark cut out at once) */
+.loader.is-quick.is-done { transform: none; opacity: 0; animation: loader-out .45s var(--ease) both; }
+@keyframes loader-out { from { opacity: 1; } to { opacity: 0; } }
 .loader.is-quick.is-done .loader-inner { transform: none; }
 body.is-loading { overflow: hidden; }
 /* as the curtain lifts, the bar's contents arrive */
@@ -2590,7 +2593,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .nav-sheet:not(:popover-open) :is(.nav-sheet-links li, .btn, .nav-sheet-meta) { transform: none; }
   .nav-live i { animation: none; }
   .loader, .loader-inner { transition: opacity .4s var(--ease), visibility 0s linear .4s; }
-  .loader.is-done { transform: none; opacity: 0; }
+  .loader.is-done { transform: none; opacity: 0; animation: loader-out .4s var(--ease) both; }
   .loader.is-done .loader-inner { transform: none; }
   .loader.is-complete .loader-dial, .loader-dial { animation: none; }
   a.link-arrow, button.link-arrow { transition: none; }
