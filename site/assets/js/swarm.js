@@ -455,6 +455,7 @@
     ctx.clearRect(0, 0, W, H);
     ctx.lineCap = 'butt'; ctx.lineJoin = 'bevel'; // round caps tessellate per segment: only the followed path gets them
     follow.dim += ((follow.active || (follow.show && sim < follow.endAt + 1.2) ? 1 : 0) - follow.dim) * (reduced.matches ? 1 : 1 - Math.exp(-frameDt * 6));
+    roleK += ((role ? 1 : 0) - roleK) * (reduced.matches || !running() ? 1 : 1 - Math.exp(-frameDt * 8)); if (roleK < 0.004) { roleK = 0; roleWas = 0; }
     placeLabels();
     drawFloor(); drawLedger(); drawFrames(); drawBoundary(); drawRails(); drawAperture(false); drawMotes(); drawTrails(); drawAgents(); drawAperture(true);
     drawFollow(); drawLeaders();
@@ -613,7 +614,7 @@
     ctx.strokeStyle = `rgba(${GR},${(0.5 + 0.4 * pulse).toFixed(3)})`; ctx.stroke();
   }
   function drawMotes() {
-    const shut = 1 - 0.75 * shutK, dim = 1 - 0.7 * follow.dim;
+    const shut = 1 - 0.75 * shutK, dim = (1 - 0.7 * follow.dim) * (roleK ? ((role || roleWas) === 1 ? 1 + 0.5 * roleK : 1 - 0.75 * roleK) : 1);
     for (let m = 0; m < MOTES; m++) {
       const o = m * 6, t = MS[m], e = t * t * (3 - 2 * t);
       const x = MX[o] + (MX[o + 3] - MX[o]) * t, y = MX[o + 1] + (MX[o + 4] - MX[o + 1]) * e, z = MX[o + 2] + (MX[o + 5] - MX[o + 2]) * e;
@@ -639,7 +640,7 @@
     const g = tctx || ctx, kd = tctx ? tdpr : dpr;
     if (tctx) { tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.globalAlpha = 1; tctx.clearRect(0, 0, tcv.width, tcv.height); tctx.setTransform(tdpr, 0, 0, tdpr, 0, 0); }
     const hair = Math.min(1, 1 / kd), boost = kd > 1.4 ? 1.35 : 1;
-    const cols = [IV, GR, RD], base = [0.24 * boost, 0.34 * boost, 0.55 * boost], dim = 1 - 0.72 * follow.dim;
+    const cols = [IV, GR, RD], base = [0.24 * boost, 0.34 * boost, 0.55 * boost], dim = (1 - 0.72 * follow.dim) * (1 - 0.6 * roleK);
     const at = (i, k) => (i * TRAIL + ((hHead - k + TRAIL * 2) % TRAIL)) * 2; // k-th sample back from the newest
     g.lineWidth = hair; g.lineCap = 'butt'; g.lineJoin = 'bevel';
     let drew = false;
@@ -682,12 +683,13 @@
     bandN[0] = bandN[1] = bandN[2] = 0;
     for (let i = 0; i < hi; i++) { if (!st[i] || isFollowed(i)) continue; const b = PF[i] > 0.66 ? 0 : PF[i] > 0.33 ? 1 : 2; bands[b][bandN[b]++] = i; }
     const r0 = clamp(0.0036 * cam.k0, 0.8, 2.1) * 2.3, dim = 1 - 0.72 * follow.dim, fade = reduced.matches;
+    const rk = roleK, rr = role || roleWas, out = 1 - 0.8 * rk, big = 1 + 0.3 * rk; // a lit role: its agents grow a little, the rest step back
     for (let b = 0; b < 3; b++) {
       const list = bands[b], n = bandN[b];
       for (let j = 0; j < n; j++) {
         const i = list[j]; agentLook(i);
-        const born = fade ? 1 : smooth(0, 0.5, sim - BORN[i]);
-        blit(LK, PX[i], PY[i], r0 * LS * PS[i], LA * (1 - 0.5 * PF[i]) * born * dim);
+        const born = fade ? 1 : smooth(0, 0.5, sim - BORN[i]), lit = !rk || inRole(i, rr);
+        blit(LK, PX[i], PY[i], r0 * LS * PS[i] * (lit ? big : 1), LA * (1 - 0.5 * PF[i]) * born * dim * (lit ? 1 : out));
       }
     }
     // settled squares glow as they snap
@@ -1234,6 +1236,51 @@
     if (hits(px, y, w, h, tagBox)) px = px > x ? x - 16 - w : x + 16;
     if (hits(px, y, w, h, tagBox) || px < 2 || px + w > W - 2) { t.hidden = true; return; }
     setPos(t, px, y);
+  }
+
+  /* ---------------- roles (Platform: data-sw-view="roles") ---------------- */
+  // The legend's four agent roles under the lab (A-01 ... A-04, .sw-role--1..4). Pointing at a card, or focusing its
+  // 'In the lab' line (a button once the lab runs), lights that role in the lab: its agents grow a little and its gate
+  // label lights (01 Signal, 03 Decide, 05 Execute, 06 Settle), while every other agent, the signals and the trails step
+  // back. Pressing the line keeps the role lit (aria-pressed) until it is pressed again or Escape; on a phone, where the
+  // lab is a screen above its legend, the press also brings the lab into view. The model is untouched: the counters,
+  // the events and the trace read exactly the same with or without a lit role.
+  const ROLE_GATE = [-1, 0, 2, 4, 5];
+  let role = 0, roleWas = 0, roleK = 0, roleHov = 0, roleFoc = 0, rolePin = 0;
+  const roleBtns = [];
+  function inRole(i, k) { // 1 signal agents (up to gate 02), 2 strategy agents (proposals, 03 to 04), 3 execution (the rails), 4 reconciliation (settling into the ledger)
+    const s = st[i];
+    return k === 1 ? s === FLOW && gate[i] <= 1 : k === 2 ? s === PROP : k === 3 ? s === RAIL : k === 4 ? s === SETTLE : true;
+  }
+  function pickRole() {
+    const k = roleHov || roleFoc || rolePin;
+    roleBtns.forEach((b, j) => { if (b) b.setAttribute('aria-pressed', String(j === rolePin)); });
+    if (k === role) return;
+    if (role) roleWas = role;
+    role = k;
+    if (k) root.dataset.swRole = k; else delete root.dataset.swRole;
+    el.gates.forEach((li, g) => li.classList.toggle('is-role', !!k && ROLE_GATE[k] === g));
+    if (booted && !running()) paint(); // paused or a still study: one frame shows it
+  }
+  if (root.dataset.swView === 'roles') {
+    (root.closest('section') || document).querySelectorAll('.sw-role').forEach((card) => {
+      const k = +((card.className.match(/\bsw-role--(\d)\b/) || [])[1] || 0), at = card.querySelector('.sw-at');
+      if (!k || !at || ROLE_GATE[k] === undefined) return;
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'sw-at-b'; b.dataset.swRoleBtn = k; b.setAttribute('aria-pressed', 'false');
+      b.append(...Array.from(at.childNodes)); at.replaceChildren(b);
+      roleBtns[k] = b;
+      card.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { roleHov = k; pickRole(); } });
+      card.addEventListener('pointerleave', (e) => { if (roleHov === k) { roleHov = 0; pickRole(); } });
+      b.addEventListener('focus', () => { roleFoc = k; pickRole(); });
+      b.addEventListener('blur', () => { if (roleFoc === k) { roleFoc = 0; pickRole(); } });
+      b.addEventListener('click', () => {
+        rolePin = rolePin === k ? 0 : k; pickRole();
+        const r = stage.getBoundingClientRect(), seen = Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0);
+        if (rolePin && seen < r.height * 0.4) stage.scrollIntoView({ block: 'center', behavior: reduced.matches ? 'auto' : 'smooth' });
+      });
+      b.addEventListener('keydown', (e) => { if (e.key === 'Escape' && rolePin) { rolePin = 0; pickRole(); e.preventDefault(); } });
+    });
   }
 
   /* ---------------- counters, all read from the model (written only while the lab is on screen) ---------------- */

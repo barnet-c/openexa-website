@@ -1334,6 +1334,17 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   .sw-on .sw-trace:not([hidden]), .sw-log li.is-filled { animation: none; }
   .sw-rec i { transition: none; }
 }
+/* Platform's roles view: a legend card lights its role in the lab, the other gates' labels step back */
+.sw-legend + .swarm-live { margin-top: clamp(20px, 2.4vw, 32px); } /* Platform: the four roles stand right above the lab they light */
+.sw-on[data-sw-view="roles"] .sw-gates li { transition: opacity .25s var(--ease); }
+.sw-on[data-sw-role] .sw-gates li:not(.is-role) { opacity: .34; }
+.sw-on[data-sw-role] .sw-gates li.is-role b, .sw-on[data-sw-role] .sw-gates li.is-role > span { color: var(--signal-bright); }
+.sw-at-b { display: flex; align-items: flex-start; gap: 10px; width: 100%; margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; text-align: left; cursor: pointer; }
+.sw-at-b:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
+.sw-at-b[aria-pressed="true"] b, .sw-at-b:focus-visible b { color: var(--signal-bright); }
+@media (hover: hover) { .sw-role:hover .sw-at b { color: var(--paper); } .sw-role:hover .sw-at-b[aria-pressed="true"] b { color: var(--signal-bright); } }
+@media (pointer: coarse) { .sw-at-b { min-height: 44px; } }
+@media (forced-colors: active) { .sw-at-b:focus-visible { outline-color: Highlight; } }
 /* v2:swarm:end */
 /* -------------------------------------------------------------------------- */
 /* v2:ledger:start */
