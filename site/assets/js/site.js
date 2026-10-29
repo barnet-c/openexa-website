@@ -862,6 +862,14 @@
   });
 
   /* ---------------- 2D swarm (interior heroes & no-WebGL fallback) ---------------- */
+  // The overture's globe drawn flat: the 404 and, when WebGL is missing, S0. Latitude rows of beads, larger and brighter where
+  // they face the eye (the far side is never drawn); two thin orbits; one green proposal ring on the first, and one red reject
+  // mote that drops from the ring on a dashed path and fades, as the 404's own line says ('REJECTED · gate 04 ... logged').
+  // It takes the largest free room beside, below or above the copy, so no stroke crosses the h1 or the lede and nothing runs
+  // under the bar. It drifts for 5 s and settles into a composed still (the loop stops: WCAG 2.2.2); a pointer moving over
+  // the globe wakes it for another 5 s. Nothing runs off screen, in a hidden tab or under reduced motion (one still is drawn).
+  // Contract: canvas[data-swarm] carries data-globe (where it went: beside, below, above, under or behind) and data-still
+  // while it rests, so a test can wait for a still frame.
   const canvas = $('canvas[data-swarm]');
   const inStory = canvas && canvas.closest('.story');
   // story.js decides on WebGL after first paint, so its fallback can arrive after this script has run
@@ -870,63 +878,203 @@
 
   function initSwarm(cv) {
     const ctx = cv.getContext('2d', { alpha: true });
+    if (!ctx) return;
     cv.hidden = false;
-    let W = 0, H = 0, dpr = 1, visible = true, frameId = 0, t = 0, last = performance.now();
-    const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
-    const IVORY = [245, 242, 236], GREEN = [79, 203, 147], TAU = Math.PI * 2;
+    const story = cv.closest('.story');
+    // the copy it keeps clear of: S0's beat text and figures, or the 404's eyebrow, h1, lede, buttons and log
+    const copy = story ? $$('.beat-0 .beat-text > *, .beat-0 .hero-stats', story) : $$('.container > *', cv.parentElement);
+    const strict = story ? [] : copy.filter(el => el.matches('h1, .lede')); // never under these, whatever the room
+    const IVORY = [245, 242, 236], GREEN = [79, 203, 147], RED = [217, 103, 93], TAU = Math.PI * 2;
     const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
-    // the overture's globe, drawn flat: the brand mark's latitude rows as fine beads (the back hemisphere is never drawn), two thin
-    // orbits and one green proposal travelling the first of them
-    const sphere = [], ROWS = 34;
-    for (let r = 0; r < ROWS; r++) { const la = (78 - 156 * r / (ROWS - 1)) * Math.PI / 180, n = Math.max(8, Math.round(92 * Math.cos(la))); for (let k = 0; k < n; k++) sphere.push({ la, lo: (k + (r % 2) * 0.5) / n * TAU }); }
     const orbits = [{ r: 1.34, tiltX: 1.16, rotZ: -0.36 }, { r: 1.6, tiltX: 1.42, rotZ: 0.52 }];
     // up to 3x within a UHD budget, no side past 4096 px: a tall fallback stage stays under iOS Safari's ~16 MP canvas limit
     const PIXEL_BUDGET = 3840 * 2160;
-    function resize() { const r = cv.getBoundingClientRect(); W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height)); dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / (W * H)), 4096 / W, 4096 / H); cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); if (prefersReduced) draw(0); }
-    function rot(p, ax, ay, az) { let [x, y, z] = p; let c = Math.cos(ax), s = Math.sin(ax); let y1 = y * c - z * s, z1 = y * s + z * c; y = y1; z = z1; c = Math.cos(ay); s = Math.sin(ay); let x1 = x * c + z * s; z1 = -x * s + z * c; x = x1; z = z1; c = Math.cos(az); s = Math.sin(az); x1 = x * c - y * s; y1 = x * s + y * c; return [x1, y1, z]; }
+    // the drift: a clock (tau, in seconds of motion) that runs only while awake. A wake eases in (RAMP s), cruises, and eases
+    // out (EASE s) onto a composed still: the ring in front, a reject part-way down its path. A reject leaves the ring every
+    // P s of clock and falls for FALL s.
+    const WAKE = 5000, RAMP = 0.6, EASE = 1.5, P = 4, FALL = 2.6, PHASE = 0.3;
+    let W = 0, H = 0, dpr = 1, G = null, sphere = [], visible = true, frameId = 0, tau = 0, plan = null, last = 0;
+    const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
+    const rot = (p, ax, ay, az) => { let [x, y, z] = p; let c = Math.cos(ax), s = Math.sin(ax); let y1 = y * c - z * s, z1 = y * s + z * c; y = y1; z = z1; c = Math.cos(ay); s = Math.sin(ay); let x1 = x * c + z * s; z1 = -x * s + z * c; x = x1; z = z1; c = Math.cos(az); s = Math.sin(az); x1 = x * c - y * s; y1 = x * s + y * c; return [x1, y1, z]; };
+    const view = (tt) => ({ spin: tt * 0.10 + mouse.x * 0.25, tilt: 0.32 + mouse.y * 0.12 });
+    const onOrbit = (o, a, v) => { const q = rot(rot([Math.cos(a) * o.r, Math.sin(a) * o.r, 0], o.tiltX, 0, o.rotZ), v.tilt, v.spin * 0.3, 0); return [G.cx + q[0] * G.R, G.cy + q[1] * G.R, q[2]]; };
+    const hidden = (x, y, z) => z < 0 && Math.hypot((x - G.cx) / G.R, (y - G.cy) / G.R) < 0.99; // behind the globe
+    const ringAt = (tt) => onOrbit(orbits[0], tt * 0.32 + 1.1, view(tt));
+    // the reject that leaves the ring at clock te: where it starts, its sideways drift and its drop (inside its room)
+    function reject(te) {
+      const [x0, y0, z0] = ringAt(te);
+      if (hidden(x0, y0, z0) || x0 < 12 || x0 > W - 12) return null;
+      const drop = Math.min(G.R * 0.5, G.floor - y0 - 10);
+      return drop < G.R * 0.22 ? null : { x0, y0, dx: (x0 >= G.cx ? 1 : -1) * G.R * 0.14, drop };
+    }
+    // a composed still: the ring in front and on the canvas, the latest reject well clear of it, part-way down its path
+    function good(tt) {
+      const te = Math.floor((tt - PHASE) / P) * P + PHASE, u = (tt - te) / FALL;
+      if (u < 0.55 || u > 0.68 || !reject(te)) return false;
+      const [x, y, z] = ringAt(tt);
+      return !hidden(x, y, z) && x > 16 && x < W - 16 && y > G.top && y < G.floor;
+    }
+    const goodFrom = (t0) => { for (let tt = t0; tt < t0 + 3 * P; tt += 0.02) if (good(tt)) return tt; return t0; };
+    // the copy in the canvas's coordinates: across, its lines (an h1's box is wider than its words); down, its boxes as laid
+    // out, before any entrance transform (a reveal starts 16 px low, split words a line low)
+    function extent(els, cr) {
+      let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+      els.forEach(el => {
+        const box = el.getBoundingClientRect(); if (box.width < 1 || box.height < 1) return;
+        let ty = 0; try { ty = new DOMMatrixReadOnly(getComputedStyle(el).transform).m42; } catch (e) { /* none */ }
+        const rg = document.createRange(); rg.selectNodeContents(el);
+        for (const q of rg.getClientRects()) if (q.width >= 1) { l = Math.min(l, q.left - cr.left); r = Math.max(r, q.right - cr.left); }
+        t = Math.min(t, box.top - ty - cr.top); b = Math.max(b, box.bottom - ty - cr.top);
+      });
+      return l < Infinity ? { l, t, r, b } : null;
+    }
+    // the copy's lines, padded: where a globe set behind the copy leaves a gap, so no mark runs under a word
+    function holes(els, cr) {
+      const out = [];
+      els.forEach(el => {
+        let ty = 0; try { ty = new DOMMatrixReadOnly(getComputedStyle(el).transform).m42; } catch (e) { /* none */ }
+        const rg = document.createRange(); rg.selectNodeContents(el);
+        for (const q of rg.getClientRects()) if (q.width >= 1 && q.height >= 1) out.push([q.left - cr.left - 9, q.top - ty - cr.top - 7, q.right - cr.left + 9, q.bottom - ty - cr.top + 7]);
+      });
+      return out;
+    }
+    function place() {
+      const cr = cv.getBoundingClientRect(), bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 64;
+      const top = Math.max(0, bar - cr.top) + 14, C = extent(copy, cr), S = extent(strict, cr), gap = 18;
+      const wide = cr.left > 1; // the canvas keeps to the right of the copy (the 404 from 961 px, S0 on wide screens)
+      // beside the copy, in the brief's proportions, level with it; its orbits never reach back into it
+      const beside = (cap) => {
+        const x0 = C ? Math.max(0, C.r + gap) : 0, R = Math.min(cap, (W - 8 - x0) / 2.6, (H - top - 12) / 2), mid = C ? (C.t + C.b) / 2 : H * 0.48;
+        return { mode: 'beside', R, cx: Math.min(W - R - 8, Math.max(W * 0.6, x0 + 1.6 * R)), cy: Math.max(top + R, Math.min(H - R - 12, mid)), floor: H - 12, alpha: 1 };
+      };
+      let g;
+      if (story && wide) g = { mode: 'beside', R: Math.min(W * 0.20, H * 0.30), cx: W * 0.735, cy: H * 0.42, floor: H - 12, alpha: 1 };
+      else if (wide || !C) g = beside(Math.min(W * 0.30, H * 0.36));
+      else {
+        // full width: the largest of the rooms beside, below and above the copy (orbits may leave the canvas, never enter the copy)
+        const cap = story ? W * 0.40 : Math.min(W * 0.30, H * 0.36);
+        const room = (y0, y1, mode) => ({ mode, R: Math.min(cap, (y1 - y0) / 2), cy: (y0 + y1) / 2, floor: y1, alpha: 1 });
+        const side = beside(cap), pick = [side, room(C.b + gap, H - 12, 'below'), room(top, C.t - gap, 'above')].reduce((a, b) => (b.R > a.R ? b : a));
+        if (pick.R >= Math.min(cap, 54)) g = pick;
+        else if (S) g = { ...room(S.b + gap, H - 12, 'under'), mode: 'under', alpha: 0.7 }; // a short screen: under the lede, behind the buttons and the log
+        else { const R = W * 0.40; g = { mode: 'behind', R, cy: Math.max(H * 0.3, top + R * 0.6), floor: H - 12, alpha: 0.55 }; } // S0 on a tall tablet
+        g.R = Math.max(24, g.R);
+        if (g.mode !== 'beside') g.cx = Math.max(g.R + 8, Math.min(W - g.R - 8, story ? W * 0.62 : W * 0.6));
+        if (g.mode === 'under' || g.mode === 'behind') g.holes = holes(copy, cr);
+      }
+      g.top = top; g.bead = W < 600 ? 1.6 : 1.25; // a bead's radius at mid depth (it grows toward the eye)
+      G = g; cv.dataset.globe = g.mode;
+      // the beads: about 12 px apart whatever the globe's size, so a small globe is not a grey disc and a large one not sparse
+      const sp = W < 600 ? 12.5 : 11.5, rows = Math.max(14, Math.min(64, Math.round(2.93 * g.R / sp) + 1)), eq = Math.round(TAU * g.R / sp);
+      sphere = [];
+      for (let r = 0; r < rows; r++) { const la = (84 - 168 * r / (rows - 1)) * Math.PI / 180, n = Math.max(8, Math.round(eq * Math.cos(la))); for (let k = 0; k < n; k++) sphere.push({ la, lo: (k + (r % 2) * 0.5) / n * TAU }); }
+    }
     function draw() {
+      if (!G) return;
+      const { R, cx, cy, bead } = G, v = view(tau), small = W < 600, hs = G.holes;
+      const out = hs ? (x, y) => { for (const h of hs) if (x > h[0] && x < h[2] && y > h[1] && y < h[3]) return true; return false; } : () => false;
       ctx.clearRect(0, 0, W, H);
-      const narrow = W < 960;
-      const R = narrow ? W * 0.40 : Math.min(W * 0.20, H * 0.30), cx = narrow ? W * 0.62 : W * 0.735, cy = narrow ? H * 0.22 : H * 0.42;
-      ctx.globalAlpha = narrow ? 0.55 : 1;
-      mouse.x += (mouse.tx - mouse.x) * 0.04; mouse.y += (mouse.ty - mouse.y) * 0.04;
-      const spin = t * 0.10 + mouse.x * 0.25, tilt = 0.32 + mouse.y * 0.12;
-      const onOrbit = (o, a) => { const q = rot(rot([Math.cos(a) * o.r, Math.sin(a) * o.r, 0], o.tiltX, 0, o.rotZ), tilt, spin * 0.3, 0); return [cx + q[0] * R, cy + q[1] * R, q[2]]; };
-      const hidden = (x, y, z) => z < 0 && Math.hypot((x - cx) / R, (y - cy) / R) < 0.99; // behind the globe
+      ctx.globalAlpha = G.alpha;
+      // the body: a green key light from the upper left, fading to the limb
+      const body = ctx.createRadialGradient(cx - R * 0.38, cy - R * 0.42, R * 0.05, cx, cy, R);
+      body.addColorStop(0, rgba(GREEN, 0.075)); body.addColorStop(0.55, rgba(IVORY, 0.03)); body.addColorStop(1, rgba(IVORY, 0.012));
+      ctx.fillStyle = body; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fill();
       // two thin orbits, one stroke each (their arcs behind the globe are left out)
       ctx.lineWidth = 1;
       orbits.forEach((o, oi) => {
         ctx.beginPath(); let pen = false;
-        for (let i = 0; i <= 160; i++) { const [x, y, z] = onOrbit(o, i / 160 * TAU); if (hidden(x, y, z)) { pen = false; continue; } if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; } }
-        ctx.strokeStyle = rgba(oi ? IVORY : GREEN, oi ? 0.09 : 0.16); ctx.stroke();
+        for (let i = 0; i <= 180; i++) { const [x, y, z] = onOrbit(o, i / 180 * TAU, v); if (hidden(x, y, z) || out(x, y)) { pen = false; continue; } if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; } }
+        ctx.strokeStyle = rgba(oi ? IVORY : GREEN, oi ? 0.16 : 0.26); ctx.stroke();
       });
-      // the globe: ~1.4 px beads, 12% ivory at the limb rising to ~32% facing the eye (fainter vanishes at 1x); beads of one alpha share one path
+      // the globe: beads at .22 alpha at the limb rising to .6 facing the eye, and from .75x to 1.35x their size; beads of one
+      // alpha share one path
       const eb = new Map();
       sphere.forEach(pt => {
-        const lo = pt.lo + spin, q = rot([Math.cos(pt.la) * Math.sin(lo), Math.sin(pt.la), Math.cos(pt.la) * Math.cos(lo)], tilt, 0, 0);
-        if (q[2] <= 0.04) return;
-        const k = Math.round((0.12 + 0.2 * Math.pow(q[2], 1.2)) * 100);
-        let f = eb.get(k); if (!f) eb.set(k, f = []); f.push(cx + q[0] * R, cy + q[1] * R);
+        const lo = pt.lo + v.spin, q = rot([Math.cos(pt.la) * Math.sin(lo), Math.sin(pt.la), Math.cos(pt.la) * Math.cos(lo)], v.tilt, 0, 0);
+        if (q[2] <= 0.04 || out(cx + q[0] * R, cy + q[1] * R)) return;
+        const k = Math.round((0.22 + 0.38 * Math.pow(q[2], 1.2)) * 50);
+        let f = eb.get(k); if (!f) eb.set(k, f = []); f.push(cx + q[0] * R, cy + q[1] * R, bead * (0.75 + 0.6 * q[2]));
       });
-      eb.forEach((f, k) => { ctx.beginPath(); for (let i = 0; i < f.length; i += 2) { ctx.moveTo(f[i] + 0.7, f[i + 1]); ctx.arc(f[i], f[i + 1], 0.7, 0, TAU); } ctx.fillStyle = rgba(IVORY, k / 100); ctx.fill(); });
-      // one proposal: a green ring travelling the first orbit (it passes behind the globe)
-      const [px, py, pz] = onOrbit(orbits[0], t * 0.32 + 1.1);
-      if (!hidden(px, py, pz)) { ctx.beginPath(); ctx.arc(px, py, 3.4, 0, TAU); ctx.strokeStyle = rgba(GREEN, 0.9); ctx.lineWidth = 1.2; ctx.stroke(); }
-      const g = ctx.createRadialGradient(cx, cy, R * 0.94, cx, cy, R * 1.1); g.addColorStop(0, rgba(IVORY, 0.035)); g.addColorStop(1, rgba(IVORY, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.1, 0, TAU); ctx.fill();
+      eb.forEach((f, k) => { ctx.beginPath(); for (let i = 0; i < f.length; i += 3) { ctx.moveTo(f[i] + f[i + 2], f[i + 1]); ctx.arc(f[i], f[i + 1], f[i + 2], 0, TAU); } ctx.fillStyle = rgba(IVORY, k / 50); ctx.fill(); });
+      // the latest reject: a dashed fall from where it left the ring, the mote on it, both fading as it drops
+      const te = Math.floor((tau - PHASE) / P) * P + PHASE, u = (tau - te) / FALL, rj = u >= 0 && u <= 1 ? reject(te) : null;
+      if (rj) {
+        const fade = u < 0.7 ? 1 : Math.max(0, 1 - (u - 0.7) / 0.3), at = (s) => [rj.x0 + rj.dx * s, rj.y0 + rj.drop * Math.pow(s, 1.6)];
+        ctx.beginPath(); let pen = false; for (let i = 0; i <= 14; i++) { const [x, y] = at(u * i / 14); if (out(x, y)) { pen = false; continue; } if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; } }
+        ctx.setLineDash([2, 3.5]); ctx.strokeStyle = rgba(RED, 0.55 * fade); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+        if (u < 0.18) { const k = u / 0.18; ctx.beginPath(); ctx.arc(rj.x0, rj.y0, 4 + 7 * k, 0, TAU); ctx.strokeStyle = rgba(RED, 0.5 * (1 - k)); ctx.stroke(); }
+        const [mx, my] = at(u); if (!out(mx, my)) { ctx.beginPath(); ctx.arc(mx, my, small ? 2.6 : 2.2, 0, TAU); ctx.fillStyle = rgba(RED, 0.95 * fade); ctx.fill(); }
+      }
+      // the proposal: a green ring travelling the first orbit (it passes behind the globe)
+      const [px, py, pz] = ringAt(tau);
+      if (!hidden(px, py, pz) && !out(px, py)) { ctx.beginPath(); ctx.arc(px, py, small ? 4.2 : 3.6, 0, TAU); ctx.strokeStyle = rgba(GREEN, 0.95); ctx.lineWidth = 1.3; ctx.stroke(); }
       ctx.globalAlpha = 1;
     }
-    // the loop runs only while the canvas is on screen in a visible tab
-    function frame(now) { frameId = 0; if (!visible || document.hidden) return; const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt; draw(); request(); }
-    function request() { if (!frameId && visible && !document.hidden) frameId = requestAnimationFrame(frame); }
-    function stop() { cancelAnimationFrame(frameId); frameId = 0; last = performance.now(); }
-    resize(); window.addEventListener('resize', resize);
+    // a wake, from now: ease in from the current speed, cruise, ease out onto the next composed still at least 5 s away
+    const speedAt = (p, t) => { const d = (t - p.t0) / 1000; if (d < RAMP) return p.s0 + (1 - p.s0) * d / RAMP; const x = (p.tEnd - t) / 1000 / EASE; return x >= 1 ? 1 : Math.max(0, x * x); };
+    function tauAt(p, t) {
+      if (t >= p.tEnd) return p.tauEnd;
+      const d = Math.max(0, (t - p.t0) / 1000), x = (p.tEnd - t) / 1000 / EASE;
+      if (x < 1) return p.tauEnd - EASE / 3 * x * x * x; // easing out: speed x^2
+      const ramp = Math.min(d, RAMP);
+      return p.tau0 + p.s0 * ramp + (1 - p.s0) * ramp * ramp / (2 * RAMP) + Math.max(0, d - RAMP);
+    }
+    function wake(t, s0, tau0) {
+      const nominal = tau0 + RAMP * (1 + s0) / 2 + (WAKE / 1000 - RAMP - EASE) + EASE / 3, tauEnd = goodFrom(nominal);
+      plan = { t0: t, s0, tau0, tauEnd, tEnd: t + WAKE + (tauEnd - nominal) * 1000 };
+      delete cv.dataset.still; request();
+    }
+    const rests = () => !plan || performance.now() >= plan.tEnd;
+    function frame(now) {
+      frameId = 0;
+      if (!visible || document.hidden || !plan) return;
+      const k = 1 - Math.exp(-Math.min(0.1, (now - last) / 1000) * 3); last = now;
+      mouse.x += (mouse.tx - mouse.x) * k; mouse.y += (mouse.ty - mouse.y) * k;
+      tau = tauAt(plan, now); draw();
+      if (now < plan.tEnd) frameId = requestAnimationFrame(frame); else cv.dataset.still = '';
+    }
+    // run while awake and in sight; at rest (or a wake that ended out of sight), the still it was heading for, drawn once
+    function request() {
+      if (frameId || !visible || document.hidden || !plan) return;
+      if (!rests()) { last = performance.now(); frameId = requestAnimationFrame(frame); return; }
+      if (tau !== plan.tauEnd) { tau = plan.tauEnd; draw(); }
+      cv.dataset.still = '';
+    }
+    function stop() { cancelAnimationFrame(frameId); frameId = 0; }
+    // placed again (a resize, a new pixel ratio, the copy's face arriving); at rest it keeps to a composed still
+    function relayout() {
+      place();
+      if (rests()) { tau = goodFrom(plan ? plan.tauEnd : tau); if (plan) plan.tauEnd = tau; } else tau = tauAt(plan, performance.now());
+      draw();
+    }
+    function resize() {
+      const r = cv.getBoundingClientRect(); W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height));
+      dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / (W * H)), 4096 / W, 4096 / H);
+      cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      relayout();
+    }
+    tau = 2.4; resize(); // the first still, composed in advance: reduced motion shows it, and the first wake lands on it
+    window.addEventListener('resize', resize);
+    if (document.fonts) document.fonts.ready.then(relayout); // the copy's lines move when its face arrives
+    setTimeout(relayout, 1800); // and once the copy's entrance is over (the split h1's words rise a line)
     // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
     (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
-    if (!prefersReduced) {
-      window.addEventListener('pointermove', (e) => { mouse.tx = (e.clientX / window.innerWidth - 0.5) * 2; mouse.ty = (e.clientY / window.innerHeight - 0.5) * 2; }, { passive: true });
-      if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) request(); else stop(); }, { threshold: 0 }).observe(cv);
-      document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else request(); });
-      request();
-    } else draw(0);
+    if (prefersReduced) { cv.dataset.still = ''; return; }
+    // the first wake starts at once, from rest, and lands on that still 5 s later
+    const t0 = performance.now(), still = tau;
+    plan = { t0, s0: 0, tau0: still - (RAMP / 2 + (WAKE / 1000 - RAMP - EASE) + EASE / 3), tauEnd: still, tEnd: t0 + WAKE };
+    tau = plan.tau0; draw();
+    // a pointer moving over the globe tilts it toward itself and keeps it awake for another 5 s (re-planned at most 4x a second)
+    window.addEventListener('pointermove', (e) => {
+      if (!G) return; const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      if (x < 0 || y < 0 || x > r.width || y > r.height || Math.hypot(x - G.cx, y - G.cy) > G.R * 1.7) return;
+      mouse.tx = Math.max(-1, Math.min(1, (x - G.cx) / (G.R * 1.7))); mouse.ty = Math.max(-1, Math.min(1, (y - G.cy) / (G.R * 1.7)));
+      const now = performance.now();
+      if (!rests() && now < plan.t0 + 250) return;
+      wake(now, rests() ? 0 : speedAt(plan, now), rests() ? tau : tauAt(plan, now));
+    }, { passive: true });
+    if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) request(); else stop(); }, { threshold: 0 }).observe(cv);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else request(); });
+    request();
   }
 })();
