@@ -460,6 +460,7 @@
     let reduced = reduceMQ.matches, paused = false, visible = false, started = false, exStart = -1, ex = 0, t = 0;
     let beadsDirty = true, pointerIn = false, focusIn = false, lastActive = performance.now(), wasBusy = true; // for the idle stop
     let restAcc = 1, lastF = 0; // frames owed at the rest rate: 20 a second with nobody at the instrument, 30 with someone
+    let prerolled = false; // the flow, run ahead once when the stack opens
     const cardY = { x: 0, v: 0 };
     let cardTop = 0, cardH = 0, titleOff = 0, cardVis = 0, figTop = 0, navHc = 72;
     const measureCard = () => { cardH = card.offsetHeight; titleOff = snm.offsetTop + snm.offsetHeight / 2; };
@@ -959,6 +960,9 @@
       const ambient = !reduced && !paused && started && awake(now);
       if (ambient) {
         t += dt;
+        // the stack is already at work when it opens: the flow is run 5 s ahead, unseen, so a proposal settles on 08 within
+        // the first seconds instead of after the 8 s it would take from empty (and before the instrument goes idle)
+        if (ex >= 1 && !prerolled) { prerolled = true; for (let k = 0; k < 100; k++) flowStep(0.05); pulse = permit = 0; bound.flash = bound.ripT = 0; if (floor) floor.land = 0; }
         flowStep(dt);
         pulse = Math.max(0, pulse - dt / 0.3); permit = Math.max(0, permit - dt / 0.55);
         bound.flash = Math.max(0, bound.flash - dt / 0.22); bound.ripT = Math.max(0, bound.ripT - dt / 0.6);
