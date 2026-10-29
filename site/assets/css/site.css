@@ -973,6 +973,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-short .story-lab.floor span { display: block; } /* two short lines, left of column 01 */
 .story-short .story-lab.floor { line-height: 1.3; }
 .story-short .story-lab.day { padding: 2px 0; min-width: 0; }
+.story-short .story-lab.layer, .story-short .story-lab.bound { min-height: 20px; } /* nine rows beside the stack from 360 px of height */
 
 /* without JavaScript, and when WebGL is unavailable (site.js then draws the 2D swarm behind the first beat), the beats read as a
    sequence. With JavaScript the pinned stage holds from the first paint, so nothing shifts when story.js arrives; should it never

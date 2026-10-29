@@ -861,7 +861,9 @@
         x1 = W - gutter - room; y0 = navH + 22;
         if (ZONE[i] === 'upper' && br.t - y0 > H * 0.36) { x0 = gutter + (W - 2 * gutter) * 0.3; y1 = br.t - 26; }
         else { x0 = Math.min(br.r + 36, W * 0.56); y1 = H - barH - Math.max(18, capH[i] + 12); } // above the scene's caption
-        if (x1 - x0 < 240) x0 = x1 - 240;
+        // at least 240 px for the structure, except across the copy: short landscape keeps its paragraphs beside the structure, so
+        // there the structure gives way (it never runs under the copy's lines)
+        if (x1 - x0 < 240) x0 = Math.max(x1 - 240, short && br.t < y1 ? br.r + 16 : -1e9);
       } else { // above this scene's copy, under the index and the scene's caption, never across the copy; the callouts keep their column
         const room = roomOf[i] = Math.max([0, 0.13, 0.15, 0.1, 0][i] * W, labelMaxW[i] ? labelMaxW[i] + 28 : 0);
         x0 = gutter * 0.5; x1 = W - gutter * 0.5 - room;
@@ -1229,7 +1231,7 @@
   const leaders = document.createElementNS(SVGNS, 'svg');
   leaders.setAttribute('class', 'story-leaders'); leaders.setAttribute('aria-hidden', 'true'); leaders.setAttribute('focusable', 'false');
   if (labelHost) labelHost.appendChild(leaders);
-  const labels = [];
+  const labels = [], capOf = []; // (capOf: each scene's caption)
   // kind: 'list' (a right-hand column with leaders), 'tag' (at its anchor), 'cap' (the scene's figure caption)
   function label(scene, html, opts) {
     const interactive = !!opts.group || opts.group === 0;
@@ -1245,6 +1247,7 @@
     if (opts.node) { node = document.createElementNS(SVGNS, 'circle'); node.setAttribute('r', '1.5'); node.setAttribute('class', 'story-node ' + (opts.cls || '')); leaders.appendChild(node); }
     const l = Object.assign({ el, path, scene, on: false, tr: '', d: '', w: 0, h: 0, y: 0 }, opts);
     l.node = node; // (the option only asks for one)
+    if (opts.kind === 'cap') capOf[scene] = l;
     labels.push(l);
     return l;
   }
@@ -1404,7 +1407,10 @@
       listCol.sort((a, b) => a.ay - b.ay);
       const sc = listCol[0].scene, L = layouts[sc];
       const maxW = Math.max(...listCol.map(l => l.w)), colX = stacked ? W - gutter * 0.5 - maxW : Math.min(L.rect[2] + 22, W - gutter * 0.5 - maxW);
-      const gap = Math.max(...listCol.map(l => l.h)) + (stacked || short ? 2 : 6), top = navH + (stacked ? barH + capH[sc] + 8 : 0) + 14, bottom = (stacked ? beatRects[sc].t - 10 : H - barH - capH[sc] - 16);
+      const gap = Math.max(...listCol.map(l => l.h)) + (stacked || short ? 2 : 6), top = navH + (stacked ? barH + capH[sc] + 22 : short ? 8 : 14);
+      let bottom = stacked ? beatRects[sc].t - 10 : H - barH - capH[sc] - (short ? 12 : 16);
+      // landscape: should the column not fit above its scene's caption (a short window at a high zoom), the caption steps aside for it
+      if (!stacked && capH[sc] && capOf[sc] && (listCol.length - 1) * gap + listCol[listCol.length - 1].h > bottom - top) { bottom = H - barH - 12; capOf[sc].a = 0; }
       let y = -1e9;
       listCol.forEach(l => { l.y = Math.max(l.ay - l.h / 2, y + gap); y = l.y; });
       const over = y + listCol[listCol.length - 1].h - bottom;
