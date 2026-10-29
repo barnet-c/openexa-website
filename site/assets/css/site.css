@@ -736,7 +736,8 @@ em, .ital { font-style: italic; }
   html, body { background: #fff !important; color: #000 !important; }
   .loader, .nav, .nav-menu, .skip, .story-idx, .story-motion, .story-labels, .story-static-mark, .hero-scroll,
   canvas, .figure-stage, .article-side, .pager, .article-share, .cta-band, .footer .top, .footer .wordmark,
-  .swarm-live, .chain, .desk, .blog-filter, .grain::after, .section[data-n]::before { display: none !important; }
+  .swarm-live, .chain, .desk, .blog-filter, .grain::after, .section[data-n]::before,
+  .swarm-live + .figure-cap, .chain + .figure-cap, .desk-cap { display: none !important; } /* (an instrument that does not print takes its caption) */
   * { animation: none !important; transition: none !important; box-shadow: none !important; text-shadow: none !important; }
   .is-dark, .page-hero--dark { --bg: #fff; --bg-2: #fff; --fg: #000; --fg-2: #222; --fg-3: #444; --line: #bbb; --line-strong: #888; --accent: #1E7A5A; background: #fff !important; color: #000 !important; }
   .is-dark *, .page-hero--dark * { color: #000 !important; background-color: transparent !important; border-color: #bbb !important; }
