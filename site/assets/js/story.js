@@ -64,7 +64,7 @@
   const cv = story.querySelector('canvas.story-gl');
   const reducedMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
   // static beats; site.js runs the 2D swarm behind them (it listens for this event when WebGL fails after it has run)
-  const fallback = () => { root.classList.remove('story-ready', 'gl-ready'); root.classList.add('no-webgl'); document.dispatchEvent(new Event('story:no-webgl')); };
+  const fallback = () => { root.classList.remove('story-ready', 'gl-ready'); root.classList.add('no-webgl'); story.setAttribute('data-settled', ''); document.dispatchEvent(new Event('story:no-webgl')); }; // (static: always at rest)
   if (!cv || !stage || !window.WebGLRenderingContext) { fallback(); return; }
   root.classList.add('story-ready');
   // portrait and small screens stack the visual above the copy (the same query lives in the stylesheet)
@@ -195,7 +195,8 @@
       const k = RING_OF_BAND[band[q]], [rr, , az] = RINGS[k];
       const th = dash(k, az - lam[q]); // the ring point that sits at the agent's longitude
       ringAng[q] = th; ringOf[q] = k;
-      const kind = k === 0 ? (R(q, 1) < 0.72 ? K.GREEN : K.BRIGHT) : k < 3 ? (R(q, 1) < 0.3 ? K.IVORY : K.DUST) : (R(q, 1) < 0.3 ? K.KHAKI : K.KDIM);
+      // LC-01: density, not bloom, carries 'live' (a bright bead is one in eight)
+      const kind = k === 0 ? (R(q, 1) < 0.88 ? K.GREEN : K.BRIGHT) : k < 3 ? (R(q, 1) < 0.3 ? K.IVORY : K.DUST) : (R(q, 1) < 0.3 ? K.KHAKI : K.KDIM);
       set(1, q, th, rr + gauss() * (k === 0 ? 0.022 : 0.014), gauss() * 0.006, code(M.RING, kind, k));
     }
     for (let q = 0; q < N_ORB; q++) {
@@ -350,6 +351,9 @@
     if (mode < 1.5) return rotY(u_spin) * s.xyz;
     if (mode < 3.5) { // orbit (S0, rings 0-5) or lifecycle ring (S1, rings 6-11): x angle, y radius, z lift
       int k = int(grp + 0.5) + (mode > 2.5 ? 6 : 0);
+      // LC-01's beads lie close along their ring: each green one at under half strength and each bright one at half, so where they
+      // overlap the ring stays green instead of clipping to a cyan white (density, not bloom, carries 'live')
+      if (mode > 2.5 && grp < 0.5) al = kind > 1.5 && kind < 2.5 ? 0.44 : kind > 7.5 && kind < 8.5 ? 0.5 : 1.0;
       float a = s.x + u_time * u_rW[k];
       vec3 U = u_rU[k], V = u_rV[k];
       return (cos(a) * U + sin(a) * V) * s.y + normalize(cross(U, V)) * s.z;
@@ -430,7 +434,7 @@
     if (k < 5.5) return vec4(0.72, 0.55, 1.0, 0.25);
     if (k < 6.5) return vec4(0.82, 0.46, 0.0, 0.0);
     if (k < 7.5) return vec4(0.9, 0.62, 0.0, 0.6);
-    if (k < 8.5) return vec4(1.15, 1.0, 0.0, 0.5);
+    if (k < 8.5) return vec4(1.15, 1.0, 0.0, 0.25);
     return vec4(0.7, 0.2, 1.0, 0.0);
   }
   float easeSpring(float t) { float s = t * t * (3.0 - 2.0 * t); float u = s - 1.0; return 1.0 + ${C3.toFixed(3)} * u * u * u + ${C1.toFixed(3)} * u * u; }
@@ -693,7 +697,7 @@
   }
 
   /* ================= layout: each scene fitted into the frame the copy leaves free ================= */
-  let W = 1, H = 1, dpr = 1, ratio = 0, stacked = false, compact = false, short = false, navH = 72, barH = 64, gutter = 24;
+  let W = 1, H = 1, dpr = 1, ratio = 0, stacked = false, compact = false, short = false, tiny = false, navH = 72, barH = 64, gutter = 24;
   // local extent seen from each scene's camera (w, h); portrait screens fit the globe to the sphere itself (its faint orbits may run wider)
   const EXT = [[2.9, 2.5], [3.3, 2.2], [2.75, 2.75], [2.55, 2.5], [3.8, 2.0]];
   const EXT_ST = [[2.45, 2.12], [3.3, 2.7], null, null, null];
@@ -705,9 +709,14 @@
   const ZONE = ['right', 'right', 'right', 'right', 'right']; // one horizon: every scene sits in the same band right of its copy
   // under the S4 floor, in CSS px: the records hang from it, then the NAV hairline with each session's regime tick, then the day tags
   const U_REC = 6.5, U_NAV = 22, U_TICK = 10, U_DAY = 35, DAY_BAND = 70;
+  const MIN_FRAME = [0, 120, 110, 120, DAY_BAND + 90]; // portrait: the least frame each structure reads in (S0's globe always keeps its lede)
+  let dayPitch = 99;
   const layouts = Array.from({ length: 5 }, () => ({ cx: 0, cy: 0, s: 1, rect: [0, 0, 0, 0] }));
-  const beatRects = [], numFit = [0, 0, 0, 0], capH = [0, 0, 0, 0, 0], labelMaxW = [0, 0, 0, 0, 0];
-  let storyTop = 0, run = 1, scrollY = 0, stageH = 1, lastP = NaN, floorW = 0, floorL = -COL_SPAN / 2 - 0.5, numGlyphH = 0;
+  const beatRects = [], numFit = [0, 0, 0, 0], capH = [0, 0, 0, 0, 0], labelMaxW = [0, 0, 0, 0, 0], roomOf = [0, 0, 0, 0, 0];
+  let storyTop = 0, run = 1, scrollY = 0, stageH = 1, storyH = 1, lastP = NaN, floorW = 0, floorL = -COL_SPAN / 2 - 0.5, numGlyphH = 0;
+  // the stage shows below the nav's bar: past the pin the stage leaves with the page, and once its last pixels are under the
+  // opaque bar nothing of it can be seen, so nothing is drawn (scrolling back up starts the loop again)
+  let belowBar = true;
   const pxuOf = (h) => (h / 2) / (CAM_D * Math.tan(FOV / 2)); // CSS px per world unit at the target's depth
   const l4 = (px) => px / Math.max(1e-4, layouts[4].s * pxuOf(H)); // S4 local units for a length in CSS px
   // where the story sits and how long it pins: the stage is 100svh, so a phone's collapsing toolbar never changes the run
@@ -715,20 +724,24 @@
     scrollY = window.scrollY;
     storyTop = story.getBoundingClientRect().top + scrollY;
     stageH = stage.offsetHeight || window.innerHeight;
-    run = Math.max(1, story.offsetHeight - stageH);
+    storyH = story.offsetHeight;
+    run = Math.max(1, storyH - stageH);
   }
-  function measureBeats() {
-    beats.forEach((b, i) => { // where each beat's copy sits, untransformed (offsets ignore the scroll-driven translate)
-      let l = 1e9, r = -1e9, t = 1e9;
-      b.querySelectorAll('.beat-text, .hero-stats').forEach(el => {
-        if (!el.offsetHeight) return; // a figure row the compact layout leaves out
-        const x = el.offsetLeft + b.offsetLeft + b.offsetParent.offsetLeft, y = el.offsetTop + b.offsetTop;
-        l = Math.min(l, x); r = Math.max(r, x + el.offsetWidth); t = Math.min(t, y);
-      });
-      const h2 = b.querySelector('h2, h1');
-      beatRects[i] = { l, r, t, ht: h2 ? b.offsetTop + h2.offsetTop : t, hb: h2 ? b.offsetTop + h2.offsetTop + h2.offsetHeight : t };
+  const beatParts = () => beats.map(b => Array.from(b.querySelectorAll('.beat-text, .hero-stats')));
+  let partsOf = null;
+  function measureBeat(i) { // where a beat's copy sits, untransformed (offsets ignore the scroll-driven translate)
+    const b = beats[i];
+    if (!b || !b.offsetParent) return;
+    let l = 1e9, r = -1e9, t = 1e9;
+    (partsOf || (partsOf = beatParts()))[i].forEach(el => {
+      if (!el.offsetHeight) return; // a figure row the compact layout leaves out
+      const x = el.offsetLeft + b.offsetLeft + b.offsetParent.offsetLeft, y = el.offsetTop + b.offsetTop;
+      l = Math.min(l, x); r = Math.max(r, x + el.offsetWidth); t = Math.min(t, y);
     });
+    const h2 = b.querySelector('h2, h1');
+    beatRects[i] = { l, r, t, ht: h2 ? b.offsetTop + h2.offsetTop : t, hb: h2 ? b.offsetTop + h2.offsetTop + h2.offsetHeight : t };
   }
+  function measureBeats() { beats.forEach((b, i) => measureBeat(i)); }
   function measureLayout() {
     const cs = getComputedStyle(stage);
     navH = parseFloat(cs.getPropertyValue('--nav-h')) || 72;
@@ -740,13 +753,36 @@
     // the callouts' own sizes (captions wrap; portrait screens leave out the names): every frame keeps clear of them. On wide
     // screens a caption wraps inside its scene's frame, never reaching back over the copy
     labelMaxW.fill(0); capH.fill(0);
-    labels.forEach(l => {
-      if (l.kind === 'cap') { const br = beatRects[l.scene]; l.el.style.maxWidth = !stacked && br && br.r > 0 ? Math.max(180, W - gutter - (br.r + 28)) + 'px' : ''; }
+    const sizeLabel = (l) => {
       l.w = l.el.offsetWidth; l.h = l.el.offsetHeight; l.tr = '';
       if (l.kind === 'cap') capH[l.scene] = l.h;
       else if (l.kind === 'list' && !((stacked || short) && l.wide)) labelMaxW[l.scene] = Math.max(labelMaxW[l.scene], l.w);
       if (l.floor) floorW = l.w;
+    };
+    labels.forEach(l => {
+      if (l.terse) { l.terse = false; l.el.classList.remove('is-terse'); }
+      if (l.row) { l.row = false; l.el.classList.remove('is-row'); }
+      if (l.kind === 'cap') { const br = beatRects[l.scene]; l.el.style.maxWidth = !stacked && br && br.r > 0 ? Math.max(180, W - gutter - (br.r + 28)) + 'px' : ''; }
+      sizeLabel(l);
     });
+    // short landscape: the callouts keep a measured column of their own right of the structure (OV-R2-4). Where the rings' or the
+    // layers' names would cost the structure more than a fifth of its size, that scene's callouts show their codes (and status)
+    // only; the inspector, the copy and the screen-reader text keep the names
+    if (!stacked && short) [1, 2].forEach(i => {
+      const br = beatRects[i] && beatRects[i].r > 0 ? beatRects[i] : { r: W * 0.46 }, ext = EXT[i];
+      const needW = Math.min(H - barH - Math.max(18, capH[i] + 12) - (navH + 22), H * 0.74) * ext[0] / ext[1]; // its width at its height-bound size
+      const size = () => Math.max(0, Math.min(W - gutter - (labelMaxW[i] + 28) - Math.min(br.r + 36, W * 0.56), needW)); // clear of the copy
+      const setTerse = (on) => { labelMaxW[i] = 0; labels.forEach(l => { if (l.scene !== i || l.kind !== 'list') return; if (l.group != null) { l.terse = on; l.el.classList.toggle('is-terse', on); } sizeLabel(l); }); };
+      const named = size();
+      setTerse(true);
+      if (named >= 0.8 * size()) setTerse(false);
+    });
+    // portrait phones stack each ring callout's code over its status (a narrow column, so the rings fill the width); where six of
+    // them would not fit between the caption and the copy that way, they go code beside status, half as tall
+    if (stacked && lab.rings && beatRects[1]) {
+      const avail = beatRects[1].t - 18 - (navH + barH + capH[1] + 22), hMax = Math.max(...lab.rings.map(l => l.h));
+      if (lab.rings.length * (hMax + 2) > avail) { labelMaxW[1] = 0; labels.forEach(l => { if (l.scene !== 1 || l.kind !== 'list') return; if (l.group != null) { l.row = true; l.el.classList.add('is-row'); } sizeLabel(l); }); }
+    }
     // the chapter mark sits above the copy column: per hand-over, the scale of its numeral that keeps it clear of both scenes' copy
     const cd = story.querySelector('.story-coda');
     codaH = cd ? cd.offsetHeight : 0;
@@ -774,6 +810,13 @@
     const lim = navH + (stacked ? barH : 0) + 6;
     let tight = false;
     beats.forEach((b, i) => { if (beatRects[i] && beatRects[i].t < lim) { b.classList.add('is-tight'); tight = true; } });
+    // portrait: a scene whose frame above its copy would be too small for its structure drops its paragraph too (a 320 px phone's
+    // S4: the columns and the band of records, NAV and day tags under the floor need DAY_BAND + 90 px; the page's §04 states it)
+    if (stacked) beats.forEach((b, i) => {
+      const br = beatRects[i];
+      if (!br || !MIN_FRAME[i] || b.classList.contains('is-tight')) return;
+      if (br.t - 14 - (navH + barH + capH[i] + 8) < MIN_FRAME[i]) { b.classList.add('is-tight'); tight = true; }
+    });
     if (tight) measureLayout();
   }
   // the six rings' projected outline at scale s (offsets from the camera target's screen point), for S1's camera
@@ -794,17 +837,17 @@
     const ok = (s) => {
       const o = ringOutline(s);
       let maxX = -1e9; for (let j = 0; j < o.length; j += 2) maxX = Math.max(maxX, o[j]);
-      const cx = x1 - 6 - maxX;
+      const cx = x1 - 8 - maxX; // the outer ring's right edge 8 px short of the callouts' room
       for (let j = 0; j < o.length; j += 2) {
         const x = cx + o[j], y = cy + o[j + 1];
         if (x < gutter || y < navH + 24 || y > H - barH - Math.max(18, capH[1] + 12)) return null;
-        if (x < br.r + 22 && y > br.t - 22) return null; // clear of the copy's corner (and of everything under it)
+        if (x < br.r + 22 && y > br.t - 14) return null; // over the copy column only above its top (14 px clear)
       }
       return { cx, minX: Math.min(...o.filter((_, j) => j % 2 === 0)) };
     };
-    if (!ok(s0)) return null;
-    let lo = s0, hi = Math.min(s0 * 2.4, (W * 0.62) / (3.25 * pxu));
-    if (hi <= lo) return null;
+    // the largest ring set that keeps every rule (smaller than the frame's first guess too: a short screen's copy corner)
+    let lo = s0 * 0.25, hi = Math.max(s0, Math.min(s0 * 2.4, (W * 0.62) / (3.25 * pxu)));
+    if (!ok(lo)) return null;
     for (let it = 0; it < 16; it++) { const m = (lo + hi) / 2; if (ok(m)) lo = m; else hi = m; }
     const r = ok(lo);
     return { s: lo, cx: r.cx, cy, x0: r.cx + r.minX };
@@ -816,21 +859,34 @@
       const ext = (stacked && EXT_ST[i]) || EXT[i];
       let x0, x1, y0, y1, s, cx, cy;
       if (!stacked) { // right of this scene's copy, clear of the nav, the index and the callouts
-        const room = Math.min(ROOM_W[i], W * 0.18);
+        let room = Math.min(ROOM_W[i], W * 0.18);
+        if (short && i >= 1 && i <= 3 && labelMaxW[i]) room = Math.max(room, labelMaxW[i] + 28); // short landscape: the callouts' measured column
+        roomOf[i] = room;
         x1 = W - gutter - room; y0 = navH + 22;
         if (ZONE[i] === 'upper' && br.t - y0 > H * 0.36) { x0 = gutter + (W - 2 * gutter) * 0.3; y1 = br.t - 26; }
         else { x0 = Math.min(br.r + 36, W * 0.56); y1 = H - barH - Math.max(18, capH[i] + 12); } // above the scene's caption
-        if (x1 - x0 < 240) x0 = x1 - 240;
+        // at least 240 px for the structure, except across the copy: short landscape keeps its paragraphs beside the structure, so
+        // there the structure gives way (it never runs under the copy's lines)
+        if (x1 - x0 < 240) x0 = Math.max(x1 - 240, short && br.t < y1 ? br.r + 16 : -1e9);
       } else { // above this scene's copy, under the index and the scene's caption, never across the copy; the callouts keep their column
-        const room = Math.max([0, 0.13, 0.15, 0.1, 0][i] * W, labelMaxW[i] ? labelMaxW[i] + 28 : 0);
+        const room = roomOf[i] = Math.max([0, 0.13, 0.15, 0.1, 0][i] * W, labelMaxW[i] ? labelMaxW[i] + 28 : 0);
         x0 = gutter * 0.5; x1 = W - gutter * 0.5 - room;
         y0 = navH + barH + capH[i] + 8;
         y1 = Math.min(Math.max(y0 + 120, Math.min(H * 0.8, br.t) - 14), br.t - 14);
       }
       if (i === 4) { // the columns, the floor's tag left of column 01, and the band of records, NAV and day tags under the floor
         const xa = x0 + floorW + 14;
-        s = Math.min((x1 - xa) / ((COL_SPAN + 0.24) * pxu), (y1 - y0 - DAY_BAND) / ((H_COL + 0.34) * pxu));
+        s = Math.max(0.05, Math.min((x1 - xa) / ((COL_SPAN + 0.24) * pxu), (y1 - y0 - DAY_BAND) / ((H_COL + 0.34) * pxu)));
         if (!stacked) s = Math.min(s, (H * 0.74) / (EXT[4][1] * pxu));
+        // the day tags: where the columns stand closer than a tag and its 3 px of air, every other tag is left out (01, 03 … 09
+        // print; all ten stay focusable and in the screen-reader text, and each shows itself when focused)
+        dayPitch = COL_SPAN / NCOL * s * pxu;
+        if (lab.days) lab.days.forEach((l, c) => {
+          const th = dayPitch < 18 && c % 2 === 1; l.el.classList.toggle('is-thin', th); if (l.ink) l.ink.classList.toggle('is-thin', th);
+          // phones: each tag as wide as 24 px where the columns leave it 3 px of air (a pointer target, 2.5.8), measured again
+          const mw = W < 600 ? clamp(Math.floor(dayPitch - 3), 14, 24) + 'px' : '';
+          if (l.el.style.minWidth !== mw) { l.el.style.minWidth = mw; if (l.ink) l.ink.style.minWidth = mw; l.w = l.el.offsetWidth; }
+        });
         cx = (xa + x1) / 2;
         const fy = stacked ? y1 - DAY_BAND : Math.min(y1 - DAY_BAND, (y0 + y1) / 2 + 0.6 * s * pxu);
         cy = fy - 0.6 * s * pxu;
@@ -839,7 +895,7 @@
         s = Math.min((x1 - x0) / (ext[0] * pxu), (y1 - y0) / (ext[1] * pxu), (H * 0.74) / (ext[1] * pxu));
         cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
         if (i === 1 && !stacked) { // on the horizon, or up to 6% of the stage above it if that buys the rings room over the copy
-          const f = [cy, cy - H * 0.06].map(c => fitRings(s, x1, c, br, pxu)).filter(Boolean).sort((p, q) => q.s - p.s)[0];
+          const f = [cy, cy - H * 0.06, H * 0.36, H * 0.42].map(c => fitRings(s, x1, c, br, pxu)).filter(Boolean).sort((p, q) => q.s - p.s)[0]; // (the largest: up to half the stage, over the copy column's empty top)
           if (f) { s = f.s; cx = f.cx; x0 = f.x0; cy = f.cy; }
         }
       }
@@ -851,12 +907,45 @@
   // the clocks start mid-flow: the ledger already holds records, proposals are already in the lane (and a still frame — reduced motion — reads)
   let sNow = 0, sTarget = 0, xNow = 0, xTarget = 0, xeNow = 0, time = 14.3, intro = 0, introStart = -1;
   let seg = 0, mRaw = 0, mE = 0, scale = [1, 1];
+  // the copy's own position. It follows the structure (sNow) while the reader scrolls; once the reader stops mid-hand-over it
+  // eases to the nearest whole scene (the rest resolver), so the copy always settles to one complete scene. The scroll
+  // position is never moved; any new input hands the copy back to the structure (it chases it, no jump).
+  let copyS = 0, copyMode = 'follow', copyFrom = 0, copyTo = 0, copyT0 = 0, lastInput = -1e9, touchDown = false, idleTimer = 0, sDir = 1;
+  const COPY_IDLE = 160, COPY_EASE = 280, COPY_TAU = 0.12;
+  // the relay's parts for a beat at distance d from the copy's position: eyebrow, headline words, paragraph (and buttons, key,
+  // figures), the beat itself. A paragraph under 8% is not drawn at all (no ghost text)
+  const relayAt = (d) => { let bo = 1 - sstep(0.32, 0.42, d); if (bo < 0.08) bo = 0; return { eo: 1 - sstep(0.48, 0.54, d), w: 1 - sstep(0.38, 0.48, d), bo, op: d < 0.56 ? 1 : 0 }; };
+  // mid-hand-over: some beat partly shown, or two beats up at once (the resolver settles exactly these states)
+  const part = (v) => v > 0.002 && v < 0.998;
+  function relayMid(c) {
+    let up = 0;
+    for (let i = 0; i < 5; i++) { const r = relayAt(Math.abs(c - i)); if (!r.op) continue; up++; if (part(r.eo) || part(r.w) || part(r.bo)) return true; }
+    return up > 1;
+  }
+  function handBack() { // any scroll input: the copy goes back to following the structure, and the resolver looks again once idle
+    lastInput = performance.now();
+    if (copyMode === 'resolve' || copyMode === 'rest') copyMode = 'chase';
+    clearTimeout(idleTimer); idleTimer = setTimeout(requestFrame, COPY_IDLE + 20); // frames may have stopped (paused, settled)
+    if (shownSettled) { shownSettled = false; story.removeAttribute('data-settled'); }
+  }
+  function stepCopy(now, dtS) {
+    if (reducedMQ.matches) { copyS = sNow; copyMode = 'follow'; return; } // reduced motion: the copy snaps with its scene
+    if (copyMode === 'follow') copyS = sNow;
+    else if (copyMode === 'chase') { copyS += (sNow - copyS) * (1 - Math.exp(-dtS / COPY_TAU)); if (Math.abs(sNow - copyS) < 0.0015) { copyS = sNow; copyMode = 'follow'; } }
+    else if (copyMode === 'resolve') { const u = clamp((now - copyT0) / COPY_EASE, 0, 1), e = 1 - (1 - u) * (1 - u) * (1 - u); copyS = lerp(copyFrom, copyTo, e); if (u >= 1) { copyS = copyTo; copyMode = 'rest'; } }
+    if ((copyMode === 'follow' || copyMode === 'chase') && now - lastInput > COPY_IDLE && !touchDown && xTarget <= 0 && relayMid(copyS)) {
+      copyFrom = copyS; copyTo = clamp(Math.round(sTarget), 0, 4); copyT0 = now; copyMode = 'resolve';
+    }
+  }
+  const copyResting = () => copyMode === 'rest' || (copyMode === 'follow' && !relayMid(copyS));
   let eye = [0, 0, CAM_D], target = [0, 0, 0], camD = CAM_D;
   const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
   function sceneScroll() {
     lastP = (scrollY - storyTop) / run; // the reader's place in the pinned run (a resize puts them back here)
-    const p = clamp(lastP, 0, 1), u = p * TOTAL_U;
+    const p = clamp(lastP, 0, 1), u = p * TOTAL_U, was = sTarget;
     sTarget = Math.min(4, u); xTarget = clamp((u - 4) / EXIT_U, 0, 1);
+    if (sTarget !== was) sDir = sTarget > was ? 1 : -1;
+    belowBar = storyTop + storyH - scrollY > navH + 1;
   }
   // the morph state for the current pair of scenes: a hold at each end, the stagger in between
   function morphState() {
@@ -893,7 +982,7 @@
   // then the paper rises to the floor line; the headline stays above it. Portrait: the columns drain, then the floor line settles,
   // pushing the proof's copy down and out of the stage while the coda opens up above the line (they never share a region, and one
   // of them is always up), then the paper rises to the line.
-  const EXIT = { wide: { paper: [0.35, 0.8], cap: [0.74, 0.9] }, tall: { cam: [0.3, 0.56], copy: [0.44, 0.58], coda: [0.4, 0.52], paper: [0.58, 0.86], cap: [0.84, 0.96] } };
+  const EXIT = { wide: { paper: [0.35, 0.8], cap: [0.74, 0.9] }, tall: { cam: [0.3, 0.56], copy: [0.3, 0.42], coda: [0.46, 0.56], paper: [0.58, 0.86], cap: [0.84, 0.96] } }; // (portrait: the proof's copy has gone before the coda opens: one headline at a time)
   // the exit, column by column: each drains into its record, left to right, over the first third of the way out
   const drainOf = (c) => clamp((xeNow - 0.02 - 0.144 * c / Math.max(1, NCOL - 1)) / 0.17, 0, 1);
   const dcArr = new Float32Array(24);
@@ -1001,7 +1090,7 @@
     // into S4 every column's actors keep its own stagger (record and square with its foot, tick with its top): they land with it
     const keyOf = (id) => {
       const n = parseInt(id.slice(1), 10);
-      if (seg === 3 && (id[0] === 'r' || id[0] === 's' || id[0] === 't')) return (n + (id[0] === 't' ? 0.55 : id[0] === 's' ? 0.12 : 0)) / (NCOL + 0.55);
+      if (seg === 3 && (id[0] === 'r' || id[0] === 's' || id[0] === 't')) return (n + (id[0] === 't' ? 0.55 : id[0] === 's' ? 0.4 : 0.3)) / (NCOL + 0.55); // (the record lands with its column's middle, not its first agents)
       return id[0] === 'r' ? 0.25 + 0.5 * (n / 11) : id[0] === 't' ? 0.7 : 0.35;
     };
     actA.forEach((A, id) => {
@@ -1016,9 +1105,14 @@
       if (actA.has(id)) return;
       const t = clamp(ease(stag(mRaw, keyOf(id))), 0, 1);
       const rise = id[0] === 'r' || id[0] === 't' ? (1 - t) * -0.25 : 0;
-      emit([B.p[0] * sB, (B.p[1] + rise) * sB, B.p[2] * sB], B.col, B.a * clamp(t * 1.4 - 0.2, 0, 1), B.shape, B.size, B.glow, B.aux);
+      // into S4 a column's settled square and broker tick only come up once its own agents have nearly formed it (never over a
+      // column that is still a spray), and in reverse they leave with it, first
+      const k = seg === 3 && (id[0] === 's' || id[0] === 't') ? sstep(0.6, 0.95, colMorph(parseInt(id.slice(1), 10))) : 1;
+      emit([B.p[0] * sB, (B.p[1] + rise) * sB, B.p[2] * sB], B.col, B.a * clamp(t * 1.4 - 0.2, 0, 1) * k, B.shape, B.size, B.glow, B.aux);
     });
   }
+  // a session column's own progress into S4 (the stagger of its agents' lower half: SPREADS[3] spreads the columns left to right)
+  const colMorph = (c) => seg === 3 ? stag(mRaw, (c + 0.22) / (NCOL + 0.55)) : 1;
 
   /* ================= hairlines: orbits, rings, layer rims, the boundary, gates, the aperture, the ledger, hash links ================= */
   const LOOP_N = LITE ? 72 : 112;
@@ -1142,7 +1236,13 @@
         if (B) { B.s = sB; emit(B, null, 0, B.col[0], B.col[1], B.col[2], B.a * tc, B.w); }
       }
     });
-    linB.forEach((B, id) => { if (!linA.has(id)) { const t = clamp(ease(stag(mRaw, B.key)), 0, 1); B.s = sB; emit(B, null, 0, B.col[0], B.col[1], B.col[2], B.a * t, B.w); } });
+    linB.forEach((B, id) => {
+      if (linA.has(id)) return;
+      const t = clamp(ease(stag(mRaw, B.key)), 0, 1);
+      // a column's regime tick, its stretch of the NAV hairline and its hash link land with the column (as its square and tick do)
+      const k = seg === 3 && /^(rt|nv|hl)\d/.test(id) ? sstep(0.6, 0.95, colMorph(parseInt(id.slice(2), 10))) : 1;
+      B.s = sB; emit(B, null, 0, B.col[0], B.col[1], B.col[2], B.a * t * k, B.w);
+    });
   }
 
   /* ================= callouts: DOM labels projected from 3D anchors, leader lines, hover and focus ================= */
@@ -1151,7 +1251,7 @@
   const leaders = document.createElementNS(SVGNS, 'svg');
   leaders.setAttribute('class', 'story-leaders'); leaders.setAttribute('aria-hidden', 'true'); leaders.setAttribute('focusable', 'false');
   if (labelHost) labelHost.appendChild(leaders);
-  const labels = [];
+  const labels = [], capOf = []; // (capOf: each scene's caption)
   // kind: 'list' (a right-hand column with leaders), 'tag' (at its anchor), 'cap' (the scene's figure caption)
   function label(scene, html, opts) {
     const interactive = !!opts.group || opts.group === 0;
@@ -1167,6 +1267,7 @@
     if (opts.node) { node = document.createElementNS(SVGNS, 'circle'); node.setAttribute('r', '1.5'); node.setAttribute('class', 'story-node ' + (opts.cls || '')); leaders.appendChild(node); }
     const l = Object.assign({ el, path, scene, on: false, tr: '', d: '', w: 0, h: 0, y: 0 }, opts);
     l.node = node; // (the option only asks for one)
+    if (opts.kind === 'cap') capOf[scene] = l;
     labels.push(l);
     return l;
   }
@@ -1221,8 +1322,10 @@
     if (hot && hot.info && hot !== inspFor) {
       const [t, s, d] = hot.info;
       insp.innerHTML = `<b>${t}</b><em>${s}</em> · ${d}`;
-      // portrait screens: the box sits left of the callout column, never under it
-      insp.style.maxWidth = stacked && hot.kind === 'list' && listX > 0 ? Math.max(160, Math.min(260, listX - 10 - gutter * 0.5)) + 'px' : '';
+      // portrait screens: the box sits left of the callout column, never under it; short landscape: between the copy and the column
+      const brS = beatRects[hot.scene];
+      insp.style.maxWidth = hot.kind !== 'list' || !(listX > 0) ? '' : stacked ? Math.max(160, Math.min(260, listX - 10 - gutter * 0.5)) + 'px'
+        : short && brS && brS.r > 0 ? Math.max(160, Math.min(260, listX - 16 - (brS.r + 12))) + 'px' : '';
       inspW = insp.offsetWidth; inspH = insp.offsetHeight;
     }
     inspFor = hot;
@@ -1240,9 +1343,21 @@
     l.el.addEventListener('pointerenter', e => { if (e.pointerType === 'touch' || !moved(e)) return; hoverPtr = { scene: l.scene, idx: l.group }; setHover(); }); // touch: taps decide
     l.el.addEventListener('pointerleave', e => { if (e.pointerType === 'touch' || !moved(e)) return; hoverPtr = null; setHover(); });
   });
-  // a callout shows while its scene is near; on the way out the proof's day tags stay, so the rising paper turns them to ink
-  const vis = (l) => 1 - sstep(0.22, 0.4, Math.abs((reducedMQ.matches ? Math.round(sNow) : sNow) - l.scene)) - (l.scene === 4 && !l.keep ? sstep((l.out || OUT4)[0], (l.out || OUT4)[1], xeNow) : 0); // reduced motion: they snap with their scene
-  const OUT4 = [0.04, 0.2];
+  // the callouts belong to a scene at rest: scene i's callouts and caption show only while i's copy is the one shown and the
+  // structure stands in i's formation (within .02 of its morph), computed in the same frame as the copy, so a slow frame can
+  // never show a stale label. They come up over 160 ms (in JS, from that same state) and go at once, with the copy. On the way
+  // out the proof's day tags stay, so the rising paper turns them to ink.
+  let labelScene = -1, labA = 0, labOnT = 0;
+  const LAB_IN = 160;
+  function sceneOfLabels() {
+    if (lost || !ready || tiny) return -1;
+    const red = reducedMQ.matches, ci = clamp(Math.round(red ? sNow : copyS), 0, 4);
+    if (!red && Math.abs(copyS - ci) >= 0.3) return -1; // the copy is mid-hand-over
+    const sm = seg + mRaw; // the structure's own position (reduced motion: it snaps with the scene)
+    return Math.abs(sm - ci) < 0.02 ? ci : -1;
+  }
+  const vis = (l) => { if (l.scene !== labelScene) return 0; const o = l.sum && !stacked ? EXIT.wide.cap : l.out || OUT4; return labA * (l.scene === 4 && !l.keep ? 1 - sstep(o[0], o[1], xeNow) : 1); };
+  const OUT4 = [0.04, 0.2]; // (wide screens keep the derived summary on the way out until the paper's caption takes it over)
   // a session's own progress into S4 (its column's stagger): its day tag lands with it and, in reverse, leaves first
   const colIn = (c) => sNow >= 4 ? 1 : seg === 3 ? clamp(ease(stag(mRaw, (c + 0.55) / (NCOL + 0.55))), 0, 1) : 0;
   let tabScene = -1, shownHasInsp = null;
@@ -1260,10 +1375,19 @@
     }
     FLANK.x = bx; FLANK.y = by; return FLANK;
   }
+  // a ring's other right-flank points, nearest the one it chose first (where its leader would pass over another ring's node)
+  function flankAlts(k, sc, x0, y0) {
+    const c = project(0, 0, 0), cx = c.x, out = [];
+    for (let j = 0; j < 96; j++) {
+      const q = onLoop(RB[k], RINGS[k][0], j / 96 * TAU, 0), p = project(q[0] * sc, q[1] * sc, q[2] * sc);
+      if (p.x > cx) out.push([p.x, p.y, Math.hypot(p.x - x0, p.y - y0)]);
+    }
+    return out.sort((u, v) => u[2] - v[2]);
+  }
   function placeLabels() {
     if (!labelHost) return;
-    const cur = Math.round(sNow), settledScene = Math.abs(sNow - cur) < 0.3 && xNow < 0.4 ? cur : -1;
-    if (settledScene !== tabScene) { // only the current scene's callouts are reachable (and announced)
+    const settledScene = labelScene >= 0 && xNow < 0.4 ? labelScene : -1;
+    if (settledScene !== tabScene) { // only the shown scene's callouts are reachable (and announced)
       tabScene = settledScene;
       labels.forEach(l => { if (l.group == null) return; const on = l.scene === tabScene; l.el.tabIndex = on ? 0 : -1; if (on) l.el.removeAttribute('aria-hidden'); else l.el.setAttribute('aria-hidden', 'true'); });
       if (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('story-lab') && document.activeElement.tabIndex < 0) stage.focus({ preventScroll: true });
@@ -1273,13 +1397,14 @@
     const paperTop = H - paperH;
     const listCol = [];
     labels.forEach(l => {
-      let on = vis(l) > 0.5 && !((stacked || short) && l.wide); // portrait and short screens leave out the secondary notes
+      const a = vis(l);
+      let on = a > 0.01 && !((stacked || short) && l.wide); // portrait and short screens leave out the secondary notes
       if (on && l.col != null) on = colIn(l.col) > 0.5;
       let x = 0, y = 0, tr = '';
       if (on && l.kind === 'cap') {
         const L = layouts[l.scene];
         if (stacked) { x = gutter; y = navH + barH + 4; }
-        else { x = L.rect[2] + (l.scene === 0 || l.scene === 4 ? 0 : Math.min(ROOM_W[l.scene], W * 0.18)) - l.w; y = H - barH - l.h - 6; }
+        else { x = L.rect[2] + roomOf[l.scene] - l.w; y = H - barH - l.h - 6; }
         x = clamp(x, 6, W - l.w - 6);
         tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
       } else if (on) {
@@ -1296,7 +1421,9 @@
           y = Math.max(y, stacked ? tagTop + capH[l.scene] : navH + 6); // never under the nav (portrait: nor the index or the caption)
           if (l.sum) { // the summary only where it clears the columns' tops; the copy, the coda and the paper's caption state it too
             const s4 = layouts[4].s, top = project(0, (Y_FLOOR + H_COL + 0.2) * s4, 0).y;
-            if (y + l.h > top - 4) on = false;
+            const k = stacked ? 0 : sstep(0.33, 0.5, xeNow); // wide, on the way out: once the columns have drained it settles 48 px over the floor line
+            if (k > 0) y = lerp(y, project(0, Y_FLOOR * s4, 0).y - 48 - l.h, k);
+            else if (y + l.h > top - 4) on = false;
           }
           l.y = y;
           tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
@@ -1304,21 +1431,37 @@
           if (l.ink && paperH > 0.5 && y > paperTop - 2) on = false; // once the paper has it, its ink copy carries it
         }
       }
-      if (on !== l.on) { l.on = on; l.el.classList.toggle('is-on', on); if (l.path) l.path.classList.toggle('is-on', on); if (l.node) l.node.classList.toggle('is-on', on); }
+      l.a = on ? a : 0;
       if (on && tr && tr !== l.tr) l.el.style.transform = l.tr = tr;
     });
     if (listCol.length) { // a column of callouts on the right of the structure; spread so they never touch
       listCol.sort((a, b) => a.ay - b.ay);
       const sc = listCol[0].scene, L = layouts[sc];
       const maxW = Math.max(...listCol.map(l => l.w)), colX = stacked ? W - gutter * 0.5 - maxW : Math.min(L.rect[2] + 22, W - gutter * 0.5 - maxW);
-      const gap = Math.max(...listCol.map(l => l.h)) + (stacked || short ? 2 : 6), top = navH + (stacked ? barH + capH[sc] + 8 : 0) + 14, bottom = (stacked ? beatRects[sc].t - 10 : H - barH - capH[sc] - 16);
+      const gap = Math.max(...listCol.map(l => l.h)) + (stacked || short ? 2 : 6), top = navH + (stacked ? barH + capH[sc] + 22 : short ? 8 : 14);
+      let bottom = stacked ? beatRects[sc].t - 10 : H - barH - capH[sc] - (short ? 12 : 16);
+      // landscape: should the column not fit above its scene's caption (a short window at a high zoom), the caption steps aside for it
+      if (!stacked && capH[sc] && capOf[sc] && (listCol.length - 1) * gap + listCol[listCol.length - 1].h > bottom - top) { bottom = H - barH - 12; capOf[sc].a = 0; }
       let y = -1e9;
       listCol.forEach(l => { l.y = Math.max(l.ay - l.h / 2, y + gap); y = l.y; });
       const over = y + listCol[listCol.length - 1].h - bottom;
       if (over > 0) { listCol.forEach(l => { l.y -= over; }); }
       for (let j = 1; j < listCol.length; j++) if (listCol[j].y < listCol[j - 1].y + gap) listCol[j].y = listCol[j - 1].y + gap;
       if (listCol[0].y < top) { const d = top - listCol[0].y; listCol.forEach(l => { l.y += d; }); }
+      // portrait: a callout that would still reach the copy (a short screen, a long list) is left out; the inspector and the
+      // screen-reader list keep it
+      if (stacked) listCol.forEach(l => { if (l.y + l.h > beatRects[sc].t - 8) l.a = 0; });
+      // S1: no leader passes within 6 px of another ring's node; a leader that would steps its own node along its ring's flank
+      if (sc === 1) for (let pass = 0; pass < 2; pass++) listCol.forEach(l => {
+        if (!l.a) return;
+        const ly = l.y + l.h / 2, ex = colX - 20;
+        const clear = (x, y) => listCol.every(o => o === l || !o.a || segDist(o.ax, o.ay, x, y, ex, ly) >= 6);
+        if (clear(l.ax, l.ay)) return;
+        const alt = flankAlts(l.group, L.s, l.ax, l.ay).find(q => q[2] < 60 && clear(q[0], q[1]));
+        if (alt) { l.ax = alt[0]; l.ay = alt[1]; }
+      });
       listCol.forEach(l => {
+        if (!l.a) return;
         const tr = `translate(${colX.toFixed(1)}px, ${l.y.toFixed(1)}px)`;
         if (tr !== l.tr) l.el.style.transform = l.tr = tr;
         if (l.path) {
@@ -1328,8 +1471,15 @@
           if (l.node) { const c = `${l.ax.toFixed(1)},${l.ay.toFixed(1)}`; if (c !== l.nc) { l.nc = c; l.node.setAttribute('cx', l.ax.toFixed(1)); l.node.setAttribute('cy', l.ay.toFixed(1)); } }
         }
       });
-      listX = colX; listBottom = listCol[listCol.length - 1].y + listCol[listCol.length - 1].h;
+      listX = colX; listBottom = Math.max(...listCol.map(l => l.a ? l.y + l.h : 0));
     }
+    // this frame's state, written at once: no CSS transition can keep a callout up after its copy has gone
+    labels.forEach(l => {
+      const on = l.a > 0;
+      if (on !== l.on) { l.on = on; l.el.classList.toggle('is-on', on); if (l.path) l.path.classList.toggle('is-on', on); if (l.node) l.node.classList.toggle('is-on', on); }
+      const ov = l.a.toFixed(2);
+      if (ov !== l.ov) { l.ov = ov; l.el.style.opacity = ov; if (l.path) l.path.style.opacity = ov; if (l.node) l.node.style.opacity = ov; }
+    });
     // the inspector: shown at rest only (never while the scenes move under it); on portrait screens just above the copy, under the
     // structure, with the caption and the summary giving way to it
     const io = !!inspFor && inspFor.on && Math.abs(sTarget - sNow) <= 0.02;
@@ -1341,17 +1491,27 @@
         y = inspFor.kind === 'list' ? (beatRects[inspFor.scene] || { t: H }).t - inspH - 12 : navH + barH + 8;
         y = clamp(y, navH + barH + (inspFor.kind === 'list' ? capH[inspFor.scene] : 0) + 8, H - inspH - 8);
       }
-      else if (inspFor.kind === 'list') { x = listX; y = listBottom + 18; }
+      else if (inspFor.kind === 'list') {
+        // wide and short landscape: never over the scene index or Pause motion (the bar), never over another callout. Under the
+        // callouts' column where it has room above the bar (wide screens); else beside the column, level with its callout, over
+        // the structure but clear of the copy; else under the nav, over the copy column's empty top
+        const lim = H - barH - inspH - 8, br = beatRects[inspFor.scene] || { r: 0, t: H };
+        x = listX; y = listBottom + 18;
+        if (y > lim || x + inspW > W - 8) {
+          x = listX - 16 - inspW; y = clamp(inspFor.y + inspFor.h / 2 - inspH / 2, navH + 8, lim);
+          if (x < br.r + 12 && y + inspH > br.t - 8 && navH + 8 + inspH <= br.t - 8) { x = gutter; y = navH + 8; }
+        }
+      }
       else { const sc = layouts[inspFor.scene].s, p = project(COL_X(inspFor.group) * sc, (Y_FLOOR + H_COL + 0.24) * sc, 0); x = p.x - inspW / 2; y = p.y - inspH - 12; }
-      x = clamp(x, 8, W - inspW - 8); y = clamp(y, navH + 8, H - inspH - 8);
+      x = clamp(x, 8, W - inspW - 8); y = clamp(y, navH + 8, H - (stacked ? 0 : barH) - inspH - 8);
       const tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
       if (tr !== inspTr) insp.style.transform = inspTr = tr;
     }
   }
   let listX = 0, listBottom = 0, inspTr = '';
-  function hitTest(px, py) { // which ring, layer or session the pointer is over (current scene only, settled)
-    const cur = Math.round(sNow);
-    if (Math.abs(sNow - cur) > 0.25 || xNow > 0.3) return null;
+  function hitTest(px, py) { // which ring, layer or session the pointer is over (the scene whose callouts show, settled)
+    const cur = labelScene;
+    if (cur < 0 || xNow > 0.3) return null;
     const sc = layouts[cur].s;
     if (cur === 1) {
       let best = null, bd = 16;
@@ -1405,8 +1565,8 @@
   }
   let shownCap = '', shownLeaving = null;
   // portrait screens: as the paper covers the copy, the proof's statement reappears above the columns (an end card, not an empty sky)
-  const coda = story.querySelector('.story-coda');
-  let shownCoda = '', shownCodaTr = '', codaH = 0;
+  const coda = story.querySelector('.story-coda'), codaS = coda && coda.querySelector('.story-coda-s');
+  let shownCoda = '', shownCodaTr = '', shownCodaS = '', codaH = 0;
   const paperSum = story.querySelector('[data-story-sum]');
   if (paperSum) paperSum.textContent = `${N_ABOVE} of ${NCOL} above the ${FLOOR_T} floor · ${N_PREM} premium · ${N_DISC} discount · ${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed`;
   // the records, printed: as the paper reaches the floor line, the records hanging from it are uncovered in ink where they hung
@@ -1421,7 +1581,7 @@
   const shown = beats.map(() => ({ op: '', tr: '', on: null, eo: '', w: '', bo: '' }));
   const beatLinks = beats.map(b => Array.from(b.querySelectorAll('a[href], button')));
   let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownFill = [], shownCapO = '', shownGlyph = '', shownLabTr = '';
-  let paperH = 0, relay0 = false, relayReady = false, codaFallback = false;
+  let paperH = 0, relay0 = false, relayReady = false, codaFallback = false, shownBarOff = null;
   // the index follows the scroll position itself: immediate, and right even when frames are slow or throttled
   function syncIndex() {
     const ci = clamp(Math.round(sTarget), 0, 4);
@@ -1431,8 +1591,14 @@
     beatLinks.forEach((list, i) => list.forEach(el => { if (i === ci) el.removeAttribute('tabindex'); else el.setAttribute('tabindex', '-1'); }));
     story.dataset.scene = String(ci);
   }
-  function updateUI() {
+  function updateUI(now) {
     const red = reducedMQ.matches, xe = xeNow;
+    const cs = red ? Math.round(sNow) : copyS; // where the copy is (reduced motion: it snaps with its scene)
+    // the callouts' scene for this frame, from the same state as the copy; when they show, the copy they keep clear of is measured
+    // now (before this frame's writes, so the read is cheap), not taken from the last refit
+    const ls = sceneOfLabels();
+    if (ls !== labelScene) { labelScene = ls; labOnT = now || performance.now(); labA = 0; }
+    if (labelScene >= 0) { labA = red ? 1 : clamp(((now || performance.now()) - labOnT) / LAB_IN, 0, 1); measureBeat(labelScene); } else labA = 0;
     const ov = Math.max(0, scrollY - storyTop - run); // past the pin the stage leaves with the page
     const lean = stacked, X = stacked ? EXIT.tall : EXIT.wide; // portrait: on the way out the coda takes over from the proof's copy
     codaFallback = false; // (short landscape: only if the headline cannot stay above the paper)
@@ -1446,11 +1612,11 @@
     // the eyebrow last. In: the eyebrow first (it crosses the outgoing one at the midpoint, so the slot is never empty), then the
     // headline, then the paragraph. Never two paragraphs at once.
     beats.forEach((b, i) => {
-      const d = Math.abs(sNow - i), s = shown[i];
+      const d = Math.abs(cs - i), s = shown[i];
       let op, eo, w, bo;
-      if (red) { op = Math.round(sNow) === i ? 1 : 0; eo = w = bo = 1; } // reduced motion: the scene's copy snaps with it, whole
-      else { eo = 1 - sstep(0.48, 0.54, d); w = 1 - sstep(0.38, 0.48, d); bo = 1 - sstep(0.32, 0.42, d); op = d < 0.56 ? 1 : 0; }
-      let dy = red ? 0 : (sNow - i) * -18;
+      if (red) { op = cs === i ? 1 : 0; eo = w = bo = 1; } // reduced motion: the scene's copy snaps with it, whole
+      else ({ eo, w, bo, op } = relayAt(d));
+      let dy = red ? 0 : (cs - i) * -18;
       if (i === 4 && xe > 0) { // on the way out: the headline stays above the paper when it fits (wide screens); the rest gives way
         const br = beatRects[4] || { ht: 0, hb: 0 }, edge = H - paperH - 26, shift = Math.min(0, edge - br.hb);
         if (lean) { // portrait: the settling floor (and the day tags under it) push the copy down; the coda has the summary by then
@@ -1465,6 +1631,7 @@
         const k = room0 <= 6 ? 0 : 1 - sstep(Math.max(0, room0 - 6 - Math.min(150, H * 0.2)), room0 - 6, ov);
         op *= k; if (!red) dy -= (1 - k) * 14;
       }
+      if (bo < 0.08) bo = 0; // (the exit fades it too) no ghost paragraph
       const o = op.toFixed(3), tr = `translate3d(0, ${dy.toFixed(1)}px, 0)`, e = eo.toFixed(3), ww = w.toFixed(3), bb = bo.toFixed(3);
       if (s.op !== o) b.style.opacity = s.op = o;
       if (s.tr !== tr) b.style.transform = s.tr = tr;
@@ -1473,16 +1640,22 @@
       if (s.bo !== bb) b.style.setProperty('--bo', s.bo = bb);
       const act = op * bo > 0.5; // only a scene whose buttons are showing takes the pointer
       if (s.on !== act) b.classList.toggle('is-active', s.on = act);
+      const gone = bo === 0; // a paragraph (buttons, key) at 0 is not there at all: no ghost text, no invisible hit target
+      if (s.gone !== gone) b.classList.toggle('is-bo0', s.gone = gone);
     });
     syncIndex();
     idx.forEach((button, i) => { const f = clamp(sNow - i + 0.5, 0, 1).toFixed(2); if (shownFill[i] !== f) button.style.setProperty('--fill', shownFill[i] = f); });
     if (shownScrolled !== sNow > 0.3) story.classList.toggle('is-scrolled', shownScrolled = sNow > 0.3);
-    // the chapter mark: absent at rest, it rises only inside a hand-over (wide screens) and rolls from this scene's numeral to the next
+    // the chapter mark: absent at rest, it rises only inside a hand-over (wide screens) and shows the scene the reader is heading
+    // into, for the whole window (no roll from the outgoing one). The cover has no number: back into S0 there is none
     if (num) {
-      const a = Math.min(3, Math.floor(sNow)), f = sNow - a;
-      const fit = numFit[a], op = red || lean || short || !fit || sNow >= 4 || xNow > 0 ? 0 : sstep(0.42, 0.47, f) * (1 - sstep(0.53, 0.58, f));
-      if (a !== shownNum) { shownNum = a; numRows[0][0].textContent = pad2(a); numRows[0][1].textContent = pad2(a + 1); numRows[1][0].textContent = SCENES[a]; numRows[1][1].textContent = SCENES[a + 1]; }
-      const v = op.toFixed(3), tr = red ? 'none' : `translate3d(0, ${((0.5 - f) * 24).toFixed(1)}px, 0)`, roll = f < 0.5 ? '0' : '1'; // it rolls over as the scene passes halfway (a CSS spring)
+      const a = Math.min(3, Math.floor(cs)), f = cs - a;
+      const fit = numFit[a];
+      let op = red || lean || short || !fit || cs >= 4 || xNow > 0 ? 0 : sstep(0.42, 0.47, f) * (1 - sstep(0.53, 0.58, f));
+      const into = op > 0 && shownNum >= 0 && Math.abs(shownNum - cs) < 1 ? shownNum : (sDir > 0 ? a + 1 : a); // latched while it shows
+      if (into === 0) op = 0;
+      if (into !== shownNum) { shownNum = into; numRows[0][0].textContent = into ? pad2(into) : ''; numRows[1][0].textContent = into ? SCENES[into] : ''; numRows[0][1].textContent = numRows[1][1].textContent = ''; }
+      const v = op.toFixed(3), tr = red ? 'none' : `translate3d(0, ${((0.5 - f) * 24).toFixed(1)}px, 0)`, roll = '0';
       if (v !== shownNumOp) { num.style.opacity = shownNumOp = v; }
       if (op > 0) { // only the numeral scales to the room above the copy; its label keeps its size and follows it up
         if (tr !== shownNumTr) { num.style.transform = shownNumTr = tr; }
@@ -1494,6 +1667,9 @@
     }
     const bo = (1 - sstep(0.08, 0.3, xe)).toFixed(3);
     if (bar && bo !== shownBar) { bar.style.opacity = shownBar = bo; bar.style.visibility = bo < 0.01 ? 'hidden' : ''; }
+    // a hidden bar is out of the tab order too (Shift+Tab back from chapter 01 goes to S4's buttons, which bring S4 back)
+    const barOff = +bo < 0.01;
+    if (barOff !== shownBarOff) { shownBarOff = barOff; idx.concat(motionButton || []).forEach(el => { if (barOff) el.setAttribute('tabindex', '-1'); else el.removeAttribute('tabindex'); }); }
     if (shownLeaving !== xe > 0.05) story.classList.toggle('is-leaving', shownLeaving = xe > 0.05); // the covered tags take no pointer
     // portrait and short landscape: while the proof's copy fades, its derived summary comes in above the floor (an end card, not an
     // empty sky), then finishes leaving before it could reach the nav
@@ -1508,6 +1684,9 @@
       const v = co.toFixed(3), tr = `translate3d(0, ${(top + (red ? 0 : (1 - co) * 10)).toFixed(1)}px, 0)`;
       if (v !== shownCoda) coda.style.opacity = shownCoda = v;
       if (co > 0 && tr !== shownCodaTr) coda.style.transform = shownCodaTr = tr;
+      // portrait: its summary line gives way as the paper's caption, which states the same, comes in
+      const vs = (lean && xe > 0 ? 1 - (red ? (xe > 0.5 ? 1 : 0) : sstep(X.cap[0], X.cap[1], xe)) : 1).toFixed(3);
+      if (codaS && vs !== shownCodaS) codaS.style.opacity = shownCodaS = vs;
     }
     placeLabels();
     if (paperH > 0.5) {
@@ -1551,11 +1730,72 @@
     if (Math.abs(y - window.scrollY) > 1) window.scrollTo({ top: y, behavior: 'instant' });
     scrollY = y;
   }
+  // 400% zoom on a desktop (320x256, 360x225, 480x270; WCAG 1.4.10): under 300 px of height the overture is its designed static
+  // sequence (html.story-tiny, the no-WebGL layout without the 2D globe) and draws nothing; no phone is that short in either
+  // orientation. Entering or leaving it keeps the reader on the scene (or the place below the overture) they were at
+  let tinyBack = null, tinyPlace = null;
+  function pinnedPlace() { // the reader's place in the pinned run
+    if (!(lastP === lastP)) { measureScroll(); scrollY = window.scrollY; sceneScroll(); }
+    if (lastP <= 1) return { at: clamp(Math.round(Math.min(4, Math.max(0, lastP) * TOTAL_U)), 0, 4) };
+    const ov = (lastP - 1) * run;
+    return ov < stageH ? { at: 4 } : { below: ov - stageH };
+  }
+  const navNow = () => parseFloat(getComputedStyle(stage).getPropertyValue('--nav-h')) || navH; // (the zoomed page's own nav)
+  function staticPlace() { // the reader's place in the static sequence: the beat at the nav's lower edge, or below the overture
+    const y = window.scrollY, bottom = story.getBoundingClientRect().top + y + story.offsetHeight, nh = navNow();
+    if (y + nh >= bottom) return { below: y - bottom };
+    let at = 0;
+    beats.forEach((b, i) => { if (b.getBoundingClientRect().top <= nh + 40) at = i; });
+    return { at };
+  }
+  function placeTo(k) { // that place, in the layout as it is now
+    const top0 = story.getBoundingClientRect().top + window.scrollY;
+    let y;
+    if (k.below != null) y = top0 + story.offsetHeight + k.below;
+    else if (tiny) y = k.at ? beats[k.at].getBoundingClientRect().top + window.scrollY - navNow() : top0;
+    else { measureScroll(); y = sceneTop(k.at); }
+    window.scrollTo({ top: Math.max(0, Math.round(y)), behavior: 'instant' });
+  }
+  function invalidate() { // every cached write is made again by the next frame
+    shown.forEach(s => { s.op = s.tr = s.eo = s.w = s.bo = ''; s.on = s.gone = null; });
+    shownIdx = shownNum = labelScene = tabScene = -1; shownBarOff = shownLeaving = shownScrolled = shownHasInsp = null;
+    shownBar = shownPaper = shownNumOp = shownNumTr = shownGlyph = shownLabTr = shownRoll = shownCoda = shownCodaTr = shownCodaS = shownCap = shownCapO = shownInk = inspTr = '';
+    labels.forEach(l => { l.tr = l.ov = l.d = l.nc = l.inkTr = ''; l.on = null; });
+  }
+  function setTiny(on) {
+    tiny = on;
+    if (on) {
+      stopFrames(); clearTimeout(idleTimer);
+      root.classList.remove('story-compact', 'story-short'); root.classList.add('story-tiny');
+      beats.forEach(b => { b.style.opacity = b.style.transform = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-tight', 'is-bo0'); });
+      if (bar) bar.style.opacity = bar.style.visibility = '';
+      if (paper) paper.style.height = paper.style.visibility = '';
+      if (num) num.style.opacity = num.style.transform = '';
+      if (coda) coda.style.opacity = coda.style.transform = '';
+      beatLinks.forEach(list => list.forEach(el => el.removeAttribute('tabindex')));
+      hoverPtr = hoverFocus = null; setHover();
+      stage.removeAttribute('tabindex');
+      shownSettled = true; story.setAttribute('data-settled', ''); // (static: always at rest)
+    } else {
+      root.classList.remove('story-tiny');
+      stage.tabIndex = 0;
+      invalidate();
+      shownSettled = false; story.removeAttribute('data-settled');
+      settledOnce = false;
+    }
+  }
   function resize(force) {
     if (lost || !ready) return;
+    const tn = window.innerHeight < 300;
+    if (tn !== tiny) {
+      const k = tiny ? (tinyPlace || staticPlace()) : pinnedPlace(); // (the static place as the reader last left it: the new width reflows it)
+      setTiny(tn);
+      if (tn) { placeTo(k); tinyPlace = k; return; }
+      force = true; tinyBack = k;
+    } else if (tiny) return;
     const w = stage.clientWidth, h = stage.clientHeight, r = window.devicePixelRatio || 1;
     const sized = force === true || w !== W || h !== H || r !== ratio || stackedMQ.matches !== stacked;
-    const keep = readingPoint(); // before anything moves
+    const keep = tinyBack ? null : readingPoint(); // before anything moves
     if (sized) {
       W = w; H = h; ratio = r;
       // phones (LITE) draw at most 2 device px per CSS px: the swarm reads the same, the GPU does less than half the work
@@ -1568,7 +1808,8 @@
     }
     measureScroll(); // the toolbar alone (stage unchanged): only the scroll geometry, the callouts keep their layout
     if (sized) fitScenes();
-    restore(keep);
+    if (tinyBack) { placeTo(tinyBack); tinyBack = null; scrollY = window.scrollY; } // back from the static sequence, at the reader's scene
+    else restore(keep);
     sceneScroll();
     requestFrame();
   }
@@ -1634,10 +1875,10 @@
 
   function frame(now, initial) {
     frameId = 0;
-    if (!running || lost || !ready) return;
+    if (!running || lost || !ready || tiny) return;
     const raw = Math.max(0, (now - t0) / 1000), dt = Math.min(0.05, raw); t0 = now;
-    const dtS = Math.min(0.25, raw); // the scroll's weight runs on real time, so throttled frames never leave the scenes lagging
-    if (!((visible && !document.hidden) || initial)) return;
+    const dtS = Math.min(1, raw); // the scroll's weight runs on real time: a slow frame (software GL, a busy machine) lands where the reader is
+    if (!((visible && belowBar && !document.hidden) || initial)) return;
     const red = reducedMQ.matches, moving = !red && !paused;
     if (moving) { time += dt; simTime += dt; mouse.x += (mouse.tx - mouse.x) * (1 - Math.exp(-dt * 3)); mouse.y += (mouse.ty - mouse.y) * (1 - Math.exp(-dt * 3)); }
     // the intro: when the loader lifts, the globe draws in from the top band down
@@ -1650,6 +1891,7 @@
     else { const k = 1 - Math.exp(-dtS * (performance.now() - lastGo.t < 1500 ? 10 : 6.5)); sNow += (sTarget - sNow) * k; xNow += (xTarget - xNow) * k; if (Math.abs(sTarget - sNow) < 0.0004) sNow = sTarget; if (Math.abs(xTarget - xNow) < 0.0004) xNow = xTarget; }
     xeNow = red ? (xNow > 0.5 ? 1 : 0) : xNow;
     morphState();
+    stepCopy(now, dtS);
     camera();
     if (pointerDirty) {
       pointerDirty = false;
@@ -1667,16 +1909,23 @@
     resetAttribs();
     if (ext) drawLines();
     resetAttribs();
-    if (!(LITE && Math.abs(sTarget - sNow) > 0.02)) drawBulk(true); // phones skip the glow pass while the scenes are moving
+    if (!SOFT && !(LITE && Math.abs(sTarget - sNow) > 0.02)) drawBulk(true); // phones skip the glow pass while the scenes are moving
     drawBulk(false);
     resetAttribs();
-    drawActors(false); drawActors(true);
-    updateUI();
-    const busy = moving || Math.abs(sTarget - sNow) > 0.0004 || Math.abs(xTarget - xNow) > 0.0004 || hov.some((v, i) => Math.abs(v - hovT[i]) > 0.002) || (intro < 1 && introStart >= 0) || introStart < 0;
-    if (busy) requestFrame();
+    drawActors(false); if (!SOFT) drawActors(true);
+    updateUI(now);
+    // settled: the structure and the exit have arrived, the copy rests on one whole scene and its callouts are fully up. Tests
+    // wait on .story[data-settled]; any scroll removes it at once
+    const settled = Math.abs(sTarget - sNow) < 0.002 && Math.abs(xTarget - xNow) < 0.002 && copyResting() && labA >= 1 && intro >= 1;
+    if (settled !== shownSettled) { shownSettled = settled; if (settled) story.setAttribute('data-settled', ''); else story.removeAttribute('data-settled'); }
+    const changing = Math.abs(sTarget - sNow) > 0.0004 || Math.abs(xTarget - xNow) > 0.0004 || hov.some((v, i) => Math.abs(v - hovT[i]) > 0.002) || (intro < 1 && introStart >= 0) || introStart < 0
+      || copyMode === 'resolve' || copyMode === 'chase' || (labelScene >= 0 && labA < 1);
+    if (changing) requestFrame();
+    else if (moving) { if (SOFT) { clearTimeout(softTimer); softTimer = setTimeout(requestFrame, 45); } else requestFrame(); } // the resting motion
   }
-  function requestFrame() { if (!frameId && running && !lost && ready && visible && !document.hidden) frameId = requestAnimationFrame(frame); }
-  function stopFrames() { cancelAnimationFrame(frameId); frameId = 0; t0 = performance.now(); }
+  let shownSettled = false, SOFT = false, softTimer = 0;
+  function requestFrame() { if (!frameId && running && !lost && ready && !tiny && visible && belowBar && !document.hidden) frameId = requestAnimationFrame(frame); }
+  function stopFrames() { cancelAnimationFrame(frameId); frameId = 0; clearTimeout(softTimer); t0 = performance.now(); }
   function updateMotion() {
     if (!motionButton) return;
     motionButton.hidden = reducedMQ.matches;
@@ -1687,14 +1936,19 @@
   const sceneTop = (i) => storyTop + run * (i / TOTAL_U);
   let lastGo = { i: -1, t: 0 };
   function goTo(i, announce) {
+    if (tiny) return; // (the static sequence: the page scrolls as usual)
     i = clamp(i, 0, 4);
     measureScroll();
+    handBack();
     lastGo = { i, t: performance.now() };
     window.scrollTo({ top: Math.round(sceneTop(i)), behavior: reducedMQ.matches ? 'instant' : 'smooth' });
-    if (announce && live) live.textContent = `Scene ${i + 1} of 5: ${SCENES[i]}`;
+    if (announce && live) { // in the index's own words: '01 · The work: Not tasks. Lifecycles.'
+      const h = beats[i] && beats[i].querySelector('h1, h2');
+      live.textContent = `${pad2(i)} · ${SCENES[i]}${h ? ': ' + h.textContent.replace(/\s+/g, ' ').trim() : ''}`;
+    }
   }
   function onKey(e) {
-    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    if (tiny || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
     const t = e.target;
     if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
     const d = e.key === 'ArrowRight' || e.key === 'PageDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'PageUp' ? -1 : 0;
@@ -1708,10 +1962,11 @@
       const top = next ? next.getBoundingClientRect().top + window.scrollY - navH : storyTop + story.offsetHeight; // it lands at the nav's lower edge
       window.scrollTo({ top: Math.round(top), behavior: reducedMQ.matches ? 'instant' : 'smooth' });
       lastGo = { i: 5, t: performance.now() };
-      if (next) { // the keyboard goes on with the chapter it arrived at
-        if (!next.hasAttribute('tabindex')) next.setAttribute('tabindex', '-1');
-        next.classList.add('story-next-target');
-        next.focus({ preventScroll: true });
+      const head = next && (next.querySelector('h2') || next);
+      if (head) { // the keyboard goes on with the chapter it arrived at, from its headline
+        if (!head.hasAttribute('tabindex')) head.setAttribute('tabindex', '-1');
+        head.classList.add('story-next-target');
+        head.focus({ preventScroll: true });
       }
       return;
     }
@@ -1723,17 +1978,31 @@
   // WebGL failed to start (or to come back): stop, clear what the loop wrote, hand over to the static beats
   function fail(err) {
     if (err) console.error(err);
-    running = false; stopFrames();
-    beats.forEach(b => { b.style.opacity = b.style.transform = b.style.visibility = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-relay', 'is-tight'); });
-    root.classList.remove('story-compact', 'story-short');
+    // where the reader is, before the page reflows into the static sequence: a scene of the overture, or a place below it
+    let at = null, below = null;
+    if (wired && lastP === lastP && !tiny) {
+      measureScroll();
+      if (scrollY > storyTop + 4 && scrollY < storyTop + run + 4) at = clamp(Math.round(sTarget), 0, 4);
+      else if (scrollY >= storyTop + run + 4) below = scrollY - (storyTop + storyH);
+    }
+    running = false; stopFrames(); clearTimeout(lostTimer); clearTimeout(idleTimer);
+    beats.forEach(b => { b.style.opacity = b.style.transform = b.style.visibility = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-relay', 'is-tight', 'is-bo0'); });
+    root.classList.remove('story-compact', 'story-short', 'story-tiny');
     beatLinks.forEach(list => list.forEach(el => el.removeAttribute('tabindex')));
     labels.forEach(l => l.el.remove()); leaders.remove();
     if (bar) bar.style.opacity = bar.style.visibility = '';
     if (paper) paper.style.height = paper.style.visibility = '';
+    if (num) num.style.opacity = num.style.transform = '';
+    if (coda) coda.style.opacity = coda.style.transform = '';
     if (motionButton) motionButton.hidden = true;
     insp.remove();
     stage.removeAttribute('tabindex'); stage.removeAttribute('aria-describedby');
     fallback();
+    // the static sequence is ~3 screens shorter: keep the reader on the scene (or the place below the overture) they were at
+    if (at != null || below != null) {
+      const top = at != null ? (at === 0 ? storyTop : beats[at].getBoundingClientRect().top + window.scrollY - navH) : story.getBoundingClientRect().top + window.scrollY + story.offsetHeight + below;
+      window.scrollTo({ top: Math.max(0, Math.round(top)), behavior: 'instant' });
+    }
   }
   let wired = false;
   function begin() {
@@ -1743,20 +2012,48 @@
       if (document.getElementById('story-keys')) stage.setAttribute('aria-describedby', 'story-keys');
       idx.forEach((button, i) => button.addEventListener('click', () => goTo(i, true)));
       stage.addEventListener('keydown', onKey);
+      // Escape closes the inspector wherever focus is, hovered or focused (WCAG 1.4.13); focus entering the bar while the stage
+      // is on its way out brings S4 back to rest, where the bar is whole
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && (hoverPtr || hoverFocus)) { hoverPtr = hoverFocus = null; setHover(); } });
+      if (bar) bar.addEventListener('focusin', () => { if (running && xTarget > 0.02) goTo(4); });
+      // Shift+Tab back from the first chapter lands on the stage itself (the hidden bar is out of the tab order): S4 comes back
+      // whole, so the focused stage shows a scene the arrow keys can step from, not the paper
+      stage.addEventListener('focusin', e => { if (e.target === stage && running && !tiny && xTarget > 0.02) goTo(4); });
       // every beat stays in the accessibility tree; keyboard focus entering one brings the story to it
       // (on the way out, S4's copy has faded: Shift+Tab back from the first chapter brings the scene back with its buttons)
-      beats.forEach((b, i) => b.addEventListener('focusin', () => { if (running && (Math.abs(sTarget - i) > 0.45 || xTarget > 0.02)) goTo(i); }));
-      if (motionButton) motionButton.addEventListener('click', () => { paused = !paused; updateMotion(); requestFrame(); });
+      beats.forEach((b, i) => b.addEventListener('focusin', () => { if (running && !tiny && (Math.abs(sTarget - i) > 0.45 || xTarget > 0.02)) goTo(i); }));
+      if (motionButton) motionButton.addEventListener('click', () => { paused = !paused; story.classList.toggle('is-paused', paused); updateMotion(); requestFrame(); }); // (the CSS loops too: the scroll cue, the live dot)
       reducedMQ.addEventListener('change', () => { mouse.x = mouse.y = mouse.tx = mouse.ty = 0; updateMotion(); requestFrame(); });
       window.addEventListener('resize', () => resize());
       stackedMQ.addEventListener('change', () => resize(true));
       (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
       window.addEventListener('scroll', () => {
-        scrollY = window.scrollY; sceneScroll(); syncIndex();
-        if (!visible) { sNow = sTarget; xNow = xTarget; settledOnce = false; } // off-screen: the instrument is already where the reader will meet it
+        const wasBelow = belowBar;
+        if (tiny) { tinyPlace = staticPlace(); return; } // the static sequence: only the reader's place is kept
+        scrollY = window.scrollY; sceneScroll(); syncIndex(); handBack();
+        if (!visible) { sNow = sTarget; xNow = xTarget; copyS = sNow; copyMode = 'follow'; settledOnce = false; } // off-screen: the instrument is already where the reader will meet it
+        if (lost) { uiNoGL(); return; } // the context is gone (for now): the copy and the index still follow the reader
+        if (wasBelow && !belowBar && running && ready) { sNow = sTarget; xNow = xTarget; copyS = sNow; copyMode = 'follow'; stopFrames(); frame(performance.now(), true); } // its last pixels go under the bar: leave it finished
         requestFrame();
       }, { passive: true });
+      // the rest resolver's inputs: a wheel, a finger down (no resolve while one is), a key (goTo hands back too)
+      window.addEventListener('wheel', handBack, { passive: true });
+      window.addEventListener('touchstart', () => { touchDown = true; handBack(); }, { passive: true, capture: true });
+      window.addEventListener('touchmove', handBack, { passive: true, capture: true });
+      const lift = (e) => { touchDown = e.touches && e.touches.length > 0; handBack(); };
+      window.addEventListener('touchend', lift, { passive: true, capture: true });
+      window.addEventListener('touchcancel', lift, { passive: true, capture: true });
       document.addEventListener('oxa:loaded', () => setTimeout(() => { relayReady = true; requestFrame(); }, 1500), { once: true }); // S0's headline entrance has run
+      // a long jump (site.js dispatches this inside the view transition's update, right after landing): when it lands on the
+      // overture, the scene is set and drawn now, so the incoming view already shows the destination with its structure (never
+      // the copy before the globe, never a rewind from where the reader left it)
+      document.addEventListener('oxa:jump', () => {
+        if (!running || lost || !ready || tiny) return;
+        measureScroll(); sceneScroll(); syncIndex();
+        if (scrollY + window.innerHeight <= storyTop || scrollY >= storyTop + storyH) return;
+        sNow = sTarget; xNow = xTarget; copyS = sNow; copyMode = 'follow'; settledOnce = true;
+        stopFrames(); frame(performance.now(), true);
+      });
       if (root.classList.contains('is-loaded')) setTimeout(() => { relayReady = true; requestFrame(); }, 1500);
       // late layout (fonts, load) refits the stage around the reader's place as the page has it now: a scroll that has not
       // reached the scroll listener yet (a deep link's landing, a reload's restored place) is the place to keep
@@ -1793,7 +2090,7 @@
       if ('IntersectionObserver' in window) {
         // visible: the loop runs; near (within 40% of a screen): the frame is brought up to the scroll before the stage can show
         new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) requestFrame(); else stopFrames(); }, { threshold: 0 }).observe(story);
-        new IntersectionObserver(([e]) => { if (e.isIntersecting && running && ready && !lost) { scrollY = window.scrollY; sceneScroll(); sNow = sTarget; xNow = xTarget; settledOnce = false; stopFrames(); frame(performance.now(), true); } }, { rootMargin: '40% 0px 40% 0px', threshold: 0 }).observe(story);
+        new IntersectionObserver(([e]) => { if (e.isIntersecting && running && ready && !lost && !tiny) { scrollY = window.scrollY; sceneScroll(); sNow = sTarget; xNow = xTarget; settledOnce = false; stopFrames(); frame(performance.now(), true); } }, { rootMargin: '40% 0px 40% 0px', threshold: 0 }).observe(story);
       }
       document.addEventListener('visibilitychange', () => { if (document.hidden) stopFrames(); else requestFrame(); });
     }
@@ -1803,11 +2100,29 @@
     frame(performance.now(), true);
     root.classList.add('gl-ready'); document.dispatchEvent(new Event('story:gl-ready')); // the loader waits for this (capped)
   }
+  // the GPU dropped the context: nothing is drawn, the copy and the index keep following the reader (callouts hidden). If the
+  // browser does not hand it back within 2.5 s, the designed static sequence takes over (with site.js's 2D globe)
+  let lostTimer = 0;
+  function uiNoGL() {
+    if (!running || !wired || tiny) return;
+    sNow = sTarget; xNow = xTarget; xeNow = reducedMQ.matches ? (xNow > 0.5 ? 1 : 0) : xNow; copyS = sNow; copyMode = 'follow';
+    morphState(); camera(); updateUI(performance.now());
+  }
   function start() {
     try { gl = cv.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: true, powerPreference: 'high-performance' }); } catch (e) { gl = null; }
     if (!gl) { fail(); return; }
-    cv.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; ready = false; stopFrames(); });
-    cv.addEventListener('webglcontextrestored', () => { lost = false; if (running) setupGL(begin); });
+    // a software renderer (no GPU: SwiftShader, llvmpipe; a VM, a remote desktop, a blocklisted driver) draws every pixel on the
+    // CPU: the stage drops its grain blend and the glow pass, and while it rests its slow motion runs at ~20 fps. Scrolling still
+    // draws every frame, and every scene, label and fallback is the same
+    try { const dbg = gl.getExtension('WEBGL_debug_renderer_info'); SOFT = /swiftshader|llvmpipe|softpipe|software|basic render/i.test(String(gl.getParameter(dbg ? dbg.UNMASKED_RENDERER_WEBGL : gl.RENDERER))); } catch (e) { SOFT = false; }
+    if (SOFT) stage.classList.remove('grain');
+    cv.addEventListener('webglcontextlost', e => {
+      e.preventDefault(); lost = true; ready = false; stopFrames();
+      if (shownSettled) { shownSettled = false; story.removeAttribute('data-settled'); }
+      uiNoGL();
+      clearTimeout(lostTimer); lostTimer = setTimeout(() => { if (lost && running) fail(); }, 2500);
+    });
+    cv.addEventListener('webglcontextrestored', () => { clearTimeout(lostTimer); lost = false; if (running) setupGL(begin); });
     setupGL(begin);
   }
   start();
