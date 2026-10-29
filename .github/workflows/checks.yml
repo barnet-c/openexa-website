@@ -73,11 +73,11 @@ jobs:
           - shard: overture-rest
             only: overture_rest
           - shard: swarm
-            only: swarm_rate,swarm_trace_to_ledger,platform_trace,platform_lab,lab_gate_labels
+            only: swarm_rate,swarm_trace_to_ledger,platform_trace,platform_lab
           - shard: ledger
             only: ledger_height,ledger_wheel,ledger_time,counters,nav_handoff
           - shard: nav
-            only: nav_readout,jump_touch,label_in_name,forced_focus
+            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels
           - shard: desk-pages
             only: desk,desk_warm_start,desk_phone_follow,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab
     steps:
