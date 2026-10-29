@@ -1002,10 +1002,10 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .no-webgl .beat-fig, .story-tiny .beat-fig { display: block; width: 100%; max-width: 440px; height: auto; margin-top: 34px; }
 .no-webgl .story-2d { height: 100vh; height: 100svh; }
 @media (min-aspect-ratio: 23/20) and (min-width: 640px) {
-  .no-webgl .beat-fig { position: absolute; right: 0; top: 50%; width: 38%; margin: 0; transform: translateY(-50%); }
+  .no-webgl .beat-fig { position: absolute; right: 0; top: 50%; width: min(46vw, 560px); max-width: none; margin: 0; transform: translateY(-50%); } /* plates, not thumbnails */
 }
 @media (scripting: none) and (min-aspect-ratio: 23/20) and (min-width: 640px) {
-  .beat-fig { position: absolute; right: 0; top: 50%; width: 38%; margin: 0; transform: translateY(-50%); }
+  .beat-fig { position: absolute; right: 0; top: 50%; width: min(46vw, 560px); max-width: none; margin: 0; transform: translateY(-50%); }
 }
 /* wide screens: site.js's 2D globe gets a canvas of its own on the right (960 px or more keeps its wide layout), clear of the copy */
 @media (min-aspect-ratio: 23/20) and (min-width: 1200px) { .no-webgl .story-2d { left: auto; right: 0; width: max(960px, 56%); } }

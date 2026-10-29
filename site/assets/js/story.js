@@ -195,7 +195,8 @@
       const k = RING_OF_BAND[band[q]], [rr, , az] = RINGS[k];
       const th = dash(k, az - lam[q]); // the ring point that sits at the agent's longitude
       ringAng[q] = th; ringOf[q] = k;
-      const kind = k === 0 ? (R(q, 1) < 0.72 ? K.GREEN : K.BRIGHT) : k < 3 ? (R(q, 1) < 0.3 ? K.IVORY : K.DUST) : (R(q, 1) < 0.3 ? K.KHAKI : K.KDIM);
+      // LC-01: density, not bloom, carries 'live' (a bright bead is one in eight)
+      const kind = k === 0 ? (R(q, 1) < 0.88 ? K.GREEN : K.BRIGHT) : k < 3 ? (R(q, 1) < 0.3 ? K.IVORY : K.DUST) : (R(q, 1) < 0.3 ? K.KHAKI : K.KDIM);
       set(1, q, th, rr + gauss() * (k === 0 ? 0.022 : 0.014), gauss() * 0.006, code(M.RING, kind, k));
     }
     for (let q = 0; q < N_ORB; q++) {
@@ -350,6 +351,9 @@
     if (mode < 1.5) return rotY(u_spin) * s.xyz;
     if (mode < 3.5) { // orbit (S0, rings 0-5) or lifecycle ring (S1, rings 6-11): x angle, y radius, z lift
       int k = int(grp + 0.5) + (mode > 2.5 ? 6 : 0);
+      // LC-01's beads lie close along their ring: each green one at under half strength and each bright one at half, so where they
+      // overlap the ring stays green instead of clipping to a cyan white (density, not bloom, carries 'live')
+      if (mode > 2.5 && grp < 0.5) al = kind > 1.5 && kind < 2.5 ? 0.44 : kind > 7.5 && kind < 8.5 ? 0.5 : 1.0;
       float a = s.x + u_time * u_rW[k];
       vec3 U = u_rU[k], V = u_rV[k];
       return (cos(a) * U + sin(a) * V) * s.y + normalize(cross(U, V)) * s.z;
@@ -430,7 +434,7 @@
     if (k < 5.5) return vec4(0.72, 0.55, 1.0, 0.25);
     if (k < 6.5) return vec4(0.82, 0.46, 0.0, 0.0);
     if (k < 7.5) return vec4(0.9, 0.62, 0.0, 0.6);
-    if (k < 8.5) return vec4(1.15, 1.0, 0.0, 0.5);
+    if (k < 8.5) return vec4(1.15, 1.0, 0.0, 0.25);
     return vec4(0.7, 0.2, 1.0, 0.0);
   }
   float easeSpring(float t) { float s = t * t * (3.0 - 2.0 * t); float u = s - 1.0; return 1.0 + ${C3.toFixed(3)} * u * u * u + ${C1.toFixed(3)} * u * u; }
@@ -837,7 +841,7 @@
       for (let j = 0; j < o.length; j += 2) {
         const x = cx + o[j], y = cy + o[j + 1];
         if (x < gutter || y < navH + 24 || y > H - barH - Math.max(18, capH[1] + 12)) return null;
-        if (x < br.r + 22 && y > br.t - 22) return null; // clear of the copy's corner (and of everything under it)
+        if (x < br.r + 22 && y > br.t - 14) return null; // over the copy column only above its top (14 px clear)
       }
       return { cx, minX: Math.min(...o.filter((_, j) => j % 2 === 0)) };
     };
@@ -886,7 +890,7 @@
         s = Math.min((x1 - x0) / (ext[0] * pxu), (y1 - y0) / (ext[1] * pxu), (H * 0.74) / (ext[1] * pxu));
         cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
         if (i === 1 && !stacked) { // on the horizon, or up to 6% of the stage above it if that buys the rings room over the copy
-          const f = [cy, cy - H * 0.06].map(c => fitRings(s, x1, c, br, pxu)).filter(Boolean).sort((p, q) => q.s - p.s)[0];
+          const f = [cy, cy - H * 0.06, H * 0.36, H * 0.42].map(c => fitRings(s, x1, c, br, pxu)).filter(Boolean).sort((p, q) => q.s - p.s)[0]; // (the largest: up to half the stage, over the copy column's empty top)
           if (f) { s = f.s; cx = f.cx; x0 = f.x0; cy = f.cy; }
         }
       }
