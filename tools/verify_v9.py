@@ -17,8 +17,10 @@ Reproducing CI on this machine. GitHub's ubuntu-latest runner renders WebGL with
 are several times slower than a laptop; reproduce that with
     python tools/serve.py 8125                                     (another terminal)
     python tools/verify_v9.py --swiftshader --cpu-throttle 4 [--only <a shard's list>]
---swiftshader (the default; CI's renderer) launches Chromium on ANGLE's SwiftShader; --gpu uses the real GPU instead (local
-only, to compare). --cpu-throttle N slows every page's main thread N times (CDP Emulation.setCPUThrottlingRate, applied
+--swiftshader (the default; CI's renderer) launches Chromium with WebGL on ANGLE's SwiftShader and 2D canvases on the CPU
+(as on a device without a GPU); --gpu uses the real GPU instead (local only, to compare). Calibrated against CI run
+40862747954 (2173b49): with the browser pinned to 4 CPUs (--cores 4) this PC reproduced its swarm failures (2 frames a
+second with SwiftShader also drawing 2D canvases; Halt's drain and the record button's trip ran out of time). --cpu-throttle N slows every page's main thread N times (CDP Emulation.setCPUThrottlingRate, applied
 before the first navigation). --cores N pins the browser to N logical CPUs (inherited CPU affinity), as a small runner.
 Both modes are printed in the run header with the host's CPU load. Calibrated against CI run 40731155926 (1a6b9fb): with
 --cpu-throttle 4 this PC reproduced its 'home' failure (Locator.screenshot, 'waiting for element to be stable'), its
@@ -40,7 +42,10 @@ from playwright.async_api import async_playwright, expect
 expect.set_options(timeout=20000)
 
 BASE = "http://127.0.0.1:8125"  # the URL argument replaces it
-SWIFTSHADER_ARGS = ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]  # CI's renderer
+# CI's renderer: WebGL on ANGLE's SwiftShader, 2D canvases rasterized on the CPU, as Chrome does on a device without a GPU.
+# Round 2: with SwiftShader also drawing the 2D canvases (an arrangement no visitor's browser uses), the homepage's swarm
+# lab took 0.5 s or more a frame on CI's 4 vCPUs, and Halt's drain and the record button's trip ran out of time there.
+SWIFTSHADER_ARGS = ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--disable-accelerated-2d-canvas"]
 GPU_ARGS = ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"]  # the real GPU (Windows; local comparison only)
 MODE = {"gl": "swiftshader", "throttle": 1.0, "cores": None, "check_timeout": 600.0}
 LIMITS = {"overture_phones": 1200, "overture_rest": 1200}  # checks that run long on CI by design (s); the rest use the default
@@ -166,7 +171,7 @@ def launch_args():
 
 
 def mode_line():
-    gl = "real GPU (" + " ".join(GPU_ARGS) + ")" if MODE["gl"] == "gpu" else "SwiftShader (ANGLE; CI's software GL)"
+    gl = "real GPU (" + " ".join(GPU_ARGS) + ")" if MODE["gl"] == "gpu" else "SwiftShader (ANGLE; CI's software GL; 2D canvas on the CPU)"
     th = f"{MODE['throttle']:g}x (CDP Emulation.setCPUThrottlingRate on every page)" if MODE["throttle"] > 1 else "off"
     cores = f" · browser pinned to logical CPUs {MODE['cores']}" if MODE["cores"] else ""
     return f"renderer {gl} · CPU throttle {th}{cores} · check limit {MODE['check_timeout']:.0f} s · host: {host_load()}"
@@ -315,6 +320,24 @@ async def still_shot(pg, sel, path, pause=None):
     return paused
 
 
+# round 2 (CI): what a swarm lab is doing when a check of it fails (its counters, visibility, quality, the page's frames)
+LAB_STATE = """(async () => { const r = document.querySelector('[data-swarm-live]'); if (!r) return null; const c = r.querySelector('canvas'), b = (c || r).getBoundingClientRect(), q = s => (r.querySelector(s) || {}).textContent || '';
+  const n = await new Promise(res => { let k = 0; const t0 = performance.now(); const f = () => { k++; if (performance.now() - t0 < 1000) requestAnimationFrame(f); else res(k); }; requestAnimationFrame(f); });
+  return { inflight: q('[data-sw-inflight]').trim(), state: q('[data-sw-state]').trim(), cls: r.className, quality: r.dataset.swQuality, cap: r.dataset.swCap || null,
+    hidden: document.hidden, canvas: [Math.round(b.top), Math.round(b.bottom)], vh: innerHeight, y: Math.round(scrollY), raf_per_s: n }; })()"""
+LEDGER_STATE = """(() => { const l = document.querySelector('[data-ledger=live]'); if (!l) return null; const s = l.querySelector('[data-lt-state]');
+  return { state: s && s.textContent.trim(), recs: l.querySelectorAll('.lt-rec').length, followed: l.querySelectorAll('.lt-rec.is-followed').length, sel: l.querySelectorAll('.lt-rec.is-sel').length, cls: l.className }; })()"""
+
+
+def lab_why(st, errs, fr=None):
+    """round 2 (CI): a swarm lab failure, explained from the page: the frames after the action, the lab's state, page errors"""
+    s = []
+    if fr: s.append(f"{len(fr)} page frames over {fr[-1][0] - fr[0][0]} ms, in flight {fr[0][1]} -> {fr[-1][1]} ({len({x[1] for x in fr})} distinct values)")
+    s.append(f"lab {st}")
+    s.append(f"page errors {errs[:3] if errs else 'none'}")
+    return "; ".join(s)
+
+
 # ---------------------------------------------------------------- the checks
 CHECKS = []
 def check(fn): CHECKS.append(fn); return fn
@@ -447,7 +470,7 @@ async def home(b):
     await pg.locator("[data-sw-halt]").click()
     await expect(pg.locator("[data-sw-state]")).to_have_text("Halted")
     drained = await until(pg, "document.querySelector('[data-sw-inflight]').textContent.trim() === '0' && document.querySelector('[data-sw-banner]').textContent.includes('drained')", 30000, 250)
-    assert drained, ("halt did not drain", await pg.evaluate("[document.querySelector('[data-sw-inflight]').textContent, document.querySelector('[data-sw-banner]').textContent]"))
+    assert drained, ("halt did not drain", await pg.evaluate("[document.querySelector('[data-sw-inflight]').textContent, document.querySelector('[data-sw-banner]').textContent]"), lab_why(await pg.evaluate(LAB_STATE), errs))
     # the ledger trace (home 06) recorded what the swarm announced, answering each announcement with a hash-linked record.
     # Round 1 (SW2/LG4): the ledger also answers 'oxa:rejected', so an answered id comes from the settled or the rejected stream.
     await pg.evaluate("document.querySelector('[data-ledger=live]').scrollIntoView({block: 'center', behavior: 'instant'})")
@@ -1307,7 +1330,8 @@ async def overture_resize(b):
 async def swarm_rate(b):
     """after Halt, once in flight reads 0, 'Settled / s' ([data-sw-rate]) reads 0 within 0.5 s and stays 0 (it is the
     model's own rate, not a trailing window)"""
-    ctx, pg = await open_page(b, "index.html", 1440, 900)
+    errs = []
+    ctx, pg = await open_page(b, "index.html", 1440, 900, errs=errs)
     await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
     num = "(s => +((document.querySelector(s) || {}).textContent || 'NaN').replace(/[^\\d.]/g, ''))"
     assert await until(pg, f"{num}('[data-sw-inflight]') > 0 && {num}('[data-sw-recorded]') > 0", 25000, 200), "swarm_rate index.html@1440x900: the lab never ran"
@@ -1317,8 +1341,9 @@ async def swarm_rate(b):
     drained = await until(pg, "document.querySelector('[data-sw-inflight]').textContent.trim() === '0'", 45000, 200)
     await pg.wait_for_timeout(1200)
     await pg.evaluate("window.__rate.on = false"); fr = (await pg.evaluate("window.__rate"))["f"]
+    st = None if drained else await pg.evaluate(LAB_STATE)
     await ctx.close()
-    assert drained, f"swarm_rate index.html@1440x900: Halt never drained (in flight {fr[-1][1] if fr else '?'})"
+    assert drained, f"swarm_rate index.html@1440x900: Halt never drained (in flight {fr[-1][1] if fr else '?'}); " + lab_why(st, errs, fr)
     zero = lambda t: re.sub(r"[^\d.]", "", t or "x") in ("0", "0.0", "0.00")
     i0 = next((i for i, x in enumerate(fr) if x[1] == "0"), None)
     assert i0 is not None, f"swarm_rate index.html@1440x900: no frame recorded in flight 0 ({len(fr)} frames)"
@@ -1340,7 +1365,8 @@ async def swarm_trace_to_ledger(b):
     """follow one proposal to Settled (council strictness 0): the trace's ledger row becomes a button naming the same
     '#id' as the ledger's .lt-rec.is-followed; clicking it brings [data-ledger=live] into view with that record .is-sel;
     on the homepage the trace, its stage tag and its live region never print 'block'"""
-    ctx, pg = await open_page(b, "index.html", 1440, 900, init=EVENTS)
+    errs = []
+    ctx, pg = await open_page(b, "index.html", 1440, 900, init=EVENTS, errs=errs)
     await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
     assert await until(pg, "+document.querySelector('[data-sw-inflight]').textContent.replace(/\\D/g, '') > 0", 25000, 200), "swarm_trace_to_ledger index.html@1440x900: the lab never ran"
     await pg.evaluate("(() => { const s = document.querySelector('[data-sw-strict]'); s.value = '0'; s.dispatchEvent(new Event('input', {bubbles: true})); s.dispatchEvent(new Event('change', {bubbles: true})); })()")
@@ -1362,10 +1388,11 @@ async def swarm_trace_to_ledger(b):
             t1 = time.monotonic()
             sel = await until(pg, """(() => { const l = document.querySelector('[data-ledger=live]'), r = l.getBoundingClientRect(), li = l.querySelector('.lt-rec.is-followed');
                 return r.top < innerHeight && r.bottom > 0 && li && li.classList.contains('is-sel') ? 1 : 0; })()""", 8000, 100)
-            if not sel: bad.append(f"after the click the ledger is not in view with {rid[0]} selected: {await pg.evaluate('(() => { const r = document.querySelector(\"[data-ledger=live]\").getBoundingClientRect(); return [Math.round(r.top), Math.round(r.bottom), [...document.querySelectorAll(\"[data-ledger=live] .lt-rec.is-sel\")].map(li => li.textContent.slice(0, 20))]; })()')}")
+            if not sel: bad.append(f"after the click the ledger is not in view with {rid[0]} selected: {await pg.evaluate('(() => { const r = document.querySelector(\"[data-ledger=live]\").getBoundingClientRect(); return [Math.round(r.top), Math.round(r.bottom), [...document.querySelectorAll(\"[data-ledger=live] .lt-rec.is-sel\")].map(li => li.textContent.slice(0, 20))]; })()')}; ledger {await pg.evaluate(LEDGER_STATE)}")
             else: print(f"swarm_trace_to_ledger: record {rid[0]} selected in the ledger {time.monotonic() - t1:.1f} s after the click")
     blk = await pg.evaluate("window.__blk")
     if blk: bad.append(f"the trace printed 'block': {blk[:3]}")
+    if bad: bad.append(lab_why(await pg.evaluate(LAB_STATE), errs))
     await ctx.close()
     assert not bad, "swarm_trace_to_ledger index.html@1440x900:\n  " + "\n  ".join(bad)
 
