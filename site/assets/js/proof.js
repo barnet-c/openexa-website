@@ -13,9 +13,10 @@
    record states it (">10" = above the floor, exact value not published) and a missing field reads "Not stated".
    The chart: one column per session, one block per basis point up to the floor and open blocks above it; the NAV regime
    as a trace above or below the NAV line; a tick where the broker confirmed and the session settled. Hover, focus or tap
-   a session for its record in the inspector; Left / Right / Home / End move between sessions, Enter or a second tap
-   lets go, Esc returns to the summary. Reduced motion: no entrance, no idle motion; idle motion also stops off-screen and
-   in hidden tabs. No WebGL, no canvas: plain DOM that stays crisp at any pixel ratio and prints. */
+   a session for its record in the inspector (built only where the section has no stats row of its own: home §04 says
+   the summary once, in its stats); Left / Right / Home / End move between sessions, Enter or a second tap lets go, Esc
+   returns to the summary. No loops: after the entrance one light passes along the floor, paused while the chart is off
+   screen (.is-away). Reduced motion: no entrance, no motion. No WebGL, no canvas: plain DOM, crisp at any pixel ratio. */
 (function () {
   'use strict';
   const src = document.getElementById('oxa-sessions');
@@ -194,17 +195,21 @@
     const body = h('div', 'pf-body');
     body.append(gut, plot, mute(h('i', 'pf-floor')), mute(h('i', 'pf-base')), mute(h('i', 'pf-nav')));
 
-    // the inspector: the summary, or the record of the session in hand
-    const read = mute(h('div', 'pf-read'));
+    // the inspector: the summary, or the record of the session in hand. Where the section already states the summary in
+    // its own stats row (home §04), the chart does not print it again: there the summary is the listbox's description
+    // only, and each option carries its session's record (its name)
+    const sec = host.closest('section');
+    const read = sec && sec.querySelector('.stats') ? null : mute(h('div', 'pf-read'));
     const bracket = h('i', 'pf-bracket');
     const cells = h('div', 'pf-cells');
     const out = ['Session', 'NAV regime', 'Captured', 'Verification', 'Status'].map(k => {
       const cell = h('div', 'pf-cell'), v = h('span', 'pf-v'), note = h('span', 'pf-s');
       cell.append(h('span', 'pf-k', k), v, note); cells.append(cell); return { v, note };
     });
-    read.append(bracket, cells);
     const said = h('p', 'sr-only', summarySaid); said.id = id + '-sum';
-    pf.append(body, read, said);
+    pf.append(body);
+    if (read) { read.append(bracket, cells); pf.append(read); }
+    pf.append(said);
     host.append(pf);
 
     /* state: the session in hand (sel), the one under the pointer (pre), the lane that takes Tab (tab) */
@@ -218,6 +223,8 @@
       areas.forEach((a, j) => a.classList.toggle('is-on', j === i));
       host.classList.toggle('has-on', i >= 0);
       host.dataset.side = i >= 0 ? String(sessions[i].side) : '';
+      hot(i);
+      if (!read) return;
       bracket.style.setProperty('--i', i >= 0 ? i : 0);
       bracket.style.setProperty('--span', i >= 0 ? 1 : N);
       const vals = i >= 0 ? recordOf(sessions[i], i) : SUMMARY;
@@ -229,7 +236,6 @@
           o.v.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.2,.7,.2,1)' });
         }
       });
-      hot(i);
     }
     function select(i) {
       sel = i;
@@ -262,10 +268,11 @@
     });
     render();
 
-    /* entrance once, when it is reached from above and a quarter of it is in view (not under reduced motion); idle
-       motion only while visible */
+    /* entrance once, when it is reached from above and a quarter of it is in view (not under reduced motion). Nothing in
+       the chart loops: after the entrance one light passes along the floor, and every animation is paused while the
+       chart is off screen (.is-away) */
     let inView = false, seen = false;
-    const live = () => host.classList.toggle('is-live', inView && !document.hidden && !reduce.matches);
+    const away = () => host.classList.toggle('is-away', !inView);
     const whole = () => { // no entrance: the final state in one style change, with no transition on the way
       host.classList.add('pf-now'); host.classList.remove('is-armed'); host.classList.add('is-in');
       void host.offsetWidth;
@@ -285,14 +292,13 @@
             setTimeout(() => host.classList.remove('is-armed'), ENTRANCE_MS);
           }
         }
-        live();
+        away();
       }), { threshold: [0, 0.25, 0.5] }).observe(host);
     } else {
       host.classList.add('is-in');
-      if ('IntersectionObserver' in window) new IntersectionObserver(entries => entries.forEach(e => { inView = e.isIntersecting; live(); })).observe(host);
+      if ('IntersectionObserver' in window) new IntersectionObserver(entries => entries.forEach(e => { inView = e.isIntersecting; away(); })).observe(host);
     }
-    document.addEventListener('visibilitychange', live);
-    if (reduce.addEventListener) reduce.addEventListener('change', () => { if (reduce.matches) host.classList.remove('is-armed'); host.classList.add('is-in'); live(); });
+    if (reduce.addEventListener) reduce.addEventListener('change', () => { if (reduce.matches) host.classList.remove('is-armed'); host.classList.add('is-in'); });
     charts.push({ preview: i => { pre = i; render(); } });
   }
 
