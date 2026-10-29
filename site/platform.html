@@ -271,7 +271,7 @@
           </ol>
           <figcaption class="figure-cap"><span>Fig. 4.1 — Below the boundary · 05 Execute and 06 Settle · the three gates, each leaving a record</span><span>Schematic</span></figcaption>
         </figure>
-        <ol class="list-rule list-rule--3" data-reveal style="--d:120ms">
+        <ol class="list-rule list-rule--3" role="list" data-reveal style="--d:120ms">
           <li><span class="k">P-01</span><div><span class="lc-tag">In 05 · Execute</span><h3>Validate and risk-check</h3><p>Proposals pass schema checks, policy rules, position and notional caps, and market-hours gates before they exist as orders at all. The Council signs the result.</p></div><div class="mono small muted">schema ✓ · policy ✓ · caps ✓ · council ✓</div></li>
           <li><span class="k">P-02</span><div><span class="lc-tag">In 05 · Execute</span><h3>Submit and confirm</h3><p>Submission tracks fills, partial fills and retries with idempotency keys, so a disrupted connection can never produce a duplicate action.</p></div><div class="mono small muted">submitted → partial → filled</div></li>
           <li><span class="k">P-03</span><div><span class="lc-tag">In 06 · Settle</span><h3>Reconcile and report</h3><p>Internal records are matched against counterparty truth — positions, cash, NAV, documents — with discrepancy alerts raised to operators and written to the ledger.</p></div><div class="mono small muted">internal ≡ counterparty · alerts on Δ</div></li>
