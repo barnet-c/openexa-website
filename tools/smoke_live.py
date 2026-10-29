@@ -17,6 +17,8 @@ async def main():
         b = await p.chromium.launch(args=["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"])
         ctx = await b.new_context(viewport={"width": 1440, "height": 900})
         pg = await ctx.new_page()
+        # a slow preview or a loaded PC: 90 s for a navigation and an action, as verify_v9 allows (patience only)
+        pg.set_default_navigation_timeout(90000); pg.set_default_timeout(90000)
         errs = []
         pg.on("pageerror", lambda e: errs.append("PAGEERROR " + str(e)))
         pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
