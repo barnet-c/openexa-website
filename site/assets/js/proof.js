@@ -303,8 +303,8 @@
 /* The cost figure (home §05 Fig. 5.1 · Proof §03 Fig. 3.1): each .cost-bar of a [data-cost] figure is drawn as index
    blocks, one per point of its runs' --w weights (the first bar, traditional, must sum to 100), in grid order column by
    column so a component stays one run. On a later bar a .cost-gone run stands for the whole components it covers (dashed
-   hollow blocks); every other run keeps its component's place in the first bar: the weight it states is solid (a
-   fraction fills part of a block) and the rest of the place is hollow. The blocks restate the markup's weights and
+   hollow blocks); every other run keeps its component's place in the first bar (--s, if stated, must agree): the weight
+   it states is solid (a fraction fills part of a block) and the rest of the place is hollow. The blocks restate the markup's weights and
    nothing else; if they do not add up, the flat runs stay as written. */
 (function () {
   'use strict';
@@ -328,7 +328,8 @@
           if (Math.abs(left) > 0.01) return null;
           out.push({ n: v, gone: true });
         } else {
-          if (slot >= base.length || v > base[slot] + 0.01) return null;
+          const place = parseFloat(run.style.getPropertyValue('--s')); // the place it states (the flat fallback keeps it)
+          if (slot >= base.length || v > base[slot] + 0.01 || (place && Math.abs(place - base[slot]) > 0.01)) return null;
           out.push({ n: base[slot++], solid: v, c });
         }
       }

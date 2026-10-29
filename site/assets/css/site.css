@@ -2150,8 +2150,9 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .cost-bar { --cols: 50; --rows: 2; --g: 3px; --bw: calc((100cqi - (var(--cols) - 1) * var(--g)) / var(--cols));
   position: relative; display: flex; container-type: inline-size; }
 .cost-bar > i { position: relative; flex: none; width: var(--w); height: calc(var(--rows) * var(--bw) + (var(--rows) - 1) * var(--g)); font-style: normal; background: var(--c); box-shadow: inset 0 0 0 1px rgba(14, 21, 18, .5); }
+.cost-bar:not(.is-blocks) > i { margin-right: calc(var(--s, var(--w)) - var(--w)); } /* a compressed run keeps its place (--s) */
 .cost-bar:not(.is-blocks) > i + i { width: calc(var(--w) - 2px); margin-left: 2px; }
-.cost-bar > .cost-gone { background: none; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.cost-bar > .cost-gone { background: none; box-shadow: none; border: 1px dashed rgba(14, 21, 18, .34); }
 .cost-bar.is-blocks > i { position: absolute; top: 0; bottom: 0; left: var(--x); height: auto; background: none; box-shadow: none; }
 .cost-bar > i > span { position: absolute; left: 0; bottom: 100%; padding: 0 0 9px 7px; border-left: 1px solid var(--line-strong); color: var(--fg-2); white-space: nowrap; }
 .cost-bar > i:last-of-type > span { left: auto; right: 0; padding: 0 7px 9px 0; border: 0; border-right: 1px solid var(--line-strong); }
@@ -2175,7 +2176,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 }
 @container cost (max-width: 560px) {
   .cost-bar { --cols: 25; --rows: 4; --g: 2px; }
-  .cost-bar > i > span { letter-spacing: .06em; }
+  .cost-bar > i > span { letter-spacing: .02em; }
   .cost-row:first-child .cost-bar { margin-top: 52px; }
   .cost-bar > i:nth-of-type(even) > span { padding-bottom: 27px; } /* two tiers: no label meets another or crosses a leader */
   .cost-row + .cost-row .cost-bar { margin-top: 48px; }
