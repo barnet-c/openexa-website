@@ -1625,7 +1625,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .layers { display: grid; gap: 0; border: 1px solid var(--line); }
 .layers .layer { display: grid; grid-template-columns: 80px 1.1fr 1.6fr; gap: 28px; padding: clamp(22px, 3vw, 40px); border-bottom: 1px solid var(--line); align-items: start; background: var(--bg); transition: background .3s; }
 .layers .layer:last-child { border-bottom: 0; }
-.layers .layer:hover { background: var(--bg-2); }
+@media (hover: hover) { .layers .layer:hover { background: var(--bg-2); } } /* no stuck hover after a tap */
 .layers .layer .k, .layers .layer-boundary .k, .layers .layer-floor .k { font-family: var(--mono); font-size: var(--mono-m, .75rem); letter-spacing: .1em; color: var(--fg-3); padding-top: 6px; }
 .layers .layer h3 { font-family: var(--serif); font-weight: 400; font-size: clamp(1.4rem, 2vw, 1.9rem); line-height: 1.15; letter-spacing: -0.015em; }
 .layers .layer h3 small { display: block; font-family: var(--mono); font-size: var(--mono-s, .6875rem); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); margin-top: 10px; }
@@ -1638,7 +1638,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .layers .io dd { margin: 0; font-size: .92rem; line-height: 1.45; color: var(--fg); }
 .layers .layer-boundary { display: grid; grid-template-columns: 80px 1.1fr 1.6fr; gap: 28px; padding: 24px clamp(22px, 3vw, 40px); border-top: 1px solid var(--signal); border-bottom: 1px solid var(--signal); margin-top: -1px; background: color-mix(in srgb, var(--signal) 7%, var(--bg)); }
 .layers .layer-boundary .k { color: color-mix(in srgb, var(--signal) 80%, var(--ink)); } /* small text on the tinted row: 5.6:1 (signal alone is 4.3:1) */
-.layers .lb-t { font-family: var(--serif); font-size: clamp(1.4rem, 2vw, 1.9rem); line-height: 1.15; letter-spacing: -0.015em; color: var(--signal); }
+.layers .lb-t { font-family: var(--serif); font-size: clamp(1.4rem, 2vw, 1.9rem); line-height: 1.15; letter-spacing: -0.015em; color: var(--signal-ink, #186B4F); } /* 5.29:1 on paper-2 (--signal: 4.32:1, and 22 px is not large text) */
 .layers .lb-t small { display: block; margin-top: 10px; font-family: var(--mono); font-size: var(--mono-s, .6875rem); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 .layers .lb-io { display: grid; gap: 12px; }
 .layers .lb-io p { color: var(--fg-2); }
@@ -1657,7 +1657,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
    The same rules hold before arch.js runs, after it and without it, so the entries never move when it does. */
 .layers[data-arch-spec] { display: block; border: 0; --arch-gap: clamp(28px, 3.2vw, 48px); --spec-gap: clamp(20px, 2.4vw, 40px); }
 [data-arch-spec] > .layer { position: relative; isolation: isolate; grid-template-columns: 56px minmax(0, 1fr) minmax(0, 2.2fr); gap: var(--spec-gap); padding: clamp(24px, 2.6vw, 34px) 0; border-top: 1px solid var(--line); border-bottom: 0; background: none; transition: none; scroll-margin-top: 16px; }
-[data-arch-spec] > .layer:hover { background: none; }
+@media (hover: hover) { [data-arch-spec] > .layer:hover { background: none; } }
 .arch--spec + .layer, [data-arch-spec] > .layer:first-child { border-top-color: var(--line-strong); }
 [data-arch-spec] > .layer .k { font-size: var(--mono-m, .75rem); color: var(--fg-3); padding-top: 9px; }
 [data-arch-spec] > .layer > div > p { max-width: 64ch; line-height: 1.6; }
@@ -1726,7 +1726,8 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .arch-legend .lg-sq { background: var(--signal-bright); }
 .arch-hint { color: var(--fg-3); }
 .arch-motion { min-height: 34px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 2px; font: var(--mono-xs, .625rem)/1.5 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-2); white-space: nowrap; transition: border-color .25s, color .25s; }
-.arch-motion:hover { border-color: var(--accent); color: var(--accent); }
+@media (hover: hover) { .arch-motion:hover { border-color: var(--accent); color: var(--accent); } }
+@media (pointer: coarse) { .arch-motion { min-height: 44px; } } /* a finger's target */
 .arch-motion:focus-visible, .arch-layer:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .arch-body { position: relative; }
 .arch-fig { position: relative; }
@@ -1936,13 +1937,21 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   [data-arch-spec] > .layer::before { transition: none; }
   [data-arch-spec] > .layer.is-flash::after { animation: none; }
 }
+/* print: the explorer prints as the list it was built from, eight layers in ink on white, with no reserved height */
 @media print {
-  .arch { background: none !important; border-color: #bbb !important; }
+  .arch { --fg: #0E1512; --fg-2: #2B302D; --fg-3: #555; --line: #bbb; --line-strong: #888; --accent: #1E7A5A; --a-ground: #fff;
+    background: none !important; border-color: #bbb !important; color: #0E1512 !important; }
+  .arch, .layers[data-arch] { min-height: 0 !important; height: auto !important; overflow: visible !important; animation: none !important; }
   .arch-fig, .arch-head, .arch-read, .arch-bound .sides, .arch-floor .gl { display: none !important; }
+  .arch-body { display: block !important; min-height: 0 !important; padding: 0 !important; }
   .arch-list { padding: 0 !important; }
-  .arch .arch-panel { display: block !important; padding: 0 0 6mm !important; }
+  .arch-layer { height: auto !important; min-height: 0 !important; padding: 4mm 0 2mm !important; color: #0E1512 !important; break-after: avoid; }
+  .arch-layer .nm { display: block !important; -webkit-line-clamp: none !important; overflow: visible !important; }
+  .arch .arch-panel { display: block !important; padding: 0 0 6mm !important; break-inside: avoid; }
+  .arch .arch-panel > .arch-side.is-below { color: #6B6551 !important; } /* khaki ink: 5.2:1 on white */
   .arch-layer::after, .arch-layer::before { display: none !important; }
   .arch--spec, .layers[data-arch-spec]::before { display: none !important; }
+  .dpl-col { break-inside: avoid; }
 }
 /* v2:arch:end */
 /* -------------------------------------------------------------------------- */
