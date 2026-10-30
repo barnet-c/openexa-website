@@ -252,6 +252,7 @@ def head(url, title, desc, kind="article", extra=""):
   <link rel="preload" href="{PFX}assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{PFX}assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{PFX}assets/css/site.css">
+  <link rel="stylesheet" href="{PFX}assets/css/blog.css">
 {extra}</head>'''
 span = lambda a, b: f"{a}" if a == b else f"{a}–{b}"
 fmt = lambda d: d.strftime("%b %-d, %Y") if os.name != "nt" else d.strftime("%b %#d, %Y")
@@ -335,7 +336,7 @@ blog_ld = ld(dict(BLOG_LD, description=desc, inLanguage="en", publisher=ORG, blo
      "author": person(p["author"])} for p in sorted(kept, key=lambda p: p["dt"], reverse=True) if not p["stub"]]),
     crumbs(("Blog", BASE)))
 page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n").replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
-<body data-nav="dark-start" class="blog-page">
+<body data-page="blog" data-nav="dark-start" class="blog-page">
   <a class="skip" href="#main">Skip to content</a>
 
 {nav}
@@ -425,7 +426,7 @@ for p in order:
         post_ld["position"] = j + 1
     note = f"Originally published on openexa.com, {fmt(p['dt'])}." + (f" A summary of work first published on {src_host}." if p["source"] else "")
     page = head(url, f'{p["title"]} — OpenEXA Blog', p["excerpt"], "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (p["title"], url)))}\n') + f'''
-<body data-nav="dark-start" class="article-page blog-post">
+<body data-page="post" data-nav="dark-start" class="article-page blog-post">
   <a class="skip" href="#main">Skip to content</a>
 
 {nav}

@@ -95,7 +95,8 @@ HEAD_LINKS = '''  <link rel="apple-touch-icon" href="{p}assets/img/apple-touch-i
   <link rel="icon" type="image/svg+xml" href="{p}assets/img/favicon.svg">
   <link rel="preload" href="{p}assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{p}assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="{p}assets/css/site.css">'''
+  <link rel="stylesheet" href="{p}assets/css/site.css">
+  <link rel="stylesheet" href="{p}assets/css/research.css">'''
 ARROW = '<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg>'
 OUTB = '<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"/></svg>'
 SCHOLAR = "https://scholar.google.com/citations?user=P40aOHIAAAAJ"
@@ -162,7 +163,7 @@ for i, post in enumerate(ordered):
         "isPartOf": SERIES_LD, "position": post["order"], "wordCount": post["words"], "timeRequired": f"PT{post['minutes']}M"},
        crumbs(("Research", HOME + "research.html"), (title, url)))}
 </head>
-<body data-nav="dark-start" class="article-page">
+<body data-page="note" data-nav="dark-start" class="article-page">
   <a class="skip" href="#main">Skip to content</a>
 
 {nav}
@@ -249,7 +250,7 @@ index_page = f'''<!DOCTYPE html>
            {"@type": "ListItem", "position": p["order"], "url": HOME + p["file"], "name": p["title"]} for p in ordered]}},
       crumbs(("Research", url)), id="ld-research")}
 </head>
-<body data-nav="dark-start" class="research-page">
+<body data-page="research" data-nav="dark-start" class="research-page">
   <a class="skip" href="#main">Skip to content</a>
 
 {nav}

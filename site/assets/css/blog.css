@@ -1,0 +1,10 @@
+/* ==========================================================================
+   OpenEXA: page styles for the Blog
+   Loaded after site.css on blog/index.html and the posts in blog/ (tools/build_blog.py writes their heads) only. site.css holds the system (tokens, type, grid, chrome, the
+   instruments); this file holds what only these pages need, so pages can change without touching each other.
+   - Use the tokens: var(--paper), var(--ink), var(--signal), var(--serif)... No new colours, faces or hex values.
+   - Scope every rule to these pages (body[data-page="blog"] or body[data-page="post"], a section id or a page class).
+   - :hover only inside @media (hover: hover); no :has() that restyles a subtree (check_static guards both here).
+   - Anything that moves has a still state under prefers-reduced-motion; anything printed reads on white.
+   - Budget: gzip -9 <= 12,000 bytes (check_static weight).
+   ========================================================================== */

@@ -1,10 +1,10 @@
 /* OpenEXA — shared behaviour
-   nav (chapter readout, progress, menu sheet) · clocks · loader · kinetic type · manifesto · reveals · forms
-   · 2D swarm fallback */
+   nav (chapter readout, progress, menu sheet) · footer · clocks · loader hand-off · kinetic type · reveals
+   · 2D swarm fallback. Page-only behaviour lives beside its page: access.js (the request form), company.js (the
+   manifesto); the instruments have their own engines. */
 (function () {
   'use strict';
 
-  const CONTACT = document.body.dataset.contact || 'access@openexa.com'; // inbox for the access form — set data-contact on <body> of access.html
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const reducedMQ = window.matchMedia('(prefers-reduced-motion: reduce)'); // read live where motion is optional
   const $ = (s, r = document) => r.querySelector(s);
@@ -284,6 +284,7 @@
 
   /* the chapter list */
   function setPanel(open, refocus) {
+    if (open && narrowMQ.matches) { setMenu(true); return; } // phones and tablets: the chapters are in the menu sheet
     if (!ui.wrap || open === chOpen) return;
     chOpen = open;
     ui.wrap.classList.toggle('is-open', open);
@@ -315,12 +316,13 @@
       if (!a) return;
       const c = chapters[+a.dataset.k];
       setPanel(false);
+      closeSheetForJump();
       // focus follows the reader to the chapter, onto its heading
       const focus = () => focusInto(c.el);
       if (!jumpTo(c.el, a.hash, e, focus)) setTimeout(focus, 0);
     });
     $('.nav-ch-top', ui.wrap).addEventListener('click', e => {
-      e.preventDefault(); setPanel(false, true);
+      e.preventDefault(); setPanel(false, true); closeSheetForJump();
       if (!jumpTo(null)) window.scrollTo({ top: 0, behavior: reducedMQ.matches ? 'instant' : 'smooth' });
     });
     document.addEventListener('pointerdown', e => { if (chOpen && !ui.wrap.contains(e.target)) setPanel(false); });
@@ -335,6 +337,7 @@
     document.body.classList.toggle('nav-open', open);
     if (nav) nav.classList.toggle('nav--menu', open);
     if (toggle) toggle.setAttribute('aria-expanded', String(open));
+    if (ui.btn && sheet && ui.panel && ui.panel.parentElement === sheet) ui.btn.setAttribute('aria-expanded', String(open));
     $$('body > main, body > .footer').forEach(el => { el.inert = open; });
     if (open) setPanel(false);
     update();
@@ -372,6 +375,35 @@
     window.addEventListener('pageshow', e => { if (e.persisted) { setMenu(false); $$('.is-going', sheet).forEach(a => a.classList.remove('is-going')); } });
   }
   window.addEventListener('keydown', e => { if (e.key === 'Escape' && chOpen) setPanel(false, true); });
+  // (v2x) phones and tablets have one menu: the readout is its label, and the sheet holds this page's chapters above
+  // the site's pages (the chapter list moves into the sheet under 961 px and back above it)
+  function closeSheetForJump() {
+    if (!menuOpen || !sheet) return;
+    sheet.classList.add('is-snap'); // gone before a jump takes its still
+    setMenu(false);
+    setTimeout(() => sheet.classList.remove('is-snap'), 80);
+  }
+  function placePanel() {
+    if (!ui.panel || !sheet) return;
+    const inSheet = narrowMQ.matches;
+    if (inSheet && ui.panel.parentElement !== sheet) { setPanel(false); sheet.prepend(ui.panel); }
+    else if (!inSheet && ui.panel.parentElement !== ui.wrap) { setMenu(false); ui.wrap.appendChild(ui.panel); }
+    sheet.classList.toggle('has-ch', inSheet);
+    // the two registers in one sheet are told apart: this page's chapters, then the site's pages
+    if (inSheet && !ui.sheetHead) {
+      const links = $('.nav-sheet-links', sheet);
+      if (links) {
+        ui.sheetHead = document.createElement('div'); ui.sheetHead.className = 'nav-ch-head nav-sheet-head'; ui.sheetHead.setAttribute('aria-hidden', 'true');
+        ui.sheetHead.innerHTML = '<span>The site</span><span></span>';
+        ui.sheetHead.lastChild.textContent = pad($$('li', links).length) + ' pages';
+        links.before(ui.sheetHead);
+      }
+    }
+    ui.btn.setAttribute('aria-controls', inSheet ? sheet.id : ui.panel.id);
+    ui.btn.setAttribute('aria-expanded', String(inSheet ? menuOpen : chOpen));
+  }
+  placePanel();
+  narrowMQ.addEventListener('change', placePanel);
 
   /* ---------------- long jumps: never through blank paper ---------------- */
   const VT_LIMIT = 16000;
@@ -583,40 +615,26 @@
   }
   if (clocks.length) { const tick = () => clocks.forEach(fn => fn()); tick(); setInterval(tick, 1000); }
 
-  /* ---------------- manifesto — words light up as the paragraph passes through the viewport ---------------- */
-  $$('[data-manifesto]').forEach(el => {
-    const words = [];
-    const walk = (node) => {
-      Array.from(node.childNodes).forEach(child => {
-        if (child.nodeType === 3) {
-          const frag = document.createDocumentFragment();
-          child.textContent.split(/(\s+)/).forEach(p => {
-            if (!p) return;
-            if (/^\s+$/.test(p)) { frag.appendChild(document.createTextNode(' ')); return; }
-            const w = document.createElement('span'); w.className = 'mw'; w.textContent = p; words.push(w); frag.appendChild(w);
-          });
-          node.replaceChild(frag, child);
-        } else if (child.nodeType === 1) walk(child);
-      });
-    };
-    walk(el);
-    if (prefersReduced) { words.forEach(w => w.classList.add('is-lit')); return; }
-    let lit = -1, raf = 0;
-    const update = () => {
-      raf = 0;
-      const r = el.getBoundingClientRect(), vh = window.innerHeight;
-      // progress 0 → 1 as the block travels from 85% of the viewport up to 30%
-      const p = Math.min(1, Math.max(0, (vh * 0.85 - r.top) / (r.height + vh * 0.55)));
-      const n = Math.round(p * words.length);
-      if (n === lit) return; lit = n;
-      words.forEach((w, i) => w.classList.toggle('is-lit', i < n));
-    };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    window.addEventListener('scroll', onScroll, { passive: true }); window.addEventListener('resize', onScroll); update();
-  });
+  /* ---------------- type: the serif's hyphen ----------------
+     Instrument Serif draws U+002D with wide sidebearings ("Domain – Specific"); its U+2010 HYPHEN is the same mark set
+     tight. Display text written with '-' between two letters takes U+2010 (the words do not change; Inter and Plex Mono
+     draw both the same). Scripts that build serif labels before this runs are covered; the pages' own copy should be
+     written with U+2010 at source (SYSTEM.md). */
+  const SERIF_TEXT = 'h1, h2, h3, h4, .display-1, .display-2, .display-3, .h4, .serif, .manifesto, .footer .tag, .nav-ch-list .t, .nav-sheet-links, blockquote';
+  const HY = /(\p{L})-(?=\p{L})/gu;
+  function serifHyphens(root) {
+    $$(SERIF_TEXT, root).forEach(el => {
+      if (el.closest('pre, code, kbd, samp, .mono, [data-keep-hyphens]')) return;
+      const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let n = tw.nextNode(); n; n = tw.nextNode()) if (n.data.indexOf('-') > 0 && HY.test(n.data)) { HY.lastIndex = 0; n.data = n.data.replace(HY, '$1\u2010'); }
+    });
+  }
+  serifHyphens(document);
 
   /* ---------------- kinetic split text ---------------- */
   function splitWords(el) {
+    if (el.dataset.split === 'done') return;
+    el.dataset.split = 'done';
     let i = 0;
     const walk = (node) => {
       Array.from(node.childNodes).forEach(child => {
@@ -636,35 +654,50 @@
     };
     walk(el);
   }
-  if (!prefersReduced) $$('[data-split]').forEach(splitWords);
 
-  /* ---------------- reveal on scroll ---------------- */
+  /* ---------------- reveal on scroll ----------------
+     (v2x) What is on the first screen when this script runs is simply there: it was painted before the script ran, so
+     it is never hidden, faded or split (the overture's beats excepted: story.js and the loader drive them). Below the
+     first screen a block takes .will-reveal and fades in as its top crosses 96% of the screen, fully in about .6 s
+     later; a headline's words are split only when it comes within a screen and a half, then rise as it arrives.
+     Without JavaScript, and under reduced motion, nothing is hidden and nothing is split. */
   $$('[data-stagger]').forEach(el => { Array.from(el.children).forEach((c, i) => c.style.setProperty('--i', i)); if (!el.hasAttribute('data-reveal')) el.setAttribute('data-reveal', ''); });
-  const revealEls = $$('[data-reveal]');
-  let rio = null, tio = null;
+  const storySplit = $$('.story [data-split]');
+  if (!prefersReduced) storySplit.forEach(splitWords);
+  const watched = $$('[data-reveal], [data-split]').filter(el => !el.closest('.story'));
+  let revealEls = [], rio = null, sio = null;
   if ('IntersectionObserver' in window && !prefersReduced) {
-    const show = el => { el.classList.add('is-in'); rio.unobserve(el); tio.unobserve(el); };
+    const fold = window.innerHeight;
+    const rects = watched.map(el => el.getBoundingClientRect()); // every read first, then every write
+    const later = watched.filter((el, k) => { const r = rects[k]; return (r.width || r.height) && r.top >= fold - 1; });
+    watched.forEach(el => { if (!later.includes(el)) el.classList.add('is-in'); });
+    revealEls = later.filter(el => el.hasAttribute('data-reveal'));
+    const show = el => { el.classList.add('is-in'); rio.unobserve(el); };
     rio = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) show(e.target); });
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
-    // a block taller than the screen would wait for 8% of its own height and show blank paper until then
-    tio = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting && e.boundingClientRect.height > (e.rootBounds ? e.rootBounds.height : window.innerHeight)) show(e.target); });
-    }, { rootMargin: '0px 0px -16% 0px', threshold: 0 });
-    revealEls.forEach(el => { el.classList.add('will-reveal'); rio.observe(el); tio.observe(el); });
-  } else revealEls.forEach(el => el.classList.add('is-in'));
+    }, { rootMargin: '0px 0px -4% 0px', threshold: 0 });
+    sio = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { sio.unobserve(e.target); if (!e.target.classList.contains('is-in')) splitWords(e.target); } });
+    }, { rootMargin: '0px 0px 150% 0px', threshold: 0 });
+    later.forEach(el => {
+      if (el.hasAttribute('data-split')) sio.observe(el);
+      if (el.hasAttribute('data-reveal')) el.classList.add('will-reveal');
+      rio.observe(el);
+    });
+  } else watched.forEach(el => el.classList.add('is-in'));
   // at once, with no transition: what a long jump passes over or lands on
   const instant = el => { el.classList.add('is-instant'); requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('is-instant'))); };
   function revealNow(el) {
-    if (!el.classList.contains('will-reveal') || el.classList.contains('is-in')) return;
+    if (el.classList.contains('is-in')) return;
     el.classList.add('is-cut', 'is-in');
     instant(el);
-    if (rio) { rio.unobserve(el); tio.unobserve(el); }
+    if (rio) rio.unobserve(el);
+    if (sio) sio.unobserve(el);
   }
   function revealRange(a, b) {
     const y = window.scrollY;
-    revealEls.forEach(el => {
-      if (!el.classList.contains('will-reveal') || el.classList.contains('is-in')) return;
+    watched.forEach(el => {
+      if (el.classList.contains('is-in')) return;
       const r = el.getBoundingClientRect();
       if ((r.width || r.height) && r.top + y < b && r.bottom + y > a) revealNow(el);
     });
@@ -700,113 +733,6 @@
   // printing: the legal disclosures (folded into a <details> above) must reach the paper
   window.addEventListener('beforeprint', () => $$('details.footer-legal').forEach(d => { d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; }));
   window.addEventListener('afterprint', () => $$('details.footer-legal').forEach(d => { d.open = d.dataset.wasOpen === '1'; }));
-
-  /* ---------------- forms (no backend: mailto handoff or configured endpoint) ---------------- */
-  $$('form[data-access]').forEach(form => {
-    const result = $('.form-ok', form.parentElement);
-    const endpoint = form.dataset.endpoint;
-    const submit = $('button[type="submit"]', form);
-    const submitLabel = $('[data-submit-label]', form);
-    const errorBox = $('[data-form-error]', form);
-    const note = $('[data-form-note]', form);
-    const name = $('input[name="name"]', form);
-    if (!result || !submit || !errorBox) {
-      console.error('OpenEXA introduction form is missing its result, submit or error element.');
-      return;
-    }
-    if (endpoint) {
-      if (submitLabel) submitLabel.textContent = 'Send introduction';
-      if (note) note.textContent = 'Your introduction will be submitted to OpenEXA when you send it.';
-    }
-    const choosePath = () => {
-      const choice = document.getElementById(location.hash.slice(1));
-      if (!choice) return;
-      // the target may be a form option, or a description elsewhere on the page that names its option via data-interest
-      const radio = form.contains(choice) ? $('input[type="radio"]', choice) : (choice.dataset.interest ? $(`input[type="radio"][value="${choice.dataset.interest}"]`, form) : null);
-      if (radio) radio.checked = true;
-    };
-    choosePath();
-    window.addEventListener('hashchange', choosePath);
-    if (name) name.addEventListener('input', () => name.setCustomValidity(''));
-    const showError = message => {
-      errorBox.textContent = message;
-      errorBox.hidden = false;
-    };
-    const showResult = sent => {
-      const heading = $('[data-result-title]', result);
-      const body = $('[data-result-body]', result);
-      const mail = $('[data-mailto]', result);
-      if (heading) heading.textContent = sent ? 'Introduction submitted.' : 'Your draft is ready.';
-      if (body) body.textContent = sent
-        ? 'Your introduction was accepted. You can return to the platform or edit your details to prepare another request.'
-        : 'Open it in your email app, review it and press send. Preparing the draft has not submitted your details to OpenEXA.';
-      if (mail) mail.hidden = sent;
-      form.hidden = true;
-      result.classList.add('show');
-      result.focus();
-    };
-    const edit = $('[data-form-edit]', result);
-    if (edit) edit.addEventListener('click', () => {
-      result.classList.remove('show');
-      form.hidden = false;
-      if (name) name.focus();
-    });
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (name) name.setCustomValidity(name.value.trim() ? '' : 'Please enter your name.');
-      if (!form.reportValidity() || submit.disabled) return;
-      errorBox.hidden = true;
-      const data = Object.fromEntries(Array.from(new FormData(form), ([key, value]) => [key, typeof value === 'string' ? value.trim() : value]));
-      if (!endpoint) {
-        const mail = $('[data-mailto]', result);
-        if (!mail) {
-          console.error('OpenEXA introduction form has no email-draft link.');
-          showError('The email draft could not be prepared. Please reload and try again.');
-          return;
-        }
-        // Windows mail handlers cut mailto URLs past ~2,000 characters, even mid-escape
-        const head = `mailto:${CONTACT}?subject=${encodeURIComponent('OpenEXA introduction - ' + data.interest)}&body=`;
-        const fits = s => (head + encodeURIComponent(s)).length <= 1900;
-        const bodyWith = msg => Object.entries(data).map(([key, value]) => `${key}: ${key === 'message' ? msg : value}`).join('\r\n');
-        const cut = (text, wrap, mark) => { // longest whole-character prefix that fits, then the mark
-          const ch = Array.from(text); let lo = 0, hi = ch.length;
-          while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (fits(wrap(ch.slice(0, mid).join('') + mark))) lo = mid; else hi = mid - 1; }
-          return wrap(ch.slice(0, lo).join('') + mark);
-        };
-        let body = bodyWith(data.message || '');
-        if (!fits(body)) body = cut(data.message || '', bodyWith, '… [shortened to fit an email link: paste the rest here]');
-        if (!fits(body)) body = cut(body, s => s, '…');
-        mail.href = head + encodeURIComponent(body);
-        showResult(false);
-        return;
-      }
-      submit.disabled = true;
-      form.setAttribute('aria-busy', 'true');
-      if (submitLabel) submitLabel.textContent = 'Sending...';
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 20000);
-      let response;
-      try {
-        response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data), signal: controller.signal });
-      } catch (error) {
-        if (error instanceof TypeError || (error instanceof DOMException && error.name === 'AbortError')) {
-          showError(controller.signal.aborted ? 'The request timed out. Your details are still here; please try again.' : 'The request could not reach OpenEXA. Check your connection and try again.');
-          return;
-        }
-        throw error;
-      } finally {
-        clearTimeout(timeout);
-        submit.disabled = false;
-        form.removeAttribute('aria-busy');
-        if (submitLabel) submitLabel.textContent = 'Send introduction';
-      }
-      if (!response.ok) {
-        showError(`Your introduction was not accepted (HTTP ${response.status}). Your details are still here; please try again.`);
-        return;
-      }
-      showResult(true);
-    });
-  });
 
   /* ---------------- 2D swarm (interior heroes & no-WebGL fallback) ---------------- */
   // The overture's globe drawn flat: the 404 and, when WebGL is missing, S0.

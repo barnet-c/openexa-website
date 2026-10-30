@@ -105,22 +105,24 @@ page404 = f'''<!DOCTYPE html>
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0E1512">
 {head_common}</head>
-<body data-nav="dark-start">
+<body data-page="404" data-nav="dark-start">
   <a class="skip" href="#main">Skip to content</a>
 
 {NAV}
   <main id="main">
     <section class="notfound is-dark grain">
-      <canvas class="notfound-swarm" data-swarm aria-hidden="true"></canvas>
       <div class="container">
-        <div class="eyebrow" data-reveal>404 · Rejected at the gate</div>
-        <h1 class="display-1" data-reveal data-split style="--d:60ms">This page didn't pass.</h1>
-        <p class="lede mt-3" data-reveal style="--d:120ms">The address is wrong, has moved, or never existed. Nothing was executed. The attempt is on the record.</p>
-        <div class="row mt-3" data-reveal style="--d:180ms">
+        <figure class="nf-plate" aria-hidden="true">
+          <svg viewBox="0 0 640 230" fill="none" focusable="false"><path class="nf-rail" d="M24 128H350"/><path class="nf-rail nf-ahead" d="M350 128H608"/><path class="nf-gate" d="M71 104l18 -12v60l-18 12z"/><text x="80" y="72" text-anchor="middle">01</text><path class="nf-gate" d="M161 104l18 -12v60l-18 12z"/><text x="170" y="72" text-anchor="middle">02</text><path class="nf-gate" d="M251 104l18 -12v60l-18 12z"/><text x="260" y="72" text-anchor="middle">03</text><ellipse class="nf-gate is-four" cx="350" cy="128" rx="13" ry="38"/><text class="nf-four" x="350" y="72" text-anchor="middle">04</text><path class="nf-gate nf-ahead" d="M431 104l18 -12v60l-18 12z"/><text x="440" y="72" text-anchor="middle">05</text><path class="nf-gate nf-ahead" d="M521 104l18 -12v60l-18 12z"/><text x="530" y="72" text-anchor="middle">06</text><path class="nf-path" d="M24 128H350" pathLength="1" stroke-width="1.5"/><circle class="nf-dot" cx="24" cy="128" r="3.5"/><path class="nf-spur" d="M350 128C362 150 380 180 404 206" pathLength="1" stroke-width="1.5"/><path class="nf-x" d="M399 201h10v10h-10z"/><text class="nf-red" x="420" y="210">REJECTED · GATE 04</text></svg>
+        </figure>
+        <div class="eyebrow">404 · Rejected at the gate</div>
+        <h1 class="display-1 mt-2">This page didn’t pass.</h1>
+        <p class="lede mt-3">The address is wrong, has moved, or never existed. Nothing was executed. The attempt is on the record.</p>
+        <div class="row mt-3">
           <a class="btn" href="index.html">Back to the start <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
           <a class="btn btn--ghost" href="platform.html">The platform</a>
         </div>
-        <p class="notfound-log" data-reveal style="--d:240ms"><span>REJECTED</span> · gate 04 · reason: unknown route · logged</p>
+        <p class="notfound-log"><span>REJECTED</span> · gate 04 · reason: unknown route · logged</p>
       </div>
     </section>
   </main>

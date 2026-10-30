@@ -6,19 +6,23 @@
    the start of navigation, so the count is the real time the visitor has waited. A later visit (in the same session, or
    arriving from another page of the site) gets the short version: the mark, no count, for as long as the stage needs and
    no longer.
-   The failsafe: 2.3-2.6 s after navigation the loader is gone. A fade on the document timeline (the compositor runs it, so
+   The failsafe: 1.9-2.2 s after navigation the loader is gone (v2x; it was 2.3-2.6 s). A fade on the document timeline (the compositor runs it, so
    scripts that hold the main thread cannot delay it) takes it away at that moment unless the curtain has lifted; any
    step of this script that would run later than that removes the loader at once instead (no count, no curtain), so a
    late script never shows it again, and a timer removes it then whatever else is running. Without this script a CSS
-   animation (v2:nav) still fades it out 2.3-2.6 s after its first frame. While the loader is up, Tab stays on the skip link:
+   animation (v2:nav) still fades it out 1.9-2.2 s after its first frame. While the loader is up, Tab stays on the skip link:
    nothing hidden beneath the loader takes keyboard focus. (The page is not made inert, which would restyle all of it
-   twice on the loader's path; reading the loader's own animations needs only the styles its first frame computes.) */
+   twice on the loader's path; reading the loader's own animations needs only the styles its first frame computes.)
+   v2x (30 Oct): shorter (a first visit holds 600 ms to 1.2 s, the curtain lifts in .7 s) and cheaper: the count and the
+   dial are written only when the count's number changes (at most 100 small writes, not one per frame), the idle sweep
+   is read from the clock instead of from computed style, and the page is told it is ready in a task of its own, so what
+   answers 'oxa:loaded' does not run inside the loader's frame. */
 (function () {
   'use strict';
   const loader = document.querySelector('.loader');
   if (!loader) return;
   const root = document.documentElement, body = document.body;
-  const LATE = 2300; // ms from navigation start: the failsafe's moment (v2:nav's .loader fade starts 2.3 s into its clock)
+  const LATE = 1900; // ms from navigation start: the failsafe's moment (v2:nav's .loader fade starts 1.9 s into its clock)
   const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
   const pad = n => String(n).padStart(2, '0');
 
@@ -30,7 +34,8 @@
   const loaded = () => {
     document.querySelectorAll('.beat-0 [data-split]').forEach(el => el.classList.add('is-in'));
     root.classList.add('is-loaded');
-    document.dispatchEvent(new CustomEvent('oxa:loaded'));
+    // the page's answers (the bar measures, the overture relays) run in their own task, not inside the loader's frame
+    setTimeout(() => document.dispatchEvent(new CustomEvent('oxa:loaded')), 0);
   };
   let gone = false;
   const drop = () => { // at once: no count, no curtain (the page is told it is ready in the next task, so the loader's
@@ -56,7 +61,7 @@
   if (seen) loader.classList.add('is-quick');
   body.classList.add('is-loading');
   hold(true);
-  const MIN = seen ? 0 : 950, CAP = seen ? 1100 : 1700, OUT = seen ? 0 : 380; // ms from navigation start; OUT = the count's run to 100
+  const MIN = seen ? 0 : 600, CAP = seen ? 800 : 1200, OUT = seen ? 0 : 300; // ms from navigation start; OUT = the count's run to 100
   const count = loader.querySelector('.loader-count'), dial = loader.querySelector('.loader-dial');
   // the overture draws its first frame (or falls back) after this script
   const glReady = !document.querySelector('.story-gl') || ['gl-ready', 'no-webgl'].some(c => root.classList.contains(c)) ? Promise.resolve()
@@ -66,24 +71,28 @@
     (document.readyState === 'complete' ? Promise.resolve() : new Promise(r => window.addEventListener('load', r, { once: true })))
       .then(() => document.fonts ? document.fonts.ready : null)]);
   const easeOut = t => 1 - Math.pow(1 - t, 3);
-  // the dial has swept on its own (CSS) since the first paint
-  const idle = dial ? Math.min(0.6, parseFloat(getComputedStyle(dial).getPropertyValue('--lp')) || 0) : 0;
-  if (!seen) loader.classList.add('is-counting');
+  // the dial has swept on its own (CSS) since the first paint: about where loader-idle has got to, read from the clock
   const t0 = performance.now(); // MIN and CAP count from navigation start
-  const early = t => idle + (0.9 - idle) * (1 - Math.exp(-Math.max(0, t - t0) / 520)); // before readiness the count eases towards 90
+  const idle = Math.min(0.26, 0.26 * (1 - Math.exp(-t0 / 700)));
+  const TAU = 420; // ms: the count's approach to 90 before readiness
+  if (!seen) loader.classList.add('is-counting');
+  const early = t => idle + (0.9 - idle) * (1 - Math.exp(-Math.max(0, t - t0) / TAU)); // before readiness the count eases towards 90
   let runFrom = 0, pFrom = 0, finishAt = 0, completed = false;
   const progressAt = (now) => finishAt && now >= runFrom ? pFrom + (1 - pFrom) * easeOut(clamp01((now - runFrom) / Math.max(1, OUT))) : early(now);
+  let shown = '';
   const paint = (p) => {
-    if (gone) return;
-    if (count) count.textContent = pad(Math.min(100, Math.round(p * 100)));
-    if (dial && !seen) dial.style.setProperty('--lp', p.toFixed(4));
+    if (gone || !count) return;
+    const n = Math.min(100, Math.round(p * 100)), t = pad(n);
+    if (t === shown) return; // nothing visible changed: no write
+    shown = t; count.textContent = t;
+    if (dial && !seen) dial.style.setProperty('--lp', (n / 100).toFixed(2));
   };
   // the curtain: it starts moving at once and takes over from the CSS failsafe (.is-done stops it)
   const lift = () => {
     if (gone) return;
     if (performance.now() >= LATE) { drop(); return; }
     loader.classList.add('is-done');
-    setTimeout(() => { if (!gone) { gone = true; loader.remove(); } }, seen ? 600 : 1150);
+    setTimeout(() => { if (!gone) { gone = true; loader.remove(); } }, seen ? 500 : 900);
   };
   const complete = () => {
     if (completed || gone) return;
@@ -95,7 +104,7 @@
     hold(false);
     loaded();
     // the decision reads for a beat (100, the aperture pulses green), then the curtain lifts
-    if (seen) lift(); else setTimeout(lift, 120);
+    if (seen) lift(); else setTimeout(lift, 90);
   };
   const schedule = () => {
     if (finishAt) return;

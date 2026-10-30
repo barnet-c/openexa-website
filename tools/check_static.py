@@ -15,7 +15,9 @@
 - craft guards: no :has() in site.css that restyles a subtree or keys on nothing (outside @media (scripting: none)),
   and none in the ledger and nav regions; 'Fig.' / 'Table' / 'Plate' labels unique on every hand-written page (the
   overture's captions in story.js count for the home page); the misspelled blog placeholder referenced nowhere; every
-  body cell of the Platform and Proof tables names its column (td[data-th]) for the phone restack.
+  body cell of the Platform and Proof tables names its column (td[data-th]) for the phone restack;
+- v2x (30 Oct): every page carries index.html's chrome (chrome_sync), names itself in <body data-page> and loads its
+  page group's stylesheet after site.css; weight budgets per group stylesheet, per page-only script and per page.
     python tools/check_static.py [--only=count_not_on_proof,regime_split,...]   (--only limits the round-1 guards)
 """
 import sys as _sys, os as _os
@@ -306,12 +308,13 @@ def has_args(compound):
 
 
 def check_has_guard():
-    """No :has() in site.css that restyles a subtree on every change (a :has() followed by another compound) or keys on
+    """No :has() in site.css or a page group's stylesheet (assets/css/<group>.css) that restyles a subtree on every change (a :has() followed by another compound) or keys on
     nothing (its argument names no class, id, attribute or element type), except inside @media (scripting: none).
     Rules that end in the :has() itself stay allowed ('.seg label:has(input:checked)'). (LG1, NV2: one footer-clock tick
     restyled 1,108 of 2,440 elements on the home page.)"""
-    css = (ROOT / "assets/css/site.css").read_text(encoding="utf-8")
-    for prelude, ats, _line in css_style_rules(css):
+    for rel in ["assets/css/site.css"] + GROUP_CSS:
+      css = (ROOT / rel).read_text(encoding="utf-8")
+      for prelude, ats, _line in css_style_rules(css):
         if ":has(" not in prelude: continue
         if any(re.search(r"\(\s*scripting\s*:\s*none\s*\)", a) for a in ats): continue
         sels, _ = split_top(prelude, ",")
@@ -320,13 +323,13 @@ def check_has_guard():
             cs = compounds(sel)
             where = [k for k, c in enumerate(cs) if ":has(" in c]
             if where and where[0] < len(cs) - 1:
-                fail("assets/css/site.css", f"has_guard: :has() followed by another compound (restyles a subtree): {sel.strip()!r}" + (f" inside {ats}" if ats else ""))
+                fail(rel, f"has_guard: :has() followed by another compound (restyles a subtree): {sel.strip()!r}" + (f" inside {ats}" if ats else ""))
                 continue
             for c in (cs[k] for k in where):
                 for arg in has_args(c):
                     plain = re.sub(r"::?[\w-]+(\([^)]*\))?", " ", arg)  # pseudo-classes/elements name no element
                     if not re.search(r"[.#\[]", arg) and not re.search(r"(^|[\s>+~(])[a-zA-Z][\w-]*", plain):
-                        fail("assets/css/site.css", f"has_guard: :has({arg}) names no class, id, attribute or element: {sel.strip()!r}")
+                        fail(rel, f"has_guard: :has({arg}) names no class, id, attribute or element: {sel.strip()!r}")
 
 
 def check_has_regions():
@@ -422,9 +425,23 @@ def check_hover_guard():
             sels, _ = split_top(prelude, ",")
             for sel in (x.strip() for x in sels if ":hover" in x):
                 fail("assets/css/site.css", f"hover_guard: v2:{m[1]} line {line}: {sel[:110]!r} is outside @media (hover: hover)" + (f" (inside {ats})" if ats else ""))
+    for rel in GROUP_CSS:  # a page group's stylesheet is one region, whole
+        for prelude, ats, line in css_style_rules((ROOT / rel).read_text(encoding="utf-8")):
+            if ":hover" not in prelude or any(re.search(r"\(\s*hover\s*:\s*hover\s*\)", a) for a in ats): continue
+            sels, _ = split_top(prelude, ",")
+            for sel in (x.strip() for x in sels if ":hover" in x):
+                fail(rel, f"hover_guard: line {line}: {sel[:110]!r} is outside @media (hover: hover)" + (f" (inside {ats})" if ats else ""))
 
 
 WEIGHT = {"assets/css/site.css": 66000, "index.html scripts": 151000}  # gzip -9 bytes: 28 Oct's size plus 10%
+# v2x (30 Oct): each page group styles its own pages in assets/css/<group>.css (loaded after site.css on those pages
+# only) and keeps page-only behaviour in its own assets/js/<name>.js; each file has its own budget, and so does every page.
+GROUPS = ("home", "proof", "platform", "research", "company", "blog")
+GROUP_CSS = [f"assets/css/{g}.css" for g in GROUPS]
+GROUP_CSS_BUDGET = 12000   # gzip -9 bytes per group stylesheet
+PAGE_JS_BUDGET = 8000      # gzip -9 bytes per page-only script (access.js, company.js, any new one)
+SHARED_JS = {"site.js", "loader.js", "story.js", "swarm.js", "ledger.js", "chain.js", "arch.js", "lane.js", "proof.js", "gap.js", "figure.js", "blog.js"}
+PAGE_SCRIPTS_BUDGET = 151000  # gzip -9 bytes: the scripts any one page loads (index.html's budget, for every page)
 
 
 def check_weight():
@@ -444,6 +461,23 @@ def check_weight():
     if total > WEIGHT["index.html scripts"]:
         fail("index.html", f"weight: its {len(js)} scripts are {total:,} bytes gzipped; budget {WEIGHT['index.html scripts']:,} (1a6b9fb's 137,253 + 10%):",
              ", ".join(f"{Path(u).name} {n:,}" for u, n in sorted(js.items(), key=lambda kv: -kv[1])))
+    for rel in GROUP_CSS:
+        if not (ROOT / rel).is_file(): fail(rel, "weight: the page group's stylesheet is missing"); continue
+        n = gz(rel)
+        if n > GROUP_CSS_BUDGET: fail(rel, f"weight: gzip {n:,} bytes; budget {GROUP_CSS_BUDGET:,} per page group stylesheet")
+    for f in sorted((ROOT / "assets/js").glob("*.js")):
+        if f.name in SHARED_JS: continue
+        n = gz(f"assets/js/{f.name}")
+        if n > PAGE_JS_BUDGET: fail(f"assets/js/{f.name}", f"weight: gzip {n:,} bytes; budget {PAGE_JS_BUDGET:,} per page-only script")
+    for rel in pages:
+        h = (ROOT / rel).read_text(encoding="utf-8")
+        base = Path(rel).parent
+        srcs = [u.split("?")[0] for u in re.findall(r'<script\b[^>]*\ssrc="([^"]+)"', h)]
+        files = [((ROOT / u.lstrip("/")) if u.startswith("/") else (ROOT / base / u)).resolve() for u in srcs]
+        gone = [str(f) for f in files if not f.is_file()]
+        if gone: fail(rel, "weight: scripts not found:", gone); continue
+        total = sum(len(gzip.compress(f.read_bytes(), 9)) for f in files)
+        if total > PAGE_SCRIPTS_BUDGET: fail(rel, f"weight: its {len(files)} scripts are {total:,} bytes gzipped; budget {PAGE_SCRIPTS_BUDGET:,} per page")
 
 
 def check_story_fallback():
@@ -488,9 +522,44 @@ def check_platform04():
     if hits: fail("platform.html", f"platform04: §04 still labels gates by number: {hits}")
 
 
+NAV_RE = re.compile(r'  <header class="nav[^"]*">.*?</header>\n  <div class="nav-menu">.*?\n  </div>\n', re.S)
+FOOT_RE = re.compile(r'  <footer class="footer">.*?</footer>\n', re.S)
+def chrome_norm(s, rel):
+    """the chrome as index.html would write it for this page: no current-page marks, no 'nav--solid' start state,
+    links as written from the site root"""
+    s = re.sub(r' aria-current="page"', "", s).replace('<header class="nav nav--solid">', '<header class="nav">')
+    depth = rel.count("/")
+    if rel == "404.html": s = s.replace('href="/', 'href="')
+    elif depth: s = s.replace('href="' + "../" * depth, 'href="')
+    return s
+
+
+def check_chrome_sync():
+    """Every page carries index.html's chrome (v2x, 30 Oct): the bar, the menu sheet and the footer, identical apart
+    from the current-page marks, the paper pages' 'nav--solid' start and the link prefix. The six other hand-written
+    pages keep hand copies and the generators copy index.html: a page whose chrome drifts fails here. Each page also
+    names itself in <body data-page> and loads its page group's stylesheet right after site.css."""
+    idx = (ROOT / "index.html").read_text(encoding="utf-8")
+    n0, f0 = NAV_RE.search(idx), FOOT_RE.search(idx)
+    if not n0 or not f0: fail("index.html", "chrome_sync: no nav/menu or footer block in index.html"); return
+    want = {"index.html": "home", "platform.html": "platform", "lifecycles.html": "platform", "evidence.html": "proof",
+            "trust.html": "proof", "company.html": "company", "access.html": "company", "research.html": "research"}
+    for rel in pages:
+        if rel == "insights.html": continue
+        s = (ROOT / rel).read_text(encoding="utf-8")
+        n, f = NAV_RE.search(s), FOOT_RE.search(s)
+        if not n or chrome_norm(n.group(0), rel) != chrome_norm(n0.group(0), "index.html"): fail(rel, "chrome_sync: the nav or menu sheet differs from index.html's")
+        if not f or chrome_norm(f.group(0), rel) != chrome_norm(f0.group(0), "index.html"): fail(rel, "chrome_sync: the footer differs from index.html's")
+        if not re.search(r'<body\b[^>]*\sdata-page="[\w-]+"', s): fail(rel, "chrome_sync: <body> has no data-page")
+        g = want.get(rel) or ("research" if rel.startswith("research/") else "blog" if rel.startswith("blog/") else None)
+        if g:
+            names = [Path(x).name for x in re.findall(r'<link rel="stylesheet" href="([^"]+)">', s)]
+            if names != ["site.css", f"{g}.css"]: fail(rel, f"chrome_sync: stylesheets {names}; want site.css then {g}.css")
+
+
 GUARDS = [check_count_not_on_proof, check_count_static_final, check_regime_split, check_research09_regimes, check_has_guard,
           check_has_regions, check_figure_labels, check_blog_placeholder, check_proof_plate, check_table_th,
-          check_hover_guard, check_weight, check_story_fallback, check_cost_definitions, check_platform04]
+          check_hover_guard, check_weight, check_story_fallback, check_cost_definitions, check_platform04, check_chrome_sync]
 only = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--only=")), None)
 if "--only" in sys.argv[1:-1]: only = sys.argv[sys.argv.index("--only") + 1]
 for g in GUARDS:
