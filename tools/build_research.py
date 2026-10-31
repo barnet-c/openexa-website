@@ -72,14 +72,17 @@ CAPTIONS = {
                "The newest block is lit. “Editing any entry breaks verification for every entry after it.”",
                "Illustrative"),
     # note 09: the colours are the record's (data-regimes, from #oxa-sessions); the floor line is not a scale
+    # r2 (r2-copy minor): the last clause untangled; the hedge ("how far is not published") stays beside its claim
     "sessions": ("Ten sessions, one column each, in the order of the record.",
-                 f"Green for a premium regime, ivory for discount. Each column fills to the khaki line, the 10{NB}bps floor, and every one rises past it; the scatter above the line does not show by how much, which is not published.",
+                 f"Green for a premium regime, ivory for discount. Each column fills to the khaki line, the 10{NB}bps floor, and every one rises past it. How far is not published, so the scatter above the line is drawn, not measured.",
                  "Illustrative · heights not to scale · regimes read from the record"),
     "mastercopy": ("One proven agent above, its copies below, on one control plane.",
                    "Phase two, on the roadmap. “A copy is a replication of that agent onto a new asset or strategy under the same control plane.”",
                    "Illustrative · roadmap"),
 }
-LIBRARY_CAPTION = ("Ten notes as ten leaves; the two research notes are lit.", "Illustrative")
+# r2 (r2-copy minor): the figure's labels ("01–02 research notes", "03–10 the series") and the meta row already say which
+# leaves are which, so the caption says what the drawing is, once
+LIBRARY_CAPTION = ("Ten notes as ten leaves.", "Illustrative")
 # v2x lab (research moment): every figure is read as a plate. Its labels pin to points of the formation (figure.js, a
 # stage with data-plate projects data-at, the formation's own x,y,z, onto the screen each frame) and say what each part
 # is, in the words of its caption or its note: no new fact, no number the caption does not already state. Points are
@@ -142,6 +145,45 @@ def labels_html(fig):
         reach = f' data-to="{to[0][0]:g},{to[0][1]:g},{to[0][2]:g}"' if to else ""
         out.append(f'<span class="fl{cls}" data-at="{x:g},{y:g},{z:g}"{reach} data-side="{side}"{ph} style="--i:{i}"><span class="fl-t">{H.escape(text, quote=False)}{small}</span></span>')
     return f'<div class="fig-labels" data-for="{fig}">{"".join(out)}</div>'
+def library_still():
+    """r2 (r2-art minor): the index hero's figure as a still, in the page's HTML. v2 and r1 painted nothing there until
+    WebGL drew (and nothing at all without JavaScript or WebGL), the only inner first screen without a drawing. This is
+    the same formation as figure.js's 'library' (ten leaves fanned round one spine, the two research notes lit), seen by
+    the same camera in the pose the plate's first frame takes (face-on, eye 0, 0.35, 4.4; fov 0.62; scale .92, the
+    desktop --figure-scale), engraved as ruled leaves instead of points: each leaf its outline and seven rules. Units: the
+    stage's height is 200, centred, so with xMidYMid meet the still lies where the points land (research.css scales it as
+    the stage's --figure-scale scales the points). When the WebGL figure is drawn (.figure-ready) the still fades out under
+    it; without JavaScript or WebGL it stays, with its caption. Geometry from figure.js FORMS.library and lookAt(): a
+    change there needs this looked at."""
+    f, eye, S0 = 1 / math.tan(0.31), (0.0, 0.35, 4.4), 0.92
+    n = math.hypot(*eye); zx, zy, zz = (e / n for e in eye)
+    xx, xz = zz, -zx; n = math.hypot(xx, xz) or 1; xx, xz = xx / n, xz / n
+    yx, yy, yz = zy * xz, zz * xx - zx * xz, -zy * xx
+    def p(x, y, z):
+        x, y, z = x * S0, y * S0, z * S0
+        v0 = xx * x + xz * z - (xx * eye[0] + xz * eye[2])
+        v1 = yx * x + yy * y + yz * z - (yx * eye[0] + yy * eye[1] + yz * eye[2])
+        v2 = zx * x + zy * y + zz * z - (zx * eye[0] + zy * eye[1] + zz * eye[2])
+        return 100 * f * v0 / -v2, -100 * f * v1 / -v2, v2
+    def pt(a, u, v): return p(math.sin(a) * u, v * 0.46, math.cos(a) * u - 0.35)
+    leaves, xm = [], 0.0
+    for l in range(10):
+        a = (l / 9 - 0.5) * 2.2
+        rim = [pt(a, u, v) for u, v in ((0.12, -1), (0.98, -1), (0.98, 1), (0.12, 1))]
+        xm = max(xm, *(abs(q[0]) for q in rim))
+        rules = [(pt(a, 0.12, v), pt(a, 0.98, v)) for v in (-1 + 2 * k / 8 for k in range(1, 8))]
+        mz = pt(a, 0.55, 0)[2]
+        depth = min(1, max(0, (mz + 5.6) / 2.6))  # figure.js: brighter nearer the eye
+        leaves.append((mz, l, rim, rules, round(0.42 + 0.7 * depth, 2)))
+    q = lambda c: f"{c[0]:.1f} {c[1]:.1f}"
+    out = []
+    for mz, l, rim, rules, op in sorted(leaves):  # far first
+        lit = l < 2
+        out.append(f'<path class="{"ls-g" if lit else "ls-r"}" stroke-opacity="{op:g}" d="M{q(rim[0])}L{q(rim[1])}L{q(rim[2])}L{q(rim[3])}Z"/>'
+                   f'<path class="{"ls-g ls-gl" if lit else "ls-l"}" stroke-opacity="{round(op * 0.75, 2):g}" d="{"".join(f"M{q(a)}L{q(b)}" for a, b in rules)}"/>')
+    w = math.ceil(xm + 6)
+    return (f'<svg class="rs-still" viewBox="{-w} -100 {2 * w} 200" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'
+            f'{"".join(out)}</svg>')
 # v2x: notes link to the instruments they describe (PAGES.md §6.4, NL-01..NL-10); targets are relative to research/
 RUN = {
     "horizon": [("Watch the Council verify proposals in the swarm lab", "../index.html#lc01")],
@@ -203,6 +245,10 @@ for _fig, (_t, _d, _h) in CAPTIONS.items():  # every quoted passage of a caption
     for _q in re.findall(r"“(.+?)”", _d):
         assert _q in _text, f"caption {_fig}: “{_q}” is not in Post {_num}"
 
+# r2: the series' lede on the index is note 03's (Series, part 1) own two sentences; the build stops if they change there
+SERIES_LEDE = "Trust is earned in the lowest-risk lifecycle first. Then it compounds."
+assert SERIES_LEDE in " ".join(t for k, t in posts[1]["blocks"]), "the §02 lede is no longer note 03's own words"
+
 def typo(t):
     """typography only, never words (VOICE §7; lab research-editorial): the apostrophe inside a word is ’ (the notes
     carry 41 straight ones: "fund's", "isn't"); a spaced em dash keeps a no-break space before it, so it never opens a
@@ -221,6 +267,12 @@ def slugify(t): return re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-")
 # v2x (SYSTEM.md §2): Instrument Serif draws U+002D wide ("Post – Training"); its U+2010 is tight. Visible serif text gets
 # U+2010 between letters at source (titles in <title>, meta and JSON-LD keep ASCII)
 def serif(t): return re.sub(r"(?<=[A-Za-z])-(?=[A-Za-z])", "‐", t)
+# r2 (system's request, r2-a11y): Instrument Serif has no U+2010 of its own, and find-in-page misses it ("Post-Training"
+# on /research found nothing). The page now carries U+002D inside site.css's .hy span, whose margins take the serif's
+# bearings in (site.js did this at load until now). serif() still marks the hyphens first, so inline()'s no-break rule
+# leaves serif compounds alone; the mark becomes the span after escaping
+HY = '<span class="hy">-</span>'
+def serif_html(t): return inline(serif(t)).replace("‐", HY)
 def us(t):  # US spelling in site-written copy (VOICE §6.3); the blog collection ledes come from build_blog.py's summary
     return typo(re.sub(r"\blabour\b", "labor", re.sub(r"\bbehaviour\b", "behavior", t)))
 def kind(post):  # one number per row (PAGES E-5): the reading-order number is the row's; the kind is said in words
@@ -229,12 +281,12 @@ def title_html(t):
     """an authored title, words and capitals kept (E-4): the two research notes' 'A Research Note on …' is set as the
     title's second line, smaller, so no title runs past three lines"""
     m = re.match(r"^(.+?\.) (A Research Note on .+)$", t)
-    if m: return f'{inline(serif(m.group(1)))} <span class="title-sub">{inline(serif(m.group(2)))}</span>'
+    if m: return f'{serif_html(m.group(1))} <span class="title-sub">{serif_html(m.group(2))}</span>'
     # lab research-editorial: a series title is a short head and a longer sentence ("Lifecycle 01. What Ten Sessions
     # on Real Markets Taught Us"). Each part is its own span, so a line can break at the sense break, never inside
     # "Lifecycle 01. What" (research.css decides where the break is taken); the words and the text run are unchanged
     m = re.match(r"^(.+\.) ([A-Z].+)$", t)
-    return f'<span class="t-head">{inline(serif(m.group(1)))}</span> <span class="t-rest">{inline(serif(m.group(2)))}</span>' if m else inline(serif(t))
+    return f'<span class="t-head">{serif_html(m.group(1))}</span> <span class="t-rest">{serif_html(m.group(2))}</span>' if m else serif_html(t)
 def hung(d): return " is-hung" if d[:1] in "“‘" else ""  # a caption that opens on a quote hangs it in the margin (research.css)
 def cap_html(fig, n, cls="figcap"):
     t, d, h = CAPTIONS[fig]
@@ -313,7 +365,7 @@ for i, post in enumerate(ordered):
     body = []
     first_p = True
     for k, t in post["blocks"]:
-        if k == "h": body.append(f'<h2 id="{slugify(t)}">{inline(serif(t))}</h2>')
+        if k == "h": body.append(f'<h2 id="{slugify(t)}">{serif_html(t)}</h2>')
         else:
             body.append(f'<p{" class=\"lead\"" if first_p else ""}>{inline(t)}</p>'); first_p = False
     dek = post["dek"] or post["short"]
@@ -412,14 +464,17 @@ for post in ordered:
           </li>''')
 notes = [p for p in ordered if p["label"] == "Research note"]
 url = "https://www.openexa.com/research.html"
+# r2: the share title is the <title>, as launch_meta_v9.py writes it, so research.html no longer differs between the
+# research build and the chain's last step (r1 open issue: built alone it said "Research — OpenEXA")
+INDEX_TITLE = "Research — OpenEXA · The thinking behind agentic lifecycles"
 desc = "Ten notes on the research behind swarm-based agentic lifecycles: compounding error and decomposition, post-training a model to a rulebook, the execution council, the hash-chained ledger, and ten sessions on real capital."
 index_page = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Research — OpenEXA · The thinking behind agentic lifecycles</title>
-{og("", url, "Research — OpenEXA", desc).replace('content="article"', 'content="website"')}
+  <title>{INDEX_TITLE}</title>
+{og("", url, INDEX_TITLE, desc).replace('content="article"', 'content="website"')}
   {ld({"@type": "CollectionPage", "@id": url + "#webpage", "url": url, "name": "Research — OpenEXA", "description": desc,
        "isPartOf": WEBSITE, "primaryImageOfPage": og_image(url), "inLanguage": "en",
        "mainEntity": {"@type": "ItemList", "itemListElement": [
@@ -432,7 +487,7 @@ index_page = f'''<!DOCTYPE html>
 {nav}
   <main id="main">
     <section class="page-hero page-hero--dark is-dark grain research-hero">
-      <div class="figure-stage research-figure" id="research-library" data-figure="library" data-spin="0.08" data-plate data-rest="2.5" aria-hidden="true"><canvas></canvas>{labels_html("library")}</div>
+      <div class="figure-stage research-figure has-still" id="research-library" data-figure="library" data-spin="0.08" data-plate data-rest="2.5" aria-hidden="true">{library_still()}<canvas></canvas>{labels_html("library")}</div>
       <div class="container">
         <div class="grid">
           <div class="col-7">
@@ -461,13 +516,15 @@ index_page = f'''<!DOCTYPE html>
         </div>
       </section>
 
-      <section class="section is-paper-2" id="series">
+      <!-- r2 (r2-fidelity): 01 and 02 share one ground, so the pinned plate beside them never crosses a band's edge; the
+           chapter head and its rule mark the change. The paper-2 band moves to 03, so the grounds still alternate -->
+      <section class="section" id="series">
         <div class="container">
           <div class="rs-col">
             <div class="sec-head" data-reveal><span class="idx">02</span><span class="lab">The series</span><span class="aside">Eight notes · the system, gate by gate</span></div>
             <div class="rs-intro">
               <h2 class="display-2" data-reveal data-split>From the unit of work to the open platform.</h2>
-              <p class="body-lg" data-reveal style="--d:80ms">Read in order, the series goes from the lifecycle test to master and copy.</p>
+              <p class="body-lg" data-reveal style="--d:80ms">{SERIES_LEDE.replace("lowest-risk", '<span class="nw">lowest-risk</span>')} These eight notes describe how.</p>
             </div>
             <ol class="posts-list" data-reveal start="3">
 {chr(10).join(rows[2:])}
@@ -489,7 +546,7 @@ index_page = f'''<!DOCTYPE html>
       </div>
     </div>
 
-    <section class="section" id="blog">
+    <section class="section is-paper-2" id="blog">
       <div class="container">
         <div class="sec-head" data-reveal><span class="idx">03</span><span class="lab">The blog</span><span class="aside">{BLOG['total']} posts · {BLOG['years'][0]}–{BLOG['years'][1]}</span></div>
         <div class="grid t-2 mb-3">
@@ -503,9 +560,9 @@ index_page = f'''<!DOCTYPE html>
       </div>
     </section>
 
-    <section class="section is-paper-2" id="principles">
+    <section class="section" id="principles">
       <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">04</span><span class="lab">Four constants</span><span class="aside">Four things that never change</span></div>
+        <div class="sec-head" data-reveal><span class="idx">04</span><span class="lab">Four constants</span><span class="aside">What never changes</span></div>
         <div class="grid t-2">
           <div class="col-5"><h2 class="display-2" data-reveal data-split>The research contribution is four constants.</h2></div>
           <div class="col-6 offset-7">
@@ -555,7 +612,8 @@ print("wrote research/feed.xml")
 featured = [ordered[0], ordered[1], ordered[2]]
 def card_title(t):
     m = re.match(r"^(.+?\.) (A Research Note on .+)$", t)
-    return f'{H.escape(serif(m.group(1)), quote=False)} <span class="title-sub">{H.escape(serif(m.group(2)), quote=False)}</span>' if m else H.escape(serif(t), quote=False)
+    sh = lambda s: H.escape(serif(s), quote=False).replace("‐", HY)
+    return f'{sh(m.group(1))} <span class="title-sub">{sh(m.group(2))}</span>' if m else sh(t)
 cards = "\n".join(f'''          <a class="card research-card" href="{p['file']}"><div class="n"><span>{p['order']:02d}</span><span>{H.escape(kind(p))}</span></div><h3 class="h4">{card_title(p['title'])}</h3><p>{inline(p['short']).replace('class="nw"', 'class="nowrap"')}</p><span class="link-arrow mt-3">{p['minutes']} min read {ARROW}</span></a>''' for p in featured)
 write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "research_cards.html"), cards)
 print("featured cards written")

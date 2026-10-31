@@ -19,11 +19,7 @@
 :is([data-page="proof"], [data-page="trust"]) .cta-band .lede { text-wrap: balance; }
 /* running text: no lone last word; hyphenation by hand only */
 :where([data-page="proof"], [data-page="trust"]) main :where(p, li) { text-wrap: pretty; hyphens: manual; } /* lowest specificity: any rule that balances wins */
-/* captions set as captions: the register code in mono, what the figure shows in Inter, the hedge in mono beside it */
-:is([data-page="proof"], [data-page="trust"]) .figure-cap { row-gap: 4px; column-gap: 32px; align-items: baseline; letter-spacing: .04em; }
-:is([data-page="proof"], [data-page="trust"]) .figure-cap > span:first-child { max-width: 64ch; font: 400 .84rem/1.5 var(--sans); letter-spacing: 0; color: var(--fg-2); text-wrap: pretty; }
-:is([data-page="proof"], [data-page="trust"]) .figure-cap .fn { margin-right: .1em; font: 500 var(--mono-s)/1 var(--mono); letter-spacing: .04em; color: var(--fg); }
-:is([data-page="proof"], [data-page="trust"]) .figure-cap > span + span { font-size: var(--mono-m); line-height: 1.5; text-wrap: balance; }
+/* captions: site.css's one register (.fc-t / .fc-n / .fc-d / .fc-h, r2) */
 
 /* ======================= Proof (evidence.html) ======================= */
 
@@ -122,21 +118,21 @@
   [data-page="proof"] .pf-doc p { max-width: 62ch; }
 }
 [data-page="proof"] .page-hero h1 { max-width: none; }
-@media (min-width: 601px) { [data-page="proof"] .page-hero .lede { max-width: 44ch; } } /* four lines that end on a phrase, not "real capital." */
+@media (min-width: 601px) { [data-page="proof"] .page-hero .lede { max-width: 44ch; } }
 @media (max-width: 360px) { [data-page="proof"] .page-hero h1 { font-size: 2.6rem; } }
 /* phones: the plate under the hero copy must not move when Inter or Instrument Serif lands after the first paint (perf
    r1 S1: CLS 0.197 on early-paint runs). Each block reserves the lines the web font sets it in, or the metric-matched
-   fallback's where that is more (measured every 4 px from 320 to 600, work/proof/r1/hero_fit.py). A floor, never a cap. */
+   fallback's where that is more (measured every 4 px from 320 to 600, work/proof/r1/hero_fit.py; the lede again in r2, r2/hero_lines.py). A floor, never a cap. */
 @media (max-width: 600px) {
   [data-page="proof"] .page-hero h1 { min-height: 2lh; }
-  [data-page="proof"] .page-hero .lede { min-height: 4lh; }
+  [data-page="proof"] .page-hero .lede { min-height: 3lh; }
 }
+@media (max-width: 559.98px) { [data-page="proof"] .page-hero .lede { min-height: 4lh; } }
 @media (max-width: 515.98px) { [data-page="proof"] .page-hero h1 { min-height: 3lh; } }
-@media (max-width: 503.98px) { [data-page="proof"] .page-hero .lede { min-height: 5lh; } }
-@media (max-width: 419.98px) { [data-page="proof"] .page-hero .lede { min-height: 6lh; } }
+@media (max-width: 423.98px) { [data-page="proof"] .page-hero .lede { min-height: 5lh; } }
 @media (max-width: 379.98px) { [data-page="proof"] .page-hero h1 { min-height: 4lh; } }
 @media (max-width: 360px) { [data-page="proof"] .page-hero h1 { min-height: 3lh; } [data-page="proof"] .pf-lc-hedge { min-height: 2lh; } }
-@media (max-width: 351.98px) { [data-page="proof"] .page-hero .lede { min-height: 7lh; } }
+@media (max-width: 351.98px) { [data-page="proof"] .page-hero .lede { min-height: 6lh; } }
 @media (max-width: 347.98px) { [data-page="proof"] .page-hero h1 { min-height: 4lh; } }
 /* the first statement of the result carries its hedge, as on Home's hero (VOICE 5.5): set to be read, not whispered
    (Inter, sentence case, 14 px; a11y r1 M5) */
@@ -158,7 +154,6 @@
   .pf-quote p { max-width: 18ch; }
 }
 @media (max-width: 600px) {
-  [data-page="proof"] .section { padding-block: 60px; }
   [data-page="proof"] .pf-terms > div { grid-template-columns: 5.2rem minmax(0, 1fr); column-gap: 14px; }
   [data-page="proof"] .pf-terms .v { font-size: 1.9rem; }
   [data-page="proof"] .pf-terms > div:nth-child(n + 3) .v { font-size: 1.4rem; }
@@ -291,6 +286,12 @@
 .tr-lt .lt-insp [contenteditable] { outline: 2px solid transparent; outline-offset: 2px; cursor: text; border-radius: 1px; box-shadow: inset 0 -1px 0 var(--line-strong); transition: box-shadow .2s, background .2s; }
 @media (hover: hover) { .tr-lt .lt-insp [contenteditable]:hover { box-shadow: inset 0 -1px 0 var(--fg-2); } }
 .tr-lt .lt-insp [contenteditable]:focus { box-shadow: inset 0 -1px 0 var(--accent); background: rgba(245, 242, 236, .07); }
+/* while a field is typed in, the next step under it: Enter verifies (the controls may be off a short screen) */
+.tr-lt .tr-enter { margin: 0; font: 400 .8125rem/1.45 var(--sans); letter-spacing: 0; color: var(--fg-2); }
+@media (min-width: 961px) {
+  .tr-lt .lt-insp.is-typing > dl:last-of-type { grid-column: 2; grid-row: 2 / span 2; }
+  .tr-lt .lt-insp.is-typing > .tr-enter { grid-column: 1; grid-row: 3; }
+}
 
 /* §02 the six commitments as a register: code, name, what it means, the mechanism (one row each from 961 px) */
 @media (min-width: 961px) {
@@ -353,7 +354,6 @@
 
 /* phones: the ledger stands in one column (every record readable, no swiping); the plates become short rows */
 @media (max-width: 600px) {
-  [data-page="trust"] .section { padding-block: 60px; }
   .tr-lt .lt-state > span { white-space: normal; }
   .tr-lt .lt-view { overflow: visible; -webkit-mask-image: none !important; mask-image: none !important; }
   .tr-lt .lt-track { display: grid; grid-template-columns: minmax(0, 1fr); width: auto; min-width: 0; padding: 4px 12px 12px 10px; }

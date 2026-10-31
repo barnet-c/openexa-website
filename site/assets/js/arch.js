@@ -29,6 +29,7 @@
   const reduceMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
   const wideMQ = window.matchMedia('(min-width: 1000px)');
   const fineMQ = window.matchMedia('(hover: hover) and (pointer: fine)');
+  const shortMQ = window.matchMedia('(max-height: 520px) and (min-aspect-ratio: 23/20)');
   const IVORY = '#F5F2EC', GREEN = '#4FCB93', KHAKI = '#ACA68E', RED = '#D9675D';
   const DEG = Math.PI / 180;
   const pad2 = (n) => String(n).padStart(2, '0');
@@ -74,7 +75,7 @@
     Array.from(root.children).forEach((el) => {
       if (el.classList.contains('layer')) {
         const k = el.querySelector('.k'), h3 = el.querySelector('h3'), small = h3 && h3.querySelector('small'), body = el.lastElementChild;
-        const name = h3 ? Array.from(h3.childNodes).filter((n) => n.nodeType === 3).map((n) => n.textContent).join(' ').replace(/\s+/g, ' ').trim() : '';
+        const name = h3 ? Array.from(h3.childNodes).filter((n) => n !== small).map((n) => n.textContent).join('').replace(/\s+/g, ' ').trim() : '';
         const dd = body ? body.querySelectorAll('dl.io dd') : [];
         items.push({ el, body, num: txt(k) || pad2(items.length + 1), name, verb: txt(small), job: el.dataset.job || '', inp: txt(dd[0]), out: txt(dd[1]) });
       } else if (el.classList.contains('layer-boundary')) { bIndex = items.length; bEl = el; }
@@ -415,6 +416,11 @@
       } else {
         reserve();
         halfW = clamp(W * (W < 560 ? 0.29 : 0.27), 84, 196); cx = W * (W < 560 ? 0.39 : 0.38);
+        F0 = (W < 560 ? 22 : 18) * DEG; thick = W < 560 ? 6 : 7;
+        const k = W < 560 ? 0.92 : 0.86, flH = floor ? 22 + fitFloor() * 14 : 10;
+        // a phone on its side: the whole stack fits under the bar (v2x r2)
+        const room = shortMQ.matches ? window.innerHeight - navH() - 24 : 0, g = room ? 1.75 : 1.5;
+        if (room) halfW = Math.min(halfW, Math.max(56, (room - 20 - thick - flH - 10) / (2 + (N - 2 + 2 * g) * k) / Math.sin(F0)));
         // the labels right of the stack (10 px mono caps, ~7.3 px a character)
         const wl = (s) => (s.length + 2) * 7.3, shortB = wl('Executes'), longB = Math.max(wl(noDot(UP.t)), wl(noDot(DN.t)));
         const roomB = () => W - 8 - (cx + 1.16 * halfW + 12), slack = () => cx - 1.16 * halfW - 16;
@@ -422,13 +428,12 @@
         if (roomB() < shortB) { cx = W - 8 - 12 - shortB - 1.16 * halfW; if (cx - 1.16 * halfW < 4) { halfW = (W - 24 - shortB) / 2.32; cx = 4 + 1.16 * halfW; } }
         roomyB = roomB() >= longB;
         roomyP = W - 8 - (cx + halfW + 12) >= Math.max(...plates.map((p) => wl(p.numLong) - 14));
-        F0 = (W < 560 ? 22 : 18) * DEG; thick = W < 560 ? 6 : 7;
-        const hh = halfW * Math.sin(F0), pitch = Math.max(30, hh * (W < 560 ? 0.92 : 0.86)), gap = pitch * 1.5, top = 30 + hh;
+        const hh = halfW * Math.sin(F0), pitch = Math.max(room ? 14 : 30, hh * k), gap = pitch * g, top = (room ? 20 : 30) + hh;
         base = []; for (let i = 0; i < N; i++) base.push(top + i * pitch + (i >= bIndex ? 2 * gap - pitch : 0));
         by = top + (bIndex - 1) * pitch + gap;
         let bottom = base[N - 1] + hh + thick;
-        if (floor) { fy = bottom + 12; bottom = fy + 10 + fitFloor() * 14; } else bottom += 10; // the floor and its label, under 08
-        const need = Math.ceil(bottom + 24);
+        if (floor) { fy = bottom + 12; bottom = fy + flH - 12; } else bottom += 10; // the floor and its label, under 08
+        const need = Math.ceil(bottom + (room ? 10 : 24));
         if (need !== figH) { figH = need; inst.style.setProperty('--fig-h', figH + 'px'); }
         Hh = figH; rowC = base.slice();
       }
@@ -989,7 +994,7 @@
       requestAnimationFrame(() => { roQueued = false; measure(); measureCard(); kick(true); });
     });
     ro.observe(bodyEl); ro.observe(list);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { measure(); measureCard(); kick(true); });
+    if (document.fonts && document.fonts.ready) requestAnimationFrame(() => document.fonts.ready.then(() => { measure(); measureCard(); kick(true); }));
     new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (e.isIntersecting && !visible) lastActive = performance.now(); // back in view: awake again

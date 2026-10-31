@@ -73,6 +73,32 @@
     window.addEventListener('scroll', queue, { passive: true });
     window.addEventListener('resize', queue, { passive: true });
     requestAnimationFrame(reading); // first read in the frame, not while the page is still being parsed and laid out
+
+    /* r2 (r2-motion): on phones the strip is in the page's flow (it settles under the list), and the notes' captions
+       differ in length (Fig. 09's three-part hedge), so a swap moved the page below it, and the lines inside the strip.
+       The caption's title and hedge are each held at the height of the longest at this width (--rs-t-h, --rs-h-h;
+       research.css), so the strip, and every line in it, keeps its place: each caption is written, measured and the
+       current one put back in one task, so nothing is painted in between. Again when the width changes and once the
+       fonts are in */
+    const box = $('.rs-caption', plate), strip = window.matchMedia('(max-width: 759.98px)');
+    const slots = [['t', '--rs-t-h'], ['h', '--rs-h-h']];
+    let measuredW = -1;
+    const reserve = () => {
+      if (!box || !cap) return;
+      if (!strip.matches || plate.closest('.no-plate')) { slots.forEach(([, v]) => plate.style.removeProperty(v)); measuredW = -1; return; }
+      const w = box.clientWidth; if (w === measuredW) return; measuredW = w;
+      slots.forEach(([, v]) => plate.style.setProperty(v, '0px'));
+      const max = { t: 0, h: 0 };
+      rows.forEach(li => { write(li); slots.forEach(([k]) => { const el = part(k); if (el) max[k] = Math.max(max[k], el.offsetHeight); }); });
+      write(current);
+      slots.forEach(([k, v]) => plate.style.setProperty(v, `${Math.ceil(max[k])}px`));
+    };
+    let rq = false;
+    const queueReserve = () => { if (!rq) { rq = true; requestAnimationFrame(() => { rq = false; reserve(); }); } };
+    window.addEventListener('resize', queueReserve, { passive: true });
+    strip.addEventListener('change', queueReserve);
+    queueReserve();
+    if (document.fonts) requestAnimationFrame(() => document.fonts.ready.then(() => { measuredW = -1; queueReserve(); }));
   }
 
   /* ---------- a stage that cannot draw (figure.js 'figure:none'): no caption for a figure that is not there ---------- */
@@ -81,7 +107,7 @@
       const shelf = st.closest('.rs-shelf'); if (shelf) shelf.classList.add('no-plate');
       $$('.posts-list .post.is-current').forEach(li => li.classList.remove('is-current'));
     }
-    else { const host = st.closest('section'); if (host) host.classList.add('no-figure-cap'); }
+    else if (!st.classList.contains('has-still')) { const host = st.closest('section'); if (host) host.classList.add('no-figure-cap'); } // (r2: the index hero keeps its still, so its caption stays true)
   };
   document.addEventListener('figure:none', e => noFigure(e.target));
   $$('.figure-stage.no-figure').forEach(noFigure);

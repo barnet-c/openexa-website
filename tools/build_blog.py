@@ -164,10 +164,11 @@ def size(name):
     d = dims(name)
     return f' width="{d[0]}" height="{d[1]}"' if d else ""
 # v2x r1 (r1-mobile 15): an 800 px copy of every wide in-body figure (new names, written after optimise() below), so a
-# phone and a 1x screen stop loading the 1800 px original into a ~330-584 px exhibit. The mat holds the image at most
-# 38rem - 24px (584 px) wide; on phones it is the column less the gutters and the mat.
+# phone and a 1x screen stop loading the 1800 px original into a ~330-603 px exhibit. The mat holds the image at most
+# 39.2rem - 24px (603 px) wide from 961 px, 36rem - 24px (552 px) on tablets (r2: the notes' reading column); on phones it
+# is the column less the gutters and the mat.
 BODY_W = 800
-BODY_SIZES = "(max-width: 660px) calc(100vw - 64px), 584px"
+BODY_SIZES = "(max-width: 660px) calc(100vw - 64px), (max-width: 960px) 552px, 603px"
 BODY_COPIES = set()
 def body_srcset(name):
     d = dims(name)
@@ -233,10 +234,10 @@ def smart_html(h):
         if part.startswith("<"):
             if re.match(r"<(code|pre|script|style)\b", part): skip += 1
             elif re.match(r"</(code|pre|script|style)>", part): skip = max(0, skip - 1)
-            # the article sets headings and blockquotes in Instrument Serif, whose U+002D reads 'Gen - AI'. Headings get
-            # U+2010 at source (what site.js does to h1-h3 at load, so they read right without JS too); a blockquote is
-            # running text, where find-in-page must still match a typed '-' (SYSTEM.md §2, r1): there the ASCII hyphen
-            # stays and is set tight (span.hy, blog.css)
+            # the article sets headings and blockquotes in Instrument Serif, whose U+002D reads 'Gen - AI'. In both the
+            # ASCII hyphen stays (find-in-page matches a typed '-') inside span.hy, which takes the bearings in (site.css;
+            # SYSTEM.md §3, r2: never U+2010, which the serif's file lacks, so it fell back to a system serif). site.js
+            # does the same to h1-h3 at load; written here, they read right without JS too
             if re.match(r"<(h2|h3)\b", part): head_ += 1
             elif re.match(r"</(h2|h3)>", part): head_ = max(0, head_ - 1)
             if re.match(r"<blockquote\b", part): quote_ += 1
@@ -247,16 +248,16 @@ def smart_html(h):
         # entities stay entities: decode for the decision, write back what the CMS wrote otherwise
         txt = H.unescape(part)
         s = smart(txt, prev)
-        out.append(esc_text(SERIF_HY.sub("‐", s)) if head_ else tight_hy(esc_text(s)) if quote_ else esc_text(s)); prev = s[-1] if s else prev
+        out.append(tight_hy(esc_text(s)) if head_ or quote_ else esc_text(s)); prev = s[-1] if s else prev
     return "".join(out)
 def tight_hy(escaped):
-    """a serif line that must stay searchable: the ASCII hyphen between letters, set tight (blog.css .hy)"""
+    """a serif line: the ASCII hyphen between letters (still found by find-in-page), set tight (site.css .hy)"""
     return SERIF_HY.sub('<span class="hy">-</span>', escaped)
 def esc_text(s): return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 def serif(s):
-    """escaped text for a serif line: U+2010 between letters (Instrument Serif draws U+002D as 'Domain – Specific';
-    SYSTEM.md §2), real quotes and dashes. Titles, meta, feeds and JSON-LD keep the ASCII hyphen."""
-    return SERIF_HY.sub("‐", esc(smart(s)))
+    """escaped text for a serif line: real quotes and dashes, and the hyphen between letters in span.hy (Instrument
+    Serif draws U+002D as 'Domain – Specific'; SYSTEM.md §3, r2). Titles, meta, feeds and JSON-LD keep plain ASCII."""
+    return tight_hy(esc(smart(s)))
 def prose(s): return esc(smart(s))
 def hang(h):
     """a paragraph that opens on a quote mark hangs it in the margin, so the text's left edge stays straight"""
@@ -372,6 +373,12 @@ def person(byline):
     who = {"@type": "Person", "name": name, "url": HOME + "company.html#" + PEOPLE_ID.get(name, "team")}
     if m: who["honorificSuffix"] = m.group(2)
     return who
+def shown(byline):
+    """the name a reader sees: one name per person (VOICE 5.9, r2-copy), the form Company uses ('Tim Leung, Ph.D.' ->
+    'Dr. Tim Leung'). JSON-LD keeps the name and the credential apart (person()); the feed keeps the byline as published"""
+    m = re.match(r"^(.*?), *Ph[.]D[.]$", byline)
+    return f"Dr. {m.group(1)}" if m else byline
+assert all(shown(a) in read(ROOT / "company.html") for a in ("Ajit K Dubey", "Tim Leung, Ph.D.", "Philip Bond, Ph.D.")), "a byline's name is not the one Company uses"
 def href(p): return p["source"] if p["stub"] else f'{p["slug"]}.html'
 
 # the 2024 Gen-AI series (Ajit): an introduction and a three-part finance series that cross-link one another
@@ -443,7 +450,7 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     span_ = span(by_col[k][-1]["dt"].year, by_col[k][0]["dt"].year)
     authors = {p["author"] for p in by_col[k]}
     assert len(authors) == 1, (k, authors)  # collections are assigned by author: the head can carry the byline once
-    shead = f'''        <div class="sec-head" data-reveal><span class="idx">{n:02d}</span><span class="lab">{esc(label)}</span><span class="aside"><span class="by">{esc(authors.pop())}</span> · {len(by_col[k])} posts · {span_}</span></div>
+    shead = f'''        <div class="sec-head" data-reveal><span class="idx">{n:02d}</span><span class="lab">{esc(label)}</span><span class="aside"><span class="by">{esc(shown(authors.pop()))}</span> · {len(by_col[k])} posts · {span_}</span></div>
 ''' + (f'''        <figure class="blog-headplate"><div class="bh-art" aria-hidden="true">{collection_svg(k)}</div><figcaption class="plates-hedge">Schematic · no data is plotted</figcaption></figure>
 ''' if k == "markets" else f'''        <figure class="blog-headplate"><div class="bh-art" aria-hidden="true">{collection_svg(k)}</div></figure>
 ''' if k == "ai" else "")
@@ -626,7 +633,9 @@ for p in order:
     if p["slug"] in SERIES_POS:  # series posts read in order, with the series listed alongside
         j = SERIES_POS[p["slug"]]; part = SERIES[j][1]
         crumb = f'<a href="index.html#series">{SERIES_NAME}</a>'
-        meta_extra = f"<span>{esc(part)} · post {j + 1} of {len(SERIES)}</span>"
+        # r2-copy: the rail and the side list number the introduction 00 and the parts 01-03; 'post 1 of 4' counted
+        # another way. The line now says what the rail says: the introduction comes before Part 1; a part is n of 3
+        meta_extra = f"<span>{esc(part)} · before {esc(SERIES[1][1])}</span>" if j == 0 else f"<span>{esc(part)} of {len(SERIES) - 1}</span>"
         items = "".join(f'<li{" aria-current=\"true\"" if s == p["slug"] else ""}><a href="{s}.html"><span>{i:02d}</span><span><b>{esc(pt)}</b>{esc(sh)}</span></a></li>' for i, (s, pt, sh) in enumerate(SERIES))
         series_box = f'<div class="series-box"><div class="eyebrow mb-2">{SERIES_NAME}</div><ol role="list">{items}</ol></div>'
         sp = SLUGS[SERIES[j - 1][0]] if j else None; sn = SLUGS[SERIES[j + 1][0]] if j + 1 < len(SERIES) else None
@@ -638,7 +647,7 @@ for p in order:
         post_ld["position"] = j + 1
     note = f"Originally published on openexa.com, {fmt(p['dt'])}." + (f" A summary of work first published on {src_host}." if p["source"] else "")
     original = f'<a class="link-arrow" href="{esc(p["source"])}" target="_blank" rel="noopener">The original on {esc(src_host)} {OUTB}</a>' if p["source"] else ""
-    byline = f'<a href="{PFX}company.html#{PEOPLE_ID[person(p["author"])["name"]]}">{esc(p["author"])}</a>' if person(p["author"]).get("name") in PEOPLE_ID else esc(p["author"])
+    byline = f'<a href="{PFX}company.html#{PEOPLE_ID[person(p["author"])["name"]]}">{esc(shown(p["author"]))}</a>' if person(p["author"]).get("name") in PEOPLE_ID else esc(shown(p["author"]))
     page = head(url, f'{p["title"]} — OpenEXA Blog', p["excerpt"], "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (p["title"], url)))}\n') + f'''
 <body data-page="post" data-nav="dark-start" class="article-page blog-post">
   <a class="skip" href="#main">Skip to content</a>

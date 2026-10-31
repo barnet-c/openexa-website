@@ -29,17 +29,8 @@
 .plate-still .ps-o--paper { stroke: rgba(245, 242, 236, .55); }
 .plate-still .ps-o--khaki { stroke: var(--khaki); opacity: .7; }
 .plate-still .ps-o--green { stroke: var(--signal-bright); stroke-width: 2.6; }
-/* captions, the site's one grammar (Home's, ADOPT-company A11): the register mark (Plate, Fig. n.n) hangs in the margin
-   in mono, the title is text (Inter), the hedge is data (mono) flush right or on its own line. The separator stays for
-   assistive tech (.fc-d). */
+/* captions: site.css's .figure-cap is the one grammar (system r2); the hero readout is a .figure-cap that sits closer */
 .company-readout { margin: 14px 0 0; }
-[data-page="company"] :is(.figure-cap, .company-readout) { --fc-ind: 4.75rem; --fc-lh: 1.25rem; position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 40px; padding-left: var(--fc-ind); font: 400 .84rem/var(--fc-lh) var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
-[data-page="company"] :is(.figure-cap, .company-readout) .fc-n { display: inline-block; width: var(--fc-ind); margin-left: calc(-1 * var(--fc-ind)); font: 500 .6875rem/var(--fc-lh) var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg); white-space: nowrap; }
-[data-page="company"] :is(.figure-cap, .company-readout) .fc-d { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-[data-page="company"] :is(.figure-cap, .company-readout) .fc-t { min-width: 0; text-wrap: pretty; }
-[data-page="company"] :is(.figure-cap, .company-readout) .fc-h { font: 400 .6875rem/1.55 var(--mono); letter-spacing: .04em; color: var(--fg-3); text-align: right; text-wrap: pretty; }
-@media (max-width: 960px) { [data-page="company"] :is(.figure-cap, .company-readout) { flex-direction: column; align-items: flex-start; gap: 3px; } [data-page="company"] :is(.figure-cap, .company-readout) .fc-h { text-align: left; } }
-@media (max-width: 600px) { [data-page="company"] :is(.figure-cap, .company-readout) { padding-left: 0; } [data-page="company"] :is(.figure-cap, .company-readout) .fc-n { width: auto; margin: 0 .75em 0 0; } }
 [data-page="company"] .company-modes { margin-top: 18px; }
 [data-page="company"] .company-mode-copy { max-width: 52ch; min-height: 4.8em; text-wrap: pretty; }
 @media (scripting: none) { .js-only { display: none; } [data-page="company"] .company-mode-copy { margin-top: 22px; } }
@@ -337,12 +328,17 @@
 }
 
 /* ================================================================ Access */
-/* The H1 asks in the visitor's terms (v2's "Tell us who you are."); the page shows what happens to the answer: beside
-   the form, the email this page writes, written as the visitor types (access.js), and "Nothing is sent until you send it."
-   under the button. The four paths are the four choices (each with its full description, at every width, so the page
-   says them once). On phones the letter appears in the result. */
+/* The H1 asks in the visitor's terms (v2's "Tell us who you are.") and answers with the page's mechanism ("You press
+   send.", r2); the page shows what happens to the answer: beside the form, the email this page writes, written as the
+   visitor types (access.js), and "Nothing is sent until you send it." under the button. The four paths are the four
+   choices (each with its full description, at every width, so the page says them once). On phones the letter appears
+   in the result. */
 [data-page="access"] .access-lede { align-self: end; }
-[data-page="access"] .access-hero h1 { max-width: 11ch; }
+/* one sentence a line at every width: "Tell us who you are." is sized to fit its column (seven of twelve from 961 px;
+   on tablets the half the form takes below, so the lede starts where the letter does; the full measure on phones) */
+[data-page="access"] .access-hero h1 .h1-l { display: block; }
+@media (min-width: 961px) { [data-page="access"] .access-hero h1 { font-size: clamp(3.4rem, 8.2vw, 6.9rem); } }
+@media (min-width: 601px) and (max-width: 960px) { [data-page="access"] .access-hero h1 { font-size: 7vw; } }
 /* the lede's last line sits on the H1's last baseline; the two column heads below share a baseline */
 @media (min-width: 601px) {
   [data-page="access"] .access-hero .grid { align-items: last baseline; }
@@ -405,7 +401,15 @@
 .letter [data-letter-subject] { border-radius: 2px; transition: background-color .2s var(--ease), box-shadow .2s var(--ease); }
 .letter-note { margin: 12px 0 0; max-width: 46ch; font-size: .86rem; line-height: 1.5; color: var(--fg-3); }
 .letter-note.is-long { color: var(--fg); }
-@media (min-width: 601px) { [data-page="access"] .access-letter .sticky { position: sticky; top: calc(var(--nav-h) + 28px); } }
+/* beside the form the letter never outgrows the screen (a phone held sideways, a small laptop, a long message): its body
+   scrolls inside and access.js keeps the part being typed in view (r2-mobile) */
+@media (min-width: 601px) {
+  [data-page="access"] .access-letter .sticky { --top: calc(var(--nav-h) + 28px); position: sticky; top: var(--top); display: flex; flex-direction: column; max-height: calc(100svh - var(--top) - 16px); }
+  [data-page="access"] .access-letter .letter:not([hidden]) { display: flex; flex-direction: column; min-height: 0; }
+  [data-page="access"] .access-letter .letter-head { flex: none; }
+  [data-page="access"] .access-letter .letter-body { min-height: 4.5lh; overflow-y: auto; } /* a wheel at its end goes on to the page */
+}
+@media (min-width: 601px) and (max-height: 760px) { [data-page="access"] .access-letter .sticky { --top: calc(var(--nav-h) + 12px); } }
 @media (min-width: 601px) and (max-width: 960px) { [data-page="access"] .access-letter .letter-body { font-size: 1.05rem; } }
 @media (max-width: 600px) { [data-page="access"] .access-letter { display: none; } }
 @media (prefers-reduced-motion: reduce) { .letter .slot, .letter [data-letter-subject] { transition: none; } }
@@ -421,10 +425,10 @@
   [data-page="access"] .access-next .list-rule--3 > li { grid-template-columns: 44px minmax(0, 1fr); }
   [data-page="access"] .access-next .list-rule--3 > li > :last-child { grid-column: 2; }
 }
+@media (min-width: 421px) and (max-width: 600px) { [data-page="access"] .form > .two + .two { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; } } /* organization | role share a line where each field is wide enough */
 @media (max-width: 600px) {
   [data-page="access"] .seg { grid-template-columns: minmax(0, 1fr); }
-  [data-page="access"] .form > .two + .two { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; } /* organization | role: short answers share a line */
-  [data-page="access"] .access-hero h1 { font-size: clamp(2.6rem, 12.5vw, 3.4rem); }
+  [data-page="access"] .access-hero h1 { font-size: clamp(2.6rem, 13.6vw, 3.4rem); } /* v2's size from 400 px; "Tell us who you are." on one line */
   [data-page="access"] .access-hero { padding-bottom: 36px; }
   [data-page="access"] .access-body { padding-top: 44px; }
   .letter-head > span { grid-template-columns: 64px minmax(0, 1fr); }

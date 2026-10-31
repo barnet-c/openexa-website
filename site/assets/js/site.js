@@ -257,7 +257,8 @@
     if (overPaper) dark = false;
     // a dark-start page whose dark opening has scrolled away has a paper ground
     if (darkStart) { const opening = bands[0] && bands[0].dark ? bands[0] : null; root.classList.toggle('is-paper-root', !!opening && y >= opening.bottom); }
-    const clear = y <= clearUntil && !menuOpen && !overPaper;
+    // the overture as a static sequence (story-tiny, under 300 px tall) scrolls its text under the bar: glass once moved
+    const clear = y <= (root.classList.contains('story-tiny') ? 16 : clearUntil) && !menuOpen && !overPaper;
     nav.classList.toggle('nav--solid', !clear);
     nav.classList.toggle('nav--dark', dark);
     if (themeMeta) {
@@ -491,14 +492,20 @@
   });
 
   if (nav) {
-    requestAnimationFrame(measure); // (v2x) no layout read in this task: the frame lays out anyway
+    // (v2x) no layout read in a script task: every measure waits for the frame, which lays out anyway. (r2: fonts.ready
+    // resolves as a microtask right after this script when the faces are in, and oxa:loaded fires inside it on pages
+    // without a loader; both forced the page's first full layout inside site.js's task: 340 ms at 4x on Lifecycles.)
+    let mRaf = 0;
+    const measureSoon = () => { if (!mRaf) mRaf = requestAnimationFrame(() => { mRaf = 0; measure(); }); };
+    measureSoon();
     window.addEventListener('scroll', queue, { passive: true });
     window.addEventListener('resize', measure);
-    window.addEventListener('load', measure);
-    ['story:gl-ready', 'story:no-webgl', 'oxa:loaded'].forEach(t => document.addEventListener(t, measure));
+    window.addEventListener('load', measureSoon);
+    ['story:gl-ready', 'story:no-webgl', 'oxa:loaded'].forEach(t => document.addEventListener(t, measureSoon));
     // content that changes height
-    if ('ResizeObserver' in window) { let ro = 0; new ResizeObserver(() => { cancelAnimationFrame(ro); ro = requestAnimationFrame(measure); }).observe(document.body); }
-    if (document.fonts) document.fonts.ready.then(measure);
+    if ('ResizeObserver' in window) new ResizeObserver(measureSoon).observe(document.body);
+    // (reading document.fonts.ready updates style and layout in Chromium: it too waits for the frame)
+    if (document.fonts) requestAnimationFrame(() => document.fonts.ready.then(measureSoon));
   }
   /* ---------------- the reader's place: kept through resizes, and a deep link's landing kept after late layout ---------------- */
   let anchor = null, settleUntil = 0, lastInput = 0, lastW = 0;
@@ -621,16 +628,29 @@
   }
 
   /* ---------------- type: the serif's hyphen ----------------
-     Instrument Serif's U+002D has wide sidebearings ("Domain – Specific"); its U+2010 is the same mark set tight. Display
-     text only (h1-h3, the tagline): find-in-page does not match U+2010 for a typed '-', so smaller titles keep ASCII. */
+     Instrument Serif's U+002D has wide side bearings ("Domain - Specific") and its file has no U+2010 (a U+2010 is drawn
+     by whatever serif the system has). In display text the hyphen stays U+002D, so find-in-page and copy match a typed
+     '-', inside a .hy span whose margins take the bearings in (site.css); a static U+2010 becomes U+002D again. No style is
+     read now: in the first frame a heading that is not in the serif gets its plain hyphen back. */
   const SERIF_TEXT = 'h1, h2, h3, .display-1, .display-2, .display-3, .manifesto, .footer .tag';
-  const HY = /(\p{L})-(?=\p{L})/gu;
+  const HY = /(\p{L})[-\u2010](?=\p{L})/u;
   function serifHyphens(root) {
+    const hosts = [];
     $$(SERIF_TEXT, root).forEach(el => {
-      if (el.closest('pre, code, kbd, samp, .mono, [data-keep-hyphens]')) return;
-      const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-      for (let n = tw.nextNode(); n; n = tw.nextNode()) if (n.data.indexOf('-') > 0 && HY.test(n.data)) { HY.lastIndex = 0; n.data = n.data.replace(HY, '$1\u2010'); }
+      if (el.closest('pre, code, kbd, samp, .mono, [data-keep-hyphens], .hy')) return;
+      const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), hits = [];
+      for (let n = tw.nextNode(); n; n = tw.nextNode()) if (HY.test(n.data)) hits.push(n);
+      if (!hits.length) return;
+      hosts.push(el);
+      hits.forEach(n => {
+        for (let m = HY.exec(n.data); m; m = HY.exec(n.data)) {
+          const rest = n.splitText(m.index + m[1].length), hy = document.createElement('span');
+          rest.data = rest.data.slice(1); hy.className = 'hy'; hy.textContent = '-'; rest.before(hy); n = rest;
+        }
+      });
     });
+    if (hosts.length) requestAnimationFrame(() => hosts.filter(el => !/Instrument Serif/.test(getComputedStyle(el).fontFamily.split(',')[0]))
+      .forEach(el => el.querySelectorAll('.hy').forEach(hy => hy.replaceWith('-'))));
   }
   serifHyphens(document);
 
@@ -640,19 +660,22 @@
     el.dataset.split = 'done';
     let i = 0;
     const walk = (node) => {
+      let wi = null; // the word being built: a .hy hyphen and the text after it stay in it (one word, no new break)
       Array.from(node.childNodes).forEach(child => {
         if (child.nodeType === 3) {
           const parts = child.textContent.split(/([ \t\n\r\f]+)/); // U+00A0 stays in its word
           const frag = document.createDocumentFragment();
           parts.forEach(p => {
             if (!p) return;
-            if (/^[ \t\n\r\f]+$/.test(p)) { frag.appendChild(document.createTextNode(' ')); return; }
+            if (/^[ \t\n\r\f]+$/.test(p)) { frag.appendChild(document.createTextNode(' ')); wi = null; return; }
+            if (wi) { wi.append(p); return; }
             const w = document.createElement('span'); w.className = 'w';
-            const wi = document.createElement('span'); wi.className = 'wi'; wi.style.setProperty('--i', i++); wi.textContent = p;
+            wi = document.createElement('span'); wi.className = 'wi'; wi.style.setProperty('--i', i++); wi.textContent = p;
             w.appendChild(wi); frag.appendChild(w);
           });
           node.replaceChild(frag, child);
-        } else if (child.nodeType === 1 && !child.classList.contains('w')) walk(child);
+        } else if (child.nodeType === 1 && child.classList.contains('hy') && wi) wi.append(child);
+        else { wi = null; if (child.nodeType === 1 && !child.classList.contains('w')) walk(child); }
       });
     };
     walk(el);

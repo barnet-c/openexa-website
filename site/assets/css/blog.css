@@ -96,8 +96,7 @@
 .blog-page .chip:focus-visible { outline-offset: 2px; }
 .blog-collection > .container { position: relative; }
 .blog-headplate { display: none; }
-.blog-page .blog-collection { padding-block: clamp(64px, 8vw, 120px); } /* chapters hand over in ~240 px at 1440, not ~290 */
-.blog-page #ai { padding-top: clamp(56px, 6.5vw, 96px); } /* the first chapter starts under the bar, not a screen later */
+/* (r2: the chapters keep site.css's one rhythm, 96/72 at 1440; the blog's own 120/120 and the first chapter's 96 went) */
 
 /* ---------- AI & agents: the series as a dated rail ---------- */
 .blog-series-head { margin-bottom: clamp(36px, 5vw, 64px); }
@@ -106,7 +105,7 @@
 .series-k > span:first-child { color: var(--fg-2); }
 .series-k-n { color: var(--fg-3); }
 /* the hedge the post heroes carry, said once for the index's plates (beside the series; above the markets grid) */
-.plates-hedge { font: 400 var(--mono-s)/1.4 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); }
+.plates-hedge { font: 400 .78rem/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); } /* the register's hedge (site.css .fc-h, r2) */
 .blog-legend { display: flex; justify-content: flex-end; margin: 0 0 14px; }
 .blog-page .series-rail { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: var(--rg); row-gap: 40px; border: 0; }
 .blog-page .series-rail > li { position: relative; background: none; border: 0; display: flex; }
@@ -143,6 +142,22 @@
 .blog-grid--wide .blog-card { flex-direction: row; }
 .blog-grid--wide .blog-thumb { flex: 0 0 44%; aspect-ratio: auto; min-height: 220px; border-bottom: 0; border-right: 1px solid var(--line); }
 .blog-grid--wide .blog-card-body { justify-content: center; }
+
+/* ---------- a grid's last row closes (r2-art): a card left alone on it takes the row as a horizontal card, its plate in
+   the first column and its words across the rest (the form of "Also in AI & agents"); with two left, the second takes
+   the last two columns. Read from the count by :nth-child, so a new post rebalances the grid. ---------- */
+@media (min-width: 1081px) {
+  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:nth-child(3n + 1):last-child { grid-column: 1 / -1; --pw: calc(100% / 3); }
+  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:nth-child(3n + 2):last-child { grid-column: span 2; --pw: 50%; }
+  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:last-child:not(:nth-child(3n)) { flex-direction: row; }
+  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:last-child:not(:nth-child(3n)) .blog-thumb { flex: 0 0 var(--pw); border-bottom: 0; border-right: 1px solid var(--line); }
+  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:last-child:not(:nth-child(3n)) .blog-card-body { justify-content: center; }
+}
+@media (min-width: 641px) and (max-width: 1080px) {
+  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:nth-child(2n + 1):last-child { grid-column: 1 / -1; flex-direction: row; }
+  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:nth-child(2n + 1):last-child .blog-thumb { flex: 0 0 50%; border-bottom: 0; border-right: 1px solid var(--line); }
+  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:nth-child(2n + 1):last-child .blog-card-body { justify-content: center; }
+}
 
 /* ---------- the Scholar link is a sentence: Inter, as on Research ---------- */
 .blog-page .scholar-link { font: 500 .95rem/1.4 var(--sans); letter-spacing: 0; text-transform: none; }
@@ -252,7 +267,7 @@
   .blog-page .chip { padding: 0 7px; letter-spacing: 0; } /* the four still fit one row at 320 */
 }
 /* phones held sideways (r1-mobile 8): words on the first screen, the figure beside them; only the bar stays fixed */
-@media (max-width: 960px) and (max-height: 520px) and (orientation: landscape) {
+@media (min-width: 540px) and (max-width: 960px) and (max-height: 520px) and (orientation: landscape) { /* not at 400% zoom (320x256): one column there, as in v2 (r2-a11y) */
   .blog-page .blog-hero { padding: calc(var(--nav-h) + 24px) 0 28px; }
   .blog-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; }
   .lib-plate { display: block; }
@@ -280,22 +295,25 @@
 .post-byline { margin: 26px 0 0; font: 400 1.05rem/1.4 var(--sans); color: var(--fg-2); }
 .post-byline a { color: var(--fg); border-bottom: 1px solid rgba(245, 242, 236, .32); transition: border-color .3s var(--ease); }
 @media (hover: hover) { .post-byline a:hover { border-color: currentColor; } }
+/* the crumb's two links and the byline are 24 px targets or more (r2-mobile: 19-21 px): the box grows upward, so the
+   underline keeps its place under the words and nothing around them moves */
+.blog-post-hero .eyebrow a { padding-top: 6px; margin-top: -6px; }
+.post-byline a { padding-top: 4px; } /* inline: its padding takes no room in the line */
 .blog-post .post-byline + .article-meta { margin-top: 12px; }
 .post-plate { margin: 0; color: var(--fg); }
 .post-plate-art { position: relative; aspect-ratio: 16 / 9; border: 1px solid var(--line); }
 .post-plate-art .bp-art { position: absolute; inset: 3% 2%; width: 96%; height: 94%; }
 .post-plate figcaption { display: grid; gap: 10px; margin-top: 18px; }
-.pp-k { display: flex; align-items: center; gap: 12px; font: 500 var(--mono-xs)/1.3 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-2); }
-.pp-k::after { content: ""; width: 28px; height: 1px; background: var(--accent); }
+/* the plate's caption in the register (site.css .figure-cap, r2): the mark in mono sentence case ('Plate · Five stages'),
+   the hedge in Inter; no rule */
+.pp-k { font: 500 .75rem/1.3 var(--mono); letter-spacing: .02em; text-transform: none; color: var(--fg); }
 /* the post's own sentence, set as a pull quote in the serif (as the notes set a figure's line), the opening mark hung */
 .pp-q { margin: 0; max-width: 52ch; font-size: .95rem; line-height: 1.55; color: var(--fg-2); text-wrap: pretty; }
 .post-plate .pp-q { margin: 2px 0 0; max-width: 34ch; font: 400 clamp(1.2rem, 1.5vw, 1.42rem)/1.28 var(--serif); letter-spacing: -0.005em; color: var(--fg); text-wrap: pretty; }
 .hang { margin-left: -.4em; }
-/* Instrument Serif's U+002D carries wide sidebearings ('Gen - AI'); where the text must stay findable with a typed '-'
-   (a blockquote, the plate's quoted sentence) the ASCII hyphen stays and is set tight (build_blog.tight_hy) */
-.hy { margin-inline: -.05em; }
+/* (serif hyphens: build_blog.tight_hy writes the ASCII hyphen in span.hy, set tight by site.css; r2) */
 .pp-q .hang { margin-left: -.34em; }
-.pp-h { font: 400 var(--mono-xs)/1.4 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); }
+.pp-h { font: 400 .78rem/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); }
 @media (prefers-reduced-motion: no-preference) { /* engraved as the page opens: CSS from the first paint, still under reduced motion */
   .post-plate .bp-art [pathLength] { animation: bp-draw 1.5s var(--ease) .15s backwards; }
   .post-plate .bp-art .pg[pathLength] { animation-duration: 1.1s; animation-delay: 1.05s; }
@@ -314,16 +332,19 @@
   .blog-post .blog-title { max-width: none; font-size: clamp(2rem, 7.4vw, 3rem); }
   .post-plate-art { aspect-ratio: 2 / 1; }
   .blog-post .article-side { order: 0; margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--line); } /* after the article on phones and tablets, as in the source */
-  .blog-article > :is(p, ul, ol, blockquote) { max-width: 36em; } /* Inter's ch is wide: 66ch ran to ~95 characters on a tablet */
 }
 
-/* ---------- post: one measure (lab: 66ch of Inter ran to ~80 characters, r1-art m3); text, quotes and exhibits share it ---------- */
-.blog-article { --measure: 38rem; }
+/* ---------- post: the notes' reading column (r2: one column for posts and notes; research.css "a note: the reading
+   column"): 19 px type on 1.68 leading across 39.2rem, 66-72 characters a line from 768 up; 18 px on tablets and 17 px
+   on phones, on 36rem. Text, quotes and exhibits share the measure ---------- */
+.blog-post .blog-article { --measure: 39.2rem; font-size: 1.1875rem; line-height: 1.68; }
+@media (max-width: 960px) { .blog-post .blog-article { --measure: 36rem; font-size: 1.0625rem; } }
+@media (min-width: 601px) and (max-width: 960px) { .blog-post .blog-article { font-size: 1.125rem; } }
 .blog-article > :is(p, ul, ol, blockquote, figure, h2, h3, .article-end) { max-width: var(--measure); }
 .blog-article > p { hyphens: manual; }
-/* the notes' lead and drop initial (site.css .article > p.lead), a step calmer: a post's first paragraph is often its
-   whole abstract. Where the browser sets initial letters (Chrome, Safari) the initial sinks exactly three lines. */
-.blog-article > p.lead { margin-bottom: 1.25em; font-size: 1.2rem; line-height: 1.62; }
+/* the notes' lead and drop initial (site.css .article > p.lead, research.css): the size steps up, the ink darkens.
+   Where the browser sets initial letters (Chrome, Safari) the initial sinks exactly two lines. */
+.blog-article > p.lead { margin-bottom: 1.25em; color: var(--fg); line-height: 1.55; }
 .blog-article > p.lead::first-letter { font-size: 3.3em; line-height: .74; margin: .07em .1em 0 -.02em; }
 @supports (initial-letter: 2) or (-webkit-initial-letter: 2) {
   .blog-article > p.lead::first-letter { float: none; margin: 0 .16em 0 0; font-size: inherit; line-height: inherit; -webkit-initial-letter: 2; initial-letter: 2; }
@@ -334,8 +355,7 @@
 .blog-article figure img { mix-blend-mode: multiply; }
 .blog-article .blog-hero-img { margin-top: 0; }
 .blog-article figcaption { padding: 12px 4px 2px; border-top: 0; font: 400 .84rem/1.5 var(--sans); letter-spacing: 0; color: var(--fg-3); text-wrap: pretty; }
-.blog-article .fig-n { display: inline-flex; align-items: center; gap: 10px; margin-right: 12px; font: 500 var(--mono-xs)/1 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-2); vertical-align: 1px; }
-.blog-article .fig-n::after { content: ""; width: 18px; height: 1px; background: var(--accent); }
+.blog-article .fig-n { margin-right: .75em; font: 500 .75rem/1 var(--mono); letter-spacing: .02em; text-transform: none; color: var(--fg); white-space: nowrap; } /* the register's mark (site.css .fc-n, r2): 'Fig. 2', no rule */
 /* lab blog-moment: the plate's quote links to its sentence in the article; the sentence carries a green underline (the
    plate's one green element) and a mark back to the plate; arriving there washes it in the site's highlighter */
 .post-plate .pp-q a { color: inherit; text-decoration: underline dotted rgba(245, 242, 236, .24); text-decoration-thickness: 1px; text-underline-offset: 5px; transition: text-decoration-color .3s var(--ease), color .3s var(--ease); }
@@ -358,6 +378,18 @@
 /* the pager: two-line serif titles keep a straight left edge in both cells (the arrow says which way) */
 .blog-post .pager-card.next { text-align: left; justify-items: start; }
 .blog-post .pager-card h3 { max-width: 30ch; }
+/* as on the notes (research.css, r2): hover and focus draw the green rule along the card's top edge, from the side the
+   card points to, and light its label (v2's hover only changed the ground) */
+.blog-post .pager-card { position: relative; }
+.blog-post .pager-card::before { content: ""; position: absolute; left: -1px; right: 0; top: -1px; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .45s var(--ease); }
+.blog-post .pager-card.next::before { transform-origin: right; }
+.blog-post .pager-card .k { transition: color .25s var(--ease); }
+.blog-post .pager-card:focus-visible::before { transform: none; }
+.blog-post .pager-card:focus-visible .k { color: var(--signal-ink); } /* the label in --signal-ink: 5.3:1 on paper-2 (--signal is 4.3) */
+@media (hover: hover) {
+  .blog-post .pager-card:hover::before { transform: none; }
+  .blog-post .pager-card:hover .k { color: var(--signal-ink); }
+}
 
 /* ---------- print ---------- */
 @media print {
@@ -370,6 +402,6 @@
 }
 @media print { .blog-article .plate-back { display: none; } .blog-article .plate-src { background: none; } .lib-plate { max-width: 70%; break-inside: avoid; } .lib-plate * { animation: none !important; } }
 @media (prefers-reduced-motion: reduce) {
-  .bp-rings, .sr-date::before, .blog-row, .br-min .arr { transition: none; }
+  .bp-rings, .sr-date::before, .blog-row, .br-min .arr, .blog-post .pager-card::before { transition: none; }
   .series-rail.will-reveal > li::before { transform: none; }
 }

@@ -23,19 +23,34 @@ CACHE = Path(str(DATA)) / "og_cards.json"
 TOP = {"index.html": "Agent swarms", "platform.html": "Platform", "lifecycles.html": "Lifecycles", "evidence.html": "Proof",
        "trust.html": "Trust & governance", "research.html": "Research", "company.html": "Company", "access.html": "Request access"}
 TAGLINE = "An AI agentic company · Lifecycle 01 live on real capital"  # v2x: the CEO's descriptor; C-009's status wording
+# v2x r2 (copy): each top-level card has its own sub-line, written to fit two lines and taken from the page's own words
+# (no claim stronger than the page; the foot already says Lifecycle 01 is live). Notes and posts keep their og:description,
+# clamped at a word boundary with an ellipsis.
+SUB = {"index.html": "A lifecycle runs from the first signal to a record a regulator can audit.",
+       "platform.html": "A typed schema between the agents that decide and the code that executes.",
+       "lifecycles.html": "In between, it is multi-party, regulated, structured, exception-heavy, gated and audit-bound.",
+       "evidence.html": "Lifecycle 01: a limited proof of concept on live capital. Not a forecast.",
+       "trust.html": "Custody never moves, and every transition is written to a ledger you can replay.",
+       "research.html": "Ten notes on the research behind swarm-based agentic lifecycles.",
+       "company.html": "We build the end-to-end infrastructure on which swarms of domain-specific AI agents run the world’s high-value lifecycles.",
+       "access.html": "Four paths. This page writes the email from what you enter."}
 
 def text(s): return re.sub(r"\s+", " ", H.unescape(re.sub(r"<[^>]+>", " ", s))).strip()
+# v2x r2 (integrate): the pages write a display hyphen as <span class="hy">-</span> (system r2, a11y); text() turns tags into
+# spaces, which printed "Post - Training" on seven cards: the span is unwrapped first, so the card reads "Post-Training"
+def unhy(s): return re.sub(r'<span class="hy">([^<]*)</span>', lambda m: m.group(1), s)
 def meta(s, prop):
     m = re.search(r'<meta property="%s" content="([^"]*)">' % re.escape(prop), s)
     return H.unescape(m.group(1)) if m else ""
 
 def headline(s):
     """The page's <h1>, keeping only what the card styles: .thin (green) and <em> (italic)."""
-    h = re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S).group(1)
+    h = unhy(re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S).group(1))
+    h = re.sub(r'<span class="nowrap">(.*?)</span>', lambda m: m.group(1).replace(" ", "\x05"), h, flags=re.S)  # the page's own unbreakable phrases
     h = re.sub(r'<span class="thin">(.*?)</span>', lambda m: "\x01" + m.group(1) + "\x02", h, flags=re.S)
     h = re.sub(r"<em>(.*?)</em>", lambda m: "\x03" + m.group(1) + "\x04", h, flags=re.S)
     h = H.escape(text(h), quote=False)
-    return h.replace("\x01", '<span class="g">').replace("\x02", "</span>").replace("\x03", "<em>").replace("\x04", "</em>")
+    return h.replace("\x01", '<span class="g">').replace("\x02", "</span>").replace("\x03", "<em>").replace("\x04", "</em>").replace("\x05", "\u00a0")
 
 def card(rel):
     s = (ROOT / rel).read_text(encoding="utf-8")
@@ -52,8 +67,9 @@ def card(rel):
         foot = "OpenEXA Blog" + (f" · {mins.group(1)} min read" if mins else "")
     # v2x: a description that opens with the page's h1 (Lifecycles) would print it twice; the sub-line starts after it
     flat = lambda x: x.replace("‐", "-").replace(" ", " ")
-    sub, h1 = meta(s, "og:description"), flat(text(re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S).group(1)))
+    sub, h1 = meta(s, "og:description"), flat(text(unhy(re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S).group(1))))
     if flat(sub).startswith(h1) and len(sub) > len(h1): sub = sub[len(h1):].lstrip()
+    sub = SUB.get(rel, sub)
     return {"rel": rel, "kicker": kicker, "headline": headline(s), "sub": sub, "foot": foot}
 
 def pages():
@@ -87,8 +103,7 @@ body { position: relative; background: #0E1512; color: #F5F2EC; font-family: 'In
 .h { font-family: 'Instrument Serif', serif; font-weight: 400; line-height: 1; letter-spacing: -.012em; text-wrap: balance; }
 .h .g { color: #4FCB93; }
 .h em { font-style: italic; }
-.s { margin-top: 30px; width: 640px; font-size: 25px; line-height: 1.4; color: rgba(245,242,236,.78);
-  display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; text-wrap: pretty; }
+.s { margin-top: 30px; width: 640px; font-size: 25px; line-height: 1.4; color: rgba(245,242,236,.78); text-wrap: pretty; }
 .foot { position: absolute; left: 72px; right: 72px; bottom: 48px; display: flex; justify-content: space-between; }
 .foot i { display: inline-block; width: 7px; height: 7px; border-radius: 50%%; background: #4FCB93; margin-right: 14px; vertical-align: 2px; }
 </style></head><body>
@@ -97,16 +112,31 @@ body { position: relative; background: #0E1512; color: #F5F2EC; font-family: 'In
 <div class="copy"><h1 class="h">%(headline)s</h1><p class="s">%(sub)s</p></div>
 <div class="foot"><span><i></i>%(foot)s</span><span>openexa.com</span></div>
 <script>
-  // largest headline size that fits in three lines (four once it is small); the sub-line takes the height left, up to three lines
-  const h = document.querySelector('.h'), s = document.querySelector('.s'), box = document.querySelector('.copy');
-  let size = 96;
-  const lines = () => Math.round(h.getBoundingClientRect().height / size);
-  h.style.fontSize = size + 'px';
-  while (size > 44 && (lines() > (size > 70 ? 3 : 4) || h.scrollWidth > h.clientWidth)) { size -= 2; h.style.fontSize = size + 'px'; }
-  const left = box.clientHeight - h.getBoundingClientRect().height - 30, lh = 25 * 1.4;
-  const n = Math.max(0, Math.min(3, Math.floor(left / lh)));
-  if (n === 0) s.remove(); else s.style.webkitLineClamp = n;
-  document.fonts.ready.then(() => document.body.dataset.ready = '1');
+  // measured once the faces are in: the largest headline size that fits in three lines (four once it is small); a sub-line
+  // written to fit two lines stays whole (the headline gives up a little size for it, never under 72 px); a longer one
+  // takes the height left, up to three lines, cut at a word with an ellipsis (never mid-word, never "...")
+  document.fonts.ready.then(() => {
+    const h = document.querySelector('.h'), s = document.querySelector('.s'), box = document.querySelector('.copy');
+    const lh = 25 * 1.4, set = (v) => { size = v; h.style.fontSize = v + 'px'; };
+    let size = 96; set(96);
+    const lines = () => Math.round(h.getBoundingClientRect().height / size);
+    const room = () => Math.floor((box.clientHeight - h.getBoundingClientRect().height - 30) / lh);
+    while (size > 44 && (lines() > (size > 70 ? 3 : 4) || h.scrollWidth > h.clientWidth)) set(size - 2);
+    const need = Math.round(s.getBoundingClientRect().height / lh);
+    if (need <= 2) while (size > 72 && room() < need) set(size - 2);
+    const n = Math.max(0, Math.min(3, room()));
+    if (n === 0) s.remove();
+    else if (need > n) {
+      const full = s.textContent, words = full.split(' ');
+      while (words.length > 1 && s.getBoundingClientRect().height > n * lh + 1) { words.pop(); s.textContent = words.join(' ').replace(/[ ,;:·—–-]+$/, '') + '…'; }
+      // a whole sentence that fits reads better than a clipped one ("… any particular product. It…"): take the longest
+      // that fits when it keeps at least half of the clipped text (a sentence end: lower-case letter or digit, then a capital)
+      const cut = s.textContent, fits = (t) => { s.textContent = t; return s.getBoundingClientRect().height <= n * lh + 1; };
+      const whole = [...full.matchAll(/[a-z0-9)’”][.?!](?=\\s+[A-Z“‘])/g)].map(m => full.slice(0, m.index + 2)).reverse().find(fits);
+      s.textContent = whole && whole.length >= cut.length / 2 ? whole : cut;
+    }
+    document.body.dataset.ready = '1';
+  });
 </script>
 </body></html>"""
 

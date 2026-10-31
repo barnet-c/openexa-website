@@ -78,7 +78,17 @@ LAYOUT = """() => {
 
 # ---------------------------------------------------------------- shared helpers for the checks
 LOADED = "(() => { const l = document.querySelector('.loader'); return !l || document.documentElement.classList.contains('is-loaded'); })()"
-NUMW = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty".split()
+# v2x r2 (home, two-phase start): home.js adds loader, story and site at the first paint and the six instruments (swarm,
+# ledger, chain, arch, lane, proof) on 'oxa:loaded', so 'is-loaded' comes before they have run. A check that acts on an
+# instrument right after load waits for them: every script home.js lists has run (its load event, or failed). The live
+# ledger mounts only when it comes within 1.5 screens (ledger.js), so a check that uses it waits for its .lt-ready there.
+SCRIPTS_RAN = """(() => { const R = window.__oxaRan = window.__oxaRan || [];
+  const on = e => { const t = e.target; if (t && t.tagName === 'SCRIPT' && t.getAttribute('src')) R.push(t.getAttribute('src')); };
+  document.addEventListener('load', on, true); document.addEventListener('error', on, true); })();"""
+HOME_ENGINES = """(() => { const tag = document.querySelector('script[data-after-paint]'); if (!tag) return true;
+  const want = tag.getAttribute('data-after-paint').split(/\\s+/).filter(Boolean), ran = window.__oxaRan || [];
+  return want.every(s => ran.includes(s)); })()"""
+NUMW ="zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty".split()
 words = lambda n: NUMW[n] if 0 <= n < len(NUMW) else str(n)
 capw = lambda t: t[:1].upper() + t[1:]
 # the record's counts by the rule check_static, proof.js and story.js apply ('>N' with N >= floor is above it; a bare N must exceed it)
@@ -221,14 +231,18 @@ async def close_leftovers(drop_shared=False):
 
 
 async def open_page(b, path, w, h, *, dpr=1, touch=False, reduced=False, js=True, init=None, errs=None, loaded=True):
-    """a fresh context at w x h, the page loaded (for the home page: until the loader has finished)"""
+    """a fresh context at w x h, the page loaded (for the home page: until the loader has finished and its six
+    instruments have started, HOME_ENGINES)"""
     ctx = await b.new_context(viewport={"width": w, "height": h}, device_scale_factor=dpr, has_touch=touch, is_mobile=touch,
                               reduced_motion="reduce" if reduced else "no-preference", java_script_enabled=js)
+    home = js and path.split("#")[0].split("?")[0] in ("index.html", "")
+    if home: await ctx.add_init_script(SCRIPTS_RAN)
     if init: await ctx.add_init_script(init)
     pg = await ctx.new_page()
     if errs is not None: pg.on("pageerror", lambda e: errs.append("PAGEERROR " + str(e)))
     await pg.goto(f"{BASE}/{path}", wait_until="load")
     if js and loaded: await until(pg, LOADED, 15000)
+    if home and loaded: await until(pg, HOME_ENGINES, int(15000 * max(1.0, MODE["throttle"])))  # a check that needs them asserts them
     return ctx, pg
 
 
@@ -567,12 +581,20 @@ async def interior(b):
     await ctx.close()
 
 
+# the replay's selected record and its first broken one (ids), and whether that one lies inside the strip's view
+TT_FIRST = """(() => { const l = document.querySelector('[data-ledger=replay]'), v = l.querySelector('.lt-view'), f = l.querySelector('.lt-rec.is-broken'), s = l.querySelector('.lt-rec.is-sel');
+  const id = el => el ? ((el.querySelector('.lt-id') || {}).textContent || '').trim() : null, vr = v.getBoundingClientRect(), fr = f ? f.getBoundingClientRect() : null;
+  return { first: id(f), sel: id(s), inView: !!fr && fr.left >= vr.left - 1 && fr.right <= vr.right + 1 }; })()"""
+
+
 @check
 async def trust_tamper(b):
     """Trust's record can be broken and Verify shows it (v2x tests pass, 30 Oct; EVOLVE Trust: 'Try to change the past'):
     typing over a record voids the verdict ('Edited · not verified'); Verify then fails from the edited record on (the
     state names the first broken record and how many of the nine no longer verify, and exactly that many records, the
-    last ones in order, are marked broken); Restore puts the excerpt back and Verify holds again ('8 of 8 links hold').
+    last ones in order, are marked broken) and selects that first broken record; Restore puts the excerpt back and Verify
+    holds again ('8 of 8 links hold'). v2x r2: at 1024x768, from the hero's way in, Enter in the edited field verifies,
+    the cause is selected inside the strip's view, and Tab from the edited field reaches Verify.
     The hashes are real SHA-256 computed in the page, so this is the chain's own tamper evidence, not a canned state."""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     pg = await ctx.new_page(); errs = []
@@ -595,10 +617,11 @@ async def trust_tamper(b):
     first = next((k for k, x in enumerate(marks) if x["edited"]), None)
     assert m and len(broken) == int(m[2]) and broken == list(range(9 - len(broken), 9)), ("the broken marks do not match the verdict", said, marks)
     assert first is not None and broken[0] == first and marks[first]["id"].lower().lstrip("#") == m[1].lower(), ("the chain must break at the edited record", said, marks)
+    # v2x r2 (proof; r2-mobile): Verify selects the cause, the first broken record (the inspector opens on it)
+    fb = await pg.evaluate(TT_FIRST)
+    assert fb["sel"] and fb["sel"] == fb["first"], ("after a failing Verify the selected record must be the first broken one", fb)
     # v2x r1 (proof; jury A11, Trust's screenshot moment): every broken record shows the hash it produces now beside its
     # seal, and the inspector, on a broken record, shows that same hash
-    if not await pg.evaluate("!!document.querySelector('[data-ledger=replay] .lt-rec.is-sel.is-broken')"):
-        await pg.locator("[data-ledger=replay] .lt-rec.is-broken").first.click(); await pg.wait_for_timeout(300)
     nw = await pg.evaluate("""(() => { const l = document.querySelector('[data-ledger=replay]'), s = l.querySelector('.lt-rec.is-sel.is-broken'), t = s && s.querySelector('.lt-now');
       return { now: l.querySelectorAll('.lt-now').length, broken: l.querySelectorAll('.lt-rec.is-broken').length, sel: t ? t.textContent.trim() : null,
                insp: (l.querySelector('[data-f="hash"] b') || {}).textContent || null }; })()""")
@@ -610,8 +633,34 @@ async def trust_tamper(b):
     await expect(state).to_contain_text("Verified here · 8 of 8 links hold", timeout=15000)
     await expect(lt.locator(".lt-rec.is-broken")).to_have_count(0)
     assert not errs, errs
-    print(f"trust_tamper: an edit voids the verdict; Verify fails from the edited record ({said.strip()}); {nw['now']} records show the hash they produce now, the inspector the same {nw['sel']}; Restore clears them, then Verify: 8 of 8 links hold")
     await ctx.close()
+    # v2x r2 (proof; r2-mobile, r2-a11y): at 1024x768, from the hero's way in: Enter in the edited field verifies; the cause
+    # (the first broken record) is selected and lies inside the strip's view (it had scrolled off the left edge); Restore
+    # holds; then Tab from the edited field reaches Verify
+    ctx = await b.new_context(viewport={"width": 1024, "height": 768}, has_touch=True)
+    pg = await ctx.new_page()
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    await pg.goto(f"{BASE}/trust.html", wait_until="load")
+    lt, state = pg.locator("[data-ledger=replay]"), pg.locator("[data-ledger=replay] [data-lt-state]")
+    await expect(lt.locator(".lt-rec")).to_have_count(9)
+    await pg.locator("a[data-lt-go]").click(); await pg.wait_for_timeout(1500)
+    await pg.keyboard.type("council · approved", delay=15)
+    await expect(state).to_contain_text(re.compile(r"edited · not verified", re.I))
+    await pg.keyboard.press("Enter")
+    await expect(state).to_contain_text(re.compile(r"Chain broken at #[0-9a-f]{4}", re.I), timeout=15000)
+    await pg.wait_for_timeout(900)  # the strip scrolls the cause into view
+    fb2 = await pg.evaluate(TT_FIRST)
+    assert fb2["sel"] and fb2["sel"] == fb2["first"] and fb2["inView"], ("1024x768: Enter verifies, and the first broken record is selected inside the strip's view", fb2)
+    await pg.locator("[data-lt-restore]").click()
+    await expect(lt.locator(".lt-rec.is-edited")).to_have_count(0)
+    await pg.locator("[data-lt-edit]").focus(); await pg.keyboard.press("Enter"); await pg.wait_for_timeout(400)
+    await pg.keyboard.type("x", delay=10); await pg.keyboard.press("Tab"); await pg.wait_for_timeout(200)
+    tab = await pg.evaluate("(() => { const a = document.activeElement; return !!a && a.hasAttribute('data-lt-verify'); })()")
+    assert tab, "1024x768: Tab from the edited field does not reach Verify"
+    assert not errs, errs
+    await ctx.close()
+    print(f"trust_tamper: an edit voids the verdict; Verify fails from the edited record ({said.strip()}) and selects it; {nw['now']} records show the hash they produce now, the inspector the same {nw['sel']}; "
+          f"Restore clears them, then Verify: 8 of 8 links hold; 1024x768: Enter verifies, the cause {fb2['sel']} selected inside the strip, Tab reaches Verify")
 
 
 @check
@@ -638,7 +687,8 @@ async def access(b):
     the name last; the attestation only when the box is ticked; no 'key: value' lines); the whole mailto URL stays within
     1,900 characters, a long message shortened with its note; the result panel takes focus and shows the letter
     addressed to 'OpenEXA' (the inbox is never visible text); edit restores the input; on a phone the four choices carry
-    their descriptions (the path list above is not drawn) and a link to a path lands on its choice"""
+    their descriptions (the path list above is not drawn) and a link to a path lands on its choice; on a phone held
+    sideways (844x390) the letter beside the form fits the screen and the line being typed stays in view (v2x r2)"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     pg = await ctx.new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -700,9 +750,27 @@ async def access(b):
     assert ph["bottom"] > 0 and ph["top"] < ph["vh"] and ph["sw"] <= 391, ("phone: #investors did not land on its choice", ph)
     assert not errs, errs
     await ctx.close()
+    # v2x r2 (company; r2-mobile): a phone on its side (844x390): the letter beside the form never outgrows the screen, and
+    # the line being typed stays inside the letter's body and on screen (the letter was 527-547 px tall in a 390 px screen)
+    ctx = await b.new_context(viewport={"width": 844, "height": 390}, has_touch=True, is_mobile=True, device_scale_factor=2)
+    pg = await ctx.new_page()
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    await pg.goto(f"{BASE}/access.html", wait_until="load"); await pg.wait_for_timeout(600)
+    side = []
+    for sel, txt in (("#name", "Jordan Avery"), ("#email", "jordan@fund.example")):
+        await pg.locator(sel).click(); await pg.keyboard.type(txt, delay=5); await pg.wait_for_timeout(250)
+        side.append(await pg.evaluate("""(() => { const s = document.querySelector('.access-letter .sticky'), b = document.querySelector('[data-letter-body]'), h = b && b.querySelector('.slot.is-here');
+          const sr = s ? s.getBoundingClientRect() : null, br = b.getBoundingClientRect(), hr = h ? h.getBoundingClientRect() : null;
+          return { vh: innerHeight, sticky: sr && sr.height ? [Math.round(sr.top), Math.round(sr.bottom)] : null, here: h ? h.dataset.slot : null,
+            inView: !!hr && hr.top >= br.top - 1 && hr.bottom <= br.bottom + 1 && hr.top >= -1 && hr.bottom <= innerHeight + 1 }; })()"""))
+    s1, s2 = side
+    assert s1["sticky"] and s2["sticky"] and all(x["sticky"][1] <= x["vh"] + 1 for x in side), ("844x390: the letter beside the form is taller than the screen", side)
+    assert s2["here"] == "email" and s2["inView"], ("844x390: after typing the email, the line being filled is not inside the letter's body and the screen", side)
+    assert not errs, errs
+    await ctx.close()
     print(f"access: four paths preselect (load + hashchange); the draft to the data-contact inbox is a letter (attestation only when ticked), "
           f"{len(href)} of 1,900 characters with a long message shortened; the panel shows it to 'OpenEXA', focus moves, no inbox on screen; "
-          f"edit restores; 390: choices with descriptions, #investors lands on its choice")
+          f"edit restores; 390: choices with descriptions, #investors lands on its choice; 844x390: the letter fits the screen and keeps the typed line in view")
 
 
 @check
@@ -1307,18 +1375,28 @@ async def nav_handoff(b):
 # ---- the ledger panel never moves the page (LG2)
 @check
 async def ledger_height(b):
-    """with [data-ledger=live] centred and its stream running, document.body.scrollHeight stays within 1 px for 6 s,
-    at 1440 and at 390"""
+    """with [data-ledger=live] centred and its stream running, document.body.scrollHeight stays within 1 px for 6 s and
+    the layout shifts in those 6 s (no input) sum to < 0.01, at 1440 and at 390"""
     bad = []
     for w, h in ((1440, 900), (390, 844)):
         ctx, pg = await open_page(b, "index.html", w, h)
         await pg.evaluate("document.querySelector('[data-ledger=live]').scrollIntoView({block: 'center', behavior: 'instant'})")
+        # v2x r2 (home): the stream mounts as it comes near (ledger.js); its track's role and orientation are set then
+        if not await until(pg, "document.querySelector('[data-ledger=live]').classList.contains('lt-ready')", 8000 if MODE["throttle"] <= 1 else 30000):
+            bad.append(f"index.html@{w}x{h}: the stream did not mount (.lt-ready) within 8 s of coming into view")
         running = await until(pg, "(() => { const t = document.querySelector('[data-ledger=live] [data-lt-state]').textContent; return /running|live/i.test(t) && !/paus/i.test(t) ? t : ''; })()", 8000)
         if not running: bad.append(f"index.html@{w}x{h}: the stream is not running: {await pg.evaluate('document.querySelector(\"[data-ledger=live] [data-lt-state]\").textContent')!r}")
         await pg.wait_for_timeout(1500)
+        # v2x r2 (proof; r2-motion): nothing inside the page shifts either while the stream runs with no input (the phone
+        # column used to snap one row a tick: CLS 0.33 in 12 s at 390); the layout shifts in the same 6 s sum to < 0.01
+        await pg.evaluate("""(() => { const S = window.__lsh = []; new PerformanceObserver(l => l.getEntries().forEach(e => { if (!e.hadRecentInput)
+          S.push([Math.round(e.startTime), +e.value.toFixed(4), (e.sources || []).slice(0, 2).map(s => s.node && s.node.nodeType === 1 ? s.node.tagName + '.' + String(s.node.className || '').split(' ')[0] : '?')]); })).observe({ type: 'layout-shift', buffered: false }); })()""")
         hs = await pg.evaluate("async () => { const out = []; for (let k = 0; k < 60; k++) { out.push(document.body.scrollHeight); await new Promise(r => setTimeout(r, 100)); } return out; }")
         moved = [(k * 100, v) for k, v in enumerate(hs) if abs(v - hs[0]) > 1]
         if moved: bad.append(f"index.html@{w}x{h}: body.scrollHeight {hs[0]} moved {len(moved)} times in 6 s (range {min(hs)}-{max(hs)}), e.g. {moved[:4]}")
+        lsh = await pg.evaluate("window.__lsh")
+        cls = sum(x[1] for x in lsh)
+        if cls >= 0.01: bad.append(f"index.html@{w}x{h}: layout shifts while the stream runs sum to {cls:.4f} in 6 s (budget < 0.01): {sorted(lsh, key=lambda x: -x[1])[:4]}")
         # v2x r1 (home; r1 mobile and fidelity): on a phone the stream is a column of four equal records, newest on top,
         # with the hash blocks folded; on a desktop the fold is open and its summary not drawn
         col = await pg.evaluate("""(() => { const l = document.querySelector('[data-ledger=live]'), t = l.querySelector('.lt-track'), hx = document.querySelector('[data-lt-hx]');
@@ -1332,7 +1410,7 @@ async def ledger_height(b):
             bad.append(f"index.html@{w}x{h}: the inspector's hash links are folded or their summary is drawn on a desktop: {col}")
         await ctx.close()
     assert not bad, "ledger_height:\n  " + "\n  ".join(bad)
-    print("ledger_height: body.scrollHeight constant (±1 px) over 6 s with the stream running, at 1440 and 390; at 390 a column of four equal records with the hash links folded, at 1440 the links open")
+    print("ledger_height: body.scrollHeight constant (±1 px) and layout shifts < 0.01 over 6 s with the stream running, at 1440 and 390; at 390 a column of four equal records with the hash links folded, at 1440 the links open")
 
 
 # ---- the overture: re-entry, the copy relay, the numeral (OV8, OV4)
@@ -1432,7 +1510,7 @@ PHONE_LAB = "(() => { " + EFF + """
   return { issues, labs: labs.length, boxes: labs.map(l => [l.t, l.bx]), dayGaps: days.slice(1).map((d, k) => +(d.l - days[k].r).toFixed(1)),
     cap3: c3 ? { t: c3.t, inside: c3.bx.l >= 0 && c3.bx.t >= 0 && c3.bx.r <= innerWidth && c3.bx.b <= innerHeight, bx: [c3.bx.l, c3.bx.t, c3.bx.r, c3.bx.b].map(Math.round) } : null };
 })()"""
-PHONES = [(390, 664), (375, 667), (360, 780), (320, 640), (844, 390), (320, 568), (667, 375), (740, 360)]  # round 2 adds the last three
+PHONES = [(390, 664), (375, 667), (360, 780), (320, 640), (844, 390), (320, 568), (667, 375), (740, 360), (568, 320)]  # round 2 adds 320x568, 667x375, 740x360; v2x r2 568x320 (an iPhone SE on its side)
 INSP_BOX = r"""(tapped) => { const vis = el => { let o = 1; for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return 0; o *= +cs.opacity; } return o; };
   const bx = el => { const r = el.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; };
   const hit = (a, c) => Math.min(a[2], c[2]) - Math.max(a[0], c[0]) > 1 && Math.min(a[3], c[3]) - Math.max(a[1], c[1]) > 1;
@@ -1464,13 +1542,13 @@ async def callout_pixels(pg, boxes):
 
 @check
 async def overture_phones(b):
-    """at 390x664, 375x667, 360x780, 320x640, 844x390, 320x568, 667x375 and 740x360 with touch, at each scene's rest: no
+    """at 390x664, 375x667, 360x780, 320x640, 844x390, 320x568, 667x375, 740x360 and 568x320 with touch, at each scene's rest: no
     visible callout box crosses the scene index, 'Pause motion', the nav, a visible beat's text or another callout; with
     the callouts hidden, under 2% of the stage's pixels inside each callout's box are brighter than luminance 120 (no
     structure under a callout); Plate 03's caption lies inside the viewport and says 'Illustrative'; at 320x640 adjacent
     S4 day tags are at least 3 px apart; at 844x390 and 667x375, the inspector opened by tapping each S1 ring and S2
     plate callout crosses none of .story-bar, .story-idx, .story-motion or another callout (OV1, OV10, D14; round 2:
-    OV-R2-1, OV-R2-4, OV-R2-5)"""
+    OV-R2-1, OV-R2-4, OV-R2-5; v2x r2: 568x320, where a plate caption crossed the headline, r2-a11y M)"""
     bad = []
     for w, h in PHONES:
         ctx, pg = await open_page(b, "index.html", w, h, touch=True)
@@ -2170,13 +2248,37 @@ SHEET_FIT = """(() => { const s = document.querySelector('#site-menu');
   const over = [...s.querySelectorAll('a, button')].filter(a => a.getClientRects().length).map(a => [a.textContent.trim().slice(0, 18), Math.round(a.getBoundingClientRect().left), Math.round(a.getBoundingClientRect().right)])
     .filter(l => l[2] > innerWidth + 0.5 || l[1] < -0.5);
   return { sw: s.scrollWidth, cw: s.clientWidth, over }; })()"""
+# v2x r2 (research's probe, work/research/r2/probe_r2.py "zoom"): the first screen's own text boxes in main (elements
+# with a text node of their own, drawn, opacity > .05); figure labels (.fl) count only while their layer is on and they are
+# not leaving. over: boxes past the right edge; hits: two boxes that cross (neither contains the other); lede: the first
+# .lede's width; grid: the number of columns of the blog hero's grid (null elsewhere)
+REFLOW_TEXT = """(() => {
+  const vw = innerWidth, over = [], boxes = [];
+  const vis = el => { const r = el.getBoundingClientRect(), cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && +cs.opacity > 0.05 ? r : null; };
+  document.querySelectorAll('main *').forEach(el => {
+    if (![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) return;
+    if (el.closest('.fl') && (el.closest('.fl.is-out') || !el.closest('.fig-labels.is-on'))) return;
+    const r = vis(el); if (!r || r.bottom < 0 || r.top > innerHeight) return;
+    if (r.right > vw + 0.5) over.push([String(el.className || el.tagName).slice(0, 30), Math.round(r.right), el.textContent.trim().slice(0, 40)]);
+    boxes.push([el, r]);
+  });
+  const hits = [];
+  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+    const [a, ra] = boxes[i], [c, rc] = boxes[j]; if (a.contains(c) || c.contains(a)) continue;
+    if (ra.left < rc.right - 1 && rc.left < ra.right - 1 && ra.top < rc.bottom - 1 && rc.top < ra.bottom - 1) hits.push([a.textContent.trim().slice(0, 30), c.textContent.trim().slice(0, 30)]);
+  }
+  const lede = document.querySelector('main .lede'), g = document.querySelector('.blog-hero-grid');
+  return { over, hits: hits.slice(0, 8), lede: lede ? Math.round(lede.getBoundingClientRect().width) : null,
+           grid: g ? getComputedStyle(g).gridTemplateColumns.split(' ').filter(Boolean).length : null };
+})()"""
 
 
 @check
 async def reflow_400(b):
     """at 320x256 (a 1280x1024 screen at 400%): no horizontal scroll on the seven hand-written pages
     (scrollWidth <= 320), and the overture either shows its static sequence (html.story-tiny) or, at each scene's rest,
-    no visible callout crosses the copy"""
+    no visible callout crosses the copy; v2x r2: on Research, notes 06 and 09, the blog index and a post, no sideways
+    scroll, no first-screen text past the edge or crossing other text, the lede >= 260 px, the blog hero one column"""
     bad = []
     for name in ("index", "platform", "lifecycles", "evidence", "trust", "company", "access"):
         ctx, pg = await open_page(b, f"{name}.html", 320, 256)
@@ -2198,8 +2300,25 @@ async def reflow_400(b):
                 hits = [x for x in m["issues"] if " x beat " in x]
                 if hits: bad.append(f"index.html@320x256 scene 0{i} (no story-tiny): {hits[:3]}")
         await ctx.close()
+    # v2x r2 (research, blog; r2-a11y serious): the generated pages too. A sideways-phone two-up hero also fired at 400 %
+    # zoom (labels over titles, a hedge cut at the edge, ledes in a 151 px column) because this check opened only the
+    # seven hand-written pages. At 320x256 (DPR 4): no horizontal scroll; no visible first-screen text in main past the
+    # right edge; no two first-screen text boxes cross (a figure label counts only while its layer is on and it is not
+    # leaving); the lede is at least 260 px wide; the blog's hero is one column.
+    for name in ("research", "research/06-post-training-on-a-rulebook", "research/09-lifecycle-01-ten-sessions", "blog/index", "blog/in-search-gen-ai-business-model"):
+        ctx, pg = await open_page(b, f"{name}.html", 320, 256, dpr=4)
+        await pg.wait_for_timeout(2600)  # the figure's labels come and go on their own clock
+        sw = await pg.evaluate("document.documentElement.scrollWidth")
+        if sw > 320: bad.append(f"{name}.html@320x256: scrollWidth {sw}")
+        r = await pg.evaluate(REFLOW_TEXT)
+        if r["over"]: bad.append(f"{name}.html@320x256: first-screen text past the right edge: {r['over'][:3]}")
+        if r["hits"]: bad.append(f"{name}.html@320x256: first-screen text boxes cross: {r['hits'][:3]}")
+        if r["lede"] is not None and r["lede"] < 260: bad.append(f"{name}.html@320x256: the lede is {r['lede']} px wide (at least 260)")
+        if r["grid"] is not None and r["grid"] != 1: bad.append(f"{name}.html@320x256: the blog hero has {r['grid']} columns (one at 400 % zoom)")
+        await ctx.close()
     assert not bad, "reflow_400:\n  " + "\n  ".join(bad)
-    print("reflow_400: the seven pages reflow at 320x256 (the menu sheet too, on Home, Platform and Access); the overture is the static sequence or keeps its callouts off the copy")
+    print("reflow_400: the seven pages reflow at 320x256 (the menu sheet too, on Home, Platform and Access); the overture is the static sequence or keeps its callouts off the copy; "
+          "Research, notes 06 and 09, the blog index and a post: no sideways scroll, no text past the edge or over other text, ledes >= 260 px, the blog hero one column")
 
 
 # ---- accessible names contain the visible label (WCAG 2.5.3; SW-R2-3, LC-R2-3, NV-R2-5)

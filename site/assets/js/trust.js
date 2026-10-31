@@ -18,7 +18,7 @@
   const T = root && root.oxaTrace;
   if (!T) return;
   const { X, recs, els, track, view, ui, F } = T;
-  const canEdit = !!ui.edit && !!F.ev && !!F.d;
+  const canEdit = !!ui.edit && !!F.ev && !!F.d, cue = root.querySelector('[data-lt-enter]');
 
   /* ---- the records as written, and what the visitor has done to them since ---- */
   const ORIG = new Map();
@@ -130,8 +130,11 @@
     const done = ok === n ? `Verified here · ${links} of ${links} links hold`
       : canEdit && first >= 0 ? `Chain broken at ${recs[first].id} · ${n - ok} of ${n} records no longer verify` : `${n - ok} of ${n} records fail verification`;
     X.dirty = false; brokenAt = -1; unbreak();
+    // the sweep pans with the walk; a broken chain stops one record before the break, which is then selected (r2)
+    const cause = canEdit && first >= 0 ? els.get(recs[first].seq) : null, k = cause ? lis.indexOf(cause) : -1;
     const m = T.maxScroll(), lead = !reduced && m > 4 && view.scrollLeft > 4 ? 280 : 0;
-    if (m > 4) { glide(view.scrollLeft, 0, lead); sweep.push(setTimeout(() => glide(0, m, lis.length * STEP + 240), lead)); }
+    const to = k >= 0 ? Math.max(0, Math.min(m, Math.round(xOf(lis[Math.max(0, k - 1)])))) : m;
+    if (m > 4) { glide(view.scrollLeft, 0, lead); sweep.push(setTimeout(() => glide(0, to, (k >= 0 ? k + 1 : lis.length) * STEP + 240), lead)); }
     lis.forEach((li, i) => {
       const a = res[+li.dataset.seq - recs[0].seq], bad = !!a && !a.ok;
       li.classList.remove('is-verified'); void li.offsetWidth;
@@ -145,8 +148,14 @@
       }, t));
       if (!bad) sweep.push(setTimeout(() => li.classList.remove('is-verified'), t + 1300));
     });
-    sweep.push(setTimeout(() => { brokenAt = first >= 0 && canEdit ? first : -1; setIdle(); T.state(done); say(done); }, reduced ? 0 : lead + lis.length * STEP + 120));
+    sweep.push(setTimeout(() => {
+      brokenAt = first >= 0 && canEdit ? first : -1; setIdle();
+      if (cause && cause.isConnected && performance.now() > T.intent) T.select(cause, false); // not while the reader is swiping the strip
+      T.state(done); say(done);
+    }, reduced ? 0 : lead + lis.length * STEP + 120));
   }
+  // a record's left edge in the strip's scroll coordinates
+  const xOf = li => li.getBoundingClientRect().left - view.getBoundingClientRect().left + view.scrollLeft - (parseFloat(getComputedStyle(track).paddingLeft) || 0);
 
   /* ---- change a record: type over the selected record, verify, watch the chain fail; restore ---- */
   function refresh(r) { // a record's column, rewritten in place to what it now says
@@ -181,16 +190,28 @@
         if (!el.hasAttribute('contenteditable')) {
           el.setAttribute('contenteditable', 'plaintext-only');
           if (!el.isContentEditable) el.setAttribute('contenteditable', 'true');
-          el.setAttribute('role', 'textbox'); el.setAttribute('aria-multiline', 'false'); el.spellcheck = false;
+          el.setAttribute('role', 'textbox'); el.setAttribute('aria-multiline', 'false'); el.setAttribute('enterkeyhint', 'go'); el.spellcheck = false;
         }
         const label = `${k} of record ${r.id}`;
         if (el.getAttribute('aria-label') !== label) el.setAttribute('aria-label', label);
       } else if (el.hasAttribute('contenteditable')) {
         if (document.activeElement === el) el.blur();
-        ['contenteditable', 'role', 'aria-multiline', 'aria-label'].forEach(a => el.removeAttribute(a));
+        ['contenteditable', 'role', 'aria-multiline', 'aria-label', 'enterkeyhint'].forEach(a => el.removeAttribute(a));
       }
     });
   }
+
+  // the controls come under the bar when off screen (a browser centres a focused button); with a field being typed in,
+  // the field and its cue stay on screen first, so on a short screen the controls show only as far as they fit (r2)
+  function place(field) {
+    const bar = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0, pad = 12, vh = window.innerHeight;
+    const c = (ui.ctrl || root).getBoundingClientRect(), f = field ? (cue && !cue.hidden ? cue : F.d).getBoundingClientRect() : c;
+    if (c.top >= bar + pad && f.bottom <= vh - pad) return;
+    let dy = c.top - bar - pad;
+    if (field && f.bottom - dy > vh - pad) dy = f.bottom - (vh - pad);
+    if (Math.abs(dy) > 1) window.scrollBy({ top: dy, behavior: T.reduced ? 'auto' : 'smooth' });
+  }
+  const toVerify = () => { ui.verify.focus({ preventScroll: true }); place(false); };
 
   /* ---- wiring: the hooks ledger.js calls, then the controls ---- */
   X.whole = whole;
@@ -205,12 +226,18 @@
   if (ui.replay) { ui.replay.hidden = false; ui.replay.addEventListener('click', replay); }
   if (ui.verify) { ui.verify.hidden = false; ui.verify.addEventListener('click', verify); }
   if (canEdit) {
+    // while a field is typed in, the next step shows under it (r2)
+    const typing = on => { if (cue && cue.hidden === on) { cue.hidden = !on; if (ui.insp) ui.insp.classList.toggle('is-typing', on); } };
     [F.ev, F.d].forEach(el => {
+      el.addEventListener('focus', () => typing(el.isContentEditable));
+      el.addEventListener('blur', () => typing(false));
       el.addEventListener('input', typed);
       el.addEventListener('keydown', e => {
         if (!el.isContentEditable) return;
-        if (e.key === 'Enter') { e.preventDefault(); if (ui.verify) ui.verify.focus(); } // one line: Enter moves on to Verify
+        if (e.key === 'Enter') { e.preventDefault(); if (ui.verify) { toVerify(); ui.verify.click(); } } // one line: Enter verifies
         else if (e.key === 'Escape') { e.preventDefault(); const b = !ui.edit.hidden ? ui.edit : ui.restore; if (b) b.focus(); }
+        // Tab out of Detail goes to Verify, not to the closing band screens below (r2)
+        else if (e.key === 'Tab' && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey && el === F.d && ui.verify && !ui.verify.hidden) { e.preventDefault(); toVerify(); }
       });
     });
     ui.edit.addEventListener('click', () => {
@@ -221,11 +248,13 @@
       if (!li) return;
       orig();
       T.select(li, false, true);
-      F.d.focus();
+      F.d.focus({ preventScroll: true });
+      place(true);
       try { const range = document.createRange(), s = window.getSelection(); range.selectNodeContents(F.d); s.removeAllRanges(); s.addRange(range); } catch (err) { /* the caret stays where focus put it */ }
-      say(`Editing ${T.bySeq(T.sel).id}: type over its detail, then verify the chain`);
+      say(`Editing ${T.bySeq(T.sel).id}: type over its detail, then press Enter to verify the chain`);
     });
     if (ui.restore) ui.restore.addEventListener('click', () => {
+      if (T.sel !== null) { T.sel = null; T.markSel(); }
       recs.forEach(r => { const o = orig().get(r.seq); if (o) { r.ev = o.ev; r.sub = o.sub; r.d = o.d; } refresh(r); });
       changed();
       say(`Original records restored · ${T.idle}`);

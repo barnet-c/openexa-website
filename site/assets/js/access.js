@@ -53,7 +53,7 @@
        ones, even mid-escape) */
     const attest = tick && tick.closest('label') ? tick.closest('label').textContent.replace(/\s+/g, ' ').trim() : '';
     const read = () => Object.fromEntries(Array.from(new FormData(form), ([key, value]) => [key, typeof value === 'string' ? value.trim() : value]));
-    const head = data => `mailto:${CONTACT}?subject=${encodeURIComponent('OpenEXA introduction - ' + data.interest)}&body=`;
+    const head = data => `mailto:${CONTACT}?subject=${encodeURIComponent('OpenEXA introduction · ' + data.interest)}&body=`;
     const fits = (data, s) => (head(data) + encodeURIComponent(s)).length <= 1900;
     const bodyWith = (data, msg) => {
       const who = `I am ${data.name}${data.role ? ', ' + data.role : ''}${data.organization ? ' at ' + data.organization : ''}.`;
@@ -97,7 +97,7 @@
       t('\n'); slot('accredited', d.accredited ? attest : '', 'The attestation, if you tick it', true);
       t('\n\nPlease reply to '); slot('email', d.email, 'your work email'); t('.\n\n'); slot('name', d.name, 'your name');
       const subject = $('[data-letter-subject]', letter);
-      if (subject) subject.textContent = 'OpenEXA introduction - ' + d.interest;
+      if (subject) subject.textContent = 'OpenEXA introduction · ' + d.interest;
       if (letterNote) { // say so before they press anything: the link has room for about a page, not more
         const long = !!d.message && !fits(d, bodyWith(Object.assign({}, d, { name: d.name || 'x', email: d.email || 'x' }), d.message));
         letterNote.textContent = long ? 'Too long for one email link: the message will be shortened, with a note where to paste the rest.' : NOTE;
@@ -105,13 +105,28 @@
       }
     };
     const KEYS = { interest: 'ask', name: 'name', email: 'email', organization: 'organization', role: 'role', assets: 'assets', message: 'message', accredited: 'accredited' };
+    // r2 (mobile): beside the form the letter's body scrolls inside when the screen is short (company.css); keep the part
+    // being typed in view there, without moving the page (one read and one write, in the next frame)
+    let keepFrame = 0;
+    const keep = () => {
+      if (!letterBody || keepFrame) return;
+      keepFrame = requestAnimationFrame(() => {
+        keepFrame = 0;
+        const sp = focusKey && $('.slot.is-here', letterBody);
+        if (!sp || letterBody.scrollHeight <= letterBody.clientHeight + 1) return;
+        const b = letterBody.getBoundingClientRect(), r = sp.getBoundingClientRect(), pad = 12;
+        if (r.bottom - r.top <= b.bottom - b.top - 2 * pad && r.top < b.top + pad) letterBody.scrollTop += r.top - b.top - pad;
+        else if (r.bottom > b.bottom - pad) letterBody.scrollTop += r.bottom - b.bottom + pad; // a long message: its newest line
+      });
+    };
     const here = key => {
       focusKey = key || '';
       if (letterBody) $$('.slot', letterBody).forEach(sp => sp.classList.toggle('is-here', !!key && sp.dataset.slot === key));
       const subject = letter && $('[data-letter-subject]', letter); // choosing a path rewrites the subject line too
       if (subject) subject.classList.toggle('is-here', key === 'ask');
+      keep();
     };
-    form.addEventListener('input', live);
+    form.addEventListener('input', () => { live(); keep(); });
     form.addEventListener('change', live);
     form.addEventListener('focusin', e => here(KEYS[e.target.name]));
     form.addEventListener('focusout', () => here(''));
@@ -210,7 +225,7 @@
         if (letter) { // the letter becomes the draft, word for word
           const put = (sel, text) => { const el = $(sel, letter); if (el) el.textContent = text; };
           put('[data-letter-to]', 'OpenEXA');
-          put('[data-letter-subject]', 'OpenEXA introduction - ' + data.interest);
+          put('[data-letter-subject]', 'OpenEXA introduction · ' + data.interest);
           put('[data-letter-body]', body.replace(/\r\n/g, '\n'));
           letter.classList.add('is-final');
           letter.hidden = false;

@@ -29,6 +29,10 @@ Changes from the source, deliberately:
     sit on one line about a third down and faces read at 64-96 px); Mike's snapshot no longer zoomed past the others
     (TUNE k 1.0). Each master is also written at 160 and 320 px (<slug>-v2x-160.webp, -320.webp) and the img carries a
     srcset, so a phone fetches a 64 px portrait's worth, not 560 px (Company was ~1.0 MB on a phone).
+  - 2026-10-31 (v2x r2, copy): two card lines say what their bios say. Philip Bond's reads his title as his bio gives it
+    ("Edward E. Carlson Distinguished Professor in Business Administration", Foster School, UW; the old line read as a
+    title he does not hold, C-178); Abhishek Sinha's drops "on the ground" and writes "V1" as his bio does, with the
+    bio's Amazon and Microsoft (C-181). No new fact.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -91,10 +95,10 @@ TEAM = [
 ADVISORS = [
     ("kumar-mehta", "Kumar Mehta", "Kumar Mehta", "Advisor · Networking", "Co-founder and CDO, and former CEO, of Versa Networks.", None, []),
     ("sreeram-kannan", "Sreeram Kannan", "Sreeram Kannan", "Advisor · Blockchain Systems", "Founder and CEO of Eigen Layer and director of the University of Washington's Blockchain Lab.", None, []),
-    ("philip-bond", "Dr. Philip Bond", "Philip Bond, Ph.D.", "Advisor · Capital Markets", "Distinguished Professor of Capital Markets, Business, Finance and Economics.", None, [("His research on the blog", "blog/index.html#economics")]),
+    ("philip-bond", "Dr. Philip Bond", "Philip Bond, Ph.D.", "Advisor · Capital Markets", "Edward E. Carlson Distinguished Professor in Business Administration at the Foster School of Business, University of Washington.", None, [("His research on the blog", "blog/index.html#economics")]),
     ("john-schuster", "John Schuster", "John Shuster", "Advisor · Strategy & Markets", "A startup founder and executive, with an MBA in Finance from The Wharton School.", None, []),
     ("victor-gamolsky", "Victor Gamolsky", "Victor Gamolsky", "Advisor · Strategy & Technology", "A decade of building and scaling ventures with lean, evidence-driven product methods.", "victor-gamolsky", []),
-    ("abhishek-sinha", "Abhishek Sinha", "Abhishek Sinha", "Advisor · Technology Programs", "A technology expert with over a decade of experience delivering v1 initiatives on the ground.", None, []),
+    ("abhishek-sinha", "Abhishek Sinha", "Abhishek Sinha", "Advisor · Technology Programs", "Over a decade delivering V1 initiatives, with experience in large technology companies such as Amazon and Microsoft.", None, []),
     ("julius-ekeroma", "Dr. Julius E. Ekeroma", "Dr. Julius E. Ekeroma, Ph.D.", "Advisor · Compliance & Risk", "Expert in compliance and financial risk, with 25+ years in auditing, operations and financial forensics.", None, []),
     ("dipit-nanawati", "Dipit Nanawati", "Dipit Nanawati", "Advisor · Financial Markets", "A trusted advisor to some of Wall Street's largest firms on operational efficiency, compliance and profitability.", None, []),
     ("subuddh-parekh", "Subuddh Parekh", "Subuddh Parekh", "Advisor · AI & ML", "Engineering, product and machine-learning expert, with a BS and MS in Computer Science from Stanford.", None, []),

@@ -318,7 +318,7 @@ def check_has_guard():
     nothing (its argument names no class, id, attribute or element type), except inside @media (scripting: none).
     Rules that end in the :has() itself stay allowed ('.seg label:has(input:checked)'). (LG1, NV2: one footer-clock tick
     restyled 1,108 of 2,440 elements on the home page.)"""
-    for rel in ["assets/css/site.css"] + GROUP_CSS:
+    for rel in REGION_CSS + GROUP_CSS:
       css = (ROOT / rel).read_text(encoding="utf-8")
       for prelude, ats, _line in css_style_rules(css):
         if ":has(" not in prelude: continue
@@ -341,7 +341,7 @@ def check_has_guard():
 def check_has_regions():
     """The two owners' greps (LG1, NV2): no ':has(' anywhere in v2:ledger, none in v2:nav outside @media (scripting:
     none). With either set left the storm remains, so both are required."""
-    css = (ROOT / "assets/css/site.css").read_text(encoding="utf-8")
+    css = region_text()
     for region in ("ledger", "nav"):
         m = re.search(r"/\* v2:%s:start \*/(.*?)/\* v2:%s:end \*/" % (region, region), css, re.S)
         if not m: fail("assets/css/site.css", f"has_regions: the v2:{region} region markers are missing"); continue
@@ -421,7 +421,7 @@ def check_hover_guard():
     @media (hover: hover), so a tap never leaves a stuck hover state on touch screens ('Follow a proposal' kept its green
     fill after Stop). ':not(:hover)' dimming counts too. Base rules outside the regions stay as pages gated them in round 1.
     (cross: hover gating, every owner; SW-R2-7, LG-R2-5, LC-R2-7, AR-R2-5, OV-R2-11.)"""
-    css = (ROOT / "assets/css/site.css").read_text(encoding="utf-8")
+    css = region_text()
     regions = list(re.finditer(r"/\* v2:([\w-]+):start \*/(.*?)/\* v2:\1:end \*/", css, re.S))
     if not regions: fail("assets/css/site.css", "hover_guard: no v2 region markers"); return
     for m in regions:
@@ -439,12 +439,23 @@ def check_hover_guard():
                 fail(rel, f"hover_guard: line {line}: {sel[:110]!r} is outside @media (hover: hover)" + (f" (inside {ats})" if ats else ""))
 
 
-WEIGHT = {"assets/css/site.css": 66000, "index.html scripts": 151000}  # gzip -9 bytes: 28 Oct's size plus 10%
+SITE_CSS_BUDGET = 40000   # gzip -9: site.css after the r2 split (~36.5 KB) plus ~10% (66,000 while it held the instruments)
+PAGE_CSS_BUDGET = 85000   # gzip -9: every stylesheet one page links (Home, all five instruments + home.css: ~82.3 KB in r2)
+WEIGHT = {"assets/css/site.css": SITE_CSS_BUDGET, "index.html scripts": 151000}  # gzip -9 bytes
 # v2x (30 Oct): each page group styles its own pages in assets/css/<group>.css (loaded after site.css on those pages
 # only) and keeps page-only behaviour in its own assets/js/<name>.js; each file has its own budget, and so does every page.
 GROUPS = ("home", "proof", "platform", "research", "company", "blog")
 GROUP_CSS = [f"assets/css/{g}.css" for g in GROUPS]
 GROUP_CSS_BUDGET = 12000   # gzip -9 bytes per group stylesheet
+# v2x r2 (system, perf): the five instrument regions left site.css for their own sheets, linked after site.css and before
+# the group's sheet only on the pages that draw them, so the other pages no longer wait for ~29 KB they never use.
+INSTRUMENT_CSS = {"overture": "overture.css", "swarm": "swarm.css", "ledger": "ledger.css", "arch": "arch.css", "proof": "proofchart.css"}
+INSTRUMENT_PAGES = {"index.html": ["overture", "swarm", "ledger", "arch", "proof"], "platform.html": ["swarm", "arch"],
+                    "evidence.html": ["proof"], "trust.html": ["ledger"]}
+INSTRUMENT_BUDGET = 8500   # gzip -9 bytes per instrument sheet (the largest, arch.css, is 7,558 at the split)
+REGION_CSS = ["assets/css/site.css"] + [f"assets/css/{f}" for f in INSTRUMENT_CSS.values()]
+def region_text():
+    return "\n".join((ROOT / rel).read_text(encoding="utf-8") for rel in REGION_CSS if (ROOT / rel).is_file())
 PAGE_JS_BUDGET = 8000      # gzip -9 bytes per page-only script (access.js, company.js, any new one)
 SHARED_JS = {"site.js", "loader.js", "story.js", "swarm.js", "ledger.js", "chain.js", "arch.js", "lane.js", "proof.js", "gap.js", "figure.js", "blog.js"}
 PAGE_SCRIPTS_BUDGET = 151000  # gzip -9 bytes: the scripts any one page loads (index.html's budget, for every page)
@@ -468,7 +479,16 @@ def check_weight():
     import gzip
     gz = lambda rel: len(gzip.compress((ROOT / rel).read_bytes(), 9))
     css = gz("assets/css/site.css")
-    if css > WEIGHT["assets/css/site.css"]: fail("assets/css/site.css", f"weight: gzip {css:,} bytes; budget {WEIGHT['assets/css/site.css']:,} (1a6b9fb's 59,799 + 10%)")
+    if css > WEIGHT["assets/css/site.css"]: fail("assets/css/site.css", f"weight: gzip {css:,} bytes; budget {WEIGHT['assets/css/site.css']:,} (the r2 split's size + ~10%)")
+    for f in INSTRUMENT_CSS.values():
+        if not (ROOT / "assets/css" / f).is_file(): fail(f"assets/css/{f}", "weight: the instrument sheet is missing"); continue
+        n = gz(f"assets/css/{f}")
+        if n > INSTRUMENT_BUDGET: fail(f"assets/css/{f}", f"weight: gzip {n:,} bytes; budget {INSTRUMENT_BUDGET:,} per instrument sheet")
+    for rel in pages:  # render-blocking CSS per page: every stylesheet it links
+        h = (ROOT / rel).read_text(encoding="utf-8"); base = Path(rel).parent
+        files = [((ROOT / u.lstrip("/")) if u.startswith("/") else (ROOT / base / u)).resolve() for u in re.findall(r'<link rel="stylesheet" href="([^"]+)">', h)]
+        n = sum(len(gzip.compress(f.read_bytes(), 9)) for f in files if f.is_file())
+        if n > PAGE_CSS_BUDGET: fail(rel, f"weight: its {len(files)} stylesheets are {n:,} bytes gzipped; budget {PAGE_CSS_BUDGET:,} per page")
     s = (ROOT / "index.html").read_text(encoding="utf-8")
     srcs = [u.split("?")[0].lstrip("/") for u in script_srcs(s)]
     missing = [u for u in srcs if not (ROOT / u).is_file()]
@@ -573,7 +593,8 @@ def check_chrome_sync():
         g = want.get(rel) or ("research" if rel.startswith("research/") else "blog" if rel.startswith("blog/") else None)
         if g:
             names = [Path(x).name for x in re.findall(r'<link rel="stylesheet" href="([^"]+)">', s)]
-            if names != ["site.css", f"{g}.css"]: fail(rel, f"chrome_sync: stylesheets {names}; want site.css then {g}.css")
+            inst = [INSTRUMENT_CSS[k] for k in INSTRUMENT_PAGES.get(rel, [])]
+            if names != ["site.css", *inst, f"{g}.css"]: fail(rel, f"chrome_sync: stylesheets {names}; want site.css, " + "".join(x + ", " for x in inst) + f"then {g}.css")
 
 
 # ---- v2x tests pass (30 Oct): contracts that had no check at all (STUDY 7.3.23, contracts §1.32), bought back where cheap

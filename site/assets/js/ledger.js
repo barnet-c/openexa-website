@@ -1,27 +1,16 @@
-/* OpenEXA — the ledger trace.
-   Records sit on one hairline. The link out of each record carries that record's SHA-256, and the next record stores
-   the same hash as its "previous hash": that is the whole idea of a hash-chained ledger, drawn literally.
-   [data-ledger="live"]   (home §06) runs an illustrative lifecycle and records what the swarm lab on the page decides.
-                          It listens on document for
-                            'oxa:settled'  {id, lane, ts, gate:'settle', count, followed}
-                            'oxa:rejected' {id, ts, count, followed, gate:'approve'}
-                            'oxa:inspect'  {record, seq, focus?}  (the swarm's trace asks to see a record: scroll,
-                                           select, pulse; focus moves to it unless focus is false)
-                          and answers every announcement with 'oxa:recorded' {id, record, hash, seq, followed}.
-                          In view, announcements are sealed into at most one row every 2 s; out of view, every 8 s. Such
-                          a row is a digest of many settlements (or rejections) and says so: 'SETTLED ×1,741', tagged
-                          'Swarm digest'. A followed proposal is answered at once, in a record of its own (n = 1), which
-                          is selected and pulses the next time the ledger is in view. Every record is stamped when it is
-                          written, later than the one before it.
-   [data-ledger="replay"] (Trust §01) holds a fixed excerpt. This file draws and inspects it; replaying, verifying and
-                          changing a record are assets/js/trust.js's (Trust only, so Home never downloads them). trust.js
-                          reaches the engine through root.oxaTrace and the hooks X (end of trace()), and hashes with this
-                          file's sha256 and body(): change the recipe here and trust.js follows it.
-   The chain, the state line and the intake start with the page; the strip is drawn (the one step that reads layout)
-   when the panel comes within 1.5 viewports, or at once when the reader, a followed proposal or 'oxa:inspect' needs it.
-   Select any record (click, tap, or arrow keys once the list has focus) to inspect its id, event and both hash links.
-   The records are illustrative; every hash is real SHA-256, computed here in the browser. Every count on the panel is
-   read from the records themselves. */
+/* OpenEXA: the ledger trace. Records sit on one hairline; the link out of each carries its record's SHA-256, which the
+   next record stores as its previous hash: a hash-chained ledger, drawn literally. Records are illustrative; every hash
+   is real, computed here. Every count on the panel is read from the records.
+   [data-ledger="live"] (Home §06): an illustrative lifecycle and what the swarm lab decides. Listens on document for
+     'oxa:settled' {id, lane, ts, gate:'settle', count, followed}, 'oxa:rejected' {id, ts, count, followed, gate:'approve'},
+     'oxa:inspect' {record, seq, focus?} (scroll, select, pulse; focus unless focus is false), and answers each
+     announcement with 'oxa:recorded' {id, record, hash, seq, followed}. Announcements are sealed into digest rows
+     ('SETTLED ×1,741', 'Swarm digest'; at most one per 2 s in view, 8 s out of view); a followed proposal gets a record
+     of its own, selected and pulsed when next in view. Each record is stamped later than the one before it.
+   [data-ledger="replay"] (Trust §01): a fixed excerpt. Replay, verify and change-a-record are trust.js's (Trust only); it
+     reaches the engine through root.oxaTrace and the hooks X (end of trace()) and hashes with sha256() and body() here.
+   The strip is drawn (the one step that reads layout) within 1.5 viewports, or when first needed. Select a record
+   (click, tap, arrow keys) to inspect its id, event and both hash links. */
 (function () {
   'use strict';
   const roots = Array.from(document.querySelectorAll('[data-ledger]'));
@@ -134,13 +123,13 @@
     const F = { k: field('k'), rec: field('rec'), ev: field('ev'), d: field('d'), src: field('src'), prev: field('prev'), prevok: field('prevok'), hash: field('hash'), next: field('next') };
     // the selected record is described by its two checks, so a screen reader hears whether it verifies
     const described = [F.prevok, F.next].filter(Boolean).map(el => el.id || (el.id = `lt-${root.dataset.ledger || 'log'}-${el.dataset.f}`)).join(' ');
-    let reduced = motionQuery.matches, mounted = false, fitRaf = 0; // mounted: the strip is drawn (see start, below)
+    let reduced = motionQuery.matches, mounted = false, fitRaf = 0; // mounted: the strip is drawn
 
     /* ---- the chain, in memory: newest last; the DOM shows a contiguous window onto it ---- */
     const CAP = 400, DOM_CAP = 36;
     const recs = [], els = new Map();
     let seq = 0, total = 0, nextId = 0x4f21;
-    const sw = { digests: 0, followed: 0, settled: 0, rejected: 0 }; // rows from the swarm, and the proposals they carry
+    const sw = { digests: 0, followed: 0, settled: 0, rejected: 0 };
     const excerpt = Array.from(track.querySelectorAll('.lt-rec')).map(li => {
       const t = s => { const n = li.querySelector(s); return n ? n.textContent.trim() : ''; };
       return { id: t('.lt-id'), lc: t('.lt-lc'), ev: t('.lt-ev').toUpperCase(), sub: t('.lt-sub'), d: li.dataset.d || t('.lt-sub'), t: t('.lt-t'), src: 'excerpt' };
@@ -158,7 +147,7 @@
       inited = true;
       head = genesis = sha256('genesis|' + (excerpt[0] ? excerpt[0].id : '#4f20'));
       excerpt.forEach(write);
-      if (!stream) stateIdle = `Chain ✓ · ${recs.length} records verify`; // sealed from these very records
+      if (!stream) stateIdle = `Chain ✓ · ${recs.length} records verify`;
       rendered = newest();
       counts(); state();
     }
@@ -222,6 +211,8 @@
     // columns are sized so a whole number of records fills the view: no record is ever cut in half at rest.
     const MIN_COL = stream ? 146 : 122;
     const G = { col: 148, padL: 28, padR: 28, w: 0 };
+    let slotted = false;
+    const SLOT = ['position', 'top', 'left', 'right', 'transform', 'transition'];
     function fit() {
       const cs = getComputedStyle(track);
       // a page may stand the records in a column (Trust on a phone; Home's stream, newest on top: column-reverse):
@@ -261,6 +252,7 @@
       if (li && li !== selLi) { li.classList.add('is-sel'); li.setAttribute('aria-selected', 'true'); if (described) li.setAttribute('aria-describedby', described); }
       if (before && before !== beforeLi) before.classList.add('is-before-sel');
       selLi = li; beforeLi = before;
+      if (G.rev || slotted) slots(false);
     }
 
     /* ---- following the newest record, browsing, inspecting ---- */
@@ -274,7 +266,7 @@
       view.scrollTo({ left: to, behavior: go ? 'smooth' : 'auto' });
     }
     function glideDone() { if (!gliding) return; clearTimeout(gliding); gliding = 0; inspect(); pill(); }
-    function reveal(li, smooth, centre) { // horizontal only: never scroll the page under the reader
+    function reveal(li, smooth, centre) { // horizontal only
       const pad = 36, x = leftOf(li), l = x - pad, r = x + G.col + pad, sl = view.scrollLeft, m = maxScroll();
       let to = null;
       // a record asked for by name sits mid-strip, on whole columns
@@ -284,9 +276,9 @@
     }
     function follow(smooth = true) {
       sel = null; following = true;
-      intentUntil = 0; // an explicit return to the head outranks the tail of an earlier swipe: the glide is the view's own
+      intentUntil = 0; // an explicit return outranks an earlier swipe
       markSel();
-      if (stream && rendered !== newest()) flush(false, true); // what was held back while paused joins the line
+      if (stream && rendered !== newest()) flush(false, true);
       stop(track.lastElementChild);
       toEnd(smooth); inspect(); state();
     }
@@ -295,7 +287,7 @@
       sel = +li.dataset.seq; following = false;
       clearTimeout(gliding); gliding = 0;
       markSel(); stop(li);
-      inspect(); // the checks that describe the option are written before focus lands on it
+      inspect(); // the checks first, then focus
       if (focus && document.activeElement !== li) li.focus({ preventScroll: true });
       reveal(li, true, centre); state();
     }
@@ -330,7 +322,7 @@
       edges(sl0);
       if (gliding) { if (Math.abs(sl0 - maxScroll()) <= 1) glideDone(); return; }
       if (sel === null) inspect(sl0); else leader();
-      pill(sl0); // only the pill's count: a replay's or an audit's own status line stays as it is
+      pill(sl0); // only the pill's count
     }
     let edgeL = null, edgeR = null;
     function edges(sl = view.scrollLeft) {
@@ -355,7 +347,7 @@
     const sourceOf = r => (r.src === 'swarm' ? r.from : `Illustrative ${r.src === 'gen' ? 'generator' : 'excerpt'}${r.lc ? ' · ' + r.lc : ''}`);
     let shown = '';
     function inspect(sl) {
-      if (!F.rec || !recs.length || (gliding && sel === null)) return; // a glide to the head is described when it lands
+      if (!F.rec || !recs.length || (gliding && sel === null)) return;
       const r = (sel !== null && bySeq(sel)) || inView(sl) || bySeq(rendered);
       if (!r) return;
       const after = bySeq(r.seq + 1), drawnAfter = after && after.seq <= rendered;
@@ -372,7 +364,7 @@
       // real checks, not labels: the stored link equals the previous record's hash
       const before = bySeq(r.seq - 1);
       let linkOk, selfOk, now = r.hash;
-      const a = X.check && X.check(r); // a changed excerpt (trust.js): the hash the record produces now, in the chain as it reads now
+      const a = X.check && X.check(r); // trust.js: the chain as it reads now
       if (a) { linkOk = a.linked; now = a.now; selfOk = now === r.hash; }
       else {
         linkOk = before ? before.hash === r.prev : r.seq === 1 ? r.prev === genesis : true;
@@ -405,13 +397,13 @@
     function state(text) {
       flag('is-inspecting', sel !== null);
       flag('is-following', following);
-      flag('is-running', stream && playing && following && onScreen()); // its breathing loops run only while it is seen
+      flag('is-running', stream && playing && following && onScreen());
       flag('is-paused', stream && !playing);
       flag('is-edited', !!X.dirty);
       const r = sel !== null ? bySeq(sel) : null;
       put(ui.state, text || (X.dirty ? 'Edited · not verified' : r ? `Inspecting ${r.id}` : stream ? (playing ? (following ? 'Running · illustrative stream' : 'Illustrative stream · browsing') : 'Paused · illustrative stream') : stateIdle));
       if (ui.play) {
-        put(ui.playText, playing ? 'Pause motion' : 'Resume motion'); // one name for one action, as on every instrument
+        put(ui.playText, playing ? 'Pause motion' : 'Resume motion');
         ui.play.classList.toggle('is-paused', !playing);
       }
       pill();
@@ -448,12 +440,35 @@
         fresh.forEach((r, i) => { const li = build(r); track.append(li); if (play && i === fresh.length - 1) landed(li); });
         if (play) { was.classList.add('is-linking'); setTimeout(() => was.classList.remove('is-linking'), 1400); }
         rendered = fresh[fresh.length - 1].seq;
-        markHead(); trim();
+        markHead(); trim(); slots(play);
         if (following) { stop(track.lastElementChild); toEnd(play); }
       }
       edges(); counts(); inspect(); state();
     }
-    function trim() { // keep the DOM small; compensate the scroll so nothing on screen moves
+    // a newest-on-top column (Home's phone stream) holds fixed places: each record sits at the track's top, set into its
+    // slot by a transform, so a new record eases the others down with no layout shift (r2: ~0.07 CLS a window)
+    function slots(ease) {
+      const lis = Array.from(track.children), st = li => li.style;
+      if (!G.rev) {
+        if (slotted) { slotted = false; st(track).removeProperty('height'); lis.forEach(li => SLOT.forEach(p => st(li).removeProperty(p))); }
+        return;
+      }
+      const cs = getComputedStyle(track), pt = parseFloat(cs.paddingTop) || 0, go = ease && !reduced;
+      let y = 0;
+      for (let i = lis.length - 1; i >= 0; i--) { // newest first
+        const s = st(lis[i]), fresh = !s.transform;
+        if (fresh) Object.assign(s, { position: 'absolute', top: pt + 'px', left: cs.paddingLeft, right: cs.paddingRight });
+        const h = lis[i].offsetHeight;
+        if (!h) continue; // beyond the four
+        s.transition = fresh ? 'none' : `opacity .35s var(--ease)${go ? ', transform .45s cubic-bezier(.2, .7, .2, 1)' : ''}`;
+        s.transform = `translateY(${y}px)`;
+        if (fresh && go) lis[i].animate({ opacity: [0, 0, 1], offset: [0, .38, 1] }, 560);
+        y += h;
+      }
+      st(track).height = pt + y + (parseFloat(cs.paddingBottom) || 0) + 'px';
+      slotted = true;
+    }
+    function trim() { // keep the DOM small; nothing on screen moves
       let removed = 0;
       while (track.childElementCount > DOM_CAP) {
         const first = track.firstElementChild;
@@ -476,7 +491,7 @@
         { ev: 'VALIDATED', lc, sub: 'schema · inputs · scope', d: `${lc} · schema checked · inputs complete · scope checked` },
       ];
       cycles++;
-      if (cycles === 2 || (cycles > 2 && Math.random() < 0.12)) { // rejects are recorded too: the second lifecycle shows one
+      if (cycles === 2 || (cycles > 2 && Math.random() < 0.12)) { // rejects are recorded too
         const why = pick(REASONS);
         steps.push({ ev: 'REJECTED', lc, sub: `council · ${why}`, d: `council · ${why} · recorded` });
         return steps;
@@ -488,7 +503,7 @@
         { ev: 'SETTLED', lc, sub: `records agent r-${r}`, d: `agent=records:r-${r} · previous hash linked` });
       return steps;
     }
-    if (stream && excerpt.length) { // the page's excerpt may end mid-lifecycle: the stream picks that lifecycle up where it stopped
+    if (stream && excerpt.length) { // the stream picks up the excerpt's lifecycle
       const last = excerpt[excerpt.length - 1], done = excerpt.filter(r => r.lc === last.lc).map(r => r.ev);
       cycles = excerpt.some(r => r.lc !== last.lc) ? 1 : 0;
       if (last.lc && !/^(SETTLED|REJECTED)$/.test(last.ev)) queue = lifecycle(last.lc).filter(s => !done.includes(s.ev));
@@ -532,13 +547,13 @@
     const inbox = { settled: [], rejected: [] };
     let sealTimer = 0, lastSeal = -Infinity, followedSeq = 0, pendingFollow = false;
     const laneOf = v => v == null || v === '' ? null : typeof v === 'number' ? (Number.isInteger(v) ? v : +v.toFixed(2)) : clean(v);
-    const countOf = d => Math.min(99999, Math.max(1, Math.floor(Number(d.count)) || 1)); // detail.count: proposals in one announcement
+    const countOf = d => Math.min(99999, Math.max(1, Math.floor(Number(d.count)) || 1));
     const pidOf = id => typeof id === 'number' ? 'P-' + id : clean(id || '');
     function intake(kind, e) {
       const d = e && e.detail;
       if (!d || typeof d !== 'object') return;
       const a = { id: d.id, lane: kind === 'settled' ? d.lane : null, ts: d.ts, count: countOf(d), followed: d.followed === true, at: performance.now() };
-      if (a.followed) { queueMicrotask(() => { mount(); followedIn(a, kind); }); return; } // never inside the swarm's frame, but at once
+      if (a.followed) { queueMicrotask(() => { mount(); followedIn(a, kind); }); return; } // not inside the swarm's frame
       inbox[kind].push(a);
       schedule();
     }
@@ -550,7 +565,7 @@
     }
     function sealDue() {
       sealTimer = 0;
-      if (onScreen()) { sealOne(); soon(); } // the foot counts the row when the line draws it (flush), not before
+      if (onScreen()) { sealOne(); soon(); }
       else { ['settled', 'rejected'].forEach(k => { if (inbox[k].length) record(take(k), k); }); }
       lastSeal = performance.now();
       schedule();
@@ -617,7 +632,7 @@
       select(li, false, true);
       pulseSoon(li);
     }
-    function ensure(s) { // the record's column, drawing it first if it is held back or was trimmed from the window
+    function ensure(s) { // the record's column, drawn first if needed
       if (els.has(s)) return els.get(s);
       if (!bySeq(s)) return null;
       if (s > rendered) flush(false, true);
@@ -639,7 +654,7 @@
     function bringIntoView() {
       const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 72;
       let b = root.getBoundingClientRect(), shift = 0;
-      try { shift = new DOMMatrixReadOnly(getComputedStyle(root).transform).m42 || 0; } catch (e) { shift = 0; } // a reveal still rising
+      try { shift = new DOMMatrixReadOnly(getComputedStyle(root).transform).m42 || 0; } catch (e) { shift = 0; }
       const top = b.top - shift, avail = window.innerHeight - navH;
       const y = b.height <= avail - 24 ? top - navH - (avail - b.height) / 2 : top - navH - 12;
       // the swarm's trace has usually centred it already (it dispatches once its own scroll has landed)
@@ -709,7 +724,7 @@
       window.addEventListener('resize', () => {
         if (fitRaf) return;
         fitRaf = requestAnimationFrame(() => {
-          fitRaf = 0; fit();
+          fitRaf = 0; fit(); slots(false);
           if (following) toEnd(false); else if (sel !== null && els.has(sel)) reveal(els.get(sel), false);
           edges(); inspect(); leader();
         });

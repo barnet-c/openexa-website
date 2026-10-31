@@ -117,7 +117,7 @@ page404 = f'''<!DOCTYPE html>
       <div class="container">
         <div class="nf-copy">
           <div class="nf-title">
-            <div class="eyebrow">404 · Rejected at the gate</div>
+            <div class="eyebrow">404 · Not found</div>
             <h1 class="display-1 mt-2">This page didn’t pass.</h1>
           </div>
           <div class="nf-next">

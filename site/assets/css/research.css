@@ -10,14 +10,16 @@
    ========================================================================== */
 
 /* ---------- figure captions (index plate, note heroes): Fig. NN, what is drawn, the note's words, the hedge ---------- */
+/* r2 (system's request, r2-art M2): the register mark ("Fig. 09") and the hedge are site.css's, one caption register on
+   every page (mono mark in sentence case, no rule; the hedge in Inter at fg-3). The legend (what is drawn, in the serif)
+   stays Research's: it is the reading moment beside the list. site.css sets the hedge flush right for its one-line
+   captions; these captions are stacked, so the hedge keeps the legend's edge */
 :is(.research-page, .article-page) .figcap { display: grid; gap: 8px; margin: 0; }
-.figcap-n { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: var(--mono-s); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); font-variant-numeric: tabular-nums; }
-.figcap-n::after { content: ""; flex: 0 0 28px; height: 1px; background: var(--accent); opacity: .8; }
+.figcap-n { font-variant-numeric: tabular-nums; }
 .figcap-t { font-family: var(--serif); font-size: clamp(1.3rem, 1.7vw, 1.6rem); line-height: 1.16; letter-spacing: -0.01em; color: var(--fg); text-wrap: balance; }
 .figcap-d { font-size: .9rem; line-height: 1.58; color: var(--fg-2); text-wrap: pretty; max-width: 54ch; }
-.figcap-h { font-family: var(--mono); font-size: var(--mono-s); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); padding-top: 2px; }
+:is(.research-page, .article-page) .figcap .figcap-h { text-align: inherit; padding-top: 2px; }
 .figcap-n:empty, .figcap-d:empty { display: none; }
-.figcap-h { text-wrap: pretty; } /* the long hedge never leaves "RECORD" alone on its last line */
 /* a caption that opens on a quotation mark hangs the mark in the margin, so the words keep the edge (build + research.js) */
 .figcap-d.is-hung { text-indent: -.4em; }
 
@@ -35,6 +37,9 @@
 /* ---------- research index: the shelf (the list, and the plate that shows the pointed note's figure) ---------- */
 .rs-shelf { position: relative; --rs-gap: clamp(16px, 2.2vw, 32px); }
 .rs-shelf + .section { border-top: 1px solid var(--line); }
+/* r2 (r2-fidelity): 01 and 02 are one ground; the full-width rule between them ran under the pinned plate's caption.
+   02's own chapter rule (the list's width) marks the change */
+.rs-shelf > #series { border-top: 0; }
 .rs-intro { display: grid; gap: clamp(16px, 2vw, 24px); margin-bottom: clamp(32px, 4vw, 56px); }
 .rs-intro h2 { max-width: 15ch; }
 .rs-intro p { max-width: 46ch; }
@@ -102,7 +107,10 @@
   .rs-hint, .rs-cap .figcap-d, .rs-rail .fig-labels { display: none; }
   .rs-cap { gap: 5px; }
   .rs-cap .figcap-t { font-family: var(--sans); font-size: .8125rem; line-height: 1.4; letter-spacing: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .rs-cap .figcap-h { font-size: var(--mono-xs); }
+  /* r2 (r2-motion): the strip keeps one height whatever the note's caption, and each line its place: the title and
+     the hedge are held at the longest of each at this width (research.js), so a caption swap moves nothing */
+  .rs-cap .figcap-t { min-height: var(--rs-t-h, 0px); }
+  .rs-cap .figcap-h { min-height: var(--rs-h-h, 0px); }
 }
 /* small phones and short screens (r1 mobile): the strip is the size of its words, not a quarter of the screen. The row
    it shows is marked in the list (green numeral and bar), so the strip drops its "Fig. NN" line; what is drawn and the
@@ -136,12 +144,30 @@
 .rs-shelf.no-plate .rs-col { margin-right: 0; }
 @media (scripting: none) {
   /* (0,2,0), after ":is(.research-page, .article-page) .figcap { display: grid }": r1 lost to it, and the note hero
-     showed a caption for a figure that is not drawn (jury: "not addressed by either lab") */
-  .research-hero .rs-herocap, .article-hero .article-figcap { display: none; }
+     showed a caption for a figure that is not drawn (jury: "not addressed by either lab"). The index hero draws its
+     still (r2), so it keeps its figure, its frame on phones and its caption */
+  .article-hero .article-figcap { display: none; }
 }
 @media (scripting: none) and (max-width: 960px) {
-  .research-hero, .article-hero { padding-top: calc(var(--nav-h) + clamp(40px, 10vw, 72px)); padding-bottom: clamp(48px, 10vw, 72px); }
+  .article-hero { padding-top: calc(var(--nav-h) + clamp(40px, 10vw, 72px)); padding-bottom: clamp(48px, 10vw, 72px); }
 }
+
+/* ---------- research index: the hero's still (r2) ----------
+   The library figure engraved in the page (build_research.library_still: the formation's own geometry, seen by figure.js's
+   camera), so the first screen has its figure before WebGL draws, and without JavaScript or WebGL. It is scaled as the
+   stage's --figure-scale scales the points (drawn at .92; .86 more on narrow screens, as figure.js), and fades out under
+   the points once they are drawn. Ruled leaves, not the blog's bundled album */
+.rs-still { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke-linecap: round; stroke-linejoin: round; scale: calc(var(--figure-scale, 1) / .92); transition: opacity 1.2s var(--ease); }
+@media (max-width: 759.98px) { .rs-still { scale: calc(var(--figure-scale, 1) / .92 * .86); } }
+/* stippled, as the points are: each rim and rule is a line of dots (round caps on zero-length dashes, in screen px) */
+.rs-still path { vector-effect: non-scaling-stroke; stroke-width: 1.3px; stroke-dasharray: 0 4.2px; }
+.rs-still .ls-r { stroke: var(--paper); stroke-width: 1.7px; stroke-dasharray: 0 3px; }
+.rs-still .ls-l { stroke: var(--khaki); }
+.rs-still .ls-g { stroke: var(--signal-bright); stroke-width: 2px; stroke-dasharray: 0 2.6px; }
+.rs-still .ls-gl { stroke-width: 1.5px; stroke-dasharray: 0 3.6px; }
+.figure-ready > .rs-still { opacity: 0; }
+.figure-stage.no-figure > .rs-still { opacity: 1; } /* a lost context: the still comes back, not an empty field */
+.figure-stage.has-still.no-figure::after { content: none; } /* no globe mark over a drawn figure */
 
 /* ---------- research index: the blog collections and the four constants ---------- */
 .research-page .research-card .link-arrow { font-family: var(--sans); font-size: .875rem; letter-spacing: 0; text-transform: none; font-weight: 500; }
@@ -322,8 +348,11 @@
 @container (max-width: 460px) { .fl--minor, .fl-t .fl-minor { display: none; } } /* a small stage keeps the part's name, not its gloss */
 
 /* a phone held sideways (short and wide): the hero is two-up, words left and figure right, so the first screen has the
-   title on it (v2 spent the whole screen on the figure); the index plate is capped to the screen's height */
-@media (max-width: 960px) and (max-height: 520px) and (min-aspect-ratio: 23/20) {
+   title on it (v2 spent the whole screen on the figure); the index plate is capped to the screen's height.
+   r2 (r2-a11y serious, WCAG 1.4.10): only from 540 px wide. A desktop zoomed to 400 % (320 x 256) is short and wide too,
+   and there the two-up hero printed figure labels over the titles and set the lede in a 151 px column; under 540 px the
+   hero stays one column, as in v2 */
+@media (min-width: 540px) and (max-width: 960px) and (max-height: 520px) and (min-aspect-ratio: 23/20) {
   .research-hero, .article-hero { padding-top: calc(var(--nav-h) + 24px); padding-bottom: 28px; }
   :is(.research-hero, .article-hero) .figure-stage[data-plate] { left: 54%; top: var(--nav-h); bottom: auto; height: calc(100vh - var(--nav-h)); height: calc(100svh - var(--nav-h)); }
   .research-hero .grid > .col-7, .article-hero-grid > div:first-child { max-width: 54%; }
@@ -335,7 +364,7 @@
 
 /* ---------- reduced motion and print ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .rs-cap, .rs-shelf .rs-rail, .fig-labels, .fig-labels.is-on, .article-page .pager-card::before { transition: none; }
+  .rs-cap, .rs-shelf .rs-rail, .fig-labels, .fig-labels.is-on, .article-page .pager-card::before, .rs-still { transition: none; }
   .fig-labels.is-on .fl { animation: none; }
   .fl, .fl-t, .fl::after { transition: none; }
 }

@@ -711,7 +711,7 @@
   }
 
   /* ================= layout: each scene fitted into the frame the copy leaves free ================= */
-  let W = 1, H = 1, dpr = 1, ratio = 0, stacked = false, compact = false, short = false, tiny = false, navH = 72, barH = 64, gutter = 24, contR;
+  let W = 1, H = 1, dpr = 1, ratio = 0, stacked = false, compact = false, short = false, tiny = false, navH = 72, barH = 64, gutter = 24, contR, safeL = 0, safeR = 0, safeProbe = null;
   // local extent seen from each scene's camera (w, h)
   const EXT = [[2.9, 2.5], [3.3, 2.2], [2.75, 2.75], [2.55, 2.5], [3.8, 2.0]];
   const EXT_ST = [[2.45, 2.12], [3.3, 2.7], null, null, null];
@@ -724,6 +724,7 @@
   // under the S4 floor, in CSS px: the records hang from it
   const U_REC = 6.5, U_NAV = 22, U_TICK = 10, U_DAY = 35, DAY_BAND = 70;
   const MIN_FRAME = [0, 120, 110, 120, DAY_BAND + 90]; // portrait: the least frame each structure reads in (S0's globe always keeps its lede)
+  const frameTiny = [false, false, false, false, false]; // stacked on a short screen: a frame too small to read drops its callouts
   let dayPitch = 99, b4 = null;
   const layouts = Array.from({ length: 5 }, () => ({ cx: 0, cy: 0, s: 1, rect: [0, 0, 0, 0] }));
   const beatRects = [], capH = [0, 0, 0, 0, 0], labelMaxW = [0, 0, 0, 0, 0], roomOf = [0, 0, 0, 0, 0];
@@ -761,8 +762,12 @@
     const bar = stage.querySelector('.story-bar');
     barH = bar ? bar.offsetHeight : 64;
     const cont = stage.querySelector('.story-ui .container');
-    gutter = (cont && parseFloat(getComputedStyle(cont).paddingLeft)) || 24; // --gutter is a clamp(): read it resolved
-    contR = cont ? cont.getBoundingClientRect().right - gutter : W - gutter;
+    const ccs = cont && getComputedStyle(cont);
+    gutter = (ccs && parseFloat(ccs.paddingLeft)) || 24; // --gutter is a clamp(): read it resolved
+    contR = cont ? cont.getBoundingClientRect().right - ((ccs && parseFloat(ccs.paddingRight)) || gutter) : W - gutter;
+    // the callouts keep out of a notch's safe-area insets, as the beats do (read through a hidden probe)
+    if (!safeProbe) { safeProbe = document.createElement('i'); safeProbe.setAttribute('aria-hidden', 'true'); const ps = safeProbe.style; ps.position = 'absolute'; ps.visibility = 'hidden'; ps.pointerEvents = 'none'; ps.paddingLeft = 'env(safe-area-inset-left)'; ps.paddingRight = 'env(safe-area-inset-right)'; stage.appendChild(safeProbe); }
+    { const pc = getComputedStyle(safeProbe); safeL = parseFloat(pc.paddingLeft) || 0; safeR = parseFloat(pc.paddingRight) || 0; }
     measureBeats();
     // the callouts' own sizes (captions wrap; portrait screens leave out the names): every frame keeps clear of them.
     labelMaxW.fill(0); capH.fill(0);
@@ -822,6 +827,7 @@
       if (br.t - 14 - (navH + barH + capH[i] + 8) < MIN_FRAME[i]) { b.classList.add('is-tight'); tight = true; }
     });
     if (tight) measureLayout();
+    beats.forEach((b, i) => { const br = beatRects[i]; frameTiny[i] = !!(stacked && br && MIN_FRAME[i] && br.t - 14 - (navH + barH + capH[i] + 8) < 40); });
   }
   // the six rings' projected outline at scale s (offsets from the camera target's screen point)
   const tmpV = new Float32Array(16), tmpP = new Float32Array(16), tmpVP = new Float32Array(16);
@@ -1404,14 +1410,14 @@
     const listCol = [];
     labels.forEach(l => {
       const a = vis(l);
-      let on = a > 0.01 && !((stacked || short) && l.wide); // portrait and short screens leave out the secondary notes
+      let on = a > 0.01 && !((stacked || short) && l.wide) && !(frameTiny[l.scene] && l.kind !== 'cap'); // portrait and short screens leave out the secondary notes
       if (on && l.col != null) on = colIn(l.col) > 0.5;
       let x = 0, y = 0, tr = '';
       if (on && l.kind === 'cap') {
         const L = layouts[l.scene];
         if (stacked) { x = gutter; y = navH + barH + 4; }
         else { x = Math.min(L.rect[2] + roomOf[l.scene], contR) - l.w; y = H - barH - l.h - 6; }
-        x = clamp(x, 6, W - l.w - 6);
+        x = clamp(x, 6 + safeL, W - l.w - 6 - safeR);
         tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
       } else if (on) {
         const sc = layouts[l.scene].s, pp = l.anchorPx ? l.anchorPx(sc) : (a => project(a[0] * sc, a[1] * sc, a[2] * sc))(l.anchor());
@@ -1423,7 +1429,7 @@
           if (sd.includes('w')) x -= l.w + 8; else if (sd.includes('e')) x += 8; else x -= l.w / 2;
           if (sd.includes('n')) y -= l.h + 6; else if (sd.includes('s')) y += 6; else y -= l.h / 2;
           y += l.dy || 0;
-          x = clamp(x, 6, W - l.w - 6);
+          x = clamp(x, 6 + safeL, W - l.w - 6 - safeR);
           y = Math.max(y, stacked ? tagTop + capH[l.scene] : navH + 6); // never under the nav (portrait: nor the index or the caption)
           if (l.sum && y + l.h > project(0, (Y_FLOOR + H_COL + 0.2) * layouts[4].s, 0).y - 4) on = false; // the summary only where it clears the columns' tops (it leaves early on the way out: the coda says it)
           l.y = y;
@@ -1438,7 +1444,7 @@
     if (listCol.length) { // a column of callouts on the right of the structure; spread so they never touch
       listCol.sort((a, b) => a.ay - b.ay);
       const sc = listCol[0].scene, L = layouts[sc];
-      const maxW = Math.max(...listCol.map(l => l.w)), colX = stacked ? W - gutter * 0.5 - maxW : Math.min(L.rect[2] + 22, W - gutter * 0.5 - maxW);
+      const maxW = Math.max(...listCol.map(l => l.w)), colX = stacked ? W - Math.max(gutter * 0.5, safeR + 6) - maxW : Math.min(L.rect[2] + 22, W - Math.max(gutter * 0.5, safeR + 6) - maxW);
       const gap = Math.max(...listCol.map(l => l.h)) + (stacked || short ? 2 : 6), top = navH + (stacked ? barH + capH[sc] + 22 : short ? 8 : 14);
       let bottom = stacked ? beatRects[sc].t - 10 : H - barH - capH[sc] - (short ? 12 : 16);
       // landscape: should the column not fit above its scene's caption (a short window at a high zoom)
@@ -1562,7 +1568,7 @@
   const coda = story.querySelector('.story-coda'), codaS = coda && coda.querySelector('.story-coda-s');
   let shownCoda = '', shownCodaTr = '', shownCodaS = '', codaH = 0;
   const paperSum = story.querySelector('[data-story-sum]');
-  if (paperSum) paperSum.textContent = `${FLOOR_T} floor · ${N_PREM} premium · ${N_DISC} discount · ${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed`;
+  if (paperSum) paperSum.textContent = `${FLOOR} ${UNIT} floor · ${N_PREM} premium · ${N_DISC} discount · ${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed`;
   // the records, printed: as the paper reaches the floor line
   const inkRecs = [];
   let inkLink = null;
@@ -1577,6 +1583,8 @@
   let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownFill = [], shownCapO = '';
   let paperH = 0, relay0 = false, relayReady = false, shownBarOff = null;
   let fadeT = 0, copyX = 0, codaA = 0, capA = 0, fading = false, kF = 1; // the exit's three fades: in or out over 0.25 s, never resting between
+  let leave4 = 1, leaveC = 1, barA = 1; // the leave too: the proof's copy, the coda and the bar
+  const codaHedge = coda && coda.querySelector('.story-coda-h'); let shownCodaHedge = '';
   // the index follows the scroll position itself: immediate
   function syncIndex() {
     const ci = clamp(Math.round(sTarget), 0, 4);
@@ -1621,10 +1629,11 @@
         }
         else { op *= 1 - copyX; if (br.ht + shift >= navH + 14) dy += shift; } // the coda takes over, as on portrait
       }
-      if (i === 4 && ov > 0) { // as the stage scrolls away the copy finishes leaving before it reaches the nav's lower edge
+      if (i === 4) { // as the stage scrolls away the copy leaves before the nav: on a threshold, in 0.25 s (never half-faded)
         const room0 = (beatRects[4] ? beatRects[4].t : 0) + dy - navH; // the room left above it when the stage starts to move
-        const k = room0 <= 6 ? 0 : 1 - sstep(Math.max(0, room0 - 6 - Math.min(150, H * 0.2)), room0 - 6, ov);
-        op *= k; if (!red) dy -= (1 - k) * 14;
+        const t4 = ov > 0 && (room0 <= 6 || ov >= room0 - 6 - Math.min(150, H * 0.2) / 2) ? 0 : 1;
+        leave4 += clamp(t4 - leave4, -k, k); if (leave4 !== t4) fading = true;
+        op *= leave4; if (!red) dy -= (1 - leave4) * 14;
       }
       if (bo < 0.08) bo = 0; // (the exit fades it too) no ghost paragraph
       const o = op.toFixed(3), tr = `translate3d(0, ${dy.toFixed(1)}px, 0)`, e = eo.toFixed(3), ww = w.toFixed(3), bb = bo.toFixed(3);
@@ -1641,7 +1650,9 @@
     syncIndex();
     idx.forEach((button, i) => { const f = clamp(sNow - i + 0.5, 0, 1).toFixed(2); if (shownFill[i] !== f) button.style.setProperty('--fill', shownFill[i] = f); });
     if (shownScrolled !== sNow > 0.3) story.classList.toggle('is-scrolled', shownScrolled = sNow > 0.3);
-    const bo = (1 - sstep(0.08, 0.3, xe)).toFixed(3);
+    const barT = xe >= 0.19 ? 0 : 1;
+    barA += clamp(barT - barA, -k, k); if (barA !== barT) fading = true;
+    const bo = barA.toFixed(3);
     if (bar && bo !== shownBar) { bar.style.opacity = shownBar = bo; bar.style.visibility = bo < 0.01 ? 'hidden' : ''; }
     // a hidden bar is out of the tab order too
     const barOff = +bo < 0.01;
@@ -1653,9 +1664,11 @@
       if (xe > 0) {
         const fy = lean ? project(0, Y_FLOOR * layouts[4].s, 0).y : H * FLOOR_END(); // portrait: above the line as it settles
         top = Math.max(navH + 14, fy - (stacked ? 52 : 40) - codaH); // just above the floor it names, clear of the ticks
-        co = codaA * sstep(navH + 6, navH + 24, top);
-        if (ov > 0) { const room0 = top - navH; co *= room0 <= 6 ? 0 : 1 - sstep(Math.max(0, room0 - 6 - Math.min(150, H * 0.2)), room0 - 6, ov); }
-      }
+        co = codaA;
+        const room0 = top - navH, tC = top < navH + 14.5 || (ov > 0 && (room0 <= 6 || ov >= room0 - 6 - Math.min(150, H * 0.2) / 2)) ? 0 : 1; // the leave, on a threshold
+        leaveC += clamp(tC - leaveC, -k, k); if (leaveC !== tC) fading = true;
+        co *= leaveC;
+      } else leaveC = 1;
       const v = co.toFixed(3), tr = `translate3d(0, ${(top + (red ? 0 : (1 - co) * 10)).toFixed(1)}px, 0)`;
       if (v !== shownCoda) coda.style.opacity = shownCoda = v;
       if (co > 0 && tr !== shownCodaTr) coda.style.transform = shownCodaTr = tr;
@@ -1687,6 +1700,11 @@
         const co = (capY + paperCapH > H ? 0 : red ? 1 : capA).toFixed(3);
         if (co !== shownCapO) paperCap.style.opacity = shownCapO = co;
       }
+    }
+    // the coda's hedge gives way only to the paper's caption (it carries the hedge) where that is shown
+    if (codaHedge) {
+      const capOn = paperCap && paperH > 0.5 ? +shownCapO || 0 : 0, vh = (1 - capOn).toFixed(3);
+      if (vh !== shownCodaHedge) codaHedge.style.opacity = shownCodaHedge = vh;
     }
   }
 
@@ -2022,7 +2040,7 @@
       if (root.classList.contains('is-loaded')) setTimeout(() => { relayReady = true; requestFrame(); }, 1500);
       // late layout (fonts, load) refits the stage around the reader's place as the page has it now
       const refit = () => { scrollY = window.scrollY; sceneScroll(); resize(true); };
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+      if (document.fonts && document.fonts.ready) requestAnimationFrame(() => document.fonts.ready.then(refit)); // (in a frame: reading it lays the page out)
       window.addEventListener('load', refit, { once: true });
       // a mouse inspects what it moves over
       stage.addEventListener('pointermove', e => {
