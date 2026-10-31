@@ -2,7 +2,10 @@
    One compact WebGL point-cloud renderer for the research and company pages. Each [data-figure] stage shows a named
    formation (a sculpture of the idea in the article) and can morph to another — the research index morphs to the
    formation of whichever post you point at. Rotates slowly, tilts with the pointer, glows in two passes, pauses
-   off-screen, honours prefers-reduced-motion, and falls back to the inline SVG when WebGL is missing. */
+   off-screen, honours prefers-reduced-motion, and falls back to the inline SVG when WebGL is missing.
+   v2x: a stage with data-rest="N" (the research index's plate) moves only while it has something to show: it eases to
+   a stop N seconds after its last change or pointer move, holds that frame, and wakes on the next (WCAG 2.2.2 without a
+   Pause control). Under reduced motion a change of formation is drawn at once, without the morph. */
 (function () {
   'use strict';
   const stages = Array.from(document.querySelectorAll('[data-figure]'));
@@ -119,10 +122,11 @@
       while (P.length < N) P.push([(rnd() * 2 - 1) * 1.4, (rnd() * 2 - 1) * 0.9, -0.9 - rnd() * 0.6, 7]);
       return P;
     },
-    // Index · the library: ten leaves fanned in space, the two research notes lit
+    // Index · the library: ten leaves fanned round one spine like the pages of an open book, the two research notes lit
+    // (v2x: v2 set the leaves edge to edge on one arc, which read as a single slab)
     library(N, rnd, g) {
       const P = []; const per = Math.floor(N * 0.088);
-      for (let l = 0; l < 10; l++) { const a = (l / 9 - 0.5) * 1.5; const cx = Math.sin(a) * 0.9, cz = Math.cos(a) * 0.9 - 0.6; const ux = Math.cos(a), uz = -Math.sin(a); for (let i = 0; i < per; i++) { const u = rnd() * 2 - 1, v = rnd() * 2 - 1; const rim = rnd() < 0.28; const uu = rim && rnd() < 0.5 ? (rnd() < 0.5 ? -1 : 1) : u, vv = rim && !(rnd() < 0.5) ? (rnd() < 0.5 ? -1 : 1) : v; P.push([cx + ux * uu * 0.28 + g() * 0.003, vv * 0.42 + g() * 0.003, cz + uz * uu * 0.28 + g() * 0.003, l < 2 ? 2 : (rim ? 0 : 1)]); } }
+      for (let l = 0; l < 10; l++) { const a = (l / 9 - 0.5) * 2.2; const ux = Math.sin(a), uz = Math.cos(a); for (let i = 0; i < per; i++) { const rim = rnd() < 0.3; let u = 0.12 + rnd() * 0.86, v = rnd() * 2 - 1; if (rim) { if (rnd() < 0.5) v = rnd() < 0.5 ? -1 : 1; else u = rnd() < 0.5 ? 0.12 : 0.98; } P.push([ux * u + g() * 0.003, v * 0.46 + g() * 0.003, uz * u - 0.35 + g() * 0.003, l < 2 ? 2 : (rim ? 0 : 1)]); } }
       while (P.length < N) P.push([(rnd() * 2 - 1) * 1.4, (rnd() * 2 - 1) * 0.9, -1.2 - rnd() * 0.6, 7]);
       return P;
     },
@@ -200,13 +204,16 @@
     out[12] = -(xx * eye[0] + xz * eye[2]); out[13] = -(yx * eye[0] + yy * eye[1] + yz * eye[2]); out[14] = -(zx * eye[0] + zy * eye[1] + zz * eye[2]); out[15] = 1;
   }
 
+  // a stage that cannot draw at all (no canvas, no WebGL, a program that fails) says so to its page: a caption must not
+  // describe a figure that is not there (research.js hides the captions and the index plate)
+  const none = stage => { stage.classList.add('no-figure'); stage.dispatchEvent(new CustomEvent('figure:none', { bubbles: true })); };
   function init(stage) {
     const cv = stage.querySelector('canvas');
     const initial = stage.dataset.figure;
-    if (!cv || !FORMS[initial]) { stage.classList.add('no-figure'); return; }
+    if (!cv || !FORMS[initial]) { none(stage); return; }
     let gl = null;
     try { gl = cv.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: true, powerPreference: 'low-power' }); } catch (e) { gl = null; }
-    if (!gl) { stage.classList.add('no-figure'); return; }
+    if (!gl) { none(stage); return; }
     const N = narrow() ? 7000 : 15000;
     const rnd = makeRng(41), g = () => (rnd() + rnd() + rnd() - 1.5) * 0.82;
     const RAND = new Float32Array(N * 4); for (let i = 0; i < N * 4; i++) RAND[i] = rnd();
@@ -215,7 +222,7 @@
     let prog = null, bufA = null, bufB = null;
     const U = {};
     const buf = (name, data) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW); const loc = gl.getAttribLocation(prog, name); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, 0); return b; };
-    const fail = (msg, log) => { if (!gl.isContextLost()) { console.warn(msg, log); stage.classList.add('no-figure'); } };
+    const fail = (msg, log) => { if (!gl.isContextLost()) { console.warn(msg, log); none(stage); } };
     // program, buffers and constant state — built once, and again in place when a lost context is restored
     let setupGen = 0; // a quick lose/restore starts a new setup: the old link poll must stop, not spin on a dead program
     function setup(done) {
@@ -245,14 +252,20 @@
     let W = 1, H = 1, dpr = 1, time = 0, mix = 1, current = initial, spinBase = parseFloat(stage.dataset.spin || '0.12');
     const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
     let frameId = 0, visible = true, lost = false, last = performance.now(), paused = false, motionBtn = null;
-    const scale = parseFloat(stage.dataset.scale || '1');
+    const rest = parseFloat(stage.dataset.rest || '0') * 1000; let woke = performance.now(), vel = 1; // data-rest (v2x)
+    let homing = false; // a resting stage turns a new formation to face the reader while it morphs, then drifts on
+    const wake = home => { woke = performance.now(); if (rest && home) homing = true; };
+    // the formation's size: data-scale, or the stage's --figure-scale (a stylesheet may size it per layout; read on resize)
+    const baseScale = parseFloat(stage.dataset.scale || '1'); let scale = baseScale;
+    const cssScale = () => { const v = parseFloat(getComputedStyle(stage).getPropertyValue('--figure-scale')); scale = v > 0 ? v : baseScale; };
     // render at the device's full resolution (up to 3x), within a UHD pixel budget so a large stage on a 3x display stays fluid
     const PIXEL_BUDGET = 3840 * 2160;
-    function resize() { if (!prog || lost) return; const r = cv.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height); dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / (W * H))); cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); gl.viewport(0, 0, cv.width, cv.height); perspective(proj, 0.62, W / H, 0.1, 30); gl.uniform1f(U.u_pr, dpr); draw(true); }
+    function resize() { if (!prog || lost) return; cssScale(); const r = cv.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height); dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / (W * H))); cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); gl.viewport(0, 0, cv.width, cv.height); perspective(proj, 0.62, W / H, 0.1, 30); gl.uniform1f(U.u_pr, dpr); draw(true); }
     function draw(force) {
       const now = performance.now(); const dt = Math.min(0.05, (now - last) / 1000); last = now;
       const moving = !reduced.matches && !paused;
-      if (moving) { time += dt; mouse.x += (mouse.tx - mouse.x) * 0.05; mouse.y += (mouse.ty - mouse.y) * 0.05; }
+      const awake = !rest || now - woke < rest; // a resting stage eases its spin to a stop, then stops asking for frames
+      if (moving) { if (rest) { vel += ((awake ? 1 : 0) - vel) * Math.min(1, dt * 2.4); if (!awake && vel < 0.004) vel = 0; } time += dt * vel; if (homing) { const a = time * spinBase, to = Math.round(a / TAU) * TAU; time += (to - a) / spinBase * Math.min(1, dt * 3); if (Math.abs(to - a) < 0.004) homing = false; } mouse.x += (mouse.tx - mouse.x) * 0.05; mouse.y += (mouse.ty - mouse.y) * 0.05; }
       if (mix < 1) mix = Math.min(1, mix + dt * 0.9);
       const ang = mouse.x * 0.35, elev = 0.35 + mouse.y * 0.25;
       lookAt(view, [Math.sin(ang) * 4.4, elev, Math.cos(ang) * 4.4]);
@@ -262,7 +275,7 @@
       gl.blendFunc(gl.ONE, gl.ONE); gl.uniform1f(U.u_halo, 1); gl.drawArrays(gl.POINTS, 0, N);
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.uniform1f(U.u_halo, 0); gl.drawArrays(gl.POINTS, 0, N);
       stage.classList.add('figure-ready');
-      if (!force && (moving || mix < 1)) request();
+      if (!force && ((moving && (awake || vel > 0)) || mix < 1)) request();
     }
     function frame() { frameId = 0; if (!visible || document.hidden || lost || paused) return; draw(false); }
     function request() { if (!frameId && prog && visible && !document.hidden && !lost && !paused) frameId = requestAnimationFrame(frame); }
@@ -293,8 +306,9 @@
         // the current target becomes the origin; snapping mid-morph is invisible at these speeds
         gl.bindBuffer(gl.ARRAY_BUFFER, bufA); gl.bufferData(gl.ARRAY_BUFFER, build(current), gl.DYNAMIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, bufB); gl.bufferData(gl.ARRAY_BUFFER, build(name), gl.DYNAMIC_DRAW);
-        current = name;
-        if (paused) { mix = 1; if (visible && !document.hidden) draw(true); } // paused: the new formation, in place, in one frame
+        current = name; wake(true);
+        // paused or reduced motion: the new formation, in place, in one frame
+        if (paused || reduced.matches) { mix = 1; if (visible && !document.hidden) draw(true); }
         else { mix = 0; request(); }
       },
     };
@@ -308,7 +322,7 @@
     if ('ResizeObserver' in window) new ResizeObserver(() => { resize(); syncMotion(); }).observe(stage); else window.addEventListener('resize', () => { resize(); syncMotion(); });
     // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
     (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
-    stage.addEventListener('pointermove', e => { if (reduced.matches || e.pointerType === 'touch') return; const r = stage.getBoundingClientRect(); mouse.tx = (e.clientX - r.left) / r.width - 0.5; mouse.ty = (e.clientY - r.top) / r.height - 0.5; }, { passive: true });
+    stage.addEventListener('pointermove', e => { if (reduced.matches || e.pointerType === 'touch') return; const r = stage.getBoundingClientRect(); mouse.tx = (e.clientX - r.left) / r.width - 0.5; mouse.ty = (e.clientY - r.top) / r.height - 0.5; if (rest) { wake(); request(); } }, { passive: true });
     stage.addEventListener('pointerleave', () => { mouse.tx = mouse.ty = 0; });
     setup(() => { resize(); request(); addMotion(); });
   }

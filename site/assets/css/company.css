@@ -8,3 +8,253 @@
    - Anything that moves has a still state under prefers-reduced-motion; anything printed reads on white.
    - Budget: gzip -9 <= 12,000 bytes (check_static weight).
    ========================================================================== */
+
+/* ---------------------------------------------------------------- Company: the hero (v2x) */
+/* The plate is drawn twice: a still engraving in inline SVG (first paint, no JavaScript, no WebGL) and the WebGL
+   swarm, which takes over when it is ready. The readout sits in the flow under the plate, so nothing can print through
+   the mode caption (v2's no-JS overlap). */
+@media (min-width: 961px) {
+  [data-page="company"] .company-hero .container { grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr); }
+  [data-page="company"] .company-intro .lede { max-width: 36ch; }
+  [data-page="company"] .company-sculpture { aspect-ratio: 1.25; }
+}
+[data-page="company"] .company-sculpture .figure-stage.no-figure::after { display: none; }
+.plate-still { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 1s var(--ease); }
+.figure-stage.figure-ready ~ .plate-still { opacity: 0; }
+.plate-still pattern circle { fill: rgba(245, 242, 236, .62); }
+.plate-still .ps-rim { fill: none; stroke: rgba(245, 242, 236, .22); stroke-width: 1; }
+.plate-still .ps-o { fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 0 6.5; }
+.plate-still .ps-o--paper { stroke: rgba(245, 242, 236, .55); }
+.plate-still .ps-o--khaki { stroke: var(--khaki); opacity: .7; }
+.plate-still .ps-o--green { stroke: var(--signal-bright); stroke-width: 2.6; }
+.company-readout { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px 16px; margin: 14px 0 0; font-family: var(--mono); font-size: var(--mono-xs); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); }
+[data-page="company"] .company-modes { margin-top: 18px; }
+[data-page="company"] .company-mode-copy { max-width: 60ch; }
+@media (scripting: none) { .js-only { display: none; } [data-page="company"] .company-mode-copy { margin-top: 22px; } }
+.arr--down { transform: rotate(90deg); }
+@media (hover: hover) { .btn:hover .arr--down { transform: rotate(90deg) translateX(3px); } }
+@media (min-width: 601px) and (max-width: 960px) { /* tablet: copy left, plate right (not a stretched phone) */
+  [data-page="company"] .company-hero { padding-top: calc(var(--nav-h) + 48px); padding-bottom: 56px; }
+  [data-page="company"] .company-hero .container { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 28px; }
+  [data-page="company"] .company-hero h1 { font-size: clamp(3rem, 7.4vw, 3.9rem); }
+  [data-page="company"] .company-sculpture { margin-top: 0; }
+}
+@media (max-width: 600px) {
+  [data-page="company"] .company-hero { padding-bottom: 44px; }
+  [data-page="company"] .company-plate { margin-top: 8px; }
+  [data-page="company"] .company-hero .hero-cta { gap: 10px; margin-top: 28px; }
+  [data-page="company"] .company-hero .hero-cta .btn { padding-left: 1.1em; padding-right: 1.1em; }
+  [data-page="company"] .team-head .body-lg { font-size: 1rem; }
+}
+
+/* ---------------------------------------------------------------- Company §01: the manifesto */
+/* Written once as it arrives (company.js), then still. Without JavaScript the words are ink and the three <em> green. */
+[data-page="company"] .manifesto.is-lg { font-size: clamp(1.85rem, 3.55vw, 3.35rem); line-height: 1.14; text-wrap: pretty; }
+[data-page="company"] .manifesto em { color: var(--accent); }
+[data-page="company"] .manifesto .mw { transition: color .25s var(--ease); }
+[data-page="company"] .mission-note { align-self: start; padding-top: .9rem; }
+[data-page="company"] .mission-note p { color: var(--fg-2); max-width: 40ch; }
+@media (min-width: 601px) and (max-width: 960px) {
+  [data-page="company"] .mission-note { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: 28px; align-items: start; }
+  [data-page="company"] .mission-note .eyebrow { grid-row: span 2; }
+  [data-page="company"] .mission-note p { max-width: 56ch; }
+}
+@media (prefers-reduced-motion: reduce) { [data-page="company"] .manifesto .mw, [data-page="company"] .crew .ph { transition: none; } }
+
+/* ---------------------------------------------------------------- Company §02: the story as a register */
+/* No progress line (v2 drew one to 68%, a progress claim with no basis). Each entry sits under a rule that says its
+   status in the site's ring code: done (ink), now (green, filled), next (dashed khaki, the "not yet" mark). */
+[data-page="company"] .timeline { list-style: none; margin: 0; padding: 0; gap: 0 clamp(18px, 2.4vw, 32px); }
+[data-page="company"] .timeline::before, [data-page="company"] .timeline::after { display: none; }
+[data-page="company"] .timeline .step { padding: 28px 0 0; border-top: 1px solid var(--fg); }
+[data-page="company"] .timeline .step::before { top: -6px; width: 11px; height: 11px; background: var(--bg); border: 1px solid var(--fg); box-shadow: none; transition: none; }
+[data-page="company"] .timeline .step.now { border-top: 2px solid var(--accent); }
+[data-page="company"] .timeline .step.now::before { top: -7px; width: 12px; height: 12px; background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 4px var(--bg); }
+[data-page="company"] .timeline .step.is-next { border-top: 1px dashed var(--khaki-deep); }
+[data-page="company"] .timeline .step.is-next::before { border: 1px dashed var(--khaki-deep); }
+[data-page="company"] .timeline .k { display: flex; gap: 12px; margin-bottom: 14px; }
+[data-page="company"] .timeline .k span:first-child { color: var(--fg); }
+[data-page="company"] .timeline .now .k span:last-child { color: var(--signal-ink); }
+[data-page="company"] .timeline p { max-width: 34ch; }
+@media (min-width: 601px) and (max-width: 960px) { [data-page="company"] .timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 44px; } }
+@media (max-width: 860px) { [data-page="company"] .timeline .step { padding-left: 0; } [data-page="company"] .timeline .step::before { top: -6px; } [data-page="company"] .timeline .step.now::before { top: -7px; } }
+@media (max-width: 600px) { [data-page="company"] .timeline { grid-template-columns: 1fr; row-gap: 26px; } [data-page="company"] .timeline .step { padding-top: 22px; } [data-page="company"] .timeline .k { margin-bottom: 10px; } [data-page="company"] .timeline p { max-width: none; margin-top: 8px; } }
+
+/* ---------------------------------------------------------------- Company §03: the register */
+/* One row per person: code, portrait, name and kicker, the card line with its links and the bio behind its control.
+   A bio opens inside its own row, so nothing beside it is stretched (v2's grid stretched a column into a strip).
+   One portrait treatment: the masters are printed ink on paper by build_team.py, so no filter at rest and no colour on
+   hover; the hover and focus state is the green ring. */
+[data-page="company"] .team-head { margin-bottom: 0; }
+[data-page="company"] .crew-sub { border-top: 0; padding-top: 0; margin: clamp(56px, 7vw, 96px) 0 18px; }
+[data-page="company"] .crew-sub--team { margin-top: clamp(48px, 6vw, 80px); }
+[data-page="company"] .crew { display: block; border: 0; border-top: 1px solid var(--line-strong); }
+[data-page="company"] .crew > li { display: grid; grid-template-columns: 64px 120px minmax(0, 3fr) minmax(0, 6fr); grid-template-areas: "n ph who what"; column-gap: clamp(18px, 2.4vw, 36px); align-items: start; padding: 30px 0; border: 0; border-bottom: 1px solid var(--line); background: none; overflow: visible; }
+[data-page="company"] .crew > li::after { display: none; }
+[data-page="company"] .crew .n { grid-area: n; padding-top: 6px; color: var(--fg-3); }
+[data-page="company"] .crew .ph { grid-area: ph; width: 120px; height: 120px; margin: 0; }
+[data-page="company"] .crew .ph img { filter: none; transform: none; transition: none; will-change: auto; }
+[data-page="company"] .crew .ph::before { opacity: .55; transition: none; }
+[data-page="company"] .crew .ph.grain::after { opacity: .14; }
+[data-page="company"] .crew > li:focus-within .ph img, [data-page="company"] .crew > li:focus-within .ph::before { filter: none; transform: none; opacity: .55; }
+/* hover and focus: a green ring drawn outside the portrait, a paper gap between (the ring of site.css sat under the clip) */
+[data-page="company"] .crew .ph { transition: box-shadow .35s var(--ease); }
+[data-page="company"] .crew .ph .ring { display: none; }
+[data-page="company"] .crew > li:focus-within .ph { box-shadow: inset 0 0 0 1px var(--line), 0 0 0 4px var(--bg), 0 0 0 5px var(--accent); }
+[data-page="company"] .crew .who { grid-area: who; min-width: 0; }
+[data-page="company"] .crew h3 { margin: 0; font-size: clamp(1.7rem, 2.3vw, 2.2rem); line-height: 1.05; text-wrap: balance; }
+[data-page="company"] .crew .role { margin-top: 12px; line-height: 1.5; }
+/* the control and the links share one line; an open bio takes the full width and the links follow it, so the control
+   that was pressed does not move */
+[data-page="company"] .crew .what { grid-area: what; min-width: 0; padding-top: 4px; display: flex; flex-wrap: wrap; align-items: center; column-gap: 26px; }
+[data-page="company"] .crew .what > p { flex: 0 0 100%; margin: 0; font-size: 1rem; line-height: 1.55; max-width: 54ch; color: var(--fg-2); }
+[data-page="company"] .crew .links { margin-top: 12px; padding-top: 0; gap: 4px 22px; }
+[data-page="company"] .crew-more[open] { flex-basis: 100%; }
+[data-page="company"] .crew .links .ext, [data-page="company"] .crew .links .int { text-decoration: none; display: inline-block; }
+[data-page="company"] .crew-more { margin-top: 12px; min-width: 0; }
+[data-page="company"] .crew-more summary { min-height: 32px; }
+[data-page="company"] .crew-more .when-open { display: none; }
+[data-page="company"] .crew-more[open] .when-shut { display: none; }
+[data-page="company"] .crew-more[open] .when-open { display: inline; }
+[data-page="company"] .crew-more[open] summary::after { transform: rotate(45deg); }
+[data-page="company"] .crew-bio { padding-top: 18px; }
+[data-page="company"] .crew-bio p { font-size: .92rem; max-width: 64ch; }
+/* the advisors: the same row, a step smaller */
+[data-page="company"] .crew--advisors > li { padding: 24px 0; }
+[data-page="company"] .crew--advisors .ph { width: 84px; height: 84px; }
+[data-page="company"] .crew--advisors h3 { font-size: clamp(1.45rem, 1.8vw, 1.7rem); }
+[data-page="company"] .crew--advisors .role { margin-top: 10px; }
+[data-page="company"] .crew-stats { margin-top: 28px; }
+[data-page="company"] .crew-stats b { font-size: clamp(1.9rem, 2.5vw, 2.5rem); }
+@media (hover: hover) {
+  [data-page="company"] .crew > li:hover .ph img { filter: none; transform: none; }
+  [data-page="company"] .crew > li:hover .ph::before { transform: none; opacity: .55; }
+  [data-page="company"] .crew > li:hover .ph { box-shadow: inset 0 0 0 1px var(--line), 0 0 0 4px var(--bg), 0 0 0 5px var(--accent); }
+  [data-page="company"] .crew > li:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; text-decoration-color: var(--line-strong); }
+}
+@media (max-width: 1024px) and (min-width: 601px) { /* tablet: the code moves over the name; portrait | name | line */
+  [data-page="company"] .crew > li, [data-page="company"] .crew--advisors > li { grid-template-columns: 96px minmax(0, 1fr) minmax(0, 1.25fr); grid-template-areas: "ph n what" "ph who what"; grid-template-rows: auto 1fr; }
+  [data-page="company"] .crew .n { padding-top: 0; margin-bottom: 8px; }
+  [data-page="company"] .crew .ph { width: 96px; height: 96px; }
+  [data-page="company"] .crew--advisors .ph { width: 72px; height: 72px; }
+}
+@media (max-width: 600px) { /* phone: a compact row, the bio under it */
+  [data-page="company"] .crew > li, [data-page="company"] .crew--advisors > li { grid-template-columns: 64px minmax(0, 1fr); grid-template-areas: "ph n" "ph who" "what what"; grid-template-rows: auto 1fr auto; column-gap: 16px; padding: 22px 0; }
+  [data-page="company"] .crew .n { padding-top: 2px; margin-bottom: 4px; }
+  [data-page="company"] .crew .ph, [data-page="company"] .crew--advisors .ph { width: 64px; height: 64px; }
+  [data-page="company"] .crew h3 { font-size: 1.5rem; }
+  [data-page="company"] .crew--advisors h3 { font-size: 1.35rem; }
+  [data-page="company"] .crew .role { margin-top: 6px; }
+  [data-page="company"] .crew .what { padding-top: 12px; }
+  [data-page="company"] .crew .what > p { font-size: .95rem; line-height: 1.5; }
+  [data-page="company"] .crew .links, [data-page="company"] .crew-more { margin-top: 8px; }
+  [data-page="company"] .crew .what { column-gap: 20px; }
+  [data-page="company"] .crew > li, [data-page="company"] .crew--advisors > li { padding: 18px 0 16px; }
+  [data-page="company"] .crew-stats { flex-wrap: nowrap; gap: 28px; }
+  [data-page="company"] .crew-sub { margin-top: 48px; }
+  [data-page="company"] .crew-sub--team { margin-top: 40px; }
+}
+
+/* ---------------------------------------------------------------- Company §04: the four constants as one plate */
+/* Quadrants divided by two hairlines (no boxed cards, no decorative hover circle). */
+[data-page="company"] .constants { border: 0; }
+[data-page="company"] .constants > div { background: none; border: 0; padding: clamp(26px, 3vw, 44px) clamp(22px, 3vw, 44px) clamp(30px, 3.4vw, 48px) 0; }
+[data-page="company"] .constants > div:nth-child(even) { padding-left: clamp(22px, 3vw, 44px); padding-right: 0; }
+[data-page="company"] .constants > div:nth-child(odd) { border-right: 1px solid var(--line); }
+[data-page="company"] .constants > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+[data-page="company"] .constants > div::after { display: none; }
+[data-page="company"] .constants .n span:first-child { color: var(--fg); }
+@media (max-width: 760px) {
+  [data-page="company"] .constants > div, [data-page="company"] .constants > div:nth-child(n) { padding: 28px 0; border-right: 0; border-bottom: 1px solid var(--line); }
+  [data-page="company"] .constants > div:nth-child(n):last-child { border-bottom: 0; }
+  [data-page="company"] .constants > div, [data-page="company"] .constants > div:nth-child(n) { padding: 24px 0 26px; }
+  [data-page="company"] .constants .n { margin-bottom: 14px; }
+  [data-page="company"] .constants p { margin-top: 12px; }
+}
+
+/* ---------------------------------------------------------------- Company §05: status in words, then where to read on */
+[data-page="company"] .class-row > li { justify-content: flex-start; }
+[data-page="company"] .class-row small { display: block; margin-top: auto; padding-top: 10px; font-family: var(--mono); font-size: var(--mono-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+[data-page="company"] .class-row .cr-live small { color: var(--signal-ink); }
+.further { list-style: none; margin: clamp(40px, 5vw, 64px) 0 0; padding: 0; border-top: 1px solid var(--line-strong); }
+.further a { display: grid; grid-template-columns: minmax(96px, 2fr) minmax(0, 9fr) auto; gap: 20px; align-items: baseline; padding: 20px 0; border-bottom: 1px solid var(--line); }
+.further .k { font-family: var(--mono); font-size: var(--mono-s); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); }
+.further .t { font-family: var(--serif); font-size: clamp(1.25rem, 1.8vw, 1.6rem); line-height: 1.2; letter-spacing: -0.01em; text-wrap: balance; }
+.further .arr { width: 16px; height: 16px; align-self: center; color: var(--fg-3); transition: transform .35s var(--ease), color .3s var(--ease); }
+.further a:focus-visible .t { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; }
+@media (hover: hover) {
+  .further a:hover .t { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; text-decoration-color: var(--line-strong); }
+  .further a:hover .arr { transform: translateX(4px); color: var(--accent); }
+}
+@media (max-width: 600px) { .further a { grid-template-columns: minmax(0, 1fr) auto; row-gap: 6px; } .further .k { grid-column: 1 / -1; } }
+
+/* ---------------------------------------------------------------- Company: print */
+@media print {
+  .plate-still, .company-readout, .company-modes { display: none !important; }
+  [data-page="company"] .crew > li { break-inside: avoid; }
+  [data-page="company"] .crew .ph { display: none; }
+  [data-page="company"] .crew > li { grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1.4fr); grid-template-areas: "n who what"; }
+}
+
+/* ================================================================ Access */
+/* The H1 is the page's mechanism ("Nothing is sent until you send it."); the paths and the form are the same four
+   things, side by side from 601 px; on phones the path list folds into the choices so the page says them once. */
+[data-page="access"] .access-lede { align-self: end; }
+[data-page="access"] .access-hero h1 { max-width: 11ch; }
+/* the four choices: the letter of each path in a ring, filled green when chosen */
+[data-page="access"] .seg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+[data-page="access"] .seg .opt { position: relative; background: var(--bg); transition: background .25s var(--ease); }
+[data-page="access"] .seg .opt:has(input:checked) { background: var(--bg-2); box-shadow: inset 0 -2px 0 var(--accent); }
+[data-page="access"] .seg label, [data-page="access"] .seg label:has(input:checked) { position: static; background: transparent; box-shadow: none; padding: 16px 16px 16px 52px; }
+[data-page="access"] .seg label::after { content: ""; position: absolute; inset: 0; } /* the whole cell chooses */
+[data-page="access"] .seg .seg-k { position: absolute; left: 16px; top: 15px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(14, 21, 18, .55); font: 500 .66rem/1 var(--mono); color: var(--fg-2); transition: background .25s var(--ease), color .25s var(--ease), border-color .25s var(--ease); }
+[data-page="access"] .seg input:checked + span .seg-k { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+[data-page="access"] .seg input:checked + span { color: var(--fg); }
+[data-page="access"] .seg-d { display: none; margin: -6px 0 0; padding: 0 16px 16px 52px; font-size: .9rem; line-height: 1.5; color: var(--fg-2); }
+@media (hover: hover) {
+  [data-page="access"] .seg .opt:hover .seg-k { border-color: var(--fg); color: var(--fg); }
+  [data-page="access"] .seg .opt:hover { background: var(--bg-2); }
+  [data-page="access"] .form input:hover, [data-page="access"] .form select:hover, [data-page="access"] .form textarea:hover { border-color: var(--fg); }
+  [data-page="access"] .f-check:hover input { border-color: var(--fg); }
+}
+/* fields: focus draws the rule twice as thick in green ("you are here"); in forced colours the transparent outline
+   becomes a system-colour ring */
+[data-page="access"] .form input:focus-visible, [data-page="access"] .form select:focus-visible, [data-page="access"] .form textarea:focus-visible { border-color: var(--accent); box-shadow: 0 1px 0 0 var(--accent); outline: 2px solid transparent; outline-offset: 3px; }
+[data-page="access"] .form textarea::placeholder { color: var(--fg-3); }
+/* the select: no native chrome, the site's chevron */
+[data-page="access"] .form select { -webkit-appearance: none; appearance: none; padding-right: 30px; cursor: pointer; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230E1512' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E") right 2px center / 16px 16px no-repeat; }
+/* the attestation: a drawn box, a paper tick on ink when ticked */
+[data-page="access"] .f-check { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 12px; align-items: start; font-family: var(--sans); font-size: .9rem; line-height: 1.55; letter-spacing: 0; text-transform: none; color: var(--fg-2); cursor: pointer; }
+[data-page="access"] .form .f-check input { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; margin: 1px 0 0; padding: 0; border: 1px solid rgba(14, 21, 18, .55); border-radius: var(--r); background: transparent center / 14px 14px no-repeat; cursor: pointer; transition: background-color .2s var(--ease), border-color .2s var(--ease); }
+[data-page="access"] .form .f-check input:checked { background-color: var(--fg); border-color: var(--fg); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23F5F2EC' stroke-width='1.8'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E"); }
+[data-page="access"] .form .f-check input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; box-shadow: none; }
+[data-page="access"] .form-go { display: grid; gap: 14px; justify-items: start; }
+[data-page="access"] .form-note { margin: 0; max-width: 50ch; font-size: .88rem; line-height: 1.55; color: var(--fg-3); }
+/* the result: the letter the page wrote, as the visitor's mail app will show it */
+[data-page="access"] .form-ok { padding: clamp(22px, 3vw, 34px); }
+.letter { margin: 24px 0 0; border: 1px solid var(--line); background: var(--bg-2); }
+.letter[hidden] { display: none; }
+.letter-head { display: grid; gap: 6px; padding: 14px 20px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: var(--mono-s); letter-spacing: .04em; color: var(--fg-2); }
+.letter-head > span { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; }
+.letter-head b { font-weight: 400; text-transform: uppercase; letter-spacing: var(--track-label); color: var(--fg-3); }
+.letter-body { padding: 20px 20px 24px; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--serif); font-size: 1.2rem; line-height: 1.42; color: var(--fg); }
+[data-page="access"] .access-next h2 { max-width: 14ch; }
+@media (min-width: 601px) and (max-width: 960px) {
+  [data-page="access"] .access-lede { align-self: end; }
+  [data-page="access"] .form .two, [data-page="access"] .seg { grid-template-columns: minmax(0, 1fr); }
+  [data-page="access"] .access-next .list-rule--3 > li { grid-template-columns: 44px minmax(0, 1fr); }
+  [data-page="access"] .access-next .list-rule--3 > li > :last-child { grid-column: 2; }
+}
+@media (max-width: 600px) {
+  [data-page="access"] .access-paths { display: none; } /* the same four things as the choices below */
+  [data-page="access"] .seg { grid-template-columns: minmax(0, 1fr); }
+  [data-page="access"] .seg-tag { display: none; }
+  [data-page="access"] .seg-d { display: block; }
+  [data-page="access"] .access-hero h1 { font-size: clamp(2.6rem, 12.5vw, 3.4rem); }
+  [data-page="access"] .access-hero { padding-bottom: 36px; }
+  [data-page="access"] .access-body { padding-top: 44px; }
+  .letter-head > span { grid-template-columns: 64px minmax(0, 1fr); }
+  .letter-body { font-size: 1.1rem; padding: 16px 16px 20px; }
+}
+@media (prefers-reduced-motion: reduce) { [data-page="access"] .seg .opt, [data-page="access"] .seg .seg-k, [data-page="access"] .form .f-check input { transition: none; } }
+@media print { [data-page="access"] .access-paths { display: block !important; } [data-page="access"] .seg-d { display: none !important; } }

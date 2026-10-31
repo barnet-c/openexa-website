@@ -582,13 +582,14 @@
     const target = document.getElementById(location.hash.slice(1));
     if (!target) return;
     let details = target.closest('details'), changed = false;
+    const inFold = !!details;
     while (details) {
       if (!details.open) { details.open = true; changed = true; }
       details = details.parentElement && details.parentElement.closest('details');
     }
-    if (changed) requestAnimationFrame(() => target.scrollIntoView({ block: 'start', behavior: 'instant' }));
+    // a link into a fold also takes focus there (G-11); a followed link finds the fold already opened by the browser
+    if (inFold) requestAnimationFrame(() => { if (changed) target.scrollIntoView({ block: 'start', behavior: 'instant' }); if (target.tabIndex < 0) target.tabIndex = -1; target.focus({ preventScroll: true }); });
   };
-  openLinkedDetails();
   window.addEventListener('hashchange', openLinkedDetails);
 
   /* ---------------- footer: legal detail remains available without JavaScript ---------------- */
@@ -601,6 +602,7 @@
     disclosures.before(details);
     details.append(summary, disclosures);
   }
+  openLinkedDetails(); // after the fold exists
 
   /* ---------------- clocks (footer) ---------------- */
   const clockFmt = (tz) => new Intl.DateTimeFormat('en-US', { timeZone: tz, hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -639,11 +641,11 @@
     const walk = (node) => {
       Array.from(node.childNodes).forEach(child => {
         if (child.nodeType === 3) {
-          const parts = child.textContent.split(/(\s+)/);
+          const parts = child.textContent.split(/([ \t\n\r\f]+)/); // U+00A0 stays in its word
           const frag = document.createDocumentFragment();
           parts.forEach(p => {
             if (!p) return;
-            if (/^\s+$/.test(p)) { frag.appendChild(document.createTextNode(' ')); return; }
+            if (/^[ \t\n\r\f]+$/.test(p)) { frag.appendChild(document.createTextNode(' ')); return; }
             const w = document.createElement('span'); w.className = 'w';
             const wi = document.createElement('span'); wi.className = 'wi'; wi.style.setProperty('--i', i++); wi.textContent = p;
             w.appendChild(wi); frag.appendChild(w);

@@ -1,6 +1,7 @@
 /* OpenEXA — the homepage loader
-   The first of the page's scripts (index.html), so nothing evaluated after it (the overture's WebGL set-up, the
-   instruments, site.js) can hold it up: its cap is armed as soon as the document is parsed.
+   The first of the page's scripts (index.html, started by home.js once the first paint is on screen), so nothing
+   evaluated after it (the overture's WebGL set-up, the instruments, site.js) can hold it up: its cap is armed as soon
+   as the first paint is on screen (its clocks run from navigation start either way).
    It finishes on elapsed time and readiness, never on a count of frames: a throttled or starved requestAnimationFrame
    (background tab, battery saver) only skips repaints of the count; timers lift the loader. performance.now() runs from
    the start of navigation, so the count is the real time the visitor has waited. A later visit (in the same session, or

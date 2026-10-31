@@ -72,11 +72,12 @@
       <div class="container">
         <div class="article-hero-grid">
           <div>
-            <div class="eyebrow" data-reveal>Research · 03 of 10 · Series · 01</div>
-            <h1 class="display-1 article-title" data-reveal data-split style="--d:60ms">Not Tasks. Lifecycles. Why We Stopped Building Assistants</h1>
+            <div class="eyebrow" data-reveal>Research · Note 03 of 10 · Series, part 1 of 8</div>
+            <h1 class="display-1 article-title article-title--long" data-reveal data-split style="--d:60ms">Not Tasks. Lifecycles. Why We Stopped Building Assistants</h1>
             <p class="lede mt-3" data-reveal style="--d:120ms">Why we stopped building assistants and changed the unit of work to the lifecycle.</p>
-            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder's notes</span><span>3 min read</span><span>Fig. 03 — lifecycle</span></div>
+            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder’s notes</span><span>3 min read</span></div>
           </div>
+          <p class="figcap article-figcap"><span class="figcap-n">Fig. 03</span><span class="figcap-t">A lifecycle as one loop of gates, the last one lit.</span><span class="figcap-d">A lifecycle “starts with a signal, moves through a series of decisions and approvals, executes against an external counterparty, and ends with a record”.</span><span class="figcap-h">Illustrative</span></p>
         </div>
       </div>
     </section>
@@ -93,7 +94,9 @@
           </nav>
           <article class="col-7 offset-5 article">
             <p class="lead">For most of the last three years, the industry has been building assistants. An assistant takes a task, produces an output, and hands it back to a person who decides what to do next. That loop is useful. It is also the wrong abstraction for the work that actually costs institutions money.</p><p>When I looked at where floors of specialists still sit in finance, semiconductors, energy, and pharma, I did not find tasks. I found lifecycles. A lifecycle is a multi-party process that starts with a signal, moves through a series of decisions and approvals, executes against an external counterparty, and ends with a record that a regulator can audit years later. ETF creation and redemption is a lifecycle. A letter of credit is a lifecycle. Batch release in a pharmaceutical plant is a lifecycle.</p><p>The defining feature of a lifecycle is that most of its cost lives in the exceptions. The happy path is already automated. What consumes human hours is the reconciliation break, the counterparty that did not confirm, the order that partially filled, the approval that needs a named person because a cap was breached. Software has always waited for a human to decide at those moments. My research thesis is that it no longer has to.</p><p>So we changed the unit of work. OpenEXA does not build an agent that does a task. We build infrastructure on which a swarm of small agents runs an entire lifecycle, from the first signal to the final ledger entry, with a human in the loop whenever a policy says there must be one and not otherwise.</p><h2 id="the-lifecycle-test">The lifecycle test</h2><p>Not every process qualifies. Early on, we wrote down six traits a process must have before we will touch it. It must be multi-party, regulated, structured enough to be machine-actionable, exception-heavy, gated by approvals or settlement, and bound to an audit trail. All six, or it isn't ours.</p><p>Those traits are not arbitrary. Each one maps to a layer in the system we built. Multi-party means we need authenticated connections to counterparties. Regulated means a policy engine must sit between decision and execution. Structured means an MCP server can expose the process as tools. Exception-heavy is where the agents earn their keep. Gated tells us where the council sits. Audit-bound tells us why the ledger is append-only and hash-chained.</p><p>If a process fails one of the six, the architecture has a piece with nothing to hold. That is why the list is a filter and not a wishlist.</p><h2 id="why-finance-first">Why finance first</h2><p>We deliberately chose the smallest, lowest-risk lifecycle we could find as our proving ground: matching a fund's price to what it holds. ETF create and redeem is narrow, the rules are public, the counterparties confirm every action independently, and the downside of a mistake is bounded by position caps. It is the ideal environment to prove that thousands of agents can run a regulated process end to end without a person watching every step.</p><p>Trust is earned in the lowest-risk lifecycle first. Then it compounds. The next posts in this series describe how.</p>
-            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder's notes · 03 / 10</span></div>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder’s notes · 03 / 10</span></div>
+            <div class="note-run"><p class="note-k">See it run</p><ul><li><a class="link-arrow" href="../lifecycles.html#test">The lifecycle test, trait by trait <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></li></ul></div>
+            <div class="note-disc"><p class="note-k">Series disclosure</p><p>Performance figures referenced in this series are proof-of-concept results over a limited period and are not guarantees of future results. OpenEXA does not take custody of client assets. Lifecycles beyond Lifecycle 01 describe roadmap intent. Any offering of securities would be made only to accredited investors under Rule 506(c). Named brokers and exchanges do not endorse OpenEXA.</p><p><a href="#disclosures">See the disclosures.</a></p></div>
           </article>
         </div>
       </div>
@@ -102,7 +105,7 @@
     <section class="section is-paper-2 section--tight">
       <div class="container">
         <div class="pager">
-          <a class='pager-card' href='02-post-training-and-audit.html'><span class='k'>← Previous · 02</span><h3>Specializing a Model to a Rulebook and Proving What It Did. A Research Note on Post-Training and Audit</h3><p>How a general model comes to follow one rulebook, and how a hash-chained ledger proves what it did.</p></a>
+          <a class='pager-card' href='02-post-training-and-audit.html'><span class='k'>← Previous · 02</span><h3>Specializing a Model to a Rulebook and Proving What It Did. A Research Note on Post‐Training and Audit</h3><p>How a general model comes to follow one rulebook, and how a hash-chained ledger proves what it did.</p></a>
           <a class='pager-card next' href='04-five-thousand-small-agents.html'><span class='k'>Next · 04 →</span><h3>Why Five Thousand Small Agents Beat One Large One</h3><p>Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.</p></a>
         </div>
       </div>
@@ -134,5 +137,6 @@
 
   <script src="../assets/js/figure.js" defer></script>
   <script src="../assets/js/site.js" defer></script>
+  <script src="../assets/js/research.js" defer></script>
 </body>
 </html>

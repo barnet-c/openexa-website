@@ -39,7 +39,7 @@ def headline(s):
 
 def card(rel):
     s = (ROOT / rel).read_text(encoding="utf-8")
-    mins = re.search(r"(\d+) min read", s)
+    mins = re.search(r"(\d+)(?:\s|&nbsp;)min read", s)  # v2x: the pages tie the number to "min" with a no-break space
     if rel in TOP:
         kicker, foot = TOP[rel], TAGLINE
     elif rel.startswith("research/"):
@@ -50,7 +50,11 @@ def card(rel):
     else:
         kicker = "Blog"
         foot = "OpenEXA Blog" + (f" · {mins.group(1)} min read" if mins else "")
-    return {"rel": rel, "kicker": kicker, "headline": headline(s), "sub": meta(s, "og:description"), "foot": foot}
+    # v2x: a description that opens with the page's h1 (Lifecycles) would print it twice; the sub-line starts after it
+    flat = lambda x: x.replace("‐", "-").replace(" ", " ")
+    sub, h1 = meta(s, "og:description"), flat(text(re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S).group(1)))
+    if flat(sub).startswith(h1) and len(sub) > len(h1): sub = sub[len(h1):].lstrip()
+    return {"rel": rel, "kicker": kicker, "headline": headline(s), "sub": sub, "foot": foot}
 
 def pages():
     out = list(TOP)

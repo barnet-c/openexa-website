@@ -72,11 +72,12 @@
       <div class="container">
         <div class="article-hero-grid">
           <div>
-            <div class="eyebrow" data-reveal>Research · 06 of 10 · Series · 04</div>
-            <h1 class="display-1 article-title" data-reveal data-split style="--d:60ms">Post-Training a Model on a Rulebook, Not on the Internet</h1>
+            <div class="eyebrow" data-reveal>Research · Note 06 of 10 · Series, part 4 of 8</div>
+            <h1 class="display-1 article-title article-title--long" data-reveal data-split style="--d:60ms">Post‐Training a Model on a Rulebook, Not on the Internet</h1>
             <p class="lede mt-3" data-reveal style="--d:120ms">Closing the gap between a model that knows finance and one that knows this lifecycle.</p>
-            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder's notes</span><span>3 min read</span><span>Fig. 06 — rulebook</span></div>
+            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder’s notes</span><span>3 min read</span></div>
           </div>
+          <p class="figcap article-figcap"><span class="figcap-n">Fig. 06</span><span class="figcap-t">A dense core, with documents drifting in.</span><span class="figcap-d">“The most valuable data in any lifecycle is its exception history.”</span><span class="figcap-h">Illustrative</span></p>
         </div>
       </div>
     </section>
@@ -93,7 +94,9 @@
           </nav>
           <article class="col-7 offset-5 article">
             <p class="lead">General-purpose language models know a great deal about finance. They do not know the specific rulebook, exception history, and document set of a single lifecycle. Closing that gap is the core of our model layer research, and it is the piece of the system most people underestimate.</p><h2 id="the-problem-with-general-capability">The problem with general capability</h2><p>A frontier model can explain how ETF creation works. Ask it what to do when an authorized participant's basket delivery is short one constituent after the cutoff, in a discount regime, when the fund's borrow cost has spiked, and the model will produce a plausible answer. Plausible is not the standard. The standard is what the fund's own procedures, the exchange's rules, and the desk's exception log say to do, every time, across five thousand agents making the same class of decision.</p><p>We solved this by post-training a language model on the lifecycle itself: its rules, its documents, and its recorded exceptions. Every agent in the swarm reasons on that model. The model is not a generalist that happens to be prompted about ETFs. It is a specialist that has internalized the rulebook.</p><h2 id="exceptions-are-the-training-set">Exceptions are the training set</h2><p>The most valuable data in any lifecycle is its exception history. The happy path is documented in a procedures manual. The exceptions are documented in years of reconciliation breaks, email threads, and the memory of the people who resolved them. That is what a human specialist actually knows and what a general model does not.</p><p>Our post-training process treats exceptions as first-class training signal. Each historical exception becomes a case: the state of the lifecycle when it occurred, the rule that applied, the action that resolved it, and the counterparty confirmation that closed it. The model learns not just the rules but the mapping from messy real-world states to rule applications.</p><h2 id="bounded-tool-use">Bounded tool use</h2><p>A post-trained model that reasons well is still not permitted to act freely. Every agent reasons on the shared model with bounded tool use. The tools available to a given agent are determined by its gate and its permission scope, not by what the model would like to call. A prediction agent has read access to market data. It does not have a tool that places orders, so it cannot place one no matter what it concludes.</p><p>This is where the model layer and the authentication layer meet. The model provides consistent reasoning across the swarm. The permission scope provides consistent limits on what that reasoning can touch.</p><h2 id="why-this-creates-a-defensible-position">Why this creates a defensible position</h2><p>A post-trained model is a moat because the training set is not public. The rules are public. The exception history of a specific lifecycle, resolved and confirmed over time, is not. Every session the swarm runs adds to that history. Every rejected proposal teaches the model something about where the council draws its line. The model gets more specific to the lifecycle the longer it runs it, and that specificity is not something a competitor can download.</p>
-            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder's notes · 06 / 10</span></div>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder’s notes · 06 / 10</span></div>
+            <div class="note-run"><p class="note-k">See it run</p><ul><li><a class="link-arrow" href="../platform.html#architecture">Find the model layer in the architecture explorer <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></li></ul></div>
+            <div class="note-disc"><p class="note-k">Series disclosure</p><p>Performance figures referenced in this series are proof-of-concept results over a limited period and are not guarantees of future results. OpenEXA does not take custody of client assets. Lifecycles beyond Lifecycle 01 describe roadmap intent. Any offering of securities would be made only to accredited investors under Rule 506(c). Named brokers and exchanges do not endorse OpenEXA.</p><p><a href="#disclosures">See the disclosures.</a></p></div>
           </article>
         </div>
       </div>
@@ -134,5 +137,6 @@
 
   <script src="../assets/js/figure.js" defer></script>
   <script src="../assets/js/site.js" defer></script>
+  <script src="../assets/js/research.js" defer></script>
 </body>
 </html>

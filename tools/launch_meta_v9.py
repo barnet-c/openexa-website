@@ -117,12 +117,12 @@ page404 = f'''<!DOCTYPE html>
         </figure>
         <div class="eyebrow">404 · Rejected at the gate</div>
         <h1 class="display-1 mt-2">This page didn’t pass.</h1>
-        <p class="lede mt-3">The address is wrong, has moved, or never existed. Nothing was executed. The attempt is on the record.</p>
+        <p class="lede mt-3">The address is wrong, has moved, or never existed. Nothing was executed.</p>
         <div class="row mt-3">
           <a class="btn" href="index.html">Back to the start <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
           <a class="btn btn--ghost" href="platform.html">The platform</a>
         </div>
-        <p class="notfound-log"><span>REJECTED</span> · gate 04 · reason: unknown route · logged</p>
+        <p class="notfound-log"><span>REJECTED</span> · gate 04 · reason: unknown route · nothing executed</p>
       </div>
     </section>
   </main>

@@ -68,160 +68,182 @@
 
   <main id="main">
     <section class="page-hero page-hero--dark is-dark grain research-hero">
-      <div class="figure-stage research-figure" id="research-figure" data-figure="library" data-spin="0.08" aria-hidden="true"><canvas></canvas></div>
+      <div class="figure-stage research-figure" id="research-library" data-figure="library" data-spin="0.08" aria-hidden="true"><canvas></canvas></div>
       <div class="container">
         <div class="grid">
           <div class="col-7">
-            <div class="eyebrow" data-reveal>Research · Founder's notes</div>
+            <div class="eyebrow" data-reveal>Research · Founder’s notes</div>
             <h1 class="display-1" data-reveal data-split style="--d:60ms">The thinking behind the swarm.</h1>
-            <p class="lede mt-3" data-reveal style="--d:120ms">Ten notes on why high-stakes work should be run by thousands of narrow agents behind one deterministic boundary — from the mathematics of compounding error to what ten sessions on real capital taught us. Point at a note and the figure becomes its idea.</p>
-            <div class="article-meta" data-reveal style="--d:180ms"><span>10 notes</span><span>37 min in total</span><span>Two research notes · an eight-part series</span></div>
+            <p class="lede mt-3" data-reveal style="--d:120ms">Ten notes on why high-stakes work should be run by thousands of narrow agents behind one deterministic boundary, from the mathematics of compounding error to what ten sessions on real capital taught us.</p>
+            <div class="article-meta" data-reveal style="--d:180ms"><span>10 notes</span><span>37 min in total</span><span>Two research notes · an eight-part series</span></div>
           </div>
         </div>
+        <p class="figcap rs-herocap"><span class="figcap-t">Ten notes as ten leaves; the two research notes are lit.</span><span class="figcap-h">Illustrative</span></p>
       </div>
     </section>
 
-    <section class="section" id="notes">
-      <div class="container">
-        <div class="sec-head" data-reveal role="heading" aria-level="2"><span class="idx">01</span><span class="lab">Research notes</span><span class="aside">Start here · the argument from first principles</span></div>
-        <ol class="posts-list" data-reveal>
-          <li class="post" data-figure-target="horizon" data-figure-stage="research-figure">
+    <!-- v2x: the shelf. The ten notes, and beside them (pinned below them on phones) one plate that shows the figure of
+         the note pointed at, focused or, on touch screens, read: research.js. Without JavaScript the plate is not drawn
+         and the list takes the full width (research.css, @media (scripting: none)). -->
+    <div class="rs-shelf">
+      <section class="section" id="notes">
+        <div class="container">
+          <div class="rs-col">
+            <div class="sec-head" data-reveal role="heading" aria-level="2"><span class="idx">01</span><span class="lab">Research notes</span><span class="aside">Start here · the argument from first principles</span></div>
+            <ol class="posts-list" data-reveal>
+          <li class="post" data-figure-target="horizon" data-figure-stage="research-figure" data-cap-n="Fig. 01" data-cap-t="Two runs of dependent steps, one of them gated." data-cap-d="The red curve decays as p to the power n. The green run has a gate after every step. “An error at step k is caught at the verification gate after step k.”" data-cap-h="Illustrative">
             <a href="research/01-compounding-error.html">
               <span class="post-n">01</span>
               <div class="post-main">
                 <div class="post-kind">Research note</div>
-                <h3>Compounding Error and the Case for Decomposition. A Research Note on Agent Architecture</h3>
+                <h3>Compounding Error and the Case for Decomposition. <span class="title-sub">A Research Note on Agent Architecture</span></h3>
                 <p>Why long-horizon autonomous work must be decomposed into narrow agents behind a deterministic boundary.</p>
               </div>
-              <div class="post-meta"><span>6 min</span><span class="post-fig">Fig. 01</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
+              <div class="post-meta"><span>6 min</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
             </a>
           </li>
-          <li class="post" data-figure-target="weights" data-figure-stage="research-figure">
+          <li class="post" data-figure-target="weights" data-figure-stage="research-figure" data-cap-n="Fig. 02" data-cap-t="One base model, rings of adapters, the record below." data-cap-d="“One base model, many adapters.” Each record in the chain below holds “the hash of the previous record.”" data-cap-h="Illustrative">
             <a href="research/02-post-training-and-audit.html">
               <span class="post-n">02</span>
               <div class="post-main">
                 <div class="post-kind">Research note</div>
-                <h3>Specializing a Model to a Rulebook and Proving What It Did. A Research Note on Post-Training and Audit</h3>
+                <h3>Specializing a Model to a Rulebook and Proving What It Did. <span class="title-sub">A Research Note on Post‐Training and Audit</span></h3>
                 <p>How a general model comes to follow one rulebook, and how a hash-chained ledger proves what it did.</p>
               </div>
-              <div class="post-meta"><span>7 min</span><span class="post-fig">Fig. 02</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
+              <div class="post-meta"><span>7 min</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
             </a>
           </li>
-        </ol>
-      </div>
-    </section>
-
-    <section class="section is-paper-2" id="series">
-      <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">02</span><span class="lab">The series</span><span class="aside">Eight posts · the system, gate by gate</span></div>
-        <div class="grid mb-3">
-          <div class="col-6"><h2 class="display-2" data-reveal data-split>From the unit of work to the open platform.</h2></div>
-          <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Read in order, the eight posts walk the architecture from the lifecycle test to the master-and-copy model — each one describing the research idea behind a layer of the stack.</p></div>
+            </ol>
+          </div>
         </div>
-        <ol class="posts-list" data-reveal start="3">
-          <li class="post" data-figure-target="lifecycle" data-figure-stage="research-figure">
+      </section>
+
+      <section class="section is-paper-2" id="series">
+        <div class="container">
+          <div class="rs-col">
+            <div class="sec-head" data-reveal><span class="idx">02</span><span class="lab">The series</span><span class="aside">Eight notes · the system, gate by gate</span></div>
+            <div class="rs-intro">
+              <h2 class="display-2" data-reveal data-split>From the unit of work to the open platform.</h2>
+              <p class="body-lg" data-reveal style="--d:80ms">Read in order, the series goes from the lifecycle test to master and copy.</p>
+            </div>
+            <ol class="posts-list" data-reveal start="3">
+          <li class="post" data-figure-target="lifecycle" data-figure-stage="research-figure" data-cap-n="Fig. 03" data-cap-t="A lifecycle as one loop of gates, the last one lit." data-cap-d="A lifecycle “starts with a signal, moves through a series of decisions and approvals, executes against an external counterparty, and ends with a record”." data-cap-h="Illustrative">
             <a href="research/03-not-tasks-lifecycles.html">
               <span class="post-n">03</span>
               <div class="post-main">
-                <div class="post-kind">Series · 01</div>
+                <div class="post-kind">Series, part 1 of 8</div>
                 <h3>Not Tasks. Lifecycles. Why We Stopped Building Assistants</h3>
                 <p>Why we stopped building assistants and changed the unit of work to the lifecycle.</p>
               </div>
-              <div class="post-meta"><span>3 min</span><span class="post-fig">Fig. 03</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
+              <div class="post-meta"><span>3 min</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
             </a>
           </li>
-          <li class="post" data-figure-target="swarm" data-figure-stage="research-figure">
+          <li class="post" data-figure-target="swarm" data-figure-stage="research-figure" data-cap-n="Fig. 04" data-cap-t="One large agent beside a lattice of small ones." data-cap-d="“No single agent sees the whole trade. Each agent is scoped to exactly one gate in the lifecycle and does exactly one job.”" data-cap-h="Illustrative">
             <a href="research/04-five-thousand-small-agents.html">
               <span class="post-n">04</span>
               <div class="post-main">
-                <div class="post-kind">Series · 02</div>
+                <div class="post-kind">Series, part 2 of 8</div>
                 <h3>Why Five Thousand Small Agents Beat One Large One</h3>
                 <p>Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.</p>
               </div>
-              <div class="post-meta"><span>3 min</span><span class="post-fig">Fig. 04</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
+              <div class="post-meta"><span>3 min</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
             </a>
           </li>
-          <li class="post" data-figure-target="boundary" data-figure-stage="research-figure">
+          <li class="post" data-figure-target="boundary" data-figure-stage="research-figure" data-cap-n="Fig. 05" data-cap-t="Eight layers and one bright plane between them." data-cap-d="“The top four decide.” Under the plane: “The bottom four execute, and they are deterministic code.”" data-cap-h="Illustrative">
             <a href="research/05-agents-decide-code-executes.html">
               <span class="post-n">05</span>
               <div class="post-main">
-                <div class="post-kind">Series · 03</div>
+                <div class="post-kind">Series, part 3 of 8</div>
                 <h3>Agents Decide. Code Executes. The One Boundary That Matters</h3>
                 <p>Eight layers, one boundary. The top four estimate; the bottom four are deterministic code.</p>
               </div>
-              <div class="post-meta"><span>3 min</span><span class="post-fig">Fig. 05</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
+              <div class="post-meta"><span>3 min</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
             </a>
           </li>
-          <li class="post" data-figure-target="rulebook" data-figure-stage="research-figure">
+          <li class="post" data-figure-target="rulebook" data-figure-stage="research-figure" data-cap-n="Fig. 06" data-cap-t="A dense core, with documents drifting in." data-cap-d="“The most valuable data in any lifecycle is its exception history.”" data-cap-h="Illustrative">
             <a href="research/06-post-training-on-a-rulebook.html">
               <span class="post-n">06</span>
               <div class="post-main">
-                <div class="post-kind">Series · 04</div>
-                <h3>Post-Training a Model on a Rulebook, Not on the Internet</h3>
+                <div class="post-kind">Series, part 4 of 8</div>
+                <h3>Post‐Training a Model on a Rulebook, Not on the Internet</h3>
                 <p>Closing the gap between a model that knows finance and one that knows this lifecycle.</p>
               </div>
-              <div class="post-meta"><span>3 min</span><span class="post-fig">Fig. 06</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
+              <div class="post-meta"><span>3 min</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
             </a>
           </li>
-          <li class="post" data-figure-target="council" data-figure-stage="research-figure">
+          <li class="post" data-figure-target="council" data-figure-stage="research-figure" data-cap-n="Fig. 07" data-cap-t="Proposals arrive from above; rejected ones leave to the side." data-cap-d="Approved proposals continue down. “If any check fails, the proposal exits at the gate and is logged.”" data-cap-h="Illustrative">
             <a href="research/07-the-execution-council.html">
               <span class="post-n">07</span>
               <div class="post-main">
-                <div class="post-kind">Series · 05</div>
+                <div class="post-kind">Series, part 5 of 8</div>
                 <h3>The Execution Council. Governance in Milliseconds</h3>
                 <p>Governance in milliseconds: what the council checks, three operating modes, and the kill switch.</p>
               </div>
-              <div class="post-meta"><span>3 min</span><span class="post-fig">Fig. 07</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
+              <div class="post-meta"><span>3 min</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
             </a>
           </li>
-          <li class="post" data-figure-target="ledger" data-figure-stage="research-figure">
+          <li class="post" data-figure-target="ledger" data-figure-stage="research-figure" data-cap-n="Fig. 08" data-cap-t="Eight blocks in a chain, each linked to the one before." data-cap-d="The newest block is lit. “Editing any entry breaks verification for every entry after it.”" data-cap-h="Illustrative">
             <a href="research/08-a-ledger-nobody-can-edit.html">
               <span class="post-n">08</span>
               <div class="post-main">
-                <div class="post-kind">Series · 06</div>
+                <div class="post-kind">Series, part 6 of 8</div>
                 <h3>A Ledger Nobody Can Edit. Hash Chains as Audit Infrastructure</h3>
                 <p>Append-only, hash-chained, replayable. Why a record an administrator can edit is only a claim.</p>
               </div>
-              <div class="post-meta"><span>3 min</span><span class="post-fig">Fig. 08</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
+              <div class="post-meta"><span>3 min</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
             </a>
           </li>
-          <li class="post" data-figure-target="sessions" data-figure-stage="research-figure">
+          <li class="post" data-figure-target="sessions" data-figure-stage="research-figure" data-cap-n="Fig. 09" data-cap-t="Ten sessions, one column each, in the order of the record." data-cap-d="Green for a premium regime, ivory for discount. Each column fills to the khaki line, the 10 bps floor, and every one rises past it; the scatter above the line does not show by how much, which is not published." data-cap-h="Illustrative · heights not to scale · regimes read from the record">
             <a href="research/09-lifecycle-01-ten-sessions.html">
               <span class="post-n">09</span>
               <div class="post-main">
-                <div class="post-kind">Series · 07</div>
+                <div class="post-kind">Series, part 7 of 8</div>
                 <h3>Lifecycle 01. What Ten Sessions on Real Markets Taught Us</h3>
                 <p>What ten live sessions on real capital showed, precisely what they did not, and where the cost goes.</p>
               </div>
-              <div class="post-meta"><span>3 min</span><span class="post-fig">Fig. 09</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
+              <div class="post-meta"><span>3 min</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
             </a>
           </li>
-          <li class="post" data-figure-target="mastercopy" data-figure-stage="research-figure">
+          <li class="post" data-figure-target="mastercopy" data-figure-stage="research-figure" data-cap-n="Fig. 10" data-cap-t="One proven agent above, its copies below, on one control plane." data-cap-d="Phase two, on the roadmap. “A copy is a replication of that agent onto a new asset or strategy under the same control plane.”" data-cap-h="Illustrative · roadmap">
             <a href="research/10-master-and-copy.html">
               <span class="post-n">10</span>
               <div class="post-main">
-                <div class="post-kind">Series · 08</div>
+                <div class="post-kind">Series, part 8 of 8</div>
                 <h3>Master and Copy. How a Proven Agent Becomes a Platform</h3>
                 <p>How a proven agent becomes a platform: prove one, master and copy, then open the rails.</p>
               </div>
-              <div class="post-meta"><span>3 min</span><span class="post-fig">Fig. 10</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
+              <div class="post-meta"><span>3 min</span><svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></div>
             </a>
           </li>
-        </ol>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <div class="rs-rail" aria-hidden="true">
+        <div class="container rs-rail-in">
+          <figure class="rs-plate">
+            <div class="rs-stage is-dark grain"><div class="figure-stage" id="research-figure" data-figure="horizon" data-spin="0.07" data-rest="5"><canvas></canvas></div></div>
+            <figcaption class="rs-caption">
+              <p class="rs-hint"><span class="rs-hint-p">Point at a note and the figure becomes its idea.</span><span class="rs-hint-t">Scroll the list and the figure follows the note you are on.</span></p>
+              <p class="figcap rs-cap"><span class="figcap-n">Fig. 01</span><span class="figcap-t">Two runs of dependent steps, one of them gated.</span><span class="figcap-d">The red curve decays as p to the power n. The green run has a gate after every step. “An error at step k is caught at the verification gate after step k.”</span><span class="figcap-h">Illustrative</span></p>
+            </figcaption>
+          </figure>
+        </div>
       </div>
-    </section>
+    </div>
 
     <section class="section" id="blog">
       <div class="container">
         <div class="sec-head" data-reveal><span class="idx">03</span><span class="lab">The blog</span><span class="aside">29 posts · 2008–2024</span></div>
-        <div class="grid mb-3">
-          <div class="col-6"><h2 class="display-2" data-reveal data-split>Before the swarm, the research.</h2></div>
+        <div class="grid t-2 mb-3">
+          <div class="col-6"><h2 class="display-2" data-reveal data-split>Three collections, from market structure to AI agents.</h2></div>
           <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Research summaries, market-structure economics and the first notes on AI agents in finance, from the people behind OpenEXA and the researchers they work with.</p><a class="link-arrow mt-3 scholar-link" href="https://scholar.google.com/citations?user=P40aOHIAAAAJ" target="_blank" rel="noopener">More on financial markets research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"/></svg></a></div>
         </div>
         <div class="card-grid card-grid--3" data-reveal style="--d:120ms">
-          <a class="card research-card" href="blog/index.html#ai"><div class="n"><span>5 posts</span><span>2024</span></div><h3 class="h4">AI &amp; agents</h3><p>The first notes on AI copilots, guardrails and autonomous agents in financial markets — the thinking that became OpenEXA&#x27;s agentic infrastructure.</p><span class="link-arrow mt-3">Browse <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
-          <a class="card research-card" href="blog/index.html#markets"><div class="n"><span>16 posts</span><span>2020–2022</span></div><h3 class="h4">Financial markets research</h3><p>Summaries of peer-reviewed research in computational finance: ETF price dynamics and drawdown risk, optimal execution, futures portfolios, sparse mean-reverting portfolios and multiscale signal processing.</p><span class="link-arrow mt-3">Browse <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
-          <a class="card research-card" href="blog/index.html#economics"><div class="n"><span>8 posts</span><span>2008–2023</span></div><h3 class="h4">Market structure &amp; economics</h3><p>Summaries of academic research on how financial markets shape real decisions — information, contracting, credit, automation and the labour share.</p><span class="link-arrow mt-3">Browse <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
+          <a class="card research-card" href="blog/index.html#ai"><div class="n"><span>5 posts</span><span>2024</span></div><h3 class="h4">AI &amp; agents</h3><p>The first notes on AI copilots, guardrails and autonomous agents in financial markets — the thinking that became OpenEXA&#x27;s agentic infrastructure.</p><span class="link-arrow mt-3">Browse the collection <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
+          <a class="card research-card" href="blog/index.html#markets"><div class="n"><span>16 posts</span><span>2020–2022</span></div><h3 class="h4">Financial markets research</h3><p>Summaries of peer-reviewed research in computational finance: ETF price dynamics and drawdown risk, optimal execution, futures portfolios, sparse mean-reverting portfolios and multiscale signal processing.</p><span class="link-arrow mt-3">Browse the collection <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
+          <a class="card research-card" href="blog/index.html#economics"><div class="n"><span>8 posts</span><span>2008–2023</span></div><h3 class="h4">Market structure &amp; economics</h3><p>Summaries of academic research on how financial markets shape real decisions — information, contracting, credit, automation and the labor share.</p><span class="link-arrow mt-3">Browse the collection <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
         </div>
         <div class="mt-4 row-links" data-reveal><a class="link-arrow" href="blog/index.html#series">Start with The Gen-AI series: from business model to AI agents <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a><a class="link-arrow" href="blog/index.html">All 29 posts <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
       </div>
@@ -229,14 +251,15 @@
 
     <section class="section is-paper-2" id="principles">
       <div class="container">
-        <div class="grid">
-          <div class="col-5"><div class="eyebrow mb-2" data-reveal>Four things that never change</div><h2 class="display-2" data-reveal data-split>The research contribution is four constants.</h2></div>
+        <div class="sec-head" data-reveal><span class="idx">04</span><span class="lab">Four constants</span><span class="aside">Four things that never change</span></div>
+        <div class="grid t-2">
+          <div class="col-5"><h2 class="display-2" data-reveal data-split>The research contribution is four constants.</h2></div>
           <div class="col-6 offset-7">
             <ol class="num-list" data-reveal style="--d:80ms">
               <li><h3>Agents decide. Code executes.</h3><p>The top four layers estimate and reason; the bottom four are deterministic. The boundary between them is a typed schema.</p></li>
               <li><h3>No single agent sees the whole job.</h3><p>Each agent is scoped to one gate and does one thing. Its failure is local and its output is a proposal until something downstream permits it.</p></li>
-              <li><h3>Nothing an agent believes can move what it is not permitted to.</h3><p>Capabilities are held per agent and per tool, enforced by the runtime rather than by the model's good behaviour.</p></li>
-              <li><h3>Anything that settles is written to a ledger nobody can edit.</h3><p>Append-only, hash-chained, replayable — and written only after an independent counterparty confirms.</p></li>
+              <li><h3>Nothing an agent believes can move what it is not permitted to.</h3><p>Capabilities are held per agent and per tool, enforced by the runtime rather than by the model’s good behavior.</p></li>
+              <li><h3>Anything that settles is written to a ledger nobody can edit.</h3><p>Append-only, hash-chained, replayable — and written only after an independent counterparty confirms.</p></li>
             </ol>
           </div>
         </div>
@@ -247,10 +270,10 @@
       <i class="mark globe" aria-hidden="true"></i>
       <div class="container">
         <div class="eyebrow" data-reveal>See it run</div>
-        <h2 class="display-2 mt-2" data-reveal data-split style="--d:60ms">The ideas, as working objects.</h2>
-        <p class="lede mt-3" data-reveal style="--d:120ms">Tighten the council on the live swarm. Edit a record and watch the chain break. Run one simulated session of Lifecycle 01.</p>
+        <h2 class="display-2 mt-2" data-reveal data-split style="--d:60ms">Three of these ideas run in your browser.</h2>
+        <p class="lede mt-3" data-reveal style="--d:120ms">Tighten the Council in the swarm lab. Edit a record and watch the chain break. Run one simulated session of Lifecycle 01.</p>
         <div class="row" data-reveal style="--d:180ms">
-          <a class="btn" href="index.html#lc01">The swarm, live <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+          <a class="btn" href="index.html#lc01">Open the swarm lab <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
           <a class="btn btn--ghost" href="index.html#governance">Break the chain</a>
           <a class="btn btn--ghost" href="lifecycles.html#lc01">Run the desk</a>
         </div>
@@ -283,5 +306,6 @@
 
   <script src="assets/js/figure.js" defer></script>
   <script src="assets/js/site.js" defer></script>
+  <script src="assets/js/research.js" defer></script>
 </body>
 </html>

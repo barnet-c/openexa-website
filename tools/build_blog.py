@@ -10,6 +10,7 @@ import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
 from meta import HOME, ORG, FEED_LINKS, ROBOTS, ld, crumbs, atom
+from blog_plates import PLATES, plate_svg, collection_svg
 import html as H, io, json, os, re, shutil
 from datetime import datetime
 from pathlib import Path
@@ -34,7 +35,7 @@ EXCLUDE = {  # crypto / token-product era - held back pending review
 COLLECTIONS = [  # key, label, lede
     ("ai", "AI & agents", "The first notes on AI copilots, guardrails and autonomous agents in financial markets — the thinking that became OpenEXA's agentic infrastructure."),
     ("markets", "Financial markets research", "Summaries of peer-reviewed research in computational finance: ETF price dynamics and drawdown risk, optimal execution, futures portfolios, sparse mean-reverting portfolios and multiscale signal processing."),
-    ("economics", "Market structure & economics", "Summaries of academic research on how financial markets shape real decisions — information, contracting, credit, automation and the labour share."),
+    ("economics", "Market structure & economics", "Summaries of academic research on how financial markets shape real decisions — information, contracting, credit, automation and the labor share."),
 ]
 # Collection 04 "Municipal markets & commentary" (Barnet Sherman's columns and two OpenEXA posts) was removed on
 # 2026-09-29: Barnet is now a customer rather than part of the team. Its posts redirect to the blog index.
@@ -67,7 +68,25 @@ DESC = {
         "An essential topic in financial economics is investigating whether financial markets exert an influence on the actual economy.",
     "employee-stock-options-exercise-timing-hedging-and-valuation":
         "Employee stock options (ESOs) are an integral component of compensation in the US. In fact, almost all S&P 500 companies grant options to their top executives.",
+    # v2x (30 Oct, PAGES B-05 / E-9): the old CMS gave the Gen-AI series cards their own titles back as excerpts, a
+    # pipe-joined headline and a superlative; one markets card lost the start of its sentence. Each now opens with its
+    # post's own first sentence (asserted against the body below).
+    "in-search-gen-ai-business-model":
+        "Over the past year, generative AI's ability to create content has dominated headlines, showcasing its potential to instantly generate text, images, and videos.",
+    "rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies":
+        "In today's investment landscape, traditional methods of analyzing company fundamentals may overlook key drivers of value.",
+    "tearsheet-how-to-use-tearsheet-in-the-face-of-volatile-crypto-and-bond-markets-as-a-means-of-capital-preservation-and-asset-appreciation":
+        "In financial markets, there are two main variables: your strategy and the unpredictable nature of the market.",
+    "empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way":
+        "Creating a Copilot or AI agent for financial markets is a complex and challenging endeavor.",
+    "modern-trends-in-financial-engineering":
+        "This new book series, Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.",
 }
+# v2x: the two hero images that are screenshots of the author's own 2024 work (the relative-value map; the create and
+# redeem loop) stay in their articles as the first figure. Every other hero image (stock photos, a 3D render, a logo,
+# clip-art) leaves the page: cards and post heroes are drawn as plates (blog_plates.py). The files stay in assets.
+KEEP_HERO = {"rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies",
+             "tearsheet-how-to-use-tearsheet-in-the-face-of-volatile-crypto-and-bond-markets-as-a-means-of-capital-preservation-and-asset-appreciation"}
 ALT = json.load(open(DATA / "blog_alt.json", encoding="utf-8")) if (DATA / "blog_alt.json").exists() else {}  # body-image alt text, written by looking at each image
 # The old site's stand-in hero for research summaries: clip-art (a cap, a book and stars) over a misspelled
 # 'RESERCH IN FINANCE · BY OUR TEAM' (legacy content, as scraped). It is never published: those cards are drawn as
@@ -164,22 +183,27 @@ def thumb(name, sizes):
     if not ws: return f'<img src="{src}{name}" alt=""{size(name)} loading="lazy" decoding="async">'
     srcset = ", ".join([f"{src}{stem}-{t}w.webp {t}w" for t in ws] + [f"{src}{name} {d[0]}w"])
     return f'<img src="{src}{stem}-{ws[-1]}w.webp" srcset="{srcset}" sizes="{sizes}" alt=""{size(name)} loading="lazy" decoding="async">'
-# The collection's mark at plate scale (round 2, PG-R2-8): Market structure & economics draws six inclined rings in ink,
-# one green, the rings Company §05 and the Lifecycles plate draw; the constellation turns a few degrees from card to card
-# (by the post's place in its collection), so a row of plates reads as one family, not one picture pasted. A collection
-# without a drawn mark keeps the fine-bead globe.
-RINGS = ((58, 23, -18), (86, 30, 13), (112, 46, -6), (138, 44, 17), (162, 64, -11), (186, 60, 4))  # rx, ry, tilt
-def mark(p):
-    if p["col"] != "economics": return '<i class="bp-mark"></i>'
-    cx, cy, turn = 212, 130, (-8, -2, 4, 10)[[q["slug"] for q in by_col[p["col"]]].index(p["slug"]) % 4]
-    green, k_ = ' class="g"', .72  # .72: the constellation keeps clear of the plate's edges and of its label
-    rings = "".join(f'<ellipse{green if k == 0 else ""} cx="{cx}" cy="{cy}" rx="{rx * k_:g}" ry="{ry * k_:g}" transform="rotate({rot + turn} {cx} {cy})"/>'
-                    for k, (rx, ry, rot) in enumerate(RINGS))
-    return f'<svg class="bp-rings" viewBox="0 0 400 225" focusable="false"><g>{rings}</g></svg>'
-def plate(p, cls):
-    """A plate in place of the legacy placeholder image: the collection label over the collection's mark. No title: the
-    card's h3 says it right under the plate. aria-hidden: the label is the section the post sits in."""
-    return f'<div class="{cls} blog-plate" aria-hidden="true"><span class="bp-k">{esc(LABEL[p["col"]])}</span>{mark(p)}</div>'
+# The plates (v2x, 30 Oct 2026; tools/blog_plates.py draws them). Every card and every post hero carries its post's own
+# engraved plate instead of a stock photo, the CMS's 3D art or a WebGL formation borrowed from Research (EVOLVE, Blog):
+# the plate draws what the post says in its own words, schematically. Market structure & economics keeps v2's mark
+# (six inclined rings, one green), turned a few degrees from card to card so a row reads as one family (PG-R2-8).
+# The old image files stay in assets/img/blog/ (the owner may want them back); only the markup stops using them.
+def pos_in_col(p): return [q["slug"] for q in by_col[p["col"]]].index(p["slug"])
+def turn(p): return (-8, -2, 4, 10)[pos_in_col(p) % 4]
+def plate_label(p): return PLATES[p["slug"]][0] if p["col"] != "economics" and p["slug"] in PLATES else LABEL[p["col"]]
+def plate(p, cls="blog-thumb"):
+    """A card's plate: the plate's name (mono) over the drawing. aria-hidden: the card's h3 names the post."""
+    return f'<div class="{cls} blog-plate" aria-hidden="true"><span class="bp-k">Plate · {esc(plate_label(p))}</span>{plate_svg(p["slug"], p["col"], turn(p))}</div>'
+SERIF_HY = re.compile(r"(?<=[^\W\d_])-(?=[^\W\d_])")
+def serif(s):
+    """escaped text for a serif line: U+2010 between letters (Instrument Serif draws U+002D as 'Domain – Specific';
+    SYSTEM.md §2). Titles, meta, feeds and JSON-LD keep the ASCII hyphen."""
+    return SERIF_HY.sub("‐", esc(s))
+def said(p):
+    """the post's own text, normalised for quoting: tags out, entities decoded, whitespace collapsed, no space before
+    punctuation (the old CMS left 'Engineering , publishes')"""
+    t = re.sub(r"\s+", " ", H.unescape(re.sub(r"<[^>]+>", " ", p["body"])))
+    return re.sub(r"\s+([,.;:)])", r"\1", t)
 
 if IMG.exists(): shutil.rmtree(IMG)  # rebuilt from the scraped originals every time
 IMG.mkdir(parents=True, exist_ok=True)
@@ -193,6 +217,8 @@ for p in kept:
             (OLD / "img" / name).write_bytes(urllib.request.urlopen(req, timeout=40).read())
     p["body"] = clean_body(p)
     p["description"] = DESC.get(p["slug"], p["description"])
+    if p["slug"] in KEEP_HERO or p["slug"] in ("in-search-gen-ai-business-model", "empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way", "modern-trends-in-financial-engineering"):
+        assert p["description"] in said(p), (p["slug"], "the card's excerpt must be the post's own sentence")
     p["title"] = re.sub(r"\s+", " ", p["title"]).strip()
     for pat, rep in FIXES: p["title"] = re.sub(pat, rep, p["title"]); p["description"] = re.sub(pat, rep, p["description"])
     assert not FORBIDDEN.search(p["body"] + p["title"] + p["description"]), (p["slug"], FORBIDDEN.findall(p["body"]))
@@ -260,11 +286,15 @@ LABEL = {k: l for k, l, _ in COLLECTIONS}
 FIG = {"ai": "swarm", "markets": "horizon", "economics": "council", "munis": "ledger"}  # figure.js formations
 BASE = "https://www.openexa.com/blog/"
 BLOG_LD = {"@type": "Blog", "@id": BASE + "#blog", "name": "OpenEXA Blog", "url": BASE}
+# v2x: each byline lands on its person on Company (company.html gives everyone an anchor since 30 Oct)
+PEOPLE_ID = {"Ajit K Dubey": "ajit-dubey", "Tim Leung": "tim-leung", "Philip Bond": "philip-bond"}
+assert all(f'id="{i}"' in read(ROOT / "company.html") for i in PEOPLE_ID.values()), "company.html lost a person's anchor"
 def person(byline):
     """schema.org author for a byline ("Tim Leung, Ph.D." -> a Person with the credential as honorificSuffix)."""
     if byline == "OpenEXA": return ORG
     m = re.match(r"^(.*?), *(Ph[.]D[.])$", byline)
-    who = {"@type": "Person", "name": m.group(1) if m else byline, "url": HOME + "company.html#team"}
+    name = m.group(1) if m else byline
+    who = {"@type": "Person", "name": name, "url": HOME + "company.html#" + PEOPLE_ID.get(name, "team")}
     if m: who["honorificSuffix"] = m.group(2)
     return who
 def href(p): return p["source"] if p["stub"] else f'{p["slug"]}.html'
@@ -279,55 +309,75 @@ SERIES_POS = {s: i for i, (s, _, _) in enumerate(SERIES)}
 assert all(s in SLUGS and not SLUGS[s]["stub"] for s, _, _ in SERIES)
 
 # ---------------- index ----------------
+# v2x (30 Oct 2026): every post appears once. The Gen-AI series is AI & agents' own lead (it is four of the
+# collection's five posts), drawn as a dated rail; v2 showed it as a featured band and then again as four cards of the
+# AI grid. The chips stick only over the collections (a wrapper ends them before the closing band and the footer).
 nav, foot = chrome()
-series_cards = []
+def card(p):
+    ext = p["stub"]
+    host = re.sub(r"^www\.", "", re.search(r"//([^/]+)", p["source"]).group(1)) if ext else ""
+    return f'''          <a class="blog-card" href="{esc(href(p))}"{' target="_blank" rel="noopener"' if ext else ''}>
+            {plate(p)}<div class="blog-card-body"><div class="k"><span>{fmt(p["dt"])}</span><span>{esc(p["author"])}</span></div>
+            <h3>{serif(p["title"])}</h3><p>{esc(p["excerpt"])}</p>
+            <span class="link-arrow">{("Read on " + host + " " + OUTB) if ext else (str(p["minutes"]) + "&nbsp;min read " + ARROW)}</span></div>
+          </a>'''
+rail = []
 for i, (s, part, short) in enumerate(SERIES):
     p = SLUGS[s]
-    thumb_html = f'<div class="blog-thumb">{thumb(p["hero_file"], CARD_SIZES)}</div>' if p.get("hero_file") else plate(p, "blog-thumb") if p.get("plate") else ""
-    series_cards.append(f'''          <li><a class="series-card" href="{s}.html">
-            <span class="series-n">{i:02d}</span>{thumb_html}
-            <div class="k"><span>{esc(part)} · {esc(short)}</span><span>{p["minutes"]} min</span></div>
-            <h3>{esc(p["title"])}</h3>
-            <span class="link-arrow">{fmt(p["dt"])} {ARROW}</span>
+    rail.append(f'''          <li><a class="series-card blog-card" href="{s}.html">
+            <span class="sr-date"><time datetime="{p["dt"].strftime("%Y-%m-%d")}">{fmt(p["dt"])}</time></span>
+            <span class="series-n">{i:02d}</span>{plate(p)}
+            <div class="k"><span>{esc(part)} · {esc(short)}</span></div>
+            <h3>{serif(p["title"])}</h3>
+            <span class="link-arrow">{p["minutes"]}&nbsp;min read {ARROW}</span>
           </a></li>''')
 series_minutes = sum(SLUGS[s]["minutes"] for s, _, _ in SERIES)
-FEATURED = f'''    <section class="section is-paper-2 blog-series" id="series" data-blog-series>
-      <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">★</span><span class="lab">Featured series</span><span class="aside">4 posts · {series_minutes} min · 2024</span></div>
-        <div class="grid mb-3">
-          <div class="col-6"><h2 class="display-2" data-reveal data-split>{SERIES_NAME}: from business model to AI agents.</h2></div>
-          <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Four posts by Ajit K Dubey, written in 2024. They set out where generative AI creates value, then work one financial use case end to end: relative value analysis, guardrails and tearsheets, and the AI copilots and autonomous agents they make possible. It's the line of thinking that became OpenEXA.</p><a class="link-arrow mt-3" href="{SERIES[0][0]}.html">Start with the introduction {ARROW}</a></div>
+in_series = {s for s, _, _ in SERIES}
+SERIES_BLOCK = f'''        <div class="grid t-2 blog-series-head">
+          <div class="col-6"><h2 class="display-2" data-reveal data-split>{serif(SERIES_NAME)}: from business model to AI agents.</h2></div>
+          <div class="col-5 offset-7"><p class="body-lg" data-reveal>Four posts by Ajit K Dubey, written in 2024. They set out where generative AI creates value, then work one financial use case end to end: relative value analysis, guardrails and tearsheets, and the AI copilots and autonomous agents they make possible. It’s the line of thinking that became OpenEXA.</p><a class="link-arrow mt-3" href="{SERIES[0][0]}.html">Start with the introduction {ARROW}</a></div>
         </div>
-        <ol class="series-rail" role="list" data-reveal style="--d:120ms">
-{chr(10).join(series_cards)}
-        </ol>
-      </div>
-    </section>
+        <div class="blog-series" id="series" data-blog-series>
+          <div class="series-k"><span><span aria-hidden="true">★</span> Featured series</span><span>4 posts · {series_minutes}&nbsp;min · 2024</span></div>
+          <ol class="series-rail" role="list" aria-label="{SERIES_NAME}, in order" data-reveal>
+{chr(10).join(rail)}
+          </ol>
+        </div>
 '''
-chips = "".join(f'<a class="chip" href="#{k}" data-blog-filter="{k}">{esc(l)} <b>{len(by_col[k])}</b></a>' for k, l, _ in COLLECTIONS)
+def chip(k, label, n):
+    # phones show the short name; the rest of the name stays in the link for assistive technology (label in name)
+    parts = {"markets": '<span class="chip-x">Financial </span>markets<span class="chip-x"> research</span>',
+             "economics": '<span class="chip-x">Market structure &amp; </span>economics'}
+    return f'<a class="chip" href="#{k}" data-blog-filter="{k}">{parts.get(k, esc(label))} <b>{n}</b></a>'
+chips = "".join(chip(k, l, len(by_col[k])) for k, l, _ in COLLECTIONS)
 sections = []
 for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
-    cards = []
-    for p in by_col[k]:
-        ext = p["stub"]
-        thumb_html = f'<div class="blog-thumb">{thumb(p["hero_file"], CARD_SIZES)}</div>' if p.get("hero_file") else plate(p, "blog-thumb") if p.get("plate") else ""
-        cards.append(f'''          <a class="blog-card{' blog-card--plate' if p.get('plate') else ''}" href="{esc(href(p))}"{' target="_blank" rel="noopener"' if ext else ''}>
-            {thumb_html}<div class="blog-card-body"><div class="k"><span>{fmt(p["dt"])}</span><span>{esc(p["author"])}</span></div>
-            <h3>{esc(p["title"])}</h3><p>{esc(p["excerpt"])}</p>
-            <span class="link-arrow">{("Read on " + re.sub(r"^www\.", "", re.search(r"//([^/]+)", p["source"]).group(1)) + " " + OUTB) if ext else (str(p["minutes"]) + " min read " + ARROW)}</span></div>
-          </a>''')
-    more = f'<a class="link-arrow mt-3 scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a>' if k == "markets" else ""
-    sections.append(f'''    <section class="section{' is-paper-2' if n % 2 == 0 else ''} blog-collection" id="{k}" data-blog-collection="{k}" data-chapter-short="{esc(SHORT[k])}">
+    span_ = span(by_col[k][-1]["dt"].year, by_col[k][0]["dt"].year)
+    shead = f'''        <div class="sec-head" data-reveal><span class="idx">{n:02d}</span><span class="lab">{esc(label)}</span><span class="aside">{len(by_col[k])} posts · {span_}</span></div>
+        <div class="blog-headplate" aria-hidden="true">{collection_svg(k)}</div>
+'''
+    if k == "ai":
+        rest = [p for p in by_col[k] if p["slug"] not in in_series]
+        body = SERIES_BLOCK + f'''        <div class="blog-also">
+          <div class="blog-also-k"><span class="eyebrow">Also in {esc(label)}</span></div>
+          <div class="blog-grid blog-grid--wide" data-reveal>
+{chr(10).join(card(p) for p in rest)}
+          </div>
+        </div>
+'''
+    else:
+        more = f'<a class="link-arrow mt-3 scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a>' if k == "markets" else ""
+        body = f'''        <div class="grid t-2 mb-3">
+          <div class="col-6"><h2 class="display-3" data-reveal>{serif(label)}.</h2></div>
+          <div class="col-5 offset-7"><p class="body-lg" data-reveal>{esc(lede)}</p>{more}</div>
+        </div>
+        <div class="blog-grid" data-reveal>
+{chr(10).join(card(p) for p in by_col[k])}
+        </div>
+'''
+    sections.append(f'''    <section class="section{' is-paper-2' if n % 2 else ''} blog-collection" id="{k}" data-blog-collection="{k}" data-chapter-short="{esc(SHORT[k])}">
       <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">{n:02d}</span><span class="lab">{esc(label)}</span><span class="aside">{len(by_col[k])} posts · {span(by_col[k][-1]["dt"].year, by_col[k][0]["dt"].year)}</span></div>
-        <div class="grid mb-3">
-          <div class="col-6"><h2 class="display-3" data-reveal>{esc(label)}.</h2></div>
-          <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">{esc(lede)}</p>{more}</div>
-        </div>
-        <div class="blog-grid" data-reveal style="--d:120ms">
-{chr(10).join(cards)}
-        </div>
-      </div>
+{shead}{body}      </div>
     </section>''')
 years = sorted(p["dt"].year for p in kept)
 desc = f"The OpenEXA blog: {len(kept)} posts from {years[0]} to {years[-1]} on AI agents in finance, financial markets research and market structure."
@@ -347,20 +397,21 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n").replace
         <div class="grid">
           <div class="col-7">
             <div class="eyebrow" data-reveal>The OpenEXA blog</div>
-            <h1 class="display-1" data-reveal data-split style="--d:60ms">The blog.</h1>
-            <p class="lede mt-3" data-reveal style="--d:120ms">Research summaries and the first notes on AI agents in finance — {len(kept)} posts from the people behind OpenEXA and the researchers they work with.</p>
-            <div class="article-meta" data-reveal style="--d:180ms"><span>{len(kept)} posts</span><span>{years[0]}–{years[-1]}</span><span>{len(COLLECTIONS)} collections</span></div>
+            <h1 class="display-1 blog-h1" data-reveal>Research summaries and our first notes on AI&nbsp;agents.</h1>
+            <p class="lede mt-3" data-reveal>Written by the people behind OpenEXA and the researchers they work with.</p>
+            <div class="article-meta" data-reveal><span>{len(kept)} posts</span><span>{years[0]}–{years[-1]}</span><span>{len(COLLECTIONS)} collections</span></div>
           </div>
         </div>
       </div>
     </section>
 
+    <div class="blog-index">
     <nav class="blog-chips-bar" aria-label="Collections">
       <div class="container"><div class="blog-chips"><a class="chip" href="index.html" data-blog-filter="all" aria-current="true">All <b>{len(kept)}</b></a>{chips}</div></div>
     </nav>
 
-{FEATURED}
 {chr(10).join(sections)}
+    </div>
 
     <section class="cta-band is-dark grain">
       <i class="mark globe" aria-hidden="true"></i>
@@ -388,8 +439,32 @@ if (ROOT / "research" / "blog").exists(): shutil.rmtree(ROOT / "research" / "blo
 write(OUT / "index.html", page)
 
 # ---------------- posts ----------------
+# v2x: the dark hero carries the post's plate and a sentence from the post that it draws (no WebGL formation: v2 paired
+# a research note's figure with each collection, e.g. a decaying curve over a grains-futures summary). The CMS's hero
+# image leaves the top of the article, except the two 2024 screenshots of the author's own work (KEEP_HERO), which stay
+# as the article's first figure. Figures are numbered (Fig. N) in the site's register; their captions keep their words.
+def post_plate(p):
+    econ = p["col"] == "economics" or p["slug"] not in PLATES
+    quote = "" if econ else f'<p class="pp-q">“{esc(PLATES[p["slug"]][2])}”</p>'
+    hedge = "The collection’s mark" if econ else "Schematic · no data is plotted"
+    return f'''<figure class="post-plate">
+          <div class="post-plate-art" aria-hidden="true">{plate_svg(p["slug"], p["col"], turn(p))}</div>
+          <figcaption><span class="pp-k">Plate · {esc(plate_label(p))}</span>{quote}<span class="pp-h">{hedge}</span></figcaption>
+        </figure>'''
+def numbered(html_):
+    """'Fig. N' on every figure of an article, in order: inside its caption, or as a caption of its own"""
+    k = [0]
+    def one(m):
+        k[0] += 1
+        fig, tag = m.group(0), f'<span class="fig-n">Fig. {k[0]}</span>'
+        if "<figcaption>" in fig: return fig.replace("<figcaption>", f"<figcaption>{tag}", 1)
+        return fig.replace("</figure>", f"<figcaption>{tag}</figcaption></figure>")
+    return re.sub(r"<figure\b.*?</figure>", one, html_, flags=re.S)
 for p in order:
     if p["stub"]: continue
+    if p["col"] != "economics":
+        assert p["slug"] in PLATES, (p["slug"], "no plate")
+        assert PLATES[p["slug"]][2] in said(p), (p["slug"], "the plate's quote is not the post's own sentence")
     sib = [q for q in by_col[p["col"]] if not q["stub"]]
     i = sib.index(p); prev = sib[i - 1] if i else None; nxt = sib[i + 1] if i + 1 < len(sib) else None
     src_host = re.sub(r"^www\.", "", re.search(r"//([^/]+)", p["source"]).group(1)) if p["source"] else ""
@@ -402,13 +477,11 @@ for p in order:
     side_links = [f'<a class="link-arrow" href="index.html#{p["col"]}">{esc(LABEL[p["col"]])} {ARROW}</a>', f'<a class="link-arrow" href="index.html">All posts {ARROW}</a>']
     if p["source"]: side_links.insert(0, f'<a class="link-arrow" href="{esc(p["source"])}" target="_blank" rel="noopener">Original on {esc(src_host)} {OUTB}</a>')
     if p["col"] == "markets": side_links.insert(1, f'<a class="link-arrow" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a>')
-    # a plate post opens on its dark article hero alone (it carries the figure): no plate repeating the h1, and no empty
-    # line where the image would stand (PG-R2-8)
-    hero_img = (f'            <figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt=""{size(p["hero_file"])} decoding="async"></figure>\n' if p.get("hero_file")
-                else "")
+    hero_img = (f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}" alt=""{size(p["hero_file"])} decoding="async"></figure>\n            '
+                if p.get("hero_file") and p["slug"] in KEEP_HERO else "")
     pager = "".join([
-        f"<a class='pager-card prev' href='{prev['slug']}.html'><span class='k'>← Newer</span><h3>{esc(prev['title'])}</h3><p>{fmt(prev['dt'])}</p></a>" if prev else f"<a class='pager-card prev' href='index.html'><span class='k'>← The blog</span><h3>All {len(kept)} posts</h3><p>{esc(LABEL[p['col']])} and {len(COLLECTIONS) - 1} more collections.</p></a>",
-        f"<a class='pager-card next' href='{nxt['slug']}.html'><span class='k'>Older →</span><h3>{esc(nxt['title'])}</h3><p>{fmt(nxt['dt'])}</p></a>" if nxt else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>Research →</span><h3>The thinking behind the swarm.</h3><p>Two research notes and an eight-part series.</p></a>",
+        f"<a class='pager-card prev' href='{prev['slug']}.html'><span class='k'>← Newer</span><h3>{serif(prev['title'])}</h3><p>{fmt(prev['dt'])}</p></a>" if prev else f"<a class='pager-card prev' href='index.html'><span class='k'>← The blog</span><h3>All {len(kept)} posts</h3><p>{esc(LABEL[p['col']])} and {len(COLLECTIONS) - 1} more collections.</p></a>",
+        f"<a class='pager-card next' href='{nxt['slug']}.html'><span class='k'>Older →</span><h3>{serif(nxt['title'])}</h3><p>{fmt(nxt['dt'])}</p></a>" if nxt else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>Research →</span><h3>The thinking behind the swarm.</h3><p>Two research notes and an eight-part series.</p></a>",
     ])
     crumb, meta_extra, series_box = esc(LABEL[p["col"]]), "", ""
     if p["slug"] in SERIES_POS:  # series posts read in order, with the series listed alongside
@@ -419,12 +492,14 @@ for p in order:
         series_box = f'<div class="series-box"><div class="eyebrow mb-2">{SERIES_NAME}</div><ol role="list">{items}</ol></div>'
         sp = SLUGS[SERIES[j - 1][0]] if j else None; sn = SLUGS[SERIES[j + 1][0]] if j + 1 < len(SERIES) else None
         pager = "".join([
-            f"<a class='pager-card prev' href='{sp['slug']}.html'><span class='k'>← {esc(SERIES[j - 1][1])}</span><h3>{esc(sp['title'])}</h3><p>{fmt(sp['dt'])}</p></a>" if sp else f"<a class='pager-card prev' href='index.html#series'><span class='k'>← {SERIES_NAME}</span><h3>Four posts, from business model to AI agents.</h3><p>2024 · {series_minutes} min in total</p></a>",
-            f"<a class='pager-card next' href='{sn['slug']}.html'><span class='k'>{esc(SERIES[j + 1][1])} →</span><h3>{esc(sn['title'])}</h3><p>{fmt(sn['dt'])}</p></a>" if sn else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>What came next →</span><h3>The thinking behind the swarm.</h3><p>The research notes and eight-part series behind OpenEXA's agentic infrastructure.</p></a>",
+            f"<a class='pager-card prev' href='{sp['slug']}.html'><span class='k'>← {esc(SERIES[j - 1][1])}</span><h3>{serif(sp['title'])}</h3><p>{fmt(sp['dt'])}</p></a>" if sp else f"<a class='pager-card prev' href='index.html#series'><span class='k'>← {SERIES_NAME}</span><h3>Four posts, from business model to AI agents.</h3><p>2024 · {series_minutes} min in total</p></a>",
+            f"<a class='pager-card next' href='{sn['slug']}.html'><span class='k'>{esc(SERIES[j + 1][1])} →</span><h3>{serif(sn['title'])}</h3><p>{fmt(sn['dt'])}</p></a>" if sn else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>What came next →</span><h3>The thinking behind the swarm.</h3><p>The research notes and eight-part series behind OpenEXA's agentic infrastructure.</p></a>",
         ])
         post_ld["isPartOf"] = [BLOG_LD, {"@type": "CreativeWorkSeries", "name": f"{SERIES_NAME} - OpenEXA Blog", "url": BASE + "#series"}]
         post_ld["position"] = j + 1
     note = f"Originally published on openexa.com, {fmt(p['dt'])}." + (f" A summary of work first published on {src_host}." if p["source"] else "")
+    original = f'<a class="link-arrow" href="{esc(p["source"])}" target="_blank" rel="noopener">The original on {esc(src_host)} {OUTB}</a>' if p["source"] else ""
+    byline = f'<a href="{PFX}company.html#{PEOPLE_ID[person(p["author"])["name"]]}">{esc(p["author"])}</a>' if person(p["author"]).get("name") in PEOPLE_ID else esc(p["author"])
     page = head(url, f'{p["title"]} — OpenEXA Blog', p["excerpt"], "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (p["title"], url)))}\n') + f'''
 <body data-page="post" data-nav="dark-start" class="article-page blog-post">
   <a class="skip" href="#main">Skip to content</a>
@@ -432,11 +507,13 @@ for p in order:
 {nav}
   <main id="main">
     <section class="page-hero page-hero--dark is-dark grain article-hero blog-post-hero">
-      <div class="figure-stage article-figure" data-figure="{FIG[p["col"]]}" data-spin="0.08" aria-hidden="true"><canvas></canvas></div>
-      <div class="container">
-        <div class="eyebrow" data-reveal><a href="index.html">Blog</a> · {crumb}</div>
-        <h1 class="display-2 article-title blog-title" data-reveal data-split style="--d:60ms">{esc(p["title"])}</h1>
-        <div class="article-meta" data-reveal style="--d:140ms"><span>{esc(p["author"])}</span><span>{fmt(p["dt"])}</span><span>{p["minutes"]} min read</span>{meta_extra}</div>
+      <div class="container post-hero">
+        <div class="post-hero-copy">
+          <div class="eyebrow" data-reveal><a href="index.html">Blog</a> · {crumb}</div>
+          <h1 class="display-2 article-title blog-title" data-reveal>{serif(p["title"])}</h1>
+          <div class="article-meta" data-reveal><span>{byline}</span><span>{fmt(p["dt"])}</span><span>{p["minutes"]}&nbsp;min read</span>{meta_extra}</div>
+        </div>
+        {post_plate(p)}
       </div>
     </section>
 
@@ -451,8 +528,8 @@ for p in order:
             </div>
           </div>
           <article class="col-7 offset-5 article blog-article">
-{hero_img}            {p["body"]}
-            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>{esc(note)}</span></div>
+            {numbered(hero_img + p["body"])}
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><p>{esc(note)}</p>{original}</div>
           </article>
         </div>
       </div>
@@ -464,7 +541,6 @@ for p in order:
   </main>
 
 {foot}
-  <script src="{PFX}assets/js/figure.js" defer></script>
   <script src="{PFX}assets/js/site.js" defer></script>
 </body>
 </html>

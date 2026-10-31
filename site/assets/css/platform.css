@@ -8,3 +8,221 @@
    - Anything that moves has a still state under prefers-reduced-motion; anything printed reads on white.
    - Budget: gzip -9 <= 12,000 bytes (check_static weight).
    ========================================================================== */
+
+/* ---------- both pages ---------- */
+@media (scripting: none) { body[data-page="platform"] .js-only, body[data-page="lifecycles"] .js-only { display: none; } }
+
+/* ==========================================================================
+   PLATFORM
+   ========================================================================== */
+
+/* ---------- hero: the engraved stack is the page's moment ----------
+   The plate takes seven columns and carries its own legend: the eight layer names, in serif, beside their numbers.
+   At first paint the plates close on the boundary (upper ones come down, lower ones come up, outermost first), the
+   boundary draws, and one proposal crosses it: a ring on 02, a mark on the boundary, a ring on 06, a square on 08.
+   CSS only, once; under reduced motion the plate is simply there. */
+body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.804; }
+@media (min-width: 961px) {
+  body[data-page="platform"] .page-hero--plate > .hero-copy { grid-column: 1 / span 5; }
+  body[data-page="platform"] .page-hero--plate > .hero-plate--stack { grid-column: 6 / -1; max-width: none; margin-top: 30px; }
+  body[data-page="platform"] .page-hero--plate .hero-copy--long .display-1 { font-size: clamp(2.9rem, 5.9vw, 6rem); }
+}
+.hero-plate--stack .hp-lab--nm { font: 400 clamp(.86rem, 1.05vw, 1rem)/1.2 var(--serif); letter-spacing: 0; text-transform: none; color: var(--fg-2); padding-right: 2px; }
+.hero-plate--stack .hp-lab--n { color: var(--fg-3); }
+.hero-plate--stack .hp-lab--side { color: var(--fg-2); }
+@media (prefers-reduced-motion: no-preference) {
+  .hero-plate--stack .pl { animation: pl-in .8s var(--ease) both; animation-delay: calc(120ms + var(--i) * 95ms); }
+  .hero-plate--stack .pl-br, .hero-plate--stack .hp-lab--side { animation: pl-fade .6s var(--ease) .5s both; }
+  .hero-plate--stack .pl-draw { vector-effect: none; stroke-dasharray: 1 1; animation: pl-draw .75s cubic-bezier(.45, .05, .2, 1) .55s both; }
+  .hero-plate--stack .pl-glow, .hero-plate--stack .hp-lab--bd { animation: pl-fade .7s var(--ease) .95s both; }
+  .hero-plate--stack .pl-path { animation: pl-fade .5s var(--ease) 1.15s both; }
+  .hero-plate--stack .pl-m { transform-box: fill-box; transform-origin: center; animation: pl-pop .45s var(--ease) both; animation-delay: calc(1.2s + var(--m) * 170ms); }
+  .hero-plate--stack .hp-lab--nm, .hero-plate--stack .hp-lab--n { animation: pl-fade .6s var(--ease) both; animation-delay: calc(220ms + var(--i) * 95ms); }
+}
+@keyframes pl-in { from { opacity: 0; transform: translateY(var(--dy, -12px)); } }
+@keyframes pl-fade { from { opacity: 0; } }
+@keyframes pl-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes pl-pop { from { opacity: 0; transform: scale(.35); } }
+/* tablets: the plate under the copy, at the width of a page, legend and all */
+@media (min-width: 601px) and (max-width: 960px) {
+  body[data-page="platform"] .hero-plate--stack { max-width: min(100%, 680px); }
+}
+/* phones: the legend column is cropped; the numbers stay beside their plates */
+@media (max-width: 600px) {
+  body[data-page="platform"] .page-hero .badge { letter-spacing: .08em; }
+  body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.329; overflow: hidden; }
+  .hero-plate--stack .hp-art { width: 135.72%; margin-left: -35.72%; }
+  .hero-plate--stack .hp-lab--nm { display: none; }
+}
+
+/* ---------- §01: the spec under the explorer ---------- */
+/* the boundary row is one line: two sides, each a label and three words, and the way to §02 */
+#architecture .layer-boundary .lb-io { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px clamp(20px, 2.6vw, 40px); }
+#architecture .layer-boundary .lb-io p { margin: 0; }
+#architecture .layer-boundary .lb-io b { display: inline; margin: 0 .7em 0 0; }
+#architecture .layer-boundary .lb-io strong { font-weight: 500; }
+#architecture .layer-boundary .lb-go { margin-left: auto; font-size: .92rem; }
+@media (min-width: 1100px) { #architecture .layer-boundary .lb-io { grid-column: 3 / -1; } }
+/* the scope of each layer as a line of data, not a row of pills */
+#architecture [data-arch-spec] > .layer > div > ul { display: block; line-height: 1.6; }
+#architecture [data-arch-spec] > .layer > div > ul li { display: inline; padding: 0; border: 0; color: var(--fg-3); white-space: nowrap; }
+#architecture [data-arch-spec] > .layer > div > ul li + li::before { content: "\00a0·\0020"; content: "\00a0·\0020" / ""; color: var(--fg-3); white-space: normal; }
+/* tablets: name and number on the left, the text and its In -> Out on the right; In and Out side by side */
+@media (min-width: 601px) and (max-width: 1099px) {
+  #architecture [data-arch-spec] > .layer { grid-template-columns: minmax(0, .8fr) minmax(0, 2fr); grid-template-rows: auto 1fr; align-content: start; column-gap: clamp(20px, 3.4vw, 36px); row-gap: 6px; }
+  #architecture [data-arch-spec] > .layer > .k { grid-column: 1; grid-row: 1; padding-top: 0; }
+  #architecture [data-arch-spec] > .layer > h3 { grid-column: 1; grid-row: 2; }
+  #architecture [data-arch-spec] > .layer > div { grid-column: 2; grid-row: 1 / span 2; }
+  #architecture [data-arch-spec] > .layer .io { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; }
+  #architecture [data-arch-spec] > .layer .io > div { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 4px; }
+  #architecture [data-arch-spec] > .layer-boundary { grid-template-columns: minmax(0, .8fr) minmax(0, 2fr); column-gap: clamp(20px, 3.4vw, 36px); }
+  #architecture [data-arch-spec] > .layer-boundary > .k { display: none; }
+}
+/* phones: each layer is a compact row (number, name and verb on one line; the text; In and Out); the chip lists (they
+   repeat the paragraph) stay off */
+@media (max-width: 600px) {
+  #architecture [data-arch-spec] > .layer { grid-template-columns: 30px minmax(0, 1fr); column-gap: 8px; row-gap: 8px; padding: 18px 0 20px; }
+  #architecture [data-arch-spec] > .layer > .k { grid-column: 1; grid-row: 1; padding-top: 7px; }
+  #architecture [data-arch-spec] > .layer > h3 { grid-column: 2; grid-row: 1; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 1.42rem; }
+  #architecture [data-arch-spec] > .layer > div { grid-column: 1 / -1; grid-row: 2; }
+  #architecture [data-arch-spec] > .layer h3 small { margin: 0; flex: none; }
+  #architecture [data-arch-spec] > .layer > div > ul { display: none; }
+  #architecture [data-arch-spec] > .layer > div > p { font-size: .95rem; line-height: 1.52; }
+  #architecture [data-arch-spec] > .layer .io { margin-top: 12px; padding-top: 10px; gap: 6px; }
+  #architecture [data-arch-spec] > .layer .io dd { font-size: .9rem; }
+  #architecture [data-arch-spec] > .layer-boundary { padding: 18px 10px; gap: 8px; }
+  #architecture [data-arch-spec] > .layer-boundary > .k { display: none; }
+  #architecture .layer-boundary .lb-go { margin-left: 0; flex-basis: 100%; }
+}
+#architecture .lb-t small { font: .9rem/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); } /* a sentence, not a label */
+
+/* ---------- §02: the one telling; the seam between the two cards is labelled once ---------- */
+#boundary .bnd-line { justify-content: center; }
+#boundary .bnd-line .chip { letter-spacing: var(--track-eyebrow); }
+/* each side's list wears the explorer's marks instead of green ticks: a ring above the line (an estimate, a proposal),
+   a square below it (a step that runs as written) */
+#boundary .bnd-side .checks li::before { width: 9px; height: 9px; top: 20px; left: 2px; border: 1px solid currentColor; border-radius: 50%; background: none; opacity: .6; }
+#boundary .bnd-side.is-below .checks li::before { width: 8px; height: 8px; border: 0; border-radius: 1px; background: currentColor; opacity: .5; }
+#boundary .bnd-side .checks li:first-child::before { top: 12px; }
+@media (max-width: 860px) { #boundary .bnd-side .checks li:first-child::before { top: 20px; } }
+@media (max-width: 600px) { #boundary .bnd-side .checks li::before, #boundary .bnd-side .checks li:first-child::before { top: 18px; } }
+@media print { body[data-page="platform"] .js-only, body[data-page="lifecycles"] .js-only { display: none !important; } }
+
+/* ---------- §03 on phones: the four roles as rows; each row's lab control on one line ---------- */
+@media (max-width: 600px) {
+  #swarm .sw-legend .card { padding: 16px 2px 16px; }
+  #swarm .sw-legend .card h3 { margin-top: 6px; }
+  #swarm .sw-legend .card > p:not(.sw-at) { margin: 6px 0 14px; font-size: .95rem; }
+  #swarm .sw-legend .sw-at { padding-top: 10px; }
+  #swarm .sw-at b { display: inline; margin: 0 0 0 .5em; }
+}
+/* ---------- §02, §04, §07 on phones: lists at reading density ---------- */
+@media (max-width: 600px) {
+  #boundary .bnd-side .checks li { padding-top: 10px; padding-bottom: 10px; }
+  #boundary .bnd-line.arch-bound { min-height: 64px; }
+  body[data-page="platform"] .list-rule--3 > li { padding-top: 18px; padding-bottom: 18px; }
+  body[data-page="platform"] .mkt-col > .n { margin-bottom: 14px; }
+  body[data-page="platform"] .list-hair > li { padding-top: 10px; padding-bottom: 10px; }
+}
+/* Table 6.1: a latency reads as one phrase */
+@media (min-width: 601px) { #modes td[data-th="Latency"] { white-space: nowrap; } }
+/* §05 on phones: the plates at a drawing's size, not a poster's */
+@media (max-width: 600px) { #mcp .dpl-plate { max-width: 280px; } }
+
+/* ==========================================================================
+   LIFECYCLES
+   ========================================================================== */
+
+/* ---------- hero: status by ring, drawn in reading order at first paint ----------
+   The live ring traces itself, then the two Next rings and the three Roadmap rings arrive, inner to outer, each with
+   its label. CSS only, once; still under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-plate--rings .hp-ring1 { vector-effect: none; stroke-width: 1.3; stroke-dasharray: 1 1; animation: pl-draw 1.1s cubic-bezier(.45, .05, .2, 1) .15s both; }
+  .hero-plate--rings .hp-s1 > ellipse, .hero-plate--rings .hp-s1 > path, .hero-plate--rings .hp-s1 > .hp-d,
+  .hero-plate--rings .hp-s2 > circle, .hero-plate--rings .hp-gl, .hero-plate--rings .hp-lab { animation: pl-fade .7s var(--ease) both; }
+  .hero-plate--rings .hp-s1 > ellipse:nth-of-type(1), .hero-plate--rings .hp-s1 > path:nth-of-type(2), .hero-plate--rings .hp-lab--next { animation-delay: .7s; }
+  .hero-plate--rings .hp-s1 > ellipse:nth-of-type(2) { animation-delay: .82s; }
+  .hero-plate--rings .hp-s1 > ellipse:nth-of-type(3), .hero-plate--rings .hp-s1 > path:nth-of-type(3), .hero-plate--rings .hp-lab--khaki { animation-delay: .98s; }
+  .hero-plate--rings .hp-s1 > ellipse:nth-of-type(4) { animation-delay: 1.08s; }
+  .hero-plate--rings .hp-s1 > ellipse:nth-of-type(5) { animation-delay: 1.18s; }
+  .hero-plate--rings .hp-s1 > .hp-d { animation-duration: 1.2s; animation-delay: .45s; }
+  .hero-plate--rings .hp-s2 > circle, .hero-plate--rings .hp-gl, .hero-plate--rings .hp-lab--acc { animation-delay: 1.05s; }
+}
+
+/* tablets: the plate at a page's width under the copy */
+@media (min-width: 601px) and (max-width: 960px) { body[data-page="lifecycles"] .hero-plate--rings { max-width: min(100%, 640px); } }
+
+/* ---------- §01: six traits ---------- */
+@media (max-width: 600px) {
+  #test .card-grid--3 { border-left: 0; }
+  #test .card-grid--3 > .card { padding: 18px 0 20px; border-right: 0; }
+  #test .card .n { margin-bottom: 12px; }
+  #test .card h3 { margin-bottom: 6px; }
+}
+
+/* ---------- §02: Table 2.1 in two columns on tablets ---------- */
+@media (min-width: 601px) and (max-width: 960px) {
+  #classes .list-rule { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: clamp(24px, 4vw, 40px); }
+  #classes .list-rule > li { grid-template-columns: 44px minmax(0, 1fr); gap: 14px; }
+}
+@media (max-width: 600px) {
+  #classes .list-rule > li { grid-template-columns: 44px minmax(0, 1fr); gap: 12px; padding: 18px 0; }
+  #classes .list-rule > li p { margin-top: 6px; font-size: .95rem; }
+}
+
+/* ---------- §03: the primary market drawn in 'How it works' (schematic) ---------- */
+.lc-mech { max-width: 400px; margin: -4px 0 26px; }
+@media (min-width: 961px) { #lc01 .lc-row > .lc-how { grid-column: 1 / span 5; } #lc01 .lc-row > :last-child { grid-column: 7 / -1; } }
+.lc-mech .hp-lab small { margin-top: 1px; }
+@media (min-width: 961px) { #lc01 .lc-how .card { padding-bottom: clamp(26px, 2.6vw, 36px); } }
+/* tablets: the card and the seven steps side by side, as on a desk */
+@media (min-width: 601px) and (max-width: 960px) {
+  #lc01 .lc-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: clamp(24px, 4vw, 40px); }
+  #lc01 .lc-row > * { grid-column: auto; }
+  #lc01 .lc-how > .card { position: sticky; top: calc(var(--nav-h) + 20px); }
+}
+
+/* ---------- the desk: Follow is its first control, on the lane where the walk happens ---------- */
+.desk-head .model-motion { margin-left: auto; }
+.desk .desk-lane { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "btn gates" "say say"; align-items: center; column-gap: clamp(20px, 3vw, 44px); padding: 20px 20px 8px; }
+.desk .desk-lane > .desk-follow { grid-area: btn; }
+.desk .dl-gates { grid-area: gates; }
+.desk .dl-say { grid-area: say; }
+.desk .desk-follow { position: relative; margin: 0; min-height: 46px; padding: 11px 20px 11px 16px; gap: 12px; border: 1px solid var(--paper); background: var(--paper); color: var(--ink); font: 500 .92rem/1.2 var(--sans); letter-spacing: 0; text-transform: none; transition: background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease), transform .12s var(--ease); }
+@media (hover: hover) { .desk .desk-follow:hover { background: color-mix(in srgb, var(--paper) 86%, var(--signal-bright)); box-shadow: inset 0 -2px 0 var(--signal-bright); } }
+.desk .desk-follow:active { transform: translateY(1px) scale(.985); }
+.desk .desk-follow[aria-pressed="true"] { background: transparent; border-color: var(--accent); color: var(--accent); box-shadow: none; }
+.desk .desk-follow:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.desk .dl-say:empty::before { font: .9rem/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); }
+/* the side panel: counters, the two controls, then the note; no dead band */
+.desk .desk-stats > div { padding: 24px 14px 20px; }
+.desk .desk-stats b { font-size: 2.3rem; }
+.desk .desk-controls { flex: 1 0 auto; align-content: center; gap: 26px; padding: 24px 18px; }
+@media (min-width: 1200px) { .desk .desk-body { grid-template-columns: minmax(0, 1fr) 360px; } }
+@media (min-width: 961px) and (max-width: 1199px) { .desk .desk-stats > div { padding: 20px 10px 18px; } .desk .desk-stats b { font-size: 1.9rem; } }
+/* the mean gap's unit sits with its number, so the label is two words */
+.desk [data-gap-avg]::after { content: "bps"; content: "bps" / " bps"; margin-left: 4px; font: 500 var(--mono-xs)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+/* the strip shows whole records only (gap.js counts the rest), so its edge needs no fade */
+.desk .desk-log, .desk .desk-log.has-more { -webkit-mask-image: none; mask-image: none; }
+/* tablets: the counters and the controls side by side under the chart */
+@media (min-width: 601px) and (max-width: 960px) {
+  .desk .desk-side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .desk .desk-stats { border-bottom: 0; border-right: 1px solid var(--line); }
+  .desk .desk-controls { border-bottom: 0; }
+  .desk .desk-note { grid-column: 1 / -1; padding-top: 4px; }
+}
+@media (max-width: 600px) {
+  .desk .desk-lane { grid-template-columns: minmax(0, 1fr); grid-template-areas: "btn" "gates" "say"; row-gap: 18px; padding: 16px 12px 6px; }
+  .desk .desk-follow { justify-content: center; }
+  .desk .desk-stats > div { padding: 16px 12px 14px; }
+  .desk .desk-stats b { font-size: 1.9rem; }
+  /* three whole records at 390 (a warm restart shows its morning): narrower blocks, tighter tracking */
+  .desk .desk-log { padding-right: 8px; letter-spacing: .05em; }
+  .desk .desk-log li { width: 110px; }
+  .desk .desk-log li:last-child { width: 102px; }
+  .desk .dk-ev b { letter-spacing: .05em; }
+  .desk .dk-side { margin-right: 5px; }
+}
+/* the narrowest phones: six gate names cannot sit side by side, so every other name drops a line (numbers stay level) */
+@media (max-width: 380px) { .desk .desk-lane { padding-left: 6px; padding-right: 6px; } .desk .dl-gates li:nth-child(even) b { margin-bottom: 13px; } }
+@media (prefers-reduced-motion: reduce) { .desk .desk-follow { transition: none; } .desk .desk-follow:active { transform: none; } }

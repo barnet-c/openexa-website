@@ -2631,6 +2631,8 @@ body.nav-open { overflow: hidden; }
 .loader .mark { width: 32%; height: 32%; color: var(--paper); opacity: .92; }
 .loader-count { font-family: var(--serif); font-size: clamp(2.6rem, 5vw, 3.9rem); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; min-width: 3ch; text-align: center; }
 .loader-lab { font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .56); text-align: center; padding: 0 var(--gutter); }
+/* phones: the label's two lines are reserved, so its re-wrap when Plex Mono lands does not move the dial (v2x) */
+@media (max-width: 480px) { .loader-lab { min-height: 3.2em; } }
 /* the decision: at 100 the aperture pulses once before the stage is revealed */
 .loader.is-complete .loader-dial { animation: loader-pulse .36s cubic-bezier(.2, .7, .2, 1) both; }
 .loader.is-complete .loader-ring { background: var(--signal-bright); transition: background .3s; }

@@ -348,3 +348,11 @@ are unchanged.
 budget (site.css at most 66,000 bytes gzipped, the homepage's scripts at most 151,000), hover rules gated by
 `(hover: hover)`, the overture's static fallback, cost definitions, figure labels and table headers.
 `verify_budget.py` (local, real GPU) holds the frame-time and main-thread budgets.
+
+## Subuddh Parekh moves to the advisors (30 Oct)
+
+At the owner's request Subuddh Parekh moves from the team to the advisors. He is now the last advisor, A-09 (kicker
+`Advisor · AI & ML`, same bio and portrait), and Shalabh Choudhri takes T-04 on the team. The Company page now reads "Four
+people build the agents that run Lifecycle 01, guided by nine advisors", and the counters read 4 / 9 / 100+; all three
+are computed from the two lists in `tools/build_team.py`. `verify_v9.py` re-pins the roster (team: Ajit K Dubey, Dr. Tim
+Leung, Mike Lockhart, Shalabh Choudhri; advisors with Subuddh Parekh last) and the counters.

@@ -445,7 +445,7 @@ async def home(b):
     await pg.keyboard.press("Home"); assert await pg.evaluate("document.activeElement.id") == "arch0-b1"
     await pg.locator("#arch0-b5").hover()
     await expect(pg.locator("#stack .arch")).to_have_class(re.compile(r"\bhas-hot\b"))
-    await expect(pg.locator("#stack .arch-card .sum-nm")).to_have_text("Routing Layer")
+    await expect(pg.locator("#stack .arch-card .sum-nm")).to_have_text(re.compile(r"^Routing layer$", re.I))  # sentence case since v2x (VOICE 5.9)
     assert await until(pg, "getComputedStyle(document.querySelector('#stack .arch-card')).opacity === '1'", 3000), "readout card not shown on hover"
     await pg.mouse.move(5, 450)
     # swarm lab: runs, announces settlements (at most 4 a second, in the agreed shape), follows by keyboard, halts and drains
@@ -601,7 +601,8 @@ async def access(b):
 
 @check
 async def company(b):
-    """company team: thirteen portraits load, monochrome at rest, colour on hover; the exact roster; no patent count"""
+    """company team: thirteen portraits load (the v2x masters), one treatment at rest and on hover (baked into the image by
+    build_team.py; the hover shows the green ring); the exact roster; no patent count"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     pg = await ctx.new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -612,20 +613,23 @@ async def company(b):
         await pg.evaluate(f"scrollTo(0, {y})"); await pg.wait_for_timeout(120)
     await pg.locator(".crew--team").scroll_into_view_if_needed()
     assert await until(pg, "[...document.querySelectorAll('.crew img')].every(i => i.complete && i.naturalWidth === 560)", 15000), "team portraits did not load"
-    team = await pg.evaluate("[...document.querySelectorAll('.crew img')].map(i => ({ok: i.complete && i.naturalWidth === 560, filter: getComputedStyle(i).filter}))")
+    team = await pg.evaluate("[...document.querySelectorAll('.crew img')].map(i => ({ok: i.complete && i.naturalWidth === 560 && /-v2x\\.webp$/.test(i.getAttribute('src')), filter: getComputedStyle(i).filter}))")
     assert len(team) == 13 and all(t["ok"] for t in team), team
-    assert all("grayscale(1)" in t["filter"] for t in team), team
-    await pg.locator(".crew > li").nth(2).hover()
+    # v2x: one portrait treatment, the same at rest and on hover (colour on hover showed how mismatched the photos are)
+    third = pg.locator(".crew > li").nth(2)
+    rest = await third.evaluate("li => ({ f: getComputedStyle(li.querySelector('img')).filter, r: getComputedStyle(li.querySelector('.ph')).boxShadow })")
+    await third.hover()
     await pg.wait_for_timeout(900)
-    hovered = await pg.locator(".crew > li").nth(2).locator("img").evaluate("i => getComputedStyle(i).filter")
-    assert hovered == "none", hovered
+    hovered = await third.evaluate("li => ({ f: getComputedStyle(li.querySelector('img')).filter, r: getComputedStyle(li.querySelector('.ph')).boxShadow })")
+    assert hovered["f"] == rest["f"] == team[2]["filter"], (rest, hovered)
+    assert hovered["r"] not in ("none", rest["r"]), ("no ring on hover", rest, hovered)
     assert await pg.locator(".sec-head .idx").all_inner_texts() == ["01", "02", "03", "04", "05"]
-    assert await pg.locator(".crew--team > li").count() == 5 and await pg.locator(".crew--advisors > li").count() == 8
+    assert await pg.locator(".crew--team > li").count() == 4 and await pg.locator(".crew--advisors > li").count() == 9
     names_team = await pg.locator(".crew--team > li h3").all_inner_texts()
     names_adv = await pg.locator(".crew--advisors > li h3").all_inner_texts()
-    # Victor and Subuddh swapped places on 2026-10-02: Subuddh holds Victor's old team slot (4th), Victor Subuddh's old advisor slot (5th)
-    assert names_team == ["Ajit K Dubey", "Dr. Tim Leung", "Mike Lockhart", "Subuddh Parekh", "Shalabh Choudhri"], names_team
-    assert names_adv == ["Kumar Mehta", "Sreeram Kannan", "Dr. Philip Bond", "John Schuster", "Victor Gamolsky", "Abhishek Sinha", "Dr. Julius E. Ekeroma", "Dipit Nanawati"], names_adv
+    # Victor and Subuddh swapped places on 2026-10-02; 2026-10-30: Subuddh Parekh moved from the team to the advisors (owner's request), last (A-09)
+    assert names_team == ["Ajit K Dubey", "Dr. Tim Leung", "Mike Lockhart", "Shalabh Choudhri"], names_team
+    assert names_adv == ["Kumar Mehta", "Sreeram Kannan", "Dr. Philip Bond", "John Schuster", "Victor Gamolsky", "Abhishek Sinha", "Dr. Julius E. Ekeroma", "Dipit Nanawati", "Subuddh Parekh"], names_adv
     roles = await pg.locator(".crew--advisors > li .role").all_inner_texts()
     assert all(r.upper().startswith("ADVISOR") for r in roles), roles
     assert not any("CHIEF PRODUCT" in r.upper() for r in roles), roles
@@ -640,7 +644,7 @@ async def company(b):
     assert await more.evaluate("d => d.open && d.querySelector('.crew-bio').innerText.length > 400")
     stats = await pg.locator(".crew-stats").inner_text()
     assert "PATENT" not in stats.upper() and "100+" in stats, stats
-    print("company: 5 team + 8 advisors (Victor and Subuddh swapped places), 13 portraits (560px masters), monochrome at rest, colour on hover, full descriptions expand, no patent count, sections 01-05")
+    print("company: 4 team + 9 advisors (Subuddh Parekh with the advisors, 30 Oct), 13 portraits (560px v2x masters), one treatment at rest and on hover with the green ring, full descriptions expand, no patent count, sections 01-05")
     assert await pg.locator('.crew a[href*="scholar.google.com/citations?user=P40aOHIAAAAJ"]').count() == 1
     assert not errs, errs
     await ctx.close()
@@ -970,7 +974,7 @@ COUNT_ROWS = [  # page, viewport, the row's value cells, the record-derived cell
     ("index.html", (1440, 900), "#proof .stats .v", "record"),
     ("evidence.html", (390, 844), ".page-hero .stats .v", "record"),
     ("platform.html", (1440, 900), "#swarm .stats .v", ["50k"]),
-    ("company.html", (1440, 900), ".crew-stats b", ["5", "8", "100+"]),
+    ("company.html", (1440, 900), ".crew-stats b", ["4", "9", "100+"]),
 ]
 STATIC_TEXTS = """async (sel) => { const norm = s => s.replace(/\\s+/g, ' ').trim();
   const html = await (await fetch(location.pathname, {cache: 'no-store'})).text();
@@ -2087,7 +2091,7 @@ async def grid_slabs(pg, sel, where, hold=False):
 
 @check
 async def grid_slab(b):
-    """no grey slab: on /blog/ at 1440 (incomplete last rows) and on Trust §02 at t=0 of its reveal (animations held at
+    """no grey slab: on /blog/ at 1440 (incomplete last rows) and on Trust's control plane (#control; §02 until v2x) at t=0 of its reveal (animations held at
     their start), no area of rgba(14,21,18,.14) over the paper wider than a rule (a 3x3 block; images excluded) shows in
     a card grid (PG-R2-2: the rules are drawn on the cells, not as the container's background between them)"""
     bad = []
@@ -2099,14 +2103,14 @@ async def grid_slab(b):
     ctx, pg = await open_page(b, "trust.html", 1440, 900)
     cdp = await ctx.new_cdp_session(pg)
     await cdp.send("Animation.enable"); await cdp.send("Animation.setPlaybackRate", {"playbackRate": 0})
-    await pg.evaluate("(() => { const s = [...document.querySelectorAll('.sec-head .idx')].find(e => e.textContent.trim() === '02'); const g = s && s.closest('section').querySelector('.card-grid'); if (g) g.setAttribute('data-oxa-grid', ''); })()")
-    out, n = await grid_slabs(pg, "[data-oxa-grid]", "trust.html@1440 §02 at t=0 of its reveal", hold=True)
+    await pg.evaluate("(() => { const g = document.querySelector('#control .card-grid'); if (g) g.setAttribute('data-oxa-grid', ''); })()")
+    out, n = await grid_slabs(pg, "[data-oxa-grid]", "trust.html@1440 #control at t=0 of its reveal", hold=True)
     await cdp.send("Animation.setPlaybackRate", {"playbackRate": 1})
     bad += out
-    if not n: bad.append("trust.html: no .card-grid in §02")
+    if not n: bad.append("trust.html: no .card-grid in #control")
     await ctx.close()
     assert not bad, "grid_slab:\n  " + "\n  ".join(bad[:10])
-    print("grid_slab: no grey slab in the blog's grids or in Trust §02 before its cards arrive")
+    print("grid_slab: no grey slab in the blog's grids or in Trust's control plane before its cards arrive")
 
 
 # ---- the overture without its context (OV-R2-3a)

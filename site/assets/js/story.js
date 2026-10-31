@@ -82,7 +82,7 @@
   ];
   const LAYERS = [
     ['Signal intelligence', 'Perceive', 'Risk, price and regime models'], ['Model layer', 'Reason', 'A post-trained LLM on the domain'],
-    ['Domain-specific agents', 'Act', 'One narrow job each'], ['Execution council', 'Govern', 'Approve or reject, by policy'],
+    ['Domain-specific agents', 'Act', 'One narrow job each'], ['Execution Council', 'Govern', 'Approve or reject, by policy'],
     ['Routing layer', 'Optimize', 'The cheapest, fastest, safest path'], ['Execution layer', 'Orchestrate', 'Deterministic order state'],
     ['MCP server', 'Connect', 'Authenticated tools and adapters'], ['Authentication layer', 'Permit', 'Scoped, revocable permissions'],
   ];
@@ -130,6 +130,10 @@
   const GATE_OF_PLATE = [0, 1, 2, 3, 4, 4, 5, 5];
   // S4: the floor line (10 bps) and one column per session; heights carry no magnitude (">10 bps" only)
   const Y_FLOOR = -0.5, H_COL = 1.0, COL_SPAN = Math.min(2.9, 0.29 * NCOL);
+  // v2x: the 10 bps floor is the top of each column's solid part (F_SOLID of its height): solid up to the floor, open
+  // above it and shorter than the solid part, so nothing above the floor is drawn taller than one floor unit. Y_FLOOR
+  // stays the columns' foot: the records hang from it and the paper rises to it.
+  const F_SOLID = 0.62, Y_FL = Y_FLOOR + F_SOLID * H_COL;
   const COL_X = (c) => -COL_SPAN / 2 + COL_SPAN * (c + 0.5) / NCOL;
 
   /* ================= particles: identity, five scene targets, stagger keys ================= */
@@ -149,7 +153,7 @@
   const set = (s, i, x, y, z, c) => { const o = i * 4; F[s][o] = x; F[s][o + 1] = y; F[s][o + 2] = z; F[s][o + 3] = c; };
   const R = (i, k) => RAND[i * 4 + k];
 
-  (function build() {
+  function* build() { // a generator: the start-up runs it in slices after the first paint (each yield is a place to stop)
     /* ---- S0: the globe (the brand mark's latitude rows), six orbits, signals, dust ---- */
     const rows = LITE ? 44 : 64, lat = [], cnt = [];
     let cs = 0;
@@ -168,6 +172,7 @@
         KEY[i * 4] = (b + 0.45 * (j / cnt[r])) / 6.45; // band by band, each band peeling round from one meridian
       }
     }
+    yield;
     for (let q = 0; q < N_ORB; q++) {
       const ii = I_ORB + q, k = q % 6;
       set(0, ii, R(ii, 0) * TAU, ORBITS[k][0] + gauss() * 0.01, gauss() * 0.006, code(M.ORBIT, K.DIM, k));
@@ -184,6 +189,7 @@
       for (let s = 0; s < 5; s++) set(s, ii, x, y, z, code(M.DRIFT, K.DUST, 0));
     }
 
+    yield;
     /* ---- S1: six lifecycle rings (LC-01 green, solid; next: dashed ivory; roadmap: sparse khaki) ---- */
     const ringAng = new Float32Array(N_SURF), ringOf = new Uint8Array(N_SURF);
     const dash = (k, th) => { // snap an angle into the ring's dash (Next) or dot (Roadmap) pattern, keeping the order of the agents
@@ -208,10 +214,12 @@
       set(1, ii, Math.cos(la) * Math.cos(lo) * rr, Math.sin(la) * rr, Math.cos(la) * Math.sin(lo) * rr, code(M.SIGIN, K.MOTE, 1));
       KEY[ii * 4 + 1] = rnd();
     }
+    yield;
     // world angle of every agent in S1 (what the layers' fills preserve)
     const phi1 = new Float32Array(N_SURF);
     for (let q = 0; q < N_SURF; q++) { const p = onLoop(RB[ringOf[q]], RINGS[ringOf[q]][0], ringAng[q], 0); phi1[q] = Math.atan2(p[2], p[0]); }
 
+    yield;
     /* ---- S2: eight layers; agents jitter above the boundary, sit on an exact grid below it ---- */
     const order = Array.from({ length: N_SURF }, (_, q) => q).sort((a, b) => (ringOf[a] - ringOf[b]) || (R(a, 2) - R(b, 2)));
     const per = Math.floor(N_SURF / 8), plateOf = new Uint8Array(N_SURF), rankIn = new Float32Array(N_SURF);
@@ -234,6 +242,7 @@
       }
       chunk.forEach(q => { KEY[q * 4 + 1] = (p + 0.35 * R(q, 0)) / 8.35; });
     }
+    yield;
     // orbit riders: the layers' rims (crisp edges) and, the ninth share, the boundary's green rim
     const orbOrder = Array.from({ length: N_ORB }, (_, q) => I_ORB + q).sort((a, b) => ((a - I_ORB) % 6 - (b - I_ORB) % 6) || (R(a, 2) - R(b, 2)));
     const operN = Math.floor(N_ORB / 9), orbPlate = new Uint8Array(N + 1);
@@ -252,6 +261,7 @@
       KEY[ii * 4 + 2] = rnd();
     }
 
+    yield;
     /* ---- S3: the side view — layers become gates, agents become the stream ---- */
     const gateLists = [[], [], [], [], [], []];
     const stream = [];
@@ -260,6 +270,7 @@
       if (rankIn[q] < 0.4) gateLists[GATE_OF_PLATE[p]].push(q); else stream.push(q);
       KEY[q * 4 + 2] = (p + 0.4 * R(q, 1)) / 8.4;
     }
+    yield;
     gateLists.forEach((list, g) => { // a fine lattice on each gate plate
       const gx = Math.max(3, Math.round(Math.sqrt(list.length * GATE_HX / GATE_HZ))), gz = Math.ceil(list.length / gx), y = GATE_Y[g];
       list.forEach((q, j) => {
@@ -290,9 +301,11 @@
       KEY[ii * 4 + 3] = rnd();
     }
 
+    yield;
     /* ---- S4: ten columns of agents standing on the floor; the orbit riders become the floor line ---- */
     const s3y = (q) => { const c = F[3][q * 4 + 3], mode = Math.floor(c / 1000); return mode === M.FLOW || mode === M.FLOWREJ ? Y_TOP - F[3][q * 4 + 1] * (Y_TOP - Y_BOT) : F[3][q * 4 + 1]; };
     const byY = Array.from({ length: N_SURF }, (_, q) => q).sort((a, b) => s3y(b) - s3y(a));
+    yield;
     const perC = Math.floor(N_SURF / NCOL);
     for (let c = 0; c < NCOL; c++) {
       const list = byY.slice(c * perC, c === NCOL - 1 ? N_SURF : (c + 1) * perC);
@@ -316,7 +329,7 @@
     }
     // S0 → S1 keys for the rest; dust never moves between scenes
     for (let q = 0; q < N_SIG; q++) { const ii = I_SIG + q; KEY[ii * 4 + 1] = KEY[ii * 4 + 1] || rnd(); }
-  })();
+  }
 
   /* ================= shaders ================= */
   const GATE_GLSL = GATE_Y.map(v => v.toFixed(4));
@@ -400,10 +413,10 @@
       float t = u_time;
       return s.xyz + 0.05 * vec3(sin(t * 0.13 + r.x * 6.28), sin(t * 0.11 + r.y * 6.28), cos(t * 0.09 + r.z * 6.28));
     }
-    // a session column: solid low, open at the top (no magnitude above the floor). On the way out it drains into its record:
-    // the lowest agents go first, the rest follow down, each fading as it reaches the foot
+    // a session column: solid up to the floor line, open above it (no magnitude above the floor). On the way out it drains
+    // into its record: the lowest agents go first, the rest follow down, each fading as it reaches the foot
     float hN = (s.y - ${Y_FLOOR.toFixed(3)}) / ${H_COL.toFixed(3)};
-    al = 1.0 - smoothstep(0.62, 1.0, hN) * 0.78;
+    al = 1.0 - step(${F_SOLID.toFixed(3)}, hN) * 0.6 - smoothstep(${F_SOLID.toFixed(3)}, 1.0, hN) * 0.28;
     float dc = u_dc[int(clamp(grp, 0.0, 23.0) + 0.5)];
     if (dc > 0.0) {
       float pc = clamp(dc * 1.4 - hN * 0.4, 0.0, 1.0), e = pc * pc * (3.0 - 2.0 * pc);
@@ -645,7 +658,7 @@
     const gen = ++setupGen;
     (function linked() { guard(() => {
       if (gen !== setupGen || gl.isContextLost()) return;
-      if (par && !Object.values(progs).every(p => gl.getProgramParameter(p.prog, par.COMPLETION_STATUS_KHR))) { requestAnimationFrame(linked); return; }
+      if (!built || (par && !Object.values(progs).every(p => gl.getProgramParameter(p.prog, par.COMPLETION_STATUS_KHR)))) { requestAnimationFrame(linked); return; } // (the particles are still being built)
       Object.values(progs).forEach(p => {
         if (!gl.getProgramParameter(p.prog, gl.LINK_STATUS)) throw new Error('story shader: ' + (gl.getShaderInfoLog(p.v) || gl.getShaderInfoLog(p.f) || gl.getProgramInfoLog(p.prog)));
       });
@@ -669,7 +682,7 @@
       gl.uniform3f(P.bulk.u.u_light, L[0] / l, L[1] / l, L[2] / l);
       gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND);
       ready = true;
-      done();
+      setTimeout(() => guard(done), 0); // the first frame in a task of its own
     }); })();
   }); }
   let maxPt = 64;
@@ -1169,7 +1182,8 @@
     } else {
       // the floor line (the paper's edge to be), the hash links between the records hanging from it
       const step = COL_SPAN / NCOL, rY = Y_FLOOR - l4(U_REC), yN = Y_FLOOR - l4(U_NAV), tk = l4(U_TICK), gap = l4(2), nav = 1 - sstep(0.06, 0.3, xeNow);
-      put('hz', [[floorL, Y_FLOOR, 0], [COL_SPAN / 2 + 0.12, Y_FLOOR, 0]], false, C.ivory, 0.46, 1, 0.9);
+      put('hz', [[-COL_SPAN / 2 - 0.12, Y_FLOOR, 0], [COL_SPAN / 2 + 0.12, Y_FLOOR, 0]], false, C.ivory, 0.3, 1, 0.9); // the foot: the records' rail
+      put('fl', [[floorL, Y_FL, 0], [COL_SPAN / 2 + 0.12, Y_FL, 0]], false, C.ivory, 0.62 * (1 - sstep(0.1, 0.36, xeNow)), 1, 0.9); // the 10 bps floor
       const dash = l4(4), per = l4(9);
       SESSIONS.forEach((ss, c) => {
         const x = COL_X(c), k = (c + 0.1) / (NCOL + 0.55);
@@ -1279,7 +1293,7 @@
     lab.days = SESSIONS.map((s, c) => label(4, `<span class="k">${s.day}</span><span class="rg">${s.regime === 'premium' ? 'P' : 'D'}</span><span class="dt">Day ${s.day} · ${s.regime} · ${esc(valueT(s))} · ${s.confirmed ? 'broker-confirmed' : 'confirmation not stated'}</span>`,
       { cls: 'day' + (s.regime === 'premium' ? ' is-prem' : ''), kind: 'tag', group: c, side: 's', keep: true, col: c, dy: U_DAY - 6, info: [`Day ${s.day}`, capw(s.regime), `${s.above ? 'Above' : 'Not above'} the ${FLOOR_T} floor (${esc(valueT(s))}) · ${s.confirmed ? 'confirmed against the broker’s records' : 'confirmation not stated'}`], anchor: () => [COL_X(c), Y_FLOOR, 0] }));
     // the floor's tag sits on the line, left of column 01 (never across it)
-    label(4, `<span>${FLOOR_T}</span> <span>floor</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.42, 0.6], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR, 0], side: 'nw' });
+    label(4, `<span>${FLOOR_T}</span> <span>floor</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.1, 0.32], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FL, 0], side: 'nw' });
     label(4, 'NAV', { cls: 'navtag', kind: 'tag', out: [0.05, 0.22], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR - l4(U_NAV), 0], side: 'w' }); // the regime ticks' baseline
     lab.sum = label(4, `<b>${N_ABOVE} of ${NCOL}</b> sessions above the ${FLOOR_T} floor<span class="sep"></span><span class="lg-p">${N_PREM} premium</span> · <span class="lg-d">${N_DISC} discount</span><span class="sep"></span><span class="lg-t">${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed</span>`, { cls: 'sum', kind: 'tag', sum: true, anchor: () => [COL_SPAN / 2 + 0.06, Y_FLOOR + H_COL + 0.26, 0], side: 'nw' });
   }
@@ -1650,7 +1664,7 @@
       let co = 0, top = 0;
       if ((lean || codaFallback) && xe > 0) {
         const fy = lean ? project(0, Y_FLOOR * layouts[4].s, 0).y : H * FLOOR_END(); // portrait: above the line as it settles
-        top = stacked ? Math.min((navH + fy - 16) / 2 - codaH / 2, fy - 48 - codaH) : Math.max(navH + 14, fy - 48 - codaH); // clear of the floor's tag and the ticks
+        top = stacked ? Math.max(navH + 14, fy - 52 - codaH) : Math.max(navH + 14, fy - 48 - codaH); // just above the floor it names, clear of the ticks
         co = red ? (xe > 0.5 ? 1 : 0) : lean ? sstep(X.coda[0], X.coda[1], xe) * sstep(navH + 6, navH + 24, top) : sstep(0.22, 0.5, xe);
         if (ov > 0) { const room0 = top - navH; co *= room0 <= 6 ? 0 : 1 - sstep(Math.max(0, room0 - 6 - Math.min(150, H * 0.2)), room0 - 6, ov); }
       }
@@ -1915,7 +1929,7 @@
     window.scrollTo({ top: Math.round(sceneTop(i)), behavior: reducedMQ.matches ? 'instant' : 'smooth' });
     if (announce && live) { // in the index's own words: '01 · The work: Not tasks. Lifecycles.'
       const h = beats[i] && beats[i].querySelector('h1, h2');
-      live.textContent = `${pad2(i)} · ${SCENES[i]}${h ? ': ' + h.textContent.replace(/\s+/g, ' ').trim() : ''}`;
+      live.textContent = `${SCENES[i]}${h ? ': ' + h.textContent.replace(/\s+/g, ' ').trim() : ''}`;
     }
   }
   function onKey(e) {
@@ -2086,5 +2100,20 @@
     cv.addEventListener('webglcontextrestored', () => { clearTimeout(lostTimer); lost = false; if (running) setupGL(begin); });
     setupGL(begin);
   }
-  start();
+  // v2x: the start-up waits for the first paint and runs in slices, so the page paints from its HTML first and no single
+  // task holds the main thread: the context and the shaders first (they compile while the particles are built), then the
+  // particles about 6 ms at a time, then the upload, then the first frame. Same particles, same order, same look.
+  let built = false;
+  function buildInSlices() {
+    const it = build();
+    (function slice() {
+      const t = performance.now();
+      let r;
+      do r = it.next(); while (!r.done && performance.now() - t < 6);
+      if (r.done) built = true; else setTimeout(slice, 0);
+    })();
+  }
+  let started = false;
+  const go = () => { if (started) return; started = true; start(); if (gl) setTimeout(buildInSlices, 0); };
+  if (document.hidden) setTimeout(go, 0); else requestAnimationFrame(() => setTimeout(go, 0));
 })();

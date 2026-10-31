@@ -143,7 +143,7 @@
     }
     return rec;
   }
-  // the strip keeps as many records as it can show (the oldest of them may sit in the fade at its left edge) and counts
+  // the strip keeps as many records as it can show whole (v2x: none is cut by the edge) and counts
   // the rest in a leading line, '+N earlier records': records kept + N = creates + redeems, always
   let dropped = 0, more = null;
   function capacity() {
@@ -151,7 +151,7 @@
     const W = el.log.clientWidth - (parseFloat(getComputedStyle(el.log).paddingRight) || 0);
     if (W <= 0 || !recs.length) return 40; // not laid out (hidden): keep a generous number until it is
     const w = recs[0].offsetWidth || 124, wl = recs[recs.length - 1].offsetWidth || w;
-    return Math.max(2, 1 + Math.ceil(Math.max(0, W - wl) / w));
+    return Math.max(2, 1 + Math.floor(Math.max(0, W - wl) / w));
   }
   function trim() {
     if (!el.log) return;
@@ -321,7 +321,7 @@
       `${clock(a.t)} ET: price runs ${Math.abs(a.g).toFixed(1)} bps ${side} NAV, past the ${thr} bps threshold.`,
       'Models score the persistence of the gap and the risk of moving against it.',
       `A strategy agent proposes ${what}: price is ${side} NAV.`,
-      'The execution council approves it, against policy.',
+      'The Council approves it, against policy.',
       'Past the boundary, execution agents route it across the rails.',
       'Settled, matched to broker truth and hash-chained into the ledger.',
     ][k - 1];

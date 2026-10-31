@@ -8,3 +8,280 @@
    - Anything that moves has a still state under prefers-reduced-motion; anything printed reads on white.
    - Budget: gzip -9 <= 12,000 bytes (check_static weight).
    ========================================================================== */
+
+/* ======================= Proof (evidence.html) ======================= */
+
+/* the hero's status line: the record's own words, no pill and no pulse (a status, not a signal) */
+[data-page="proof"] .pf-badge { display: block; padding: 0; border: 0; font-size: var(--mono-m); line-height: 1.6; letter-spacing: var(--track-label); color: var(--fg-2); }
+[data-page="proof"] .pf-badge i { display: inline-block; width: 7px; height: 7px; margin: 0 10px 1px 0; vertical-align: middle; animation: none; }
+[data-page="proof"] .pf-badge span { white-space: nowrap; } /* "broker-confirmed" never splits at its hyphen */
+
+/* the hero plate draws at first paint: ten records land on the line, then one tick per broker confirmation, in order */
+@media (prefers-reduced-motion: no-preference) {
+  [data-page="proof"] .hero-plate--records .hp-rec { transform-box: fill-box; transform-origin: 50% 100%; animation: pf-land .5s var(--ease) calc(120ms + var(--i, 0) * 50ms) backwards; }
+  [data-page="proof"] .hero-plate--records .hp-fine { animation: pf-fade .6s var(--ease) .6s backwards; }
+  [data-page="proof"] .hero-plate--records .hp-tick { stroke-dasharray: 1; animation: pf-tick .36s var(--ease) calc(820ms + var(--i, 0) * 95ms) backwards; }
+  [data-page="proof"] .hero-plate--records .hp-lab--acc { animation: pf-fade .5s var(--ease) 1.7s backwards; }
+}
+@keyframes pf-land { from { opacity: 0; transform: translateY(-10px) scaleY(.6); } }
+@keyframes pf-fade { from { opacity: 0; } }
+@keyframes pf-tick { from { stroke-dashoffset: 1; } }
+
+/* §01: the hedge points at the disclosures, and reaches them (site.js opens the fold) */
+.pf-hedge a { color: var(--fg-2); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; transition: color .2s, text-decoration-color .2s; }
+@media (hover: hover) { .pf-hedge a:hover { color: var(--fg); text-decoration-color: currentColor; } }
+.pf-hedge a:focus-visible { color: var(--fg); text-decoration-color: currentColor; }
+
+/* Table 1.1, folded: a value equal to the one above it is a ditto mark (proof.js marks them; the static rows say the same).
+   The words stay in the cell for screen readers, search, copy and the record check; only the eye reads the mark. */
+.proof-table .pf-dt > * { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.proof-table .pf-dt::after { content: "\201D" / ""; display: inline-block; font: 400 1.7rem/.5 var(--serif); color: var(--fg-3); transform: translateY(.42em); }
+.proof-table td.num.pf-dt { padding-right: 40px; }
+.proof-table td.pf-dt:not(.num) { padding-left: 18px; }
+/* each mark sits under the middle of the value it repeats (Day 01's 'Broker confirmation' and 'Settled') */
+@media (min-width: 601px) { .proof-table td.pf-dt:nth-child(4) { padding-left: 64px; } .proof-table td.pf-dt:nth-child(5) { padding-left: 32px; } }
+.proof-table tbody tr + tr td { padding-block: 11px; }
+.proof-table tbody tr:first-child td { padding-block: 16px; }
+.pf-legend { display: flex; gap: 10px; align-items: baseline; max-width: 62ch; margin: 10px 0 0; font: .82rem/1.5 var(--sans); color: var(--fg-3); }
+.pf-legend b { flex: none; font: 400 1.5rem/.6 var(--serif); color: var(--fg-2); transform: translateY(.3em); }
+
+/* what the sessions show, and what they do not (research note 09 and the footer) */
+.pf-scope { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(32px, 4vw, 72px); margin-top: clamp(72px, 8vw, 128px); padding-top: clamp(36px, 4vw, 56px); border-top: 1px solid var(--line-strong); }
+.pf-quote { margin: 0; }
+.pf-quote blockquote { margin: 0; }
+.pf-quote p { font: 400 clamp(1.9rem, 2.7vw, 2.75rem)/1.06 var(--serif); letter-spacing: -.015em; color: var(--fg); text-indent: -.42em; text-wrap: balance; }
+.pf-quote figcaption { margin-top: 22px; font: 500 var(--mono-s)/1.4 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); }
+.pf-quote figcaption a { display: inline-flex; gap: 8px; padding-bottom: 3px; border-bottom: 1px solid var(--line-strong); transition: color .2s, border-color .2s; }
+@media (hover: hover) { .pf-quote figcaption a:hover { color: var(--fg); border-color: currentColor; } }
+.pf-quote figcaption a:focus-visible { color: var(--fg); border-color: currentColor; }
+.pf-lists { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(28px, 3.4vw, 56px); }
+.pf-lk { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; font: 400 clamp(1.35rem, 1.8vw, 1.6rem)/1.2 var(--serif); letter-spacing: -.01em; color: var(--fg); }
+/* the chart's own marks: a filled block for what the record shows, an open block for what it does not */
+.pf-lk i { flex: none; width: 11px; height: 11px; background: var(--fg); }
+.pf-lk--not i { background: transparent; border: 1px solid var(--fg-2); }
+.pf-list { border-top: 1px solid var(--line-strong); }
+.pf-list > li { padding: 14px 0 15px; border-bottom: 1px solid var(--line); font-size: 1rem; line-height: 1.5; color: var(--fg-2); text-wrap: pretty; }
+.pf-list b { font-weight: 600; color: var(--fg); }
+
+/* §02: the three documents keep their links on one baseline */
+[data-page="proof"] .pf-doc { display: flex; flex-direction: column; }
+[data-page="proof"] .pf-doc > .mt-3 { margin-top: auto; padding-top: 22px; }
+
+/* the hero, the plate and the four figures on one screen at 1440 x 900 (the record, then its tally) */
+[data-page="proof"] .page-hero .stats { margin-top: clamp(36px, 3.4vw, 48px); }
+@media (min-width: 961px) {
+  [data-page="proof"] .page-hero--dark { padding-top: calc(var(--nav-h) + clamp(48px, 5.6vw, 84px)); }
+  [data-page="proof"] .page-hero .stats > div { padding-block: clamp(22px, 2.2vw, 32px); }
+}
+/* tablets: the four figures stay one row */
+@media (min-width: 601px) and (max-width: 960px) {
+  [data-page="proof"] .page-hero .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  [data-page="proof"] .page-hero .stats > div { padding: 22px 16px 24px; }
+  [data-page="proof"] .page-hero .stats .v { font-size: 2.3rem; }
+  [data-page="proof"] .page-hero .stats .k { letter-spacing: .08em; }
+  [data-page="proof"] .page-hero .stats .d { font-size: .86rem; }
+}
+
+@media (max-width: 960px) {
+  .pf-scope { grid-template-columns: minmax(0, 1fr); row-gap: 36px; }
+  .pf-quote p { max-width: 18ch; }
+}
+@media (max-width: 600px) {
+  [data-page="proof"] .section { padding-block: 60px; }
+  /* the four figures two by two */
+  [data-page="proof"] .page-hero .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-page="proof"] .page-hero .stats > div { padding: 20px 14px 22px 0; }
+  [data-page="proof"] .page-hero .stats > div:nth-child(even) { padding-left: 16px; }
+  [data-page="proof"] .page-hero .stats .v { font-size: 2.35rem; }
+  [data-page="proof"] .page-hero .stats .k { letter-spacing: .08em; }
+  [data-page="proof"] .page-hero .stats .d { font-size: .86rem; }
+  .pf-lists { grid-template-columns: minmax(0, 1fr); }
+  .pf-scope { margin-top: 56px; padding-top: 32px; }
+  .pf-quote p { font-size: 1.75rem; }
+  .pf-list > li { padding: 12px 0 13px; font-size: .97rem; }
+  /* Table 1.1 on a phone: one record in full, then nine one-line rows: the day, the regime, and three ditto marks */
+  [data-page="proof"] .proof-table > tbody > tr { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: 4px 12px; padding: 10px 0 9px; }
+  [data-page="proof"] .proof-table > tbody > tr:first-child { padding: 14px 0 16px; row-gap: 10px; }
+  [data-page="proof"] .proof-table > tbody > tr + tr { grid-template-columns: 4.6em minmax(0, 1fr) repeat(3, 1.5em); align-items: center; column-gap: 8px; padding: 8px 0; }
+  [data-page="proof"] .proof-table > tbody > tr > td:first-child { grid-column: 1; padding: 0; }
+  [data-page="proof"] .proof-table > tbody > tr:first-child > td:nth-child(2) { grid-column: 2 / -1; }
+  [data-page="proof"] .proof-table > tbody > tr + tr > td:nth-child(2) { grid-column: auto; }
+  [data-page="proof"] .proof-table > tbody > tr > td:nth-child(n + 3) { font-size: .88rem; }
+  [data-page="proof"] .proof-table > tbody > tr + tr td[data-th]::before { display: none; }
+  [data-page="proof"] .proof-table td[data-th]::before { letter-spacing: .06em; }
+  [data-page="proof"] .proof-table td.num { text-align: left; }
+  .proof-table td.num.pf-dt, .proof-table td.pf-dt:not(.num) { padding: 0; line-height: 1; text-align: center; }
+  .proof-table .pf-dt::after { font-size: 1.45rem; transform: translateY(.3em); }
+  .proof-table .tag { padding: 3px 6px; }
+  .pf-legend { font-size: .8rem; }
+  /* the three documents: short rows on the drawn line */
+  [data-page="proof"] .pf-docs { row-gap: 34px; }
+  [data-page="proof"] .pf-doc h3 { font-size: 1.6rem; }
+  [data-page="proof"] .pf-doc .pf-dh { margin-bottom: 12px; }
+  [data-page="proof"] .pf-doc p { font-size: .94rem; }
+  [data-page="proof"] .pf-doc > .mt-3 { padding-top: 14px; }
+}
+@media print {
+  .proof-table .pf-dt > * { position: static; width: auto; height: auto; clip-path: none; }
+  .proof-table .pf-dt::after, .pf-legend { display: none; }
+}
+
+/* ======================= Trust (trust.html) ======================= */
+
+/* the hero: the plate draws at first paint (structure, then the Council's verdicts), and one link goes to the ledger */
+[data-page="trust"] .tr-go { margin-top: clamp(24px, 2.6vw, 36px); }
+@media (prefers-reduced-motion: no-preference) {
+  [data-page="trust"] .hero-plate--council .hp-s1 { animation: pf-fade .7s var(--ease) .1s backwards; }
+  [data-page="trust"] .hero-plate--council .hp-s2 { animation: pf-fade .8s var(--ease) .75s backwards; }
+  [data-page="trust"] .hero-plate--council .hp-lab { animation: pf-fade .6s var(--ease) .45s backwards; }
+  [data-page="trust"] .hero-plate--council .hp-lab--acc, [data-page="trust"] .hero-plate--council .hp-lab--rej { animation-delay: 1s; }
+}
+
+/* §01 the ledger, first: the instrument closer to its heading */
+.tr-ledger .tr-lead { row-gap: 20px; }
+.tr-lt { margin-top: clamp(36px, 4vw, 60px); }
+/* the head: title and controls, then the status and how to break the record */
+.tr-lt .lt-head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title ctrl" "hint state"; row-gap: 10px; column-gap: 24px; padding-top: 12px; padding-bottom: 12px; }
+.tr-lt .lt-state { justify-self: end; }
+.tr-lt .lt-hint { grid-area: hint; justify-self: start; margin: 0; max-width: 64ch; font: 400 .8125rem/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); text-wrap: pretty; }
+@media (max-width: 960px) {
+  .tr-lt .lt-head { grid-template-areas: "title ctrl" "state state" "hint hint"; row-gap: 8px; }
+  .tr-lt .lt-state { justify-self: start; }
+}
+.tr-lt [data-lt-say] { text-transform: none; letter-spacing: 0; }
+.tr-lt .lt-btn--restore { border-color: rgba(217, 103, 93, .6); color: var(--fg); }
+@media (hover: hover) { .tr-lt .lt-btn--restore:hover { border-color: var(--reject); background: var(--reject); color: var(--ink); } }
+/* an edit is waiting for its verdict: Verify is the next step */
+.tr-lt.is-edited [data-lt-verify] { border-color: var(--accent); color: var(--accent); }
+.tr-lt.is-edited .lt-state { color: var(--khaki); }
+.tr-lt.is-edited .lt-state i { background: transparent; box-shadow: inset 0 0 0 1px currentColor; }
+/* edited, not yet verified: the record's block is drawn open and dashed (the site's "not yet" mark), its tag says so */
+.tr-lt .lt-rec.is-edited .lt-lc { padding: 1px 5px 0; border: 1px dashed var(--khaki); border-radius: 1px; color: var(--khaki); }
+.tr-lt .lt-rec.is-broken .lt-lc { border-color: rgba(217, 103, 93, .6); }
+.tr-lt .lt-rec.is-edited .lt-node { background: transparent; box-shadow: none; outline: 1.5px dashed var(--khaki); outline-offset: -1.5px; }
+/* broken: from the edited record on, every record and its link turn red as the walk reaches them, and stay red */
+.tr-lt { transition: border-color .5s var(--ease); }
+.tr-lt.is-broken { border-color: rgba(217, 103, 93, .55); }
+.tr-lt.is-broken .lt-state { color: var(--reject); }
+.tr-lt .lt-rec.is-broken .lt-node { background: transparent; outline: 0; box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 14px rgba(217, 103, 93, .45); }
+.tr-lt .lt-rec.is-broken .lt-seg { background: var(--reject); }
+.tr-lt .lt-rec.is-broken .lt-tag { color: var(--reject); text-decoration: line-through; text-decoration-thickness: 1px; }
+.tr-lt .lt-rec.is-broken .lt-ev, .tr-lt .lt-rec.is-broken .lt-sub, .tr-lt .lt-rec.is-broken .lt-id, .tr-lt .lt-rec.is-broken .lt-lc { color: var(--reject); }
+.tr-lt .lt-rec.is-broken::after { opacity: 1; background: rgba(217, 103, 93, .07); }
+@media (prefers-reduced-motion: no-preference) {
+  .tr-lt .lt-rec.is-broken .lt-node { animation: tr-break .5s cubic-bezier(.3, .7, .3, 1) backwards; }
+}
+@keyframes tr-break { 0% { transform: scale(1.6); box-shadow: inset 0 0 0 6px var(--reject), 0 0 22px rgba(217, 103, 93, .8); } }
+/* the selected record's event and detail can be typed over */
+.tr-lt .lt-insp [contenteditable] { outline: none; cursor: text; border-radius: 1px; box-shadow: inset 0 -1px 0 var(--line-strong); transition: box-shadow .2s, background .2s; }
+@media (hover: hover) { .tr-lt .lt-insp [contenteditable]:hover { box-shadow: inset 0 -1px 0 var(--fg-2); } }
+.tr-lt .lt-insp [contenteditable]:focus { box-shadow: inset 0 -1px 0 var(--accent); background: rgba(245, 242, 236, .07); }
+
+/* §02 the six commitments as a register: code, name, what it means, the mechanism (one row each from 961 px) */
+@media (min-width: 961px) {
+  [data-page="trust"] .tr-t > li { grid-template-columns: 64px minmax(0, 3.1fr) minmax(0, 5fr) minmax(0, 2.4fr); column-gap: clamp(20px, 2.4vw, 40px); padding: 26px 0 28px; align-items: start; }
+  [data-page="trust"] .tr-t > li > div:not(.mono) { display: contents; }
+  [data-page="trust"] .tr-t > li h3 { padding-top: 1px; text-wrap: balance; }
+  [data-page="trust"] .tr-t > li p { margin-top: 3px; }
+  [data-page="trust"] .tr-t > li > .mono { padding-top: 7px; line-height: 1.6; text-wrap: balance; }
+}
+[data-page="trust"] .tr-t { border-top: 0; margin-top: calc(6px - clamp(36px, 5vw, 72px)); }
+[data-page="trust"] .tr-t > li .k { display: flex; flex-direction: column; gap: 12px; }
+[data-page="trust"] .tr-t svg.tg { margin-top: 0; }
+
+/* §03 the control plane: six engraved plates on one ruled sheet, not six boxed cards */
+.tr-cp { row-gap: 40px; }
+.tr-k { border-left: 0; border-top: 1px solid var(--line-strong); }
+.tr-k > .tr-kp { display: flex; flex-direction: column; padding: clamp(22px, 2.2vw, 30px) clamp(20px, 2.2vw, 30px) clamp(24px, 2.4vw, 32px); background: transparent; border-radius: 0; transition: background .3s var(--ease); }
+.tr-k > .tr-kp:nth-child(2n) { border-right: 0; }
+.tr-k > .tr-kp:nth-child(2n + 1) { padding-left: 0; }
+.tr-kp .n { margin-bottom: 18px; }
+.tr-kd { margin: 4px 0 22px; color: var(--fg); }
+.tr-kd .tr-k-o6 { fill-opacity: .5; }
+.tr-kd .tr-k-o3 { fill-opacity: .28; }
+.tr-kt h3 { margin-bottom: 8px; }
+.tr-kt p { max-width: 42ch; }
+@media (hover: hover) {
+  .tr-k > .tr-kp:hover { background: rgba(14, 21, 18, .025); }
+  .tr-k > .tr-kp:hover .n { color: var(--fg-2); }
+}
+.tr-k-cap { margin-top: 16px; }
+/* each plate arrives as structure first; the stop it makes (red) or the approval it signs (green) lands a beat later */
+@media screen and (prefers-reduced-motion: no-preference) {
+  .tr-kd :is(.hp-rrec, .hp-gf, .hp-g, .hp-gl, .hp-lab--rej, .hp-lab--acc) { transition: opacity .35s var(--ease) .3s; }
+  .tr-kp.will-reveal:not(.is-in) .tr-kd :is(.hp-rrec, .hp-gf, .hp-g, .hp-gl, .hp-lab--rej, .hp-lab--acc) { opacity: 0; }
+  .tr-kp:is(.is-cut, .is-instant) .tr-kd * { transition: none; }
+}
+@media (min-width: 1200px) {
+  .tr-cp-copy { position: sticky; top: calc(var(--nav-h) + 32px); align-self: start; }
+}
+/* small desktops: the heading takes the row, the six plates sit three by two under it */
+@media (min-width: 961px) and (max-width: 1199px) {
+  .tr-cp > .tr-cp-copy, .tr-cp > .tr-cp-plates { grid-column: 1 / -1; }
+  .tr-cp-copy { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 48px; align-items: end; }
+  .tr-cp-copy .body-lg { margin-top: 0; }
+  .tr-k { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tr-k > .tr-kp:nth-child(n) { border-right: 1px solid var(--line); padding-left: clamp(20px, 2.2vw, 30px); }
+  .tr-k > .tr-kp:nth-child(3n) { border-right: 0; }
+  .tr-k > .tr-kp:nth-child(3n + 1) { padding-left: 0; }
+}
+@media (min-width: 601px) and (max-width: 960px) {
+  .tr-cp-copy .body-lg { max-width: 60ch; }
+}
+
+/* §04 plain language: the same two marks as Proof's "show / do not show" */
+.tr-dn .pf-list > li { font-size: 1rem; }
+
+/* phones: the ledger stands in one column (every record readable, no swiping); the plates become short rows */
+@media (max-width: 600px) {
+  [data-page="trust"] .section { padding-block: 60px; }
+  .tr-lt .lt-state > span { white-space: normal; }
+  .tr-lt .lt-view { overflow: visible; -webkit-mask-image: none !important; mask-image: none !important; }
+  .tr-lt .lt-track { display: grid; grid-template-columns: minmax(0, 1fr); width: auto; min-width: 0; padding: 4px 12px 12px 10px; }
+  .tr-lt .lt-rec { contain: layout style; width: auto; margin-left: 0; padding: 11px 8px 12px 34px; display: grid; grid-template-columns: 4.4em minmax(0, 1fr) auto; grid-template-areas: "meta ev t" "meta sub ."; column-gap: 10px; row-gap: 4px; align-items: baseline; }
+  .tr-lt .lt-rec::after { inset: 2px 0; }
+  .tr-lt .lt-meta { grid-area: meta; flex-direction: column; gap: 2px; }
+  .tr-lt .lt-ev { grid-area: ev; margin-top: 0; }
+  .tr-lt .lt-t { grid-area: t; margin-top: 0; }
+  .tr-lt .lt-sub { grid-area: sub; margin-top: 0; min-height: 0; -webkit-line-clamp: 2; }
+  .tr-lt .lt-line { position: absolute; inset: 0; height: auto; margin: 0; pointer-events: none; }
+  .tr-lt .lt-node { left: 10px; top: 15px; }
+  .tr-lt .lt-seg { left: 15.5px; right: auto; top: 29px; bottom: -15px; width: 1px; height: auto; transform-origin: 50% 0; }
+  .tr-lt .lt-rec.is-head .lt-seg { display: none; }
+  .tr-lt .lt-rec .lt-tag { left: auto; right: 8px; top: auto; bottom: 13px; transform: none; padding: 0; background: none; }
+  .tr-lt .lt-gap { left: 26px; top: auto; bottom: -6px; transform: none; }
+  .tr-lt .lt-rec.is-linking .lt-seg { animation-name: tr-form-v; }
+  .tr-lt .lt-leader { display: none; }
+  .tr-lt .lt-rec:focus-visible::before { inset: 2px 0; }
+
+  /* the register on a phone: code, mark and mechanism on one line, then the commitment at full width */
+  [data-page="trust"] .tr-t > li { grid-template-columns: auto minmax(0, 1fr); column-gap: 14px; row-gap: 8px; padding: 18px 0 20px; }
+  [data-page="trust"] .tr-t > li .k { grid-row: 1; grid-column: 1; flex-direction: row; align-items: center; gap: 12px; }
+  [data-page="trust"] .tr-t > li > .mono { grid-row: 1; grid-column: 2; align-self: center; justify-self: end; font-size: .66rem; line-height: 1.45; text-align: right; }
+  [data-page="trust"] .tr-t > li > div:not(.mono) { grid-row: 2; grid-column: 1 / -1; }
+  [data-page="trust"] .tr-t svg.tg { width: 20px; height: 20px; }
+  [data-page="trust"] .tr-t > li h3 { font-size: 1.3rem; }
+  [data-page="trust"] .tr-t > li p { margin-top: 6px; font-size: .97rem; }
+
+  .tr-k > .tr-kp, .tr-k > .tr-kp:nth-child(n) { display: grid; grid-template-columns: 116px minmax(0, 1fr); column-gap: 18px; padding: 18px 0 20px; border-right: 0; }
+  .tr-kp .n { grid-column: 1 / -1; margin-bottom: 12px; }
+  .tr-kd { margin: 2px 0 0; }
+  .tr-kd .hp-labs { display: none; }
+  .tr-kt h3 { font-size: 1.2rem; }
+  .tr-kt p { font-size: .94rem; }
+}
+/* the narrowest phones: each record on three short lines (id beside event, detail, time), the plates narrower */
+@media (max-width: 400px) {
+  .tr-lt .lt-rec { grid-template-columns: 3.9em minmax(0, 1fr); grid-template-areas: "meta ev" "meta sub" "meta t"; row-gap: 3px; padding-right: 6px; }
+  .tr-lt .lt-ev { letter-spacing: .07em; }
+  .tr-lt .lt-t { margin-top: 2px; }
+  .tr-lt .lt-rec .lt-tag { bottom: 12px; right: 6px; }
+  .tr-k > .tr-kp, .tr-k > .tr-kp:nth-child(n) { grid-template-columns: 92px minmax(0, 1fr); column-gap: 14px; }
+}
+@keyframes tr-form-v { 0% { transform: scaleY(.3); background: var(--accent); } 55% { transform: none; background: var(--accent); } 100% { background: var(--line-strong); } }
+@media (min-width: 601px) and (max-width: 1199px) { .tr-lt .lt-x { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
+
+@media print {
+  .tr-lt .lt-hint { display: none; }
+  .tr-cp-copy { position: static; }
+}

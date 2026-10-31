@@ -109,12 +109,21 @@
     // each cell names its column (data-th): on phones the rows restack and the cells carry their own labels
     const head = table.tHead && table.tHead.rows[0] ? Array.from(table.tHead.rows[0].cells, c => c.textContent.trim()) : [];
     const TH = ['Session', 'NAV regime', 'Captured', 'Verification', 'Status'].map((k, j) => head[j] || k);
+    // Table 1.1 folds: a value equal to the one above it (Captured, Verification, Status) is drawn as a ditto mark
+    // (.pf-dt, proof.css); its text stays in the cell for screen readers, search and copy
     const rows = sessions.map((s, i) => {
-      const tr = h('tr');
-      const td = (cls, ...kids) => { const c = h('td', cls); c.dataset.th = TH[tr.cells.length]; c.append(...kids); tr.append(c); };
+      const tr = h('tr'), up = sessions[i - 1];
+      const td = (cls, same, kid) => {
+        const c = h('td', [cls, same ? 'pf-dt' : ''].filter(Boolean).join(' ') || null);
+        c.dataset.th = TH[tr.cells.length];
+        c.append(same && typeof kid === 'string' ? h('span', null, kid) : kid); tr.append(c);
+      };
       const mini = mute(h('i', 'pf-mini')); mini.dataset.side = String(s.side);
-      td('lab', s.day); td(null, mini, s.regime); td('num', valueText(s)); td(null, s.confirmation);
-      td(null, h('span', 'tag' + (s.settled ? ' on' : ''), s.status));
+      td('lab', false, s.day);
+      const reg = h('td'); reg.dataset.th = TH[1]; reg.append(mini, s.regime); tr.append(reg);
+      td('num', up && valueText(up) === valueText(s), valueText(s));
+      td(null, up && up.confirmation === s.confirmation, s.confirmation);
+      td(null, up && up.status === s.status && up.settled === s.settled, h('span', 'tag' + (s.settled ? ' on' : ''), s.status));
       tr.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') preview(i); });
       return tr;
     });

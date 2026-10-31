@@ -72,11 +72,12 @@
       <div class="container">
         <div class="article-hero-grid">
           <div>
-            <div class="eyebrow" data-reveal>Research · 05 of 10 · Series · 03</div>
-            <h1 class="display-1 article-title" data-reveal data-split style="--d:60ms">Agents Decide. Code Executes. The One Boundary That Matters</h1>
+            <div class="eyebrow" data-reveal>Research · Note 05 of 10 · Series, part 3 of 8</div>
+            <h1 class="display-1 article-title article-title--long" data-reveal data-split style="--d:60ms">Agents Decide. Code Executes. The One Boundary That Matters</h1>
             <p class="lede mt-3" data-reveal style="--d:120ms">Eight layers, one boundary. The top four estimate; the bottom four are deterministic code.</p>
-            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder's notes</span><span>3 min read</span><span>Fig. 05 — boundary</span></div>
+            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder’s notes</span><span>3 min read</span></div>
           </div>
+          <p class="figcap article-figcap"><span class="figcap-n">Fig. 05</span><span class="figcap-t">Eight layers and one bright plane between them.</span><span class="figcap-d">“The top four decide.” Under the plane: “The bottom four execute, and they are deterministic code.”</span><span class="figcap-h">Illustrative</span></p>
         </div>
       </div>
     </section>
@@ -93,7 +94,9 @@
           </nav>
           <article class="col-7 offset-5 article">
             <p class="lead">If I had to reduce the OpenEXA architecture to one sentence, it would be this: agents decide, code executes. Every design decision we have made follows from where we drew that line.</p><p>Our stack has eight layers. The top four decide. Signal intelligence perceives the environment with our own risk and prediction models. The model layer reasons on a post-trained language model. Domain-specific agents propose actions. The execution council governs those proposals against policy. All four are probabilistic. They estimate, they reason, they can be wrong.</p><p>The bottom four execute, and they are deterministic code. The routing layer selects a venue and counterparty by scoring, not by judgment. The execution layer is a state machine that is idempotent, retried, and reconciled against the broker. The MCP server exposes authenticated tools to the outside world and is deployed per customer. The authentication layer holds scoped, revocable permissions for every agent and every tool.</p><h2 id="why-the-boundary-sits-there">Why the boundary sits there</h2><p>Language models are excellent at the part of the lifecycle that used to require a specialist: reading an exception, interpreting a rule, proposing what to do. They are the wrong tool for the part that requires certainty: sending an order once and only once, confirming a fill, writing a record that cannot be edited.</p><p>By making layers five through eight deterministic, we get a property I consider non-negotiable in regulated work. Nothing an agent believes can move what it is not permitted to. An agent can be confidently wrong about the size of a NAV gap. The consequences of that error stop at the council, and even if the council approves, the execution layer will only do what the permission scope allows, exactly once, and it will reconcile the result with an independent counterparty.</p><h2 id="idempotency-as-a-safety-property">Idempotency as a safety property</h2><p>The execution layer is built around a simple contract: do it once. Every order transition has a unique identity. If a network fault causes a retry, the state machine recognizes the transition and refuses to run it twice. This sounds like plumbing. It is actually the mechanism that lets us give agents autonomy. Autonomy without idempotency means a confused agent can double-execute. Autonomy with idempotency means the worst case is a rejected proposal.</p><h2 id="mcp-as-the-structural-interface">MCP as the structural interface</h2><p>We use the Model Context Protocol as the boundary between reasoning and the external world. Brokers, custodians, exchanges, and clearing houses are exposed to agents as authenticated tools. Each customer gets their own MCP server, so permissions are scoped to that customer's accounts and nothing else. Custody never moves. No agent and no tool has withdrawal rights.</p><p>This is what lets us claim that the lifecycle is machine-actionable. The structured trait in our lifecycle test is not about data formats. It is about whether the process can be expressed as a set of tools with clear inputs, outputs, and permission scopes. When it can, the swarm can run it. When it cannot, no amount of model capability will make it safe.</p>
-            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder's notes · 05 / 10</span></div>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder’s notes · 05 / 10</span></div>
+            <div class="note-run"><p class="note-k">See it run</p><ul><li><a class="link-arrow" href="../platform.html#architecture">Explore the eight layers and the boundary <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></li></ul></div>
+            <div class="note-disc"><p class="note-k">Series disclosure</p><p>Performance figures referenced in this series are proof-of-concept results over a limited period and are not guarantees of future results. OpenEXA does not take custody of client assets. Lifecycles beyond Lifecycle 01 describe roadmap intent. Any offering of securities would be made only to accredited investors under Rule 506(c). Named brokers and exchanges do not endorse OpenEXA.</p><p><a href="#disclosures">See the disclosures.</a></p></div>
           </article>
         </div>
       </div>
@@ -103,7 +106,7 @@
       <div class="container">
         <div class="pager">
           <a class='pager-card' href='04-five-thousand-small-agents.html'><span class='k'>← Previous · 04</span><h3>Why Five Thousand Small Agents Beat One Large One</h3><p>Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.</p></a>
-          <a class='pager-card next' href='06-post-training-on-a-rulebook.html'><span class='k'>Next · 06 →</span><h3>Post-Training a Model on a Rulebook, Not on the Internet</h3><p>Closing the gap between a model that knows finance and one that knows this lifecycle.</p></a>
+          <a class='pager-card next' href='06-post-training-on-a-rulebook.html'><span class='k'>Next · 06 →</span><h3>Post‐Training a Model on a Rulebook, Not on the Internet</h3><p>Closing the gap between a model that knows finance and one that knows this lifecycle.</p></a>
         </div>
       </div>
     </section>
@@ -134,5 +137,6 @@
 
   <script src="../assets/js/figure.js" defer></script>
   <script src="../assets/js/site.js" defer></script>
+  <script src="../assets/js/research.js" defer></script>
 </body>
 </html>

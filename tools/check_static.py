@@ -444,16 +444,27 @@ SHARED_JS = {"site.js", "loader.js", "story.js", "swarm.js", "ledger.js", "chain
 PAGE_SCRIPTS_BUDGET = 151000  # gzip -9 bytes: the scripts any one page loads (index.html's budget, for every page)
 
 
+def script_srcs(html):
+    """the scripts a page loads: every <script src>, then the space-separated list a tag names in data-after-paint
+    (home.js appends those once the first paint is on screen, in order)"""
+    srcs = re.findall(r'<script\b[^>]*\ssrc="([^"]+)"', html)
+    for tag in re.findall(r'<script\b[^>]*>', html):
+        m = re.search(r'\sdata-after-paint="([^"]*)"', tag)
+        if m: srcs += m.group(1).split()
+    return srcs
+
+
 def check_weight():
     """Transfer weight cannot grow unnoticed while the CSS split is deferred: gzip -9 of site.css <= 66,000 bytes and the
     sum of gzip -9 over the scripts index.html loads (<script src>) <= 151,000 bytes: 59,799 and 137,253 at 1a6b9fb,
-    plus 10% (director's test list; _cross 'rejected': the split is deferred)."""
+    plus 10% (director's test list; _cross 'rejected': the split is deferred). A page's scripts are its <script src>
+    tags plus the ones a tag names in data-after-paint (home.js starts those after the first paint; v2x, 30 Oct)."""
     import gzip
     gz = lambda rel: len(gzip.compress((ROOT / rel).read_bytes(), 9))
     css = gz("assets/css/site.css")
     if css > WEIGHT["assets/css/site.css"]: fail("assets/css/site.css", f"weight: gzip {css:,} bytes; budget {WEIGHT['assets/css/site.css']:,} (1a6b9fb's 59,799 + 10%)")
     s = (ROOT / "index.html").read_text(encoding="utf-8")
-    srcs = [u.split("?")[0].lstrip("/") for u in re.findall(r'<script\b[^>]*\ssrc="([^"]+)"', s)]
+    srcs = [u.split("?")[0].lstrip("/") for u in script_srcs(s)]
     missing = [u for u in srcs if not (ROOT / u).is_file()]
     if missing: fail("index.html", "weight: scripts not found:", missing)
     js = {u: gz(u) for u in srcs if (ROOT / u).is_file()}
@@ -472,7 +483,7 @@ def check_weight():
     for rel in pages:
         h = (ROOT / rel).read_text(encoding="utf-8")
         base = Path(rel).parent
-        srcs = [u.split("?")[0] for u in re.findall(r'<script\b[^>]*\ssrc="([^"]+)"', h)]
+        srcs = [u.split("?")[0] for u in script_srcs(h)]
         files = [((ROOT / u.lstrip("/")) if u.startswith("/") else (ROOT / base / u)).resolve() for u in srcs]
         gone = [str(f) for f in files if not f.is_file()]
         if gone: fail(rel, "weight: scripts not found:", gone); continue
