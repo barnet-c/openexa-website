@@ -17,7 +17,13 @@
   overture's captions in story.js count for the home page); the misspelled blog placeholder referenced nowhere; every
   body cell of the Platform and Proof tables names its column (td[data-th]) for the phone restack;
 - v2x (30 Oct): every page carries index.html's chrome (chrome_sync), names itself in <body data-page> and loads its
-  page group's stylesheet after site.css; weight budgets per group stylesheet, per page-only script and per page.
+  page group's stylesheet after site.css; weight budgets per group stylesheet, per page-only script and per page;
+- v2x tests pass (30 Oct), contracts that had no check: the security headers with the exact CSP, the cache routes, MIME
+  types, 404 rewrite and speculation rules (headers); nothing on a page or in a script needs what the CSP forbids
+  (csp_markup); the footer's columns, Sentiment desk link and verbatim disclosures in #disclosures on every page
+  (footer); the skip link first and one main#main on every page, data-page as SYSTEM.md names it (landmarks); the
+  shared head lines, theme-color by opening, canonical = og:url = the page's own address, robots and manifest (heads);
+  the CEO's fixed lines, no "$22 trillion", Proof ends at §03 and Trust at §04 (decisions).
     python tools/check_static.py [--only=count_not_on_proof,regime_split,...]   (--only limits the round-1 guards)
 """
 import sys as _sys, os as _os
@@ -473,9 +479,11 @@ def check_weight():
         fail("index.html", f"weight: its {len(js)} scripts are {total:,} bytes gzipped; budget {WEIGHT['index.html scripts']:,} (1a6b9fb's 137,253 + 10%):",
              ", ".join(f"{Path(u).name} {n:,}" for u, n in sorted(js.items(), key=lambda kv: -kv[1])))
     for rel in GROUP_CSS:
-        if not (ROOT / rel).is_file(): fail(rel, "weight: the page group's stylesheet is missing"); continue
-        n = gz(rel)
-        if n > GROUP_CSS_BUDGET: fail(rel, f"weight: gzip {n:,} bytes; budget {GROUP_CSS_BUDGET:,} per page group stylesheet")
+        if not (ROOT / rel).is_file(): fail(rel, "weight: the page group's stylesheet is missing")
+    for f in sorted((ROOT / "assets/css").glob("*.css")):  # every stylesheet but site.css, a group's or a new one (tests pass, 30 Oct)
+        if f.name == "site.css": continue
+        n = gz(f"assets/css/{f.name}")
+        if n > GROUP_CSS_BUDGET: fail(f"assets/css/{f.name}", f"weight: gzip {n:,} bytes; budget {GROUP_CSS_BUDGET:,} per page group stylesheet")
     for f in sorted((ROOT / "assets/js").glob("*.js")):
         if f.name in SHARED_JS: continue
         n = gz(f"assets/js/{f.name}")
@@ -568,9 +576,232 @@ def check_chrome_sync():
             if names != ["site.css", f"{g}.css"]: fail(rel, f"chrome_sync: stylesheets {names}; want site.css then {g}.css")
 
 
+# ---- v2x tests pass (30 Oct): contracts that had no check at all (STUDY 7.3.23, contracts §1.32), bought back where cheap
+# The security headers, verbatim (contracts §1.12): build_blog.py writes them into staticwebapp.config.json; Azure and
+# tools/serve.py send them. A change to the policy is a decision, so it changes here too.
+CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; img-src 'self' data:; "
+       "connect-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; "
+       "upgrade-insecure-requests")
+HEADERS = {
+    "Content-Security-Policy": CSP,
+    "Permissions-Policy": "accelerometer=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), hid=(), "
+                          "magnetometer=(), microphone=(), midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=()",
+    "X-Frame-Options": "DENY", "Referrer-Policy": "same-origin", "X-Content-Type-Options": "nosniff",
+    "Speculation-Rules": '"/speculation.specrules"',
+}
+CACHE_ROUTES = [  # (route, Cache-Control), in order: the first match wins on Azure (contracts §1.13)
+    ("/assets/fonts/*", "public, max-age=2592000, stale-while-revalidate=86400"),
+    ("/assets/img/blog/*", "public, max-age=2592000, stale-while-revalidate=86400"),
+    ("/assets/img/team/*", "public, max-age=86400, stale-while-revalidate=604800"),
+    ("/assets/img/og/*", "public, max-age=604800, stale-while-revalidate=86400"),
+    ("/assets/img/*", "public, max-age=604800, stale-while-revalidate=86400"),
+]
+MIME = {".webmanifest": "application/manifest+json", ".specrules": "application/speculationrules+json"}
+
+
+def check_headers():
+    """staticwebapp.config.json carries the site's security headers exactly (the CSP verbatim, Permissions-Policy all off,
+    X-Frame-Options, Referrer-Policy, nosniff, Speculation-Rules), the cache routes in order, the two MIME types and the
+    404 rewrite; speculation.specrules prefetches same-origin pages only, at 'moderate', never prerenders, and skips
+    feeds, images, the manifest and in-page/new-tab/nofollow links (contracts §1.12-1.13: no check asserted them)."""
+    try: cfg = json.loads((ROOT / "staticwebapp.config.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e: fail("staticwebapp.config.json", "headers: does not parse:", e); return
+    got = cfg.get("globalHeaders") or {}
+    for k, v in HEADERS.items():
+        if got.get(k) != v: fail("staticwebapp.config.json", f"headers: {k} is {got.get(k)!r}; want {v!r}")
+    extra = sorted(set(got) - set(HEADERS))
+    if extra: fail("staticwebapp.config.json", "headers: global headers this check does not know (add them here if intended):", extra)
+    if "'unsafe-inline'" in CSP.replace("style-src-attr 'unsafe-inline'", "") or "unsafe-eval" in got.get("Content-Security-Policy", ""):
+        fail("headers: the policy allows inline scripts or eval")
+    cache = [(r["route"], (r.get("headers") or {}).get("Cache-Control")) for r in cfg.get("routes", []) if "redirect" not in r]
+    if cache != CACHE_ROUTES: fail("staticwebapp.config.json", "headers: cache routes", cache, "; want", CACHE_ROUTES)
+    if cfg.get("mimeTypes") != MIME: fail("staticwebapp.config.json", "headers: mimeTypes", cfg.get("mimeTypes"))
+    if cfg.get("responseOverrides") != {"404": {"rewrite": "/404.html", "statusCode": 404}}:
+        fail("staticwebapp.config.json", "headers: responseOverrides must rewrite 404 to /404.html with status 404:", cfg.get("responseOverrides"))
+    try: spec = json.loads((ROOT / "speculation.specrules").read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e: fail("speculation.specrules", "headers: does not parse:", e); return
+    if set(spec) != {"prefetch"}: fail("speculation.specrules", "headers: prefetch only (no prerender):", sorted(spec))
+    rules = spec.get("prefetch") or [{}]
+    flat = json.dumps(rules)
+    if len(rules) != 1 or rules[0].get("eagerness") != "moderate" or '"href_matches": "/*"' not in flat:
+        fail("speculation.specrules", "headers: one same-origin '/*' rule at eagerness 'moderate' expected:", flat[:160])
+    for skip in ("/*.xml", "/*.jpg", "/*.png", "/*.webp", "/*.ico", "/*.webmanifest", "/*.specrules", "[href^='#']", "[target=_blank]", "[rel~=nofollow]"):
+        if skip not in flat: fail("speculation.specrules", f"headers: the prefetch rule no longer excludes {skip}")
+
+
+def check_csp_markup():
+    """Nothing on a page needs what the CSP forbids (contracts §1.12; violations only showed up as console errors on the
+    pages a browser check happened to open): no executable inline <script> (inline application/json and ld+json data are
+    fine), no <style> element, no on*= handler, no javascript: URL, no iframe/object/embed/audio/video, no script,
+    stylesheet, font, image or preload from another origin; no eval or new Function in the site's scripts."""
+    for rel in pages:
+        s = (ROOT / rel).read_text(encoding="utf-8")
+        for tag in re.findall(r"<script\b[^>]*>", s):
+            typ = (re.search(r'\stype="([^"]*)"', tag) or [None, ""])[1]
+            if "src=" not in tag and typ not in ("application/json", "application/ld+json"): fail(rel, "csp_markup: inline executable <script>:", tag[:100])
+        if re.search(r"<style[\s>]", s, re.I): fail(rel, "csp_markup: a <style> element (style-src 'self' blocks it)")
+        markup = re.sub(r"<script\b[^>]*>.*?</script>", "", s, flags=re.S | re.I)
+        on = sorted(set(re.findall(r"<[a-z][\w-]*\b[^>]*?\s(on[a-z]+)\s*=", markup, re.I)))
+        if on: fail(rel, "csp_markup: inline event handlers:", on)
+        if re.search(r'(?:href|src|action)\s*=\s*"\s*javascript:', markup, re.I): fail(rel, "csp_markup: a javascript: URL")
+        embeds = sorted(set(re.findall(r"<(iframe|object|embed|audio|video|frame)\b", markup, re.I)))
+        if embeds: fail(rel, "csp_markup: embeds the CSP blocks:", embeds)
+        for tag in re.findall(r"<(?:script|img|source|link)\b[^>]*>", s):
+            if tag.startswith("<link") and not re.search(r'\srel="(?:stylesheet|preload|modulepreload|icon|apple-touch-icon|manifest)"', tag): continue
+            for u in re.findall(r'\s(?:src|href|srcset)="([^"]*)"', tag):
+                if re.match(r"\s*(?:https?:)?//", u): fail(rel, "csp_markup: a resource from another origin:", tag[:120])
+    for f in sorted((ROOT / "assets/js").glob("*.js")):
+        js = re.sub(r"(?m)^\s*//.*$", " ", re.sub(r"/\*.*?\*/", " ", f.read_text(encoding="utf-8"), flags=re.S))
+        if re.search(r"(?<![\w.])eval\s*\(|\bnew\s+Function\s*\(", js): fail(f"assets/js/{f.name}", "csp_markup: eval or new Function (script-src has no 'unsafe-eval')")
+    for f in sorted((ROOT / "assets/css").glob("*.css")):
+        if re.search(r"""url\(\s*['"]?\s*(?:https?:)?//|@import""", f.read_text(encoding="utf-8")): fail(f"assets/css/{f.name}", "csp_markup: a url() from another origin or an @import")
+
+
+# The footer (contracts §1.15-1.16; CLAUDE.md: "Legal/Reg D-style disclosures stay in every footer"). chrome_sync keeps every
+# page equal to index.html; this pins what index.html (and so every page) must say.
+FOOTER_COLUMNS = [
+    ("Product", [("platform.html", "Platform"), ("lifecycles.html", "Lifecycles"), ("evidence.html", "Proof"), ("trust.html", "Trust & governance")]),
+    ("Company", [("company.html", "About OpenEXA"), ("research.html", "Research"), ("blog/index.html", "Blog"), ("https://sentiment.openexa.com/", "Sentiment desk ↗")]),
+    ("Access", [("access.html", "Request access"), ("access.html#managers", "For managers"), ("access.html#lifecycles", "Bring a lifecycle")]),
+]
+DISCLOSURE = (
+    "Important disclosures. OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. "
+    "Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. "
+    "Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering "
+    "documents, which will contain a full description of risks. "
+    "Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or "
+    "guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain "
+    "with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their "
+    "respective owners and do not endorse OpenEXA.")
+plain = lambda frag: re.sub(r"\s+", " ", H.unescape(re.sub(r"<[^>]+>", " ", frag))).replace("‐", "-").strip()
+
+
+def check_footer():
+    """Every page but the Insights stub ends with the footer: the three columns and their links in order (Product, Company
+    with the Sentiment desk link to https://sentiment.openexa.com/ rel=noopener, Access with the two Access paths), the
+    legal text verbatim in the one #disclosures element (the anchor 'See the disclosures.' lands on), and the company
+    line '© YEAR OpenEXA Inc. · Seattle, WA' (contracts §1.15-1.16; no check covered any of it)."""
+    for rel in pages:
+        if rel == "insights.html": continue
+        s = (ROOT / rel).read_text(encoding="utf-8")
+        m = FOOT_RE.search(s)
+        if not m: fail(rel, "footer: no <footer class=\"footer\">"); continue
+        f = chrome_norm(m.group(0), rel)
+        cols = re.findall(r"<div><h2>([^<]*)</h2><ul>(.*?)</ul></div>", f, re.S)
+        got = [(plain(h), [(H.unescape(a), plain(t)) for a, t in re.findall(r'<a href="([^"]*)"[^>]*>(.*?)</a>', ul, re.S)]) for h, ul in cols]
+        if got != FOOTER_COLUMNS: fail(rel, "footer: the link columns differ from the contract:", got)
+        if not re.search(r'<a href="https://sentiment\.openexa\.com/" rel="noopener">', f): fail(rel, "footer: the Sentiment desk link lost rel=noopener")
+        n_disc = s.count('id="disclosures"')
+        if n_disc != 1: fail(rel, f'footer: {n_disc} elements carry id="disclosures"; want 1')
+        d = re.search(r'<div class="disc" id="disclosures">(.*?)</div>', f, re.S)
+        if not d or plain(d.group(1)) != DISCLOSURE: fail(rel, "footer: the legal text in #disclosures is not the disclosure, verbatim:", plain(d.group(1))[:120] if d else "(missing)")
+        if not re.search(r"© \d{4} OpenEXA Inc\. · Seattle, WA<", f): fail(rel, "footer: no '© YEAR OpenEXA Inc. · Seattle, WA' line")
+
+
+DATA_PAGE = {"index.html": "home", "platform.html": "platform", "lifecycles.html": "lifecycles", "evidence.html": "proof", "trust.html": "trust",
+             "company.html": "company", "access.html": "access", "research.html": "research", "blog/index.html": "blog", "404.html": "404"}
+
+
+def check_landmarks():
+    """Every page but the Insights stub starts its <body> with the skip link '<a class="skip" href="#main">Skip to
+    content</a>' and has exactly one <main>, which is main#main (contracts §1.22: on 49 pages, checked nowhere); <body
+    data-page> names the page with SYSTEM.md's value (research notes 'note', blog posts 'post')."""
+    for rel in pages:
+        if rel == "insights.html": continue
+        s = (ROOT / rel).read_text(encoding="utf-8")
+        after = s.split("<body", 1)[-1]
+        first = re.search(r"<(a|button|input|select|textarea)\b[^>]*>(?:[^<]*</a>)?", after)  # the first thing Tab reaches
+        if not first or first.group(0) != '<a class="skip" href="#main">Skip to content</a>' or after.find(first.group(0)) > after.find('<header class="nav'):
+            fail(rel, "landmarks: the first focusable element in <body> is not the skip link to #main (before the bar):", first.group(0)[:80] if first else None)
+        mains = re.findall(r"<main\b[^>]*>", s)
+        if mains != ['<main id="main">'] and not (len(mains) == 1 and re.search(r'\sid="main"', mains[0])): fail(rel, "landmarks: want exactly one <main id=\"main\">, found", mains)
+        want = DATA_PAGE.get(rel) or ("note" if rel.startswith("research/") else "post" if rel.startswith("blog/") else None)
+        got = (re.search(r'<body\b[^>]*\sdata-page="([^"]*)"', s) or [None, None])[1]
+        if want and got != want: fail(rel, f"landmarks: <body data-page={got!r}>; SYSTEM.md names it {want!r}")
+
+
+HEAD_COMMON = ['<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">',
+               '<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">']
+HEAD_INDEXED = ['<link rel="alternate" type="application/atom+xml" title="OpenEXA Blog" href="/blog/feed.xml">',
+                '<link rel="alternate" type="application/atom+xml" title="OpenEXA Research" href="/research/feed.xml">',
+                '<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">', '<link rel="manifest" href="site.webmanifest">']
+
+
+def check_heads():
+    """The shared head (contracts §1.8, §1.32.5): every page's head has the charset, viewport and icon as index.html
+    writes them, preloads exactly index.html's fonts (each a woff2 file in assets/fonts), and one theme-color, ink
+    #0E1512 on pages that open dark (data-nav="dark-start") and paper #F5F2EC on the others; every indexable page also
+    the two feed links, the touch icon and the manifest, a canonical URL that is its own address and an og:url equal to
+    it. robots.txt points at the sitemap; the manifest parses, its colours are ink and its icons exist; favicon.ico exists."""
+    head_lines = lambda s: [l.strip() for l in s.split("</head>", 1)[0].split("\n")]
+    want_pre = [l for l in head_lines((ROOT / "index.html").read_text(encoding="utf-8")) if l.startswith('<link rel="preload"')]
+    for l in want_pre:
+        href = (re.search(r'\shref="([^"]*)"', l) or [None, ""])[1]
+        if not re.fullmatch(r"assets/fonts/[\w.-]+\.woff2", href) or not (ROOT / href).is_file() or 'as="font"' not in l:
+            fail("index.html", "heads: a preload that is not a site font file:", l)
+    for rel in pages:
+        if rel == "insights.html": continue
+        s = (ROOT / rel).read_text(encoding="utf-8")
+        head = s.split("</head>", 1)[0]
+        depth = rel.count("/")
+        lines = [l.strip() for l in head.split("\n")]
+        lines = [l.replace('href="/', 'href="') if rel == "404.html" and "feed.xml" not in l else l.replace('href="' + "../" * depth, 'href="') if depth else l for l in lines]
+        need = HEAD_COMMON + ([] if rel in NOT_INDEXED else HEAD_INDEXED)
+        missing = [l for l in need if l not in lines]
+        if missing: fail(rel, "heads: missing or changed:", missing)
+        preloads = [l for l in lines if l.startswith('<link rel="preload"')]
+        if not want_pre or preloads != want_pre: fail(rel, "heads: preloads differ from index.html's fonts:", preloads)
+        tc = re.findall(r'<meta name="theme-color" content="([^"]*)">', head)
+        dark = bool(re.search(r'<body\b[^>]*\sdata-nav="dark-start"', s))
+        if tc != ["#0E1512" if dark else "#F5F2EC"]: fail(rel, f"heads: theme-color {tc}; want {'#0E1512 (opens dark)' if dark else '#F5F2EC (opens on paper)'}")
+        if rel in NOT_INDEXED: continue
+        canon = (re.search(r'<link rel="canonical" href="([^"]+)">', head) or [None, None])[1]
+        own = HOME + ("" if rel == "index.html" else rel[:-10] if rel.endswith("index.html") else rel)
+        if canon != own: fail(rel, f"heads: canonical {canon!r}; the page's own address is {own!r}")
+        ogu = (re.search(r'<meta property="og:url" content="([^"]+)">', head) or [None, None])[1]
+        if ogu != canon: fail(rel, f"heads: og:url {ogu!r} differs from the canonical URL")
+    robots = (ROOT / "robots.txt").read_text(encoding="utf-8") if (ROOT / "robots.txt").is_file() else ""
+    if "Sitemap: https://www.openexa.com/sitemap.xml" not in robots or re.search(r"(?m)^Disallow:\s*/\s*$", robots): fail("robots.txt", "heads: must allow the site and name the sitemap")
+    try:
+        man = json.loads((ROOT / "site.webmanifest").read_text(encoding="utf-8"))
+        if man.get("theme_color") != "#0E1512" or man.get("background_color") != "#0E1512" or man.get("name") != "OpenEXA": fail("site.webmanifest", "heads: name OpenEXA and ink colours expected:", {k: man.get(k) for k in ("name", "theme_color", "background_color")})
+        gone = [i.get("src") for i in man.get("icons", []) if not (ROOT / str(i.get("src", ""))).is_file()]
+        if not man.get("icons") or gone: fail("site.webmanifest", "heads: icons missing:", gone or "none listed")
+    except (OSError, ValueError) as e: fail("site.webmanifest", "heads: does not parse:", e)
+    if not (ROOT / "favicon.ico").is_file(): fail("favicon.ico", "heads: missing")
+
+
+SUBLINE = "OpenEXA builds the end-to-end infrastructure on which swarms of domain-specific AI agents run the world's high-value lifecycles."
+
+
+def check_decisions():
+    """The CEO's fixed lines and page-length decisions (CLAUDE.md content decisions; EVOLVE: 'The CEO's lines stay word for
+    word'), which no check pinned: Home's h1 'Infrastructure for agentic lifecycles.', its sub-line, 'An AI agentic
+    company', 'Not tasks. Lifecycles.' and 'Trillions' (Lifecycles says 'Trillions' too); Company's h1 'Intelligence, put to
+    work.' with 'put to work.' as its italic; never '$22 trillion' or '$22T' anywhere; Proof ends at its §03 and Trust at
+    its §04; no Investors page."""
+    vis = {rel: plain(visible((ROOT / rel).read_text(encoding="utf-8"))).replace("’", "'") for rel in ("index.html", "company.html", "lifecycles.html")}
+    for line in ("Infrastructure for agentic lifecycles.", SUBLINE, "An AI agentic company", "Not tasks. Lifecycles.", "Trillions"):
+        if line not in vis["index.html"]: fail("index.html", f"decisions: the CEO's line {line!r} is not on the page word for word")
+    if "Trillions" not in vis["lifecycles.html"]: fail("lifecycles.html", "decisions: 'Trillions' is not on the page")
+    if "An AI agentic company" not in vis["company.html"]: fail("company.html", "decisions: 'An AI agentic company' is not on the page")
+    h1 = lambda rel: (re.search(r"<h1\b[^>]*>(.*?)</h1>", (ROOT / rel).read_text(encoding="utf-8"), re.S) or [None, ""])[1]
+    if plain(h1("index.html")) != "Infrastructure for agentic lifecycles.": fail("index.html", "decisions: the h1 is not the CEO's headline:", plain(h1("index.html")))
+    ch = h1("company.html")
+    if plain(ch) != "Intelligence, put to work." or not re.search(r"<em>\s*put to work\.\s*</em>", ch): fail("company.html", "decisions: the h1 is not 'Intelligence, <em>put to work.</em>':", ch[:100])
+    for rel in pages:
+        t = visible((ROOT / rel).read_text(encoding="utf-8"))
+        if re.search(r"\$\s?22\s?(?:T\b|tn\b|trillion)", t, re.I): fail(rel, "decisions: '$22 trillion' / '$22T' (the CEO's word is 'Trillions')")
+    for rel, last in (("evidence.html", 3), ("trust.html", 4)):
+        idx = [int(x) for x in re.findall(r'<span class="idx">(\d+)</span>', (ROOT / rel).read_text(encoding="utf-8"))]
+        if not idx or max(idx) != last: fail(rel, f"decisions: the page ends at its §{last:02d} (CEO); its sections run to {max(idx) if idx else 'none'}")
+    if any(p for p in pages if re.search(r"(^|/)investors?\.html$", p)): fail("decisions: an Investors page exists (no Investors page, CEO)")
+
+
 GUARDS = [check_count_not_on_proof, check_count_static_final, check_regime_split, check_research09_regimes, check_has_guard,
           check_has_regions, check_figure_labels, check_blog_placeholder, check_proof_plate, check_table_th,
-          check_hover_guard, check_weight, check_story_fallback, check_cost_definitions, check_platform04, check_chrome_sync]
+          check_hover_guard, check_weight, check_story_fallback, check_cost_definitions, check_platform04, check_chrome_sync,
+          check_headers, check_csp_markup, check_footer, check_landmarks, check_heads, check_decisions]
 only = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--only=")), None)
 if "--only" in sys.argv[1:-1]: only = sys.argv[sys.argv.index("--only") + 1]
 for g in GUARDS:

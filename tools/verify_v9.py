@@ -33,7 +33,7 @@ after that instrument's Pause control (or two equal boxes), with animations disa
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE
-import asyncio, json, linecache, os, platform, re, subprocess, sys, time, traceback
+import asyncio, json, linecache, os, platform, re, subprocess, sys, time, traceback, urllib.parse
 from pathlib import Path
 from playwright.async_api import async_playwright, expect
 # CI's runner is several times slower than a laptop: an expect() without its own timeout waits up to 20 s (Playwright's
@@ -272,6 +272,11 @@ async def scene_rest(pg, n, timeout=None):
     with --cpu-throttle): no wall-clock assertion here."""
     timeout = timeout or (60000 if MODE["throttle"] > 1 else 30000)
     settled = await has_settled(pg)
+    # v2x (30 Oct): story.js wires the index once its WebGL scene is built (begin(), after html.gl-ready), and since v2x it
+    # builds in slices after the first paint, so on a slow runner the loader (capped at 1.2 s) can lift first and an
+    # index click sent at once is lost. Wait for the overture to be wired (gl-ready, or the static no-webgl sequence);
+    # if it never is, the click goes anyway and the check fails as before. (Requested of home: wire the index earlier.)
+    await until(pg, "['gl-ready', 'no-webgl'].some(c => document.documentElement.classList.contains(c))", timeout)
     await pg.evaluate(FRAME_COUNTER)
     await pg.evaluate(f"document.querySelector('.story-idx [data-n=\"0{n}\"]').click()")
     snap = """(() => { const i = document.querySelector('.story-idx [aria-current]'); const b = document.querySelector('.beat-%d');
@@ -563,6 +568,44 @@ async def interior(b):
 
 
 @check
+async def trust_tamper(b):
+    """Trust's record can be broken and Verify shows it (v2x tests pass, 30 Oct; EVOLVE Trust: 'Try to change the past'):
+    typing over a record voids the verdict ('Edited · not verified'); Verify then fails from the edited record on (the
+    state names the first broken record and how many of the nine no longer verify, and exactly that many records, the
+    last ones in order, are marked broken); Restore puts the excerpt back and Verify holds again ('8 of 8 links hold').
+    The hashes are real SHA-256 computed in the page, so this is the chain's own tamper evidence, not a canned state."""
+    ctx = await b.new_context(viewport={"width": 1440, "height": 900})
+    pg = await ctx.new_page(); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    await pg.goto(f"{BASE}/trust.html#ledger", wait_until="load")
+    lt, state = pg.locator("[data-ledger=replay]"), pg.locator("[data-ledger=replay] [data-lt-state]")
+    await expect(lt.locator(".lt-rec")).to_have_count(9)
+    await expect(state).to_contain_text("9 records verify")
+    await pg.locator("[data-lt-edit]").click()
+    await pg.wait_for_timeout(300)
+    await pg.keyboard.type("council · approved", delay=15)
+    await expect(state).to_contain_text(re.compile(r"edited · not verified", re.I))
+    await expect(pg.locator("[data-lt-restore]")).to_be_visible()
+    await pg.locator("[data-lt-verify]").click()
+    await expect(state).to_contain_text(re.compile(r"Chain broken at #[0-9a-f]{4} · \d+ of 9 records no longer verify", re.I), timeout=15000)
+    said = await state.text_content()
+    m = re.search(r"#([0-9a-f]{4}) · (\d+) of 9", said, re.I)
+    marks = await pg.evaluate("[...document.querySelectorAll('[data-ledger=replay] .lt-rec')].map(li => ({ id: (li.querySelector('.lt-id') || {}).textContent, broken: li.classList.contains('is-broken'), edited: li.classList.contains('is-edited') }))")
+    broken = [k for k, x in enumerate(marks) if x["broken"]]
+    first = next((k for k, x in enumerate(marks) if x["edited"]), None)
+    assert m and len(broken) == int(m[2]) and broken == list(range(9 - len(broken), 9)), ("the broken marks do not match the verdict", said, marks)
+    assert first is not None and broken[0] == first and marks[first]["id"].lower().lstrip("#") == m[1].lower(), ("the chain must break at the edited record", said, marks)
+    await pg.locator("[data-lt-restore]").click()
+    await expect(lt.locator(".lt-rec.is-edited")).to_have_count(0)
+    await pg.locator("[data-lt-verify]").click()
+    await expect(state).to_contain_text("Verified here · 8 of 8 links hold", timeout=15000)
+    await expect(lt.locator(".lt-rec.is-broken")).to_have_count(0)
+    assert not errs, errs
+    print(f"trust_tamper: an edit voids the verdict; Verify fails from the edited record ({said.strip()}); Restore, then Verify: 8 of 8 links hold")
+    await ctx.close()
+
+
+@check
 async def desk(b):
     """the desk on Lifecycles runs after a deep link (its clock has left 09:30)"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
@@ -581,22 +624,72 @@ async def desk(b):
 
 @check
 async def access(b):
-    """the access form: a linked path preselected, a mailto draft prepared, edit restores the input"""
+    """the access form: every linked path preselects its choice (on load and on hashchange); the draft goes to the
+    data-contact inbox with the path in its subject and a letter for a body (greeting, who and what, the reply address,
+    the name last; the attestation only when the box is ticked; no 'key: value' lines); the whole mailto URL stays within
+    1,900 characters, a long message shortened with its note; the result panel takes focus and shows the letter
+    addressed to 'OpenEXA' (the inbox is never visible text); edit restores the input; on a phone the four choices carry
+    their descriptions (the path list above is not drawn) and a link to a path lands on its choice"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     pg = await ctx.new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.goto(f"{BASE}/access.html#managers", wait_until="load")
     await expect(pg.locator('input[value="Manager platform"]')).to_be_checked()
+    # v2x tests pass (30 Oct): the other three paths, by hashchange (the footer, /for-investors and the pages link to them)
+    for hid, val in (("partners", "Platform partnership"), ("investors", "Qualified investor"), ("lifecycles", "Bring a lifecycle"), ("managers", "Manager platform")):
+        await pg.evaluate(f"location.hash = '{hid}'")
+        await expect(pg.locator(f'input[name="interest"][value="{val}"]')).to_be_checked()
+    inbox = await pg.evaluate("document.body.dataset.contact")
+    attest = await pg.evaluate("document.querySelector('input[name=\"accredited\"]').closest('label').textContent.replace(/\\s+/g, ' ').trim()")
     await pg.locator("#name").fill("Test Person"); await pg.locator("#email").fill("t@example.com")
     await pg.locator('button[type="submit"]').click()
     await expect(pg.locator("form[data-access]")).to_be_hidden()
     href = await pg.locator("[data-mailto]").get_attribute("href")
-    assert href.startswith("mailto:ajit@openexa.com?subject=") and "Manager%20platform" in href, href
+    assert inbox == "ajit@openexa.com" and href.startswith(f"mailto:{inbox}?subject=") and "Manager%20platform" in href, href
+    body = urllib.parse.unquote(href.split("&body=", 1)[1])
+    parts = body.split("\r\n\r\n")
+    assert parts[0] == "Hello OpenEXA," and parts[-1] == "Test Person" and "Please reply to t@example.com." in parts, ("the draft is not a letter", body)
+    assert parts[1].startswith("I am Test Person.") and "I would like to" in parts[1], body
+    assert attest not in body and not re.search(r"(?m)^(interest|name|email|organization|role|assets|message|accredited): ", body), ("attestation unticked / key: value lines", body)
+    panel = await pg.evaluate("""(() => { const r = document.querySelector('.form-ok'), l = document.querySelector('[data-letter]');
+      return { focused: document.activeElement === r, shown: !!l && !l.hidden && l.getClientRects().length > 0,
+        to: (document.querySelector('[data-letter-to]') || {}).textContent, body: (document.querySelector('[data-letter-body]') || {}).textContent,
+        text: document.body.innerText }; })()""")
+    assert panel["focused"] and panel["shown"] and panel["to"] == "OpenEXA", ("result panel", {k: v for k, v in panel.items() if k != "text"})
+    assert panel["body"] == body.replace("\r\n", "\n"), ("the panel's letter is not the draft", panel["body"][:120])
+    assert inbox not in panel["text"] and "ajit@" not in panel["text"].lower(), "the inbox address is visible"
     await pg.locator("[data-form-edit]").click()
     await expect(pg.locator("#name")).to_have_value("Test Person")
-    print("access: linked path preselected, draft prepared, edit restores input")
+    await expect(pg.locator("#name")).to_be_focused()
+    # a long message (1,200 characters, the field's limit; dashes and spaces grow 3-9x when encoded) with the box ticked
+    await pg.locator("#msg").fill(("Custody — timeline — mandate. " * 40)[:1200])
+    await pg.locator('input[name="accredited"]').check()
+    await pg.locator('button[type="submit"]').click()
+    await expect(pg.locator("form[data-access]")).to_be_hidden()
+    href = await pg.locator("[data-mailto]").get_attribute("href")
+    body = urllib.parse.unquote(href.split("&body=", 1)[1])
+    assert len(href) <= 1900, ("the mailto URL is longer than 1,900 characters", len(href))
+    assert "[shortened to fit an email link: paste the rest here]" in body and attest in body and body.endswith("\r\n\r\nTest Person") and "Please reply to t@example.com." in body, ("long draft", len(href), body[-300:])
     assert not errs, errs
     await ctx.close()
+    # a phone: the choices carry their descriptions; a link to a path (/for-investors) lands on its choice
+    ctx = await b.new_context(viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True, device_scale_factor=2)
+    pg = await ctx.new_page()
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    await pg.goto(f"{BASE}/access.html#investors", wait_until="load")
+    await expect(pg.locator('input[name="interest"][value="Qualified investor"]')).to_be_checked()
+    await pg.wait_for_timeout(600)
+    ph = await pg.evaluate("""(() => { const opt = document.querySelector('input[value="Qualified investor"]').closest('.opt').getBoundingClientRect();
+      return { paths: document.querySelector('.access-paths').getClientRects().length,
+        descs: [...document.querySelectorAll('.seg-d')].map(d => d.getClientRects().length > 0 && getComputedStyle(d).visibility !== 'hidden'),
+        top: Math.round(opt.top), bottom: Math.round(opt.bottom), vh: innerHeight, sw: document.documentElement.scrollWidth }; })()""")
+    assert ph["paths"] == 0 and len(ph["descs"]) == 4 and all(ph["descs"]), ("phone: the path list should fold into the four choices", ph)
+    assert ph["bottom"] > 0 and ph["top"] < ph["vh"] and ph["sw"] <= 391, ("phone: #investors did not land on its choice", ph)
+    assert not errs, errs
+    await ctx.close()
+    print(f"access: four paths preselect (load + hashchange); the draft to the data-contact inbox is a letter (attestation only when ticked), "
+          f"{len(href)} of 1,900 characters with a long message shortened; the panel shows it to 'OpenEXA', focus moves, no inbox on screen; "
+          f"edit restores; 390: choices with descriptions, #investors lands on its choice")
 
 
 @check
@@ -646,8 +739,66 @@ async def company(b):
     assert "PATENT" not in stats.upper() and "100+" in stats, stats
     print("company: 4 team + 9 advisors (Subuddh Parekh with the advisors, 30 Oct), 13 portraits (560px v2x masters), one treatment at rest and on hover with the green ring, full descriptions expand, no patent count, sections 01-05")
     assert await pg.locator('.crew a[href*="scholar.google.com/citations?user=P40aOHIAAAAJ"]').count() == 1
+    # v2x tests pass (30 Oct): the CEO's hero, 'Intelligence, put to work.', with 'put to work.' in white italic (the
+    # heading's own colour, never the signal green; CLAUDE.md)
+    hero = await pg.evaluate("""(() => { const h = document.querySelector('main h1'), em = h && h.querySelector('em'); if (!em) return null;
+      const a = getComputedStyle(h), e = getComputedStyle(em); return { text: h.textContent.replace(/\\s+/g, ' ').trim(), h: a.color, em: e.color, style: e.fontStyle }; })()""")
+    assert hero and hero["text"] == "Intelligence, put to work." and hero["em"] == hero["h"] and hero["style"] == "italic", ("company hero", hero)
     assert not errs, errs
     await ctx.close()
+
+
+DISC = """() => { const t = document.getElementById('disclosures'), d = t && t.closest('details'), a = document.activeElement;
+  return { open: d ? d.open : null, top: t ? Math.round(t.getBoundingClientRect().top) : null, focus_in: !!t && (a === t || t.contains(a)), vh: innerHeight }; }"""
+
+
+@check
+async def disclosures(b):
+    """the legal text is on every page and reachable (v2x tests pass, 30 Oct; CLAUDE.md: the disclosures in every
+    footer): with JavaScript each page folds #disclosures into a closed 'Legal & disclosures' <details> in its footer;
+    Proof's 'See the disclosures.' (a link to #disclosures), clicked at 1440 and tapped on a 390 phone, and a direct load
+    of evidence.html#disclosures open the fold, bring the text into view and move focus into it (site.js; G-11)"""
+    errs = []
+    ctx = await b.new_context(viewport={"width": 1440, "height": 900})
+    pg = await ctx.new_page()
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    folds = {}
+    for name in PAGES:
+        await pg.goto(f"{BASE}/{name}.html", wait_until="load")
+        await until(pg, "!!document.querySelector('.footer details.footer-legal #disclosures')", 15000)
+        folds[name] = await pg.evaluate("""(() => { const d = document.querySelector('.footer details.footer-legal'), s = d && d.querySelector(':scope > summary');
+          return d ? { closed: !d.open, summary: s ? s.textContent.trim() : null, text: (d.querySelector('#disclosures') || {}).textContent || '' } : null; })()""")
+    bad = {k: v and {kk: vv for kk, vv in v.items() if kk != "text"} for k, v in folds.items()
+           if not v or not v["closed"] or v["summary"] != "Legal & disclosures" or "Rule 506(c) of Regulation D" not in v["text"]}
+    assert not bad, ("footer fold", bad)
+    await ctx.close()
+    seen = {}
+    for w, mode in ((1440, "click"), (390, "tap"), (1440, "direct"), (390, "direct")):
+        phone = w == 390
+        ctx = await b.new_context(viewport={"width": w, "height": 900 if not phone else 844}, has_touch=phone, is_mobile=phone, device_scale_factor=2 if phone else 1)
+        pg = await ctx.new_page()
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        await pg.goto(f"{BASE}/evidence.html" + ("#disclosures" if mode == "direct" else ""), wait_until="load")
+        await until(pg, "!!document.querySelector('.footer details.footer-legal')", 15000)
+        if mode != "direct":
+            link = pg.locator('main a[href="#disclosures"]').first
+            await expect(link).to_have_text(re.compile(r"disclosures", re.I))
+            await link.scroll_into_view_if_needed(); await pg.wait_for_timeout(500)  # a click in the same moment as the scroll is not followed
+            await (link.tap() if mode == "tap" else link.click())
+        # the page may still be scrolling (smooth scroll) when the fold opens and focus moves: wait for all three
+        await until(pg, f"(r => r.open && r.focus_in && r.top >= 0 && r.top < r.vh)(({DISC})())", 8000)
+        r, t_w = await pg.evaluate(DISC), time.monotonic()
+        while time.monotonic() - t_w < 8:  # then where it comes to rest: two equal reads 250 ms apart
+            await pg.wait_for_timeout(250)
+            r2 = await pg.evaluate(DISC)
+            if r2["top"] == r["top"]: break
+            r = r2
+        seen[f"{mode}@{w}"] = r
+        assert r["open"] and r["focus_in"] and 0 <= r["top"] <= r["vh"] - 48, (f"{mode} at {w}: the fold must open, the text come to rest in view (its first lines) and focus move into it", r)
+        await ctx.close()
+    assert not errs, errs
+    print(f"disclosures: {len(folds)} pages fold the legal text into a closed 'Legal & disclosures'; Proof's link (click 1440, tap 390) and a direct "
+          f"load open it, the text in view (top {', '.join(str(v['top']) for v in seen.values())}) and focus inside")
 
 
 @check
@@ -923,6 +1074,9 @@ async def no_js(b):
     assert await pg.locator(".lt-rec").count() == 9
     await pg.goto(f"{BASE}/platform.html", wait_until="load")
     assert await pg.locator("#architecture .layers .layer").count() == 8
+    # v2x tests pass (30 Oct): Access without JavaScript says the form needs it and that nothing was sent (contracts §1.14)
+    await pg.goto(f"{BASE}/access.html", wait_until="load")
+    await expect(pg.locator("form[data-access] p.form-error", has_text="The request form needs JavaScript to prepare the email. Enable it and reload. Nothing has been submitted.")).to_be_visible()
     # Round 2 (PG-R2-1, director's test list): without JavaScript the reader keeps the links. On each hand-written page
     # and research.html the visible a[href] in main are at least 90% of those with JavaScript; research.html shows its
     # ten notes ('li.post a'), which a no-JS rule hid at 1a6b9fb

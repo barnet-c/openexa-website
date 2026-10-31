@@ -8,6 +8,8 @@ name: Checks
 # (fail-fast: false). They start with the static job rather than after it, so one run reports every failing check and
 # takes as long as its slowest shard. The static job checks that every verify_v9 check sits in exactly one shard
 # (verify_v9.py --shards).
+# v2x (30 Oct): the static job also runs the placeholder check and probes routes, redirects and the security headers
+# against tools/serve.py (Azure's config applied), so a header or redirect regression fails without a browser.
 # To reproduce a shard on a PC, under CI's conditions (software GL, a slow CPU):
 #   python tools/serve.py 8125                                   (another terminal)
 #   python tools/verify_v9.py --swiftshader --cpu-throttle 4 --only <that shard's list>
@@ -51,6 +53,14 @@ jobs:
             echo "::error::A generated file differs from what its generator writes: edit the generator or its data, rerun it, commit both."; exit 1; }
       - run: python tools/linkcheck_tree.py
       - run: python tools/check_static.py
+      - name: No placeholder or unfinished copy on any page (V2X-D2)
+        run: python tools/check_placeholders.py
+      - name: Routes, redirects and security headers as Azure serves them (tools/serve.py)
+        run: |
+          python tools/serve.py > serve.log 2>&1 &
+          for i in $(seq 1 20); do curl -fs http://127.0.0.1:8125/ > /dev/null && break; sleep 0.5; done
+          python tools/probe_routes.py http://127.0.0.1:8125
+          python tools/verify_redirects.py http://127.0.0.1:8125
       - name: Every verify_v9 check sits in exactly one browser shard
         run: python tools/verify_v9.py --shards .github/workflows/checks.yml
 
@@ -77,9 +87,9 @@ jobs:
           - shard: ledger
             only: ledger_height,ledger_wheel,ledger_time,counters,nav_handoff
           - shard: nav
-            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels
+            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures
           - shard: desk-pages
-            only: desk,desk_warm_start,desk_phone_follow,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab
+            only: desk,desk_warm_start,desk_phone_follow,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab,trust_tamper
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -6,6 +6,7 @@ from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE
 import asyncio, sys
 from pathlib import Path
 from playwright.async_api import async_playwright, expect
+from rules import PEOPLE, GONE  # the site's content rules (tools/rules.py), as check_static and verify_v9 apply them
 
 ARG = sys.argv[1] if len(sys.argv) > 1 else "https://thankful-mushroom-0dd42611e.3.azurestaticapps.net"
 BASE = ARG.rstrip("/")
@@ -81,11 +82,12 @@ async def main():
         for path in ("/company", "/blog/", "/research"):
             await pg.goto(f"{BASE}{path}", wait_until="load")
             txt = await pg.evaluate("document.body.innerText")
-            assert not any(n in txt for n in ("Barnet", "Sherman", "Braintree")), (path, "Barnet Sherman must not appear")
+            assert not any(n in txt for n in ("Barnet", "Sherman", "Braintree")) and not GONE.search(txt), (path, "Barnet Sherman must not appear", GONE.findall(txt))
         for path in ("/", "/research", "/platform", "/trust"):
             await pg.goto(f"{BASE}{path}", wait_until="load")
             txt = await pg.evaluate("document.body.innerText")
             assert not any(n in txt for n in ("Dubey", "Leung", "Lockhart", "Gamolsky", "Choudhri", "Schuster", "Ekeroma", "Nanawati")), path
+            assert not PEOPLE.search(txt), (path, "names outside Company and the blog (v2x: every name in rules.PEOPLE)", sorted(set(PEOPLE.findall(txt))))
         assert not errs, errs
         print(f"live smoke OK: team on /company only (13 portraits), no Barnet anywhere, company figure + modes, research hover morph, article 02 (toc {toc} = h2 {h2}), insights -> research, 7 chapters, 0 errors")
         await b.close()
