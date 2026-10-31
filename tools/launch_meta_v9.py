@@ -90,7 +90,9 @@ urls = "".join(f"  <url><loc>{SITE if p == 'index.html' else SITE + p}</loc><las
 write(os.path.join(ROOT, "sitemap.xml"), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls + "</urlset>\n")
 save_lastmod(page_file(p) for p in pages)
 
-# 404 — header/footer from index.html
+# 404 — header/footer from index.html; the plate (the lane carrying the address that was asked for): nf_plate.py
+from nf_plate import plate as nf_plate
+PLATE = nf_plate()
 index = read(os.path.join(ROOT, "index.html"))
 head_common = re.search(r'  <link rel="icon".*?<link rel="stylesheet" href="assets/css/site.css">\n', index, re.S).group(0)
 NAV = re.search(r'  <header class="nav">.*?</header>\n  <div class="nav-menu">.*?</div>\n', index, re.S).group(0)
@@ -104,7 +106,8 @@ page404 = f'''<!DOCTYPE html>
   <meta name="description" content="This page did not pass the gate.">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0E1512">
-{head_common}</head>
+{head_common}  <link rel="stylesheet" href="assets/css/notfound.css">
+</head>
 <body data-page="404" data-nav="dark-start">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -112,23 +115,28 @@ page404 = f'''<!DOCTYPE html>
   <main id="main">
     <section class="notfound is-dark grain">
       <div class="container">
-        <figure class="nf-plate" aria-hidden="true">
-          <svg viewBox="0 0 640 230" fill="none" focusable="false"><path class="nf-rail" d="M24 128H350"/><path class="nf-rail nf-ahead" d="M350 128H608"/><path class="nf-gate" d="M71 104l18 -12v60l-18 12z"/><text x="80" y="72" text-anchor="middle">01</text><path class="nf-gate" d="M161 104l18 -12v60l-18 12z"/><text x="170" y="72" text-anchor="middle">02</text><path class="nf-gate" d="M251 104l18 -12v60l-18 12z"/><text x="260" y="72" text-anchor="middle">03</text><ellipse class="nf-gate is-four" cx="350" cy="128" rx="13" ry="38"/><text class="nf-four" x="350" y="72" text-anchor="middle">04</text><path class="nf-gate nf-ahead" d="M431 104l18 -12v60l-18 12z"/><text x="440" y="72" text-anchor="middle">05</text><path class="nf-gate nf-ahead" d="M521 104l18 -12v60l-18 12z"/><text x="530" y="72" text-anchor="middle">06</text><path class="nf-path" d="M24 128H350" pathLength="1" stroke-width="1.5"/><circle class="nf-dot" cx="24" cy="128" r="3.5"/><path class="nf-spur" d="M350 128C362 150 380 180 404 206" pathLength="1" stroke-width="1.5"/><path class="nf-x" d="M399 201h10v10h-10z"/><text class="nf-red" x="420" y="210">REJECTED · GATE 04</text></svg>
-        </figure>
-        <div class="eyebrow">404 · Rejected at the gate</div>
-        <h1 class="display-1 mt-2">This page didn’t pass.</h1>
-        <p class="lede mt-3">The address is wrong, has moved, or never existed. Nothing was executed.</p>
-        <div class="row mt-3">
-          <a class="btn" href="index.html">Back to the start <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
-          <a class="btn btn--ghost" href="platform.html">The platform</a>
+        <div class="nf-copy">
+          <div class="nf-title">
+            <div class="eyebrow">404 · Rejected at the gate</div>
+            <h1 class="display-1 mt-2">This page didn’t pass.</h1>
+          </div>
+          <div class="nf-next">
+            <p class="lede">The address is wrong, has moved, or never existed. Nothing&nbsp;was&nbsp;executed.</p>
+            <div class="row mt-3">
+              <a class="btn" href="index.html">Back to the start <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+              <a class="btn btn--ghost" href="platform.html">The platform</a>
+            </div>
+          </div>
         </div>
-        <p class="notfound-log"><span>REJECTED</span> · gate 04 · reason: unknown route · nothing executed</p>
+        {PLATE}
+        <p class="notfound-log"><span>REJECTED</span>&nbsp;· gate&nbsp;04&nbsp;· reason:&nbsp;unknown&nbsp;route</p>
       </div>
     </section>
   </main>
 
 {FOOTER}
   <script src="assets/js/site.js" defer></script>
+  <script src="assets/js/notfound.js" defer></script>
 </body>
 </html>
 '''

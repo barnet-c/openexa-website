@@ -595,13 +595,22 @@ async def trust_tamper(b):
     first = next((k for k, x in enumerate(marks) if x["edited"]), None)
     assert m and len(broken) == int(m[2]) and broken == list(range(9 - len(broken), 9)), ("the broken marks do not match the verdict", said, marks)
     assert first is not None and broken[0] == first and marks[first]["id"].lower().lstrip("#") == m[1].lower(), ("the chain must break at the edited record", said, marks)
+    # v2x r1 (proof; jury A11, Trust's screenshot moment): every broken record shows the hash it produces now beside its
+    # seal, and the inspector, on a broken record, shows that same hash
+    if not await pg.evaluate("!!document.querySelector('[data-ledger=replay] .lt-rec.is-sel.is-broken')"):
+        await pg.locator("[data-ledger=replay] .lt-rec.is-broken").first.click(); await pg.wait_for_timeout(300)
+    nw = await pg.evaluate("""(() => { const l = document.querySelector('[data-ledger=replay]'), s = l.querySelector('.lt-rec.is-sel.is-broken'), t = s && s.querySelector('.lt-now');
+      return { now: l.querySelectorAll('.lt-now').length, broken: l.querySelectorAll('.lt-rec.is-broken').length, sel: t ? t.textContent.trim() : null,
+               insp: (l.querySelector('[data-f="hash"] b') || {}).textContent || null }; })()""")
+    assert nw["now"] == nw["broken"] and nw["sel"] and nw["insp"] == nw["sel"], ("sealed vs now: one '.lt-now' per broken record, and the inspector's hash on a broken record is its '.lt-now'", nw)
     await pg.locator("[data-lt-restore]").click()
     await expect(lt.locator(".lt-rec.is-edited")).to_have_count(0)
+    await expect(lt.locator(".lt-now")).to_have_count(0)
     await pg.locator("[data-lt-verify]").click()
     await expect(state).to_contain_text("Verified here · 8 of 8 links hold", timeout=15000)
     await expect(lt.locator(".lt-rec.is-broken")).to_have_count(0)
     assert not errs, errs
-    print(f"trust_tamper: an edit voids the verdict; Verify fails from the edited record ({said.strip()}); Restore, then Verify: 8 of 8 links hold")
+    print(f"trust_tamper: an edit voids the verdict; Verify fails from the edited record ({said.strip()}); {nw['now']} records show the hash they produce now, the inspector the same {nw['sel']}; Restore clears them, then Verify: 8 of 8 links hold")
     await ctx.close()
 
 
@@ -641,7 +650,11 @@ async def access(b):
         await expect(pg.locator(f'input[name="interest"][value="{val}"]')).to_be_checked()
     inbox = await pg.evaluate("document.body.dataset.contact")
     attest = await pg.evaluate("document.querySelector('input[name=\"accredited\"]').closest('label').textContent.replace(/\\s+/g, ' ').trim()")
+    blank = await pg.evaluate("(() => { const l = document.querySelector('[data-letter]'); return l && l.getClientRects().length ? l.querySelector('[data-letter-body]').textContent : null; })()")
+    assert blank and "I am your name" in blank and "Please reply to your work email." in blank, ("the letter is not on the page before typing", blank)
     await pg.locator("#name").fill("Test Person"); await pg.locator("#email").fill("t@example.com")
+    lv = await pg.evaluate("(() => { const b = document.querySelector('[data-letter-body]'); return { text: b.textContent, here: [...b.querySelectorAll('.slot.is-here')].map(s => s.dataset.slot) }; })()")
+    assert "I am Test Person" in lv["text"] and "Please reply to t@example.com." in lv["text"] and lv["here"] == ["email"], ("the letter does not follow the typing", lv)
     await pg.locator('button[type="submit"]').click()
     await expect(pg.locator("form[data-access]")).to_be_hidden()
     href = await pg.locator("[data-mailto]").get_attribute("href")
@@ -680,7 +693,7 @@ async def access(b):
     await expect(pg.locator('input[name="interest"][value="Qualified investor"]')).to_be_checked()
     await pg.wait_for_timeout(600)
     ph = await pg.evaluate("""(() => { const opt = document.querySelector('input[value="Qualified investor"]').closest('.opt').getBoundingClientRect();
-      return { paths: document.querySelector('.access-paths').getClientRects().length,
+      return { paths: (document.querySelector('.access-paths') || { getClientRects: () => [] }).getClientRects().length,
         descs: [...document.querySelectorAll('.seg-d')].map(d => d.getClientRects().length > 0 && getComputedStyle(d).visibility !== 'hidden'),
         top: Math.round(opt.top), bottom: Math.round(opt.bottom), vh: innerHeight, sw: document.documentElement.scrollWidth }; })()""")
     assert ph["paths"] == 0 and len(ph["descs"]) == 4 and all(ph["descs"]), ("phone: the path list should fold into the four choices", ph)
@@ -705,8 +718,8 @@ async def company(b):
     for y in range(0, await pg.evaluate("document.body.scrollHeight"), 400):
         await pg.evaluate(f"scrollTo(0, {y})"); await pg.wait_for_timeout(120)
     await pg.locator(".crew--team").scroll_into_view_if_needed()
-    assert await until(pg, "[...document.querySelectorAll('.crew img')].every(i => i.complete && i.naturalWidth === 560)", 15000), "team portraits did not load"
-    team = await pg.evaluate("[...document.querySelectorAll('.crew img')].map(i => ({ok: i.complete && i.naturalWidth === 560 && /-v2x\\.webp$/.test(i.getAttribute('src')), filter: getComputedStyle(i).filter}))")
+    assert await until(pg, "[...document.querySelectorAll('.crew img')].every(i => i.complete && i.naturalWidth > 0 && i.naturalWidth >= i.clientWidth)", 15000), "team portraits did not load"
+    team = await pg.evaluate("[...document.querySelectorAll('.crew img')].map(i => ({ok: i.complete && i.naturalWidth >= i.clientWidth && /-v2x\\.webp$/.test(i.getAttribute('src')) && /-v2x(-160|-320)?\\.webp$/.test(i.currentSrc) && /160w.*320w.*560w/.test(i.getAttribute('srcset')), filter: getComputedStyle(i).filter}))")
     assert len(team) == 13 and all(t["ok"] for t in team), team
     # v2x: one portrait treatment, the same at rest and on hover (colour on hover showed how mismatched the photos are)
     third = pg.locator(".crew > li").nth(2)
@@ -737,13 +750,22 @@ async def company(b):
     assert await more.evaluate("d => d.open && d.querySelector('.crew-bio').innerText.length > 400")
     stats = await pg.locator(".crew-stats").inner_text()
     assert "PATENT" not in stats.upper() and "100+" in stats, stats
-    print("company: 4 team + 9 advisors (Subuddh Parekh with the advisors, 30 Oct), 13 portraits (560px v2x masters), one treatment at rest and on hover with the green ring, full descriptions expand, no patent count, sections 01-05")
+    print("company: 4 team + 9 advisors (Subuddh Parekh with the advisors, 30 Oct), 13 portraits (v2x, srcset 160/320/560), one treatment at rest and on hover with the green ring, full descriptions expand, no patent count, sections 01-05")
     assert await pg.locator('.crew a[href*="scholar.google.com/citations?user=P40aOHIAAAAJ"]').count() == 1
     # v2x tests pass (30 Oct): the CEO's hero, 'Intelligence, put to work.', with 'put to work.' in white italic (the
     # heading's own colour, never the signal green; CLAUDE.md)
     hero = await pg.evaluate("""(() => { const h = document.querySelector('main h1'), em = h && h.querySelector('em'); if (!em) return null;
       const a = getComputedStyle(h), e = getComputedStyle(em); return { text: h.textContent.replace(/\\s+/g, ' ').trim(), h: a.color, em: e.color, style: e.fontStyle }; })()""")
     assert hero and hero["text"] == "Intelligence, put to work." and hero["em"] == hero["h"] and hero["style"] == "italic", ("company hero", hero)
+    # lab (31 Oct): §04 draws its idea, one loop of gates and the four constants (C-01...C-04 on the plate and in the
+    # list); it runs on screen (a record is written within a pass), has Pause motion, and pointing at a constant marks it
+    await pg.evaluate("document.documentElement.style.scrollBehavior = 'auto'; document.querySelector('[data-kplate]').scrollIntoView({ block: 'center', behavior: 'instant' })")
+    kp = await pg.evaluate("(() => { const f = document.querySelector('[data-kplate]'); return { codes: [...f.querySelectorAll('.kl--code')].map(t => t.textContent), recs: f.querySelectorAll('.k-recs rect').length, pause: !!f.querySelector('button.figure-motion:not([hidden])'), list: [...document.querySelectorAll('#constants [data-k] .n span:first-child')].map(s => s.textContent) }; })()")
+    assert sorted(kp["codes"]) == ["C-01", "C-02", "C-03", "C-04"] and kp["list"] == ["C-01", "C-02", "C-03", "C-04"] and kp["recs"] >= 10 and kp["pause"], ("the constants plate", kp)
+    first = await pg.evaluate("[...document.querySelectorAll('.k-recs rect')].map(r => r.getAttribute('class')).join()")
+    assert await until(pg, f"[...document.querySelectorAll('.k-recs rect')].map(r => r.getAttribute('class')).join() !== {first!r} || document.querySelectorAll('.k-recs rect').length > {kp['recs']}", 12000), "the plate wrote no record"
+    await pg.locator('#constants [data-k="c3"]').hover(); await pg.wait_for_timeout(500)
+    assert await pg.evaluate("document.querySelector('[data-kplate]').dataset.on") == "c3", "pointing at C-03 did not mark it on the plate"
     assert not errs, errs
     await ctx.close()
 
@@ -850,6 +872,72 @@ async def resolution(b):
     await ctx.close()
 
 
+DEEP_OFF = """(id => { const el = document.getElementById(id), sp = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+  return el ? Math.round(el.getBoundingClientRect().top - sp) : null; })"""
+
+
+@check
+async def deep_links(b):
+    """v2x r1 (qa-hostile S2, qa-firefox D3): a link lands where it points and no address can break the page's script.
+    /#lc01 and /#governance at 390x844 (touch) and 1440x900, no input: once the page has had 6 s to land, the target's top
+    comes to within 2 px of scroll-padding-top and stays there for four samples 0.75 s apart (v2's site.js read the
+    overture's own scrolling as the reader's and stopped 3,355 px past or 535 px short). /platform#%E0%A4%A and /#% (a
+    malformed escape threw URIError and stopped site.js) load with no page error, and the footer's clocks and legal fold,
+    which site.js builds, exist."""
+    bad, got = [], []
+    for w, h, touch in ((390, 844, True), (1440, 900, False)):
+        for hid in ("lc01", "governance"):
+            ctx = await b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch)
+            pg = await ctx.new_page(); errs = []
+            pg.on("pageerror", lambda e: errs.append(str(e)))
+            await pg.goto(f"{BASE}/index.html#{hid}", wait_until="commit")
+            await pg.wait_for_timeout(6000)
+            off = None
+            for _ in range(40):  # it may still be landing on a slow machine: wait for it (up to 10 s more), then it must stay
+                off = await pg.evaluate(f"{DEEP_OFF}({hid!r})")
+                if off is not None and abs(off) <= 2: break
+                await pg.wait_for_timeout(250)
+            seq = [off]
+            for _ in range(4):
+                await pg.wait_for_timeout(750); seq.append(await pg.evaluate(f"{DEEP_OFF}({hid!r})"))
+            if any(v is None or abs(v) > 2 for v in seq): bad.append(f"index.html#{hid}@{w}x{h}: the target's top against scroll-padding-top {seq} (px; within 2 wanted, and staying)")
+            if errs: bad.append(f"index.html#{hid}@{w}x{h}: page errors {errs[:2]}")
+            got.append(f"#{hid}@{w} {seq[-1]}")
+            await ctx.close()
+    for path in ("platform.html#%E0%A4%A", "index.html#%"):
+        ctx = await b.new_context(viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True)
+        pg = await ctx.new_page(); errs = []
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        await pg.goto(f"{BASE}/{path}", wait_until="load")
+        ok = await until(pg, "!!document.querySelector('.footer .clocks') && !!document.querySelector('.footer-legal')", 8000)
+        if errs or not ok: bad.append(f"{path}@390: page errors {errs[:2]}; footer clocks and legal fold built: {bool(ok)}")
+        await ctx.close()
+    assert not bad, "deep_links:\n  " + "\n  ".join(bad)
+    print(f"deep_links: Home's deep links land under the bar and stay ({'; '.join(got)} px); two malformed addresses load with site.js running (clocks, legal fold) and no page error")
+
+
+@check
+async def overture_net(b):
+    """v2x r1 (qa-hostile S7): a failed overture engine leaves a readable page at once. With assets/js/story.js aborted,
+    html.story-failed is set and the overture's stage is no longer pinned (.story-stage position: relative) within 1.5 s
+    of 'load' (x the CPU throttle), at 390 and 1440: no waiting for the safety net's clock (20 s while story.js is
+    expected) and no pinned dark screen."""
+    bad = []
+    limit = int(1500 * max(1.0, MODE["throttle"]))
+    for w, h, touch in ((390, 844, True), (1440, 900, False)):
+        ctx = await b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch)
+        pg = await ctx.new_page()
+        await pg.route("**/assets/js/story.js*", lambda r: r.abort())
+        await pg.goto(f"{BASE}/index.html", wait_until="load")
+        ok = await until(pg, "document.documentElement.classList.contains('story-failed') && getComputedStyle(document.querySelector('.story-stage')).position === 'relative'", limit)
+        if not ok:
+            st = await pg.evaluate("({ cls: document.documentElement.className, pos: getComputedStyle(document.querySelector('.story-stage')).position })")
+            bad.append(f"index.html@{w}x{h} with story.js aborted: not static within {limit} ms of load: {st}")
+        await ctx.close()
+    assert not bad, "overture_net:\n  " + "\n  ".join(bad)
+    print(f"overture_net: with story.js aborted the overture is static (html.story-failed, stage unpinned) within {limit} ms of load at 390 and 1440")
+
+
 @check
 async def phone(b):
     """phone: the explorer is an accordion, a chapter lands under the 64 px bar, the menu sheet is a popover over an inert page"""
@@ -872,9 +960,18 @@ async def phone(b):
     assert await until(pg, "document.querySelector('#site-menu').matches(':popover-open') && document.querySelector('main').inert", 3000), "menu sheet did not open"
     await pg.keyboard.press("Escape")
     assert await until(pg, "!document.querySelector('#site-menu').matches(':popover-open') && !document.querySelector('main').inert", 3000), "menu sheet did not close"
+    # v2x r1 (system; motion critic r1): Escape pressed on a link inside the sheet (Tab once after opening it) closes the
+    # sheet, the page is no longer inert and focus is back on the toggle that opened it
+    await pg.locator(".nav-toggle").click()
+    assert await until(pg, "document.querySelector('#site-menu').matches(':popover-open')", 3000), "menu sheet did not open a second time"
+    await pg.keyboard.press("Tab"); await pg.wait_for_timeout(200)
+    inside = await pg.evaluate("(() => { const a = document.activeElement; return a && a.closest('#site-menu') ? a.textContent.trim().slice(0, 30) : null; })()")
+    await pg.keyboard.press("Escape")
+    back = await until(pg, "!document.querySelector('#site-menu').matches(':popover-open') && !document.querySelector('main').inert && document.activeElement === document.querySelector('.nav-toggle')", 3000)
+    assert inside and back, ("Escape from a link inside the sheet", inside, await pg.evaluate("({ open: document.querySelector('#site-menu').matches(':popover-open'), inert: document.querySelector('main').inert, focus: document.activeElement.className })"))
     assert not errs, errs
     await ctx.close()
-    print("phone: explorer accordion opens inline, chapter 04 lands under the bar, menu sheet opens (page inert) and Escape closes it")
+    print(f"phone: explorer accordion opens inline, chapter 04 lands under the bar, menu sheet opens (page inert) and Escape closes it, also from a link inside it ({inside!r}: focus back on the toggle)")
 
 
 @check
@@ -1074,6 +1171,16 @@ async def no_js(b):
     assert await pg.locator(".lt-rec").count() == 9
     await pg.goto(f"{BASE}/platform.html", wait_until="load")
     assert await pg.locator("#architecture .layers .layer").count() == 8
+    # v2x r1 (qa-hostile S3): no dead controls without JavaScript: on Lifecycles the desk and its caption are not drawn
+    # and its no-JS note is, at 390 here and at 768 below
+    DESK_NOJS = "(() => { const d = s => { const e = document.querySelector(s); return e ? getComputedStyle(e).display : null; }; return { desk: d('.desk'), cap: d('.desk-cap'), note: d('.desk-nojs') }; })()"
+    await pg.goto(f"{BASE}/lifecycles.html", wait_until="load")
+    dn = await pg.evaluate(DESK_NOJS)
+    assert dn["desk"] == "none" and dn["cap"] in ("none", None) and dn["note"] not in ("none", None), ("lifecycles.html@390 without JavaScript: the desk", dn)
+    c768 = await b.new_context(java_script_enabled=False, viewport={"width": 768, "height": 1024})
+    p768 = await c768.new_page(); await p768.goto(f"{BASE}/lifecycles.html", wait_until="load")
+    dn768 = await p768.evaluate(DESK_NOJS); await c768.close()
+    assert dn768["desk"] == "none" and dn768["cap"] in ("none", None) and dn768["note"] not in ("none", None), ("lifecycles.html@768 without JavaScript: the desk", dn768)
     # v2x tests pass (30 Oct): Access without JavaScript says the form needs it and that nothing was sent (contracts §1.14)
     await pg.goto(f"{BASE}/access.html", wait_until="load")
     await expect(pg.locator("form[data-access] p.form-error", has_text="The request form needs JavaScript to prepare the email. Enable it and reload. Nothing has been submitted.")).to_be_visible()
@@ -1096,7 +1203,7 @@ async def no_js(b):
         if nojs[name] < 0.9 * withjs: low.append(f"{name}.html@390: {nojs[name]} visible links in main without JavaScript, {withjs} with it")
     await ctx.close()
     assert not low and posts == 10, f"no_js: {low}; research.html shows {posts} visible 'li.post a' without JavaScript (10 expected)"
-    print(f"fallbacks: readable without JS on every page (sessions list, ledger and chain records, six gates, eight layers with the boundary after 04, menu sheet as a popover, no loader); "
+    print(f"fallbacks: readable without JS on every page (sessions list, ledger and chain records, six gates, eight layers with the boundary after 04, menu sheet as a popover, no loader, the desk's note instead of a dead desk at 390 and 768); "
           f"links kept without JS on {len(LINK_PAGES)} pages, research.html lists its {posts} notes")
 
 
@@ -1212,9 +1319,20 @@ async def ledger_height(b):
         hs = await pg.evaluate("async () => { const out = []; for (let k = 0; k < 60; k++) { out.push(document.body.scrollHeight); await new Promise(r => setTimeout(r, 100)); } return out; }")
         moved = [(k * 100, v) for k, v in enumerate(hs) if abs(v - hs[0]) > 1]
         if moved: bad.append(f"index.html@{w}x{h}: body.scrollHeight {hs[0]} moved {len(moved)} times in 6 s (range {min(hs)}-{max(hs)}), e.g. {moved[:4]}")
+        # v2x r1 (home; r1 mobile and fidelity): on a phone the stream is a column of four equal records, newest on top,
+        # with the hash blocks folded; on a desktop the fold is open and its summary not drawn
+        col = await pg.evaluate("""(() => { const l = document.querySelector('[data-ledger=live]'), t = l.querySelector('.lt-track'), hx = document.querySelector('[data-lt-hx]');
+          const shown = [...l.querySelectorAll('.lt-rec')].filter(r => getComputedStyle(r).display !== 'none').map(r => Math.round(r.getBoundingClientRect().height * 10) / 10);
+          const sum = hx && hx.querySelector('summary');
+          return { orient: t && t.getAttribute('aria-orientation'), shown, hx: hx ? hx.open : null, summary: sum ? getComputedStyle(sum).display : null }; })()""")
+        if w < 601:
+            if col["orient"] != "vertical" or len(col["shown"]) != 4 or max(col["shown"]) - min(col["shown"]) > 1 or col["hx"] is not False:
+                bad.append(f"index.html@{w}x{h}: the stream is not a column of four equal records with the hash links folded: {col}")
+        elif col["hx"] is not True or col["summary"] != "none":
+            bad.append(f"index.html@{w}x{h}: the inspector's hash links are folded or their summary is drawn on a desktop: {col}")
         await ctx.close()
     assert not bad, "ledger_height:\n  " + "\n  ".join(bad)
-    print("ledger_height: body.scrollHeight constant (±1 px) over 6 s with the stream running, at 1440 and 390")
+    print("ledger_height: body.scrollHeight constant (±1 px) over 6 s with the stream running, at 1440 and 390; at 390 a column of four equal records with the hash links folded, at 1440 the links open")
 
 
 # ---- the overture: re-entry, the copy relay, the numeral (OV8, OV4)
@@ -2048,6 +2166,12 @@ async def print_home(b):
 
 
 # ---- 400% zoom: 320x256 reflows (PG-R2-5b, OV-R2-5c)
+SHEET_FIT = """(() => { const s = document.querySelector('#site-menu');
+  const over = [...s.querySelectorAll('a, button')].filter(a => a.getClientRects().length).map(a => [a.textContent.trim().slice(0, 18), Math.round(a.getBoundingClientRect().left), Math.round(a.getBoundingClientRect().right)])
+    .filter(l => l[2] > innerWidth + 0.5 || l[1] < -0.5);
+  return { sw: s.scrollWidth, cw: s.clientWidth, over }; })()"""
+
+
 @check
 async def reflow_400(b):
     """at 320x256 (a 1280x1024 screen at 400%): no horizontal scroll on the seven hand-written pages
@@ -2059,6 +2183,14 @@ async def reflow_400(b):
         await pg.wait_for_timeout(800)
         sw = await pg.evaluate("document.documentElement.scrollWidth")
         if sw > 320: bad.append(f"{name}.html@320x256: scrollWidth {sw}")
+        if name in ("index", "platform", "access"):  # v2x r1: the menu sheet reflows too (no sideways scroll, every link inside the width)
+            await pg.locator(".nav-toggle").click()
+            if not await until(pg, "document.querySelector('#site-menu').matches(':popover-open')", 3000): bad.append(f"{name}.html@320x256: the menu sheet did not open")
+            else:
+                await pg.wait_for_timeout(500)
+                sh = await pg.evaluate(SHEET_FIT)
+                if sh["sw"] > sh["cw"] or sh["over"]: bad.append(f"{name}.html@320x256: the menu sheet scrolls sideways (scrollWidth {sh['sw']} > clientWidth {sh['cw']}) or a link leaves the width: {sh['over'][:3]}")
+                await pg.keyboard.press("Escape"); await until(pg, "!document.querySelector('#site-menu').matches(':popover-open')", 3000)
         if name == "index" and not await pg.evaluate("document.documentElement.classList.contains('story-tiny')"):
             for i in range(5):
                 if not await scene_rest(pg, i): bad.append(f"index.html@320x256 scene 0{i}: no story-tiny and the scene did not come to rest"); continue
@@ -2067,7 +2199,7 @@ async def reflow_400(b):
                 if hits: bad.append(f"index.html@320x256 scene 0{i} (no story-tiny): {hits[:3]}")
         await ctx.close()
     assert not bad, "reflow_400:\n  " + "\n  ".join(bad)
-    print("reflow_400: the seven pages reflow at 320x256; the overture is the static sequence or keeps its callouts off the copy")
+    print("reflow_400: the seven pages reflow at 320x256 (the menu sheet too, on Home, Platform and Access); the overture is the static sequence or keeps its callouts off the copy")
 
 
 # ---- accessible names contain the visible label (WCAG 2.5.3; SW-R2-3, LC-R2-3, NV-R2-5)
@@ -2162,23 +2294,24 @@ def contrast(c1, c2):
 
 @check
 async def forced_focus(b):
-    """in forced colours (Windows High Contrast), a Tab onto the lab's strictness slider (home), Access's #name and the
-    desk's threshold slider (Lifecycles) changes at least 100 pixels by 3:1 or more around the control (the focus ring
-    in the system colours; method of r2/a11y/focus_pix.py)"""
+    """in forced colours (Windows High Contrast), a Tab onto the lab's strictness slider (home), Access's #name, the
+    desk's threshold slider (Lifecycles) and, at 390, the menu toggle (v2x r1) changes at least 100 pixels by 3:1 or more
+    around the control (the focus ring in the system colours; method of r2/a11y/focus_pix.py)"""
     from PIL import Image
     import io
     bad, got = [], []
-    for path, sel in (("index.html", "[data-sw-strict]"), ("access.html", "#name"), ("lifecycles.html", "[data-gap-thr]")):
-        ctx = await b.new_context(viewport={"width": 1440, "height": 900}, forced_colors="active", reduced_motion="reduce")
+    for path, sel, W, Hh in (("index.html", "[data-sw-strict]", 1440, 900), ("access.html", "#name", 1440, 900), ("lifecycles.html", "[data-gap-thr]", 1440, 900),
+                             ("index.html", ".nav-toggle", 390, 844)):  # v2x r1: the phone's menu toggle
+        ctx = await b.new_context(viewport={"width": W, "height": Hh}, forced_colors="active", reduced_motion="reduce")
         pg = await ctx.new_page()
         await pg.goto(f"{BASE}/{path}", wait_until="load"); await until(pg, LOADED, 15000); await pg.wait_for_timeout(1200)
-        await pg.mouse.move(2, 898)
+        await pg.mouse.move(2, Hh - 2)
         if await pg.evaluate(FOCUS_PREP, sel) is None: bad.append(f"{path}: no {sel}"); await ctx.close(); continue
         await pg.wait_for_timeout(500); await pg.keyboard.press("Tab"); await pg.wait_for_timeout(600)
         on = await pg.evaluate("(s) => document.activeElement === document.querySelector(s)", sel)
         r = await pg.evaluate("(s) => { const r = document.querySelector(s).getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; }", sel)
         x0, y0 = max(0, r[0] - 10), max(0, r[1] - 10)
-        clip = {"x": x0, "y": y0, "width": min(1440, r[0] + r[2] + 10) - x0, "height": min(900, r[1] + r[3] + 10) - y0}
+        clip = {"x": x0, "y": y0, "width": min(W, r[0] + r[2] + 10) - x0, "height": min(Hh, r[1] + r[3] + 10) - y0}
         fimg = Image.open(io.BytesIO(await pg.screenshot(clip=clip, animations="disabled"))).convert("RGB")
         await pg.evaluate("document.activeElement && document.activeElement.blur()"); await pg.wait_for_timeout(600)
         uimg = Image.open(io.BytesIO(await pg.screenshot(clip=clip, animations="disabled"))).convert("RGB")
@@ -2188,8 +2321,8 @@ async def forced_focus(b):
         changed = [(a, c) for a, c in zip(fp, up) if max(abs(a[0] - c[0]), abs(a[1] - c[1]), abs(a[2] - c[2])) > 10]
         good = sum(1 for a, c in changed if contrast(a, c) >= 3)
         got.append(f"{path} {sel}: {good}")
-        if not on: bad.append(f"{path}@1440 (forced colours): Tab did not land on {sel}")
-        elif good < 100: bad.append(f"{path}@1440 (forced colours): focusing {sel} changes {len(changed)} px, {good} of them by 3:1 or more (100 needed)")
+        if not on: bad.append(f"{path}@{W} (forced colours): Tab did not land on {sel}")
+        elif good < 100: bad.append(f"{path}@{W} (forced colours): focusing {sel} changes {len(changed)} px, {good} of them by 3:1 or more (100 needed)")
     assert not bad, "forced_focus:\n  " + "\n  ".join(bad)
     print(f"forced_focus: focus shows in forced colours ({'; '.join(got)} px at 3:1)")
 

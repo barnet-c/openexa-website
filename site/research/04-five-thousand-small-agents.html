@@ -47,7 +47,7 @@
         <a href="../company.html">Company</a>
         <i class="nav-ink" aria-hidden="true"></i>
       </nav>
-      <a class="btn btn--sm" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <a class="btn btn--sm" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
       <button class="nav-toggle" type="button" popovertarget="site-menu" aria-label="Menu"><span></span></button>
     </div>
   </header>
@@ -61,23 +61,23 @@
         <li><a href="../research.html"><span class="n" aria-hidden="true">05</span>Research</a></li>
         <li><a href="../company.html"><span class="n" aria-hidden="true">06</span>Company</a></li>
       </ol>
-      <a class="btn" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <a class="btn" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
       <p class="nav-sheet-meta"><span class="nav-live"><i></i>Lifecycle 01 · live on real capital</span><span>Seattle, WA</span></p>
     </nav>
   </div>
 
   <main id="main">
     <section class="page-hero page-hero--dark is-dark grain article-hero">
-      <div class="figure-stage article-figure" data-figure="swarm" data-spin="0.10" aria-hidden="true"><canvas></canvas></div>
+      <div class="figure-stage article-figure" data-figure="swarm" data-spin="0.10" data-plate data-rest="2.5" aria-hidden="true"><canvas></canvas><div class="fig-labels" data-for="swarm"><span class="fl" data-at="-0.72,0.45,0" data-side="t" style="--i:0"><span class="fl-t">one large agent</span></span><span class="fl fl--acc" data-at="0.64,0.46,0" data-side="t" style="--i:1"><span class="fl-t">one gate, one job each</span></span></div></div>
       <div class="container">
         <div class="article-hero-grid">
           <div>
-            <div class="eyebrow" data-reveal>Research · Note 04 of 10 · Series, part 2 of 8</div>
+            <div class="eyebrow" data-reveal><span><span class="nw">Research · Note 04 of 10 ·</span> <span class="nw">Series, part 2 of 8</span></span></div>
             <h1 class="display-1 article-title" data-reveal data-split style="--d:60ms">Why Five Thousand Small Agents Beat One Large One</h1>
             <p class="lede mt-3" data-reveal style="--d:120ms">Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.</p>
             <div class="article-meta" data-reveal style="--d:180ms"><span>Founder’s notes</span><span>3 min read</span></div>
           </div>
-          <p class="figcap article-figcap"><span class="figcap-n">Fig. 04</span><span class="figcap-t">One large agent beside a lattice of small ones.</span><span class="figcap-d">“No single agent sees the whole trade. Each agent is scoped to exactly one gate in the lifecycle and does exactly one job.”</span><span class="figcap-h">Illustrative</span></p>
+          <p class="figcap article-figcap"><span class="figcap-n">Fig. 04</span><span class="figcap-t">One large agent beside a lattice of small ones.</span><span class="figcap-d is-hung">“No single agent sees the whole trade. Each agent is scoped to exactly one gate in the lifecycle and does exactly one job.”</span><span class="figcap-h">Illustrative</span></p>
         </div>
       </div>
     </section>
@@ -88,14 +88,14 @@
           <nav class="col-3 article-side" aria-label="In this note">
             <div class="sticky">
               <div class="eyebrow mb-2">In this note</div>
-              <ol class="toc" data-toc><li><a href="#the-verification-argument">The verification argument</a></li><li><a href="#the-economic-argument">The economic argument</a></li><li><a href="#what-the-swarm-shares">What the swarm shares</a></li></ol>
-              <div class="article-share mt-3"><a class="link-arrow" href="../research.html">All research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
+              <ol class="toc" data-toc><li><a href="#the-verification-argument"><span>The verification argument</span></a></li><li><a href="#the-economic-argument"><span>The economic argument</span></a></li><li><a href="#what-the-swarm-shares"><span>What the swarm shares</span></a></li></ol>
+              <div class="article-share mt-3"><a class="link-arrow" href="../research.html">All research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
             </div>
           </nav>
           <article class="col-7 offset-5 article">
-            <p class="lead">The most common question I get is why we run five thousand to fifty thousand agents per lifecycle instead of one capable agent with a long context window and a good set of tools. The answer comes from failure analysis, not from a preference for scale.</p><p>A monolithic agent has one property that makes it unacceptable in regulated work: it sees the whole job. That sounds like an advantage. In practice it means the agent's belief about the world and its permission to act on the world are held in the same place. When the belief is wrong, the action follows. There is no seam where a policy can intervene, no boundary where a failure stops instead of propagating.</p><p>Our design principle is the opposite. No single agent sees the whole trade. Each agent is scoped to exactly one gate in the lifecycle and does exactly one job. A signal agent reads NAV and flow data. A prediction agent estimates the direction and duration of a gap. A decision agent proposes one sized, routed action. None of them can execute anything. Their output is a proposal, and a proposal is just a data structure until something downstream permits it.</p><h2 id="the-verification-argument">The verification argument</h2><p>Small agents are verifiable in a way large agents are not. An agent whose job is to estimate borrow cost for a single basket can be tested against historical borrow data, given a bounded tool set, and assigned a permission scope that covers only what it needs to read. When it is wrong, we know which agent was wrong and at which gate. When a monolithic agent is wrong, we know only that the output was wrong.</p><p>This is the same reason distributed systems engineers moved from monoliths to services, and the same reason safety-critical software is built from small components with explicit interfaces. The agent layer is not exempt from those lessons because the components happen to reason in natural language.</p><h2 id="the-economic-argument">The economic argument</h2><p>The swarm size is also driven by the economics of the work itself. At five percent a year, a dollar earns roughly two ten-thousandths of a dollar per day. A human desk cannot cover its own cost on a band that thin. Wall Street leaves the four to eight percent yield band in ETF primary markets alone for that reason, not because the opportunity is invisible.</p><p>A swarm changes the arithmetic. Thousands of narrow agents, each holding no inventory and each waiting on no counterparty, can work a band that is too small for people. The scale is not a demonstration. It is the only configuration in which the lifecycle is profitable to run.</p><h2 id="what-the-swarm-shares">What the swarm shares</h2><p>The agents are small, but they are not isolated. Every agent reasons on the same model layer, a language model post-trained on the lifecycle's rules, documents, and exceptions. That shared substrate is what keeps five thousand independent decisions consistent with one rulebook. I will cover the post-training work in a later post. The point here is that specialization at the agent level and consistency at the model level are complementary, not in tension.</p>
-            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder’s notes · 04 / 10</span></div>
-            <div class="note-run"><p class="note-k">See it run</p><ul><li><a class="link-arrow" href="../platform.html#swarm">See the swarm by role in the swarm lab <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></li></ul></div>
+            <p class="lead">The most common question I get is why we run five thousand to fifty thousand agents per lifecycle instead of one capable agent with a long context window and a good set of tools. The answer comes from failure analysis, not from a preference for scale.</p><p>A monolithic agent has one property that makes it unacceptable in regulated work: it sees the whole job. That sounds like an advantage. In practice it means the agent’s belief about the world and its permission to act on the world are held in the same place. When the belief is wrong, the action follows. There is no seam where a policy can intervene, no boundary where a failure stops instead of propagating.</p><p>Our design principle is the opposite. No single agent sees the whole trade. Each agent is scoped to exactly one gate in the lifecycle and does exactly one job. A signal agent reads NAV and flow data. A prediction agent estimates the direction and duration of a gap. A decision agent proposes one sized, routed action. None of them can execute anything. Their output is a proposal, and a proposal is just a data structure until something downstream permits it.</p><h2 id="the-verification-argument">The verification argument</h2><p>Small agents are verifiable in a way large agents are not. An agent whose job is to estimate borrow cost for a single basket can be tested against historical borrow data, given a bounded tool set, and assigned a permission scope that covers only what it needs to read. When it is wrong, we know which agent was wrong and at which gate. When a monolithic agent is wrong, we know only that the output was wrong.</p><p>This is the same reason distributed systems engineers moved from monoliths to services, and the same reason <span class="nw">safety-critical</span> software is built from small components with explicit interfaces. The agent layer is not exempt from those lessons because the components happen to reason in natural language.</p><h2 id="the-economic-argument">The economic argument</h2><p>The swarm size is also driven by the economics of the work itself. At five percent a year, a dollar earns roughly two <span class="nw">ten-thousandths</span> of a dollar per day. A human desk cannot cover its own cost on a band that thin. Wall Street leaves the four to eight percent yield band in ETF primary markets alone for that reason, not because the opportunity is invisible.</p><p>A swarm changes the arithmetic. Thousands of narrow agents, each holding no inventory and each waiting on no counterparty, can work a band that is too small for people. The scale is not a demonstration. It is the only configuration in which the lifecycle is profitable to run.</p><h2 id="what-the-swarm-shares">What the swarm shares</h2><p>The agents are small, but they are not isolated. Every agent reasons on the same model layer, a language model <span class="nw">post-trained</span> on the lifecycle’s rules, documents, and exceptions. That shared substrate is what keeps five thousand independent decisions consistent with one rulebook. I will cover the <span class="nw">post-training</span> work in a later post. The point here is that specialization at the agent level and consistency at the model level are complementary, not in tension.</p>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder’s notes · 04 / 10</span></div>
+            <div class="note-run"><p class="note-k">See it run</p><ul><li><a class="link-arrow" href="../platform.html#swarm">See the swarm by role in the swarm lab <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></li></ul></div>
             <div class="note-disc"><p class="note-k">Series disclosure</p><p>Performance figures referenced in this series are proof-of-concept results over a limited period and are not guarantees of future results. OpenEXA does not take custody of client assets. Lifecycles beyond Lifecycle 01 describe roadmap intent. Any offering of securities would be made only to accredited investors under Rule 506(c). Named brokers and exchanges do not endorse OpenEXA.</p><p><a href="#disclosures">See the disclosures.</a></p></div>
           </article>
         </div>
@@ -105,8 +105,8 @@
     <section class="section is-paper-2 section--tight">
       <div class="container">
         <div class="pager">
-          <a class='pager-card' href='03-not-tasks-lifecycles.html'><span class='k'>← Previous · 03</span><h3>Not Tasks. Lifecycles. Why We Stopped Building Assistants</h3><p>Why we stopped building assistants and changed the unit of work to the lifecycle.</p></a>
-          <a class='pager-card next' href='05-agents-decide-code-executes.html'><span class='k'>Next · 05 →</span><h3>Agents Decide. Code Executes. The One Boundary That Matters</h3><p>Eight layers, one boundary. The top four estimate; the bottom four are deterministic code.</p></a>
+          <a class='pager-card' href='03-not-tasks-lifecycles.html'><span class='k'>← Previous · 03</span><h3><span class="t-head">Not Tasks. Lifecycles.</span> <span class="t-rest">Why We Stopped Building Assistants</span></h3><p>Why we stopped building assistants and changed the unit of work to the lifecycle.</p></a>
+          <a class='pager-card next' href='05-agents-decide-code-executes.html'><span class='k'>Next · 05 →</span><h3><span class="t-head">Agents Decide. Code Executes.</span> <span class="t-rest">The One Boundary That Matters</span></h3><p>Eight layers, one boundary. The top four estimate; the bottom four are deterministic code.</p></a>
         </div>
       </div>
     </section>
@@ -125,13 +125,13 @@
       </div>
       <div class="disc" id="disclosures">
         <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>
-        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
+        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client’s broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
       </div>
       <div class="bottom">
         <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
         <span>Infrastructure for agentic lifecycles</span>
       </div>
-      <div class="wordmark" aria-hidden="true">OpenEXA</div>
+      <div class="wordmark" aria-hidden="true" data-word="OpenEXA"></div>
     </div>
   </footer>
 

@@ -15,6 +15,7 @@
    at the safety net's moment (4 s) if story.js never ran. */
 @media (scripting: enabled) {
   html:not(.story-ready):not(.no-webgl) body[data-page="home"] .story-static-mark { opacity: 0; animation: home-mark-net 1ms 4s forwards; }
+  html.story-failed:not(.story-ready):not(.no-webgl) body[data-page="home"] .story-static-mark { animation-delay: 0s; } /* a failed download: at once */
 }
 @keyframes home-mark-net { to { opacity: .5; } }
 
@@ -37,8 +38,10 @@ body[data-page="home"] .hero-lc01 .lc-n .live { margin: .1em 0 0 7px; vertical-a
 body[data-page="home"] .hero-lc01 .lc-t { grid-column: 2; display: block; margin: 0; font: 400 .98rem/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .86); text-wrap: pretty; }
 body[data-page="home"] .hero-lc01 .lc-t span { display: inline; margin: 0; font: inherit; letter-spacing: inherit; text-transform: none; color: inherit; }
 body[data-page="home"] .hero-lc01 .lc-t .lc-k { font-weight: 600; color: var(--paper); }
-body[data-page="home"] .hero-lc01 .lc-hedge span { display: inline; margin: 0; font: inherit; letter-spacing: inherit; color: inherit; }
-body[data-page="home"] .hero-lc01 .lc-hedge { grid-column: 2; margin-top: 8px; font: 400 var(--mono-s, .6875rem)/1.45 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .6); }
+/* the hedge: a sentence in Inter at a size people read, directly under the fact it qualifies (claims.md counts
+   prominence; it was 10-11 px mono caps at 60%). site.css's .hero-stats span rule uppercases every span: undone. */
+body[data-page="home"] .hero-lc01 .lc-hedge span { display: inline; margin: 0; font: inherit; letter-spacing: inherit; text-transform: none; color: inherit; }
+body[data-page="home"] .hero-lc01 .lc-hedge { grid-column: 2; margin-top: 6px; font: 400 .8125rem/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .72); }
 
 /* the scene index: names, no numbers (the chapters keep the numbers; the plates keep theirs) */
 body[data-page="home"] .story-idx button .n { display: none; }
@@ -53,56 +56,81 @@ body[data-page="home"] .btn:focus-visible .arr--down { transform: translateY(3px
 body[data-page="home"] .btn .lbl-s { display: none; }
 @media (max-width: 359.98px) { body[data-page="home"] .btn .lbl-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } body[data-page="home"] .btn .lbl-s { display: inline; } }
 
-/* portrait: five short rules, the current scene named */
-@media (max-width: 639.98px), (max-aspect-ratio: 23/20) {
-  body[data-page="home"] .story-idx button { min-width: 30px; padding-right: 8px; }
-  body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: 8px; }
-  /* (keyed on aria-current, in the HTML from the first paint, so the bar does not reflow when story.js arrives) */
-  body[data-page="home"] .story-idx button[aria-current="step"] { padding-right: 14px; }
-  body[data-page="home"] .story-idx button[aria-current="step"]::before, body[data-page="home"] .story-idx button[aria-current="step"] i { right: 14px; }
-  body[data-page="home"] .story-idx button[aria-current="step"] .t { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+/* the scene index: the five names wherever they fit, so no name moves from slot to slot as the scenes change (the
+   current one used to be named alone: a small layout jump in the first screens). Phones, upright or sideways, keep the
+   five rules alone, as v2's five numerals were: the bar is a progress mark there, and each button keeps its name for
+   assistive tech. */
+@media (min-width: 760px) {
+  body[data-page="home"] .story-idx button .t { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+  body[data-page="home"] .story-idx button { padding-right: 14px; }
+  body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: 14px; }
 }
-/* short landscape and small laptops (site.css names only the current scene there): the current one from the HTML */
-@media (min-aspect-ratio: 23/20) and (max-width: 1100px) {
-  body[data-page="home"] .story-idx button[aria-current="step"] .t { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+
+/* a phone held sideways (landscape under 760 px): the five rules, as on a phone held upright. site.css names the current
+   scene alone there; without its number the other four buttons had no width left to draw their rules, so the index
+   was one label that changed its text and width from scene to scene */
+@media (max-width: 759.98px) and (min-aspect-ratio: 23/20) {
+  body[data-page="home"] .story-idx ol { gap: 0; }
+  body[data-page="home"] .story-idx button { min-width: 34px; padding-right: 10px; }
+  body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: 10px; }
+  body[data-page="home"] .story-idx button.is-on .t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
-/* the narrowest phones: five rules, as v2's five numerals were (the longest name would push Pause motion to two lines) */
-@media (max-width: 359.98px) {
-  body[data-page="home"] .story-idx button[aria-current="step"] { padding-right: 8px; min-width: 30px; }
-  body[data-page="home"] .story-idx button[aria-current="step"]::before, body[data-page="home"] .story-idx button[aria-current="step"] i { right: 8px; }
-  body[data-page="home"] .story-idx button[aria-current="step"] .t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-}
+
+/* the plates' captions: the plate number stays a mono register mark, the title is text (Inter, sentence case), as the
+   chapters' figure captions are set */
+body[data-page="home"] .story-lab.cap { font: 400 .78rem/1.45 var(--sans); letter-spacing: 0; text-transform: none; text-wrap: balance; }
+body[data-page="home"] .story-lab.cap b { font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+
+/* the stage's focus ring is the site's (it was 1 px at 55%, inset 8 px: the faintest on the site) */
+body[data-page="home"] .story-stage:focus-visible { outline: 2px solid var(--signal-bright); outline-offset: -2px; }
+
+/* WCAG 2.2 SC 2.5.8: where a row of callouts sits under 24 px apart (S2's eight layers on phones, S4's ten days on the
+   narrowest), they are not pointer targets; a tap reaches the drawing under them, the keyboard still inspects them, and
+   §02's explorer and §04's list carry the same records */
+@media (max-width: 599.98px) { body[data-page="home"] .story-lab.layer { pointer-events: none; } }
+@media (max-width: 359.98px) { body[data-page="home"] .story-lab.day { pointer-events: none; } }
 
 /* phones (portrait, JS on: the compact overture). The definition and the Lifecycle 01 line stay: they are the
    five-second answer; the overture's own rules would have hidden the row they replace. */
 @media (scripting: enabled) and (max-width: 599.98px) {
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-lc01 { display: grid; max-width: 100%; margin-top: 16px; padding-top: 12px; }
-  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-def { margin-top: 8px; font-size: .84rem; line-height: 1.5; color: rgba(245, 242, 236, .62); }
+  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-def { margin-top: 8px; font-size: .84rem; line-height: 1.5; color: rgba(245, 242, 236, .7); }
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-def + .hero-cta { margin-top: 14px; }
+  html:not(.no-webgl) body[data-page="home"] .beat-0 .display-1 { font-size: clamp(2.1rem, 9.4vw, 3.4rem); } /* the headline leads the first screen */
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-lc01 { column-gap: 12px; }
-  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-n { font-size: 1.3rem; }
-  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-t { font-size: .84rem; line-height: 1.45; }
-  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-hedge { margin-top: 5px; font-size: var(--mono-xs, .625rem); }
+  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-t { font-size: .875rem; line-height: 1.45; }
+  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-hedge { margin-top: 4px; font-size: .75rem; }
 }
 @media (max-width: 639.98px), (max-aspect-ratio: 23/20) {
   body[data-page="home"] .beat-0 .hero-lc01 { max-width: 100%; }
-  /* the hedge takes two lines in either mono (Plex Mono is not preloaded; a reflow when it lands moved the whole
-     bottom-anchored beat: CLS 0.16 in Lighthouse) */
-  body[data-page="home"] .hero-lc01 .lc-hedge .nowrap { display: block; }
   body[data-page="home"] .beat-0 .hero-def { font-size: .9rem; color: rgba(245, 242, 236, .64); }
 }
+/* the narrowest phones: the hedge takes two fixed lines, whichever face has landed (a reflow when a font arrived once
+   moved the whole bottom-anchored beat: CLS 0.16 in Lighthouse); from 380 px it fits one line with room to spare */
+@media (max-width: 379.98px) { body[data-page="home"] .hero-lc01 .lc-hedge .nowrap { display: block; } }
 html.story-compact body[data-page="home"] .beat-0 .hero-lc01 { display: grid; }
-/* a tight screen (story.js): the definition goes with the sub-line (v2's rule for the sub-line stands) */
-body[data-page="home"] .beat-0.is-tight .hero-def { display: none; }
+/* the CEO's sub-line stays the second voice on compact screens (site.css sets it at .86rem there; the definition was
+   the same size or larger, three grey blocks with no second stop after the headline) */
+html.story-compact body[data-page="home"] .beat-0 .hero-def { font-size: .8rem; }
+@media (min-width: 600px) { html.story-compact body[data-page="home"] .beat-0 .hero-sub { font-size: 1rem; } }
+@media (scripting: enabled) and (max-width: 599.98px) and (min-height: 800px) {
+  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-sub { font-size: .94rem; }
+}
+/* 740-799 px tall (360 x 740 and the like): the globe keeps a frame worth the name; the gloss sits a little tighter */
+@media (scripting: enabled) and (max-width: 599.98px) and (max-height: 799.98px) {
+  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-def { line-height: 1.42; }
+}
+/* a short screen (story.js): the definition gives way first (.is-snug), so the CEO's sub-line keeps its place; on a
+   tight one it goes with the sub-line (v2's rule for the sub-line stands) */
+body[data-page="home"] .beat-0.is-snug .hero-def, body[data-page="home"] .beat-0.is-tight .hero-def { display: none; }
 /* a short portrait phone (under 740 px tall, the compact overture): the globe keeps its frame; the definition gives way
    (S1 says what a lifecycle is one scroll later) and the Lifecycle 01 line tightens */
 @media (scripting: enabled) and (max-width: 599.98px) and (max-height: 739.98px) {
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-def { display: none; }
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-def + .hero-cta, html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-sub + .hero-def + .hero-cta { margin-top: 14px; }
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-lc01 { margin-top: 12px; padding-top: 10px; column-gap: 10px; }
-  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-n { font-size: 1.12rem; }
-  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-t { font-size: .78rem; line-height: 1.4; }
-  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-hedge { margin-top: 3px; letter-spacing: .08em; }
+  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-t { font-size: .8125rem; line-height: 1.4; }
+  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-hedge { margin-top: 3px; }
 }
 /* short landscape (a phone held sideways): as v2, the hero keeps the CEO's lines and the buttons only; the record is
    S4's, one scroll on (showing the fact here pushed the sub-line out: story.js then marked the beat tight) */
@@ -133,6 +161,18 @@ body[data-page="home"] #proof h2 em { display: block; margin-top: .06em; font-st
   body[data-page="home"] .story-coda-s { margin-top: 14px; }
 }
 
+/* (lab) wide screens: the coda takes over from the proof's headline as on portrait and stands on the line of ten
+   records, which opens out to the page's measure as the paper rises to it (story.js) */
+@media (min-width: 640px) and (min-aspect-ratio: 23/20) and (min-height: 600.02px) {
+  html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story-coda { display: block; right: auto; width: min(46vw, 640px); }
+  body[data-page="home"] .story-coda-t { font-size: clamp(3rem, 6.2vw, 6.4rem); line-height: .96; letter-spacing: -0.025em; }
+  body[data-page="home"] .story-coda-s { display: none; } /* the paper's caption states it, under the line */
+  /* the line has room on paper: each record's regime in full under its day (P and D stay on the dark) */
+  body[data-page="home"] .story-ink .story-lab .rg { position: relative; color: transparent; }
+  body[data-page="home"] .story-ink .story-lab .rw { display: block; position: absolute; left: 50%; top: 0; transform: translateX(-50%); color: rgba(14, 21, 18, .62); }
+}
+body[data-page="home"] .story-lab .rw { display: none; }
+
 /* rhythm: a little less air between chapters than the system's 144 px (the seams read as holes on Home) */
 body[data-page="home"] main > .section { padding-block: clamp(56px, 7vw, 100px); }
 
@@ -143,34 +183,38 @@ body[data-page="home"] main > .section { padding-block: clamp(56px, 7vw, 100px);
   body[data-page="home"] #lifecycles .num-list li { grid-template-columns: 32px 1fr; column-gap: 10px; padding: 14px 0; }
   body[data-page="home"] #lifecycles .num-list li h3 { font-size: 1.16rem; }
   body[data-page="home"] #lifecycles .num-list li p { margin-top: 5px; font-size: .9rem; line-height: 1.5; }
-  /* the six classes: a two-column status register (status, code, name). Each class is told in full on Lifecycles,
-     where its description lives (VOICE 5.3); here it is one line and a ring. */
-  body[data-page="home"] #lifecycles .card-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  body[data-page="home"] #lifecycles .card-grid .card { padding: 14px 12px 16px; }
-  body[data-page="home"] #lifecycles .card .n { margin-bottom: 10px; font-size: .66rem; }
-  body[data-page="home"] #lifecycles .card .n { flex-wrap: wrap; gap: 6px 8px; }
-  body[data-page="home"] #lifecycles .card .n .lc-code { gap: 8px; white-space: nowrap; }
+  /* the six classes: one row each (ring, code, name, status); each class is told in full on Lifecycles (VOICE 5.3) */
+  body[data-page="home"] #lifecycles .card .n .lc-code { white-space: nowrap; }
   body[data-page="home"] #lifecycles .card .lc-ring { width: 22px; height: 22px; }
-  body[data-page="home"] #lifecycles .card .h4 { margin: 0; font-size: 1.06rem; line-height: 1.2; }
   body[data-page="home"] #lifecycles .card p { display: none; }
-  body[data-page="home"] #lifecycles .card .badge { padding: 3px 6px !important; }
   /* §03: the lane's gates drawn smaller, their roles beside them */
   body[data-page="home"] #lc01 .lane-v { --lv-gw: 72px; --lv-x: 36px; }
   body[data-page="home"] #lc01 .lane-v > li { column-gap: 14px; min-height: 60px; padding-bottom: 14px; }
   body[data-page="home"] #lc01 .lane-v > .lv-bound { padding-left: calc(var(--lv-gw) + 14px); }
-  body[data-page="home"] #lc01 .lane-v .lk-role { margin-top: 5px; font-size: .88rem; line-height: 1.5; }
-  /* §04: the four figures two by two */
-  body[data-page="home"] #proof .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  body[data-page="home"] #proof .stats > div { padding: 20px 14px 22px; }
-  body[data-page="home"] #proof .stats .v { font-size: 2.2rem; }
-  body[data-page="home"] #proof .stats .k { margin-top: 10px; font-size: .64rem; }
-  body[data-page="home"] #proof .stats .d { margin-top: 6px; font-size: .84rem; }
+  /* each gate is one line here (number, gate, who works it); the sentences that describe them are Lifecycles' (§03,
+     word for word), one link away under the lab */
+  body[data-page="home"] #lc01 .lane-v .lk-role { display: none; }
+  body[data-page="home"] #lc01 .lane-v > li { min-height: 52px; padding-bottom: 8px; }
   /* §06: the five governance terms two by two, the halt across */
   body[data-page="home"] #governance .gov-spec { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   body[data-page="home"] #governance .gov-spec li, body[data-page="home"] #governance .gov-spec li + li { padding: 14px 12px 12px 0; border-left: 0; border-bottom: 1px solid var(--line); font-size: .88rem; }
   body[data-page="home"] #governance .gov-spec li:nth-child(even) { padding-left: 12px; border-left: 1px solid var(--line); }
   body[data-page="home"] #governance .gov-spec li:last-child { grid-column: 1 / -1; }
-  body[data-page="home"] #governance .chain-key li { grid-template-columns: 22px minmax(0, 1fr); gap: 10px; padding: 10px 0; font-size: .86rem; }
+  /* the chain's key as a legend row: its marks and their names (the sentences repeat the paragraph above them; screen
+     readers still hear them) */
+  body[data-page="home"] #governance .chain-key { display: flex; flex-wrap: wrap; gap: 0 18px; border-bottom: 1px solid var(--line); }
+  body[data-page="home"] #governance .chain-key li { grid-template-columns: 22px auto; gap: 6px; align-items: center; padding: 8px 0; border-bottom: 0; }
+  body[data-page="home"] #governance .chain-key li > span { font-size: 0; line-height: 0; }
+  body[data-page="home"] #governance .chain-key li b { margin: 0; }
+  body[data-page="home"] #governance .chain-key i { height: 26px; transform: scale(.8); transform-origin: 50% 50%; }
+  /* the chain folds to records 01-04 with a control for all eight (home.js; an edit opens it; without JS all eight) */
+  body[data-page="home"] #governance .chain.is-folded .chain-list > li:nth-child(n + 5) { display: none; }
+  body[data-page="home"] #governance .chain-more { display: flex; align-items: center; gap: 10px; width: calc(100% - 24px); min-height: 44px; margin: 0 12px 8px; padding: 0 12px; border: 1px dashed var(--line-strong); border-radius: 2px; font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); }
+  body[data-page="home"] #governance .chain-more::before { content: "+"; content: "+" / ""; font-size: .9rem; color: var(--accent); }
+  body[data-page="home"] #governance .chain-more[aria-expanded="true"]::before { content: "\2212"; content: "\2212" / ""; }
+  body[data-page="home"] #governance .chain-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* §02: the explorer's eight rows at a phone's pitch (44 px targets kept) */
+  body[data-page="home"] #stack .arch-layer { min-height: 50px; padding-block: 5px; }
   /* the chain: who and event on one line, the detail under them */
   body[data-page="home"] #governance .chain-list > li { grid-template-columns: 2.2em auto minmax(0, 1fr) auto; grid-template-areas: "i who ev flag" "i what what what"; column-gap: 10px; padding-bottom: 28px; }
   /* §07: the three notes as a list of titles (each dek is the note's own first lines, one tap away) */
@@ -182,5 +226,194 @@ body[data-page="home"] main > .section { padding-block: clamp(56px, 7vw, 100px);
   body[data-page="home"] #research .research-card .link-arrow { margin-top: 4px; }
 }
 
+@media (min-width: 601px) { body[data-page="home"] #governance .chain-more { display: none; } }
+
+/* §06 the running log on a phone: one column, newest on top, the four newest records each readable whole (it was v2's
+   sideways strip: one record in view and the next cut at the edge). ledger.js reads the column from this layout (the
+   arrow keys follow it; nothing scrolls sideways). A record asked for by name (a click in the swarm lab's trace, the
+   keyboard) stays in view under the four. Each record is three short lines, so a swarm digest's "SETTLED ×1,741" fits
+   at 320: id, lifecycle and time; the event; what it carried, with its hash on the right. Rows keep one height, so the
+   page never moves while the stream runs (verify_v9 ledger_height). */
+body[data-page="home"] .lt-hx > summary { display: none; }
+@media (max-width: 600px) {
+  body[data-page="home"] [data-ledger-stream] .lt-view { overflow: visible; -webkit-mask-image: none !important; mask-image: none !important; }
+  body[data-page="home"] [data-ledger-stream] .lt-track { display: flex; flex-direction: column-reverse; width: auto; min-width: 0; padding: 4px 10px 6px 8px; }
+  body[data-page="home"] [data-ledger-stream] .lt-rec:nth-last-child(n + 5):not(.is-sel) { display: none; }
+  body[data-page="home"] [data-ledger-stream] .lt-rec { contain: layout style; width: auto; margin-left: 0; padding: 9px 8px 10px 32px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "id lc t" "ev ev ev" "sub sub sub"; column-gap: 10px; row-gap: 3px; align-items: baseline; }
+  body[data-page="home"] [data-ledger-stream] .lt-meta { display: contents; }
+  body[data-page="home"] [data-ledger-stream] .lt-id { grid-area: id; }
+  body[data-page="home"] [data-ledger-stream] .lt-lc { grid-area: lc; min-width: 0; }
+  body[data-page="home"] [data-ledger-stream] .lt-t { grid-area: t; margin: 0; }
+  body[data-page="home"] [data-ledger-stream] .lt-ev { grid-area: ev; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body[data-page="home"] [data-ledger-stream] .lt-sub { grid-area: sub; display: block; min-height: 0; height: auto; margin: 0; padding-right: 66px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* it runs to the hash on its right */
+  body[data-page="home"] .lt[data-ledger-stream] :is(.lt-ev, .lt-lc) { white-space: nowrap; overflow: hidden; } /* one line while inspecting too: the inspector below has the full text */
+  body[data-page="home"] [data-ledger-stream] .lt-rec::after { inset: 2px 0; }
+  body[data-page="home"] [data-ledger-stream] .lt-rec:focus-visible::before { inset: 2px 0; }
+  /* the rail: each record's node beside its event; its link runs up to the newer record above it */
+  body[data-page="home"] [data-ledger-stream] .lt-line { position: absolute; inset: 0; height: auto; margin: 0; pointer-events: none; }
+  body[data-page="home"] [data-ledger-stream] .lt-node { left: 10px; top: 27px; }
+  body[data-page="home"] [data-ledger-stream] .lt-seg { left: 15.5px; right: auto; top: calc(39px - 100%); bottom: calc(100% - 27px); width: 1px; height: auto; background: var(--line-strong); -webkit-mask-image: none; mask-image: none; transform-origin: 50% 100%; }
+  body[data-page="home"] [data-ledger-stream] .lt-rec.is-head .lt-seg { display: none; }
+  body[data-page="home"] [data-ledger-stream] .lt-rec.is-sel .lt-seg, body[data-page="home"] [data-ledger-stream] .lt-rec.is-before-sel .lt-seg { background: var(--accent); }
+  body[data-page="home"] [data-ledger-stream] .lt-rec.is-linking .lt-seg { animation-name: home-form-v; }
+  body[data-page="home"] [data-ledger-stream] .lt-tag { left: auto; right: 8px; top: auto; bottom: 11px; transform: none; padding: 0; background: none; }
+  body[data-page="home"] [data-ledger-stream] .lt-leader { display: none; }
+  body[data-page="home"] [data-ledger-stream] .lt-latest svg { transform: rotate(-90deg); } /* the newest record is on top */
+  /* the inspector: the record in full; its two hash blocks fold under "Hash links" (home.js), the site's "+" fold */
+  body[data-page="home"] .lt-hx > summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 44px; margin-top: 2px; border-top: 1px solid var(--line); list-style: none; cursor: pointer; font: 500 var(--mono-tick)/1.6 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-2); }
+  body[data-page="home"] .lt-hx > summary::-webkit-details-marker { display: none; }
+  body[data-page="home"] .lt-hx > summary::after { content: "+"; content: "+" / ""; font-size: 1.1rem; line-height: 1; color: var(--accent); transition: transform .35s var(--ease); }
+  body[data-page="home"] .lt-hx[open] > summary::after { transform: rotate(45deg); }
+  body[data-page="home"] .lt-hx > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  body[data-page="home"] .lt-hx[open] > dl { margin-top: 4px; }
+}
+/* 361-400 px: three lines hold every detail and source the stream writes (site.css keeps four under 400 px for the
+   narrowest phones; at 390 two of them stood empty as dark holes in the inspector) */
+@media (min-width: 361px) and (max-width: 400px) {
+  body[data-page="home"] .lt[data-ledger-stream]:not(.is-inspecting) .lt-insp :is([data-f="d"], [data-f="src"]) { -webkit-line-clamp: 3; height: 4.95em; }
+}
+@keyframes home-form-v { 0% { transform: scaleY(.38); background: var(--accent); } 55% { transform: none; background: var(--accent); } 100% { background: var(--line-strong); } }
+@media (prefers-reduced-motion: reduce) { body[data-page="home"] .lt-hx > summary::after { transition: none; } }
+
 /* §05: the four cost definitions are sentences (their words pinned): Inter; the component names stay labels */
 body[data-page="home"] #economics .cost-key dd { margin-top: 3px; font: 400 .84rem/1.45 var(--sans); letter-spacing: 0; color: var(--fg-2); }
+
+/* ==========================================================================
+   The reading layer (lab: home editorial). Set like a printed report: one caption grammar, chapter heads on one
+   baseline, chapters that close instead of trail, statuses as a register, and no line broken where a reader trips.
+   ========================================================================== */
+
+/* ---------- captions: the figure number hangs in the margin as a register mark; the title is text (Inter); the hedge
+   and the source are data (mono) on their own line or flush right. The dash stays for assistive tech (.fc-d). */
+body[data-page="home"] .figure-cap { --fc-ind: 4.75rem; --fc-lh: 1.25rem; position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 40px; margin-top: 16px; padding-left: var(--fc-ind); font: 400 .84rem/var(--fc-lh) var(--sans); letter-spacing: 0; color: var(--fg-2); }
+body[data-page="home"] .figure-cap .fc-n { display: inline-block; width: var(--fc-ind); margin-left: calc(-1 * var(--fc-ind)); font: 500 .6875rem/var(--fc-lh) var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg); white-space: nowrap; }
+body[data-page="home"] .figure-cap .fc-d { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+body[data-page="home"] .figure-cap .fc-t { min-width: 0; text-wrap: pretty; }
+/* the hedge or source is a sentence: Inter, at a size people read (it was 11 px mono; r1 fidelity: "less mono", and a
+   hedge is never quieter than it must be). Only the figure number stays a mono register mark. */
+body[data-page="home"] .figure-cap .fc-h { font: 400 .78rem/1.5 var(--sans); letter-spacing: 0; color: var(--fg-3); text-align: right; text-wrap: pretty; }
+body[data-page="home"] .figure-cap--stack { flex-direction: column; align-items: flex-start; gap: 3px; }
+body[data-page="home"] .figure-cap--stack .fc-h { text-align: left; }
+/* the chart's key reads as the caption's second line, the evidence as its third */
+body[data-page="home"] .figure-cap .fc-key { color: var(--fg-2); text-wrap: balance; }
+@media (max-width: 960px) {
+  body[data-page="home"] .figure-cap { flex-direction: column; align-items: flex-start; gap: 3px; }
+  body[data-page="home"] .figure-cap .fc-h { text-align: left; }
+}
+/* phones: the measure is too narrow to give a margin to the number; it leads the title, and the hedge takes the full line */
+@media (max-width: 600px) {
+  body[data-page="home"] .figure-cap { padding-left: 0; margin-top: 14px; }
+  body[data-page="home"] .figure-cap .fc-n { width: auto; margin: 0 .75em 0 0; }
+}
+
+/* chapter heads on one baseline: site.css since v2x r1 (the system lab's move 4; Home's copy removed by the integrator) */
+
+/* ---------- chapters close instead of trail ----------
+   The overture's paper caption is the record line chapter 01 opens under: the page no longer leaves ~200 px of blank
+   paper between that line and the chapter's head. Each chapter's closing link sits with the figure it follows. */
+body[data-page="home"] main > .story + .section { padding-top: clamp(28px, 3.4vw, 48px); }
+/* a chapter's foot is a little shorter than the next one's head: the space belongs to the chapter that opens */
+body[data-page="home"] main > .section { padding-bottom: clamp(44px, 5.4vw, 76px); }
+body[data-page="home"] main > .section > .container > .mt-4:last-child { margin-top: clamp(28px, 3vw, 40px); }
+
+/* ---------- §01 the six classes: their statuses as one register (Live was a boxed badge beside two plain words) ---------- */
+body[data-page="home"] #lifecycles .card .n--ring > span:last-child { font: 400 .6875rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--khaki-ink); }
+body[data-page="home"] #lifecycles .card .n--ring > span:last-child:not(.badge) { padding-top: 1px; }
+body[data-page="home"] #lifecycles .card .n--ring > .st-next { color: var(--fg-2); }
+body[data-page="home"] #lifecycles .card .n--ring > .badge { gap: 7px; padding: 0 !important; border: 0; color: var(--signal-ink); }
+
+/* §01 the six traits: the counter stands on the title's baseline */
+body[data-page="home"] #lifecycles .num-list li { align-items: baseline; }
+body[data-page="home"] #lifecycles .num-list li::before { grid-row: 1; padding-top: 0; }
+
+/* (site.css makes every span in the governance list a block; the no-break groups inside its lines stay inline) */
+body[data-page="home"] #governance .gov-spec span .nowrap { display: inline; }
+
+/* ---------- short multi-line items break into even lines, not a long line and a runt ---------- */
+body[data-page="home"] #governance .gov-spec li > span:last-child, body[data-page="home"] #economics .cost-key dd, body[data-page="home"] #proof .stats .d,
+body[data-page="home"] #lc01 .lk-role { text-wrap: balance; }
+
+/* ---------- the first screen: three voices, three sizes ----------
+   H1, then the CEO's sub-line, then the definition as a gloss (smaller, quieter, a shorter measure), so the eye has a
+   second stop after the headline. The record line is led by its live mark alone (the serif "01" before "Lifecycle 01"
+   read "01 Lifecycle 01"). */
+body[data-page="home"] .beat-0 .hero-def { max-width: 53ch; font-size: .94rem; line-height: 1.6; color: rgba(245, 242, 236, .7); }
+body[data-page="home"] .beat-0 .hero-lc01 { column-gap: 14px; }
+body[data-page="home"] .hero-lc01 .lc-n, html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-n { grid-row: 1; display: block; width: 6px; height: 6px; margin: 9px 0 0; font-size: 0; line-height: 0; }
+body[data-page="home"] .hero-lc01 .lc-n .live { display: block; margin: 0; vertical-align: 0; }
+@media (max-width: 639.98px), (max-aspect-ratio: 23/20) {
+  body[data-page="home"] .beat-0 .hero-def { max-width: 42ch; font-size: .88rem; color: rgba(245, 242, 236, .7); }
+}
+@media (scripting: enabled) and (max-width: 599.98px) {
+  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-lc01 { column-gap: 11px; }
+  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-n { margin-top: 7px; }
+}
+
+/* ---------- §01 the six classes: a register, as Lifecycles keeps them (the 3 x 2 card grid was the template) ----------
+   One ruled row per class: ring and code, the class, what agents would run, its status flush right. Phones keep the
+   name and the status; Lifecycle 01's row keeps its sentence, which is where "insurance … follow" stands. */
+body[data-page="home"] #lifecycles .card-grid--3 { grid-template-columns: minmax(0, 1fr); border: 0; border-top: 1px solid var(--line-strong); }
+body[data-page="home"] #lifecycles .card-grid--3 > .card { display: grid; grid-template-columns: 8.25rem minmax(0, 15.5rem) minmax(0, 1fr) 6.5rem; column-gap: clamp(20px, 2.6vw, 44px); align-items: baseline; padding: 19px 0 21px; border: 0; border-bottom: 1px solid var(--line); background: none; }
+body[data-page="home"] #lifecycles .card-grid--3 > .card .n { display: contents; }
+body[data-page="home"] #lifecycles .card-grid--3 .lc-code { grid-column: 1; grid-row: 1; align-self: start; gap: 12px; margin-top: 5px; font-size: .72rem; color: var(--fg-2); }
+body[data-page="home"] #lifecycles .card-grid--3 .card .h4 { grid-column: 2; grid-row: 1; margin: 0; font-size: clamp(1.25rem, 1.5vw, 1.45rem); line-height: 1.15; text-wrap: balance; }
+body[data-page="home"] #lifecycles .card-grid--3 .card p { grid-column: 3; grid-row: 1; margin: 0; max-width: 58ch; font-size: .94rem; line-height: 1.55; text-wrap: pretty; }
+body[data-page="home"] #lifecycles .card-grid--3 .card .n--ring > span:last-child { grid-column: 4; grid-row: 1; justify-self: end; }
+body[data-page="home"] #lifecycles .card-grid--3 .card:first-child .h4 { color: var(--fg); }
+@media (min-width: 601px) and (max-width: 960px) {
+  body[data-page="home"] #lifecycles .card-grid--3 > .card { grid-template-columns: 6.6rem minmax(0, 1fr) auto; row-gap: 6px; }
+  body[data-page="home"] #lifecycles .card-grid--3 .card p { grid-column: 2; grid-row: 2; }
+  body[data-page="home"] #lifecycles .card-grid--3 .card .n--ring > span:last-child { grid-column: 3; }
+  body[data-page="home"] #lifecycles .card-grid--3 > .card:last-child:nth-child(odd) { grid-column: auto; }
+}
+@media (max-width: 600px) {
+  body[data-page="home"] #lifecycles .card-grid--3 { grid-template-columns: minmax(0, 1fr); }
+  body[data-page="home"] #lifecycles .card-grid--3 > .card { grid-template-columns: 4.9rem minmax(0, 1fr) auto; column-gap: 12px; row-gap: 6px; padding: 13px 0 14px; }
+  body[data-page="home"] #lifecycles .card-grid--3 .lc-code { gap: 8px; margin-top: 4px; font-size: .64rem; }
+  body[data-page="home"] #lifecycles .card-grid--3 .card .h4 { font-size: 1.06rem; line-height: 1.2; }
+  body[data-page="home"] #lifecycles .card-grid--3 .card:first-child p { display: block; grid-column: 2 / -1; grid-row: 2; font-size: .84rem; line-height: 1.5; }
+  body[data-page="home"] #lifecycles .card-grid--3 .card .n--ring > span:last-child { grid-column: 3; font-size: .625rem; }
+}
+
+/* ---------- §04 the four figures: a summary of terms, not a strip of giant numerals ----------
+   Label and its sentence on the left, the figure flush right in the serif, rows ruled like a prospectus table. The two
+   broker-confirmed figures lead; the two open ones (beta customers, runs) follow, quieter. Hooks (.stats .v) stay. */
+body[data-page="home"] #proof .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(32px, 5.6vw, 88px); row-gap: 0; background: none; border: 0; border-bottom: 1px solid var(--line); }
+body[data-page="home"] #proof .stats > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "k v" "d v"; column-gap: 24px; align-items: baseline; padding: 20px 0 22px; background: none; border-top: 1px solid var(--line-strong); }
+body[data-page="home"] #proof .stats .v { grid-area: v; align-self: baseline; font-size: clamp(2.1rem, 2.9vw, 2.75rem); line-height: .95; letter-spacing: -0.02em; text-align: right; white-space: nowrap; font-variant-numeric: lining-nums tabular-nums; }
+body[data-page="home"] #proof .stats .v small { margin-left: .3em; font-size: .72rem; }
+body[data-page="home"] #proof .stats .k { grid-area: k; margin: 0; font: 500 1rem/1.35 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg); }
+body[data-page="home"] #proof .stats .d { grid-area: d; margin-top: 3px; max-width: 36ch; font-size: .9rem; line-height: 1.5; }
+body[data-page="home"] #proof .stats > div:nth-child(n + 3) { border-top-color: var(--line); }
+body[data-page="home"] #proof .stats > div:nth-child(n + 3) .v { font-size: clamp(1.7rem, 2.2vw, 2.1rem); color: var(--fg-2); }
+/* the two open figures read as Proof's terms set them: a quieter label and sentence, not only a greyer figure */
+body[data-page="home"] #proof .stats > div:nth-child(n + 3) .k { font-weight: 400; color: var(--fg-2); }
+body[data-page="home"] #proof .stats > div:nth-child(n + 3) .d { color: var(--fg-3); }
+@media (max-width: 600px) {
+  body[data-page="home"] #proof .stats { grid-template-columns: minmax(0, 1fr); }
+  body[data-page="home"] #proof .stats > div { padding: 15px 0 16px; }
+  body[data-page="home"] #proof .stats > div:nth-child(2) { border-top-color: var(--line); }
+  body[data-page="home"] #proof .stats .v { font-size: 2rem; }
+  body[data-page="home"] #proof .stats .k { margin: 0; font-size: .94rem; }
+  body[data-page="home"] #proof .stats .d { margin-top: 2px; font-size: .84rem; }
+}
+
+/* §04's status line, unboxed: the green mark and the words, as the register above and Proof's hero set it */
+body[data-page="home"] #proof .proof-copy .badge { padding: 0; border: 0; color: var(--fg-2); }
+@media (min-width: 961px) { body[data-page="home"] #proof .proof-copy .badge { position: relative; top: 3px; } } /* on the chart kicker's baseline */
+
+/* the chart's key is a sentence: Inter, under the title; the evidence line stays data */
+body[data-page="home"] .figure-cap .fc-key { font: 400 .8rem/1.5 var(--sans); letter-spacing: 0; color: var(--fg-2); }
+
+/* ---------- §07 the three notes, set as Research sets them ----------
+   The authors' subtitles in a second voice (.title-sub, as on Research); the kind in Research's label register; and the
+   cards share one set of rows, so the three deks and the three read times start on the same lines across the row. */
+body[data-page="home"] #research .research-card h3 .title-sub { display: block; margin-top: .32em; font-size: .8em; line-height: 1.2; color: var(--fg-2); }
+body[data-page="home"] #research .research-card .n > span:last-child { font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; }
+body[data-page="home"] #research .research-card > p { text-wrap: pretty; }
+@media (min-width: 601px) {
+  body[data-page="home"] #research .card-grid--3 { grid-auto-rows: auto; }
+  body[data-page="home"] #research .research-card { display: grid; grid-row: span 4; grid-template-rows: subgrid; row-gap: 0; }
+  body[data-page="home"] #research .research-card > p { align-self: start; }
+  body[data-page="home"] #research .research-card .link-arrow { align-self: end; }
+}

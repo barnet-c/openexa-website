@@ -13,11 +13,10 @@
                           'Swarm digest'. A followed proposal is answered at once, in a record of its own (n = 1), which
                           is selected and pulses the next time the ledger is in view. Every record is stamped when it is
                           written, later than the one before it.
-   [data-ledger="replay"] (Trust §01) holds a fixed excerpt that can be replayed, verified and changed: with
-                          [data-lt-edit] the selected record's event and detail can be typed over in the inspector.
-                          Verification recomputes the chain as it reads now; the edited record and every record after it
-                          no longer produce the hashes they were sealed with, so they fail ('Chain broken at #4f1b · 8 of 9
-                          records no longer verify'). [data-lt-restore] puts the excerpt back.
+   [data-ledger="replay"] (Trust §01) holds a fixed excerpt. This file draws and inspects it; replaying, verifying and
+                          changing a record are assets/js/trust.js's (Trust only, so Home never downloads them). trust.js
+                          reaches the engine through root.oxaTrace and the hooks X (end of trace()), and hashes with this
+                          file's sha256 and body(): change the recipe here and trust.js follows it.
    The chain, the state line and the intake start with the page; the strip is drawn (the one step that reads layout)
    when the panel comes within 1.5 viewports, or at once when the reader, a followed proposal or 'oxa:inspect' needs it.
    Select any record (click, tap, or arrow keys once the list has focus) to inspect its id, event and both hash links.
@@ -149,38 +148,19 @@
     if (excerpt.length) nextId = (parseInt(excerpt[excerpt.length - 1].id.replace(/[^0-9a-f]/gi, ''), 16) || 0x4f20) + 1;
     let genesis = '', head = '', inited = false, stateIdle = '';
     const body = r => [r.id, r.t, r.ev, r.sub, r.d].join('|');
-    // the replay can be changed (Trust): the records as written, and what the visitor has done to them since
-    const canEdit = !stream && !!ui.edit && !!F.ev && !!F.d;
-    const ORIG = new Map();
-    let edits = 0, dirty = false, brokenAt = -1, auditKey = '', auditRes = [];
+    // a replay is extended by trust.js through these hooks: edited(r), editable(r), check(r), built(r, li), whole(),
+    // and two values: v (how many edits so far) and dirty (an edit is waiting for its verdict)
+    const X = {};
+    const edited = r => !!(X.edited && X.edited(r));
     // the chain is hashed when it is first needed
     function init() {
       if (inited) return;
       inited = true;
       head = genesis = sha256('genesis|' + (excerpt[0] ? excerpt[0].id : '#4f20'));
       excerpt.forEach(write);
-      if (!stream) recs.forEach(r => ORIG.set(r.seq, { ev: r.ev, sub: r.sub, d: r.d, lc: r.lc }));
-      setIdle();
+      if (!stream) stateIdle = `Chain ✓ · ${recs.length} records verify`; // sealed from these very records
       rendered = newest();
       counts(); state();
-    }
-    // the chain as it reads now: every hash recomputed from its record and the hash recomputed before it. A record
-    // verifies while that equals the hash it was sealed with, which the next record stores as its previous hash.
-    function audit() {
-      const key = edits + ':' + total;
-      if (key === auditKey) return auditRes;
-      let p = recs.length ? recs[0].prev : genesis;
-      auditRes = recs.map(r => { const now = sha256(p + '|' + body(r)), linked = r.prev === p; p = now; return { linked, now, ok: linked && now === r.hash }; });
-      auditKey = key;
-      return auditRes;
-    }
-    const isEdited = r => { const o = ORIG.get(r.seq); return !!o && (o.ev !== r.ev || o.d !== r.d || o.sub !== r.sub); };
-    const anyEdited = () => recs.some(isEdited);
-    function setIdle() {
-      if (stream) return;
-      const n = recs.length, ok = verified();
-      stateIdle = brokenAt >= 0 && recs[brokenAt] ? `Chain broken at ${recs[brokenAt].id} · ${n - ok} of ${n} records no longer verify`
-        : ok === n ? `Chain ✓ · ${n} records verify` : `${n - ok} of ${n} records fail verification`;
     }
     function write(r) {
       if (!inited) init();
@@ -202,7 +182,7 @@
 
     /* ---- one record = one column on the line ---- */
     function build(r) {
-      const ed = canEdit && isEdited(r);
+      const ed = edited(r);
       const li = node('li', 'ln lt-rec' + tone(r.ev) + (r.src === 'swarm' ? ' is-swarm' : '') + (r.followed ? ' is-followed' : '') + (ed ? ' is-edited' : ''));
       li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false'); li.tabIndex = -1;
       li.dataset.seq = r.seq;
@@ -214,6 +194,7 @@
       const ev = node('b', 'lt-ev', r.digest ? r.kind + ' ' : r.ev);
       if (r.digest) ev.append(node('span', 'lt-n', r.ev.slice(r.kind.length + 1)));
       li.append(meta, ev, node('span', 'lt-sub', r.sub), node('time', 'lt-t', r.t), line);
+      if (X.built) X.built(r, li);
       els.set(r.seq, li);
       return li;
     }
@@ -243,8 +224,10 @@
     const G = { col: 148, padL: 28, padR: 28, w: 0 };
     function fit() {
       const cs = getComputedStyle(track);
-      // a page may stand the records in a column (Trust on a phone): nothing then scrolls sideways
-      G.vert = cs.display !== 'flex' || cs.flexDirection === 'column';
+      // a page may stand the records in a column (Trust on a phone; Home's stream, newest on top: column-reverse):
+      // nothing then scrolls sideways, and the arrow keys follow the column
+      G.vert = cs.display !== 'flex' || cs.flexDirection.startsWith('column'); G.rev = cs.flexDirection === 'column-reverse';
+      if (track.hasAttribute('role')) track.setAttribute('aria-orientation', G.vert ? 'vertical' : 'horizontal');
       G.padL = parseFloat(cs.paddingLeft) || 0; G.padR = parseFloat(cs.paddingRight) || 0; G.w = view.clientWidth;
       const avail = G.w - G.padL - G.padR;
       if (avail <= 0) return;
@@ -320,7 +303,8 @@
     track.addEventListener('focusin', e => { const li = e.target.closest('.lt-rec'); if (li && +li.dataset.seq !== sel) select(li, false); });
     track.addEventListener('keydown', e => {
       const cur = e.target.closest('.lt-rec'); if (!cur) return;
-      const go = { ArrowLeft: cur.previousElementSibling, ArrowRight: cur.nextElementSibling, Home: track.firstElementChild, End: track.lastElementChild }[e.key];
+      const back = cur.previousElementSibling, on = cur.nextElementSibling;
+      const go = { ArrowLeft: back, ArrowRight: on, Home: track.firstElementChild, End: track.lastElementChild, ...(G.vert ? G.rev ? { ArrowUp: on, ArrowDown: back } : { ArrowUp: back, ArrowDown: on } : {}) }[e.key];
       if (go !== undefined) { e.preventDefault(); if (go) select(go, true); return; }
       if (e.key === 'Escape') { e.preventDefault(); follow(); const b = [ui.play, ui.replay, ui.latest].find(x => x && !x.hidden); if (b) b.focus(); }
     });
@@ -376,7 +360,7 @@
       if (!r) return;
       const after = bySeq(r.seq + 1), drawnAfter = after && after.seq <= rendered;
       const title = sel !== null ? (r.followed ? 'The proposal you followed' : 'Selected record') : 'Newest record in view';
-      const key = `${r.seq}|${title}|${after ? (drawnAfter ? 'd' : 'b') : 'n'}|${edits}`;
+      const key = `${r.seq}|${title}|${after ? (drawnAfter ? 'd' : 'b') : 'n'}|${X.v || 0}`;
       if (key === shown) { leader(); return; }
       shown = key;
       if (F.k) { put(F.k, title); F.k.classList.toggle('is-followed', sel !== null && !!r.followed); }
@@ -384,42 +368,23 @@
       put(F.ev, r.ev); F.ev.className = 'lt-insp-ev' + tone(r.ev);
       put(F.d, r.d);
       if (F.src) put(F.src, sourceOf(r));
-      setEditable(sel !== null ? r : null);
+      if (X.editable) X.editable(sel !== null ? r : null);
       // real checks, not labels: the stored link equals the previous record's hash
       const before = bySeq(r.seq - 1);
       let linkOk, selfOk, now = r.hash;
-      if (edits) { // a changed excerpt: the hash shown is the one the record produces now, in the chain as it reads now
-        const a = audit()[r.seq - recs[0].seq] || { linked: true, now: r.hash };
-        linkOk = a.linked; now = a.now; selfOk = now === r.hash;
-      } else {
+      const a = X.check && X.check(r); // a changed excerpt (trust.js): the hash the record produces now, in the chain as it reads now
+      if (a) { linkOk = a.linked; now = a.now; selfOk = now === r.hash; }
+      else {
         linkOk = before ? before.hash === r.prev : r.seq === 1 ? r.prev === genesis : true;
         selfOk = sha256(r.prev + '|' + body(r)) === r.hash;
       }
       hexInto(F.prev, r.prev); hexInto(F.hash, now);
       put(F.prevok, !linkOk ? '✗ does not match the record before' : before ? `✓ the hash of ${before.id}` : r.seq === 1 ? '✓ genesis of this ledger' : '✓ the hash of the record before');
       F.prevok.classList.toggle('is-bad', !linkOk);
-      put(F.next, !selfOk ? (!edits ? '✗ does not recompute from this record' : isEdited(r) ? '✗ edited · not the hash it was sealed with' : '✗ not the hash it was sealed with')
+      put(F.next, !selfOk ? (!a ? '✗ does not recompute from this record' : edited(r) ? '✗ edited · not the hash it was sealed with' : '✗ not the hash it was sealed with')
         : drawnAfter ? `✓ recomputes · stored as previous hash by ${after.id}` : after ? '✓ recomputes · stored by the next record' : stream ? '✓ recomputes · awaiting the next record' : '✓ recomputes · last record of this excerpt');
       F.next.classList.toggle('is-bad', !selfOk);
       leader();
-    }
-    // the selected record's event and detail can be typed over (Trust's replay); with nothing selected they are read only
-    function setEditable(r) {
-      if (!canEdit) return;
-      [[F.ev, 'Event'], [F.d, 'Detail']].forEach(([el, k]) => {
-        if (r) {
-          if (!el.hasAttribute('contenteditable')) {
-            el.setAttribute('contenteditable', 'plaintext-only');
-            if (!el.isContentEditable) el.setAttribute('contenteditable', 'true');
-            el.setAttribute('role', 'textbox'); el.setAttribute('aria-multiline', 'false'); el.spellcheck = false;
-          }
-          const label = `${k} of record ${r.id}`;
-          if (el.getAttribute('aria-label') !== label) el.setAttribute('aria-label', label);
-        } else if (el.hasAttribute('contenteditable')) {
-          if (document.activeElement === el) el.blur();
-          ['contenteditable', 'role', 'aria-multiline', 'aria-label'].forEach(a => el.removeAttribute(a));
-        }
-      });
     }
     let leaderOn = false;
     function leader() {
@@ -442,13 +407,11 @@
       flag('is-following', following);
       flag('is-running', stream && playing && following && onScreen()); // its breathing loops run only while it is seen
       flag('is-paused', stream && !playing);
-      flag('is-edited', dirty);
+      flag('is-edited', !!X.dirty);
       const r = sel !== null ? bySeq(sel) : null;
-      put(ui.state, text || (dirty ? 'Edited · not verified' : r ? `Inspecting ${r.id}` : stream ? (playing ? (following ? 'Running · illustrative stream' : 'Illustrative stream · browsing') : 'Paused · illustrative stream') : stateIdle));
+      put(ui.state, text || (X.dirty ? 'Edited · not verified' : r ? `Inspecting ${r.id}` : stream ? (playing ? (following ? 'Running · illustrative stream' : 'Illustrative stream · browsing') : 'Paused · illustrative stream') : stateIdle));
       if (ui.play) {
-        put(ui.playText, playing ? 'Pause' : 'Play');
-        const label = playing ? 'Pause the stream' : 'Play the stream';
-        if (ui.play.getAttribute('aria-label') !== label) ui.play.setAttribute('aria-label', label);
+        put(ui.playText, playing ? 'Pause motion' : 'Resume motion'); // one name for one action, as on every instrument
         ui.play.classList.toggle('is-paused', !playing);
       }
       pill();
@@ -714,155 +677,9 @@
       });
     }
 
-    /* ---- replay: the excerpt writes itself again, at its own rhythm ---- */
-    const secs = t => { const m = /(\d+):(\d+):(\d+)(?:\.(\d+))?/.exec(t || ''); return m ? +m[1] * 3600 + +m[2] * 60 + +m[3] + +('0.' + (m[4] || '0')) : 0; };
-    function gapMark(li, a, b) { // a long wait between two records is drawn on the link that spans it
-      const s = secs(b.t) - secs(a.t);
-      if (!li || s < 3600) return;
-      const line = li.querySelector('.lt-line');
-      if (line && !line.querySelector('.lt-gap')) line.append(node('span', 'lt-gap', `+${Math.floor(s / 3600)}h ${String(Math.floor(s % 3600 / 60)).padStart(2, '0')}m`));
-    }
-    function verified() { // recompute every hash from its record and the hash recomputed before it; compare with what was sealed
-      return audit().reduce((n, a) => n + (a.ok ? 1 : 0), 0);
-    }
-    let said = '';
-    const say = t => { if (ui.say && t && t !== said) ui.say.textContent = said = t; };
-    function unbreak() { // a verdict holds only for the records it was given on
-      if (stream) return;
-      Array.from(track.querySelectorAll('.is-broken')).forEach(li => li.classList.remove('is-broken'));
-      flag('is-broken', false);
-    }
-    let replaying = 0;
-    function replay() {
-      clearTimeout(replaying);
-      sweep.forEach(clearTimeout); sweep = []; cancelAnimationFrame(glideRaf);
-      if (canEdit) { brokenAt = -1; dirty = anyEdited(); unbreak(); setIdle(); }
-      const all = recs.slice();
-      if (!all.length) return;
-      if (sel !== null) follow(false);
-      following = true; // the view and the inspector follow the record being written
-      els.clear(); track.replaceChildren(); rendered = 0; selLi = beforeLi = headLi = null;
-      let i = 0;
-      const next = () => {
-        const r = all[i++];
-        const was = track.lastElementChild, li = build(r);
-        if (!reduced) landed(li);
-        track.append(li); rendered = r.seq; markHead();
-        if (was) { gapMark(was, all[i - 2], r); if (!reduced) { was.classList.add('is-linking'); setTimeout(() => was.classList.remove('is-linking'), 1400); } }
-        stop(li); toEnd(true); edges(); inspect();
-        state(i < all.length ? `Replaying · ${i} of ${all.length}` : `Replayed · ${all.length} records`);
-        if (i < all.length) {
-          // real gaps between records, compressed: milliseconds stay quick, a long wait shows as a pause
-          const gap = secs(all[i].t) - secs(r.t);
-          replaying = setTimeout(next, Math.min(1500, Math.max(380, gap * 600)));
-        } else replaying = 0;
-      };
-      next();
-    }
-    let glideRaf = 0, sweep = [];
-    function glide(from, to, ms) { // a scripted pan of the strip, eased; the reader's own scrolling is never fought
-      cancelAnimationFrame(glideRaf);
-      if (reduced || ms <= 0 || Math.abs(to - from) < 2) { view.scrollLeft = to; return; }
-      const t0 = performance.now();
-      const step = now => {
-        const p = Math.min(1, (now - t0) / ms), e = p < .5 ? 2 * p * p : 1 - Math.pow(2 - 2 * p, 2) / 2;
-        view.scrollLeft = from + (to - from) * e;
-        if (p < 1 && performance.now() > intentUntil) glideRaf = requestAnimationFrame(step);
-      };
-      glideRaf = requestAnimationFrame(step);
-    }
-    function verify() {
-      // an audit walks every link from the first record to the last
-      if (sel !== null) { sel = null; markSel(); }
-      following = false; inspect(); // the inspector rides along with the sweep
-      sweep.forEach(clearTimeout); sweep = [];
-      if (replaying) { clearTimeout(replaying); replaying = 0; whole(); inspect(); } // a replay in progress completes at once
-      const res = audit(), ok = verified(), n = recs.length, lis = Array.from(track.children), STEP = 110;
-      const first = res.findIndex(a => !a.ok);
-      const links = Math.max(0, n - 1);
-      const done = ok === n ? `Verified here · ${links} of ${links} links hold`
-        : canEdit && first >= 0 ? `Chain broken at ${recs[first].id} · ${n - ok} of ${n} records no longer verify` : `${n - ok} of ${n} records fail verification`;
-      dirty = false; brokenAt = -1; unbreak();
-      const m = maxScroll(), lead = !reduced && m > 4 && view.scrollLeft > 4 ? 280 : 0;
-      if (m > 4) { glide(view.scrollLeft, 0, lead); sweep.push(setTimeout(() => glide(0, m, lis.length * STEP + 240), lead)); }
-      lis.forEach((li, i) => {
-        const a = res[+li.dataset.seq - recs[0].seq], bad = !!a && !a.ok;
-        li.classList.remove('is-verified'); void li.offsetWidth;
-        const at = reduced ? 0 : lead + i * STEP;
-        // the walk lights each link that holds; from the first that does not, every record turns red and stays red
-        sweep.push(setTimeout(() => { li.classList.add(bad ? 'is-broken' : 'is-verified'); if (bad) flag('is-broken', true); if (!reduced) state(`Verifying · ${i + 1} of ${lis.length}`); }, at));
-        if (!bad) sweep.push(setTimeout(() => li.classList.remove('is-verified'), at + 1300));
-      });
-      sweep.push(setTimeout(() => { brokenAt = first >= 0 && canEdit ? first : -1; setIdle(); state(done); say(done); }, reduced ? 0 : lead + lis.length * STEP + 120));
-    }
-    if (ui.replay) { ui.replay.hidden = false; ui.replay.addEventListener('click', replay); }
-    if (ui.verify) { ui.verify.hidden = false; ui.verify.addEventListener('click', verify); }
-
-    /* ---- change a record (Trust): type over the selected record, verify, watch the chain fail; restore ---- */
-    function refresh(r) { // a record's column, rewritten in place to what it now says
-      const li = els.get(r.seq); if (!li) return;
-      const ed = isEdited(r), t = tone(r.ev), o = ORIG.get(r.seq);
-      r.lc = ed ? 'edited' : (o ? o.lc : r.lc);
-      li.classList.toggle('is-settled', t === ' is-settled'); li.classList.toggle('is-rejected', t === ' is-rejected'); li.classList.toggle('is-edited', ed);
-      put(li.querySelector('.lt-ev'), r.ev); put(li.querySelector('.lt-sub'), r.sub); put(li.querySelector('.lt-lc'), r.lc || '');
-      li.setAttribute('aria-label', `${r.id}, ${r.ev}, ${r.d}, ${r.t}${ed ? ', edited' : ''}`);
-    }
-    function changed() { // any edit (or a restore) voids the last verdict
-      edits++; dirty = anyEdited(); brokenAt = -1; unbreak(); setIdle();
-      shown = ''; inspect(); state(); ctrls();
-    }
-    function ctrls() {
-      if (!canEdit) return;
-      const ed = anyEdited();
-      if (ui.restore) ui.restore.hidden = !ed;
-      ui.edit.hidden = ed;
-      if (ui.ctrl) ui.ctrl.hidden = false;
-    }
-    function typed(e) {
-      const el = e.currentTarget, r = sel !== null ? bySeq(sel) : null, o = r && ORIG.get(r.seq);
-      if (!r || !el.isContentEditable) return;
-      const v = el.textContent.replace(/[\r\n]+/g, ' ');
-      if (el === F.ev) r.ev = v;
-      else { r.d = v; r.sub = o && v === o.d ? o.sub : v; } // the column shows what was typed; the original text restores the original column
-      refresh(r); changed();
-    }
-    if (canEdit) {
-      [F.ev, F.d].forEach(el => {
-        el.addEventListener('input', typed);
-        el.addEventListener('keydown', e => {
-          if (!el.isContentEditable) return;
-          if (e.key === 'Enter') { e.preventDefault(); if (ui.verify) ui.verify.focus(); } // one line: Enter moves on to Verify
-          else if (e.key === 'Escape') { e.preventDefault(); const b = !ui.edit.hidden ? ui.edit : ui.restore; if (b) b.focus(); }
-        });
-      });
-      ui.edit.addEventListener('click', () => {
-        mount();
-        // the selected record, or the rejection: the record a visitor would most want to rewrite
-        let li = sel !== null ? els.get(sel) : null;
-        if (!li) { const r = recs.find(x => /^REJECTED/.test(x.ev)) || recs[0]; li = r ? els.get(r.seq) : null; }
-        if (!li) return;
-        select(li, false, true);
-        F.d.focus();
-        try { const range = document.createRange(), s = window.getSelection(); range.selectNodeContents(F.d); s.removeAllRanges(); s.addRange(range); } catch (err) { /* the caret stays where focus put it */ }
-        say(`Editing ${bySeq(sel).id}: type over its detail, then verify the chain`);
-      });
-      if (ui.restore) ui.restore.addEventListener('click', () => {
-        recs.forEach(r => { const o = ORIG.get(r.seq); if (o) { r.ev = o.ev; r.sub = o.sub; r.d = o.d; } refresh(r); });
-        changed();
-        say(`Original records restored · ${stateIdle}`);
-        ui.edit.focus();
-      });
-      ui.edit.hidden = false;
-      if (ui.hint) ui.hint.hidden = false;
-    }
     if (ui.play) ui.play.hidden = !stream;
     // the controls' container shows only when it holds a control (no selector has to ask the document)
     if (ui.ctrl) ui.ctrl.hidden = ![ui.play, ui.replay, ui.verify].some(b => b && !b.hidden && ui.ctrl.contains(b));
-
-    function whole() { // the excerpt, all of it, with its long waits marked on the links
-      rebuild();
-      Array.from(track.children).forEach((li, i, all) => { if (i) gapMark(all[i - 1], bySeq(+all[i - 1].dataset.seq), bySeq(+li.dataset.seq)); });
-    }
 
     /* ---- start: the controls and the intake now; the chain once the page is idle (or first needed) */
     if (!stream) following = false;
@@ -875,7 +692,7 @@
       track.setAttribute('role', 'listbox');
       track.setAttribute('aria-orientation', 'horizontal');
       fit();
-      if (stream) rebuild(); else whole();
+      if (stream || !X.whole) rebuild(); else X.whole();
       root.classList.add('lt-ready');
       if (stream) {
         root.classList.add('is-stream');
@@ -905,5 +722,11 @@
       near.observe(root);
     } else mount();
     motionQuery.addEventListener('change', e => { reduced = e.matches; if (reduced && playing) { playing = false; clearTimeout(timer); timer = 0; state(); } });
+    if (!stream) root.oxaTrace = { X, recs, els, track, view, ui, F, sha256, body, put, node, tone, init, build, landed, markHead, markSel,
+      stop, toEnd, edges, inspect, state, maxScroll, rebuild, bySeq, flag, select, follow, mount,
+      get sel() { return sel; }, set sel(v) { sel = v; }, get following() { return following; }, set following(v) { following = v; },
+      get rendered() { return rendered; }, set rendered(v) { rendered = v; }, get reduced() { return reduced; },
+      get intent() { return intentUntil; }, get idle() { return stateIdle; }, set idle(t) { stateIdle = t; },
+      forget() { selLi = beforeLi = headLi = null; }, reshow() { shown = ''; } };
   }
 })();

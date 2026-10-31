@@ -12,6 +12,7 @@
   const pad = (n) => String(n).padStart(2, '0');
   const clamp01 = (v) => v < 0 ? 0 : v > 1 ? 1 : v;
   const root = document.documentElement;
+  const unhash = h => { try { return decodeURIComponent(h); } catch (e) { return h; } }; // (#% must not stop the script)
 
   /* ---------------- nav: the frame of every page ---------------- */
   const nav = $('.nav');
@@ -19,18 +20,20 @@
   const themeMeta = $('meta[name="theme-color"]');
   const story = $('.story');
   const paper = story && $('.story-paper', story);
+  // on Home this runs after story.js: an overture not started by now never will (site.css's net)
+  if (story && !root.classList.contains('story-ready') && !root.classList.contains('no-webgl')) root.classList.add('story-failed');
   let paperTop = null, paperWatch = 0;
   const toggle = $('.nav-toggle');
   const sheet = $('.nav-sheet');
-  let navH = 72, vh = window.innerHeight, maxScroll = 1, clearUntil = -1, bands = [], navRaf = 0, menuOpen = false;
+  let navH = 72, vh = 0, maxScroll = 1, clearUntil = -1, bands = [], navRaf = 0, menuOpen = false;
 
-  const pageKey = path => path.replace(/\/+$/, '').split('/').pop().replace(/\.html$/, '') || 'index';
+  const pageKey = path => path.replace(/(\/index)?(\.html)?\/*$/, '').split('/').pop() || 'index';
   const here = pageKey(location.pathname);
   const section = /\/research\/[^/]+$/.test(location.pathname) ? 'research' : here; // an article sits under Research
-  // marks the link to where the reader is; never removes a mark the page itself states
-  $$('.nav-links a, .nav-sheet a, .nav .btn').forEach(a => {
-    const href = (a.getAttribute('href') || '').split(/[?#]/)[0];
-    if (href && (pageKey(href) === here || pageKey(href) === section)) a.setAttribute('aria-current', 'page');
+  // marks where the reader is (the footer: that page only); never removes a mark the page states
+  $$('.nav-links a, .nav-sheet a, .nav .btn, .footer ul a').forEach(a => {
+    const k = pageKey(a.pathname);
+    if (a.host === location.host && (a.closest('.footer') ? k === here && !a.hash : k === here || k === section)) a.setAttribute('aria-current', 'page');
   });
 
   /* chapters: [data-chapter] sections, else numbered sections (.sec-head), else an article's table of contents. */
@@ -44,7 +47,7 @@
     return idx && lab ? { el, n: idx.textContent.trim(), title: lab.textContent.trim(), short: shortOf(el) } : null;
   }).filter(Boolean);
   if (chapters.length < 2) chapters = $$('.toc a[href^="#"]').map((a, i) => {
-    const el = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+    const el = document.getElementById(unhash(a.hash.slice(1)));
     return el ? { el, n: pad(i + 1), title: a.textContent.trim(), short: '', toc: true, scope: el.closest('article, .article') } : null;
   }).filter(Boolean);
   if (chapters.length < 2) chapters = [];
@@ -54,8 +57,8 @@
     if (!c.el.id) { let id = 'chapter-' + (c.n.replace(/[^\w-]/g, '') || k); while (document.getElementById(id)) id += '-'; c.el.id = id; }
   });
   // an address that names a section given its id just now
-  if (chapters.length && location.hash && chapters.some(c => '#' + c.el.id === decodeURIComponent(location.hash)) && window.scrollY < 2) {
-    const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  if (chapters.length && location.hash && chapters.some(c => '#' + c.el.id === unhash(location.hash)) && window.scrollY < 2) {
+    const target = document.getElementById(unhash(location.hash.slice(1)));
     requestAnimationFrame(() => target.scrollIntoView({ block: 'start', behavior: 'instant' }));
   }
 
@@ -304,7 +307,7 @@
     });
     ui.panel.addEventListener('keydown', e => {
       const r = rows(), i = r.indexOf(document.activeElement);
-      if (e.key === 'Escape') { e.preventDefault(); setPanel(false, true); }
+      if (e.key === 'Escape') { e.preventDefault(); if (menuOpen) { setMenu(false); toggle.focus(); } else setPanel(false, true); } // in the sheet: the sheet closes
       else if (e.key === 'ArrowDown') { e.preventDefault(); focusRow(i + 1); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); focusRow(i < 0 ? r.length - 1 : i - 1); }
       else if (e.key === 'Home') { e.preventDefault(); focusRow(0); }
@@ -464,7 +467,7 @@
     if (!a || (a.target && a.target !== '_self') || a.closest('.nav-ch, .nav-sheet')) return;
     const url = new URL(a.href, location.href);
     if (url.origin !== location.origin || url.pathname !== location.pathname || url.search !== location.search || url.hash.length < 2) return;
-    const el = document.getElementById(decodeURIComponent(url.hash.slice(1)));
+    const el = document.getElementById(unhash(url.hash.slice(1)));
     if (!el || el.closest('details:not([open])')) return; // the browser opens a closed <details> for its target
     jumpTo(el, url.hash, e, () => focusInto(el)); // as after an anchor jump, the next Tab continues from the destination
   });
@@ -488,7 +491,7 @@
   });
 
   if (nav) {
-    measure();
+    requestAnimationFrame(measure); // (v2x) no layout read in this task: the frame lays out anyway
     window.addEventListener('scroll', queue, { passive: true });
     window.addEventListener('resize', measure);
     window.addEventListener('load', measure);
@@ -498,7 +501,7 @@
     if (document.fonts) document.fonts.ready.then(measure);
   }
   /* ---------------- the reader's place: kept through resizes, and a deep link's landing kept after late layout ---------------- */
-  let anchor = null, settleUntil = 0, lastInput = 0, lastW = window.innerWidth;
+  let anchor = null, settleUntil = 0, lastInput = 0, lastW = 0;
   const inFlow = el => { const p = getComputedStyle(el).position; return p !== 'fixed' && p !== 'sticky' && p !== 'absolute'; };
   // where layout puts an element (viewport y), ignoring transforms
   const layoutTop = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y - window.scrollY; };
@@ -549,37 +552,39 @@
       requestAnimationFrame(() => { restoreAnchor(); requestAnimationFrame(restoreAnchor); });
       [120, 300, 600, 880].forEach(ms => setTimeout(restoreAnchor, ms));
     });
-    setTimeout(pickAnchor, 0);
+    requestAnimationFrame(() => { lastW = window.innerWidth; setTimeout(pickAnchor, 0); });
     document.addEventListener('oxa:jump', () => setTimeout(pickAnchor, 0));
   }
-  // a deep link (#id) lands at the bar's edge once the layout has settled after load
-  const deep = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  // a deep link lands at the bar after load and again as the overture settles; only the reader's input stops it
+  const hashId = () => unhash(location.hash.slice(1));
+  const deep = location.hash.length > 1 && document.getElementById(hashId());
   if (deep && nav) {
-    let quietFrom = 0, deepDone = false, alignedY = 0;
+    let quietTo = 0, busy = false, ro = null;
     const realign = (h0, n) => requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (lastInput || deepDone) return;
-      const sp = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0, off = () => deep.getBoundingClientRect().top - sp;
-      // late layout moves the target while the page stays where it was
-      if (Math.abs(window.scrollY - alignedY) > 2) { if (Math.abs(off()) > 2) { deepDone = true; return; } alignedY = window.scrollY; }
+      if (lastInput) { busy = false; return; }
       const h = root.scrollHeight;
       if (h !== h0 && n < 60) { realign(h, n + 1); return; }
-      if (Math.abs(off()) > 1) deep.scrollIntoView({ block: 'start', behavior: 'instant' });
-      alignedY = window.scrollY;
+      busy = false;
+      const sp = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
+      if (Math.abs(deep.getBoundingClientRect().top - sp) > 1) deep.scrollIntoView({ block: 'start', behavior: 'instant' });
     }));
-    const start = () => {
-      quietFrom = performance.now();
-      alignedY = window.scrollY;
-      realign(root.scrollHeight, 0);
-      if ('ResizeObserver' in window) {
-        const ro = new ResizeObserver(() => { if (performance.now() - quietFrom < 2500 && !lastInput && !deepDone) realign(root.scrollHeight, 0); else ro.disconnect(); });
+    const land = () => { if (!busy && !lastInput) { busy = true; realign(root.scrollHeight, 0); } };
+    const watch = () => {
+      if (lastInput) return;
+      quietTo = performance.now() + 2500;
+      land();
+      if (!ro && 'ResizeObserver' in window) {
+        ro = new ResizeObserver(() => { if (performance.now() < quietTo && !lastInput) land(); else { ro.disconnect(); ro = null; } });
         ro.observe(document.body);
       }
     };
-    if (document.readyState === 'complete') start(); else window.addEventListener('load', start, { once: true });
+    if (document.readyState === 'complete') watch(); else window.addEventListener('load', watch, { once: true });
+    ['story:gl-ready', 'story:no-webgl', 'oxa:loaded'].forEach(t => document.addEventListener(t, watch));
   }
 
   const openLinkedDetails = () => {
-    const target = document.getElementById(location.hash.slice(1));
+    const id = hashId();
+    const target = id && document.getElementById(id);
     if (!target) return;
     let details = target.closest('details'), changed = false;
     const inFold = !!details;
@@ -604,25 +609,21 @@
   }
   openLinkedDetails(); // after the fold exists
 
-  /* ---------------- clocks (footer) ---------------- */
-  const clockFmt = (tz) => new Intl.DateTimeFormat('en-US', { timeZone: tz, hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const clocks = [];
+  /* ---------------- clocks (footer): hours and minutes, set on the minute; New York is market time ---------------- */
   const bottom = $('.footer .bottom');
   if (bottom) {
     const span = document.createElement('span'); span.className = 'clocks';
-    span.innerHTML = '<span><b>Seattle</b> <time data-tz="America/Los_Angeles"></time></span><span><b>New York</b> <time data-tz="America/New_York"></time></span>';
+    span.innerHTML = '<span><b>Seattle</b> <time data-tz="America/Los_Angeles"></time></span><span><b>New York</b> · market time <time data-tz="America/New_York"></time></span>';
     bottom.appendChild(span);
-    const fmts = $$('time[data-tz]', span).map(t => ({ t, f: clockFmt(t.dataset.tz) }));
-    clocks.push(() => { const now = new Date(); fmts.forEach(({ t, f }) => { t.textContent = f.format(now).replace(/^24/, '00'); t.dateTime = now.toISOString(); }); });
+    const fmts = $$('time[data-tz]', span).map(t => ({ t, f: new Intl.DateTimeFormat('en-US', { timeZone: t.dataset.tz, hourCycle: 'h23', hour: '2-digit', minute: '2-digit' }) }));
+    const tick = () => { const now = new Date(); fmts.forEach(({ t, f }) => { t.textContent = f.format(now); t.dateTime = now.toISOString(); }); setTimeout(tick, 60050 - now % 60000); };
+    tick();
   }
-  if (clocks.length) { const tick = () => clocks.forEach(fn => fn()); tick(); setInterval(tick, 1000); }
 
   /* ---------------- type: the serif's hyphen ----------------
-     Instrument Serif draws U+002D with wide sidebearings ("Domain – Specific"); its U+2010 HYPHEN is the same mark set
-     tight. Display text written with '-' between two letters takes U+2010 (the words do not change; Inter and Plex Mono
-     draw both the same). Scripts that build serif labels before this runs are covered; the pages' own copy should be
-     written with U+2010 at source (SYSTEM.md). */
-  const SERIF_TEXT = 'h1, h2, h3, h4, .display-1, .display-2, .display-3, .h4, .serif, .manifesto, .footer .tag, .nav-ch-list .t, .nav-sheet-links, blockquote';
+     Instrument Serif's U+002D has wide sidebearings ("Domain – Specific"); its U+2010 is the same mark set tight. Display
+     text only (h1-h3, the tagline): find-in-page does not match U+2010 for a typed '-', so smaller titles keep ASCII. */
+  const SERIF_TEXT = 'h1, h2, h3, .display-1, .display-2, .display-3, .manifesto, .footer .tag';
   const HY = /(\p{L})-(?=\p{L})/gu;
   function serifHyphens(root) {
     $$(SERIF_TEXT, root).forEach(el => {
@@ -658,22 +659,19 @@
   }
 
   /* ---------------- reveal on scroll ----------------
-     (v2x) What is on the first screen when this script runs is simply there: it was painted before the script ran, so
-     it is never hidden, faded or split (the overture's beats excepted: story.js and the loader drive them). Below the
-     first screen a block takes .will-reveal and fades in as its top crosses 96% of the screen, fully in about .6 s
-     later; a headline's words are split only when it comes within a screen and a half, then rise as it arrives.
-     Without JavaScript, and under reduced motion, nothing is hidden and nothing is split. */
+     (v2x) The first screen is never hidden, faded or split (the overture's beats excepted); sorted in the first frame.
+     Below it a block fades in as its top crosses 96% of the screen; a headline is split 1.5 screens ahead. Without
+     JavaScript, and under reduced motion, nothing is hidden and nothing is split. */
   $$('[data-stagger]').forEach(el => { Array.from(el.children).forEach((c, i) => c.style.setProperty('--i', i)); if (!el.hasAttribute('data-reveal')) el.setAttribute('data-reveal', ''); });
   const storySplit = $$('.story [data-split]');
   if (!prefersReduced) storySplit.forEach(splitWords);
   const watched = $$('[data-reveal], [data-split]').filter(el => !el.closest('.story'));
-  let revealEls = [], rio = null, sio = null;
-  if ('IntersectionObserver' in window && !prefersReduced) {
+  let rio = null, sio = null;
+  if ('IntersectionObserver' in window && !prefersReduced) requestAnimationFrame(() => {
     const fold = window.innerHeight;
     const rects = watched.map(el => el.getBoundingClientRect()); // every read first, then every write
     const later = watched.filter((el, k) => { const r = rects[k]; return (r.width || r.height) && r.top >= fold - 1; });
     watched.forEach(el => { if (!later.includes(el)) el.classList.add('is-in'); });
-    revealEls = later.filter(el => el.hasAttribute('data-reveal'));
     const show = el => { el.classList.add('is-in'); rio.unobserve(el); };
     rio = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) show(e.target); });
@@ -686,7 +684,7 @@
       if (el.hasAttribute('data-reveal')) el.classList.add('will-reveal');
       rio.observe(el);
     });
-  } else watched.forEach(el => el.classList.add('is-in'));
+  }); else watched.forEach(el => el.classList.add('is-in'));
   // at once, with no transition: what a long jump passes over or lands on
   const instant = el => { el.classList.add('is-instant'); requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('is-instant'))); };
   function revealNow(el) {

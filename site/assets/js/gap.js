@@ -48,7 +48,7 @@
   function reset() {
     S.t = 0; S.g = (rnd() - 0.5) * 6; S.samples = [[0, S.g]]; S.acts = []; S.cooldown = 0;
     S.creates = 0; S.redeems = 0; S.sumGap = 0; S.done = 0; S.nextJump = 20 + rnd() * 60;
-    dropped = 0; more = null;
+    dropped = 0; more = null; clearReceipt();
     if (el.log) { el.log.replaceChildren(); el.log.classList.remove('has-more'); }
   }
   // integrate the session by `mins` minutes (stops early once a followed proposal exists)
@@ -136,7 +136,7 @@
     if (subtle) {
       const body = `OXA-DESK|${rec.seq}|${rec.kind}|${rec.clock}|${rec.gap}`;
       chain = chain.then(prev => subtle.digest('SHA-256', new TextEncoder().encode(`${body}|${prev}`)).then(buf => {
-        rec.hash = hexOf(buf);
+        rec.hash = hexOf(buf); rec.prev = prev;
         if (rec.h) rec.h.textContent = rec.hash.slice(0, 8);
         return rec.hash;
       })).catch(() => GENESIS);
@@ -145,7 +145,7 @@
   }
   // the strip keeps as many records as it can show whole (v2x: none is cut by the edge) and counts
   // the rest in a leading line, '+N earlier records': records kept + N = creates + redeems, always
-  let dropped = 0, more = null;
+  let dropped = 0, more = null, rcptLi = null; // rcptLi: the record the walk's last line names (receipt)
   function capacity() {
     const recs = el.log.querySelectorAll(':scope > .dk-rec');
     const W = el.log.clientWidth - (parseFloat(getComputedStyle(el.log).paddingRight) || 0);
@@ -157,7 +157,7 @@
     if (!el.log) return;
     const recs = el.log.querySelectorAll(':scope > .dk-rec');
     const n = recs.length - capacity();
-    for (let i = 0; i < n; i++) { recs[i].remove(); dropped++; }
+    for (let i = 0; i < n; i++) { if (recs[i] === rcptLi) clearReceipt(); recs[i].remove(); dropped++; }
     if (!dropped) return;
     if (!more) { more = document.createElement('li'); more.className = 'dk-more'; }
     if (el.log.firstElementChild !== more) el.log.prepend(more);
@@ -335,6 +335,7 @@
   }
   function say(text, gate) {
     if (!el.say) return;
+    rcptLi = null;
     el.say.replaceChildren();
     if (gate) { const b = document.createElement('b'); b.textContent = `${pad2(gate)} ${GATES[gate - 1]}`; el.say.append(b, ' '); }
     el.say.append(text);
@@ -389,8 +390,40 @@
     if (a.rec && a.rec.li) a.rec.li.classList.add('is-followed');
     follow.state = 'idle'; follow.act = null;
     setFollowButton(false);
-    follow.timers.push(setTimeout(() => { if (follow.state === 'idle') setLane(0); }, 1600));
+    follow.timers.push(setTimeout(() => { if (follow.state === 'idle' && !rcptLi) setLane(0); }, 1600));
+    receipt(a, 1200);
     stats();
+  }
+  // the walk ends on the record itself (v2x lab): after the Settle line, the action as the ledger holds it, its SHA-256
+  // and the record it is chained to (the same line's room: nothing below moves); both hashes are the ones the strip
+  // prints, and both light on the strip
+  function clearReceipt() {
+    if (!rcptLi) return;
+    rcptLi = null;
+    if (el.say && el.say.querySelector('.dl-rcpt')) el.say.replaceChildren();
+    root.querySelectorAll('.dk-rec.is-linked').forEach(li => li.classList.remove('is-linked'));
+    if (follow.state === 'idle') setLane(0);
+  }
+  function receipt(a, ms) {
+    const r = a.rec;
+    if (!r || !el.say) return;
+    chain.then(() => follow.timers.push(setTimeout(() => {
+      if (follow.state !== 'idle' || !r.li || !r.li.isConnected || !r.li.classList.contains('is-followed')) return;
+      const line = document.createElement('span'); line.className = 'dl-rcpt';
+      const b = document.createElement('b'); b.textContent = 'Recorded';
+      const hx = (h) => { const c = document.createElement('span'); c.className = 'dl-hx'; c.textContent = h.slice(0, 8); return c; };
+      line.append(b, ` A ${r.kind === 'CREATE' ? 'create' : 'redeem'} at ${r.clock} ET`);
+      if (r.hash && r.prev) line.append(', hashed ', hx(r.hash), ' and chained to the record before it, ', hx(r.prev), r.prev === GENESIS ? ', the start of the chain.' : '.');
+      else line.append(', recorded in this session’s ledger.');
+      el.say.replaceChildren(line);
+      rcptLi = r.li;
+      // the lane keeps the route it walked, every gate passed, for as long as the line names a record on the strip
+      setLane(0);
+      if (el.lane) el.lane.querySelectorAll('li').forEach(li => li.classList.add('is-past'));
+      root.querySelectorAll('.dk-rec.is-linked').forEach(li => li.classList.remove('is-linked'));
+      const before = r.li.previousElementSibling;
+      if (before && before.classList.contains('dk-rec')) before.classList.add('is-linked');
+    }, ms)));
   }
   // under reduced motion the panel is a still: the follow walks its last action through the gates without motion
   function stillFollow() {
@@ -404,6 +437,7 @@
       root.querySelectorAll('.dk-rec.is-followed').forEach(li => li.classList.remove('is-followed'));
       if (a.rec && a.rec.li) a.rec.li.classList.add('is-followed');
       follow.state = 'idle'; follow.act = null; setFollowButton(false); stats();
+      receipt(a, 0);
     }, 6 * STEP_MS));
   }
   if (el.follow) {
@@ -418,7 +452,7 @@
   motion.type = 'button';
   motion.className = 'model-motion';
   motion.dataset.gapMotion = '';
-  motion.textContent = 'Pause model'; // the label itself toggles: no aria-pressed
+  motion.textContent = 'Pause motion'; // the label itself toggles: no aria-pressed (the site's one name for it)
   const head = root.querySelector('.desk-head');
   if (head) head.appendChild(motion);
   function still() {
@@ -459,7 +493,7 @@
   }
   function togglePause() {
     paused = !paused;
-    motion.textContent = paused ? 'Resume model' : 'Pause model';
+    motion.textContent = paused ? 'Resume motion' : 'Pause motion';
     if (paused) stopFrames(); else requestFrame();
     draw(); stats();
   }
@@ -467,24 +501,40 @@
   cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); hover = e.clientX - r.left; if (reduced.matches || paused) draw(); }, { passive: true });
   cv.addEventListener('pointerleave', () => { hover = null; if (reduced.matches || paused) draw(); });
 
-  resize();
+  // The desk sits screens below the fold: it sizes, runs its morning and draws only when it comes within one and a half
+  // screens (as the ledger strip does), so a load spends nothing on it. It re-measures whenever the canvas's box changes,
+  // which also covers a browser that runs this before the stylesheets apply (WebKit: a 300 x 150 canvas until then).
+  let started = false;
   motion.hidden = reduced.matches;
-  if (reduced.matches) still(); else { warm(); draw(); stats(); }
-  window.addEventListener('resize', resize);
-  // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
-  (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
-  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => {
-    visible = e.isIntersecting; last = performance.now();
-    if (visible) requestFrame(); else stopFrames();
-  }, { threshold: 0.05 }).observe(root);
-  else visible = true;
+  function start() {
+    if (started) return;
+    started = true;
+    resize();
+    if (reduced.matches) still(); else { warm(); draw(); stats(); }
+    if ('ResizeObserver' in window) new ResizeObserver(([e]) => {
+      const r = e.contentRect;
+      if (Math.floor(r.width) !== W || Math.floor(r.height) !== H) resize();
+    }).observe(cv);
+    else window.addEventListener('resize', resize);
+    // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
+    (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
+    requestFrame();
+  }
+  if ('IntersectionObserver' in window) {
+    const near = new IntersectionObserver(([e]) => { if (e.isIntersecting) { near.disconnect(); start(); } }, { rootMargin: '150% 0px' });
+    near.observe(root);
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting; last = performance.now();
+      if (visible) { start(); requestFrame(); } else stopFrames();
+    }, { threshold: 0.05 }).observe(root);
+  } else { visible = true; start(); }
   reduced.addEventListener('change', () => {
     stopFrames();
     if (follow.state !== 'idle') stopFollow();
     motion.hidden = reduced.matches;
+    if (!started) return;
     if (reduced.matches) still(); else { warm(); requestFrame(); }
     draw(); stats();
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopFrames(); else requestFrame(); });
-  requestFrame();
 })();

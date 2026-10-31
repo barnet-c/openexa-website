@@ -75,7 +75,7 @@ jobs:
           - shard: pages
             only: pages,no_js,no_webgl,faux_bold,tables_phone,reflow_400,print_home
           - shard: home
-            only: home,interior,resolution,phone,reduced_motion,loader,proof_entrance
+            only: home,interior,resolution,phone,reduced_motion,loader,proof_entrance,overture_net
           - shard: overture
             only: overture_reentry,overture_relay,overture_numeral,overture_tap,overture_resize,overture_ctx_lost
           - shard: overture-phones
@@ -87,7 +87,7 @@ jobs:
           - shard: ledger
             only: ledger_height,ledger_wheel,ledger_time,counters,nav_handoff
           - shard: nav
-            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures
+            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures,deep_links
           - shard: desk-pages
             only: desk,desk_warm_start,desk_phone_follow,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab,trust_tamper
     steps:

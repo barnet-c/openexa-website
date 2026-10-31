@@ -618,3 +618,97 @@ def collection_svg(col):
     if col == "economics": return svg(rings(0), "bp-art bp-rings")
     if col == "markets": return svg(decomposition(rng("markets"), 3))
     return svg(five_stages(rng("ai")))
+
+
+# ---------------------------------------------------------------- the index hero: the library (lab: blog-moment)
+#
+# The blog as one object: an oblong album of plates lying open, one leaf per post (29), in its three collections.
+# Financial markets research (16 leaves) lies on the left, Market structure & economics (8) on the right, and the five
+# AI & agents leaves stand mid-turn between them; the four Gen-AI series leaves are the green ones (the rail's four
+# parts below). The top leaf of each bundle shows that collection's own plate (the plates the phones show at each
+# collection's head). Drawn in 3D and projected orthographically, so every leaf is a parallelogram: one affine matrix
+# places a unit square (the leaf) and the 400 x 225 drawing on it. No data: the counts are the leaves.
+#
+# CSS (blog.css "the library") uses the matrices the generator writes as custom properties: --k (where a turning leaf
+# starts its fall at first paint) and --h (the fanned position while the pointer is on the bundle). The transform
+# attribute is the rest state, so the plate is whole without CSS animation, without JS and under reduced motion.
+
+LIB_YAW, LIB_PITCH, LIB_D = math.radians(20), math.radians(38), 225 / 400   # camera; the leaf's depth : width (16:9)
+LIB_S = 300                                                                    # one leaf width in viewBox units
+
+
+def _lib_proj(x, y, z):
+    """yaw about the vertical, then pitch down; screen y grows downward; returns (sx, sy, depth: larger is farther)"""
+    cy_, sy_ = math.cos(LIB_YAW), math.sin(LIB_YAW)
+    x, z = x * cy_ + z * sy_, -x * sy_ + z * cy_
+    cp, sp = math.cos(LIB_PITCH), math.sin(LIB_PITCH)
+    y, z = y * cp + z * sp, -y * sp + z * cp
+    return x, -y, z
+
+
+def _lib_matrix(a):
+    """the leaf turned by a (radians from upright, + to the right) as (a, b, c, d, e, f) in units of LIB_S, unit square
+    (s: spine -> fore-edge, t: front -> back); and the depth of its centre"""
+    u = _lib_proj(math.sin(a), math.cos(a), 0)
+    v = _lib_proj(0, 0, LIB_D)
+    return (u[0], u[1], v[0], v[1], 0.0, 0.0), (u[2] + v[2]) / 2
+
+
+def _mx(m, ox, oy):
+    a, b, c, d, e, f_ = m
+    return f"matrix({a * LIB_S:.2f},{b * LIB_S:.2f},{c * LIB_S:.2f},{d * LIB_S:.2f},{e * LIB_S + ox:.1f},{f_ * LIB_S + oy:.1f})"
+
+
+def library_svg(labels=("Markets", "AI & agents", "Economics"), counts=(16, 5, 8), lit=4):
+    """the hero plate of the blog index (see the note above). Bundles are links to their collections (tabindex -1: the
+    chips below are the keyboard's way; the svg is aria-hidden)."""
+    deg = math.radians
+    # (key, angles, green leaves, face index, face drawing); angles run from the outermost leaf to the top one
+    bundles = [
+        # jury (blog): the leaves come from the counts, spread over the same arcs, so a new post adds a leaf
+        ("markets", [deg(-88.6 + 4.4 * k / max(counts[0] - 1, 1)) for k in range(counts[0])], set(), counts[0] - 1, decomposition(rng("markets"), 3)),
+        ("ai", [deg(-55 + 34 * k / max(counts[1] - 1, 1)) for k in range(counts[1])], set(range(counts[1] - lit, counts[1])), counts[1] - 1, five_stages(rng("ai"))),
+        ("economics", [deg(88.6 - 4.4 * k / max(counts[2] - 1, 1)) for k in range(counts[2])], set(), counts[2] - 1, rings(0)),
+    ]
+    # fit: the corners of every leaf at rest and fanned (hover), plus room for the lettering underneath
+    pts = []
+    for _, angs, _, _, _ in bundles:
+        for a in angs + [a * 1.16 for a in angs]:
+            m, _ = _lib_matrix(a)
+            for s, t in ((0, 0), (1, 0), (0, 1), (1, 1)):
+                pts.append((m[0] * s + m[2] * t, m[1] * s + m[3] * t))
+    x0, x1 = min(p[0] for p in pts) * LIB_S, max(p[0] for p in pts) * LIB_S
+    y0, y1 = min(p[1] for p in pts) * LIB_S, max(p[1] for p in pts) * LIB_S
+    pad = 6
+    ox, oy = -x0 + pad, -y0 + pad
+    vw = round(x1 - x0 + 2 * pad)
+    face_t = f"scale({1 / W:.6f},{1 / H:.6f}) translate(0,{H}) scale(1,-1)"   # plate y down -> leaf t (front at the bottom)
+    groups = []
+    for bi, (key, angs, green, face_i, face) in enumerate(bundles):
+        leaves = []
+        for i, a in enumerate(angs):
+            m, depth = _lib_matrix(a)
+            style = ""
+            if key == "ai":   # turning leaves: start their fall nearer upright; fan wider under the pointer
+                style = f' style="--k:{_mx(_lib_matrix(a + deg(19))[0], ox, oy)};--h:{_mx(_lib_matrix(a * 1.16)[0], ox, oy)};--i:{len(angs) - 1 - i}"'
+            inner = f'<path class="lf{" lf-g" if i in green else ""}" d="M0 0H1V1H0Z"/>'
+            if i == face_i:
+                mirror = f" translate({W},0) scale(-1,1)" if a < 0 else ""   # read from the fore-edge to the spine on the left
+                inner += f'<g class="lf-face" transform="{face_t}{mirror}">{compact(face)}</g>'
+            leaves.append((depth, f'<g class="lf-w" transform="{_mx(m, ox, oy)}"{style}>{inner}</g>'))
+        leaves.sort(key=lambda t: -t[0])  # far first
+        # the lowest point of the bundle's front edge (the spine is at 0; a leaf's fore-edge corner at its u)
+        lows = [(m_[0] * LIB_S + ox, m_[1] * LIB_S + oy) for m_ in (_lib_matrix(a)[0] for a in angs)]
+        groups.append((key, "".join(h for _, h in leaves), lows))
+    # lettering on one line under the album, as an engraving's: Markets at the left stack's fore-edge, AI & agents at
+    # the spine the leaves turn on, Economics at the right stack's fore-edge
+    spine = (ox, oy)
+    base = max(max(y for _, y in g[2]) for g in groups) + 26
+    at = {"markets": (min(x for x, _ in groups[0][2]), "start"), "ai": (spine[0], "middle"),
+          "economics": (max(x for x, _ in groups[2][2]), "end")}
+    vh = round(base + 6)
+    groups = [f'<a class="lib-b lib-{key}" href="#{key}" tabindex="-1">{body}<text class="lib-t" x="{at[key][0]:.0f}" '
+              f'y="{base:.0f}" text-anchor="{at[key][1]}">{lab.replace("&", "&amp;")}</text></a>'
+              for (key, body, _), lab in zip(groups, labels)]
+    return (f'<svg class="lib-art" viewBox="0 0 {vw} {vh}" fill="none" focusable="false" aria-hidden="true">'
+            + "".join(groups) + "</svg>")

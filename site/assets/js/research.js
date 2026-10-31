@@ -19,7 +19,11 @@
     const cap = $('.rs-cap', plate);
     const part = k => $('.figcap-' + k, cap);
     let current = null, swap = 0;
-    const write = li => ['n', 't', 'd', 'h'].forEach(k => { const el = part(k); if (el) el.textContent = li.dataset['cap' + k.toUpperCase()] || ''; });
+    const write = li => ['n', 't', 'd', 'h'].forEach(k => {
+      const el = part(k); if (!el) return;
+      el.textContent = li.dataset['cap' + k.toUpperCase()] || '';
+      if (k === 'd') el.classList.toggle('is-hung', /^[“‘]/.test(el.textContent)); // an opening quote hangs (research.css)
+    });
     function choose(li) {
       if (!li || li === current || plate.closest('.no-plate')) return; // no plate (no WebGL): no row is marked
       if (current) current.classList.remove('is-current');
@@ -39,28 +43,36 @@
       li.addEventListener('focusin', () => choose(li));
     });
     // while the list scrolls, the note at the reading line (about two-fifths down the screen) is the plate's: always on
-    // touch screens; with a mouse, unless the pointer is on the list (then the row pointed at decides)
+    // touch screens; with a mouse, unless the pointer is on the list (then the row pointed at decides). r1: read from the
+    // rows' positions on each scrolled frame (the last row whose top has passed the line), not from a thin band the rows
+    // cross: a jump (Page Down, End, a link, a hard flick) carried rows past the band in one frame and left the plate on
+    // an earlier note's figure, even after the last note
     const touch = window.matchMedia('(hover: none)');
     let onList = false;
     $$('.rs-col .posts-list').forEach(l => {
       l.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') onList = true; });
       l.addEventListener('pointerleave', () => { onList = false; });
     });
-    if ('IntersectionObserver' in window) {
-      const io = new IntersectionObserver(es => {
-        if (onList && !touch.matches) return;
-        es.forEach(e => { if (e.isIntersecting) choose(e.target); });
-      }, { rootMargin: '-40% 0px -59% 0px' });
-      rows.forEach(li => io.observe(li));
-    }
+    const atLine = () => {
+      if (onList && !touch.matches) return;
+      // a row reached with the keyboard keeps the plate while the page scrolls it into view (else two rows were marked)
+      const f = document.activeElement; if (f && f.closest && f.closest('.posts-list .post')) return;
+      const line = window.innerHeight * 0.4; let li = rows[0];
+      for (const r of rows) { if (r.getBoundingClientRect().top <= line) li = r; else break; }
+      choose(li);
+    };
     // phones: the plate is a strip at the foot of the screen; it comes up once the list is being read (research.css)
     const shelf = plate.closest('.rs-shelf');
-    if (shelf) {
-      let queued = false;
-      const reading = () => { queued = false; shelf.classList.toggle('is-reading', rows[0].getBoundingClientRect().top < window.innerHeight * 0.78); };
-      window.addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(reading); } }, { passive: true });
-      reading();
-    }
+    let queued = false;
+    const reading = () => {
+      queued = false;
+      if (shelf) shelf.classList.toggle('is-reading', rows[0].getBoundingClientRect().top < window.innerHeight * 0.78);
+      atLine();
+    };
+    const queue = () => { if (!queued) { queued = true; requestAnimationFrame(reading); } };
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue, { passive: true });
+    requestAnimationFrame(reading); // first read in the frame, not while the page is still being parsed and laid out
   }
 
   /* ---------- a stage that cannot draw (figure.js 'figure:none'): no caption for a figure that is not there ---------- */
@@ -94,6 +106,6 @@
     const queue = () => { if (!queued) { queued = true; requestAnimationFrame(mark); } };
     window.addEventListener('scroll', queue, { passive: true });
     window.addEventListener('resize', queue, { passive: true });
-    mark();
+    requestAnimationFrame(mark);
   }
 })();

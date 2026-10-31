@@ -48,7 +48,7 @@ PUBLISHED = "2026-09-21"  # the research section went live with v10 (docs/site-h
 NB = " "
 CAPTIONS = {
     "horizon": ("Two runs of dependent steps, one of them gated.",
-                "The red curve decays as p to the power n. The green run has a gate after every step. “An error at step k is caught at the verification gate after step k.”",
+                "The ungated run decays as p to the power n. The gated run has a gate after every step. “An error at step k is caught at the verification gate after step k.”",
                 "Illustrative"),
     "weights": ("One base model, rings of adapters, the record below.",
                 "“One base model, many adapters.” Each record in the chain below holds “the hash of the previous record.”",
@@ -80,6 +80,68 @@ CAPTIONS = {
                    "Illustrative · roadmap"),
 }
 LIBRARY_CAPTION = ("Ten notes as ten leaves; the two research notes are lit.", "Illustrative")
+# v2x lab (research moment): every figure is read as a plate. Its labels pin to points of the formation (figure.js, a
+# stage with data-plate projects data-at, the formation's own x,y,z, onto the screen each frame) and say what each part
+# is, in the words of its caption or its note: no new fact, no number the caption does not already state. Points are
+# figure.js's geometry (FORMS): a formation that moves needs its labels moved here. Sides: r, l (text beside the point,
+# its first line on the rule), t, b (centred above, below), tl, tr, bl, br (above or below, text ending or starting at
+# the point). Flags: "minor" (dropped on a small stage), "minorsub" (its second line, a gloss, dropped on a small stage;
+# never for a hedge), "acc" (the green part), "rej" (a rejection: the only red text). An optional last item (r1) is where
+# the words begin when the point lies inside the drawing: the rule reaches out to it (figure.js data-to, --lead).
+# Path: the span of the formation's own path (FORMS' fifth value, 0..1) the label names; while the pulse walks the
+# path it lights each label it passes, so the plate reads itself out in the note's order. None: the part is not on
+# the path (it is named, never lit).
+def _cols():  # note 09: ten columns, x = -1.08 + c * 0.24 (figure.js sessions), numbered and lit in the record's order
+    return [(f"{c + 1:02d}", None, (round(-1.08 + c * 0.24, 2), -0.76, 0), "b", "" if c in (0, 9) else "minor", (c / 10, (c + 0.9) / 10))
+            for c in range(10)]
+def _loop(n):  # note 03: node n of figure.js lifecycle (a ring of r 0.95, tilted 0.9, from angle 0.5)
+    a = n / 6 * math.tau + 0.5; x, z = math.cos(a) * 0.95, math.sin(a) * 0.95
+    return (round(x, 3), round(z * math.sin(0.9) * 0.5, 3), round(z * math.cos(0.9), 3))
+LABELS = {
+    "horizon": [("verification gate", None, (-0.69, -0.74, 0.14), "b", "", (0.2, 0.2)),
+                ("a gate after every step", None, (0.72, 0.57, 0.14), "t", "acc", (0.81, 0.81)),
+                ("p to the power n", None, (0.92, -0.55, -0.12), "b", "", (0.9, 0.9))],
+    "weights": [("one base model", None, (-0.46, 0.22, 0), "l", "", None, (-0.84, 0.22, 0)),
+                ("adapters", None, (0.705, 0.363, 0), "r", "", (0.0, 0.5)),
+                ("the record", "each holds the previous hash", (0.14, -0.74, 0), "r", "minorsub", (0.55, 0.95))],
+    # the note's own definition of a lifecycle, in its order round the loop
+    "lifecycle": [("signal", None, _loop(0), "r", "", (0.0, 0.03)),
+                  ("decisions, approvals", None, _loop(2), "l", "", (0.18, 0.56)),
+                  ("executes against an external counterparty", None, _loop(4), "b", "minor", (0.74, 0.74)),
+                  ("record", None, _loop(5), "r", "acc", (0.93, 0.93))],
+    "swarm": [("one large agent", None, (-0.72, 0.45, 0), "t", "", None),
+              ("one gate, one job each", None, (0.64, 0.46, 0), "t", "acc", None)],
+    "boundary": [("01–04 decide", None, (-0.8, 0.4, 0.36), "l", "", (0.0, 0.34)),
+                 ("the boundary", None, (-0.92, 0, 0.46), "l", "acc", (0.44, 0.44)),
+                 ("05–08 execute", "deterministic code", (-0.8, -0.4, 0.36), "l", "minorsub", (0.55, 0.89))],
+    "rulebook": [("documents, exceptions", None, (1.05, -0.47, 0), "b", "", (0.08, 0.2)),
+                 ("the post-trained model", None, (0, 0.52, 0), "t", "", (0.96, 0.96))],
+    "council": [("proposals", None, (0.02, 0.95, 0), "r", "", (0.0, 0.1)),
+                ("Execution Council", None, (-0.34, 0.1, 0), "l", "", (0.42, 0.42)),
+                ("approved", None, (0, -0.86, 0), "l", "acc", (0.84, 0.92)),
+                ("rejected, logged", None, (1.15, -0.5, 0), "b", "rej", (0.9, 0.9))],
+    "ledger": [("record 01", None, (-1.0, 0.63, 0), "t", "", (0.0, 0.06)),
+               ("hash of the previous record", None, (0, 0.02, 0.24), "tr", "", (0.43, 0.45)),
+               ("newest", None, (1.0, -0.63, 0), "b", "acc", (0.875, 0.9))],
+    # the floor is read like an axis: its value at the line's left end, the first line on the rule
+    "sessions": [("10\u00a0bps", "floor", (-1.25, 0.4, 0.07), "l", "", None)] + _cols()
+                + [("above the floor", "how far is not published", (0, 0.93, 0), "t", "", None)],
+    "mastercopy": [("master agent", None, (0.31, 0.62, 0), "r", "acc", (0.0, 0.06)),
+                   ("copies", "phase two, on the roadmap", (0.93, -0.18, -0.07), "tl", "", (0.74, 0.74)),
+                   ("one control plane", None, (-1.3, -0.77, 0), "br", "", (0.9, 0.9))],
+    "library": [("01–02 research notes", None, (-0.873, 0.47, 0.095), "t", "acc", (0.0, 0.16)),
+                ("03–10 the series", None, (0.873, 0.47, 0.095), "t", "", (0.19, 0.9))],
+}
+def labels_html(fig):
+    out = []
+    for i, (text, sub, (x, y, z), side, flags, path, *to) in enumerate(LABELS[fig]):
+        cls = "".join(f" fl--{f}" for f in flags.split() if f != "minorsub")
+        gloss = ' class="fl-minor"' if "minorsub" in flags.split() else ""
+        small = f"<small{gloss}>{H.escape(sub, quote=False)}</small>" if sub else ""
+        ph = f' data-ph="{path[0]:g},{path[1]:g}"' if path else ""
+        reach = f' data-to="{to[0][0]:g},{to[0][1]:g},{to[0][2]:g}"' if to else ""
+        out.append(f'<span class="fl{cls}" data-at="{x:g},{y:g},{z:g}"{reach} data-side="{side}"{ph} style="--i:{i}"><span class="fl-t">{H.escape(text, quote=False)}{small}</span></span>')
+    return f'<div class="fig-labels" data-for="{fig}">{"".join(out)}</div>'
 # v2x: notes link to the instruments they describe (PAGES.md §6.4, NL-01..NL-10); targets are relative to research/
 RUN = {
     "horizon": [("Watch the Council verify proposals in the swarm lab", "../index.html#lc01")],
@@ -141,29 +203,43 @@ for _fig, (_t, _d, _h) in CAPTIONS.items():  # every quoted passage of a caption
     for _q in re.findall(r"“(.+?)”", _d):
         assert _q in _text, f"caption {_fig}: “{_q}” is not in Post {_num}"
 
+def typo(t):
+    """typography only, never words (VOICE §7; lab research-editorial): the apostrophe inside a word is ’ (the notes
+    carry 41 straight ones: "fund's", "isn't"); a spaced em dash keeps a no-break space before it, so it never opens a
+    line. Visible text only: <title>, meta, feeds and JSON-LD keep the source characters."""
+    t = re.sub(r"(?<=\w)'(?=\w)", "’", t)
+    t = re.sub(r"\b(Lifecycle|Day|Phase) (\d)", r"\1" + NB + r"\2", t)  # "Lifecycle 01" never breaks across a line
+    return t.replace(" — ", NB + "— ").replace(" -- ", NB + "— ")
 def inline(t):
-    t = H.escape(t, quote=False)
+    t = H.escape(typo(t), quote=False)
     t = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", t)
     t = re.sub(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)", r"<em>\1</em>", t)
-    t = t.replace(" -- ", " — ")
-    return t
+    # a hyphenated compound ("hash-chained", "create-or-redeem", at most 19 letters) is never split at its hyphen across
+    # two lines (research.css .nw); serif text has U+2010 by then and is left to its own balance
+    return re.sub(r"(?<![\w‐-])(?=[\w-]{3,24}(?![\w-]))(\w+(?:-\w+)+)", r'<span class="nw">\1</span>', t)
 def slugify(t): return re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-")
 # v2x (SYSTEM.md §2): Instrument Serif draws U+002D wide ("Post – Training"); its U+2010 is tight. Visible serif text gets
 # U+2010 between letters at source (titles in <title>, meta and JSON-LD keep ASCII)
 def serif(t): return re.sub(r"(?<=[A-Za-z])-(?=[A-Za-z])", "‐", t)
 def us(t):  # US spelling in site-written copy (VOICE §6.3); the blog collection ledes come from build_blog.py's summary
-    return re.sub(r"\blabour\b", "labor", re.sub(r"\bbehaviour\b", "behavior", t))
+    return typo(re.sub(r"\blabour\b", "labor", re.sub(r"\bbehaviour\b", "behavior", t)))
 def kind(post):  # one number per row (PAGES E-5): the reading-order number is the row's; the kind is said in words
     return "Research note" if post["label"] == "Research note" else f"Series, part {int(post['label'].split('·')[1])} of 8"
 def title_html(t):
     """an authored title, words and capitals kept (E-4): the two research notes' 'A Research Note on …' is set as the
     title's second line, smaller, so no title runs past three lines"""
     m = re.match(r"^(.+?\.) (A Research Note on .+)$", t)
-    return f'{inline(serif(m.group(1)))} <span class="title-sub">{inline(serif(m.group(2)))}</span>' if m else inline(serif(t))
+    if m: return f'{inline(serif(m.group(1)))} <span class="title-sub">{inline(serif(m.group(2)))}</span>'
+    # lab research-editorial: a series title is a short head and a longer sentence ("Lifecycle 01. What Ten Sessions
+    # on Real Markets Taught Us"). Each part is its own span, so a line can break at the sense break, never inside
+    # "Lifecycle 01. What" (research.css decides where the break is taken); the words and the text run are unchanged
+    m = re.match(r"^(.+\.) ([A-Z].+)$", t)
+    return f'<span class="t-head">{inline(serif(m.group(1)))}</span> <span class="t-rest">{inline(serif(m.group(2)))}</span>' if m else inline(serif(t))
+def hung(d): return " is-hung" if d[:1] in "“‘" else ""  # a caption that opens on a quote hangs it in the margin (research.css)
 def cap_html(fig, n, cls="figcap"):
     t, d, h = CAPTIONS[fig]
     return (f'<p class="{cls}"><span class="figcap-n">Fig.{NB}{n}</span><span class="figcap-t">{H.escape(t, quote=False)}</span>'
-            f'<span class="figcap-d">{H.escape(d, quote=False)}</span><span class="figcap-h">{H.escape(h, quote=False)}</span></p>')
+            f'<span class="figcap-d{hung(d)}">{H.escape(d, quote=False)}</span><span class="figcap-h">{H.escape(h, quote=False)}</span></p>')
 
 # ---------------- templates from the live homepage ----------------
 index_html = read(os.path.join(ROOT, "index.html"))
@@ -184,8 +260,8 @@ HEAD_LINKS = '''  <link rel="apple-touch-icon" href="{p}assets/img/apple-touch-i
   <link rel="preload" href="{p}assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{p}assets/css/site.css">
   <link rel="stylesheet" href="{p}assets/css/research.css">'''
-ARROW = '<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg>'
-OUTB = '<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"/></svg>'
+ARROW = '<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg>'
+OUTB = '<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M5 11L11 5M6 5h5v5"/></svg>'
 SCHOLAR = "https://scholar.google.com/citations?user=P40aOHIAAAAJ"
 BLOG = json.load(open(os.path.join(str(DATA), "blog_summary.json"), encoding="utf-8"))  # written by build_blog.py
 
@@ -225,14 +301,15 @@ for i, post in enumerate(ordered):
 
 def pager_card(p, k, cls=""):
     return (f"<a class='pager-card{cls}' href='{os.path.basename(p['file'])}'><span class='k'>{k}</span>"
-            f"<h3>{inline(serif(p['title']))}</h3><p>{inline(p['short'])}</p></a>")
+            f"<h3>{title_html(p['title'])}</h3><p>{inline(p['short'])}</p></a>")
 
 for i, post in enumerate(ordered):
     prev = ordered[i - 1] if i else None
     nxt = ordered[i + 1] if i + 1 < len(ordered) else None
     nav, foot = chrome("../", "research")
     heads = [(slugify(t), t) for k, t in post["blocks"] if k == "h"]
-    toc = "".join(f'<li><a href="#{a}">{inline(t)}</a></li>' for a, t in heads)
+    # the link is a grid (numeral, words): the words are one span, so a no-break compound inside them is not a grid item
+    toc = "".join(f'<li><a href="#{a}"><span>{inline(t)}</span></a></li>' for a, t in heads)
     body = []
     first_p = True
     for k, t in post["blocks"]:
@@ -263,12 +340,12 @@ for i, post in enumerate(ordered):
 {nav}
   <main id="main">
     <section class="page-hero page-hero--dark is-dark grain article-hero">
-      <div class="figure-stage article-figure" data-figure="{post['fig']}"{stage_data(post['fig'])} data-spin="0.10" aria-hidden="true"><canvas></canvas></div>
+      <div class="figure-stage article-figure" data-figure="{post['fig']}"{stage_data(post['fig'])} data-spin="0.10" data-plate data-rest="2.5" aria-hidden="true"><canvas></canvas>{labels_html(post['fig'])}</div>
       <div class="container">
         <div class="article-hero-grid">
           <div>
-            <div class="eyebrow" data-reveal>Research · Note {n} of {len(ordered):02d} · {H.escape(kind(post))}</div>
-            <h1 class="display-1 article-title{' article-title--long' if long_title else ''}" data-reveal data-split style="--d:60ms">{title_html(title)}</h1>
+            <div class="eyebrow" data-reveal><span><span class="nw">Research · Note{NB}{n} of{NB}{len(ordered):02d} ·</span> <span class="nw">{H.escape(kind(post))}</span></span></div>
+            <h1 class="display-1 article-title{' article-title--long' if long_title else ''}{' article-title--split' if 't-head' in title_html(title) else ''}" data-reveal data-split style="--d:60ms">{title_html(title)}</h1>
             <p class="lede mt-3" data-reveal style="--d:120ms">{inline(dek)}</p>
             <div class="article-meta" data-reveal style="--d:180ms"><span>Founder’s notes</span><span>{post['minutes']}{NB}min read</span></div>
           </div>
@@ -289,7 +366,7 @@ for i, post in enumerate(ordered):
           </nav>
           <article class="col-7 offset-5 article">
             {"".join(body)}
-            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder’s notes · {n} / {len(ordered):02d}</span></div>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder’s notes · {n}{NB}/{NB}{len(ordered):02d}</span></div>
             <div class="note-run"><p class="note-k">See it run</p><ul>{run}</ul></div>
             <div class="note-disc"><p class="note-k">Series disclosure</p><p>{H.escape(SERIES_DISCLOSURE, quote=False)}</p><p><a href="#disclosures">See the disclosures.</a></p></div>
           </article>
@@ -327,7 +404,6 @@ for post in ordered:
             <a href="{post['file']}">
               <span class="post-n">{post['order']:02d}</span>
               <div class="post-main">
-                <div class="post-kind">{H.escape(kind(post))}</div>
                 <h3>{title_html(post['title'])}</h3>
                 <p>{inline(post['short'])}</p>
               </div>
@@ -356,7 +432,7 @@ index_page = f'''<!DOCTYPE html>
 {nav}
   <main id="main">
     <section class="page-hero page-hero--dark is-dark grain research-hero">
-      <div class="figure-stage research-figure" id="research-library" data-figure="library" data-spin="0.08" aria-hidden="true"><canvas></canvas></div>
+      <div class="figure-stage research-figure" id="research-library" data-figure="library" data-spin="0.08" data-plate data-rest="2.5" aria-hidden="true"><canvas></canvas>{labels_html("library")}</div>
       <div class="container">
         <div class="grid">
           <div class="col-7">
@@ -365,8 +441,8 @@ index_page = f'''<!DOCTYPE html>
             <p class="lede mt-3" data-reveal style="--d:120ms">Ten notes on why high-stakes work should be run by thousands of narrow agents behind one deterministic boundary, from the mathematics of compounding error to what ten sessions on real capital taught us.</p>
             <div class="article-meta" data-reveal style="--d:180ms"><span>{len(ordered)} notes</span><span>{sum(p['minutes'] for p in ordered)}{NB}min in total</span><span>Two research notes · an eight-part series</span></div>
           </div>
+          <p class="figcap rs-herocap"><span class="figcap-t">{LIBRARY_CAPTION[0]}</span><span class="figcap-h">{LIBRARY_CAPTION[1]}</span></p>
         </div>
-        <p class="figcap rs-herocap"><span class="figcap-t">{LIBRARY_CAPTION[0]}</span><span class="figcap-h">{LIBRARY_CAPTION[1]}</span></p>
       </div>
     </section>
 
@@ -403,7 +479,7 @@ index_page = f'''<!DOCTYPE html>
       <div class="rs-rail" aria-hidden="true">
         <div class="container rs-rail-in">
           <figure class="rs-plate">
-            <div class="rs-stage is-dark grain"><div class="figure-stage" id="research-figure" data-figure="{ordered[0]['fig']}" data-spin="0.07" data-rest="5"><canvas></canvas></div></div>
+            <div class="rs-stage is-dark grain"><div class="figure-stage" id="research-figure" data-figure="{ordered[0]['fig']}" data-spin="0.07" data-rest="2.5" data-plate><canvas></canvas>{"".join(labels_html(p['fig']) for p in ordered)}</div></div>
             <figcaption class="rs-caption">
               <p class="rs-hint"><span class="rs-hint-p">Point at a note and the figure becomes its idea.</span><span class="rs-hint-t">Scroll the list and the figure follows the note you are on.</span></p>
               {cap_html(ordered[0]['fig'], '01', 'figcap rs-cap')}
@@ -473,8 +549,13 @@ atom(os.path.join(OUT_DIR, "feed.xml"), "OpenEXA Research", "Research notes and 
             "summary": p["short"]} for p in ordered])
 print("wrote research/feed.xml")
 
-# homepage teaser cards (three featured) → printed for the caller to insert
+# homepage teaser cards (three featured) → written for the caller to insert, in Home §07's own form (home r1): the kind
+# as kind() says it, the research notes' "A Research Note on …" as the title's second line, and Home's .nowrap (the
+# research pages' .nw is scoped to them)
 featured = [ordered[0], ordered[1], ordered[2]]
-cards = "\n".join(f'''          <a class="card research-card" href="{p['file']}" data-figure-target="{p['fig']}"><div class="n"><span>{p['order']:02d}</span><span>{H.escape(p['label'])}</span></div><h3 class="h4">{inline(p['title'])}</h3><p>{inline(p['short'])}</p><span class="link-arrow mt-3">{p['minutes']} min read {ARROW}</span></a>''' for p in featured)
+def card_title(t):
+    m = re.match(r"^(.+?\.) (A Research Note on .+)$", t)
+    return f'{H.escape(serif(m.group(1)), quote=False)} <span class="title-sub">{H.escape(serif(m.group(2)), quote=False)}</span>' if m else H.escape(serif(t), quote=False)
+cards = "\n".join(f'''          <a class="card research-card" href="{p['file']}"><div class="n"><span>{p['order']:02d}</span><span>{H.escape(kind(p))}</span></div><h3 class="h4">{card_title(p['title'])}</h3><p>{inline(p['short']).replace('class="nw"', 'class="nowrap"')}</p><span class="link-arrow mt-3">{p['minutes']} min read {ARROW}</span></a>''' for p in featured)
 write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "research_cards.html"), cards)
 print("featured cards written")

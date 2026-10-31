@@ -19,6 +19,8 @@
   [data-page="company"] .company-sculpture { aspect-ratio: 1.25; }
 }
 [data-page="company"] .company-sculpture .figure-stage.no-figure::after { display: none; }
+[data-page="company"] .eyebrow, [data-page="access"] .eyebrow { align-items: baseline; }
+[data-page="company"] .eyebrow::before, [data-page="access"] .eyebrow::before { align-self: flex-start; margin-top: calc(.5lh - .5px); } /* centred on the first line, also when the kicker wraps (phones) */
 .plate-still { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 1s var(--ease); }
 .figure-stage.figure-ready ~ .plate-still { opacity: 0; }
 .plate-still pattern circle { fill: rgba(245, 242, 236, .62); }
@@ -27,9 +29,19 @@
 .plate-still .ps-o--paper { stroke: rgba(245, 242, 236, .55); }
 .plate-still .ps-o--khaki { stroke: var(--khaki); opacity: .7; }
 .plate-still .ps-o--green { stroke: var(--signal-bright); stroke-width: 2.6; }
-.company-readout { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px 16px; margin: 14px 0 0; font-family: var(--mono); font-size: var(--mono-xs); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); }
+/* captions, the site's one grammar (Home's, ADOPT-company A11): the register mark (Plate, Fig. n.n) hangs in the margin
+   in mono, the title is text (Inter), the hedge is data (mono) flush right or on its own line. The separator stays for
+   assistive tech (.fc-d). */
+.company-readout { margin: 14px 0 0; }
+[data-page="company"] :is(.figure-cap, .company-readout) { --fc-ind: 4.75rem; --fc-lh: 1.25rem; position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 40px; padding-left: var(--fc-ind); font: 400 .84rem/var(--fc-lh) var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
+[data-page="company"] :is(.figure-cap, .company-readout) .fc-n { display: inline-block; width: var(--fc-ind); margin-left: calc(-1 * var(--fc-ind)); font: 500 .6875rem/var(--fc-lh) var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg); white-space: nowrap; }
+[data-page="company"] :is(.figure-cap, .company-readout) .fc-d { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+[data-page="company"] :is(.figure-cap, .company-readout) .fc-t { min-width: 0; text-wrap: pretty; }
+[data-page="company"] :is(.figure-cap, .company-readout) .fc-h { font: 400 .6875rem/1.55 var(--mono); letter-spacing: .04em; color: var(--fg-3); text-align: right; text-wrap: pretty; }
+@media (max-width: 960px) { [data-page="company"] :is(.figure-cap, .company-readout) { flex-direction: column; align-items: flex-start; gap: 3px; } [data-page="company"] :is(.figure-cap, .company-readout) .fc-h { text-align: left; } }
+@media (max-width: 600px) { [data-page="company"] :is(.figure-cap, .company-readout) { padding-left: 0; } [data-page="company"] :is(.figure-cap, .company-readout) .fc-n { width: auto; margin: 0 .75em 0 0; } }
 [data-page="company"] .company-modes { margin-top: 18px; }
-[data-page="company"] .company-mode-copy { max-width: 60ch; }
+[data-page="company"] .company-mode-copy { max-width: 52ch; min-height: 4.8em; text-wrap: pretty; }
 @media (scripting: none) { .js-only { display: none; } [data-page="company"] .company-mode-copy { margin-top: 22px; } }
 .arr--down { transform: rotate(90deg); }
 @media (hover: hover) { .btn:hover .arr--down { transform: rotate(90deg) translateX(3px); } }
@@ -39,13 +51,18 @@
   [data-page="company"] .company-hero h1 { font-size: clamp(3rem, 7.4vw, 3.9rem); }
   [data-page="company"] .company-sculpture { margin-top: 0; }
 }
+@media (max-width: 960px) { [data-page="company"] .company-hero .hero-cta { gap: 10px; } [data-page="company"] .company-hero .hero-cta .btn { padding-left: 1.1em; padding-right: 1.1em; } }
 @media (max-width: 600px) {
   [data-page="company"] .company-hero { padding-bottom: 44px; }
   [data-page="company"] .company-plate { margin-top: 8px; }
-  [data-page="company"] .company-hero .hero-cta { gap: 10px; margin-top: 28px; }
-  [data-page="company"] .company-hero .hero-cta .btn { padding-left: 1.1em; padding-right: 1.1em; }
+  [data-page="company"] .company-hero .hero-cta { margin-top: 28px; }
   [data-page="company"] .team-head .body-lg { font-size: 1rem; }
 }
+
+/* ---------------------------------------------------------------- Company: paired heads (A8) */
+/* a heading and the paragraph beside it start on the same baseline (chapter heads on one baseline: site.css since v2x
+   r1, the system lab's move 4; Company's copy removed by the integrator) */
+@media (min-width: 601px) { [data-page="company"] .team-head, [data-page="company"] #lifecycles .grid { align-items: first baseline; } }
 
 /* ---------------------------------------------------------------- Company §01: the manifesto */
 /* Written once as it arrives (company.js), then still. Without JavaScript the words are ink and the three <em> green. */
@@ -53,7 +70,8 @@
 [data-page="company"] .manifesto em { color: var(--accent); }
 [data-page="company"] .manifesto .mw { transition: color .25s var(--ease); }
 [data-page="company"] .mission-note { align-self: start; padding-top: .9rem; }
-[data-page="company"] .mission-note p { color: var(--fg-2); max-width: 40ch; }
+@media (min-width: 961px) { [data-page="company"] .mission-grid { align-items: first baseline; } [data-page="company"] .mission-note { align-self: auto; padding-top: 0; } }
+[data-page="company"] .mission-note p { color: var(--fg-2); max-width: 40ch; text-wrap: pretty; }
 @media (min-width: 601px) and (max-width: 960px) {
   [data-page="company"] .mission-note { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: 28px; align-items: start; }
   [data-page="company"] .mission-note .eyebrow { grid-row: span 2; }
@@ -75,7 +93,8 @@
 [data-page="company"] .timeline .k { display: flex; gap: 12px; margin-bottom: 14px; }
 [data-page="company"] .timeline .k span:first-child { color: var(--fg); }
 [data-page="company"] .timeline .now .k span:last-child { color: var(--signal-ink); }
-[data-page="company"] .timeline p { max-width: 34ch; }
+[data-page="company"] .timeline p { max-width: 34ch; text-wrap: pretty; }
+[data-page="company"] .timeline h3 { text-wrap: balance; }
 @media (min-width: 601px) and (max-width: 960px) { [data-page="company"] .timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 44px; } }
 @media (max-width: 860px) { [data-page="company"] .timeline .step { padding-left: 0; } [data-page="company"] .timeline .step::before { top: -6px; } [data-page="company"] .timeline .step.now::before { top: -7px; } }
 @media (max-width: 600px) { [data-page="company"] .timeline { grid-template-columns: 1fr; row-gap: 26px; } [data-page="company"] .timeline .step { padding-top: 22px; } [data-page="company"] .timeline .k { margin-bottom: 10px; } [data-page="company"] .timeline p { max-width: none; margin-top: 8px; } }
@@ -87,56 +106,86 @@
    hover; the hover and focus state is the green ring. */
 [data-page="company"] .team-head { margin-bottom: 0; }
 [data-page="company"] .crew-sub { border-top: 0; padding-top: 0; margin: clamp(56px, 7vw, 96px) 0 18px; }
+[data-page="company"] .crew-sub p { text-wrap: pretty; }
 [data-page="company"] .crew-sub--team { margin-top: clamp(48px, 6vw, 80px); }
 [data-page="company"] .crew { display: block; border: 0; border-top: 1px solid var(--line-strong); }
 [data-page="company"] .crew > li { display: grid; grid-template-columns: 64px 120px minmax(0, 3fr) minmax(0, 6fr); grid-template-areas: "n ph who what"; column-gap: clamp(18px, 2.4vw, 36px); align-items: start; padding: 30px 0; border: 0; border-bottom: 1px solid var(--line); background: none; overflow: visible; }
 [data-page="company"] .crew > li::after { display: none; }
-[data-page="company"] .crew .n { grid-area: n; padding-top: 6px; color: var(--fg-3); }
-[data-page="company"] .crew .ph { grid-area: ph; width: 120px; height: 120px; margin: 0; }
+[data-page="company"] .crew .n { grid-area: n; color: var(--fg-3); }
+[data-page="company"] .crew .ph { grid-area: ph; width: 96px; height: 96px; margin: 0; }
 [data-page="company"] .crew .ph img { filter: none; transform: none; transition: none; will-change: auto; }
-[data-page="company"] .crew .ph::before { opacity: .55; transition: none; }
+[data-page="company"] .crew .ph::before { opacity: .3; transition: none; } /* r1: the dot field quieter, so a photo cut beside the head (John) does not read as a different background */
 [data-page="company"] .crew .ph.grain::after { opacity: .14; }
-[data-page="company"] .crew > li:focus-within .ph img, [data-page="company"] .crew > li:focus-within .ph::before { filter: none; transform: none; opacity: .55; }
+[data-page="company"] .crew > li:focus-within .ph img, [data-page="company"] .crew > li:focus-within .ph::before { filter: none; transform: none; opacity: .3; }
 /* hover and focus: a green ring drawn outside the portrait, a paper gap between (the ring of site.css sat under the clip) */
 [data-page="company"] .crew .ph { transition: box-shadow .35s var(--ease); }
 [data-page="company"] .crew .ph .ring { display: none; }
 [data-page="company"] .crew > li:focus-within .ph { box-shadow: inset 0 0 0 1px var(--line), 0 0 0 4px var(--bg), 0 0 0 5px var(--accent); }
 [data-page="company"] .crew .who { grid-area: who; min-width: 0; }
 [data-page="company"] .crew h3 { margin: 0; font-size: clamp(1.7rem, 2.3vw, 2.2rem); line-height: 1.05; text-wrap: balance; }
-[data-page="company"] .crew .role { margin-top: 12px; line-height: 1.5; }
+/* the kicker is a person's title, not data: Inter, in the text colour (green is the site's "live, settled" mark) */
+[data-page="company"] .crew .role { margin-top: 8px; font-family: var(--sans); font-size: .875rem; line-height: 1.45; letter-spacing: 0; text-transform: none; color: var(--fg-2); }
 /* the control and the links share one line; an open bio takes the full width and the links follow it, so the control
    that was pressed does not move */
-[data-page="company"] .crew .what { grid-area: what; min-width: 0; padding-top: 4px; display: flex; flex-wrap: wrap; align-items: center; column-gap: 26px; }
-[data-page="company"] .crew .what > p { flex: 0 0 100%; margin: 0; font-size: 1rem; line-height: 1.55; max-width: 54ch; color: var(--fg-2); }
-[data-page="company"] .crew .links { margin-top: 12px; padding-top: 0; gap: 4px 22px; }
+[data-page="company"] .crew .what { grid-area: what; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 24px; }
+[data-page="company"] .crew .what > p { flex: 0 0 100%; margin: 0; font-size: 1rem; line-height: 1.55; max-width: 54ch; color: var(--fg-2); text-wrap: pretty; }
+/* the bio control and the links: Inter, underlined in a hairline that darkens on hover (they were mono capitals) */
+[data-page="company"] .crew .links { margin-top: 10px; padding-top: 0; gap: 4px 20px; font-family: var(--sans); font-size: .875rem; letter-spacing: 0; }
+[data-page="company"] .crew .links a { min-height: 32px; text-underline-offset: 5px; }
 [data-page="company"] .crew-more[open] { flex-basis: 100%; }
 [data-page="company"] .crew .links .ext, [data-page="company"] .crew .links .int { text-decoration: none; display: inline-block; }
-[data-page="company"] .crew-more { margin-top: 12px; min-width: 0; }
-[data-page="company"] .crew-more summary { min-height: 32px; }
+[data-page="company"] .crew-more { margin-top: 10px; min-width: 0; }
+[data-page="company"] .crew-more summary { min-height: 32px; gap: 8px; padding: 0; border-bottom: 0; font-family: var(--sans); font-size: .875rem; letter-spacing: 0; text-transform: none; color: var(--fg); }
+[data-page="company"] .crew-more summary > span:not(.sr-only) { text-decoration: underline 1px var(--line-strong); text-underline-offset: 5px; transition: text-decoration-color .3s var(--ease); }
+[data-page="company"] .crew-more summary::after { color: var(--fg-3); }
+[data-page="company"] .crew-more summary:focus-visible > span, [data-page="company"] .crew-more[open] summary > span { text-decoration-color: currentColor; }
+[data-page="company"] .crew-more[open] summary { color: var(--fg); }
 [data-page="company"] .crew-more .when-open { display: none; }
 [data-page="company"] .crew-more[open] .when-shut { display: none; }
 [data-page="company"] .crew-more[open] .when-open { display: inline; }
 [data-page="company"] .crew-more[open] summary::after { transform: rotate(45deg); }
 [data-page="company"] .crew-bio { padding-top: 18px; }
-[data-page="company"] .crew-bio p { font-size: .92rem; max-width: 64ch; }
+[data-page="company"] .crew-bio p { font-size: .92rem; max-width: 64ch; text-wrap: pretty; }
 /* the advisors: the same row, a step smaller */
 [data-page="company"] .crew--advisors > li { padding: 24px 0; }
-[data-page="company"] .crew--advisors .ph { width: 84px; height: 84px; }
 [data-page="company"] .crew--advisors h3 { font-size: clamp(1.45rem, 1.8vw, 1.7rem); }
 [data-page="company"] .crew--advisors .role { margin-top: 10px; }
-[data-page="company"] .crew-stats { margin-top: 28px; }
-[data-page="company"] .crew-stats b { font-size: clamp(1.9rem, 2.5vw, 2.5rem); }
+/* the three figures: a ruled summary, figures in the serif (lining, tabular), their labels in Inter on one line (they were
+   mono capitals wrapped under the figure) */
+[data-page="company"] .crew-stats { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 0; margin-top: 32px; padding-top: 0; border-top: 1px solid var(--line-strong); }
+[data-page="company"] .crew-stats > div { padding: 18px 24px 0; border-left: 1px solid var(--line); }
+[data-page="company"] .crew-stats > div:first-child { padding-left: 0; border-left: 0; }
+[data-page="company"] .crew-stats b { font-size: clamp(2rem, 2.6vw, 2.5rem); font-variant-numeric: lining-nums tabular-nums; }
+[data-page="company"] .crew-stats span { max-width: none; margin-top: 10px; font-family: var(--sans); font-size: .8125rem; line-height: 1.35; letter-spacing: 0; text-transform: none; color: var(--fg-2); }
+@media (max-width: 960px) { /* tablets and phones: the three figures' cells close up so no label wraps */
+  [data-page="company"] .crew-stats > div { padding-left: 16px; padding-right: 16px; }
+  [data-page="company"] .crew-stats > div:first-child { padding-left: 0; }
+  [data-page="company"] .crew-stats span { font-size: .75rem; }
+}
 @media (hover: hover) {
+  [data-page="company"] .crew-more summary:hover > span { text-decoration-color: currentColor; }
   [data-page="company"] .crew > li:hover .ph img { filter: none; transform: none; }
-  [data-page="company"] .crew > li:hover .ph::before { transform: none; opacity: .55; }
+  [data-page="company"] .crew > li:hover .ph::before { transform: none; opacity: .3; }
   [data-page="company"] .crew > li:hover .ph { box-shadow: inset 0 0 0 1px var(--line), 0 0 0 4px var(--bg), 0 0 0 5px var(--accent); }
   [data-page="company"] .crew > li:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; text-decoration-color: var(--line-strong); }
 }
+@media screen and (min-width: 1025px) { /* the row on the page's twelve columns: code | portrait (set against the name) | name (on the
+  story's second column) | line and bio (on the column of the paragraph above); code, name and line share one baseline */
+  [data-page="company"] .crew > li, [data-page="company"] .crew-sub { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-areas: none; column-gap: clamp(16px, 2.2vw, 32px); }
+  [data-page="company"] .crew > li { align-items: first baseline; }
+  [data-page="company"] .crew .n { grid-area: 1 / 1 / 2 / 2; }
+  [data-page="company"] .crew .ph { grid-area: 1 / 2 / 2 / 4; justify-self: end; align-self: start; }
+  [data-page="company"] .crew .who { grid-area: 1 / 4 / 2 / 8; }
+  [data-page="company"] .crew .what { grid-area: 1 / 8 / 2 / 13; }
+  [data-page="company"] .crew-sub { align-items: last baseline; }
+  [data-page="company"] .crew-sub-h { grid-column: 1 / span 7; }
+  [data-page="company"] .crew-sub p { grid-column: 8 / span 5; }
+}
 @media (max-width: 1024px) and (min-width: 601px) { /* tablet: the code moves over the name; portrait | name | line */
-  [data-page="company"] .crew > li, [data-page="company"] .crew--advisors > li { grid-template-columns: 96px minmax(0, 1fr) minmax(0, 1.25fr); grid-template-areas: "ph n what" "ph who what"; grid-template-rows: auto 1fr; }
+  [data-page="company"] .crew > li, [data-page="company"] .crew--advisors > li { grid-template-columns: 80px minmax(0, 1fr) minmax(0, 1.25fr); grid-template-areas: "ph n what" "ph who what"; grid-template-rows: auto 1fr; align-items: first baseline; } /* the code and the line's first line share a baseline */
+  [data-page="company"] .crew .ph { align-self: start; }
   [data-page="company"] .crew .n { padding-top: 0; margin-bottom: 8px; }
-  [data-page="company"] .crew .ph { width: 96px; height: 96px; }
-  [data-page="company"] .crew--advisors .ph { width: 72px; height: 72px; }
+  [data-page="company"] .crew .ph { width: 80px; height: 80px; }
 }
 @media (max-width: 600px) { /* phone: a compact row, the bio under it */
   [data-page="company"] .crew > li, [data-page="company"] .crew--advisors > li { grid-template-columns: 64px minmax(0, 1fr); grid-template-areas: "ph n" "ph who" "what what"; grid-template-rows: auto 1fr auto; column-gap: 16px; padding: 22px 0; }
@@ -150,34 +199,125 @@
   [data-page="company"] .crew .links, [data-page="company"] .crew-more { margin-top: 8px; }
   [data-page="company"] .crew .what { column-gap: 20px; }
   [data-page="company"] .crew > li, [data-page="company"] .crew--advisors > li { padding: 18px 0 16px; }
-  [data-page="company"] .crew-stats { flex-wrap: nowrap; gap: 28px; }
   [data-page="company"] .crew-sub { margin-top: 48px; }
   [data-page="company"] .crew-sub--team { margin-top: 40px; }
 }
 
-/* ---------------------------------------------------------------- Company §04: the four constants as one plate */
-/* Quadrants divided by two hairlines (no boxed cards, no decorative hover circle). */
-[data-page="company"] .constants { border: 0; }
-[data-page="company"] .constants > div { background: none; border: 0; padding: clamp(26px, 3vw, 44px) clamp(22px, 3vw, 44px) clamp(30px, 3.4vw, 48px) 0; }
-[data-page="company"] .constants > div:nth-child(even) { padding-left: clamp(22px, 3vw, 44px); padding-right: 0; }
-[data-page="company"] .constants > div:nth-child(odd) { border-right: 1px solid var(--line); }
-[data-page="company"] .constants > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
-[data-page="company"] .constants > div::after { display: none; }
+/* ---------------------------------------------------------------- Company §04: the constants plate */
+/* The section's idea, drawn: one loop of gates that changes with each lifecycle, and the four constants that do not
+   (C-01 the boundary, C-02 agents scoped to their gate, C-03 the stop short of custody, C-04 the ledger). Inline SVG:
+   it paints with the page, reads complete without JavaScript and holds still under reduced motion. company.js runs it:
+   a proposal walks the gates above the boundary (dashed: agents estimate), crosses it, walks the gates below (solid:
+   code executes) and is written to the ledger once the counterparty confirms; one in four is rejected at the Council
+   and written too; every second pass the loop takes another shape and nothing else moves. From 961 px the constants
+   are one column and the plate stays beside them; the constant being read (or pointed at) is marked on the plate. */
+#constants { overflow: clip; }
+.kplate { position: relative; margin: 0; }
+.kplate-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.kplate .kl { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; fill: var(--fg-3); }
+.kplate .kl--code { fill: var(--fg); letter-spacing: .1em; }
+.kplate .k-state { fill: var(--fg-2); }
+.kplate .k-loop { fill: none; stroke: var(--fg-3); stroke-width: 1.2; }
+.kplate .k-loop--up { stroke-dasharray: 3 4; }
+.kplate .k-gate { fill: var(--bg); stroke: var(--fg-2); stroke-width: 1.2; }
+.kplate .k-gate--up > circle { fill: var(--bg); stroke: inherit; }
+.kplate .k-agent { fill: var(--fg-2); stroke: none; }
+.kplate .k-council circle { fill: none; stroke: var(--fg-2); stroke-width: 1; stroke-dasharray: 2 2; }
+.kplate .k-bnd { stroke: var(--accent); stroke-width: 1.2; }
+.kplate .k-box { fill: none; stroke: var(--fg-3); stroke-width: 1; }
+.kplate .k-stop { fill: none; stroke: var(--fg-3); stroke-width: 1.2; stroke-dasharray: 3 3; }
+.kplate .k-bar { fill: none; stroke: var(--fg-2); stroke-width: 1.5; }
+.kplate .k-strip { stroke: var(--line-strong); stroke-width: 1; }
+.kplate .k-lead { fill: none; stroke: var(--line-strong); stroke-width: 1; }
+.kplate .k-rec { fill: var(--fg-2); }
+.kplate .k-rec--rej { fill: var(--bg); stroke: var(--reject); stroke-width: 1.2; }
+.kplate .k-rec--new { fill: var(--accent); }
+.kplate .k-tok { fill: var(--fg); stroke: var(--bg); stroke-width: 2; }
+.kplate .k-knock { fill: var(--bg); }
+.kplate .kl--box { fill: var(--fg-3); }
+.kplate .k-tok.is-ok { fill: var(--accent); }
+.kplate .k-tok.is-rej { fill: var(--reject); }
+.kplate .k-spur { fill: none; stroke: var(--reject); stroke-width: 1.2; stroke-dasharray: 2 3; }
+/* a moment of the walk: the gate the proposal stands on, the boundary as it crosses, the leader as it is written */
+.kplate .is-hit { stroke: var(--accent); }
+.kplate .k-gate--up.is-hit > circle { stroke: var(--accent); }
+.kplate .k-gate--dn.is-hit { fill: var(--accent); stroke: var(--accent); }
+.kplate .k-gate.is-no > circle { stroke: var(--reject); }
+.kplate .k-lead.is-hit { stroke: var(--accent); }
+/* the constant being read: the rest of the plate steps back */
+.kplate :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate text.k-c2, .kplate .k-loop, .kplate .k-council > circle { transition: opacity .35s var(--ease); }
+.kplate[data-on] :where(.k-c1, .k-c2, .k-c3, .k-c4) > :where(:not(text, .k-knock)) { opacity: .3; }
+.kplate[data-on] :where(.k-c1, .k-c3, .k-c4) > text, .kplate[data-on] text.k-c2 { opacity: .6; }
+.kplate[data-on] .k-loop, .kplate[data-on] .k-council > circle { opacity: .55; }
+.kplate[data-on="c1"] .k-c1 > *, .kplate[data-on="c2"] .k-c2 > *, .kplate[data-on="c2"] text.k-c2, .kplate[data-on="c3"] .k-c3 > *, .kplate[data-on="c4"] .k-c4 > * { opacity: 1; }
+.kplate[data-on="c1"] .k-c1 .kl--code, .kplate[data-on="c2"] .kl--code.k-c2, .kplate[data-on="c3"] .k-c3 .kl--code, .kplate[data-on="c4"] .k-c4 .kl--code { fill: var(--accent); }
+.kplate .figure-cap { margin-top: 18px; padding-top: 10px; row-gap: 4px; border-top: 1px solid var(--line); }
+.kplate > .figure-motion { top: -6px; right: 0; }
 [data-page="company"] .constants .n span:first-child { color: var(--fg); }
+[data-page="company"] .constants > div::after { display: none; }
+@media (min-width: 961px) {
+  [data-page="company"] .k-grid { align-items: start; }
+  [data-page="company"] .k-side { grid-column: 6 / -1; position: sticky; top: calc(var(--nav-h) + 40px); padding: 6px 0 0 clamp(16px, 2vw, 32px); }
+  [data-page="company"] .k-text { grid-column: 1 / span 5; }
+  /* one column of constants, a rule between them; the one being read carries a green rule */
+  [data-page="company"] .constants { display: block; border: 0; margin-top: clamp(40px, 5vw, 72px); }
+  [data-page="company"] .constants > div { background: none; border: 0; border-top: 1px solid var(--line); padding: 26px 0 34px; transition: border-color .35s var(--ease); }
+  [data-page="company"] .constants > div.is-on { border-top-color: var(--accent); }
+  [data-page="company"] .constants > div.is-on .n span:first-child { color: var(--accent); }
+  [data-page="company"] .constants .n { margin-bottom: 18px; }
+  [data-page="company"] .constants h3 { font-size: clamp(1.5rem, 2vw, 1.9rem); }
+  [data-page="company"] .constants p { margin-top: 12px; }
+}
+@media (min-width: 961px) and (max-width: 1279px) { .kplate .kl { font-size: 14px; } }
+@media (max-width: 960px) {
+  [data-page="company"] .k-grid { display: flex; flex-direction: column; }
+  [data-page="company"] .k-text { display: contents; }
+  [data-page="company"] .k-text > .body-lg { order: 2; }
+  [data-page="company"] .k-side { order: 3; margin-top: clamp(32px, 5vw, 48px); }
+  [data-page="company"] .k-text > .constants { order: 4; margin-top: clamp(40px, 6vw, 56px); }
+  [data-page="company"] .k-text > .mt-4 { order: 5; }
+  .kplate .kl { font-size: 13px; }
+  /* tablet: the quadrants (two hairlines); phone: four blocks with rules between */
+  [data-page="company"] .constants { border: 0; }
+  [data-page="company"] .constants > div { background: none; border: 0; padding: clamp(26px, 3vw, 44px) clamp(22px, 3vw, 44px) clamp(30px, 3.4vw, 48px) 0; }
+  [data-page="company"] .constants > div:nth-child(even) { padding-left: clamp(22px, 3vw, 44px); padding-right: 0; }
+  [data-page="company"] .constants > div:nth-child(odd) { border-right: 1px solid var(--line); }
+  [data-page="company"] .constants > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 600px) { /* only the codes on the plate; the words are the constants just below */
+  .kplate .kl--word { display: none; }
+  .kplate .kl { font-size: 24px; }
+  .kplate .kl--box { font-size: 19px; }
+  .kplate { padding-top: 34px; } /* Pause motion in its own band above the plate */
+  .kplate > .figure-motion { top: -6px; }
+  .kplate .k-knock { width: 84px; }
+}
+[data-page="company"] .constants p { text-wrap: pretty; }
 @media (max-width: 760px) {
-  [data-page="company"] .constants > div, [data-page="company"] .constants > div:nth-child(n) { padding: 28px 0; border-right: 0; border-bottom: 1px solid var(--line); }
+  [data-page="company"] .constants > div, [data-page="company"] .constants > div:nth-child(n) { padding: 24px 0 26px; border-right: 0; border-bottom: 1px solid var(--line); }
   [data-page="company"] .constants > div:nth-child(n):last-child { border-bottom: 0; }
-  [data-page="company"] .constants > div, [data-page="company"] .constants > div:nth-child(n) { padding: 24px 0 26px; }
   [data-page="company"] .constants .n { margin-bottom: 14px; }
   [data-page="company"] .constants p { margin-top: 12px; }
 }
+@media (prefers-reduced-motion: reduce) { .kplate :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate text.k-c2, .kplate .k-loop, .kplate .k-council > circle, [data-page="company"] .constants > div { transition: none; } }
 
 /* ---------------------------------------------------------------- Company §05: status in words, then where to read on */
-[data-page="company"] .class-row > li { justify-content: flex-start; }
+[data-page="company"] .class-row { border-left: 0; border-top-color: var(--line-strong); }
+[data-page="company"] .class-row > li { justify-content: flex-start; background: none; }
+[data-page="company"] .class-row > li:last-child { border-right: 0; }
+@media (min-width: 961px) { [data-page="company"] .class-row > li:first-child { padding-left: 0; } }
+@media (min-width: 601px) and (max-width: 960px) { [data-page="company"] .class-row > li:nth-child(3n) { border-right: 0; } [data-page="company"] .class-row > li:nth-child(3n + 1) { padding-left: 0; } }
 [data-page="company"] .class-row small { display: block; margin-top: auto; padding-top: 10px; font-family: var(--mono); font-size: var(--mono-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
 [data-page="company"] .class-row .cr-live small { color: var(--signal-ink); }
+@media (max-width: 600px) {
+  [data-page="company"] .class-row { grid-template-columns: minmax(0, 1fr); }
+  [data-page="company"] .class-row > li { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 14px; min-height: 0; padding: 13px 0; border-right: 0; }
+  [data-page="company"] .class-row > li::before { width: 40px; height: 17px; }
+  [data-page="company"] .class-row small { margin: 0; padding: 0; }
+}
 .further { list-style: none; margin: clamp(40px, 5vw, 64px) 0 0; padding: 0; border-top: 1px solid var(--line-strong); }
 .further a { display: grid; grid-template-columns: minmax(96px, 2fr) minmax(0, 9fr) auto; gap: 20px; align-items: baseline; padding: 20px 0; border-bottom: 1px solid var(--line); }
+@media screen and (min-width: 1025px) { .further a { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(16px, 2.2vw, 32px); } .further .k { grid-column: 1 / span 3; } .further .t { grid-column: 4 / span 8; } .further .arr { grid-column: 12; justify-self: end; } }
 .further .k { font-family: var(--mono); font-size: var(--mono-s); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); }
 .further .t { font-family: var(--serif); font-size: clamp(1.25rem, 1.8vw, 1.6rem); line-height: 1.2; letter-spacing: -0.01em; text-wrap: balance; }
 .further .arr { width: 16px; height: 16px; align-self: center; color: var(--fg-3); transition: transform .35s var(--ease), color .3s var(--ease); }
@@ -193,16 +333,29 @@
   .plate-still, .company-readout, .company-modes { display: none !important; }
   [data-page="company"] .crew > li { break-inside: avoid; }
   [data-page="company"] .crew .ph { display: none; }
-  [data-page="company"] .crew > li { grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1.4fr); grid-template-areas: "n who what"; }
+  [data-page="company"] .crew > li { grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1.4fr); grid-template-areas: "n who what"; grid-template-rows: auto; align-items: first baseline; }
 }
 
 /* ================================================================ Access */
-/* The H1 is the page's mechanism ("Nothing is sent until you send it."); the paths and the form are the same four
-   things, side by side from 601 px; on phones the path list folds into the choices so the page says them once. */
+/* The H1 asks in the visitor's terms (v2's "Tell us who you are."); the page shows what happens to the answer: beside
+   the form, the email this page writes, written as the visitor types (access.js), and "Nothing is sent until you send it."
+   under the button. The four paths are the four choices (each with its full description, at every width, so the page
+   says them once). On phones the letter appears in the result. */
 [data-page="access"] .access-lede { align-self: end; }
 [data-page="access"] .access-hero h1 { max-width: 11ch; }
+/* the lede's last line sits on the H1's last baseline; the two column heads below share a baseline */
+@media (min-width: 601px) {
+  [data-page="access"] .access-hero .grid { align-items: last baseline; }
+  [data-page="access"] .access-lede { align-self: last baseline; }
+  [data-page="access"] .access-next .grid { align-items: first baseline; }
+}
+/* field labels are words a person reads: Inter, the qualifier ("required", "optional") a step quieter (they were mono
+   capitals) */
+[data-page="access"] .form .f > label:not(.f-check) { font-family: var(--sans); font-size: .875rem; line-height: 1.4; letter-spacing: 0; text-transform: none; color: var(--fg); }
+[data-page="access"] .form .f-q { color: var(--fg-3); }
+[data-page="access"] .list-rule p, [data-page="access"] .seg-d, [data-page="access"] .form-note, [data-page="access"] .f-check span { text-wrap: pretty; }
 /* the four choices: the letter of each path in a ring, filled green when chosen */
-[data-page="access"] .seg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+[data-page="access"] .seg { grid-template-columns: minmax(0, 1fr); }
 [data-page="access"] .seg .opt { position: relative; background: var(--bg); transition: background .25s var(--ease); }
 [data-page="access"] .seg .opt:has(input:checked) { background: var(--bg-2); box-shadow: inset 0 -2px 0 var(--accent); }
 [data-page="access"] .seg label, [data-page="access"] .seg label:has(input:checked) { position: static; background: transparent; box-shadow: none; padding: 16px 16px 16px 52px; }
@@ -210,17 +363,26 @@
 [data-page="access"] .seg .seg-k { position: absolute; left: 16px; top: 15px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(14, 21, 18, .55); font: 500 .66rem/1 var(--mono); color: var(--fg-2); transition: background .25s var(--ease), color .25s var(--ease), border-color .25s var(--ease); }
 [data-page="access"] .seg input:checked + span .seg-k { background: var(--accent); border-color: var(--accent); color: var(--paper); }
 [data-page="access"] .seg input:checked + span { color: var(--fg); }
-[data-page="access"] .seg-d { display: none; margin: -6px 0 0; padding: 0 16px 16px 52px; font-size: .9rem; line-height: 1.5; color: var(--fg-2); }
+[data-page="access"] .seg-d { margin: -6px 0 0; padding: 0 16px 16px 52px; font-size: .9rem; line-height: 1.5; color: var(--fg-2); max-width: 62ch; }
+[data-page="access"] .seg .opt { scroll-margin-top: calc(var(--nav-h) + 24px); }
+/* focus rings the whole choice, its description included (the label alone is only its first line) */
+[data-page="access"] .seg label:has(input:focus-visible) { outline: none; }
+[data-page="access"] .seg .opt:has(input:focus-visible), [data-page="access"] .seg.is-kbd .opt:has(input:focus) { outline: 2px solid var(--accent); outline-offset: -2px; z-index: 1; }
 @media (hover: hover) {
   [data-page="access"] .seg .opt:hover .seg-k { border-color: var(--fg); color: var(--fg); }
   [data-page="access"] .seg .opt:hover { background: var(--bg-2); }
   [data-page="access"] .form input:hover, [data-page="access"] .form select:hover, [data-page="access"] .form textarea:hover { border-color: var(--fg); }
-  [data-page="access"] .f-check:hover input { border-color: var(--fg); }
+  [data-page="access"] .form .f-check:hover input:not(:checked) { border-color: var(--fg); background-color: rgba(14, 21, 18, .04); }
 }
 /* fields: focus draws the rule twice as thick in green ("you are here"); in forced colours the transparent outline
    becomes a system-colour ring */
 [data-page="access"] .form input:focus-visible, [data-page="access"] .form select:focus-visible, [data-page="access"] .form textarea:focus-visible { border-color: var(--accent); box-shadow: 0 1px 0 0 var(--accent); outline: 2px solid transparent; outline-offset: 3px; }
 [data-page="access"] .form textarea::placeholder { color: var(--fg-3); }
+/* a field the browser refused: its rule and a line under it in the rejection red (access.js writes the line) */
+[data-page="access"] .form [aria-invalid="true"], [data-page="access"] .form [aria-invalid="true"]:focus-visible { border-color: var(--reject); }
+[data-page="access"] .form [aria-invalid="true"]:focus-visible { box-shadow: 0 1px 0 0 var(--reject); }
+[data-page="access"] .f-err { margin: -2px 0 0; font-size: .8125rem; line-height: 1.45; color: var(--reject); }
+[data-page="access"] .f-err:empty { display: none; }
 /* the select: no native chrome, the site's chevron */
 [data-page="access"] .form select { -webkit-appearance: none; appearance: none; padding-right: 30px; cursor: pointer; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230E1512' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E") right 2px center / 16px 16px no-repeat; }
 /* the attestation: a drawn box, a paper tick on ink when ticked */
@@ -231,30 +393,48 @@
 [data-page="access"] .form-go { display: grid; gap: 14px; justify-items: start; }
 [data-page="access"] .form-note { margin: 0; max-width: 50ch; font-size: .88rem; line-height: 1.55; color: var(--fg-3); }
 /* the result: the letter the page wrote, as the visitor's mail app will show it */
-[data-page="access"] .form-ok { padding: clamp(22px, 3vw, 34px); }
+[data-page="access"] .form-ok { padding: clamp(22px, 3vw, 34px); scroll-margin-top: calc(var(--nav-h) + 16px); } /* focus lands with its eyebrow under the bar, not behind it */
 .letter { margin: 24px 0 0; border: 1px solid var(--line); background: var(--bg-2); }
+[data-page="access"] .access-letter .letter { margin-top: 0; }
+[data-page="access"] .access-letter .eyebrow { display: flex; margin: 0 0 8px; } /* on the form's first label; the sheet level with the choices */
+/* the blanks: a solid rule to fill, a dashed one that is left out if empty; the part being typed carries the highlighter */
+.letter .slot { border-radius: 2px; -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: background-color .2s var(--ease), box-shadow .2s var(--ease); }
+.letter .slot:not(.is-filled) { color: var(--fg-3); text-decoration: underline 1px var(--line-strong); text-underline-offset: .24em; }
+.letter .slot.is-opt { text-decoration-style: dashed; }
+.letter .slot.is-here, .letter [data-letter-subject].is-here { background: rgba(30, 122, 90, .16); box-shadow: 0 0 0 2px rgba(30, 122, 90, .16); }
+.letter [data-letter-subject] { border-radius: 2px; transition: background-color .2s var(--ease), box-shadow .2s var(--ease); }
+.letter-note { margin: 12px 0 0; max-width: 46ch; font-size: .86rem; line-height: 1.5; color: var(--fg-3); }
+.letter-note.is-long { color: var(--fg); }
+@media (min-width: 601px) { [data-page="access"] .access-letter .sticky { position: sticky; top: calc(var(--nav-h) + 28px); } }
+@media (min-width: 601px) and (max-width: 960px) { [data-page="access"] .access-letter .letter-body { font-size: 1.05rem; } }
+@media (max-width: 600px) { [data-page="access"] .access-letter { display: none; } }
+@media (prefers-reduced-motion: reduce) { .letter .slot, .letter [data-letter-subject] { transition: none; } }
 .letter[hidden] { display: none; }
 .letter-head { display: grid; gap: 6px; padding: 14px 20px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: var(--mono-s); letter-spacing: .04em; color: var(--fg-2); }
 .letter-head > span { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; }
 .letter-head b { font-weight: 400; text-transform: uppercase; letter-spacing: var(--track-label); color: var(--fg-3); }
 .letter-body { padding: 20px 20px 24px; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--serif); font-size: 1.2rem; line-height: 1.42; color: var(--fg); }
 [data-page="access"] .access-next h2 { max-width: 14ch; }
+[data-page="access"] .access-next .list-rule > li > :last-child { font-family: var(--sans); font-size: .875rem; letter-spacing: 0; color: var(--fg-2); font-variant-numeric: tabular-nums; }
 @media (min-width: 601px) and (max-width: 960px) {
-  [data-page="access"] .access-lede { align-self: end; }
   [data-page="access"] .form .two, [data-page="access"] .seg { grid-template-columns: minmax(0, 1fr); }
   [data-page="access"] .access-next .list-rule--3 > li { grid-template-columns: 44px minmax(0, 1fr); }
   [data-page="access"] .access-next .list-rule--3 > li > :last-child { grid-column: 2; }
 }
 @media (max-width: 600px) {
-  [data-page="access"] .access-paths { display: none; } /* the same four things as the choices below */
   [data-page="access"] .seg { grid-template-columns: minmax(0, 1fr); }
-  [data-page="access"] .seg-tag { display: none; }
-  [data-page="access"] .seg-d { display: block; }
+  [data-page="access"] .form > .two + .two { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; } /* organization | role: short answers share a line */
   [data-page="access"] .access-hero h1 { font-size: clamp(2.6rem, 12.5vw, 3.4rem); }
   [data-page="access"] .access-hero { padding-bottom: 36px; }
   [data-page="access"] .access-body { padding-top: 44px; }
   .letter-head > span { grid-template-columns: 64px minmax(0, 1fr); }
   .letter-body { font-size: 1.1rem; padding: 16px 16px 20px; }
 }
+/* forced colours (r1-a11y M1): the chosen path and the ticked box keep a visible state; native controls come back */
+@media (forced-colors: active) {
+  [data-page="access"] .seg .opt:has(input:checked) { outline: 2px solid Highlight; outline-offset: -2px; }
+  [data-page="access"] .seg input:checked + span .seg-k { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+  [data-page="access"] .form .f-check input, [data-page="access"] .form select { -webkit-appearance: auto; appearance: auto; background-image: none; }
+}
 @media (prefers-reduced-motion: reduce) { [data-page="access"] .seg .opt, [data-page="access"] .seg .seg-k, [data-page="access"] .form .f-check input { transition: none; } }
-@media print { [data-page="access"] .access-paths { display: block !important; } [data-page="access"] .seg-d { display: none !important; } }
+@media print { [data-page="access"] .access-letter { display: none !important; } }

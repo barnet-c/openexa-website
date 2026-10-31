@@ -17,11 +17,20 @@
 .figcap-d { font-size: .9rem; line-height: 1.58; color: var(--fg-2); text-wrap: pretty; max-width: 54ch; }
 .figcap-h { font-family: var(--mono); font-size: var(--mono-s); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); padding-top: 2px; }
 .figcap-n:empty, .figcap-d:empty { display: none; }
+.figcap-h { text-wrap: pretty; } /* the long hedge never leaves "RECORD" alone on its last line */
+/* a caption that opens on a quotation mark hangs the mark in the margin, so the words keep the edge (build + research.js) */
+.figcap-d.is-hung { text-indent: -.4em; }
 
 /* ---------- research index: hero ---------- */
-.research-hero .rs-herocap { position: absolute; z-index: 1; right: max(var(--gutter), calc((100% - var(--max)) / 2 + var(--gutter))); bottom: clamp(24px, 3vw, 40px); max-width: 30ch; text-align: right; gap: 4px; }
+/* the H1 sets in two lines, "The thinking behind / the swarm.", not three with "behind" alone (v2's rag); the size
+   stays the largest of the inner pages. The library caption ends on the meta row's line (one grid row, bottom-aligned) */
+@media (min-width: 961px) {
+  .research-hero h1.display-1 { font-size: clamp(3.4rem, 6.8vw, 6.2rem); line-height: .97; max-width: none; }
+  .research-hero .rs-herocap { grid-column: 9 / -1; align-self: end; justify-self: end; max-width: 30ch; text-align: right; gap: 4px; }
+}
 .rs-herocap .figcap-t { font-family: var(--sans); font-size: .8125rem; line-height: 1.45; letter-spacing: 0; color: var(--fg-2); }
 @media (max-width: 960px) { .research-hero .rs-herocap { display: none; } .research-hero .figure-stage { --figure-scale: 1.3; } }
+@media (max-width: 600px) { .research-hero h1.display-1 { font-size: clamp(2.6rem, 14vw, 3.4rem); } } /* two lines at 320 too */
 
 /* ---------- research index: the shelf (the list, and the plate that shows the pointed note's figure) ---------- */
 .rs-shelf { position: relative; --rs-gap: clamp(16px, 2.2vw, 32px); }
@@ -39,13 +48,22 @@
 @media (hover: none) { .rs-hint-p { display: none; } .rs-hint-t { display: inline; } }
 .rs-cap { transition: opacity .14s var(--ease); }
 .rs-cap.is-swapping { opacity: 0; }
-/* the row whose figure is on the plate: v2's hover mark, held (no indent, so a scrolled list does not shuffle) */
+/* the row whose figure is on the plate: v2's mark, held. It hangs in the margin, clear of the numeral, and nothing
+   indents (hover included), so the numerals and titles keep one edge while the plate follows the pointer */
+.research-page .posts-list .post > a::before { left: calc(-1 * clamp(11px, 1.3vw, 18px)); }
+.research-page .posts-list .post:focus-within > a { padding-left: 0; }
+@media (hover: hover) { .research-page .posts-list .post:hover > a { padding-left: 0; } }
 .posts-list .post.is-current > a::before { transform: scaleY(1); }
 .posts-list .post.is-current .post-n { color: var(--accent); }
 
-/* one number per row (E-5): the reading-order numeral; the kind in words; the read time and the arrow */
-.research-page .post-kind { letter-spacing: var(--track-label); }
+/* one number per row (E-5), set like a contents page: the numeral, the title's first line and the read time share one
+   baseline; the section head above says the kind (Research notes · The series), so the rows do not repeat it */
+.research-page .posts-list .post > a { align-items: baseline; }
+.research-page .post-n { padding-top: 0; }
+.research-page .post-meta { padding-top: 0; }
+.rs-col > .sec-head + .posts-list { margin-top: calc(-1 * clamp(36px, 5vw, 72px)); border-top: 0; } /* the head's rule opens the list */
 .research-page .post-main h3 .title-sub { display: block; margin-top: .3em; font-size: max(.62em, 1.0625rem); line-height: 1.2; color: var(--fg-2); }
+.research-page .post-main h3 .t-head { display: block; }
 .research-page .scholar-link { font-family: var(--sans); font-size: .95rem; letter-spacing: 0; text-transform: none; }
 
 @media (scripting: enabled) and (min-width: 760px) {
@@ -58,7 +76,7 @@
   .rs-caption { padding-top: 18px; }
   .rs-cap { min-height: 15.5em; align-content: start; }
   .research-page .posts-list .post > a { grid-template-columns: 56px minmax(0, 1fr) auto; gap: 20px; }
-  .research-page .post-main h3 { max-width: 25ch; }
+  .research-page .post-main h3 { max-width: 30ch; }
 }
 @media (scripting: enabled) and (min-width: 760px) and (max-width: 1023.98px) {
   .research-page .posts-list .post > a { grid-template-columns: 40px minmax(0, 1fr); gap: 14px; }
@@ -81,17 +99,45 @@
   .rs-caption { grid-column: 1; grid-row: 1; align-self: center; padding-block: 12px; }
   .rs-shelf .rs-rail { transform: translateY(101%); transition: transform .5s var(--ease); }
   .rs-shelf.is-reading .rs-rail { transform: none; }
-  .rs-hint, .rs-cap .figcap-d { display: none; }
+  .rs-hint, .rs-cap .figcap-d, .rs-rail .fig-labels { display: none; }
   .rs-cap { gap: 5px; }
   .rs-cap .figcap-t { font-family: var(--sans); font-size: .8125rem; line-height: 1.4; letter-spacing: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .rs-cap .figcap-h { font-size: var(--mono-xs); }
+}
+/* small phones and short screens (r1 mobile): the strip is the size of its words, not a quarter of the screen. The row
+   it shows is marked in the list (green numeral and bar), so the strip drops its "Fig. NN" line; what is drawn and the
+   hedge stay whole (r1 fix: a two-line clamp cut Fig. 09's sentence at "in the order of the…") */
+@media (scripting: enabled) and (max-width: 360px), (scripting: enabled) and (max-width: 759.98px) and (max-height: 700px) {
+  .rs-plate { min-height: 92px; gap: 12px; grid-template-columns: minmax(0, 1fr) 34%; }
+  .rs-caption { padding-block: 9px; }
+  .rs-cap { gap: 4px; }
+  .rs-cap .figcap-n { display: none; }
+}
+/* a short window (a phone held sideways, a desktop zoomed to 400 %): the strip is not pinned, so the list is never read
+   through a slot; it stands under the list, as it does after the last note (qa-hostile, WCAG 1.4.10) */
+@media (scripting: enabled) and (max-width: 759.98px) and (max-height: 559.98px) {
+  .rs-rail { position: relative; }
+  .rs-shelf .rs-rail { transform: none; transition: none; }
+}
+/* phones, with or without JavaScript: the read time and the arrow sit in the margin under the numeral, so each row is
+   a line shorter (a contents page's marginal figure, not a fifth line under the dek) */
+@media (max-width: 759.98px) {
+  .research-page .posts-list .post > a { grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: auto 1fr; row-gap: 10px; }
+  .research-page .post-n { grid-area: 1 / 1; }
+  .research-page .post-main { grid-area: 1 / 2 / span 2; }
+  .research-page .post-meta { grid-area: 2 / 1; align-self: start; flex-direction: column; align-items: flex-start; gap: 4px; }
+  /* a wrapped arrow link keeps its arrow after the last word, not stranded at the right edge */
+  .research-page .row-links .link-arrow { display: inline; line-height: 1.6; }
+  .research-page .row-links .link-arrow .arr { display: inline; vertical-align: -2px; margin-left: .35em; }
 }
 @media (scripting: none) { .rs-rail { display: none; } }
 /* no figure (no JavaScript, or no WebGL: figure.js 'figure:none'): no plate, no caption, no empty frame for it on phones */
 .rs-shelf.no-plate .rs-rail, .no-figure-cap .figcap { display: none; }
 .rs-shelf.no-plate .rs-col { margin-right: 0; }
 @media (scripting: none) {
-  .research-hero .rs-herocap, .article-figcap { display: none; }
+  /* (0,2,0), after ":is(.research-page, .article-page) .figcap { display: grid }": r1 lost to it, and the note hero
+     showed a caption for a figure that is not drawn (jury: "not addressed by either lab") */
+  .research-hero .rs-herocap, .article-hero .article-figcap { display: none; }
 }
 @media (scripting: none) and (max-width: 960px) {
   .research-hero, .article-hero { padding-top: calc(var(--nav-h) + clamp(40px, 10vw, 72px)); padding-bottom: clamp(48px, 10vw, 72px); }
@@ -100,11 +146,19 @@
 /* ---------- research index: the blog collections and the four constants ---------- */
 .research-page .research-card .link-arrow { font-family: var(--sans); font-size: .875rem; letter-spacing: 0; text-transform: none; font-weight: 500; }
 @media (min-width: 601px) and (max-width: 960px) { #principles .num-list { margin-top: 8px; } }
+#principles .num-list h3 { text-wrap: balance; } /* no "to." alone on a line at 320, no full-measure line at 1440 */
 
 /* ---------- a note: the hero ---------- */
 .article-title { max-width: 18ch; }
 .article-title--long { font-size: clamp(2.3rem, 4.5vw, 4.3rem); max-width: 19ch; }
 .article-title .title-sub { display: block; margin-top: .4em; font-size: .46em; line-height: 1.18; letter-spacing: -0.005em; color: var(--fg-2); max-width: 30ch; }
+/* a series title breaks at its sense break: "Lifecycle 01." / "What Ten Sessions on Real Markets Taught Us" */
+.article-title .t-head { display: block; }
+.article-hero .article-title--split { max-width: 22ch; } /* "Governance in Milliseconds" holds one line under its head */
+/* the eyebrow breaks between its two parts, never inside "Series, part 7 of 8" (.nw) */
+:is(.research-page, .article-page) .nw { white-space: nowrap; } /* compounds and label parts never break inside */
+.article-hero .eyebrow { align-items: flex-start; }
+.article-hero .eyebrow::before { margin-top: .78em; flex: none; } /* the rule stays on the first line when the label wraps */
 .article-figcap .figcap-t { font-size: clamp(1.15rem, 1.5vw, 1.4rem); }
 .article-figcap .figcap-d { font-size: .84rem; }
 @media (scripting: enabled) and (min-width: 961px) {
@@ -114,29 +168,68 @@
   .article-figcap { position: absolute; z-index: 1; right: max(var(--gutter), calc((100% - var(--max)) / 2 + var(--gutter))); left: 56%; bottom: clamp(28px, 3vw, 44px); padding-top: 16px; border-top: 1px solid var(--line); }
 }
 @media (max-width: 960px) {
-  .article-figcap { margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--line); }
+  /* (0,3,0): the shared ":is(.research-page, .article-page) .figcap { margin: 0 }" had set the meta row on the rule */
+  .article-hero .figcap.article-figcap { margin-top: clamp(28px, 6vw, 40px); padding-top: 16px; border-top: 1px solid var(--line); }
   .article-title--long { font-size: clamp(2.2rem, 8vw, 3.2rem); }
   .article-title .title-sub { font-size: .52em; }
 }
-/* tablets: the figure above the title takes half the screen's width in height, not two thirds */
+/* tablets: the figure above the title takes half the screen's width in height, not two thirds; its caption is set as a
+   plate caption in two columns (label and title left, the note's words and the hedge right) */
 @media (scripting: enabled) and (min-width: 601px) and (max-width: 960px) {
   .article-hero { padding-top: calc(var(--nav-h) + 46vw); }
   .article-hero .figure-stage { height: calc(var(--nav-h) + 50vw); }
+  .article-hero .figcap.article-figcap { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(20px, 4vw, 40px); }
+  .article-figcap .figcap-n { grid-area: 1 / 1; }
+  .article-figcap .figcap-t { grid-area: 2 / 1 / span 2; align-self: start; }
+  .article-figcap .figcap-d { grid-area: 2 / 2; max-width: none; }
+  .article-figcap .figcap-h { grid-area: 3 / 2; }
+}
+
+@media (scripting: enabled) and (min-width: 760px) and (max-height: 520px) and (min-aspect-ratio: 23/20) {
+  .rs-stage { aspect-ratio: auto; height: 40svh; }
+  .rs-cap { min-height: 0; }
+  .rs-cap .figcap-d, .rs-hint { display: none; }
+}
+
+/* ---------- a note: the reading column ---------- */
+/* v2 set Inter at 17.9 px across 691 px: 78–83 characters a line at 1440, 85–89 on a tablet. The column now holds
+   66–72 at every width from 768 up (a 39.2rem measure, 19 px type, 1.68 leading) */
+.article-page .article { font-size: 1.1875rem; line-height: 1.68; }
+.article-page .article > p { max-width: 39.2rem; }
+.article-page .article > p.lead { color: var(--fg); line-height: 1.55; }
+.article-page .article h2 { max-width: 30ch; text-wrap: balance; }
+.article-page .article > h2:first-child { margin-top: 0; } /* a note that opens on a heading (01) starts level with "In this note" */
+@media (min-width: 961px) { .article-page .article h2 { font-size: clamp(1.9rem, 2.6vw, 2.3rem); } } /* 30 px at 1024, not 27 over 19 px text */
+/* the initial: exactly two lines deep, its top on the cap line and its foot on the second baseline (initial-letter);
+   where that is not supported, a float sized to stay inside two lines (v2's ran into a third line on phones) */
+.article-page .article > p.lead::first-letter { font-size: 3.3em; line-height: .74; margin: .07em .1em 0 -.02em; }
+@supports (initial-letter: 2) or (-webkit-initial-letter: 2) {
+  .article-page .article > p.lead::first-letter { float: none; font-size: inherit; line-height: inherit; margin: 0 .16em 0 0; -webkit-initial-letter: 2; initial-letter: 2; }
+}
+@media (max-width: 960px) {
+  .article-page .article { font-size: 1.0625rem; }
+  .article-page .article > p { max-width: 36rem; }
+}
+@media (min-width: 601px) and (max-width: 960px) {
+  .article-page .article { font-size: 1.125rem; }
+  .article-page .article h2 { font-size: clamp(1.75rem, 4.2vw, 2.1rem); }
 }
 
 /* ---------- a note: "In this note" (the part being read is marked by research.js) ---------- */
-.toc li a { position: relative; }
+.toc li a { position: relative; text-wrap: balance; } /* a two-line part never ends on one word */
 .toc li.is-on a::after { content: ""; position: absolute; left: -14px; top: 9px; bottom: 9px; width: 2px; background: var(--accent); }
 @media (max-width: 960px) {
-  /* phones and tablets: the parts as one wrapped line under the hero, not an orphaned label */
+  /* phones and tablets: the parts as one wrapped run under the hero ("01 The setup  02 The result …"), each part kept
+     whole on its line and the mono numerals doing the separating, not five 33 px rows (PAGES N-09) */
   .article-side { margin-bottom: 8px; }
   .article-side .eyebrow { margin-bottom: 10px; }
-  .article-page .toc { display: grid; gap: 0; border-top: 0; }
-  .article-page .toc li { border-bottom: 0; }
-  .article-page .toc li a { grid-template-columns: 24px 1fr; padding: 5px 0; font-size: .9rem; }
+  .article-page .toc { display: flex; flex-wrap: wrap; gap: 4px 1.3em; border-top: 0; font-size: .9375rem; line-height: 1.45; }
+  .article-page .toc li { border-bottom: 0; max-width: 100%; }
+  .article-page .toc li a { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .5em; padding: 2px 0; font-size: inherit; color: var(--fg); }
+  .article-page .toc li a::before { padding-top: .3em; }
   .article-page .toc li.is-on a::after { content: none; }
   .article-share { display: none; }
-  .article-side { border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 26px; }
+  .article-side { border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 30px; }
   .note-run { margin-top: 36px; }
   .note-disc { margin-top: 32px; padding: 16px 18px; }
 }
@@ -150,13 +243,104 @@
 .note-disc p { margin: 0; font-size: .84rem; line-height: 1.6; color: var(--fg-2); }
 .note-disc p + p { margin-top: 10px; }
 .note-disc .note-k { margin-bottom: 10px; font-size: var(--mono-xs); }
+/* the end matter keeps the text's measure: its rules stop where the lines stop */
+.article-page .article > :is(.article-end, .note-run, .note-disc) { max-width: 39.2rem; }
+.article-page .pager-card h3 { max-width: 36ch; } /* both cards rag alike (v2: one balanced, one a single long line) */
+.article-page .pager-card h3 .t-head { display: block; }
+.article-page .pager-card h3 .title-sub { display: block; margin-top: .3em; font-size: .7em; line-height: 1.2; color: var(--fg-2); }
 .note-disc a { border-bottom: 1px solid var(--line-strong); transition: border-color .25s var(--ease); }
 @media (hover: hover) { .note-disc a:hover { border-color: var(--fg); } }
+/* the pager: v2's hover set the card to the colour it already had (nothing moved). Hover and focus now draw the site's
+   green rule along the card's top edge, from the side the card points to, and light its label */
+.article-page .pager-card { position: relative; }
+.article-page .pager-card::before { content: ""; position: absolute; left: -1px; right: 0; top: -1px; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .45s var(--ease); }
+.article-page .pager-card.next::before { transform-origin: right; }
+.article-page .pager-card .k { transition: color .25s var(--ease); }
+.article-page .pager-card:focus-visible::before { transform: none; }
+.article-page .pager-card:focus-visible .k { color: var(--accent); }
+@media (hover: hover) {
+  .article-page .pager-card:hover::before { transform: none; }
+  .article-page .pager-card:hover .k { color: var(--accent); }
+  .toc li a:hover::before { color: var(--accent); }
+}
+
+/* ---------- the figures as plates (lab): labels pinned to their points ----------
+   figure.js (data-plate) writes each .fl's position (the point) and --dx (how far the words slide to stay on the stage);
+   the group of the figure on show gets .is-on once the formation has landed. Words: the caption's and the note's. Without
+   JavaScript or WebGL no group is ever shown (no figure, no labels). */
+.figure-stage[data-plate] { container-type: inline-size; }
+/* a plate faces the reader and only sways, so it needs no fade at its left edge (site.css masks the spinning note
+   figures); it is sized to stand inside the content edge with room for its words, and on phones and tablets it starts
+   under the bar, not beneath it, so nothing it says is ever covered */
+@media (min-width: 961px) {
+  .article-hero .figure-stage[data-plate] { -webkit-mask-image: none; mask-image: none; --figure-scale: .84; }
+  .research-hero .figure-stage[data-plate] { --figure-scale: .92; }
+}
+@media (max-width: 960px) {
+  :is(.research-hero, .article-hero) .figure-stage[data-plate] { top: var(--nav-h); height: 66vw; }
+  .research-hero .figure-stage[data-plate] { --figure-scale: 1.45; }
+}
+@media (scripting: enabled) and (min-width: 601px) and (max-width: 960px) {
+  .article-hero .figure-stage[data-plate] { height: 50vw; }
+}
+.fig-labels { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .2s var(--ease), visibility 0s linear .2s; }
+.fig-labels.is-on { opacity: 1; visibility: visible; transition: opacity .2s var(--ease); }
+.fl { position: absolute; left: 0; top: 0; color: var(--fg-3); }
+.fl.is-out { visibility: hidden; }
+.fl::after { content: ""; position: absolute; left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 2px var(--ink); }
+.fl::before { content: ""; position: absolute; background: currentColor; }
+/* --lead: the rule's reach (figure.js; 19 px, longer for a point inside the drawing whose words stand clear of it) */
+.fl[data-side="r"]::before { left: 5px; top: 0; width: calc(var(--lead, 19px) - 9px); height: 1px; }
+.fl[data-side="l"]::before { left: calc(4px - var(--lead, 19px)); top: 0; width: calc(var(--lead, 19px) - 9px); height: 1px; }
+.fl:is([data-side="t"], [data-side="tl"], [data-side="tr"])::before { left: 0; top: -15px; width: 1px; height: 10px; }
+.fl:is([data-side="b"], [data-side="bl"], [data-side="br"])::before { left: 0; top: 5px; width: 1px; height: 10px; }
+.fl-t {
+  position: absolute; left: 0; top: 0; white-space: nowrap; translate: var(--dx, 0px) 0;
+  font: 400 var(--mono-s)/1.35 var(--mono); letter-spacing: .02em; color: var(--fg-2); font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 2px var(--ink), 0 0 6px var(--ink), 0 0 12px var(--ink); /* a knockout, not a glow: words stay legible over points */
+}
+.fl-t small { display: block; font-size: inherit; color: var(--fg-3); }
+.fl[data-side="r"] .fl-t { transform: translate(var(--lead, 19px), -.675em); } /* the first line on the rule */
+.fl[data-side="l"] .fl-t { transform: translate(calc(-100% - var(--lead, 19px)), -.675em); text-align: right; }
+.fl[data-side="t"] .fl-t { transform: translate(-50%, calc(-100% - 18px)); text-align: center; }
+.fl[data-side="b"] .fl-t { transform: translate(-50%, 18px); text-align: center; }
+.fl[data-side="tl"] .fl-t { transform: translate(calc(-100% + 6px), calc(-100% - 18px)); text-align: right; }
+.fl[data-side="tr"] .fl-t { transform: translate(-6px, calc(-100% - 18px)); }
+.fl[data-side="bl"] .fl-t { transform: translate(calc(-100% + 6px), 18px); text-align: right; }
+.fl[data-side="br"] .fl-t { transform: translate(-6px, 18px); }
+.fl--acc { color: var(--signal-bright); }
+.fl--acc .fl-t { color: var(--fg); }
+.fl--rej, .fl--rej .fl-t { color: var(--reject-bright); }
+/* the pulse passing the part a label names: its point, rule and words brighten (figure.js .is-lit) */
+.fl, .fl-t { transition: color .3s var(--ease); }
+.fl::after { transition: transform .3s var(--ease); }
+.fl.is-lit:not(.fl--acc, .fl--rej) { color: var(--fg); }
+.fl.is-lit:not(.fl--rej) .fl-t { color: var(--fg); }
+.fl.is-lit::after { transform: scale(1.75); }
+.fig-labels.is-on .fl { animation: fl-in .5s var(--ease) both; animation-delay: calc(60ms + var(--i, 0) * 70ms); }
+@keyframes fl-in { from { opacity: 0; } }
+@container (max-width: 460px) { .fl--minor, .fl-t .fl-minor { display: none; } } /* a small stage keeps the part's name, not its gloss */
+
+/* a phone held sideways (short and wide): the hero is two-up, words left and figure right, so the first screen has the
+   title on it (v2 spent the whole screen on the figure); the index plate is capped to the screen's height */
+@media (max-width: 960px) and (max-height: 520px) and (min-aspect-ratio: 23/20) {
+  .research-hero, .article-hero { padding-top: calc(var(--nav-h) + 24px); padding-bottom: 28px; }
+  :is(.research-hero, .article-hero) .figure-stage[data-plate] { left: 54%; top: var(--nav-h); bottom: auto; height: calc(100vh - var(--nav-h)); height: calc(100svh - var(--nav-h)); }
+  .research-hero .grid > .col-7, .article-hero-grid > div:first-child { max-width: 54%; }
+  .research-hero h1.display-1, .article-hero .article-title { font-size: clamp(1.9rem, 10vh, 2.6rem); }
+  .research-hero .lede, .article-hero .lede { font-size: 1rem; margin-top: 14px; }
+  .article-hero .figure-stage[data-plate] { --figure-scale: .72; }
+  .research-hero .figure-stage[data-plate] { --figure-scale: 1; } /* the wide formations (note 09's ten columns) fit the half-width stage */
+}
 
 /* ---------- reduced motion and print ---------- */
-@media (prefers-reduced-motion: reduce) { .rs-cap, .rs-shelf .rs-rail { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .rs-cap, .rs-shelf .rs-rail, .fig-labels, .fig-labels.is-on, .article-page .pager-card::before { transition: none; }
+  .fig-labels.is-on .fl { animation: none; }
+  .fl, .fl-t, .fl::after { transition: none; }
+}
 @media print {
-  .rs-rail, .rs-herocap, .article-figcap, .note-run { display: none !important; }
+  .rs-rail, .rs-herocap, .article-figcap, .note-run, .fig-labels { display: none !important; }
   .rs-col { margin-right: 0 !important; }
   .posts-list .post.is-current > a::before { transform: scaleY(0) !important; }
   .posts-list .post.is-current .post-n { color: inherit !important; }

@@ -22,7 +22,7 @@ OUT = ROOT / "assets" / "img" / "og"
 CACHE = Path(str(DATA)) / "og_cards.json"
 TOP = {"index.html": "Agent swarms", "platform.html": "Platform", "lifecycles.html": "Lifecycles", "evidence.html": "Proof",
        "trust.html": "Trust & governance", "research.html": "Research", "company.html": "Company", "access.html": "Request access"}
-TAGLINE = "An AI company · Lifecycle 01 in production"
+TAGLINE = "An AI agentic company · Lifecycle 01 live on real capital"  # v2x: the CEO's descriptor; C-009's status wording
 
 def text(s): return re.sub(r"\s+", " ", H.unescape(re.sub(r"<[^>]+>", " ", s))).strip()
 def meta(s, prop):

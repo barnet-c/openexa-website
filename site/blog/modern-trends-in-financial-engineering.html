@@ -47,7 +47,7 @@
         <a href="../company.html">Company</a>
         <i class="nav-ink" aria-hidden="true"></i>
       </nav>
-      <a class="btn btn--sm" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <a class="btn btn--sm" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
       <button class="nav-toggle" type="button" popovertarget="site-menu" aria-label="Menu"><span></span></button>
     </div>
   </header>
@@ -61,7 +61,7 @@
         <li><a href="../research.html"><span class="n" aria-hidden="true">05</span>Research</a></li>
         <li><a href="../company.html"><span class="n" aria-hidden="true">06</span>Company</a></li>
       </ol>
-      <a class="btn" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <a class="btn" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
       <p class="nav-sheet-meta"><span class="nav-live"><i></i>Lifecycle 01 · live on real capital</span><span>Seattle, WA</span></p>
     </nav>
   </div>
@@ -72,11 +72,12 @@
         <div class="post-hero-copy">
           <div class="eyebrow" data-reveal><a href="index.html">Blog</a> · Financial markets research</div>
           <h1 class="display-2 article-title blog-title" data-reveal>Modern Trends in Financial Engineering</h1>
-          <div class="article-meta" data-reveal><span><a href="../company.html#tim-leung">Tim Leung, Ph.D.</a></span><span>May 17, 2022</span><span>3&nbsp;min read</span></div>
+          <p class="post-byline" data-reveal><a href="../company.html#tim-leung">Tim Leung, Ph.D.</a></p>
+          <div class="article-meta" data-reveal><span><time datetime="2022-05-17">May 17, 2022</time></span><span>3&nbsp;min read</span></div>
         </div>
-        <figure class="post-plate">
+        <figure class="post-plate" id="plate">
           <div class="post-plate-art" aria-hidden="true"><svg class="bp-art" viewBox="0 0 400 225" fill="none" focusable="false" aria-hidden="true"><path class="pr" d="M24 196l352 0"/><path class="pg" d="M70 196l0-108 19.7 0 0 108" pathLength="1"/><path class="pc" d="M73 100l13.7 0M73 104l13.7 0M73 184l13.7 0M95.5 86.7l17.3 0M95.5 90.7l17.3 0M95.5 184l17.3 0M121.3 78.7l11.4 0M121.3 82.7l11.4 0M121.3 184l11.4 0M140.6 91.7l13.4 0M140.6 95.7l13.4 0M140.6 184l13.4 0M162.7 79.6l18.1 0M162.7 83.6l18.1 0M162.7 184l18.1 0M189.3 94.2l15.8 0M189.3 98.2l15.8 0M189.3 184l15.8 0M213.8 101.7l18 0M213.8 105.7l18 0M213.8 184l18 0M239.3 86.9l9.1 0M239.3 90.9l9.1 0M239.3 184l9.1 0M257.6 91.5l13 0M257.6 95.5l13 0M257.6 184l13 0M279.9 106.7l19 0M279.9 110.7l19 0M279.9 184l19 0M308.1 112.4l12.5 0M308.1 116.4l12.5 0M308.1 184l12.5 0"/><path class="pb" d="M92.5 196l0-121.3 23.3 0 0 121.3M118.3 196l0-129.3 17.4 0 0 129.3M137.6 196l0-116.3 19.4 0 0 116.3M159.7 196l0-128.4 24.1 0 0 128.4M186.3 196l0-113.8 21.8 0 0 113.8M210.8 196l0-106.3 24 0 0 106.3M236.3 196l0-121.1 15.1 0 0 121.1M254.6 196l0-116.5 19 0 0 116.5M276.9 196l0-101.3 25 0 0 101.3M305.1 196l0-95.6 18.5 0 0 95.6M351.5 196l-23.3-109.6 19.5-4.1 23.3 109.5"/></svg></div>
-          <figcaption><span class="pp-k">Plate · A book series</span><p class="pp-q">“This new book series, Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.”</p><span class="pp-h">Schematic · no data is plotted</span></figcaption>
+          <figcaption><span class="pp-k">Plate · A book series</span><p class="pp-q"><a href="#plate-src"><span class="hang">“</span>This new book series, Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.”</a></p><span class="pp-h">Schematic · no data is plotted</span></figcaption>
         </figure>
       </div>
     </section>
@@ -84,23 +85,23 @@
     <section class="section article-body-section">
       <div class="container">
         <div class="grid">
+          <article class="col-7 offset-5 article blog-article">
+            <p class="lead"><mark class="plate-src" id="plate-src">This new book series, <strong>Modern Trends in Financial Engineering</strong>, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.</mark>⁠<a class="plate-back" href="#plate" aria-label="Back to the plate"></a></p><p>The series’ objective is to provide cutting-edge mathematical tools and practical financial insights for both academics and professionals in Financial Engineering. The modern trends are motivated by recent market phenomena, new regulations, financial innovations, advanced trading systems and risk management strategies.</p><p>The series will serve as a convenient medium for researchers, including professors, graduate students, and practitioners, to track the frontier research and latest advances in the field of Financial Engineering/Quantitative Finance.</p><p>Here are some volumes in the series (with free book chapters):</p><p><strong>Volume 1: Optimal Mean Reversion Trading</strong>: <em>Mathematical Analysis and Practical Applications</em></p><p>Authors: Tim Leung &amp; Xin Li (<em>Columbia University</em>)</p><p>This book provides a systematic study to the practical problem of optimal trading in the presence of mean-reverting price dynamics. It is self-contained and organized in its presentation, and provides rigorous mathematical analysis as well as computational methods for trading ETFs, options, futures on commodities or volatility indices, and credit risk derivatives.</p><p>It offers a rigorous financial engineering approach that combines novel analytical methodologies and applications to a wide array of real-world examples. Various practical aspects of trading problems, such as model estimation, risk premium, risk constraints, and transaction costs, are also discussed.</p><p>The explanations in the book are detailed enough to capture the interest of the curious student or researcher, and complete enough to give the necessary background material for further exploration into the subject and related literature.</p><p>This book will be a useful tool for anyone interested in financial engineering, particularly algorithmic trading and commodity trading, and would like to understand the mathematically optimal strategies.</p>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><p>Originally published on openexa.com, May 17, 2022. A summary of work first published on timleungresearch.medium.com.</p><a class="link-arrow" href="https://timleungresearch.medium.com/modern-trends-in-financial-engineering-987d28db1d83" target="_blank" rel="noopener">The original on timleungresearch.medium.com <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M5 11L11 5M6 5h5v5"/></svg></a></div>
+          </article>
           <div class="col-3 article-side">
             <div class="sticky blog-side">
               
               <div class="eyebrow mb-2">Financial markets research</div>
-              <a class="link-arrow" href="https://timleungresearch.medium.com/modern-trends-in-financial-engineering-987d28db1d83" target="_blank" rel="noopener">Original on timleungresearch.medium.com <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"/></svg></a><a class="link-arrow" href="https://scholar.google.com/citations?user=P40aOHIAAAAJ" target="_blank" rel="noopener">More on financial markets research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"/></svg></a><a class="link-arrow" href="index.html#markets">Financial markets research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a><a class="link-arrow" href="index.html">All posts <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+              <a class="link-arrow" href="https://timleungresearch.medium.com/modern-trends-in-financial-engineering-987d28db1d83" target="_blank" rel="noopener">Original on timleungresearch.medium.com <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M5 11L11 5M6 5h5v5"/></svg></a><a class="link-arrow" href="https://scholar.google.com/citations?user=P40aOHIAAAAJ" target="_blank" rel="noopener">More on financial markets research <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M5 11L11 5M6 5h5v5"/></svg></a><a class="link-arrow" href="index.html#markets">16 posts in this collection <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a><a class="link-arrow" href="index.html">All 29 posts <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
             </div>
           </div>
-          <article class="col-7 offset-5 article blog-article">
-            <p>This new book series, <strong>Modern Trends in Financial Engineering</strong>, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.</p><p>The series' objective is to provide cutting-edge mathematical tools and practical financial insights for both academics and professionals in Financial Engineering. The modern trends are motivated by recent market phenomena, new regulations, financial innovations, advanced trading systems and risk management strategies.</p><p>The series will serve as a convenient medium for researchers, including professors, graduate students, and practitioners, to track the frontier research and latest advances in the field of Financial Engineering/Quantitative Finance.</p><p>Here are some volumes in the series (with free book chapters):</p><p><strong>Volume 1: Optimal Mean Reversion Trading</strong>: <em>Mathematical Analysis and Practical Applications</em></p><p>Authors: Tim Leung &amp; Xin Li (<em>Columbia University</em>)</p><p>This book provides a systematic study to the practical problem of optimal trading in the presence of mean-reverting price dynamics. It is self-contained and organized in its presentation, and provides rigorous mathematical analysis as well as computational methods for trading ETFs, options, futures on commodities or volatility indices, and credit risk derivatives.</p><p>It offers a rigorous financial engineering approach that combines novel analytical methodologies and applications to a wide array of real-world examples. Various practical aspects of trading problems, such as model estimation, risk premium, risk constraints, and transaction costs, are also discussed.</p><p>The explanations in the book are detailed enough to capture the interest of the curious student or researcher, and complete enough to give the necessary background material for further exploration into the subject and related literature.</p><p>This book will be a useful tool for anyone interested in financial engineering, particularly algorithmic trading and commodity trading, and would like to understand the mathematically optimal strategies.</p>
-            <div class="article-end"><span class="mark" aria-hidden="true"></span><p>Originally published on openexa.com, May 17, 2022. A summary of work first published on timleungresearch.medium.com.</p><a class="link-arrow" href="https://timleungresearch.medium.com/modern-trends-in-financial-engineering-987d28db1d83" target="_blank" rel="noopener">The original on timleungresearch.medium.com <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11L11 5M6 5h5v5"/></svg></a></div>
-          </article>
         </div>
       </div>
     </section>
 
     <section class="section is-paper-2 section--tight">
-      <div class="container"><h2 class="sr-only">More posts</h2><div class="pager"><a class='pager-card prev' href='leveraged-etfs-price-dynamics-and-options-valuation.html'><span class='k'>← Newer</span><h3>Leveraged ETFs - Price Dynamics and Options Valuation</h3><p>Jun 11, 2022</p></a><a class='pager-card next' href='examining-the-drawdown-risk-of-sector-etfs-2022.html'><span class='k'>Older →</span><h3>Examining the Drawdown Risk of Sector ETFs - 2022</h3><p>Apr 24, 2022</p></a></div></div>
+      <div class="container"><h2 class="sr-only">More posts</h2><div class="pager"><a class='pager-card prev' href='leveraged-etfs-price-dynamics-and-options-valuation.html'><span class='k'>← Newer</span><h3>Leveraged ETFs — Price Dynamics and Options Valuation</h3><p>Jun 11, 2022</p></a><a class='pager-card next' href='examining-the-drawdown-risk-of-sector-etfs-2022.html'><span class='k'>Older →</span><h3>Examining the Drawdown Risk of Sector ETFs — 2022</h3><p>Apr 24, 2022</p></a></div></div>
     </section>
   </main>
 
@@ -117,13 +118,13 @@
       </div>
       <div class="disc" id="disclosures">
         <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>
-        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
+        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client’s broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
       </div>
       <div class="bottom">
         <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
         <span>Infrastructure for agentic lifecycles</span>
       </div>
-      <div class="wordmark" aria-hidden="true">OpenEXA</div>
+      <div class="wordmark" aria-hidden="true" data-word="OpenEXA"></div>
     </div>
   </footer>
 

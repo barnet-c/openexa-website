@@ -23,6 +23,12 @@ Changes from the source, deliberately:
     portrait treatment for all thirteen (portrait()): the head is measured and set at one size and height, the tones
     are normalised and printed ink on paper, so photos from different cameras sit together. New file names
     (<slug>-v2x.webp); the old files are left in place for pages cached before the change.
+  - 2026-10-31 (lab company-editorial, ported in r1): the card line keeps hyphenated compounds whole (span.nowrap, the
+    site's utility), so a two-line line never breaks at "capital-|markets"; words unchanged.
+  - 2026-10-31 (v2x r1): one portrait, set closer (the head is 40% of the frame's width, its top 11% down, so the eyes
+    sit on one line about a third down and faces read at 64-96 px); Mike's snapshot no longer zoomed past the others
+    (TUNE k 1.0). Each master is also written at 160 and 320 px (<slug>-v2x-160.webp, -320.webp) and the img carries a
+    srcset, so a phone fetches a 64 px portrait's worth, not 560 px (Company was ~1.0 MB on a phone).
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -67,6 +73,8 @@ FIX = [  # typos in the scraped bios
 ]
 def curly(s):  # typography: apostrophes as U+2019 (VOICE §7); no quotation marks occur in these texts
     return s.replace("'", "’")
+def whole(s):  # 2026-10-31 (lab company-editorial): a card line never breaks inside a hyphenated compound ("capital-|markets")
+    return re.sub(r"\w+(?:-\w+)+", lambda m: f'<span class="nowrap">{m.group(0)}</span>', s)
 # (slug, display name, source name, title, short line, v1 photo or None, extra links)
 TEAM = [
     ("ajit-dubey", "Ajit K Dubey", "Ajit K Dubey", "Founder · CEO", "Founder and CEO of OpenEXA. Big Tech and capital-markets veteran, building the foundational infrastructure for agentic lifecycles.", "ajit-dubey", []),
@@ -101,9 +109,11 @@ ADVISORS = [
 # TUNE corrects what a measurement cannot know: Mike's only photo is a small holiday snapshot (zoomed past the child
 # beside him; half the stretch, softened, since its noise is not detail); Subuddh's hat is not his head; John's photo
 # is cut behind his head.
-SIZE, HEAD_W, HEAD_TOP = 560, 0.34, 0.14
+SIZE, HEAD_W, HEAD_TOP = 560, 0.40, 0.11  # r1 (31 Oct): 0.34 / 0.14 left faces small in 64-96 px circles
 INK, PAPER, MID = (14, 21, 18), (245, 242, 236), (112, 112, 104)
-TUNE = {"Mike Lockhart": dict(k=1.22, soft=True), "Subuddh Parekh": dict(k=0.66, top=0.035), "John Shuster": dict(k=1.15)}
+TUNE = {"Mike Lockhart": dict(k=1.0, soft=True), "Subuddh Parekh": dict(k=0.66, top=0.035), "John Shuster": dict(k=1.15)}
+SMALL = (160, 320)
+SIZES = "(max-width: 600px) 64px, (max-width: 1024px) 80px, 96px"  # company.css: one portrait size, 96 / 80 / 64 px
 def subject(path):
     im = Image.open(path).convert("RGBA"); box = im.getchannel("A").point(lambda v: 255 if v > 12 else 0).getbbox()
     return im, box
@@ -144,6 +154,8 @@ def portrait(slug, src_name, v1_name):
     duo = duo.filter(ImageFilter.GaussianBlur(.6) if t.get("soft") else ImageFilter.UnsharpMask(radius=1.1, percent=55, threshold=2))
     out = Image.merge("RGBA", (*duo.split(), alpha))
     out.save(IMGDIR / f"{slug}-v2x.webp", "WEBP", quality=88, method=6)
+    for w in SMALL:  # r1: the sizes a 64-96 px circle needs at 1-3x (the srcset in rows())
+        out.resize((w, w), Image.LANCZOS).save(IMGDIR / f"{slug}-v2x-{w}.webp", "WEBP", quality=86, method=6)
     return best.parent.name, h
 IMGDIR.mkdir(parents=True, exist_ok=True)  # v2x: the v2 files stay for pages cached before the change
 
@@ -168,12 +180,14 @@ def links(src_name, extra, name):
         out.append(f'<a href="{H.escape(u)}"' + ('' if inside else ' target="_blank" rel="noopener"') + f'>{H.escape(t)}'
                    + (f'<span class="sr-only"> — {H.escape(name)}</span>' if t in GENERIC else '') + (ARR_IN if inside else ARR_OUT) + '</a>')
     return "".join(out)
+def srcset(slug):
+    return ", ".join([f"assets/img/team/{slug}-v2x-{w}.webp {w}w" for w in SMALL] + [f"assets/img/team/{slug}-v2x.webp {SIZE}w"])
 def rows(people, prefix):
     items, report = [], []
     for i, (slug, name, src, title, short, v1, extra) in enumerate(people):
         where, h = portrait(slug, src, v1); report.append((name, where, h))
         l = links(src, extra, name)
-        items.append(f'''          <li id="{slug}" data-reveal style="--d:{(i % 3) * 40}ms"><div class="n"><span>{prefix}-{i + 1:02d}</span></div><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{slug}-v2x.webp" alt="" width="560" height="560" loading="lazy" decoding="async"></div><div class="who"><h3>{H.escape(name)}</h3><div class="role">{H.escape(title)}</div></div><div class="what"><p>{H.escape(curly(short), quote=False)}</p><details class="crew-more"><summary><span class="when-shut">Read the full bio</span><span class="when-open">Close the bio</span><span class="sr-only"> for {H.escape(name)}</span></summary><div class="crew-bio">{bio(src)}</div></details>{f'<div class="links">{l}</div>' if l else ''}</div></li>''')
+        items.append(f'''          <li id="{slug}" data-reveal style="--d:{(i % 3) * 40}ms"><div class="n"><span>{prefix}-{i + 1:02d}</span></div><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{slug}-v2x.webp" srcset="{srcset(slug)}" sizes="{SIZES}" alt="" width="560" height="560" loading="lazy" decoding="async"></div><div class="who"><h3>{H.escape(name)}</h3><div class="role">{H.escape(title)}</div></div><div class="what"><p>{whole(H.escape(curly(short), quote=False))}</p><details class="crew-more"><summary><span class="when-shut">Read the full bio</span><span class="when-open">Close the bio</span><span class="sr-only"> for {H.escape(name)}</span></summary><div class="crew-bio">{bio(src)}</div></details>{f'<div class="links">{l}</div>' if l else ''}</div></li>''')
     return "\n".join(items), report
 
 WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"]

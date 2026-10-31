@@ -16,33 +16,76 @@
    PLATFORM
    ========================================================================== */
 
-/* ---------- hero: the engraved stack is the page's moment ----------
+/* ---------- hero: the engraved stack is the page's moment, and one decision is drawn on it ----------
    The plate takes seven columns and carries its own legend: the eight layer names, in serif, beside their numbers.
-   At first paint the plates close on the boundary (upper ones come down, lower ones come up, outermost first), the
-   boundary draws, and one proposal crosses it: a ring on 02, a mark on the boundary, a ring on 06, a square on 08.
-   CSS only, once; under reduced motion the plate is simply there. */
-body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.804; }
+   At first paint the plates close on the boundary (upper ones come down, lower ones come up, outermost first) and the
+   boundary draws. Then three agents on 03 propose: each proposal falls, dashed (not yet real), to the Execution Council
+   on 04. The middle one is refused there: its ring turns red and a red spur ends in a cross (the 404 plate's grammar).
+   The other two cross the boundary at one green point, turn from ring to square (a step that runs as written), run
+   solid down 05-08 and settle, green, on the counterparties' floor. CSS only, once, done by ~3.8 s, so no Pause; the
+   end state is the drawing itself, which is also the still under reduced motion, without animation and in print. */
+body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.696; }
 @media (min-width: 961px) {
   body[data-page="platform"] .page-hero--plate > .hero-copy { grid-column: 1 / span 5; }
   body[data-page="platform"] .page-hero--plate > .hero-plate--stack { grid-column: 6 / -1; max-width: none; margin-top: 30px; }
   body[data-page="platform"] .page-hero--plate .hero-copy--long .display-1 { font-size: clamp(2.9rem, 5.9vw, 6rem); }
 }
 .hero-plate--stack .hp-lab--nm { font: 400 clamp(.86rem, 1.05vw, 1rem)/1.2 var(--serif); letter-spacing: 0; text-transform: none; color: var(--fg-2); padding-right: 2px; }
-.hero-plate--stack .hp-lab--n { color: var(--fg-3); }
+.hero-plate--stack .hp-lab--n, .hero-plate--stack .hp-lab--fl { color: var(--fg-3); }
 .hero-plate--stack .hp-lab--side { color: var(--fg-2); }
+/* the decision: dashed above the line, solid below it; rings are proposals, squares are steps, green settles, red refuses */
+.hero-plate--stack .pm-up { fill: none; stroke: currentColor; stroke-opacity: .72; stroke-width: 1; stroke-dasharray: 2 3; }
+.hero-plate--stack .pm-down { fill: none; stroke: currentColor; stroke-opacity: .8; stroke-width: 1.15; }
+.hero-plate--stack .pm-step { fill: currentColor; fill-opacity: .85; }
+.hero-plate--stack :is(.pm-agent, .pm-cross, .pm-settle) { fill: var(--accent); }
+.hero-plate--stack :is(.pm-ring, .pm-rring) { fill: var(--bg); stroke: var(--accent); stroke-width: 1.6; }
+.hero-plate--stack .pm-rring { stroke: var(--reject); }
+.hero-plate--stack .is-rej .pm-ring { opacity: 0; }
+.hero-plate--stack .pm-spur, .hero-plate--stack .pm-x { fill: none; stroke: var(--reject); stroke-width: 1.6; stroke-linecap: round; }
+/* the key and the replay, in the caption: the key is its own row */
+.hero-plate--stack .hp-key { order: 3; flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.hero-plate--stack .hp-key > span { display: inline-flex; align-items: center; gap: 7px; }
+.hero-plate--stack .hp-key i { width: 9px; height: 9px; flex: none; border: 1.5px solid var(--accent); border-radius: 50%; }
+.hero-plate--stack .hp-key i.k-rej { border-color: var(--reject); }
+.hero-plate--stack .hp-key i.k-sq { width: 8px; height: 8px; border: 0; border-radius: 1px; background: var(--accent); }
+.hero-plate--stack .hp-replay { margin: 0 0 0 1.1em; padding: 0; border: 0; background: none; font: inherit; letter-spacing: inherit; color: var(--fg-2); text-decoration: underline dashed; text-decoration-color: var(--line-strong); text-underline-offset: 3px; cursor: pointer; }
+@media (hover: hover) { .hero-plate--stack .hp-replay:hover { color: var(--fg); text-decoration-style: solid; text-decoration-color: currentColor; } }
 @media (prefers-reduced-motion: no-preference) {
   .hero-plate--stack .pl { animation: pl-in .8s var(--ease) both; animation-delay: calc(120ms + var(--i) * 95ms); }
-  .hero-plate--stack .pl-br, .hero-plate--stack .hp-lab--side { animation: pl-fade .6s var(--ease) .5s both; }
-  .hero-plate--stack .pl-draw { vector-effect: none; stroke-dasharray: 1 1; animation: pl-draw .75s cubic-bezier(.45, .05, .2, 1) .55s both; }
+  .hero-plate--stack :is(.pl-br, .pm-floor, .hp-lab--side, .hp-lab--fl) { animation: pl-fade .6s var(--ease) .5s both; }
+  .hero-plate--stack :is(.pl-draw, .pm-down, .pm-spur) { vector-effect: none; stroke-dasharray: 1 1; }
+  .hero-plate--stack .pl-draw { animation: pl-draw .75s cubic-bezier(.45, .05, .2, 1) .55s both; }
   .hero-plate--stack .pl-glow, .hero-plate--stack .hp-lab--bd { animation: pl-fade .7s var(--ease) .95s both; }
-  .hero-plate--stack .pl-path { animation: pl-fade .5s var(--ease) 1.15s both; }
-  .hero-plate--stack .pl-m { transform-box: fill-box; transform-origin: center; animation: pl-pop .45s var(--ease) both; animation-delay: calc(1.2s + var(--m) * 170ms); }
   .hero-plate--stack .hp-lab--nm, .hero-plate--stack .hp-lab--n { animation: pl-fade .6s var(--ease) both; animation-delay: calc(220ms + var(--i) * 95ms); }
+  /* each rail starts 220 ms after the one before: the agent, its proposal falling to 04, the verdict */
+  .hero-plate--stack .pm-rail { --t: calc(1.15s + var(--o) * 220ms); }
+  .hero-plate--stack :is(.pm-agent, .pm-cross, .pm-step, .pm-settle, .pm-rring) { transform-box: fill-box; transform-origin: center; }
+  .hero-plate--stack .pm-agent { animation: pl-pop .35s var(--ease) var(--t) both; }
+  .hero-plate--stack .pm-up { animation: pl-fade .4s linear calc(var(--t) + .15s) both; }
+  .hero-plate--stack .pm-ring { animation: pm-fall .45s cubic-bezier(.5, 0, .3, 1) calc(var(--t) + .15s) both; }
+  .hero-plate--stack .is-rej .pm-ring { animation: pm-fall .45s cubic-bezier(.5, 0, .3, 1) calc(var(--t) + .15s) both, pm-out .25s linear calc(var(--t) + .75s) forwards; }
+  .hero-plate--stack .pm-rring { animation: pl-pop .4s var(--ease) calc(var(--t) + .75s) both; }
+  .hero-plate--stack .pm-spur { animation: pl-draw .3s var(--ease) calc(var(--t) + .9s) both; }
+  .hero-plate--stack .pm-x { animation: pl-fade .2s linear calc(var(--t) + 1.15s) both; }
+  .hero-plate--stack .pm-up2 { animation-duration: .3s; animation-delay: calc(var(--t) + .75s); }
+  .hero-plate--stack .pm-cross { animation: pl-pop .35s var(--ease) calc(var(--t) + 1s) both; }
+  .hero-plate--stack .pm-down { animation: pl-draw .7s linear calc(var(--t) + 1.05s) both; }
+  .hero-plate--stack .pm-step { animation: pl-pop .3s var(--ease) calc(var(--t) + 1.19s + var(--s) * 136ms) both; }
+  .hero-plate--stack .pm-settle { animation: pl-pop .4s var(--ease) calc(var(--t) + 1.75s) both; }
+  /* below the first screen (a small phone, a phone on its side) the plate waits for the reader: site.js holds it as
+     .will-reveal until it arrives, and the whole drawing starts then; on the first screen, and without JavaScript, it
+     plays from first paint */
+  .hero-plate--stack.will-reveal:not(.is-in) * { animation-play-state: paused; }
 }
 @keyframes pl-in { from { opacity: 0; transform: translateY(var(--dy, -12px)); } }
 @keyframes pl-fade { from { opacity: 0; } }
 @keyframes pl-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes pl-pop { from { opacity: 0; transform: scale(.35); } }
+@keyframes pm-fall { from { opacity: 0; transform: translateY(-32px); } 25% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes pm-out { from { opacity: 1; } to { opacity: 0; } }
+@media print { .hero-plate--stack * { animation: none !important; } .hero-plate--stack .hp-replay { display: none; } }
+/* tablets and phones: the caption is a column (the caption grammar below), so the key is one more line, not a 100% basis */
+@media (max-width: 960px) { .hero-plate--stack .hp-key { flex-basis: auto; } }
 /* tablets: the plate under the copy, at the width of a page, legend and all */
 @media (min-width: 601px) and (max-width: 960px) {
   body[data-page="platform"] .hero-plate--stack { max-width: min(100%, 680px); }
@@ -50,9 +93,20 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.804; }
 /* phones: the legend column is cropped; the numbers stay beside their plates */
 @media (max-width: 600px) {
   body[data-page="platform"] .page-hero .badge { letter-spacing: .08em; }
-  body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.329; overflow: hidden; }
+  body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; overflow: hidden; }
   .hero-plate--stack .hp-art { width: 135.72%; margin-left: -35.72%; }
   .hero-plate--stack .hp-lab--nm { display: none; }
+}
+/* the smallest phones: the floor's label keeps inside the cropped plate (14 characters at a tighter track) */
+@media (max-width: 380px) { .hero-plate--stack .hp-lab--fl { letter-spacing: .03em; } }
+/* a phone on its side: the plate sits beside the copy at about 300 px, where the serif names would crowd the numbers and
+   reach into the lede; it takes the phone's crop (numbers only), clipped on the left only so the side labels keep room */
+@media (max-width: 960px) and (max-height: 520px) and (min-width: 600px) and (orientation: landscape) {
+  body[data-page="platform"] .hero-plate--stack { clip-path: inset(-24px -48px -24px 0); }
+  .hero-plate--stack .hp-art { width: 135.72%; margin-left: -35.72%; }
+  .hero-plate--stack .hp-lab--nm { display: none; }
+  /* the floor's label ends inside the window (it ran 2-7 px past it at 667 x 375 and 640 x 360) */
+  .hero-plate--stack .hp-lab--fl { left: 73%; letter-spacing: .03em; }
 }
 
 /* ---------- §01: the spec under the explorer ---------- */
@@ -98,6 +152,7 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.804; }
 
 /* ---------- §02: the one telling; the seam between the two cards is labelled once ---------- */
 #boundary .bnd-line { justify-content: center; }
+#boundary .grid > .offset-7 > .body-lg { text-wrap: balance; } /* the one sentence left of the lede */
 #boundary .bnd-line .chip { letter-spacing: var(--track-eyebrow); }
 /* each side's list wears the explorer's marks instead of green ticks: a ring above the line (an estimate, a proposal),
    a square below it (a step that runs as written) */
@@ -106,14 +161,18 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.804; }
 #boundary .bnd-side .checks li:first-child::before { top: 12px; }
 @media (max-width: 860px) { #boundary .bnd-side .checks li:first-child::before { top: 20px; } }
 @media (max-width: 600px) { #boundary .bnd-side .checks li::before, #boundary .bnd-side .checks li:first-child::before { top: 18px; } }
-@media print { body[data-page="platform"] .js-only, body[data-page="lifecycles"] .js-only { display: none !important; } }
+@media print { body[data-page="platform"] .js-only, body[data-page="lifecycles"] .js-only { display: none !important; } body[data-page="lifecycles"] .desk-nojs { display: block !important; } }
 
-/* ---------- §03 on phones: the four roles as rows; each row's lab control on one line ---------- */
+/* ---------- §03 on phones: the four roles as a four-row list (code, role and agents on one line; its sentence; where it
+   works in the lab, on one line) ---------- */
 @media (max-width: 600px) {
-  #swarm .sw-legend .card { padding: 16px 2px 16px; }
-  #swarm .sw-legend .card h3 { margin-top: 6px; }
-  #swarm .sw-legend .card > p:not(.sw-at) { margin: 6px 0 14px; font-size: .95rem; }
-  #swarm .sw-legend .sw-at { padding-top: 10px; }
+  #swarm .sw-legend > .card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline; padding: 15px 0 12px; }
+  #swarm .sw-legend .card .n { display: contents; }
+  #swarm .sw-legend .card .n > span:first-child { grid-column: 1; grid-row: 1; }
+  #swarm .sw-legend .card .n > span:last-child { grid-column: 3; grid-row: 1; }
+  #swarm .sw-legend .card h3 { grid-column: 2; grid-row: 1; margin: 0; }
+  #swarm .sw-legend .card > p:not(.sw-at) { grid-column: 1 / -1; margin: 6px 0 10px; font-size: .94rem; line-height: 1.5; }
+  #swarm .sw-legend .sw-at { grid-column: 1 / -1; padding-top: 8px; }
   #swarm .sw-at b { display: inline; margin: 0 0 0 .5em; }
 }
 /* ---------- §02, §04, §07 on phones: lists at reading density ---------- */
@@ -132,6 +191,16 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.804; }
 /* ==========================================================================
    LIFECYCLES
    ========================================================================== */
+
+/* ---------- the desk's walk ends on the record (gap.js receipt): the two hashes in mono, lit on the strip too ---------- */
+.desk .dl-rcpt { color: var(--fg); }
+.desk .dl-hx { font: 500 .84em/1 var(--mono); letter-spacing: .04em; color: var(--accent); white-space: nowrap; }
+.desk .dk-rec.is-followed .dk-h { color: var(--accent); }
+.desk .dk-rec.is-linked .dk-h { color: var(--fg); }
+@media (prefers-reduced-motion: no-preference) { .desk .dl-rcpt { animation: pl-fade .45s var(--ease) both; } }
+/* phones: the walk's line keeps three lines' room (gate 01's line and the record both take three at 390), so the desk
+   does not grow or shrink under the reader's thumb as the action walks and lands */
+@media (max-width: 600px) { .desk .dl-say { min-height: calc(4.5em + 10px); } }
 
 /* ---------- hero: status by ring, drawn in reading order at first paint ----------
    The live ring traces itself, then the two Next rings and the three Roadmap rings arrive, inner to outer, each with
@@ -195,13 +264,14 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.804; }
 .desk .desk-follow:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .desk .dl-say:empty::before { font: .9rem/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); }
 /* the side panel: counters, the two controls, then the note; no dead band */
-.desk .desk-stats > div { padding: 24px 14px 20px; }
+.desk .desk-stats > div { padding: 24px 12px 20px; }
+.desk .desk-stats span { letter-spacing: .07em; }
 .desk .desk-stats b { font-size: 2.3rem; }
 .desk .desk-controls { flex: 1 0 auto; align-content: center; gap: 26px; padding: 24px 18px; }
 @media (min-width: 1200px) { .desk .desk-body { grid-template-columns: minmax(0, 1fr) 360px; } }
 @media (min-width: 961px) and (max-width: 1199px) { .desk .desk-stats > div { padding: 20px 10px 18px; } .desk .desk-stats b { font-size: 1.9rem; } }
-/* the mean gap's unit sits with its number, so the label is two words */
-.desk [data-gap-avg]::after { content: "bps"; content: "bps" / " bps"; margin-left: 4px; font: 500 var(--mono-xs)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+/* the empty lane says what the walk shows, not the button's words again (v2's line repeated them; no gate count here) */
+.desk .dl-say:empty::before { content: "Each gate lights as the action passes it; its record lands in the ledger below."; }
 /* the strip shows whole records only (gap.js counts the rest), so its edge needs no fade */
 .desk .desk-log, .desk .desk-log.has-more { -webkit-mask-image: none; mask-image: none; }
 /* tablets: the counters and the controls side by side under the chart */
@@ -226,3 +296,265 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.804; }
 /* the narrowest phones: six gate names cannot sit side by side, so every other name drops a line (numbers stay level) */
 @media (max-width: 380px) { .desk .desk-lane { padding-left: 6px; padding-right: 6px; } .desk .dl-gates li:nth-child(even) b { margin-bottom: 13px; } }
 @media (prefers-reduced-motion: reduce) { .desk .desk-follow { transition: none; } .desk .desk-follow:active { transform: none; } }
+
+
+/* ==========================================================================
+   The reading layer (lab: platform editorial). Both pages set like a printed report, in the grammar of Home's reading
+   layer: one caption grammar; chapter heads on one baseline; every chapter's heading in columns 1-7 and its lede from
+   column 8; chapters that close instead of trail; registers instead of boxed cards; labels and numerals on the
+   baselines of the text they belong to; no line broken where a reader trips.
+   ========================================================================== */
+
+/* ---------- captions: the number hangs in the margin as a register mark; the title is text (Inter); the hedge and the
+   source are data (mono), flush right or on their own line. The dash stays for assistive tech (.fc-d). */
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .figure-cap { --fc-ind: 4.75rem; --fc-lh: 1.25rem; position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 40px; padding-left: var(--fc-ind); font: 400 .84rem/var(--fc-lh) var(--sans); letter-spacing: 0; color: var(--fg-2); }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .figure-cap .fc-n { display: inline-block; width: var(--fc-ind); margin-left: calc(-1 * var(--fc-ind)); font: 500 .6875rem/var(--fc-lh) var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg); white-space: nowrap; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .figure-cap .fc-d { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .figure-cap .fc-t { min-width: 0; text-wrap: pretty; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .figure-cap .fc-h { font: 400 .6875rem/1.55 var(--mono); letter-spacing: .04em; color: var(--fg-3); text-align: right; text-wrap: pretty; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .figure-cap--stack { flex-direction: column; align-items: flex-start; gap: 3px; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .figure-cap--stack .fc-h { text-align: left; }
+@media (max-width: 960px) {
+  :is(body[data-page="platform"], body[data-page="lifecycles"]) .figure-cap { flex-direction: column; align-items: flex-start; gap: 3px; }
+  :is(body[data-page="platform"], body[data-page="lifecycles"]) .figure-cap .fc-h { text-align: left; }
+}
+@media (max-width: 600px) {
+  :is(body[data-page="platform"], body[data-page="lifecycles"]) .figure-cap { padding-left: 0; margin-top: 14px; }
+  :is(body[data-page="platform"], body[data-page="lifecycles"]) .figure-cap .fc-n { width: auto; margin: 0 .75em 0 0; }
+}
+
+/* chapter heads on one baseline: site.css since v2x r1 (the system lab's move 4; Platform's copy removed by the integrator) */
+
+/* ---------- chapters close instead of trail: a chapter's foot is shorter than the next one's head (Home's measure) ---------- */
+:is(body[data-page="platform"], body[data-page="lifecycles"]) main > .section { padding-block: clamp(56px, 7vw, 100px) clamp(44px, 5.4vw, 76px); }
+#mcp.section { padding-bottom: clamp(44px, 5.4vw, 76px); }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) main > .section > .container > .mt-4:last-child { margin-top: clamp(28px, 3vw, 40px); }
+
+/* ---------- a heading that states two rules: one line per sentence, across the page ---------- */
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .ln { display: block; text-wrap: balance; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .h2-rule { max-width: none; margin-bottom: calc(-1 * clamp(4px, 1.6vw, 24px)); }
+
+/* ---------- the live status: the green mark and the words, unboxed (as Proof's hero and Home §04 set it) ---------- */
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .page-hero .badge { padding: 0; border: 0; color: var(--fg-2); }
+body[data-page="lifecycles"] .lc-st { display: inline; margin-left: .8em; padding: 0; border: 0; font-size: .64rem; color: var(--signal-ink); white-space: nowrap; }
+body[data-page="lifecycles"] .lc-st i { display: inline-block; margin-right: 7px; vertical-align: .2em; }
+
+/* ---------- running text: no runt last lines in short items ---------- */
+:is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(dd, .list-rule p, .layer p, .desk-note, .sw-role p) { text-wrap: pretty; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(.stats .d, .lb-t small, .mkt-col h3, .checks li, .list-hair li) { text-wrap: balance; }
+body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
+
+/* the keyboard clause of §01's instruction only where there is a pointer, and so a keyboard */
+@media (hover: none) { body[data-page="platform"] .kb-only { display: none; } }
+
+/* ---------- Platform §01: the spec on the page's own twelve columns ----------
+   Number in column 1, name and its scope in 2-4, the paragraph in 5-9 (about 60 characters a line), In and Out in
+   10-12, so the table's columns are the grid every chapter head stands on. The number, the paragraph and In stand on
+   the name's first baseline; the scope is a short list under the verb, not a line of dots. */
+@media (min-width: 1100px) {
+  #architecture [data-arch-spec] > :is(.layer, .layer-boundary, .layer-floor) { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(16px, 2.2vw, 32px); }
+  #architecture [data-arch-spec] > .layer > .k { grid-column: 1; padding-top: 1.66rem; }
+  #architecture [data-arch-spec] > .layer > h3 { grid-column: 2 / span 3; }
+  #architecture [data-arch-spec] > .layer > div { grid-column: 2 / -1; }
+  #architecture [data-arch-spec] > .layer > div > p { grid-column: 4 / span 5; margin-top: .5rem; }
+  #architecture [data-arch-spec] > .layer > div > ul { grid-column: 1 / span 3; }
+  #architecture [data-arch-spec] > .layer > div > .io { grid-column: 9 / -1; margin-top: .94rem; }
+  #architecture [data-arch-spec] > .layer-boundary > .k { grid-column: 1; }
+  #architecture [data-arch-spec] > .layer-boundary > .lb-t { grid-column: 2 / span 3; }
+  #architecture .layer-boundary .lb-io { grid-column: 5 / -1; }
+  #architecture [data-arch-spec] > .layer-floor > p { grid-column: 2 / -1; }
+}
+#architecture [data-arch-spec] > .layer > div > ul { margin-top: 14px; }
+#architecture [data-arch-spec] > .layer > div > ul li { display: block; font: 400 .8125rem/1.55 var(--sans); letter-spacing: 0; white-space: normal; }
+#architecture [data-arch-spec] > .layer > div > ul li + li::before { content: none; }
+
+/* ---------- Platform §03: the four figures as a summary of terms (Home §04's form), not a strip of giant numerals ---------- */
+#swarm .stats.sw-spec { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(32px, 5.6vw, 88px); row-gap: 0; background: none; border: 0; border-bottom: 1px solid var(--line); }
+#swarm .stats.sw-spec > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "k v" "d v"; column-gap: 24px; align-items: baseline; padding: 18px 0 20px; background: none; border-top: 1px solid var(--line-strong); }
+#swarm .stats.sw-spec .v { grid-area: v; font-size: clamp(2rem, 2.7vw, 2.6rem); line-height: .95; text-align: right; white-space: nowrap; font-variant-numeric: lining-nums tabular-nums; }
+#swarm .stats.sw-spec .k { grid-area: k; margin: 0; font: 500 1rem/1.35 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg); }
+#swarm .stats.sw-spec .d { grid-area: d; margin-top: 3px; max-width: 40ch; font-size: .9rem; line-height: 1.5; }
+#swarm .stats.sw-spec > div:nth-child(n + 3) { border-top-color: var(--line); }
+@media (max-width: 600px) {
+  #swarm .stats.sw-spec { grid-template-columns: minmax(0, 1fr); }
+  #swarm .stats.sw-spec > div { padding: 14px 0 15px; }
+  #swarm .stats.sw-spec > div:nth-child(2) { border-top-color: var(--line); }
+  #swarm .stats.sw-spec .v { font-size: 1.9rem; }
+  #swarm .stats.sw-spec .k { font-size: .94rem; }
+  #swarm .stats.sw-spec .d { font-size: .84rem; }
+}
+
+/* ---------- Platform §04: each step's data flush right, on the tag's baseline, like a figure in a table ---------- */
+@media (min-width: 761px) { body[data-page="platform"] .list-rule--3 > li > .mono { justify-self: end; text-align: right; } }
+
+/* ---------- Platform §06: a numeric column's head stands over its figures; the table's caption takes a closing rule,
+   as the dial's does, and both captions close their columns on one line ---------- */
+#modes .modes-head { align-items: start; }
+#modes .ledger th:nth-child(3) { text-align: right; }
+#modes .modes-cap { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+
+/* ---------- Lifecycles §01: the six traits as a register (the boxed 3 x 2 grid with icons was the template) ----------
+   One ruled row per trait: code, the trait, what it means, and the layer it maps to, with the stack's own glyph, in a
+   column of its own (a cross-reference, not an icon). */
+#test .card-grid--3 { grid-template-columns: minmax(0, 1fr); border: 0; border-top: 1px solid var(--line-strong); }
+#test .card-grid--3 > .card { display: grid; grid-template-columns: 56px minmax(0, 15.5rem) minmax(0, 1fr) 13.5rem; column-gap: clamp(20px, 2.6vw, 44px); align-items: baseline; padding: 20px 0 22px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; }
+#test .card .n { display: contents; }
+#test .card .n > span:first-child { grid-column: 1; grid-row: 1; font: 400 .75rem/1 var(--mono); letter-spacing: .08em; color: var(--fg-3); }
+#test .card .h4 { grid-column: 2; grid-row: 1; margin: 0; font-size: clamp(1.3rem, 1.6vw, 1.5rem); line-height: 1.15; text-wrap: balance; }
+#test .card p { grid-column: 3; grid-row: 1; margin: 0; max-width: 60ch; font-size: .96rem; line-height: 1.55; }
+#test .card .lc-map { display: block; grid-column: 4; grid-row: 1; justify-self: start; font: 400 .6875rem/1.3 var(--mono); letter-spacing: .06em; color: var(--fg-2); white-space: nowrap; }
+#test .card .lc-map svg { display: inline-block; width: 34px; height: auto; margin-right: 10px; vertical-align: middle; }
+/* wide screens: the register on the page's twelve columns, as Platform's spec (code 1, trait 2-4, text 5-9, layer 10-12) */
+@media (min-width: 1100px) {
+  #test .card-grid--3 > .card { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(16px, 2.2vw, 32px); }
+  #test .card .n > span:first-child { grid-column: 1; }
+  #test .card .h4 { grid-column: 2 / span 3; }
+  #test .card p { grid-column: 5 / span 5; }
+  #test .card .lc-map { grid-column: 10 / -1; }
+}
+@media (min-width: 601px) and (max-width: 960px) {
+  #test .card-grid--3 > .card { grid-template-columns: 48px minmax(0, 1fr) auto; row-gap: 8px; }
+  #test .card p { grid-column: 2 / -1; grid-row: 2; }
+  #test .card .lc-map { grid-column: 3; }
+}
+@media (max-width: 600px) {
+  #test .card-grid--3 > .card { grid-template-columns: 40px minmax(0, 1fr); column-gap: 10px; row-gap: 6px; padding: 16px 0 18px; }
+  #test .card .h4 { font-size: 1.22rem; }
+  #test .card p { grid-column: 2; grid-row: 2; font-size: .92rem; line-height: 1.5; }
+  #test .card .lc-map { grid-column: 2; grid-row: 3; justify-self: start; margin-top: 4px; }
+  #test .card .lc-map svg { width: 26px; }
+}
+
+/* ---------- Lifecycles §02: the ring and the code on one line, on the class's baseline ---------- */
+#classes .list-rule > li { grid-template-columns: 6.25rem minmax(0, 1fr); }
+#classes .list-rule > li .k { white-space: nowrap; }
+#classes .list-rule > li h3 { text-wrap: balance; }
+#classes .list-rule > li .k .lc-ring { display: inline-block; width: 20px; height: 20px; margin: 0 9px 0 0; vertical-align: -5px; }
+@media (max-width: 960px) { #classes .list-rule > li { grid-template-columns: 5.9rem minmax(0, 1fr); } }
+@media (max-width: 600px) {
+  #classes .list-rule > li { grid-template-columns: 4.3rem minmax(0, 1fr); gap: 8px; }
+  #classes .list-rule > li .k { font-size: .66rem; letter-spacing: .04em; }
+  #classes .list-rule > li .k .lc-ring { width: 16px; height: 16px; margin-right: 6px; vertical-align: -4px; }
+}
+
+/* the 'How it works' card pins only where the screen can hold it (a phone held sideways cannot) */
+@media (min-width: 601px) and (max-width: 960px) and (max-height: 719.98px) { #lc01 .lc-how > .card { position: static; } }
+
+/* ---------- Platform §01 on tablets: each layer as a 2 x 2 (name | paragraph, then scope | In and Out on one rule) ----------
+   The name column was empty under the verb while the scope list pushed In and Out ~100 px down; now the scope stands
+   in that column, beside In and Out, as the layer's data. */
+@media (min-width: 601px) and (max-width: 1099px) {
+  #architecture [data-arch-spec] > .layer { grid-template-areas: "k p" "h p" "ul io"; grid-template-rows: auto 1fr auto; }
+  #architecture [data-arch-spec] > .layer > .k { grid-area: k; }
+  #architecture [data-arch-spec] > .layer > h3 { grid-area: h; align-self: start; }
+  #architecture [data-arch-spec] > .layer > div { display: contents; }
+  #architecture [data-arch-spec] > .layer > div > p { grid-area: p; }
+  #architecture [data-arch-spec] > .layer > div > ul, #architecture [data-arch-spec] > .layer > div > .io { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+  #architecture [data-arch-spec] > .layer > div > ul { grid-area: ul; align-self: start; }
+  #architecture [data-arch-spec] > .layer > div > .io { grid-area: io; }
+}
+
+/* ---------- Platform §03: the four roles as the lab's legend, in columns (the boxed cards read as a feature row) ---------- */
+#swarm .sw-legend { border: 0; }
+#swarm .sw-legend > .card { border-bottom: 0; background: none; }
+@media (min-width: 961px) {
+  #swarm .sw-legend > .card { padding-inline: clamp(18px, 2vw, 28px); }
+  #swarm .sw-legend > .card:first-child { padding-left: 0; }
+  #swarm .sw-legend > .card:last-child { padding-right: 0; border-right: 0; }
+}
+@media (min-width: 521px) and (max-width: 960px) {
+  #swarm .sw-legend > .card { padding-inline: 0 clamp(18px, 3vw, 28px); }
+  #swarm .sw-legend > .card:nth-child(even) { padding-inline: clamp(18px, 3vw, 28px) 0; border-right: 0; }
+  #swarm .sw-legend > .card:nth-child(-n + 2) { border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 520px) {
+  #swarm .sw-legend > .card { border-right: 0; }
+  #swarm .sw-legend > .card + .card { border-top: 1px solid var(--line); }
+}
+
+/* ---------- the lede beside a chapter heading starts on the heading's cap line (it rode ~4 px above it) ---------- */
+@media (min-width: 961px) { :is(body[data-page="platform"], body[data-page="lifecycles"]) main .section > .container > .grid > .offset-7 > .body-lg:first-child { margin-top: .25rem; } }
+
+/* ---------- the hero's status line is text (it wraps after a middle dot on phones, its mark on the first line) ---------- */
+body[data-page="platform"] .page-hero .badge { display: inline-block; line-height: 1.7; padding-left: 15px; text-indent: -15px; }
+body[data-page="platform"] .page-hero .badge i { display: inline-block; margin-right: 9px; vertical-align: .12em; }
+/* (a wrapped second line hangs under the words, not under the mark) */
+
+/* ---------- Platform §07: a column head stays two labels on the narrowest phones (it broke word by word) ---------- */
+body[data-page="platform"] .mkt-col > .n { flex-wrap: wrap; row-gap: 2px; }
+body[data-page="platform"] .mkt-col > .n > span { white-space: nowrap; }
+
+/* ---------- Lifecycles §02 on tablets: one column of full-measure rows (two columns left ~35 characters a line) ---------- */
+@media (min-width: 601px) and (max-width: 960px) { #classes .list-rule { display: block; } #classes .list-rule > li p { max-width: 64ch; } }
+
+/* ==========================================================================
+   r1: phones are shorter by layout, never by content (fidelity and mobile critics). Every paragraph, In and Out, role,
+   row and list item stays; what goes is slack: padding, a wasted gutter, a drawing larger than its job.
+   ========================================================================== */
+@media (max-width: 600px) {
+  /* Platform §01: the explorer's head on two lines (its key on one); each layer tighter */
+  #architecture .arch.is-narrow .arch-head { row-gap: 4px; padding-top: 6px; padding-bottom: 8px; }
+  #architecture .arch.is-narrow .arch-legend { gap: 4px 10px; letter-spacing: .08em; }
+  #architecture [data-arch-spec] > .layer { row-gap: 6px; padding: 14px 0 16px; }
+  #architecture [data-arch-spec] > .layer > div > p { font-size: .93rem; line-height: 1.5; }
+  #architecture [data-arch-spec] > .layer-boundary { padding: 14px 10px; }
+  /* Platform §02: the two lists at reading density */
+  #boundary .bnd-side .checks li { padding-top: 8px; padding-bottom: 8px; }
+  /* Platform §04: the step's code on its tag's line, so the text takes the full measure */
+  body[data-page="platform"] .list-rule--3 > li { grid-template-columns: 2.9rem minmax(0, 1fr); column-gap: 10px; row-gap: 0; padding-top: 16px; padding-bottom: 16px; }
+  body[data-page="platform"] .list-rule--3 > li > div:not(.mono) { display: contents; }
+  body[data-page="platform"] .list-rule--3 > li > .k { grid-column: 1; grid-row: 1; }
+  body[data-page="platform"] .list-rule--3 > li .lc-tag { grid-column: 2; grid-row: 1; }
+  body[data-page="platform"] .list-rule--3 > li :is(h3, p, .mono) { grid-column: 1 / -1; }
+  body[data-page="platform"] .list-rule--3 > li h3 { margin-top: 6px; }
+  body[data-page="platform"] .list-rule--3 > li p { margin-top: 4px; }
+  body[data-page="platform"] .list-rule--3 > li > .mono { margin-top: 8px; }
+  /* Platform §06: the dial at a drawing's size; Table 6.1's rows closer */
+  #modes .sec-plate--dial .hp-art { max-width: 270px; }
+  #modes .table-scroll > .ledger > tbody > tr { row-gap: 4px; padding: 12px 0; }
+  #modes .table-scroll > .ledger > tbody > tr > td:first-child { padding-bottom: 2px; }
+  /* Platform §07 */
+  body[data-page="platform"] .mkt-col .list-hair > li { padding-top: 8px; padding-bottom: 8px; }
+  /* Lifecycles §01 and §02: rows at reading density */
+  #test .card-grid--3 > .card { padding: 13px 0 15px; }
+  #classes .list-rule > li { padding: 14px 0; }
+  #classes .list-rule > li p { font-size: .92rem; line-height: 1.5; }
+  /* Lifecycles §03: the seven steps on a narrower lane (the glyphs at 70%), so the words take the measure */
+  #lc01 .lane-v--steps { --lv-gw: 72px; --lv-x: 36px; }
+  #lc01 .lane-v--steps > li { column-gap: 14px; min-height: 0; padding-bottom: 18px; }
+  #lc01 .lane-v--steps p { margin-top: 4px; font-size: .94rem; line-height: 1.5; }
+  /* the desk: the two sliders side by side under the counters */
+  .desk .desk-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 18px; padding: 14px 14px 8px; align-content: start; align-items: end; }
+  /* each value on its own line under its label (a wrapped value never starts its line with the dot) */
+  .desk .desk-controls output { display: block; margin-top: 2px; }
+  .desk .desk-controls output[data-gap-n-out]::before { content: none; }
+  /* Lifecycles §04: the orbit drawn small above its list (its tags kept at their size) */
+  body[data-page="lifecycles"] .orbit-fig { max-width: 280px; }
+  body[data-page="lifecycles"] .orbit-svg { font-size: clamp(13.75px, calc(37.4px - 4.93vw), 21.9px); }
+}
+/* In and Out side by side from 360 px: two short columns, each its label over its text */
+@media (min-width: 360px) and (max-width: 600px) {
+  #architecture [data-arch-spec] > .layer .io { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 18px; margin-top: 10px; padding-top: 9px; }
+  #architecture [data-arch-spec] > .layer .io > div { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 2px; }
+  #architecture [data-arch-spec] > .layer .io dd { font-size: .86rem; line-height: 1.42; }
+}
+
+/* ---------- r1, second pass: phones and tablets ---------- */
+/* Platform §03 on phones: the lab's two sliders side by side (each value under its label), as the desk sets them */
+@media (max-width: 420px) {
+  body[data-page="platform"] #swarm .swarm-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; }
+  body[data-page="platform"] #swarm .swarm-controls label { letter-spacing: .08em; }
+  body[data-page="platform"] #swarm .swarm-controls output { display: block; margin-top: 2px; }
+  body[data-page="platform"] #swarm .swarm-controls output::before { content: none; }
+}
+/* Platform §07 on tablets: the two sides stay side by side (one column left half the page empty) */
+@media (min-width: 601px) and (max-width: 860px) {
+  body[data-page="platform"] .mkt-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  body[data-page="platform"] .mkt-col { padding-right: clamp(18px, 3vw, 28px); }
+  body[data-page="platform"] .mkt-col + .mkt-col { margin-top: 0; padding-left: clamp(18px, 3vw, 28px); padding-right: 0; border-top: 0; border-left: 1px solid var(--line); }
+}
+/* Lifecycles desk: the mean gap's unit takes its own line where the cell is narrow (no line ends on its dot) */
+.desk .desk-stats :is(.dk-u, .dk-sep) { display: inline; margin: 0; } /* site.css makes every span in the counters a block */
+@media (max-width: 1199px) { .desk .desk-stats .dk-u { display: block; margin-top: 2px; } .desk .desk-stats .dk-sep { display: none; } }
+/* 381-420 px: six gate names side by side need a tighter track ('APPROVE' and 'EXECUTE' touched at 390) */
+@media (min-width: 381px) and (max-width: 420px) { .desk .dl-gates li { letter-spacing: .05em; } }

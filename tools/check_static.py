@@ -673,7 +673,7 @@ DISCLOSURE = (
     "guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain "
     "with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their "
     "respective owners and do not endorse OpenEXA.")
-plain = lambda frag: re.sub(r"\s+", " ", H.unescape(re.sub(r"<[^>]+>", " ", frag))).replace("‐", "-").strip()
+plain = lambda frag: re.sub(r"\s+", " ", H.unescape(re.sub(r"<[^>]+>", " ", frag))).replace("‐", "-").replace("’", "'").strip()
 
 
 def check_footer():
