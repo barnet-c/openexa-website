@@ -702,7 +702,7 @@
   }
 
   /* ================= layout: each scene fitted into the frame the copy leaves free ================= */
-  let W = 1, H = 1, dpr = 1, ratio = 0, stacked = false, compact = false, short = false, tiny = false, navH = 72, barH = 64, gutter = 24, contR, safeL = 0, safeR = 0, safeProbe = null;
+  let W = 1, H = 1, dpr = 1, ptK = 1, ratio = 0, stacked = false, compact = false, short = false, tiny = false, navH = 72, barH = 64, gutter = 24, contR, safeL = 0, safeR = 0, safeProbe = null;
   // local extent seen from each scene's camera (w, h)
   const EXT = [[2.9, 2.5], [3.3, 2.2], [2.75, 2.75], [2.55, 2.5], [3.8, 2.0]];
   const EXT_ST = [[2.45, 2.12], [3.3, 2.7], null, null, null];
@@ -903,7 +903,7 @@
       layouts[i] = { cx, cy, s, rect: [x0, y0, x1, y1] };
     }
     // (lab) landing, the record line opens out to the page's measure: the rule the paper chapters continue (1.0x: its depth)
-    const L4 = layouts[4], ml = beatRects[4] ? beatRects[4].l : gutter, tw = Math.max(15, ...(lab.days || []).map(l => l.ink ? l.ink.querySelector('.rw').offsetWidth : 0)); // (the outer tags meet the margins)
+    const L4 = layouts[4], ml = beatRects[4] ? beatRects[4].l : gutter, tw = Math.max(15, ...(lab.days || []).map(l => l.ink ? l.ink.querySelector('.k').offsetWidth : 0)); // (the outer tags meet the margins)
     b4 = { s: L4.s, cx: L4.cx, z: Math.max(1, (stacked ? 1.008 : 1.02) * (W - 2 * ml - tw) / (COL_SPAN * (NCOL - 1) / NCOL * L4.s * pxu)) };
   }
 
@@ -978,9 +978,9 @@
       frust(L.cy + (H * FLOOR_END() - f) * (stacked ? sstep(EXIT.tall.cam[0], EXIT.tall.cam[1], xeNow) : sstep(0, 0.35, xeNow))); // portrait: it pushes the copy out
     }
   }
-  const FLOOR_END = () => (stacked ? 0.7 : 0.76); // where the floor line, the paper's edge to be, ends on screen (share of the stage)
+  const FLOOR_END = () => (stacked ? 0.7 : short ? 0.76 : 0.66); // where the floor line, the paper's edge to be, ends on screen (share of the stage; wide: 0.76 -> 0.66 on 1 Nov, so the coda and its record line sit in the frame, not under a dark hole, and the paper under them stays short)
   // the way out, in shares of the exit.
-  const EXIT = { wide: { copy: [0.1, 0.22], coda: [0.18, 0.28], paper: [0.35, 0.8], cap: [0.74, 0.9] }, tall: { cam: [0.3, 0.56], copy: [0.3, 0.42], coda: [0.38, 0.48], paper: [0.58, 0.86], cap: [0.84, 0.96] } }; // (portrait: the proof's copy has gone before the coda opens: one headline at a time)
+  const EXIT = { wide: { copy: [0.1, 0.22], coda: [0.18, 0.28], paper: [0.26, 0.66], cap: [0.6, 0.76] }, tall: { cam: [0.3, 0.56], copy: [0.3, 0.42], coda: [0.38, 0.48], paper: [0.58, 0.86], cap: [0.84, 0.96] } }; // (portrait: the proof's copy has gone before the coda opens: one headline at a time)
   // (lab) the exit folds the ten columns down together with the floor line (the paper's edge); seals go into their records
   const foldE = () => sstep(0.02, 0.3, xeNow), flY = () => lerp(Y_FL, Y_FLOOR + 0.02, foldE());
   const sealOf = (c) => clamp((xeNow - 0.03 - 0.12 * c / Math.max(1, NCOL - 1)) / 0.1, 0, 1);
@@ -1288,7 +1288,7 @@
     label(3, '<i class="lg-b"></i><span class="n">Records · hash-linked</span>', { cls: 'note', kind: 'list', leader: true, wide: true, anchor: () => [LEDGER_X0 + LEDGER_DX * 3.5, Y_LEDGER + 0.05, 0] });
     // S4: the sessions under their columns (from the data), the floor, the derived summary
     const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    lab.days = SESSIONS.map((s, c) => label(4, `<span class="k">${s.day}</span><span class="rg">${s.regime === 'premium' ? 'P' : 'D'}<span class="rw">${s.regime}</span></span><span class="dt">Day ${s.day} · ${s.regime} · ${esc(valueT(s))} · ${s.confirmed ? 'broker-confirmed' : 'confirmation not stated'}</span>`,
+    lab.days = SESSIONS.map((s, c) => label(4, `<span class="k">${s.day}</span><span class="dt">Day ${s.day} · ${s.regime} · ${esc(valueT(s))} · ${s.confirmed ? 'broker-confirmed' : 'confirmation not stated'}</span>`,
       { cls: 'day' + (s.regime === 'premium' ? ' is-prem' : ''), kind: 'tag', group: c, side: 's', keep: true, col: c, dy: U_DAY - 6, info: [`Day ${s.day}`, capw(s.regime), `${s.above ? 'Above' : 'Not above'} the ${FLOOR_T} floor (${esc(valueT(s))}) · ${s.confirmed ? 'confirmed against the broker’s records' : 'confirmation not stated'}`], anchor: () => [COL_X(c), Y_FLOOR, 0] }));
     // the floor's tag sits on the line, left of column 01 (never across it)
     label(4, `<span>${FLOOR_T}</span> <span>floor</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
@@ -1772,6 +1772,7 @@
       W = w; H = h; ratio = r;
       // phones (LITE) draw at most 2 device px per CSS px
       dpr = Math.min(LITE ? 2 : 3, r, Math.sqrt(PIXEL_BUDGET / Math.max(1, W * H)));
+      ptK = Math.max(1, W / 1600); // wide screens: points, glows and actors grow with the frame, so the globe and the swarm read as dense as at 1440 (4K: 2.4x)
       cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr);
       gl.viewport(0, 0, cv.width, cv.height);
       if (paperIn) paperIn.style.height = H + 'px'; // the paper's contents live in the stage's frame
@@ -1796,7 +1797,7 @@
     gl.uniform1f(u.u_swirl, SWIRL[seg]); gl.uniform1f(u.u_lift, LIFT[seg]); gl.uniform3fv(u.u_liftDir, LIFT_DIR[seg]);
     gl.uniform1f(u.u_sA, scale[0]); gl.uniform1f(u.u_sB, scale[1]);
     gl.uniform1f(u.u_spin, time * 0.07 + 0.6);
-    gl.uniform1f(u.u_pr, dpr); gl.uniform1f(u.u_dist, CAM_D); gl.uniform1f(u.u_fogR, 1.7 * Math.max(scale[0], scale[1]));
+    gl.uniform1f(u.u_pr, dpr * ptK); gl.uniform1f(u.u_dist, CAM_D); gl.uniform1f(u.u_fogR, 1.7 * Math.max(scale[0], scale[1]));
     gl.uniform1f(u.u_maxpt, maxPt); gl.uniform1f(u.u_intro, intro); gl.uniform1f(u.u_halo, halo ? 1 : 0);
     gl.uniform1f(u.u_shade, lerp(SHADE[seg], SHADE[seg + 1], mE));
     gl.uniform1fv(u.u_hov, hov); gl.uniform1f(u.u_hovOn, hoverOn); gl.uniform1f(u.u_hovScene, hoverScene);
@@ -1832,7 +1833,7 @@
     const pr = P.act, u = pr.u;
     gl.useProgram(pr.prog);
     gl.uniformMatrix4fv(u.u_view, false, view); gl.uniformMatrix4fv(u.u_proj, false, proj);
-    gl.uniform1f(u.u_pr, dpr); gl.uniform1f(u.u_dist, CAM_D); gl.uniform1f(u.u_fogR, 1.7 * Math.max(scale[0], scale[1])); gl.uniform1f(u.u_maxpt, maxPt); gl.uniform1f(u.u_halo, halo ? 1 : 0);
+    gl.uniform1f(u.u_pr, dpr * ptK); gl.uniform1f(u.u_dist, CAM_D); gl.uniform1f(u.u_fogR, 1.7 * Math.max(scale[0], scale[1])); gl.uniform1f(u.u_maxpt, maxPt); gl.uniform1f(u.u_halo, halo ? 1 : 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, BUF.act);
     if (!halo) gl.bufferSubData(gl.ARRAY_BUFFER, 0, actData.subarray(0, nAct * 11));
     const st = 44;

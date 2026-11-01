@@ -222,8 +222,11 @@
       G.padL = parseFloat(cs.paddingLeft) || 0; G.padR = parseFloat(cs.paddingRight) || 0; G.w = view.clientWidth;
       const avail = G.w - G.padL - G.padR;
       if (avail <= 0) return;
-      // a live column holds a digest's longest lines beside the id
-      const min = window.innerWidth < 600 ? (stream ? 140 : 136) : MIN_COL;
+      // a live column holds a digest's longest lines beside the id. The minimums are px at a 16 px root; the records are
+      // set in rem, and a 4K page grows its root with the viewport (root = 100vw / 150), so the columns grow with it:
+      // in px alone, at 3840 every id and detail was cut off and the records crowded into the left of the panel
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) / 16 || 1;
+      const min = (window.innerWidth < 600 ? (stream ? 140 : 136) : MIN_COL) * rem;
       let n = Math.max(2, Math.floor(avail / min));
       if (!stream) n = Math.min(n, Math.max(2, recs.length));
       G.col = Math.floor(avail / n * 10) / 10;

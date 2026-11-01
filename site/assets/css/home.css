@@ -119,20 +119,10 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
 @media (min-width: 640px) and (min-aspect-ratio: 23/20) and (min-height: 600.02px) {
   html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story-coda { display: block; right: auto; width: min(46vw, 640px); }
   body[data-page="home"] .story-coda-t { font-size: clamp(3rem, 6.2vw, 6.4rem); line-height: .96; letter-spacing: -0.025em; }
-  /* each record's regime in full under its day */
-  body[data-page="home"] .story-ink .story-lab .rg { position: relative; color: transparent; }
-  body[data-page="home"] .story-ink .story-lab .rw { display: block; position: absolute; left: 50%; top: 0; transform: translateX(-50%); color: rgba(14, 21, 18, .62); }
 }
-body[data-page="home"] .story-lab .rw { display: none; }
 
 /* ---------- phones: shorter, nothing dropped but repeats ---------- */
 @media (max-width: 600px) {
-  /* §03: the lane's gates smaller */
-  body[data-page="home"] #lc01 .lane-v { --lv-gw: 72px; --lv-x: 36px; }
-  body[data-page="home"] #lc01 .lane-v > li { column-gap: 14px; min-height: 60px; padding-bottom: 14px; }
-  body[data-page="home"] #lc01 .lane-v > .lv-bound { padding-left: calc(var(--lv-gw) + 14px); }
-  /* each gate on one line */
-  body[data-page="home"] #lc01 .lane-v > li { min-height: 52px; padding-bottom: 8px; }
   /* the chain folds to records 01-04 (home.js) */
   body[data-page="home"] #governance .chain.is-folded .chain-list > li:nth-child(n + 5) { display: none; }
   body[data-page="home"] #governance .chain-more { display: flex; align-items: center; gap: 10px; width: calc(100% - 24px); min-height: 44px; margin: 0 12px 8px; padding: 0 12px; border: 1px dashed var(--line-strong); border-radius: 2px; font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); }
@@ -147,47 +137,6 @@ body[data-page="home"] .story-lab .rw { display: none; }
 
 @media (min-width: 601px) { body[data-page="home"] #governance .chain-more { display: none; } }
 
-/* §06 the running log on a phone: one column, newest on top, rows of one height */
-body[data-page="home"] .lt-hx > summary { display: none; }
-@media (max-width: 600px) {
-  body[data-page="home"] [data-ledger-stream] .lt-view { overflow: visible; -webkit-mask-image: none !important; mask-image: none !important; }
-  body[data-page="home"] [data-ledger-stream] .lt-track { display: flex; flex-direction: column-reverse; width: auto; min-width: 0; padding: 4px 10px 6px 8px; }
-  body[data-page="home"] [data-ledger-stream] .lt-rec:nth-last-child(n + 5):not(.is-sel) { display: none; }
-  body[data-page="home"] [data-ledger-stream] .lt-rec { contain: layout style; width: auto; margin-left: 0; padding: 9px 8px 10px 32px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "id lc t" "ev ev ev" "sub sub sub"; column-gap: 10px; row-gap: 3px; align-items: baseline; }
-  body[data-page="home"] [data-ledger-stream] .lt-meta { display: contents; }
-  body[data-page="home"] [data-ledger-stream] .lt-id { grid-area: id; }
-  body[data-page="home"] [data-ledger-stream] .lt-lc { grid-area: lc; min-width: 0; }
-  body[data-page="home"] [data-ledger-stream] .lt-t { grid-area: t; margin: 0; }
-  body[data-page="home"] [data-ledger-stream] .lt-ev { grid-area: ev; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  body[data-page="home"] [data-ledger-stream] .lt-sub { grid-area: sub; display: block; min-height: 0; height: auto; margin: 0; padding-right: 66px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  body[data-page="home"] .lt[data-ledger-stream] :is(.lt-ev, .lt-lc) { white-space: nowrap; overflow: hidden; }
-  body[data-page="home"] [data-ledger-stream] .lt-rec::after { inset: 2px 0; }
-  body[data-page="home"] [data-ledger-stream] .lt-rec:focus-visible::before { inset: 2px 0; }
-  /* the rail: each node beside its event */
-  body[data-page="home"] [data-ledger-stream] .lt-line { position: absolute; inset: 0; height: auto; margin: 0; pointer-events: none; }
-  body[data-page="home"] [data-ledger-stream] .lt-node { left: 10px; top: 27px; }
-  body[data-page="home"] [data-ledger-stream] .lt-seg { left: 15.5px; right: auto; top: calc(39px - 100%); bottom: calc(100% - 27px); width: 1px; height: auto; background: var(--line-strong); -webkit-mask-image: none; mask-image: none; transform-origin: 50% 100%; }
-  body[data-page="home"] [data-ledger-stream] .lt-rec.is-head .lt-seg { display: none; }
-  body[data-page="home"] [data-ledger-stream] .lt-rec.is-sel .lt-seg, body[data-page="home"] [data-ledger-stream] .lt-rec.is-before-sel .lt-seg { background: var(--accent); }
-  body[data-page="home"] [data-ledger-stream] .lt-rec.is-linking .lt-seg { animation-name: home-form-v; }
-  body[data-page="home"] [data-ledger-stream] .lt-tag { left: auto; right: 8px; top: auto; bottom: 11px; transform: none; padding: 0; background: none; }
-  body[data-page="home"] [data-ledger-stream] .lt-leader { display: none; }
-  body[data-page="home"] [data-ledger-stream] .lt-latest svg { transform: rotate(-90deg); }
-  /* the inspector: hash blocks fold under "Hash links" */
-  body[data-page="home"] .lt-hx > summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 44px; margin-top: 2px; border-top: 1px solid var(--line); list-style: none; cursor: pointer; font: 500 var(--mono-tick)/1.6 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-2); }
-  body[data-page="home"] .lt-hx > summary::-webkit-details-marker { display: none; }
-  body[data-page="home"] .lt-hx > summary::after { content: "+"; content: "+" / ""; font-size: 1.1rem; line-height: 1; color: var(--accent); transition: transform .35s var(--ease); }
-  body[data-page="home"] .lt-hx[open] > summary::after { transform: rotate(45deg); }
-  body[data-page="home"] .lt-hx > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  body[data-page="home"] .lt-hx[open] > dl { margin-top: 4px; }
-}
-/* 361-400 px: three lines for detail and source */
-@media (min-width: 361px) and (max-width: 400px) {
-  body[data-page="home"] .lt[data-ledger-stream]:not(.is-inspecting) .lt-insp :is([data-f="d"], [data-f="src"]) { -webkit-line-clamp: 3; height: 4.95em; }
-}
-@keyframes home-form-v { 0% { transform: scaleY(.38); background: var(--accent); } 55% { transform: none; background: var(--accent); } 100% { background: var(--line-strong); } }
-@media (prefers-reduced-motion: reduce) { body[data-page="home"] .lt-hx > summary::after { transition: none; } }
-
 /* ========== The reading layer (lab: home editorial) ========== */
 
 /* captions: the chart's key is the caption's second line */
@@ -195,23 +144,17 @@ body[data-page="home"] .figure-cap .fc-key { color: var(--fg-2); text-wrap: bala
 
 /* chapters close instead of trail */
 body[data-page="home"] main > .story + .section { padding-top: clamp(28px, 3.4vw, 48px); }
-
-/* §01 the six classes: statuses as one register */
-body[data-page="home"] #lifecycles .card .n--ring > span:last-child { font: 400 .6875rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--khaki-ink); }
-body[data-page="home"] #lifecycles .card .n--ring > span:last-child:not(.badge) { padding-top: 1px; }
-body[data-page="home"] #lifecycles .card .n--ring > .st-next { color: var(--fg-2); }
-body[data-page="home"] #lifecycles .card .n--ring > .badge { gap: 7px; padding: 0 !important; border: 0; color: var(--signal-ink); }
-
-/* §06 the running log: its head (the Pause) sticks under the bar; one row on a short screen */
-body[data-page="home"] .lt[data-ledger-stream] { overflow: clip; }
-body[data-page="home"] .lt[data-ledger-stream] .lt-head { position: sticky; top: var(--nav-h); z-index: 6; background: var(--lt-bg); border-radius: var(--r) var(--r) 0 0; }
-@media (max-height: 520.98px) {
-  body[data-page="home"] .lt[data-ledger-stream] .lt-head { grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "title latest state ctrl"; min-height: 0; padding-block: 2px; }
-  body[data-page="home"] .lt[data-ledger-stream] .lt-state { justify-self: end; }
+/* wide screens: the paper the overture leaves (its record line settles at 66 % of the frame) is this chapter's top margin */
+@media (min-width: 640px) and (min-aspect-ratio: 23/20) and (min-height: 600.02px) {
+  html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] main > .story + .section { padding-top: 0; }
 }
-@media (max-height: 520.98px) and (max-width: 699.98px) { body[data-page="home"] .lt[data-ledger-stream] .lt-title-x { display: none; } }
 
-/* §06 the chain on phones: the stream's record size; 16 px while editing */
+/* §01 the six classes: the ring, then the status in words (no codes, no mono capitals) */
+body[data-page="home"] #lifecycles .card .n--ring > span:last-child { font: 400 .875rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--khaki-ink); }
+body[data-page="home"] #lifecycles .card .n--ring > .st-next { color: var(--fg-2); }
+body[data-page="home"] #lifecycles .card .n--ring > .badge { padding: 0; border: 0; color: var(--signal-ink); }
+
+/* §06 the chain on phones: a smaller record size; 16 px while editing */
 @media (max-width: 600px) {
   body[data-page="home"] #governance .chain-list { font-size: .78rem; }
   body[data-page="home"] #governance .chain-list [contenteditable] { font-size: inherit; }
@@ -236,7 +179,7 @@ body[data-page="home"] .figure-cap .fc-key { font: 400 .8rem/1.5 var(--sans); le
 /* four sizes a screen: the display head, the line (Inter 1.1rem), the hedge (Inter .875rem), the instruments' mono */
 body[data-page="home"] main > .section { --ch-gap: clamp(36px, 4.4vw, 68px); }
 body[data-page="home"] .ch-title { max-width: 15ch; text-wrap: balance; }
-body[data-page="home"] .ch-title + :not(.ch-line) { margin-top: var(--ch-gap); }
+body[data-page="home"] .ch-title + :not(.ch-line), body[data-page="home"] .ch-title + .ch-line + * { margin-top: var(--ch-gap); }
 body[data-page="home"] .ch-head { margin-bottom: var(--ch-gap); }
 body[data-page="home"] .ch-line { margin-top: 18px; max-width: 34ch; font-size: 1.1rem; line-height: 1.5; color: var(--fg-2); text-wrap: balance; }
 body[data-page="home"] .ch-note { margin-top: 16px; font-size: .875rem; line-height: 1.45; color: var(--fg-3); }
@@ -255,23 +198,22 @@ body[data-page="home"] #lifecycles .lc-reg { grid-template-columns: repeat(3, mi
 body[data-page="home"] #lifecycles .lc-reg > .card { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr; row-gap: clamp(30px, 3.6vw, 56px); align-items: start; padding: 18px clamp(18px, 2.2vw, 32px) 26px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; }
 body[data-page="home"] #lifecycles .lc-reg > .card:nth-child(3n + 1) { padding-left: 0; }
 body[data-page="home"] #lifecycles .lc-reg > .card:not(:nth-child(3n + 1)) { border-left: 1px solid var(--line); }
-body[data-page="home"] #lifecycles .lc-reg .card .n { display: contents; }
-body[data-page="home"] #lifecycles .lc-reg .lc-code { grid-column: 1; grid-row: 1; gap: 10px; font-size: .6875rem; letter-spacing: .12em; color: var(--fg-2); }
-body[data-page="home"] #lifecycles .lc-reg .card .n--ring > span:last-child { grid-column: 2; grid-row: 1; justify-self: end; margin-top: 8px; }
+body[data-page="home"] #lifecycles .lc-reg .card .n { grid-column: 1 / -1; grid-row: 1; justify-content: flex-start; gap: 12px; margin: 0; color: var(--fg-2); }
+body[data-page="home"] #lifecycles .lc-reg .lc-code { flex: none; }
 body[data-page="home"] #lifecycles .lc-reg .card .h4 { grid-column: 1 / -1; grid-row: 2; align-self: end; margin: 0; max-width: 13ch; font-size: clamp(1.5rem, 2.05vw, 2.05rem); line-height: 1.08; letter-spacing: -0.015em; color: var(--fg-2); text-wrap: balance; }
 body[data-page="home"] #lifecycles .lc-reg .card:first-child .h4 { color: var(--fg); }
 body[data-page="home"] #lifecycles .lc-reg .card:first-child { box-shadow: inset 0 2px 0 var(--accent); }
 @media (max-width: 760px) {
   body[data-page="home"] #lifecycles .lc-reg { grid-template-columns: minmax(0, 1fr); }
-  body[data-page="home"] #lifecycles .lc-reg > .card, body[data-page="home"] #lifecycles .lc-reg > .card:nth-child(n) { grid-template-columns: 5.4rem minmax(0, 1fr) auto; grid-template-rows: auto; column-gap: 12px; padding: 14px 0 15px; border-left: 0; align-items: baseline; }
-  body[data-page="home"] #lifecycles .lc-reg .lc-code { gap: 8px; font-size: .625rem; white-space: nowrap; }
+  /* a phone: ring | name, the status under the name */
+  body[data-page="home"] #lifecycles .lc-reg > .card, body[data-page="home"] #lifecycles .lc-reg > .card:nth-child(n) { grid-template-columns: 22px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 14px; row-gap: 3px; padding: 14px 0 15px; border-left: 0; align-items: center; }
+  body[data-page="home"] #lifecycles .lc-reg .card .n { display: contents; }
+  body[data-page="home"] #lifecycles .lc-reg .lc-code { grid-column: 1; grid-row: 1 / span 2; align-self: center; }
   body[data-page="home"] #lifecycles .lc-reg .lc-ring { width: 22px; height: 22px; }
-  body[data-page="home"] #lifecycles .lc-reg .card .h4 { grid-column: 2; grid-row: 1; max-width: none; font-size: 1.12rem; line-height: 1.25; }
-  body[data-page="home"] #lifecycles .lc-reg .card .n--ring > span:last-child { grid-column: 3; margin-top: 0; font-size: .625rem; }
+  body[data-page="home"] #lifecycles .lc-reg .card .h4 { grid-column: 2; grid-row: 1; align-self: end; max-width: none; font-size: 1.1rem; line-height: 1.25; } /* the line's size: three sizes on this screen */
+  body[data-page="home"] #lifecycles .lc-reg .card .n--ring > span:last-child { grid-column: 2; grid-row: 2; justify-self: start; }
 }
 
-/* §03: the lane, then the lab that runs it */
-body[data-page="home"] #lc01 .swarm-live { margin-top: clamp(40px, 5vw, 80px); }
 
 /* §04: the head, its hedge and two figures beside the chart */
 body[data-page="home"] #proof .proof-copy .ch-title { max-width: 11ch; }
@@ -288,10 +230,9 @@ body[data-page="home"] #proof .figure-cap .fc-key { font-size: .875rem; color: r
 body[data-page="home"] #economics .ch-title { max-width: 12ch; }
 body[data-page="home"] #economics .cost .figure-cap { margin-top: 18px; }
 
-/* §06: the chain beside its head; the running log under both */
+/* §06: the chain beside its head */
 body[data-page="home"] #governance .chain-row .ch-head { margin: 0; }
 body[data-page="home"] #governance .chain-row .ch-title { font-size: clamp(2.6rem, 4.6vw, 4.4rem); }
-body[data-page="home"] #governance .lt { margin-top: clamp(48px, 6vw, 96px); }
 @media (min-width: 961px) { body[data-page="home"] #governance .chain-row .ch-head { position: sticky; top: calc(var(--nav-h) + 32px); } }
 
 /* §07: three titles, nothing else */
@@ -313,8 +254,16 @@ body[data-page="home"] .cta-band .row { margin-top: clamp(28px, 3vw, 40px); }
 /* one small register: hedges, notes, captions and the chapters' links share Inter .875rem */
 body[data-page="home"] .ch-link { font-size: .875rem; }
 body[data-page="home"] main .figure-cap, body[data-page="home"] main .figure-cap .fc-h { font-size: .875rem; }
-/* the first screen's fact at the buttons' size */
-body[data-page="home"] .hero-lc01 .lc-t { font-size: .95rem; }
+/* the first screen's fact at the buttons' size (14 / 13.8 px); the kicker at the sub-line's: four sizes on the first screen
+   (display, sub-line, buttons and fact, hedge). The kicker follows every size the overture's modes give the sub-line. */
+body[data-page="home"] .hero-lc01 .lc-t { font-size: var(--fs-small); }
+body[data-page="home"] .beat-0 .hero-kicker { font-size: var(--fs-body); }
+@media (max-width: 639.98px), (max-aspect-ratio: 23/20) { body[data-page="home"] .beat-0 .hero-kicker { font-size: clamp(.98rem, 2.6vw, 1.15rem); } }
+html.story-compact body[data-page="home"] .beat-0 .hero-kicker { font-size: .86rem; }
+@media (min-width: 600px) { html.story-compact body[data-page="home"] .beat-0 .hero-kicker { font-size: 1rem; } }
+@media (scripting: enabled) and (max-width: 599.98px) { html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker { font-size: .86rem; } }
+@media (scripting: enabled) and (max-width: 599.98px) and (min-height: 800px) { html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker { font-size: .94rem; } }
+@media (min-width: 600px) and (min-height: 900px) and (max-aspect-ratio: 23/20) { html.story-compact body[data-page="home"] .story .beat-0 .hero-kicker { font-size: clamp(1rem, 2.6vw, 1.15rem); } }
 /* §05: the rows' names and their indices at one serif size */
 body[data-page="home"] #economics .cost-lab b, body[data-page="home"] #economics .cost-val { font-size: clamp(1.5rem, 1.9vw, 1.9rem); }
 /* §07: the reading time is a note, not a data label */
@@ -328,7 +277,13 @@ body[data-page="home"] #research .research-card .link-arrow { font: 400 .875rem/
   body[data-page="home"] .beat-0 .beat-text { max-width: min(50%, 41.25rem); }
   body[data-page="home"] .beat-0 .hero-lc01 { max-width: min(52%, 37.5rem); }
   html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story-coda { width: min(46vw, 40rem); }
-  body[data-page="home"] .lt { --lt-col: 9.25rem; --lt-bleed: 1rem; --lt-pr: 1.125rem; }
 }
+/* 4K: the opening scene's copy centred between the nav and the scene index (not at the bottom under ~1,300 px of dark);
+   the safety net (story.js never ran) still lays it out as a static block */
+@media (scripting: enabled) and (min-width: 2400px) {
+  html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story .beat-0 { top: var(--nav-h); bottom: var(--story-bar-h); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+  html:not(.story-ready):not(.no-webgl) body[data-page="home"] .story .beat-0 { animation: home-static-beat0 1ms var(--story-net) forwards; }
+}
+@keyframes home-static-beat0 { to { position: relative; left: auto; right: auto; top: auto; bottom: auto; opacity: 1; transform: none; pointer-events: auto; padding-top: clamp(56px, 9vh, 96px); padding-bottom: clamp(56px, 9vh, 96px); } }
 /* without JavaScript the chart is its list of sessions: its key has nothing to key */
 @media (scripting: none) { body[data-page="home"] #proof .proof-fig .figure-cap { display: none; } }

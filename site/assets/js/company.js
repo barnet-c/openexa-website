@@ -3,10 +3,11 @@
    2. The hero plate's caption follows the mode (figure.js switches the formation; the caption is the mode's name, read
       out by screen readers: cut, 1 Nov, the mode paragraph went).
    3. §03 (was §04), the constants plate (lab, 31 Oct): "The lifecycles vary. Four constants don't.", drawn. A proposal walks the
-      loop of gates: above the boundary (agents decide), across it (C-01), below it (code executes), and is written to
-      the ledger when the counterparty confirms (C-04); one pass in four is rejected at the Council and written too.
-      Every second pass the loop takes another shape (another lifecycle); the boundary, the agents scoped to their
-      gates (C-02), the stop short of custody (C-03) and the ledger do not move. The still in the markup is shape 0
+      loop of gates: above the boundary (agents decide), across it (constant 1), below it (code executes), and is
+      written to the ledger when the counterparty confirms (4); one pass in four is rejected at the Council and written
+      too. Every second pass the loop takes another shape (another lifecycle); the boundary, the agents scoped to their
+      gates (2), the stop short of custody (3) and the ledger do not move. Fix (1 Nov): the register codes C-01...C-04
+      left the list and the plate; the constant being read is marked by the plate itself (its part lit, the rest back). The still in the markup is shape 0
       with the proposal on the boundary: what readers see without JavaScript and under reduced motion. It runs only on
       screen, with Pause motion; the constant being read (from 961 px) or pointed at is marked on the plate.
       The still SVG in company.html is maintained by hand: it is draw(lay(SHAPES[0])) with the proposal on the boundary,
@@ -41,11 +42,10 @@
     // five gate slots above and three below; a slot a shape does not use sits on its last gate, hidden
     const lay = g => ({ a: g.a, b: g.b, n: g.n,
       up: [0, 1, 2, 3, 4].map(i => (Math.min(i, g.u - 1) + 1) / (g.u + 1) * .5), uo: [0, 1, 2, 3, 4].map(i => +(i < g.u)),
-      dn: [0, 1, 2].map(j => .5 + (Math.min(j, g.l - 1) + 1) / (g.l + 1) * .5), do: [0, 1, 2].map(j => +(j < g.l)),
-      top: (Math.floor(g.u / 2) + 1) / (g.u + 1) * .5 });
+      dn: [0, 1, 2].map(j => .5 + (Math.min(j, g.l - 1) + 1) / (g.l + 1) * .5), do: [0, 1, 2].map(j => +(j < g.l)) });
     const mix = (A, B, t) => { const o = {}; for (const k in A) o[k] = Array.isArray(A[k]) ? A[k].map((v, i) => lerp(v, B[k][i], t)) : lerp(A[k], B[k], t); return o; };
     const loopUp = one('.k-loop--up'), loopDn = one('.k-loop--dn'), gUp = all('.k-gate--up'), gDn = all('.k-gate--dn');
-    const council = one('.k-council'), tag2 = one('.k-tag2'), stop = one('.k-stop'), bar = one('.k-bar'), lead = one('.k-lead');
+    const council = one('.k-council'), stop = one('.k-stop'), bar = one('.k-bar'), lead = one('.k-lead');
     const tok = one('.k-tok'), recs = one('.k-recs'), bnd = all('.k-bnd'), state = one('.k-state');
     const say = t => { if (state && state.textContent !== t) state.textContent = t; };
     const spur = document.createElementNS(NS, 'path');
@@ -65,7 +65,6 @@
       });
       gDn.forEach((g, j) => { const [x, y] = pt(L, L.dn[j]); at(g, x, y); g.setAttribute('opacity', f(L.do[j])); });
       const [cx, cy] = pt(L, lastOf(L.up, L.uo)); at(council, cx, cy);
-      const [tx, ty] = pt(L, L.top); tag2.setAttribute('x', f(tx + 22)); tag2.setAttribute('y', f(ty - 22));
       const [ex, ey] = pt(L, L.dn[0]); stop.setAttribute('d', `M${f(ex - 9)} ${f(ey)}H160`); bar.setAttribute('d', `M156 ${f(ey - 8)}V${f(ey + 8)}`);
       const [sx, sy] = pt(L, lastOf(L.dn, L.do)); lead.setAttribute('d', `M${f(sx)} ${f(sy + 8)}V372H${LX}V${LY - 6}`);
     }

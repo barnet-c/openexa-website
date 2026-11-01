@@ -85,6 +85,9 @@
     const lbt = bEl && bEl.querySelector('.lb-t');
     const bTitle = (lbt && lbt.firstChild && lbt.firstChild.textContent.trim()) || 'The boundary';
     const bNote = lbt && lbt.querySelector('small') ? txt(lbt.querySelector('small')) : '';
+    // a boundary given one line (Platform, owner's-eye fix 1 Nov): the line sits on the boundary row and replaces the
+    // arrows legend there and beside the plane on phones; the green plane is the boundary, the line says what it is
+    const bLine = bEl && bEl.querySelector('.lb-line') ? txt(bEl.querySelector('.lb-line')) : '';
     const noDot = (s) => s.replace(/[.\s]+$/, '');
 
     /* ---------------- 2 · the instrument ---------------- */
@@ -153,14 +156,17 @@
       btns.push(b); panels.push(p); heads.push(hd);
       if (i === bIndex - 1) {
         bRow = H('div', 'arch-bound', list);
-        H('span', 'chip', bRow, bTitle);
-        const sides = H('span', 'sides', bRow);
-        [['Above it: ', '↑ ', UP.t], ['Below it: ', '↓ ', DN.t]].forEach(([sr, arrow, t]) => {
-          const s = H('span', '', sides);
-          H('span', 'sr-only', s, sr);
-          H('span', '', s, arrow).setAttribute('aria-hidden', 'true');
-          s.appendChild(document.createTextNode(noDot(t)));
-        });
+        if (bLine) { bRow.classList.add('has-line'); H('p', 'ab-line', bRow, bLine); }
+        else {
+          H('span', 'chip', bRow, bTitle);
+          const sides = H('span', 'sides', bRow);
+          [['Above it: ', '↑ ', UP.t], ['Below it: ', '↓ ', DN.t]].forEach(([sr, arrow, t]) => {
+            const s = H('span', '', sides);
+            H('span', 'sr-only', s, sr);
+            H('span', '', s, arrow).setAttribute('aria-hidden', 'true');
+            s.appendChild(document.createTextNode(noDot(t)));
+          });
+        }
       }
     });
     // the floor under 08: the rails the stack connects to
@@ -191,7 +197,10 @@
 
     inst.append(head, bodyEl);
     if (spec) { root.insertBefore(inst, root.firstChild); root.classList.add('is-built'); } // takes the room CSS held for it
-    else { items.forEach((it) => it.el.remove()); if (bEl) bEl.remove(); if (fEl) fEl.remove(); }
+    else {
+      items.forEach((it) => it.el.remove()); if (bEl) bEl.remove(); if (fEl) fEl.remove();
+      if (bEl && bEl.id && bRow) bRow.id = bEl.id; // an anchor on the boundary (Platform #boundary) lands on its row
+    }
 
     /* ---------------- 3 · the drawing ---------------- */
     const defs = S('defs', null, svg);
@@ -894,7 +903,8 @@
         setA(bound.tUp, 'x', f1(cx + BR[0] + 12)); setA(bound.tUp, 'y', f1(by - 8));
         setA(bound.tDn, 'x', f1(cx + BR[0] + 12)); setA(bound.tDn, 'y', f1(by + 16));
         setA(bound.tUp, 'opacity', f3(bl)); setA(bound.tDn, 'opacity', f3(bl));
-        const up = '↑ ' + (roomy ? noDot(UP.t) : 'Decides'), dnT = '↓ ' + (roomy ? noDot(DN.t) : 'Executes');
+        // a boundary given one line says it on the row under the drawing; beside the plane, the plane alone
+        const up = bLine ? '' : '↑ ' + (roomy ? noDot(UP.t) : 'Decides'), dnT = bLine ? '' : '↓ ' + (roomy ? noDot(DN.t) : 'Executes');
         if (bound.tUp.textContent !== up) bound.tUp.textContent = up;
         if (bound.tDn.textContent !== dnT) bound.tDn.textContent = dnT;
         plates.forEach((p, i) => { const t2 = roomyP ? p.numLong : p.numShort; if (p.num.textContent !== t2) p.num.textContent = t2; setA(p.num, 'opacity', f3(clamp((exOf(i) - 0.8) / 0.2, 0, 1))); });

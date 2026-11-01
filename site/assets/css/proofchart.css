@@ -26,7 +26,7 @@
 }
 /* a narrow chart (every phone): the open block's note wraps to three lines, so its zone keeps room for them above the
    floor's label (Home and Proof) */
-@container (max-width: 540px) { .pf { --zg: calc(var(--ng, 1) * (var(--b) + var(--g)) + 3.6rem); } }
+@container (max-width: 540px) { .pf, .proof:not(.is-built)::before { --zg: calc(var(--ng, 1) * (var(--b) + var(--g)) + 3.6rem); } } /* the unbuilt box too: the build moves nothing */
 @supports (width: 1cqi) {
   .pf, .proof:not(.is-built)::before {
     --gut: clamp(64px, 15cqi, 108px); --lane: calc((100cqi - var(--gut)) / var(--cols, 10));
@@ -70,6 +70,24 @@
 }
 @supports not (width: 1cqi) {
   @media (max-width: 340px) { .pf, .proof:not(.is-built)::before { --gut: 38px; } .pf-gut { letter-spacing: .02em; } .pf-y { right: 2px; } .pf-y .pf-lw, .y-above small, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { font-size: var(--mono-tick); letter-spacing: 0; white-space: nowrap; } }
+}
+/* 4K at 100 % (Home; Proof has its own in proof.css): the root grows with the viewport (home.css), so the chart's gutter,
+   blocks and zones move to rem with its labels. In px the gutter stopped at 108 px while the type grew, and at 3840
+   "exact value not published" wrapped to three lines across the floor rule. Now the chart is the 1440 chart, scaled:
+   the hedge on two lines above the floor (zone = one open block + 2.25rem, as at 1440). The unbuilt box (r4) takes the
+   same sizes, so the build still moves nothing. */
+@media (min-width: 2400px) {
+  @supports (width: 1cqi) {
+    body[data-page="home"] .pf, body[data-page="home"] .proof:not(.is-built)::before {
+      --gut: clamp(4rem, 15cqi, 6.75rem); --b: clamp(.5625rem, calc(var(--lane) * .34), 1.0625rem); --g: clamp(.125rem, calc(var(--b) * .2), .1875rem);
+      --zr: clamp(4.25rem, 12cqi, 5.5rem); --zd: 1.875rem; --zo: 1.625rem; --zg: calc(var(--ng, 1) * (var(--b) + var(--g)) + 2.25rem);
+    }
+  }
+  @supports (width: 1cqi) and (width: round(down, 10.5px, 1px)) { /* whole pixels: crisp, even blocks */
+    body[data-page="home"] .pf, body[data-page="home"] .proof:not(.is-built)::before {
+      --b: round(down, clamp(.5625rem, calc(var(--lane) * .34), 1.0625rem), 1px); --g: round(down, clamp(.125rem, calc(var(--b) * .2), .1875rem), 1px);
+    }
+  }
 }
 
 /* the floor (a lit hairline, from the gutter across every lane), the baseline and the NAV reference */

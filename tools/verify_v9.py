@@ -346,8 +346,6 @@ LAB_STATE = """(async () => { const r = document.querySelector('[data-swarm-live
   const n = await new Promise(res => { let k = 0; const t0 = performance.now(); const f = () => { k++; if (performance.now() - t0 < 1000) requestAnimationFrame(f); else res(k); }; requestAnimationFrame(f); });
   return { inflight: q('[data-sw-inflight]').trim(), state: q('[data-sw-state]').trim(), cls: r.className, quality: r.dataset.swQuality, cap: r.dataset.swCap || null,
     hidden: document.hidden, canvas: [Math.round(b.top), Math.round(b.bottom)], vh: innerHeight, y: Math.round(scrollY), raf_per_s: n }; })()"""
-LEDGER_STATE = """(() => { const l = document.querySelector('[data-ledger=live]'); if (!l) return null; const s = l.querySelector('[data-lt-state]');
-  return { state: s && s.textContent.trim(), recs: l.querySelectorAll('.lt-rec').length, followed: l.querySelectorAll('.lt-rec.is-followed').length, sel: l.querySelectorAll('.lt-rec.is-sel').length, cls: l.className }; })()"""
 
 
 def lab_why(st, errs, fr=None):
@@ -405,7 +403,8 @@ async def pages(b):
 
 @check
 async def home(b):
-    """the homepage systems as one page at 1440: beats, record-driven overture, nav, explorer, swarm, ledger, chain, proof"""
+    """the homepage systems as one page at 1440: beats, record-driven overture, nav, explorer, swarm, chain, proof (the
+    running ledger left Home on 1 Nov)"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     await ctx.add_init_script(EVENTS)
     pg = await ctx.new_page()
@@ -504,31 +503,10 @@ async def home(b):
     await expect(pg.locator("[data-sw-state]")).to_have_text("Halted")
     drained = await until(pg, "document.querySelector('[data-sw-inflight]').textContent.trim() === '0' && document.querySelector('[data-sw-banner]').textContent.includes('drained')", 30000, 250)
     assert drained, ("halt did not drain", await pg.evaluate("[document.querySelector('[data-sw-inflight]').textContent, document.querySelector('[data-sw-banner]').textContent]"), lab_why(await pg.evaluate(LAB_STATE), errs))
-    # the ledger trace (home 06) recorded what the swarm announced, answering each announcement with a hash-linked record.
-    # Round 1 (SW2/LG4): the ledger also answers 'oxa:rejected', so an answered id comes from the settled or the rejected stream.
-    await pg.evaluate("document.querySelector('[data-ledger=live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-    await pg.wait_for_timeout(1200)
-    await expect(pg.locator("[data-ledger-stream] .ln").first).to_be_visible()
-    rec = await until(pg, "(() => { const r = window.__oxaEv.recorded, ids = new Set(window.__oxaEv.settled.concat(window.__oxaEv.rejected).map(e => e.id)); return r.length && r.every(x => /^[0-9a-f]{64}$/.test(x.hash) && /^#[0-9a-f]{4}$/.test(x.record) && ids.has(x.id)) ? r.length : 0; })()", 12000, 200)
-    assert rec, ("swarm announcements were not recorded by the ledger", await pg.evaluate("window.__oxaEv.recorded.slice(0, 3)"))
-    # Round 2 (LG-R2-3): the foot names the swarm's rows as digests ('M swarm digests covering S settled ...'); round 1
-    # said '... from the swarm above, carrying S settled ...'
-    await expect(pg.locator("[data-lt-swarm]")).to_contain_text(re.compile(r"from the swarm above|swarm digests?"))
-    await expect(pg.locator("[data-ledger=live] .lt-rec.is-swarm").first).to_be_visible()
-    # Round 1 (LG4): in view the ledger seals swarm announcements into at most one record per 2 s, so five announcements
-    # dispatched together are all answered with real hashes but may share one record (>= 1 distinct record, not 5)
-    await pg.evaluate("for (let i = 0; i < 5; i++) document.dispatchEvent(new CustomEvent('oxa:settled', {detail: {id: 'P-9990' + i, lane: i + 1, ts: Date.now()}}))")
-    five = await until(pg, "(() => { const r = window.__oxaEv.recorded.filter(x => /^P-9990\\d$/.test(x.id)); return new Set(r.map(x => x.id)).size === 5 && new Set(r.map(x => x.record)).size >= 1 && r.every(x => /^[0-9a-f]{64}$/.test(x.hash) && /^#[0-9a-f]{4}$/.test(x.record)) ? 5 : 0; })()", 9000)
-    assert five, ("5 announcements -> 5 answers with hashes (>= 1 record)", await pg.evaluate("window.__oxaEv.recorded.filter(x => /^P-9990/.test(x.id))"))
-    # the stream is one tab stop; arrows inspect; Escape returns to the head and focuses Pause
-    await pg.locator('[data-ledger=live] .lt-rec[tabindex="0"]').focus()
-    await expect(pg.locator("[data-ledger=live] [data-lt-state]")).to_contain_text("Inspecting #")
-    sel0 = await pg.evaluate("[...document.querySelectorAll('[data-ledger=live] .lt-rec')].findIndex(li => li.getAttribute('aria-selected') === 'true')")
-    await pg.keyboard.press("ArrowLeft")
-    sel1 = await pg.evaluate("[...document.querySelectorAll('[data-ledger=live] .lt-rec')].findIndex(li => li.getAttribute('aria-selected') === 'true')")
-    assert sel1 >= 0 and sel1 == sel0 - 1, (sel0, sel1)
-    await pg.keyboard.press("Escape")
-    assert await pg.evaluate("document.activeElement === document.querySelector('[data-ledger=live] [data-lt-play]')")
+    # v2x cut, owner's-eye fix (1 Nov): Home's running agent log ("[data-ledger=live]", once home 06) left the page with
+    # its stream keyboard; the swarm's announcements are no longer sealed on Home (the lab's trace links to Trust's ledger:
+    # swarm_trace_to_ledger), so the ledger answers, the five-announcement test and the stream's keys are not read here.
+    assert await pg.locator("[data-ledger=live]").count() == 0, "Home draws a running ledger again: restore its block in `home` (git show e5720dc:tools/verify_v9.py)"
     # chain
     await pg.locator("[data-chain]").scroll_into_view_if_needed()
     await pg.wait_for_timeout(800)
@@ -566,7 +544,7 @@ async def home(b):
     assert not errs, errs
     print(f"home: 5 beats navigable, stats clear of the globe, motion pause, overture reads the record ({rc['total']} columns, {rc['premium']} premium), last beat clear of the bar, "
           f"7 chapters in the nav list (no rail), explorer keys/hover, swarm {len(ev)} events in view (gaps >= {min(gaps):.0f} ms), follow by keyboard, halt drains, "
-          f"{rec} swarm announcements recorded with hashes, stream keyboard, chain breaks (typed and one-tap) + restores, proof listbox")
+          f"chain breaks (typed and one-tap) + restores, proof listbox")
     await ctx.close()
 
 
@@ -1058,15 +1036,19 @@ async def company(b):
     hero = await pg.evaluate("""(() => { const h = document.querySelector('main h1'), em = h && h.querySelector('em'); if (!em) return null;
       const a = getComputedStyle(h), e = getComputedStyle(em); return { text: h.textContent.replace(/\\s+/g, ' ').trim(), h: a.color, em: e.color, style: e.fontStyle }; })()""")
     assert hero and hero["text"] == "Intelligence, put to work." and hero["em"] == hero["h"] and hero["style"] == "italic", ("company hero", hero)
-    # lab (31 Oct): §04 draws its idea, one loop of gates and the four constants (C-01...C-04 on the plate and in the
-    # list); it runs on screen (a record is written within a pass), has Pause motion, and pointing at a constant marks it
+    # lab (31 Oct): §03 draws its idea, one loop of gates and the four constants; it runs on screen (a record is written
+    # within a pass), has Pause motion, and pointing at a constant marks it. v2x cut, owner's-eye fix (1 Nov): the
+    # register codes C-01...C-04 left the list and the plate (label noise); the four constants are their lines, in order,
+    # and the plate's own words carry them: pointing at the third lights its label ('Custody'), not the boundary words.
     await pg.evaluate("document.documentElement.style.scrollBehavior = 'auto'; document.querySelector('[data-kplate]').scrollIntoView({ block: 'center', behavior: 'instant' })")
-    kp = await pg.evaluate("(() => { const f = document.querySelector('[data-kplate]'); return { codes: [...f.querySelectorAll('.kl--code')].map(t => t.textContent), recs: f.querySelectorAll('.k-recs rect').length, pause: !!f.querySelector('button.figure-motion:not([hidden])'), list: [...document.querySelectorAll('#constants [data-k] .n span:first-child')].map(s => s.textContent) }; })()")
-    assert sorted(kp["codes"]) == ["C-01", "C-02", "C-03", "C-04"] and kp["list"] == ["C-01", "C-02", "C-03", "C-04"] and kp["recs"] >= 10 and kp["pause"], ("the constants plate", kp)
+    kp = await pg.evaluate("(() => { const f = document.querySelector('[data-kplate]'); return { codes: (document.querySelector('#constants').textContent.match(/C-0[0-9]/g) || []).length, recs: f.querySelectorAll('.k-recs rect').length, pause: !!f.querySelector('button.figure-motion:not([hidden])'), list: [...document.querySelectorAll('#constants [data-k]')].map(d => d.dataset.k + ':' + d.textContent.replace(/\\s+/g, ' ').trim()) }; })()")
+    assert kp["codes"] == 0 and [x.split(":")[0] for x in kp["list"]] == ["c1", "c2", "c3", "c4"] and kp["list"][0] == "c1:Agents decide. Code executes." and kp["recs"] >= 10 and kp["pause"], ("the constants plate", kp)
     first = await pg.evaluate("[...document.querySelectorAll('.k-recs rect')].map(r => r.getAttribute('class')).join()")
     assert await until(pg, f"[...document.querySelectorAll('.k-recs rect')].map(r => r.getAttribute('class')).join() !== {first!r} || document.querySelectorAll('.k-recs rect').length > {kp['recs']}", 12000), "the plate wrote no record"
     await pg.locator('#constants [data-k="c3"]').hover(); await pg.wait_for_timeout(500)
-    assert await pg.evaluate("document.querySelector('[data-kplate]').dataset.on") == "c3", "pointing at C-03 did not mark it on the plate"
+    assert await pg.evaluate("document.querySelector('[data-kplate]').dataset.on") == "c3", "pointing at the third constant did not mark it on the plate"
+    lit = await pg.evaluate("(() => { const t = document.querySelector('[data-kplate] .k-c3 .kl--box'), r = document.querySelector('[data-kplate] .k-c1 .kl--word'); return t && r ? [getComputedStyle(t).fill, getComputedStyle(r).fill] : null; })()")
+    assert lit and lit[0] != lit[1], ("pointing at the third constant should light 'Custody' on the plate, not the boundary words", lit)
     assert not errs, errs
     await ctx.close()
 
@@ -1292,7 +1274,8 @@ FOOT_HIT = r"""(async () => { const out = [];
 
 @check
 async def reduced_motion(b):
-    """reduced motion: the explorer is open and still; the ledger stream starts paused; Trust verifies at once"""
+    """reduced motion: the explorer is open and still; Home's swarm lab is a still study with no motion control (until
+    the 1 Nov cut: Home's ledger stream started paused; the stream left the site); Trust verifies at once"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
     pg = await ctx.new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -1301,13 +1284,17 @@ async def reduced_motion(b):
     await pg.evaluate("document.querySelector('#stack .arch').scrollIntoView({block: 'center', behavior: 'instant'})")
     assert await until(pg, "!!document.querySelector('#stack .arch.is-ready')", 1500), "explorer not open at once under reduced motion"
     await expect(pg.locator("#stack .arch-motion")).to_be_hidden()
-    await expect(pg.locator("[data-ledger=live] [data-lt-state]")).to_have_text("Paused · illustrative stream")
+    # v2x cut (1 Nov): Home's running instrument is the swarm lab (the agent log left the page); under reduced motion it is
+    # drawn as a still study and offers no Pause motion
+    await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
+    await expect(pg.locator("[data-swarm-live] [data-sw-state]")).to_have_text("Static study")
+    await expect(pg.locator("[data-swarm-live] [data-sw-motion]")).to_be_hidden()
     await pg.goto(f"{BASE}/trust.html", wait_until="load")
     await pg.locator("[data-lt-verify]").click()
     await expect(pg.locator("[data-ledger=replay] [data-lt-state]")).to_contain_text("Verified here · 8 of 8 links hold", timeout=1500)
     assert not errs, errs
     await ctx.close()
-    print("reduced motion: explorer open and still (no motion control), stream paused, Trust verifies at once")
+    print("reduced motion: explorer open and still (no motion control), the swarm lab a still study (no motion control), Trust verifies at once")
 
 
 # where the loader is, read in the page: [performance.now(), 'parsing' | 'shown' | 'hidden' | 'removed', opacity, visibility]
@@ -1478,10 +1465,10 @@ async def no_js(b):
         layers: q('#stack .layers .layer'), before: bi < 0 ? -1 : kids.slice(0, bi).filter(e => e.classList.contains('layer')).length,
         io: [...document.querySelectorAll('#stack .layers .layer')].every(l => { const h = l.querySelector('h3'), v = h && h.querySelector('small');
           return !!v && v.textContent.trim().length > 0 && h.textContent.trim().length > v.textContent.trim().length && h.getClientRects().length > 0; }) }; })()""")
-    # v2x cut (1 Nov): Home's agent log starts from four records (was eight) and each layer of the stack shows its name and
-    # verb (the In / Out pairs left the page; the job line is the explorer's, with JavaScript); the session list is the
-    # <noscript> record now, drawn here because scripts are off
-    assert nj["loader"] == "none" and nj["proof"] == 10 and nj["stream"] == 4 and nj["chain"] == 8 and nj["gates"] == 6 and nj["bar"] == "none", nj
+    # v2x cut (1 Nov): each layer of the stack shows its name and verb (the In / Out pairs left the page; the job line is
+    # the explorer's, with JavaScript); the session list is the <noscript> record now, drawn here because scripts are off.
+    # Owner's-eye fix (1 Nov): Home's agent log left the page (stream 0; it started from four records); the chain stays
+    assert nj["loader"] == "none" and nj["proof"] == 10 and nj["stream"] == 0 and nj["chain"] == 8 and nj["gates"] == 6 and nj["bar"] == "none", nj
     assert nj["layers"] == 8 and nj["before"] == 4 and nj["io"], nj
     await pg.locator(".nav-toggle").click()
     assert await pg.evaluate("document.querySelector('#site-menu').matches(':popover-open')"), "menu sheet does not open without JavaScript"
@@ -1523,7 +1510,7 @@ async def no_js(b):
         if nojs[name] < 0.9 * withjs: low.append(f"{name}.html@390: {nojs[name]} visible links in main without JavaScript, {withjs} with it")
     await ctx.close()
     assert not low and posts == 10, f"no_js: {low}; research.html shows {posts} visible 'li.post a' without JavaScript (10 expected)"
-    print(f"fallbacks: readable without JS on every page (sessions list, ledger and chain records, six gates, eight layers with the boundary after 04, menu sheet as a popover, no loader, the desk's note instead of a dead desk at 390 and 768); "
+    print(f"fallbacks: readable without JS on every page (sessions list, chain records, Trust's ledger excerpt, six gates, eight layers with the boundary after 04, menu sheet as a popover, no loader, the desk's note instead of a dead desk at 390 and 768); "
           f"links kept without JS on {len(LINK_PAGES)} pages, research.html lists its {posts} notes")
 
 
@@ -1628,42 +1615,38 @@ async def nav_handoff(b):
 # ---- the ledger panel never moves the page (LG2)
 @check
 async def ledger_height(b):
-    """with [data-ledger=live] centred and its stream running, document.body.scrollHeight stays within 1 px for 6 s and
-    the layout shifts in those 6 s (no input) sum to < 0.01, at 1440 and at 390"""
+    """a ledger being written never moves the page: on Trust, with the excerpt [data-ledger=replay] centred and Replay
+    pressed, document.body.scrollHeight stays within 1 px until the nine records are written again, and the layout
+    shifts in that time (no input after the press) sum to < 0.01, at 1440 (a horizontal strip) and at 390 (a column).
+    v2x cut, owner's-eye fix (1 Nov): until then this read Home's running stream ([data-ledger=live]), which left the site
+    with Home's agent log; Trust's replay is the one ledger still written while the reader watches."""
     bad = []
-    for w, h in ((1440, 900), (390, 844)):
-        ctx, pg = await open_page(b, "index.html", w, h)
-        await pg.evaluate("document.querySelector('[data-ledger=live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-        # v2x r2 (home): the stream mounts as it comes near (ledger.js); its track's role and orientation are set then
-        if not await until(pg, "document.querySelector('[data-ledger=live]').classList.contains('lt-ready')", 8000 if MODE["throttle"] <= 1 else 30000):
-            bad.append(f"index.html@{w}x{h}: the stream did not mount (.lt-ready) within 8 s of coming into view")
-        running = await until(pg, "(() => { const t = document.querySelector('[data-ledger=live] [data-lt-state]').textContent; return /running|live/i.test(t) && !/paus/i.test(t) ? t : ''; })()", 8000)
-        if not running: bad.append(f"index.html@{w}x{h}: the stream is not running: {await pg.evaluate('document.querySelector(\"[data-ledger=live] [data-lt-state]\").textContent')!r}")
-        await pg.wait_for_timeout(1500)
-        # v2x r2 (proof; r2-motion): nothing inside the page shifts either while the stream runs with no input (the phone
-        # column used to snap one row a tick: CLS 0.33 in 12 s at 390); the layout shifts in the same 6 s sum to < 0.01
+    for w, h, orient in ((1440, 900, "horizontal"), (390, 844, "vertical")):
+        ctx, pg = await open_page(b, "trust.html", w, h)
+        await pg.evaluate("document.querySelector('[data-ledger=replay]').scrollIntoView({block: 'center', behavior: 'instant'})")
+        if not await until(pg, "(() => { const l = document.querySelector('[data-ledger=replay]'), r = l.querySelector('[data-lt-replay]'); return l.classList.contains('lt-ready') && r && !r.hidden; })()", 8000 if MODE["throttle"] <= 1 else 30000):
+            bad.append(f"trust.html@{w}x{h}: the excerpt did not mount with its Replay control"); await ctx.close(); continue
+        await pg.wait_for_timeout(1200)
+        o = await pg.evaluate("(() => { const t = document.querySelector('[data-ledger=replay] .lt-track'); return t && t.getAttribute('aria-orientation'); })()")
+        if o != orient: bad.append(f"trust.html@{w}x{h}: the excerpt's track is {o!r}, expected {orient!r}")
         await pg.evaluate("""(() => { const S = window.__lsh = []; new PerformanceObserver(l => l.getEntries().forEach(e => { if (!e.hadRecentInput)
           S.push([Math.round(e.startTime), +e.value.toFixed(4), (e.sources || []).slice(0, 2).map(s => s.node && s.node.nodeType === 1 ? s.node.tagName + '.' + String(s.node.className || '').split(' ')[0] : '?')]); })).observe({ type: 'layout-shift', buffered: false }); })()""")
-        hs = await pg.evaluate("async () => { const out = []; for (let k = 0; k < 60; k++) { out.push(document.body.scrollHeight); await new Promise(r => setTimeout(r, 100)); } return out; }")
-        moved = [(k * 100, v) for k, v in enumerate(hs) if abs(v - hs[0]) > 1]
-        if moved: bad.append(f"index.html@{w}x{h}: body.scrollHeight {hs[0]} moved {len(moved)} times in 6 s (range {min(hs)}-{max(hs)}), e.g. {moved[:4]}")
+        h0 = await pg.evaluate("document.body.scrollHeight")
+        await pg.locator("[data-ledger=replay] [data-lt-replay]").click()
+        # sampled every 100 ms until a second after the state says 'Replayed' (a replay of nine records takes about 6 s)
+        hs = await pg.evaluate("""async () => { const out = [], st = document.querySelector('[data-ledger=replay] [data-lt-state]'); let done = 0;
+          for (let k = 0; k < 200 && done < 10; k++) { out.push([document.body.scrollHeight, st.textContent]); if (/^Replayed/.test(st.textContent)) done++; await new Promise(r => setTimeout(r, 100)); } return out; }""")
+        states = [t for _, t in hs]
+        if not any(t.startswith("Replaying") for t in states) or not states[-1].startswith("Replayed"):
+            bad.append(f"trust.html@{w}x{h}: the replay did not run to its end: {sorted(set(states))[:4]} ... {states[-1]!r}")
+        moved = [(k * 100, v) for k, (v, _) in enumerate(hs) if abs(v - h0) > 1]
+        if moved: bad.append(f"trust.html@{w}x{h}: body.scrollHeight {h0} moved {len(moved)} times during the replay (range {min(v for v, _ in hs)}-{max(v for v, _ in hs)}), e.g. {moved[:4]}")
         lsh = await pg.evaluate("window.__lsh")
         cls = sum(x[1] for x in lsh)
-        if cls >= 0.01: bad.append(f"index.html@{w}x{h}: layout shifts while the stream runs sum to {cls:.4f} in 6 s (budget < 0.01): {sorted(lsh, key=lambda x: -x[1])[:4]}")
-        # v2x r1 (home; r1 mobile and fidelity): on a phone the stream is a column of four equal records, newest on top,
-        # with the hash blocks folded; on a desktop the fold is open and its summary not drawn
-        col = await pg.evaluate("""(() => { const l = document.querySelector('[data-ledger=live]'), t = l.querySelector('.lt-track'), hx = document.querySelector('[data-lt-hx]');
-          const shown = [...l.querySelectorAll('.lt-rec')].filter(r => getComputedStyle(r).display !== 'none').map(r => Math.round(r.getBoundingClientRect().height * 10) / 10);
-          const sum = hx && hx.querySelector('summary');
-          return { orient: t && t.getAttribute('aria-orientation'), shown, hx: hx ? hx.open : null, summary: sum ? getComputedStyle(sum).display : null }; })()""")
-        if w < 601:
-            if col["orient"] != "vertical" or len(col["shown"]) != 4 or max(col["shown"]) - min(col["shown"]) > 1 or col["hx"] is not False:
-                bad.append(f"index.html@{w}x{h}: the stream is not a column of four equal records with the hash links folded: {col}")
-        elif col["hx"] is not True or col["summary"] != "none":
-            bad.append(f"index.html@{w}x{h}: the inspector's hash links are folded or their summary is drawn on a desktop: {col}")
+        if cls >= 0.01: bad.append(f"trust.html@{w}x{h}: layout shifts during the replay sum to {cls:.4f} (budget < 0.01): {sorted(lsh, key=lambda x: -x[1])[:4]}")
         await ctx.close()
     assert not bad, "ledger_height:\n  " + "\n  ".join(bad)
-    print("ledger_height: body.scrollHeight constant (±1 px) and layout shifts < 0.01 over 6 s with the stream running, at 1440 and 390; at 390 a column of four equal records with the hash links folded, at 1440 the links open")
+    print("ledger_height: Trust's replay writes its nine records again with body.scrollHeight constant (±1 px) and layout shifts < 0.01, at 1440 (strip) and 390 (column)")
 
 
 # ---- the overture: re-entry, the copy relay, the numeral (OV8, OV4)
@@ -1972,65 +1955,81 @@ BLOCK_WATCH = """(() => { const hit = window.__blk = []; const sel = ['#sw-trace
 
 @check
 async def swarm_trace_to_ledger(b):
-    """follow one proposal to Settled (council strictness 0): the trace's ledger row becomes a button naming the same
-    '#id' as the ledger's .lt-rec.is-followed; clicking it brings [data-ledger=live] into view with that record .is-sel;
-    on the homepage the trace, its stage tag and its live region never print 'block'"""
+    """follow one proposal to Settled on Home (council strictness 0): the trace ends at a ledger the reader can inspect.
+    v2x cut, owner's-eye fix (1 Nov): Home has no ledger of its own any more (its agent log left the page), so the
+    trace's ledger row becomes a link to Trust's (a.sw-led-a, href trust.html#ledger, named 'The ledger on the Trust
+    page'), never a record button; following it lands on Trust with the ledger in view and its nine records. On the
+    homepage the trace, its stage tag and its live region never print 'block' or 'no ledger'. (Until then the row became
+    a button naming the record, which Home's own ledger selected when it was clicked.)"""
     errs = []
     ctx, pg = await open_page(b, "index.html", 1440, 900, init=EVENTS, errs=errs)
     await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
     assert await until(pg, "+document.querySelector('[data-sw-inflight]').textContent.replace(/\\D/g, '') > 0", 25000, 200), "swarm_trace_to_ledger index.html@1440x900: the lab never ran"
     await pg.evaluate("(() => { const s = document.querySelector('[data-sw-strict]'); s.value = '0'; s.dispatchEvent(new Event('input', {bubbles: true})); s.dispatchEvent(new Event('change', {bubbles: true})); })()")
     await pg.evaluate(BLOCK_WATCH)
+    await pg.evaluate(TEXT_WATCH, r"no ledger")
     await pg.mouse.move(5, 450)
     await pg.locator("[data-sw-follow]").click()
     t0 = time.monotonic()
-    got = await until(pg, """(() => { const b = document.querySelector('[data-sw-log] [data-sw-rec]'); if (b) return 'button';
-        const t = (document.querySelector('[data-sw-log]') || {}).textContent || ''; return /record #[0-9a-f]{4}/.test(t) ? 'text:' + t.replace(/\\s+/g, ' ').slice(-80) : ''; })()""", 60000, 250)
+    got = await until(pg, """(() => { if (document.querySelector('[data-sw-log] a.sw-led-a')) return 'link';
+        return document.querySelector('[data-sw-log] [data-sw-rec]') ? 'button' : ''; })()""", 60000, 250)
     bad = []
-    if got != "button":
-        bad.append(f"the trace's ledger row is no button after {time.monotonic() - t0:.0f} s: {got or (await pg.evaluate('(document.querySelector(\"[data-sw-log]\") || {}).textContent || \"\"'))[-120:]!r}")
-    else:
-        ids = await pg.evaluate("({ btn: document.querySelector('[data-sw-log] [data-sw-rec]').dataset.swRec || document.querySelector('[data-sw-log] [data-sw-rec]').textContent, followed: [...document.querySelectorAll('[data-ledger=live] .lt-rec.is-followed')].map(li => (li.querySelector('.lt-id') || li).textContent.trim()) })")
-        rid = re.search(r"#[0-9a-f]{4}", ids["btn"] or "")
-        if not rid or ids["followed"] != [rid[0]]: bad.append(f"the trace's button names {ids['btn']!r}; the ledger's .lt-rec.is-followed: {ids['followed']}")
-        else:
-            await pg.locator("[data-sw-log] [data-sw-rec]").click()
-            t1 = time.monotonic()
-            sel = await until(pg, """(() => { const l = document.querySelector('[data-ledger=live]'), r = l.getBoundingClientRect(), li = l.querySelector('.lt-rec.is-followed');
-                return r.top < innerHeight && r.bottom > 0 && li && li.classList.contains('is-sel') ? 1 : 0; })()""", 8000, 100)
-            if not sel: bad.append(f"after the click the ledger is not in view with {rid[0]} selected: {await pg.evaluate('(() => { const r = document.querySelector(\"[data-ledger=live]\").getBoundingClientRect(); return [Math.round(r.top), Math.round(r.bottom), [...document.querySelectorAll(\"[data-ledger=live] .lt-rec.is-sel\")].map(li => li.textContent.slice(0, 20))]; })()')}; ledger {await pg.evaluate(LEDGER_STATE)}")
-            else: print(f"swarm_trace_to_ledger: record {rid[0]} selected in the ledger {time.monotonic() - t1:.1f} s after the click")
-    blk = await pg.evaluate("window.__blk")
+    blk, tw = await pg.evaluate("window.__blk || []"), await pg.evaluate("window.__tw || []")
     if blk: bad.append(f"the trace printed 'block': {blk[:3]}")
-    if bad: bad.append(lab_why(await pg.evaluate(LAB_STATE), errs))
+    if tw: bad.append(f"the trace printed 'no ledger': {tw[:3]}")
+    if got != "link":
+        log = await pg.evaluate("(document.querySelector('[data-sw-log]') || {}).textContent || ''")
+        bad.append(f"the trace's ledger row is no link to Trust's ledger after {time.monotonic() - t0:.0f} s ({got or 'nothing'}): {log[-120:]!r}")
+    else:
+        a = await pg.evaluate("(() => { const a = document.querySelector('[data-sw-log] a.sw-led-a'); return { href: a.getAttribute('href'), name: a.getAttribute('aria-label'), text: a.textContent.replace(/\\s+/g, ' ').trim() }; })()")
+        if a["href"] != "trust.html#ledger" or a["name"] != "The ledger on the Trust page" or not a["text"].startswith("Ledger"):
+            bad.append(f"the trace's ledger link reads {a}")
+        elif not bad:
+            await pg.locator("[data-sw-log] a.sw-led-a").click()
+            await pg.wait_for_url(re.compile(r"/trust(\.html)?#ledger$"), timeout=15000)
+            await pg.wait_for_load_state("load")
+            land = await until(pg, """(() => { const s = document.getElementById('ledger'); if (!s) return null; const r = s.getBoundingClientRect();
+                return r.top < innerHeight * 0.5 && r.bottom > innerHeight * 0.5 && document.querySelectorAll('[data-ledger=replay] .lt-rec').length === 9 ? [Math.round(r.top), Math.round(r.bottom)] : null; })()""", 8000, 100)
+            if not land:
+                where = await pg.evaluate("(() => { const s = document.getElementById('ledger'); return [location.href, s ? Math.round(s.getBoundingClientRect().top) : null, document.querySelectorAll('[data-ledger=replay] .lt-rec').length]; })()")
+                bad.append(f"after the link Trust's ledger is not in view with its nine records: {where}")
+            else: print(f"swarm_trace_to_ledger: the settled trace links to Trust's ledger after {time.monotonic() - t0:.1f} s; it lands in view (top {land[0]} px) with nine records")
+    if bad and not got == "link": bad.append(lab_why(await pg.evaluate(LAB_STATE), errs))
     await ctx.close()
     assert not bad, "swarm_trace_to_ledger index.html@1440x900:\n  " + "\n  ".join(bad)
 
 
 @check
 async def ledger_wheel(b):
-    """with the pointer over the ledger strip, 6 vertical wheel steps of 120 px (3 down, 3 up; up to 3 trials) never
-    turn [data-lt-state] to 'browsing'"""
-    pg = await shared_home(b)
-    await pg.evaluate("document.querySelector('[data-ledger=live] .lt-view').scrollIntoView({block: 'center', behavior: 'instant'})")
-    await until(pg, "/running|live/i.test(document.querySelector('[data-ledger=live] [data-lt-state]').textContent)", 6000)
-    await pg.evaluate("""(() => { const s = document.querySelector('[data-ledger=live] [data-lt-state]'); const R = window.__lts = [s.textContent];
-      new MutationObserver(() => R.push(s.textContent)).observe(s, { subtree: true, childList: true, characterData: true }); })()""")
-    for trial in range(3):
-        await pg.evaluate("document.querySelector('[data-ledger=live] .lt-view').scrollIntoView({block: 'center', behavior: 'instant'})")
-        await pg.wait_for_timeout(700)
-        x, y = await pg.evaluate(f"(() => {{ const r = document.querySelector('[data-ledger=live] .lt-view').getBoundingClientRect(); return [r.left + r.width * {0.3 + 0.2 * trial}, r.top + r.height / 2]; }})()")
-        await pg.mouse.move(x, y)
-        for k in range(6):
-            await pg.mouse.wheel(0, 120 if k < 3 else -120); await pg.wait_for_timeout(180)
-        await pg.wait_for_timeout(600)
-        states = await pg.evaluate("window.__lts")
-        if any("browsing" in s.lower() for s in states): break
+    """a vertical wheel over a ledger strip belongs to the page: on Trust at 1440, while Replay writes the excerpt again,
+    6 vertical wheel steps of 120 px with the pointer over the strip (3 down, 3 up) scroll the page and never take the
+    strip off the record being written: the replay runs to 'Replayed · 9 records' with the strip at its newest record.
+    v2x cut, owner's-eye fix (1 Nov): until then this read Home's running stream ([data-ledger=live]: the wheel never
+    turned it to 'browsing'), which left the site with Home's agent log."""
+    ctx, pg = await open_page(b, "trust.html", 1440, 900)
+    await pg.evaluate("document.querySelector('[data-ledger=replay] .lt-view').scrollIntoView({block: 'center', behavior: 'instant'})")
+    await until(pg, "(() => { const r = document.querySelector('[data-ledger=replay] [data-lt-replay]'); return !!r && !r.hidden; })()", 8000 if MODE["throttle"] <= 1 else 30000)
+    await pg.wait_for_timeout(900)
+    await pg.locator("[data-ledger=replay] [data-lt-replay]").click()
+    await pg.evaluate("document.querySelector('[data-ledger=replay] .lt-view').scrollIntoView({block: 'center', behavior: 'instant'})")
+    await pg.wait_for_timeout(300)
+    x, y = await pg.evaluate("(() => { const r = document.querySelector('[data-ledger=replay] .lt-view').getBoundingClientRect(); return [r.left + r.width * 0.5, r.top + r.height / 2]; })()")
+    await pg.mouse.move(x, y)
+    ys = [await pg.evaluate("scrollY")]
+    for k in range(6):
+        await pg.mouse.wheel(0, 120 if k < 3 else -120); await pg.wait_for_timeout(180)
+        ys.append(await pg.evaluate("scrollY"))
+    end = await until(pg, "/^Replayed/.test(document.querySelector('[data-ledger=replay] [data-lt-state]').textContent) ? document.querySelector('[data-ledger=replay] [data-lt-state]').textContent : ''", 20000, 100)
+    await pg.wait_for_timeout(1500)  # the strip's last glide
+    v = await pg.evaluate("(() => { const v = document.querySelector('[data-ledger=replay] .lt-view'); return { sl: Math.round(v.scrollLeft), max: v.scrollWidth - v.clientWidth, recs: document.querySelectorAll('[data-ledger=replay] .lt-rec').length }; })()")
     await pg.mouse.move(5, 450)
-    states = await pg.evaluate("window.__lts")
-    browsing = [s for s in states if "browsing" in s.lower()]
-    assert not browsing, f"ledger_wheel index.html@1440x900 (trial {trial + 1}): a vertical wheel over the strip stopped following: {sorted(set(states))}"
-    print(f"ledger_wheel: {trial + 1} trials of 6 vertical wheel steps over the strip, states {sorted(set(states))}")
+    await ctx.close()
+    bad = []
+    if max(ys) - ys[0] < 120: bad.append(f"the page did not scroll under a vertical wheel over the strip: scrollY {ys}")
+    if not end or "9" not in end or v["recs"] != 9: bad.append(f"the replay did not run to its end: state {end!r}, {v['recs']} records")
+    if v["max"] > 2 and v["sl"] < v["max"] - 2: bad.append(f"the strip left the record being written: scrollLeft {v['sl']} of {v['max']}")
+    assert not bad, "ledger_wheel trust.html@1440x900:\n  " + "\n  ".join(bad)
+    print(f"ledger_wheel: 6 vertical wheel steps over Trust's strip during a replay scrolled the page (scrollY {ys[0]} -> {max(ys)} -> {ys[-1]}); the replay ended '{end}', the strip at {v['sl']} of {v['max']} px")
 
 
 # ---- the proof chart's entrance from above: all sessions rise together (PF2)
@@ -2140,8 +2139,8 @@ STEPS = [  # Lifecycles §02 (§03 before the cut): the six gates plus 07 Reconc
     # step sentences and the eyebrow left the page (one heading and one sentence per section; the stations name the gates)
     "Signal", "Predict", "Decide", "Approve", "Execute", "Settle", "Reconcile",
 ]
-LANE_HOME = """(() => { const q = s => document.querySelectorAll(s); const items = [...q('#lc01 [data-lane-key] > li[data-g]')];
-  return { flow: q('.flow').length, lane: q('#lc01 [data-lane]').length, gates: items.map(li => [li.dataset.g, li.textContent.replace(/\\s+/g, ' ').trim()]) }; })()"""
+LANE_HOME = """(() => { const q = s => document.querySelectorAll(s); const items = [...q('#lc01 [data-sw-gates] > li')];
+  return { flow: q('.flow').length, lane: q('#lc01 [data-lane]').length, gates: items.map(li => li.textContent.replace(/\\s+/g, ' ').trim()) }; })()"""
 LANE_STEPS = """(() => { const sec = document.querySelector('#lc01'), ol = sec && (sec.querySelector('.lane-v--steps') || sec.querySelector('.lane-v')); const items = ol ? [...ol.querySelectorAll(':scope > li[data-g]')] : [];
   return { wall: document.querySelectorAll('.wall').length, lane: !!ol, steps: items.map(li => [li.dataset.g, ((li.querySelector('h3') || li).textContent || '').replace(/\\s+/g, ' ').trim()]),
     text: sec ? sec.textContent.replace(/\\s+/g, ' ') : '' }; })()"""
@@ -2149,17 +2148,19 @@ LANE_STEPS = """(() => { const sec = document.querySelector('#lc01'), ol = sec &
 
 @check
 async def lifecycle_lane_home(b):
-    """home: no .flow; #lc01 holds the lane figure whose key lists the six gates 01 Signal ... 06 Settle, with and
-    without JavaScript"""
+    """home: no .flow; Lifecycle 01 (#lc01) names the six gates 01 Signal ... 06 Settle in order, with and without
+    JavaScript. v2x cut, owner's-eye fix (1 Nov): the lane figure (ex Fig. 3.1, [data-lane]) left Home, where the six
+    gates were told twice; they are named once, by the swarm lab's gate list ([data-sw-gates]). Lifecycles keeps the lane
+    (lifecycle_lane_steps)."""
     bad = []
     for js in (True, False):
         ctx, pg = await open_page(b, "index.html", 1440, 900, js=js, reduced=True)
         m = await pg.evaluate(LANE_HOME)
-        ok = [g for g, t in m["gates"]] == [str(k + 1) for k in range(6)] and all(f"0{k + 1}" in t and GATES[k] in t for k, (g, t) in enumerate(m["gates"]))
-        if m["flow"] or not m["lane"] or not ok: bad.append(f"index.html@1440x900 js={'on' if js else 'off'}: .flow {m['flow']}, lane figures {m['lane']}, gates {[(g, t[:28]) for g, t in m['gates']]}")
+        ok = len(m["gates"]) == 6 and all(re.match(rf"0{k + 1}\b", t) and GATES[k] in t for k, t in enumerate(m["gates"]))
+        if m["flow"] or m["lane"] or not ok: bad.append(f"index.html@1440x900 js={'on' if js else 'off'}: .flow {m['flow']}, lane figures {m['lane']} (none expected), gates {[t[:28] for t in m['gates']]}")
         await ctx.close()
     assert not bad, "lifecycle_lane_home:\n  " + "\n  ".join(bad)
-    print("lifecycle_lane_home: no .flow; the lane's key lists 01 Signal ... 06 Settle, with and without JavaScript")
+    print("lifecycle_lane_home: no .flow, no second lane; Lifecycle 01's lab names 01 Signal ... 06 Settle, with and without JavaScript")
 
 
 @check
@@ -2209,30 +2210,41 @@ async def nav_readout(b):
     """no chapter name is cut. v2x cut (1 Nov): under 961 px the bar has no readout (the menu toggle opens the sheet, whose
     first items are this page's chapters), so at 390 and 360, on every page with chapters, the open sheet's chapter
     titles each have scrollWidth <= clientWidth (+1 px rounding); and at 1024 (the narrowest desktop bar), for every
-    chapter, the readout's line in .nav-ch-btn fits as before (it shows the chapter's number since the cut)"""
-    bad, n, m = [], 0, 0
+    chapter, the readout's line in .nav-ch-btn fits as before (it shows the chapter's number since the cut).
+    Never vacuous. Until the owner's-eye fix (1 Nov) a fixed floor said so (>= 60 sheet names, >= 30 readouts); the cut
+    and that fix took the pages to 27 chapters, under it. Now each page is held to its own markup: where the page names
+    its chapters (main section[data-chapter], two or more), the sheet lays out and measures every one of them at both
+    phone widths and the desktop bar reads every one at 1024; and at least six of the pages read have chapters."""
+    bad, n, m, have = [], 0, 0, set()
     for w, h in ((390, 844), (360, 780)):
         for name in READOUT_PAGES:
             ctx, pg = await open_page(b, f"{name}.html", w, h, reduced=True)
             await pg.locator(".nav-toggle").click()
             await until(pg, "document.querySelector('#site-menu').matches(':popover-open')", 3000)
             r = await pg.evaluate(SHEET_TITLES); n += len(r)
+            marked = await pg.evaluate("document.querySelectorAll('main section[data-chapter]').length")
+            if marked >= 2:
+                have.add(name)
+                if len(r) != marked: bad.append(f"{name}.html@{w}x{h} sheet: {len(r)} chapter names laid out, the page has {marked} chapters")
             bad += [f"{name}.html@{w}x{h} sheet: '{t}' needs {sw} px, has {cw}" for t, sw, cw in r if sw > cw + 1]
             await ctx.close()
     for w, h in ((1024, 768),):
         for name in READOUT_PAGES:
             ctx, pg = await open_page(b, f"{name}.html", w, h, reduced=True)
             hrefs = await pg.evaluate("[...document.querySelectorAll('.nav-ch-list a')].filter(a => !a.closest('li').hidden).map(a => a.getAttribute('href'))")
+            marked = await pg.evaluate("document.querySelectorAll('main section[data-chapter]').length")
+            read = 0
             for href in hrefs:
                 await pg.evaluate("(h) => { const el = document.getElementById(decodeURIComponent(h.slice(1))); if (el) window.scrollTo({top: el.getBoundingClientRect().top + scrollY - 40, behavior: 'instant'}); }", href)
                 r = await pg.evaluate(READOUT)
-                if r: m += 1
+                if r: m += 1; read += 1
                 if r and r["sw"] > r["cw"] + 1: bad.append(f"{name}.html@{w}x{h} {href}: '{r['txt']}' needs {r['sw']} px, has {r['cw']}")
+            if marked >= 2 and read != marked: bad.append(f"{name}.html@{w}x{h}: the readout was read for {read} of the page's {marked} chapters")
             await ctx.close()
-    # never vacuous: the phones' sheets list the chapters of the nine pages that have them, and the desktop bar reads them
-    assert n >= 2 * 30 and m >= 30, f"nav_readout: only {n} chapter names in the phones' sheets and {m} desktop readouts were read"
-    assert not bad, f"nav_readout: {len(bad)} cut chapter names:\n  " + "\n  ".join(bad[:20])
-    print(f"nav_readout: {n} chapter names in the phones' sheet at 390 and 360 and {m} desktop readouts at 1024, none cut")
+    # never vacuous: every page that names chapters had each one read, and enough pages name them to mean something
+    assert len(have) >= 6 and n and m, f"nav_readout: only {sorted(have)} have chapters ({n} sheet names, {m} desktop readouts read)"
+    assert not bad, f"nav_readout: {len(bad)} problems:\n  " + "\n  ".join(bad[:20])
+    print(f"nav_readout: {n} chapter names in the phones' sheet at 390 and 360 and {m} desktop readouts at 1024 over {len(have)} pages with chapters (every chapter of each), none cut")
 
 
 PILL_ACTIVE = """() => { const a = document.activeElement, sh = document.querySelector('.nav-sheet');
@@ -2481,22 +2493,7 @@ async def lab_gate_labels(b):
     print(f"lab_gate_labels: {n} layouts, no two gate labels intersect")
 
 
-# ---- the ledger: time only moves forward; digests add up (LG-R2-2, LG-R2-3)
-LEDGER_READ = r"""(() => [...document.querySelectorAll('[data-ledger=live] .lt-rec')].map(li => { const t = s => ((li.querySelector(s) || {}).textContent || '').replace(/\s+/g, ' ').trim();
-  return { id: t('.lt-id'), t: t('.lt-t'), ev: t('.lt-ev'), lc: t('.lt-lc'), sub: t('.lt-sub'), swarm: li.classList.contains('is-swarm') || /swarm|followed/i.test(t('.lt-lc')) }; }))()"""
-num = lambda s: int(s.replace(",", "")) if s else 0
-
-
-def digest_n(r):
-    """how many proposals a swarm record carries: 'SETTLED ×1,741' (LG-R2-3), else 'P-49000 +1,740 more' / 'proposal P-1' / '12 proposals'"""
-    m = re.search(r"[×xX]\s*([\d,]+)", r["ev"])  # 'SETTLED ×1,741' (or a plain 'x'); no event word contains an x
-    if m: return num(m[1])
-    m = re.search(r"\+([\d,]+) more", r["sub"])
-    if m: return num(m[1]) + 1
-    m = re.search(r"\b([\d,]+) proposals?\b", r["sub"])
-    return num(m[1]) if m else 1
-
-
+# ---- the ledger: time only moves forward (LG-R2-2; the digests of LG-R2-3 left with Home's stream, 1 Nov)
 def stamp_ms(t):
     m = re.fullmatch(r"(\d\d):(\d\d):(\d\d)(?:\.(\d{1,3}))?", t)
     return None if not m else ((int(m[1]) * 60 + int(m[2])) * 60 + int(m[3])) * 1000 + int((m[4] or "0").ljust(3, "0"))
@@ -2504,50 +2501,33 @@ def stamp_ms(t):
 
 @check
 async def ledger_time(b):
-    """home's live ledger at 1440, fed by the swarm lab (strictness 40%, so settled and rejected digests interleave):
-    across 40 consecutive new records the timestamps strictly increase (LG-R2-2), and the foot's swarm totals equal the
-    sum of n over the swarm digests seen (LG-R2-3; 'SETTLED xN' or the round-1 '+N more' wording)"""
-    ctx, pg = await open_page(b, "index.html", 1440, 900)
-    await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-    ran = await until(pg, "+((document.querySelector('[data-sw-inflight]') || {}).textContent || '0').replace(/\\D/g, '') > 0", 25000, 200)
-    await pg.evaluate(SET_RANGE, ["[data-sw-strict]", 40])
-    first = {r["id"] for r in await pg.evaluate(LEDGER_READ)}  # the page's own excerpt: not part of the stream
-    await pg.wait_for_timeout(4000)
-    await pg.evaluate("document.querySelector('[data-ledger=live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-    # follows from the ledger (the lab, off screen, keeps stepping while the ledger is near): a followed proposal's
-    # answer seals both waiting kinds at once, where a record stamped with its group's last announcement ran backwards
-    seen, order, t0, t_follow, follows = {}, [], time.monotonic(), 0, 0
-    while time.monotonic() - t0 < (180 if MODE["throttle"] > 1 else 120):
-        for r in await pg.evaluate(LEDGER_READ):
-            if r["id"] and r["id"] not in first and r["id"] not in seen: seen[r["id"]] = r; order.append(r["id"])
-        if len(order) >= 44 and follows >= 3: break
-        if time.monotonic() - t_follow > 9 and await pg.evaluate("(() => { const f = document.querySelector('[data-sw-follow]'); if (!f || f.getAttribute('aria-pressed') === 'true') return false; f.click(); return true; })()"):
-            t_follow, follows = time.monotonic(), follows + 1
-        await pg.wait_for_timeout(400)
-    # the last rows and the foot in one read: a row drawn between two reads would count in the foot and not in the rows
-    # (at 4x the loop ends on its time limit, 400 ms after its last read; ledger.md's note to the tests owner)
-    rows, foot = await pg.evaluate(f"[{LEDGER_READ}, (document.querySelector('[data-ledger=live] .lt-foot') || {{}}).textContent || '']")
-    for r in rows:
-        if r["id"] and r["id"] not in first and r["id"] not in seen: seen[r["id"]] = r; order.append(r["id"])
-    foot = re.sub(r"\s+", " ", foot)
+    """time moves forward in the ledger (LG-R2-2): on Trust at 1440 the excerpt's nine records read their ids in sequence
+    and timestamps that strictly increase, and a replay writes the same nine records again in the same order with the
+    same stamps. v2x cut, owner's-eye fix (1 Nov): until then this read Home's live ledger fed by the swarm lab (40
+    consecutive new records moving forward in time, and the foot's swarm totals equal to the digests seen, LG-R2-3); that
+    stream left the site with Home's agent log, and no page carries swarm digests any more."""
+    READ = r"""(() => [...document.querySelectorAll('[data-ledger=replay] .lt-rec')].map(li => { const t = s => ((li.querySelector(s) || {}).textContent || '').replace(/\s+/g, ' ').trim();
+      return { id: t('.lt-id'), t: t('.lt-t'), ev: t('.lt-ev') }; }))()"""
+    ctx, pg = await open_page(b, "trust.html", 1440, 900)
+    await pg.evaluate("document.querySelector('[data-ledger=replay]').scrollIntoView({block: 'center', behavior: 'instant'})")
+    await until(pg, "(() => { const r = document.querySelector('[data-ledger=replay] [data-lt-replay]'); return !!r && !r.hidden; })()", 8000 if MODE["throttle"] <= 1 else 30000)
+    before = await pg.evaluate(READ)
+    await pg.locator("[data-ledger=replay] [data-lt-replay]").click()
+    end = await until(pg, "/^Replayed/.test(document.querySelector('[data-ledger=replay] [data-lt-state]').textContent)", 20000, 100)
+    after = await pg.evaluate(READ)
     await ctx.close()
     bad = []
-    if not ran: bad.append("the swarm lab never ran")
-    recs = [seen[i] for i in order]
-    if len(recs) < 40: bad.append(f"only {len(recs)} new records in {time.monotonic() - t0:.0f} s (40 needed)")
-    back = [(a["id"], a["t"], b2["id"], b2["t"]) for a, b2 in zip(recs, recs[1:]) if (stamp_ms(b2["t"]) or 0) <= (stamp_ms(a["t"]) or 0)]
-    if back: bad.append(f"{len(back)} of {len(recs) - 1} steps do not move forward in time, e.g. {back[:3]}")
-    if any(stamp_ms(r["t"]) is None for r in recs): bad.append(f"unreadable timestamps: {[r['t'] for r in recs if stamp_ms(r['t']) is None][:3]}")
-    dig = [r for r in seen.values() if r["swarm"]]
-    s_set = sum(digest_n(r) for r in dig if re.match(r"settled", r["ev"], re.I))
-    s_rej = sum(digest_n(r) for r in dig if re.match(r"rejected", r["ev"], re.I))
-    fs, fr = re.search(r"([\d,]+) settled", foot), re.search(r"([\d,]+) rejected", foot)
-    if not dig: bad.append("no swarm digests reached the ledger")
-    elif not fs: bad.append(f"the foot names no settled total: {foot!r}")
-    elif (num(fs[1]), num(fr[1]) if fr else 0) != (s_set, s_rej):
-        bad.append(f"the foot says {num(fs[1])} settled / {num(fr[1]) if fr else 0} rejected; the {len(dig)} digests carry {s_set} / {s_rej}: {foot!r}")
-    assert not bad, "ledger_time index.html@1440x900:\n  " + "\n  ".join(bad)
-    print(f"ledger_time: {len(recs)} consecutive records ({follows} follows) move forward in time; {len(dig)} digests carry {s_set} settled + {s_rej} rejected, as the foot says")
+    for tag, recs in (("before", before), ("after the replay", after)):
+        if len(recs) != 9: bad.append(f"{tag}: {len(recs)} records (9 expected)")
+        if any(stamp_ms(r["t"]) is None for r in recs): bad.append(f"{tag}: unreadable timestamps {[r['t'] for r in recs if stamp_ms(r['t']) is None][:3]}")
+        back = [(a["id"], a["t"], c["id"], c["t"]) for a, c in zip(recs, recs[1:]) if (stamp_ms(c["t"]) or 0) <= (stamp_ms(a["t"]) or 0)]
+        if back: bad.append(f"{tag}: {len(back)} of {len(recs) - 1} steps do not move forward in time, e.g. {back[:3]}")
+        ids = [int(r["id"].lstrip("#"), 16) if re.fullmatch(r"#[0-9a-f]{4}", r["id"]) else None for r in recs]
+        if None in ids or any(j != i + 1 for i, j in zip(ids, ids[1:])): bad.append(f"{tag}: the ids are not in sequence: {[r['id'] for r in recs]}")
+    if not end: bad.append("the replay did not end within 20 s")
+    elif after != before: bad.append(f"the replay changed the excerpt: {[(a['id'], a['t']) for a, c in zip(before, after) if a != c][:3]}")
+    assert not bad, "ledger_time trust.html@1440x900:\n  " + "\n  ".join(bad)
+    print(f"ledger_time: Trust's excerpt {before[0]['id']}...{before[-1]['id']} moves forward in time ({before[0]['t']} -> {before[-1]['t']}), and a replay writes the same nine records in the same order")
 
 
 # ---- the home page prints as text on white (OV-R2-6)
@@ -2711,17 +2691,19 @@ async def label_in_name(b):
     """on the seven hand-written pages at 1440, plus the lab's record button after a followed proposal settles: every
     visible control's visible text (a label with an <output> read up to its value; digits and punctuation stripped on
     both sides) is a case-insensitive substring of its accessible name (WCAG 2.5.3): the nav readout, the lab's sliders
-    and record button, the desk's threshold slider among them (NV-R2-5, SW-R2-3, LC-R2-3)"""
+    and the trace's ledger link, the desk's threshold slider among them (NV-R2-5, SW-R2-3, LC-R2-3). v2x cut, owner's-eye
+    fix (1 Nov): Home has no ledger, so a settled trace ends in a link 'Ledger' named 'The ledger on the Trust page'
+    (it was a record button 'record #id · hash' answered by Home's ledger)"""
     bad, n = [], 0
     for name in ("index", "platform", "lifecycles", "evidence", "trust", "company", "access"):
         ctx, pg = await open_page(b, f"{name}.html", 1440, 900)
         cdp = await ctx.new_cdp_session(pg)
-        if name == "index":  # the record button exists once a followed proposal is answered by the ledger
+        if name == "index":  # the trace's ledger link exists once a followed proposal has settled
             await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
             await until(pg, "+((document.querySelector('[data-sw-inflight]') || {}).textContent || '0').replace(/\\D/g, '') > 0", 25000, 200)
             await pg.evaluate(SET_RANGE, ["[data-sw-strict]", 0]); await pg.mouse.move(2, 2)
             await pg.locator("[data-swarm-live] [data-sw-follow]").click()
-            if not await until(pg, "!!document.querySelector('[data-sw-log] [data-sw-rec]')", 60000, 250): bad.append("index.html: no record button in the trace after 60 s (nothing to check)")
+            if not await until(pg, "!!document.querySelector('[data-sw-log] a.sw-led-a')", 60000, 250): bad.append("index.html: no ledger link in the trace after 60 s (nothing to check)")
         ctrls = await pg.evaluate(LIN_MARK)
         names = await names_by_mark(pg, cdp)
         for c in ctrls:

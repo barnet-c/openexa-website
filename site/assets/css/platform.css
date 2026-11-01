@@ -85,6 +85,12 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.696; }
 }
 /* the smallest phones: the floor's label inside the crop */
 @media (max-width: 380px) { .hero-plate--stack .hp-lab--fl { letter-spacing: .03em; } }
+/* the narrowest phones: the drawing a little smaller, still cropped at its legend column (34.21 / 130 = the legend's
+   26.3 %), so the labels on the right stay whole; at 320 they were cut mid-word ("DETERMINISTI", "COUNTERPARTIE") */
+@media (max-width: 350px) {
+  .hero-plate--stack .hp-art { width: 130%; margin-left: -34.21%; }
+  .hero-plate--stack .hp-lab--side { letter-spacing: .03em; }
+}
 /* a phone on its side: the phone's crop, beside the copy */
 @media (max-width: 960px) and (max-height: 520px) and (min-width: 600px) and (orientation: landscape) {
   body[data-page="platform"] .hero-plate--stack { clip-path: inset(-24px -48px -24px 0); }
@@ -134,22 +140,6 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.696; }
 }
 #architecture .lb-t small { font: .9rem/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); } /* a sentence, not a label */
 
-/* §02: the one telling */
-#boundary .bnd-line { justify-content: center; }
-#boundary .grid > .offset-7 > .body-lg { text-wrap: balance; } /* the one sentence left of the lede */
-#boundary .bnd-line .chip { letter-spacing: var(--track-eyebrow); }
-/* each side's list wears the explorer's marks: a ring above the line, a square below */
-#boundary .bnd-side .checks li::before { width: 9px; height: 9px; top: 20px; left: 2px; border: 1px solid currentColor; border-radius: 50%; background: none; opacity: .6; }
-#boundary .bnd-side.is-below .checks li::before { width: 8px; height: 8px; border: 0; border-radius: 1px; background: currentColor; opacity: .5; }
-#boundary .bnd-side .checks li:first-child::before { top: 12px; }
-@media (max-width: 860px) { #boundary .bnd-side .checks li:first-child::before { top: 20px; } }
-@media (max-width: 600px) { #boundary .bnd-side .checks li::before, #boundary .bnd-side .checks li:first-child::before { top: 18px; } }
-/* each side's four layers, drawn as the hero plate draws them */
-#boundary .bnd-plate { display: none; }
-@media (min-width: 861px) {
-  #boundary .bnd-side { grid-template-areas: "n n" "h ul" "f ul"; grid-template-rows: auto auto 1fr; }
-  #boundary .bnd-plate { display: block; grid-area: f; align-self: end; width: min(100%, 250px); margin: 32px 0 6px; }
-}
 @media print { body[data-page="platform"] .js-only, body[data-page="lifecycles"] .js-only { display: none !important; } body[data-page="lifecycles"] .desk-nojs { display: block !important; } }
 
 /* §03 on phones: the four roles as a four-row list (one column only: in two, 'Prove' ran into its label at 521-600; r5) */
@@ -163,10 +153,8 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.696; }
   #swarm .sw-legend .sw-at { grid-column: 1 / -1; padding-top: 8px; }
   #swarm .sw-at b { display: inline; margin: 0 0 0 .5em; }
 }
-/* §02, §04, §07 on phones: lists at reading density */
+/* the pipeline and the marketplace on phones: lists at reading density */
 @media (max-width: 600px) {
-  #boundary .bnd-side .checks li { padding-top: 10px; padding-bottom: 10px; }
-  #boundary .bnd-line.arch-bound { min-height: 64px; }
   body[data-page="platform"] .list-rule--3 > li { padding-top: 18px; padding-bottom: 18px; }
   body[data-page="platform"] .mkt-col > .n { margin-bottom: 14px; }
   body[data-page="platform"] .list-hair > li { padding-top: 10px; padding-bottom: 10px; }
@@ -499,8 +487,6 @@ body[data-page="platform"] .mkt-col > .n > span { white-space: nowrap; }
   #architecture [data-arch-spec] > .layer { row-gap: 6px; padding: 14px 0 16px; }
   #architecture [data-arch-spec] > .layer > div > p { font-size: .93rem; line-height: 1.5; }
   #architecture [data-arch-spec] > .layer-boundary { padding: 14px 10px; }
-  /* Platform §02: the two lists at reading density */
-  #boundary .bnd-side .checks li { padding-top: 8px; padding-bottom: 8px; }
   /* Platform §04: the code on its tag's line */
   body[data-page="platform"] .list-rule--3 > li { grid-template-columns: 2.9rem minmax(0, 1fr); column-gap: 10px; row-gap: 0; padding-top: 16px; padding-bottom: 16px; }
   body[data-page="platform"] .list-rule--3 > li > div:not(.mono) { display: contents; }
@@ -579,16 +565,6 @@ body[data-page="platform"] .mkt-col > .n > span { white-space: nowrap; }
 #swarm .sw-legend .card { padding-top: clamp(18px, 1.8vw, 24px); }
 #swarm .sw-legend .sw-at { margin-top: 16px; }
 
-/* Platform §02: the boundary as the stack draws it: the four layers that decide, the line, the four that execute */
-#boundary .bnd { max-width: 860px; }
-#boundary .bnd-side { grid-template-columns: minmax(0, 250px) minmax(0, 1fr); grid-template-areas: "f n" "f h"; grid-template-rows: 1fr 1fr; column-gap: clamp(24px, 4vw, 64px); align-items: center; padding: 0; border: 0; background: none; overflow: visible; }
-#boundary .bnd-plate { display: block; grid-area: f; width: 100%; margin: 0; align-self: center; }
-#boundary .bnd-side .n { align-self: end; }
-#boundary .bnd-side h3 { align-self: start; margin-top: 6px; }
-#boundary .bnd-line.arch-bound { min-height: clamp(64px, 7vw, 96px); }
-@media (min-width: 861px) { #boundary .bnd-side { grid-template-areas: "f n" "f h"; grid-template-rows: 1fr 1fr; } #boundary .bnd-plate { width: 100%; margin: 0; } }
-@media (max-width: 600px) { #boundary .bnd-side { grid-template-columns: minmax(0, 132px) minmax(0, 1fr); column-gap: 18px; } }
-
 /* Platform §03 on phones: the four roles two by two */
 @media (max-width: 520px) {
   #swarm .sw-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -639,7 +615,6 @@ body[data-page="platform"] .mkt-col > .n > span { white-space: nowrap; }
 /* Lifecycles §02: the head, then the mechanism, beside the seven steps */
 #lc01 .lc-how > .ch-head { margin-bottom: clamp(28px, 3.2vw, 48px); }
 #lc01 .lc-how .ch-title { max-width: 12ch; }
-#boundary .bnd-line .chip { letter-spacing: 0; }
 
 /* 4K at 100 %: the pages keep their proportions instead of shrinking into a 1600 px column (as Home, home.css) */
 @media (min-width: 2400px) {
@@ -652,8 +627,61 @@ body[data-page="platform"] .mkt-col > .n > span { white-space: nowrap; }
   #lc01 .lane-v--steps > li { min-height: 4rem; column-gap: 1.125rem; }
   .desk .desk-log li { width: 7.75rem; }
   .desk .desk-log li:last-child { width: 7rem; }
-  #boundary .bnd { max-width: 53.75rem; }
-  #boundary .bnd-side { grid-template-columns: minmax(0, 15.625rem) minmax(0, 1fr); }
 }
 /* Platform §03: each role's gate (the button that lights it in the lab) at the small step, as the line above it */
 #swarm .sw-legend .sw-at, #swarm .sw-legend .sw-at :is(b, .sw-at-b) { font: 500 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; text-transform: none; }
+
+/* ========== owner's-eye fix (1 Nov): the boundary told once; the orbit's callouts as names ========== */
+/* Platform §01: the explorer's boundary row carries the one line (arch.js .has-line), set into the green line as the chip was;
+   no arrows legend, no counterparties row. The overview beside the plane keeps its two halves; where they sit says which. */
+#architecture .arch-bound.has-line { justify-content: flex-start; font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; }
+#architecture .arch-bound .ab-line { position: relative; z-index: 1; flex: 1 1 auto; margin: 0; padding: 3px 0; background: var(--a-ground); color: var(--fg-2); text-wrap: balance; }
+#architecture .arch.is-narrow .arch-bound.has-line { padding-top: 14px; padding-bottom: 14px; }
+#architecture .arch-bound[id] { scroll-margin-top: 42vh; } /* #boundary lands with the plane mid-screen, not under the bar */
+#architecture .arch-ov b { display: none; }
+#architecture .arch-ov strong { margin-top: 0; }
+/* without JavaScript: the line under the boundary's name, once */
+#architecture .layer-boundary .lb-line { margin: 4px 0 0; font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
+#architecture .layer-boundary .lb-line ~ .lb-io { display: none; }
+
+/* Lifecycles §04: the twelve callouts are names (the small step, in Inter); a callout's status shows on hover or focus; the
+   key beside the hedge reads the beads. The overlay drawing (.orbit-cs) has the base drawing's viewBox and sits on it. */
+body[data-page="lifecycles"] .orbit-fig { position: relative; }
+body[data-page="lifecycles"] .orbit-cs { position: absolute; inset: 0; width: 100%; height: auto; }
+.orbit-cs .orb-c { outline: none; cursor: default; }
+.orbit-cs .orb-hit { fill: transparent; stroke: none; }
+.orbit-cs text.orb-n { font-family: var(--sans); font-weight: 400; font-size: 1.3em; letter-spacing: 0; fill: var(--fg-2); }
+.orbit-cs .is-live text.orb-n { font-weight: 500; fill: var(--signal-ink, #186B4F); }
+.orbit-cs text.orb-s { opacity: 0; transition: opacity .2s var(--ease); }
+.orbit-cs .orb-hl { fill: none; stroke: var(--signal-ink, #186B4F); stroke-width: 1.2; opacity: 0; transition: opacity .2s var(--ease); }
+.orbit-cs .is-live .orb-hl { r: 14px; }
+.orbit-cs .ldr2 { transition: opacity .2s var(--ease); }
+.orbit-cs .orb-c:focus text.orb-s, .orbit-cs .orb-c:focus .orb-hl { opacity: 1; }
+.orbit-cs .orb-c:focus .ldr2 { opacity: .75; }
+.orbit-cs .orb-c:not(.is-live):focus text.orb-n { fill: var(--fg); }
+@media (hover: hover) {
+  .orbit-cs .orb-c:hover text.orb-s, .orbit-cs .orb-c:hover .orb-hl { opacity: 1; }
+  .orbit-cs .orb-c:hover .ldr2 { opacity: .75; }
+  .orbit-cs .orb-c:not(.is-live):hover text.orb-n { fill: var(--fg); }
+}
+.orbit-cs .orb-c:focus-visible .orb-hit { stroke: var(--signal-ink, #186B4F); stroke-width: 1.5; }
+body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap: clamp(24px, 3vw, 44px); }
+.orb-key { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-2); }
+.orb-key > span { display: inline-flex; align-items: center; gap: 7px; }
+.orb-key svg { display: block; flex: none; width: .86em; height: .86em; overflow: visible; } /* grows with the step at 4K */
+@media (min-width: 961px) { body[data-page="lifecycles"] .orbit-list { display: none; } } /* the overlay is the list here */
+@media (max-width: 960px) {
+  body[data-page="lifecycles"] .orbit-cs { display: none; }
+  /* the list under the orbit: names at the small step; a status shows when its item is tapped or focused */
+  body[data-page="lifecycles"] .orbit-list li { padding: 9px 0; outline: none; }
+  body[data-page="lifecycles"] .orbit-list span { font: 400 var(--fs-small)/1.35 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg); }
+  body[data-page="lifecycles"] .orbit-list small { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  body[data-page="lifecycles"] .orbit-list li:focus small { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal; margin-top: 2px; }
+  body[data-page="lifecycles"] .orbit-list li:focus-visible { outline: 2px solid var(--signal-ink, #186B4F); outline-offset: 2px; }
+  body[data-page="lifecycles"] .orbit-list .lc-ring { grid-row: auto; width: 22px; height: 22px; }
+  body[data-page="lifecycles"] .orbit-list li { grid-template-columns: 22px minmax(0, 1fr); }
+  body[data-page="lifecycles"] .orbit-list li:focus .lc-ring { grid-row: span 2; }
+}
+@media (min-width: 2400px) { .orbit-cs text.orb-n { font-size: 1.05em; } }
+@media (prefers-reduced-motion: reduce) { .orbit-cs :is(text.orb-s, .orb-hl, .ldr2) { transition: none; } }
+@media print { .orbit-cs text.orb-s { opacity: 1; } }

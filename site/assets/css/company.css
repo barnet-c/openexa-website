@@ -162,18 +162,18 @@
 
 /* ---------------------------------------------------------------- Company §03: the constants plate */
 /* The section's idea, drawn: one loop of gates that changes with each lifecycle, and the four constants that do not
-   (C-01 the boundary, C-02 agents scoped to their gate, C-03 the stop short of custody, C-04 the ledger). Inline SVG:
+   (the boundary, agents scoped to their gate, the stop short of custody, the ledger). Inline SVG:
    it paints with the page, reads complete without JavaScript and holds still under reduced motion. company.js runs it:
    a proposal walks the gates above the boundary (dashed: agents estimate), crosses it, walks the gates below (solid:
    code executes) and is written to the ledger once the counterparty confirms; one in four is rejected at the Council
    and written too; every second pass the loop takes another shape and nothing else moves. From 961 px the constants
    are one column and the plate stays beside them; the constant being read (or pointed at) is marked on the plate.
-   Cut (1 Nov): each constant is its code and its line; the plate shows the rest. */
+   Cut (1 Nov): each constant is its line; the plate shows the rest. Fix (1 Nov): no register codes, in the list or on
+   the plate; the constant being read lights its part of the plate (its words and marks in green, the rest back). */
 #constants { overflow: clip; }
 .kplate { position: relative; margin: 0; }
 .kplate-svg { display: block; width: 100%; height: auto; overflow: visible; }
 .kplate .kl { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; fill: var(--fg-3); }
-.kplate .kl--code { fill: var(--fg); letter-spacing: .1em; }
 .kplate .k-state { fill: var(--fg-2); }
 .kplate .k-loop { fill: none; stroke: var(--fg-3); stroke-width: 1.2; }
 .kplate .k-loop--up { stroke-dasharray: 3 4; }
@@ -191,7 +191,6 @@
 .kplate .k-rec--rej { fill: var(--bg); stroke: var(--reject); stroke-width: 1.2; }
 .kplate .k-rec--new { fill: var(--accent); }
 .kplate .k-tok { fill: var(--fg); stroke: var(--bg); stroke-width: 2; }
-.kplate .k-knock { fill: var(--bg); }
 .kplate .kl--box { fill: var(--fg-3); }
 .kplate .k-tok.is-ok { fill: var(--accent); }
 .kplate .k-tok.is-rej { fill: var(--reject); }
@@ -203,16 +202,15 @@
 .kplate .k-gate.is-no > circle { stroke: var(--reject); }
 .kplate .k-lead.is-hit { stroke: var(--accent); }
 /* the constant being read: the rest of the plate steps back */
-.kplate :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate text.k-c2, .kplate .k-loop, .kplate .k-council > circle { transition: opacity .35s var(--ease); }
-.kplate[data-on] :where(.k-c1, .k-c2, .k-c3, .k-c4) > :where(:not(text, .k-knock)) { opacity: .3; }
-.kplate[data-on] :where(.k-c1, .k-c3, .k-c4) > text, .kplate[data-on] text.k-c2 { opacity: .6; }
+.kplate :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate .k-loop, .kplate .k-council > circle { transition: opacity .35s var(--ease), fill .35s var(--ease); }
+.kplate[data-on] :where(.k-c1, .k-c2, .k-c3, .k-c4) > :where(:not(text)) { opacity: .3; }
+.kplate[data-on] :where(.k-c1, .k-c3, .k-c4) > text { opacity: .6; }
 .kplate[data-on] .k-loop, .kplate[data-on] .k-council > circle { opacity: .55; }
-.kplate[data-on="c1"] .k-c1 > *, .kplate[data-on="c2"] .k-c2 > *, .kplate[data-on="c2"] text.k-c2, .kplate[data-on="c3"] .k-c3 > *, .kplate[data-on="c4"] .k-c4 > * { opacity: 1; }
-.kplate[data-on="c1"] .k-c1 .kl--code, .kplate[data-on="c2"] .kl--code.k-c2, .kplate[data-on="c3"] .k-c3 .kl--code, .kplate[data-on="c4"] .k-c4 .kl--code { fill: var(--accent); }
+.kplate[data-on="c1"] .k-c1 > *, .kplate[data-on="c2"] .k-c2 > *, .kplate[data-on="c3"] .k-c3 > *, .kplate[data-on="c4"] .k-c4 > * { opacity: 1; }
+.kplate[data-on="c1"] .k-c1 .kl:not(.kl--dim), .kplate[data-on="c2"] .k-agent, .kplate[data-on="c3"] .k-c3 .kl, .kplate[data-on="c4"] .k-c4 .kl { fill: var(--accent); }
 .kplate .figure-cap { margin-top: 18px; padding-top: 10px; row-gap: 4px; border-top: 1px solid var(--line); }
 .kplate .figure-cap .fc-h { text-align: left; }
 .kplate > .figure-motion { top: -6px; right: 0; }
-[data-page="company"] .constants .n { margin-bottom: 14px; color: var(--fg); }
 [data-page="company"] .constants > div::after { display: none; }
 @media (min-width: 961px) {
   [data-page="company"] .k-grid { align-items: start; margin-top: clamp(32px, 4vw, 56px); }
@@ -222,7 +220,6 @@
   [data-page="company"] .constants { display: block; border: 0; }
   [data-page="company"] .constants > div { background: none; border: 0; border-top: 1px solid var(--line); padding: 24px 0 36px; transition: border-color .35s var(--ease); }
   [data-page="company"] .constants > div.is-on { border-top-color: var(--accent); }
-  [data-page="company"] .constants > div.is-on .n { color: var(--accent); }
 }
 @media (min-width: 961px) and (max-width: 1279px) { .kplate .kl { font-size: 14px; } }
 @media (max-width: 960px) {
@@ -239,20 +236,21 @@
   [data-page="company"] .constants > div:nth-child(odd) { border-right: 1px solid var(--line); }
   [data-page="company"] .constants > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
 }
-@media (max-width: 600px) { /* only the codes on the plate; the words are the constants just below */
+@media (max-width: 600px) { /* phones: the plate keeps its four words (either side of the boundary, custody, the ledger);
+   the layers, the Council and the running line give way; "Agents decide" steps down to sit on the boundary as
+   "Code executes" sits under it */
   .kplate .kl--word { display: none; }
-  .kplate .kl { font-size: 24px; }
-  .kplate .kl--box { font-size: 19px; }
+  .kplate .k-c1 .kl--word:not(.kl--dim), .kplate .k-c4 .kl--word { display: inline; }
+  .kplate .kl { font-size: 22px; letter-spacing: .06em; }
+  .kplate .k-c1 .kl--word:not(.kl--dim):first-of-type { transform: translateY(18px); }
   .kplate { padding-top: 34px; } /* Pause motion in its own band above the plate */
   .kplate > .figure-motion { top: -6px; }
-  .kplate .k-knock { width: 84px; }
 }
 @media (max-width: 760px) {
   [data-page="company"] .constants > div, [data-page="company"] .constants > div:nth-child(n) { padding: 22px 0 24px; border-right: 0; border-bottom: 1px solid var(--line); }
   [data-page="company"] .constants > div:nth-child(n):last-child { border-bottom: 0; }
-  [data-page="company"] .constants .n { margin-bottom: 10px; }
 }
-@media (prefers-reduced-motion: reduce) { .kplate :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate text.k-c2, .kplate .k-loop, .kplate .k-council > circle, [data-page="company"] .constants > div { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .kplate :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate .k-loop, .kplate .k-council > circle, [data-page="company"] .constants > div { transition: none; } }
 
 /* ---------------------------------------------------------------- Company §04: the six classes, status in words */
 [data-page="company"] .class-row { border-left: 0; border-top-color: var(--line-strong); }
@@ -280,25 +278,19 @@
 }
 
 /* ================================================================ Access */
-/* The H1 is v2's, as the owner signed it (S-38, 31 Oct): "Tell us who you are. We'll take it from there."; the page
-   shows what "from there" means: beside the form, the email this page writes, written as the visitor types (access.js),
-   and "Nothing is sent until you send it." under the button. The four paths are the four choices, by name only: the
-   letter's ask line changes with the choice, so it says what each path is (cut, 1 Nov: the hero's lede, the four
-   descriptions and the steps' paragraphs went). On phones the letter appears in the result. */
-/* the H1 sets on the statement step (118 px at 1440, v2's size) and breaks by sense (r4), never "who you / are.": each
-   sentence is a block, its phrases tied with no-break spaces. Tablets: the full row, one sentence a line, the lede
-   under it over the form, as v2 set it.
-   Desktops: "Tell us who you are. / We'll take it / from there." in v2's three lines; the first line may run past the
-   seventh column (up to ~55 px at 1440+), above the lede, which sits beside the last two and starts where the letter
-   does. Phones: "We'll take it / from there.", and "Tell us / who you are." under 375 px. */
+/* The H1 is the first sentence of v2's (S-38, 31 Oct): "Tell us who you are." (cut, 1 Nov: "We'll take it from there."
+   went, so the heading keeps to eight words and the form and its letter reach the first screen at 1440). Beside the
+   form, the email this page writes, written as the visitor types (access.js), and "nothing is sent until you send it"
+   under the button. The four paths are the four choices, by name only: the letter's ask line changes with the choice,
+   so it says what each path is (cut, 1 Nov: the hero's lede, the four descriptions and the steps' paragraphs went). On
+   phones the letter appears in the result. */
+/* the H1 sets on the statement step, on one line ("Tell us / who you are." under 375 px, never "who you / are.") */
 [data-page="access"] .access-hero h1 { max-width: none; }
-[data-page="access"] .access-hero .h1-s { display: block; }
-@media (min-width: 961px) { [data-page="access"] .access-hero h1 { width: max-content; } [data-page="access"] .access-hero .h1-p { display: block; } }
 /* field labels are words a person reads: Inter, the qualifier ("required", "optional") a step quieter (they were mono
    capitals) */
 [data-page="access"] .form .f > label:not(.f-check) { font-family: var(--sans); font-size: var(--fs-small); line-height: 1.4; letter-spacing: 0; text-transform: none; color: var(--fg); }
 [data-page="access"] .form .f-q { color: var(--fg-3); }
-[data-page="access"] .form-note, [data-page="access"] .f-check span { text-wrap: pretty; }
+[data-page="access"] .f-check span { text-wrap: pretty; }
 /* the four choices, two by two: a drawn ring, a green dot in it when chosen */
 [data-page="access"] .seg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 [data-page="access"] .seg .opt { position: relative; background: var(--bg); transition: background .25s var(--ease); }
@@ -345,7 +337,7 @@
 [data-page="access"] .form .f-check input:checked { background-color: var(--fg); border-color: var(--fg); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23F5F2EC' stroke-width='1.8'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E"); }
 [data-page="access"] .form .f-check input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; box-shadow: none; }
 [data-page="access"] .form-go { display: grid; gap: 14px; justify-items: start; }
-[data-page="access"] .form-note { margin: 0; max-width: 50ch; font-size: var(--fs-small); line-height: 1.55; color: var(--fg-3); }
+[data-page="access"] .form-note { margin: 0; max-width: 56ch; font-size: var(--fs-small); line-height: 1.55; color: var(--fg-3); text-wrap: balance; } /* one line beside the button's column from 961 px; two even lines on phones */
 /* the result: the letter the page wrote, as the visitor's mail app will show it */
 [data-page="access"] .form-ok { padding: clamp(22px, 3vw, 34px); scroll-margin-top: 16px; } /* access.js scrolls it under the bar (html's scroll-padding is the bar), 16 px clear */
 .letter { margin: 24px 0 0; border: 1px solid var(--line); background: var(--bg-2); }

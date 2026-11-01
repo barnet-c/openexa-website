@@ -22,7 +22,8 @@ frame over its own repeated runs), fails while the calibration is above 2x idle 
 not change what they count.
 
 The checks (the item each one guards in brackets):
-  style_ledger         a 2 s trace with the live ledger centred: median UpdateLayoutTree elementCount < 60   [LG1, NV2; round 2 tightened from 200]
+  style_ledger         a 2 s trace while Trust's ledger replays (centred, 1440): median UpdateLayoutTree elementCount < 60
+                       (Home's live ledger until it left the page on 1 Nov)   [LG1, NV2; round 2 tightened from 200]
   style_clock          reduced motion, at the footer: one footer-clock text change restyles < 50 elements, on / and /platform.html   [NV2]
   cls_latency          / at 390 with 700 ms of network latency: layout shift (no recent input) sums to < 0.1   [OV9]
   offscreen_work       at the footer of /, /lifecycles.html, /platform.html: no running animation with an off-screen target,
@@ -32,7 +33,8 @@ The checks (the item each one guards in brackets):
   desk_reduced_raf     reduced motion, the desk in view: gap.js runs 0 requestAnimationFrame callbacks in 3 s   [LC2b, LC6]
   headline_after_step* 400 ms after each overture index step (1440, 390): every headline word is up (translateY <= 4% of its height)   [OV4]
   desk_warm_time*      within 1.2 s of the desk scrolling into view: its clock reads >= 11:00 ET and its strip holds a record   [LC2b]
-  inspect_time*        the trace's record button: the followed record is selected in the ledger within 800 ms of the click   [SW2, LG4; round 2 tightened from 1.5 s]
+  inspect_time*        a click on a record of Trust's ledger selects it and the inspector names it within 800 ms (until
+                       1 Nov: the swarm trace's record button and Home's ledger, which left the page)   [SW2, LG4; round 2 tightened from 1.5 s]
   proof_entrance_time* home 4.1's chart, arrived at from above: its entrance transitions finish within 1.3 s of .is-in   [PF2]
   swarm_pacing*        the swarm lab centred at 1440x900@2: frame interval median <= 18 ms, p95 <= 33 ms   [SW4]
   swarm_phone_fps*     the lab at 390x844@3, touch, 4x CPU, agents at the slider's maximum: >= 30 fps once the governor has
@@ -139,14 +141,18 @@ def recalcs(events):
 
 @check
 async def style_ledger(b):
-    ctx, pg = await V.open_page(b, "index.html", 1440, 900)
+    ctx, pg = await V.open_page(b, "trust.html", 1440, 900)
     cdp = await ctx.new_cdp_session(pg)
-    await pg.evaluate("document.querySelector('[data-ledger=live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-    await pg.wait_for_timeout(2500)
+    await pg.evaluate("document.querySelector('[data-ledger=replay]').scrollIntoView({block: 'center', behavior: 'instant'})")
+    await V.until(pg, "(() => { const r = document.querySelector('[data-ledger=replay] [data-lt-replay]'); return !!r && !r.hidden; })()", 8000)
+    await pg.wait_for_timeout(1500)
+    await pg.locator("[data-ledger=replay] [data-lt-replay]").click()
+    await pg.mouse.move(5, 450)
+    await pg.wait_for_timeout(500)  # the click's own restyle is not the ledger's
     n = recalcs(await trace(pg, cdp, 2.0))
     await ctx.close()
     med = statistics.median(n) if n else 0
-    return med < 60 and len(n) > 0, f"index.html@1440x900, ledger centred, 2 s: {len(n)} recalcs, median {med:.0f} elements (max {max(n or [0])}); budget < 60 (round 2; was < 200)"
+    return med < 60 and len(n) > 0, f"trust.html@1440x900, ledger centred and replaying, 2 s: {len(n)} recalcs, median {med:.0f} elements (max {max(n or [0])}); budget < 60 (round 2; was < 200)"
 
 
 @check
@@ -291,24 +297,22 @@ async def desk_warm_time(b):
 @check
 @timing
 async def inspect_time(b):
-    ctx, pg = await V.open_page(b, "index.html", 1440, 900)
-    await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-    await V.until(pg, "+document.querySelector('[data-sw-inflight]').textContent.replace(/\\D/g, '') > 0", 25000, 200)
-    await pg.evaluate("(() => { const s = document.querySelector('[data-sw-strict]'); s.value = '0'; s.dispatchEvent(new Event('input', {bubbles: true})); s.dispatchEvent(new Event('change', {bubbles: true})); })()")
-    await pg.locator("[data-sw-follow]").click()
-    has = await V.until(pg, """(() => { if (document.querySelector('[data-sw-log] [data-sw-rec]')) return 'button';
-        return /record #[0-9a-f]{4}/.test((document.querySelector('[data-sw-log]') || {}).textContent || '') ? 'text' : ''; })()""", 60000, 250)
-    if has != "button":
-        await ctx.close(); return False, f"index.html@1440x900: the trace's ledger row is no record button ({has or 'nothing after 60 s'}; needs SW2 + LG4)", float("inf")
-    await pg.evaluate("""(() => { const R = window.__ins = { click: 0, sel: 0 }; document.addEventListener('click', e => { if (e.target.closest('[data-sw-rec]')) R.click = performance.now(); }, true);
-      const watch = () => { const li = document.querySelector('[data-ledger=live] .lt-rec.is-followed'); if (li && li.classList.contains('is-sel') && R.click && !R.sel) R.sel = performance.now(); };
-      new MutationObserver(watch).observe(document.querySelector('[data-ledger=live]'), { subtree: true, attributes: true, attributeFilter: ['class'] }); })()""")
-    await pg.locator("[data-sw-log] [data-sw-rec]").click()
+    ctx, pg = await V.open_page(b, "trust.html", 1440, 900)
+    await pg.evaluate("document.querySelector('[data-ledger=replay]').scrollIntoView({block: 'center', behavior: 'instant'})")
+    ok = await V.until(pg, "document.querySelectorAll('[data-ledger=replay] .lt-rec').length === 9 && document.querySelector('[data-ledger=replay]').classList.contains('lt-ready')", 8000)
+    if not ok:
+        await ctx.close(); return False, "trust.html@1440x900: the ledger did not mount with its nine records", float("inf")
+    await pg.wait_for_timeout(800)
+    await pg.evaluate("""(() => { const l = document.querySelector('[data-ledger=replay]'), li = l.querySelectorAll('.lt-rec')[4], id = li.querySelector('.lt-id').textContent.trim();
+      const R = window.__ins = { click: 0, sel: 0 }; document.addEventListener('click', e => { if (e.target.closest('.lt-rec')) R.click = performance.now(); }, true);
+      const watch = () => { const f = l.querySelector('[data-f="rec"]'); if (li.classList.contains('is-sel') && f && f.textContent.includes(id) && R.click && !R.sel) R.sel = performance.now(); };
+      new MutationObserver(watch).observe(l, { subtree: true, attributes: true, childList: true, characterData: true }); })()""")
+    await pg.locator("[data-ledger=replay] .lt-rec").nth(4).click()
     await V.until(pg, "window.__ins.sel > 0", 8000)
     r = await pg.evaluate("window.__ins")
     await ctx.close()
     ms = r["sel"] - r["click"] if r["sel"] else None
-    return ms is not None and ms <= 800, f"index.html@1440x900: the followed record was selected {'%.0f ms' % ms if ms is not None else 'never (8 s)'} after the click; budget 800 ms (round 2; was 1.5 s)", ms if ms is not None else float("inf")
+    return ms is not None and ms <= 800, f"trust.html@1440x900: the fifth record was selected and named in the inspector {'%.0f ms' % ms if ms is not None else 'never (8 s)'} after the click; budget 800 ms (round 2; was 1.5 s)", ms if ms is not None else float("inf")
 
 
 @check

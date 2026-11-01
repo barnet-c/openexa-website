@@ -88,7 +88,7 @@
 .pf-legend { display: flex; gap: 10px; align-items: baseline; max-width: 64ch; margin: 12px 0 0; font: .82rem/1.5 var(--sans); color: var(--fg-3); }
 .pf-legend b { flex: none; font: 400 1.5rem/.6 var(--serif); color: var(--fg-2); transform: translateY(.3em); }
 
-/* the open / filled marks (Trust's refusals use the open one) */
+/* the open / filled marks */
 .pf-lk { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; font: 400 clamp(1.35rem, 1.8vw, 1.6rem)/1.2 var(--serif); letter-spacing: -.01em; color: var(--fg); }
 /* the chart's own marks: a filled block for what the record shows, an open block for what it does not */
 .pf-lk i { flex: none; width: 11px; height: 11px; background: var(--fg); }
@@ -115,6 +115,9 @@
 @media (min-width: 1200px) {
   [data-page="proof"] .page-hero--plate > .hero-copy { grid-column: 1 / span 6; }
   [data-page="proof"] .pf-record { grid-column: 7 / -1; max-width: 600px; }
+  /* "The broker confirmed it." is .03em wider than six columns from 1420 to 1890 px and fell to three lines: the head
+     may reach an eighth of an em into the gutter (its text still ends >= 30 px short of the plate; work/proof/cut/h1_sweep.py) */
+  [data-page="proof"] .page-hero h1 { margin-inline-end: -.125em; }
 }
 @media (max-width: 960px) { [data-page="proof"] .pf-record { grid-column: 1 / -1; min-width: 0; } }
 /* tablets: the record as a spread, the plate and its terms side by side; §01's heading beside its text */
@@ -134,11 +137,11 @@
   [data-page="proof"] .page-hero h1 { min-height: 2lh; }
   [data-page="proof"] .page-hero .lede { min-height: 2lh; }
 }
-@media (max-width: 463.98px) { [data-page="proof"] .page-hero h1 { min-height: 3lh; } }
+@media (max-width: 359.98px) { [data-page="proof"] .page-hero h1 { min-height: 3lh; } } /* "…confirmed it." (1 Nov): re-measured at 1 px, work/proof/cut/hero_edges.py */
 @media (max-width: 459.98px) { [data-page="proof"] .page-hero .lede { min-height: 3lh; } }
 @media (max-width: 451.98px) { [data-page="proof"] .pf-lc-hedge { min-height: 2lh; } }
 @media (max-width: 359.98px) { [data-page="proof"] .page-hero .lede { min-height: 4lh; } }
-@media (max-width: 347.98px) { [data-page="proof"] .page-hero h1 { min-height: 4lh; } }
+@media (max-width: 344.98px) { [data-page="proof"] .page-hero h1 { min-height: 4lh; } }
 /* the first statement of the result carries its hedge, as on Home's hero (VOICE 5.5): set to be read, not whispered
    (Inter, sentence case, 14 px; a11y r1 M5), in Home's hedge tone, paper at 72% (8.9:1 on ink; a11y r3 m2) */
 [data-page="proof"] .pf-lc-hedge { margin-top: 16px; font: 400 .875rem/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); }
@@ -333,18 +336,19 @@
   .tr-cu-plate.will-reveal:not(.is-in) .tr-cud :is(.hp-r, .hp-gl, .hp-gf, .hp-lab--rej, .hp-lab--acc) { opacity: 0; }
 }
 
-/* §04 the refusals: three lines, each with the open mark (Proof's 'not shown' mark) */
+/* §04 the refusals: three lines, each led by a short reject-red rule, the stop the plates draw (1 Nov: the open squares
+   read as unticked checkboxes, a to-do list on the governance page). A border, not a fill, so forced colours keep it. */
 .tr-no { row-gap: 28px; }
 .tr-no-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line-strong); }
-.tr-no-list > li { display: flex; align-items: baseline; gap: 14px; padding: 18px 0 19px; border-bottom: 1px solid var(--line); font: 500 var(--fs-body)/1.45 var(--sans); color: var(--fg); text-wrap: pretty; } /* the refusals at the size they had (running text, bold lead): set, not shouted */
-.tr-no-list > li > i { flex: none; width: 10px; height: 10px; border: 1px solid var(--fg-2); transform: translateY(.05em); }
+.tr-no-list > li { display: flex; align-items: baseline; gap: .875rem; padding: 18px 0 19px; border-bottom: 1px solid var(--line); font: 500 var(--fs-body)/1.45 var(--sans); color: var(--fg); text-wrap: pretty; } /* the refusals at the size they had (running text, bold lead): set, not shouted */
+.tr-no-list > li > i { flex: none; width: .875rem; height: 0; border-top: .125rem solid var(--reject); transform: translateY(-.34em); }
 @media (max-width: 960px) { .tr-no > * { grid-column: 1 / -1; } }
 
 /* phones: the ledger stands in one column (every record readable, no swiping); the plates become short rows */
 @media (max-width: 600px) {
   .tr-lt .lt-state > span { white-space: normal; }
   .tr-lt .lt-view { overflow: visible; -webkit-mask-image: none !important; mask-image: none !important; }
-  .tr-lt .lt-track { display: grid; grid-template-columns: minmax(0, 1fr); width: auto; min-width: 0; padding: 4px 12px 12px 10px; }
+  .tr-lt .lt-track { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; width: auto; min-width: 0; padding: 4px 12px 12px 10px; } /* start: a replay holds the column's height (trust.js) and the rows must not stretch into it */
   .tr-lt .lt-rec { contain: layout style; width: auto; margin-left: 0; padding: 11px 8px 12px 34px; display: grid; grid-template-columns: 4.4em minmax(0, 1fr) auto; grid-template-areas: "meta ev t" "meta sub ."; column-gap: 10px; row-gap: 4px; align-items: baseline; }
   .tr-lt .lt-rec::after { inset: 2px 0; }
   .tr-lt .lt-meta { grid-area: meta; flex-direction: column; gap: 2px; }

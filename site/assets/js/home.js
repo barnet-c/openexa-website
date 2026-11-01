@@ -17,17 +17,17 @@
     chain.addEventListener('input', () => set(true));
     chain.addEventListener('click', e => { if (e.target.closest('[data-chain-try]')) set(true); });
   }
-  // §06 on phones: the inspector's hash links fold (open from 601 px)
-  const hx = document.querySelector('[data-lt-hx]');
-  if (hx && window.matchMedia) {
-    const mq = matchMedia('(max-width: 600px)'), fold = () => { hx.open = !mq.matches; };
-    fold(); mq.addEventListener('change', fold);
-  }
 })();
 (function () {
   'use strict';
   const me = document.currentScript, root = document.documentElement;
-  const list = ((me && me.getAttribute('data-after-paint')) || '').split(/\s+/).filter(Boolean);
+  // an engine whose instrument the page does not draw is not fetched (a safety net: Home's list dropped ledger.js and
+  // lane.js on 1 Nov, when its lane and running log left the page)
+  const draws = { 'ledger.js': '[data-ledger]', 'lane.js': '[data-lane]' };
+  const list = ((me && me.getAttribute('data-after-paint')) || '').split(/\s+/).filter(src => {
+    const k = src && draws[src.split('/').pop()];
+    return !!src && (!k || !!document.querySelector(k));
+  });
   if (!list.length) return;
   if (list.some(src => /story\.js$/.test(src))) root.classList.add('story-wait');
   const FIRST = /(?:^|\/)(?:loader|story|site)\.js$/;

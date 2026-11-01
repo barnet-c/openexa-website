@@ -223,7 +223,7 @@
    66–72 at every width from 768 up (a 39.2rem measure, 19 px type, 1.68 leading) */
 .article-page .article { font-size: 1.1875rem; line-height: 1.68; }
 .article-page .article > p { max-width: 39.2rem; }
-.article-page .article > p.lead { color: var(--fg); line-height: 1.55; }
+.article-page .article > p.lead { font-size: inherit; color: var(--fg); line-height: 1.55; } /* the text's size, not site.css's --fs-body (17.8 px beside 19 px text at 1440; 28.8 beside 30.4 at 3840) */
 /* a research note's standfirst (the author's italic line in the source) opens the body, set off by a rule (cut, 1 Nov) */
 .article-page .article > p.dek { margin: 0 0 1.6em; padding-bottom: 1.4em; border-bottom: 1px solid var(--line); color: var(--fg-2); }
 .article-page .article h2 { max-width: 30ch; text-wrap: balance; }
@@ -257,7 +257,7 @@
 /* ---------- a note: after the body (the instruments it describes; the series disclosure) ---------- */
 .note-run { margin-top: 40px; }
 .note-run ul { display: grid; gap: 14px; list-style: none; margin: 0; padding: 0; }
-.note-run .link-arrow { font-size: var(--fs-body); line-height: 1.4; }
+.note-run .link-arrow { font-size: inherit; line-height: 1.4; } /* the text's size: one size, not two a pixel apart */
 .note-disc { margin-top: 44px; padding: 20px 22px; background: var(--paper-2); border-radius: var(--r); max-width: 66ch; }
 .note-disc p { margin: 0; font-size: var(--fs-small); line-height: 1.6; color: var(--fg-2); }
 /* the end matter keeps the text's measure: its rules stop where the lines stop */
@@ -365,6 +365,11 @@
   /* the hero's drawing stands inside the column, so every label it carries has room (at 3840 it ran past the content
      edge and its right-hand labels were dropped) */
   :is(.research-hero, .article-hero) .figure-stage { right: max(0px, calc((100vw - var(--max)) / 2)); }
+  /* a note's text takes the site's body step (28.8 px at 3840), so the opening paragraph, the instrument links, the
+     pager's subtitles and the footer line are one size with it: at 3840 the text was 30.4 px beside 28.8 px, five sizes
+     on a screen (1 Nov). The measure stays ~69 characters a line, as at 1440 */
+  .article-page .article { font-size: var(--fs-body); }
+  .article-page .article > :is(p, .article-end, .note-run, .note-disc) { max-width: 37.125rem; } /* 33 x the text's 1.125rem */
 }
 
 /* ---------- reduced motion and print ---------- */

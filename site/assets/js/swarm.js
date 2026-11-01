@@ -6,9 +6,9 @@
    Events, batched (at most four flushes a second):
      'oxa:settled'  {id, lane, ts, gate: 'settle', count, followed}   proposals settled since the previous flush
      'oxa:rejected' {id, ts, count, followed, gate: 'approve'}        proposals the council rejected since then
-   A ledger on the page ([data-ledger="live"], home §06) answers 'oxa:recorded' {id, record, hash, seq, followed}; a
-   followed proposal's trace names that record and its button dispatches 'oxa:inspect' {record, seq, focus}. Without a
-   ledger (Platform) the trace names the lab's own ledger line. On screen the model runs; off screen it writes nothing and
+   A running ledger on the page ([data-ledger="live"]; none since Home's left on 1 Nov) answers 'oxa:recorded' {id, record,
+   hash, seq, followed}; a followed proposal's trace names that record and its button dispatches 'oxa:inspect' {record,
+   seq, focus}. Without one (Home, Platform) the trace names the lab's own ledger line and links to Trust's. On screen the model runs; off screen it writes nothing and
    steps (4 Hz, nothing drawn) only while the page's ledger is near or a followed proposal is in flight. Pause motion and
    hidden tabs freeze it; reduced motion: a still study. */
 (function () {
@@ -30,7 +30,7 @@
     traceState: $('[data-sw-trace-state]'), log: $('[data-sw-log]'), close: $('[data-sw-trace-close]'), say: $('[data-sw-say]'),
     hov: $('[data-sw-hover]'), bound: $('[data-sw-bound]'),
   };
-  const LEDGER = document.querySelector('[data-ledger="live"]'); // the page's own ledger (home §06); Platform has none
+  const LEDGER = document.querySelector('[data-ledger="live"]'); // a page's own running ledger, if it has one (Home's left on 1 Nov; Platform has none)
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const TAU = Math.PI * 2;
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -894,9 +894,9 @@
     } else {
       const what = outcome === 'settled' ? "sealed into the lab's ledger line" : "rejection logged on the lab's ledger line";
       setRow('led', t, what, outcome === 'settled' ? 'ok' : 'bad');
-      const r = rowOf('led'); if (r) r.link = 'index.html#governance'; // its name links to the inspectable ledger
+      const r = rowOf('led'); if (r) r.link = 'trust.html#ledger'; // its name links to the inspectable ledger (Trust's)
       if (outcome === 'settled') tagSet('settled · sealed', 'ok');
-      say(`${id}: ${what}; the inspectable ledger is on the home page.`);
+      say(`${id}: ${what}; the inspectable ledger is on the Trust page.`);
     }
     touch();
   }
@@ -1077,9 +1077,9 @@
       const was = li.__cls; li.__ver = r.ver; li.__cls = r.cls;
       li.className = (r.cls ? 'is-' + r.cls : '') + (was === 'pend' && r.cls !== 'pend' ? ' is-filled' : '');
       li.children[0].textContent = r.t === null ? '—' : fmtT(r.t);
-      if (r.link && !li.children[1].firstElementChild) { // a page without a ledger: the row's name leads to the home page's
+      if (r.link && !li.children[1].firstElementChild) { // a page without a ledger: the row's name leads to Trust's
         const a = document.createElement('a'); a.href = r.link; a.className = 'sw-led-a';
-        a.setAttribute('aria-label', 'The ledger on the home page');
+        a.setAttribute('aria-label', 'The ledger on the Trust page');
         const ar = document.createElement('i'); ar.setAttribute('aria-hidden', 'true'); ar.textContent = ' →';
         a.append(r.name, ar); li.children[1].replaceChildren(a);
       }

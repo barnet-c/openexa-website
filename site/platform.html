@@ -104,42 +104,17 @@
           <div class="layer" data-job="The post-trained model every agent reasons on. It can propose anything and execute nothing on its own."><div class="k">02</div><h3>Model layer<small>Reason</small></h3><div></div></div>
           <div class="layer" data-job="Thousands of narrow agents, each built for one job: read a feed, score a gap, size an order, check a limit, match a fill."><div class="k">03</div><h3>Domain<span class="hy">-</span>specific agents<small>Act</small></h3><div></div></div>
           <div class="layer" data-job="The gate every proposal passes. It arbitrates between agents and enforces policy and mandate limits."><div class="k">04</div><h3>Execution Council<small>Govern</small></h3><div></div></div>
-          <div class="layer-boundary"><div class="k">—</div><p class="lb-t">The boundary</p><div class="lb-io"><p data-side="above"><b>Above</b> <strong>Agents decide.</strong></p><p data-side="below"><b>Below</b> <strong>Code executes.</strong></p></div></div>
+          <div class="layer-boundary" id="boundary"><div class="k">—</div><p class="lb-t">The boundary</p><p class="lb-line">The line is a typed schema, and nothing crosses it without a decision.</p><div class="lb-io"><p data-side="above"><b>Above</b> <strong>Agents decide.</strong></p><p data-side="below"><b>Below</b> <strong>Code executes.</strong></p></div></div>
           <div class="layer" data-job="Finds the cheapest, fastest, safest path for each approved action, on live conditions and past performance."><div class="k">05</div><h3>Routing layer<small>Optimize</small></h3><div></div></div>
           <div class="layer" data-job="Runs the lifecycle as a deterministic state machine, with retries, idempotency and reconciliation."><div class="k">06</div><h3>Execution layer<small>Orchestrate</small></h3><div></div></div>
           <div class="layer" data-job="Gives agents authenticated connectivity to the rails, through secure, customer-scoped MCP servers."><div class="k">07</div><h3>MCP server<small>Connect</small></h3><div></div></div>
           <div class="layer" data-job="Grants every agent, tool and counterparty exactly the permissions its workflow needs, and nothing more."><div class="k">08</div><h3>Authentication layer<small>Permit</small></h3><div></div></div>
-          <div class="layer-floor"><div class="k">—</div><p>Brokers · Clearing · OTC · Venues · Counterparties</p></div>
         </div>
       </div>
     </section>
 
-    <!-- 02 AI VS ALGORITHMIC -->
-    <section class="section is-paper-2" id="boundary" data-chapter="One boundary" data-chapter-short="Boundary" data-n="02">
-      <div class="container">
-        <div class="ch-head">
-          <h2 class="display-2 ch-title" data-reveal><span class="ln">Above the line, agents decide.</span> <span class="ln">Below, code executes.</span></h2>
-          <p class="ch-line" data-reveal style="--d:80ms">The line is a typed schema, and nothing crosses it without a decision.</p>
-        </div>
-        <!-- the stack's order: adaptive (01-04) above the boundary, deterministic (05-08) below it, as in §01 -->
-        <div class="bnd">
-          <div class="card bnd-side" data-reveal>
-            <div class="n"><span>Layers 01–04</span></div>
-            <h3 class="display-3">Models, agents, the Council.</h3>
-            <div class="bnd-plate hp-art" aria-hidden="true"><svg viewBox="0 0 238 136" aria-hidden="true" focusable="false"><path class="hp-h hp-dash" d="M4 19L142 2L234 19L96 36Z"/><g class="hp-d"><circle cx="116.1" cy="24.7" r="1.5" opacity="0.5"/><circle cx="86.9" cy="22.5" r="1.6" opacity="0.5"/><circle cx="167" cy="14.6" r="1.7" opacity="0.5"/><circle cx="67.1" cy="16.8" r="1.6" opacity="0.6"/><circle cx="139.5" cy="14" r="1.7" opacity="0.6"/><circle cx="72.6" cy="23.2" r="1.6" opacity="0.8"/><circle cx="157.5" cy="10.8" r="1.5" opacity="0.7"/><circle cx="125.8" cy="15.5" r="1.6" opacity="0.7"/><circle cx="81.6" cy="22.3" r="1.4" opacity="0.5"/><circle cx="158.1" cy="22.6" r="1.8" opacity="0.6"/><circle cx="83.5" cy="24.4" r="1.3" opacity="0.5"/><circle cx="85" cy="23.5" r="1.4" opacity="0.5"/><circle cx="127.6" cy="12.8" r="1.6" opacity="0.8"/></g><path class="hp-h hp-dash" d="M4 51L142 34L234 51L96 68Z"/><g class="hp-d"><circle cx="103.7" cy="47.2" r="1.4" opacity="0.6"/><circle cx="164.8" cy="44.5" r="1.6" opacity="0.6"/><circle cx="124.3" cy="51.9" r="1.2" opacity="0.8"/><circle cx="110.4" cy="43.1" r="1.2" opacity="0.5"/><circle cx="160.2" cy="51.9" r="1.2" opacity="0.5"/><circle cx="76.4" cy="50.1" r="1.4" opacity="0.7"/><circle cx="149.5" cy="51.2" r="1.3" opacity="0.6"/><circle cx="124.8" cy="47.1" r="1.4" opacity="0.6"/><circle cx="114.7" cy="50.7" r="1.2" opacity="0.5"/><circle cx="100" cy="54.3" r="1.5" opacity="0.7"/><circle cx="97.4" cy="61" r="1.4" opacity="0.7"/><circle cx="92.3" cy="59.6" r="1.4" opacity="0.7"/><circle cx="85.9" cy="46.2" r="1.6" opacity="0.7"/></g><path class="hp-h hp-dash" d="M4 83L142 66L234 83L96 100Z"/><g class="hp-d"><circle cx="147.8" cy="81.7" r="1.5" opacity="0.6"/><circle cx="167.7" cy="83.6" r="1.6" opacity="0.7"/><circle cx="103.3" cy="80.2" r="1.8" opacity="0.7"/><circle cx="133.9" cy="79.5" r="1.4" opacity="0.6"/><circle cx="96.1" cy="83.8" r="1.9" opacity="0.6"/><circle cx="123.6" cy="74.8" r="1.4" opacity="0.6"/><circle cx="84.4" cy="89.4" r="1.7" opacity="0.7"/><circle cx="133.6" cy="85.3" r="1.8" opacity="0.6"/><circle cx="70.2" cy="80.5" r="1.3" opacity="0.6"/><circle cx="54.2" cy="85.8" r="1.8" opacity="0.5"/><circle cx="138" cy="81.8" r="1.7" opacity="0.7"/><circle cx="79.9" cy="82.6" r="1.4" opacity="0.7"/><circle cx="89.1" cy="82.4" r="1.5" opacity="0.6"/></g><path class="hp-h hp-dash" d="M4 115L142 98L234 115L96 132Z"/><g class="hp-d"><circle cx="79.9" cy="114.9" r="1.5" opacity="0.7"/><circle cx="201.6" cy="114.1" r="1.3" opacity="0.7"/><circle cx="95.5" cy="111.7" r="1.4" opacity="0.7"/><circle cx="123.6" cy="117.2" r="1.8" opacity="0.8"/><circle cx="110.5" cy="110.7" r="1.2" opacity="0.6"/><circle cx="121.7" cy="111.5" r="1.9" opacity="0.5"/><circle cx="74.8" cy="118.3" r="1.7" opacity="0.7"/><circle cx="142.6" cy="108.4" r="1.4" opacity="0.7"/><circle cx="161.8" cy="112.2" r="1.3" opacity="0.7"/><circle cx="151.9" cy="109.5" r="1.7" opacity="0.7"/><circle cx="129.2" cy="117.6" r="1.2" opacity="0.5"/><circle cx="160.6" cy="115.5" r="1.2" opacity="0.6"/><circle cx="169.5" cy="118.5" r="1.6" opacity="0.7"/></g></svg></div>
-          </div>
-          <div class="arch-bound bnd-line" data-reveal style="--d:60ms" aria-hidden="true"><span class="chip">Typed schema</span></div>
-          <div class="card bnd-side is-below" data-reveal style="--d:120ms">
-            <div class="n"><span>Layers 05–08</span></div>
-            <h3 class="display-3">Rules, adapters, order state.</h3>
-            <div class="bnd-plate hp-art" aria-hidden="true"><svg viewBox="0 0 238 136" aria-hidden="true" focusable="false"><path class="hp-h" d="M4 19L142 2L234 19L96 36Z"/><g class="hp-d"><circle cx="41.7" cy="20" r="1.15" opacity=".55"/><circle cx="60.1" cy="23.4" r="1.15" opacity=".55"/><circle cx="78.5" cy="26.8" r="1.15" opacity=".55"/><circle cx="96.9" cy="30.2" r="1.15" opacity=".55"/><circle cx="61.6" cy="17.6" r="1.15" opacity=".55"/><circle cx="80" cy="21" r="1.15" opacity=".55"/><circle cx="98.4" cy="24.4" r="1.15" opacity=".55"/><circle cx="116.8" cy="27.8" r="1.15" opacity=".55"/><circle cx="81.5" cy="15.1" r="1.15" opacity=".55"/><circle cx="99.9" cy="18.5" r="1.15" opacity=".55"/><circle cx="118.3" cy="21.9" r="1.15" opacity=".55"/><circle cx="136.7" cy="25.3" r="1.15" opacity=".55"/><circle cx="101.3" cy="12.7" r="1.15" opacity=".55"/><circle cx="119.7" cy="16.1" r="1.15" opacity=".55"/><circle cx="138.1" cy="19.5" r="1.15" opacity=".55"/><circle cx="156.5" cy="22.9" r="1.15" opacity=".55"/><circle cx="121.2" cy="10.2" r="1.15" opacity=".55"/><circle cx="139.6" cy="13.6" r="1.15" opacity=".55"/><circle cx="158" cy="17" r="1.15" opacity=".55"/><circle cx="176.4" cy="20.4" r="1.15" opacity=".55"/><circle cx="141.1" cy="7.8" r="1.15" opacity=".55"/><circle cx="159.5" cy="11.2" r="1.15" opacity=".55"/><circle cx="177.9" cy="14.6" r="1.15" opacity=".55"/><circle cx="196.3" cy="18" r="1.15" opacity=".55"/></g><path class="hp-h" d="M4 51L142 34L234 51L96 68Z"/><g class="hp-d"><circle cx="41.7" cy="52" r="1.15" opacity=".55"/><circle cx="60.1" cy="55.4" r="1.15" opacity=".55"/><circle cx="78.5" cy="58.8" r="1.15" opacity=".55"/><circle cx="96.9" cy="62.2" r="1.15" opacity=".55"/><circle cx="61.6" cy="49.6" r="1.15" opacity=".55"/><circle cx="80" cy="53" r="1.15" opacity=".55"/><circle cx="98.4" cy="56.4" r="1.15" opacity=".55"/><circle cx="116.8" cy="59.8" r="1.15" opacity=".55"/><circle cx="81.5" cy="47.1" r="1.15" opacity=".55"/><circle cx="99.9" cy="50.5" r="1.15" opacity=".55"/><circle cx="118.3" cy="53.9" r="1.15" opacity=".55"/><circle cx="136.7" cy="57.3" r="1.15" opacity=".55"/><circle cx="101.3" cy="44.7" r="1.15" opacity=".55"/><circle cx="119.7" cy="48.1" r="1.15" opacity=".55"/><circle cx="138.1" cy="51.5" r="1.15" opacity=".55"/><circle cx="156.5" cy="54.9" r="1.15" opacity=".55"/><circle cx="121.2" cy="42.2" r="1.15" opacity=".55"/><circle cx="139.6" cy="45.6" r="1.15" opacity=".55"/><circle cx="158" cy="49" r="1.15" opacity=".55"/><circle cx="176.4" cy="52.4" r="1.15" opacity=".55"/><circle cx="141.1" cy="39.8" r="1.15" opacity=".55"/><circle cx="159.5" cy="43.2" r="1.15" opacity=".55"/><circle cx="177.9" cy="46.6" r="1.15" opacity=".55"/><circle cx="196.3" cy="50" r="1.15" opacity=".55"/></g><path class="hp-h" d="M4 83L142 66L234 83L96 100Z"/><g class="hp-d"><circle cx="41.7" cy="84" r="1.15" opacity=".55"/><circle cx="60.1" cy="87.4" r="1.15" opacity=".55"/><circle cx="78.5" cy="90.8" r="1.15" opacity=".55"/><circle cx="96.9" cy="94.2" r="1.15" opacity=".55"/><circle cx="61.6" cy="81.6" r="1.15" opacity=".55"/><circle cx="80" cy="85" r="1.15" opacity=".55"/><circle cx="98.4" cy="88.4" r="1.15" opacity=".55"/><circle cx="116.8" cy="91.8" r="1.15" opacity=".55"/><circle cx="81.5" cy="79.1" r="1.15" opacity=".55"/><circle cx="99.9" cy="82.5" r="1.15" opacity=".55"/><circle cx="118.3" cy="85.9" r="1.15" opacity=".55"/><circle cx="136.7" cy="89.3" r="1.15" opacity=".55"/><circle cx="101.3" cy="76.7" r="1.15" opacity=".55"/><circle cx="119.7" cy="80.1" r="1.15" opacity=".55"/><circle cx="138.1" cy="83.5" r="1.15" opacity=".55"/><circle cx="156.5" cy="86.9" r="1.15" opacity=".55"/><circle cx="121.2" cy="74.2" r="1.15" opacity=".55"/><circle cx="139.6" cy="77.6" r="1.15" opacity=".55"/><circle cx="158" cy="81" r="1.15" opacity=".55"/><circle cx="176.4" cy="84.4" r="1.15" opacity=".55"/><circle cx="141.1" cy="71.8" r="1.15" opacity=".55"/><circle cx="159.5" cy="75.2" r="1.15" opacity=".55"/><circle cx="177.9" cy="78.6" r="1.15" opacity=".55"/><circle cx="196.3" cy="82" r="1.15" opacity=".55"/></g><path class="hp-h" d="M4 115L142 98L234 115L96 132Z"/><g class="hp-d"><circle cx="41.7" cy="116" r="1.15" opacity=".55"/><circle cx="60.1" cy="119.4" r="1.15" opacity=".55"/><circle cx="78.5" cy="122.8" r="1.15" opacity=".55"/><circle cx="96.9" cy="126.2" r="1.15" opacity=".55"/><circle cx="61.6" cy="113.6" r="1.15" opacity=".55"/><circle cx="80" cy="117" r="1.15" opacity=".55"/><circle cx="98.4" cy="120.4" r="1.15" opacity=".55"/><circle cx="116.8" cy="123.8" r="1.15" opacity=".55"/><circle cx="81.5" cy="111.1" r="1.15" opacity=".55"/><circle cx="99.9" cy="114.5" r="1.15" opacity=".55"/><circle cx="118.3" cy="117.9" r="1.15" opacity=".55"/><circle cx="136.7" cy="121.3" r="1.15" opacity=".55"/><circle cx="101.3" cy="108.7" r="1.15" opacity=".55"/><circle cx="119.7" cy="112.1" r="1.15" opacity=".55"/><circle cx="138.1" cy="115.5" r="1.15" opacity=".55"/><circle cx="156.5" cy="118.9" r="1.15" opacity=".55"/><circle cx="121.2" cy="106.2" r="1.15" opacity=".55"/><circle cx="139.6" cy="109.6" r="1.15" opacity=".55"/><circle cx="158" cy="113" r="1.15" opacity=".55"/><circle cx="176.4" cy="116.4" r="1.15" opacity=".55"/><circle cx="141.1" cy="103.8" r="1.15" opacity=".55"/><circle cx="159.5" cy="107.2" r="1.15" opacity=".55"/><circle cx="177.9" cy="110.6" r="1.15" opacity=".55"/><circle cx="196.3" cy="114" r="1.15" opacity=".55"/></g></svg></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 03 SWARM -->
-    <section class="section section--open is-dark grain" id="swarm" data-chapter="The swarm" data-chapter-short="Swarm" data-n="03">
+    <!-- 02 SWARM -->
+    <section class="section section--open is-dark grain" id="swarm" data-chapter="The swarm" data-chapter-short="Swarm" data-n="02">
       <div class="container">
         <div class="ch-head">
           <h2 class="display-2 ch-title" data-reveal><span class="ph">Thousands</span> <span class="ph">of narrow agents</span> <span class="ph">beat one wide one.</span></h2>
@@ -197,8 +172,8 @@
       </div>
     </section>
 
-    <!-- 04 PIPELINE -->
-    <section class="section" id="pipeline" data-chapter="Execution pipeline" data-chapter-short="Pipeline" data-n="04">
+    <!-- 03 PIPELINE -->
+    <section class="section" id="pipeline" data-chapter="Execution pipeline" data-chapter-short="Pipeline" data-n="03">
       <div class="container">
         <div class="ch-head">
           <h2 class="display-2 ch-title" data-reveal>Every action passes three&nbsp;gates.</h2>
@@ -219,8 +194,8 @@
       </div>
     </section>
 
-    <!-- 05 CUSTOMER MCP -->
-    <section class="section is-paper-2" id="mcp" data-chapter="Deployment" data-n="05">
+    <!-- 04 CUSTOMER MCP -->
+    <section class="section is-paper-2" id="mcp" data-chapter="Deployment" data-n="04">
       <div class="container">
         <div class="ch-head">
           <h2 class="display-2 ch-title" data-reveal><span class="ph">Your agents see only</span> <span class="ph">what you grant.</span></h2>
@@ -235,8 +210,8 @@
       </div>
     </section>
 
-    <!-- 06 MODES -->
-    <section class="section" id="modes" data-chapter="Operating modes" data-chapter-short="Modes" data-n="06">
+    <!-- 05 MODES -->
+    <section class="section" id="modes" data-chapter="Operating modes" data-chapter-short="Modes" data-n="05">
       <div class="container">
         <div class="ch-head modes-head">
           <h2 class="display-2 ch-title" data-reveal><span class="ph">As autonomous</span><span class="ws-a"> </span><span class="ph">as<span class="ws-b"> </span>your mandate allows.</span></h2>
@@ -265,8 +240,8 @@
       </div>
     </section>
 
-    <!-- 07 MARKETPLACE -->
-    <section class="section is-paper-2" id="marketplace" data-chapter="The marketplace" data-chapter-short="Marketplace" data-n="07">
+    <!-- 06 MARKETPLACE -->
+    <section class="section is-paper-2" id="marketplace" data-chapter="The marketplace" data-chapter-short="Marketplace" data-n="06">
       <div class="container">
         <div class="ch-head">
           <h2 class="display-2 ch-title" data-reveal><span class="ph">Built as a platform</span> <span class="ph">others deploy agents&nbsp;on.</span></h2>

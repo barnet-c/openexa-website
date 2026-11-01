@@ -77,10 +77,13 @@
     if (line && !line.querySelector('.lt-gap')) line.append(T.node('span', 'lt-gap', `+${Math.floor(s / 3600)}h ${String(Math.floor(s % 3600 / 60)).padStart(2, '0')}m`));
   }
   function whole() { // the excerpt, all of it, with its long waits marked on the links
-    T.rebuild();
+    hold(false); T.rebuild();
     Array.from(track.children).forEach((li, i, all) => { if (i) gapMark(all[i - 1], T.bySeq(+all[i - 1].dataset.seq), T.bySeq(+li.dataset.seq)); });
   }
   let replaying = 0, glideRaf = 0, sweep = [];
+  // while the excerpt writes itself again the track keeps the height it had: on a phone, where it is a column, the page
+  // under it would otherwise shrink by eight records and grow back one at a time (v2x cut: verify_v9 ledger_height)
+  function hold(on) { track.style.minHeight = on ? track.offsetHeight + 'px' : ''; }
   function replay() {
     clearTimeout(replaying);
     sweep.forEach(clearTimeout); sweep = []; cancelAnimationFrame(glideRaf);
@@ -90,7 +93,7 @@
     if (!all.length) return;
     if (T.sel !== null) T.follow(false);
     T.following = true; // the view and the inspector follow the record being written
-    els.clear(); track.replaceChildren(); T.rendered = 0; T.forget();
+    hold(true); els.clear(); track.replaceChildren(); T.rendered = 0; T.forget();
     let i = 0;
     const next = () => {
       const r = all[i++];
@@ -104,7 +107,7 @@
         // real gaps between records, compressed: milliseconds stay quick, a long wait shows as a pause
         const gap = secs(all[i].t) - secs(r.t);
         replaying = setTimeout(next, Math.min(1500, Math.max(380, gap * 600)));
-      } else replaying = 0;
+      } else { replaying = 0; hold(false); }
     };
     next();
   }
