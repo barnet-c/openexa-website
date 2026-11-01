@@ -7,11 +7,7 @@
 }
 @keyframes home-mark-net { to { opacity: .5; } }
 
-/* S0: the definition, then Lifecycle 01 with its hedge in one group (.hero-stats hooks kept) */
-body[data-page="home"] .beat-0 .hero-def { margin-top: 14px; max-width: 47ch; font-size: 1rem; line-height: 1.55; color: rgba(245, 242, 236, .72); opacity: var(--bo, 1); text-wrap: pretty; }
-body[data-page="home"] .beat-0.is-bo0 .hero-def { visibility: hidden; }
-body[data-page="home"] .beat-0 .hero-sub + .hero-def { margin-top: 14px; }
-body[data-page="home"] .beat-0 .hero-def + .hero-cta { margin-top: 26px; }
+/* S0: the CEO's two lines, the buttons, then Lifecycle 01 with its hedge in one group (.hero-stats hooks kept) */
 body[data-page="home"] .beat-0 .hero-lc01 { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 16px; row-gap: 0; align-items: start; max-width: min(52%, 600px); margin-top: 26px; padding-top: 16px; }
 /* the record line, drawn as the curtain lifts */
 body[data-page="home"] .beat-0 .hero-lc01::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: rgba(245, 242, 236, .18); transform-origin: 0 50%; }
@@ -27,36 +23,21 @@ body[data-page="home"] .hero-lc01 .lc-t .lc-k { font-weight: 600; color: var(--p
 body[data-page="home"] .hero-lc01 .lc-hedge span { display: inline; margin: 0; font: inherit; letter-spacing: inherit; text-transform: none; color: inherit; }
 body[data-page="home"] .hero-lc01 .lc-hedge { grid-column: 2; margin-top: 6px; font: 400 .8125rem/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .72); }
 
-/* the scene index: names, no numbers */
-body[data-page="home"] .story-idx button .n { display: none; }
+/* the scene index: five rules, no text (their names are the buttons' labels) */
 body[data-page="home"] .story-num { display: none; }
-/* the ghost arrow: in-page, downwards */
-body[data-page="home"] .btn .arr--down { transition: transform .45s var(--ease); }
-@media (hover: hover) { body[data-page="home"] .btn:hover .arr--down { transform: translateY(3px); } }
-body[data-page="home"] .btn:focus-visible .arr--down { transform: translateY(3px); }
-/* the narrowest phones: the in-page button's short label (the full one stays its name) */
-body[data-page="home"] .btn .lbl-s { display: none; }
-@media (max-width: 359.98px) { body[data-page="home"] .btn .lbl-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } body[data-page="home"] .btn .lbl-s { display: inline; } }
-
-/* the scene index: the five names wherever they fit */
-@media (min-width: 760px) {
-  body[data-page="home"] .story-idx button .t { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
-  body[data-page="home"] .story-idx button { padding-right: 14px; }
-  body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: 14px; }
-}
+body[data-page="home"] .story-idx button { min-width: 46px; padding-right: 12px; }
+body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: 12px; }
 
 /* a phone held sideways: the five rules, as upright */
 @media (max-width: 759.98px) and (min-aspect-ratio: 23/20) {
   body[data-page="home"] .story-idx ol { gap: 0; }
   body[data-page="home"] .story-idx button { min-width: 34px; padding-right: 10px; }
   body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: 10px; }
-  body[data-page="home"] .story-idx button.is-on .t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
-/* the plates' captions in the chapters' grammar */
+/* the plates' captions: a hedge only */
 body[data-page="home"] .story-lab.cap { display: flex; flex-wrap: wrap; column-gap: 1.5em; font: 400 .78rem/1.45 var(--sans); letter-spacing: 0; text-transform: none; text-wrap: balance; color: rgba(245, 242, 236, .78); }
 body[data-page="home"] .story-lab.cap .fc-h { text-align: left; color: rgba(245, 242, 236, .6); }
-body[data-page="home"] .story-lab.cap b { font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: .02em; text-transform: none; }
 
 /* the stage's focus ring is the site's */
 body[data-page="home"] .story-stage:focus-visible { outline: 2px solid var(--signal-bright); outline-offset: -2px; }
@@ -68,16 +49,13 @@ body[data-page="home"] .story-stage:focus-visible { outline: 2px solid var(--sig
 /* phones, JS on (compact overture): the definition and Lifecycle 01 stay */
 @media (scripting: enabled) and (max-width: 599.98px) {
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-lc01 { display: grid; max-width: 100%; margin-top: 16px; padding-top: 12px; }
-  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-def { margin-top: 8px; font-size: .84rem; line-height: 1.5; color: rgba(245, 242, 236, .7); }
-  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-def + .hero-cta { margin-top: 14px; }
   html:not(.no-webgl) body[data-page="home"] .beat-0 .display-1 { font-size: clamp(2.1rem, 9.4vw, 3.4rem); }
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-lc01 { column-gap: 12px; }
-  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-t { font-size: .875rem; line-height: 1.45; }
+  html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-t { font-size: .86rem; line-height: 1.45; } /* the buttons' size */
   html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-hedge { margin-top: 4px; font-size: .75rem; }
 }
 @media (max-width: 639.98px), (max-aspect-ratio: 23/20) {
   body[data-page="home"] .beat-0 .hero-lc01 { max-width: 100%; }
-  body[data-page="home"] .beat-0 .hero-def { font-size: .9rem; color: rgba(245, 242, 236, .64); }
 }
 /* the narrowest phones: the hedge on two fixed lines */
 @media (max-width: 379.98px) {
@@ -86,31 +64,22 @@ body[data-page="home"] .story-stage:focus-visible { outline: 2px solid var(--sig
 }
 html.story-compact body[data-page="home"] .beat-0 .hero-lc01 { display: grid; }
 /* compact screens: the CEO's sub-line stays the second voice */
-html.story-compact body[data-page="home"] .beat-0 .hero-def { font-size: .8rem; }
 @media (min-width: 600px) { html.story-compact body[data-page="home"] .beat-0 .hero-sub { font-size: 1rem; } }
 @media (scripting: enabled) and (max-width: 599.98px) and (min-height: 800px) {
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-sub { font-size: .94rem; }
-  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-def { font-size: .85rem; } /* under the sub-line, not fine print */
-}
-/* 740-799 px tall: the gloss a little tighter */
-@media (scripting: enabled) and (max-width: 599.98px) and (max-height: 799.98px) {
-  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-def { line-height: 1.42; }
 }
 /* a short screen (story.js): lines give way visually, never leave the reading order */
-body[data-page="home"] .beat-0.is-snug .hero-def, body[data-page="home"] .beat-0.is-tight .hero-def,
 body[data-page="home"] .beat-0.is-tight .hero-sub, body[data-page="home"] .story .beat.is-tight .body-lg,
 html.story-short body[data-page="home"] .story .beat-4 .body-lg { display: block; position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 /* a short portrait phone: the definition gives way, the record line tightens */
 @media (scripting: enabled) and (max-width: 599.98px) and (max-height: 739.98px) {
-  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-def { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-def + .hero-cta, html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-sub + .hero-def + .hero-cta { margin-top: 14px; }
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-lc01 { margin-top: 12px; padding-top: 10px; column-gap: 10px; }
   html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-t { font-size: .8125rem; line-height: 1.4; }
   html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-hedge { margin-top: 3px; }
 }
 /* short landscape: as v2, the CEO's lines and the buttons only */
 @media (max-height: 600px) and (min-aspect-ratio: 23/20) {
-  html body[data-page="home"] .story .story-ui .beat-0 :is(.hero-def, .hero-lc01) { display: block; position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+  html body[data-page="home"] .story .story-ui .beat-0 .hero-lc01 { display: block; position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
   html body[data-page="home"] .story .story-ui .beat-0 .display-1 { font-size: clamp(1.9rem, 10vh, 3.4rem); }
 }
 /* a phone under 640 px held sideways: the scenes' heads at the short scale */
@@ -128,96 +97,43 @@ body[data-page="home"] .proof-hedge { max-width: 46ch; font-size: .9rem; line-he
 body[data-page="home"] .proof-hedge a { color: var(--fg); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: var(--line-strong); transition: text-decoration-color .25s var(--ease); }
 @media (hover: hover) { body[data-page="home"] .proof-hedge a:hover { text-decoration-color: var(--accent); } }
 
-/* §06: the stream's foot is a sentence */
-body[data-page="home"] .lt-foot > span:first-child { font-family: var(--sans); font-size: .8rem; letter-spacing: 0; line-height: 1.45; }
-
 /* display heads break between phrases only */
 body[data-page="home"] h2 .ph { white-space: nowrap; }
-@media (max-width: 359.98px) { body[data-page="home"] #lc01 h2.display-2 { font-size: 2.4rem; } } /* "created and redeemed" fits a 320 column */
-
-/* §04: the honest half of the headline in italic */
-body[data-page="home"] #proof .proof-copy h2 { font-size: clamp(2.3rem, 4.3vw, 4.05rem); line-height: 1; }
-body[data-page="home"] #proof h2 em { display: block; margin-top: .06em; font-style: italic; color: rgba(245, 242, 236, .78); }
 
 /* portrait tablets: the CEO's headline at v2's size on two lines */
 @media (min-width: 600px) and (max-aspect-ratio: 23/20) {
   html.story-compact body[data-page="home"] .beat-0 .display-1 { font-size: clamp(2.3rem, 9.6vw, 4.2rem); }
-  html body[data-page="home"] .story .beat-0 .hero-def { max-width: 34em; font-size: clamp(.94rem, 2.1vw, 1rem); line-height: 1.55; } /* the five-second line, not fine print */
 }
 /* from 900 px tall: the scenes at v2's portrait scale */
 @media (min-width: 600px) and (min-height: 900px) and (max-aspect-ratio: 23/20) {
   html.story-compact body[data-page="home"] .story .beat h2 { font-size: clamp(1.85rem, 7.2vw, 3rem); }
-  html.story-compact body[data-page="home"] .story .beat .eyebrow { margin-bottom: 10px; }
   html.story-compact body[data-page="home"] .story .beat .body-lg { margin-top: 12px; font-size: clamp(.94rem, 2.3vw, 1.02rem); line-height: 1.55; }
   html.story-compact body[data-page="home"] .story .beat-0 .hero-sub { margin-top: 12px; font-size: clamp(1rem, 2.6vw, 1.15rem); }
-  html.story-compact body[data-page="home"] .story .beat .story-legend { display: flex; margin-top: 14px; }
 }
 
 /* the coda on portrait screens: display size, on the floor it names */
 @media (max-width: 639.98px), (max-aspect-ratio: 23/20) {
   body[data-page="home"] .story-coda-t { font-size: clamp(2.3rem, 10.6vw, 3.6rem); line-height: 1; max-width: 12ch; }
-  body[data-page="home"] .story-coda-s { margin-top: 14px; }
 }
 
 /* (lab) wide screens: the coda stands on the line of ten records */
 @media (min-width: 640px) and (min-aspect-ratio: 23/20) and (min-height: 600.02px) {
   html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story-coda { display: block; right: auto; width: min(46vw, 640px); }
   body[data-page="home"] .story-coda-t { font-size: clamp(3rem, 6.2vw, 6.4rem); line-height: .96; letter-spacing: -0.025em; }
-  body[data-page="home"] .story-coda-s { display: none; } /* the paper's caption states it */
   /* each record's regime in full under its day */
   body[data-page="home"] .story-ink .story-lab .rg { position: relative; color: transparent; }
   body[data-page="home"] .story-ink .story-lab .rw { display: block; position: absolute; left: 50%; top: 0; transform: translateX(-50%); color: rgba(14, 21, 18, .62); }
 }
 body[data-page="home"] .story-lab .rw { display: none; }
 
-/* ---------- §01: the traits beside the head, the six classes as Fig. 1.1 ---------- */
-body[data-page="home"] #lifecycles .lc-intro { align-items: start; }
-@media (min-width: 961px) {
-  body[data-page="home"] #lifecycles .lc-intro > .col-5 { grid-column: 1 / span 5; }
-  body[data-page="home"] #lifecycles .lc-intro > .lc-traits { grid-column: 7 / -1; padding-top: .55rem; }
-}
-body[data-page="home"] #lifecycles .lc-traits .num-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, auto); grid-auto-flow: column; column-gap: clamp(24px, 3vw, 48px); row-gap: clamp(20px, 2.2vw, 30px); }
-body[data-page="home"] #lifecycles .lc-traits .num-list li { grid-template-columns: 2.25rem minmax(0, 1fr); column-gap: 0; padding: 0; border: 0; }
-body[data-page="home"] #lifecycles .lc-traits .num-list li::before { font-size: .6875rem; letter-spacing: .04em; }
-body[data-page="home"] #lifecycles .lc-traits .num-list li h3 { font-size: clamp(1.2rem, 1.45vw, 1.38rem); line-height: 1.15; }
-body[data-page="home"] #lifecycles .lc-traits .num-list li p { margin-top: 7px; max-width: 34ch; font-size: .9rem; line-height: 1.5; }
-body[data-page="home"] #lifecycles .lc-traits .link-arrow { margin-top: clamp(26px, 2.8vw, 40px); }
-@media (min-width: 601px) and (max-width: 960px) {
-  body[data-page="home"] #lifecycles .lc-intro .body-lg { max-width: 60ch; }
-}
-
-
 /* ---------- phones: shorter, nothing dropped but repeats ---------- */
 @media (max-width: 600px) {
-  body[data-page="home"] main > .section .sec-head { margin-bottom: 28px; }
-  /* §01: the six traits by name */
-  body[data-page="home"] #lifecycles .lc-traits .num-list { column-gap: 14px; row-gap: 14px; }
-  body[data-page="home"] #lifecycles .lc-traits .num-list li { grid-template-columns: 1.75rem minmax(0, 1fr); }
-  body[data-page="home"] #lifecycles .lc-traits .num-list li h3 { font-size: 1.06rem; line-height: 1.2; }
-  body[data-page="home"] #lifecycles .lc-traits .num-list li p { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  body[data-page="home"] #lifecycles .lc-traits .link-arrow { margin-top: 22px; }
-  /* the six classes: one row each */
-  body[data-page="home"] #lifecycles .card .n .lc-code { white-space: nowrap; }
-  body[data-page="home"] #lifecycles .card .lc-ring { width: 22px; height: 22px; }
-  body[data-page="home"] #lifecycles .card p { display: none; }
   /* §03: the lane's gates smaller */
   body[data-page="home"] #lc01 .lane-v { --lv-gw: 72px; --lv-x: 36px; }
   body[data-page="home"] #lc01 .lane-v > li { column-gap: 14px; min-height: 60px; padding-bottom: 14px; }
   body[data-page="home"] #lc01 .lane-v > .lv-bound { padding-left: calc(var(--lv-gw) + 14px); }
   /* each gate on one line */
-  body[data-page="home"] #lc01 .lane-v .lk-role { display: none; }
   body[data-page="home"] #lc01 .lane-v > li { min-height: 52px; padding-bottom: 8px; }
-  /* §06: the governance terms two by two */
-  body[data-page="home"] #governance .gov-spec { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  body[data-page="home"] #governance .gov-spec li, body[data-page="home"] #governance .gov-spec li + li { padding: 14px 12px 12px 0; border-left: 0; border-bottom: 1px solid var(--line); font-size: .88rem; }
-  body[data-page="home"] #governance .gov-spec li:nth-child(even) { padding-left: 12px; border-left: 1px solid var(--line); }
-  body[data-page="home"] #governance .gov-spec li:last-child { grid-column: 1 / -1; }
-  /* the chain's key as a legend row */
-  body[data-page="home"] #governance .chain-key { display: flex; flex-wrap: wrap; gap: 0 18px; border-bottom: 1px solid var(--line); }
-  body[data-page="home"] #governance .chain-key li { grid-template-columns: 22px auto; gap: 6px; align-items: center; padding: 8px 0; border-bottom: 0; }
-  body[data-page="home"] #governance .chain-key li > span { font-size: 0; line-height: 0; }
-  body[data-page="home"] #governance .chain-key li b { margin: 0; }
-  body[data-page="home"] #governance .chain-key i { height: 26px; transform: scale(.8); transform-origin: 50% 50%; }
   /* the chain folds to records 01-04 (home.js) */
   body[data-page="home"] #governance .chain.is-folded .chain-list > li:nth-child(n + 5) { display: none; }
   body[data-page="home"] #governance .chain-more { display: flex; align-items: center; gap: 10px; width: calc(100% - 24px); min-height: 44px; margin: 0 12px 8px; padding: 0 12px; border: 1px dashed var(--line-strong); border-radius: 2px; font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); }
@@ -228,13 +144,6 @@ body[data-page="home"] #lifecycles .lc-traits .link-arrow { margin-top: clamp(26
   body[data-page="home"] #stack .arch-layer { min-height: 50px; padding-block: 5px; }
   /* the chain: who and event, the detail under them */
   body[data-page="home"] #governance .chain-list > li { grid-template-columns: 2.2em auto minmax(0, 1fr) auto; grid-template-areas: "i who ev flag" "i what what what"; column-gap: 10px; padding-bottom: 28px; }
-  /* §07: the notes as a list of titles */
-  body[data-page="home"] #research .card-grid--3 { grid-template-columns: minmax(0, 1fr); }
-  body[data-page="home"] #research .research-card { padding: 16px 14px 18px; }
-  body[data-page="home"] #research .research-card .n { margin-bottom: 10px; }
-  body[data-page="home"] #research .research-card h3 { margin-bottom: 8px; font-size: 1.14rem; }
-  body[data-page="home"] #research .research-card > p { display: none; }
-  body[data-page="home"] #research .research-card .link-arrow { margin-top: 4px; }
 }
 
 @media (min-width: 601px) { body[data-page="home"] #governance .chain-more { display: none; } }
@@ -280,14 +189,10 @@ body[data-page="home"] .lt-hx > summary { display: none; }
 @keyframes home-form-v { 0% { transform: scaleY(.38); background: var(--accent); } 55% { transform: none; background: var(--accent); } 100% { background: var(--line-strong); } }
 @media (prefers-reduced-motion: reduce) { body[data-page="home"] .lt-hx > summary::after { transition: none; } }
 
-/* §05: the cost definitions are sentences */
-body[data-page="home"] #economics .cost-key dd { margin-top: 3px; font: 400 .84rem/1.45 var(--sans); letter-spacing: 0; color: var(--fg-2); }
-
 /* ========== The reading layer (lab: home editorial) ========== */
 
 /* captions: the chart's key is the caption's second line */
 body[data-page="home"] .figure-cap .fc-key { color: var(--fg-2); text-wrap: balance; }
-
 
 /* chapters close instead of trail */
 body[data-page="home"] main > .story + .section { padding-top: clamp(28px, 3.4vw, 48px); }
@@ -297,19 +202,6 @@ body[data-page="home"] #lifecycles .card .n--ring > span:last-child { font: 400 
 body[data-page="home"] #lifecycles .card .n--ring > span:last-child:not(.badge) { padding-top: 1px; }
 body[data-page="home"] #lifecycles .card .n--ring > .st-next { color: var(--fg-2); }
 body[data-page="home"] #lifecycles .card .n--ring > .badge { gap: 7px; padding: 0 !important; border: 0; color: var(--signal-ink); }
-
-/* §01 the six traits: counter on the title's baseline */
-body[data-page="home"] #lifecycles .num-list li { align-items: baseline; }
-body[data-page="home"] #lifecycles .num-list li::before { grid-row: 1; padding-top: 0; }
-
-/* no-break groups in the governance list stay inline */
-body[data-page="home"] #governance .gov-spec span .nowrap { display: inline; }
-/* the five controls: terms on a rule, no rings */
-body[data-page="home"] #governance .gov-spec b { gap: 0; }
-body[data-page="home"] #governance .gov-spec b::before { content: none; }
-
-/* §03 Fig. 3.1: the role line holds its place before lane.js */
-@media (scripting: enabled) and (min-width: 961px) { body[data-page="home"] .lane:not(.is-on) .lane-role { display: grid; visibility: hidden; } }
 
 /* §06 the running log: its head (the Pause) sticks under the bar; one row on a short screen */
 body[data-page="home"] .lt[data-ledger-stream] { overflow: clip; }
@@ -328,89 +220,116 @@ body[data-page="home"] .lt[data-ledger-stream] .lt-head { position: sticky; top:
 }
 @media (max-width: 600px) and (pointer: coarse) { body[data-page="home"] #governance .chain-list [contenteditable]:focus { font-size: 16px; } }
 @media (pointer: coarse) { body[data-page="home"] #governance .chain-list :is(.ev, .what) { box-sizing: border-box; min-height: 24px; padding-block: 2px; } } /* 24 px targets (SC 2.5.8) */
-/* the how-to in the touch screen's word */
-body[data-page="home"] .ch-touch { display: none; }
-@media (hover: none) and (pointer: coarse) { body[data-page="home"] .ch-mouse { display: none; } body[data-page="home"] .ch-touch { display: inline; } }
-
-/* short multi-line items break into even lines */
-body[data-page="home"] #governance .gov-spec li > span:last-child, body[data-page="home"] #economics .cost-key dd, body[data-page="home"] #proof .stats .d,
-body[data-page="home"] #lc01 .lk-role { text-wrap: balance; }
 
 /* ---------- the first screen: three voices, three sizes ---------- */
-body[data-page="home"] .beat-0 .hero-def { max-width: 53ch; font-size: .94rem; line-height: 1.6; color: rgba(245, 242, 236, .7); }
 body[data-page="home"] .beat-0 .hero-lc01 { column-gap: 14px; }
 body[data-page="home"] .hero-lc01 .lc-n, html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-n { grid-row: 1; display: block; width: 6px; height: 6px; margin: 9px 0 0; font-size: 0; line-height: 0; }
 body[data-page="home"] .hero-lc01 .lc-n .live { display: block; margin: 0; vertical-align: 0; }
-@media (max-width: 639.98px), (max-aspect-ratio: 23/20) {
-  body[data-page="home"] .beat-0 .hero-def { max-width: 42ch; font-size: .88rem; color: rgba(245, 242, 236, .7); }
-}
 @media (scripting: enabled) and (max-width: 599.98px) {
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-lc01 { column-gap: 11px; }
   html:not(.no-webgl) body[data-page="home"] .hero-lc01 .lc-n { margin-top: 7px; }
 }
 
-/* ---------- §01 the six classes: a register ---------- */
-body[data-page="home"] #lifecycles .card-grid--3 { grid-template-columns: minmax(0, 1fr); border: 0; border-top: 1px solid var(--line-strong); }
-body[data-page="home"] #lifecycles .card-grid--3 > .card { display: grid; grid-template-columns: 8.25rem minmax(0, 15.5rem) minmax(0, 1fr) 6.5rem; column-gap: clamp(20px, 2.6vw, 44px); align-items: baseline; padding: 19px 0 21px; border: 0; border-bottom: 1px solid var(--line); background: none; }
-body[data-page="home"] #lifecycles .card-grid--3 > .card .n { display: contents; }
-body[data-page="home"] #lifecycles .card-grid--3 .lc-code { grid-column: 1; grid-row: 1; align-self: start; gap: 12px; margin-top: 5px; font-size: .72rem; color: var(--fg-2); }
-body[data-page="home"] #lifecycles .card-grid--3 .card .h4 { grid-column: 2; grid-row: 1; margin: 0; font-size: clamp(1.25rem, 1.5vw, 1.45rem); line-height: 1.15; text-wrap: balance; }
-body[data-page="home"] #lifecycles .card-grid--3 .card p { grid-column: 3; grid-row: 1; margin: 0; max-width: 58ch; font-size: .94rem; line-height: 1.55; text-wrap: pretty; }
-body[data-page="home"] #lifecycles .card-grid--3 .card .n--ring > span:last-child { grid-column: 4; grid-row: 1; justify-self: end; }
-body[data-page="home"] #lifecycles .card-grid--3 .card:first-child .h4 { color: var(--fg); }
-@media (min-width: 601px) and (max-width: 960px) {
-  body[data-page="home"] #lifecycles .card-grid--3 > .card { grid-template-columns: 6.6rem minmax(0, 1fr) auto; row-gap: 6px; }
-  body[data-page="home"] #lifecycles .card-grid--3 .card p { grid-column: 2; grid-row: 2; }
-  body[data-page="home"] #lifecycles .card-grid--3 .card .n--ring > span:last-child { grid-column: 3; }
-  body[data-page="home"] #lifecycles .card-grid--3 > .card:last-child:nth-child(odd) { grid-column: auto; }
-}
-@media (max-width: 600px) {
-  body[data-page="home"] #lifecycles .card-grid--3 { grid-template-columns: minmax(0, 1fr); }
-  body[data-page="home"] #lifecycles .card-grid--3 > .card { grid-template-columns: 4.9rem minmax(0, 1fr) auto; column-gap: 12px; row-gap: 6px; padding: 13px 0 14px; }
-  body[data-page="home"] #lifecycles .card-grid--3 .lc-code { gap: 8px; margin-top: 4px; font-size: .64rem; }
-  body[data-page="home"] #lifecycles .card-grid--3 .card .h4 { font-size: 1.06rem; line-height: 1.2; }
-  body[data-page="home"] #lifecycles .card-grid--3 .card:first-child p { display: block; grid-column: 2 / -1; grid-row: 2; font-size: .84rem; line-height: 1.5; }
-  body[data-page="home"] #lifecycles .card-grid--3 .card .n--ring > span:last-child { grid-column: 3; font-size: .625rem; }
-}
-
-/* ---------- §04 the four figures: a summary of terms ---------- */
-body[data-page="home"] #proof .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(32px, 5.6vw, 88px); row-gap: 0; background: none; border: 0; border-bottom: 1px solid var(--line); }
-body[data-page="home"] #proof .stats > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "k v" "d v"; column-gap: 24px; align-items: baseline; padding: 20px 0 22px; background: none; border-top: 1px solid var(--line-strong); }
-body[data-page="home"] #proof .stats .v { grid-area: v; align-self: baseline; font-size: clamp(2.1rem, 2.9vw, 2.75rem); line-height: .95; letter-spacing: -0.02em; text-align: right; white-space: nowrap; font-variant-numeric: lining-nums tabular-nums; }
-body[data-page="home"] #proof .stats .v small { margin-left: .3em; font-size: .72rem; }
-body[data-page="home"] #proof .stats .k { grid-area: k; margin: 0; font: 500 1rem/1.35 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg); }
-body[data-page="home"] #proof .stats .d { grid-area: d; margin-top: 3px; max-width: 36ch; font-size: .9rem; line-height: 1.5; }
-body[data-page="home"] #proof .stats > div:nth-child(n + 3) { border-top-color: var(--line); }
-body[data-page="home"] #proof .stats > div:nth-child(n + 3) .v { font-size: clamp(1.7rem, 2.2vw, 2.1rem); color: var(--fg-2); }
-/* the two open figures, quieter */
-body[data-page="home"] #proof .stats > div:nth-child(n + 3) .k { font-weight: 400; color: var(--fg-2); }
-body[data-page="home"] #proof .stats > div:nth-child(n + 3) .d { color: var(--fg-3); }
-@media (max-width: 600px) {
-  body[data-page="home"] #proof .stats { grid-template-columns: minmax(0, 1fr); }
-  body[data-page="home"] #proof .stats > div { padding: 15px 0 16px; }
-  body[data-page="home"] #proof .stats > div:nth-child(2) { border-top-color: var(--line); }
-  body[data-page="home"] #proof .stats .v { font-size: 2rem; }
-  body[data-page="home"] #proof .stats .k { margin: 0; font-size: .94rem; }
-  body[data-page="home"] #proof .stats .d { margin-top: 2px; font-size: .84rem; }
-}
-
-/* §04's status line, unboxed */
-body[data-page="home"] #proof .proof-copy .badge { padding: 0; border: 0; color: var(--fg-2); }
-@media (min-width: 961px) { body[data-page="home"] #proof .proof-copy .badge { position: relative; top: 3px; } } /* on the chart kicker's baseline */
-/* portrait tablets: the ledes at a reading measure */
-@media (min-width: 601px) and (max-width: 960.98px) { body[data-page="home"] :is(#lifecycles .lc-intro, #proof .proof-copy, #governance .chain-row) .body-lg { max-width: 31em; } }
-
 /* the chart's key is a sentence */
 body[data-page="home"] .figure-cap .fc-key { font: 400 .8rem/1.5 var(--sans); letter-spacing: 0; color: var(--fg-2); }
 
-/* ---------- §07 the three notes, set as Research sets them ---------- */
-body[data-page="home"] #research .research-card h3 :is(.title-sub, .t-head) { display: block; }
-body[data-page="home"] #research .research-card h3 .title-sub { margin-top: .32em; font-size: .8em; line-height: 1.2; color: var(--fg-2); }
-body[data-page="home"] #research .research-card .n > span:last-child { font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; }
-body[data-page="home"] #research .research-card > p { text-wrap: pretty; }
-@media (min-width: 601px) {
-  body[data-page="home"] #research .card-grid--3 { grid-auto-rows: auto; }
-  body[data-page="home"] #research .research-card { display: grid; grid-row: span 4; grid-template-rows: subgrid; row-gap: 0; }
-  body[data-page="home"] #research .research-card > p { align-self: start; }
-  body[data-page="home"] #research .research-card .link-arrow { align-self: end; }
+/* ========== v2x cut: one head, at most one line, then the instrument ========== */
+/* four sizes a screen: the display head, the line (Inter 1.1rem), the hedge (Inter .875rem), the instruments' mono */
+body[data-page="home"] main > .section { --ch-gap: clamp(36px, 4.4vw, 68px); }
+body[data-page="home"] .ch-title { max-width: 15ch; text-wrap: balance; }
+body[data-page="home"] .ch-title + :not(.ch-line) { margin-top: var(--ch-gap); }
+body[data-page="home"] .ch-head { margin-bottom: var(--ch-gap); }
+body[data-page="home"] .ch-line { margin-top: 18px; max-width: 34ch; font-size: 1.1rem; line-height: 1.5; color: var(--fg-2); text-wrap: balance; }
+body[data-page="home"] .ch-note { margin-top: 16px; font-size: .875rem; line-height: 1.45; color: var(--fg-3); }
+body[data-page="home"] .ch-link { margin-top: clamp(32px, 3.4vw, 52px); }
+body[data-page="home"] .is-dark .ch-note { color: rgba(245, 242, 236, .6); }
+/* captions here carry no figure number: no hanging indent */
+body[data-page="home"] main .figure-cap { padding-left: 0; }
+
+/* the first screen: the CEO's head and line, two buttons, one fact with its hedge */
+body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(26px, 3.2vh, 36px); }
+body[data-page="home"] .beat-0 .hero-lc01 { margin-top: clamp(28px, 4vh, 44px); }
+body[data-page="home"] .hero-lc01 .lc-t, body[data-page="home"] .hero-lc01 .lc-hedge { white-space: normal; }
+
+/* §01 the six classes: a register of six cells, the live one first */
+body[data-page="home"] #lifecycles .lc-reg { grid-template-columns: repeat(3, minmax(0, 1fr)); border: 0; border-top: 1px solid var(--line-strong); }
+body[data-page="home"] #lifecycles .lc-reg > .card { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr; row-gap: clamp(30px, 3.6vw, 56px); align-items: start; padding: 18px clamp(18px, 2.2vw, 32px) 26px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; }
+body[data-page="home"] #lifecycles .lc-reg > .card:nth-child(3n + 1) { padding-left: 0; }
+body[data-page="home"] #lifecycles .lc-reg > .card:not(:nth-child(3n + 1)) { border-left: 1px solid var(--line); }
+body[data-page="home"] #lifecycles .lc-reg .card .n { display: contents; }
+body[data-page="home"] #lifecycles .lc-reg .lc-code { grid-column: 1; grid-row: 1; gap: 10px; font-size: .6875rem; letter-spacing: .12em; color: var(--fg-2); }
+body[data-page="home"] #lifecycles .lc-reg .card .n--ring > span:last-child { grid-column: 2; grid-row: 1; justify-self: end; margin-top: 8px; }
+body[data-page="home"] #lifecycles .lc-reg .card .h4 { grid-column: 1 / -1; grid-row: 2; align-self: end; margin: 0; max-width: 13ch; font-size: clamp(1.5rem, 2.05vw, 2.05rem); line-height: 1.08; letter-spacing: -0.015em; color: var(--fg-2); text-wrap: balance; }
+body[data-page="home"] #lifecycles .lc-reg .card:first-child .h4 { color: var(--fg); }
+body[data-page="home"] #lifecycles .lc-reg .card:first-child { box-shadow: inset 0 2px 0 var(--accent); }
+@media (max-width: 760px) {
+  body[data-page="home"] #lifecycles .lc-reg { grid-template-columns: minmax(0, 1fr); }
+  body[data-page="home"] #lifecycles .lc-reg > .card, body[data-page="home"] #lifecycles .lc-reg > .card:nth-child(n) { grid-template-columns: 5.4rem minmax(0, 1fr) auto; grid-template-rows: auto; column-gap: 12px; padding: 14px 0 15px; border-left: 0; align-items: baseline; }
+  body[data-page="home"] #lifecycles .lc-reg .lc-code { gap: 8px; font-size: .625rem; white-space: nowrap; }
+  body[data-page="home"] #lifecycles .lc-reg .lc-ring { width: 22px; height: 22px; }
+  body[data-page="home"] #lifecycles .lc-reg .card .h4 { grid-column: 2; grid-row: 1; max-width: none; font-size: 1.12rem; line-height: 1.25; }
+  body[data-page="home"] #lifecycles .lc-reg .card .n--ring > span:last-child { grid-column: 3; margin-top: 0; font-size: .625rem; }
 }
+
+/* §03: the lane, then the lab that runs it */
+body[data-page="home"] #lc01 .swarm-live { margin-top: clamp(40px, 5vw, 80px); }
+
+/* §04: the head, its hedge and two figures beside the chart */
+body[data-page="home"] #proof .proof-copy .ch-title { max-width: 11ch; }
+body[data-page="home"] #proof .proof-hedge { margin-top: 22px; max-width: 34ch; font-size: .875rem; line-height: 1.5; color: rgba(245, 242, 236, .66); }
+body[data-page="home"] #proof .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 clamp(24px, 3vw, 48px); margin-top: clamp(36px, 4.4vw, 64px); background: none; border: 0; }
+body[data-page="home"] #proof .stats > div { padding: 18px 0 0; background: none; border-top: 1px solid var(--line-strong); }
+body[data-page="home"] #proof .stats .v { font-size: clamp(2.4rem, 3.2vw, 3rem); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: lining-nums tabular-nums; }
+body[data-page="home"] #proof .stats .k { margin-top: 10px; font: 400 .875rem/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .66); }
+body[data-page="home"] #proof .proof-fig .figure-cap { padding-left: 0; }
+body[data-page="home"] #proof .figure-cap .fc-key { font-size: .875rem; color: rgba(245, 242, 236, .6); }
+@media (min-width: 961px) { body[data-page="home"] #proof .proof-layout { align-items: end; } }
+
+/* §05: the head, then the stack of costs */
+body[data-page="home"] #economics .ch-title { max-width: 12ch; }
+body[data-page="home"] #economics .cost .figure-cap { margin-top: 18px; }
+
+/* §06: the chain beside its head; the running log under both */
+body[data-page="home"] #governance .chain-row .ch-head { margin: 0; }
+body[data-page="home"] #governance .chain-row .ch-title { font-size: clamp(2.6rem, 4.6vw, 4.4rem); }
+body[data-page="home"] #governance .lt { margin-top: clamp(48px, 6vw, 96px); }
+@media (min-width: 961px) { body[data-page="home"] #governance .chain-row .ch-head { position: sticky; top: calc(var(--nav-h) + 32px); } }
+
+/* §07: three titles, nothing else */
+body[data-page="home"] #research .card-grid--3 { border-left: 0; }
+body[data-page="home"] #research .research-card:last-child { border-right: 0; }
+body[data-page="home"] #research .research-card { display: flex; flex-direction: column; justify-content: space-between; gap: 28px; min-height: clamp(150px, 13vw, 210px); padding: 22px clamp(18px, 2.2vw, 32px) 20px; background: none; }
+body[data-page="home"] #research .research-card:first-child { padding-left: 0; }
+body[data-page="home"] #research .research-card h3 { margin: 0; max-width: 20ch; font-size: clamp(1.3rem, 1.7vw, 1.6rem); line-height: 1.15; text-wrap: balance; }
+body[data-page="home"] #research .research-card h3 .t-head { display: block; }
+@media (max-width: 760px) {
+  body[data-page="home"] #research .card-grid--3 { grid-template-columns: minmax(0, 1fr); }
+  body[data-page="home"] #research .research-card, body[data-page="home"] #research .research-card:first-child { min-height: 0; gap: 12px; padding: 18px 0; border-right: 0; }
+  body[data-page="home"] #research .research-card h3 { font-size: 1.2rem; }
+}
+
+/* the close */
+body[data-page="home"] .cta-band .row { margin-top: clamp(28px, 3vw, 40px); }
+
+/* one small register: hedges, notes, captions and the chapters' links share Inter .875rem */
+body[data-page="home"] .ch-link { font-size: .875rem; }
+body[data-page="home"] main .figure-cap, body[data-page="home"] main .figure-cap .fc-h { font-size: .875rem; }
+/* the first screen's fact at the buttons' size */
+body[data-page="home"] .hero-lc01 .lc-t { font-size: .95rem; }
+/* §05: the rows' names and their indices at one serif size */
+body[data-page="home"] #economics .cost-lab b, body[data-page="home"] #economics .cost-val { font-size: clamp(1.5rem, 1.9vw, 1.9rem); }
+/* §07: the reading time is a note, not a data label */
+body[data-page="home"] #research .research-card .link-arrow { font: 400 .875rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; }
+
+/* 4K at 100 %: the page keeps its proportions instead of shrinking into a 1600 px column */
+@media (min-width: 2400px) {
+  html:has(> body[data-page="home"]) { font-size: calc(100vw / 150); }
+  body[data-page="home"] { --max: clamp(1320px, 70vw, 100rem); }
+  body[data-page="home"] .beat-text { max-width: min(44%, 35rem); }
+  body[data-page="home"] .beat-0 .beat-text { max-width: min(50%, 41.25rem); }
+  body[data-page="home"] .beat-0 .hero-lc01 { max-width: min(52%, 37.5rem); }
+  html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story-coda { width: min(46vw, 40rem); }
+  body[data-page="home"] .lt { --lt-col: 9.25rem; --lt-bleed: 1rem; --lt-pr: 1.125rem; }
+}
+/* without JavaScript the chart is its list of sessions: its key has nothing to key */
+@media (scripting: none) { body[data-page="home"] #proof .proof-fig .figure-cap { display: none; } }

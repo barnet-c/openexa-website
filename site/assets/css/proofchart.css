@@ -19,7 +19,7 @@
 .proof { container-type: inline-size; position: relative; }
 .pf, .proof:not(.is-built)::before {
   --gut: 76px; --b: 12px; --g: 2px; --zr: 72px; /* without container units: fixed sizes that fit any width from 320 px */
-  --zg: calc(var(--ng, 4) * (var(--b) + var(--g)) + 20px); --zc: calc(var(--n, 10) * (var(--b) + var(--g)));
+  --zg: calc(var(--ng, 1) * (var(--b) + var(--g)) + 2.25rem); /* one open block, and room for its label */ --zc: calc(var(--n, 10) * (var(--b) + var(--g)));
   --zd: 30px; --zo: 26px;
   --top: calc(var(--zg) + var(--zc));
   position: relative;
@@ -32,7 +32,7 @@
 }
 @supports (width: 1cqi) and (width: round(down, 10.5px, 1px)) { .pf, .proof:not(.is-built)::before { --b: round(down, clamp(9px, calc(var(--lane) * .34), 17px), 1px); } } /* whole pixels: crisp, even blocks */
 /* (r4) until proof.js builds the chart (Home: as the curtain lifts) its box is held at the lanes' height from the
-   chart's own variables (the rules above serve this ::before too; --cols/--n/--ng at Home's 10/10/4), the static list
+   chart's own variables (the rules above serve this ::before too; --cols/--n/--ng at Home's 10/10/1), the static list
    in the same cell. The build moves nothing */
 @media (scripting: enabled) {
   .proof:not(.is-built) { display: grid; }

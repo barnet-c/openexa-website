@@ -147,6 +147,7 @@
         sd.appendChild(glyph(i));
         H('span', '', sd, above ? `Above the boundary · ${noDot(UP.t).toLowerCase()}` : `Below the boundary · ${noDot(DN.t).toLowerCase()}`);
         p.insertBefore(sd, p.firstChild);
+        if (p.children.length === 1 && it.job) H('p', '', p, it.job); // a layer given only its job (Home): the job is its panel
         list.appendChild(p);
       }
       btns.push(b); panels.push(p); heads.push(hd);

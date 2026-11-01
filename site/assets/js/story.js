@@ -124,6 +124,8 @@
   const Y_FLOOR = -0.5, H_COL = 1.0, COL_SPAN = Math.min(2.9, 0.29 * NCOL);
   // v2x: the floor is the top of each column's solid part (F_SOLID); above it, open and shorter (no magnitude). Y_FLOOR is the foot
   const F_SOLID = 0.62, Y_FL = Y_FLOOR + F_SOLID * H_COL;
+  // the column's top: one open unit above the floor (the value above it is not published), as Fig. 4.1 draws it
+  const Y_CTOP = Y_FL + (Y_FL - Y_FLOOR - 0.04) / (FLOOR > 0 && FLOOR < 30 ? Math.round(FLOOR) : 10);
   const COL_X = (c) => -COL_SPAN / 2 + COL_SPAN * (c + 0.5) / NCOL;
 
   /* ================= particles: identity, five scene targets, stagger keys ================= */
@@ -296,15 +298,17 @@
     const s3y = (q) => { const c = F[3][q * 4 + 3], mode = Math.floor(c / 1000); return mode === M.FLOW || mode === M.FLOWREJ ? Y_TOP - F[3][q * 4 + 1] * (Y_TOP - Y_BOT) : F[3][q * 4 + 1]; };
     const byY = Array.from({ length: N_SURF }, (_, q) => q).sort((a, b) => s3y(b) - s3y(a));
     yield;
-    // (lab) Fig. 4.1's encoding: a solid block per basis point up to the floor; above it two open edges (value not published)
+    // (lab) Fig. 4.1's encoding: a solid block per basis point up to the floor; above it ONE open unit, two edges (the value
+    // above the floor is not published, so nothing above it may read as a height)
     const perC = Math.floor(N_SURF / NCOL), nx = 5, nz = 3, sN = nx * nz, oN = 2 * nz, yS = Y_FL - Y_FLOOR - 0.04, NB = FLOOR > 0 && FLOOR < 30 ? Math.round(FLOOR) : 10;
+    const UO = yS / NB; // one unit's band: the open unit sits in the band just above the floor
     for (let c = 0; c < NCOL; c++) {
       const list = byY.slice(c * perC, c === NCOL - 1 ? N_SURF : (c + 1) * perC);
-      const pit = (sN * yS + oN * (H_COL - yS)) / list.length, cut = sN * Math.round(yS / pit), x0 = COL_X(c);
+      const pit = (sN * yS + oN * UO) / list.length, cut = sN * Math.round(yS / pit), x0 = COL_X(c);
       const above = SESSIONS[c].above; // one status for every session above the floor (a session the record does not put above it stays dim)
       list.sort((a, b) => R(a, 2) - R(b, 2)).forEach((q, j) => {
         const o = j >= cut, k = o ? j - cut : j, w = o ? 2 : nx, a = o ? (k % 2) * (nx - 1) : k % nx, b = Math.floor(k / w) % nz;
-        const g = (Math.floor(k / sN) + 0.5) * pit * NB / yS, f = o ? yS + (Math.floor(k / oN) + 0.5) * pit : (Math.floor(g) + 0.14 + 0.72 * (g % 1)) * yS / NB;
+        const g = (Math.floor(k / sN) + 0.5) * pit * NB / yS, f = o ? yS + UO * 0.14 + 0.72 * Math.min(UO, (Math.floor(k / oN) + 0.5) * pit) : (Math.floor(g) + 0.14 + 0.72 * (g % 1)) * yS / NB;
         set(4, q, x0 + (a - (nx - 1) / 2) * 0.024, Y_FLOOR + 0.04 + f, (b - (nz - 1) / 2) * 0.024, code(M.COLUMN, !above ? K.DIM : !o && R(q, 1) < 0.34 ? K.BRIGHT : K.IVORY, c));
         KEY[q * 4 + 3] = (c + 0.55 * (R(q, 3) * 7.31 % 1)) / (NCOL + 0.55); // (lab) every height at once: a forming column fills in, never grows
       });
@@ -1064,7 +1068,7 @@
         const x = COL_X(c), ss = SESSIONS[c], dc = sealOf(c);
         put('r' + c, x, rY, 0, C.ivory, 0.95, 2, 15, 0.4 * Math.sin(PI * sstep(0.3, 1, dc)), 0); // a brief light as its seal goes in
         if (ss.above) put('s' + c, x, lerp(Y_FLOOR + l4(7), rY, sstep(0, 0.6, dc)), 0, C.green, 0.95 * (1 - sstep(0.4, 0.8, dc)), 1, 9, 0.6, 1);
-        if (ss.confirmed) put('t' + c, x, lerp(Y_FLOOR + H_COL + 0.1, tY, e), 0, C.green, 0.95, 3, 12, 0.5, 0);
+        if (ss.confirmed) put('t' + c, x, lerp(Y_CTOP + 0.1, tY, e), 0, C.green, 0.95, 3, 12, 0.5, 0);
       }
     }
     return out;
@@ -1267,13 +1271,10 @@
   }
   const lab = {};
   if (labelHost) {
-    // the plates' captions in the chapters' grammar: the mark, the title, then the hedge
-    const cap = (i, t, h) => label(i, `<span><b>Plate 0${i}</b> ${t}</span>${h ? ` <span class="fc-h">${h}</span>` : ''}`, { cls: 'cap', kind: 'cap' });
-    cap(0, 'The work, worldwide', 'Illustrative · each point stands for an agent');
-    cap(1, 'Six lifecycle classes, one infrastructure');
-    cap(2, 'Eight layers and one boundary, read top to bottom');
-    cap(3, 'Six gates, one Council, one ledger', 'Illustrative');
-    cap(4, `${REC.lifecycle}, ${words(NCOL)} sessions`, 'Value above the floor not published · not to scale');
+    // the plates' captions: a hedge only, beside what it hedges (the scenes that state nothing carry none)
+    const cap = (i, h) => label(i, `<span class="fc-h">${h}</span>`, { cls: 'cap', kind: 'cap' });
+    cap(3, 'Illustrative');
+    cap(4, 'Value above the floor not published');
     // S1: a column of callouts, one per ring, each anchored on the ring's front-right arc
     lab.rings = LC.map((c, k) => label(1, `<span class="k">${c[0]}</span><span class="n">${c[1]}</span><span class="st st-${c[2].toLowerCase()}">${c[2]}</span><span class="dt">${c[3]}: ${c[4]}</span>`,
       { cls: 'ring' + (k === 0 ? ' is-live' : ''), kind: 'list', group: k, leader: true, node: true, info: [`${c[0]} · ${c[3]}`, c[2], c[4]], anchorPx: (sc) => ringFlank(k, sc) }));
@@ -1292,7 +1293,7 @@
     // the floor's tag sits on the line, left of column 01 (never across it)
     label(4, `<span>${FLOOR_T}</span> <span>floor</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
     label(4, 'NAV', { cls: 'navtag', kind: 'tag', out: [0.05, 0.22], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR - l4(U_NAV), 0], side: 'w' }); // the regime ticks' baseline
-    lab.sum = label(4, `<b>${N_ABOVE} of ${NCOL}</b> sessions above the ${FLOOR_T} floor<span class="sep"></span><span class="lg-p">${N_PREM} premium</span> · <span class="lg-d">${N_DISC} discount</span><span class="sep"></span><span class="lg-t">${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed</span>`, { cls: 'sum', kind: 'tag', sum: true, anchor: () => [COL_SPAN / 2 + 0.06, Y_FLOOR + H_COL + 0.26, 0], side: 'nw' });
+    // (the derived summary is the coda's: 'Ten of ten above the floor.')
   }
   // the inspector: one quiet box that shows the hovered or focused ring, layer or session
   const insp = document.createElement('div');

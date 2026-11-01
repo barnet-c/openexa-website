@@ -124,7 +124,7 @@
   function buildChart(host, n) {
     const N = sessions.length, id = 'oxa-proof-' + n;
     const per = floor <= 20 ? 1 : Math.ceil(floor / 10);   // basis points per block: one each, up to a 20 bps floor
-    const nb = Math.ceil(floor / per), NG = 4;              // blocks up to the floor · open blocks above it
+    const nb = Math.ceil(floor / per), NG = 1;              // blocks up to the floor · ONE open block above it (the value above is not published)
     const fig = host.closest('[data-proof-fig]');
     if (fig) fig.hidden = false;
     host.textContent = '';                                   // the static fallback gives way to the chart
