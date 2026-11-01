@@ -54,13 +54,24 @@ def headline(s):
     return (h.replace("\x01", '<span class="g">').replace("\x02", "</span>").replace("\x03", "<em>").replace("\x04", "</em>").replace("\x05", "\u00a0")
             .replace("\x06", '<span class="hy">').replace("\x07", "</span>"))
 
+def note_kicker(rel):
+    """A note's card kicker, "Research · Note 03 of 10 · Series, part 1 of 8". The notes' eyebrow said this until the 1 Nov
+    cut took it off the page (cut-research); the card keeps it, derived from the site itself: the notes in file order and
+    the series as the research index lists it (its #series section), so the cards stay byte-identical."""
+    notes = sorted(p.name for p in (ROOT / "research").glob("*.html"))
+    name = rel.split("/", 1)[1]
+    k = f"Research · Note {notes.index(name) + 1:02d} of {len(notes)}"
+    m = re.search(r'<section\b[^>]*\bid="series"[^>]*>(.*?)</section>', (ROOT / "research.html").read_text(encoding="utf-8"), re.S)
+    series = list(dict.fromkeys(re.findall(r'href="research/([^"#]+\.html)"', m.group(1)))) if m else []
+    return k + (f" · Series, part {series.index(name) + 1} of {len(series)}" if name in series else "")
+
 def card(rel):
     s = (ROOT / rel).read_text(encoding="utf-8")
     mins = re.search(r"(\d+)(?:\s|&nbsp;)min read", s)  # v2x: the pages tie the number to "min" with a no-break space
     if rel in TOP:
         kicker, foot = TOP[rel], TAGLINE
     elif rel.startswith("research/"):
-        kicker = text(re.search(r'<div class="eyebrow[^"]*"[^>]*>(.*?)</div>', s, re.S).group(1)).replace(" · Research note", "")
+        kicker = note_kicker(rel)
         foot = "OpenEXA Research" + (f" · {mins.group(1)} min read" if mins else "")
     elif rel == "blog/index.html":
         kicker, foot = "Blog", "OpenEXA Blog · AI agents · Markets research · Market structure"

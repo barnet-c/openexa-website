@@ -559,3 +559,101 @@ body[data-page="platform"] .mkt-col > .n > span { white-space: nowrap; }
 @media (max-width: 1199px) { .desk .desk-stats .dk-u { display: block; margin-top: 2px; } .desk .desk-stats .dk-sep { display: none; } }
 /* 381-420 px: a tighter track for six gate names */
 @media (min-width: 381px) and (max-width: 420px) { .desk .dl-gates li { letter-spacing: .05em; } }
+
+/* ========== v2x cut (1 Nov): one head, at most one line, then the drawing or the instrument ========== */
+/* four sizes a screen: the display head, the line (--fs-body), the small step (hedges, labels, buttons), the instruments' own */
+:is(body[data-page="platform"], body[data-page="lifecycles"]) main > .section { --ch-gap: clamp(36px, 4.4vw, 68px); }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-head { margin-bottom: var(--ch-gap); }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-title { max-width: 16ch; text-wrap: balance; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-line { margin-top: 18px; max-width: 36ch; font-size: var(--fs-body); line-height: 1.5; color: var(--fg-2); text-wrap: pretty; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-note { margin-top: 14px; font-size: var(--fs-small); line-height: 1.45; color: var(--fg-3); }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-link { margin-top: clamp(28px, 3vw, 44px); }
+/* captions carry no figure number now: no hanging indent */
+:is(body[data-page="platform"], body[data-page="lifecycles"]) main .figure-cap { padding-left: 0; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) .cta-band .row { margin-top: clamp(28px, 3vw, 40px); }
+
+/* Platform §03: the four roles, a legend that lights the lab (verb, who, where) */
+#swarm .sw-legend { margin-bottom: clamp(20px, 2.4vw, 32px); }
+#swarm .sw-role .h4 { margin: 0; }
+#swarm .sw-role .sw-who { display: block; margin-top: 6px; font: 400 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; color: var(--fg-3); }
+#swarm .sw-legend .card { padding-top: clamp(18px, 1.8vw, 24px); }
+#swarm .sw-legend .sw-at { margin-top: 16px; }
+
+/* Platform §02: the boundary as the stack draws it: the four layers that decide, the line, the four that execute */
+#boundary .bnd { max-width: 860px; }
+#boundary .bnd-side { grid-template-columns: minmax(0, 250px) minmax(0, 1fr); grid-template-areas: "f n" "f h"; grid-template-rows: 1fr 1fr; column-gap: clamp(24px, 4vw, 64px); align-items: center; padding: 0; border: 0; background: none; overflow: visible; }
+#boundary .bnd-plate { display: block; grid-area: f; width: 100%; margin: 0; align-self: center; }
+#boundary .bnd-side .n { align-self: end; }
+#boundary .bnd-side h3 { align-self: start; margin-top: 6px; }
+#boundary .bnd-line.arch-bound { min-height: clamp(64px, 7vw, 96px); }
+@media (min-width: 861px) { #boundary .bnd-side { grid-template-areas: "f n" "f h"; grid-template-rows: 1fr 1fr; } #boundary .bnd-plate { width: 100%; margin: 0; } }
+@media (max-width: 600px) { #boundary .bnd-side { grid-template-columns: minmax(0, 132px) minmax(0, 1fr); column-gap: 18px; } }
+
+/* Platform §03 on phones: the four roles two by two */
+@media (max-width: 520px) {
+  #swarm .sw-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #swarm .sw-legend > .card { display: block; padding: 14px 12px 12px 0; border-right: 0; }
+  #swarm .sw-legend > .card + .card { border-top: 0; }
+  #swarm .sw-legend > .card:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  #swarm .sw-legend > .card:nth-child(even) { padding-left: 12px; padding-right: 0; }
+  #swarm .sw-legend .sw-at { margin-top: 12px; padding-top: 8px; }
+  #swarm .sw-at b { display: block; margin: 3px 0 0; }
+}
+
+/* Lifecycles §01: six traits, three by two; each names the layer it maps to */
+#test .card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); border: 0; border-top: 1px solid var(--line-strong); }
+#test .card-grid--3 > .card { display: flex; flex-direction: column; justify-content: space-between; gap: 22px; min-height: clamp(128px, 11vw, 168px); padding: 22px clamp(16px, 2vw, 28px) 20px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; }
+#test .card-grid--3 > .card:not(:nth-child(3n + 1)) { padding-left: clamp(16px, 2vw, 28px); border-left: 1px solid var(--line); }
+#test .card .h4 { grid-column: auto; grid-row: auto; margin: 0; max-width: 14ch; font-size: var(--fs-heading); line-height: 1.15; }
+#test .card .lc-map { display: flex; align-items: center; grid-column: auto; grid-row: auto; font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; color: var(--fg-2); white-space: nowrap; }
+#test .card .lc-map svg { width: 34px; margin-right: 10px; }
+@media (max-width: 960px) {
+  #test .card-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #test .card-grid--3 > .card:not(:nth-child(3n + 1)) { padding-left: 0; border-left: 0; }
+  #test .card-grid--3 > .card:nth-child(even) { padding-left: clamp(14px, 3vw, 24px); border-left: 1px solid var(--line); }
+  #test .card-grid--3 > :last-child:nth-child(odd) { grid-column: auto; }
+}
+@media (max-width: 600px) {
+  #test .card-grid--3 > .card { display: flex; grid-template-columns: none; min-height: 0; gap: 14px; padding: 16px 10px 14px 0; }
+  #test .card-grid--3 > .card:nth-child(even) { padding-left: 12px; padding-right: 0; }
+  #test .card .h4 { font-size: var(--fs-heading); }
+  #test .card .lc-map { grid-column: auto; grid-row: auto; margin-top: 0; white-space: normal; }
+  #test .card .lc-map svg { width: 24px; margin-right: 8px; flex: none; }
+}
+
+/* Lifecycles §02: the mechanism, then the seven steps (names only: the drawing carries them) */
+#lc01 .lc-how .card { padding: clamp(22px, 2.4vw, 34px); }
+#lc01 .lc-mech { max-width: 440px; margin: 0 auto; }
+@media (min-width: 961px) { #lc01 .lc-how .card { padding-bottom: clamp(22px, 2.4vw, 34px); } }
+#lc01 .lane-v--steps > li { min-height: 64px; padding-bottom: 14px; }
+#lc01 .lane-v--steps h3 { font-size: var(--fs-heading); }
+
+/* Lifecycles §03: the desk is the chapter */
+#desk .desk { border-color: var(--line-strong); }
+#desk .ch-link { margin-top: clamp(28px, 3vw, 40px); }
+/* Lifecycles hero: the head alone beside the rings, centred on them */
+@media (min-width: 961px) {
+  body[data-page="lifecycles"] .page-hero--plate { align-items: center; }
+  body[data-page="lifecycles"] .page-hero--plate > .hero-plate { margin-top: 0; }
+}
+/* Lifecycles §02: the head, then the mechanism, beside the seven steps */
+#lc01 .lc-how > .ch-head { margin-bottom: clamp(28px, 3.2vw, 48px); }
+#lc01 .lc-how .ch-title { max-width: 12ch; }
+#boundary .bnd-line .chip { letter-spacing: 0; }
+
+/* 4K at 100 %: the pages keep their proportions instead of shrinking into a 1600 px column (as Home, home.css) */
+@media (min-width: 2400px) {
+  html:has(> body[data-page="platform"]), html:has(> body[data-page="lifecycles"]) { font-size: calc(100vw / 150); }
+  :is(body[data-page="platform"], body[data-page="lifecycles"]) { --max: clamp(1320px, 70vw, 100rem); }
+  /* what is set in px elsewhere, in rem here so it grows with the page */
+  body[data-page="lifecycles"] .hero-plate--rings { max-width: 35rem; }
+  #lc01 .lc-mech { max-width: 27.5rem; }
+  #lc01 .lane-v--steps { --lv-gw: 6.5rem; --lv-x: 3.25rem; }
+  #lc01 .lane-v--steps > li { min-height: 4rem; column-gap: 1.125rem; }
+  .desk .desk-log li { width: 7.75rem; }
+  .desk .desk-log li:last-child { width: 7rem; }
+  #boundary .bnd { max-width: 53.75rem; }
+  #boundary .bnd-side { grid-template-columns: minmax(0, 15.625rem) minmax(0, 1fr); }
+}
+/* Platform §03: each role's gate (the button that lights it in the lab) at the small step, as the line above it */
+#swarm .sw-legend .sw-at, #swarm .sw-legend .sw-at :is(b, .sw-at-b) { font: 500 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; text-transform: none; }

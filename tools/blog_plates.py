@@ -671,7 +671,7 @@ def _mx(m, ox, oy):
 
 def library_svg(labels=("Markets", "AI & agents", "Economics"), counts=(16, 5, 8), lit=4):
     """the hero plate of the blog index (see the note above). Bundles are links to their collections (tabindex -1: the
-    chips below are the keyboard's way; the svg is aria-hidden)."""
+    nav's chapter list is the keyboard's way since the chips bar was cut on 1 Nov; the svg is aria-hidden)."""
     deg = math.radians
     # (key, angles, green leaves, face index, face drawing); angles run from the outermost leaf to the top one
     bundles = [

@@ -10,7 +10,7 @@
 .notfound .lede { max-width: 46ch; }
 .notfound .row { display: flex; flex-wrap: wrap; gap: 14px; }
 .nf-next { margin-top: clamp(22px, 3vw, 30px); }
-.notfound-log { margin-top: 24px; font-family: var(--mono); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+.notfound-log { margin-top: 24px; font-family: var(--mono); font-size: var(--fs-small); letter-spacing: .02em; color: var(--fg-3); } /* the gate's record: data, at the small step (1 Nov) */
 .notfound-log span { color: var(--reject); }
 /* a spread from 961 px: the headline left, the way on beside its foot; the plate across the page below */
 @media (min-width: 961px) {

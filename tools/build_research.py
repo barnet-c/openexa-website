@@ -8,7 +8,12 @@ from meta import HOME, ORG, WEBSITE, FEED_LINKS, ROBOTS, ld, crumbs, atom
    v2x (30 Oct 2026, group "research"): the index's plate beside the list shows the pointed or read note's figure with a
    caption from that note's own words (CAPTIONS; research.js, research.css); one number per row; every note gets its
    figure caption, links to the instruments it describes (RUN) and the series disclosure (moved, words verbatim, out of
-   note 02's body). Bodies, titles and read times are unchanged."""
+   note 02's body). Bodies, titles and read times are unchanged.
+   v2x cut (1 Nov 2026, the owner: "so many words everywhere"): one heading and at most one sentence per section, then the
+   drawing. The index keeps its H1, one line, the ten titles beside the plate, the blog's three collections and the
+   browser instruments; the notes keep their bodies word for word and lose the kicker, the caption paragraphs, the
+   labels around the end matter and the pager's summaries. The figures' labels are instrument text (<template>, set by
+   figure.js when the figure draws); every hedge stays beside what it hedges. Removed lines: .shots/v2x/notes/cut-research.md."""
 import html as H, io, json, math, os, re
 
 MD = str(DATA / 'openexa-research-blogs.md')
@@ -49,49 +54,26 @@ FIXES = [
 ]
 PUBLISHED = "2026-09-21"  # the research section went live with v10 (docs/site-history.md); the markdown has no dates
 
-# v2x (30 Oct): every figure has a caption written from its own note (PAGES.md §6.3, FC-01..FC-10; owner approval is
-# pending, so they are listed in REPORT.md). Per formation: the line that says what is drawn, the note's own words
-# (each “quoted” passage must occur verbatim in that note: the build stops otherwise), and the hedge line.
+# v2x (30 Oct): every figure had a caption written from its own note (PAGES.md §6.3, FC-01..FC-10).
+# v2x cut (1 Nov): the figure's own labels name its parts, so the caption paragraphs (the note's quoted words) and the
+# "Fig. NN" marks are gone. What stays, per formation: the line that says what is drawn (shown only on phones, in the
+# index's pinned strip, where the labels do not fit) and the hedge, which stands beside every drawing.
 NB = " "
 CAPTIONS = {
-    "horizon": ("Two runs of dependent steps, one of them gated.",
-                "The ungated run decays as p to the power n. The gated run has a gate after every step. “An error at step k is caught at the verification gate after step k.”",
-                "Illustrative"),
-    "weights": ("One base model, rings of adapters, the record below.",
-                "“One base model, many adapters.” Each record in the chain below holds “the hash of the previous record.”",
-                "Illustrative"),
-    "lifecycle": ("A lifecycle as one loop of gates, the last one lit.",
-                  "A lifecycle “starts with a signal, moves through a series of decisions and approvals, executes against an external counterparty, and ends with a record”.",
-                  "Illustrative"),
-    "swarm": ("One large agent beside a lattice of small ones.",
-              "“No single agent sees the whole trade. Each agent is scoped to exactly one gate in the lifecycle and does exactly one job.”",
-              "Illustrative"),
-    "boundary": ("Eight layers and one bright plane between them.",
-                 "“The top four decide.” Under the plane: “The bottom four execute, and they are deterministic code.”",
-                 "Illustrative"),
-    "rulebook": ("A dense core, with documents drifting in.",
-                 "“The most valuable data in any lifecycle is its exception history.”",
-                 "Illustrative"),
-    "council": ("Proposals arrive from above; rejected ones leave to the side.",
-                "Approved proposals continue down. “If any check fails, the proposal exits at the gate and is logged.”",
-                "Illustrative"),
-    "ledger": ("Eight blocks in a chain, each linked to the one before.",
-               "The newest block is lit. “Editing any entry breaks verification for every entry after it.”",
-               "Illustrative"),
-    # note 09: the colours are the record's (data-regimes, from #oxa-sessions); the floor line is not a scale
-    # r2 (r2-copy minor): the last clause untangled; the hedge ("how far is not published") stays beside its claim
-    "sessions": ("Ten sessions, one column each, in the order of the record.",
-                 f"Green for a premium regime, ivory for discount. Each column fills to the khaki line, the 10{NB}bps floor, and every one rises past it. How far is not published, so the scatter above the line is drawn, not measured.",
-                 "Illustrative · heights not to scale · regimes read from the record"),
-    "mastercopy": ("One proven agent above, its copies below, on one control plane.",
-                   "Phase two, on the roadmap. “A copy is a replication of that agent onto a new asset or strategy under the same control plane.”",
-                   "Illustrative · roadmap"),
+    "horizon": ("Two runs of dependent steps, one of them gated.", "Illustrative"),
+    "weights": ("One base model, rings of adapters, the record below.", "Illustrative"),
+    "lifecycle": ("A lifecycle as one loop of gates, the last one lit.", "Illustrative"),
+    "swarm": ("One large agent beside a lattice of small ones.", "Illustrative"),
+    "boundary": ("Eight layers and one bright plane between them.", "Illustrative"),
+    "rulebook": ("A dense core, with documents drifting in.", "Illustrative"),
+    "council": ("Proposals arrive from above; rejected ones leave to the side.", "Illustrative"),
+    "ledger": ("Eight blocks in a chain, each linked to the one before.", "Illustrative"),
+    # note 09: the colours are the record's (data-regimes, from #oxa-sessions); the floor line is not a scale. Cut (1 Nov):
+    # each column fills to the floor and shows ONE open unit above it (figure.js), never a scatter; the label "above the
+    # floor / how far is not published" stays beside it
+    "sessions": ("Ten sessions, one column each, in the order of the record.", "Illustrative · heights not to scale"),
+    "mastercopy": ("One proven agent above, its copies below, on one control plane.", "Illustrative · roadmap"),
 }
-# r2 (r2-copy minor): the figure's labels ("01–02 research notes", "03–10 the series") and the meta row already say which
-# leaves are which, so the caption says what the drawing is, once
-# r3 (r3-art minor): set in the plate captions' register, as on Platform, Lifecycles, Proof and Trust ("Plate · Six
-# lifecycle classes · Schematic"): the "Plate" mark, the title (no full stop, as theirs), the hedge
-LIBRARY_CAPTION = ("Ten notes as ten leaves", "Illustrative")
 # v2x lab (research moment): every figure is read as a plate. Its labels pin to points of the formation (figure.js, a
 # stage with data-plate projects data-at, the formation's own x,y,z, onto the screen each frame) and say what each part
 # is, in the words of its caption or its note: no new fact, no number the caption does not already state. Points are
@@ -109,7 +91,7 @@ LIBRARY_CAPTION = ("Ten notes as ten leaves", "Illustrative")
 # the plate shows no labels at all, so a drawing never names its parts without their hedge (data-keep). "keep=t,tl,tr"
 # limits the slots to those sides: "above the floor" never stands below the columns it describes.
 def _cols():  # note 09: ten columns, x = -1.08 + c * 0.24 (figure.js sessions), numbered and lit in the record's order
-    return [(f"{c + 1:02d}", None, (round(-1.08 + c * 0.24, 2), -0.76, 0), "b", "" if c in (0, 9) else "minor", (c / 10, (c + 0.9) / 10))
+    return [(f"{c + 1:02d}", None, (round(-1.08 + c * 0.24, 2), -0.78, 0), "b", "" if c in (0, 9) else "minor", (c / 10, (c + 0.9) / 10))
             for c in range(10)]
 def _loop(n):  # note 03: node n of figure.js lifecycle (a ring of r 0.95, tilted 0.9, from angle 0.5)
     a = n / 6 * math.tau + 0.5; x, z = math.cos(a) * 0.95, math.sin(a) * 0.95
@@ -141,9 +123,10 @@ LABELS = {
                ("hash of the previous record", None, (0, 0.02, 0.24), "tr", "", (0.43, 0.45)),
                ("newest", None, (1.0, -0.63, 0), "b", "acc", (0.875, 0.9))],
     # the floor is read like an axis: its value at the line's left end, the first line on the rule
-    # r3: each hedge label first ("keep", below)
-    "sessions": [("above the floor", "how far is not published", (0, 0.93, 0), "t", "keep=t,tl,tr", None),
-                 ("10\u00a0bps", "floor", (-1.25, 0.4, 0.07), "l", "", None)] + _cols(),
+    # r3: each hedge label first ("keep", below). Cut (1 Nov): "above the floor" points at the top of the one open unit
+    # each column carries (figure.js sessions: the floor F = 0.48, the open unit up to 0.625)
+    "sessions": [("above the floor", "how far is not published", (0, 0.65, 0), "t", "keep=t,tl,tr", None),
+                 ("10\u00a0bps", "floor", (-1.25, 0.48, 0.07), "l", "", None)] + _cols(),
     "mastercopy": [("copies", "phase two, on the roadmap", (0.93, -0.18, -0.07), "tl", "keep", (0.74, 0.74)),
                    ("master agent", None, (0.31, 0.62, 0), "r", "acc", (0.0, 0.06)),
                    ("one control plane", None, (-1.3, -0.77, 0), "br", "", (0.9, 0.9))],
@@ -163,7 +146,7 @@ def labels_html(fig):
         ph = f' data-ph="{path[0]:g},{path[1]:g}"' if path else ""
         reach = f' data-to="{to[0][0]:g},{to[0][1]:g},{to[0][2]:g}"' if to else ""
         out.append(f'<span class="fl{cls}" data-at="{x:g},{y:g},{z:g}"{reach} data-side="{side}"{ph}{keep} style="--i:{i}"><span class="fl-t">{H.escape(text, quote=False)}{small}</span></span>')
-    return f'<div class="fig-labels" data-for="{fig}">{"".join(out)}</div>'
+    return f'<template data-labels><div class="fig-labels" data-for="{fig}">{"".join(out)}</div></template>'
 def library_still():
     """r2 (r2-art minor): the index hero's figure as a still, in the page's HTML. v2 and r1 painted nothing there until
     WebGL drew (and nothing at all without JavaScript or WebGL), the only inner first screen without a drawing. This is
@@ -211,7 +194,7 @@ RUN = {
     "swarm": [("See the swarm by role in the swarm lab", "../platform.html#swarm")],
     "boundary": [("Explore the eight layers and the boundary", "../platform.html#architecture")],
     "rulebook": [("Find the model layer in the architecture explorer", "../platform.html#architecture")],
-    "council": [("Adjust the Council’s strictness and watch the approval rate change", "../index.html#lc01")],
+    "council": [("Tighten the Council in the swarm lab", "../index.html#lc01")],
     "ledger": [("Replay a ledger excerpt, then try to change the past", "../trust.html#ledger")],
     "sessions": [("See the ten sessions on the Proof page", "../evidence.html"), ("Run one simulated session on the desk", "../lifecycles.html#lc01")],
     "mastercopy": [("The six lifecycle classes, status by ring", "../lifecycles.html#classes")],
@@ -258,15 +241,6 @@ for num, body in zip(chunks[0::2], chunks[1::2]):
     posts[int(num)] = {"num": int(num), "title": title, "dek": dek, "blocks": blocks, "words": words, "minutes": max(3, round(words / 210))}
 assert sorted(posts) == list(range(1, 11)), sorted(posts)
 assert SERIES_DISCLOSURE, "the series disclosure (the markdown's closing '*Disclosures: …*') was not found"
-for _fig, (_t, _d, _h) in CAPTIONS.items():  # every quoted passage of a caption is its note's own words
-    _num = next(n for n, m in META.items() if m[1] == _fig)
-    _text = " ".join(t for k, t in posts[_num]["blocks"])
-    for _q in re.findall(r"“(.+?)”", _d):
-        assert _q in _text, f"caption {_fig}: “{_q}” is not in Post {_num}"
-
-# r2: the series' lede on the index is note 03's (Series, part 1) own two sentences; the build stops if they change there
-SERIES_LEDE = "Trust is earned in the lowest-risk lifecycle first. Then it compounds."
-assert SERIES_LEDE in " ".join(t for k, t in posts[1]["blocks"]), "the §02 lede is no longer note 03's own words"
 
 def typo(t):
     """typography only, never words (VOICE §7; lab research-editorial): the apostrophe inside a word is ’ (the notes
@@ -343,11 +317,12 @@ def title_html(t):
     # r5: inside each part, the line breaks between its phrases (PHRASES; bound, disp())
     m = re.match(r"^(.+\.) ([A-Z].+)$", t)
     return f'<span class="t-head">{disp(m.group(1))}</span> <span class="t-rest">{phrased(m.group(2))}</span>' if m else phrased(t)
-def hung(d): return " is-hung" if d[:1] in "“‘" else ""  # a caption that opens on a quote hangs it in the margin (research.css)
-def cap_html(fig, n, cls="figcap"):
-    t, d, h = CAPTIONS[fig]
-    return (f'<p class="{cls}"><span class="figcap-n">Fig.{NB}{n}</span><span class="figcap-t">{H.escape(t, quote=False)}</span>'
-            f'<span class="figcap-d{hung(d)}">{H.escape(d, quote=False)}</span><span class="figcap-h">{H.escape(h, quote=False)}</span></p>')
+def cap_html(fig, cls="figcap", title=False):
+    """cut (1 Nov): beside a drawing, its hedge; the index's strip also has the line that says what is drawn (phones only,
+    where the labels do not fit; research.js writes it from the row)"""
+    t, h = CAPTIONS[fig]
+    tt = '<span class="figcap-t"></span>' if title else ""
+    return f'<p class="{cls}">{tt}<span class="figcap-h">{H.escape(h, quote=False)}</span></p>'
 
 # ---------------- templates from the live homepage ----------------
 index_html = read(os.path.join(ROOT, "index.html"))
@@ -407,9 +382,9 @@ for i, post in enumerate(ordered):
     slug, fig, label, dek_short = META[post["num"]]
     post.update({"slug": slug, "fig": fig, "label": label, "short": dek_short, "order": i + 1, "file": f"research/{i + 1:02d}-{slug}.html"})
 
+# cut (1 Nov): a pager card is where it leads and the title there; the summaries under the titles are gone
 def pager_card(p, k, cls=""):
-    return (f"<a class='pager-card{cls}' href='{os.path.basename(p['file'])}'><span class='k'>{k}</span>"
-            f"<h3>{title_html(p['title'])}</h3><p>{inline(p['short'])}</p></a>")
+    return f"<a class='pager-card{cls}' href='{os.path.basename(p['file'])}'><span class='k'>{k}</span><h3>{title_html(p['title'])}</h3></a>"
 
 for i, post in enumerate(ordered):
     prev = ordered[i - 1] if i else None
@@ -419,6 +394,10 @@ for i, post in enumerate(ordered):
     # the link is a grid (numeral, words): the words are one span, so a no-break compound inside them is not a grid item
     toc = "".join(f'<li><a href="#{a}"><span>{inline(t)}</span></a></li>' for a, t in heads)
     body = []
+    # cut (1 Nov): the hero is the title and the drawing. A research note's standfirst (the markdown's italic line, the
+    # author's own words) opens the body instead of standing as a 40-word lede under the title; the series notes'
+    # site-written summary (META) is no longer printed on the page (it stays the share and search description)
+    if post["dek"]: body.append(f'<p class="dek">{inline(post["dek"])}</p>')
     first_p = True
     for k, t in post["blocks"]:
         if k == "h": body.append(f'<h2 id="{slugify(t)}">{disp(t)}</h2>')  # r5: bound as the titles are (disp)
@@ -430,6 +409,8 @@ for i, post in enumerate(ordered):
     n = f"{post['order']:02d}"
     run = "".join(f'<li><a class="link-arrow" href="{href}">{H.escape(text, quote=False)}{NB}{ARROW}</a></li>' for text, href in RUN[post["fig"]])
     long_title = len(re.sub(r" A Research Note on .+$", "", title)) > 52
+    first = "<a class='pager-card' href='../research.html'><span class='k'>← Research</span><h3>All ten notes</h3></a>"
+    last = "<a class='pager-card next' href='../access.html'><span class='k'>Next →</span><h3>Bring us a lifecycle.</h3></a>"
     page = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -452,12 +433,10 @@ for i, post in enumerate(ordered):
       <div class="container">
         <div class="article-hero-grid">
           <div>
-            <div class="eyebrow" data-reveal><span><span class="nw">Research · Note{NB}{n} of{NB}{len(ordered):02d} ·</span> <span class="nw">{H.escape(kind(post))}</span></span></div>
-            <h1 class="display-1 article-title{' article-title--long' if long_title else ''}{' article-title--split' if 't-head' in title_html(title) else ''}" data-reveal data-split style="--d:60ms">{title_html(title)}</h1>
-            <p class="lede mt-3" data-reveal style="--d:120ms">{inline(dek)}</p>
-            <div class="article-meta" data-reveal style="--d:180ms"><span>Founder’s notes</span><span>{post['minutes']}{NB}min read</span></div>
+            <h1 class="display-1 article-title{' article-title--long' if long_title else ''}{' article-title--split' if 't-head' in title_html(title) else ''}" data-reveal data-split>{title_html(title)}</h1>
+            <div class="article-meta" data-reveal style="--d:120ms"><span>Founder’s notes</span><span>{post['minutes']}{NB}min read</span></div>
           </div>
-          {cap_html(post['fig'], n, "figcap article-figcap")}
+          {cap_html(post['fig'], "figcap article-figcap")}
         </div>
       </div>
     </section>
@@ -467,16 +446,14 @@ for i, post in enumerate(ordered):
         <div class="grid">
           <nav class="col-3 article-side" aria-label="In this note">
             <div class="sticky">
-              <div class="eyebrow mb-2">In this note</div>
               <ol class="toc" data-toc>{toc}</ol>
-              <div class="article-share mt-3"><a class="link-arrow" href="../research.html">All research {ARROW}</a></div>
             </div>
           </nav>
           <article class="col-7 offset-5 article">
             {"".join(body)}
-            <div class="article-end"><span class="mark" aria-hidden="true"></span><span>OpenEXA Research · Founder’s notes · {n}{NB}/{NB}{len(ordered):02d}</span></div>
-            <div class="note-run"><p class="note-k">See it run</p><ul>{run}</ul></div>
-            <div class="note-disc"><p class="note-k">Series disclosure</p><p>{H.escape(SERIES_DISCLOSURE, quote=False)}</p><p><a href="#disclosures">See the disclosures.</a></p></div>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span></div>
+            <div class="note-run"><ul>{run}</ul></div>
+            <div class="note-disc"><p>{H.escape(SERIES_DISCLOSURE, quote=False)} <a href="#disclosures">See the disclosures.</a></p></div>
           </article>
         </div>
       </div>
@@ -485,8 +462,8 @@ for i, post in enumerate(ordered):
     <section class="section is-paper-2 section--tight">
       <div class="container">
         <div class="pager">
-          {pager_card(prev, f"← Previous · {prev['order']:02d}") if prev else "<a class='pager-card' href='../research.html'><span class='k'>← Research</span><h3>All ten notes</h3><p>The research behind swarm-based agentic lifecycles, in reading order.</p></a>"}
-          {pager_card(nxt, f"Next · {nxt['order']:02d} →", " next") if nxt else "<a class='pager-card next' href='../access.html'><span class='k'>Next →</span><h3>Bring us a lifecycle.</h3><p>For institutions running high-value lifecycles and partners building on agentic infrastructure.</p></a>"}
+          {pager_card(prev, "← Previous") if prev else first}
+          {pager_card(nxt, "Next →", " next") if nxt else last}
         </div>
       </div>
     </section>
@@ -505,15 +482,17 @@ for i, post in enumerate(ordered):
 # ---------------- index ----------------
 nav, foot = chrome("", "research")
 rows = []
+# cut (1 Nov): a row is the note's number, its title and its read time; the summaries under the titles are gone (the
+# plate beside the list shows each note's idea). The row carries the plate's words for that note: what is drawn (the
+# phone strip) and the hedge
 for post in ordered:
-    t, d, h = CAPTIONS[post["fig"]]
-    cap = " ".join(f'data-cap-{k}="{H.escape(v, quote=True)}"' for k, v in (("n", f"Fig.{NB}{post['order']:02d}"), ("t", t), ("d", d), ("h", h)))
+    t, h = CAPTIONS[post["fig"]]
+    cap = " ".join(f'data-cap-{k}="{H.escape(v, quote=True)}"' for k, v in (("t", t), ("h", h)))
     rows.append(f'''          <li class="post" data-figure-target="{post['fig']}" data-figure-stage="research-figure" {cap}>
             <a href="{post['file']}">
               <span class="post-n">{post['order']:02d}</span>
               <div class="post-main">
                 <h3>{title_html(post['title'])}</h3>
-                <p>{inline(post['short'])}</p>
               </div>
               <div class="post-meta"><span>{post['minutes']}{NB}min</span>{ARROW}</div>
             </a>
@@ -523,9 +502,10 @@ url = "https://www.openexa.com/research.html"
 # r2: the share title is the <title>, as launch_meta_v9.py writes it, so research.html no longer differs between the
 # research build and the chain's last step (r1 open issue: built alone it said "Research — OpenEXA")
 INDEX_TITLE = "Research — OpenEXA · The thinking behind agentic lifecycles"
-# r4 (r4-copy): "the Execution Council" is a name (VOICE 5.9); §03's link reads "Start with the Gen-AI series" (no
-# capital article mid-sentence, no colon subtitle inside a link)
 desc ="Ten notes on the research behind swarm-based agentic lifecycles: compounding error and decomposition, post-training a model to a rulebook, the Execution Council, the hash-chained ledger, and ten sessions on real capital."
+# cut (1 Nov): the blog's three collections as three titles with their size and years; each card is the link
+def years(c): return str(c["years"][0]) if c["years"][0] == c["years"][1] else f'{c["years"][0]}–{c["years"][1]}'
+collections = "\n".join(f'          <a class="card research-card" href="blog/index.html#{c["key"]}"><h3 class="h4">{H.escape(c["label"])}</h3><div class="n"><span>{c["count"]}{NB}posts · {years(c)}</span>{ARROW}</div></a>' for c in BLOG['collections'])
 index_page = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -549,24 +529,22 @@ index_page = f'''<!DOCTYPE html>
       <div class="container">
         <div class="grid">
           <div class="col-7">
-            <div class="eyebrow" data-reveal>Research · Founder’s notes</div>
-            <h1 class="display-1" data-reveal data-split style="--d:60ms">The thinking behind the swarm.</h1>
-            <p class="lede mt-3" data-reveal style="--d:120ms">Ten notes on why high-stakes work should be run by thousands of narrow agents behind one deterministic boundary, from the mathematics of compounding error to what ten sessions on real capital taught us.</p>
-            <div class="article-meta" data-reveal style="--d:180ms"><span>{len(ordered)} notes</span><span>{sum(p['minutes'] for p in ordered)}{NB}min in total</span><span>Two research notes · an eight-part series</span></div>
+            <h1 class="display-1" data-reveal data-split>The thinking behind the swarm.</h1>
+            <p class="lede mt-3" data-reveal style="--d:120ms">Ten notes on why high-stakes work should be run by thousands of narrow agents behind one deterministic boundary.</p>
           </div>
-          <p class="figure-cap hp-cap rs-herocap"><span class="fc-t"><b class="fc-n">Plate</b><span class="fc-d"> · </span>{LIBRARY_CAPTION[0]}</span><span class="fc-h">{LIBRARY_CAPTION[1]}</span></p>
         </div>
       </div>
     </section>
 
     <!-- v2x: the shelf. The ten notes, and beside them (pinned below them on phones) one plate that shows the figure of
          the note pointed at, focused or, on touch screens, read: research.js. Without JavaScript the plate is not drawn
-         and the list takes the full width (research.css, @media (scripting: none)). -->
+         and the list takes the full width (research.css, @media (scripting: none)). Cut (1 Nov): no chapter heads; the
+         two research notes and the eight-part series read as one contents page, a wider gap between 02 and 03 -->
     <div class="rs-shelf">
-      <section class="section" id="notes">
+      <section class="section" id="notes" data-chapter="Research notes" data-n="01">
         <div class="container">
           <div class="rs-col">
-            <div class="sec-head" data-reveal role="heading" aria-level="2"><span class="idx">01</span><span class="lab">Research notes</span><span class="aside">Start here · the argument from first principles</span></div>
+            <h2 class="sr-only">Research notes</h2>
             <ol class="posts-list" data-reveal>
 {chr(10).join(rows[:2])}
             </ol>
@@ -574,16 +552,10 @@ index_page = f'''<!DOCTYPE html>
         </div>
       </section>
 
-      <!-- r2 (r2-fidelity): 01 and 02 share one ground, so the pinned plate beside them never crosses a band's edge; the
-           chapter head and its rule mark the change. The paper-2 band moves to 03, so the grounds still alternate -->
-      <section class="section" id="series">
+      <section class="section" id="series" data-chapter="The series" data-n="02">
         <div class="container">
           <div class="rs-col">
-            <div class="sec-head" data-reveal><span class="idx">02</span><span class="lab">The series</span><span class="aside">Eight notes · the system, gate by gate</span></div>
-            <div class="rs-intro">
-              <h2 class="display-2" data-reveal data-split>{PH("From the unit of work", "to the open platform.")}</h2>
-              <p class="body-lg" data-reveal style="--d:80ms">{SERIES_LEDE.replace("lowest-risk", '<span class="nw">lowest-risk</span>')} These eight notes describe how.</p>
-            </div>
+            <h2 class="sr-only">The series</h2>
             <ol class="posts-list" data-reveal start="3">
 {chr(10).join(rows[2:])}
             </ol>
@@ -595,42 +567,20 @@ index_page = f'''<!DOCTYPE html>
         <div class="container rs-rail-in">
           <figure class="rs-plate">
             <div class="rs-stage is-dark grain"><div class="figure-stage" id="research-figure" data-figure="{ordered[0]['fig']}" data-spin="0.07" data-rest="2.5" data-plate><canvas></canvas>{"".join(labels_html(p['fig']) for p in ordered)}</div></div>
-            <figcaption class="rs-caption">
-              <p class="rs-hint"><span class="rs-hint-p">Point at a note and the figure becomes its idea.</span><span class="rs-hint-t">Scroll the list and the figure follows the note you are on.</span></p>
-              {cap_html(ordered[0]['fig'], '01', 'figcap rs-cap')}
-            </figcaption>
+            <figcaption class="rs-caption">{cap_html(ordered[0]['fig'], 'figcap rs-cap', title=True)}</figcaption>
           </figure>
         </div>
       </div>
     </div>
 
-    <section class="section is-paper-2" id="blog">
+    <section class="section is-paper-2" id="blog" data-chapter="The blog" data-n="03">
       <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">03</span><span class="lab">The blog</span><span class="aside">{BLOG['total']} posts · {BLOG['years'][0]}–{BLOG['years'][1]}</span></div>
-        <div class="grid t-2 mb-3">
+        <div class="grid t-2 rs-blog-head">
           <div class="col-6"><h2 class="display-2" data-reveal data-split>{PH("Three collections,", "from market structure", "to AI agents.")}</h2></div>
-          <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Research summaries, market-structure economics and the first notes on AI agents in finance, from the people behind OpenEXA and the researchers they work with.</p><a class="link-arrow mt-3 scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">The papers on Google Scholar {OUTB}</a></div>
+          <div class="col-5 offset-7 row-links" data-reveal><a class="link-arrow" href="blog/index.html">All {BLOG['total']} posts {ARROW}</a><a class="link-arrow scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">The papers on Google Scholar {OUTB}</a></div>
         </div>
-        <div class="card-grid card-grid--{len(BLOG['collections'])}" data-reveal style="--d:120ms">
-{chr(10).join(f'          <a class="card research-card" href="blog/index.html#{c["key"]}"><div class="n"><span>{c["count"]} posts</span><span>{c["years"][0] if c["years"][0] == c["years"][1] else str(c["years"][0]) + "–" + str(c["years"][1])}</span></div><h3 class="h4">{H.escape(c["label"])}</h3><p>{H.escape(us(c["lede"]))}</p><span class="link-arrow mt-3">Browse the collection{NB}{ARROW}</span></a>' for c in BLOG['collections'])}
-        </div>
-        <div class="mt-4 row-links" data-reveal><a class="link-arrow" href="blog/index.html#series">Start with {re.sub(r"^The ", "the ", BLOG['series']['name'])} {ARROW}</a><a class="link-arrow" href="blog/index.html">All {BLOG['total']} posts {ARROW}</a></div>
-      </div>
-    </section>
-
-    <section class="section" id="principles">
-      <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">04</span><span class="lab">Four constants</span><span class="aside">What never changes</span></div>
-        <div class="grid t-2">
-          <div class="col-5"><h2 class="display-2" data-reveal data-split>{bind("The research contribution is four constants.")}</h2></div>
-          <div class="col-6 offset-7">
-            <ol class="num-list" data-reveal style="--d:80ms">
-              <li><h3>Agents decide. Code executes.</h3><p>The top four layers estimate and reason; the bottom four are deterministic. The boundary between them is a typed schema.</p></li>
-              <li><h3>No single agent sees the whole job.</h3><p>Each agent is scoped to one gate and does one thing. Its failure is local and its output is a proposal until something downstream permits it.</p></li>
-              <li><h3>Nothing an agent believes can move what it is not permitted to.</h3><p>Capabilities are held per agent and per tool, enforced by the runtime rather than by the model’s good behavior.</p></li>
-              <li><h3>Anything that settles is written to a ledger nobody can edit.</h3><p>Append-only, hash-chained, replayable{NB}— and written only after an independent counterparty confirms.</p></li>
-            </ol>
-          </div>
+        <div class="card-grid card-grid--{len(BLOG['collections'])}" data-reveal style="--d:80ms">
+{collections}
         </div>
       </div>
     </section>
@@ -638,10 +588,8 @@ index_page = f'''<!DOCTYPE html>
     <section class="cta-band is-dark grain">
       <i class="mark globe" aria-hidden="true"></i>
       <div class="container">
-        <div class="eyebrow" data-reveal>See it run</div>
-        <h2 class="display-2 mt-2" data-reveal data-split style="--d:60ms">Three of these ideas run in your browser.</h2>
-        <p class="lede mt-3" data-reveal style="--d:120ms">Tighten the Council in the swarm lab. Edit a record and watch the chain break. Run one simulated session of Lifecycle{NB}01.</p>
-        <div class="row" data-reveal style="--d:180ms">
+        <h2 class="display-2" data-reveal data-split>Three of these ideas run in your browser.</h2>
+        <div class="row" data-reveal style="--d:120ms">
           <a class="btn" href="index.html#lc01">Open the swarm lab {ARROW}</a>
           <a class="btn btn--ghost" href="index.html#governance">Break the chain</a>
           <a class="btn btn--ghost" href="lifecycles.html#lc01">Run the desk</a>

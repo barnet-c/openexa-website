@@ -16,7 +16,7 @@
 /* a compound word never breaks at its hyphen ("market-dependent") */
 :is([data-page="proof"], [data-page="trust"]) .nw { white-space: nowrap; }
 /* display heads break between phrases only: a line never ends on "and", "the" or "your" (r5 art; Home's .ph, r4) */
-:is([data-page="proof"], [data-page="trust"]) h2 .ph { white-space: nowrap; }
+:is([data-page="proof"], [data-page="trust"]) :is(h1, h2) .ph { white-space: nowrap; }
 /* ledes that close a page are short: set them as even lines */
 :is([data-page="proof"], [data-page="trust"]) .cta-band .lede { text-wrap: balance; }
 /* running text: no lone last word; hyphenation by hand only */
@@ -24,11 +24,6 @@
 /* captions: site.css's one register (.fc-t / .fc-n / .fc-d / .fc-h, r2) */
 
 /* ======================= Proof (evidence.html) ======================= */
-
-/* the hero's status line: the record's own words, no pill and no pulse (a status, not a signal) */
-[data-page="proof"] .pf-badge { display: block; padding: 0; border: 0; font-size: var(--mono-m); line-height: 1.6; letter-spacing: var(--track-label); color: var(--fg-2); }
-[data-page="proof"] .pf-badge i { display: inline-block; width: 7px; height: 7px; margin: 0 10px 1px 0; vertical-align: middle; animation: none; }
-[data-page="proof"] .pf-badge span { white-space: nowrap; } /* "broker-confirmed" never splits at its hyphen */
 
 /* the hero plate draws at first paint: ten records land on the line, then one tick per broker confirmation, in order,
    each wiped in from the left. The moving marks are small HTML boxes over the still SVG (a box clips the same 346 x 252
@@ -60,6 +55,9 @@
 @keyframes pf-wipe { from { transform: translateX(-100%); } }
 @keyframes pf-hold { from { transform: translateX(100%); } }
 
+/* §01 Fig. 1.1: one open block above the floor, no chevron, and the narrow chart's room for its note are shared with
+   home §04 now (proofchart.css) */
+
 /* §01: the hedge points at the disclosures, and reaches them (site.js opens the fold). Graphite, not slate: the qualifier
    beside the chart a regulator reads is never the dimmest line on the page (r4-a11y) */
 [data-page="proof"] .pf-hedge { color: var(--fg-2); }
@@ -90,16 +88,7 @@
 .pf-legend { display: flex; gap: 10px; align-items: baseline; max-width: 64ch; margin: 12px 0 0; font: .82rem/1.5 var(--sans); color: var(--fg-3); }
 .pf-legend b { flex: none; font: 400 1.5rem/.6 var(--serif); color: var(--fg-2); transform: translateY(.3em); }
 
-/* what the sessions show, and what they do not (research note 09 and the footer) */
-.pf-scope { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(32px, 4vw, 72px); margin-top: clamp(72px, 8vw, 128px); padding-top: clamp(36px, 4vw, 56px); border-top: 1px solid var(--line-strong); }
-.pf-quote { margin: 0; }
-.pf-quote blockquote { margin: 0; }
-.pf-quote p { font: 400 clamp(1.9rem, 2.7vw, 2.75rem)/1.06 var(--serif); letter-spacing: -.015em; color: var(--fg); text-indent: -.42em; text-wrap: balance; }
-.pf-quote figcaption { margin-top: 22px; font: 500 var(--mono-s)/1.4 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); }
-.pf-quote figcaption a { display: inline-flex; gap: 8px; padding-bottom: 3px; border-bottom: 1px solid var(--line-strong); transition: color .2s, border-color .2s; }
-@media (hover: hover) { .pf-quote figcaption a:hover { color: var(--fg); border-color: currentColor; } }
-.pf-quote figcaption a:focus-visible { color: var(--fg); border-color: currentColor; }
-.pf-lists { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(28px, 3.4vw, 56px); }
+/* the open / filled marks (Trust's refusals use the open one) */
 .pf-lk { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; font: 400 clamp(1.35rem, 1.8vw, 1.6rem)/1.2 var(--serif); letter-spacing: -.01em; color: var(--fg); }
 /* the chart's own marks: a filled block for what the record shows, an open block for what it does not */
 .pf-lk i { flex: none; width: 11px; height: 11px; background: var(--fg); }
@@ -108,35 +97,32 @@
 .pf-list > li { padding: 14px 0 15px; border-bottom: 1px solid var(--line); font-size: 1rem; line-height: 1.5; color: var(--fg-2); text-wrap: pretty; }
 .pf-list b { font-weight: 600; color: var(--fg); }
 
-/* §02: the three documents keep their links on one baseline */
-[data-page="proof"] .pf-doc { display: flex; flex-direction: column; }
-[data-page="proof"] .pf-doc > .mt-3 { margin-top: auto; padding-top: 22px; }
 
-/* the hero: the words on the left; on the right the record, drawn (the plate) and stated (a summary of terms under it).
-   The four figures keep their markup (.page-hero .stats .v: verify_v9 counters) and leave the giant-numeral strip. */
+/* §02: the three documents are their names on the hash line; the last one opens the ledger on Trust */
+[data-page="proof"] .pf-doc h3 a { display: inline-flex; align-items: baseline; gap: .3em; border-bottom: 1px solid var(--line-strong); transition: border-color .2s; }
+[data-page="proof"] .pf-doc h3 .arr { width: .55em; height: .55em; flex: none; }
+@media (hover: hover) { [data-page="proof"] .pf-doc h3 a:hover { border-color: currentColor; } }
+
+/* §03: the stack's key (.pf-ck) is shared with home §05: proofchart.css */
+
+/* the hero: the words on the left; on the right the record, drawn (the plate) */
 @media (min-width: 961px) {
   [data-page="proof"] .page-hero--dark { padding-top: calc(var(--nav-h) + clamp(44px, 4.8vw, 72px)); padding-bottom: clamp(44px, 4.4vw, 64px); }
   [data-page="proof"] .pf-record { grid-column: 8 / -1; justify-self: end; width: 100%; max-width: 480px; min-width: 0; }
   [data-page="proof"] .pf-record > .hero-plate { max-width: none; }
 }
-/* §01's heading sits in a narrow sticky column: capped a step under display-2 so it sets in two lines, not three
-   ("It held on both / sides of the NAV." rather than "It held on / both sides / of the NAV.") */
-[data-page="proof"] .proof-copy h2 { font-size: clamp(2.6rem, 5.4vw, 4.2rem); }
-/* small desktops: §01's text column is narrow, so its type steps down to keep the measure (30 → 34 characters) */
-@media (min-width: 961px) and (max-width: 1199px) { [data-page="proof"] .proof-copy .body-lg { font-size: 1rem; } }
-@media (min-width: 1200px) { [data-page="proof"] .pf-record { max-width: 500px; } }
+/* the plate is the page's first moment: with the terms gone it takes the room they left (alone in its column) */
+@media (min-width: 1200px) {
+  [data-page="proof"] .page-hero--plate > .hero-copy { grid-column: 1 / span 6; }
+  [data-page="proof"] .pf-record { grid-column: 7 / -1; max-width: 600px; }
+}
 @media (max-width: 960px) { [data-page="proof"] .pf-record { grid-column: 1 / -1; min-width: 0; } }
 /* tablets: the record as a spread, the plate and its terms side by side; §01's heading beside its text */
 @media (min-width: 601px) and (max-width: 960px) {
-  [data-page="proof"] .pf-record { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); column-gap: clamp(24px, 4vw, 40px); align-items: end; }
-  [data-page="proof"] .pf-record > .hero-plate { grid-column: 1; max-width: none; }
-  [data-page="proof"] .page-hero .stats.pf-terms { grid-column: 2; margin-top: 0; }
-  [data-page="proof"] .pf-terms > div { grid-template-columns: 4.6rem minmax(0, 1fr); column-gap: 14px; }
-  [data-page="proof"] .pf-terms .v { font-size: 1.75rem; }
+  [data-page="proof"] .pf-record > .hero-plate { max-width: 560px; }
   [data-page="proof"] .proof-copy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(24px, 4vw, 40px); align-items: start; }
   [data-page="proof"] .proof-copy > h2 { grid-row: 1 / span 2; }
   [data-page="proof"] .proof-copy > .body-lg { margin-top: 0; }
-  [data-page="proof"] .pf-doc p { max-width: 62ch; }
 }
 [data-page="proof"] .page-hero h1 { max-width: none; }
 @media (min-width: 601px) { [data-page="proof"] .page-hero .lede { max-width: 44ch; } }
@@ -146,41 +132,18 @@
    fallback's where that is more (measured every 4 px from 320 to 600, work/proof/r1/hero_fit.py; the lede again in r2, r2/hero_lines.py). A floor, never a cap. */
 @media (max-width: 600px) {
   [data-page="proof"] .page-hero h1 { min-height: 2lh; }
-  [data-page="proof"] .page-hero .lede { min-height: 3lh; }
+  [data-page="proof"] .page-hero .lede { min-height: 2lh; }
 }
-@media (max-width: 559.98px) { [data-page="proof"] .page-hero .lede { min-height: 4lh; } }
-@media (max-width: 515.98px) { [data-page="proof"] .page-hero h1 { min-height: 3lh; } }
-@media (max-width: 423.98px) { [data-page="proof"] .page-hero .lede { min-height: 5lh; } }
-@media (max-width: 379.98px) { [data-page="proof"] .page-hero h1 { min-height: 4lh; } }
-@media (max-width: 360px) { [data-page="proof"] .page-hero h1 { min-height: 3lh; } [data-page="proof"] .pf-lc-hedge { min-height: 2lh; } }
-@media (max-width: 351.98px) { [data-page="proof"] .page-hero .lede { min-height: 6lh; } }
+@media (max-width: 463.98px) { [data-page="proof"] .page-hero h1 { min-height: 3lh; } }
+@media (max-width: 459.98px) { [data-page="proof"] .page-hero .lede { min-height: 3lh; } }
+@media (max-width: 451.98px) { [data-page="proof"] .pf-lc-hedge { min-height: 2lh; } }
+@media (max-width: 359.98px) { [data-page="proof"] .page-hero .lede { min-height: 4lh; } }
 @media (max-width: 347.98px) { [data-page="proof"] .page-hero h1 { min-height: 4lh; } }
 /* the first statement of the result carries its hedge, as on Home's hero (VOICE 5.5): set to be read, not whispered
    (Inter, sentence case, 14 px; a11y r1 M5), in Home's hedge tone, paper at 72% (8.9:1 on ink; a11y r3 m2) */
 [data-page="proof"] .pf-lc-hedge { margin-top: 16px; font: 400 .875rem/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); }
-[data-page="proof"] .page-hero .stats.pf-terms { display: block; margin-top: clamp(22px, 2.2vw, 30px); background: none; border: 0; border-top: 1px solid var(--line-strong); }
-[data-page="proof"] .pf-terms > div { display: grid; grid-template-columns: 6rem minmax(0, 1fr); column-gap: 18px; align-items: start; padding: 10px 0 11px; background: none; border-bottom: 1px solid var(--line); }
-[data-page="proof"] .pf-terms .v { grid-row: 1 / span 2; align-self: start; margin-top: -.06em; font-size: 2rem; line-height: 1; letter-spacing: -.02em; font-variant-numeric: lining-nums tabular-nums; }
-[data-page="proof"] .pf-terms .v small { margin-left: .3em; font-size: .78rem; }
-[data-page="proof"] .pf-terms .k { margin: 0; font: 500 .9rem/1.35 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg); }
-[data-page="proof"] .pf-terms .d { margin: 1px 0 0; max-width: none; font-size: .875rem; line-height: 1.45; color: var(--fg-2); }
-/* the two broker-confirmed facts lead; the two open counts (C-033, C-034) follow, quieter: same words, less weight */
-[data-page="proof"] .pf-terms > div:nth-child(n + 3) { padding-block: 8px 9px; }
-[data-page="proof"] .pf-terms > div:nth-child(n + 3) .v { font-size: 1.45rem; color: var(--fg-2); }
-[data-page="proof"] .pf-terms > div:nth-child(n + 3) .k { font-weight: 400; color: var(--fg-2); }
-[data-page="proof"] .pf-terms > div:nth-child(n + 3) .d { color: var(--fg-3); }
 
-@media (max-width: 960px) {
-  .pf-scope { grid-template-columns: minmax(0, 1fr); row-gap: 36px; }
-  .pf-quote p { max-width: 18ch; }
-}
 @media (max-width: 600px) {
-  [data-page="proof"] .pf-terms > div { grid-template-columns: 5.2rem minmax(0, 1fr); column-gap: 14px; }
-  [data-page="proof"] .pf-terms .v { font-size: 1.9rem; }
-  [data-page="proof"] .pf-terms > div:nth-child(n + 3) .v { font-size: 1.4rem; }
-  .pf-lists { grid-template-columns: minmax(0, 1fr); }
-  .pf-scope { margin-top: 56px; padding-top: 32px; }
-  .pf-quote p { font-size: 1.75rem; }
   .pf-list > li { padding: 12px 0 13px; font-size: .97rem; }
   /* Table 1.1 on a phone: one record in full, then nine one-line rows: the day, the regime, and three ditto marks */
   [data-page="proof"] .proof-table > tbody > tr { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: 4px 12px; padding: 10px 0 9px; }
@@ -198,23 +161,8 @@
   .proof-table .pf-dt::after { font-size: 1.45rem; transform: translateY(.3em); }
   .proof-table .tag { padding: 3px 6px; }
   .pf-legend { font-size: .8rem; }
-  /* the comparison stays a table on a phone: its heads once, three columns, no label repeated on every row */
-  [data-page="proof"] .cost-cmp.mt-5 { margin-top: 48px; }
-  [data-page="proof"] .cost-cmp thead { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
-  [data-page="proof"] .cost-cmp tr, [data-page="proof"] .cost-cmp tr.cmp-g { display: table-row; padding: 0; border: 0; }
-  [data-page="proof"] .cost-cmp thead th { padding: 0 8px 10px 0; vertical-align: bottom; font-size: var(--mono-xs); }
-  [data-page="proof"] .cost-cmp thead b { margin-top: 4px; font-size: 1.05rem; }
-  [data-page="proof"] .cost-cmp .cmp-g th { padding: 20px 0 8px; }
-  [data-page="proof"] .cost-cmp tbody th[scope="row"] { width: 46%; padding: 13px 12px 14px 0; border-bottom: 1px solid var(--line); font-size: .94rem; line-height: 1.3; }
-  [data-page="proof"] .cost-cmp tbody th small { font-size: .8rem; line-height: 1.35; }
-  [data-page="proof"] .cost-cmp td { width: 27%; padding: 13px 8px 14px 0; border-bottom: 1px solid var(--line); font-size: .78rem; line-height: 1.35; }
-  [data-page="proof"] .cost-cmp td::before { display: none; }
   /* the three documents: short rows on the drawn line */
   [data-page="proof"] .pf-docs { row-gap: 34px; }
-  [data-page="proof"] .pf-doc h3 { font-size: 1.6rem; }
-  [data-page="proof"] .pf-doc .pf-dh { margin-bottom: 12px; }
-  [data-page="proof"] .pf-doc p { font-size: .94rem; }
-  [data-page="proof"] .pf-doc > .mt-3 { padding-top: 14px; }
 }
 @media print {
   .proof-table .pf-dt > * { position: static; width: auto; height: auto; clip-path: none; }
@@ -231,14 +179,8 @@
 [data-page="trust"] .tr-go { margin-top: clamp(24px, 2.6vw, 36px); }
 @media (min-width: 601px) { [data-page="trust"] .page-hero .lede { max-width: 44ch; } } /* four even lines */
 /* phones: the lede reserves its lines, so the plate under it holds still when Inter lands late (as on Proof) */
-@media (max-width: 600px) { [data-page="trust"] .page-hero .lede { min-height: 4lh; } }
-@media (max-width: 531.98px) { [data-page="trust"] .page-hero .lede { min-height: 5lh; } }
-@media (max-width: 447.98px) { [data-page="trust"] .page-hero .lede { min-height: 6lh; } }
-@media (max-width: 391.98px) { [data-page="trust"] .page-hero .lede { min-height: 7lh; } }
-@media (max-width: 339.98px) { [data-page="trust"] .page-hero .lede { min-height: 8lh; } }
-/* the hint's two sentences, one to a line where they fit (the instruction, then what happens) */
-.tr-lt .lt-hint .ln { display: block; }
-@media (max-width: 600px) { .tr-lt .lt-hint .ln { display: inline; } }
+@media (max-width: 600px) { [data-page="trust"] .page-hero .lede { min-height: 2lh; } }
+@media (max-width: 435.98px) { [data-page="trust"] .page-hero .lede { min-height: 3lh; } }
 @media screen and (prefers-reduced-motion: no-preference) {
   [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) :is(.tp-rec, .tp-set, .tp-rj, .tp-prop) { transform-box: fill-box; transform-origin: 50% 100%; }
   [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .hp-s1 { animation: pf-fade .6s var(--ease) 0s backwards; }
@@ -260,12 +202,11 @@
 /* the head takes seven columns where it sits beside the paragraph, so "and every link after it fails." stays one line */
 @media (min-width: 961px) { .tr-ledger .tr-lead > .col-6 { grid-column-end: span 7; } }
 .tr-lt { margin-top: clamp(36px, 4vw, 60px); }
-/* the head: title and controls, then the status and how to break the record */
-.tr-lt .lt-head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title ctrl" "hint state"; row-gap: 10px; column-gap: 24px; padding-top: 12px; padding-bottom: 12px; }
+/* the head: title and controls, then the status */
+.tr-lt .lt-head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title ctrl" ". state"; row-gap: 10px; column-gap: 24px; padding-top: 12px; padding-bottom: 12px; }
 .tr-lt .lt-state { justify-self: end; }
-.tr-lt .lt-hint { grid-area: hint; justify-self: start; margin: 0; max-width: 78ch; font: 400 .8125rem/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); text-wrap: pretty; }
 @media (max-width: 960px) {
-  .tr-lt .lt-head { grid-template-areas: "title ctrl" "state state" "hint hint"; row-gap: 8px; }
+  .tr-lt .lt-head { grid-template-areas: "title ctrl" "state state"; row-gap: 8px; }
   .tr-lt .lt-state { justify-self: start; }
 }
 .tr-lt [data-lt-say] { text-transform: none; letter-spacing: 0; }
@@ -295,7 +236,6 @@
 .tr-lt .lt-rec.is-broken .lt-now { display: block; color: var(--reject); }
 @media (min-width: 601px) { .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-gap { top: 39px; } }
 .tr-lt .lt-key { display: none; }
-.tr-lt.is-broken .lt-said { display: none; }
 .tr-lt.is-broken .lt-key { display: inline; }
 .tr-lt .lt-key s { text-decoration-color: var(--reject); }
 .tr-lt .lt-key b { font-weight: 400; color: var(--reject); }
@@ -316,29 +256,17 @@
 .tr-lt .tr-enter { margin: 0; font: 400 .8125rem/1.45 var(--sans); letter-spacing: 0; color: var(--fg-2); }
 .tr-lt .tr-tap { display: none; }
 @media (hover: none) and (pointer: coarse) { .tr-lt .tr-key { display: none; } .tr-lt .tr-tap { display: inline; } }
-/* the excerpt's hedge in the foot reads as words, as on Home's stream: Inter, 12.8 px, Home's hedge tone (a11y r3 m2) */
-.tr-lt .lt-foot > span:first-child { font-family: var(--sans); font-size: .8rem; letter-spacing: 0; line-height: 1.45; color: rgba(245, 242, 236, .72); }
+/* the excerpt's hedge in the foot reads as words, as on Home's stream: Inter at the small step, Home's hedge tone */
+.tr-lt .lt-foot > span:first-child { font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; line-height: 1.45; text-transform: none; color: rgba(245, 242, 236, .72); }
 /* without JavaScript the hint and the controls stay hidden; the foot says why (Home's chain sentence; r5 copy) */
-.tr-lt .tr-nojs { flex-basis: 100%; font-family: var(--sans); font-size: .8rem; letter-spacing: 0; line-height: 1.45; color: rgba(245, 242, 236, .72); }
+.tr-lt .tr-nojs { flex-basis: 100%; font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; line-height: 1.45; color: rgba(245, 242, 236, .72); }
 @media (scripting: enabled) { .tr-lt .tr-nojs { display: none; } }
 @media (min-width: 961px) {
   .tr-lt .lt-insp.is-typing > dl:last-of-type { grid-column: 2; grid-row: 2 / span 2; }
   .tr-lt .lt-insp.is-typing > .tr-enter { grid-column: 1; grid-row: 3; }
 }
 
-/* §02 the six commitments as a register: code, name, what it means, the mechanism (one row each from 961 px) */
-@media (min-width: 961px) {
-  /* a printed register: code, title, text and mechanism share one first baseline */
-  [data-page="trust"] .tr-t > li { grid-template-columns: 52px minmax(0, 3fr) minmax(0, 5fr) minmax(0, 2.7fr); column-gap: clamp(20px, 2.4vw, 40px); padding: 26px 0 28px; align-items: baseline; }
-  [data-page="trust"] .tr-t > li > div:not(.mono) { display: contents; }
-  [data-page="trust"] .tr-t > li h3 { text-wrap: balance; }
-  [data-page="trust"] .tr-t > li p { margin-top: 0; }
-  [data-page="trust"] .tr-t > li > .mono { line-height: 1.6; text-wrap: balance; }
-}
-[data-page="trust"] .tr-t { border-top: 0; margin-top: calc(6px - clamp(36px, 5vw, 72px)); }
-[data-page="trust"] .tr-t > li .k { display: flex; flex-direction: column; gap: 12px; }
-
-/* §03 the control plane: six engraved plates on one ruled sheet, not six boxed cards */
+/* §02 the control plane: six engraved plates on one ruled sheet, each a drawing and its name */
 .tr-cp { row-gap: 40px; }
 .tr-k { --kp: clamp(20px, 2.2vw, 30px); border-left: 0; border-top: 1px solid var(--line-strong); }
 .tr-k > .tr-kp { display: flex; flex-direction: column; padding: clamp(22px, 2.2vw, 30px) var(--kp) clamp(24px, 2.4vw, 32px); background: transparent; border-radius: 0; transition: background .3s var(--ease); }
@@ -346,7 +274,6 @@
    titles and rules line up (r5 art: odd plates were 30 px wider, their titles 5-8 px lower) */
 .tr-k > .tr-kp:nth-child(2n) { border-right: 0; padding-right: 0; }
 .tr-k > .tr-kp:nth-child(2n + 1) { padding-left: 0; }
-.tr-kp .n { margin-bottom: 18px; }
 .tr-kd { margin: 4px 0 22px; color: var(--fg); }
 .tr-kd .tr-k-o6 { fill-opacity: .5; }
 .tr-kd .tr-k-o3 { fill-opacity: .28; }
@@ -354,11 +281,9 @@
    the drawn block beside it (#B4443C reads 4.48:1 here, under 4.5) */
 .tr-kd .hp-lab--acc { color: var(--signal-ink); }
 .tr-kd .hp-lab--rej { color: var(--fg-2); }
-.tr-kt h3 { margin-bottom: 8px; }
-.tr-kt p { max-width: 42ch; }
+.tr-kt h3 { margin: 0; }
 @media (hover: hover) {
   .tr-k > .tr-kp:hover { background: rgba(14, 21, 18, .025); }
-  .tr-k > .tr-kp:hover .n { color: var(--fg-2); }
 }
 .tr-k-cap { margin-top: 16px; }
 /* each plate arrives as structure first; the stop it makes (red) or the approval it signs (green) lands a beat later */
@@ -393,8 +318,27 @@
   [data-page="proof"] .cta-band h2 { font-size: min(2.6rem, calc((100vw - 40px) / 7.05)); }
 }
 
-/* §04 plain language: the same two marks as Proof's "show / do not show" */
-.tr-dn .pf-list > li { font-size: 1rem; }
+/* §03 custody: the account drawn (one scoped port in, nothing out) beside its one line */
+.tr-cu { row-gap: 32px; align-items: center; }
+.tr-cu-plate { margin: 0; }
+.tr-cud { color: var(--fg); }
+.tr-cud .hp-lab--acc { color: var(--signal-ink); }
+.tr-cud .hp-lab--rej { color: var(--fg-2); }
+.tr-cu-plate .figure-cap { margin-top: 14px; }
+@media (max-width: 960px) { .tr-cu > * { grid-column: 1 / -1; } }
+/* phones: the drawing is a third of its desktop size; the two words that carry it stay (the line above says the rest) */
+@media (max-width: 600px) { .tr-cud .tr-cu-xs { display: none; } }
+@media screen and (prefers-reduced-motion: no-preference) {
+  .tr-cud :is(.hp-r, .hp-gl, .hp-gf, .hp-lab--rej, .hp-lab--acc) { transition: opacity .35s var(--ease) .35s; }
+  .tr-cu-plate.will-reveal:not(.is-in) .tr-cud :is(.hp-r, .hp-gl, .hp-gf, .hp-lab--rej, .hp-lab--acc) { opacity: 0; }
+}
+
+/* §04 the refusals: three lines, each with the open mark (Proof's 'not shown' mark) */
+.tr-no { row-gap: 28px; }
+.tr-no-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line-strong); }
+.tr-no-list > li { display: flex; align-items: baseline; gap: 14px; padding: 18px 0 19px; border-bottom: 1px solid var(--line); font: 500 var(--fs-body)/1.45 var(--sans); color: var(--fg); text-wrap: pretty; } /* the refusals at the size they had (running text, bold lead): set, not shouted */
+.tr-no-list > li > i { flex: none; width: 10px; height: 10px; border: 1px solid var(--fg-2); transform: translateY(.05em); }
+@media (max-width: 960px) { .tr-no > * { grid-column: 1 / -1; } }
 
 /* phones: the ledger stands in one column (every record readable, no swiping); the plates become short rows */
 @media (max-width: 600px) {
@@ -426,20 +370,11 @@
   .tr-lt .lt-btn--ico > span { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
   .tr-lt .lt-btn--ico :is(.lt-x, .lt-xs) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-  /* the register on a phone: code, mark and mechanism on one line, then the commitment at full width */
-  [data-page="trust"] .tr-t > li { grid-template-columns: auto minmax(0, 1fr); column-gap: 14px; row-gap: 8px; padding: 18px 0 20px; }
-  [data-page="trust"] .tr-t > li .k { grid-row: 1; grid-column: 1; flex-direction: row; align-items: center; gap: 12px; }
-  [data-page="trust"] .tr-t > li > .mono { grid-row: 1; grid-column: 2; align-self: center; justify-self: end; font-size: .66rem; line-height: 1.45; text-align: right; }
-  [data-page="trust"] .tr-t > li > div:not(.mono) { grid-row: 2; grid-column: 1 / -1; }
-  [data-page="trust"] .tr-t > li h3 { font-size: 1.3rem; }
-  [data-page="trust"] .tr-t > li p { margin-top: 6px; font-size: .97rem; }
-
   .tr-k > .tr-kp, .tr-k > .tr-kp:nth-child(n) { display: grid; grid-template-columns: 116px minmax(0, 1fr); column-gap: 18px; padding: 18px 0 20px; border-right: 0; }
-  .tr-kp .n { grid-column: 1 / -1; margin-bottom: 12px; }
+  .tr-kp { align-items: center; }
   .tr-kd { margin: 2px 0 0; }
   .tr-kd .hp-labs { display: none; }
   .tr-kt h3 { font-size: 1.2rem; }
-  .tr-kt p { font-size: .94rem; }
 }
 /* the narrowest phones: each record on three short lines (id beside event, detail, time), the plates narrower */
 @media (max-width: 400px) {
@@ -457,7 +392,18 @@
 @keyframes tr-form-v { 0% { transform: scaleY(.3); background: var(--accent); } 55% { transform: none; background: var(--accent); } 100% { background: var(--line-strong); } }
 @media (min-width: 601px) and (max-width: 1199px) { .tr-lt .lt-x { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
 
+/* 4K at 100 % (as Home): the page keeps its proportions instead of shrinking into a 1,600 px strip; root = viewport / 150 */
+@media (min-width: 2400px) {
+  html:has(> body:is([data-page="proof"], [data-page="trust"])) { font-size: calc(100vw / 150); }
+  body:is([data-page="proof"], [data-page="trust"]) { --max: clamp(1320px, 70vw, 100rem); }
+  [data-page="proof"] .pf-record { max-width: 37.5rem; }
+  [data-page="trust"] .hero-plate--council { max-width: 35rem; }
+  /* Fig. 1.1 in rem, so its blocks and gutter grow with its labels (proofchart.css sizes them in px) */
+  [data-page="proof"] .pf { --gut: clamp(4rem, 15cqi, 6.75rem); --b: clamp(.5625rem, calc(var(--lane) * .34), 1.0625rem); --g: clamp(.125rem, calc(var(--b) * .2), .1875rem);
+    --zr: clamp(4.25rem, 12cqi, 5.5rem); --zd: 1.875rem; --zo: 1.625rem; --zg: calc(var(--ng, 1) * (var(--b) + var(--g)) + 3.6rem); }
+  [data-page="trust"] .lt { --lt-col: 9.25rem; --lt-bleed: 1rem; --lt-pr: 1.125rem; }
+}
+
 @media print {
-  .tr-lt .lt-hint { display: none; }
   .tr-cp-copy { position: static; }
 }

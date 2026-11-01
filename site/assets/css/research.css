@@ -14,34 +14,26 @@
    every page (mono mark in sentence case, no rule; the hedge in Inter at fg-3). The legend (what is drawn, in the serif)
    stays Research's: it is the reading moment beside the list. site.css sets the hedge flush right for its one-line
    captions; these captions are stacked, so the hedge keeps the legend's edge */
-:is(.research-page, .article-page) .figcap { display: grid; gap: 8px; margin: 0; }
-.figcap-n { font-variant-numeric: tabular-nums; }
-.figcap-t { font-family: var(--serif); font-size: clamp(1.3rem, 1.7vw, 1.6rem); line-height: 1.16; letter-spacing: -0.01em; color: var(--fg); text-wrap: balance; }
-.figcap-d { font-size: .9rem; line-height: 1.58; color: var(--fg-2); text-wrap: pretty; max-width: 54ch; }
-:is(.research-page, .article-page) .figcap .figcap-h { text-align: inherit; padding-top: 2px; }
-.figcap-n:empty, .figcap-d:empty { display: none; }
-/* a caption that opens on a quotation mark hangs the mark in the margin, so the words keep the edge (build + research.js) */
-.figcap-d.is-hung { text-indent: -.4em; }
+:is(.research-page, .article-page) .figcap { display: grid; gap: 6px; margin: 0; }
+:is(.research-page, .article-page) .figcap .figcap-h { text-align: inherit; }
+/* cut (1 Nov): the figures' labels name their parts, so a caption is the hedge; the index's phone strip also says what
+   is drawn (.figcap-t, written by research.js), because the labels do not fit there */
+.figcap-t { font-size: var(--fs-small); line-height: 1.4; color: var(--fg); }
+.figcap-t:empty { display: none; }
 
 /* ---------- research index: hero ---------- */
-/* the H1 sets in two lines, "The thinking / behind the swarm.", not three with "behind" alone (v2's rag). r3 (system's
-   H1 scale): the plate step (site.css --h1-plate, 89 px at 1440), as on the other pages with a hero plate.
-   The library caption is a plate caption (r3-art: the "Plate" mark, as on Platform, Lifecycles, Proof and Trust): one
-   line under the figure, as wide as their plates, ending on the meta row's line (one grid row, bottom-aligned) */
-/* r4 (r4-art m1): the plate step at every width, as the other plate heroes (47.6 px at 768, 46.4 at 390), not the
-   statement step under 961 px; the phone rule only caps it (two lines at 320) */
+/* the H1 sets in two lines, "The thinking / behind the swarm.", not three with "behind" alone (v2's rag). The plate step
+   (site.css --h1-plate) at every width; the phone rule only caps it (two lines at 320). Cut (1 Nov): the H1, one line
+   and the library figure; no kicker, no meta row, no plate caption */
 .research-hero h1.display-1 { font-size: var(--h1-plate); }
 @media (min-width: 961px) {
-  .research-hero h1.display-1 { line-height: .97; max-width: none; }
-  .research-hero .rs-herocap { grid-column: 8 / -1; align-self: end; justify-self: end; width: 100%; max-width: 500px; margin: 0; }
+  .research-hero h1.display-1 { line-height: .97; max-width: 7.2em; } /* two lines at every width ("The thinking / behind the swarm."): at 4K one line ran into the drawing */
 }
-/* r4 (r4-art m1): tablets and phones keep the plate's mark and hedge, set just under the formation, which figure.js
-   draws down to 77 % of the stage's height on phones and 83 % from 760 px (work/research/r4/probe_extent.py): the hero
-   starts there, the caption first, one line where it fits */
+/* tablets and phones: the figure, which figure.js draws down to 77 % of the stage's height on phones and 83 % from
+   760 px, then the words */
 @media (max-width: 960px) {
   .research-hero { padding-top: calc(var(--nav-h) + 51vw + 18px); }
   .research-hero .figure-stage { --figure-scale: 1.3; }
-  .research-hero .rs-herocap { order: -1; grid-column: 1 / -1; margin: 0 0 clamp(10px, 3vw, 24px); flex-direction: row; justify-content: space-between; align-items: baseline; gap: 2px 20px; }
 }
 @media (min-width: 760px) and (max-width: 960px) { .research-hero { padding-top: calc(var(--nav-h) + 54.7vw + 20px); } }
 @media (max-width: 600px) { .research-hero h1.display-1 { font-size: min(var(--h1-plate), clamp(2.6rem, 14vw, 3.4rem)); } }
@@ -49,24 +41,20 @@
 /* ---------- research index: the shelf (the list, and the plate that shows the pointed note's figure) ---------- */
 .rs-shelf { position: relative; --rs-gap: clamp(16px, 2.2vw, 32px); }
 .rs-shelf + .section { border-top: 1px solid var(--line); }
-/* r2 (r2-fidelity): 01 and 02 are one ground; the full-width rule between them ran under the pinned plate's caption.
-   02's own chapter rule (the list's width) marks the change */
-.rs-shelf > #series { border-top: 0; }
-.rs-intro { display: grid; gap: clamp(16px, 2vw, 24px); margin-bottom: clamp(32px, 4vw, 56px); }
-/* r5 (r5-art moderate): the hand-set chapter heads break between phrases (build_research PH), as Home's do. A phrase is
-   one unit that wraps inside itself only where its column is narrower than it, so no zoom or text size scrolls sideways */
+/* r2 (r2-fidelity): 01 and 02 are one ground. Cut (1 Nov): no chapter head between them; the two research notes and the
+   series read as one contents page, the series a step lower (a wider gap, its own rule) */
+.rs-shelf > #series { border-top: 0; padding-top: 0; }
+.rs-shelf > #notes { padding-bottom: clamp(36px, 4.4vw, 64px); }
+.rs-shelf > #notes .post:last-child { border-bottom: 0; } /* the series opens on its own rule */
+/* r5 (r5-art moderate): display heads break between phrases (build_research PH), as Home's do. A phrase is one unit
+   that wraps inside itself only where its column is narrower than it, so no zoom or text size scrolls sideways */
 :is(.research-page, .article-page) :is(h1, h2, h3) .ph { display: inline-block; } /* the ten titles too (PHRASES) */
-.rs-intro h2 { max-width: none; } /* the phrases are the measure: "From the unit of work / to the open platform." (15ch broke "of work to the") */
 @media (max-width: 359.98px) { .research-page h2.display-2 { font-size: 2.4rem; } } /* as Home §03's: "from market structure" fits a 320 column */
-.rs-intro p { max-width: 46ch; }
 .rs-rail { display: none; }
 .rs-plate { margin: 0; }
 .rs-stage { position: relative; overflow: hidden; border-radius: var(--r); }
 .rs-stage .figure-stage { pointer-events: auto; }
 .rs-stage .figure-stage canvas { touch-action: pan-y; }
-.rs-hint { margin: 0 0 18px; font-size: .8125rem; line-height: 1.45; color: var(--fg-3); }
-.rs-hint-t { display: none; }
-@media (hover: none) { .rs-hint-p { display: none; } .rs-hint-t { display: inline; } }
 .rs-cap { transition: opacity .14s var(--ease); }
 .rs-cap.is-swapping { opacity: 0; }
 /* the row whose figure is on the plate: v2's mark, held. It hangs in the margin, clear of the numeral, and nothing
@@ -82,10 +70,9 @@
 .research-page .posts-list .post > a { align-items: baseline; }
 .research-page .post-n { padding-top: 0; }
 .research-page .post-meta { padding-top: 0; }
-.rs-col > .sec-head + .posts-list { margin-top: calc(-1 * clamp(36px, 5vw, 72px)); border-top: 0; } /* the head's rule opens the list */
-.research-page .post-main h3 .title-sub { display: block; margin-top: .3em; font-size: max(.62em, 1.0625rem); line-height: 1.2; color: var(--fg-2); }
+.research-page .post-main h3 .title-sub { display: block; margin-top: .3em; font-size: var(--fs-body); line-height: 1.2; color: var(--fg-2); }
 .research-page .post-main h3 .t-head { display: block; }
-.research-page .scholar-link { font-family: var(--sans); font-size: .95rem; letter-spacing: 0; text-transform: none; }
+.research-page .scholar-link { font-family: var(--sans); letter-spacing: 0; text-transform: none; }
 
 @media (scripting: enabled) and (min-width: 760px) {
   /* the list keeps seven of twelve columns; the plate takes the other five and stays beside the rows */
@@ -94,8 +81,8 @@
   .rs-rail-in { height: 100%; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--rs-gap); padding-block: clamp(72px, 10vw, 150px); }
   .rs-plate { grid-column: 8 / -1; align-self: start; position: sticky; top: calc(var(--nav-h) + 28px); pointer-events: auto; }
   .rs-stage { aspect-ratio: 6 / 5; }
-  .rs-caption { padding-top: 18px; }
-  .rs-cap { min-height: 15.5em; align-content: start; }
+  .rs-caption { padding-top: 14px; }
+  .rs-cap .figcap-t { display: none; } /* the labels on the plate say it */
   .research-page .posts-list .post > a { grid-template-columns: 56px minmax(0, 1fr) auto; gap: 20px; }
   .research-page .post-main h3 { max-width: 30ch; }
 }
@@ -103,10 +90,7 @@
   .research-page .posts-list .post > a { grid-template-columns: 40px minmax(0, 1fr); gap: 14px; }
   .research-page .post-meta { grid-column: 2; padding-top: 0; }
   .research-page .post-main h3 { font-size: 1.45rem; }
-  .research-page .post-main p { font-size: .92rem; }
   .rs-stage { aspect-ratio: 1; }
-  .rs-cap { min-height: 21em; }
-  .figcap-t { font-size: 1.2rem; }
 }
 /* phones: the plate is a strip pinned to the foot of the screen while the list is read; it settles after the last note */
 @media (scripting: enabled) and (max-width: 759.98px) {
@@ -120,22 +104,20 @@
   .rs-caption { grid-column: 1; grid-row: 1; align-self: center; padding-block: 12px; }
   .rs-shelf .rs-rail { transform: translateY(101%); transition: transform .5s var(--ease); }
   .rs-shelf.is-reading .rs-rail { transform: none; }
-  .rs-hint, .rs-cap .figcap-d, .rs-rail .fig-labels { display: none; }
+  .rs-rail .fig-labels { display: none; }
   .rs-cap { gap: 5px; }
-  .rs-cap .figcap-t { font-family: var(--sans); font-size: .8125rem; line-height: 1.4; letter-spacing: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .rs-cap .figcap-t { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   /* r2 (r2-motion): the strip keeps one height whatever the note's caption, and each line its place: the title and
      the hedge are held at the longest of each at this width (research.js), so a caption swap moves nothing */
   .rs-cap .figcap-t { min-height: var(--rs-t-h, 0px); }
   .rs-cap .figcap-h { min-height: var(--rs-h-h, 0px); }
 }
-/* small phones and short screens (r1 mobile): the strip is the size of its words, not a quarter of the screen. The row
-   it shows is marked in the list (green numeral and bar), so the strip drops its "Fig. NN" line; what is drawn and the
-   hedge stay whole (r1 fix: a two-line clamp cut Fig. 09's sentence at "in the order of the…") */
+/* small phones and short screens (r1 mobile): the strip is the size of its words, not a quarter of the screen; what is
+   drawn and the hedge stay whole */
 @media (scripting: enabled) and (max-width: 360px), (scripting: enabled) and (max-width: 759.98px) and (max-height: 700px) {
   .rs-plate { min-height: 92px; gap: 12px; grid-template-columns: minmax(0, 1fr) 34%; }
   .rs-caption { padding-block: 9px; }
   .rs-cap { gap: 4px; }
-  .rs-cap .figcap-n { display: none; }
 }
 /* a short window (a phone held sideways, a desktop zoomed to 400 %): the strip is not pinned, so the list is never read
    through a slot; it stands under the list, as it does after the last note (qa-hostile, WCAG 1.4.10) */
@@ -190,10 +172,17 @@
 .figure-stage.no-figure > .rs-still { opacity: 1; } /* a lost context: the still comes back, not an empty field */
 .figure-stage.has-still.no-figure::after { content: none; } /* no globe mark over a drawn figure */
 
-/* ---------- research index: the blog collections and the four constants ---------- */
-.research-page .research-card .link-arrow { font-family: var(--sans); font-size: .875rem; letter-spacing: 0; text-transform: none; font-weight: 500; }
-@media (min-width: 601px) and (max-width: 960px) { #principles .num-list { margin-top: 8px; } }
-#principles .num-list h3 { text-wrap: balance; } /* no "to." alone on a line at 320, no full-measure line at 1440 */
+/* ---------- research index: the blog's three collections (cut, 1 Nov: no ledes; the card is the link) ---------- */
+.rs-blog-head { align-items: end; margin-bottom: clamp(32px, 4vw, 56px); }
+.rs-blog-head .row-links { display: flex; flex-wrap: wrap; gap: 14px 30px; justify-content: flex-end; }
+.research-page .research-card { display: grid; align-content: space-between; gap: 40px; min-height: clamp(160px, 13vw, 220px); }
+.research-page .research-card h3 { margin: 0; }
+.research-page .research-card .n { margin: 0; align-items: center; }
+.research-page .research-card .n .arr { width: 18px; height: 18px; transition: transform .35s var(--ease), color .3s; }
+.research-page .research-card:focus-visible .n .arr { transform: translateX(6px); color: var(--accent); }
+@media (hover: hover) { .research-page .research-card:hover .n .arr { transform: translateX(6px); color: var(--accent); } }
+@media (max-width: 960px) { .rs-blog-head .row-links { justify-content: flex-start; margin-top: 20px; } }
+@media (max-width: 600px) { .research-page .research-card { min-height: 0; gap: 18px; } }
 
 /* ---------- a note: the hero ---------- */
 /* r3 (system's H1 scale): every note's title is on site.css's article step (--h1-article, 65 px at 1440), the size the
@@ -203,43 +192,30 @@
    { 16ch }" (0,1,1) had outranked the (0,1,0) rules here, so every unsplit title was set in 16ch; note 06, the other
    long one, breaks as it did */
 .article-hero .article-title--long { max-width: 21ch; }
-.article-title .title-sub { display: block; margin-top: .4em; font-size: .46em; line-height: 1.18; letter-spacing: -0.005em; color: var(--fg-2); max-width: 30ch; }
+.article-title .title-sub { display: block; margin-top: .5em; font-size: var(--fs-heading); line-height: 1.18; letter-spacing: -0.005em; color: var(--fg-2); max-width: 30ch; }
 /* a series title breaks at its sense break: "Lifecycle 01." / "What Ten Sessions on Real Markets Taught Us" */
 .article-title .t-head { display: block; }
 .article-hero .article-title--split { max-width: 22ch; } /* "Governance in Milliseconds" holds one line under its head */
-/* the eyebrow breaks between its two parts, never inside "Series, part 7 of 8" (.nw) */
-:is(.research-page, .article-page) .nw { white-space: nowrap; } /* compounds and label parts never break inside */
-.article-hero .eyebrow { align-items: flex-start; }
-.article-hero .eyebrow::before { margin-top: .78em; flex: none; } /* the rule stays on the first line when the label wraps */
-.article-figcap .figcap-t { font-size: clamp(1.15rem, 1.5vw, 1.4rem); }
-.article-figcap .figcap-d { font-size: .84rem; }
+:is(.research-page, .article-page) .nw { white-space: nowrap; } /* compounds never break inside */
 @media (scripting: enabled) and (min-width: 961px) {
   .article-hero { padding-bottom: 0; }
-  .article-hero .figure-stage { top: calc(var(--nav-h) * .6); bottom: 9.5rem; }
+  .article-hero .figure-stage { top: calc(var(--nav-h) * .6); bottom: 7.5rem; } /* cut: the drawing sits nearer its hedge */
   .article-hero-grid { padding-bottom: 11rem; }
-  .article-figcap { position: absolute; z-index: 1; right: max(var(--gutter), calc((100% - var(--max)) / 2 + var(--gutter))); left: 56%; bottom: clamp(28px, 3vw, 44px); padding-top: 16px; border-top: 1px solid var(--line); }
+  /* cut (1 Nov): the hedge alone, under the drawing at the hero's foot, right-aligned; no rule over a single word */
+  .article-figcap { position: absolute; z-index: 1; right: max(var(--gutter), calc((100% - var(--max)) / 2 + var(--gutter))); left: 56%; bottom: clamp(36px, 4.4vw, 64px); text-align: right; }
 }
 @media (max-width: 960px) {
-  /* (0,3,0): the shared ":is(.research-page, .article-page) .figcap { margin: 0 }" had set the meta row on the rule */
-  .article-hero .figcap.article-figcap { margin-top: clamp(28px, 6vw, 40px); padding-top: 16px; border-top: 1px solid var(--line); }
-  .article-title .title-sub { font-size: .52em; }
+  /* the hedge stands under the drawing it hedges, before the title (cut, 1 Nov) */
+  .article-hero .figcap.article-figcap { order: -1; margin: 0 0 clamp(20px, 5vw, 32px); text-align: right; }
 }
-/* tablets: the figure above the title takes half the screen's width in height, not two thirds; its caption is set as a
-   plate caption in two columns (label and title left, the note's words and the hedge right) */
+/* tablets: the figure above the title takes half the screen's width in height, not two thirds */
 @media (scripting: enabled) and (min-width: 601px) and (max-width: 960px) {
   .article-hero { padding-top: calc(var(--nav-h) + 46vw); }
   .article-hero .figure-stage { height: calc(var(--nav-h) + 50vw); }
-  .article-hero .figcap.article-figcap { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(20px, 4vw, 40px); }
-  .article-figcap .figcap-n { grid-area: 1 / 1; }
-  .article-figcap .figcap-t { grid-area: 2 / 1 / span 2; align-self: start; }
-  .article-figcap .figcap-d { grid-area: 2 / 2; max-width: none; }
-  .article-figcap .figcap-h { grid-area: 3 / 2; }
 }
 
 @media (scripting: enabled) and (min-width: 760px) and (max-height: 520px) and (min-aspect-ratio: 23/20) {
   .rs-stage { aspect-ratio: auto; height: 40svh; }
-  .rs-cap { min-height: 0; }
-  .rs-cap .figcap-d, .rs-hint { display: none; }
 }
 
 /* ---------- a note: the reading column ---------- */
@@ -248,6 +224,8 @@
 .article-page .article { font-size: 1.1875rem; line-height: 1.68; }
 .article-page .article > p { max-width: 39.2rem; }
 .article-page .article > p.lead { color: var(--fg); line-height: 1.55; }
+/* a research note's standfirst (the author's italic line in the source) opens the body, set off by a rule (cut, 1 Nov) */
+.article-page .article > p.dek { margin: 0 0 1.6em; padding-bottom: 1.4em; border-bottom: 1px solid var(--line); color: var(--fg-2); }
 .article-page .article h2 { max-width: 30ch; text-wrap: balance; }
 .article-page .article > h2:first-child { margin-top: 0; } /* a note that opens on a heading (01) starts level with "In this note" */
 @media (min-width: 961px) { .article-page .article h2 { font-size: clamp(1.9rem, 2.6vw, 2.3rem); } } /* 30 px at 1024, not 27 over 19 px text */
@@ -270,35 +248,23 @@
 .toc li a { position: relative; text-wrap: balance; } /* a two-line part never ends on one word */
 .toc li.is-on a::after { content: ""; position: absolute; left: -14px; top: 9px; bottom: 9px; width: 2px; background: var(--accent); }
 @media (max-width: 960px) {
-  /* phones and tablets: the parts as one wrapped run under the hero ("01 The setup  02 The result …"), each part kept
-     whole on its line and the mono numerals doing the separating, not five 33 px rows (PAGES N-09) */
-  .article-side { margin-bottom: 8px; }
-  .article-side .eyebrow { margin-bottom: 10px; }
-  .article-page .toc { display: flex; flex-wrap: wrap; gap: 4px 1.3em; border-top: 0; font-size: .9375rem; line-height: 1.45; }
-  .article-page .toc li { border-bottom: 0; max-width: 100%; }
-  .article-page .toc li a { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .5em; padding: 2px 0; font-size: inherit; color: var(--fg); }
-  .article-page .toc li a::before { padding-top: .3em; }
-  .article-page .toc li.is-on a::after { content: none; }
-  .article-share { display: none; }
-  .article-side { border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 30px; }
+  /* phones and tablets (cut, 1 Nov): no list of parts above the text; the menu lists them (site.js reads this list) */
+  .article-page .article-side { display: none; }
   .note-run { margin-top: 36px; }
   .note-disc { margin-top: 32px; padding: 16px 18px; }
 }
 
 /* ---------- a note: after the body (the instruments it describes; the series disclosure) ---------- */
-.note-k { font-family: var(--mono); font-size: var(--mono-s); letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--fg-3); margin: 0 0 14px; }
-.note-run { margin-top: 48px; padding: 24px 0 0; border-top: 1px solid var(--line-strong); }
-.note-run ul { display: grid; gap: 12px; list-style: none; margin: 0; padding: 0; }
-.note-run .link-arrow { font-size: 1.02rem; line-height: 1.4; }
+.note-run { margin-top: 40px; }
+.note-run ul { display: grid; gap: 14px; list-style: none; margin: 0; padding: 0; }
+.note-run .link-arrow { font-size: var(--fs-body); line-height: 1.4; }
 .note-disc { margin-top: 44px; padding: 20px 22px; background: var(--paper-2); border-radius: var(--r); max-width: 66ch; }
-.note-disc p { margin: 0; font-size: .84rem; line-height: 1.6; color: var(--fg-2); }
-.note-disc p + p { margin-top: 10px; }
-.note-disc .note-k { margin-bottom: 10px; font-size: var(--mono-xs); }
+.note-disc p { margin: 0; font-size: var(--fs-small); line-height: 1.6; color: var(--fg-2); }
 /* the end matter keeps the text's measure: its rules stop where the lines stop */
 .article-page .article > :is(.article-end, .note-run, .note-disc) { max-width: 39.2rem; }
 .article-page .pager-card h3 { max-width: 36ch; } /* both cards rag alike (v2: one balanced, one a single long line) */
 .article-page .pager-card h3 .t-head { display: block; }
-.article-page .pager-card h3 .title-sub { display: block; margin-top: .3em; font-size: .7em; line-height: 1.2; color: var(--fg-2); }
+.article-page .pager-card h3 .title-sub { display: block; margin-top: .3em; font-size: var(--fs-body); line-height: 1.2; color: var(--fg-2); }
 .note-disc a { border-bottom: 1px solid var(--line-strong); transition: border-color .25s var(--ease); }
 @media (hover: hover) { .note-disc a:hover { border-color: var(--fg); } }
 /* the pager: v2's hover set the card to the colour it already had (nothing moved). Hover and focus now draw the site's
@@ -390,9 +356,15 @@
   .research-hero .lede, .article-hero .lede { font-size: 1rem; margin-top: 14px; }
   .article-hero .figure-stage[data-plate] { --figure-scale: .72; }
   .research-hero .figure-stage[data-plate] { --figure-scale: 1; } /* the wide formations (note 09's ten columns) fit the half-width stage */
-  /* r4: the plate caption stands under the figure, in the figure's half (the leaves end at 71 % of the stage's height);
-     its box is the container, which starts 24 px under the bar */
-  .research-hero .rs-herocap { position: absolute; z-index: 1; left: 54%; right: max(var(--gutter), env(safe-area-inset-right)); top: calc((100vh - var(--nav-h)) * .75 - 24px); top: calc((100svh - var(--nav-h)) * .75 - 24px); margin: 0; }
+}
+
+/* ---------- 4K at 100 % (cut, 1 Nov; as Home): the page keeps its proportions instead of shrinking into a 1600 px column ---------- */
+@media (min-width: 2400px) {
+  html:has(> body:is([data-page="research"], [data-page="note"])) { font-size: calc(100vw / 150); }
+  body:is([data-page="research"], [data-page="note"]) { --max: clamp(1320px, 70vw, 100rem); }
+  /* the hero's drawing stands inside the column, so every label it carries has room (at 3840 it ran past the content
+     edge and its right-hand labels were dropped) */
+  :is(.research-hero, .article-hero) .figure-stage { right: max(0px, calc((100vw - var(--max)) / 2)); }
 }
 
 /* ---------- reduced motion and print ---------- */
@@ -402,7 +374,7 @@
   .fl, .fl-t, .fl::after { transition: none; }
 }
 @media print {
-  .rs-rail, .rs-herocap, .article-figcap, .note-run, .fig-labels { display: none !important; }
+  .rs-rail, .article-figcap, .note-run, .fig-labels { display: none !important; }
   .rs-col { margin-right: 0 !important; }
   .posts-list .post.is-current > a::before { transform: scaleY(0) !important; }
   .posts-list .post.is-current .post-n { color: inherit !important; }

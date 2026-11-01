@@ -37,7 +37,7 @@
 
   <header class="nav">
     <div class="container">
-      <a class="brand" href="../index.html" aria-label="OpenEXA, Agentic infrastructure, home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <a class="brand" href="../index.html" aria-label="OpenEXA, home"><i class="mark"></i>OpenEXA</a>
       <nav class="nav-links" aria-label="Primary">
         <a href="../platform.html">Platform</a>
         <a href="../lifecycles.html">Lifecycles</a>
@@ -54,15 +54,14 @@
   <div class="nav-menu">
     <nav class="nav-sheet is-dark grain" id="site-menu" popover aria-label="Menu">
       <ol class="nav-sheet-links">
-        <li><a href="../platform.html"><span class="n" aria-hidden="true">01</span>Platform</a></li>
-        <li><a href="../lifecycles.html"><span class="n" aria-hidden="true">02</span>Lifecycles</a></li>
-        <li><a href="../evidence.html"><span class="n" aria-hidden="true">03</span>Proof</a></li>
-        <li><a href="../trust.html"><span class="n" aria-hidden="true">04</span>Trust</a></li>
-        <li><a href="../research.html"><span class="n" aria-hidden="true">05</span>Research</a></li>
-        <li><a href="../company.html"><span class="n" aria-hidden="true">06</span>Company</a></li>
+        <li><a href="../platform.html">Platform</a></li>
+        <li><a href="../lifecycles.html">Lifecycles</a></li>
+        <li><a href="../evidence.html">Proof</a></li>
+        <li><a href="../trust.html">Trust</a></li>
+        <li><a href="../research.html">Research</a></li>
+        <li><a href="../company.html">Company</a></li>
       </ol>
       <a class="btn" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
-      <p class="nav-sheet-meta"><span class="nav-live"><i></i>Lifecycle 01 · live on real capital</span><span>Seattle, WA</span></p>
     </nav>
   </div>
 
@@ -70,14 +69,12 @@
     <section class="page-hero page-hero--dark is-dark grain article-hero blog-post-hero">
       <div class="container post-hero">
         <div class="post-hero-copy">
-          <div class="eyebrow" data-reveal><span><a href="index.html">Blog</a> · Market structure &amp; economics</span></div>
+          <p class="post-crumb" data-reveal><a href="index.html">Blog</a></p>
           <h1 class="display-2 article-title blog-title" data-reveal>Predatory mortgage lending</h1>
-          <p class="post-byline" data-reveal><a href="../company.html#philip-bond">Dr. Philip Bond</a></p>
-          <div class="article-meta" data-reveal><span><time datetime="2008-07-01">Jul 1, 2008</time></span><span>2&nbsp;min read</span></div>
+          <p class="post-byline" data-reveal><a href="../company.html#philip-bond">Dr. Philip Bond</a><span><time datetime="2008-07-01">Jul 1, 2008</time></span><span>2&nbsp;min read</span></p>
         </div>
         <figure class="post-plate" id="plate">
           <div class="post-plate-art" aria-hidden="true"><svg class="bp-art bp-rings" viewBox="0 0 800 450" fill="none" focusable="false" aria-hidden="true"><ellipse class="pg" cx="424" cy="260" rx="84" ry="33" transform="rotate(-8 424 260)" pathLength="1"/><ellipse class="pb" cx="424" cy="260" rx="124" ry="43" transform="rotate(23 424 260)"/><ellipse class="pb" cx="424" cy="260" rx="161" ry="66" transform="rotate(4 424 260)"/><ellipse class="pb" cx="424" cy="260" rx="199" ry="63" transform="rotate(27 424 260)"/><ellipse class="pb" cx="424" cy="260" rx="233" ry="92" transform="rotate(-1 424 260)"/><ellipse class="pb" cx="424" cy="260" rx="268" ry="86" transform="rotate(14 424 260)"/></svg></div>
-          <figcaption><span class="pp-k"><b class="fc-n">Plate</b><span class="fc-d"> · </span>Market structure &amp; economics</span><span class="pp-h">The collection’s mark</span></figcaption>
         </figure>
       </div>
     </section>
@@ -85,23 +82,16 @@
     <section class="section article-body-section">
       <div class="container">
         <div class="grid">
-          <article class="col-7 offset-5 article blog-article">
+          <article class="col-7 article blog-article">
             <p class="lead">In our model, a critical assumption is that the existing lender possesses more information than the borrower. Initially, we focus on the most extreme scenario where, at time 1, the lender can perfectly predict the borrower’s income at time 2, while the borrower only knows that her likelihood of having a high income at time 2 is p. Essentially, the lender has complete foresight. However, we now relax this assumption and instead depict the lender as receiving a signal about the borrower’s income at time 2 that isn’t perfect but still informative. The results we derive remain consistent in nature. Moreover, diminishing the lender’s level of information has two opposing influences on the prevalence of predatory lending. On one hand, the lender’s limited foresight results in a decreased expectation of a negative impact on the borrower’s well-being, given the possibility that she might have a higher income at time 2 and can thus repay the loan. This effect mitigates predatory practices. On the other hand, the lender’s reduced foresight prompts a greater willingness to lend to borrowers with unfavorable signals, as there’s still some chance they could have higher incomes at time 2. This increased lending propensity could lead to more predatory behavior.</p><p>In a more formal context, we suppose that the current lender receives a signal σ ∈ {I, K}. Borrowers for whom the lender observes σ = I (respectively, σ = K) are labeled as good-signal borrowers (respectively, bad-signal borrowers). We assume that the probability of σ = I given y2 = I is Pr(σ = I|y2 = I) = Pr(σ = K|y2 = K) = 1 − ε, where ε ∈ [0, 1/2). The case where ε = 0 aligns with the primary model, while higher values of ε correspond to a reduction in the lender’s informational advantage. We define θ ≡ Pr(y2 = K|σ = K) = (1−p)(1−ε) / ((1−p)(1−ε)+pε) and φ ≡ Pr(y2 = I|σ = I) = p(1−ε) / (p(1−ε)+(1−p)ε) to represent the lender’s adjusted beliefs.</p>
-            <div class="article-end"><span class="mark" aria-hidden="true"></span><p>Originally published on openexa.com, Jul 1, 2008. A summary of work first published on faculty.washington.edu.</p><a class="link-arrow" href="http://faculty.washington.edu/apbond/research/imperfect-foresight-supp.pdf" target="_blank" rel="noopener">The original on faculty.washington.edu <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M5 11L11 5M6 5h5v5"/></svg></a></div>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span><p>A summary of work first published on <a href="http://faculty.washington.edu/apbond/research/imperfect-foresight-supp.pdf" target="_blank" rel="noopener">faculty.washington.edu<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M5 11L11 5M6 5h5v5"/></svg></a>.</p></div>
           </article>
-          <div class="col-3 article-side">
-            <div class="sticky blog-side">
-              
-              <div class="eyebrow mb-2">Market structure &amp; economics</div>
-              <a class="link-arrow" href="http://faculty.washington.edu/apbond/research/imperfect-foresight-supp.pdf" target="_blank" rel="noopener">The original on faculty.washington.edu <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M5 11L11 5M6 5h5v5"/></svg></a><a class="link-arrow" href="index.html#economics">8 posts in this collection <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a><a class="link-arrow" href="index.html">All 29 posts <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
-            </div>
-          </div>
         </div>
       </div>
     </section>
 
     <section class="section is-paper-2 section--tight">
-      <div class="container"><h2 class="sr-only">More posts</h2><div class="pager"><a class='pager-card prev' href='the-real-effects-of-financial-markets.html'><span class='k'>← Newer</span><h3>The real effects of financial markets</h3><p>Jul 11, 2012</p></a><a class='pager-card next' href='../research.html'><span class='k'>Research →</span><h3>The thinking behind the swarm.</h3><p>Two research notes and an eight-part series.</p></a></div></div>
+      <div class="container"><h2 class="sr-only">More posts</h2><div class="pager"><a class='pager-card prev' href='the-real-effects-of-financial-markets.html'><span class='k'>← Newer</span><h3>The real effects of financial markets</h3></a><a class='pager-card next' href='../research.html'><span class='k'>Research →</span><h3>The thinking behind the swarm.</h3></a></div></div>
     </section>
   </main>
 
@@ -122,7 +112,6 @@
       </div>
       <div class="bottom">
         <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
-        <span>Infrastructure for agentic lifecycles</span>
       </div>
       <div class="wordmark" aria-hidden="true" data-word="OpenEXA"></div>
     </div>

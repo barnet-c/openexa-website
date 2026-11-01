@@ -89,8 +89,7 @@ html.story-short body[data-page="home"] .story .beat-4 .body-lg { display: block
 @media (prefers-reduced-motion: reduce) { body[data-page="home"] .hero-lc01 .live, html.is-loaded body[data-page="home"] .beat-0 .hero-lc01::before { animation: none; } }
 
 /* ---------- the chapters ---------- */
-/* one number per chapter: no ghost numerals */
-body[data-page="home"] .section[data-n]::before { content: none; }
+/* (no ghost numerals: site.css no longer draws .section[data-n]::before, system cut 1 Nov) */
 
 /* §04: the hedge in the headline's group */
 body[data-page="home"] .proof-hedge { max-width: 46ch; font-size: .9rem; line-height: 1.55; color: var(--fg-2); }

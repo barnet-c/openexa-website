@@ -37,6 +37,13 @@ Changes from the source, deliberately:
     card line and bio; a typo-level fix, FIX). No other word changes.
   - 2026-10-31 (v2x r4, art): an internal link ("His research on the blog") ends in the site's drawn svg.arr, as every
     other internal text link does, not a text arrow (U+2192); external links keep their "↗". Words unchanged.
+  - 2026-11-01 (cut, the owner's word budget: "so many words everywhere"): the register says less and the bios stay, in
+    the people's own words, behind their expanders. Gone: the register codes (T-01, A-01 ...), the section row, the
+    first sentence above the figures (the figures 4 and 9 say it) and its closing clause ("with deep experience in AI,
+    capital markets and financial innovation"), the advisors' paragraph and the advisors' card lines (their kickers
+    name each one's area; the rest is in the bio). The four team members keep their card line. The expander reads
+    "Bio" (+ / x), with the person's name for screen readers. The section is named for the bar's chapter list by
+    data-chapter (02: §01 Mission left the page). Every bio, name, kicker, link and portrait is unchanged.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -191,25 +198,25 @@ def links(src_name, extra, name):
     return "".join(out)
 def srcset(slug):
     return ", ".join([f"assets/img/team/{slug}-v2x-{w}.webp {w}w" for w in SMALL] + [f"assets/img/team/{slug}-v2x.webp {SIZE}w"])
-def rows(people, prefix):
+def rows(people, line):
+    """line: the card line is drawn (the team); an advisor's row is name, kicker, bio and links (cut, 1 Nov)"""
     items, report = [], []
     for i, (slug, name, src, title, short, v1, extra) in enumerate(people):
         where, h = portrait(slug, src, v1); report.append((name, where, h))
         l = links(src, extra, name)
-        items.append(f'''          <li id="{slug}" data-reveal style="--d:{(i % 3) * 40}ms"><div class="n"><span>{prefix}-{i + 1:02d}</span></div><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{slug}-v2x.webp" srcset="{srcset(slug)}" sizes="{SIZES}" alt="" width="560" height="560" loading="lazy" decoding="async"></div><div class="who"><h3>{H.escape(name)}</h3><div class="role">{H.escape(title)}</div></div><div class="what"><p>{whole(H.escape(curly(short), quote=False))}</p><details class="crew-more"><summary><span class="when-shut">Read the full bio</span><span class="when-open">Close the bio</span><span class="sr-only"> for {H.escape(name)}</span></summary><div class="crew-bio">{bio(src)}</div></details>{f'<div class="links">{l}</div>' if l else ''}</div></li>''')
+        card = f'<p>{whole(H.escape(curly(short), quote=False))}</p>' if line else ''
+        items.append(f'''          <li id="{slug}" data-reveal style="--d:{(i % 3) * 40}ms"><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{slug}-v2x.webp" srcset="{srcset(slug)}" sizes="{SIZES}" alt="" width="560" height="560" loading="lazy" decoding="async"></div><div class="who"><h3>{H.escape(name)}</h3><div class="role">{H.escape(title)}</div></div><div class="what">{card}<details class="crew-more"><summary><span class="crew-more-l">Bio</span><span class="sr-only"> of {H.escape(name)}</span></summary><div class="crew-bio">{bio(src)}</div></details>{f'<div class="links">{l}</div>' if l else ''}</div></li>''')
     return "\n".join(items), report
 
-WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"]
-team_html, r1 = rows(TEAM, "T")
-adv_html, r2 = rows(ADVISORS, "A")
+team_html, r1 = rows(TEAM, True)
+adv_html, r2 = rows(ADVISORS, False)
 SECTION = f'''    <!-- 03 THE TEAM -->
-    <section class="section" id="team">
+    <section class="section" id="team" data-chapter="The team" data-n="02">
       <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">03</span><span class="lab">The team</span><span class="aside">Big Tech · Wall Street · the academy</span></div>
         <div class="grid t-2 team-head">
           <div class="col-6"><h2 class="display-2" data-reveal data-split>Systems people and market people, under one roof.</h2></div>
           <div class="col-5 offset-7">
-            <p class="body-lg" data-reveal style="--d:80ms">{WORDS[len(TEAM)]} people build the agents that run Lifecycle 01, guided by {WORDS[len(ADVISORS)].lower()} advisors from technology, finance and the academy. Between them, they have built and led work at Google, Microsoft, Amazon, PayPal, Goldman Sachs, Bank of America and JPMorgan Chase, with deep experience in AI, capital markets and financial innovation.</p>
+            <p class="body-lg" data-reveal style="--d:80ms">Between them, they have built and led work at Google, Microsoft, Amazon, PayPal, Goldman Sachs, Bank of America and JPMorgan&nbsp;Chase.</p>
             <div class="crew-stats" data-reveal style="--d:140ms">
               <div><b>{len(TEAM)}</b><span>Team members</span></div>
               <div><b>{len(ADVISORS)}</b><span>Advisors</span></div>
@@ -221,7 +228,7 @@ SECTION = f'''    <!-- 03 THE TEAM -->
         <ol class="crew crew--team" role="list" aria-label="The OpenEXA team">
 {team_html}
         </ol>
-        <div class="crew-sub" data-reveal><h3 class="crew-sub-h">Advisors</h3><p>Operators, scholars and specialists who advise OpenEXA on strategy, AI and machine learning, compliance and risk, networks, distributed systems and the economics of financial markets.</p></div>
+        <div class="crew-sub" data-reveal><h3 class="crew-sub-h">Advisors</h3></div>
         <ol class="crew crew--advisors" role="list" aria-label="OpenEXA advisors">
 {adv_html}
         </ol>

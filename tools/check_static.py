@@ -546,7 +546,13 @@ def check_cost_definitions():
 
 
 def chapter(s, idx):
-    """the markup of the chapter whose sec-head index reads idx, up to the next chapter's sec-head (or '')"""
+    """the markup of the chapter numbered idx, up to the next chapter (or ''). Since the 1 Nov cut a chapter names itself
+    with <section data-n="NN"> (the sec-head rows left the pages); a page that still numbers its rows is read by its
+    sec-head index as before."""
+    m = re.search(r'<section\b[^>]*\sdata-n="%s"[^>]*>' % re.escape(idx), s)
+    if m:
+        nxt = re.search(r'<section\b[^>]*(?:\sdata-n="\d\d"|class="cta-band)', s[m.end():])
+        return s[m.start():m.end() + (nxt.start() if nxt else len(s) - m.end())]
     parts = re.split(r'(?=<span class="idx">\d\d</span>)', s)
     hit = [p for p in parts if p.startswith(f'<span class="idx">{idx}</span>')]
     return hit[0] if hit else ""
@@ -557,7 +563,8 @@ def check_platform04():
     reads 'Gate 05' (or 'Gate 06'); the tags say 'In 05 · Execute' / 'In 06 · Settle' (LC-R2-1)."""
     s = (ROOT / "platform.html").read_text(encoding="utf-8")
     sec = chapter(s, "04")
-    if not sec: fail("platform.html", "platform04: no §04 (sec-head idx 04)"); return
+    if not sec: fail("platform.html", "platform04: no §04 (section data-n=04 or sec-head idx 04)"); return
+    if "three" not in H.unescape(re.sub(r"<[^>]+>", " ", sec)).lower(): fail("platform.html", "platform04: §04 no longer says three gates (its h2); re-read D3 before changing this check")
     hits = sorted(set(m[0] for m in re.finditer(r"(?i)\bgate\s+0[56]\b[^<]{0,14}", H.unescape(sec))))
     if hits: fail("platform.html", f"platform04: §04 still labels gates by number: {hits}")
 

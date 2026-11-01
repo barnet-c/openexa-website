@@ -37,7 +37,6 @@
   });
 
   /* chapters: [data-chapter] sections, else numbered sections (.sec-head), else an article's table of contents. */
-  const tagline = ($('.nav .brand small') || {}).textContent || '';
   const headOf = el => { const head = $('.sec-head', el); return head && head.closest('section') === el ? head : null; };
   const labOf = el => { const lab = headOf(el) && $('.lab', headOf(el)); return lab ? lab.textContent.trim() : ''; };
   const shortOf = el => (el.dataset.chapterShort || '').trim();
@@ -74,13 +73,12 @@
     nav.classList.add('has-ch');
     const wrap = ui.wrap = document.createElement('div'); wrap.className = 'nav-ch';
     wrap.innerHTML =
-      '<button class="nav-ch-btn" type="button" aria-expanded="false" aria-controls="nav-ch-panel"><span class="nav-ch-roll"></span>' +
+      '<button class="nav-ch-btn is-intro" type="button" aria-expanded="false" aria-controls="nav-ch-panel"><span class="nav-ch-roll"></span>' +
       '<svg class="nav-ch-caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.6l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></button>' +
-      '<div class="nav-ch-panel" id="nav-ch-panel"><div class="nav-ch-head"><span>On this page</span><span></span></div><ol class="nav-ch-list"></ol>' +
+      '<div class="nav-ch-panel" id="nav-ch-panel"><ol class="nav-ch-list"></ol>' +
       '<a class="nav-ch-top" href="#"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 8.5V1.8M2 4.6l3-3 3 3" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>Back to top</a></div>';
     brand.after(wrap);
     ui.btn = $('.nav-ch-btn', wrap); ui.roll = $('.nav-ch-roll', wrap); ui.panel = $('.nav-ch-panel', wrap); ui.list = $('.nav-ch-list', wrap);
-    $('.nav-ch-head span:last-child', wrap).textContent = pad(chapters.length) + ' chapters';
     chapters.forEach(c => {
       const li = document.createElement('li'), a = document.createElement('a');
       a.href = '#' + c.el.id; a.dataset.k = c.k;
@@ -90,7 +88,9 @@
     });
   }
 
-  /* the readout: the line rolls up to the next chapter (down when going back); its width follows. */
+  /* the readout: the line rolls up to the next chapter (down when going back); its width follows. It shows the chapter's
+     number only (1 Nov: no running head; the title is in the list); at the top of the page it is empty (site.css shows
+     it there only to a keyboard). */
   const MODES = ['is-short', 'is-compact'];
   const total = () => pad(Math.max(0, ...chapters.map(c => /^\d+$/.test(c.n) ? +c.n : 0)) || chapters.length);
   function lineFor(k, mode) {
@@ -98,8 +98,6 @@
     line.className = 'nav-ch-line';
     if (k < 0) {
       line.classList.add('is-intro');
-      line.innerHTML = '<span class="t t-wide"></span><span class="t t-short">Index</span>';
-      line.firstChild.textContent = tagline || 'Index';
     } else {
       const c = chapters[k], b = document.createElement('b'), t = document.createElement('span');
       b.textContent = c.n; if (/^\d+$/.test(c.n)) b.className = 'is-num';
@@ -146,19 +144,10 @@
     nameReadout();
   }
   /* the readout's accessible name starts with exactly what it shows */
-  const midMQ = window.matchMedia('(min-width: 961px) and (max-width: 1099.98px)'), wideMQ = window.matchMedia('(min-width: 1100px)');
-  function shownText(k) {
-    if (k < 0) return wideMQ.matches && tagline ? tagline : 'Index';
-    const c = chapters[k];
-    if (midMQ.matches) return c.n; // a narrow desktop shows the number only
-    if (c.mode === 'short' && c.short) return `${c.n} ${c.short}`;
-    if (c.mode === 'compact' && /^\d+$/.test(c.n)) return `§${c.n} / ${total()}`;
-    return `${c.n} ${c.title}`;
-  }
   function nameReadout() {
     if (!ui.btn || shownK < -1) return;
-    const shown = shownText(shownK), full = shownK < 0 ? shown : `${chapters[shownK].n} ${chapters[shownK].title}`;
-    ui.btn.setAttribute('aria-label', `${shown}${full === shown ? '' : ' · ' + chapters[shownK].title} · on this page: ${chapters.length} chapters`);
+    const c = chapters[shownK];
+    ui.btn.setAttribute('aria-label', `${c ? `${c.n} ${c.title} · ` : ''}On this page: ${chapters.length} chapters`);
   }
   function showChapter(k) {
     if (!ui.roll || k === shownK) return;
@@ -171,6 +160,7 @@
     Array.from(ui.roll.children).forEach(ch => ch.remove());
     const old = ui.line, neu = lineFor(k);
     ui.line = neu;
+    ui.btn.classList.toggle('is-intro', k < 0); // nothing to show above the first chapter (site.css)
     ui.roll.appendChild(neu);
     // a long jump (ours, or the swarm lab's record trip: html[data-jump]) lands with its readout: no roll
     if (first || !old || reducedMQ.matches || !neu.animate || document.hidden || jumping || root.dataset.jump) return;
@@ -401,17 +391,7 @@
     const inSheet = narrowMQ.matches;
     if (inSheet && ui.panel.parentElement !== sheet) { setPanel(false); sheet.prepend(ui.panel); }
     else if (!inSheet && ui.panel.parentElement !== ui.wrap) { setMenu(false); ui.wrap.appendChild(ui.panel); }
-    sheet.classList.toggle('has-ch', inSheet);
-    // the two registers in one sheet are told apart: this page's chapters, then the site's pages
-    if (inSheet && !ui.sheetHead) {
-      const links = $('.nav-sheet-links', sheet);
-      if (links) {
-        ui.sheetHead = document.createElement('div'); ui.sheetHead.className = 'nav-ch-head nav-sheet-head'; ui.sheetHead.setAttribute('aria-hidden', 'true');
-        ui.sheetHead.innerHTML = '<span>The site</span><span></span>';
-        ui.sheetHead.lastChild.textContent = pad($$('li', links).length) + ' pages';
-        links.before(ui.sheetHead);
-      }
-    }
+    sheet.classList.toggle('has-ch', inSheet); // this page's chapters (body step), then the site's pages (larger): no head rows (1 Nov)
     ui.btn.setAttribute('aria-controls', inSheet ? sheet.id : ui.panel.id);
     ui.btn.setAttribute('aria-expanded', String(inSheet ? menuOpen : chOpen));
   }
@@ -629,7 +609,7 @@
   const bottom = $('.footer .bottom');
   if (bottom) {
     const span = document.createElement('span'); span.className = 'clocks';
-    span.innerHTML = '<span><b>Seattle</b> <time data-tz="America/Los_Angeles"></time></span><span><b>New York</b> · market time <time data-tz="America/New_York"></time></span>';
+    span.innerHTML = '<span><b>Seattle</b> <time data-tz="America/Los_Angeles"></time></span><span><b>New York</b> <time data-tz="America/New_York"></time></span>';
     bottom.appendChild(span);
     const fmts = $$('time[data-tz]', span).map(t => ({ t, f: new Intl.DateTimeFormat('en-US', { timeZone: t.dataset.tz, hourCycle: 'h23', hour: '2-digit', minute: '2-digit' }) }));
     const tick = () => { const now = new Date(); fmts.forEach(({ t, f }) => { t.textContent = f.format(now); t.dateTime = now.toISOString(); }); setTimeout(tick, 60050 - now % 60000); };

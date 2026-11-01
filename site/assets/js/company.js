@@ -1,11 +1,8 @@
 /* OpenEXA — the Company page (company.html; loaded after site.js and figure.js).
-   1. The manifesto: its words are written in reading order, once, as the paragraph arrives (under half a second), and then
-      stay. v2 tied each word to the scroll position, which left the paragraph half grey for as long as it was on
-      screen; v2x: nothing stays half-lit after it arrives. In view at load, under reduced motion or without
-      IntersectionObserver: all lit at once (first paint is final, SYSTEM 5.1).
-   2. The hero plate's caption follows the mode (figure.js switches the formation and the mode caption; the plate
-      label was the same for all three).
-   3. §04, the constants plate (lab, 31 Oct): "The lifecycles vary. Four constants don't.", drawn. A proposal walks the
+   1. (cut, 1 Nov) The manifesto left the page with its section; its writer went with it (v2x r5 in git history).
+   2. The hero plate's caption follows the mode (figure.js switches the formation; the caption is the mode's name, read
+      out by screen readers: cut, 1 Nov, the mode paragraph went).
+   3. §03 (was §04), the constants plate (lab, 31 Oct): "The lifecycles vary. Four constants don't.", drawn. A proposal walks the
       loop of gates: above the boundary (agents decide), across it (C-01), below it (code executes), and is written to
       the ledger when the counterparty confirms (C-04); one pass in four is rejected at the Council and written too.
       Every second pass the loop takes another shape (another lifecycle); the boundary, the agents scoped to their
@@ -17,40 +14,6 @@
 (function () {
   'use strict';
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  /* ---------------- manifesto ---------------- */
-  $$('[data-manifesto]').forEach(el => {
-    const vh = window.innerHeight;
-    const r = el.getBoundingClientRect();
-    const inView = r.top < vh && r.bottom > 0;
-    const words = [];
-    const walk = (node) => {
-      Array.from(node.childNodes).forEach(child => {
-        if (child.nodeType === 3) {
-          const frag = document.createDocumentFragment();
-          child.textContent.split(/(\s+)/).forEach(p => {
-            if (!p) return;
-            if (/^\s+$/.test(p)) { frag.appendChild(document.createTextNode(p.replace(/[^ ]+/g, ' ') || ' ')); return; }
-            const w = document.createElement('span'); w.className = 'mw'; w.textContent = p; words.push(w); frag.appendChild(w);
-          });
-          node.replaceChild(frag, child);
-        } else if (child.nodeType === 1) walk(child);
-      });
-    };
-    walk(el);
-    const all = () => words.forEach(w => w.classList.add('is-lit'));
-    if (prefersReduced || inView || !('IntersectionObserver' in window)) { el.classList.add('is-written'); all(); return; }
-    const step = Math.min(10, 450 / Math.max(1, words.length)); // the whole paragraph in at most ~0.45 s, settled by ~0.7 s
-    const io = new IntersectionObserver(entries => {
-      if (!entries.some(e => e.isIntersecting)) return;
-      io.disconnect();
-      el.classList.add('is-writing');
-      words.forEach((w, i) => { w.style.transitionDelay = `${Math.round(i * step)}ms`; });
-      requestAnimationFrame(() => { all(); setTimeout(() => { el.classList.replace('is-writing', 'is-written'); words.forEach(w => { w.style.transitionDelay = ''; }); }, words.length * step + 400); });
-    }, { rootMargin: '0px 0px 8% 0px' }); // starts just before it scrolls in
-    io.observe(el);
-  });
 
   /* ---------------- the hero plate's caption follows the mode ---------------- */
   const label = document.querySelector('[data-plate-label]');

@@ -7,7 +7,10 @@
    blank fills with their words, the part they are typing is marked, a part left empty is drawn dashed (it will be left
    out), and a message too long for one email link says so before they press anything. On "Prepare request" it becomes
    the exact text of the draft. On phones the letter waits for the result panel (it moves there). Without JavaScript it
-   is the letter's form with its blanks. */
+   is the letter's form with its blanks.
+   cut (1 Nov, the owner's word budget): the result panel is its title, its two actions and the letter (no
+   [data-result-body] line; showResult skips it when absent); the note under the letter is empty until a message is too
+   long for one email link. */
 (function () {
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
@@ -191,7 +194,7 @@
       if (heading) heading.textContent = sent ? 'Introduction submitted.' : 'Your draft is ready.';
       if (body) body.textContent = sent
         ? 'Your introduction was accepted. You can return to the platform or edit your details to prepare another request.'
-        : 'Open it in your email app, review it and press send. Preparing the draft has not submitted your details to OpenEXA.';
+        : 'Open it in your email app, review it and press send.';
       if (mail) mail.hidden = sent;
       if (letter && sent) letter.hidden = true;
       form.hidden = true;

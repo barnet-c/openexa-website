@@ -1,8 +1,8 @@
 /* OpenEXA: the research pages (research.html and the ten notes; group "research", v2x).
    Index: one plate beside the list (#research-figure, a figure.js stage) shows the figure of the note pointed at or
    focused, and while the list scrolls (pointer elsewhere, or a touch screen), of the note at the reading line. Its
-   caption, written from that note's own words, comes from the row (data-cap-n/-t/-d/-h, written by
-   tools/build_research.py) and changes with it. The row whose figure is
+   caption comes from the row (data-cap-t, what is drawn, shown on phones only; data-cap-h, the hedge; written by
+   tools/build_research.py) and changes with it (cut, 1 Nov: the caption paragraphs and "Fig. NN" are gone). The row whose figure is
    on the plate is marked (.is-current). Without JavaScript the plate is not drawn (research.css) and the list is v2's.
    Notes: "In this note" marks the part being read (.is-on, aria-current), which v2 had styled but no longer set.
    No inline script or style (CSP); nothing here is needed to read a page. */
@@ -19,10 +19,8 @@
     const cap = $('.rs-cap', plate);
     const part = k => $('.figcap-' + k, cap);
     let current = null, swap = 0;
-    const write = li => ['n', 't', 'd', 'h'].forEach(k => {
-      const el = part(k); if (!el) return;
-      el.textContent = li.dataset['cap' + k.toUpperCase()] || '';
-      if (k === 'd') el.classList.toggle('is-hung', /^[“‘]/.test(el.textContent)); // an opening quote hangs (research.css)
+    const write = li => ['t', 'h'].forEach(k => {
+      const el = part(k); if (el) el.textContent = li.dataset['cap' + k.toUpperCase()] || '';
     });
     function choose(li) {
       if (!li || li === current || plate.closest('.no-plate')) return; // no plate (no WebGL): no row is marked
@@ -36,8 +34,8 @@
       cap.classList.add('is-swapping');
       swap = setTimeout(() => { write(li); cap.classList.remove('is-swapping'); }, 140);
     }
-    // the plate starts on the first note (its figure and caption are in the markup); mark that row
-    current = rows[0]; current.classList.add('is-current');
+    // the plate starts on the first note (its figure and hedge are in the markup); mark that row, write its caption
+    current = rows[0]; current.classList.add('is-current'); write(current);
     rows.forEach(li => {
       li.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') choose(li); });
       li.addEventListener('focusin', () => choose(li));
@@ -66,7 +64,9 @@
     let queued = false;
     const reading = () => {
       queued = false;
-      if (shelf) shelf.classList.toggle('is-reading', rows[0].getBoundingClientRect().top < window.innerHeight * 0.78);
+      // cut (1 Nov): the hero is shorter, so the first row now starts on a phone's first screen; the strip still waits
+      // for the reader's first scroll, so it never covers the first screen
+      if (shelf) shelf.classList.toggle('is-reading', window.scrollY > 24 && rows[0].getBoundingClientRect().top < window.innerHeight * 0.78);
       atLine();
     };
     const queue = () => { if (!queued) { queued = true; requestAnimationFrame(reading); } };

@@ -123,13 +123,10 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-idx button:focus-visible { outline: 1px solid var(--signal-bright); outline-offset: 2px; }
 .story-keys { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .story-stage:focus-visible .story-keys { position: static; width: auto; height: auto; overflow: visible; clip-path: none; font: var(--mono-tick)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--signal-bright); }
-.story-motion { pointer-events: auto; min-height: 44px; padding: 0 2px; font: var(--mono-tick)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58); transition: opacity .2s var(--ease); }
+.story-motion { pointer-events: auto; min-height: 44px; padding: 0 2px; font: var(--fs-small)/1 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .66); transition: opacity .2s var(--ease); } /* a control, in Inter (1 Nov) */
 .story-labels.has-insp ~ .story-bar .story-motion { opacity: .35; } /* the inspector is up: the control steps back */
 .story-motion[hidden] { display: none; }
-.story-bar .hero-scroll { position: static; display: inline-flex; color: rgba(245, 242, 236, .5); transition: opacity .5s var(--ease); }
-.story-bar .hero-scroll i { height: 22px; }
-.story.is-scrolled .hero-scroll { opacity: 0; }
-.story.is-scrolled .hero-scroll i, .story.is-scrolled .hero-stats .live, .story.is-paused .hero-scroll i, .story.is-paused .hero-stats .live { animation-play-state: paused; } /* their loops (transform, opacity) stop once S0 has gone, and with Pause motion */
+.story.is-scrolled .hero-stats .live, .story.is-paused .hero-stats .live { animation-play-state: paused; } /* its loop (transform, opacity) stops once S0 has gone, and with Pause motion */
 /* the hand-off: the columns drain into their records on the floor line */
 .story-paper { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; height: 0; overflow: hidden; visibility: hidden; background: var(--paper); color: var(--ink); pointer-events: none; }
 .story-paper-in { position: absolute; left: 0; right: 0; bottom: 0; height: 100vh; height: 100svh; } /* the stage's frame: the paper uncovers what is here, it does not carry it */
@@ -143,7 +140,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-ink-link { position: absolute; left: 0; top: 0; height: 1px; background: rgba(14, 21, 18, .34); }
 .story.is-leaving .story-lab { pointer-events: none; }
 .story-next-target:focus { outline: none; } /* the chapter the keys stepped into from the last scene: focus moves there, no ring on the section */
-.story-paper-cap { display: flex; justify-content: space-between; gap: 6px 24px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--rule-strong); font: .7rem/1.5 var(--mono); letter-spacing: .06em; color: var(--slate); }
+.story-paper-cap { display: flex; justify-content: space-between; gap: 6px 24px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--rule-strong); font: var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: var(--slate); } /* a caption, not data: the small step in Inter (1 Nov) */
 
 /* the layout modes story.js measures. */
 .story-compact .story-legend, .story-compact .beat-0 .hero-stats { display: none; }
@@ -276,7 +273,6 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   .story-idx button { padding-right: 10px; min-width: 34px; }
   .story-idx button::before, .story-idx button i { right: 10px; }
   .story-idx button .t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .story-bar .hero-scroll { display: none; }
   .beat { bottom: clamp(16px, 3vh, 34px); }
   .beat-text, .beat-0 .beat-text { max-width: 100%; }
   .beat h2 { font-size: clamp(1.85rem, 7.2vw, 3rem); max-width: 18ch; }
@@ -316,7 +312,7 @@ html.story-tiny .story .beat [data-split] .wi { transform: none; }
 html.story-tiny .story .beat-0 .hero-kicker { display: block; }
 html.story-tiny .story .beat-0 .hero-stats { display: grid; }
 html.story-tiny .story .story-coda { display: none; }
-@media (prefers-reduced-motion: reduce) { .story-bar .hero-scroll i { animation: none; opacity: .5; } .hero-stats .live { animation: none; } .story-lab, .story-leader, .story-node, .story-insp.is-on, .story-idx button, .story-num i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .hero-stats .live { animation: none; } .story-lab, .story-leader, .story-node, .story-insp.is-on, .story-idx button, .story-num i { transition: none; } }
 /* print: the overture prints as its static sequence, ink on white */
 @media print {
   .story-bar, .story-paper, .story-insp, .story-leaders, .story-legend { display: none !important; }

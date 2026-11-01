@@ -67,21 +67,22 @@ async def main():
                 await pg.evaluate("document.querySelector('.article').scrollIntoView()"); await pg.wait_for_timeout(600)
                 await pg.screenshot(path=shot(f"article-{i+1:02d}-body.png"))
             print(f"article {i+1:02d} {fig['name']:11} toc={toc} ok")
-        # company: sculpture + modes + manifesto + timeline
+        # company: sculpture + modes + timeline (1 Nov cut: the mode's copy is the plate's caption, the mode's name; the
+        # manifesto and #mission left the page, see .shots/v2x/TESTS.md section 16)
         await pg.goto(f"{BASE}/company.html", wait_until="load"); await pg.wait_for_timeout(2500)
         assert await pg.locator("#company-figure").evaluate("el => el.classList.contains('figure-ready')")
         await pg.screenshot(path=shot(f"company-hero.png"))
         await pg.locator('.company-modes button[data-figure-target="swarm"]').click(); await pg.wait_for_timeout(1500)
         assert await pg.locator("#company-figure").get_attribute("data-figure-current") == "swarm"
-        assert (await pg.locator("#company-mode-copy").inner_text()).startswith("Thousands of narrow agents")
+        assert (await pg.locator("[data-plate-label]").inner_text()).startswith("Narrow agents"), await pg.locator("[data-plate-label]").inner_text()
         await pg.screenshot(path=shot(f"company-specialize.png"))
         await pg.locator('.company-modes button[data-figure-target="boundary"]').click(); await pg.wait_for_timeout(1500)
+        assert await pg.locator("#company-figure").get_attribute("data-figure-current") == "boundary"
+        assert (await pg.locator("[data-plate-label]").inner_text()).startswith("Decide above"), await pg.locator("[data-plate-label]").inner_text()
         await pg.screenshot(path=shot(f"company-act.png"))
-        for sel, name in (("#mission", "mission"), ("#story", "story"), ("#constants", "constants"), ("#lifecycles", "lifecycles")):
+        for sel, name in (("#story", "story"), ("#team", "team"), ("#constants", "constants"), ("#lifecycles", "lifecycles")):
             await pg.evaluate(f"document.querySelector('{sel}').scrollIntoView()"); await pg.wait_for_timeout(1800)
             await pg.screenshot(path=shot(f"company-{name}.png"))
-        lit = await pg.evaluate("document.querySelectorAll('.manifesto .mw.is-lit').length")
-        assert lit > 10, ("manifesto did not light", lit)
         assert await pg.locator(".timeline").evaluate("el => el.classList.contains('is-in')")
         # homepage research chapter
         await pg.goto(f"{BASE}/index.html", wait_until="load"); await pg.wait_for_timeout(3000)
@@ -93,7 +94,7 @@ async def main():
         await pg.goto(f"{BASE}/insights.html", wait_until="load"); await pg.wait_for_timeout(800)
         assert pg.url.endswith("/research.html"), pg.url
         assert not errs, errs
-        print("desktop: research index morphs on hover, 10 articles render with TOC + figure, company modes switch, manifesto lights, 7 chapters, insights redirects")
+        print("desktop: research index morphs on hover, 10 articles render with TOC + figure, company modes switch the formation and its caption, the timeline reveals, 7 chapters, insights redirects")
         await ctx.close()
         # mobile
         ctx = await b.new_context(viewport={"width": 390, "height": 844})

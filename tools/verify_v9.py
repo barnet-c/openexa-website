@@ -431,13 +431,25 @@ async def home(b):
     await pg.locator("[data-story-motion]").click()
     # the overture reads the sessions record (#oxa-sessions): a column, a day tag and an ink copy per session; derived copy.
     # Round 1 (OV4): the coda states the derived summary instead of repeating the tally, so the tally is checked against
-    # the record wherever it is written (at least once: the beat-4 headline) instead of against two literal copies.
+    # the record wherever it is written instead of against two literal copies. v2x cut (1 Nov): the beat-4 tally "Ten for
+    # ten." left the page; the derived count is now written as the coda ("Ten of ten above the floor.") and the first
+    # screen's fact ("ten sessions above 10 bps"), so every derived number the page writes ([data-story-n] above / total /
+    # floor / tally, in the case its data-story-as asks for) must equal the record, and the coda's above and total must be
+    # there at least once.
     st = await pg.evaluate("""(() => ({ days: document.querySelectorAll('.story-labels .story-lab.day').length,
         prem: document.querySelectorAll('.story-labels .story-lab.day.is-prem').length, ink: document.querySelectorAll('.story-ink .story-lab').length,
-        tally: [...document.querySelectorAll('[data-story-n=tally]')].map(e => e.textContent) }))()""")
+        n: [...document.querySelectorAll('[data-story-n]')].map(e => [e.dataset.storyN, e.dataset.storyAs || '', e.textContent]) }))()""")
     rc = await pg.evaluate(RECORD)
     tally = capw(words(rc["above"])) + " for " + words(rc["total"]) + "."
-    assert st["days"] == rc["total"] and st["prem"] == rc["premium"] and st["ink"] == rc["total"] and st["tally"] and all(t == tally for t in st["tally"]), (st, "record", rc, "tally", tally)
+    def story_want(k, as_):
+        if k == "tally": return tally
+        v = rc.get(k)
+        if k not in ("above", "total", "floor") or v is None: return None
+        v = int(v) if float(v).is_integer() else v
+        return words(v) if as_ == "words" else capw(words(v)) if as_ == "Words" else str(v)
+    wrong = [(k, a, t, story_want(k, a)) for k, a, t in st["n"] if story_want(k, a) is not None and t != story_want(k, a)]
+    keys = {k for k, a, t in st["n"]}
+    assert st["days"] == rc["total"] and st["prem"] == rc["premium"] and st["ink"] == rc["total"] and {"above", "total"} <= keys and not wrong, (st, "record", rc, "differ", wrong)
     # the last beat has faded before the stage's exit could carry it under the bar
     await pg.evaluate("(() => { const s = document.querySelector('.story'); window.scrollTo({top: s.offsetTop + s.offsetHeight - innerHeight * 0.5, behavior: 'instant'}); })()")
     op = await until(pg, "(() => { const o = +getComputedStyle(document.querySelector('.beat-4')).opacity; return o < 0.05 ? String(o) : ''; })()", 4000)
@@ -560,15 +572,18 @@ async def home(b):
 
 @check
 async def interior(b):
-    """Proof: table rows light their sessions; Trust: the replay verifies; Platform: the explorer is ready"""
+    """Proof: pointing at a session lights it and the inspector reads its record; Trust: the replay verifies; Platform: the
+    explorer is ready. (v2x cut, 1 Nov: Table 1.1 left Proof for readers with JavaScript, it is the <noscript> record
+    now; the chart's lanes and inspector carry each session, so the hover is on the lane, not on a table row.)"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     pg = await ctx.new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.goto(f"{BASE}/evidence.html", wait_until="load")
     await expect(pg.locator("#performance [role=option]")).to_have_count(10)
-    await pg.locator("table[data-proof-table] tbody tr:nth-child(3)").hover()
+    await pg.locator("#performance .pf-lane").nth(2).scroll_into_view_if_needed()
+    await pg.locator("#performance .pf-lane").nth(2).hover()
     await expect(pg.locator("#performance .pf-lane").nth(2)).to_have_class(re.compile(r"\bis-on\b"))
-    await expect(pg.locator("table[data-proof-table] tbody tr:nth-child(3)")).to_have_class(re.compile(r"\bis-hot\b"))
+    await expect(pg.locator("#performance .pf-read")).to_contain_text("Day 03")
     await pg.goto(f"{BASE}/trust.html", wait_until="load")
     await expect(pg.locator("[data-ledger=replay] .lt-rec")).to_have_count(9)
     await expect(pg.locator("[data-ledger=replay] [data-lt-state]")).to_contain_text("9 records verify")
@@ -579,7 +594,7 @@ async def interior(b):
     assert await until(pg, "!!document.querySelector('#architecture .arch.is-wide.is-ready')", 10000), "platform explorer not ready"
     assert await pg.locator("#architecture .arch-layer").count() == 8
     assert not errs, errs
-    print("proof: table rows light their sessions; trust: 9-record trace verifies 8 of 8 links; platform: explorer ready with 8 layers")
+    print("proof: a session lights on hover and the inspector reads Day 03; trust: 9-record trace verifies 8 of 8 links; platform: explorer ready with 8 layers")
     await ctx.close()
 
 
@@ -895,8 +910,9 @@ async def access(b):
     data-contact inbox with the path in its subject and a letter for a body (greeting, who and what, the reply address,
     the name last; the attestation only when the box is ticked; no 'key: value' lines); the whole mailto URL stays within
     1,900 characters, a long message shortened with its note; the result panel takes focus and shows the letter
-    addressed to 'OpenEXA' (the inbox is never visible text); edit restores the input; on a phone the four choices carry
-    their descriptions (the path list above is not drawn) and a link to a path lands on its choice; on a phone held
+    addressed to 'OpenEXA' (the inbox is never visible text); edit restores the input; on a phone the four choices are
+    shown by name (the path list above is not drawn), a link to a path lands on its choice and the letter's ask line says
+    what that path asks for (v2x cut, 1 Nov: the four descriptions left the page at every width); on a phone held
     sideways (844x390) the letter beside the form fits the screen and the line being typed stays in view (v2x r2)"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     pg = await ctx.new_page(); errs = []
@@ -944,7 +960,7 @@ async def access(b):
     assert "[shortened to fit an email link: paste the rest here]" in body and attest in body and body.endswith("\r\n\r\nTest Person") and "Please reply to t@example.com." in body, ("long draft", len(href), body[-300:])
     assert not errs, errs
     await ctx.close()
-    # a phone: the choices carry their descriptions; a link to a path (/for-investors) lands on its choice
+    # a phone: the four choices by name; a link to a path (/for-investors) lands on its choice; the letter says what it asks
     ctx = await b.new_context(viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True, device_scale_factor=2)
     pg = await ctx.new_page()
     pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -953,9 +969,11 @@ async def access(b):
     await pg.wait_for_timeout(600)
     ph = await pg.evaluate("""(() => { const opt = document.querySelector('input[value="Qualified investor"]').closest('.opt').getBoundingClientRect();
       return { paths: (document.querySelector('.access-paths') || { getClientRects: () => [] }).getClientRects().length,
-        descs: [...document.querySelectorAll('.seg-d')].map(d => d.getClientRects().length > 0 && getComputedStyle(d).visibility !== 'hidden'),
+        names: [...document.querySelectorAll('.seg .opt label')].filter(l => l.getClientRects().length > 0 && getComputedStyle(l).visibility !== 'hidden').map(l => l.textContent.trim()),
+        ask: ((document.querySelector('[data-letter-body] [data-slot=ask]') || {}).textContent || '').trim(),
         top: Math.round(opt.top), bottom: Math.round(opt.bottom), vh: innerHeight, sw: document.documentElement.scrollWidth }; })()""")
-    assert ph["paths"] == 0 and len(ph["descs"]) == 4 and all(ph["descs"]), ("phone: the path list should fold into the four choices", ph)
+    assert ph["paths"] == 0 and ph["names"] == ["Bring a lifecycle", "Manager platform", "Platform partnership", "Qualified investor"], ("phone: the path list should fold into the four choices", ph)
+    assert "qualified-investor path" in ph["ask"], ("phone: the letter does not say what the chosen path asks for", ph)
     assert ph["bottom"] > 0 and ph["top"] < ph["vh"] and ph["sw"] <= 391, ("phone: #investors did not land on its choice", ph)
     assert not errs, errs
     await ctx.close()
@@ -979,7 +997,7 @@ async def access(b):
     await ctx.close()
     print(f"access: four paths preselect (load + hashchange); the draft to the data-contact inbox is a letter (attestation only when ticked), "
           f"{len(href)} of 1,900 characters with a long message shortened; the panel shows it to 'OpenEXA', focus moves, no inbox on screen; "
-          f"edit restores; 390: choices with descriptions, #investors lands on its choice; 844x390: the letter fits the screen and keeps the typed line in view")
+          f"edit restores; 390: the four choices by name, #investors lands on its choice and the letter says what it asks; 844x390: the letter fits the screen and keeps the typed line in view")
 
 
 @check
@@ -1006,7 +1024,10 @@ async def company(b):
     hovered = await third.evaluate("li => ({ f: getComputedStyle(li.querySelector('img')).filter, r: getComputedStyle(li.querySelector('.ph')).boxShadow })")
     assert hovered["f"] == rest["f"] == team[2]["filter"], (rest, hovered)
     assert hovered["r"] not in ("none", rest["r"]), ("no ring on hover", rest, hovered)
-    assert await pg.locator(".sec-head .idx").all_inner_texts() == ["01", "02", "03", "04", "05"]
+    # v2x cut (1 Nov): the chapters name themselves with data-chapter / data-n (the .sec-head rows left the pages; §01
+    # Mission left Company), four of them now
+    ch = await pg.evaluate("[...document.querySelectorAll('main section[data-chapter]')].map(s => s.dataset.n + ' ' + s.dataset.chapter)")
+    assert ch == ["01 The story so far", "02 The team", "03 How we build", "04 Where the work is"], ("company chapters", ch)
     assert await pg.locator(".crew--team > li").count() == 4 and await pg.locator(".crew--advisors > li").count() == 9
     names_team = await pg.locator(".crew--team > li h3").all_inner_texts()
     names_adv = await pg.locator(".crew--advisors > li h3").all_inner_texts()
@@ -1016,18 +1037,21 @@ async def company(b):
     roles = await pg.locator(".crew--advisors > li .role").all_inner_texts()
     assert all(r.upper().startswith("ADVISOR") for r in roles), roles
     assert not any("CHIEF PRODUCT" in r.upper() for r in roles), roles
-    team_ids = await pg.locator(".crew--team > li .n").all_inner_texts()
-    adv_ids = await pg.locator(".crew--advisors > li .n").all_inner_texts()
-    assert team_ids[3] == "T-04" and adv_ids[4] == "A-05", (team_ids, adv_ids)
+    # v2x cut (1 Nov): the register codes (T-04, A-05) are gone with the label noise; the order stays pinned by the names
+    # above, and no code may come back half-way (a row with a code and a row without)
+    assert await pg.locator(".crew .n").count() == 0, await pg.locator(".crew .n").all_inner_texts()
     ajit = await pg.locator(".crew--team > li").first.inner_text()
     assert "Ajit K Dubey" in ajit and not re.search(r"patent|fourteen", ajit, re.I), ajit
     more = pg.locator(".crew--team > li:nth-child(2) details.crew-more")
     assert await more.evaluate("d => !d.open")
     await more.locator("summary").click(); await pg.wait_for_timeout(300)
     assert await more.evaluate("d => d.open && d.querySelector('.crew-bio').innerText.length > 400")
+    # the expander's name says whose bio it opens (the visible word is "Bio"; v2x cut)
+    bio_name = await more.locator("summary").evaluate(r"s => s.textContent.replace(/\s+/g, ' ').trim()")
+    assert bio_name == "Bio of Dr. Tim Leung", ("the bio expander's name", bio_name)
     stats = await pg.locator(".crew-stats").inner_text()
     assert "PATENT" not in stats.upper() and "100+" in stats, stats
-    print("company: 4 team + 9 advisors (Subuddh Parekh with the advisors, 30 Oct), 13 portraits (v2x, srcset 160/320/560), one treatment at rest and on hover with the green ring, full descriptions expand, no patent count, sections 01-05")
+    print("company: 4 team + 9 advisors (Subuddh Parekh with the advisors, 30 Oct), 13 portraits (v2x, srcset 160/320/560), one treatment at rest and on hover with the green ring, full descriptions expand ('Bio of <name>'), no patent count, chapters 01-04, no register codes")
     assert await pg.locator('.crew a[href*="scholar.google.com/citations?user=P40aOHIAAAAJ"]').count() == 1
     # v2x tests pass (30 Oct): the CEO's hero, 'Intelligence, put to work.', with 'put to work.' in white italic (the
     # heading's own colour, never the signal green; CLAUDE.md)
@@ -1102,32 +1126,29 @@ async def disclosures(b):
 
 @check
 async def blog(b):
-    """blog: collections filter, hash deep link, the featured series, 29 cards"""
+    """blog: the hash deep link lands on its collection, the featured series, 29 cards, the scholar link; a series post
+    names its part and links back to the series. (v2x cut, 1 Nov: the filter chips and the post's side list of the
+    series left the pages by design, so /blog/#markets is a jump to Markets with all three collections shown, and a
+    series post says 'The Gen-AI series · Part N' in its crumb instead of marking a side list.)"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     pg = await ctx.new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.goto(f"{BASE}/blog/index.html#markets", wait_until="load")
     await pg.wait_for_timeout(900)
-    shown = await pg.evaluate("[...document.querySelectorAll('[data-blog-collection]')].filter(s => !s.hidden).map(s => s.id)")
-    assert shown == ["markets"], shown
-    await pg.locator('.blog-chips [data-blog-filter="all"]').click()
-    await pg.wait_for_timeout(600)
-    shown = await pg.evaluate("[...document.querySelectorAll('[data-blog-collection]')].filter(s => !s.hidden).length")
-    assert shown == 3, shown
+    shown = await pg.evaluate("[...document.querySelectorAll('[data-blog-collection]')].filter(s => !s.hidden && s.getClientRects().length > 0).map(s => s.id)")
+    assert sorted(shown) == ["ai", "economics", "markets"], shown
+    land = await pg.evaluate("(() => { const r = document.getElementById('markets').getBoundingClientRect(); return { top: Math.round(r.top), vh: innerHeight }; })()")
+    assert -2 <= land["top"] < land["vh"] / 2, ("/blog/#markets did not land on Markets", land)
     assert await pg.locator("#munis").count() == 0
+    assert await pg.locator(".blog-chips").count() == 0  # no filter row came back half-way (its script is not loaded)
     cards = await pg.locator(".blog-card").count()
     assert cards == 29, cards
     assert await pg.locator('#markets a[href*="scholar.google.com"]').count() == 1
     assert await pg.locator("#series .series-card").count() == 4
-    await pg.locator('.blog-chips [data-blog-filter="markets"]').click(); await pg.wait_for_timeout(400)
-    assert await pg.evaluate("document.querySelector('[data-blog-series]').hidden")
-    await pg.locator('.blog-chips [data-blog-filter="ai"]').click(); await pg.wait_for_timeout(400)
-    assert not await pg.evaluate("document.querySelector('[data-blog-series]').hidden")
     await pg.goto(f"{BASE}/blog/rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies.html", wait_until="load")
-    assert await pg.evaluate("document.querySelector('.series-box li[aria-current=\"true\"] b').textContent") == "Part 1"
-    assert await pg.locator(".series-box li").count() == 4
-    print("blog: featured Gen-AI series (4 parts) shows under All/AI, hides under other filters; series nav marks the current part")
-    print(f"blog: {cards} cards in 3 collections, filter + #hash deep link work, scholar link present")
+    crumb = await pg.evaluate("(() => { const c = document.querySelector('.post-crumb'); return c ? { text: c.textContent.replace(/\\s+/g, ' ').trim(), series: !!c.querySelector('a[href=\"index.html#series\"]') } : null; })()")
+    assert crumb and crumb["series"] and crumb["text"].endswith("Part 1"), ("the series post's crumb", crumb)
+    print(f"blog: {cards} cards in 3 collections, #markets lands on Markets, the Gen-AI series (4 parts), scholar link present; a series post names its part and links to the series")
     assert not errs, errs
     await ctx.close()
 
@@ -1231,8 +1252,8 @@ async def phone(b):
     await expect(pg.locator("#arch0-p4")).to_be_visible()
     assert await pg.evaluate("document.querySelector('#arch0-p4').previousElementSibling === document.querySelectorAll('#stack h3.arch-h')[3]")
     assert await pg.evaluate("document.documentElement.scrollWidth") == 390
-    await pg.locator(".nav-ch-btn").click()
-    await pg.locator(".nav-ch-list a").nth(3).click()
+    await pg.locator(".nav-toggle").click()  # v2x cut (1 Nov): on phones the toggle opens the sheet; its first items are the chapters
+    await pg.locator("#site-menu .nav-ch-list a").nth(3).click()
     land = await until(pg, "(() => { const t = document.querySelector('#proof').getBoundingClientRect().top, b = document.querySelector('.nav').getBoundingClientRect().bottom; return Math.abs(t - b) <= 2 ? [t, b] : null; })()", 6000)
     assert land, ("chapter 04 did not land under the bar at 390", await pg.evaluate("[document.querySelector('#proof').getBoundingClientRect().top, document.querySelector('.nav').getBoundingClientRect().bottom]"))
     await pg.locator(".nav-toggle").click()
@@ -1455,8 +1476,12 @@ async def no_js(b):
       return { loader: getComputedStyle(document.querySelector('.loader')).display, proof: q('.proof-list li'), stream: q('[data-ledger-stream] .lt-rec'),
         chain: q('.chain-list li'), gates: q('[data-sw-gates] li'), bar: getComputedStyle(document.querySelector('.swarm-bar')).display,
         layers: q('#stack .layers .layer'), before: bi < 0 ? -1 : kids.slice(0, bi).filter(e => e.classList.contains('layer')).length,
-        io: [...document.querySelectorAll('#stack .layers .layer')].every(l => l.querySelectorAll('dl.io dd').length === 2) }; })()""")
-    assert nj["loader"] == "none" and nj["proof"] == 10 and nj["stream"] == 8 and nj["chain"] == 8 and nj["gates"] == 6 and nj["bar"] == "none", nj
+        io: [...document.querySelectorAll('#stack .layers .layer')].every(l => { const h = l.querySelector('h3'), v = h && h.querySelector('small');
+          return !!v && v.textContent.trim().length > 0 && h.textContent.trim().length > v.textContent.trim().length && h.getClientRects().length > 0; }) }; })()""")
+    # v2x cut (1 Nov): Home's agent log starts from four records (was eight) and each layer of the stack shows its name and
+    # verb (the In / Out pairs left the page; the job line is the explorer's, with JavaScript); the session list is the
+    # <noscript> record now, drawn here because scripts are off
+    assert nj["loader"] == "none" and nj["proof"] == 10 and nj["stream"] == 4 and nj["chain"] == 8 and nj["gates"] == 6 and nj["bar"] == "none", nj
     assert nj["layers"] == 8 and nj["before"] == 4 and nj["io"], nj
     await pg.locator(".nav-toggle").click()
     assert await pg.evaluate("document.querySelector('#site-menu').matches(':popover-open')"), "menu sheet does not open without JavaScript"
@@ -1526,10 +1551,11 @@ async def no_webgl(b):
 
 # ================================================================ round 1 (v2) guards, one per item of the director's list
 # ---- counters: never a value other than the final one (NV1, PF1, SW3, PG10; D13)
-COUNT_ROWS = [  # page, viewport, the row's value cells, the record-derived cells (home/Proof) or the director's literals
-    ("index.html", (1440, 900), "#proof .stats .v", "record"),
-    ("evidence.html", (390, 844), ".page-hero .stats .v", "record"),
-    ("platform.html", (1440, 900), "#swarm .stats .v", ["50k"]),
+COUNT_ROWS = [  # page, viewport, the row's value cells, the record-derived cells ("record") or the director's literals
+    # v2x cut (1 Nov): every stats row the site still has. Home's row lost ">10 bps" and "10/10" (the chart and the heading
+    # say them; check_static compares those with #oxa-sessions) and keeps the CEO's 3 and 5; Proof's hero row and
+    # Platform's swarm row left the pages. The principle is unchanged: no figure ever shows a value it does not end on.
+    ("index.html", (1440, 900), "#proof .stats .v", ["3", "5"]),
     ("company.html", (1440, 900), ".crew-stats b", ["4", "9", "100+"]),
 ]
 STATIC_TEXTS = """async (sel) => { const norm = s => s.replace(/\\s+/g, ' ').trim();
@@ -1720,7 +1746,7 @@ PHONE_LAB = "(() => { " + EFF + """
   const box = el => { const r = el.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; };
   const ov = (a, b) => Math.min(a.r, b.r) - Math.max(a.l, b.l) > 1 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 1;
   const shown = el => eff(el, document.documentElement) > 0.3 && el.getBoundingClientRect().width > 0;
-  const labs = [...document.querySelectorAll('.story-labels .story-lab')].filter(shown).map(l => ({ t: l.textContent.replace(/\\s+/g, ' ').trim().slice(0, 44), full: l.textContent.replace(/\\s+/g, ' ').trim(), bx: box(l) }));
+  const labs = [...document.querySelectorAll('.story-labels .story-lab')].filter(shown).map(l => ({ t: l.textContent.replace(/\\s+/g, ' ').trim().slice(0, 44), full: l.textContent.replace(/\\s+/g, ' ').trim(), bx: box(l), cap: l.classList.contains('cap') }));
   const obst = [];
   const idx = document.querySelector('.story-idx'); if (idx && shown(idx)) obst.push(['the scene index', box(idx)]);
   const mo = document.querySelector('.story-motion'); if (mo && shown(mo)) obst.push(['Pause motion', box(mo)]);
@@ -1732,7 +1758,9 @@ PHONE_LAB = "(() => { " + EFF + """
   const issues = [];
   labs.forEach((l, i) => { obst.forEach(([n, bx]) => { if (ov(l.bx, bx)) issues.push(`'${l.t}' x ${n}`); });
     for (let j = i + 1; j < labs.length; j++) if (ov(l.bx, labs[j].bx)) issues.push(`'${l.t}' x '${labs[j].t}'`); });
-  const c3 = labs.find(l => /^(Plate|Fig\\.)\\s*0?3\\b/.test(l.t));
+  // v2x cut (1 Nov): the scene captions lost their 'Plate 03' mark (scene 3's reads 'Illustrative' only), so the caption is
+  // the scene's shown .story-lab.cap (one per scene; at scene 3's rest only its own shows), or a marked one as before
+  const c3 = labs.find(l => l.cap) || labs.find(l => /^(Plate|Fig\\.)\\s*0?3\\b/.test(l.t));
   const days = [...document.querySelectorAll('.story-labels .story-lab.day')].filter(shown).map(l => box(l)).sort((a, b) => a.l - b.l);
   return { issues, labs: labs.length, boxes: labs.map(l => [l.t, l.bx]), dayGaps: days.slice(1).map((d, k) => +(d.l - days[k].r).toFixed(1)),
     cap3: c3 ? { t: c3.full, inside: c3.bx.l >= 0 && c3.bx.t >= 0 && c3.bx.r <= innerWidth && c3.bx.b <= innerHeight, bx: [c3.bx.l, c3.bx.t, c3.bx.r, c3.bx.b].map(Math.round) } : null };
@@ -2108,14 +2136,9 @@ async def proof_entrance(b):
 
 # ---- the lifecycle lane (LC1, LC2, D2) and the desk (LC2b)
 GATES = ["Signal", "Predict", "Decide", "Approve", "Execute", "Settle"]  # the canonical gate vocabulary (_cross)
-STEPS = [  # Lifecycles §03, kept verbatim (D2): the six gates plus 07 Reconcile, with their texts
-    ("Signal", "Data agents run real-time analysis of price, NAV, basket composition and venue depth across the ETF universe."),
-    ("Predict", "Proprietary AI-ML models score the persistence of each gap and the risk of moving against it."),
-    ("Decide", "Strategy agents propose create or redeem, size and timing under portfolio-level constraints."),
-    ("Approve", "The Execution Council approves or rejects — automatic, with approval, or manual. Rejected proposals are logged too."),
-    ("Execute", "Execution agents route across clearing-and-settlement, OTC and dark-pool rails, HFT automation and dealer-brokers."),
-    ("Settle", "Clearing and settlement tracked to completion, with counterparty exposure engineered out of the design."),
-    ("Reconcile", "Every fill matched to broker truth; every transition hash-chained into the ledger."),
+STEPS = [  # Lifecycles §02 (§03 before the cut): the six gates plus 07 Reconcile (D2), by name. v2x cut (1 Nov): the seven
+    # step sentences and the eyebrow left the page (one heading and one sentence per section; the stations name the gates)
+    "Signal", "Predict", "Decide", "Approve", "Execute", "Settle", "Reconcile",
 ]
 LANE_HOME = """(() => { const q = s => document.querySelectorAll(s); const items = [...q('#lc01 [data-lane-key] > li[data-g]')];
   return { flow: q('.flow').length, lane: q('#lc01 [data-lane]').length, gates: items.map(li => [li.dataset.g, li.textContent.replace(/\\s+/g, ' ').trim()]) }; })()"""
@@ -2141,9 +2164,9 @@ async def lifecycle_lane_home(b):
 
 @check
 async def lifecycle_lane_steps(b):
-    """Lifecycles §03: the vertical lane draws the six gates plus the 07 Reconcile station (D2), each with its step text
-    unchanged, and the eyebrow 'Seven steps · one swarm · vertical execution'; no .wall on the page; with and without
-    JavaScript"""
+    """Lifecycles #lc01: the vertical lane draws the six gates plus the 07 Reconcile station (D2), 01 Signal ... 07
+    Reconcile in order; no .wall on the page; with and without JavaScript. (v2x cut, 1 Nov: the seven step sentences and
+    the eyebrow 'Seven steps · one swarm · vertical execution' left the page by design; the stations stay.)"""
     bad = []
     for js in (True, False):
         ctx, pg = await open_page(b, "lifecycles.html", 1440, 900, js=js, reduced=True)
@@ -2152,13 +2175,10 @@ async def lifecycle_lane_steps(b):
         gs = [g for g, t in m["steps"]]
         tag = f"lifecycles.html@1440x900 js={'on' if js else 'off'}"
         if m["wall"]: bad.append(f"{tag}: {m['wall']} .wall element(s)")
-        if not m["lane"] or names != [s for s, _ in STEPS] or gs != [str(k) for k in range(1, 8)]: bad.append(f"{tag}: the lane's stations read {m['steps']} (lane: {m['lane']})")
-        missing = [s for s, t in STEPS if t not in m["text"]]
-        if missing: bad.append(f"{tag}: step texts missing for {missing}")
-        if "Seven steps · one swarm · vertical execution" not in m["text"]: bad.append(f"{tag}: the eyebrow 'Seven steps · one swarm · vertical execution' is gone")
+        if not m["lane"] or names != STEPS or gs != [str(k) for k in range(1, 8)]: bad.append(f"{tag}: the lane's stations read {m['steps']} (lane: {m['lane']})")
         await ctx.close()
     assert not bad, "lifecycle_lane_steps:\n  " + "\n  ".join(bad)
-    print("lifecycle_lane_steps: six gates + 07 Reconcile with their seven texts, no .wall, with and without JavaScript")
+    print("lifecycle_lane_steps: six gates + 07 Reconcile by name, in order, no .wall, with and without JavaScript")
 
 
 @check
@@ -2177,6 +2197,7 @@ async def desk_warm_start(b):
 
 
 # ---- the phone chapter readout is never cut (NV5)
+SHEET_TITLES = """() => [...document.querySelectorAll('#site-menu .nav-ch-list a')].filter(a => !a.closest('li').hidden && a.getClientRects().length).map(a => { const t = a.querySelector('.t') || a; return [t.textContent.trim(), t.scrollWidth, t.clientWidth]; })"""
 READOUT_PAGES = ["index", "platform", "lifecycles", "evidence", "trust", "company", "research", "research/01-compounding-error", "blog/index", "access"]
 READOUT = "async () => { " + FRAMES + """ await frames(3); const lines = [...document.querySelectorAll('.nav-ch-btn .nav-ch-line')];
   const l = lines[0]; if (!l) return null;
@@ -2185,20 +2206,33 @@ READOUT = "async () => { " + FRAMES + """ await frames(3); const lines = [...doc
 
 @check
 async def nav_readout(b):
-    """at 390 and 360, on every page with chapters and for every chapter: the readout's line in .nav-ch-btn has
-    scrollWidth <= clientWidth (+1 px rounding): no chapter title is cut"""
-    bad, n = [], 0
+    """no chapter name is cut. v2x cut (1 Nov): under 961 px the bar has no readout (the menu toggle opens the sheet, whose
+    first items are this page's chapters), so at 390 and 360, on every page with chapters, the open sheet's chapter
+    titles each have scrollWidth <= clientWidth (+1 px rounding); and at 1024 (the narrowest desktop bar), for every
+    chapter, the readout's line in .nav-ch-btn fits as before (it shows the chapter's number since the cut)"""
+    bad, n, m = [], 0, 0
     for w, h in ((390, 844), (360, 780)):
+        for name in READOUT_PAGES:
+            ctx, pg = await open_page(b, f"{name}.html", w, h, reduced=True)
+            await pg.locator(".nav-toggle").click()
+            await until(pg, "document.querySelector('#site-menu').matches(':popover-open')", 3000)
+            r = await pg.evaluate(SHEET_TITLES); n += len(r)
+            bad += [f"{name}.html@{w}x{h} sheet: '{t}' needs {sw} px, has {cw}" for t, sw, cw in r if sw > cw + 1]
+            await ctx.close()
+    for w, h in ((1024, 768),):
         for name in READOUT_PAGES:
             ctx, pg = await open_page(b, f"{name}.html", w, h, reduced=True)
             hrefs = await pg.evaluate("[...document.querySelectorAll('.nav-ch-list a')].filter(a => !a.closest('li').hidden).map(a => a.getAttribute('href'))")
             for href in hrefs:
                 await pg.evaluate("(h) => { const el = document.getElementById(decodeURIComponent(h.slice(1))); if (el) window.scrollTo({top: el.getBoundingClientRect().top + scrollY - 40, behavior: 'instant'}); }", href)
-                r = await pg.evaluate(READOUT); n += 1
+                r = await pg.evaluate(READOUT)
+                if r: m += 1
                 if r and r["sw"] > r["cw"] + 1: bad.append(f"{name}.html@{w}x{h} {href}: '{r['txt']}' needs {r['sw']} px, has {r['cw']}")
             await ctx.close()
-    assert not bad, f"nav_readout: {len(bad)} cut readouts:\n  " + "\n  ".join(bad[:20])
-    print(f"nav_readout: {n} chapter readouts at 390 and 360, none cut")
+    # never vacuous: the phones' sheets list the chapters of the nine pages that have them, and the desktop bar reads them
+    assert n >= 2 * 30 and m >= 30, f"nav_readout: only {n} chapter names in the phones' sheets and {m} desktop readouts were read"
+    assert not bad, f"nav_readout: {len(bad)} cut chapter names:\n  " + "\n  ".join(bad[:20])
+    print(f"nav_readout: {n} chapter names in the phones' sheet at 390 and 360 and {m} desktop readouts at 1024, none cut")
 
 
 PILL_ACTIVE = """() => { const a = document.activeElement, sh = document.querySelector('.nav-sheet');
@@ -2208,43 +2242,53 @@ PILL_ACTIVE = """() => { const a = document.activeElement, sh = document.querySe
 
 @check
 async def pill_focus(b):
-    """v2x r5 (system; r5-a11y moderate): under 961 px the readout's pill opens the menu sheet with the keyboard and
-    focus goes where the reader is: Enter on .nav-ch-btn puts focus, with its visible ring, on the sheet's link for the
-    current chapter (a[aria-current]); Escape closes the sheet and returns focus to the pill, not to the menu toggle or
-    the page. Home 390 (touch), Platform 900, Trust 390 (touch), each read with the reader 45% down the page. Based on
-    system's .shots/v2x/work/system-r5/probe1.py pill()."""
+    """v2x r5 (system; r5-a11y moderate), re-expressed for the 1 Nov cut: under 961 px there is one menu control. The
+    readout's pill is not drawn (it read as a second menu beside the toggle; the owner's cut took the bar's running head
+    away); Enter on the menu toggle opens the sheet with this page's chapters first and the reader's chapter marked
+    (a[aria-current] is the chapter the bar names for where the reader is); Tab enters the sheet on a chapter link with
+    its visible ring (:focus-visible); Escape closes the sheet and returns focus to the toggle. Home 390 (touch),
+    Platform 900, Trust 390 (touch), each read with the reader 45% down the page."""
     said = []
     for path, w, h, touch in (("index.html", 390, 844, True), ("platform.html", 900, 900, False), ("trust.html", 390, 844, True)):
         ctx, pg = await open_page(b, path, w, h, dpr=2 if touch else 1, touch=touch)
         await pg.evaluate("window.scrollTo({top: document.body.scrollHeight * .45, behavior: 'instant'})")
-        await expect(pg.locator(".nav-ch-btn")).to_be_visible()
+        await expect(pg.locator(".nav-toggle")).to_be_visible()
         await pg.wait_for_timeout(600)
-        await pg.focus(".nav-ch-btn"); await pg.keyboard.press("Enter")
-        a1 = await until(pg, PILL_ACTIVE.replace("return a ?", "return a && document.querySelector('.nav-sheet') && document.querySelector('.nav-sheet').contains(a) ?"), 3000) or await pg.evaluate(PILL_ACTIVE)
+        pill = await pg.evaluate("(() => { const p = document.querySelector('.nav-ch-btn'); return !!p && p.checkVisibility({ visibilityProperty: true, opacityProperty: true }) && p.getBoundingClientRect().width > 0; })()")
+        await pg.focus(".nav-toggle"); await pg.keyboard.press("Enter")
+        st = await until(pg, """(() => { const sh = document.querySelector('#site-menu'); if (!sh || !sh.matches(':popover-open')) return null;
+          const cur = sh.querySelector('.nav-ch-list a[aria-current]'), lab = (document.querySelector('.nav-ch-btn') || { getAttribute: () => '' }).getAttribute('aria-label') || '';
+          const first = sh.querySelector('a[href], button'), t = cur && (cur.querySelector('.t') || cur);
+          return { current: t ? t.textContent.trim() : null, label: lab.split(' · ')[0], firstIsChapter: !!first && !!first.closest('.nav-ch-list') }; })()""", 3000)
+        await pg.keyboard.press("Tab"); await pg.wait_for_timeout(250)
+        a1 = await pg.evaluate(PILL_ACTIVE)
         await pg.keyboard.press("Escape"); await pg.wait_for_timeout(500)
-        a2 = await pg.evaluate(PILL_ACTIVE)
+        a2 = await pg.evaluate("(() => ({ toggle: document.activeElement === document.querySelector('.nav-toggle'), open: document.querySelector('#site-menu').matches(':popover-open') }))()")
         await ctx.close()
         where = f"{path}@{w}"
-        assert a1 and a1["inSheet"] and a1["tag"] == "A" and a1["current"], f"pill_focus {where}: Enter on the readout's pill left focus on {a1} (want the sheet's current-chapter link)"
-        assert a1["ring"], f"pill_focus {where}: the current-chapter link took focus without its visible ring (:focus-visible): {a1}"
-        assert a2 and a2["pill"], f"pill_focus {where}: Escape in the sheet sent focus to {a2} (want the readout's pill)"
-        said.append(f"{where}: Enter -> '{a1['text']}' (current, ring), Escape -> the pill")
+        assert not pill, f"pill_focus {where}: the readout's pill is drawn beside the menu toggle under 961 px (two menus)"
+        assert st and st["firstIsChapter"] and st["current"] and st["current"] in st["label"], f"pill_focus {where}: Enter on the toggle: the sheet {st} (want it open, this page's chapters first, the reader's chapter marked as the bar names it)"
+        assert a1 and a1["inSheet"] and a1["tag"] == "A" and a1["ring"], f"pill_focus {where}: Tab after opening the sheet left focus on {a1} (want a link inside the sheet, with its visible ring)"
+        assert a2["toggle"] and not a2["open"], f"pill_focus {where}: Escape in the sheet left {a2} (want the sheet closed and focus on the toggle)"
+        said.append(f"{where}: no pill; Enter on the toggle -> sheet, '{st['current']}' marked current; Tab -> '{a1['text']}' (ring); Escape -> the toggle")
     print("pill_focus: " + "; ".join(said))
 
 
 @check
 async def tables_phone(b):
-    """at 390, 360 and 320, every .table-scroll on /platform.html and /evidence.html has scrollWidth <= clientWidth + 1"""
+    """at 390, 360 and 320, every .table-scroll on /platform.html and /evidence.html has scrollWidth <= clientWidth + 1.
+    v2x cut (1 Nov): Proof's only table is the session record for readers without JavaScript (<noscript>; with it the
+    chart and its inspector carry each session), so Proof is read with JavaScript off, where that table is drawn."""
     bad = []
     for w, h in ((390, 844), (360, 780), (320, 640)):
         for name in ("platform", "evidence"):
-            ctx, pg = await open_page(b, f"{name}.html", w, h, reduced=True)
+            ctx, pg = await open_page(b, f"{name}.html", w, h, reduced=True, js=name != "evidence")
             m = await pg.evaluate("[...document.querySelectorAll('.table-scroll')].map(t => [t.scrollWidth, t.clientWidth])")
             over = [x for x in m if x[0] > x[1] + 1]
             if not m or over: bad.append(f"{name}.html@{w}x{h}: .table-scroll [scrollWidth, clientWidth] {m}")
             await ctx.close()
     assert not bad, "tables_phone:\n  " + "\n  ".join(bad)
-    print("tables_phone: every Platform and Proof table fits at 390, 360 and 320")
+    print("tables_phone: every Platform table (with JavaScript) and Proof's no-JS record fit at 390, 360 and 320")
 
 
 # ---- type craft: no synthesized bold (PG2)
@@ -2272,17 +2316,14 @@ async def faux_bold(b):
 
 
 # ---- Platform: the full spec without interaction (AR1); the swarm lab in §03 (SW3)
-SPEC = """async () => { const norm = s => s.replace(/\\s+/g, ' ').trim();
+SPEC = """async () => { const norm = s => (s || '').replace(/\\s+/g, ' ').trim();
   const doc = new DOMParser().parseFromString(await (await fetch(location.pathname, {cache: 'no-store'})).text(), 'text/html');
-  const layers = [...doc.querySelectorAll('#architecture .layers .layer')], want = [];
-  layers.forEach((l, i) => { const p = l.querySelector('p'); if (p) want.push(['0' + (i + 1) + ' paragraph', norm(p.textContent)]);
-    l.querySelectorAll('dl.io dd').forEach((dd, j) => want.push(['0' + (i + 1) + (j ? ' Out' : ' In'), norm(dd.textContent)])); });
-  const inner = norm(document.body.innerText), els = [...document.querySelectorAll('#architecture p, #architecture dd')];
-  const shown = e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden'; };
-  const missing = want.filter(([k, t]) => !(inner.includes(t) && els.some(e => norm(e.textContent) === t && shown(e)))).map(([k, t]) => k + ': ' + t.slice(0, 40));
-  return { layers: layers.length, want: want.length, missing }; }"""
+  // each layer of the markup: its name (the h3 without its verb) and its job line (v2x cut: data-job, the readout's text)
+  return { layers: [...doc.querySelectorAll('#architecture .layers .layer')].map(l => { const h = l.querySelector('h3').cloneNode(true), v = h.querySelector('small'); if (v) v.remove();
+    return [norm(h.textContent), norm(l.getAttribute('data-job'))]; }) }; }"""
 SPEC_TAGS = """() => { const ir = document.querySelector('#architecture .arch').getBoundingClientRect();
-  const r = [...document.querySelectorAll('#architecture .arch-list.is-tags .arch-layer')].filter(x => x.checkVisibility()).map(x => x.getBoundingClientRect());
+  // the layer buttons a reader can hit (v2x cut: no spec mode, so the list's own buttons; the r4 tags were spec-only)
+  const r = [...document.querySelectorAll('#architecture .arch-layer')].filter(x => x.checkVisibility()).map(x => x.getBoundingClientRect());
   let overlap = 0; for (let i = 0; i < r.length; i++) for (let j = i + 1; j < r.length; j++) { const a = r[i], c = r[j];
     if (a.left < c.right - .5 && c.left < a.right - .5 && a.top < c.bottom - .5 && c.top < a.bottom - .5) overlap++; }
   return { n: r.length, minH: r.length ? Math.min(...r.map(q => q.height)) : 0, overlap, outside: r.filter(q => q.left < ir.left - .5 || q.right > ir.right + .5).length,
@@ -2291,38 +2332,43 @@ SPEC_TAGS = """() => { const ir = document.querySelector('#architecture .arch').
 
 @check
 async def platform_spec(b):
-    """Platform at 1440, without any interaction: all eight layer paragraphs of §01 and their In/Out lines (from the
-    page's own markup) are in innerText with non-zero boxes"""
+    """Platform's explorer. v2x cut (1 Nov): the spec sheet under it (eight paragraphs, chip lists, In/Out pairs) left the
+    page; each layer keeps its name, verb and one job line (data-job), which the readout shows, as on Home. At 1440 the
+    markup lists the eight layers, each with its job, and pointing at each layer shows its name and that job in the
+    readout; at 900 Tab from Pause reaches layer 01, ArrowDown 02, Enter opens its panel (aria-expanded, the panel shown)
+    and Escape closes it with focus kept; on short windows (844x390, 320x256) the eight layer buttons stay targets: each
+    at least 24 px tall, none overlapping another, none outside the instrument (WCAG 2.5.8, r4)"""
     ctx, pg = await open_page(b, "platform.html", 1440, 900)
-    await pg.wait_for_timeout(1500)
     m = await pg.evaluate(SPEC)
+    await pg.evaluate("document.querySelector('#architecture .arch').scrollIntoView({block: 'center', behavior: 'instant'})")
+    assert await until(pg, "!!document.querySelector('#architecture .arch.is-wide.is-ready')", 10000), "platform explorer not ready at 1440"
+    shown = []
+    for k, (name, job) in enumerate(m["layers"]):
+        await pg.locator(f"#arch0-b{k + 1}").hover()
+        got = await until(pg, f"""(() => {{ const c = document.querySelector('#architecture .arch-card'), n = c && c.querySelector('.sum-nm'), j = c && c.querySelector('.sum-job'), norm = s => (s || '').replace(/\\s+/g, ' ').trim();
+          return c && getComputedStyle(c).opacity === '1' && n && j && norm(j.textContent) === {json.dumps(job)} ? norm(n.textContent) : ''; }})()""", 3000)
+        shown.append(got)
+    await pg.mouse.move(5, 450)
     await ctx.close()
-    assert m["layers"] == 8 and m["want"] == 24 and not m["missing"], f"platform_spec platform.html@1440x900: {m['layers']} layers, {m['want']} texts; not shown: {m['missing'][:6]}"
-    # v2x r3 (platform; r3-a11y moderate, 2.1.1): under 1000 px the narrow explorer has a keyboard way in, as §01's lede
-    # promises ("↑ ↓ and Enter"): the eight drawn plate labels are the layer buttons (.arch-list.is-tags), Tab from Pause
-    # reaches layer 01, ArrowDown 02, Enter moves focus to entry 02
+    assert len(m["layers"]) == 8 and all(j for _, j in m["layers"]) and shown == [n for n, _ in m["layers"]], f"platform_spec platform.html@1440x900: layers {[(n, j[:24]) for n, j in m['layers']]}; the readout named {shown} as each layer was pointed at (want each layer's name with its job line)"
     ctx, pg = await open_page(b, "platform.html", 900, 900)
     await pg.evaluate("document.querySelector('#architecture .arch-motion').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(1500)
     await pg.focus("#architecture .arch-motion")
     keys = []
-    for k in ("Tab", "ArrowDown", "Enter"):
-        await pg.keyboard.press(k); await pg.wait_for_timeout(500 if k == "Enter" else 200)
-        keys.append(await pg.evaluate("document.activeElement.id"))
-    tags = await pg.evaluate("[...document.querySelectorAll('#architecture .arch-list.is-tags .arch-layer')].filter(x => { const r = x.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(x).visibility !== 'hidden'; }).length")
+    for k in ("Tab", "ArrowDown", "Enter", "Escape"):
+        await pg.keyboard.press(k); await pg.wait_for_timeout(500 if k == "Enter" else 250)
+        keys.append(await pg.evaluate("[document.activeElement.id, document.activeElement.getAttribute('aria-expanded'), !!document.querySelector('#arch0-p2') && !document.querySelector('#arch0-p2').hidden]"))
     await ctx.close()
-    assert keys == ["arch0-b1", "arch0-b2", "arch0-e2"] and tags == 8, f"platform_spec platform.html@900x900: Tab, ArrowDown, Enter from Pause focus {keys} (want arch0-b1, arch0-b2, arch0-e2); {tags} of 8 layer buttons shown over the drawing"
-    # v2x r4 (platform; r4-a11y minor, WCAG 2.5.8): on short windows (sideways phone, 400% zoom) the eight layer tags stay
-    # targets: each at least 24 px tall, none overlapping another, none outside the instrument (arch.js takes both sides
-    # of the stack when the pitch is under 24 px). Based on platform's .shots/v2x/work/platform/r4/tags_probe.py
+    assert keys == [["arch0-b1", "false", False], ["arch0-b2", "false", False], ["arch0-b2", "true", True], ["arch0-b2", "false", False]], f"platform_spec platform.html@900x900: Tab, ArrowDown, Enter, Escape from Pause give [focus, aria-expanded, panel 02 shown] {keys}"
     sizes = []
     for w, h, touch in ((844, 390, True), (320, 256, False)):
         ctx, pg = await open_page(b, "platform.html", w, h, dpr=2 if touch else 1, touch=touch)
         await pg.evaluate("document.querySelector('#architecture .arch').scrollIntoView({block: 'start', behavior: 'instant'})"); await pg.wait_for_timeout(1500)
         t = await pg.evaluate(SPEC_TAGS)
         await ctx.close()
-        sizes.append(f"{w}x{h}: {t['n']} tags, least {t['minH']:.1f} px tall, {t['overlap']} overlaps, {t['outside']} outside")
+        sizes.append(f"{w}x{h}: {t['n']} layer buttons, least {t['minH']:.1f} px tall, {t['overlap']} overlaps, {t['outside']} outside")
         assert t["n"] == 8 and t["minH"] >= 23.5 and not t["overlap"] and not t["outside"], f"platform_spec platform.html@{w}x{h}: {sizes[-1]} (want 8, >= 24 px, 0, 0); sizes {t['sizes']}"
-    print("platform_spec: 8 layer paragraphs and 16 In/Out lines shown without interaction; at 900 the 8 plate labels are the layer buttons, Tab/ArrowDown/Enter reach entry 02; "
+    print("platform_spec: 8 layers in the markup with their jobs; pointing at each shows its name and job; at 900 Tab/ArrowDown/Enter/Escape open and close layer 02's panel; "
           + "; ".join(sizes))
 
 
@@ -2522,14 +2568,17 @@ PRINT_BEATS = r"""(() => { const out = [];
 @check
 async def print_home(b):
     """printing /: every overture beat's eyebrow, h1/h2 and .body-lg (S0: its lede) prints at opacity 1, visible, as dark
-    text (at least 4.5:1) on white (no dark background colour or image behind it) (OV-R2-6)"""
+    text (at least 4.5:1) on white (no dark background colour or image behind it) (OV-R2-6). v2x cut (1 Nov): the scene
+    kickers ('The work', 'The stack', 'The swarm', 'The proof') left the page, so every beat must print its headline and
+    the first its kicker ('An AI agentic company'); every one of those that exists prints dark on white, as before"""
     ctx, pg = await open_page(b, "index.html", 1280, 900)
     await pg.emulate_media(media="print"); await pg.wait_for_timeout(800)
     els = await pg.evaluate(PRINT_BEATS)
     await ctx.close()
     bad = [e for e in els if e["o"] < 0.99 or e["hidden"] or not e["w"] or e["bg"] < 0.8 or e["img"] or e["cr"] < 4.5]
-    beats = {e["beat"] for e in els if e["el"].startswith(("h1", "h2"))} & {e["beat"] for e in els if re.search(r"eyebrow|kicker", e["el"])}
-    assert beats == set(range(5)) and not bad, f"print_home index.html@1280 (print): beats with an eyebrow and a headline {sorted(beats)}; {len(bad)} of {len(els)} overture text elements do not print as dark text on white (opacity 1, contrast >= 4.5, no dark background or image behind), e.g. {bad[:4]}"
+    beats = {e["beat"] for e in els if e["el"].startswith(("h1", "h2"))}
+    kick0 = any(e["beat"] == 0 and re.search(r"eyebrow|kicker", e["el"]) for e in els)
+    assert beats == set(range(5)) and kick0 and not bad, f"print_home index.html@1280 (print): beats with a headline {sorted(beats)}, scene 0's kicker {kick0}; {len(bad)} of {len(els)} overture text elements do not print as dark text on white (opacity 1, contrast >= 4.5, no dark background or image behind), e.g. {bad[:4]}"
     print(f"print_home: {len(els)} overture text elements print at opacity 1, dark on white")
 
 
@@ -2920,7 +2969,9 @@ async def overture_rest(b):
     """where the reader stops, the copy settles: at 1440 (wheel) and 390x844 (touch), stopping at 25, 50 and 75% of each
     of the four hand-overs, the frame 1 s later (or later, once the copy has stopped changing) shows exactly one beat with
     every headline word risen (translateY <= 6%) and its .body-lg (S0: its lede) at >= .9, and no other beat's eyebrow
-    above .1; from S0 to S1 .story-num never shows '00' (every frame) (OV-R2-2)"""
+    above .1; from S0 to S1 .story-num never shows '00' (every frame) (OV-R2-2). v2x cut (1 Nov): scenes 3 and 4 have
+    no paragraph any more (the headline is the scene's one line), so a beat without a .body-lg is complete when every
+    headline word has risen; a beat that has one still needs it at >= .9"""
     bad, n = [], 0
     for w, h, touch in ((1440, 900, False), (390, 844, True)):
         tag = f"index.html@{w}x{h}" + (" touch" if touch else " wheel")
@@ -2950,7 +3001,7 @@ async def overture_rest(b):
                     if not last or st != last[0]: last = (st, fr)
                     await pg.wait_for_timeout(150)
                 n += 1
-                whole = [x["i"] for x in st if x["n"] and x["up"] == x["n"] and (x["body"] or 0) >= 0.9]
+                whole = [x["i"] for x in st if x["n"] and x["up"] == x["n"] and (x["body"] is None or x["body"] >= 0.9)]
                 eyes = [(x["i"], x["eye"]) for x in st if x["i"] not in whole and x["eye"] > 0.1]
                 if len(whole) != 1 or eyes:
                     bad.append(f"{tag} S{i}->S{i + 1} stop at {int(f * 100)}% (s={s:.2f}, y={y}): complete beats {whole}, other eyebrows {eyes}; "
@@ -3074,7 +3125,8 @@ async def jump_touch(b):
     """at 390x844 with touch, every screencast frame of Back to top (from the footer) and of a chapter jump from 01 to 06
     on home: at least 2% lit pixels below the bar (no blank frame), no band (4+ full-width rows) of the ink root #0B110F
     beside a paper view (between the bar and the paper, or between the paper and the incoming sheet), and one chapter
-    readout (never the old and the new bar both drawn) (NV-R2-2)"""
+    readout (never the old and the new bar both drawn) (NV-R2-2). v2x cut (1 Nov): phones have no readout pill; the menu
+    toggle opens the sheet that holds Back to top and the chapters, so the tap that opens it is on the toggle"""
     bad, summary = [], []
     for case in ("top", "06"):
         ctx, pg = await open_page(b, "index.html", 390, 844, touch=True)
@@ -3082,7 +3134,7 @@ async def jump_touch(b):
         if case == "top": await pg.evaluate("window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'})")
         else: await pg.evaluate("(() => { const a = document.querySelectorAll('.nav-ch-list a')[0]; const el = document.getElementById(decodeURIComponent(a.getAttribute('href').slice(1))); window.scrollTo({top: el.getBoundingClientRect().top + scrollY, behavior: 'instant'}); })()")
         await pg.wait_for_timeout(1800)
-        await bounded(pg.locator(".nav-ch-btn").tap(), "a tap on the chapter readout", 60); await pg.wait_for_timeout(700)
+        await bounded(pg.locator(".nav-toggle").tap(), "a tap on the menu toggle", 60); await pg.wait_for_timeout(700)
         bar_h = int(await pg.evaluate("Math.ceil((document.querySelector('header.nav') || document.querySelector('.nav')).getBoundingClientRect().bottom)"))
         frames = []
         def on(ev):

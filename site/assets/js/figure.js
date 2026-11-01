@@ -115,13 +115,28 @@
       return P;
     },
     // 09 · Ten sessions above the floor
+    // v2x cut (1 Nov; the site's rule: a chart never draws more above the 10 bps floor than one open unit per session):
+    // each column fills to the floor (the khaki line) and carries ONE open unit above it, an outline, not a scatter. How
+    // far above the floor a session went is not published, and the drawing no longer suggests it. The stack is centred
+    // (build_research.py LABELS["sessions"] pins its labels to these points: B, F and U move together with them)
     sessions(N, rnd, g) {
       // each column's NAV regime comes from the session record: data-regimes on the stage (p = premium, d = discount),
       // written by build_research.py from #oxa-sessions. The literal is only the fallback (the research index's morph).
       const rec = (document.querySelector('[data-figure][data-regimes]') || { dataset: {} }).dataset.regimes;
       const P = []; const regime = /^[pd]{10}$/.test(rec || '') ? rec : 'ddppppdpdd'; const per = Math.floor(N * 0.082);
-      for (let c = 0; c < 10; c++) { const x = -1.08 + c * 0.24; for (let i = 0; i < per; i++) { const u = rnd(); const y = u < 0.78 ? -0.7 + rnd() * 1.1 : -0.7 + 1.1 + Math.min(-Math.log(1 - rnd()) * 0.16, 0.5); P.push([x + (rnd() - 0.5) * 0.14, y, (rnd() - 0.5) * 0.1, regime[c] === 'p' ? 2 : 0]); } }
-      for (let i = 0; i < N * 0.08; i++) P.push([(rnd() * 2 - 1) * 1.25, 0.4 + g() * 0.005, 0.07, 1]);
+      const B = -0.72, F = 0.48, U = (F - B) / 10, w = 0.07, o0 = F + 0.025, o1 = o0 + U; // ten units to the floor; one open unit above
+      for (let c = 0; c < 10; c++) {
+        const x = -1.08 + c * 0.24, k = regime[c] === 'p' ? 2 : 0;
+        for (let i = 0; i < per; i++) {
+          if (rnd() < 0.86) { P.push([x + (rnd() - 0.5) * 2 * w, B + rnd() * (F - B), (rnd() - 0.5) * 0.1, k]); continue; }
+          // the open unit: its outline only (the perimeter, sides weighted by length)
+          const e = rnd() * (4 * w + 2 * U); let px, py;
+          if (e < 2 * w) { px = x - w + e; py = o0; } else if (e < 4 * w) { px = x - w + (e - 2 * w); py = o1; }
+          else if (e < 4 * w + U) { px = x - w; py = o0 + (e - 4 * w); } else { px = x + w; py = o0 + (e - 4 * w - U); }
+          P.push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, k]);
+        }
+      }
+      for (let i = 0; i < N * 0.08; i++) P.push([(rnd() * 2 - 1) * 1.25, F + g() * 0.005, 0.07, 1]);
       while (P.length < N) P.push([(rnd() * 2 - 1) * 1.4, (rnd() * 2 - 1) * 0.9, -0.9 - rnd() * 0.6, 7]);
       return P;
     },
@@ -226,6 +241,9 @@
   // describe a figure that is not there (research.js hides the captions and the index plate)
   const none = stage => { stage.classList.add('no-figure'); stage.dispatchEvent(new CustomEvent('figure:none', { bubbles: true })); };
   function init(stage) {
+    // v2x cut (1 Nov): a plate's labels arrive as <template data-labels> (instrument text, not page text: nothing shows them
+    // until the figure draws); they join the stage here, before the groups below are read
+    stage.querySelectorAll(':scope > template[data-labels]').forEach(t => t.replaceWith(t.content));
     const cv = stage.querySelector('canvas');
     const initial = stage.dataset.figure;
     if (!cv || !FORMS[initial]) { none(stage); return; }

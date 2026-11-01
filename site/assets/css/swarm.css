@@ -43,7 +43,7 @@
 .sw-gates li.is-council::before { left: -4px; top: -8px; width: 15px; height: 15px; border: 1.5px solid var(--accent); background: none; box-sizing: border-box; }
 .sw-gates li:nth-child(n+5)::before { border-radius: 1px; background: var(--accent); }
 .sw-gates b { font-weight: 500; color: var(--accent); }
-.sw-gates small { display: block; margin-top: 10px; font: 400 .86rem/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); }
+.sw-gates small { display: block; margin-top: 10px; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); }
 @media (max-width: 760px) {
   .sw-gates { grid-template-columns: 1fr; padding: 22px 20px 26px 34px; }
   .sw-gates li { padding: 0 0 18px 18px; border-top: 0; border-left: 1px solid var(--line-strong); }
@@ -205,9 +205,9 @@
 /* Platform §03: the swarm's four facts as one compact static row */
 .stats.sw-spec { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: clamp(36px, 4.5vw, 64px) 0 clamp(28px, 3vw, 40px); }
 .stats.sw-spec > div { padding: clamp(16px, 1.6vw, 22px) clamp(14px, 1.6vw, 22px); }
-.stats.sw-spec .v { font-size: clamp(2rem, 2.8vw, 2.75rem); }
+.stats.sw-spec .v { font-size: var(--fs-heading); }
 .stats.sw-spec .k { margin-top: 10px; }
-.stats.sw-spec .d { margin-top: 6px; font-size: .88rem; }
+.stats.sw-spec .d { margin-top: 6px; font-size: var(--fs-small); }
 .sw-legend .card { display: flex; flex-direction: column; padding-top: clamp(24px, 2.4vw, 32px); }
 .sw-legend .card > p:not(.sw-at) { margin-bottom: 22px; }
 .sw-legend .card .n { gap: 12px; } /* narrow cards: the code never splits at its hyphen; the role name wraps, flush right */

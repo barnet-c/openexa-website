@@ -230,7 +230,7 @@
 .chain-row .display-3 { max-width: 13ch; }
 /* §06: the five governance terms as one spec row, leading into the ledger */
 .gov-spec { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--line-strong); }
-.gov-spec li { padding: 18px 22px 2px 0; color: var(--fg-2); font-size: .95rem; line-height: 1.5; }
+.gov-spec li { padding: 18px 22px 2px 0; color: var(--fg-2); font-size: var(--fs-small); line-height: 1.5; }
 .gov-spec li + li { padding-left: 22px; border-left: 1px solid var(--line); }
 .gov-spec b { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font: 500 var(--mono-s, .6875rem)/1.4 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); }
 .gov-spec b::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--accent); background: radial-gradient(circle at center, var(--accent) 0 2px, transparent 2.5px); }
@@ -246,7 +246,7 @@
 }
 /* the key: the chain's three marks, drawn in ink on paper */
 .chain-key { border-top: 1px solid var(--line); }
-.chain-key li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: .92rem; line-height: 1.5; color: var(--fg-2); }
+.chain-key li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-small); line-height: 1.5; color: var(--fg-2); }
 .chain-key b { display: block; margin-bottom: 2px; font: 500 var(--mono-s, .6875rem)/1.6 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); }
 .chain-key i { position: relative; display: block; width: 28px; height: 34px; }
 .chain-key .k-node::before { content: ""; position: absolute; left: 8px; top: 4px; width: 11px; height: 11px; background: var(--ink); }
