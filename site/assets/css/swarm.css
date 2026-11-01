@@ -7,6 +7,8 @@
    Mono labels never go under 10 px (--mono-xs) and keep .12em tracking. */
 .swarm-live { position: relative; border: 1px solid var(--line-strong); border-radius: var(--r); background: #0B110F; overflow: hidden; margin-bottom: 40px; }
 .sw-head { display: flex; align-items: center; gap: 10px 22px; flex-wrap: wrap; min-height: 56px; padding: 8px 12px 8px 20px; border-bottom: 1px solid var(--line); font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
+/* the hedge reads at the labels' 11 px in the hedge tone, never smaller or dimmer than the counts it qualifies (r3-a11y m2) */
+.sw-head .sw-kicker { font-size: var(--mono-xs); color: var(--fg-2); }
 .sw-live, .sw-follow, .sw-key, .sw-on .sw-gates small, .sw-limit, .sw-ledger, .sw-bound, .sw-banner, .sw-agent, .sw-hover, .sw-trace, .swarm-live:not(.sw-on) .swarm-bar { display: none; }
 .sw-on .sw-live { display: inline-flex; align-items: center; gap: 9px; color: var(--accent); min-width: 8.5em; }
 /* the state light: a still dot (system r2: no "live" pulse on an illustrative model; the word carries the state) */

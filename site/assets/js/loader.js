@@ -8,9 +8,10 @@
    arriving from another page of the site) gets the short version: the mark, no count, for as long as the stage needs and
    no longer.
    The failsafe: 1.9-2.2 s after navigation the loader is gone (v2x; it was 2.3-2.6 s). A fade on the document timeline (the compositor runs it, so
-   scripts that hold the main thread cannot delay it) takes it away at that moment unless the curtain has lifted; any
-   step of this script that would run later than that removes the loader at once instead (no count, no curtain), so a
-   late script never shows it again, and a timer removes it then whatever else is running. Without this script a CSS
+   scripts that hold the main thread cannot delay it) takes it away at that moment unless the curtain has lifted; a
+   count that has not reached 100 by then is never shown again (the loader is removed at once: no count, no curtain),
+   and a timer removes it then whatever else is running. A count that reached 100 before it always lifts its curtain,
+   even when a long task holds the lift a little past it (r3), unless the fade has already finished. Without this script a CSS
    animation (v2:nav) still fades it out 1.9-2.2 s after its first frame. While the loader is up, Tab stays on the skip link:
    nothing hidden beneath the loader takes keyboard focus. (The page is not made inert, which would restyle all of it
    twice on the loader's path; reading the loader's own animations needs only the styles its first frame computes.)
@@ -88,10 +89,12 @@
     shown = t; count.textContent = t;
     if (dial && !seen) dial.style.setProperty('--lp', (n / 100).toFixed(2));
   };
-  // the curtain: it starts moving at once and takes over from the CSS failsafe (.is-done stops it)
+  // the curtain: it starts moving at once and takes over from the CSS failsafe (.is-done stops it). Once the count has
+  // reached 100 the curtain always lifts, even when a long task held its beat past LATE (r3: that was a cut from '100'
+  // straight to the hero); only after the failsafe has faded the loader out (LATE + 300) is it simply taken away.
   const lift = () => {
     if (gone) return;
-    if (performance.now() >= LATE) { drop(); return; }
+    if (performance.now() >= LATE + 300) { drop(); return; } // (lift only follows complete(), which drops at LATE)
     loader.classList.add('is-done');
     setTimeout(() => { if (!gone) { gone = true; loader.remove(); } }, seen ? 500 : 900);
   };
@@ -104,8 +107,9 @@
     body.classList.remove('is-loading');
     hold(false);
     loaded();
-    // the decision reads for a beat (100, the aperture pulses green), then the curtain lifts
-    if (seen) lift(); else setTimeout(lift, 90);
+    // the decision reads for a beat (100, the aperture pulses green), then the curtain lifts; no beat when it would
+    // end within 60 ms of the failsafe's moment
+    if (seen || performance.now() + 90 >= LATE - 60) lift(); else setTimeout(lift, 90);
   };
   const schedule = () => {
     if (finishAt) return;

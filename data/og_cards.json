@@ -1,5 +1,5 @@
 {
- "access.html": "0ce3b4236426b48d",
+ "access.html": "ccfb015f61c0295b",
  "blog/an-optimization-algorithm-for-sparse-mean-reverting-portfolio-selection.html": "98341c138aed1ff5",
  "blog/automation-financial-frictions-and-the-long-run-labor-share.html": "01fc541cf5a0cec0",
  "blog/buying-high-and-selling-low-stock-repurchases-and-persistent-asymmetric-information.html": "3b9cfcb32a52c764",
@@ -38,13 +38,13 @@
  "research.html": "30a503ff54a81724",
  "research/01-compounding-error.html": "7799c303820576f8",
  "research/02-post-training-and-audit.html": "17fdcf95dadef6c8",
- "research/03-not-tasks-lifecycles.html": "82cd92dae295b86c",
- "research/04-five-thousand-small-agents.html": "534ff8701132e993",
+ "research/03-not-tasks-lifecycles.html": "06df3232d6116e8e",
+ "research/04-five-thousand-small-agents.html": "dd4201cd4e720c53",
  "research/05-agents-decide-code-executes.html": "ebca13e59006d95d",
  "research/06-post-training-on-a-rulebook.html": "7ec1eab6891ea09e",
- "research/07-the-execution-council.html": "6b482689f2a6bfcd",
+ "research/07-the-execution-council.html": "d857022a553abd0d",
  "research/08-a-ledger-nobody-can-edit.html": "547fdf993f3e7a2a",
- "research/09-lifecycle-01-ten-sessions.html": "7223cfde14f0ebbf",
- "research/10-master-and-copy.html": "9c09cbfef6233bc7",
+ "research/09-lifecycle-01-ten-sessions.html": "d616fee6470cda7a",
+ "research/10-master-and-copy.html": "90434e34b21fb1fb",
  "trust.html": "4a2cd7fd3e43e7a9"
 }

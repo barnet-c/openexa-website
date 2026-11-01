@@ -24,13 +24,14 @@
 .figcap-d.is-hung { text-indent: -.4em; }
 
 /* ---------- research index: hero ---------- */
-/* the H1 sets in two lines, "The thinking behind / the swarm.", not three with "behind" alone (v2's rag); the size
-   stays the largest of the inner pages. The library caption ends on the meta row's line (one grid row, bottom-aligned) */
+/* the H1 sets in two lines, "The thinking / behind the swarm.", not three with "behind" alone (v2's rag). r3 (system's
+   H1 scale): the plate step (site.css --h1-plate, 89 px at 1440), as on the other pages with a hero plate.
+   The library caption is a plate caption (r3-art: the "Plate" mark, as on Platform, Lifecycles, Proof and Trust): one
+   line under the figure, as wide as their plates, ending on the meta row's line (one grid row, bottom-aligned) */
 @media (min-width: 961px) {
-  .research-hero h1.display-1 { font-size: clamp(3.4rem, 6.8vw, 6.2rem); line-height: .97; max-width: none; }
-  .research-hero .rs-herocap { grid-column: 9 / -1; align-self: end; justify-self: end; max-width: 30ch; text-align: right; gap: 4px; }
+  .research-hero h1.display-1 { font-size: var(--h1-plate); line-height: .97; max-width: none; }
+  .research-hero .rs-herocap { grid-column: 8 / -1; align-self: end; justify-self: end; width: 100%; max-width: 500px; margin: 0; }
 }
-.rs-herocap .figcap-t { font-family: var(--sans); font-size: .8125rem; line-height: 1.45; letter-spacing: 0; color: var(--fg-2); }
 @media (max-width: 960px) { .research-hero .rs-herocap { display: none; } .research-hero .figure-stage { --figure-scale: 1.3; } }
 @media (max-width: 600px) { .research-hero h1.display-1 { font-size: clamp(2.6rem, 14vw, 3.4rem); } } /* two lines at 320 too */
 
@@ -175,8 +176,10 @@
 #principles .num-list h3 { text-wrap: balance; } /* no "to." alone on a line at 320, no full-measure line at 1440 */
 
 /* ---------- a note: the hero ---------- */
+/* r3 (system's H1 scale): every note's title is on site.css's article step (--h1-article, 65 px at 1440), the size the
+   long titles had; only the measures are Research's */
 .article-title { max-width: 18ch; }
-.article-title--long { font-size: clamp(2.3rem, 4.5vw, 4.3rem); max-width: 19ch; }
+.article-title--long { max-width: 19ch; }
 .article-title .title-sub { display: block; margin-top: .4em; font-size: .46em; line-height: 1.18; letter-spacing: -0.005em; color: var(--fg-2); max-width: 30ch; }
 /* a series title breaks at its sense break: "Lifecycle 01." / "What Ten Sessions on Real Markets Taught Us" */
 .article-title .t-head { display: block; }
@@ -196,7 +199,6 @@
 @media (max-width: 960px) {
   /* (0,3,0): the shared ":is(.research-page, .article-page) .figcap { margin: 0 }" had set the meta row on the rule */
   .article-hero .figcap.article-figcap { margin-top: clamp(28px, 6vw, 40px); padding-top: 16px; border-top: 1px solid var(--line); }
-  .article-title--long { font-size: clamp(2.2rem, 8vw, 3.2rem); }
   .article-title .title-sub { font-size: .52em; }
 }
 /* tablets: the figure above the title takes half the screen's width in height, not two thirds; its caption is set as a
@@ -318,22 +320,27 @@
 /* --lead: the rule's reach (figure.js; 19 px, longer for a point inside the drawing whose words stand clear of it) */
 .fl[data-side="r"]::before { left: 5px; top: 0; width: calc(var(--lead, 19px) - 9px); height: 1px; }
 .fl[data-side="l"]::before { left: calc(4px - var(--lead, 19px)); top: 0; width: calc(var(--lead, 19px) - 9px); height: 1px; }
-.fl:is([data-side="t"], [data-side="tl"], [data-side="tr"])::before { left: 0; top: -15px; width: 1px; height: 10px; }
-.fl:is([data-side="b"], [data-side="bl"], [data-side="br"])::before { left: 0; top: 5px; width: 1px; height: 10px; }
+/* --drop: how much longer (or, down to -8 px, shorter) a label above or below its point draws its rule; figure.js sets it
+   only for a hedge label (data-keep) that needs the room to stand clear of the drawing (r3) */
+.fl:is([data-side="t"], [data-side="tl"], [data-side="tr"])::before { left: 0; top: calc(-15px - var(--drop, 0px)); width: 1px; height: calc(10px + var(--drop, 0px)); }
+.fl:is([data-side="b"], [data-side="bl"], [data-side="br"])::before { left: 0; top: 5px; width: 1px; height: calc(10px + var(--drop, 0px)); }
 .fl-t {
   position: absolute; left: 0; top: 0; white-space: nowrap; translate: var(--dx, 0px) 0;
   font: 400 var(--mono-s)/1.35 var(--mono); letter-spacing: .02em; color: var(--fg-2); font-variant-numeric: tabular-nums;
   text-shadow: 0 0 2px var(--ink), 0 0 6px var(--ink), 0 0 12px var(--ink); /* a knockout, not a glow: words stay legible over points */
 }
 .fl-t small { display: block; font-size: inherit; color: var(--fg-3); }
+/* a hedge label without room for two lines may stand as one: "above the floor · how far is not published" (r3) */
+.fl.is-one .fl-t small { display: inline; }
+.fl.is-one .fl-t small::before { content: " · "; }
 .fl[data-side="r"] .fl-t { transform: translate(var(--lead, 19px), -.675em); } /* the first line on the rule */
 .fl[data-side="l"] .fl-t { transform: translate(calc(-100% - var(--lead, 19px)), -.675em); text-align: right; }
-.fl[data-side="t"] .fl-t { transform: translate(-50%, calc(-100% - 18px)); text-align: center; }
-.fl[data-side="b"] .fl-t { transform: translate(-50%, 18px); text-align: center; }
-.fl[data-side="tl"] .fl-t { transform: translate(calc(-100% + 6px), calc(-100% - 18px)); text-align: right; }
-.fl[data-side="tr"] .fl-t { transform: translate(-6px, calc(-100% - 18px)); }
-.fl[data-side="bl"] .fl-t { transform: translate(calc(-100% + 6px), 18px); text-align: right; }
-.fl[data-side="br"] .fl-t { transform: translate(-6px, 18px); }
+.fl[data-side="t"] .fl-t { transform: translate(-50%, calc(-100% - 18px - var(--drop, 0px))); text-align: center; }
+.fl[data-side="b"] .fl-t { transform: translate(-50%, calc(18px + var(--drop, 0px))); text-align: center; }
+.fl[data-side="tl"] .fl-t { transform: translate(calc(-100% + 6px), calc(-100% - 18px - var(--drop, 0px))); text-align: right; }
+.fl[data-side="tr"] .fl-t { transform: translate(-6px, calc(-100% - 18px - var(--drop, 0px))); }
+.fl[data-side="bl"] .fl-t { transform: translate(calc(-100% + 6px), calc(18px + var(--drop, 0px))); text-align: right; }
+.fl[data-side="br"] .fl-t { transform: translate(-6px, calc(18px + var(--drop, 0px))); }
 .fl--acc { color: var(--signal-bright); }
 .fl--acc .fl-t { color: var(--fg); }
 .fl--rej, .fl--rej .fl-t { color: var(--reject-bright); }

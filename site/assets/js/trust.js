@@ -84,6 +84,7 @@
   function replay() {
     clearTimeout(replaying);
     sweep.forEach(clearTimeout); sweep = []; cancelAnimationFrame(glideRaf);
+    armed = null; pending = false;
     if (canEdit) { brokenAt = -1; X.dirty = anyEdited(); unbreak(); setIdle(); }
     const all = recs.slice();
     if (!all.length) return;
@@ -123,6 +124,7 @@
   function verify() {
     if (T.sel !== null) { T.sel = null; T.markSel(); }
     T.following = false; T.inspect(); // the inspector rides along with the sweep
+    armed = null; pending = false; tabs(); // a verdict ends the edit: the fields leave the Tab order (r3)
     sweep.forEach(clearTimeout); sweep = [];
     if (replaying) { clearTimeout(replaying); replaying = 0; whole(); T.inspect(); } // a replay in progress completes at once
     const reduced = T.reduced, res = audit(), ok = verified(), n = recs.length, lis = Array.from(track.children), STEP = 110;
@@ -178,13 +180,32 @@
   function typed(e) {
     const el = e.currentTarget, r = T.sel !== null ? T.bySeq(T.sel) : null, o = r && orig().get(r.seq);
     if (!r || !el.isContentEditable) return;
+    pending = true; // the next Tab out of Detail goes to Verify, once
     const v = el.textContent.replace(/[\r\n]+/g, ' ');
     if (el === F.ev) r.ev = v;
     else { r.d = v; r.sub = o && v === o.d ? o.sub : v; } // the column shows what was typed; the original text restores the original column
     refresh(r); changed();
   }
-  // the selected record's event and detail can be typed over; with nothing selected they are read only
+  // the selected record's event and detail can be typed over; with nothing selected they are read only.
+  // r3 (a11y S1, motion): they are Tab stops only once an edit was started on purpose for that record ('Change a record',
+  // 'Try to change the past', a click or tap in a field): a record selected by Tab focus never puts an editor in the
+  // Tab path. An editable field nobody has typed in yet says what it is (aria-describedby).
+  let armed = null, pending = false;
+  const touch = () => matchMedia('(hover: none) and (pointer: coarse)').matches;
+  const how = document.getElementById('lt-how');
+  function arm(seq) { armed = seq; tabs(); }
+  function tabs() {
+    if (!canEdit) return;
+    const r = T.sel !== null ? T.bySeq(T.sel) : null, on = !!r && armed === r.seq, fresh = !!r && !isEdited(r);
+    if (how) how.textContent = `Start typing to change this record, then ${touch() ? 'tap Go on your keyboard' : 'press Enter'} to verify the chain.`;
+    [F.ev, F.d].forEach(el => {
+      if (!el.isContentEditable) { el.removeAttribute('tabindex'); el.removeAttribute('aria-describedby'); return; }
+      el.tabIndex = on ? 0 : -1;
+      if (how && fresh) el.setAttribute('aria-describedby', how.id); else el.removeAttribute('aria-describedby');
+    });
+  }
   function editable(r) {
+    if (!r || r.seq !== armed) armed = null;
     [[F.ev, 'Event'], [F.d, 'Detail']].forEach(([el, k]) => {
       if (r) {
         if (!el.hasAttribute('contenteditable')) {
@@ -199,6 +220,7 @@
         ['contenteditable', 'role', 'aria-multiline', 'aria-label', 'enterkeyhint'].forEach(a => el.removeAttribute(a));
       }
     });
+    tabs();
   }
 
   // the controls come under the bar when off screen (a browser centres a focused button); with a field being typed in,
@@ -229,15 +251,17 @@
     // while a field is typed in, the next step shows under it (r2)
     const typing = on => { if (cue && cue.hidden === on) { cue.hidden = !on; if (ui.insp) ui.insp.classList.toggle('is-typing', on); } };
     [F.ev, F.d].forEach(el => {
-      el.addEventListener('focus', () => typing(el.isContentEditable));
-      el.addEventListener('blur', () => typing(false));
+      // a field can take focus only by a click or tap, a screen reader or this file (it is out of the Tab order until
+      // then): that starts the edit on purpose
+      el.addEventListener('focus', () => { if (el.isContentEditable && T.sel !== null && armed !== T.sel) arm(T.sel); typing(el.isContentEditable); });
+      el.addEventListener('blur', e => { typing(false); if (e.relatedTarget !== F.ev && e.relatedTarget !== F.d) pending = false; });
       el.addEventListener('input', typed);
       el.addEventListener('keydown', e => {
         if (!el.isContentEditable) return;
-        if (e.key === 'Enter') { e.preventDefault(); if (ui.verify) { toVerify(); ui.verify.click(); } } // one line: Enter verifies
+        if (e.key === 'Enter') { e.preventDefault(); pending = false; if (ui.verify) { toVerify(); ui.verify.click(); } } // one line: Enter verifies
         else if (e.key === 'Escape') { e.preventDefault(); const b = !ui.edit.hidden ? ui.edit : ui.restore; if (b) b.focus(); }
-        // Tab out of Detail goes to Verify, not to the closing band screens below (r2)
-        else if (e.key === 'Tab' && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey && el === F.d && ui.verify && !ui.verify.hidden) { e.preventDefault(); toVerify(); }
+        // Tab out of Detail after typing goes to Verify, once; any other Tab keeps the page's order (r2; r3: never a loop)
+        else if (e.key === 'Tab' && pending && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey && el === F.d && ui.verify && !ui.verify.hidden) { e.preventDefault(); pending = false; toVerify(); }
       });
     });
     ui.edit.addEventListener('click', () => {
@@ -247,13 +271,15 @@
       if (!li) { const r = recs.find(x => /^REJECTED/.test(x.ev)) || recs[0]; li = r ? els.get(r.seq) : null; }
       if (!li) return;
       orig();
-      T.select(li, false, true);
+      armed = +li.dataset.seq;
+      T.select(li, false, true); tabs();
       F.d.focus({ preventScroll: true });
       place(true);
       try { const range = document.createRange(), s = window.getSelection(); range.selectNodeContents(F.d); s.removeAllRanges(); s.addRange(range); } catch (err) { /* the caret stays where focus put it */ }
-      say(`Editing ${T.bySeq(T.sel).id}: type over its detail, then press Enter to verify the chain`);
+      say(`Editing ${T.bySeq(T.sel).id}: type over its detail, then ${touch() ? 'tap Go on your keyboard' : 'press Enter'} to verify the chain`);
     });
     if (ui.restore) ui.restore.addEventListener('click', () => {
+      armed = null;
       if (T.sel !== null) { T.sel = null; T.markSel(); }
       recs.forEach(r => { const o = orig().get(r.seq); if (o) { r.ev = o.ev; r.sub = o.sub; r.d = o.d; } refresh(r); });
       changed();

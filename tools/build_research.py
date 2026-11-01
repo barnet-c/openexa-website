@@ -18,14 +18,21 @@ ORDER = [9, 10, 1, 2, 3, 4, 5, 6, 7, 8]
 META = {  # post number → slug, figure, short label, one-line dek used on the index and cards
     9:  ("compounding-error", "horizon", "Research note", "Why long-horizon autonomous work must be decomposed into narrow agents behind a deterministic boundary."),
     10: ("post-training-and-audit", "weights", "Research note", "How a general model comes to follow one rulebook, and how a hash-chained ledger proves what it did."),
-    1:  ("not-tasks-lifecycles", "lifecycle", "Series · 01", "Why we stopped building assistants and changed the unit of work to the lifecycle."),
-    2:  ("five-thousand-small-agents", "swarm", "Series · 02", "Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one."),
+    # r3 (r3-copy moderate): five summaries restated their own titles ("Governance in Milliseconds" / "Governance in
+    # milliseconds: …"). Each now says what the note covers, in its own words, and never what its figure's caption
+    # already quotes beside it: 03 its two parts ("six traits a process must have before we will touch it", "Why finance
+    # first"; the definition is Fig. 03's caption); 04 its second paragraph ("There is no seam where a policy can
+    # intervene"; "No single agent sees the whole trade" is Fig. 04's); 07 its three parts ("One switch halts everything,
+    # in every mode"); 09 its parts and its hedge ("what this does and does not show"); 10 its three phases. Wording only:
+    # no claim added or made stronger (claims map, research.json)
+    1:  ("not-tasks-lifecycles", "lifecycle", "Series · 01", "The six traits a process must have before we will touch it, and why finance comes first."),
+    2:  ("five-thousand-small-agents", "swarm", "Series · 02", "Failure analysis, not a taste for scale: an agent that sees the whole job leaves no seam where a policy can intervene."),
     3:  ("agents-decide-code-executes", "boundary", "Series · 03", "Eight layers, one boundary. The top four estimate; the bottom four are deterministic code."),
     4:  ("post-training-on-a-rulebook", "rulebook", "Series · 04", "Closing the gap between a model that knows finance and one that knows this lifecycle."),
-    5:  ("the-execution-council", "council", "Series · 05", "Governance in milliseconds: what the council checks, three operating modes, and the kill switch."),
+    5:  ("the-execution-council", "council", "Series · 05", "What the Council checks, the three operating modes, and the halt that works in every mode."),
     6:  ("a-ledger-nobody-can-edit", "ledger", "Series · 06", "Append-only, hash-chained, replayable. Why a record an administrator can edit is only a claim."),
-    7:  ("lifecycle-01-ten-sessions", "sessions", "Series · 07", "What ten live sessions on real capital showed, precisely what they did not, and where the cost goes."),
-    8:  ("master-and-copy", "mastercopy", "Series · 08", "How a proven agent becomes a platform: prove one, master and copy, then open the rails."),
+    7:  ("lifecycle-01-ten-sessions", "sessions", "Series · 07", "The setup, the result and where the cost goes, and precisely what ten sessions do not show."),
+    8:  ("master-and-copy", "mastercopy", "Series · 08", "Three phases: prove one agent, master and copy it, then open the rails."),
 }
 # your standing rule: no exchange or broker names anywhere on the site
 FIXES = [
@@ -82,7 +89,9 @@ CAPTIONS = {
 }
 # r2 (r2-copy minor): the figure's labels ("01–02 research notes", "03–10 the series") and the meta row already say which
 # leaves are which, so the caption says what the drawing is, once
-LIBRARY_CAPTION = ("Ten notes as ten leaves.", "Illustrative")
+# r3 (r3-art minor): set in the plate captions' register, as on Platform, Lifecycles, Proof and Trust ("Plate · Six
+# lifecycle classes · Schematic"): the "Plate" mark, the title (no full stop, as theirs), the hedge
+LIBRARY_CAPTION = ("Ten notes as ten leaves", "Illustrative")
 # v2x lab (research moment): every figure is read as a plate. Its labels pin to points of the formation (figure.js, a
 # stage with data-plate projects data-at, the formation's own x,y,z, onto the screen each frame) and say what each part
 # is, in the words of its caption or its note: no new fact, no number the caption does not already state. Points are
@@ -94,6 +103,11 @@ LIBRARY_CAPTION = ("Ten notes as ten leaves.", "Illustrative")
 # Path: the span of the formation's own path (FORMS' fifth value, 0..1) the label names; while the pulse walks the
 # path it lights each label it passes, so the plate reads itself out in the note's order. None: the part is not on
 # the path (it is named, never lit).
+# r3 (r3-a11y moderate): "keep" marks a label that carries a hedge (note 09 "how far is not published", note 10 "phase
+# two, on the roadmap"). It is listed first, so where words would cross, the claim-side label yields to it; where its
+# own side has no room (a phone's stage), figure.js looks for another free slot round its point; and if there is none,
+# the plate shows no labels at all, so a drawing never names its parts without their hedge (data-keep). "keep=t,tl,tr"
+# limits the slots to those sides: "above the floor" never stands below the columns it describes.
 def _cols():  # note 09: ten columns, x = -1.08 + c * 0.24 (figure.js sessions), numbered and lit in the record's order
     return [(f"{c + 1:02d}", None, (round(-1.08 + c * 0.24, 2), -0.76, 0), "b", "" if c in (0, 9) else "minor", (c / 10, (c + 0.9) / 10))
             for c in range(10)]
@@ -127,23 +141,28 @@ LABELS = {
                ("hash of the previous record", None, (0, 0.02, 0.24), "tr", "", (0.43, 0.45)),
                ("newest", None, (1.0, -0.63, 0), "b", "acc", (0.875, 0.9))],
     # the floor is read like an axis: its value at the line's left end, the first line on the rule
-    "sessions": [("10\u00a0bps", "floor", (-1.25, 0.4, 0.07), "l", "", None)] + _cols()
-                + [("above the floor", "how far is not published", (0, 0.93, 0), "t", "", None)],
-    "mastercopy": [("master agent", None, (0.31, 0.62, 0), "r", "acc", (0.0, 0.06)),
-                   ("copies", "phase two, on the roadmap", (0.93, -0.18, -0.07), "tl", "", (0.74, 0.74)),
+    # r3: each hedge label first ("keep", below)
+    "sessions": [("above the floor", "how far is not published", (0, 0.93, 0), "t", "keep=t,tl,tr", None),
+                 ("10\u00a0bps", "floor", (-1.25, 0.4, 0.07), "l", "", None)] + _cols(),
+    "mastercopy": [("copies", "phase two, on the roadmap", (0.93, -0.18, -0.07), "tl", "keep", (0.74, 0.74)),
+                   ("master agent", None, (0.31, 0.62, 0), "r", "acc", (0.0, 0.06)),
                    ("one control plane", None, (-1.3, -0.77, 0), "br", "", (0.9, 0.9))],
     "library": [("01–02 research notes", None, (-0.873, 0.47, 0.095), "t", "acc", (0.0, 0.16)),
                 ("03–10 the series", None, (0.873, 0.47, 0.095), "t", "", (0.19, 0.9))],
 }
+def _keep(flags): return next((f for f in flags.split() if f.split("=")[0] == "keep"), None)
+assert all(not _keep(l[4]) for ls in LABELS.values() for l in ls[1:]), "a hedge label (keep) is listed first"
 def labels_html(fig):
     out = []
     for i, (text, sub, (x, y, z), side, flags, path, *to) in enumerate(LABELS[fig]):
-        cls = "".join(f" fl--{f}" for f in flags.split() if f != "minorsub")
+        k = _keep(flags)
+        cls = "".join(f" fl--{f}" for f in flags.split() if f != "minorsub" and f != k)
+        keep = (f' data-keep="{k.partition("=")[2].replace(",", " ")}"' if "=" in k else " data-keep") if k else ""
         gloss = ' class="fl-minor"' if "minorsub" in flags.split() else ""
         small = f"<small{gloss}>{H.escape(sub, quote=False)}</small>" if sub else ""
         ph = f' data-ph="{path[0]:g},{path[1]:g}"' if path else ""
         reach = f' data-to="{to[0][0]:g},{to[0][1]:g},{to[0][2]:g}"' if to else ""
-        out.append(f'<span class="fl{cls}" data-at="{x:g},{y:g},{z:g}"{reach} data-side="{side}"{ph} style="--i:{i}"><span class="fl-t">{H.escape(text, quote=False)}{small}</span></span>')
+        out.append(f'<span class="fl{cls}" data-at="{x:g},{y:g},{z:g}"{reach} data-side="{side}"{ph}{keep} style="--i:{i}"><span class="fl-t">{H.escape(text, quote=False)}{small}</span></span>')
     return f'<div class="fig-labels" data-for="{fig}">{"".join(out)}</div>'
 def library_still():
     """r2 (r2-art minor): the index hero's figure as a still, in the page's HTML. v2 and r1 painted nothing there until
@@ -496,7 +515,7 @@ index_page = f'''<!DOCTYPE html>
             <p class="lede mt-3" data-reveal style="--d:120ms">Ten notes on why high-stakes work should be run by thousands of narrow agents behind one deterministic boundary, from the mathematics of compounding error to what ten sessions on real capital taught us.</p>
             <div class="article-meta" data-reveal style="--d:180ms"><span>{len(ordered)} notes</span><span>{sum(p['minutes'] for p in ordered)}{NB}min in total</span><span>Two research notes · an eight-part series</span></div>
           </div>
-          <p class="figcap rs-herocap"><span class="figcap-t">{LIBRARY_CAPTION[0]}</span><span class="figcap-h">{LIBRARY_CAPTION[1]}</span></p>
+          <p class="figure-cap hp-cap rs-herocap"><span class="fc-t"><b class="fc-n">Plate</b><span class="fc-d"> · </span>{LIBRARY_CAPTION[0]}</span><span class="fc-h">{LIBRARY_CAPTION[1]}</span></p>
         </div>
       </div>
     </section>
@@ -551,7 +570,7 @@ index_page = f'''<!DOCTYPE html>
         <div class="sec-head" data-reveal><span class="idx">03</span><span class="lab">The blog</span><span class="aside">{BLOG['total']} posts · {BLOG['years'][0]}–{BLOG['years'][1]}</span></div>
         <div class="grid t-2 mb-3">
           <div class="col-6"><h2 class="display-2" data-reveal data-split>Three collections, from market structure to AI agents.</h2></div>
-          <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Research summaries, market-structure economics and the first notes on AI agents in finance, from the people behind OpenEXA and the researchers they work with.</p><a class="link-arrow mt-3 scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a></div>
+          <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Research summaries, market-structure economics and the first notes on AI agents in finance, from the people behind OpenEXA and the researchers they work with.</p><a class="link-arrow mt-3 scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">The papers on Google Scholar {OUTB}</a></div>
         </div>
         <div class="card-grid card-grid--{len(BLOG['collections'])}" data-reveal style="--d:120ms">
 {chr(10).join(f'          <a class="card research-card" href="blog/index.html#{c["key"]}"><div class="n"><span>{c["count"]} posts</span><span>{c["years"][0] if c["years"][0] == c["years"][1] else str(c["years"][0]) + "–" + str(c["years"][1])}</span></div><h3 class="h4">{H.escape(c["label"])}</h3><p>{H.escape(us(c["lede"]))}</p><span class="link-arrow mt-3">Browse the collection{NB}{ARROW}</span></a>' for c in BLOG['collections'])}

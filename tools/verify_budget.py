@@ -40,6 +40,14 @@ The checks (the item each one guards in brackets):
   page_transition+     home at S0 to Company and to Proof, 5 runs each: every screencast frame's mean luminance under the bar
                        < 60 (no white flash between dark pages); Platform to Lifecycles, 5 runs: no frame draws both pages'
                        views at opacity >= .25 (two headlines legible)   [NV-R2-3]
+  home_landing+        v2x r3: Home opened mid-way. Reload and Back with §04 80 px under the top (1440; 390@2 touch): §04 lands
+                       within 2 px of 80 and the largest layout-shift window (no recent input; 1 s gap, 5 s cap) is < 0.05
+                       (0.037 at 1440 today, from §04's chart building on screen: tighten to 0.01 once its live height is
+                       reserved); /#proof, /#lc01, /#governance fresh, five loads each at both widths: the target's top at
+                       the bar's bottom (2 px) and that window < 0.1 in every load   [r3-motion M1, r3-perf moderate]
+  loader_curtain+      v2x r3: 20 first visits to / at 390x844@2, touch, 4x CPU: every visit lifts its curtain (the loader's
+                       .is-done comes, and before the loader is removed; none ends at .is-complete alone) and the beat
+                       .is-done - .is-complete is < 150 ms in every visit (designed 90)   [r3-perf moderate, r3-motion minor]
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -437,6 +445,103 @@ async def page_transition(b):
     ok = ok and not any(x[1] for x in both)
     msgs.append(f"platform -> lifecycles: (frames, frames with both views at >= .25, e.g.) per run {both}")
     return ok, "; ".join(msgs) + "; budget: luminance < 60 in every frame, never both views at .25", worst
+
+
+def shift_window(ls):
+    """the largest session window of layout shifts without recent input (1 s gap, 5 s cap), as CLS counts them"""
+    best = cur = 0.0; s0 = last = -1e9
+    for e in sorted(ls, key=lambda e: e["t"]):
+        if e["t"] - last > 1000 or e["t"] - s0 > 5000: cur, s0 = 0.0, e["t"]
+        cur += e["v"]; last = e["t"]; best = max(best, cur)
+    return best
+
+
+LAND_AT = """(id) => { const p = document.getElementById(id), n = document.querySelector('header.nav') || document.querySelector('.nav');
+  return { top: p ? Math.round(p.getBoundingClientRect().top) : null, bar: n ? Math.round(n.getBoundingClientRect().bottom) : null, y: Math.round(scrollY) }; }"""
+LAND_SIZES = ((1440, 900, False), (390, 844, True))
+
+
+async def land_ctx(b, w, h, touch):
+    ctx = await b.new_context(viewport={"width": w, "height": h}, device_scale_factor=2 if touch else 1, has_touch=touch, is_mobile=touch)
+    await ctx.add_init_script(CLS)
+    pg = await ctx.new_page(); pg.set_default_navigation_timeout(60000)
+    return ctx, pg
+
+
+@check
+@frames
+async def home_landing(b):
+    """v2x r3 (home; r3-motion M1, r3-perf moderate): reload and Back land where the reader was, and a deep link lands at
+    the bar, without the page jumping (home.js keeps the place; based on home's .shots/v2x/work/home-r3/clsnav.py)"""
+    ok, out, worst = True, [], 0.0
+    for w, h, touch in LAND_SIZES:
+        for case in ("reload", "back"):
+            ctx, pg = await land_ctx(b, w, h, touch)
+            await pg.goto(f"{V.BASE}/index.html", wait_until="load"); await pg.wait_for_timeout(5000)
+            # html scrolls smoothly: a scrollTo takes ~1.5 s to arrive, so the place is read 2.5 s after it
+            await pg.evaluate("(() => { const p = document.getElementById('proof'); scrollTo(0, p.getBoundingClientRect().top + scrollY - 80); })()")
+            await pg.wait_for_timeout(2500)
+            before = (await pg.evaluate(LAND_AT, "proof"))["top"]
+            if case == "reload": await pg.reload(wait_until="load")
+            else:
+                await pg.goto(f"{V.BASE}/evidence.html", wait_until="load"); await pg.wait_for_timeout(1500)
+                await pg.go_back(wait_until="load")
+            await pg.wait_for_timeout(6000)
+            at = await pg.evaluate(LAND_AT, "proof"); cls = shift_window(await pg.evaluate("window.__ls || []"))
+            await ctx.close()
+            worst = max(worst, cls)
+            good = at["top"] is not None and abs(at["top"] - 80) <= 2 and cls < 0.05
+            ok = ok and good
+            out.append(f"{case}@{w}: §04 at {at['top']} (was {before}), CLS {cls:.3f}" + ("" if good else " FAIL"))
+    for w, h, touch in LAND_SIZES:
+        for tid in ("proof", "lc01", "governance"):
+            tops, clss = [], []
+            for _ in range(5):
+                ctx, pg = await land_ctx(b, w, h, touch)
+                await pg.goto(f"{V.BASE}/index.html#{tid}", wait_until="load"); await pg.wait_for_timeout(6000)
+                at = await pg.evaluate(LAND_AT, tid); cls = shift_window(await pg.evaluate("window.__ls || []"))
+                await ctx.close()
+                tops.append(None if at["top"] is None or at["bar"] is None else at["top"] - at["bar"]); clss.append(cls)
+            worst = max(worst, max(clss))
+            good = all(t is not None and abs(t) <= 2 for t in tops) and max(clss) < 0.1
+            ok = ok and good
+            out.append(f"#{tid}@{w}: target - bar {tops}, CLS max {max(clss):.3f}" + ("" if good else " FAIL"))
+    return ok, "; ".join(out) + "; budget: reload/Back within 2 px of 80 and CLS < 0.05; deep links at the bar (2 px), CLS < 0.1", worst
+
+
+CURTAIN = r"""(() => { const E = window.__ev = {}; const mark = k => { if (!(k in E)) E[k] = Math.round(performance.now()); };
+  new MutationObserver(ms => { for (const m of ms) {
+    if (m.type === 'attributes') { const el = m.target, c = el.classList; if (c && c.contains('loader')) { for (const k of ['is-complete', 'is-done']) if (c.contains(k)) mark('loader.' + k); } }
+    else for (const n of m.removedNodes) if (n.classList && n.classList.contains('loader')) mark('loader.removed'); } })
+    .observe(document, { attributes: true, attributeFilter: ['class'], subtree: true, childList: true }); })();"""
+
+
+@check
+@frames
+async def loader_curtain(b):
+    """v2x r3 (home, system; r3-perf moderate, r3-motion minor): on a slow phone the loader still ends with its curtain:
+    the count reaches 100 (.is-complete), then the curtain lifts (.is-done) about 90 ms later, before the loader is
+    removed. Based on home's .shots/v2x/work/home-r3/curtain.py (20/20 on an idle machine, beat median 100 ms, max 106)."""
+    runs = []
+    for _ in range(20):
+        ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
+        await ctx.add_init_script(CURTAIN)
+        pg = await ctx.new_page(); pg.set_default_navigation_timeout(60000)
+        cdp = await ctx.new_cdp_session(pg)
+        await cdp.send("Emulation.setCPUThrottlingRate", {"rate": 4})
+        await pg.goto(f"{V.BASE}/index.html", wait_until="load"); await pg.wait_for_timeout(4500)
+        ev = await pg.evaluate("Object.assign({}, window.__ev || {})")
+        await ctx.close()
+        c, d, r = ev.get("loader.is-complete"), ev.get("loader.is-done"), ev.get("loader.removed")
+        runs.append({"curtain": bool(d and (not r or d <= r)), "beat": (d - c) if (c is not None and d is not None) else None, "complete_only": bool(c and not d)})
+    beats = [x["beat"] for x in runs if x["beat"] is not None]
+    curt, alone = sum(x["curtain"] for x in runs), sum(x["complete_only"] for x in runs)
+    slow = [x for x in beats if x >= 150]
+    ok = curt == len(runs) and not alone and len(beats) == len(runs) and not slow
+    med = statistics.median(beats) if beats else None
+    return ok, (f"20 first visits at 390x844@2, 4x CPU: {curt}/20 lift the curtain before the loader goes, {alone} end at .is-complete alone; "
+                f"beat .is-done - .is-complete median {med} ms, max {max(beats) if beats else None} ms ({len(slow)} at 150 ms or more); "
+                "budget: 20/20, none alone, every beat < 150 ms"), (max(beats) if beats else float("inf"))
 
 
 def parse_cal(argv):

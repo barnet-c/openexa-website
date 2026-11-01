@@ -135,8 +135,8 @@
 @media (max-width: 351.98px) { [data-page="proof"] .page-hero .lede { min-height: 6lh; } }
 @media (max-width: 347.98px) { [data-page="proof"] .page-hero h1 { min-height: 4lh; } }
 /* the first statement of the result carries its hedge, as on Home's hero (VOICE 5.5): set to be read, not whispered
-   (Inter, sentence case, 14 px; a11y r1 M5) */
-[data-page="proof"] .pf-lc-hedge { margin-top: 16px; font: 400 .875rem/1.5 var(--sans); letter-spacing: 0; color: var(--fg-3); }
+   (Inter, sentence case, 14 px; a11y r1 M5), in Home's hedge tone, paper at 72% (8.9:1 on ink; a11y r3 m2) */
+[data-page="proof"] .pf-lc-hedge { margin-top: 16px; font: 400 .875rem/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); }
 [data-page="proof"] .page-hero .stats.pf-terms { display: block; margin-top: clamp(22px, 2.2vw, 30px); background: none; border: 0; border-top: 1px solid var(--line-strong); }
 [data-page="proof"] .pf-terms > div { display: grid; grid-template-columns: 6rem minmax(0, 1fr); column-gap: 18px; align-items: start; padding: 10px 0 11px; background: none; border-bottom: 1px solid var(--line); }
 [data-page="proof"] .pf-terms .v { grid-row: 1 / span 2; align-self: start; margin-top: -.06em; font-size: 2rem; line-height: 1; letter-spacing: -.02em; font-variant-numeric: lining-nums tabular-nums; }
@@ -282,12 +282,19 @@
   .tr-lt .lt-rec.is-broken .lt-node { animation: tr-break .5s cubic-bezier(.3, .7, .3, 1) backwards; }
 }
 @keyframes tr-break { 0% { transform: scale(1.6); box-shadow: inset 0 0 0 6px var(--reject), 0 0 22px rgba(217, 103, 93, .8); } }
-/* the selected record's event and detail can be typed over */
+/* the selected record's event and detail can be typed over: the text box is a block inside its dd, so the list stays a
+   list of terms and definitions (r3: axe definition-list, aria-allowed-role) */
+.tr-lt .lt-insp dd > [data-f="ev"] { display: block; }
 .tr-lt .lt-insp [contenteditable] { outline: 2px solid transparent; outline-offset: 2px; cursor: text; border-radius: 1px; box-shadow: inset 0 -1px 0 var(--line-strong); transition: box-shadow .2s, background .2s; }
 @media (hover: hover) { .tr-lt .lt-insp [contenteditable]:hover { box-shadow: inset 0 -1px 0 var(--fg-2); } }
 .tr-lt .lt-insp [contenteditable]:focus { box-shadow: inset 0 -1px 0 var(--accent); background: rgba(245, 242, 236, .07); }
-/* while a field is typed in, the next step under it: Enter verifies (the controls may be off a short screen) */
+/* while a field is typed in, the next step under it: Enter verifies (the controls may be off a short screen); on a
+   touch screen the keyboard's own key, labelled Go by enterkeyhint (r3 mobile) */
 .tr-lt .tr-enter { margin: 0; font: 400 .8125rem/1.45 var(--sans); letter-spacing: 0; color: var(--fg-2); }
+.tr-lt .tr-tap { display: none; }
+@media (hover: none) and (pointer: coarse) { .tr-lt .tr-key { display: none; } .tr-lt .tr-tap { display: inline; } }
+/* the excerpt's hedge in the foot reads as words, as on Home's stream: Inter, 12.8 px, Home's hedge tone (a11y r3 m2) */
+.tr-lt .lt-foot > span:first-child { font-family: var(--sans); font-size: .8rem; letter-spacing: 0; line-height: 1.45; color: rgba(245, 242, 236, .72); }
 @media (min-width: 961px) {
   .tr-lt .lt-insp.is-typing > dl:last-of-type { grid-column: 2; grid-row: 2 / span 2; }
   .tr-lt .lt-insp.is-typing > .tr-enter { grid-column: 1; grid-row: 3; }

@@ -231,18 +231,20 @@ async def close_leftovers(drop_shared=False):
 
 
 async def open_page(b, path, w, h, *, dpr=1, touch=False, reduced=False, js=True, init=None, errs=None, loaded=True):
-    """a fresh context at w x h, the page loaded (for the home page: until the loader has finished and its six
-    instruments have started, HOME_ENGINES)"""
+    """a fresh context at w x h, the page loaded: until the loader has finished and, on any page whose HTML starts its
+    scripts after the first paint (`script[data-after-paint]`: Home's six instruments, Lifecycles' gap.js and site.js),
+    until every script that tag lists has run (HOME_ENGINES; true at once on a page without the tag). v2x r3: was Home
+    only; Lifecycles moved its scripts after the paint (system r3, r3-perf), so a check acting on the desk right after
+    'load' must not run before gap.js."""
     ctx = await b.new_context(viewport={"width": w, "height": h}, device_scale_factor=dpr, has_touch=touch, is_mobile=touch,
                               reduced_motion="reduce" if reduced else "no-preference", java_script_enabled=js)
-    home = js and path.split("#")[0].split("?")[0] in ("index.html", "")
-    if home: await ctx.add_init_script(SCRIPTS_RAN)
+    if js: await ctx.add_init_script(SCRIPTS_RAN)  # cheap; records every <script src> that loads or fails, on any page
     if init: await ctx.add_init_script(init)
     pg = await ctx.new_page()
     if errs is not None: pg.on("pageerror", lambda e: errs.append("PAGEERROR " + str(e)))
     await pg.goto(f"{BASE}/{path}", wait_until="load")
     if js and loaded: await until(pg, LOADED, 15000)
-    if home and loaded: await until(pg, HOME_ENGINES, int(15000 * max(1.0, MODE["throttle"])))  # a check that needs them asserts them
+    if js and loaded: await until(pg, HOME_ENGINES, int(15000 * max(1.0, MODE["throttle"])))  # a check that needs them asserts them
     return ctx, pg
 
 
@@ -657,10 +659,58 @@ async def trust_tamper(b):
     await pg.keyboard.type("x", delay=10); await pg.keyboard.press("Tab"); await pg.wait_for_timeout(200)
     tab = await pg.evaluate("(() => { const a = document.activeElement; return !!a && a.hasAttribute('data-lt-verify'); })()")
     assert tab, "1024x768: Tab from the edited field does not reach Verify"
+    # v2x r3 (proof; r3-a11y S1, r3-motion): no trap inside the record. From Verify, four more Tabs (a record, Event,
+    # Detail, then out) leave [data-ledger]; r2's fields were Tab stops that cycled inside it
+    left = []
+    for _ in range(4):
+        await pg.keyboard.press("Tab"); await pg.wait_for_timeout(80)
+        left.append(await pg.evaluate(TAB_STEP))
+    assert not left[-1]["inLedger"], ("1024x768: four Tabs after Verify must leave the record ([data-ledger])", [x["d"] for x in left])
     assert not errs, errs
     await ctx.close()
     print(f"trust_tamper: an edit voids the verdict; Verify fails from the edited record ({said.strip()}) and selects it; {nw['now']} records show the hash they produce now, the inspector the same {nw['sel']}; "
-          f"Restore clears them, then Verify: 8 of 8 links hold; 1024x768: Enter verifies, the cause {fb2['sel']} selected inside the strip, Tab reaches Verify")
+          f"Restore clears them, then Verify: 8 of 8 links hold; 1024x768: Enter verifies, the cause {fb2['sel']} selected inside the strip, Tab reaches Verify, four more leave the record ({left[-1]['d']})")
+
+
+# ---- the keyboard can always leave: a Tab walk reaches the footer, and no stop repeats within one cycle (v2x r3)
+TAB_STEP = r"""(() => { const a = document.activeElement; if (!a || a === document.body) return { id: 0, d: 'BODY', skip: false, legal: false, inLedger: false };
+  window.__twN = window.__twN || 0; if (!a.__tw) a.__tw = ++window.__twN;
+  const t = (a.getAttribute('aria-label') || a.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+  return { id: a.__tw, d: a.tagName.toLowerCase() + (a.id ? '#' + a.id : '') + ' ' + JSON.stringify(t),
+    skip: /^Skip to content/i.test(t), legal: a.matches('.footer-legal > summary'), inLedger: !!a.closest('[data-ledger]') }; })()"""
+TAB_PAGES = [("trust.html", 80, 60), ("index.html", 200, 160)]  # (page, presses, 'Legal & disclosures' reached by)
+
+
+@check
+async def tab_walk(b):
+    """v2x r3 (proof; r3-a11y S1 and r3-motion, WCAG 2.1.1/2.1.2): from a fresh page, Tab up to N times. 'Legal &
+    disclosures' (the footer's last summary) is reached within the budget, and between two visits of 'Skip to content'
+    (one cycle) no element takes focus twice. Trust: 80 presses, the footer by 60 (31-stop cycle at 1440, 25 at 390;
+    r2's record trapped focus and never reached the footer in 140); Home, whose chain fields are Tab stops by design: 200
+    presses, the footer by 160 (86-stop cycle at 1440, 74 at 390). Not 'no element focused more than twice in 80
+    presses': the skip link correctly comes round three or four times in 80 on a short page."""
+    bad, said = [], []
+    for path, n, by in TAB_PAGES:
+        for w, h in ((1440, 900), (390, 844)):
+            ctx, pg = await open_page(b, path, w, h)
+            await pg.wait_for_timeout(1000)
+            seq = []
+            for _ in range(n):
+                await pg.keyboard.press("Tab"); await pg.wait_for_timeout(40)
+                seq.append(await pg.evaluate(TAB_STEP))
+            await ctx.close()
+            legal = next((k + 1 for k, x in enumerate(seq) if x["legal"]), None)
+            skips = [k + 1 for k, x in enumerate(seq) if x["skip"]]
+            rep, seen = [], {}
+            for k, x in enumerate(seq):
+                if x["skip"]: seen = {}
+                if x["id"] and x["id"] in seen: rep.append(f"{x['d']} at presses {seen[x['id']]} and {k + 1}")
+                if x["id"]: seen[x["id"]] = k + 1
+            if legal is None or legal > by: bad.append(f"{path}@{w}x{h}: 'Legal & disclosures' reached at press {legal} (by {by} expected); skip link at {skips[:4]}; last stops {[x['d'] for x in seq[-4:]]}")
+            if rep: bad.append(f"{path}@{w}x{h}: {len(rep)} element(s) took focus twice within one cycle, e.g. {rep[:3]}")
+            said.append(f"{path}@{w}: footer at {legal}, cycle {skips[1] - 1 if len(skips) > 1 else '?'}")
+    assert not bad, "tab_walk:\n  " + "\n  ".join(bad)
+    print("tab_walk: " + "; ".join(said) + "; no stop twice in a cycle")
 
 
 @check
@@ -674,10 +724,22 @@ async def desk(b):
     await pg.wait_for_timeout(5000)
     info = await pg.evaluate("({time: document.querySelector('[data-gap-time]').textContent, log: document.querySelectorAll('.desk-log li').length, state: document.querySelector('[data-gap-state]').textContent})")
     assert info["time"] != "09:30 ET", info
+    # v2x r3 (platform; r3-motion minor): with Follow centred in the viewport, Pause is on screen under the bar and answers
+    # at its centre (it had sat under the bar or off screen while the walk ran)
+    await pg.evaluate("document.querySelector('[data-gap-follow]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(600)
+    mo = await pg.evaluate(GAP_MOTION)
+    assert mo["inside"] and mo["hit"], ("1440x900: with Follow centred, Pause must lie under the bar inside the viewport and answer at its centre", mo)
     await still_shot(pg, "[data-gap]", OUT / "desk.png", pause="[data-gap-motion]")
     assert not errs, errs
-    print("desk:", info)
+    print("desk:", info, "; Pause in view under the bar with Follow centred")
     await ctx.close()
+
+
+GAP_MOTION = r"""(() => { const m = document.querySelector('[data-gap-motion]'), n = document.querySelector('header.nav') || document.querySelector('.nav');
+  const r = m.getBoundingClientRect(), bar = n.getBoundingClientRect().bottom, e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+  return { box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)], bar: Math.round(bar), vh: innerHeight,
+    inside: r.top >= bar - 1 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth, hit: !!e && (e === m || m.contains(e)) }; })()"""
+DESK_HEAD = "(() => Math.round(document.querySelector('.desk-head').getBoundingClientRect().height))()"
 
 
 @check
@@ -1009,11 +1071,13 @@ async def overture_net(b):
 @check
 async def phone(b):
     """phone: the explorer is an accordion, a chapter lands under the 64 px bar, the menu sheet is a popover over an inert page"""
-    ctx = await b.new_context(viewport={"width": 390, "height": 844})
-    pg = await ctx.new_page(); errs = []
-    pg.on("pageerror", lambda e: errs.append(str(e)))
-    await pg.goto(f"{BASE}/index.html", wait_until="load")
+    # v2x r3: open_page, not 'loader detached': since home r3 the instruments are added as the curtain lifts, so at CI
+    # speed arch.js had not built `#stack .arch` yet when the loader left (TypeError on null); open_page waits until
+    # every script home.js lists has run
+    errs = []
+    ctx, pg = await open_page(b, "index.html", 390, 844, errs=errs)
     await pg.locator(".loader").wait_for(state="detached", timeout=15000)
+    assert await until(pg, "!!document.querySelector('#stack .arch')", 10000), "390: the explorer (#stack .arch) was not built"
     await pg.evaluate("document.querySelector('#stack .arch').scrollIntoView({block: 'center', behavior: 'instant'})")
     assert await until(pg, "!!document.querySelector('#stack .arch.is-narrow')", 10000), "explorer not narrow at 390"
     await pg.locator("#arch0-b4").click()
@@ -1037,9 +1101,25 @@ async def phone(b):
     await pg.keyboard.press("Escape")
     back = await until(pg, "!document.querySelector('#site-menu').matches(':popover-open') && !document.querySelector('main').inert && document.activeElement === document.querySelector('.nav-toggle')", 3000)
     assert inside and back, ("Escape from a link inside the sheet", inside, await pg.evaluate("({ open: document.querySelector('#site-menu').matches(':popover-open'), inert: document.querySelector('main').inert, focus: document.activeElement.className })"))
+    # v2x r3 (system; r3-mobile minor): every footer list link answers a tap over at least 32 px of height (site.css
+    # widens the hit area 5 px above and below without changing the look); read with elementFromPoint at 390
+    foot = await pg.evaluate(FOOT_HIT)
+    short = [x for x in foot if x["span"] < 32]
+    assert foot and not short, ("390: footer links that answer over less than 32 px (text, box height, span)", short, len(foot))
     assert not errs, errs
     await ctx.close()
-    print(f"phone: explorer accordion opens inline, chapter 04 lands under the bar, menu sheet opens (page inert) and Escape closes it, also from a link inside it ({inside!r}: focus back on the toggle)")
+    print(f"phone: explorer accordion opens inline, chapter 04 lands under the bar, menu sheet opens (page inert) and Escape closes it, also from a link inside it ({inside!r}: focus back on the toggle); "
+          f"{len(foot)} footer links answer over >= 32 px (least {min(x['span'] for x in foot)})")
+
+
+FOOT_HIT = r"""(async () => { const out = [];
+  const links = [...document.querySelectorAll('footer ul li a')].filter(a => { const r = a.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(a).visibility !== 'hidden'; });
+  for (const a of links) { a.scrollIntoView({ block: 'center', behavior: 'instant' }); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const r = a.getBoundingClientRect(), cx = r.left + Math.min(r.width / 2, 12), cy = r.top + r.height / 2;
+    const at = y => { const e = document.elementFromPoint(cx, y); return !!e && (e === a || a.contains(e)); };
+    let up = 0, dn = 0; while (up < 40 && at(cy - up - 1)) up++; while (dn < 40 && at(cy + dn + 1)) dn++;
+    out.push({ t: a.textContent.replace(/\s+/g, ' ').trim().slice(0, 30), h: Math.round(r.height), span: up + dn + 1 }); }
+  return out; })()"""
 
 
 @check
@@ -1493,7 +1573,7 @@ PHONE_LAB = "(() => { " + EFF + """
   const box = el => { const r = el.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; };
   const ov = (a, b) => Math.min(a.r, b.r) - Math.max(a.l, b.l) > 1 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 1;
   const shown = el => eff(el, document.documentElement) > 0.3 && el.getBoundingClientRect().width > 0;
-  const labs = [...document.querySelectorAll('.story-labels .story-lab')].filter(shown).map(l => ({ t: l.textContent.replace(/\\s+/g, ' ').trim().slice(0, 44), bx: box(l) }));
+  const labs = [...document.querySelectorAll('.story-labels .story-lab')].filter(shown).map(l => ({ t: l.textContent.replace(/\\s+/g, ' ').trim().slice(0, 44), full: l.textContent.replace(/\\s+/g, ' ').trim(), bx: box(l) }));
   const obst = [];
   const idx = document.querySelector('.story-idx'); if (idx && shown(idx)) obst.push(['the scene index', box(idx)]);
   const mo = document.querySelector('.story-motion'); if (mo && shown(mo)) obst.push(['Pause motion', box(mo)]);
@@ -1508,7 +1588,7 @@ PHONE_LAB = "(() => { " + EFF + """
   const c3 = labs.find(l => /^(Plate|Fig\\.)\\s*0?3\\b/.test(l.t));
   const days = [...document.querySelectorAll('.story-labels .story-lab.day')].filter(shown).map(l => box(l)).sort((a, b) => a.l - b.l);
   return { issues, labs: labs.length, boxes: labs.map(l => [l.t, l.bx]), dayGaps: days.slice(1).map((d, k) => +(d.l - days[k].r).toFixed(1)),
-    cap3: c3 ? { t: c3.t, inside: c3.bx.l >= 0 && c3.bx.t >= 0 && c3.bx.r <= innerWidth && c3.bx.b <= innerHeight, bx: [c3.bx.l, c3.bx.t, c3.bx.r, c3.bx.b].map(Math.round) } : null };
+    cap3: c3 ? { t: c3.full, inside: c3.bx.l >= 0 && c3.bx.t >= 0 && c3.bx.r <= innerWidth && c3.bx.b <= innerHeight, bx: [c3.bx.l, c3.bx.t, c3.bx.r, c3.bx.b].map(Math.round) } : null };
 })()"""
 PHONES = [(390, 664), (375, 667), (360, 780), (320, 640), (844, 390), (320, 568), (667, 375), (740, 360), (568, 320)]  # round 2 adds 320x568, 667x375, 740x360; v2x r2 568x320 (an iPhone SE on its side)
 INSP_BOX = r"""(tapped) => { const vis = el => { let o = 1; for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return 0; o *= +cs.opacity; } return o; };
@@ -1545,7 +1625,8 @@ async def overture_phones(b):
     """at 390x664, 375x667, 360x780, 320x640, 844x390, 320x568, 667x375, 740x360 and 568x320 with touch, at each scene's rest: no
     visible callout box crosses the scene index, 'Pause motion', the nav, a visible beat's text or another callout; with
     the callouts hidden, under 2% of the stage's pixels inside each callout's box are brighter than luminance 120 (no
-    structure under a callout); Plate 03's caption lies inside the viewport and says 'Illustrative'; at 320x640 adjacent
+    structure under a callout); Plate 03's caption lies inside the viewport and says 'Illustrative' (its full text: v2x r3 sets
+    the hedge after the mark and title, past the 44 characters the messages quote); at 320x640 adjacent
     S4 day tags are at least 3 px apart; at 844x390 and 667x375, the inspector opened by tapping each S1 ring and S2
     plate callout crosses none of .story-bar, .story-idx, .story-motion or another callout (OV1, OV10, D14; round 2:
     OV-R2-1, OV-R2-4, OV-R2-5; v2x r2: 568x320, where a plate caption crossed the headline, r2-a11y M)"""
@@ -2033,7 +2114,20 @@ async def platform_spec(b):
     m = await pg.evaluate(SPEC)
     await ctx.close()
     assert m["layers"] == 8 and m["want"] == 24 and not m["missing"], f"platform_spec platform.html@1440x900: {m['layers']} layers, {m['want']} texts; not shown: {m['missing'][:6]}"
-    print("platform_spec: 8 layer paragraphs and 16 In/Out lines shown without interaction")
+    # v2x r3 (platform; r3-a11y moderate, 2.1.1): under 1000 px the narrow explorer has a keyboard way in, as §01's lede
+    # promises ("↑ ↓ and Enter"): the eight drawn plate labels are the layer buttons (.arch-list.is-tags), Tab from Pause
+    # reaches layer 01, ArrowDown 02, Enter moves focus to entry 02
+    ctx, pg = await open_page(b, "platform.html", 900, 900)
+    await pg.evaluate("document.querySelector('#architecture .arch-motion').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(1500)
+    await pg.focus("#architecture .arch-motion")
+    keys = []
+    for k in ("Tab", "ArrowDown", "Enter"):
+        await pg.keyboard.press(k); await pg.wait_for_timeout(500 if k == "Enter" else 200)
+        keys.append(await pg.evaluate("document.activeElement.id"))
+    tags = await pg.evaluate("[...document.querySelectorAll('#architecture .arch-list.is-tags .arch-layer')].filter(x => { const r = x.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(x).visibility !== 'hidden'; }).length")
+    await ctx.close()
+    assert keys == ["arch0-b1", "arch0-b2", "arch0-e2"] and tags == 8, f"platform_spec platform.html@900x900: Tab, ArrowDown, Enter from Pause focus {keys} (want arch0-b1, arch0-b2, arch0-e2); {tags} of 8 layer buttons shown over the drawing"
+    print("platform_spec: 8 layer paragraphs and 16 In/Out lines shown without interaction; at 900 the 8 plate labels are the layer buttons, Tab/ArrowDown/Enter reach entry 02")
 
 
 @check
@@ -2694,13 +2788,18 @@ async def desk_phone_follow(b):
     await pg.wait_for_timeout(1500)
     # (a) the walk, in view
     await pg.evaluate("document.querySelector('[data-gap-follow]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(400)
+    # v2x r3 (platform; r3-motion minor): with Follow centred, Pause lies under the bar and answers at its centre; the
+    # desk's head keeps its height during a followed walk (the state no longer wraps Pause onto a third row)
+    mo, head0 = await pg.evaluate(GAP_MOTION), await pg.evaluate(DESK_HEAD)
+    if not (mo["inside"] and mo["hit"]): bad.append(f"lifecycles.html@390x844: with Follow centred, Pause is not under the bar inside the viewport or does not answer at its centre {mo}")
     await bounded(pg.locator("[data-gap-follow]").tap(), "a tap on Follow the next action", 60)
-    walk, t0 = [], time.monotonic()
+    walk, heads, t0 = [], set(), time.monotonic()
     while time.monotonic() - t0 < 40:
         d = await pg.evaluate(DESK)
-        if d["on"]: walk.append(d)
+        if d["on"]: walk.append(d); heads.add(await pg.evaluate(DESK_HEAD))
         if walk and d["state"] != "Following an action": break
         await pg.wait_for_timeout(150)
+    if heads - {head0}: bad.append(f"lifecycles.html@390x844: the desk's head is {head0} px before the walk and {sorted(heads)} px during it (must not change)")
     if len(walk) < 3: bad.append(f"lifecycles.html@390x844: the follow walk was not seen ({len(walk)} samples with a lit gate in 40 s; state {d['state']!r})")
     # LC-R2-2 brings the lane in with a smooth scrollIntoView as the follow starts, during the walk's first gate (one
     # second): from gate 02 on, and at the last sample of gate 01, the lane is inside the viewport

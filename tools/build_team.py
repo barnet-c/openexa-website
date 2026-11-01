@@ -33,6 +33,8 @@ Changes from the source, deliberately:
     ("Edward E. Carlson Distinguished Professor in Business Administration", Foster School, UW; the old line read as a
     title he does not hold, C-178); Abhishek Sinha's drops "on the ground" and writes "V1" as his bio does, with the
     bio's Amazon and Microsoft (C-181). No new fact.
+  - 2026-10-31 (v2x r3, copy): "Eigen Layer" is written as the project writes its name, "EigenLayer" (Sreeram Kannan's
+    card line and bio; a typo-level fix, FIX). No other word changes.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -70,6 +72,7 @@ FIX = [  # typos in the scraped bios
     ("credibility. Recognized for", "credibility. He is recognized for"),
     ("decisiveness. Strengths include", "decisiveness. His strengths include"),
     ("to get most out of them", "to get the most out of them"),
+    ("Eigen Layer", "EigenLayer"),  # v2x r3: the project's own spelling (Sreeram Kannan's bio)
     ("An expert in compliance and financial risk with", "Julius is an expert in compliance and financial risk with"),
     ("Ph.D. in Business Analytics, expert in", "He holds a Ph.D. in Business Analytics and is an expert in"),
     ("and trade surveillance. Integrating data sets, performing analytical calculations, building and configuring models, performing model validation and tuning.",
@@ -82,7 +85,7 @@ def whole(s):  # 2026-10-31 (lab company-editorial): a card line never breaks in
 # (slug, display name, source name, title, short line, v1 photo or None, extra links)
 TEAM = [
     ("ajit-dubey", "Ajit K Dubey", "Ajit K Dubey", "Founder · CEO", "Founder and CEO of OpenEXA. Big Tech and capital-markets veteran, building the foundational infrastructure for agentic lifecycles.", "ajit-dubey", []),
-    ("tim-leung", "Dr. Tim Leung", "Tim Leung, Ph.D.", "Chief Scientist", "Boeing Endowed Chair Professor of Applied Mathematics and Director of Computational Finance & Risk Management at the University of Washington.", "tim-leung", [("More on financial markets research", SCHOLAR)]),
+    ("tim-leung", "Dr. Tim Leung", "Tim Leung, Ph.D.", "Chief Scientist", "Boeing Endowed Chair Professor of Applied Mathematics and Director of Computational Finance & Risk Management at the University of Washington.", "tim-leung", [("Google Scholar", SCHOLAR)]),
     ("mike-lockhart", "Mike Lockhart", "Mike Lockhart", "Chief Technology", "Architect of high-stakes systems, including those that touch 90% of Microsoft's revenue.", "mike-lockhart", []),
     ("shalabh-choudhri", "Shalabh Choudhri", "Shalabh Choudhri", "Chief AI Agents", "Leads agent research and the post-trained models behind OpenEXA's domain-specific execution agents.", "shalabh-choudhri", []),
 ]
@@ -94,7 +97,7 @@ TEAM = [
 # 2026-10-30: Subuddh Parekh moved from the team to the advisors (owner's request): the last advisor, A-09, "Advisor · AI & ML".
 ADVISORS = [
     ("kumar-mehta", "Kumar Mehta", "Kumar Mehta", "Advisor · Networking", "Co-founder and CDO, and former CEO, of Versa Networks.", None, []),
-    ("sreeram-kannan", "Sreeram Kannan", "Sreeram Kannan", "Advisor · Blockchain Systems", "Founder and CEO of Eigen Layer and director of the University of Washington's Blockchain Lab.", None, []),
+    ("sreeram-kannan", "Sreeram Kannan", "Sreeram Kannan", "Advisor · Blockchain Systems", "Founder and CEO of EigenLayer and director of the University of Washington's Blockchain Lab.", None, []),
     ("philip-bond", "Dr. Philip Bond", "Philip Bond, Ph.D.", "Advisor · Capital Markets", "Edward E. Carlson Distinguished Professor in Business Administration at the Foster School of Business, University of Washington.", None, [("His research on the blog", "blog/index.html#economics")]),
     ("john-schuster", "John Schuster", "John Shuster", "Advisor · Strategy & Markets", "A startup founder and executive, with an MBA in Finance from The Wharton School.", None, []),
     ("victor-gamolsky", "Victor Gamolsky", "Victor Gamolsky", "Advisor · Strategy & Technology", "A decade of building and scaling ventures with lean, evidence-driven product methods.", "victor-gamolsky", []),

@@ -76,9 +76,10 @@ body[data-page="home"] .btn .lbl-s { display: none; }
   body[data-page="home"] .story-idx button.is-on .t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
-/* the plates' captions: the plate number stays a mono register mark, the title is text (Inter, sentence case), as the
-   chapters' figure captions are set */
-body[data-page="home"] .story-lab.cap { font: 400 .78rem/1.45 var(--sans); letter-spacing: 0; text-transform: none; text-wrap: balance; }
+/* the plates' captions in the chapters' grammar: the plate number a mono register mark, the title in Inter, sentence
+   case, then the hedge, dimmer, beside it where it fits and under it where it does not */
+body[data-page="home"] .story-lab.cap { display: flex; flex-wrap: wrap; column-gap: 1.5em; font: 400 .78rem/1.45 var(--sans); letter-spacing: 0; text-transform: none; text-wrap: balance; color: rgba(245, 242, 236, .78); }
+body[data-page="home"] .story-lab.cap .fc-h { text-align: left; color: rgba(245, 242, 236, .6); }
 body[data-page="home"] .story-lab.cap b { font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: .02em; text-transform: none; }
 
 /* the stage's focus ring is the site's (it was 1 px at 55%, inset 8 px: the faintest on the site) */
@@ -107,10 +108,10 @@ body[data-page="home"] .story-stage:focus-visible { outline: 2px solid var(--sig
 }
 /* the narrowest phones: the hedge takes two fixed lines, whichever face has landed (a reflow when a font arrived once
    moved the whole bottom-anchored beat: CLS 0.16 in Lighthouse); from 380 px it fits one line with room to spare. The
-   break never ends a line on the middle dot: there the dot is left to assistive tech. (Same for the S4 and coda hedges.) */
+   break never ends a line on the middle dot: there the dot is left to assistive tech. */
 @media (max-width: 379.98px) {
-  body[data-page="home"] .story :is(.lc-hedge, .beat-hedge, .story-coda-h) span.nowrap { display: block; }
-  body[data-page="home"] .story :is(.lc-hedge, .beat-hedge, .story-coda-h) span.lc-sep { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  body[data-page="home"] .story .lc-hedge span.nowrap { display: block; }
+  body[data-page="home"] .story .lc-hedge span.lc-sep { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 html.story-compact body[data-page="home"] .beat-0 .hero-lc01 { display: grid; }
 /* the CEO's sub-line stays the second voice on compact screens (site.css sets it at .86rem there; the definition was
@@ -171,22 +172,6 @@ body[data-page="home"] .lt-foot > span:first-child { font-family: var(--sans); f
 /* §04: the honest half of the headline, in the italic the overture uses for its turn ("Not tasks. Lifecycles.") */
 body[data-page="home"] #proof .proof-copy h2 { font-size: clamp(2.3rem, 4.3vw, 4.05rem); line-height: 1; }
 body[data-page="home"] #proof h2 em { display: block; margin-top: .06em; font-style: italic; color: rgba(245, 242, 236, .78); }
-
-/* the ten sessions' result never stands without its hedge (r2 copy S; VOICE 5.5: a hedge moves up with its claim). S4's
-   headline carries the hero's hedge line, set as the hero sets it; it follows the headline, not the paragraph, so it is
-   there whenever the result is (the paragraph gives way first on short screens). The coda carries it directly under
-   "Ten of ten above the floor." until the paper's caption, which carries it too, arrives (story.js). */
-body[data-page="home"] .beat-4 .beat-hedge { margin-top: 12px; max-width: 60ch; font: 400 .8125rem/1.45 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); }
-body[data-page="home"] .beat-4 .body-lg + .beat-hedge { margin-top: 10px; }
-body[data-page="home"] .story-coda-h { margin-top: 14px; font: 400 .875rem/1.45 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .74); }
-@media (max-width: 599.98px) {
-  body[data-page="home"] .beat-4 .beat-hedge, body[data-page="home"] .story-coda-h { font-size: .75rem; }
-  body[data-page="home"] .story-coda-h { margin-top: 10px; }
-}
-@media (max-height: 600px) and (min-aspect-ratio: 23/20) {
-  body[data-page="home"] .beat-4 .beat-hedge { margin-top: 8px; font-size: .75rem; }
-  body[data-page="home"] .story-coda-h { margin-top: 8px; font-size: .75rem; }
-}
 
 /* portrait tablets (768 x 1024, 820 x 1180): the CEO's headline at v2's size on two balanced lines; the compact mode
    story.js sets for the taller hero sized it at 3.4rem on one 595 px line (r2 art M). On a short screen the
@@ -373,11 +358,16 @@ body[data-page="home"] #governance .gov-spec span .nowrap { display: inline; }
 body[data-page="home"] #governance .gov-spec b { gap: 0; }
 body[data-page="home"] #governance .gov-spec b::before { content: none; }
 
+/* §03 Fig. 3.1: the gate's role line (lane.js shows it from 961 px) keeps its place from the first paint, so the chapters
+   below do not move when lane.js starts (a reload or Back lands there before it does) */
+@media (scripting: enabled) and (min-width: 961px) { body[data-page="home"] .lane:not(.is-on) .lane-role { display: grid; visibility: hidden; } }
+
 /* §06 the running log: its head (the only Pause for the motion below it) stays in view under the bar while any of the
    panel is (r2 motion m: a reader at the inspector saw records move with no Pause on screen). overflow: clip keeps the
-   rounded edge without making the panel a scroller, so the head sticks to the page. */
+   rounded edge without making the panel a scroller, so the head sticks to the page. Not on a short screen (a phone held
+   sideways), where a pinned head and the bar would hold ~40% of it while the records scroll by. */
 body[data-page="home"] .lt[data-ledger-stream] { overflow: clip; }
-body[data-page="home"] .lt[data-ledger-stream] .lt-head { position: sticky; top: var(--nav-h); z-index: 6; background: var(--lt-bg); border-radius: var(--r) var(--r) 0 0; }
+@media (min-height: 521px) { body[data-page="home"] .lt[data-ledger-stream] .lt-head { position: sticky; top: var(--nav-h); z-index: 6; background: var(--lt-bg); border-radius: var(--r) var(--r) 0 0; } }
 
 /* §06 the chain on phones: its records at the stream's record size, so each takes two lines (who and event; what it
    carried), not three at a desktop size squeezed into a phone (r2 mobile m). A field being edited on a touch screen

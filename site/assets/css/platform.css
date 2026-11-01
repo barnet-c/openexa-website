@@ -28,7 +28,11 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.696; }
 @media (min-width: 961px) {
   body[data-page="platform"] .page-hero--plate > .hero-copy { grid-column: 1 / span 5; }
   body[data-page="platform"] .page-hero--plate > .hero-plate--stack { grid-column: 6 / -1; max-width: none; margin-top: 30px; }
-  body[data-page="platform"] .page-hero--plate .hero-copy--long .display-1 { font-size: clamp(2.9rem, 5.9vw, 6rem); }
+}
+/* the H1 on the plate step (89 px at 1440, up to 102): from 1360 px 'The agentic stack.' needs a sixth column to keep its line */
+@media (min-width: 1360px) {
+  body[data-page="platform"] .page-hero--plate > .hero-copy { grid-column: 1 / span 6; }
+  body[data-page="platform"] .page-hero--plate > .hero-plate--stack { grid-column: 7 / -1; }
 }
 .hero-plate--stack .hp-lab--nm { font: 400 clamp(.86rem, 1.05vw, 1rem)/1.2 var(--serif); letter-spacing: 0; text-transform: none; color: var(--fg-2); padding-right: 2px; }
 .hero-plate--stack .hp-lab--n, .hero-plate--stack .hp-lab--fl { color: var(--fg-3); }
@@ -165,7 +169,6 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.696; }
 @media (max-width: 600px) { #boundary .bnd-side .checks li::before, #boundary .bnd-side .checks li:first-child::before { top: 18px; } }
 /* each side's four layers, drawn as the hero plate draws them: dashed plates of scattered estimates above the line, solid
    plates on a lattice below it (r2: v2's dot field, which faded across the card and counted nothing, is not drawn) */
-#boundary .bnd-side::after { content: none; }
 #boundary .bnd-plate { display: none; }
 @media (min-width: 861px) {
   #boundary .bnd-side { grid-template-areas: "n n" "h ul" "f ul"; grid-template-rows: auto auto 1fr; }
@@ -263,6 +266,20 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.696; }
 
 /* ---------- the desk: Follow is its first control, on the lane where the walk happens ---------- */
 .desk-head .model-motion { margin-left: auto; }
+/* its head (state, clock and the one Pause) stays in view under the bar while any of the desk is, as Home's stream head
+   does (r3 motion: with Follow mid-screen the Pause was off screen); clip, not hidden, so the head sticks to the page */
+body[data-page="lifecycles"] .desk { overflow: clip; }
+body[data-page="lifecycles"] .desk-head { position: sticky; top: var(--nav-h); z-index: 3; background: var(--desk-bg); border-radius: var(--r) var(--r) 0 0; }
+/* phones: one height whatever the state says ('Following an action' wrapped Pause onto a third row): the state over the
+   clock, Pause beside both */
+@media (max-width: 600px) {
+  body[data-page="lifecycles"] .desk-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "k k" "s b" "t b"; row-gap: 4px; align-items: center; }
+  body[data-page="lifecycles"] .desk-head > .desk-kicker { grid-area: k; margin-bottom: 6px; }
+  body[data-page="lifecycles"] .desk-head > .live { grid-area: s; }
+  body[data-page="lifecycles"] .desk-head > .t { grid-area: t; }
+  body[data-page="lifecycles"] .desk-head > .model-motion { grid-area: b; margin: 0; }
+}
+@media (max-width: 380px) { body[data-page="lifecycles"] .desk-head { grid-template-areas: "k k" "s s" "t b"; } } /* the state on a line of its own */
 .desk .desk-lane { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "btn gates" "say say"; align-items: center; column-gap: clamp(20px, 3vw, 44px); padding: 20px 20px 8px; }
 .desk .desk-lane > .desk-follow { grid-area: btn; }
 .desk .dl-gates { grid-area: gates; }
@@ -336,6 +353,18 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
 /* the keyboard clause of §01's instruction only where there is a pointer, and so a keyboard */
 @media (hover: none) { body[data-page="platform"] .kb-only { display: none; } }
+/* §01 under 1000 px: the plates' drawn labels are the layer buttons (arch.js .is-tags), so Tab, the arrows and Enter work
+   there too (r3 a11y); they look as the drawn labels did */
+#architecture .arch--spec.is-narrow .arch-svg text.ap-num, #architecture .arch-list.is-tags :is(.arch-bound, .arch-floor) { display: none; }
+#architecture .arch--spec.is-narrow .arch-list.is-tags { display: block; position: absolute; inset: 0; padding: 0; pointer-events: none; }
+#architecture .arch-list.is-tags > .arch-h { position: absolute; left: 0; top: 0; }
+#architecture .arch-list.is-tags .arch-layer { display: flex; align-items: center; gap: 0; width: auto; height: var(--tag-h, 24px); min-height: 0; padding: 0 6px; border: 0; background: none; font: var(--mono-tick)/1 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); white-space: nowrap; pointer-events: auto; }
+#architecture .arch-list.is-tags .arch-layer :is(.n, .vb) { display: inline; font: inherit; letter-spacing: inherit; color: inherit; }
+#architecture .arch-list.is-tags .vb::before { content: "\00a0·\00a0"; content: "\00a0·\00a0" / ""; }
+#architecture .arch-list.is-tags .nm, #architecture .arch-list.is-short .vb { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+#architecture .arch-list.is-tags .arch-layer::before, #architecture .arch-list.is-tags .arch-layer::after { content: none; }
+#architecture .arch-list.is-tags .arch-layer.is-hot { color: var(--accent); }
+#architecture .arch-list.is-tags .arch-layer:focus-visible { outline-offset: 1px; }
 
 /* ---------- Platform §01: the spec on the page's own twelve columns ----------
    Number in column 1, name and its scope in 2-4, the paragraph in 5-9 (about 60 characters a line), In and Out in
@@ -359,8 +388,8 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 #architecture [data-arch-spec] > .layer > div > ul li + li::before { content: none; }
 
 /* ---------- Platform §03: the four terms as a summary (Home §04's form), not a strip of giant numerals ----------
-   r2: one figure (50k, the swarm's scale); the counts that are only counts (eight layers, three modes, one ledger) are
-   words in their terms. From 1100 px the four terms stand on the four columns of the roles' legend below. */
+   Each figure (50k, 8, 3, 1: the four the owner approved, S-22) flush right at the r1 size; from 1100 px the four terms
+   stand on the four columns of the roles' legend below. */
 #swarm .stats.sw-spec { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(32px, 5.6vw, 88px); row-gap: 0; background: none; border: 0; border-bottom: 1px solid var(--line); }
 #swarm .stats.sw-spec > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "k v" "d v"; column-gap: 24px; align-items: baseline; padding: 18px 0 20px; background: none; border-top: 1px solid var(--line-strong); }
 #swarm .stats.sw-spec .v { grid-area: v; font-size: clamp(2rem, 2.7vw, 2.6rem); line-height: .95; text-align: right; white-space: nowrap; font-variant-numeric: lining-nums tabular-nums; }

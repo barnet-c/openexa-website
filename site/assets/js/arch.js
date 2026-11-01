@@ -1,24 +1,12 @@
 /* OpenEXA — the architecture explorer: eight layers, exploded, one boundary, on the floor of the rails.
-   Enhances a `.layers[data-arch]` list (readable as it is without JavaScript) into an instrument: a readout on the left,
-   the stack drawn in SVG in the centre (an axonometric projection, so it stays crisp at any pixel ratio) and the layers
-   as buttons on the right, each one the label of its plate. Pointing at a layer, or focusing it, lifts its plate and shows
-   its job and In -> Out; Up/Down (or Left/Right), Home and End move between layers, Enter or Space opens one, Escape closes it.
-   With `data-arch-spec` (Platform) the list stays on the page as the full spec, under the instrument: Enter, a click or a
-   tap on a layer or its plate brings that layer's entry into view and lights it, instead of opening a panel.
-   Above the boundary (between 04 and 05) agents jitter, estimating; below it every mark snaps to the plane's grid, and the
-   ground itself changes at the seam: scattered motes above, a lattice below. Dashed explosion lines join the plates' corners.
-   Under 08 lies the floor (`.layer-floor`: the rails the stack connects to).
-   An illustrative proposal travels the stack: the Council decides; approved, it crosses the boundary as a ring and snaps
-   to each plate's grid below it, still a ring, until the last plate settles it as a square that drops to the floor;
-   rejected, it falls away. The readout card follows the plate you point at and keeps itself on screen; it swaps one layer
-   for the next out, then in, never both at once. Motion runs only on screen in a visible tab, stops on request, never
-   starts under reduced motion. At rest it is cheap: nobody at it, only the proposal's flow runs, drawn at 20 Hz; a
-   pointer or focus in it adds the beads' drift at 30 Hz (each plate's beads as three groups, one transform each), and
-   bead by bead, at full rate, only on the plate you point at. With no pointer or focus in it for 8 s it stops; a pointer,
-   focus, or its coming back into view wakes it. Nothing reads layout while the script runs: the geometry is taken in the
-   first frame after the build.
-   The wide instrument's height is set in CSS (--arch-minh), before and after this script builds it, so the page under it
-   never moves when it does. */
+   Turns a `.layers[data-arch]` list (complete without JavaScript) into an instrument: a readout (left), the stack in SVG
+   (centre) and the layers as buttons (right), each the label of its plate. Pointing or focus lifts a plate and shows its
+   job and In -> Out; arrows, Home and End move, Enter or Space opens, Escape closes. With `data-arch-spec` (Platform) the
+   list stays as the spec under it, and a layer leads to its entry; under 1000 px the plates' labels are the buttons.
+   An illustrative proposal travels the stack: approved, it crosses the boundary and settles as a square on the floor;
+   rejected, it falls away. Motion runs only on screen in a visible tab, stops on request and never under reduced motion;
+   at rest it is drawn at 20-30 Hz and it stops 8 s after the last pointer or focus. Nothing reads layout while the
+   script runs. The wide instrument's height is held in CSS (--arch-minh), so the page under it never moves. */
 (function () {
   'use strict';
   const roots = Array.from(document.querySelectorAll('.layers[data-arch]'));
@@ -52,6 +40,15 @@
     return e;
   }
   function setA(e, k, v) { const c = e.__a || (e.__a = {}); if (c[k] !== v) { c[k] = v; e.setAttribute(k, v); } } // write only what changed
+  function setS(e, k, v) { const c = e.__s || (e.__s = {}); if (c[k] !== v) { c[k] = v; e.style[k] = v; } }
+  // a layer's name in the serif: each hyphen in the site's span, the face's wide bearings taken in (.hy; r3)
+  function nameInto(el, s) {
+    el.textContent = '';
+    const re = /\p{L}[-‐](?=\p{L})/gu;
+    let at = 0, m;
+    while ((m = re.exec(s))) { const cut = m.index + m[0].length - 1; el.append(s.slice(at, cut)); H('span', 'hy', el, '-'); at = cut + 1; }
+    el.append(s.slice(at));
+  }
   // a critically damped spring (implicit Euler): stable at any frame time, no overshoot
   function spring(o, target, dt, w) {
     const f = 1 + 2 * dt * w, hoo = dt * w * w, hhoo = dt * hoo, det = 1 / (f + hhoo);
@@ -105,7 +102,10 @@
     inst.classList.add('arch', 'is-building');
     if (spec) inst.classList.add('arch--spec');
     const head = H('div', 'arch-head');
-    H('span', 'arch-lab', head, root.dataset.archLabel || 'The agentic stack');
+    // the label in the caption register: the figure's mark in mono, its title in Inter, the separator for assistive tech
+    const lab = H('span', 'arch-lab', head), labTxt = root.dataset.archLabel || 'The agentic stack';
+    const lm = /^(Fig\.\s*\d[\d.]*?)\.?(?:\s+[—–·:-])?\s+(\S.*)$/.exec(labTxt);
+    if (lm) { H('b', 'fc-n', lab, lm[1].replace(/\s+/, ' ')); H('span', 'fc-d', lab, ' · '); lab.append(lm[2]); } else lab.textContent = labTxt;
     const legend = H('span', 'arch-legend', head);
     legend.setAttribute('aria-hidden', 'true');
     H('span', '', legend, 'Illustrative');
@@ -137,7 +137,7 @@
       const hd = H(spec ? 'div' : 'h3', 'arch-h', list);
       const b = H('button', 'arch-layer', hd);
       b.type = 'button'; b.id = `${pre}-b${i + 1}`;
-      H('span', 'n', b, it.num); H('span', 'nm', b, it.name); H('span', 'vb', b, it.verb);
+      H('span', 'n', b, it.num); nameInto(H('span', 'nm', b), it.name); H('span', 'vb', b, it.verb);
       const p = it.body;
       p.id = `${pre}-p${i + 1}`;
       if (spec) {
@@ -367,7 +367,7 @@
     }
 
     /* ---------------- 4 · geometry ---------------- */
-    let wide = false, W = 1, Hh = 1, cx = 0, halfW = 150, Sc = 1, F0 = 19 * DEG, thick = 7, figH = 0, minH = 0;
+    let wide = false, tags = false, W = 1, Hh = 1, cx = 0, halfW = 150, Sc = 1, F0 = 19 * DEG, thick = 7, figH = 0, minH = 0, tagH = 24;
     let base = new Array(N).fill(0), rowC = new Array(N).fill(0), by = 0, fy = 0, readL = 0, readR = 0, readTop = 0, listL = 0, listR = 0, roomyB = false, roomyP = false;
     const view = { T: 45 * DEG, F: 19 * DEG, tT: 45 * DEG, tF: 19 * DEG };
     let geoDirty = true;
@@ -429,6 +429,8 @@
         roomyB = roomB() >= longB;
         roomyP = W - 8 - (cx + halfW + 12) >= Math.max(...plates.map((p) => wl(p.numLong) - 14));
         const hh = halfW * Math.sin(F0), pitch = Math.max(room ? 14 : 30, hh * k), gap = pitch * g, top = (room ? 20 : 30) + hh;
+        const th = Math.min(24, Math.floor(pitch));
+        if (th !== tagH) { tagH = th; list.style.setProperty('--tag-h', th + 'px'); }
         base = []; for (let i = 0; i < N; i++) base.push(top + i * pitch + (i >= bIndex ? 2 * gap - pitch : 0));
         by = top + (bIndex - 1) * pitch + gap;
         let bottom = base[N - 1] + hh + thick;
@@ -475,7 +477,7 @@
       const it = items[i], above = i < bIndex;
       skL.textContent = `${it.num} / ${pad2(N)} · ${it.verb}`;
       skR.textContent = above ? 'Decides' : 'Executes';
-      snm.textContent = it.name; sjob.textContent = it.job; sjob.hidden = !it.job;
+      nameInto(snm, it.name); sjob.textContent = it.job; sjob.hidden = !it.job;
       sIn.textContent = it.inp; sOut.textContent = it.out; sio.hidden = !(it.inp || it.out);
       sside.textContent = '';
       sside.appendChild(glyph(i));
@@ -562,6 +564,11 @@
     function setMode(w, defer) {
       wide = w;
       inst.classList.toggle('is-wide', wide); inst.classList.toggle('is-narrow', !wide);
+      // spec, narrow: the list under the drawing is not shown, so the plates' labels become the layer buttons (keyboard
+      // and pointer: Tab to a layer, Up/Down to move, Enter to its entry), placed over the drawing by render()
+      tags = spec && !wide;
+      list.classList.toggle('is-tags', tags);
+      if (!tags) heads.forEach((hd) => { setS(hd, 'transform', ''); setS(hd, 'opacity', ''); });
       inst.style.removeProperty('--arch-cardh'); minH = 0;
       placePanels();
       hint.textContent = spec ? (wide && fineMQ.matches ? 'Point at a layer · ↑ ↓ · Enter for its spec' : fineMQ.matches ? 'Click a plate for its spec' : 'Tap a plate for its spec')
@@ -851,6 +858,7 @@
         // labels (narrow): numbers beside the plates
         const xr = cx + C[0] + 12;
         setA(p.num, 'x', f1(xr)); setA(p.num, 'y', f1(y + C[1]));
+        p.lx = xr; p.ly = y + C[1];
       });
       // explosion lines between the plates' corners; they stretch as a plate lifts
       const gA = clamp((ex - 0.6) / 0.4, 0, 1);
@@ -887,6 +895,13 @@
         if (bound.tUp.textContent !== up) bound.tUp.textContent = up;
         if (bound.tDn.textContent !== dnT) bound.tDn.textContent = dnT;
         plates.forEach((p, i) => { const t2 = roomyP ? p.numLong : p.numShort; if (p.num.textContent !== t2) p.num.textContent = t2; setA(p.num, 'opacity', f3(clamp((exOf(i) - 0.8) / 0.2, 0, 1))); });
+        if (tags) { // the labels are the layer buttons: each sits where its plate's label is drawn, and shows as it does
+          list.classList.toggle('is-short', !roomyP);
+          plates.forEach((p, i) => {
+            setS(heads[i], 'transform', `translate(${f1(p.lx - 6)}px, ${f1(p.ly - tagH / 2)}px)`);
+            setS(heads[i], 'opacity', f3(focus === i ? 1 : clamp((exOf(i) - 0.8) / 0.2, 0, 1)));
+          });
+        }
       }
       // the floor: a ground line under the stack, hatched beneath it as in a technical drawing
       if (floor) {

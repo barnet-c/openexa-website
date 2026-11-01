@@ -130,12 +130,12 @@
     form.addEventListener('change', live);
     form.addEventListener('focusin', e => here(KEYS[e.target.name]));
     form.addEventListener('focusout', () => here(''));
-    // the letter sits beside the form; on phones it waits for the result panel and appears there, above its buttons
+    // the letter sits beside the form; on phones it waits for the result panel and appears there, under its buttons, so
+    // "Open the email" is on the first screen after "Prepare request" (r3-mobile: the letter is 600-700 px on a phone)
     const place = () => {
       if (!letter || !home) return;
       const inPanel = result.classList.contains('show') && narrow.matches;
-      const row = $('.row', result);
-      if (inPanel && letter.parentElement !== result) result.insertBefore(letter, row);
+      if (inPanel && letter.parentElement !== result) result.appendChild(letter);
       else if (!inPanel && letter.parentElement !== home) home.insertBefore(letter, letterNote && letterNote.parentElement === home ? letterNote : null);
     };
     narrow.addEventListener('change', place);
@@ -197,7 +197,10 @@
       form.hidden = true;
       result.classList.add('show');
       place();
-      result.focus();
+      // focus without the browser's own scroll (for a panel taller than the screen it picks its own alignment and
+      // ignores scroll-margin-top), then its top under the bar: "One more step / Your draft is ready." (r3-mobile)
+      result.focus({ preventScroll: true });
+      result.scrollIntoView({ block: 'start', behavior: 'instant' });
     };
     const edit = $('[data-form-edit]', result);
     if (edit) edit.addEventListener('click', () => {

@@ -34,7 +34,7 @@
     <published>2026-09-21T00:00:00Z</published>
     <updated>2026-09-21T00:00:00Z</updated>
     <author><name>OpenEXA</name></author>
-    <summary>Why we stopped building assistants and changed the unit of work to the lifecycle.</summary>
+    <summary>The six traits a process must have before we will touch it, and why finance comes first.</summary>
   </entry>
   <entry>
     <title>Why Five Thousand Small Agents Beat One Large One</title>
@@ -43,7 +43,7 @@
     <published>2026-09-21T00:00:00Z</published>
     <updated>2026-09-21T00:00:00Z</updated>
     <author><name>OpenEXA</name></author>
-    <summary>Failure analysis, not a taste for scale: why thousands of narrow agents beat one large one.</summary>
+    <summary>Failure analysis, not a taste for scale: an agent that sees the whole job leaves no seam where a policy can intervene.</summary>
   </entry>
   <entry>
     <title>Agents Decide. Code Executes. The One Boundary That Matters</title>
@@ -70,7 +70,7 @@
     <published>2026-09-21T00:00:00Z</published>
     <updated>2026-09-21T00:00:00Z</updated>
     <author><name>OpenEXA</name></author>
-    <summary>Governance in milliseconds: what the council checks, three operating modes, and the kill switch.</summary>
+    <summary>What the Council checks, the three operating modes, and the halt that works in every mode.</summary>
   </entry>
   <entry>
     <title>A Ledger Nobody Can Edit. Hash Chains as Audit Infrastructure</title>
@@ -88,7 +88,7 @@
     <published>2026-09-21T00:00:00Z</published>
     <updated>2026-09-21T00:00:00Z</updated>
     <author><name>OpenEXA</name></author>
-    <summary>What ten live sessions on real capital showed, precisely what they did not, and where the cost goes.</summary>
+    <summary>The setup, the result and where the cost goes, and precisely what ten sessions do not show.</summary>
   </entry>
   <entry>
     <title>Master and Copy. How a Proven Agent Becomes a Platform</title>
@@ -97,6 +97,6 @@
     <published>2026-09-21T00:00:00Z</published>
     <updated>2026-09-21T00:00:00Z</updated>
     <author><name>OpenEXA</name></author>
-    <summary>How a proven agent becomes a platform: prove one, master and copy, then open the rails.</summary>
+    <summary>Three phases: prove one agent, master and copy it, then open the rails.</summary>
   </entry>
 </feed>

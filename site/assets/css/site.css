@@ -80,7 +80,17 @@
   --mono-m: .75rem;
   --track-label: .12em;
   --track-eyebrow: .14em;
+
+  /* the H1 scale (r3): three steps, one per kind of page, never a page's own clamp. Statement: the page is its sentence
+     (Company, Access, the 404; v2's .display-1). Plate: the H1 beside its hero plate (Platform, Lifecycles, Proof, Trust,
+     Research, Blog). Article: a post's or a note's title. 118 / 89 / 65 px at 1440. Home's overture keeps its own
+     scale; a window under 501 px tall sets its short scale. A headline that does not fit its step gets a wider measure
+     or column, never a smaller size. */
+  --h1-statement: clamp(3.4rem, 8.2vw, 7.6rem);
+  --h1-plate: clamp(2.9rem, 6.2vw, 6.4rem);
+  --h1-article: clamp(2.3rem, 4.5vw, 4.3rem);
 }
+@media (max-width: 960px) { :root { --h1-article: clamp(2.2rem, 9vw, 3.2rem); } } /* one column: the title leads the plate */
 
 /* ---------- reset ---------- */
 *, *::before, *::after { box-sizing: border-box; }
@@ -115,7 +125,7 @@ ul, ol { padding: 0; list-style: none; }
 em, .ital { font-style: italic; }
 .serif em { font-family: var(--serif); }
 
-.display-1 { font-family: var(--serif); font-weight: 400; font-size: clamp(3.4rem, 8.2vw, 7.6rem); line-height: .96; letter-spacing: -0.025em; }
+.display-1 { font-family: var(--serif); font-weight: 400; font-size: var(--h1-statement); line-height: .96; letter-spacing: -0.025em; }
 .display-2 { font-family: var(--serif); font-weight: 400; font-size: clamp(2.6rem, 5.4vw, 4.8rem); line-height: 1.02; letter-spacing: -0.02em; }
 .display-3 { font-family: var(--serif); font-weight: 400; font-size: clamp(1.9rem, 3.2vw, 2.9rem); line-height: 1.1; letter-spacing: -0.015em; }
 .h4 { font-family: var(--serif); font-weight: 400; font-size: clamp(1.35rem, 1.8vw, 1.6rem); line-height: 1.2; letter-spacing: -0.01em; }
@@ -351,7 +361,9 @@ main > .is-dark:last-child { position: relative; margin-bottom: -1px; }
 .footer h2 { font-family: var(--mono); font-weight: 500; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); margin-bottom: 12px; }
 .footer ul li { padding: 4px 0; font-size: .95rem; }
 /* the footer speaks the bar's grammar: where you are is a solid rule; a link you point at or focus, a dashed one */
-.footer ul li a { opacity: .85; padding-bottom: 3px; background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size .45s var(--ease), opacity .25s var(--ease); }
+.footer ul li a { position: relative; opacity: .85; padding-bottom: 3px; background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size .45s var(--ease), opacity .25s var(--ease); }
+/* a thumb-sized target with the look unchanged (r3-mobile): 22 px links answer over 32 px, short of the next row's */
+.footer ul li a::after { content: ""; position: absolute; inset: -5px -6px; }
 .footer ul li a:not([aria-current="page"]) { background-image: repeating-linear-gradient(90deg, currentColor 0 3px, transparent 3px 6px); } /* dashed at rest too: it never leaves as a solid rule (r1-motion 3) */
 .footer ul li a[aria-current="page"], .footer ul li a:focus-visible { opacity: 1; background-size: 100% 1px; }
 .footer ul li a[href]:focus-visible { background-color: transparent; } /* a list, not running text: no highlighter */
@@ -503,15 +515,17 @@ main > .is-dark:last-child { position: relative; margin-bottom: -1px; }
 .research-hero .figure-stage canvas, .article-hero .figure-stage canvas { touch-action: pan-y; }
 .research-hero .lede, .article-hero .lede { max-width: 46ch; }
 .article-hero-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
-.article-title { max-width: 16ch; text-wrap: balance; font-size: clamp(2.6rem, 5.4vw, 5.2rem); line-height: 1.02; }
-.article-meta { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 28px; font-family: var(--mono); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
-.article-meta span { display: inline-flex; align-items: center; gap: 10px; }
-.article-meta span::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: .8; }
+.article-title { max-width: 16ch; text-wrap: balance; font-size: var(--h1-article); line-height: 1.02; }
+/* the meta row's items part on a hairline, as the bar's wordmark does from its label (r3: the green dot means live
+   status only, never a bullet). A wrapped row's first item has no rule: the row clips what falls left of its edge */
+.article-meta { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 28px; overflow: hidden; font-family: var(--mono); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+.article-meta span { position: relative; display: inline-flex; align-items: center; }
+.article-meta span::before { content: ""; position: absolute; left: -13px; top: 50%; width: 1px; height: 1.2em; margin-top: -.6em; background: currentColor; opacity: .45; }
 @media (max-width: 960px) {
   .research-hero, .article-hero, .company-hero { min-height: 0; display: block; padding-top: calc(var(--nav-h) + 62vw); }
   .research-hero .figure-stage, .article-hero .figure-stage { left: 0; height: calc(var(--nav-h) + 66vw); pointer-events: none; }
   .article-hero-grid { grid-template-columns: 1fr; }
-  .article-title { font-size: clamp(2.2rem, 9vw, 3.2rem); max-width: none; }
+  .article-title { max-width: none; }
 }
 
 /* ---------- research index ---------- */
@@ -704,7 +718,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: -1px; }
 @media (hover: hover) { .blog-card:hover::after { transform: scaleX(1); } }
 .scholar-link { display: inline-flex; font-family: var(--mono); font-size: .72rem; letter-spacing: var(--track-label); text-transform: uppercase; }
 .blog-post-hero { min-height: 0; padding-bottom: clamp(56px, 7vw, 96px); }
-.blog-title { max-width: 22ch; font-size: clamp(2.1rem, 4.2vw, 3.9rem); line-height: 1.06; margin-top: 18px; }
+.blog-title { max-width: 22ch; font-size: var(--h1-article); line-height: 1.06; margin-top: 18px; }
 .blog-side { display: grid; gap: 14px; justify-items: start; }
 .blog-side .link-arrow { font-size: .9rem; }
 .blog-article > figure, .blog-article figure { margin: 0 0 1.6em; border: 1px solid var(--line); background: var(--paper-2); }
@@ -1120,7 +1134,15 @@ html { scroll-padding-top: var(--nav-h); }
 @media (max-height: 500px) and (max-width: 960px) and (min-width: 540px) {
   .nav-sheet.has-ch { display: none; }
   .nav-sheet.has-ch:popover-open, .nav-open .nav-sheet.has-ch { display: grid; grid-template-columns: 1fr 1fr; align-content: start; column-gap: clamp(24px, 5vw, 56px); }
-  .nav-sheet.has-ch > .nav-ch-panel { grid-row: 1 / span 3; }
+  /* left: this page's chapters, then Request access and the foot; right: the site's pages (r3-mobile: the button sat
+     under the six pages, below a 390 px screen). At 844 x 390 a page of three chapters fits whole and the button is on
+     screen up to five; a longer chapter list scrolls, as it must */
+  .nav-sheet.has-ch:popover-open, .nav-open .nav-sheet.has-ch { row-gap: 16px; }
+  .nav-sheet.has-ch > .nav-ch-panel { grid-column: 1; grid-row: 1 / span 2; }
+  .nav-sheet.has-ch > .nav-sheet-head { grid-column: 2; grid-row: 1; margin-bottom: -16px; }
+  .nav-sheet.has-ch > .nav-sheet-links { grid-column: 2; grid-row: 2 / span 3; }
+  .nav-sheet.has-ch > .btn { grid-column: 1; grid-row: 3; justify-self: start; }
+  .nav-sheet.has-ch > .nav-sheet-meta { grid-column: 1; grid-row: 4; row-gap: 6px; }
   .nav-sheet.has-ch .nav-sheet-links { display: block; }
   .nav-sheet.has-ch .nav-sheet-links li:nth-child(2) { border-top: 0; }
   .nav-sheet.has-ch .nav-sheet-links a { min-height: 44px; font-size: 1.45rem; }
@@ -1478,7 +1500,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .desk .model-motion { font-size: var(--mono-tick); letter-spacing: .12em; }
 .desk-legend { font-size: var(--mono-tick); letter-spacing: .12em; }
 .desk-legend i.dk-nav { width: 16px; height: 1px; background: repeating-linear-gradient(90deg, var(--khaki) 0 3px, transparent 3px 6px); }
-.desk-legend .desk-axis { margin-left: auto; letter-spacing: .08em; text-transform: none; }
+.desk-legend .desk-axis { margin-left: auto; letter-spacing: 0; text-transform: none; font-size: var(--mono-xs); color: var(--fg-2); } /* the hedge at 11 px in the hedge tone (r3-a11y m2); untracked, it is no wider than the 10 px tracked line, so it keeps the legend's row at 1440 */
 .desk-chart canvas { height: clamp(260px, 26vw, 360px); }
 .desk-legend i.band { height: 7px; border: 0; border-top: 1px solid var(--accent); background: linear-gradient(180deg, rgba(79, 203, 147, .3), rgba(79, 203, 147, 0)); }
 .desk-legend i.ring { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--accent); background: none; }
@@ -1694,8 +1716,8 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
    the drawing), so they stay crisp and >= 10 px at every width. No loops: one staged fade on reveal, none without it. */
 .page-hero--plate { align-items: center; }
 .page-hero--plate > .hero-copy { grid-column: 1 / span 7; min-width: 0; }
-.page-hero--plate .display-1 { font-size: clamp(2.9rem, 6.2vw, 6.4rem); max-width: 17ch; }
-.page-hero--plate .hero-copy--long .display-1 { font-size: clamp(2.6rem, 5.3vw, 5.5rem); } /* Platform's three-clause h1 */
+.page-hero--plate .display-1 { font-size: var(--h1-plate); max-width: 17ch; }
+.page-hero--plate .hero-copy--long .display-1 { max-width: 18ch; } /* Platform's three-clause h1: the plate step, a wider measure (r3) */
 .page-hero--plate .lede { max-width: 50ch; }
 .hero-plate { grid-column: 8 / -1; justify-self: end; width: 100%; max-width: 500px; min-width: 0; margin: 0; }
 .hp-art { position: relative; }

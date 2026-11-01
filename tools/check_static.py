@@ -457,7 +457,8 @@ REGION_CSS = ["assets/css/site.css"] + [f"assets/css/{f}" for f in INSTRUMENT_CS
 def region_text():
     return "\n".join((ROOT / rel).read_text(encoding="utf-8") for rel in REGION_CSS if (ROOT / rel).is_file())
 PAGE_JS_BUDGET = 8000      # gzip -9 bytes per page-only script (access.js, company.js, any new one)
-SHARED_JS = {"site.js", "loader.js", "story.js", "swarm.js", "ledger.js", "chain.js", "arch.js", "lane.js", "proof.js", "gap.js", "figure.js", "blog.js"}
+SHARED_JS = {"site.js", "loader.js", "story.js", "swarm.js", "ledger.js", "chain.js", "arch.js", "lane.js", "proof.js", "gap.js", "figure.js", "blog.js",
+             "afterpaint.js"}  # v2x r3 (system): the after-paint starter, a shared module (Lifecycles now; any page may use it)
 PAGE_SCRIPTS_BUDGET = 151000  # gzip -9 bytes: the scripts any one page loads (index.html's budget, for every page)
 
 

@@ -429,7 +429,7 @@ series_minutes = sum(SLUGS[s]["minutes"] for s, _, _ in SERIES)
 PLATES_HEDGE = "Plates are schematic · no data is plotted"
 in_series = {s for s, _, _ in SERIES}
 SERIES_BLOCK = f'''        <div class="grid t-2 blog-series-head">
-          <div class="col-6"><h2 class="display-2" data-reveal data-split>{serif(SERIES_NAME)}: from business model to AI agents.</h2></div>
+          <div class="col-6"><h2 class="display-2" data-reveal data-split>{serif(SERIES_NAME)}: <span class="sh-sub">from business&nbsp;model to AI agents.</span></h2></div>
           <div class="col-5 offset-7"><p class="body-lg" data-reveal>Four posts by Ajit K Dubey, written in 2024. They set out where generative AI creates value, then work one financial use case end to end: relative value analysis, guardrails and tearsheets, and the AI copilots and autonomous agents they make possible. It’s the line of thinking that became OpenEXA.</p><a class="link-arrow mt-3" href="{SERIES[0][0]}.html">Start with the introduction {ARROW}</a></div>
         </div>
         <div class="blog-series" id="series" data-blog-series>
@@ -451,9 +451,8 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     authors = {p["author"] for p in by_col[k]}
     assert len(authors) == 1, (k, authors)  # collections are assigned by author: the head can carry the byline once
     shead = f'''        <div class="sec-head" data-reveal><span class="idx">{n:02d}</span><span class="lab">{esc(label)}</span><span class="aside"><span class="by">{esc(shown(authors.pop()))}</span> · {len(by_col[k])} posts · {span_}</span></div>
-''' + (f'''        <figure class="blog-headplate"><div class="bh-art" aria-hidden="true">{collection_svg(k)}</div><figcaption class="plates-hedge">Schematic · no data is plotted</figcaption></figure>
-''' if k == "markets" else f'''        <figure class="blog-headplate"><div class="bh-art" aria-hidden="true">{collection_svg(k)}</div></figure>
-''' if k == "ai" else "")
+''' + (f'''        <figure class="blog-headplate"><div class="bh-art" aria-hidden="true">{collection_svg(k)}</div><figcaption><span class="pp-k">Plate · {esc(label)}</span><span class="pp-h">Schematic · no data is plotted</span></figcaption></figure>
+''' if k in ("markets", "ai") else "")  # r3-art: the phone's one plate per collection carries the register's mark and hedge, as the cards do wider
     if k == "economics":
         # v2x lab (blog-editorial): eight cards carried one mark eight times (r1-art M6, r1-mobile 9). The collection
         # is set as a register, the way Research lists its notes, beside its plate, shown once.
@@ -481,7 +480,7 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
         </div>
 '''
     else:
-        more = f'<a class="link-arrow mt-3 scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a>' if k == "markets" else ""
+        more = f'<a class="link-arrow mt-3 scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">The papers on Google Scholar {OUTB}</a>' if k == "markets" else ""
         body = f'''        <div class="grid t-2 mb-3">
           <div class="col-6"><h2 class="display-3" data-reveal>{serif(label)}.</h2></div>
           <div class="col-5 offset-7"><p class="body-lg" data-reveal>{prose(lede)}</p>{more}</div>
@@ -622,7 +621,7 @@ for p in order:
     # the eyebrow above names the collection; the link says where it goes (v2 repeated the name as the link)
     side_links = [f'<a class="link-arrow" href="index.html#{p["col"]}">{len(by_col[p["col"]])} posts in this collection {ARROW}</a>', f'<a class="link-arrow" href="index.html">All {len(kept)} posts {ARROW}</a>']
     if p["source"]: side_links.insert(0, f'<a class="link-arrow" href="{esc(p["source"])}" target="_blank" rel="noopener">Original on {esc(src_host)} {OUTB}</a>')
-    if p["col"] == "markets": side_links.insert(1, f'<a class="link-arrow" href="{SCHOLAR}" target="_blank" rel="noopener">More on financial markets research {OUTB}</a>')
+    if p["col"] == "markets": side_links.insert(1, f'<a class="link-arrow" href="{SCHOLAR}" target="_blank" rel="noopener">The papers on Google Scholar {OUTB}</a>')
     hero_img = (f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}"{body_srcset(p["hero_file"])} alt=""{size(p["hero_file"])} decoding="async"></figure>\n            '
                 if p.get("hero_file") and p["slug"] in KEEP_HERO else "")
     pager = "".join([

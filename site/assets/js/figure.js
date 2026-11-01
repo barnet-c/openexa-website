@@ -282,7 +282,7 @@
     const fitNow = () => fitA + (fitB - fitA) * mix * mix * (3 - 2 * mix);
     const SWAY = 0.2, FLOW_S = 1.5; // radians either side of face-on; seconds per pass of the pulse
     const groups = {}; let grp = null, grpOn = false;
-    stage.querySelectorAll('.fig-labels').forEach(el => { groups[el.dataset.for] = { el, items: Array.from(el.querySelectorAll('.fl')).map(l => ({ el: l, at: l.dataset.at.split(',').map(Number), side: l.dataset.side || 'r', ph: l.dataset.ph ? l.dataset.ph.split(',').map(Number) : null, to: l.dataset.to ? l.dataset.to.split(',').map(Number) : null, lead: 19, w: 0, h: 0, x: NaN, y: NaN, dx: 0, out: false, lit: false })) }; });
+    stage.querySelectorAll('.fig-labels').forEach(el => { groups[el.dataset.for] = { el, items: Array.from(el.querySelectorAll('.fl')).map(l => ({ el: l, at: l.dataset.at.split(',').map(Number), side: l.dataset.side || 'r', ph: l.dataset.ph ? l.dataset.ph.split(',').map(Number) : null, to: l.dataset.to ? l.dataset.to.split(',').map(Number) : null, keep: l.hasAttribute('data-keep'), sides: (l.dataset.keep || '').split(' ').filter(Boolean), lead: 19, w: 0, h: 0, w1: 0, h1: 0, drop: 0, one: false, dropSet: 0, oneSet: false, x: NaN, y: NaN, dx: 0, out: false, lit: false })) }; });
     grp = groups[initial] || null;
     // where the words may stand (stage px): inside the page's content edge, never under the bar (a hero stage starts at
     // the top of the page); a label that cannot stand there whole is not shown
@@ -323,7 +323,13 @@
       if (!force && ((moving && (awake || vel > 0)) || mix < 1 || reveal < 1.1)) request();
     }
     function labelsOn() {
-      grpOn = true; planned = false; grp.items.forEach(it => { const t = it.el.firstElementChild; it.w = t ? t.offsetWidth : 0; it.h = t ? t.offsetHeight : 0; it.x = NaN; it.sd = it.side; it.blocked = false; });
+      grpOn = true; planned = false; grp.items.forEach(it => {
+        if (it.oneSet) { it.el.classList.remove('is-one'); it.oneSet = false; }
+        const t = it.el.firstElementChild; it.w = t ? t.offsetWidth : 0; it.h = t ? t.offsetHeight : 0; it.x = NaN; it.sd = it.side; it.blocked = false; it.drop = 0; it.one = false;
+        // a hedge label's words on one line, measured for the slot search (r3)
+        it.w1 = it.h1 = 0;
+        if (it.keep && t && t.querySelector('small')) { it.el.classList.add('is-one'); it.w1 = t.offsetWidth; it.h1 = t.offsetHeight; it.el.classList.remove('is-one'); }
+      });
       grp.el.classList.add('is-on');
     }
     // the formation's point (x, y, z), turned by the sway and sized, onto the stage (px); false behind the eye
@@ -366,37 +372,62 @@
       grp.items.forEach(it => { const on = !!it.ph && f >= it.ph[0] - 0.02 && f <= it.ph[it.ph.length - 1] + 0.08; if (on !== it.lit) { it.el.classList.toggle('is-lit', on); it.lit = on; } });
     }
     const mirror = d => d === 'l' ? 'r' : d === 'r' ? 'l' : (d[0] === 't' ? 'b' : 't') + d.slice(1);
+    /* r3 (a11y): a label that carries a hedge (data-keep: note 09 "how far is not published", note 10 "phase two, on the
+       roadmap") is listed first, so the claim-side labels yield to it where words would cross. Where its own side and
+       the other have no room (a phone's stage), it tries the sides its data-keep allows (all if empty), a rule 8 px
+       shorter or up to 96 px longer, and its two lines set as one; the first slot inside the stage, clear of the drawing
+       (at most three of its sampled points) and of its own point wins. If none does, no label of the group is shown: a
+       part is never named without its hedge (the caption says it all) */
+    const SIDES = ['t', 'b', 'r', 'l', 'tr', 'tl', 'br', 'bl'], DROPS = [0, -8, 12, 24, 36, 48, 60, 72, 84, 96];
+    const setOut = (it, out) => { if (out !== it.out) { it.el.classList.toggle('is-out', out); it.out = out; } };
     function place(spin, sc, planning) {
       const s = Math.sin(spin), c = Math.cos(spin), M = 6, L = safe.l + M, R = safe.r - M, T = safe.t + 4, B = H - 4, taken = [];
+      let bare = false; // the hedge label is not shown, so no other label is
       grp.items.forEach(it => {
-        if (!project(it.at[0], it.at[1], it.at[2], s, c, sc)) return;
+        if (!project(it.at[0], it.at[1], it.at[2], s, c, sc)) { if (it.keep) { bare = true; setOut(it, true); } return; }
         const px = scr[0], py = scr[1];
         // a label whose point lies inside the drawing (data-to: where its words begin, in the formation's space) reaches
         // out on a longer rule, so its words stand clear of what surrounds the point
         if (it.to && project(it.to[0], it.to[1], it.to[2], s, c, sc)) { const lead = Math.max(19, Math.round(Math.abs(scr[0] - px))); if (lead !== it.lead) { it.lead = lead; it.el.style.setProperty('--lead', `${lead}px`); } }
         // keep the words inside the safe box: the text slides along its rule, the point stays where it is; a label whose
-        // point or words would stand outside it (beyond the content edge, under the bar) is not shown
-        const off = d => d === 'l' ? -it.lead - it.w : d === 'r' ? it.lead : d.length > 1 ? (d[1] === 'l' ? 6 - it.w : -6) : -it.w / 2;
-        const over = l => Math.max(L - l, l + it.w - R, 0);
-        const at = sd => { const left = px + off(sd), top = sd[0] === 't' ? py - 18 - it.h : sd[0] === 'b' ? py + 18 : py - 7, dx = left < L ? L - left : left + it.w > R ? R - left - it.w : 0; return { sd, left, top, dx, bad: top < T || top + it.h > B || Math.abs(dx) > it.w * 0.5 + 12 }; };
+        // point or words would stand outside it (beyond the content edge, under the bar), or wider than it, is not shown
+        const off = (d, w) => d === 'l' ? -it.lead - w : d === 'r' ? it.lead : d.length > 1 ? (d[1] === 'l' ? 6 - w : -6) : -w / 2;
+        const over = q => Math.max(L - q.left, q.left + q.w - R, 0);
+        const at = (sd, drop, one) => {
+          const w = one ? it.w1 : it.w, h = one ? it.h1 : it.h, left = px + off(sd, w), top = sd[0] === 't' ? py - 18 - drop - h : sd[0] === 'b' ? py + 18 + drop : py - 7;
+          const dx = left < L ? L - left : left + w > R ? R - left - w : 0;
+          return { sd, drop, one, w, h, left, top, dx, bad: top < T || top + h > B || Math.abs(dx) > w * 0.5 + 12 || w > R - L };
+        };
         if (planning) {
           // words beside a point that lack room on their side (more than a short slide) stand on the other, if they fit
           // there; words that would lie on the drawing do the same, or are not shown
-          let g = at(it.side);
-          if ((g.sd === 'l' || g.sd === 'r') && over(g.left) > 16) { const o = at(mirror(g.sd)); if (!over(o.left)) g = o; }
-          const covered = q => hits(q.left + q.dx, q.top, q.left + q.dx + it.w, q.top + it.h) > Math.max(6, 0.35 * occN * it.w * it.h / (W * H));
+          let g = at(it.side, 0, false);
+          if ((g.sd === 'l' || g.sd === 'r') && over(g) > 16) { const o = at(mirror(g.sd), 0, false); if (!over(o)) g = o; }
+          const covered = q => hits(q.left + q.dx, q.top, q.left + q.dx + q.w, q.top + q.h) > Math.max(6, 0.35 * occN * q.w * q.h / (W * H));
           it.blocked = false;
-          if (it.w && covered(g)) { const o = at(mirror(g.sd)); if (!o.bad && !covered(o)) g = o; else it.blocked = true; }
-          it.sd = g.sd; return;
+          if (it.w && covered(g)) { const o = at(mirror(g.sd), 0, false); if (!o.bad && !covered(o)) g = o; else it.blocked = true; }
+          if (it.keep && it.w && (it.blocked || g.bad)) {
+            it.blocked = true;
+            const clear = q => hits(q.left + q.dx, q.top, q.left + q.dx + q.w, q.top + q.h) <= 3 && !(px > q.left + q.dx - 4 && px < q.left + q.dx + q.w + 4 && py > q.top - 3 && py < q.top + q.h + 3);
+            const sides = [it.side, mirror(it.side), ...SIDES].filter(sd => !it.sides.length || it.sides.includes(sd));
+            search: for (const drop of DROPS) for (const one of it.w1 ? [false, true] : [false]) for (const sd of sides) {
+              if (drop && (sd === 'l' || sd === 'r')) continue;
+              const q = at(sd, drop, one); if (!q.bad && clear(q)) { g = q; it.blocked = false; break search; }
+            }
+          }
+          it.sd = g.sd; it.drop = g.drop; it.one = g.one; return;
         }
-        const { sd, left, top, dx, bad } = at(it.sd || it.side);
+        const { sd, left, top, dx, bad, w, h } = at(it.sd || it.side, it.drop, it.one);
         if (sd !== it.el.dataset.side) it.el.dataset.side = sd;
-        let out = it.blocked || px < safe.l || px > safe.r || py < T || py > B || bad;
+        if (it.drop !== it.dropSet) { it.el.style.setProperty('--drop', `${it.drop}px`); it.dropSet = it.drop; }
+        if (it.one !== it.oneSet) { it.el.classList.toggle('is-one', it.one); it.oneSet = it.one; }
+        let out = bare || it.blocked || px < safe.l || px > safe.r || py < T || py > B || bad;
         // words never cross words: a label that would touch one shown before it (the table's order is the priority) waits
-        if (!out && it.w) { const x0 = left + dx - 4, x1 = left + dx + it.w + 4; if (taken.some(b => x0 < b[2] && x1 > b[0] && top - 3 < b[3] && top + it.h + 3 > b[1])) out = true; else taken.push([x0, top, x1, top + it.h], [px - 5, py - 5, px + 5, py + 5]); }
+        if (!out && w) { const x0 = left + dx - 4, x1 = left + dx + w + 4; if (taken.some(b => x0 < b[2] && x1 > b[0] && top - 3 < b[3] && top + h + 3 > b[1])) out = true; else taken.push([x0, top, x1, top + h], [px - 5, py - 5, px + 5, py + 5]); }
+        if (it.keep && out) bare = true;
         if (px !== it.x || py !== it.y) { it.el.style.transform = `translate(${px}px, ${py}px)`; it.x = px; it.y = py; }
         if (dx !== it.dx) { it.el.style.setProperty('--dx', `${Math.round(dx)}px`); it.dx = dx; }
-        if (out !== it.out) { it.el.classList.toggle('is-out', out); it.out = out; }
+        setOut(it, out);
       });
     }
     function frame() { frameId = 0; if (!visible || document.hidden || lost || paused) return; draw(false); }

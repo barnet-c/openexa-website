@@ -1,24 +1,16 @@
-/* OpenEXA — the swarm lab (home §03, Platform §03). An illustrative model, drawn in 3D on a 2D canvas (no WebGL needed).
-   Agents carry proposals left to right through six gates. Signals drift in and are picked up at 01 Signal; through
-   02 Predict and 03 Decide agents estimate (they jitter), and at 03 each forms a proposal (a green ring). At 04 Approve the
-   execution council, an aperture of fine ticks, approves or rejects against a risk limit you can tighten: the aperture
-   closes, proposals queue at it, rejected ones fall away and fade. Past the council execution is deterministic: approved
-   proposals snap onto five rails that advance in lockstep, settle at 06 as solid squares and are sealed into blocks on a
-   hash-chained ledger line. Halt stops new proposals while open work drains. "Follow a proposal" (or click/tap an agent)
-   traces one proposal gate by gate until it settles or is rejected. Every counter is derived from the model's state;
-   'Settled / s' is an exponentially weighted rate of the model's own settlements, folded once per rail tick (tau 1.6 s
-   of model time).
-   The page hears the model through document events, both batched on one clock (at most four flushes a second):
+/* OpenEXA — the swarm lab (home §03, Platform §03): an illustrative model, 3D on a 2D canvas. Agents carry proposals
+   through six gates; at 04 the Council's aperture approves or rejects against a risk limit you can tighten (rejections
+   fall away); approved ones run five rails in lockstep, settle at 06 and are sealed into a hash-chained ledger line. Halt
+   stops new proposals while open work drains; "Follow a proposal" traces one. Counters derive from the model's state
+   ('Settled / s': an exponentially weighted rate, tau 1.6 s of model time).
+   Events, batched (at most four flushes a second):
      'oxa:settled'  {id, lane, ts, gate: 'settle', count, followed}   proposals settled since the previous flush
      'oxa:rejected' {id, ts, count, followed, gate: 'approve'}        proposals the council rejected since then
-   A ledger on the page ([data-ledger="live"], home §06) answers with 'oxa:recorded' {id, record, hash, seq, followed}; the
-   trace of a followed proposal then names that record, and its button scrolls the ledger into view and dispatches
-   'oxa:inspect' {record, seq, focus}. Without a ledger (Platform) the trace names the lab's own ledger line, where the
-   followed proposal's block was drawn (a followed rejection is logged there too, in red).
-   The model runs while the lab is on screen. Off screen it writes nothing to the DOM and steps (a 4 Hz pulse, nothing
-   drawn) only while the page's ledger is within a viewport or a followed proposal is still in flight; otherwise model
-   time stops: nothing is extrapolated. 'Pause motion' freezes it all; hidden tabs too.
-   prefers-reduced-motion: no autonomous motion, every control re-renders a still study. */
+   A ledger on the page ([data-ledger="live"], home §06) answers 'oxa:recorded' {id, record, hash, seq, followed}; a
+   followed proposal's trace names that record and its button dispatches 'oxa:inspect' {record, seq, focus}. Without a
+   ledger (Platform) the trace names the lab's own ledger line. On screen the model runs; off screen it writes nothing and
+   steps (4 Hz, nothing drawn) only while the page's ledger is near or a followed proposal is in flight. Pause motion and
+   hidden tabs freeze it; reduced motion: a still study. */
 (function () {
   'use strict';
   const root = document.querySelector('[data-swarm-live]');

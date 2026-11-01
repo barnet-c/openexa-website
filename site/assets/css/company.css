@@ -39,7 +39,7 @@
 @media (min-width: 601px) and (max-width: 960px) { /* tablet: copy left, plate right (not a stretched phone) */
   [data-page="company"] .company-hero { padding-top: calc(var(--nav-h) + 48px); padding-bottom: 56px; }
   [data-page="company"] .company-hero .container { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 28px; }
-  [data-page="company"] .company-hero h1 { font-size: clamp(3rem, 7.4vw, 3.9rem); }
+  /* the H1 on the statement step (site.css, r3), as Access beside it: "Intelligence," fits half the grid at 8.2vw */
   [data-page="company"] .company-sculpture { margin-top: 0; }
 }
 @media (max-width: 960px) { [data-page="company"] .company-hero .hero-cta { gap: 10px; } [data-page="company"] .company-hero .hero-cta .btn { padding-left: 1.1em; padding-right: 1.1em; } }
@@ -107,7 +107,8 @@
 [data-page="company"] .crew .ph img { filter: none; transform: none; transition: none; will-change: auto; }
 [data-page="company"] .crew .ph::before { opacity: .3; transition: none; } /* r1: the dot field quieter, so a photo cut beside the head (John) does not read as a different background */
 [data-page="company"] .crew .ph.grain::after { opacity: .14; }
-[data-page="company"] .crew > li:focus-within .ph img, [data-page="company"] .crew > li:focus-within .ph::before { filter: none; transform: none; opacity: .3; }
+[data-page="company"] .crew > li:focus-within .ph img { filter: none; transform: none; }
+[data-page="company"] .crew > li:focus-within .ph::before { transform: none; opacity: .3; } /* r3: the dot field only; the portrait itself faded to .3 while its row had focus (an open bio) */
 /* hover and focus: a green ring drawn outside the portrait, a paper gap between (the ring of site.css sat under the clip) */
 [data-page="company"] .crew .ph { transition: box-shadow .35s var(--ease); }
 [data-page="company"] .crew .ph .ring { display: none; }
@@ -177,6 +178,21 @@
   [data-page="company"] .crew .ph { align-self: start; }
   [data-page="company"] .crew .n { padding-top: 0; margin-bottom: 8px; }
   [data-page="company"] .crew .ph { width: 80px; height: 80px; }
+}
+/* portrait tablets (601-960): the bio control and the links are the row's foot, under the name and under the line, so
+   an open bio reads across both columns (~70 characters, as on desktops), not down the right one (~43) beside blank
+   paper (r3-mobile); the control does not move when pressed, and the links follow the open bio. From 961 px the right
+   column is wide enough (452 px at 1024) and the row keeps the control under the line */
+@media screen and (max-width: 960px) and (min-width: 601px) {
+  [data-page="company"] .crew > li, [data-page="company"] .crew--advisors > li { grid-template-areas: "ph n what" "ph who what" "ph more links"; grid-template-rows: auto 1fr auto; }
+  [data-page="company"] .crew .what { display: contents; }
+  [data-page="company"] .crew .what > p { grid-area: what; }
+  [data-page="company"] .crew-more { grid-area: more; }
+  [data-page="company"] .crew .links { grid-area: links; }
+  [data-page="company"] .crew-more[open] { grid-column: 2 / -1; }
+  [data-page="company"] .crew-more, [data-page="company"] .crew .links { align-self: start; } /* the control holds its place when the links move on */
+  [data-page="company"] .crew-more[open] ~ .links { grid-row: 4; grid-column: 2 / -1; }
+  [data-page="company"] .crew-bio p { max-width: 52ch; } /* the desktop's measure (~70 characters), not the full two columns */
 }
 @media (max-width: 600px) { /* phone: a compact row, the bio under it */
   [data-page="company"] .crew > li, [data-page="company"] .crew--advisors > li { grid-template-columns: 64px minmax(0, 1fr); grid-template-areas: "ph n" "ph who" "what what"; grid-template-rows: auto 1fr auto; column-gap: 16px; padding: 22px 0; }
@@ -328,17 +344,14 @@
 }
 
 /* ================================================================ Access */
-/* The H1 asks in the visitor's terms (v2's "Tell us who you are.") and answers with the page's mechanism ("You press
-   send.", r2); the page shows what happens to the answer: beside the form, the email this page writes, written as the
-   visitor types (access.js), and "Nothing is sent until you send it." under the button. The four paths are the four
-   choices (each with its full description, at every width, so the page says them once). On phones the letter appears
-   in the result. */
+/* The H1 is v2's, as the owner signed it (S-38, 31 Oct): "Tell us who you are. We'll take it from there."; the page
+   shows what "from there" means: beside the form, the email this page writes, written as the visitor types (access.js),
+   and "Nothing is sent until you send it." under the button. The four paths are the four choices (each with its full
+   description, at every width, so the page says them once). On phones the letter appears in the result. */
 [data-page="access"] .access-lede { align-self: end; }
-/* one sentence a line at every width: "Tell us who you are." is sized to fit its column (seven of twelve from 961 px;
-   on tablets the half the form takes below, so the lede starts where the letter does; the full measure on phones) */
-[data-page="access"] .access-hero h1 .h1-l { display: block; }
-@media (min-width: 961px) { [data-page="access"] .access-hero h1 { font-size: clamp(3.4rem, 8.2vw, 6.9rem); } }
-@media (min-width: 601px) and (max-width: 960px) { [data-page="access"] .access-hero h1 { font-size: 7vw; } }
+/* the H1 sets on the statement step (site.css --h1-statement, as Company and the 404: 118 px at 1440, v2's size), in
+   three lines across seven columns from 961 px, half the grid on tablets (the lede starts where the letter does), the
+   full measure on phones (54.4 px, v2's) (r3: no page-own size) */
 /* the lede's last line sits on the H1's last baseline; the two column heads below share a baseline */
 @media (min-width: 601px) {
   [data-page="access"] .access-hero .grid { align-items: last baseline; }
@@ -374,9 +387,11 @@
    becomes a system-colour ring */
 [data-page="access"] .form input:focus-visible, [data-page="access"] .form select:focus-visible, [data-page="access"] .form textarea:focus-visible { border-color: var(--accent); box-shadow: 0 1px 0 0 var(--accent); outline: 2px solid transparent; outline-offset: 3px; }
 [data-page="access"] .form textarea::placeholder { color: var(--fg-3); }
-/* a field the browser refused: its rule and a line under it in the rejection red (access.js writes the line) */
+/* a field the browser refused: its rule and a line under it in the rejection red (access.js writes the line). The one
+   the visitor is sent to keeps the red and takes the site's ring on top (2 px green, as every control on paper), so
+   focus is a change of mark, not a thicker red line (r3-a11y; 2.4.13); forced colours draw the ring in a system colour */
 [data-page="access"] .form [aria-invalid="true"], [data-page="access"] .form [aria-invalid="true"]:focus-visible { border-color: var(--reject); }
-[data-page="access"] .form [aria-invalid="true"]:focus-visible { box-shadow: 0 1px 0 0 var(--reject); }
+[data-page="access"] .form [aria-invalid="true"]:focus-visible { box-shadow: 0 1px 0 0 var(--reject); outline: 2px solid var(--accent); outline-offset: 3px; }
 [data-page="access"] .f-err { margin: -2px 0 0; font-size: .8125rem; line-height: 1.45; color: var(--reject); }
 [data-page="access"] .f-err:empty { display: none; }
 /* the select: no native chrome, the site's chevron */
@@ -389,7 +404,7 @@
 [data-page="access"] .form-go { display: grid; gap: 14px; justify-items: start; }
 [data-page="access"] .form-note { margin: 0; max-width: 50ch; font-size: .88rem; line-height: 1.55; color: var(--fg-3); }
 /* the result: the letter the page wrote, as the visitor's mail app will show it */
-[data-page="access"] .form-ok { padding: clamp(22px, 3vw, 34px); scroll-margin-top: calc(var(--nav-h) + 16px); } /* focus lands with its eyebrow under the bar, not behind it */
+[data-page="access"] .form-ok { padding: clamp(22px, 3vw, 34px); scroll-margin-top: 16px; } /* access.js scrolls it under the bar (html's scroll-padding is the bar), 16 px clear */
 .letter { margin: 24px 0 0; border: 1px solid var(--line); background: var(--bg-2); }
 [data-page="access"] .access-letter .letter { margin-top: 0; }
 [data-page="access"] .access-letter .eyebrow { display: flex; margin: 0 0 8px; } /* on the form's first label; the sheet level with the choices */
@@ -428,7 +443,6 @@
 @media (min-width: 421px) and (max-width: 600px) { [data-page="access"] .form > .two + .two { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; } } /* organization | role share a line where each field is wide enough */
 @media (max-width: 600px) {
   [data-page="access"] .seg { grid-template-columns: minmax(0, 1fr); }
-  [data-page="access"] .access-hero h1 { font-size: clamp(2.6rem, 13.6vw, 3.4rem); } /* v2's size from 400 px; "Tell us who you are." on one line */
   [data-page="access"] .access-hero { padding-bottom: 36px; }
   [data-page="access"] .access-body { padding-top: 44px; }
   .letter-head > span { grid-template-columns: 64px minmax(0, 1fr); }

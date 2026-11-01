@@ -1,18 +1,10 @@
-/* OpenEXA — the overture (homepage): one instrument, five scenes, signal → record.
-   S0 a globe of agents with six faint orbits; signals drift in and are absorbed · S1 the globe unwraps band by band into six
-   lifecycle rings · S2 the rings flatten and stack into eight layers around one glowing boundary (jitter above, grid below)
-   · S3 seen from the side, the layers become six gates: proposals pass them, the council aperture decides, rejections fall
-   away, settled actions become hash-linked records · S4 the ledger's records regroup into ten session columns above the
-   10 bps floor; on the way out the ledger line becomes the rule the paper chapters continue.
-   - every particle keeps its identity: morphs are staggered by structure (band, ring, layer, column), travel on curved paths
-     and settle with a light spring, so the instrument never dissolves into noise;
-   - one vocabulary of role-coded sprites: signal mote, agent bead, proposal ring, council aperture, settled square,
-     rejected red (falls with gravity), record block, hash link;
-   - callouts are DOM (crisp, selectable), projected from 3D anchors with leader lines, kept clear of the beat text;
-   - contracts other code and the checks rely on: html.story-ready / .no-webgl / .gl-ready, story:no-webgl / story:gl-ready,
-     [data-story-motion], .story-idx buttons (aria-current="step"), .beat-N, .story-2d (site.js draws the 2D fallback).
-   Reduced motion: no autonomous motion and the scenes snap. No WebGL: the static beats. The context, shaders and buffers
-   are built under the loader and rebuilt in place if the GPU drops the context. */
+/* OpenEXA — the overture (Home): five scenes, signal → record. S0 a globe of agents, six orbits · S1 it unwraps into six
+   lifecycle rings · S2 they stack into eight layers around one boundary · S3 from the side, six gates: the Council decides,
+   rejections fall away, what settles becomes hash-linked records · S4 the records regroup into ten session columns on the
+   10 bps floor; on the way out the record line becomes the paper's rule. Particles keep their identity (staggered, curved
+   morphs); callouts are DOM, projected from 3D anchors. Contracts: html.story-ready / .no-webgl / .gl-ready,
+   story:no-webgl / story:gl-ready, [data-story-motion], .story-idx (aria-current="step"), .beat-N, .story-2d (site.js).
+   Reduced motion: the scenes snap. No WebGL: the static beats. A lost context is rebuilt in place. */
 (function () {
   'use strict';
   const story = document.querySelector('.story');
@@ -130,9 +122,7 @@
   const GATE_OF_PLATE = [0, 1, 2, 3, 4, 4, 5, 5];
   // S4: the floor line (10 bps) and one column per session; heights carry no magnitude (">10 bps" only)
   const Y_FLOOR = -0.5, H_COL = 1.0, COL_SPAN = Math.min(2.9, 0.29 * NCOL);
-  // v2x: the 10 bps floor is the top of each column's solid part (F_SOLID of its height): solid up to the floor, open
-  // above it and shorter than the solid part, so nothing above the floor is drawn taller than one floor unit. Y_FLOOR
-  // stays the columns' foot: the records hang from it and the paper rises to it.
+  // v2x: the floor is the top of each column's solid part (F_SOLID); above it, open and shorter (no magnitude). Y_FLOOR is the foot
   const F_SOLID = 0.62, Y_FL = Y_FLOOR + F_SOLID * H_COL;
   const COL_X = (c) => -COL_SPAN / 2 + COL_SPAN * (c + 0.5) / NCOL;
 
@@ -306,8 +296,7 @@
     const s3y = (q) => { const c = F[3][q * 4 + 3], mode = Math.floor(c / 1000); return mode === M.FLOW || mode === M.FLOWREJ ? Y_TOP - F[3][q * 4 + 1] * (Y_TOP - Y_BOT) : F[3][q * 4 + 1]; };
     const byY = Array.from({ length: N_SURF }, (_, q) => q).sort((a, b) => s3y(b) - s3y(a));
     yield;
-    // (lab) Fig. 4.1's encoding: one solid block per basis point up to the floor (the record's floor: ten blocks for 10 bps);
-    // above it only the two edges, open-topped, fading out (value not published)
+    // (lab) Fig. 4.1's encoding: a solid block per basis point up to the floor; above it two open edges (value not published)
     const perC = Math.floor(N_SURF / NCOL), nx = 5, nz = 3, sN = nx * nz, oN = 2 * nz, yS = Y_FL - Y_FLOOR - 0.04, NB = FLOOR > 0 && FLOOR < 30 ? Math.round(FLOOR) : 10;
     for (let c = 0; c < NCOL; c++) {
       const list = byY.slice(c * perC, c === NCOL - 1 ? N_SURF : (c + 1) * perC);
@@ -366,8 +355,7 @@
     if (mode < 1.5) return rotY(u_spin) * s.xyz;
     if (mode < 3.5) { // orbit (S0, rings 0-5) or lifecycle ring (S1, rings 6-11): x angle, y radius, z lift
       int k = int(grp + 0.5) + (mode > 2.5 ? 6 : 0);
-      // LC-01's beads lie close along their ring: each green one at under half strength and each bright one at half, so where they
-      // overlap the ring stays green instead of clipping to a cyan white (density, not bloom, carries 'live')
+      // LC-01's close beads at under half strength: overlaps stay green, not cyan white
       if (mode > 2.5 && grp < 0.5) al = kind > 1.5 && kind < 2.5 ? 0.44 : kind > 7.5 && kind < 8.5 ? 0.5 : 1.0;
       float a = s.x + u_time * u_rW[k];
       vec3 U = u_rU[k], V = u_rV[k];
@@ -415,8 +403,7 @@
       float t = u_time;
       return s.xyz + 0.05 * vec3(sin(t * 0.13 + r.x * 6.28), sin(t * 0.11 + r.y * 6.28), cos(t * 0.09 + r.z * 6.28));
     }
-    // a session column: solid up to the floor line, open above it (no magnitude above the floor). On the way out all ten fold
-    // down onto the foot together, the floor line with them (lab), fading as they flatten into the record line
+    // a session column: solid up to the floor, open above it; on the way out all ten fold onto the foot together
     float hN = (s.y - ${Y_FLOOR.toFixed(3)}) / ${H_COL.toFixed(3)};
     al = 1.0 - step(${F_SOLID.toFixed(3)}, hN) * (1.0 - 0.62 * pow(1.0 - smoothstep(${F_SOLID.toFixed(3)}, 1.04, hN), 1.6));
     float dc = u_dc[int(clamp(grp, 0.0, 23.0) + 0.5)];
@@ -725,6 +712,7 @@
   const U_REC = 6.5, U_NAV = 22, U_TICK = 10, U_DAY = 35, DAY_BAND = 70;
   const MIN_FRAME = [0, 120, 110, 120, DAY_BAND + 90]; // portrait: the least frame each structure reads in (S0's globe always keeps its lede)
   const frameTiny = [false, false, false, false, false]; // stacked on a short screen: a frame too small to read drops its callouts
+  const band4 = () => (frameTiny[4] ? 8 : DAY_BAND); // S4's room under the floor: none for tags it leaves out
   let dayPitch = 99, b4 = null;
   const layouts = Array.from({ length: 5 }, () => ({ cx: 0, cy: 0, s: 1, rect: [0, 0, 0, 0] }));
   const beatRects = [], capH = [0, 0, 0, 0, 0], labelMaxW = [0, 0, 0, 0, 0], roomOf = [0, 0, 0, 0, 0];
@@ -827,7 +815,7 @@
       if (br.t - 14 - (navH + barH + capH[i] + 8) < MIN_FRAME[i]) { b.classList.add('is-tight'); tight = true; }
     });
     if (tight) measureLayout();
-    beats.forEach((b, i) => { const br = beatRects[i]; frameTiny[i] = !!(stacked && br && MIN_FRAME[i] && br.t - 14 - (navH + barH + capH[i] + 8) < 40); });
+    beats.forEach((b, i) => { const br = beatRects[i]; frameTiny[i] = !!(stacked && br && (MIN_FRAME[i] || !i) && br.t - 14 - (navH + barH + capH[i] + 8) < (i === 4 ? 40 + DAY_BAND : 40)); }); // (S4's tags hang a band under the floor)
   }
   // the six rings' projected outline at scale s (offsets from the camera target's screen point)
   const tmpV = new Float32Array(16), tmpP = new Float32Array(16), tmpVP = new Float32Array(16);
@@ -885,7 +873,7 @@
       }
       if (i === 4) { // the columns, the floor's tag left of column 01, and the band of records
         const xa = x0 + floorW + 14;
-        s = Math.max(0.05, Math.min((x1 - xa) / ((COL_SPAN + 0.24) * pxu), (y1 - y0 - DAY_BAND) / ((H_COL + 0.34) * pxu)));
+        s = Math.max(0.05, Math.min((x1 - xa) / ((COL_SPAN + 0.24) * pxu), (y1 - y0 - band4()) / ((H_COL + 0.34) * pxu)));
         if (!stacked) s = Math.min(s, (H * 0.74) / (EXT[4][1] * pxu));
         // the day tags: where the columns stand closer than a tag and its 3 px of air
         dayPitch = COL_SPAN / NCOL * s * pxu;
@@ -896,7 +884,7 @@
           if (l.el.style.minWidth !== mw) { l.el.style.minWidth = mw; if (l.ink) l.ink.style.minWidth = mw; l.w = l.el.offsetWidth; }
         });
         cx = (xa + x1) / 2;
-        const fy = stacked ? y1 - DAY_BAND : Math.min(y1 - DAY_BAND, (y0 + y1) / 2 + 0.6 * s * pxu);
+        const fy = stacked ? y1 - band4() : Math.min(y1 - DAY_BAND, (y0 + y1) / 2 + 0.6 * s * pxu);
         cy = fy - 0.6 * s * pxu;
         floorL = -COL_SPAN / 2 - 0.04 - (floorW + 10) / (s * pxu);
       } else {
@@ -907,6 +895,7 @@
           if (f) { s = f.s; cx = f.cx; x0 = f.x0; cy = f.cy; }
         }
       }
+      if (!i && frameTiny[0]) cy = -H; // a frame too small to draw the globe at all (568 x 320): it is not drawn, not a stray node
       layouts[i] = { cx, cy, s, rect: [x0, y0, x1, y1] };
     }
     // (lab) landing, the record line opens out to the page's measure: the rule the paper chapters continue (1.0x: its depth)
@@ -988,8 +977,7 @@
   const FLOOR_END = () => (stacked ? 0.7 : 0.76); // where the floor line, the paper's edge to be, ends on screen (share of the stage)
   // the way out, in shares of the exit.
   const EXIT = { wide: { copy: [0.1, 0.22], coda: [0.18, 0.28], paper: [0.35, 0.8], cap: [0.74, 0.9] }, tall: { cam: [0.3, 0.56], copy: [0.3, 0.42], coda: [0.38, 0.48], paper: [0.58, 0.86], cap: [0.84, 0.96] } }; // (portrait: the proof's copy has gone before the coda opens: one headline at a time)
-  // (lab) the exit folds all ten columns down together and the floor line with them, so every frame shows ten equal columns
-  // above the floor; the floor becomes the paper's edge. As it starts, each seal goes into its record, Day 01 first (light only)
+  // (lab) the exit folds the ten columns down together with the floor line (the paper's edge); seals go into their records
   const foldE = () => sstep(0.02, 0.3, xeNow), flY = () => lerp(Y_FL, Y_FLOOR + 0.02, foldE());
   const sealOf = (c) => clamp((xeNow - 0.03 - 0.12 * c / Math.max(1, NCOL - 1)) / 0.1, 0, 1);
   const dcArr = new Float32Array(24);
@@ -1129,7 +1117,7 @@
     const put = (id, pts, closed, col, a, w, key, dy, dash) => out.set(id, { pts, closed, col, a, w: w || 1, key: key == null ? 0.5 : key, dy: dy || 0, dash: dash || 0 });
     if (sc === 0) {
       ORBITS.forEach((o, k) => { const pts = geo('o0' + k, () => Array.from({ length: LOOP_N }, (_, j) => onLoop(OB[k], o[0], j / LOOP_N * TAU, 0))); put('o' + k, pts, true, k === 0 ? C.green : C.ivory, k === 0 ? 0.2 : 0.1, 1, 0.12 + 0.5 * k / 6); });
-      put('hz', [[-1.35, -1.3, 0], [1.35, -1.3, 0]], false, C.ivory, 0.07, 1, 0.9);
+      put('hz', [[-1.35, -1.3, 0], [1.35, -1.3, 0]], false, C.ivory, stacked ? 0 : 0.07, 1, 0.9); // (stacked: it would cross the kicker)
       // the silhouette of a unit sphere seen from the eye
       const k = clamp(scale[0] / CAM_D, 0, 0.9), rl = Math.sqrt(1 - k * k), e = [eye[0] - target[0], eye[1] - target[1], eye[2] - target[2]], el = Math.hypot(e[0], e[1], e[2]) || 1;
       const Rv = [view[0], view[4], view[8]], Uv = [view[1], view[5], view[9]], c = [e[0] / el * k, e[1] / el * k, e[2] / el * k];
@@ -1279,12 +1267,13 @@
   }
   const lab = {};
   if (labelHost) {
-    // the plates' captions lead with what kind of picture they are
-    label(0, '<b>Plate 00</b> The work, worldwide · illustrative · each point stands for an agent', { cls: 'cap', kind: 'cap' });
-    label(1, '<b>Plate 01</b> Six lifecycle classes · one infrastructure', { cls: 'cap', kind: 'cap' });
-    label(2, '<b>Plate 02</b> Eight layers, read top to bottom · one boundary', { cls: 'cap', kind: 'cap' });
-    label(3, '<b>Plate 03</b> Illustrative · six gates · one Council · one ledger', { cls: 'cap', kind: 'cap' });
-    label(4, `<b>Plate 04</b> ${REC.lifecycle} · ${NCOL} sessions · value above the floor not published · not to scale`, { cls: 'cap', kind: 'cap' });
+    // the plates' captions in the chapters' grammar: the mark, the title, then the hedge
+    const cap = (i, t, h) => label(i, `<span><b>Plate 0${i}</b> ${t}</span>${h ? ` <span class="fc-h">${h}</span>` : ''}`, { cls: 'cap', kind: 'cap' });
+    cap(0, 'The work, worldwide', 'Illustrative · each point stands for an agent');
+    cap(1, 'Six lifecycle classes, one infrastructure');
+    cap(2, 'Eight layers and one boundary, read top to bottom');
+    cap(3, 'Six gates, one Council, one ledger', 'Illustrative');
+    cap(4, `${REC.lifecycle}, ${words(NCOL)} sessions`, 'Value above the floor not published · not to scale');
     // S1: a column of callouts, one per ring, each anchored on the ring's front-right arc
     lab.rings = LC.map((c, k) => label(1, `<span class="k">${c[0]}</span><span class="n">${c[1]}</span><span class="st st-${c[2].toLowerCase()}">${c[2]}</span><span class="dt">${c[3]}: ${c[4]}</span>`,
       { cls: 'ring' + (k === 0 ? ' is-live' : ''), kind: 'list', group: k, leader: true, node: true, info: [`${c[0]} · ${c[3]}`, c[2], c[4]], anchorPx: (sc) => ringFlank(k, sc) }));
@@ -1349,10 +1338,8 @@
     l.el.addEventListener('pointerenter', e => { if (e.pointerType === 'touch' || !moved(e)) return; hoverPtr = { scene: l.scene, idx: l.group }; setHover(); }); // touch: taps decide
     l.el.addEventListener('pointerleave', e => { if (e.pointerType === 'touch' || !moved(e)) return; hoverPtr = null; setHover(); });
   });
-  // the callouts belong to a scene at rest: scene i's callouts and caption show only while i's copy is the one shown and the
-  // structure stands in i's formation (within .02 of its morph), computed in the same frame as the copy, so a slow frame can
-  // never show a stale label. They come up over 160 ms (in JS, from that same state) and go at once, with the copy. On the way
-  // out the proof's day tags stay, so the rising paper turns them to ink.
+  // a scene's callouts show only while its copy is shown and its structure is formed (within .02), read in the copy's frame
+  // (never a stale label); up over 160 ms, gone at once. On the way out the day tags stay: the paper turns them to ink.
   let labelScene = -1, labA = 0, labOnT = 0;
   const LAB_IN = 160;
   function sceneOfLabels() {
@@ -1410,7 +1397,7 @@
     const listCol = [];
     labels.forEach(l => {
       const a = vis(l);
-      let on = a > 0.01 && !((stacked || short) && l.wide) && !(frameTiny[l.scene] && l.kind !== 'cap'); // portrait and short screens leave out the secondary notes
+      let on = a > 0.01 && !((stacked || short) && l.wide) && !(frameTiny[l.scene] && (l.kind !== 'cap' || !l.scene)); // portrait and short screens leave out the secondary notes
       if (on && l.col != null) on = colIn(l.col) > 0.5;
       let x = 0, y = 0, tr = '';
       if (on && l.kind === 'cap') {
@@ -1444,7 +1431,7 @@
     if (listCol.length) { // a column of callouts on the right of the structure; spread so they never touch
       listCol.sort((a, b) => a.ay - b.ay);
       const sc = listCol[0].scene, L = layouts[sc];
-      const maxW = Math.max(...listCol.map(l => l.w)), colX = stacked ? W - Math.max(gutter * 0.5, safeR + 6) - maxW : Math.min(L.rect[2] + 22, W - Math.max(gutter * 0.5, safeR + 6) - maxW);
+      const maxW = Math.max(...listCol.map(l => l.w)), colX = stacked ? W - Math.max(gutter * 0.5, safeR + 6) - maxW : Math.min(L.rect[2] + 22, Math.min(contR, W - safeR - 6) - maxW); // (wide: the column ends on the content edge)
       const gap = Math.max(...listCol.map(l => l.h)) + (stacked || short ? 2 : 6), top = navH + (stacked ? barH + capH[sc] + 22 : short ? 8 : 14);
       let bottom = stacked ? beatRects[sc].t - 10 : H - barH - capH[sc] - (short ? 12 : 16);
       // landscape: should the column not fit above its scene's caption (a short window at a high zoom)
@@ -1584,7 +1571,6 @@
   let paperH = 0, relay0 = false, relayReady = false, shownBarOff = null;
   let fadeT = 0, copyX = 0, codaA = 0, capA = 0, fading = false, kF = 1; // the exit's three fades: in or out over 0.25 s, never resting between
   let leave4 = 1, leaveC = 1, barA = 1; // the leave too: the proof's copy, the coda and the bar
-  const codaHedge = coda && coda.querySelector('.story-coda-h'); let shownCodaHedge = '';
   // the index follows the scroll position itself: immediate
   function syncIndex() {
     const ci = clamp(Math.round(sTarget), 0, 4);
@@ -1624,7 +1610,7 @@
         const br = beatRects[4] || { ht: 0, hb: 0 }, edge = H - paperH - 26, shift = Math.min(0, edge - br.hb);
         if (lean) { // portrait: the settling floor (and the day tags under it) push the copy down
           const fNow = project(0, Y_FLOOR * layouts[4].s, 0).y;
-          dy += Math.max(0, fNow + DAY_BAND + 10 - (br.t || H));
+          dy += Math.max(0, fNow + band4() + 10 - (br.t || H));
           op *= 1 - copyX;
         }
         else { op *= 1 - copyX; if (br.ht + shift >= navH + 14) dy += shift; } // the coda takes over, as on portrait
@@ -1689,8 +1675,7 @@
           if (inkLink) { inkLink.style.transform = `translate(${xs[0].toFixed(1)}px, ${ry.toFixed(1)}px)`; inkLink.style.width = (xs[xs.length - 1] - xs[0]).toFixed(1) + 'px'; }
         }
       }
-      // the paper's caption sits under the ink tags; where it would not fit whole above the stage's lower edge (short
-      // landscape) it is left out, as the stage would cut it through its letters
+      // the paper's caption under the ink tags; left out where it would not fit whole (short landscape)
       if (paperCap) {
         let yb = 0;
         if (lab.days) lab.days.forEach(l => { if (l.inkTr && l.h) yb = Math.max(yb, l.y + l.h); });
@@ -1700,11 +1685,6 @@
         const co = (capY + paperCapH > H ? 0 : red ? 1 : capA).toFixed(3);
         if (co !== shownCapO) paperCap.style.opacity = shownCapO = co;
       }
-    }
-    // the coda's hedge gives way only to the paper's caption (it carries the hedge) where that is shown
-    if (codaHedge) {
-      const capOn = paperCap && paperH > 0.5 ? +shownCapO || 0 : 0, vh = (1 - capOn).toFixed(3);
-      if (vh !== shownCodaHedge) codaHedge.style.opacity = shownCodaHedge = vh;
     }
   }
 
@@ -2011,6 +1991,7 @@
       reducedMQ.addEventListener('change', () => { mouse.x = mouse.y = mouse.tx = mouse.ty = 0; updateMotion(); requestFrame(); });
       window.addEventListener('resize', () => resize());
       stackedMQ.addEventListener('change', () => resize(true));
+      if (window.ResizeObserver) { let bh = 0; new ResizeObserver(() => { const h = beats[0].offsetHeight; if (bh && h !== bh) requestAnimationFrame(() => { resize(true); bh = beats[0].offsetHeight; }); else bh = h; }).observe(beats[0]); }
       (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
       window.addEventListener('scroll', () => {
         const wasBelow = belowBar;
@@ -2091,8 +2072,7 @@
   function start() {
     try { gl = cv.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: true, powerPreference: 'high-performance' }); } catch (e) { gl = null; }
     if (!gl) { fail(); return; }
-    // a software renderer
-    // (gl.RENDERER first: only Chromium masks it, and Firefox warns that the debug extension is going away)
+    // a software renderer (gl.RENDERER first: Chromium masks it; Firefox deprecates the debug extension)
     try { let r = String(gl.getParameter(gl.RENDERER)); if (r === 'WebKit WebGL') { const dbg = gl.getExtension('WEBGL_debug_renderer_info'); if (dbg) r = String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)); } SOFT = /swiftshader|llvmpipe|softpipe|software|basic render/i.test(r); } catch (e) { SOFT = false; }
     if (SOFT) stage.classList.remove('grain');
     cv.addEventListener('webglcontextlost', e => {
@@ -2104,9 +2084,7 @@
     cv.addEventListener('webglcontextrestored', () => { clearTimeout(lostTimer); lost = false; if (running) setupGL(begin); });
     setupGL(begin);
   }
-  // v2x: the start-up waits for the first paint and runs in slices, so the page paints from its HTML first and no single
-  // task holds the main thread: the context and the shaders first (they compile while the particles are built), then the
-  // particles about 6 ms at a time, then the upload, then the first frame. Same particles, same order, same look.
+  // v2x: after the first paint, in slices: context and shaders (compiling meanwhile), particles ~6 ms at a time, upload, frame
   let built = false;
   function buildInSlices() {
     const it = build();
