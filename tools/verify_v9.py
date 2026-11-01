@@ -678,7 +678,21 @@ TAB_STEP = r"""(() => { const a = document.activeElement; if (!a || a === docume
   const t = (a.getAttribute('aria-label') || a.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40);
   return { id: a.__tw, d: a.tagName.toLowerCase() + (a.id ? '#' + a.id : '') + ' ' + JSON.stringify(t),
     skip: /^Skip to content/i.test(t), legal: a.matches('.footer-legal > summary'), inLedger: !!a.closest('[data-ledger]') }; })()"""
-TAB_PAGES = [("trust.html", 80, 60), ("index.html", 200, 160)]  # (page, presses, 'Legal & disclosures' reached by)
+TAB_PAGES = [("trust.html", 80, 60), ("index.html", 120, 90)]  # (page, presses, 'Legal & disclosures' reached by)
+# v2x r4 (platform; r4-a11y moderate, WCAG 2.4.11): the desk's sticky head never hides the control Shift+Tab lands on
+DESK_SIZES = ((1440, 900), (1024, 900), (1024, 768))
+DESK_LIST = r"""() => { const d = document.querySelector('.desk');
+  const f = [...d.querySelectorAll('a[href], button, input, [tabindex]')].filter(e => e.tabIndex >= 0 && !e.disabled && e.checkVisibility());
+  f.forEach((e, i) => e.setAttribute('data-tw', i)); return f.map(e => (e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 30)); }"""
+DESK_PLACE = r"""([i, where]) => { const e = document.querySelector(`[data-tw="${i}"]`), r = e.getBoundingClientRect();
+  const nav = document.querySelector('header.nav').getBoundingClientRect();
+  scrollTo({ top: scrollY + (where === 'head' ? r.top - nav.bottom - 8 : r.bottom - nav.bottom - 6), behavior: 'instant' }); }"""
+DESK_COVER = r"""() => { const e = document.activeElement, r = e.getBoundingClientRect(), hr = document.querySelector('.desk-head').getBoundingClientRect();
+  let covered = 0;
+  for (const fx of [0.1, 0.5, 0.9]) for (const fy of [0.1, 0.5, 0.9]) { const x = r.left + r.width * fx, y = r.top + r.height * fy;
+    if (y < 0 || y > innerHeight) { covered++; continue; } const h = document.elementFromPoint(x, y); if (!(h === e || e.contains(h))) covered++; }
+  return { focus: (e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 30), i: e.getAttribute('data-tw'), covered,
+           stuck: Math.abs(hr.top - document.querySelector('header.nav').getBoundingClientRect().bottom) < 2 }; }"""
 
 
 @check
@@ -686,9 +700,16 @@ async def tab_walk(b):
     """v2x r3 (proof; r3-a11y S1 and r3-motion, WCAG 2.1.1/2.1.2): from a fresh page, Tab up to N times. 'Legal &
     disclosures' (the footer's last summary) is reached within the budget, and between two visits of 'Skip to content'
     (one cycle) no element takes focus twice. Trust: 80 presses, the footer by 60 (31-stop cycle at 1440, 25 at 390;
-    r2's record trapped focus and never reached the footer in 140); Home, whose chain fields are Tab stops by design: 200
-    presses, the footer by 160 (86-stop cycle at 1440, 74 at 390). Not 'no element focused more than twice in 80
-    presses': the skip link correctly comes round three or four times in 80 on a short page."""
+    r2's record trapped focus and never reached the footer in 140). Home: v2x r4 (proof; r4-a11y minor) the chain is one
+    roving Tab stop (the record numbers) and its sixteen fields are out of the Tab order until used, so the footer by 90
+    in 120 presses (press 70 at 1440 and 66 at 390 when tightened; r3's chain fields made it 85 / 73, budget 160 in 200).
+    Not 'no element focused more than twice in 80 presses': the skip link correctly comes round three or four times in
+    80 on a short page.
+    v2x r4 (platform; r4-a11y moderate, WCAG 2.4.11): Lifecycles at 1440x900, 1024x900 and 1024x768: with each desk
+    control just under the sticky head (its top 8 px under the bar) or its bottom 6 px under the bar, focus the next
+    control without scrolling and press Shift+Tab: the control that takes focus is never covered at all nine sample
+    points (by the head, the bar or the screen's edge). Based on platform's .shots/v2x/work/platform/r4/desk_probe.py
+    (0 of 9 points covered at every size)."""
     bad, said = [], []
     for path, n, by in TAB_PAGES:
         for w, h in ((1440, 900), (390, 844)):
@@ -709,8 +730,71 @@ async def tab_walk(b):
             if legal is None or legal > by: bad.append(f"{path}@{w}x{h}: 'Legal & disclosures' reached at press {legal} (by {by} expected); skip link at {skips[:4]}; last stops {[x['d'] for x in seq[-4:]]}")
             if rep: bad.append(f"{path}@{w}x{h}: {len(rep)} element(s) took focus twice within one cycle, e.g. {rep[:3]}")
             said.append(f"{path}@{w}: footer at {legal}, cycle {skips[1] - 1 if len(skips) > 1 else '?'}")
+    for w, h in DESK_SIZES:
+        ctx, pg = await open_page(b, "lifecycles.html", w, h)
+        await pg.evaluate("document.querySelector('.desk').scrollIntoView({block: 'start', behavior: 'instant'})"); await pg.wait_for_timeout(1000)
+        names = await pg.evaluate(DESK_LIST)
+        legs, worst, other = 0, 0, 0
+        for i in range(len(names) - 1):
+            for where in ("head", "edge"):
+                await pg.evaluate(DESK_PLACE, [i, where]); await pg.wait_for_timeout(250)
+                await pg.evaluate(f"document.querySelector('[data-tw=\"{i + 1}\"]').focus({{preventScroll: true}})")
+                await pg.keyboard.press("Shift+Tab"); await pg.wait_for_timeout(900)
+                s = await pg.evaluate(DESK_COVER); legs += 1; worst = max(worst, s["covered"]); other += s["i"] != str(i)
+                if s["covered"] >= 9: bad.append(f"lifecycles.html@{w}x{h} ({where}): Shift+Tab from {names[i + 1]!r} focused {s['focus']!r} hidden at all 9 points (head stuck: {s['stuck']})")
+        await ctx.close()
+        if len(names) < 2: bad.append(f"lifecycles.html@{w}x{h}: {len(names)} desk controls found")
+        said.append(f"lifecycles@{w}x{h}: {legs} Shift+Tab legs over {len(names)} desk controls, worst {worst} of 9 points covered"
+                    + (f" ({other} landed outside the listed controls)" if other else ""))
     assert not bad, "tab_walk:\n  " + "\n  ".join(bad)
     print("tab_walk: " + "; ".join(said) + "; no stop twice in a cycle")
+
+
+CHAIN_AT = """(sel) => { const e = document.querySelector(sel); return !!e && document.activeElement === e; }"""
+CHAIN_STOPS = """() => ({ fields: [...document.querySelectorAll('.chain-list .ev, .chain-list .what')].filter(f => f.tabIndex >= 0).length,
+  stops: [...document.querySelectorAll('.chain-list .i[role="button"]')].filter(i => i.tabIndex === 0).length,
+  numbers: document.querySelectorAll('.chain-list .i[role="button"]').length })"""
+
+
+@check
+async def chain_keys(b):
+    """v2x r4 (proof; r4-a11y minor, Home §06): the chain is one roving Tab stop. On a fresh Home no record's Event or
+    Detail is a Tab stop and exactly one record number ('Edit record 01') is; ArrowDown twice reaches record 03's number,
+    Enter puts the caret in its Detail, typing breaks the chain at 03, Escape returns to the number; after Restore and
+    'Alter record 03', Tab from Restore lands on record 03's number. At 1440 and 390 (where 05-08 are folded and the
+    arrows skip them). Based on proof's .shots/v2x/work/proof/r4/chain_probe.py. verify_v9 `home` keeps the pointer path
+    (fill 'REJECTED' into record 03's Event, the one-tap Alter, Restore)."""
+    said = []
+    for w, h, touch in ((1440, 900, False), (390, 844, True)):
+        ctx, pg = await open_page(b, "index.html", w, h, dpr=2 if touch else 1, touch=touch)
+        await pg.locator("[data-chain]").scroll_into_view_if_needed()
+        await expect(pg.locator("[data-chain].chain-ready")).to_have_count(1)
+        await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain intact")
+        st = await pg.evaluate(CHAIN_STOPS)
+        assert st["fields"] == 0 and st["stops"] == 1 and st["numbers"] == 8, f"chain_keys@{w}: {st} (want no field in the Tab order, one roving stop of 8 record numbers)"
+        r1, r3 = ".chain-list li:nth-child(1) .i", ".chain-list li:nth-child(3) .i"
+        await pg.focus(r1)
+        await pg.keyboard.press("ArrowDown"); await pg.keyboard.press("ArrowDown"); await pg.wait_for_timeout(80)
+        assert await pg.evaluate(CHAIN_AT, r3), f"chain_keys@{w}: ArrowDown x2 from record 01 did not reach record 03's number"
+        await pg.keyboard.press("Enter"); await pg.wait_for_timeout(120)
+        assert await pg.evaluate(CHAIN_AT, ".chain-list li:nth-child(3) .what"), f"chain_keys@{w}: Enter on record 03's number did not put the caret in its Detail"
+        await pg.keyboard.type("altered", delay=15)
+        await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain broken at record 03")
+        await pg.keyboard.press("Escape"); await pg.wait_for_timeout(80)
+        assert await pg.evaluate(CHAIN_AT, r3), f"chain_keys@{w}: Escape in record 03's Detail did not return to its number"
+        await pg.locator("[data-chain-restore]").click()
+        await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain intact")
+        await pg.locator("[data-chain-try]").click()
+        await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain broken at record 03")
+        await pg.focus("[data-chain-restore]"); await pg.keyboard.press("Tab"); await pg.wait_for_timeout(80)
+        assert await pg.evaluate(CHAIN_AT, r3), f"chain_keys@{w}: Tab from Restore after 'Alter record 03' did not land on record 03's number"
+        st2 = await pg.evaluate(CHAIN_STOPS)
+        await pg.locator("[data-chain-restore]").click()
+        await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain intact")
+        await ctx.close()
+        assert st2["stops"] == 1, f"chain_keys@{w}: {st2['stops']} record numbers are Tab stops after the walk (want 1)"
+        said.append(f"{w}: 0 fields and 1 of 8 numbers in the Tab order; Down x2, Enter, type, Escape, Alter, Tab from Restore all land on record 03")
+    print("chain_keys: " + "; ".join(said))
 
 
 @check
@@ -2103,6 +2187,12 @@ SPEC = """async () => { const norm = s => s.replace(/\\s+/g, ' ').trim();
   const shown = e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden'; };
   const missing = want.filter(([k, t]) => !(inner.includes(t) && els.some(e => norm(e.textContent) === t && shown(e)))).map(([k, t]) => k + ': ' + t.slice(0, 40));
   return { layers: layers.length, want: want.length, missing }; }"""
+SPEC_TAGS = """() => { const ir = document.querySelector('#architecture .arch').getBoundingClientRect();
+  const r = [...document.querySelectorAll('#architecture .arch-list.is-tags .arch-layer')].filter(x => x.checkVisibility()).map(x => x.getBoundingClientRect());
+  let overlap = 0; for (let i = 0; i < r.length; i++) for (let j = i + 1; j < r.length; j++) { const a = r[i], c = r[j];
+    if (a.left < c.right - .5 && c.left < a.right - .5 && a.top < c.bottom - .5 && c.top < a.bottom - .5) overlap++; }
+  return { n: r.length, minH: r.length ? Math.min(...r.map(q => q.height)) : 0, overlap, outside: r.filter(q => q.left < ir.left - .5 || q.right > ir.right + .5).length,
+           sizes: r.map(q => [Math.round(q.width), Math.round(q.height)]) }; }"""
 
 
 @check
@@ -2127,7 +2217,19 @@ async def platform_spec(b):
     tags = await pg.evaluate("[...document.querySelectorAll('#architecture .arch-list.is-tags .arch-layer')].filter(x => { const r = x.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(x).visibility !== 'hidden'; }).length")
     await ctx.close()
     assert keys == ["arch0-b1", "arch0-b2", "arch0-e2"] and tags == 8, f"platform_spec platform.html@900x900: Tab, ArrowDown, Enter from Pause focus {keys} (want arch0-b1, arch0-b2, arch0-e2); {tags} of 8 layer buttons shown over the drawing"
-    print("platform_spec: 8 layer paragraphs and 16 In/Out lines shown without interaction; at 900 the 8 plate labels are the layer buttons, Tab/ArrowDown/Enter reach entry 02")
+    # v2x r4 (platform; r4-a11y minor, WCAG 2.5.8): on short windows (sideways phone, 400% zoom) the eight layer tags stay
+    # targets: each at least 24 px tall, none overlapping another, none outside the instrument (arch.js takes both sides
+    # of the stack when the pitch is under 24 px). Based on platform's .shots/v2x/work/platform/r4/tags_probe.py
+    sizes = []
+    for w, h, touch in ((844, 390, True), (320, 256, False)):
+        ctx, pg = await open_page(b, "platform.html", w, h, dpr=2 if touch else 1, touch=touch)
+        await pg.evaluate("document.querySelector('#architecture .arch').scrollIntoView({block: 'start', behavior: 'instant'})"); await pg.wait_for_timeout(1500)
+        t = await pg.evaluate(SPEC_TAGS)
+        await ctx.close()
+        sizes.append(f"{w}x{h}: {t['n']} tags, least {t['minH']:.1f} px tall, {t['overlap']} overlaps, {t['outside']} outside")
+        assert t["n"] == 8 and t["minH"] >= 23.5 and not t["overlap"] and not t["outside"], f"platform_spec platform.html@{w}x{h}: {sizes[-1]} (want 8, >= 24 px, 0, 0); sizes {t['sizes']}"
+    print("platform_spec: 8 layer paragraphs and 16 In/Out lines shown without interaction; at 900 the 8 plate labels are the layer buttons, Tab/ArrowDown/Enter reach entry 02; "
+          + "; ".join(sizes))
 
 
 @check

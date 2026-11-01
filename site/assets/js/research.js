@@ -93,8 +93,16 @@
       write(current);
       slots.forEach(([k, v]) => plate.style.setProperty(v, `${Math.ceil(max[k])}px`));
     };
+    // r4 (r4-a11y m2): the strip's height, so a row focused from the keyboard scrolls clear of it (research.css
+    // scroll-margin-bottom). Read after the slots are held; the strip's height also follows the screen's height
+    const rail = plate.closest('.rs-rail');
+    const stripH = () => {
+      if (!shelf || !rail) return;
+      if (strip.matches && !plate.closest('.no-plate')) shelf.style.setProperty('--rs-strip-h', `${Math.ceil(rail.offsetHeight)}px`);
+      else shelf.style.removeProperty('--rs-strip-h');
+    };
     let rq = false;
-    const queueReserve = () => { if (!rq) { rq = true; requestAnimationFrame(() => { rq = false; reserve(); }); } };
+    const queueReserve = () => { if (!rq) { rq = true; requestAnimationFrame(() => { rq = false; reserve(); stripH(); }); } };
     window.addEventListener('resize', queueReserve, { passive: true });
     strip.addEventListener('change', queueReserve);
     queueReserve();

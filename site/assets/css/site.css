@@ -16,9 +16,8 @@
 @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400 600; font-display: swap; src: url(../fonts/inter-var-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400 600; font-display: swap; src: url(../fonts/inter-var-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 /* fonts:end */
-/* (v2x) metric-matched fallbacks, local() only (no font files): until a face arrives the text wraps as it will in it,
-   so nothing below a first-screen block moves when the font lands. Measured on the site's own copy (Chromium, Windows
-   faces): size-adjust = average advance ratio; the overrides are the web face's ascent/descent divided by it. */
+/* (v2x) metric-matched local() fallbacks (no font files): text wraps as it will in the web face, so nothing moves when
+   it lands. size-adjust = the average advance ratio on the site's copy; the overrides = ascent/descent over it. */
 @font-face { font-family: 'Inter fallback'; src: local('Arial'), local('ArialMT'), local('Roboto'); size-adjust: 106.7%; ascent-override: 90.8%; descent-override: 22.6%; line-gap-override: 0%; }
 @font-face { font-family: 'Instrument Serif fallback'; src: local('Georgia'); size-adjust: 75.6%; ascent-override: 131%; descent-override: 41%; line-gap-override: 0%; }
 @font-face { font-family: 'Instrument Serif fallback'; font-style: italic; src: local('Georgia Italic'), local('Georgia-Italic'); size-adjust: 78.2%; ascent-override: 126.6%; descent-override: 39.6%; line-gap-override: 0%; }
@@ -64,16 +63,14 @@
 
   /* rhythm */
   --gutter: clamp(20px, 4vw, 56px);
-  /* chapters (r2): a chapter that continues the thought opens on --sec-close; one whose first object is a screenshot
-     instrument opens on --sec-open (.section--open); every chapter closes on --sec-foot, shorter than the next head */
+  /* chapters (r2): open on --sec-close, or --sec-open (.section--open) when an instrument comes first; close on --sec-foot */
   --sec-close: clamp(56px, 6.67vw, 96px); --sec-open: clamp(64px, 10.4vw, 150px); --sec-foot: clamp(44px, 5vw, 72px);
   --max: clamp(1320px, 70vw, 1600px); /* wide screens get a wider column (rem stays put: fitted instruments keep their size) */
   --nav-h: 72px;
   --r: 3px;
   --ease: cubic-bezier(.2, .7, .2, 1);
 
-  /* mono micro-type: one scale for every mono label on the site. v2x: labels never under 11 px; --mono-tick (10 px)
-     is for what sits inside an instrument's fitted plate (ticks, gate and record labels the engines measure). */
+  /* mono micro-type, one scale: labels >= 11 px; --mono-tick (10 px) only inside an instrument's fitted plate */
   --mono-tick: .625rem;
   --mono-xs: .6875rem;
   --mono-s: .6875rem;
@@ -81,21 +78,20 @@
   --track-label: .12em;
   --track-eyebrow: .14em;
 
-  /* the H1 scale (r3): three steps, one per kind of page, never a page's own clamp. Statement: the page is its sentence
-     (Company, Access, the 404; v2's .display-1). Plate: the H1 beside its hero plate (Platform, Lifecycles, Proof, Trust,
-     Research, Blog). Article: a post's or a note's title. 118 / 89 / 65 px at 1440. Home's overture keeps its own
-     scale; a window under 501 px tall sets its short scale. A headline that does not fit its step gets a wider measure
-     or column, never a smaller size. */
+  /* the H1 scale (r3), one step per kind of page: statement (Company, Access, the 404), plate (beside a hero plate),
+     article (posts, notes): 118 / 89 / 65 px at 1440. Home's overture and windows under 501 px tall keep their own.
+     A headline that does not fit gets a wider measure, never a smaller size. */
   --h1-statement: clamp(3.4rem, 8.2vw, 7.6rem);
   --h1-plate: clamp(2.9rem, 6.2vw, 6.4rem);
   --h1-article: clamp(2.3rem, 4.5vw, 4.3rem);
 }
 @media (max-width: 960px) { :root { --h1-article: clamp(2.2rem, 9vw, 3.2rem); } } /* one column: the title leads the plate */
+@media (max-width: 960px) and (max-height: 520px) and (min-width: 600px) { :root { --h1-statement: clamp(2.3rem, 10vh, 3rem); } } /* sideways phones: the plate step's short size (r4) */
 
 /* ---------- reset ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; } /* (inherited) no browser flash on a tap: presses are the site's own */
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body {
   margin: 0;
@@ -155,8 +151,7 @@ blockquote, .manifesto { hanging-punctuation: first; }
   .md-col-6 { grid-column: span 6 !important; }
 }
 @media (max-width: 600px) { .md-col-6 { grid-column: span 12 !important; } }
-/* tablets (601-960 px), opt-in: a .grid.t-2 keeps two columns where a phone would stack (every col-* takes half; .t-full
-   takes the row); .t-cols is a plain two-column grid at 601-1024 px for anything that is not on the 12 columns. */
+/* tablets, opt-in: .grid.t-2 keeps two columns at 601-960 (.t-full takes the row); .t-cols: two columns at 601-1024 */
 @media (min-width: 601px) and (max-width: 960px) {
   .grid.t-2 > [class*="col-"] { grid-column: auto / span 6; }
   .grid.t-2 > .t-full { grid-column: 1 / -1; }
@@ -244,8 +239,7 @@ main > .section > .container > .mt-4:last-child { margin-top: clamp(28px, 3vw, 4
 .page-hero--dark { border-bottom: 0; }
 
 /* ---------- reveal ---------- */
-/* site.js gives .will-reveal only to blocks below the first screen; they are fully in about .6 s after they arrive
-   (half the authored --d, a .5 s fade). Without JavaScript, and under reduced motion, nothing is ever hidden. */
+/* .will-reveal (site.js) only below the first screen, whole about .6 s after arrival; never without JS or with reduced motion */
 [data-reveal] { transition: opacity .5s var(--ease), transform .6s var(--ease); transition-delay: calc(var(--d, 0ms) * .5); }
 [data-reveal].will-reveal:not(.is-in) { opacity: 0; transform: translateY(12px); }
 [data-reveal].is-in { opacity: 1; transform: none; }
@@ -383,7 +377,8 @@ main > .is-dark:last-child { position: relative; margin-bottom: -1px; }
 }
 @media (min-width: 601px) and (max-width: 960px) { .footer .bottom > *, .footer .clocks > span, .footer .disc p { grid-column: span 2; } .footer .bottom .clocks { display: contents; } }
 @media (min-width: 961px) { .footer .bottom .clocks { grid-column: 4; justify-self: end; flex-wrap: nowrap; } .footer .disc p + p { grid-column: 2 / -1; } }
-@media (max-width: 600px) { .footer .top { grid-template-columns: 1fr 1fr; gap: 28px 20px; } .footer .top > :first-child { grid-column: 1 / -1; } } /* phones: the brand, then the links two by two */
+@media (max-width: 600px) { .footer .top { grid-template-columns: 1fr 1fr; gap: 28px 20px; } .footer .top > :first-child { grid-column: 1 / -1; } }
+@media (max-width: 359px) { .footer .top { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: 14px; } .footer ul li { padding: 4.5px 0; font-size: .9rem; } .footer ul li a::after { inset: -6px; } } /* 320: every label on one line; still 32 px per tap, rows 32 apart */ /* phones: the brand, then the links two by two */
 
 /* ==========================================================================
    Advanced layer — story stage, kinetic type, loader, cursor, transitions
@@ -402,9 +397,8 @@ main > .is-dark:last-child { position: relative; margin-bottom: -1px; }
 .badge { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; padding: 7px 12px; border: 1px solid var(--line-strong); border-radius: 2px; color: var(--fg-2); }
 .badge i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s ease-in-out 3; } /* three beats, then still (WCAG 2.2.2) */
 @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: .35 } }
-/* captions: one register on every page (r2 art M2). The number is a mono register mark ("Fig. 6.1", "Table 1.1",
-   "Plate") hung in the margin; the title is a sentence in Inter; the hedge or source is Inter at fg-3, flush right on wide
-   screens, on its own line under 961 px. No dash and no rule: the separator after the mark is for assistive tech (.fc-d). */
+/* captions, one register (r2): a mono mark ("Fig. 6.1", "Table 1.1", "Plate") in the margin, the title in Inter, the
+   hedge in Inter at fg-3 (flush right when wide, its own line under 961 px); .fc-d is for assistive tech only. */
 .figure-cap { --fc-ind: 4.75rem; --fc-lh: 1.25rem; position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 40px; margin-top: 16px; padding-left: var(--fc-ind); font: 400 .84rem/var(--fc-lh) var(--sans); letter-spacing: 0; color: var(--fg-2); }
 .fc-n, .figcap-n { font: 500 .75rem/var(--fc-lh, 1.25rem) var(--mono); letter-spacing: .02em; text-transform: none; color: var(--fg); white-space: nowrap; }
 .figure-cap .fc-n { display: inline-block; width: var(--fc-ind); margin-left: calc(-1 * var(--fc-ind)); }
@@ -420,8 +414,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: -1px; }
 .sticky { position: sticky; top: calc(var(--nav-h) + 32px); }
 @media (max-width: 960px) { .sticky { position: static; } }
 .nowrap { white-space: nowrap; }
-/* grain: the portraits only (it binds mismatched photos into one treatment). Dark surfaces carry none: the ink is the
-   texture (r2 art m2, CARTE §3 "noise grain"); the class on bands, heroes and the sheet is inert. */
+/* grain: the portraits only (it binds mismatched photos); dark surfaces carry none (r2), the class elsewhere is inert */
 .ph.grain::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .28; mix-blend-mode: multiply; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
 .skip { position: absolute; left: -999px; top: 8px; z-index: 1000; background: var(--ink); color: var(--paper); padding: 8px 12px; }
 .skip:focus { left: 8px; }
@@ -756,6 +749,11 @@ main > .is-dark:last-child { position: relative; margin-bottom: -1px; }
 .series-card::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .5s var(--ease); }
 .series-card:focus-visible::after { transform: scaleX(1); }
 @media (hover: hover) { .series-card:hover::after { transform: scaleX(1); } }
+/* a press (touch has no hover, and html turns the browser's tap flash off): the card's hover state at once (r4) */
+:is(.blog-card, .series-card, .research-card):active h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+:is(.blog-card, .series-card, .research-card, .pager-card):active .link-arrow { color: var(--accent); }
+.blog-card:active { background: var(--paper); transition: none; }
+:is(.blog-card, .series-card):active::after, :is(.blog-post, .article-page) .pager-card:active::before { transform: none; transition-duration: .2s; }
 .row-links { display: flex; flex-wrap: wrap; gap: 14px 32px; }
 .series-box { width: 100%; padding-bottom: 22px; margin-bottom: 8px; border-bottom: 1px solid var(--line); }
 .series-box ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
@@ -840,9 +838,8 @@ main > .is-dark:last-child { position: relative; margin-bottom: -1px; }
 /* v2:proof lives in proofchart.css (linked only where it is drawn; system r2) */
 /* -------------------------------------------------------------------------- */
 /* v2:nav:start */
-/* The frame of every page: the nav (with the chapter readout that replaced the fixed right-hand rail), the menu sheet,
-   the homepage loader, page transitions, and the shared polish of controls and focus. Behaviour: site.js (nav · chapters
-   · loader). Context selectors use :where() so a component's own rules always win over this global layer. */
+/* The frame of every page: nav and chapter readout, menu sheet, loader, page transitions, controls and focus (site.js).
+   :where() keeps a component's own rules ahead of this layer. */
 
 /* ---------- off-screen: a band of the page that is wholly out of view runs no CSS animation ---------- */
 .is-offscreen, .is-offscreen *, .is-offscreen *::before, .is-offscreen *::after { animation-play-state: paused !important; }
@@ -919,7 +916,7 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-ch-btn {
   position: relative; display: inline-flex; align-items: center; gap: 10px; min-width: 0; height: 44px; padding: 0 8px 0 13px;
   font-family: var(--mono); font-size: var(--mono-xs, .625rem); font-weight: 400; line-height: 1; letter-spacing: .16em; text-transform: uppercase;
-  color: inherit; border-radius: 2px; -webkit-tap-highlight-color: transparent;
+  color: inherit; border-radius: 2px;
 }
 .nav-ch-btn::before { content: ""; position: absolute; left: 0; top: 50%; width: 1px; height: 13px; margin-top: -6.5px; background: currentColor; opacity: .38; }
 .nav-ch-btn:focus-visible { outline-offset: 0; }
@@ -970,7 +967,6 @@ html { scroll-padding-top: var(--nav-h); }
   min-height: 46px; padding: 8px 20px; transition: background-color .2s var(--ease);
 }
 /* a tap leaves no highlight (it would be baked into a jump's still); focus-visible keeps its own state */
-.nav-ch-list a, .nav-ch-top, .nav-sheet a { -webkit-tap-highlight-color: transparent; }
 .nav-ch-list a::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; background: var(--accent); transform: scaleY(0); transition: transform .35s var(--ease); }
 .nav-ch-list .n { font-family: var(--mono); font-size: var(--mono-xs, .625rem); letter-spacing: .1em; color: var(--p-fg-3); font-variant-numeric: tabular-nums; transition: color .25s var(--ease); }
 .nav-ch-list .t { font-family: var(--serif); font-size: 1.2rem; line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; transition: transform .35s var(--ease); }
@@ -1000,7 +996,7 @@ html { scroll-padding-top: var(--nav-h); }
 .nav:not(.nav--solid) .nav-progress i { background: rgba(245, 242, 236, .1); }
 
 /* ---------- the toggle: two hairlines that cross ---------- */
-.nav-toggle { display: none; position: relative; width: 44px; height: 44px; margin-right: -11px; margin-left: auto; align-items: center; justify-content: center; flex: none; -webkit-tap-highlight-color: transparent; }
+.nav-toggle { display: none; position: relative; width: 44px; height: 44px; margin-right: -11px; margin-left: auto; align-items: center; justify-content: center; flex: none; }
 .nav-toggle span { position: relative; display: block; width: 22px; height: 9px; }
 .nav-toggle span::before, .nav-toggle span::after { content: ""; position: absolute; left: 0; right: 0; height: 1.5px; background: currentColor; transition: transform .5s var(--ease); }
 .nav-toggle span::before { top: 0; }
@@ -1134,9 +1130,8 @@ html { scroll-padding-top: var(--nav-h); }
 @media (max-height: 500px) and (max-width: 960px) and (min-width: 540px) {
   .nav-sheet.has-ch { display: none; }
   .nav-sheet.has-ch:popover-open, .nav-open .nav-sheet.has-ch { display: grid; grid-template-columns: 1fr 1fr; align-content: start; column-gap: clamp(24px, 5vw, 56px); }
-  /* left: this page's chapters, then Request access and the foot; right: the site's pages (r3-mobile: the button sat
-     under the six pages, below a 390 px screen). At 844 x 390 a page of three chapters fits whole and the button is on
-     screen up to five; a longer chapter list scrolls, as it must */
+  /* left: the chapters, Request access, the foot; right: the pages (r3-mobile). At 844 x 390 three chapters fit
+     whole; the button is on screen up to five */
   .nav-sheet.has-ch:popover-open, .nav-open .nav-sheet.has-ch { row-gap: 16px; }
   .nav-sheet.has-ch > .nav-ch-panel { grid-column: 1; grid-row: 1 / span 2; }
   .nav-sheet.has-ch > .nav-sheet-head { grid-column: 2; grid-row: 1; margin-bottom: -16px; }
@@ -1162,8 +1157,12 @@ body.nav-open { overflow: hidden; }
 }
 @keyframes loader-failsafe { 0%, 86.36% { opacity: 1; } to { opacity: 0; } }
 @keyframes loader-failsafe-off { to { visibility: hidden; pointer-events: none; } }
-/* loader.js lifts the curtain 120 ms after 100 (the decision reads for a beat) */
+/* the curtain: .is-done comes with '100' (loader.js); a first visit's transitions wait 90 ms, the beat, on the
+   compositor: no long task can stretch or skip it (r4) */
 .loader.is-done { transform: translateY(-100%); visibility: hidden; animation: none; }
+.loader:not(.is-quick).is-done { transition-delay: 90ms, 840ms; }
+.loader:not(.is-quick).is-done .loader-inner { transition-delay: 90ms, 290ms; }
+.loader:not(.is-quick).is-done::after { transition-delay: 90ms; }
 /* the curtain's lower edge is a hairline: the lift reads as a sheet being raised off the stage */
 .loader::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(245, 242, 236, .4) 30%, rgba(79, 203, 147, .55) 50%, rgba(245, 242, 236, .4) 70%, transparent); opacity: 0; transition: opacity .25s var(--ease); }
 .loader.is-done::after { opacity: 1; }
@@ -1209,6 +1208,7 @@ body.is-loading { overflow: hidden; }
 .loader.is-done ~ .nav .container > * { animation: nav-arrive .8s var(--ease) both; animation-delay: calc(.38s + var(--i, 0) * 60ms); }
 .loader.is-done ~ .nav .container > :nth-child(2) { --i: 1; } .loader.is-done ~ .nav .container > :nth-child(3) { --i: 2; }
 .loader.is-done ~ .nav .container > :nth-child(4) { --i: 3; } .loader.is-done ~ .nav .container > :nth-child(5) { --i: 4; }
+.loader:not(.is-quick).is-done ~ .nav .container > * { animation-delay: calc(.47s + var(--i, 0) * 60ms); } /* after the beat */
 @keyframes nav-arrive { from { opacity: 0; transform: translateY(-10px); } }
 
 /* ---------- page transitions: the bar stays put, the page settles in beneath it ---------- */
@@ -1225,7 +1225,7 @@ body.is-loading { overflow: hidden; }
 
 /* ---------- controls: buttons, links, focus ---------- */
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-:where(.btn) { transition: transform .35s var(--ease), background-color .3s var(--ease), color .3s var(--ease), border-color .3s var(--ease), box-shadow .3s var(--ease); -webkit-tap-highlight-color: transparent; }
+:where(.btn) { transition: transform .35s var(--ease), background-color .3s var(--ease), color .3s var(--ease), border-color .3s var(--ease), box-shadow .3s var(--ease); }
 :where(.btn) { transition: transform .35s var(--ease), background-color .3s var(--ease), background-size .45s var(--ease), color .3s var(--ease), border-color .3s var(--ease), box-shadow .3s var(--ease); }
 /* hover (v2x): a 2 px green rule draws along the lower edge and the fill lifts a step; the arrow leans on */
 @media (hover: hover) {
@@ -1257,7 +1257,7 @@ a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 1
 .figure-motion {
   position: absolute; z-index: 3; display: inline-flex; align-items: center; min-height: 44px; padding: 0 2px;
   font: var(--mono-xs, .625rem)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58);
-  transition: color .25s var(--ease); -webkit-tap-highlight-color: transparent;
+  transition: color .25s var(--ease);
 }
 .figure-motion[hidden] { display: none; }
 .figure-motion:focus-visible { color: var(--paper); outline-offset: 0; }
@@ -1320,6 +1320,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .nav-live i::after { animation: none; }
   .loader, .loader-inner { transition: opacity .4s var(--ease), visibility 0s linear .4s; }
   .loader.is-done { transform: none; opacity: 0; animation: loader-out .4s var(--ease) both; }
+  .loader:not(.is-quick).is-done { animation-delay: 90ms; transition-delay: 0s, 490ms; } /* the beat, then the fade */
   .loader.is-done .loader-inner { transform: none; }
   .loader.is-complete .loader-dial, .loader-dial { animation: none; }
   a.link-arrow, button.link-arrow { transition: none; }
@@ -1345,11 +1346,10 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 /* -------------------------------------------------------------------------- */
 
 /* v2:lifecycle:start */
-/* ---------- the lifecycle plates: every lifecycle is one lane (lane.js; the drawings themselves need no script) ----------
-   The overture's S3 geometry engraved on paper: six gates, the council aperture, the boundary, five rails, settled squares
-   and the record line. Ink is currentColor at 1 px; --accent only where something is approved, settled or live; --reject
-   for rejects; khaki for roadmap. Home §03 Fig. 3.1 (an ink plate >= 961 px, its gate list as the legend; below 961 px the
-   list is the lane), Lifecycles §01-§04 (traits, classes, the seven steps, the desk, the orbit), Platform §04. */
+/* ---------- the lifecycle plates: every lifecycle is one lane (lane.js; the drawings need no script) ----------
+   The overture's S3 engraved on paper: six gates, the council aperture, the boundary, five rails, settled squares, the
+   record line; 1 px currentColor, --accent where approved/settled/live, --reject, khaki for roadmap. Home Fig. 3.1,
+   Lifecycles §01-§04, Platform §04. */
 .lcp { overflow: visible; color: var(--fg); --lc-ground: var(--paper); }
 .is-paper-2 .lcp { --lc-ground: var(--paper-2); }
 .lcp path, .lcp rect, .lcp circle, .lcp ellipse { vector-effect: non-scaling-stroke; }
@@ -1709,11 +1709,9 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 
 /* v2:pages:start */
 /* ---------- interior hero plates (platform · lifecycles · proof · trust) ----------
-   An interior hero opens on a plate: the overture's marks, engraved. Copy (eyebrow, h1, lede) in columns 1-7,
-   figure.hero-plate in 8-12; under 961 px the plate follows the lede at <= 45% of the viewport height. The drawing is a
-   static inline SVG: hairlines in currentColor and --line-strong at 1 px (non-scaling), --accent only on live, boundary
-   and settled marks, --reject for rejects, khaki for roadmap. Labels are DOM text over the drawing at --x/--y (percent of
-   the drawing), so they stay crisp and >= 10 px at every width. No loops: one staged fade on reveal, none without it. */
+   The overture's marks, engraved: copy in columns 1-7, figure.hero-plate in 8-12 (under 961 px after the lede, <= 45% of
+   the viewport's height). Static SVG, 1 px hairlines; --accent only on live, boundary and settled marks, --reject on
+   rejects, khaki on roadmap. Labels are DOM text at --x/--y (>= 10 px). One staged fade on reveal, no loops. */
 .page-hero--plate { align-items: center; }
 .page-hero--plate > .hero-copy { grid-column: 1 / span 7; min-width: 0; }
 .page-hero--plate .display-1 { font-size: var(--h1-plate); max-width: 17ch; }

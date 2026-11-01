@@ -35,6 +35,8 @@ Changes from the source, deliberately:
     bio's Amazon and Microsoft (C-181). No new fact.
   - 2026-10-31 (v2x r3, copy): "Eigen Layer" is written as the project writes its name, "EigenLayer" (Sreeram Kannan's
     card line and bio; a typo-level fix, FIX). No other word changes.
+  - 2026-10-31 (v2x r4, art): an internal link ("His research on the blog") ends in the site's drawn svg.arr, as every
+    other internal text link does, not a text arrow (U+2192); external links keep their "↗". Words unchanged.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -177,7 +179,7 @@ def bio(src_name):
     return "".join(out)
 GENERIC = {"LinkedIn", "X (Twitter)", "Faculty page"}  # labels shared by several cards: the person's name follows for screen readers
 ARR_OUT = '<span class="ext" aria-hidden="true"> ↗</span>'
-ARR_IN = '<span class="int" aria-hidden="true"> →</span>'
+ARR_IN = '<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg>'  # r4: the site's drawn arrow
 def links(src_name, extra, name):
     ls = [(("X (Twitter)" if t.startswith("X") else t), u) for t, u in old[src_name]["links"]] + extra
     ls = [("Faculty page" if t == "LinkedIn" and "linkedin.com" not in u else t, u) for t, u in ls]  # Philip's "LinkedIn" is his UW page

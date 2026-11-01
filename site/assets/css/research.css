@@ -28,12 +28,23 @@
    H1 scale): the plate step (site.css --h1-plate, 89 px at 1440), as on the other pages with a hero plate.
    The library caption is a plate caption (r3-art: the "Plate" mark, as on Platform, Lifecycles, Proof and Trust): one
    line under the figure, as wide as their plates, ending on the meta row's line (one grid row, bottom-aligned) */
+/* r4 (r4-art m1): the plate step at every width, as the other plate heroes (47.6 px at 768, 46.4 at 390), not the
+   statement step under 961 px; the phone rule only caps it (two lines at 320) */
+.research-hero h1.display-1 { font-size: var(--h1-plate); }
 @media (min-width: 961px) {
-  .research-hero h1.display-1 { font-size: var(--h1-plate); line-height: .97; max-width: none; }
+  .research-hero h1.display-1 { line-height: .97; max-width: none; }
   .research-hero .rs-herocap { grid-column: 8 / -1; align-self: end; justify-self: end; width: 100%; max-width: 500px; margin: 0; }
 }
-@media (max-width: 960px) { .research-hero .rs-herocap { display: none; } .research-hero .figure-stage { --figure-scale: 1.3; } }
-@media (max-width: 600px) { .research-hero h1.display-1 { font-size: clamp(2.6rem, 14vw, 3.4rem); } } /* two lines at 320 too */
+/* r4 (r4-art m1): tablets and phones keep the plate's mark and hedge, set just under the formation, which figure.js
+   draws down to 77 % of the stage's height on phones and 83 % from 760 px (work/research/r4/probe_extent.py): the hero
+   starts there, the caption first, one line where it fits */
+@media (max-width: 960px) {
+  .research-hero { padding-top: calc(var(--nav-h) + 51vw + 18px); }
+  .research-hero .figure-stage { --figure-scale: 1.3; }
+  .research-hero .rs-herocap { order: -1; grid-column: 1 / -1; margin: 0 0 clamp(10px, 3vw, 24px); flex-direction: row; justify-content: space-between; align-items: baseline; gap: 2px 20px; }
+}
+@media (min-width: 760px) and (max-width: 960px) { .research-hero { padding-top: calc(var(--nav-h) + 54.7vw + 20px); } }
+@media (max-width: 600px) { .research-hero h1.display-1 { font-size: min(var(--h1-plate), clamp(2.6rem, 14vw, 3.4rem)); } }
 
 /* ---------- research index: the shelf (the list, and the plate that shows the pointed note's figure) ---------- */
 .rs-shelf { position: relative; --rs-gap: clamp(16px, 2.2vw, 32px); }
@@ -127,6 +138,11 @@
 @media (scripting: enabled) and (max-width: 759.98px) and (max-height: 559.98px) {
   .rs-rail { position: relative; }
   .rs-shelf .rs-rail { transform: none; transition: none; }
+}
+/* r4 (r4-a11y m2, WCAG 2.4.12): a row reached with the keyboard is scrolled clear of the pinned strip, not behind it.
+   --rs-strip-h is the strip's own height (research.js; 154 px at 390x844, its safe-area padding included) */
+@media (scripting: enabled) and (max-width: 759.98px) and (min-height: 560px) {
+  .research-page .posts-list .post > a { scroll-margin-bottom: calc(var(--rs-strip-h, 9.75rem) + 16px); }
 }
 /* phones, with or without JavaScript: the read time and the arrow sit in the margin under the numeral, so each row is
    a line shorter (a contents page's marginal figure, not a fifth line under the dek) */
@@ -367,6 +383,9 @@
   .research-hero .lede, .article-hero .lede { font-size: 1rem; margin-top: 14px; }
   .article-hero .figure-stage[data-plate] { --figure-scale: .72; }
   .research-hero .figure-stage[data-plate] { --figure-scale: 1; } /* the wide formations (note 09's ten columns) fit the half-width stage */
+  /* r4: the plate caption stands under the figure, in the figure's half (the leaves end at 71 % of the stage's height);
+     its box is the container, which starts 24 px under the bar */
+  .research-hero .rs-herocap { position: absolute; z-index: 1; left: 54%; right: max(var(--gutter), env(safe-area-inset-right)); top: calc((100vh - var(--nav-h)) * .75 - 24px); top: calc((100svh - var(--nav-h)) * .75 - 24px); margin: 0; }
 }
 
 /* ---------- reduced motion and print ---------- */

@@ -197,7 +197,7 @@
   function tabs() {
     if (!canEdit) return;
     const r = T.sel !== null ? T.bySeq(T.sel) : null, on = !!r && armed === r.seq, fresh = !!r && !isEdited(r);
-    if (how) how.textContent = `Start typing to change this record, then ${touch() ? 'tap Go on your keyboard' : 'press Enter'} to verify the chain.`;
+    if (how) how.textContent = `Start typing to change this record, then ${touch() ? 'tap your keyboard’s Go or Enter key' : 'press Enter'} to verify the chain.`;
     [F.ev, F.d].forEach(el => {
       if (!el.isContentEditable) { el.removeAttribute('tabindex'); el.removeAttribute('aria-describedby'); return; }
       el.tabIndex = on ? 0 : -1;
@@ -276,7 +276,7 @@
       F.d.focus({ preventScroll: true });
       place(true);
       try { const range = document.createRange(), s = window.getSelection(); range.selectNodeContents(F.d); s.removeAllRanges(); s.addRange(range); } catch (err) { /* the caret stays where focus put it */ }
-      say(`Editing ${T.bySeq(T.sel).id}: type over its detail, then ${touch() ? 'tap Go on your keyboard' : 'press Enter'} to verify the chain`);
+      say(`Editing ${T.bySeq(T.sel).id}: type over its detail, then ${touch() ? 'tap your keyboard’s Go or Enter key' : 'press Enter'} to verify the chain`);
     });
     if (ui.restore) ui.restore.addEventListener('click', () => {
       armed = null;

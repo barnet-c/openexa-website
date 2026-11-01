@@ -1,11 +1,6 @@
-/* OpenEXA — the chain, for real.
-   Eight records on one vertical hairline. Each is hashed with SHA-256 over (its content + the previous hash), and the
-   link below it carries that hash down to the next record, which stores it. Edit any field and the link out of that
-   record snaps: it and every record after it turn red, one after another, because each stored previous-hash no longer
-   matches. "Restore" heals the chain from the top. The records come from the page (readable without JavaScript).
-   The cascade is walked here, one record every 110 ms, and the status line counts exactly the records that are red on
-   screen; the sentence it ends on is announced once, to a separate live region.
-   The point: nothing on the ledger can be changed quietly. */
+/* OpenEXA — the chain, for real (Home §06). Eight records from the page, each hashed with SHA-256 over its content and
+   the hash before it. Edit a field: that record and every one after it turn red in a cascade (110 ms a record), the
+   status counts what is red and its last sentence is announced once. Restore heals from the top. */
 (function () {
   'use strict';
   const root = document.querySelector('[data-chain]');
@@ -27,7 +22,7 @@
   }
   const statusText = textOf(status);
   const setStatus = s => { if (statusText.data !== s) statusText.data = s; };
-  // the actions' container shows only when it holds a button (no selector has to ask the document)
+  // the actions show only when they hold a button
   const syncActs = () => { if (acts) acts.hidden = (!tryIt || tryIt.hidden) && (!restore || restore.hidden); };
   if (!window.crypto || !crypto.subtle) {
     setStatus('Interactive verification is unavailable');
@@ -48,12 +43,12 @@
   async function sha(s) { return hex(await crypto.subtle.digest('SHA-256', enc.encode(s))); }
   const pad = n => String(n).padStart(2, '0');
 
-  // one row per record: node on the line, the record, and below it the link that carries its hash to the next one
+  // a row per record: node, record, and the link carrying its hash to the next
   const rows = RECORDS.map((r, i) => {
     const li = document.createElement('li');
-    li.innerHTML = `<i class="chain-node" aria-hidden="true"></i><span class="i">${pad(i + 1)}</span><span class="who"></span>` +
-      `<b class="ev" spellcheck="false" role="textbox" aria-label="Event for record ${i + 1}" aria-multiline="false"></b>` +
-      `<span class="what" spellcheck="false" role="textbox" aria-label="Detail for record ${i + 1}" aria-multiline="false"></span>` +
+    li.innerHTML = `<i class="chain-node" aria-hidden="true"></i><span class="i" role="button" tabindex="${i ? -1 : 0}" aria-label="Edit record ${pad(i + 1)}" aria-describedby="chain-how-i">${pad(i + 1)}</span><span class="who"></span>` +
+      `<b class="ev" tabindex="-1" spellcheck="false" role="textbox" aria-label="Event for record ${i + 1}" aria-multiline="false"></b>` +
+      `<span class="what" tabindex="-1" spellcheck="false" role="textbox" aria-label="Detail for record ${i + 1}" aria-multiline="false"></span>` +
       `<span class="chain-flag" hidden>edited</span><i class="chain-seg" aria-hidden="true"></i>` +
       `<span class="chain-link"><span class="sr-only">Hash of record ${i + 1}: </span><s><span class="sr-only">stored </span><span class="chain-was"></span><span class="sr-only">, now </span></s><b></b></span>`;
     li.querySelector('.who').textContent = r[0];
@@ -85,7 +80,7 @@
   async function write() {
     const c = await compute();
     c.forEach(p => stored.push(p));
-    // what each link stored when the chain was written: shown struck through beside the new hash once that link snaps
+    // the stored hash, struck beside the new one once a link snaps
     rows.forEach((li, i) => { li.querySelector('.chain-was').textContent = stored[i][1].slice(0, 8); });
     paint(c, -1, true);
     rows.forEach(li => li.querySelectorAll('.ev, .what').forEach(field => field.setAttribute('contenteditable', 'plaintext-only')));
@@ -113,7 +108,7 @@
     console.error('OpenEXA chain study could not compute the record hashes.', error);
   }
 
-  // hex digits roll to their new value, in step with the cascade: one shared frame loop for every rolling link
+  // hex digits roll to their new value with the cascade (one frame loop)
   const HEX = '0123456789abcdef', rolls = new Map();
   let rollRaf = 0;
   function roll(el, to, delay) {
@@ -147,7 +142,7 @@
     return `Chain broken at record ${pad(first + 1)} · ${plural(n, 'record no longer verifies', 'records no longer verify')}`;
   }
   let said = '';
-  function settled(broken, quiet) { // the cascade has reached the last record: the final sentence, announced once
+  function settled(broken, quiet) { // the last record reached: the final sentence, announced once
     const s = line(broken);
     setStatus(s);
     root.classList.toggle('is-broken', red() > 0);
@@ -155,13 +150,13 @@
     if (quiet) said = s;
   }
 
-  const STEP = 110; // ms between one record turning and the next: the cascade (and the healing) travel down the line
+  const STEP = 110; // ms from one record to the next, breaking or healing
   let cascade = [];
   function paint(c, broken, quiet) {
     cascade.forEach(clearTimeout); cascade = [];
     const steps = [];
     rows.forEach((li, i) => {
-      // "edited" marks every record whose content differs from what was written, not only the first one
+      // "edited": every record that differs from what was written
       const edited = li.querySelector('.ev').textContent !== ORIGINAL[i][1] || li.querySelector('.what').textContent !== ORIGINAL[i][2];
       li.classList.toggle('is-edited', edited);
       li.querySelector('.chain-flag').hidden = !edited;
@@ -173,7 +168,7 @@
       const run = () => {
         const li = rows[s.i];
         if (li.classList.contains('is-broken') !== s.bad) {
-          // a record that stops verifying flares red as the break reaches it; one that verifies again flares green
+          // red as the break reaches it; green as it verifies again
           li.classList.toggle('is-broken', s.bad);
           li.classList.remove('is-heal');
           if (!s.bad && !now) {
@@ -193,13 +188,48 @@
     if (tryIt) tryIt.hidden = !intact || !stored.length;
     syncActs();
   }
+  // r4 a11y: one Tab stop, the record's number (roving; Enter edits). A record's fields are Tab stops only while in use
+  const idx = rows.map(li => li.querySelector('.i')), F = li => li.querySelectorAll('.ev, .what');
+  [['i', 'Enter types over its detail; Up and Down choose another record.'], ['f', 'Type to change this record: it and every record after it stop verifying. Enter or Escape goes back to the record.']].forEach(([k, s]) => {
+    const e = document.createElement('span'); e.id = 'chain-how-' + k; e.hidden = true; e.textContent = s; root.append(e);
+  });
+  let rove = 0, armed = -1;
+  const point = j => { idx[rove].tabIndex = -1; idx[rove = j].tabIndex = 0; };
+  function arm(j) {
+    if (armed === j) return;
+    if (armed >= 0) F(rows[armed]).forEach(f => { f.tabIndex = -1; f.removeAttribute('aria-describedby'); });
+    if ((armed = j) < 0) return;
+    point(j);
+    const fresh = !rows[j].classList.contains('is-edited');
+    F(rows[j]).forEach(f => { f.tabIndex = 0; if (fresh) f.setAttribute('aria-describedby', 'chain-how-f'); });
+  }
+  function edit(j) {
+    const f = rows[j].querySelector('.what');
+    if (!f.isContentEditable) return;
+    arm(j); f.focus();
+    try { const r = document.createRange(), s = getSelection(); r.selectNodeContents(f); s.removeAllRanges(); s.addRange(r); } catch (err) { /* the caret stays where focus put it */ }
+  }
+  idx.forEach((b, j) => b.addEventListener('click', () => edit(j)));
+  list.addEventListener('focusin', e => { const f = e.target.closest('.ev, .what'); if (f && f.isContentEditable) arm(rows.indexOf(f.parentNode)); });
+  list.addEventListener('focusout', e => { const to = e.relatedTarget; if (armed >= 0 && !(to && to.parentNode === rows[armed] && to.matches('.ev, .what'))) arm(-1); });
   let t = 0;
   list.addEventListener('input', () => { revision++; clearTimeout(t); t = setTimeout(() => verify().catch(reportCryptoError), 120); });
-  list.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
-  // the one-tap version for anyone who would rather not type: change the council's decision on record 03
+  list.addEventListener('keydown', e => {
+    const j = rows.indexOf(e.target.closest('li')), k = e.key;
+    if (j < 0 || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.target !== idx[j]) { if (k === 'Enter' || k === 'Escape') { e.preventDefault(); getSelection().removeAllRanges(); idx[j].focus(); } return; }
+    if (k === 'Enter' || k === ' ') { e.preventDefault(); edit(j); return; }
+    const vis = rows.map((li, n) => n).filter(n => rows[n].offsetParent), v = vis.indexOf(j); // Home folds 05-08 on phones
+    const to = /^Arrow(Down|Right)$/.test(k) ? vis[v + 1] : /^Arrow(Up|Left)$/.test(k) ? vis[v - 1] : k === 'Home' ? vis[0] : k === 'End' ? vis[vis.length - 1] : -1;
+    if (to === -1) return;
+    e.preventDefault();
+    if (to !== undefined) { point(to); idx[to].focus(); }
+  });
+  // the one-tap version: change the council's decision on record 03
   if (tryIt) tryIt.addEventListener('click', () => {
     const ev = rows[Math.min(2, rows.length - 1)].querySelector('.ev');
     ev.textContent = ev.textContent.trim() === 'REJECTED' ? 'REVOKED' : 'REJECTED';
+    point(Math.min(2, rows.length - 1)); // Tab from Restore reaches record 03
     revision++; clearTimeout(t);
     verify().then(() => { if (restore && !restore.hidden) restore.focus(); }).catch(reportCryptoError);
   });

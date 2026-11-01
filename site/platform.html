@@ -129,7 +129,7 @@
           <div class="layer" data-job="Finds the cheapest, fastest, safest path for each approved action, on live conditions and past performance.">
             <div class="k">05</div>
             <h3>Routing layer<small>Optimize</small></h3>
-            <div><p>Routes each approved action across brokers, OTC desks, dark pools, exchanges and clearing rails, scoring real-time conditions and historical performance for the cheapest, fastest, safest path for that action.</p><ul><li>Order routing</li><li>Venue scoring</li><li>Cost of execution</li><li>Latency budget</li></ul><dl class="io"><div><dt>In</dt><dd>Approved actions, live venue and counterparty conditions</dd></div><div><dt>Out</dt><dd>A scored route for every action</dd></div></dl></div>
+            <div><p>Routes each approved action across brokers, OTC desks, dark pools, exchanges and clearing rails, scoring real-time conditions and historical performance to find the cheapest, fastest, safest path for that action.</p><ul><li>Order routing</li><li>Venue scoring</li><li>Cost of execution</li><li>Latency budget</li></ul><dl class="io"><div><dt>In</dt><dd>Approved actions, live venue and counterparty conditions</dd></div><div><dt>Out</dt><dd>A scored route for every action</dd></div></dl></div>
           </div>
           <div class="layer" data-job="Runs the lifecycle as a deterministic state machine, with retries, idempotency and reconciliation.">
             <div class="k">06</div>
@@ -325,7 +325,7 @@
               <table class="ledger" aria-labelledby="modes-table-name">
               <thead><tr><th>Mode</th><th>Who approves</th><th>Latency</th><th>Typical mandate</th></tr></thead>
               <tbody>
-                <tr><td data-th="Mode"><span class="lab">Fully automatic</span><span class="sub">Agents execute within policy</span></td><td data-th="Who approves">Execution Council</td><td class="num" data-th="Latency">ms</td><td data-th="Typical mandate">Low-risk single-agent lifecycles</td></tr>
+                <tr><td data-th="Mode"><span class="lab">Fully automatic</span><span class="sub">Agents propose, the Council approves within policy</span></td><td data-th="Who approves">Execution Council</td><td class="num" data-th="Latency">ms</td><td data-th="Typical mandate">Low-risk single-agent lifecycles</td></tr>
                 <tr><td data-th="Mode"><span class="lab">Auto-with-approval</span><span class="sub">Agents propose, humans confirm</span></td><td data-th="Who approves">Operator or delegate</td><td class="num" data-th="Latency">seconds to minutes</td><td data-th="Typical mandate">New lifecycles, new strategies, larger tickets</td></tr>
                 <tr><td data-th="Mode"><span class="lab">Manual</span><span class="sub">Agents recommend only</span></td><td data-th="Who approves">Operator</td><td class="num" data-th="Latency">discretionary</td><td data-th="Typical mandate">Evaluation and onboarding</td></tr>
                 <tr><td data-th="Mode"><span class="lab">Emergency halt</span><span class="sub">Available in every mode</span></td><td data-th="Who approves">Any operator</td><td class="num" data-th="Latency">immediate</td><td data-th="Typical mandate">Counterparty or API disruption, market events</td></tr>
@@ -353,7 +353,7 @@
         </figure>
         <div class="mkt-cols">
           <div class="mkt-col" data-reveal><div class="n"><span>Supply side</span><span>Managers · builders</span></div><h3 class="display-3">Publish agents and lifecycles.</h3><ul class="list-hair mt-3" role="list"><li>Workflow creation and instrument-level constraints</li><li>Streamlined approval workflows through the Council</li><li>Governance management and role-based access</li><li>Models, real-time feeds and algorithms; only compliant actions pass</li></ul></div>
-          <div class="mkt-col" data-reveal style="--d:80ms"><div class="n"><span>Demand side</span><span>Institutions · investors</span></div><h3 class="display-3">Allocate with full visibility.</h3><ul class="list-hair mt-3" role="list"><li>Lifecycle and pool selection with strategy-level performance</li><li>Transaction visibility for execution-quality monitoring</li><li>A secure sandbox: agents execute, monitor and enforce risk controls</li><li>Custody stays at your broker throughout</li></ul></div>
+          <div class="mkt-col" data-reveal style="--d:80ms"><div class="n"><span>Demand side</span><span>Institutions · investors</span></div><h3 class="display-3">Allocate with full visibility.</h3><ul class="list-hair mt-3" role="list"><li>Lifecycle and pool selection with strategy-level performance</li><li>Transaction visibility for execution-quality monitoring</li><li>A secure sandbox: agents act within enforced risk controls</li><li>Custody stays at your broker throughout</li></ul></div>
         </div>
       </div>
     </section>

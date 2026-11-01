@@ -1,12 +1,4 @@
-/* OpenEXA — the architecture explorer: eight layers, exploded, one boundary, on the floor of the rails.
-   Turns a `.layers[data-arch]` list (complete without JavaScript) into an instrument: a readout (left), the stack in SVG
-   (centre) and the layers as buttons (right), each the label of its plate. Pointing or focus lifts a plate and shows its
-   job and In -> Out; arrows, Home and End move, Enter or Space opens, Escape closes. With `data-arch-spec` (Platform) the
-   list stays as the spec under it, and a layer leads to its entry; under 1000 px the plates' labels are the buttons.
-   An illustrative proposal travels the stack: approved, it crosses the boundary and settles as a square on the floor;
-   rejected, it falls away. Motion runs only on screen in a visible tab, stops on request and never under reduced motion;
-   at rest it is drawn at 20-30 Hz and it stops 8 s after the last pointer or focus. Nothing reads layout while the
-   script runs. The wide instrument's height is held in CSS (--arch-minh), so the page under it never moves. */
+/* OpenEXA · the architecture explorer (Home §02, Platform §01): a .layers[data-arch] list made an instrument. */
 (function () {
   'use strict';
   const roots = Array.from(document.querySelectorAll('.layers[data-arch]'));
@@ -367,7 +359,7 @@
     }
 
     /* ---------------- 4 · geometry ---------------- */
-    let wide = false, tags = false, W = 1, Hh = 1, cx = 0, halfW = 150, Sc = 1, F0 = 19 * DEG, thick = 7, figH = 0, minH = 0, tagH = 24;
+    let wide = false, tags = false, W = 1, Hh = 1, cx = 0, halfW = 150, Sc = 1, F0 = 19 * DEG, thick = 7, figH = 0, minH = 0, tagH = 24, stag = false;
     let base = new Array(N).fill(0), rowC = new Array(N).fill(0), by = 0, fy = 0, readL = 0, readR = 0, readTop = 0, listL = 0, listR = 0, roomyB = false, roomyP = false;
     const view = { T: 45 * DEG, F: 19 * DEG, tT: 45 * DEG, tF: 19 * DEG };
     let geoDirty = true;
@@ -428,8 +420,18 @@
         if (roomB() < shortB) { cx = W - 8 - 12 - shortB - 1.16 * halfW; if (cx - 1.16 * halfW < 4) { halfW = (W - 24 - shortB) / 2.32; cx = 4 + 1.16 * halfW; } }
         roomyB = roomB() >= longB;
         roomyP = W - 8 - (cx + halfW + 12) >= Math.max(...plates.map((p) => wl(p.numLong) - 14));
-        const hh = halfW * Math.sin(F0), pitch = Math.max(room ? 14 : 30, hh * k), gap = pitch * g, top = (room ? 20 : 30) + hh;
-        const th = Math.min(24, Math.floor(pitch));
+        const hh = halfW * Math.sin(F0), pitch = Math.max(room ? 14 : 30, hh * k);
+        // short windows: the tags take both sides of the stack (odd layers left), each 24 px tall at twice the pitch (r4 a11y),
+        // and the boundary keeps 36 px each side, so a focused tag's ring clears its two labels
+        stag = tags && pitch < 24; list.classList.toggle('is-stag', stag);
+        const gap = Math.max(pitch * g, stag ? 36 : 0), top = (room ? 20 : 30) + hh;
+        if (stag) { // room for the left tags: the stack moves right while its right side still fits, else numbers only
+          const lo = (t) => halfW + 26 + t.length * 7.3, lft = Math.max(...plates.map((p) => lo(p.numLong)));
+          if (roomyP && cx < lft && W - 8 - (lft + halfW + 12) >= lft - halfW - 26 && roomB() + cx - lft >= shortB) cx = lft;
+          if (cx < lft) roomyP = false;
+          cx = Math.max(cx, lo('01')); roomyB = roomB() >= longB;
+        }
+        const th = stag ? 24 : Math.min(24, Math.floor(pitch));
         if (th !== tagH) { tagH = th; list.style.setProperty('--tag-h', th + 'px'); }
         base = []; for (let i = 0; i < N; i++) base.push(top + i * pitch + (i >= bIndex ? 2 * gap - pitch : 0));
         by = top + (bIndex - 1) * pitch + gap;
@@ -898,7 +900,7 @@
         if (tags) { // the labels are the layer buttons: each sits where its plate's label is drawn, and shows as it does
           list.classList.toggle('is-short', !roomyP);
           plates.forEach((p, i) => {
-            setS(heads[i], 'transform', `translate(${f1(p.lx - 6)}px, ${f1(p.ly - tagH / 2)}px)`);
+            setS(heads[i], 'transform', stag && !(i % 2) ? `translate(calc(${f1(cx + A[0] - 6)}px - 100%), ${f1(p.ly - C[1] + A[1] - tagH / 2)}px)` : `translate(${f1(p.lx - 6)}px, ${f1(p.ly - tagH / 2)}px)`);
             setS(heads[i], 'opacity', f3(focus === i ? 1 : clamp((exOf(i) - 0.8) / 0.2, 0, 1)));
           });
         }

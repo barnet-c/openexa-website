@@ -1,5 +1,4 @@
-/* OpenEXA · the swarm lab (Home §03, Platform §03). Cut from site.css unchanged (31 Oct 2026, system r2): linked after site.css, before the
-   page group's sheet, only on the pages that draw it, so the other pages do not wait for it. */
+/* OpenEXA · the swarm lab (Home §03, Platform §03): its own sheet since r2, linked only where drawn. */
 /* v2:swarm:start */
 /* ---------- the swarm lab (home §03, Platform §03; engine: assets/js/swarm.js) ----------
    head (state · kicker · key · Follow) · stage (canvas + gate labels projected from 3D + agent tag + trace) · counters +
@@ -9,14 +8,14 @@
 .sw-head { display: flex; align-items: center; gap: 10px 22px; flex-wrap: wrap; min-height: 56px; padding: 8px 12px 8px 20px; border-bottom: 1px solid var(--line); font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 /* the hedge reads at the labels' 11 px in the hedge tone, never smaller or dimmer than the counts it qualifies (r3-a11y m2) */
 .sw-head .sw-kicker { font-size: var(--mono-xs); color: var(--fg-2); }
-.sw-live, .sw-follow, .sw-key, .sw-on .sw-gates small, .sw-limit, .sw-ledger, .sw-bound, .sw-banner, .sw-agent, .sw-hover, .sw-trace, .swarm-live:not(.sw-on) .swarm-bar { display: none; }
-.sw-on .sw-live { display: inline-flex; align-items: center; gap: 9px; color: var(--accent); min-width: 8.5em; }
+.sw-on .sw-gates small, .sw-limit, .sw-ledger, .sw-bound, .sw-banner, .sw-agent, .sw-hover, .sw-trace { display: none; }
+.swarm-live .sw-live { display: inline-flex; align-items: center; gap: 9px; color: var(--accent); min-width: 8.5em; }
 /* the state light: a still dot (system r2: no "live" pulse on an illustrative model; the word carries the state) */
 .sw-live i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .swarm-live.is-halted .sw-live { color: var(--khaki); }
 .swarm-live.is-paused .sw-live { color: var(--fg-2); }
 /* the key: the same marks as the overture's lane (S3) and the explorer */
-.sw-on .sw-key { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin: 0 0 0 auto; padding: 0; list-style: none; color: rgba(245, 242, 236, .66); }
+.swarm-live .sw-key { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin: 0 0 0 auto; padding: 0; list-style: none; color: rgba(245, 242, 236, .66); }
 .sw-key li { display: inline-flex; align-items: center; gap: 7px; }
 .sw-key li::before { content: ""; flex: none; width: 9px; height: 9px; box-sizing: border-box; }
 .sw-key .k-p::before { border: 1.5px solid var(--signal-bright); border-radius: 50%; }
@@ -25,7 +24,7 @@
 .sw-key .k-b::before { width: 14px; height: 6px; background: rgba(245, 242, 236, .92); border-radius: 1px; }
 /* forced colours: the key keeps the canvas's swatches */
 @media (forced-colors: active) { .sw-key :is(.k-s, .k-r)::before { forced-color-adjust: none; } .sw-key .k-b::before { forced-color-adjust: none; background: CanvasText; } }
-.sw-on .sw-follow { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 14px 8px 12px; border: 1px solid rgba(79, 203, 147, .55); border-radius: 2px; color: var(--accent); font: inherit; letter-spacing: var(--track-label, .12em); text-transform: uppercase; transition: background .2s, color .2s, border-color .2s; }
+.swarm-live .sw-follow { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 14px 8px 12px; border: 1px solid rgba(79, 203, 147, .55); border-radius: 2px; color: var(--accent); font: inherit; letter-spacing: var(--track-label, .12em); text-transform: uppercase; transition: background .2s, color .2s, border-color .2s; }
 .sw-follow::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid currentColor; box-sizing: border-box; }
 @media (hover: hover) { .sw-follow:hover { background: rgba(79, 203, 147, .12); } }
 .sw-follow[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #0B110F; }
@@ -152,11 +151,11 @@
 @media (hover: hover) { .sw-motion:hover { color: var(--signal-bright); } }
 .sw-motion[hidden] { display: none; }
 @media (max-width: 1100px) { .swarm-bar { grid-template-columns: 1fr; } .swarm-stats { border-right: 0; border-bottom: 1px solid var(--line); } }
-@media (max-width: 980px) { .sw-on .sw-key { order: 5; flex-basis: 100%; margin: 0; } .sw-on .sw-follow { margin-left: auto; } }
+@media (max-width: 980px) { .swarm-live .sw-key { order: 5; flex-basis: 100%; margin: 0; } .swarm-live .sw-follow { margin-left: auto; } }
 @media (max-width: 640px) {
   .sw-head { padding-left: 16px; row-gap: 8px; }
-  .sw-on .sw-kicker { order: -1; flex-basis: 100%; } /* its own first line: the lab names itself an illustrative model at every width */
-  .sw-on .sw-key { gap: 6px 14px; }
+  .swarm-live .sw-kicker { order: -1; flex-basis: 100%; } /* its own first line: the lab names itself an illustrative model at every width */
+  .swarm-live .sw-key { gap: 6px 14px; }
   .sw-stage { --sw-h: 292px; }
   .swarm-stats > div { padding: 14px 10px 12px 12px; }
   .swarm-stats b { font-size: 1.45rem; }
@@ -182,7 +181,7 @@
   .swarm-controls input[type=range] { height: 44px; }
   .swarm-controls input[type=range]::-webkit-slider-thumb { width: 22px; height: 22px; margin-top: -10.5px; }
   .swarm-controls input[type=range]::-moz-range-thumb { width: 16px; height: 16px; }
-  .sw-on .sw-follow, .sw-trace-close, .sw-motion, .sw-rec { min-height: 44px; }
+  .swarm-live .sw-follow, .sw-trace-close, .sw-motion, .sw-rec { min-height: 44px; }
   .sw-rec { margin: 0; }
   .sw-log li[data-k="led"] { min-height: 48px; }
   .sw-on.is-stacked .sw-log { min-height: calc(6 * 2.1em + 48px + 10px); }
@@ -252,4 +251,17 @@
 @media (hover: hover) { .sw-role:hover .sw-at b { color: var(--paper); } .sw-role:hover .sw-at-b[aria-pressed="true"] b { color: var(--signal-bright); } }
 @media (pointer: coarse) { .sw-at-b { min-height: 44px; } }
 @media (forced-colors: active) { .sw-at-b:focus-visible { outline-color: Highlight; } }
+@media (scripting: none) { .swarm-live :is(.sw-live, .sw-follow, .sw-key), .swarm-live .swarm-bar { display: none; } } /* no script: the static six-gate diagram, no dead controls */
+/* (r4) until swarm.js runs (Home: as the curtain lifts) the lab holds its live boxes, empty: head items laid out, not
+   drawn; the stage at its band; the counters held. Its start moves nothing; the static gates show after 6 s if it never runs */
+@media (scripting: enabled) {
+  .swarm-live:not(.sw-on) :is(.sw-live, .sw-follow, .sw-key, .swarm-bar) { visibility: hidden; }
+  .swarm-live:not(.sw-on) .sw-stage { min-height: var(--sw-h); }
+  .swarm-live:not(.sw-on) .sw-gates { position: absolute; left: 0; right: 0; top: 0; visibility: hidden; animation: sw-late 0s 6s forwards; animation-play-state: running !important; } /* one step: not paused off screen */
+  @keyframes sw-late { to { visibility: visible; } }
+  @media (prefers-reduced-motion: no-preference) {
+    .swarm-live:not(.sw-on) .sw-btns::after { content: ""; min-height: 30px; } /* Pause motion's place */
+    @media (pointer: coarse) { .swarm-live:not(.sw-on) .sw-btns::after { min-height: 44px; } }
+  }
+}
 /* v2:swarm:end */

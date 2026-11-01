@@ -24,14 +24,14 @@ META = {  # post number → slug, figure, short label, one-line dek used on the 
     # first"; the definition is Fig. 03's caption); 04 its second paragraph ("There is no seam where a policy can
     # intervene"; "No single agent sees the whole trade" is Fig. 04's); 07 its three parts ("One switch halts everything,
     # in every mode"); 09 its parts and its hedge ("what this does and does not show"); 10 its three phases. Wording only:
-    # no claim added or made stronger (claims map, research.json)
+    # no claim added or made stronger (claims map, research.json). r4 (r4-copy): 09's series is one list of four
     1:  ("not-tasks-lifecycles", "lifecycle", "Series · 01", "The six traits a process must have before we will touch it, and why finance comes first."),
     2:  ("five-thousand-small-agents", "swarm", "Series · 02", "Failure analysis, not a taste for scale: an agent that sees the whole job leaves no seam where a policy can intervene."),
     3:  ("agents-decide-code-executes", "boundary", "Series · 03", "Eight layers, one boundary. The top four estimate; the bottom four are deterministic code."),
     4:  ("post-training-on-a-rulebook", "rulebook", "Series · 04", "Closing the gap between a model that knows finance and one that knows this lifecycle."),
     5:  ("the-execution-council", "council", "Series · 05", "What the Council checks, the three operating modes, and the halt that works in every mode."),
     6:  ("a-ledger-nobody-can-edit", "ledger", "Series · 06", "Append-only, hash-chained, replayable. Why a record an administrator can edit is only a claim."),
-    7:  ("lifecycle-01-ten-sessions", "sessions", "Series · 07", "The setup, the result and where the cost goes, and precisely what ten sessions do not show."),
+    7:  ("lifecycle-01-ten-sessions", "sessions", "Series · 07", "The setup, the result, where the cost goes, and precisely what ten sessions do not show."),
     8:  ("master-and-copy", "mastercopy", "Series · 08", "Three phases: prove one agent, master and copy it, then open the rails."),
 }
 # your standing rule: no exchange or broker names anywhere on the site
@@ -486,7 +486,9 @@ url = "https://www.openexa.com/research.html"
 # r2: the share title is the <title>, as launch_meta_v9.py writes it, so research.html no longer differs between the
 # research build and the chain's last step (r1 open issue: built alone it said "Research — OpenEXA")
 INDEX_TITLE = "Research — OpenEXA · The thinking behind agentic lifecycles"
-desc = "Ten notes on the research behind swarm-based agentic lifecycles: compounding error and decomposition, post-training a model to a rulebook, the execution council, the hash-chained ledger, and ten sessions on real capital."
+# r4 (r4-copy): "the Execution Council" is a name (VOICE 5.9); §03's link reads "Start with the Gen-AI series" (no
+# capital article mid-sentence, no colon subtitle inside a link)
+desc ="Ten notes on the research behind swarm-based agentic lifecycles: compounding error and decomposition, post-training a model to a rulebook, the Execution Council, the hash-chained ledger, and ten sessions on real capital."
 index_page = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -575,7 +577,7 @@ index_page = f'''<!DOCTYPE html>
         <div class="card-grid card-grid--{len(BLOG['collections'])}" data-reveal style="--d:120ms">
 {chr(10).join(f'          <a class="card research-card" href="blog/index.html#{c["key"]}"><div class="n"><span>{c["count"]} posts</span><span>{c["years"][0] if c["years"][0] == c["years"][1] else str(c["years"][0]) + "–" + str(c["years"][1])}</span></div><h3 class="h4">{H.escape(c["label"])}</h3><p>{H.escape(us(c["lede"]))}</p><span class="link-arrow mt-3">Browse the collection{NB}{ARROW}</span></a>' for c in BLOG['collections'])}
         </div>
-        <div class="mt-4 row-links" data-reveal><a class="link-arrow" href="blog/index.html#series">Start with {BLOG['series']['name']}: from business model to AI agents {ARROW}</a><a class="link-arrow" href="blog/index.html">All {BLOG['total']} posts {ARROW}</a></div>
+        <div class="mt-4 row-links" data-reveal><a class="link-arrow" href="blog/index.html#series">Start with {re.sub(r"^The ", "the ", BLOG['series']['name'])} {ARROW}</a><a class="link-arrow" href="blog/index.html">All {BLOG['total']} posts {ARROW}</a></div>
       </div>
     </section>
 

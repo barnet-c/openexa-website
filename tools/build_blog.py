@@ -33,7 +33,8 @@ EXCLUDE = {  # crypto / token-product era - held back pending review
     "how-chatgpt-can-change-the-future-of-cryptocurrency", "five-generative-ai-technologies-in-cryptocurrency", "history-of-ai-and-cryptocurrency",
 }
 COLLECTIONS = [  # key, label, lede
-    ("ai", "AI & agents", "The first notes on AI copilots, guardrails and autonomous agents in financial markets — the thinking that became OpenEXA's agentic infrastructure."),
+    # ai's lede prints only on Research §03's card (blog_summary.json); r4-copy point 5 (VOICE 6.1): no dash pivot, C-141 as strong
+    ("ai", "AI & agents", "The first notes on AI copilots, guardrails and autonomous agents in financial markets. The thinking in them became OpenEXA's agentic infrastructure."),
     ("markets", "Financial markets research", "Summaries of peer-reviewed research in computational finance: ETF price dynamics and drawdown risk, optimal execution, futures portfolios, sparse mean-reverting portfolios and multiscale signal processing."),
     ("economics", "Market structure & economics", "Summaries of academic research on how financial markets shape real decisions — information, contracting, credit, automation and the labor share."),
 ]
@@ -210,7 +211,8 @@ def plate(p, cls="blog-thumb"):
 SERIF_HY = re.compile(r"(?<=[^\W\d_])-(?=[^\W\d_])")
 # v2x lab (blog-editorial, 31 Oct): typography on the page, never words (VOICE §7; r1-art M8, r1-copy 31). The old CMS
 # kept typewriter marks: straight quotes and apostrophes, a spaced hyphen for a dash, three dots. What the page shows
-# is set with the real characters; titles in <title>, meta, feeds and JSON-LD keep the ASCII the CMS had.
+# is set with the real characters, and so are a post's <title> and share text (r4-copy); feeds and JSON-LD keep the
+# ASCII the CMS had.
 OPENERS = set(" \t\n ([{‘“—–-/")
 def smart(t, prev=" "):
     """one run of text: ’ ‘ “ ” by the character before (prev carries it across tags), a spaced hyphen as the house
@@ -256,7 +258,7 @@ def tight_hy(escaped):
 def esc_text(s): return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 def serif(s):
     """escaped text for a serif line: real quotes and dashes, and the hyphen between letters in span.hy (Instrument
-    Serif draws U+002D as 'Domain – Specific'; SYSTEM.md §3, r2). Titles, meta, feeds and JSON-LD keep plain ASCII."""
+    Serif draws U+002D as 'Domain – Specific'; SYSTEM.md §3, r2). Feeds and JSON-LD keep plain ASCII."""
     return tight_hy(esc(smart(s)))
 def prose(s): return esc(smart(s))
 def hang(h):
@@ -427,13 +429,18 @@ for i, (s, part, short) in enumerate(SERIES):
 series_minutes = sum(SLUGS[s]["minutes"] for s, _, _ in SERIES)
 # the index's plates carry the hedge the post heroes carry (r1-fidelity 6): beside the series and above the markets grid
 PLATES_HEDGE = "Plates are schematic · no data is plotted"
+def plate_cap(title):
+    """a plate's title line in the site's caption register (site.css .fc-n, r2): the mono mark 'Plate', then the title in
+    Inter (r4-art: 'Plate · The library' set the title inside the mark, a third dialect). The ' · ' between them is kept
+    for assistive technology and copying only (site.css .fc-d), as on Platform and Research"""
+    return f'<span class="pp-k"><b class="fc-n">Plate</b><span class="fc-d"> · </span>{esc(title)}</span>'
 in_series = {s for s, _, _ in SERIES}
 SERIES_BLOCK = f'''        <div class="grid t-2 blog-series-head">
           <div class="col-6"><h2 class="display-2" data-reveal data-split>{serif(SERIES_NAME)}: <span class="sh-sub">from business&nbsp;model to AI agents.</span></h2></div>
           <div class="col-5 offset-7"><p class="body-lg" data-reveal>Four posts by Ajit K Dubey, written in 2024. They set out where generative AI creates value, then work one financial use case end to end: relative value analysis, guardrails and tearsheets, and the AI copilots and autonomous agents they make possible. It’s the line of thinking that became OpenEXA.</p><a class="link-arrow mt-3" href="{SERIES[0][0]}.html">Start with the introduction {ARROW}</a></div>
         </div>
         <div class="blog-series" id="series" data-blog-series>
-          <div class="series-k"><span><span aria-hidden="true">★</span> Featured series</span><span>4 posts · {series_minutes}&nbsp;min · 2024</span></div>
+          <div class="series-k"><span class="eyebrow">Featured series</span><span>4 posts · {series_minutes}&nbsp;min · 2024</span></div>
           <ol class="series-rail" role="list" aria-label="{SERIES_NAME}, in order" data-reveal>
 {chr(10).join(rail)}
           </ol>
@@ -451,7 +458,7 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     authors = {p["author"] for p in by_col[k]}
     assert len(authors) == 1, (k, authors)  # collections are assigned by author: the head can carry the byline once
     shead = f'''        <div class="sec-head" data-reveal><span class="idx">{n:02d}</span><span class="lab">{esc(label)}</span><span class="aside"><span class="by">{esc(shown(authors.pop()))}</span> · {len(by_col[k])} posts · {span_}</span></div>
-''' + (f'''        <figure class="blog-headplate"><div class="bh-art" aria-hidden="true">{collection_svg(k)}</div><figcaption><span class="pp-k">Plate · {esc(label)}</span><span class="pp-h">Schematic · no data is plotted</span></figcaption></figure>
+''' + (f'''        <figure class="blog-headplate"><div class="bh-art" aria-hidden="true">{collection_svg(k)}</div><figcaption>{plate_cap(label)}<span class="pp-h">Schematic · no data is plotted</span></figcaption></figure>
 ''' if k in ("markets", "ai") else "")  # r3-art: the phone's one plate per collection carries the register's mark and hedge, as the cards do wider
     if k == "economics":
         # v2x lab (blog-editorial): eight cards carried one mark eight times (r1-art M6, r1-mobile 9). The collection
@@ -466,7 +473,7 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
           </ol>
           <figure class="blog-econ-plate" aria-hidden="true">
             <div class="blog-econ-art">{collection_svg(k)}</div>
-            <figcaption><span class="pp-k">Plate · {esc(label)}</span><span class="pp-h">The collection’s mark</span></figcaption>
+            <figcaption>{plate_cap(label)}<span class="pp-h">The collection’s mark</span></figcaption>
           </figure>
         </div>
 '''
@@ -501,7 +508,7 @@ years = sorted(p["dt"].year for p in kept)
 assert sum(1 for p in by_col["ai"] if p["slug"] in in_series) == 4
 LIBRARY = f'''<figure class="lib-plate">
           <div class="lib-stage">{library_svg((SHORT["markets"], SHORT["ai"], SHORT["economics"]), tuple(len(by_col[k]) for k in ("markets", "ai", "economics")), sum(1 for p in by_col["ai"] if p["slug"] in in_series))}</div>
-          <figcaption><span class="pp-k">Plate · The library</span><p class="pp-q">Every post is a leaf, filed in its collection; the four green leaves are the Gen-AI series.</p><span class="pp-h">Schematic · no plate on this page plots data</span></figcaption>
+          <figcaption>{plate_cap("The library")}<p class="pp-q">Every post is a leaf, filed in its collection; the four green leaves are the Gen-AI series.</p><span class="pp-h">Schematic · no plate on this page plots data</span></figcaption>
         </figure>'''
 desc = f"The OpenEXA blog: {len(kept)} posts from {years[0]} to {years[-1]} on AI agents in finance, financial markets research and market structure."
 blog_ld = ld(dict(BLOG_LD, description=desc, inLanguage="en", publisher=ORG, blogPost=[
@@ -569,7 +576,7 @@ def post_plate(p):
     hedge = "The collection’s mark" if econ else "Schematic · no data is plotted"
     return f'''<figure class="post-plate" id="plate">
           <div class="post-plate-art" aria-hidden="true">{plate_svg(p["slug"], p["col"], turn(p))}</div>
-          <figcaption><span class="pp-k">Plate · {esc(plate_label(p))}</span>{quote}<span class="pp-h">{hedge}</span></figcaption>
+          <figcaption>{plate_cap(plate_label(p))}{quote}<span class="pp-h">{hedge}</span></figcaption>
         </figure>'''
 MARKED = []  # jury (blog): every plate's sentence is found and marked, or the build stops (checked after the posts)
 BLOCK = re.compile(r"</?(?:p|li|ul|ol|h[2-6]|blockquote|figure|figcaption)\b[^>]*>")
@@ -620,7 +627,8 @@ for p in order:
     if p["source"]: post_ld["isBasedOn"] = p["source"]
     # the eyebrow above names the collection; the link says where it goes (v2 repeated the name as the link)
     side_links = [f'<a class="link-arrow" href="index.html#{p["col"]}">{len(by_col[p["col"]])} posts in this collection {ARROW}</a>', f'<a class="link-arrow" href="index.html">All {len(kept)} posts {ARROW}</a>']
-    if p["source"]: side_links.insert(0, f'<a class="link-arrow" href="{esc(p["source"])}" target="_blank" rel="noopener">Original on {esc(src_host)} {OUTB}</a>')
+    # r4-copy (VOICE 5.12): one label for one destination, the article end's 'The original on <host>'
+    if p["source"]: side_links.insert(0, f'<a class="link-arrow" href="{esc(p["source"])}" target="_blank" rel="noopener">The original on {esc(src_host)} {OUTB}</a>')
     if p["col"] == "markets": side_links.insert(1, f'<a class="link-arrow" href="{SCHOLAR}" target="_blank" rel="noopener">The papers on Google Scholar {OUTB}</a>')
     hero_img = (f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}"{body_srcset(p["hero_file"])} alt=""{size(p["hero_file"])} decoding="async"></figure>\n            '
                 if p.get("hero_file") and p["slug"] in KEEP_HERO else "")
@@ -647,7 +655,9 @@ for p in order:
     note = f"Originally published on openexa.com, {fmt(p['dt'])}." + (f" A summary of work first published on {src_host}." if p["source"] else "")
     original = f'<a class="link-arrow" href="{esc(p["source"])}" target="_blank" rel="noopener">The original on {esc(src_host)} {OUTB}</a>' if p["source"] else ""
     byline = f'<a href="{PFX}company.html#{PEOPLE_ID[person(p["author"])["name"]]}">{esc(shown(p["author"]))}</a>' if person(p["author"]).get("name") in PEOPLE_ID else esc(shown(p["author"]))
-    page = head(url, f'{p["title"]} — OpenEXA Blog', p["excerpt"], "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (p["title"], url)))}\n') + f'''
+    # r4-copy (r3 point 12): what search results and link previews show is set as the H1 is (’, and the house dash with a
+    # no-break space before it); JSON-LD and the feed keep the title as published
+    page = head(url, f'{smart(p["title"])} — OpenEXA Blog', smart(p["excerpt"]), "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (p["title"], url)))}\n') + f'''
 <body data-page="post" data-nav="dark-start" class="article-page blog-post">
   <a class="skip" href="#main">Skip to content</a>
 

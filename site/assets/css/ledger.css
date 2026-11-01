@@ -1,5 +1,4 @@
-/* OpenEXA · the ledger stream and replay, the editable chain (Home §06, Trust §01). Cut from site.css unchanged (31 Oct 2026, system r2): linked after site.css, before the
-   page group's sheet, only on the pages that draw it, so the other pages do not wait for it. */
+/* OpenEXA · the ledger stream and replay, the editable chain (Home §06, Trust §01): own sheet since r2, linked where drawn. */
 /* v2:ledger:start */
 /* ---------- the ledger trace (ledger.js): records on one hairline, each link carrying a hash. No relational selectors:
    every state is a class ledger.js sets on the one element it concerns ---------- */
@@ -43,7 +42,7 @@
 .lt-track { position: relative; display: flex; width: max-content; min-width: 100%; margin: 0; padding: 16px 28px 12px; list-style: none; }
 
 /* one record = one contained column on the line */
-.lt-rec { flex: none; position: relative; isolation: isolate; contain: layout style paint; width: calc(var(--lt-col) + var(--lt-bleed)); margin-left: calc(var(--lt-bleed) * -1); padding: 12px var(--lt-pr) 10px var(--lt-bleed); cursor: pointer; outline: none; transition: opacity .35s var(--ease); -webkit-tap-highlight-color: transparent; }
+.lt-rec { flex: none; position: relative; isolation: isolate; contain: layout style paint; width: calc(var(--lt-col) + var(--lt-bleed)); margin-left: calc(var(--lt-bleed) * -1); padding: 12px var(--lt-pr) 10px var(--lt-bleed); cursor: pointer; outline: none; transition: opacity .35s var(--ease); }
 /* pointing at a record lifts its block off the panel; the link row below stays on the line */
 .lt-rec::after { content: ""; position: absolute; z-index: -1; inset: 0 6px 44px 6px; border-radius: 2px; background: rgba(245, 242, 236, .045); opacity: 0; transition: opacity .25s var(--ease); pointer-events: none; }
 .lt-rec.is-sel::after { opacity: 1; background: rgba(245, 242, 236, .07); }
@@ -173,6 +172,7 @@
 .chain-list { margin: 0; padding: 4px 20px 8px; list-style: none; font: var(--mono-m, .75rem)/1.6 var(--mono); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
 .chain-list > li { position: relative; display: grid; grid-template-columns: 2.4em 6.2em 9.4em minmax(0, 1fr) auto; column-gap: 14px; align-items: baseline; padding: 8px 12px 32px 44px; border-radius: 2px; color: var(--fg-2); transition: background .45s var(--ease); }
 .chain-list .i, .chain-list .who { color: var(--fg-3); transition: color .35s; }
+.chain-list .i[role="button"] { justify-self: start; cursor: pointer; } /* the record number is chain.js's roving stop: its ring hugs the number (proof r4) */
 .chain-list .ev { justify-self: start; max-width: 100%; font-weight: 500; letter-spacing: .08em; color: var(--fg); transition: color .35s, box-shadow .25s, background .25s; }
 .chain-list .what { justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); transition: color .35s, box-shadow .25s, background .25s; }
 .chain-list [contenteditable] { outline: 2px solid transparent; outline-offset: 2px; border-radius: 1px; cursor: text; box-shadow: inset 0 -1px 0 transparent; }
@@ -309,5 +309,13 @@
   .lt-view { overflow: visible !important; -webkit-mask-image: none !important; mask-image: none !important; }
   .lt-track { flex-wrap: wrap; width: auto; row-gap: 6mm; }
   .lt-insp, .lt-leader, .lt-ctrl, .lt-latest { display: none !important; }
+}
+/* (r4) until ledger.js and chain.js run (Home: as the curtain lifts) the inspector and controls hold their places, not
+   drawn (winning over site.css's [hidden] while scripts run), and the chain's rows their height. Their start moves nothing */
+@media (scripting: enabled) {
+  .lt .lt-insp[hidden] { display: grid !important; visibility: hidden; }
+  .lt .lt-ctrl[hidden] { display: inline-flex !important; visibility: hidden; min-height: 34px; }
+  @media (pointer: coarse) { .lt .lt-ctrl[hidden] { min-height: 44px; } } /* a button's height */
+  @media (min-width: 761px) { .chain:not(.chain-ready) .chain-list > li { padding-bottom: 32px; } } /* the hash link's row, until chain.js */
 }
 /* v2:ledger:end */

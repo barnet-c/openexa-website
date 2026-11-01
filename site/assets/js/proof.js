@@ -1,22 +1,10 @@
-/* OpenEXA — proof: the Lifecycle 01 performance report (home §04 · Proof §01)
-
-   One record per page: <script type="application/json" id="oxa-sessions">
-     { "lifecycle": "...", "unit": "bps", "floor": 10,
-       "sessions": [ { "day": "Day 01", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled" }, ... ] }
-   Everything on the page that describes the sessions is drawn or counted from that record:
-     [data-proof-chart]  the session chart (it replaces its static fallback; a [data-proof-fig] wrapper is un-hidden)
-     [data-proof-table]  a table of the sessions: rows rebuilt from the record, linked to the chart on hover
-     [data-proof="k"]    a derived count, k = total · above · premium · discount · confirmed · settled · floor, or "regimes"
-                         (the sentence "Five premium, five discount."); data-proof-as="words" | "Words" spells it out. It is
-                         written once, final: no count-up, so every frame, screen reader and in-page search reads the record.
-   The static HTML says the same thing for readers without JavaScript. Nothing is invented: a value is drawn only as the
-   record states it (">10" = above the floor, exact value not published) and a missing field reads "Not stated".
-   The chart: one column per session, one block per basis point up to the floor and open blocks above it; the NAV regime
-   as a trace above or below the NAV line; a tick where the broker confirmed and the session settled. Hover, focus or tap
-   a session for its record in the inspector (built only where the section has no stats row of its own: home §04 says
-   the summary once, in its stats); Left / Right / Home / End move between sessions, Enter or a second tap lets go, Esc
-   returns to the summary. No loops: after the entrance one light passes along the floor, paused while the chart is off
-   screen (.is-away). Reduced motion: no entrance, no motion. No WebGL, no canvas: plain DOM, crisp at any pixel ratio. */
+/* OpenEXA — proof: the Lifecycle 01 performance report (home §04 · Proof §01), drawn from the one record
+   <script type="application/json" id="oxa-sessions"> { lifecycle, unit, floor, sessions: [{ day, regime, value, confirmation, status }] }.
+   [data-proof-chart] the chart (replaces its fallback; un-hides a [data-proof-fig]) · [data-proof-table] rows rebuilt from
+   the record · [data-proof="k"] a count (total above premium discount confirmed settled floor, or "regimes"), data-proof-as
+   "words"/"Words" spells it; written once, final. The static HTML says the same without JS. Nothing is invented: ">10" is
+   drawn as above the floor, value not published; a missing field reads "Not stated". Lanes: hover, focus or tap for a
+   session's record; arrows, Home/End, Enter, Esc. One entrance, then still; none under reduced motion. Plain DOM. */
 (function () {
   'use strict';
   const src = document.getElementById('oxa-sessions');
@@ -85,7 +73,7 @@
   const sameValue = sessions.every(s => s.value === sessions[0].value);
   const SUMMARY = [
     ['All ' + C.total, lifecycle || 'sessions'],
-    [C.premium + ' · ' + C.discount, 'premium · discount'],
+    [C.premium + ' and ' + C.discount, 'premium · discount'],
     [sameValue ? valueText(sessions[0]) : 'Varies', C.above === C.total ? 'in every session' : C.above + ' of ' + C.total + ' above the floor'],
     [C.confirmed + ' of ' + C.total, 'broker-confirmed'],
     [C.settled + ' of ' + C.total, 'settled']
@@ -106,11 +94,10 @@
   function buildTable(table) {
     let tb = table.tBodies[0];
     if (!tb) { tb = h('tbody'); table.append(tb); }
-    // each cell names its column (data-th): on phones the rows restack and the cells carry their own labels
+    // data-th: each cell names its column (phones restack the rows)
     const head = table.tHead && table.tHead.rows[0] ? Array.from(table.tHead.rows[0].cells, c => c.textContent.trim()) : [];
     const TH = ['Session', 'NAV regime', 'Captured', 'Verification', 'Status'].map((k, j) => head[j] || k);
-    // Table 1.1 folds: a value equal to the one above it (Captured, Verification, Status) is drawn as a ditto mark
-    // (.pf-dt, proof.css); its text stays in the cell for screen readers, search and copy
+    // a value equal to the one above is a ditto mark (.pf-dt); its text stays in the cell
     const rows = sessions.map((s, i) => {
       const tr = h('tr'), up = sessions[i - 1];
       const td = (cls, same, kid) => {
@@ -147,7 +134,7 @@
 
     // direct labels, in a gutter that shares the lanes' rows
     const gut = mute(h('div', 'pf-gut'));
-    // a long label carries a short form too (.pf-ls), shown only where the gutter is narrowest
+    // .pf-ls: a short form for the narrowest gutter
     const lab = (cls, k, note, short) => {
       const e = h('span', 'pf-y ' + cls), b = h('b');
       if (short) b.append(h('span', 'pf-lw', k), h('span', 'pf-ls', short)); else b.textContent = k;
@@ -167,7 +154,7 @@
     const trace = sv('svg', { class: 'pf-trace', viewBox: '0 0 ' + N * 100 + ' 100', preserveAspectRatio: 'none', 'aria-hidden': 'true', focusable: 'false' });
     let risers = '';
     sessions.forEach((s, i) => { const nx = sessions[i + 1]; if (nx && nx.side !== s.side) risers += 'M' + (i + 1) * 100 + ' ' + Y(s.side) + 'V' + Y(nx.side); });
-    // a faint wash between each segment and NAV: the side of the NAV reads at a glance
+    // a faint wash between each segment and NAV
     const areas = sessions.map((s, i) => sv('rect', { x: i * 100, y: Math.min(Y(s.side), 50), width: 100, height: Math.abs(Y(s.side) - 50), class: 'pf-area' }));
     trace.append(...areas);
     if (risers) trace.append(sv('path', { d: risers, class: 'pf-riser', 'vector-effect': 'non-scaling-stroke' }));

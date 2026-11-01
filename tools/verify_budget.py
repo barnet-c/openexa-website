@@ -459,6 +459,13 @@ def shift_window(ls):
 LAND_AT = """(id) => { const p = document.getElementById(id), n = document.querySelector('header.nav') || document.querySelector('.nav');
   return { top: p ? Math.round(p.getBoundingClientRect().top) : null, bar: n ? Math.round(n.getBoundingClientRect().bottom) : null, y: Math.round(scrollY) }; }"""
 LAND_SIZES = ((1440, 900, False), (390, 844, True))
+# v2x r4: the deeper places (chapter, px into it) and the two desktop widths system measured them at
+LAND_DEEP = (("reload", "lc01", 900), ("back", "lc01", 900), ("reload", "governance", 600), ("back", "governance", 600),
+             ("reload", "governance", 1200), ("back", "governance", 1200))
+LAND_DEEP_SIZES = ((1440, 900), (1280, 800))
+LAND_GOTO = """([id, off]) => { const t = document.getElementById(id); scrollTo({ top: t.getBoundingClientRect().top + scrollY + off, behavior: 'instant' }); }"""
+LAND_PLACE = """() => { const s = [...document.querySelectorAll('main > section[id]')].filter(c => c.getBoundingClientRect().top < innerHeight / 3).pop();
+  return s ? [s.id, Math.round(s.getBoundingClientRect().top)] : [null, null]; }"""
 
 
 async def land_ctx(b, w, h, touch):
@@ -472,7 +479,9 @@ async def land_ctx(b, w, h, touch):
 @frames
 async def home_landing(b):
     """v2x r3 (home; r3-motion M1, r3-perf moderate): reload and Back land where the reader was, and a deep link lands at
-    the bar, without the page jumping (home.js keeps the place; based on home's .shots/v2x/work/home-r3/clsnav.py)"""
+    the bar, without the page jumping (home.js keeps the place; based on home's .shots/v2x/work/home-r3/clsnav.py).
+    v2x r4 (system; r4-motion M1): §04's window tightened to 0.01 (the chart's live height is held now), and reload/Back
+    at #lc01+900 and #governance+600/+1200 at 1440 and 1280 (window < 0.05)."""
     ok, out, worst = True, [], 0.0
     for w, h, touch in LAND_SIZES:
         for case in ("reload", "back"):
@@ -490,9 +499,31 @@ async def home_landing(b):
             at = await pg.evaluate(LAND_AT, "proof"); cls = shift_window(await pg.evaluate("window.__ls || []"))
             await ctx.close()
             worst = max(worst, cls)
-            good = at["top"] is not None and abs(at["top"] - 80) <= 2 and cls < 0.05
+            good = at["top"] is not None and abs(at["top"] - 80) <= 2 and cls < 0.01
             ok = ok and good
-            out.append(f"{case}@{w}: §04 at {at['top']} (was {before}), CLS {cls:.3f}" + ("" if good else " FAIL"))
+            out.append(f"{case}@{w}: §04 at {at['top']} (was {before}), CLS {cls:.4f}" + ("" if good else " FAIL"))
+    # v2x r4 (system; r4-motion M1): deeper places, past the instruments that build on screen (the swarm lab, the chart,
+    # the stream, the chain), whose live boxes the instrument sheets now hold before their engines run. The reader's
+    # place is the chapter in the upper third of the screen (as home.js keeps it); after the reload or Back its top is
+    # where it was (2 px). Based on system's .shots/v2x/work/system-r4/land.py (32 of 32 exact, CLS <= 0.0035).
+    for w, h in LAND_DEEP_SIZES:
+        for case, sec, off in LAND_DEEP:
+            ctx, pg = await land_ctx(b, w, h, False)
+            await pg.goto(f"{V.BASE}/index.html", wait_until="load"); await pg.wait_for_timeout(3500)
+            await pg.evaluate(LAND_GOTO, [sec, off]); await pg.wait_for_timeout(1400); await pg.mouse.move(3, 300)
+            pid, before = await pg.evaluate(LAND_PLACE)
+            if case == "reload": await pg.reload(wait_until="load")
+            else:
+                await pg.goto(f"{V.BASE}/evidence.html", wait_until="load"); await pg.wait_for_timeout(1200)
+                await pg.go_back(wait_until="load")
+            await pg.wait_for_timeout(5000)
+            after = (await pg.evaluate(LAND_AT, pid))["top"] if pid else None
+            cls = shift_window(await pg.evaluate("window.__ls || []"))
+            await ctx.close()
+            worst = max(worst, cls)
+            good = pid is not None and after is not None and abs(after - before) <= 2 and cls < 0.05
+            ok = ok and good
+            out.append(f"{case} #{sec}{off:+d}@{w}: #{pid} at {after} (was {before}), CLS {cls:.4f}" + ("" if good else " FAIL"))
     for w, h, touch in LAND_SIZES:
         for tid in ("proof", "lc01", "governance"):
             tops, clss = [], []
@@ -506,12 +537,24 @@ async def home_landing(b):
             good = all(t is not None and abs(t) <= 2 for t in tops) and max(clss) < 0.1
             ok = ok and good
             out.append(f"#{tid}@{w}: target - bar {tops}, CLS max {max(clss):.3f}" + ("" if good else " FAIL"))
-    return ok, "; ".join(out) + "; budget: reload/Back within 2 px of 80 and CLS < 0.05; deep links at the bar (2 px), CLS < 0.1", worst
+    return ok, "; ".join(out) + ("; budget: reload/Back §04 within 2 px of 80 and CLS < 0.01; the deeper places within 2 px of where they"
+                                 " were and CLS < 0.05; deep links at the bar (2 px), CLS < 0.1"), worst
 
 
-CURTAIN = r"""(() => { const E = window.__ev = {}; const mark = k => { if (!(k in E)) E[k] = Math.round(performance.now()); };
+CURTAIN = r"""(() => { const E = window.__ev = {}, A = window.__an = {}; const mark = k => { if (!(k in E)) E[k] = Math.round(performance.now()); };
+  // v2x r4 (system): when .is-done appears, find the curtain's transform transition and the dial's 'loader-pulse' (it
+  // starts in the '100' frame) and read their start times once the compositor has set them (rAF until both are set)
+  const grab = l => { try {
+    const tr = l.getAnimations().find(a => a.transitionProperty === 'transform');
+    const dial = l.querySelector('.loader-dial'), pu = dial && dial.getAnimations().find(a => a.animationName === 'loader-pulse');
+    A.found = [!!tr, !!pu];
+    const rd = () => { if (tr) { A.tr_start = tr.startTime == null ? null : tr.startTime; A.tr_delay = tr.effect.getTiming().delay; }
+      if (pu) A.pulse_start = pu.startTime == null ? null : pu.startTime;
+      if ((tr && tr.startTime == null) || (pu && pu.startTime == null)) requestAnimationFrame(rd); };
+    rd(); } catch (e) { A.err = String(e); } };
   new MutationObserver(ms => { for (const m of ms) {
-    if (m.type === 'attributes') { const el = m.target, c = el.classList; if (c && c.contains('loader')) { for (const k of ['is-complete', 'is-done']) if (c.contains(k)) mark('loader.' + k); } }
+    if (m.type === 'attributes') { const el = m.target, c = el.classList; if (c && c.contains('loader')) { for (const k of ['is-complete', 'is-done']) if (c.contains(k)) mark('loader.' + k);
+      if (c.contains('is-done') && !A.found) grab(el); } }
     else for (const n of m.removedNodes) if (n.classList && n.classList.contains('loader')) mark('loader.removed'); } })
     .observe(document, { attributes: true, attributeFilter: ['class'], subtree: true, childList: true }); })();"""
 
@@ -520,8 +563,13 @@ CURTAIN = r"""(() => { const E = window.__ev = {}; const mark = k => { if (!(k i
 @frames
 async def loader_curtain(b):
     """v2x r3 (home, system; r3-perf moderate, r3-motion minor): on a slow phone the loader still ends with its curtain:
-    the count reaches 100 (.is-complete), then the curtain lifts (.is-done) about 90 ms later, before the loader is
-    removed. Based on home's .shots/v2x/work/home-r3/curtain.py (20/20 on an idle machine, beat median 100 ms, max 106)."""
+    the count reaches 100 (.is-complete), then the curtain lifts (.is-done), before the loader is removed.
+    v2x r4 (system; r4-perf moderate): loader.js now adds .is-done in the same task as .is-complete and site.css holds the
+    curtain with a 90 ms transition delay that the compositor runs, so the class times are equal by design and measured
+    nothing. The beat is read as the visitor sees it: the curtain's transform transition starts (startTime + its delay)
+    85-110 ms after the dial's 'loader-pulse' animation, which starts in the frame that shows '100' (both start times are
+    the compositor's frame time). Based on system's .shots/v2x/work/system-r4/beat.py (20/20 at 90 ms; a 150 ms long
+    task after '100' leaves it at 90; v2 under the same task 183-200)."""
     runs = []
     for _ in range(20):
         ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
@@ -531,17 +579,22 @@ async def loader_curtain(b):
         await cdp.send("Emulation.setCPUThrottlingRate", {"rate": 4})
         await pg.goto(f"{V.BASE}/index.html", wait_until="load"); await pg.wait_for_timeout(4500)
         ev = await pg.evaluate("Object.assign({}, window.__ev || {})")
+        an = await pg.evaluate("Object.assign({}, window.__an || {})")
         await ctx.close()
         c, d, r = ev.get("loader.is-complete"), ev.get("loader.is-done"), ev.get("loader.removed")
-        runs.append({"curtain": bool(d and (not r or d <= r)), "beat": (d - c) if (c is not None and d is not None) else None, "complete_only": bool(c and not d)})
+        ts, td, ps = an.get("tr_start"), an.get("tr_delay"), an.get("pulse_start")
+        beat = round(ts + td - ps) if None not in (ts, td, ps) else None
+        runs.append({"curtain": bool(d and (not r or d <= r)), "beat": beat, "complete_only": bool(c and not d), "found": an.get("found"), "err": an.get("err")})
     beats = [x["beat"] for x in runs if x["beat"] is not None]
     curt, alone = sum(x["curtain"] for x in runs), sum(x["complete_only"] for x in runs)
-    slow = [x for x in beats if x >= 150]
-    ok = curt == len(runs) and not alone and len(beats) == len(runs) and not slow
+    off = [x for x in beats if not 85 <= x <= 110]
+    unread = [(x["found"], x["err"]) for x in runs if x["beat"] is None]
+    ok = curt == len(runs) and not alone and len(beats) == len(runs) and not off
     med = statistics.median(beats) if beats else None
     return ok, (f"20 first visits at 390x844@2, 4x CPU: {curt}/20 lift the curtain before the loader goes, {alone} end at .is-complete alone; "
-                f"beat .is-done - .is-complete median {med} ms, max {max(beats) if beats else None} ms ({len(slow)} at 150 ms or more); "
-                "budget: 20/20, none alone, every beat < 150 ms"), (max(beats) if beats else float("inf"))
+                f"beat (curtain transition start + delay - '100' pulse start) median {med} ms, range {min(beats) if beats else None}-{max(beats) if beats else None} ms "
+                f"({len(off)} outside 85-110; {len(unread)} unread{': ' + str(unread[:3]) if unread else ''}); "
+                "budget: 20/20, none alone, every beat 85-110 ms"), (max(beats) if beats else float("inf"))
 
 
 def parse_cal(argv):

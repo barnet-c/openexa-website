@@ -1,13 +1,10 @@
-/* OpenEXA · the architecture explorer (Home §02, Platform §01). Cut from site.css unchanged (31 Oct 2026, system r2): linked after site.css, before the
-   page group's sheet, only on the pages that draw it, so the other pages do not wait for it. */
+/* OpenEXA · the architecture explorer (Home §02, Platform §01): own sheet since r2, linked where drawn. */
 /* v2:arch:start */
 /* ---------- the architecture explorer (arch.js) ----------
-   Without JavaScript: .layers is a readable list (eight layers, each with its job, chips and In -> Out, the boundary
-   between 04 and 05, and the floor under 08). arch.js turns it into .arch: a dark instrument with a readout (left), the
-   exploded stack drawn in SVG (centre) and the layers as buttons (right), joined by leader lines; one boundary line runs
-   across the whole panel, and the floor's line runs under the stack. With data-arch-spec (Platform) the list stays, as the
-   full spec under the instrument: every layer's job, scope and In -> Out is readable without any interaction.
-   The wide instrument's height (--arch-minh) is held here before arch.js builds it and after, so nothing under it moves. */
+   No JS: .layers is a readable list (eight layers: job, chips, In -> Out; the boundary after 04; the floor under 08).
+   arch.js builds .arch: readout (left), the exploded stack in SVG (centre), the layers as buttons (right), leader lines,
+   one boundary across the panel. data-arch-spec (Platform) keeps the list as the full spec under it. --arch-minh holds
+   the wide instrument's height before and after the build. */
 .layers { display: grid; gap: 0; border: 1px solid var(--line); }
 .layers .layer { display: grid; grid-template-columns: 80px 1.1fr 1.6fr; gap: 28px; padding: clamp(22px, 3vw, 40px); border-bottom: 1px solid var(--line); align-items: start; background: var(--bg); transition: background .3s; }
 .layers .layer:last-child { border-bottom: 0; }

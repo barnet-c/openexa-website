@@ -1,5 +1,5 @@
 /* OpenEXA: Home's start-up (home group). The page paints first; data-after-paint's scripts follow in order: loader, story
-   and site at the first paint (5 s net), the instruments as the curtain lifts (2.5 s net), all at once on a page opened
+   and site at the first paint (5 s net), the instruments as the curtain goes (2.5 s net), all at once on a page opened
    mid-way. A reload or Back lands the reader in the chapter they left in the first frame (the browser's restore would
    land on the static figures, shorter than the live ones). .story-wait / .story-failed mark story.js. */
 (function () {
@@ -58,7 +58,7 @@
   } catch (e) { /* no storage */ }
   if (at) { ['wheel', 'touchstart', 'keydown'].forEach(t => addEventListener(t, () => { moved = 1; }, { once: true, passive: true })); hold(1); requestAnimationFrame(land); }
   const rest = () => { if (later) return; later = true; list.filter(src => !FIRST.test(src)).forEach(add); };
-  // the curtain lifts on the compositor: the instruments start then, not in the beat showing '100'
+  // '100' sets the curtain going (.is-done; its beat is a CSS delay the compositor runs): the instruments start then
   const lifted = () => {
     const l = document.querySelector('.loader'), up = () => !l.isConnected || l.classList.contains('is-done');
     if (!l || up()) return rest();

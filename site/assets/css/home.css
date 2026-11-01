@@ -169,6 +169,10 @@ body[data-page="home"] .proof-hedge a { color: var(--fg); text-decoration: under
 /* §06: the stream's foot is a sentence: Inter; its count stays data */
 body[data-page="home"] .lt-foot > span:first-child { font-family: var(--sans); font-size: .8rem; letter-spacing: 0; line-height: 1.45; }
 
+/* display heads break between phrases only, so a sentence never ends on a line of its own word (r4 art M2) */
+body[data-page="home"] h2 .ph { white-space: nowrap; }
+@media (max-width: 359.98px) { body[data-page="home"] h2 .ph-wide { white-space: normal; } } /* wider than a 320 column */
+
 /* §04: the honest half of the headline, in the italic the overture uses for its turn ("Not tasks. Lifecycles.") */
 body[data-page="home"] #proof .proof-copy h2 { font-size: clamp(2.3rem, 4.3vw, 4.05rem); line-height: 1; }
 body[data-page="home"] #proof h2 em { display: block; margin-top: .06em; font-style: italic; color: rgba(245, 242, 236, .78); }
@@ -178,6 +182,15 @@ body[data-page="home"] #proof h2 em { display: block; margin-top: .06em; font-st
    definition gives way first (.is-snug), as it does everywhere. */
 @media (min-width: 600px) and (max-aspect-ratio: 23/20) {
   html.story-compact body[data-page="home"] .beat-0 .display-1 { font-size: clamp(2.3rem, 9.6vw, 4.2rem); }
+}
+/* from 900 px tall it is only the hero's height that makes the copy compact: the scenes, S3's key and the CEO's
+   sub-line keep v2's portrait scale (r4 art/fidelity M: 35 px scene heads at 768 x 1024, under the chapters' 42) */
+@media (min-width: 600px) and (min-height: 900px) and (max-aspect-ratio: 23/20) {
+  html.story-compact body[data-page="home"] .story .beat h2 { font-size: clamp(1.85rem, 7.2vw, 3rem); }
+  html.story-compact body[data-page="home"] .story .beat .eyebrow { margin-bottom: 10px; }
+  html.story-compact body[data-page="home"] .story .beat .body-lg { margin-top: 12px; font-size: clamp(.94rem, 2.3vw, 1.02rem); line-height: 1.55; }
+  html.story-compact body[data-page="home"] .story .beat-0 .hero-sub { margin-top: 12px; font-size: clamp(1rem, 2.6vw, 1.15rem); }
+  html.story-compact body[data-page="home"] .story .beat .story-legend { display: flex; margin-top: 14px; }
 }
 
 /* the overture's coda on portrait screens: the statement at display size, standing on the floor it names */
@@ -364,10 +377,16 @@ body[data-page="home"] #governance .gov-spec b::before { content: none; }
 
 /* §06 the running log: its head (the only Pause for the motion below it) stays in view under the bar while any of the
    panel is (r2 motion m: a reader at the inspector saw records move with no Pause on screen). overflow: clip keeps the
-   rounded edge without making the panel a scroller, so the head sticks to the page. Not on a short screen (a phone held
-   sideways), where a pinned head and the bar would hold ~40% of it while the records scroll by. */
+   rounded edge without making the panel a scroller, so the head sticks to the page. On a short screen (a phone held
+   sideways) it pins as one row at a button's height, not two rows that held ~40% of the screen with the bar (r3), so
+   Pause stays in reach there too (r4 motion m); under 700 px wide the title is "Agent log", as on a narrow phone. */
 body[data-page="home"] .lt[data-ledger-stream] { overflow: clip; }
-@media (min-height: 521px) { body[data-page="home"] .lt[data-ledger-stream] .lt-head { position: sticky; top: var(--nav-h); z-index: 6; background: var(--lt-bg); border-radius: var(--r) var(--r) 0 0; } }
+body[data-page="home"] .lt[data-ledger-stream] .lt-head { position: sticky; top: var(--nav-h); z-index: 6; background: var(--lt-bg); border-radius: var(--r) var(--r) 0 0; }
+@media (max-height: 520.98px) {
+  body[data-page="home"] .lt[data-ledger-stream] .lt-head { grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "title latest state ctrl"; min-height: 0; padding-block: 2px; }
+  body[data-page="home"] .lt[data-ledger-stream] .lt-state { justify-self: end; }
+}
+@media (max-height: 520.98px) and (max-width: 699.98px) { body[data-page="home"] .lt[data-ledger-stream] .lt-title-x { display: none; } }
 
 /* §06 the chain on phones: its records at the stream's record size, so each takes two lines (who and event; what it
    carried), not three at a desktop size squeezed into a phone (r2 mobile m). A field being edited on a touch screen
@@ -451,6 +470,8 @@ body[data-page="home"] #proof .stats > div:nth-child(n + 3) .d { color: var(--fg
 /* §04's status line, unboxed: the green mark and the words, as the register above and Proof's hero set it */
 body[data-page="home"] #proof .proof-copy .badge { padding: 0; border: 0; color: var(--fg-2); }
 @media (min-width: 961px) { body[data-page="home"] #proof .proof-copy .badge { position: relative; top: 3px; } } /* on the chart kicker's baseline */
+/* portrait tablets: the full-width ledes (§01, §04, the chain) at a reading measure, ~62 characters (r4 mobile m) */
+@media (min-width: 601px) and (max-width: 960.98px) { body[data-page="home"] :is(#lifecycles .lc-intro, #proof .proof-copy, #governance .chain-row) .body-lg { max-width: 31em; } }
 
 /* the chart's key is a sentence: Inter, under the title; the evidence line stays data */
 body[data-page="home"] .figure-cap .fc-key { font: 400 .8rem/1.5 var(--sans); letter-spacing: 0; color: var(--fg-2); }

@@ -1,5 +1,4 @@
-/* OpenEXA · the proof chart and the cost index (Home §04-05, Proof). Cut from site.css unchanged (31 Oct 2026, system r2): linked after site.css, before the
-   page group's sheet, only on the pages that draw it, so the other pages do not wait for it. */
+/* OpenEXA · the proof chart and the cost index (Home §04-05, Proof): own sheet since r2, linked where drawn. */
 /* v2:proof:start */
 /* ---------- proof — the ten-session report: home §04 and Proof §01 (assets/js/proof.js draws it from #oxa-sessions) ---------- */
 .proof-layout { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(40px, 5vw, 96px); align-items: start; }
@@ -18,7 +17,7 @@
 
 /* the chart: a gutter of direct labels + one lane per session */
 .proof { container-type: inline-size; position: relative; }
-.pf {
+.pf, .proof:not(.is-built)::before {
   --gut: 76px; --b: 12px; --g: 2px; --zr: 72px; /* without container units: fixed sizes that fit any width from 320 px */
   --zg: calc(var(--ng, 4) * (var(--b) + var(--g)) + 20px); --zc: calc(var(--n, 10) * (var(--b) + var(--g)));
   --zd: 30px; --zo: 26px;
@@ -26,12 +25,20 @@
   position: relative;
 }
 @supports (width: 1cqi) {
-  .pf {
+  .pf, .proof:not(.is-built)::before {
     --gut: clamp(64px, 15cqi, 108px); --lane: calc((100cqi - var(--gut)) / var(--cols, 10));
     --b: clamp(9px, calc(var(--lane) * .34), 17px); --g: clamp(2px, calc(var(--b) * .2), 3px); --zr: clamp(68px, 12cqi, 88px);
   }
 }
-@supports (width: 1cqi) and (width: round(down, 10.5px, 1px)) { .pf { --b: round(down, clamp(9px, calc(var(--lane) * .34), 17px), 1px); } } /* whole pixels: crisp, even blocks */
+@supports (width: 1cqi) and (width: round(down, 10.5px, 1px)) { .pf, .proof:not(.is-built)::before { --b: round(down, clamp(9px, calc(var(--lane) * .34), 17px), 1px); } } /* whole pixels: crisp, even blocks */
+/* (r4) until proof.js builds the chart (Home: as the curtain lifts) its box is held at the lanes' height from the
+   chart's own variables (the rules above serve this ::before too; --cols/--n/--ng at Home's 10/10/4), the static list
+   in the same cell. The build moves nothing */
+@media (scripting: enabled) {
+  .proof:not(.is-built) { display: grid; }
+  .proof:not(.is-built) > *, .proof:not(.is-built)::before { grid-area: 1 / 1; }
+  .proof:not(.is-built)::before { content: ""; height: calc(var(--top) + var(--zr) + var(--zd) + var(--zo)); }
+}
 .pf-body { position: relative; display: grid; grid-template-columns: var(--gut) minmax(0, 1fr); }
 .pf-gut { position: relative; font-family: var(--mono); font-size: var(--mono-tick); line-height: 1.3; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 .pf-y { position: absolute; left: 0; right: 10px; }
@@ -51,7 +58,7 @@
 @container (max-width: 540px) { .pf-y .pf-n { display: none; } .pf-y small { font-size: .625rem; } .pf-gut { letter-spacing: .06em; } .pf-y { right: 4px; } }
 /* phones under ~340 px: a narrower gutter keeps every lane (the tap target) at least 24 px wide */
 @container (max-width: 300px) {
-  .pf { --gut: 38px; }
+  .pf, .proof:not(.is-built)::before { --gut: 38px; }
   .pf-gut { letter-spacing: .02em; }
   .pf-y { right: 2px; }
   .pf-y .pf-lw, .y-above small { display: none; }
@@ -59,7 +66,7 @@
   .y-floor small { font-size: var(--mono-tick); letter-spacing: 0; white-space: nowrap; }
 }
 @supports not (width: 1cqi) {
-  @media (max-width: 340px) { .pf { --gut: 38px; } .pf-gut { letter-spacing: .02em; } .pf-y { right: 2px; } .pf-y .pf-lw, .y-above small, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { font-size: var(--mono-tick); letter-spacing: 0; white-space: nowrap; } }
+  @media (max-width: 340px) { .pf, .proof:not(.is-built)::before { --gut: 38px; } .pf-gut { letter-spacing: .02em; } .pf-y { right: 2px; } .pf-y .pf-lw, .y-above small, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { font-size: var(--mono-tick); letter-spacing: 0; white-space: nowrap; } }
 }
 
 /* the floor (a lit hairline, from the gutter across every lane), the baseline and the NAV reference */
@@ -81,7 +88,7 @@
 .pf-y { transition: color .25s var(--ease); }
 
 .pf-lanes { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(var(--cols, 10), minmax(0, 1fr)); }
-.pf-lane { position: relative; display: grid; grid-template-rows: var(--zg) var(--zc) var(--zr) var(--zd) var(--zo); justify-items: center; cursor: pointer; outline: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.pf-lane { position: relative; display: grid; grid-template-rows: var(--zg) var(--zc) var(--zr) var(--zd) var(--zo); justify-items: center; cursor: pointer; outline: 0; touch-action: manipulation; }
 .pf-lane::before, .pf-lane::after { content: ""; position: absolute; inset: 0 2px; border-radius: 2px; pointer-events: none; }
 .pf-lane::before { background: var(--fg); opacity: 0; transition: opacity .25s var(--ease); }
 @media (hover: hover) { .pf-lane:hover::before { opacity: .035; } }

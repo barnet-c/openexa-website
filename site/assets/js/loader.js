@@ -10,8 +10,9 @@
    The failsafe: 1.9-2.2 s after navigation the loader is gone (v2x; it was 2.3-2.6 s). A fade on the document timeline (the compositor runs it, so
    scripts that hold the main thread cannot delay it) takes it away at that moment unless the curtain has lifted; a
    count that has not reached 100 by then is never shown again (the loader is removed at once: no count, no curtain),
-   and a timer removes it then whatever else is running. A count that reached 100 before it always lifts its curtain,
-   even when a long task holds the lift a little past it (r3), unless the fade has already finished. Without this script a CSS
+   and a timer removes it then whatever else is running. A count that reached 100 before it always lifts its curtain:
+   .is-done comes with '100', and site.css holds a first visit's curtain for a 90 ms beat in its own transition delay, on
+   the compositor, so no long task can stretch the beat or skip it (r4; it was a 90 ms timer). Without this script a CSS
    animation (v2:nav) still fades it out 1.9-2.2 s after its first frame. While the loader is up, Tab stays on the skip link:
    nothing hidden beneath the loader takes keyboard focus. (The page is not made inert, which would restyle all of it
    twice on the loader's path; reading the loader's own animations needs only the styles its first frame computes.)
@@ -89,15 +90,6 @@
     shown = t; count.textContent = t;
     if (dial && !seen) dial.style.setProperty('--lp', (n / 100).toFixed(2));
   };
-  // the curtain: it starts moving at once and takes over from the CSS failsafe (.is-done stops it). Once the count has
-  // reached 100 the curtain always lifts, even when a long task held its beat past LATE (r3: that was a cut from '100'
-  // straight to the hero); only after the failsafe has faded the loader out (LATE + 300) is it simply taken away.
-  const lift = () => {
-    if (gone) return;
-    if (performance.now() >= LATE + 300) { drop(); return; } // (lift only follows complete(), which drops at LATE)
-    loader.classList.add('is-done');
-    setTimeout(() => { if (!gone) { gone = true; loader.remove(); } }, seen ? 500 : 900);
-  };
   const complete = () => {
     if (completed || gone) return;
     completed = true;
@@ -107,9 +99,10 @@
     body.classList.remove('is-loading');
     hold(false);
     loaded();
-    // the decision reads for a beat (100, the aperture pulses green), then the curtain lifts; no beat when it would
-    // end within 60 ms of the failsafe's moment
-    if (seen || performance.now() + 90 >= LATE - 60) lift(); else setTimeout(lift, 90);
+    // the curtain, in the frame that shows '100' (.is-done also stops the CSS failsafe); a first visit's decision reads
+    // for a beat (the aperture pulses green) while its transitions wait out their 90 ms delay (site.css)
+    loader.classList.add('is-done');
+    setTimeout(() => { if (!gone) { gone = true; loader.remove(); } }, seen ? 500 : 990);
   };
   const schedule = () => {
     if (finishAt) return;

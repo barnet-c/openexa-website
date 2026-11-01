@@ -10,8 +10,8 @@ card, captioned with a sentence quoted from the post (build_blog.py asserts each
 
 Language (site.css 404 plate, Platform/Lifecycles plates): hairlines in currentColor at .2-.75 opacity, one element in
 the signal green (--accent, 1.5), dashed lines for bounds and the "not yet", small filled dots for observations, hollow
-dots for what is left out, vertical engraving strokes for areas. viewBox 400 x 225 (the cards' 16:9); the top 44 units
-stay clear for the card's label. Classes (styled in assets/css/blog.css):
+dots for what is left out, vertical engraving strokes for areas. Drawn in 400 x 225 units (the cards' 16:9; written at
+K = 2, viewBox 800 x 450, r4); the top 44 units stay clear for the card's label. Classes (styled in assets/css/blog.css):
   pa main line · pb secondary · pc faint (hatching, many paths) · pd dashed bound · pr base rule · pg the green line
   pk filled dot · po hollow dot · pq green dot · pt hero-only label (hidden on cards)
 pathLength="1" on pa/pg lets CSS draw them in (the post hero at first paint; the green line again on a card's hover).
@@ -20,6 +20,10 @@ import hashlib, math, random, re
 
 W, H = 400, 225
 X0, X1 = 28, 372
+# r4-perf: the drawers work in 400 x 225 units; the svg is written at K times that, on an 800 x 450 viewBox, in whole
+# numbers (half a drawing unit, a third of a pixel on the largest plate), so the index carries no decimals in its 25
+# plates (27.4 -> ~21 KB gzip). blog.css sets the strokes and lettering in the same doubled units (--u).
+K = 2
 
 
 def rng(key):
@@ -27,19 +31,25 @@ def rng(key):
 
 
 def f(v):
-    s = f"{v:.1f}"
-    return s[:-2] if s.endswith(".0") else ("-" + s[2:] if s.startswith("-0.") else s[1:] if s.startswith("0.") else s)
+    """a coordinate or a length as written: K times the drawing's units, a whole number"""
+    return str(round(v * K))
+
+
+def fr(v):
+    """a dot's radius as written: K times, to a tenth (a dot is small enough for whole numbers to show)"""
+    s = f"{v * K:.1f}"
+    return s[:-2] if s.endswith(".0") else s
 
 
 def d(xy):
-    """a polyline as compact path data: the first point absolute, then relative steps, all in exact tenths of a unit
-    (rounded once, so the relative steps cannot drift)"""
-    pts = [(round(x * 10), round(y * 10)) for x, y in xy]
+    """a polyline as compact path data: the first point absolute, then relative steps, in whole written units (rounded
+    once, so the relative steps cannot drift)"""
+    pts = [(round(x * K), round(y * K)) for x, y in xy]
     nums = []
     for (ax, ay), (bx, by) in zip(pts, pts[1:]):
-        nums += [f((bx - ax) / 10), f((by - ay) / 10)]
+        nums += [str(bx - ax), str(by - ay)]
     body = nums[0] + "".join(n if n.startswith("-") else " " + n for n in nums[1:]) if nums else ""
-    return f"M{f(pts[0][0] / 10)} {f(pts[0][1] / 10)}l{body}"
+    return f"M{pts[0][0]} {pts[0][1]}l{body}"
 
 
 def path(xy, cls, draw=False):
@@ -51,7 +61,7 @@ def line(x1, y1, x2, y2, cls, draw=False):
 
 
 def dot(x, y, cls="pk", r=1.6):
-    return f'<circle class="{cls}" cx="{f(x)}" cy="{f(y)}" r="{f(r)}"/>'
+    return f'<circle class="{cls}" cx="{f(x)}" cy="{f(y)}" r="{fr(r)}"/>'
 
 
 def label(x, y, text, anchor="middle"):
@@ -354,7 +364,7 @@ def exercise(r):
     ys = fit([strike], 60, 192, lo, hi)[0]
     out = [rule(), line(X0, ys, X1, ys, "pc"), line(x[vest], 54, x[vest], 200, "pd"),
            path(list(zip(x[vest:], yb)), "pd"), path(list(zip(x[:hit + 1], yp[:hit + 1])), "pa", True),
-           path(list(zip(x[hit:], yp[hit:])), "pc"), dot(x[hit], yp[hit], "pq", 3.2), f'<circle class="pg" cx="{f(x[hit])}" cy="{f(yp[hit])}" r="7"/>',
+           path(list(zip(x[hit:], yp[hit:])), "pc"), dot(x[hit], yp[hit], "pq", 3.2), f'<circle class="pg" cx="{f(x[hit])}" cy="{f(yp[hit])}" r="{f(7)}"/>',
            label(x[vest], 216, "vesting"), label(X1, ys - 5, "strike", "end")]
     return out
 
@@ -436,7 +446,7 @@ def five_stages(r):
     out += [line(cx[3] - 24 * k_, cy + 9 * k_, cx[3] + 18 * k_, cy - 27 * k_, "pd"), line(cx[3] - 18 * k_, cy + 27 * k_, cx[3] + 24 * k_, cy - 9 * k_, "pd"),
             line(cx[3] - 21 * k_, cy + 18 * k_, cx[3] + 21 * k_, cy - 18 * k_, "pa")]
     rr = 22 * k_
-    out.append(f'<ellipse class="pa" cx="{cx[4]}" cy="{cy}" rx="{f(rr)}" ry="{f(rr)}" pathLength="1"/>')
+    out.append(f'<ellipse class="pa" cx="{f(cx[4])}" cy="{f(cy)}" rx="{f(rr)}" ry="{f(rr)}" pathLength="1"/>')
     out += [dot(cx[4] + rr * math.cos(a), cy + rr * math.sin(a), "pk", 2.2) for a in (0.3, 2.4, 4.4)]
     out.append(path([(cx[4] + rr - 3, cy - 18), (cx[4] + rr + .5, cy - 10), (cx[4] + rr + 6, cy - 17)], "pa"))
     a, b, top = cx[1] + 8, cx[2] - 8, cy - 62  # the bridge: an arc from the bell over to the line
@@ -457,8 +467,8 @@ def cohort(r):
     for _ in range(11):
         a, rr = r.uniform(0, 6.28), math.sqrt(r.uniform(.12, 1))
         out.append(dot(tx + 40 * rr * math.cos(a), ty + 25 * rr * math.sin(a), "pk", 2.4))
-    out.append(f'<ellipse class="pd" cx="{tx}" cy="{ty}" rx="50" ry="33"/>')
-    out += [dot(tx, ty, "pq", 3.4), f'<circle class="pg" cx="{tx}" cy="{ty}" r="8" pathLength="1"/>']
+    out.append(f'<ellipse class="pd" cx="{f(tx)}" cy="{f(ty)}" rx="{f(50)}" ry="{f(33)}"/>')
+    out += [dot(tx, ty, "pq", 3.4), f'<circle class="pg" cx="{f(tx)}" cy="{f(ty)}" r="{f(8)}" pathLength="1"/>']
     out.append(label(tx + 60, ty - 36, "cohort", "start"))
     return out
 
@@ -487,7 +497,7 @@ def guardrails(r):
 def agent(r):
     """an agent (green) on a loop that passes the parties a trade must touch (the post's own diagram, as a schematic)"""
     cx, cy, rx, ry = 200, 128, 132, 56
-    out = [f'<ellipse class="pb" cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}"/>']
+    out = [f'<ellipse class="pb" cx="{f(cx)}" cy="{f(cy)}" rx="{f(rx)}" ry="{f(ry)}"/>']
     for a in (math.radians(d_) for d_ in (200, 270, 340, 20, 90, 160)):
         x, y = cx + rx * math.cos(a), cy + ry * math.sin(a)
         out.append(line(cx, cy, x, y, "pc"))
@@ -503,7 +513,7 @@ def agent(r):
 def credit(r):
     """savers (left) to a bank (green ring) to borrowers (right)"""
     cx, cy = 200, 128
-    out = [f'<circle class="pg" cx="{cx}" cy="{cy}" r="16" pathLength="1"/>', dot(cx, cy, "pq", 2.4)]
+    out = [f'<circle class="pg" cx="{f(cx)}" cy="{f(cy)}" r="{f(16)}" pathLength="1"/>', dot(cx, cy, "pq", 2.4)]
     for k in range(9):
         y = 66 + k * 15.5
         xl, xr = 58 + r.uniform(-6, 6), 342 + r.uniform(-6, 6)
@@ -521,7 +531,7 @@ RINGS = ((58, 23, -18), (86, 30, 13), (112, 46, -6), (138, 44, 17), (162, 64, -1
 
 def rings(turn):
     cx, cy, k_ = 212, 130, .72  # .72: the constellation keeps clear of the plate's edges and of its label
-    return [f'<ellipse class="{"pg" if k == 0 else "pb"}" cx="{cx}" cy="{cy}" rx="{f(rx * k_)}" ry="{f(ry * k_)}" transform="rotate({rot + turn} {cx} {cy})"' + (' pathLength="1"' if k == 0 else "") + "/>"
+    return [f'<ellipse class="{"pg" if k == 0 else "pb"}" cx="{f(cx)}" cy="{f(cy)}" rx="{f(rx * k_)}" ry="{f(ry * k_)}" transform="rotate({rot + turn} {f(cx)} {f(cy)})"' + (' pathLength="1"' if k == 0 else "") + "/>"
             for k, (rx, ry, rot) in enumerate(RINGS)]
 
 
@@ -602,7 +612,7 @@ def compact(inner):
 
 
 def svg(inner, cls="bp-art"):
-    return f'<svg class="{cls}" viewBox="0 0 {W} {H}" fill="none" focusable="false" aria-hidden="true">{compact(inner)}</svg>'
+    return f'<svg class="{cls}" viewBox="0 0 {W * K} {H * K}" fill="none" focusable="false" aria-hidden="true">{compact(inner)}</svg>'
 
 
 def plate_svg(slug, col, turn=0):
@@ -682,7 +692,7 @@ def library_svg(labels=("Markets", "AI & agents", "Economics"), counts=(16, 5, 8
     pad = 6
     ox, oy = -x0 + pad, -y0 + pad
     vw = round(x1 - x0 + 2 * pad)
-    face_t = f"scale({1 / W:.6f},{1 / H:.6f}) translate(0,{H}) scale(1,-1)"   # plate y down -> leaf t (front at the bottom)
+    face_t = f"scale({1 / (W * K):.7f},{1 / (H * K):.7f}) translate(0,{H * K}) scale(1,-1)"   # plate y down -> leaf t (front at the bottom)
     groups = []
     for bi, (key, angs, green, face_i, face) in enumerate(bundles):
         leaves = []
@@ -693,7 +703,7 @@ def library_svg(labels=("Markets", "AI & agents", "Economics"), counts=(16, 5, 8
                 style = f' style="--k:{_mx(_lib_matrix(a + deg(19))[0], ox, oy)};--h:{_mx(_lib_matrix(a * 1.16)[0], ox, oy)};--i:{len(angs) - 1 - i}"'
             inner = f'<path class="lf{" lf-g" if i in green else ""}" d="M0 0H1V1H0Z"/>'
             if i == face_i:
-                mirror = f" translate({W},0) scale(-1,1)" if a < 0 else ""   # read from the fore-edge to the spine on the left
+                mirror = f" translate({W * K},0) scale(-1,1)" if a < 0 else ""   # read from the fore-edge to the spine on the left
                 inner += f'<g class="lf-face" transform="{face_t}{mirror}">{compact(face)}</g>'
             leaves.append((depth, f'<g class="lf-w" transform="{_mx(m, ox, oy)}"{style}>{inner}</g>'))
         leaves.sort(key=lambda t: -t[0])  # far first

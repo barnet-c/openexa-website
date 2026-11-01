@@ -1,5 +1,4 @@
-/* OpenEXA · the overture (Home). Cut from site.css unchanged (31 Oct 2026, system r2): linked after site.css, before the
-   page group's sheet, only on the pages that draw it, so the other pages do not wait for it. */
+/* OpenEXA · the overture (Home): own sheet since r2, linked where drawn. */
 /* v2:overture:start */
 /* ---------- the overture: one instrument, five scenes (story.js) — copy on the left, the instrument on the right, the scene index below;
    portrait screens stack the instrument above the copy and move the index under the nav ---------- */
