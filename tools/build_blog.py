@@ -250,7 +250,8 @@ def smart_html(h):
         # entities stay entities: decode for the decision, write back what the CMS wrote otherwise
         txt = H.unescape(part)
         s = smart(txt, prev)
-        out.append(tight_hy(esc_text(s)) if head_ or quote_ else esc_text(s)); prev = s[-1] if s else prev
+        # r5: an article's headings are display lines too; they bind their function words as the titles do (post_title)
+        out.append(tight_hy(esc_text(bind(s) if head_ else s)) if head_ or quote_ else esc_text(s)); prev = s[-1] if s else prev
     return "".join(out)
 def tight_hy(escaped):
     """a serif line: the ASCII hyphen between letters (still found by find-in-page), set tight (site.css .hy)"""
@@ -260,6 +261,34 @@ def serif(s):
     """escaped text for a serif line: real quotes and dashes, and the hyphen between letters in span.hy (Instrument
     Serif draws U+002D as 'Domain – Specific'; SYSTEM.md §3, r2). Feeds and JSON-LD keep plain ASCII."""
     return tight_hy(esc(smart(s)))
+# r5-art (minor): a post title on the page never ends a line on a short function word ("Contracting in the / presence
+# of judicial agency"): the word is bound to the one after it with a no-break space, the rule research's titles take in
+# r5, so text-wrap: balance can only break by sense ("Contracting / in the presence of judicial agency"). Typography
+# only: same words; find-in-page and copying read a space. <title>, meta, JSON-LD and the feed keep plain spaces
+BIND = re.compile(r"(?<![\w’'‐-])(a|an|the|of|on|in|to|for|and|or|as|at|by|is|via|with|from|under) +(?=[^\s—–-])", re.I)
+# A sentence inside a title also keeps its last word with the one before it, so no line opens on "System. Why Banks
+# Exist?" (r5 probe: that post's H1 at 1440, 1024 and 390, its card at 320). The longest chain this makes, "in the
+# Financial System.", is 253 px in the H1 at 320 (column 280): measured, no overflow at any width
+INNER_END = re.compile(r" (?=[^\s]+[.?!] [A-Z])")
+# The titles' compound terms are never split across lines ("Optimal Execution for High / Frequency Trading", "Price /
+# Dynamics"), a typesetter's keep-together list, as an exception list is for hyphenation. A term whose chain would run
+# past a phone's 280 px column in its H1 stays off the list ("and Portfolio Concentration", ~285 px at 35 px). So the
+# list holds "High Frequency", not "High Frequency Trading": bound to its "for", the whole term ran 10 px past the H1's
+# column at 320 (r5 probe p6); at 320 alone the title takes a third line ("Trading"), at every other width it is two
+CHAIN_MAX = 24  # characters in one bound run: "in the Financial System." (24) is 253 px in the H1 at 320, the widest that fits
+KEEP = ("High Frequency", "Generative AI","Drawdown Risk", "Price Dynamics", "Exercise Timing", "True Potential", "Relative Value Analysis",
+        "Volatility Asymmetry", "Storage Cost Model", "Value Creation")
+KEEP_RE = re.compile(r"\b(" + "|".join(re.escape(k) for k in KEEP) + r")\b")
+def bind(t):
+    t = INNER_END.sub("\u00a0", BIND.sub(lambda m: m.group(1) + "\u00a0", t))
+    return KEEP_RE.sub(lambda m: m.group(1).replace(" ", "\u00a0"), t)
+def post_title(s):
+    """a post's title as a display line (index cards, the register, the series rail, the H1, the pager)"""
+    return tight_hy(esc(bind(smart(s))))
+# r5-copy (minor): JSON-LD now sets a title and an excerpt as the page does (’, the house dash), as r4 did for <title> and
+# the share text, with plain spaces (a no-break space is for line breaking, which structured data has none of). The feed
+# alone keeps the text as published (every subscriber's copy of an entry would change)
+def ld_text(s): return smart(s).replace("\u00a0", " ")
 def prose(s): return esc(smart(s))
 def hang(h):
     """a paragraph that opens on a quote mark hangs it in the margin, so the text's left edge stays straight"""
@@ -391,6 +420,9 @@ SERIES = [("in-search-gen-ai-business-model", "Introduction", "The business mode
 SERIES_NAME = "The Gen-AI series"
 SERIES_POS = {s: i for i, (s, _, _) in enumerate(SERIES)}
 assert all(s in SLUGS and not SLUGS[s]["stub"] for s, _, _ in SERIES)
+assert all(any(k in p["title"] for p in kept) for k in KEEP), [k for k in KEEP if not any(k in p["title"] for p in kept)]  # a stale keep-together term
+_runs = [(max(bind(smart(p["title"])).split(" "), key=len), p["slug"]) for p in kept]
+assert all(len(r) <= CHAIN_MAX for r, _ in _runs), [(r, s) for r, s in _runs if len(r) > CHAIN_MAX]  # a bound run too wide for a phone's H1
 
 # ---------------- index ----------------
 # v2x (30 Oct 2026): every post appears once. The Gen-AI series is AI & agents' own lead (it is four of the
@@ -405,7 +437,7 @@ def card(p):
     host = re.sub(r"^www\.", "", re.search(r"//([^/]+)", p["source"]).group(1)) if ext else ""
     return f'''          <a class="blog-card" href="{esc(href(p))}"{' target="_blank" rel="noopener"' if ext else ''}>
             {plate(p)}<div class="blog-card-body"><div class="k"><time datetime="{iso(p)}">{fmt(p["dt"])}</time></div>
-            <h3>{serif(p["title"])}</h3><p>{prose(p["excerpt"])}</p>
+            <h3>{post_title(p["title"])}</h3><p>{prose(p["excerpt"])}</p>
             <span class="link-arrow">{("Read on " + host + " " + OUTB) if ext else (str(p["minutes"]) + "&nbsp;min read " + ARROW)}</span></div>
           </a>'''
 def row(p):
@@ -413,7 +445,7 @@ def row(p):
     ext = ' target="_blank" rel="noopener"' if p["stub"] else ""
     return f'''          <li><a class="blog-card blog-row" href="{esc(href(p))}"{ext}>
             <time class="br-date" datetime="{iso(p)}">{fmt(p["dt"])}</time>
-            <div class="br-main"><h3>{serif(p["title"])}</h3><p>{prose(p["excerpt"])}</p></div>
+            <div class="br-main"><h3>{post_title(p["title"])}</h3><p>{prose(p["excerpt"])}</p></div>
             <span class="br-min">{p["minutes"]}&nbsp;min read {OUTB if p["stub"] else ARROW}</span>
           </a></li>'''
 rail = []
@@ -423,12 +455,13 @@ for i, (s, part, short) in enumerate(SERIES):
             <span class="sr-date"><time datetime="{iso(p)}">{fmt(p["dt"])}</time></span>
             <span class="series-n">{i:02d}</span>{plate(p)}
             <div class="k"><span>{esc(part)} · {esc(short)}</span></div>
-            <h3>{serif(p["title"])}</h3>
+            <h3>{post_title(p["title"])}</h3>
             <span class="link-arrow">{p["minutes"]}&nbsp;min read {ARROW}</span>
           </a></li>''')
 series_minutes = sum(SLUGS[s]["minutes"] for s, _, _ in SERIES)
-# the index's plates carry the hedge the post heroes carry (r1-fidelity 6): beside the series and above the markets grid
-PLATES_HEDGE = "Plates are schematic · no data is plotted"
+# the index's plates carry the hedge the post heroes carry (r1-fidelity 6): above the markets grid (wider than a phone;
+# on a phone the collection's head plate carries it). r5-copy: one hedge, one wording, the plates' own
+PLATES_HEDGE = "Schematic · no data is plotted"
 def plate_cap(title):
     """a plate's title line in the site's caption register (site.css .fc-n, r2): the mono mark 'Plate', then the title in
     Inter (r4-art: 'Plate · The library' set the title inside the mark, a third dialect). The ' · ' between them is kept
@@ -458,7 +491,7 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     authors = {p["author"] for p in by_col[k]}
     assert len(authors) == 1, (k, authors)  # collections are assigned by author: the head can carry the byline once
     shead = f'''        <div class="sec-head" data-reveal><span class="idx">{n:02d}</span><span class="lab">{esc(label)}</span><span class="aside"><span class="by">{esc(shown(authors.pop()))}</span> · {len(by_col[k])} posts · {span_}</span></div>
-''' + (f'''        <figure class="blog-headplate"><div class="bh-art" aria-hidden="true">{collection_svg(k)}</div><figcaption>{plate_cap(label)}<span class="pp-h">Schematic · no data is plotted</span></figcaption></figure>
+''' + (f'''        <figure class="blog-headplate"><div class="bh-art" aria-hidden="true">{collection_svg(k)}</div><figcaption>{plate_cap(label)}<span class="pp-h">{PLATES_HEDGE}</span></figcaption></figure>
 ''' if k in ("markets", "ai") else "")  # r3-art: the phone's one plate per collection carries the register's mark and hedge, as the cards do wider
     if k == "economics":
         # v2x lab (blog-editorial): eight cards carried one mark eight times (r1-art M6, r1-mobile 9). The collection
@@ -512,7 +545,7 @@ LIBRARY = f'''<figure class="lib-plate">
         </figure>'''
 desc = f"The OpenEXA blog: {len(kept)} posts from {years[0]} to {years[-1]} on AI agents in finance, financial markets research and market structure."
 blog_ld = ld(dict(BLOG_LD, description=desc, inLanguage="en", publisher=ORG, blogPost=[
-    {"@type": "BlogPosting", "headline": p["title"], "url": BASE + p["slug"] + ".html", "datePublished": p["dt"].strftime("%Y-%m-%d"),
+    {"@type": "BlogPosting", "headline": ld_text(p["title"]), "url": BASE + p["slug"] + ".html", "datePublished": p["dt"].strftime("%Y-%m-%d"),
      "author": person(p["author"])} for p in sorted(kept, key=lambda p: p["dt"], reverse=True) if not p["stub"]]),
     crumbs(("Blog", BASE)))
 page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n").replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
@@ -525,7 +558,7 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n").replace
       <div class="container blog-hero-grid">
         <div class="blog-hero-copy">
           <div class="eyebrow" data-reveal>The OpenEXA blog</div>
-          <h1 class="display-1 blog-h1" data-reveal>Research summaries and our first notes on AI&nbsp;agents.</h1>
+          <h1 class="display-1 blog-h1" data-reveal><span class="ph">Research summaries</span> <span class="ph">and our first notes</span> <span class="ph">on AI&nbsp;agents.</span></h1>
           <p class="lede mt-3" data-reveal>Written by the people behind OpenEXA and the researchers they work with.</p>
           <div class="article-meta" data-reveal><span>{len(kept)} posts</span><span>{years[0]}–{years[-1]}</span><span>{len(COLLECTIONS)} collections</span></div>
         </div>
@@ -573,7 +606,7 @@ write(OUT / "index.html", page)
 def post_plate(p):
     econ = p["col"] == "economics" or p["slug"] not in PLATES
     quote = "" if econ else f'<p class="pp-q"><a href="#plate-src"><span class="hang">“</span>{tight_hy(prose(PLATES[p["slug"]][2]))}”</a></p>'
-    hedge = "The collection’s mark" if econ else "Schematic · no data is plotted"
+    hedge = "The collection’s mark" if econ else PLATES_HEDGE
     return f'''<figure class="post-plate" id="plate">
           <div class="post-plate-art" aria-hidden="true">{plate_svg(p["slug"], p["col"], turn(p))}</div>
           <figcaption>{plate_cap(plate_label(p))}{quote}<span class="pp-h">{hedge}</span></figcaption>
@@ -620,7 +653,7 @@ for p in order:
     i = sib.index(p); prev = sib[i - 1] if i else None; nxt = sib[i + 1] if i + 1 < len(sib) else None
     src_host = re.sub(r"^www\.", "", re.search(r"//([^/]+)", p["source"]).group(1)) if p["source"] else ""
     url = BASE + p["slug"] + ".html"
-    post_ld = {"@type": "BlogPosting", "@id": url + "#article", "headline": p["title"], "description": p["excerpt"], "url": url,
+    post_ld = {"@type": "BlogPosting", "@id": url + "#article", "headline": ld_text(p["title"]), "description": ld_text(p["excerpt"]), "url": url,
                "mainEntityOfPage": url, "datePublished": p["dt"].strftime("%Y-%m-%d"), "inLanguage": "en", "image": [og_image(url)],
                "author": person(p["author"]), "publisher": ORG, "isPartOf": BLOG_LD, "articleSection": LABEL[p["col"]],
                "timeRequired": f"PT{p['minutes']}M"}
@@ -633,9 +666,12 @@ for p in order:
     hero_img = (f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}"{body_srcset(p["hero_file"])} alt=""{size(p["hero_file"])} decoding="async"></figure>\n            '
                 if p.get("hero_file") and p["slug"] in KEEP_HERO else "")
     pager = "".join([
-        f"<a class='pager-card prev' href='{prev['slug']}.html'><span class='k'>← Newer</span><h3>{serif(prev['title'])}</h3><p>{fmt(prev['dt'])}</p></a>" if prev else f"<a class='pager-card prev' href='index.html'><span class='k'>← The blog</span><h3>All {len(kept)} posts</h3><p>{esc(LABEL[p['col']])} and {len(COLLECTIONS) - 1} more collections.</p></a>",
-        f"<a class='pager-card next' href='{nxt['slug']}.html'><span class='k'>Older →</span><h3>{serif(nxt['title'])}</h3><p>{fmt(nxt['dt'])}</p></a>" if nxt else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>Research →</span><h3>The thinking behind the swarm.</h3><p>Two research notes and an eight-part series.</p></a>",
+        f"<a class='pager-card prev' href='{prev['slug']}.html'><span class='k'>← Newer</span><h3>{post_title(prev['title'])}</h3><p>{fmt(prev['dt'])}</p></a>" if prev else f"<a class='pager-card prev' href='index.html'><span class='k'>← The blog</span><h3>All {len(kept)} posts</h3><p>{esc(LABEL[p['col']])} and {len(COLLECTIONS) - 1} more collections.</p></a>",
+        f"<a class='pager-card next' href='{nxt['slug']}.html'><span class='k'>Older →</span><h3>{post_title(nxt['title'])}</h3><p>{fmt(nxt['dt'])}</p></a>" if nxt else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>Research →</span><h3>The thinking behind the swarm.</h3><p>Two research notes and an eight-part series.</p></a>",
     ])
+    # r5 (own probe): the crumb is written as one run of text (a span inside the eyebrow's flex row), so a long collection
+    # wraps under itself ("Blog · Financial markets / research", 24 posts at 320, 8 at 360) with the hairline at its first
+    # line; as three flex items, "Blog" sat centred on a two-line block and the hairline between the lines (blog.css)
     crumb, meta_extra, series_box = esc(LABEL[p["col"]]), "", ""
     if p["slug"] in SERIES_POS:  # series posts read in order, with the series listed alongside
         j = SERIES_POS[p["slug"]]; part = SERIES[j][1]
@@ -647,17 +683,17 @@ for p in order:
         series_box = f'<div class="series-box"><div class="eyebrow mb-2">{SERIES_NAME}</div><ol role="list">{items}</ol></div>'
         sp = SLUGS[SERIES[j - 1][0]] if j else None; sn = SLUGS[SERIES[j + 1][0]] if j + 1 < len(SERIES) else None
         pager = "".join([
-            f"<a class='pager-card prev' href='{sp['slug']}.html'><span class='k'>← {esc(SERIES[j - 1][1])}</span><h3>{serif(sp['title'])}</h3><p>{fmt(sp['dt'])}</p></a>" if sp else f"<a class='pager-card prev' href='index.html#series'><span class='k'>← {SERIES_NAME}</span><h3>Four posts, from business model to AI agents.</h3><p>2024 · {series_minutes} min in total</p></a>",
-            f"<a class='pager-card next' href='{sn['slug']}.html'><span class='k'>{esc(SERIES[j + 1][1])} →</span><h3>{serif(sn['title'])}</h3><p>{fmt(sn['dt'])}</p></a>" if sn else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>What came next →</span><h3>The thinking behind the swarm.</h3><p>The research notes and eight-part series behind OpenEXA's agentic infrastructure.</p></a>",
+            f"<a class='pager-card prev' href='{sp['slug']}.html'><span class='k'>← {esc(SERIES[j - 1][1])}</span><h3>{post_title(sp['title'])}</h3><p>{fmt(sp['dt'])}</p></a>" if sp else f"<a class='pager-card prev' href='index.html#series'><span class='k'>← {SERIES_NAME}</span><h3>Four posts, from business model to AI agents.</h3><p>2024 · {series_minutes} min in total</p></a>",
+            f"<a class='pager-card next' href='{sn['slug']}.html'><span class='k'>{esc(SERIES[j + 1][1])} →</span><h3>{post_title(sn['title'])}</h3><p>{fmt(sn['dt'])}</p></a>" if sn else f"<a class='pager-card next' href='{PFX}research.html'><span class='k'>What came next →</span><h3>The thinking behind the swarm.</h3><p>The research notes and eight-part series behind OpenEXA's agentic infrastructure.</p></a>",
         ])
-        post_ld["isPartOf"] = [BLOG_LD, {"@type": "CreativeWorkSeries", "name": f"{SERIES_NAME} - OpenEXA Blog", "url": BASE + "#series"}]
+        post_ld["isPartOf"] = [BLOG_LD, {"@type": "CreativeWorkSeries", "name": f"{SERIES_NAME} — OpenEXA Blog", "url": BASE + "#series"}]
         post_ld["position"] = j + 1
     note = f"Originally published on openexa.com, {fmt(p['dt'])}." + (f" A summary of work first published on {src_host}." if p["source"] else "")
     original = f'<a class="link-arrow" href="{esc(p["source"])}" target="_blank" rel="noopener">The original on {esc(src_host)} {OUTB}</a>' if p["source"] else ""
     byline = f'<a href="{PFX}company.html#{PEOPLE_ID[person(p["author"])["name"]]}">{esc(shown(p["author"]))}</a>' if person(p["author"]).get("name") in PEOPLE_ID else esc(shown(p["author"]))
     # r4-copy (r3 point 12): what search results and link previews show is set as the H1 is (’, and the house dash with a
     # no-break space before it); JSON-LD and the feed keep the title as published
-    page = head(url, f'{smart(p["title"])} — OpenEXA Blog', smart(p["excerpt"]), "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (p["title"], url)))}\n') + f'''
+    page = head(url, f'{smart(p["title"])} — OpenEXA Blog', smart(p["excerpt"]), "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (ld_text(p["title"]), url)))}\n') + f'''
 <body data-page="post" data-nav="dark-start" class="article-page blog-post">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -666,8 +702,8 @@ for p in order:
     <section class="page-hero page-hero--dark is-dark grain article-hero blog-post-hero">
       <div class="container post-hero">
         <div class="post-hero-copy">
-          <div class="eyebrow" data-reveal><a href="index.html">Blog</a> · {crumb}</div>
-          <h1 class="display-2 article-title blog-title" data-reveal>{serif(p["title"])}</h1>
+          <div class="eyebrow" data-reveal><span><a href="index.html">Blog</a> · {crumb}</span></div>
+          <h1 class="display-2 article-title blog-title" data-reveal>{post_title(p["title"])}</h1>
           <p class="post-byline" data-reveal>{byline}</p>
           <div class="article-meta" data-reveal><span><time datetime="{iso(p)}">{fmt(p["dt"])}</time></span><span>{p["minutes"]}&nbsp;min read</span>{meta_extra}</div>
         </div>

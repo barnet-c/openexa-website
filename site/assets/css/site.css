@@ -78,9 +78,8 @@
   --track-label: .12em;
   --track-eyebrow: .14em;
 
-  /* the H1 scale (r3), one step per kind of page: statement (Company, Access, the 404), plate (beside a hero plate),
-     article (posts, notes): 118 / 89 / 65 px at 1440. Home's overture and windows under 501 px tall keep their own.
-     A headline that does not fit gets a wider measure, never a smaller size. */
+  /* the H1 scale (r3): statement (Company, Access, the 404), plate (beside a hero plate), article (posts, notes): 118 / 89 /
+     65 px at 1440 (Home and windows under 501 px tall: their own). A long headline gets a wider measure, never a smaller size */
   --h1-statement: clamp(3.4rem, 8.2vw, 7.6rem);
   --h1-plate: clamp(2.9rem, 6.2vw, 6.4rem);
   --h1-article: clamp(2.3rem, 4.5vw, 4.3rem);
@@ -375,7 +374,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: -1px; }
   .footer .bottom { display: grid; grid-template-columns: var(--fc); column-gap: var(--fg-gap); }
   .footer .bottom > * { white-space: nowrap; }
 }
-@media (min-width: 601px) and (max-width: 960px) { .footer .bottom > *, .footer .clocks > span, .footer .disc p { grid-column: span 2; } .footer .bottom .clocks { display: contents; } }
+@media (min-width: 601px) and (max-width: 960px) { .footer .bottom > *, .footer .clocks > span, .footer .disc p { grid-column: span 2; } .footer .bottom .clocks { display: contents; } .footer .bottom > :not(.clocks) { white-space: normal; } } /* two-column cells hold both lines; they wrap only under user text spacing (1.4.12) */
 @media (min-width: 961px) { .footer .bottom .clocks { grid-column: 4; justify-self: end; flex-wrap: nowrap; } .footer .disc p + p { grid-column: 2 / -1; } }
 @media (max-width: 600px) { .footer .top { grid-template-columns: 1fr 1fr; gap: 28px 20px; } .footer .top > :first-child { grid-column: 1 / -1; } }
 @media (max-width: 359px) { .footer .top { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: 14px; } .footer ul li { padding: 4.5px 0; font-size: .9rem; } .footer ul li a::after { inset: -6px; } } /* 320: every label on one line; still 32 px per tap, rows 32 apart */ /* phones: the brand, then the links two by two */
@@ -1307,7 +1306,7 @@ html[data-jump]::view-transition { pointer-events: none; } /* a click during the
 html[data-jump] .nav-ch-panel { transition: none !important; }
 .nav-ch.is-snap .nav-ch-panel { transition: none !important; } /* the same for a plain cut (no transition, no data-jump) */
 /* revealed at once (a jump's destination, a focused control): no transition for those two frames */
-.is-instant, .is-instant * { transition: none !important; }
+.is-instant, .is-instant *, .is-instant::before, .is-instant::after, .is-instant *::before, .is-instant *::after { transition: none !important; }
 
 /* ---------- reduced motion: nothing slides; states still change ---------- */
 @media (prefers-reduced-motion: reduce) {
@@ -1347,8 +1346,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 
 /* v2:lifecycle:start */
 /* ---------- the lifecycle plates: every lifecycle is one lane (lane.js; the drawings need no script) ----------
-   The overture's S3 engraved on paper: six gates, the council aperture, the boundary, five rails, settled squares, the
-   record line; 1 px currentColor, --accent where approved/settled/live, --reject, khaki for roadmap. Home Fig. 3.1,
+   The overture's S3 on paper (gates, council, boundary, rails, record line); colours as the hero plates. Home Fig. 3.1,
    Lifecycles §01-§04, Platform §04. */
 .lcp { overflow: visible; color: var(--fg); --lc-ground: var(--paper); }
 .is-paper-2 .lcp { --lc-ground: var(--paper-2); }
@@ -1478,8 +1476,8 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 }
 
 @media (max-width: 960px) { .lane .lane-v { max-width: 640px; margin-top: 8px; } .lane .figure-cap { margin-top: 26px; } }
-/* narrow phones: an 88 px column, the 104 px glyph drawn whole 8 px into the margin */
-@media (max-width: 420px) { .lane-v { --lv-gw: 88px; --lv-x: 44px; } .lane-v > li { column-gap: 12px; } .lane-v .lv-g { width: 104px; max-width: none; margin-left: -8px; } .lane-v > .lv-bound { padding-left: calc(var(--lv-gw) + 12px); } }
+/* narrow phones: the glyph 16 px wider than its column, 8 px into the margin, on the stem (a 72 px column: 88, clear; r5) */
+@media (max-width: 420px) { .lane-v { --lv-gw: 88px; --lv-x: 44px; } .lane-v > li { column-gap: 12px; } .lane-v .lv-g { width: calc(var(--lv-gw) + 16px); max-width: none; margin-left: -8px; } .lane-v > .lv-bound { padding-left: calc(var(--lv-gw) + 12px); } }
 @media (prefers-reduced-motion: reduce) { .lane .dr, .lane-v .dr, .lc-pipe .dr, .lane-h [data-g], .lane-v .lv-g { transition: none; } }
 
 /* ---------- the desk (gap.js; Lifecycles §03): a session on top, the lane beside it, the ledger under it ---------- */
@@ -1709,9 +1707,8 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 
 /* v2:pages:start */
 /* ---------- interior hero plates (platform · lifecycles · proof · trust) ----------
-   The overture's marks, engraved: copy in columns 1-7, figure.hero-plate in 8-12 (under 961 px after the lede, <= 45% of
-   the viewport's height). Static SVG, 1 px hairlines; --accent only on live, boundary and settled marks, --reject on
-   rejects, khaki on roadmap. Labels are DOM text at --x/--y (>= 10 px). One staged fade on reveal, no loops. */
+   Copy in columns 1-7, the plate in 8-12 (under 961 px after the lede, <= 45vh). Static SVG hairlines; --accent for live,
+   boundary and settled, --reject for rejects, khaki for roadmap; labels are DOM text (>= 10 px). One fade, no loops. */
 .page-hero--plate { align-items: center; }
 .page-hero--plate > .hero-copy { grid-column: 1 / span 7; min-width: 0; }
 .page-hero--plate .display-1 { font-size: var(--h1-plate); max-width: 17ch; }

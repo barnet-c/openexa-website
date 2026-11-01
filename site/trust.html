@@ -94,7 +94,7 @@
       <div class="container">
         <div class="sec-head" data-reveal><span class="idx">01</span><span class="lab">The ledger</span><span class="aside"><span class="nw">Append-only</span> · <span class="nw">hash-chained</span></span></div>
         <div class="grid t-2 tr-lead">
-          <div class="col-6"><h2 class="display-2" data-reveal><span class="ln">Replay any action.</span> <span class="ln">Edit one record, and every link after it&nbsp;fails.</span></h2></div>
+          <div class="col-6"><h2 class="display-2" data-reveal><span class="ln">Replay any action.</span> <span class="ln"><span class="ph">Edit one record,</span> <span class="ph">and every link</span> <span class="ph">after it&nbsp;fails.</span></span></h2></div>
           <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Every transition is traceable to the agent that proposed it and the decision that allowed it. Any state&nbsp;— proposed, rejected, approved, submitted, partially filled, filled, reconciled&nbsp;— can be replayed with the inputs that produced it, by an operator, an auditor or a regulator.</p></div>
         </div>
 
@@ -143,7 +143,7 @@
             </dl>
           </div>
           <i class="lt-leader" aria-hidden="true"></i>
-          <div class="lt-foot"><span>Illustrative log excerpt · rejects are recorded too</span><span class="lt-said">Every record references its predecessor’s hash</span><span class="lt-key" aria-hidden="true"><s>Struck</s>: the hash a record was sealed with · <b>red</b>: the hash it produces now</span></div>
+          <div class="lt-foot"><span>Illustrative log excerpt · rejects are recorded too</span><span class="lt-said">Every record references its predecessor’s hash</span><span class="lt-key" aria-hidden="true"><s>Struck</s>: the hash a record was sealed with · <b>red</b>: the hash it produces now</span><span class="tr-nojs">Turn on JavaScript to hash these records and try to change one.</span></div>
         </div>
         <div class="figure-cap" data-reveal><span class="fc-t"><b class="fc-n">Fig.&nbsp;1.1</b><span class="fc-d"> — </span>The ledger, replayed · select any record to inspect its hash&nbsp;links</span><span class="fc-h">Illustrative excerpt · real <span class="nw">SHA-256</span>, computed in your browser</span></div>
       </div>
@@ -219,7 +219,7 @@
       <i class="mark globe" aria-hidden="true"></i>
       <div class="container">
         <div class="eyebrow" data-reveal>Access</div>
-        <h2 class="display-2 mt-2" data-reveal style="--d:60ms">Bring your compliance team.</h2>
+        <h2 class="display-2 mt-2" data-reveal style="--d:60ms"><span class="ph">Bring</span> <span class="ph">your compliance team.</span></h2>
         <p class="lede mt-3" data-reveal style="--d:120ms">We will walk through the Council, the permissions, the control plane and the ledger with the people whose job is to say&nbsp;no.</p>
         <div class="row" data-reveal style="--d:180ms">
           <a class="btn" href="access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
@@ -252,8 +252,6 @@
     </div>
   </footer>
 
-  <script src="assets/js/ledger.js" defer></script>
-  <script src="assets/js/site.js" defer></script>
-  <script src="assets/js/trust.js" defer></script>
+  <script src="assets/js/afterpaint.js" defer data-after-paint="assets/js/ledger.js assets/js/site.js assets/js/trust.js"></script>
 </body>
 </html>

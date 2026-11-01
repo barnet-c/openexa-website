@@ -53,6 +53,7 @@
 .lt-n { font-size: var(--mono-s, .6875rem); font-weight: 400; letter-spacing: .02em; font-variant-numeric: tabular-nums; } /* a digest's count */
 .lt-sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.9em; margin-top: 6px; font: var(--mono-s, .6875rem)/1.45 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
 .lt--excerpt .lt-sub { -webkit-line-clamp: 3; min-height: 4.35em; } /* the excerpt is read in full: nothing in it is cut */
+.lt--excerpt .lt-insp { overflow-anchor: none; } /* rewritten by ledger.js: never the place a reload restores to (r5) */
 .lt-t { display: block; margin-top: 8px; font: var(--mono-tick)/1.3 var(--mono); letter-spacing: .03em; color: var(--fg-3); font-variant-numeric: tabular-nums; }
 /* the line: a 12 px block per record, and out of it the link that carries the record's SHA-256 */
 .lt-line { position: relative; display: block; height: 24px; margin: 14px calc(var(--lt-pr) * -1) 0 0; }
@@ -75,8 +76,7 @@
 .lt.is-running .lt-rec.is-head .lt-seg { animation: lt-await 2.4s ease-in-out infinite; }
 /* inspecting: the chosen record and both of its links */
 .lt-rec.is-sel .lt-node { transform: scale(1.25); }
-/* the other records step back by their drawing only: their words stay at full strength (WCAG 1.4.3; r2 a11y: the time
-   grey is 5.47:1 at full, so no text may dim), and the chosen record reads by its fill, its ring and its green link */
+/* the other records step back by their drawing only, their words at full strength (1.4.3: the time grey is 5.47:1) */
 .lt.is-inspecting .lt-rec:not(.is-sel) .lt-node, .lt.is-inspecting .lt-rec:not(.is-sel):not(.is-before-sel) .lt-seg { opacity: .34; }
 @media (hover: hover) { /* a pointer over a stepped-back record brings it forward */
   .lt-rec:hover .lt-node { transform: scale(1.25); }
@@ -173,6 +173,7 @@
 .chain-list > li { position: relative; display: grid; grid-template-columns: 2.4em 6.2em 9.4em minmax(0, 1fr) auto; column-gap: 14px; align-items: baseline; padding: 8px 12px 32px 44px; border-radius: 2px; color: var(--fg-2); transition: background .45s var(--ease); }
 .chain-list .i, .chain-list .who { color: var(--fg-3); transition: color .35s; }
 .chain-list .i[role="button"] { justify-self: start; cursor: pointer; } /* the record number is chain.js's roving stop: its ring hugs the number (proof r4) */
+@media (hover: hover) { .chain-list .i[role="button"]:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; } .chain-list > li:not(.is-broken) .i[role="button"]:hover { color: var(--accent); } } /* the way in answers a pointer, in the hash links' green (a broken record keeps its red; r5) */
 .chain-list .ev { justify-self: start; max-width: 100%; font-weight: 500; letter-spacing: .08em; color: var(--fg); transition: color .35s, box-shadow .25s, background .25s; }
 .chain-list .what { justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); transition: color .35s, box-shadow .25s, background .25s; }
 .chain-list [contenteditable] { outline: 2px solid transparent; outline-offset: 2px; border-radius: 1px; cursor: text; box-shadow: inset 0 -1px 0 transparent; }
@@ -194,8 +195,8 @@
 /* the last record's hash waits for a record that does not exist yet */
 .chain-list > li:last-child .chain-seg { bottom: 4px; }
 .chain-list > li:last-child .chain-seg::before, .chain-list > li:last-child .chain-seg::after { background: repeating-linear-gradient(var(--line-strong) 0 3px, transparent 3px 6px); }
-/* broken: the record turns at once as the break reaches it (its block flares) */
-.chain-list > li.is-broken { background: rgba(217, 103, 93, .055); transition: none; }
+/* broken: the record turns at once (its block flares); an edge marks the row, its red text on the panel's ink (r5: 4.67:1) */
+.chain-list > li.is-broken { background: none; border-radius: 0; box-shadow: inset 2px 0 0 rgba(217, 103, 93, .6); transition: none; }
 .chain-list > li.is-broken .i, .chain-list > li.is-broken .who, .chain-list > li.is-broken .ev, .chain-list > li.is-broken .what { color: var(--reject); transition: none; }
 .chain-list > li.is-broken .chain-node { background: transparent; box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 14px rgba(217, 103, 93, .45); transition: none; }
 /* healed: it turns back at once too (its block flares green) */
@@ -314,7 +315,11 @@
    drawn (winning over site.css's [hidden] while scripts run), and the chain's rows their height. Their start moves nothing */
 @media (scripting: enabled) {
   .lt .lt-insp[hidden] { display: grid !important; visibility: hidden; }
+  /* until ledger.js mounts, hashes in view (Trust) take the width it writes, unseen (r5) */
+  .lt:not(.lt-ready) .lt-insp > dl code:is([data-f="prev"], [data-f="hash"]) { font-size: 0; }
+  .lt:not(.lt-ready) .lt-insp > dl code:is([data-f="prev"], [data-f="hash"])::after { content: "00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000"; font-size: var(--mono-s, .6875rem); visibility: hidden; }
   .lt .lt-ctrl[hidden] { display: inline-flex !important; visibility: hidden; min-height: 34px; }
+  .lt .lt-hint[hidden] { display: block !important; visibility: hidden; } /* Trust's how-to line in the head (r5) */
   @media (pointer: coarse) { .lt .lt-ctrl[hidden] { min-height: 44px; } } /* a button's height */
   @media (min-width: 761px) { .chain:not(.chain-ready) .chain-list > li { padding-bottom: 32px; } } /* the hash link's row, until chain.js */
 }

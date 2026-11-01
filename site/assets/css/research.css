@@ -53,7 +53,11 @@
    02's own chapter rule (the list's width) marks the change */
 .rs-shelf > #series { border-top: 0; }
 .rs-intro { display: grid; gap: clamp(16px, 2vw, 24px); margin-bottom: clamp(32px, 4vw, 56px); }
-.rs-intro h2 { max-width: 15ch; }
+/* r5 (r5-art moderate): the hand-set chapter heads break between phrases (build_research PH), as Home's do. A phrase is
+   one unit that wraps inside itself only where its column is narrower than it, so no zoom or text size scrolls sideways */
+:is(.research-page, .article-page) :is(h1, h2, h3) .ph { display: inline-block; } /* the ten titles too (PHRASES) */
+.rs-intro h2 { max-width: none; } /* the phrases are the measure: "From the unit of work / to the open platform." (15ch broke "of work to the") */
+@media (max-width: 359.98px) { .research-page h2.display-2 { font-size: 2.4rem; } } /* as Home §03's: "from market structure" fits a 320 column */
 .rs-intro p { max-width: 46ch; }
 .rs-rail { display: none; }
 .rs-plate { margin: 0; }
@@ -195,7 +199,10 @@
 /* r3 (system's H1 scale): every note's title is on site.css's article step (--h1-article, 65 px at 1440), the size the
    long titles had; only the measures are Research's */
 .article-title { max-width: 18ch; }
-.article-title--long { max-width: 19ch; }
+/* r5: note 02's phrase "and Proving What It Did." holds one line (four lines in 16ch). (0,2,0): site.css's ".page-hero h1
+   { 16ch }" (0,1,1) had outranked the (0,1,0) rules here, so every unsplit title was set in 16ch; note 06, the other
+   long one, breaks as it did */
+.article-hero .article-title--long { max-width: 21ch; }
 .article-title .title-sub { display: block; margin-top: .4em; font-size: .46em; line-height: 1.18; letter-spacing: -0.005em; color: var(--fg-2); max-width: 30ch; }
 /* a series title breaks at its sense break: "Lifecycle 01." / "What Ten Sessions on Real Markets Taught Us" */
 .article-title .t-head { display: block; }

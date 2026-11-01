@@ -1,9 +1,8 @@
 /* OpenEXA · the swarm lab (Home §03, Platform §03): its own sheet since r2, linked only where drawn. */
 /* v2:swarm:start */
 /* ---------- the swarm lab (home §03, Platform §03; engine: assets/js/swarm.js) ----------
-   head (state · kicker · key · Follow) · stage (canvas + gate labels projected from 3D + agent tag + trace) · counters +
-   controls. Without JavaScript the gate list is a static six-gate diagram and the dead controls are not shown.
-   Mono labels never go under 10 px (--mono-xs) and keep .12em tracking. */
+   head · stage (canvas, projected gate labels, tag, trace) · counters + controls. No JS: a static six-gate diagram, no
+   dead controls. Mono labels >= 10 px. */
 .swarm-live { position: relative; border: 1px solid var(--line-strong); border-radius: var(--r); background: #0B110F; overflow: hidden; margin-bottom: 40px; }
 .sw-head { display: flex; align-items: center; gap: 10px 22px; flex-wrap: wrap; min-height: 56px; padding: 8px 12px 8px 20px; border-bottom: 1px solid var(--line); font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 /* the hedge reads at the labels' 11 px in the hedge tone, never smaller or dimmer than the counts it qualifies (r3-a11y m2) */

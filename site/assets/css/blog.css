@@ -52,6 +52,10 @@
 /* the plate step (site.css --h1-plate, r3: 89 px at 1440, as Platform, Lifecycles, Proof, Trust and Research), so the
    H1 leads every H2 below it (r3-art: 75 against the series' 77); a wider measure keeps the sentence on three lines */
 .blog-page .blog-h1 { font-size: var(--h1-plate); max-width: 20ch; text-wrap: balance; }
+/* r5 (art, rag probe): the H1 breaks by phrase, as Home's heads do: "Research summaries / and our first notes / on AI
+   agents." (768 and the sideways phones ended a line on "and"). A phrase that fits its line stays whole; one wider than
+   the line (320, 1600-1920, where the column is narrow for 102 px) wraps inside itself, so nothing ever runs over */
+.blog-page .blog-h1 .ph { display: inline-block; }
 .blog-page .blog-hero .lede { max-width: 38ch; }
 .lib-plate { margin: 0; color: var(--fg); }
 .lib-art { display: block; width: 100%; height: auto; overflow: visible; }
@@ -309,6 +313,9 @@
   .lib-plate .pp-q { font-size: .85rem; }
   .blog-page .blog-h1 { font-size: clamp(2rem, 9vh, 2.7rem); }
   .blog-page .blog-hero .lede { margin-top: 14px; font-size: 1rem; }
+  /* a post: the notes' short size (research.css), one step with them sideways as upright (r5-mobile: 51 px put the date
+     under the screen at 844x390 and filled 667x375 with the title alone) */
+  .blog-post .blog-title { font-size: clamp(1.9rem, 10vh, 2.6rem); }
 }
 /* a short window (a phone on its side, 400% zoom): the bar alone stays fixed; the chips scroll away with the page
    (r1-mobile 8, qa-hostile m1: bar + chips took 120 of 256 px) */
@@ -331,7 +338,11 @@
 @media (hover: hover) { .post-byline a:hover { border-color: currentColor; } }
 /* the crumb's two links and the byline are 24 px targets or more (r2-mobile: 19-21 px): the box grows upward, so the
    underline keeps its place under the words and nothing around them moves */
-.blog-post-hero .eyebrow a { padding-top: 6px; margin-top: -6px; }
+.blog-post-hero .eyebrow a { display: inline-block; padding-top: 6px; margin-top: -6px; }
+/* r5 (own probe): the crumb is one run of text (build_blog), so a long collection wraps under itself at 320 and 360;
+   the hairline stays at the first line's middle, where align-items: center put it on one line */
+.blog-post-hero .eyebrow { align-items: flex-start; }
+.blog-post-hero .eyebrow::before { margin-top: 9px; margin-top: calc(.5lh); }
 .post-byline a { padding-top: 4px; } /* inline: its padding takes no room in the line */
 .blog-post .post-byline + .article-meta { margin-top: 12px; }
 .post-plate { margin: 0; color: var(--fg); }

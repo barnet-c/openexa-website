@@ -352,7 +352,9 @@
     if (!a) return;
     const top = Math.min(a.getBoundingClientRect().top, z.getBoundingClientRect().top);
     const bottom = Math.max(a.getBoundingClientRect().bottom, z.getBoundingClientRect().bottom);
-    const lo = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0) + 12, hi = window.innerHeight - 12;
+    // under the bar and, where it sticks, under the desk's own head (r5: it sticks on a phone held sideways too)
+    const head = $('.desk-head'), stuck = head && getComputedStyle(head).position === 'sticky' ? head.getBoundingClientRect().height : 0;
+    const lo = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0) + stuck + 12, hi = window.innerHeight - 12;
     let dy = 0;
     if (bottom - top > hi - lo || top < lo) dy = top - lo; // taller than the room: the lane first
     else if (bottom > hi) dy = bottom - hi;

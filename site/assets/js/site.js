@@ -288,7 +288,11 @@
 
   /* the chapter list */
   function setPanel(open, refocus) {
-    if (open && narrowMQ.matches) { setMenu(true); return; } // phones and tablets: the chapters are in the menu sheet
+    if (open && narrowMQ.matches) { // phones and tablets: the chapters are in the menu sheet, and focus goes in with them
+      opener = ui.btn; setMenu(true);
+      requestAnimationFrame(() => { if (menuOpen && !sheet.contains(document.activeElement)) ($('.nav-ch-list a[aria-current]', sheet) || $('.nav-ch-list a', sheet) || toggle).focus(); });
+      return;
+    }
     if (!ui.wrap || open === chOpen) return;
     chOpen = open;
     ui.wrap.classList.toggle('is-open', open);
@@ -308,7 +312,7 @@
     });
     ui.panel.addEventListener('keydown', e => {
       const r = rows(), i = r.indexOf(document.activeElement);
-      if (e.key === 'Escape') { e.preventDefault(); if (menuOpen) { setMenu(false); toggle.focus(); } else setPanel(false, true); } // in the sheet: the sheet closes
+      if (e.key === 'Escape') { e.preventDefault(); if (menuOpen) { const o = opener; setMenu(false); if (!o) toggle.focus(); } else setPanel(false, true); } // in the sheet: the sheet closes
       else if (e.key === 'ArrowDown') { e.preventDefault(); focusRow(i + 1); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); focusRow(i < 0 ? r.length - 1 : i - 1); }
       else if (e.key === 'Home') { e.preventDefault(); focusRow(0); }
@@ -335,6 +339,7 @@
 
   /* the menu sheet (phones, tablets): a popover — it opens without JavaScript */
   const popover = !!(sheet && sheet.hasAttribute('popover') && typeof sheet.showPopover === 'function');
+  let opener = null; // the readout's pill, when it opened the sheet: focus returns to it (r5)
   function syncMenu(open) {
     if (open === menuOpen) return;
     menuOpen = open;
@@ -345,6 +350,10 @@
     $$('body > main, body > .footer').forEach(el => { el.inert = open; });
     if (open) setPanel(false);
     update();
+    if (!open && opener) {
+      const o = opener, a = document.activeElement; opener = null;
+      if (!a || a === document.body || sheet.contains(a)) (o.checkVisibility && !o.checkVisibility({ visibilityProperty: true }) ? toggle : o).focus();
+    }
   }
   function setMenu(open) {
     if (!sheet) return;
@@ -367,7 +376,7 @@
     }));
     document.addEventListener('keydown', e => {
       if (!menuOpen) return;
-      if (e.key === 'Escape' && !popover) { setMenu(false); toggle.focus(); }
+      if (e.key === 'Escape' && !popover) { const o = opener; setMenu(false); if (!o) toggle.focus(); }
       else if (e.key === 'Tab') {
         const items = $$('a[href], button', sheet).filter(el => el.getClientRects().length);
         const last = items[items.length - 1];
@@ -704,7 +713,7 @@
     }, { rootMargin: '0px 0px 150% 0px', threshold: 0 });
     later.forEach(el => {
       if (el.hasAttribute('data-split')) sio.observe(el);
-      if (el.hasAttribute('data-reveal')) el.classList.add('will-reveal');
+      if (el.hasAttribute('data-reveal')) { el.classList.add('will-reveal'); instant(el); } // hidden at once: no fade-out off screen (r5)
       rio.observe(el);
     });
   }); else watched.forEach(el => el.classList.add('is-in'));

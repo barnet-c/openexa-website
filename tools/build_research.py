@@ -292,6 +292,42 @@ def serif(t): return re.sub(r"(?<=[A-Za-z])-(?=[A-Za-z])", "‐", t)
 # leaves serif compounds alone; the mark becomes the span after escaping
 HY = '<span class="hy">-</span>'
 def serif_html(t): return inline(serif(t)).replace("‐", HY)
+# r5 (r5-art moderate): display text never ends a line on a short function word or a clause opener ("What Ten Sessions
+# on / Real Markets Taught Us", "Hash Chains as / Audit Infrastructure"): each binds to the word after it with a no-break
+# space, so the line breaks before it. The words, their order and the text run are unchanged (U+00A0 searches, copies
+# and reads as a space; site.js keeps it inside its word when it splits a head). Display text only (the H1, the index
+# rows, the pager cards, the notes' section heads, Home's cards): <title>, meta, JSON-LD, the feed and the TOC keep plain
+# spaces. Same rule as Home §07's card titles ("Why&nbsp;We&nbsp;Stopped").
+BIND = "a an the of on in to for and or nor but as at by via with from is it its we our that this not how what why".split()
+BIND_RE = re.compile(r"(?<![\w‐’'-])(" + "|".join(BIND) + r") (?=\S)", re.I)
+# a modal keeps its "not" ("Why the execution layer / should not be a language model", never "should / not be")
+AUX_RE = re.compile(r"(?<![\w‐’'-])(should|would|could|must|can|will|do|does|did|are|was|were) (?=not\b)", re.I)
+def bind(t): return BIND_RE.sub(lambda m: m.group(1) + NB, AUX_RE.sub(lambda m: m.group(1) + NB, t))
+def disp(t):
+    """display HTML: bound (bind), serif hyphens (serif_html), and each bound run that holds a serif hyphen kept whole
+    (.nw), so it never breaks at its hyphen: binding made "on·Post-" the cheapest break ("A Research Note on Post- /
+    Training and Audit", r5 p1). The span holds the whole run, so site.js's split keeps it one word."""
+    t = re.sub(r"[^ ]*‐[^ ]*", lambda m: "\x01" + m.group(0) + "\x02", serif(bind(t)))
+    return inline(t).replace("\x01", '<span class="nw">').replace("\x02", "</span>").replace("‐", HY)
+# r5 (r5-art moderate): the index's hand-set chapter heads and the ten titles break between phrases, as Home's heads do
+# ("From the unit of work / to the open platform."; "Lifecycle 01. / What Ten Sessions / on Real Markets Taught Us").
+# research.css sets each .ph as one unit that wraps inside itself (bound, as above) only where its column is narrower
+# than it, so no zoom or text size scrolls sideways. §04's "The research contribution" is wider than its 1440 and 1024
+# column, so it is bound, not phrased ("The research / contribution / is four constants.").
+def PH(*parts): return " ".join(f'<span class="ph">{disp(p)}</span>' for p in parts)
+# The titles' phrases, part by part (a title's head, its sentence, a research note's "A Research Note on …"): " | " marks
+# where a line may break. The build stops unless every entry is part of a title, word for word.
+PHRASES = [
+    "Compounding Error | and the Case for Decomposition.", "A Research Note | on Agent Architecture",
+    "Specializing a Model | to a Rulebook | and Proving What It Did.", "A Research Note | on Post-Training and Audit",
+    "Why We Stopped | Building Assistants", "Why Five Thousand Small Agents | Beat One Large One",
+    "The One Boundary | That Matters", "Post-Training a Model | on a Rulebook, | Not on the Internet",
+    "Governance | in Milliseconds", "Hash Chains | as Audit Infrastructure",
+    "What Ten Sessions | on Real Markets | Taught Us", "How a Proven Agent | Becomes a Platform",
+]
+PHRASED = {p.replace(" | ", " "): p.split(" | ") for p in PHRASES}
+for _p in PHRASED: assert any(_p in p["title"] for p in posts.values()), f"PHRASES: “{_p}” is not part of a title, word for word"
+def phrased(part): return PH(*PHRASED[part]) if part in PHRASED else disp(part)
 def us(t):  # US spelling in site-written copy (VOICE §6.3); the blog collection ledes come from build_blog.py's summary
     return typo(re.sub(r"\blabour\b", "labor", re.sub(r"\bbehaviour\b", "behavior", t)))
 def kind(post):  # one number per row (PAGES E-5): the reading-order number is the row's; the kind is said in words
@@ -300,12 +336,13 @@ def title_html(t):
     """an authored title, words and capitals kept (E-4): the two research notes' 'A Research Note on …' is set as the
     title's second line, smaller, so no title runs past three lines"""
     m = re.match(r"^(.+?\.) (A Research Note on .+)$", t)
-    if m: return f'{serif_html(m.group(1))} <span class="title-sub">{serif_html(m.group(2))}</span>'
+    if m: return f'{phrased(m.group(1))} <span class="title-sub">{phrased(m.group(2))}</span>'
     # lab research-editorial: a series title is a short head and a longer sentence ("Lifecycle 01. What Ten Sessions
     # on Real Markets Taught Us"). Each part is its own span, so a line can break at the sense break, never inside
     # "Lifecycle 01. What" (research.css decides where the break is taken); the words and the text run are unchanged
+    # r5: inside each part, the line breaks between its phrases (PHRASES; bound, disp())
     m = re.match(r"^(.+\.) ([A-Z].+)$", t)
-    return f'<span class="t-head">{serif_html(m.group(1))}</span> <span class="t-rest">{serif_html(m.group(2))}</span>' if m else serif_html(t)
+    return f'<span class="t-head">{disp(m.group(1))}</span> <span class="t-rest">{phrased(m.group(2))}</span>' if m else phrased(t)
 def hung(d): return " is-hung" if d[:1] in "“‘" else ""  # a caption that opens on a quote hangs it in the margin (research.css)
 def cap_html(fig, n, cls="figcap"):
     t, d, h = CAPTIONS[fig]
@@ -384,7 +421,7 @@ for i, post in enumerate(ordered):
     body = []
     first_p = True
     for k, t in post["blocks"]:
-        if k == "h": body.append(f'<h2 id="{slugify(t)}">{serif_html(t)}</h2>')
+        if k == "h": body.append(f'<h2 id="{slugify(t)}">{disp(t)}</h2>')  # r5: bound as the titles are (disp)
         else:
             body.append(f'<p{" class=\"lead\"" if first_p else ""}>{inline(t)}</p>'); first_p = False
     dek = post["dek"] or post["short"]
@@ -544,7 +581,7 @@ index_page = f'''<!DOCTYPE html>
           <div class="rs-col">
             <div class="sec-head" data-reveal><span class="idx">02</span><span class="lab">The series</span><span class="aside">Eight notes · the system, gate by gate</span></div>
             <div class="rs-intro">
-              <h2 class="display-2" data-reveal data-split>From the unit of work to the open platform.</h2>
+              <h2 class="display-2" data-reveal data-split>{PH("From the unit of work", "to the open platform.")}</h2>
               <p class="body-lg" data-reveal style="--d:80ms">{SERIES_LEDE.replace("lowest-risk", '<span class="nw">lowest-risk</span>')} These eight notes describe how.</p>
             </div>
             <ol class="posts-list" data-reveal start="3">
@@ -571,7 +608,7 @@ index_page = f'''<!DOCTYPE html>
       <div class="container">
         <div class="sec-head" data-reveal><span class="idx">03</span><span class="lab">The blog</span><span class="aside">{BLOG['total']} posts · {BLOG['years'][0]}–{BLOG['years'][1]}</span></div>
         <div class="grid t-2 mb-3">
-          <div class="col-6"><h2 class="display-2" data-reveal data-split>Three collections, from market structure to AI agents.</h2></div>
+          <div class="col-6"><h2 class="display-2" data-reveal data-split>{PH("Three collections,", "from market structure", "to AI agents.")}</h2></div>
           <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Research summaries, market-structure economics and the first notes on AI agents in finance, from the people behind OpenEXA and the researchers they work with.</p><a class="link-arrow mt-3 scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">The papers on Google Scholar {OUTB}</a></div>
         </div>
         <div class="card-grid card-grid--{len(BLOG['collections'])}" data-reveal style="--d:120ms">
@@ -585,7 +622,7 @@ index_page = f'''<!DOCTYPE html>
       <div class="container">
         <div class="sec-head" data-reveal><span class="idx">04</span><span class="lab">Four constants</span><span class="aside">What never changes</span></div>
         <div class="grid t-2">
-          <div class="col-5"><h2 class="display-2" data-reveal data-split>The research contribution is four constants.</h2></div>
+          <div class="col-5"><h2 class="display-2" data-reveal data-split>{bind("The research contribution is four constants.")}</h2></div>
           <div class="col-6 offset-7">
             <ol class="num-list" data-reveal style="--d:80ms">
               <li><h3>Agents decide. Code executes.</h3><p>The top four layers estimate and reason; the bottom four are deterministic. The boundary between them is a typed schema.</p></li>
@@ -633,7 +670,7 @@ print("wrote research/feed.xml")
 featured = [ordered[0], ordered[1], ordered[2]]
 def card_title(t):
     m = re.match(r"^(.+?\.) (A Research Note on .+)$", t)
-    sh = lambda s: H.escape(serif(s), quote=False).replace("‐", HY)
+    sh = lambda s: disp(s).replace('class="nw"', 'class="nowrap"')  # r5: bound as on Research (disp; site.css's .nowrap)
     return f'{sh(m.group(1))} <span class="title-sub">{sh(m.group(2))}</span>' if m else sh(t)
 cards = "\n".join(f'''          <a class="card research-card" href="{p['file']}"><div class="n"><span>{p['order']:02d}</span><span>{H.escape(kind(p))}</span></div><h3 class="h4">{card_title(p['title'])}</h3><p>{inline(p['short']).replace('class="nw"', 'class="nowrap"')}</p><span class="link-arrow mt-3">{p['minutes']} min read {ARROW}</span></a>''' for p in featured)
 write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "research_cards.html"), cards)

@@ -1,10 +1,8 @@
 /* OpenEXA · the architecture explorer (Home §02, Platform §01): own sheet since r2, linked where drawn. */
 /* v2:arch:start */
 /* ---------- the architecture explorer (arch.js) ----------
-   No JS: .layers is a readable list (eight layers: job, chips, In -> Out; the boundary after 04; the floor under 08).
-   arch.js builds .arch: readout (left), the exploded stack in SVG (centre), the layers as buttons (right), leader lines,
-   one boundary across the panel. data-arch-spec (Platform) keeps the list as the full spec under it. --arch-minh holds
-   the wide instrument's height before and after the build. */
+   No JS: .layers, a readable list. arch.js builds .arch: readout, the exploded stack (SVG), the layers as buttons, one
+   boundary; data-arch-spec (Platform) keeps the list as the spec under it; --arch-minh holds the wide instrument. */
 .layers { display: grid; gap: 0; border: 1px solid var(--line); }
 .layers .layer { display: grid; grid-template-columns: 80px 1.1fr 1.6fr; gap: 28px; padding: clamp(22px, 3vw, 40px); border-bottom: 1px solid var(--line); align-items: start; background: var(--bg); transition: background .3s; }
 .layers .layer:last-child { border-bottom: 0; }

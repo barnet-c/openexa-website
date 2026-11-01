@@ -44,13 +44,15 @@ def meta(s, prop):
     return H.unescape(m.group(1)) if m else ""
 
 def headline(s):
-    """The page's <h1>, keeping only what the card styles: .thin (green) and <em> (italic)."""
-    h = unhy(re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S).group(1))
+    """The page's <h1>, keeping only what the card styles: .thin (green), <em> (italic) and .hy (the serif hyphen, set tight
+    as on the page: a bare U+002D in Instrument Serif reads as an en dash, "Gen–AI"; r5)."""
+    h = re.sub(r'<span class="hy">([^<]*)</span>', lambda m: "\x06" + m.group(1) + "\x07", re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S).group(1))
     h = re.sub(r'<span class="nowrap">(.*?)</span>', lambda m: m.group(1).replace(" ", "\x05"), h, flags=re.S)  # the page's own unbreakable phrases
     h = re.sub(r'<span class="thin">(.*?)</span>', lambda m: "\x01" + m.group(1) + "\x02", h, flags=re.S)
     h = re.sub(r"<em>(.*?)</em>", lambda m: "\x03" + m.group(1) + "\x04", h, flags=re.S)
     h = H.escape(text(h), quote=False)
-    return h.replace("\x01", '<span class="g">').replace("\x02", "</span>").replace("\x03", "<em>").replace("\x04", "</em>").replace("\x05", "\u00a0")
+    return (h.replace("\x01", '<span class="g">').replace("\x02", "</span>").replace("\x03", "<em>").replace("\x04", "</em>").replace("\x05", "\u00a0")
+            .replace("\x06", '<span class="hy">').replace("\x07", "</span>"))
 
 def card(rel):
     s = (ROOT / rel).read_text(encoding="utf-8")
@@ -103,6 +105,7 @@ body { position: relative; background: #0E1512; color: #F5F2EC; font-family: 'In
 .h { font-family: 'Instrument Serif', serif; font-weight: 400; line-height: 1; letter-spacing: -.012em; text-wrap: balance; }
 .h .g { color: #4FCB93; }
 .h em { font-style: italic; }
+.h .hy { margin-inline: -.045em; }
 .s { margin-top: 30px; width: 640px; font-size: 25px; line-height: 1.4; color: rgba(245,242,236,.78); text-wrap: pretty; }
 .foot { position: absolute; left: 72px; right: 72px; bottom: 48px; display: flex; justify-content: space-between; }
 .foot i { display: inline-block; width: 7px; height: 7px; border-radius: 50%%; background: #4FCB93; margin-right: 14px; vertical-align: 2px; }

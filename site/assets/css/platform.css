@@ -104,7 +104,7 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.696; }
 @media (min-width: 1100px) { #architecture .layer-boundary .lb-io { grid-column: 3 / -1; } }
 /* each layer's scope as a line of data */
 #architecture [data-arch-spec] > .layer > div > ul { display: block; line-height: 1.6; }
-#architecture [data-arch-spec] > .layer > div > ul li { display: inline; padding: 0; border: 0; color: var(--fg-3); white-space: nowrap; }
+#architecture [data-arch-spec] > .layer > div > ul li { display: inline; padding: 0; border: 0; color: var(--fg-2); white-space: nowrap; } /* content, not a hedge: graphite (r5 a11y) */
 #architecture [data-arch-spec] > .layer > div > ul li + li::before { content: "\00a0·\0020"; content: "\00a0·\0020" / ""; color: var(--fg-3); white-space: normal; }
 /* tablets: name left, text and In -> Out right */
 @media (min-width: 601px) and (max-width: 1099px) {
@@ -152,8 +152,8 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.696; }
 }
 @media print { body[data-page="platform"] .js-only, body[data-page="lifecycles"] .js-only { display: none !important; } body[data-page="lifecycles"] .desk-nojs { display: block !important; } }
 
-/* §03 on phones: the four roles as a four-row list */
-@media (max-width: 600px) {
+/* §03 on phones: the four roles as a four-row list (one column only: in two, 'Prove' ran into its label at 521-600; r5) */
+@media (max-width: 520px) {
   #swarm .sw-legend > .card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; align-items: baseline; padding: 15px 0 12px; }
   #swarm .sw-legend .card .n { display: contents; }
   #swarm .sw-legend .card .n > span:first-child { grid-column: 1; grid-row: 1; }
@@ -236,12 +236,12 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.696; }
 
 /* the desk: Follow is its first control */
 .desk-head .model-motion { margin-left: auto; }
-/* its head stays in view under the bar while any of the desk is (r3 motion), where the screen has room (Home's D-H49) */
+/* its head stays in view under the bar while any of the desk is (r3 motion); sideways as one row (r5, Home's stream head) */
 body[data-page="lifecycles"] .desk { overflow: clip; --dh: 57px; }
 body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg); border-radius: var(--r) var(--r) 0 0; }
 @media (max-width: 900px) { body[data-page="lifecycles"] .desk { --dh: 92px; } }
 @media (max-width: 380px) { body[data-page="lifecycles"] .desk { --dh: 114px; } }
-@media (min-height: 521px) {
+@media (min-height: 521px), (min-width: 540px) {
   body[data-page="lifecycles"] .desk-head { position: sticky; top: var(--nav-h); }
   /* a control focused from below lands under the head, not beneath it (r4 a11y, 2.4.11) */
   body[data-page="lifecycles"] .desk-head ~ * :is(a, button, input, [tabindex]) { scroll-margin-top: calc(var(--dh) + 12px); }
@@ -255,6 +255,14 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
   body[data-page="lifecycles"] .desk-head > .model-motion { grid-area: b; margin: 0; }
 }
 @media (max-width: 380px) { body[data-page="lifecycles"] .desk-head { grid-template-areas: "k k" "s s" "t b"; } } /* the state on its own line */
+/* a phone on its side: hedge, state and Pause in one row at a button's height; under 760 px the chart's axis tells the time */
+@media (max-height: 520.98px) and (min-width: 540px) {
+  body[data-page="lifecycles"] .desk { --dh: 49px; }
+  body[data-page="lifecycles"] .desk-head { display: flex; flex-wrap: nowrap; column-gap: 14px; min-height: 0; padding-block: 2px; }
+  body[data-page="lifecycles"] .desk-head > :is(.desk-kicker, .live) { flex: 0 1 auto; order: 0; min-width: 0; margin: 0; text-wrap: balance; }
+  body[data-page="lifecycles"] .desk-head > .model-motion { flex: none; margin-left: auto; }
+}
+@media (max-height: 520.98px) and (min-width: 540px) and (max-width: 759.98px) { body[data-page="lifecycles"] .desk-head > .t { display: none; } }
 .desk .desk-lane { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "btn gates" "say say"; align-items: center; column-gap: clamp(20px, 3vw, 44px); padding: 20px 20px 8px; }
 .desk .desk-lane > .desk-follow { grid-area: btn; }
 .desk .dl-gates { grid-area: gates; }
@@ -277,8 +285,8 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 @media (min-width: 961px) and (max-width: 1199px) { .desk .desk-stats > div { padding: 20px 10px 18px; } .desk .desk-stats b { font-size: 1.9rem; } }
 /* whole records only, so no fade */
 .desk .desk-log, .desk .desk-log.has-more { -webkit-mask-image: none; mask-image: none; }
-/* tablets: counters and controls side by side */
-@media (min-width: 601px) and (max-width: 960px) {
+/* portrait tablets: counters and controls side by side (sideways the panel beside the chart keeps them stacked; r5) */
+@media (min-width: 601px) and (max-width: 960px) and (min-height: 521px) {
   .desk .desk-side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .desk .desk-stats { border-bottom: 0; border-right: 1px solid var(--line); }
   .desk .desk-controls { border-bottom: 0; }
@@ -306,6 +314,13 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 
 /* a heading that states two rules: one line per sentence */
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .ln { display: block; text-wrap: balance; }
+/* display heads break by phrase (r5 art, as Home's D-H56); a clause wider than a phone's column takes its own line */
+:is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(h1, h2) .ph { white-space: nowrap; }
+@media (max-width: 399.98px) { :is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(h1, h2) .ph-n { display: block; white-space: normal; } }
+/* 'as your mandate allows.' needs 321 px: under 375 the line breaks after the comparative's 'as', so 'your mandate'
+   stays whole; under 330 the head is tracked by half a pixel a letter so 'your mandate allows.' (287 px) fits 280 */
+@media (max-width: 374.98px) { body[data-page="platform"] .modes-head h2 .ws-a { white-space: nowrap; } body[data-page="platform"] .modes-head h2 .ws-b { white-space: normal; } }
+@media (max-width: 329.98px) { body[data-page="platform"] .modes-head h2 { letter-spacing: -.032em; } }
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .h2-rule { max-width: none; margin-bottom: calc(-1 * clamp(4px, 1.6vw, 24px)); }
 
 /* the live status, unboxed */

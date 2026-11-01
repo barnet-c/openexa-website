@@ -597,11 +597,17 @@ async def trust_tamper(b):
     last ones in order, are marked broken) and selects that first broken record; Restore puts the excerpt back and Verify
     holds again ('8 of 8 links hold'). v2x r2: at 1024x768, from the hero's way in, Enter in the edited field verifies,
     the cause is selected inside the strip's view, and Tab from the edited field reaches Verify.
-    The hashes are real SHA-256 computed in the page, so this is the chain's own tamper evidence, not a canned state."""
+    The hashes are real SHA-256 computed in the page, so this is the chain's own tamper evidence, not a canned state.
+    v2x r5 (system r5, r5-perf issue 4): Trust starts ledger.js and trust.js after its first paint (afterpaint.js), so
+    'load' no longer means they have run, and the hero's "Try to change the past" is the plain #ledger link (no edit)
+    until trust.js arrives, by design. Each leg waits, as open_page does, until every script the after-paint tag lists
+    has run before it acts (integrate r5: the 1024 leg clicked the link ~40 ms before trust.js, 3 of 8 runs)."""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
+    await ctx.add_init_script(SCRIPTS_RAN)
     pg = await ctx.new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.goto(f"{BASE}/trust.html#ledger", wait_until="load")
+    assert await until(pg, HOME_ENGINES, int(15000 * max(1.0, MODE["throttle"]))), "trust.html: the after-paint scripts (ledger.js, site.js, trust.js) did not all run"
     lt, state = pg.locator("[data-ledger=replay]"), pg.locator("[data-ledger=replay] [data-lt-state]")
     await expect(lt.locator(".lt-rec")).to_have_count(9)
     await expect(state).to_contain_text("9 records verify")
@@ -640,9 +646,11 @@ async def trust_tamper(b):
     # (the first broken record) is selected and lies inside the strip's view (it had scrolled off the left edge); Restore
     # holds; then Tab from the edited field reaches Verify
     ctx = await b.new_context(viewport={"width": 1024, "height": 768}, has_touch=True)
+    await ctx.add_init_script(SCRIPTS_RAN)
     pg = await ctx.new_page()
     pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.goto(f"{BASE}/trust.html", wait_until="load")
+    assert await until(pg, HOME_ENGINES, int(15000 * max(1.0, MODE["throttle"]))), "trust.html@1024x768: the after-paint scripts did not all run"
     lt, state = pg.locator("[data-ledger=replay]"), pg.locator("[data-ledger=replay] [data-lt-state]")
     await expect(lt.locator(".lt-rec")).to_have_count(9)
     await pg.locator("a[data-lt-go]").click(); await pg.wait_for_timeout(1500)
@@ -795,6 +803,61 @@ async def chain_keys(b):
         assert st2["stops"] == 1, f"chain_keys@{w}: {st2['stops']} record numbers are Tab stops after the walk (want 1)"
         said.append(f"{w}: 0 fields and 1 of 8 numbers in the Tab order; Down x2, Enter, type, Escape, Alter, Tab from Restore all land on record 03")
     print("chain_keys: " + "; ".join(said))
+
+
+# the contrast of every visible text run in the chain's broken records against the colour actually under it: the
+# element's own and its ancestors' backgrounds composited from the first opaque one up (a translucent tint counts), the
+# text colour composited over that; 4.5:1, or 3:1 for large text (24 px, or 18.66 px at 600+)
+CHAIN_BROKEN_CONTRAST = """() => { const P = c => { const m = (c || '').match(/[\\d.]+/g); if (!m || m.length < 3) return null; const v = m.map(Number); return [v[0], v[1], v[2], v.length > 3 ? v[3] : 1]; };
+  const over = (t, u) => [0, 1, 2].map(i => t[i] * t[3] + u[i] * (1 - t[3])).concat(1);
+  const lin = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+  const L = c => .2126 * lin(c[0]) + .7152 * lin(c[1]) + .0722 * lin(c[2]);
+  const under = el => { const ls = []; for (let e = el; e; e = e.parentElement) { const c = P(getComputedStyle(e).backgroundColor); if (c && c[3] > 0) { ls.push(c); if (c[3] >= .999) break; } }
+    let base = [255, 255, 255, 1]; for (let i = ls.length - 1; i >= 0; i--) base = ls[i][3] >= .999 ? ls[i] : over(ls[i], base); return base; };
+  const rows = [...document.querySelectorAll('.chain-list > li.is-broken')].filter(li => li.getClientRects().length);
+  const out = [], seen = new Set();
+  for (const li of rows) { const tw = document.createTreeWalker(li, NodeFilter.SHOW_TEXT);
+    for (let n = tw.nextNode(); n; n = tw.nextNode()) { const el = n.parentElement; if (!n.data.trim() || seen.has(el)) continue; seen.add(el);
+      if (!el.checkVisibility({opacityProperty: true, visibilityProperty: true})) continue;
+      const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) continue;
+      const s = getComputedStyle(el); if (s.clipPath && s.clipPath !== 'none') continue;
+      const bg = under(el), fg0 = P(s.color); if (!fg0) continue; const fg = fg0[3] < .999 ? over(fg0, bg) : fg0;
+      const a = L(fg), b = L(bg), ratio = (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+      const px = parseFloat(s.fontSize), large = px >= 24 || (px >= 18.66 && +s.fontWeight >= 600);
+      out.push({row: li.querySelector('.i') ? li.querySelector('.i').textContent.trim() : '?', el: el.tagName.toLowerCase() + (el.className ? '.' + String(el.className).split(' ')[0] : ''),
+                text: n.data.trim().slice(0, 24), color: s.color, under: 'rgb(' + bg.slice(0, 3).map(Math.round).join(', ') + ')', ratio: Math.round(ratio * 100) / 100, need: large ? 3 : 4.5}); } }
+  return {rows: rows.length, runs: out}; }"""
+
+
+@check
+async def chain_contrast(b):
+    """v2x r5 (system; r5-a11y moderate, Home §06): after 'Alter record 03' every visible text run in a broken record
+    (number, agent, event, detail, flag, new hash) reads at 4.5:1 or better (3:1 if large) against the colour actually
+    under it, translucent fills composited (v2's rgba(217,103,93,.055) tint put the red text at 4.39:1); and a broken
+    record is still marked as broken by something other than its text colour (a fill, an edge or an outline). At 1440 and
+    390. Based on system's .shots/v2x/work/system-r5/probe1.py chain()."""
+    said = []
+    for w, h, touch in ((1440, 900, False), (390, 844, True)):
+        ctx, pg = await open_page(b, "index.html", w, h, dpr=2 if touch else 1, touch=touch)
+        await pg.locator("[data-chain]").scroll_into_view_if_needed()
+        await expect(pg.locator("[data-chain].chain-ready")).to_have_count(1)
+        await pg.locator("[data-chain-try]").click()
+        await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain broken at record 03")
+        await pg.wait_for_timeout(600)  # the row's own transitions (colour, edge) settle
+        r = await pg.evaluate(CHAIN_BROKEN_CONTRAST)
+        mark = await pg.evaluate("""() => { const li = document.querySelector('.chain-list > li.is-broken'); if (!li) return null; const s = getComputedStyle(li);
+          const clear = c => !c || /^rgba\\(\\d+, \\d+, \\d+, 0\\)$/.test(c) || c === 'transparent';
+          return {fill: !clear(s.backgroundColor), edge: s.boxShadow !== 'none' || ['Top', 'Right', 'Bottom', 'Left'].some(k => parseFloat(s['border' + k + 'Width']) > 0 && !clear(s['border' + k + 'Color'])),
+                  outline: s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0}; }""")
+        await pg.locator("[data-chain-restore]").click()
+        await ctx.close()
+        low = [x for x in r["runs"] if x["ratio"] < x["need"]]
+        assert r["rows"] >= 1 and r["runs"], f"chain_contrast@{w}: no broken record to read after 'Alter record 03' ({r['rows']} rows)"
+        assert not low, f"chain_contrast@{w}: {len(low)} text runs in broken records under their minimum: " + "; ".join(
+            f"record {x['row']} {x['el']} '{x['text']}' {x['color']} on {x['under']} = {x['ratio']}:1 (need {x['need']})" for x in low[:6])
+        assert mark and (mark["fill"] or mark["edge"] or mark["outline"]), f"chain_contrast@{w}: a broken record has no fill, edge or outline of its own ({mark}): only its text colour says it is broken"
+        said.append(f"{w}: {r['rows']} broken records, {len(r['runs'])} text runs, lowest {min(x['ratio'] for x in r['runs'])}:1, marked by {'/'.join(k for k, v in mark.items() if v)}")
+    print("chain_contrast: " + "; ".join(said))
 
 
 @check
@@ -2136,6 +2199,37 @@ async def nav_readout(b):
             await ctx.close()
     assert not bad, f"nav_readout: {len(bad)} cut readouts:\n  " + "\n  ".join(bad[:20])
     print(f"nav_readout: {n} chapter readouts at 390 and 360, none cut")
+
+
+PILL_ACTIVE = """() => { const a = document.activeElement, sh = document.querySelector('.nav-sheet');
+  return a ? {tag: a.tagName, pill: a.matches('.nav-ch-btn'), inSheet: !!(sh && sh.contains(a)), current: a.getAttribute('aria-current'),
+              ring: a.matches(':focus-visible'), text: (a.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 32)} : null; }"""
+
+
+@check
+async def pill_focus(b):
+    """v2x r5 (system; r5-a11y moderate): under 961 px the readout's pill opens the menu sheet with the keyboard and
+    focus goes where the reader is: Enter on .nav-ch-btn puts focus, with its visible ring, on the sheet's link for the
+    current chapter (a[aria-current]); Escape closes the sheet and returns focus to the pill, not to the menu toggle or
+    the page. Home 390 (touch), Platform 900, Trust 390 (touch), each read with the reader 45% down the page. Based on
+    system's .shots/v2x/work/system-r5/probe1.py pill()."""
+    said = []
+    for path, w, h, touch in (("index.html", 390, 844, True), ("platform.html", 900, 900, False), ("trust.html", 390, 844, True)):
+        ctx, pg = await open_page(b, path, w, h, dpr=2 if touch else 1, touch=touch)
+        await pg.evaluate("window.scrollTo({top: document.body.scrollHeight * .45, behavior: 'instant'})")
+        await expect(pg.locator(".nav-ch-btn")).to_be_visible()
+        await pg.wait_for_timeout(600)
+        await pg.focus(".nav-ch-btn"); await pg.keyboard.press("Enter")
+        a1 = await until(pg, PILL_ACTIVE.replace("return a ?", "return a && document.querySelector('.nav-sheet') && document.querySelector('.nav-sheet').contains(a) ?"), 3000) or await pg.evaluate(PILL_ACTIVE)
+        await pg.keyboard.press("Escape"); await pg.wait_for_timeout(500)
+        a2 = await pg.evaluate(PILL_ACTIVE)
+        await ctx.close()
+        where = f"{path}@{w}"
+        assert a1 and a1["inSheet"] and a1["tag"] == "A" and a1["current"], f"pill_focus {where}: Enter on the readout's pill left focus on {a1} (want the sheet's current-chapter link)"
+        assert a1["ring"], f"pill_focus {where}: the current-chapter link took focus without its visible ring (:focus-visible): {a1}"
+        assert a2 and a2["pill"], f"pill_focus {where}: Escape in the sheet sent focus to {a2} (want the readout's pill)"
+        said.append(f"{where}: Enter -> '{a1['text']}' (current, ring), Escape -> the pill")
+    print("pill_focus: " + "; ".join(said))
 
 
 @check

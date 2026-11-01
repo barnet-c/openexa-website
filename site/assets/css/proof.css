@@ -15,6 +15,8 @@
 :is([data-page="proof"], [data-page="trust"]) h1 .ln + .ln { text-wrap: pretty; } /* the long line first, the short one last */
 /* a compound word never breaks at its hyphen ("market-dependent") */
 :is([data-page="proof"], [data-page="trust"]) .nw { white-space: nowrap; }
+/* display heads break between phrases only: a line never ends on "and", "the" or "your" (r5 art; Home's .ph, r4) */
+:is([data-page="proof"], [data-page="trust"]) h2 .ph { white-space: nowrap; }
 /* ledes that close a page are short: set them as even lines */
 :is([data-page="proof"], [data-page="trust"]) .cta-band .lede { text-wrap: balance; }
 /* running text: no lone last word; hyphenation by hand only */
@@ -255,6 +257,8 @@
 
 /* §01 the ledger, first: the instrument closer to its heading */
 .tr-ledger .tr-lead { row-gap: 20px; }
+/* the head takes seven columns where it sits beside the paragraph, so "and every link after it fails." stays one line */
+@media (min-width: 961px) { .tr-ledger .tr-lead > .col-6 { grid-column-end: span 7; } }
 .tr-lt { margin-top: clamp(36px, 4vw, 60px); }
 /* the head: title and controls, then the status and how to break the record */
 .tr-lt .lt-head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title ctrl" "hint state"; row-gap: 10px; column-gap: 24px; padding-top: 12px; padding-bottom: 12px; }
@@ -314,6 +318,9 @@
 @media (hover: none) and (pointer: coarse) { .tr-lt .tr-key { display: none; } .tr-lt .tr-tap { display: inline; } }
 /* the excerpt's hedge in the foot reads as words, as on Home's stream: Inter, 12.8 px, Home's hedge tone (a11y r3 m2) */
 .tr-lt .lt-foot > span:first-child { font-family: var(--sans); font-size: .8rem; letter-spacing: 0; line-height: 1.45; color: rgba(245, 242, 236, .72); }
+/* without JavaScript the hint and the controls stay hidden; the foot says why (Home's chain sentence; r5 copy) */
+.tr-lt .tr-nojs { flex-basis: 100%; font-family: var(--sans); font-size: .8rem; letter-spacing: 0; line-height: 1.45; color: rgba(245, 242, 236, .72); }
+@media (scripting: enabled) { .tr-lt .tr-nojs { display: none; } }
 @media (min-width: 961px) {
   .tr-lt .lt-insp.is-typing > dl:last-of-type { grid-column: 2; grid-row: 2 / span 2; }
   .tr-lt .lt-insp.is-typing > .tr-enter { grid-column: 1; grid-row: 3; }
@@ -333,9 +340,11 @@
 
 /* §03 the control plane: six engraved plates on one ruled sheet, not six boxed cards */
 .tr-cp { row-gap: 40px; }
-.tr-k { border-left: 0; border-top: 1px solid var(--line-strong); }
-.tr-k > .tr-kp { display: flex; flex-direction: column; padding: clamp(22px, 2.2vw, 30px) clamp(20px, 2.2vw, 30px) clamp(24px, 2.4vw, 32px); background: transparent; border-radius: 0; transition: background .3s var(--ease); }
-.tr-k > .tr-kp:nth-child(2n) { border-right: 0; }
+.tr-k { --kp: clamp(20px, 2.2vw, 30px); border-left: 0; border-top: 1px solid var(--line-strong); }
+.tr-k > .tr-kp { display: flex; flex-direction: column; padding: clamp(22px, 2.2vw, 30px) var(--kp) clamp(24px, 2.4vw, 32px); background: transparent; border-radius: 0; transition: background .3s var(--ease); }
+/* the sheet's outer columns run flush to its edges, so every plate's drawing is the same width and each row's drawings,
+   titles and rules line up (r5 art: odd plates were 30 px wider, their titles 5-8 px lower) */
+.tr-k > .tr-kp:nth-child(2n) { border-right: 0; padding-right: 0; }
 .tr-k > .tr-kp:nth-child(2n + 1) { padding-left: 0; }
 .tr-kp .n { margin-bottom: 18px; }
 .tr-kd { margin: 4px 0 22px; color: var(--fg); }
@@ -366,13 +375,22 @@
   .tr-cp > .tr-cp-copy, .tr-cp > .tr-cp-plates { grid-column: 1 / -1; }
   .tr-cp-copy { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 48px; align-items: end; }
   .tr-cp-copy .body-lg { margin-top: 0; }
-  .tr-k { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .tr-k > .tr-kp:nth-child(n) { border-right: 1px solid var(--line); padding-left: clamp(20px, 2.2vw, 30px); }
-  .tr-k > .tr-kp:nth-child(3n) { border-right: 0; }
+  /* three across: the middle plate pads both sides, so its column is wider by one padding (equal drawings) */
+  .tr-k { grid-template-columns: minmax(0, 1fr) calc((100% + 2 * var(--kp)) / 3) minmax(0, 1fr); }
+  .tr-k > .tr-kp:nth-child(n) { border-right: 1px solid var(--line); padding-left: var(--kp); padding-right: var(--kp); }
+  .tr-k > .tr-kp:nth-child(3n) { border-right: 0; padding-right: 0; }
   .tr-k > .tr-kp:nth-child(3n + 1) { padding-left: 0; }
 }
 @media (min-width: 601px) and (max-width: 960px) {
   .tr-cp-copy .body-lg { max-width: 60ch; }
+}
+
+/* the closing band: "Bring your compliance team." on one line where it fits (20ch held it 5 px short), else broken
+   after "Bring"; under 360 px the phrase "your compliance team." sets a little smaller to stay whole (Proof's likewise) */
+[data-page="trust"] .cta-band h2 { max-width: 21ch; }
+@media (max-width: 359.98px) {
+  [data-page="trust"] .cta-band h2 { font-size: min(2.6rem, calc((100vw - 40px) / 7.45)); }
+  [data-page="proof"] .cta-band h2 { font-size: min(2.6rem, calc((100vw - 40px) / 7.05)); }
 }
 
 /* §04 plain language: the same two marks as Proof's "show / do not show" */

@@ -48,6 +48,11 @@ The checks (the item each one guards in brackets):
   loader_curtain+      v2x r3: 20 first visits to / at 390x844@2, touch, 4x CPU: every visit lifts its curtain (the loader's
                        .is-done comes, and before the loader is removed; none ends at .is-complete alone) and the beat
                        .is-done - .is-complete is < 150 ms in every visit (designed 90)   [r3-perf moderate, r3-motion minor]
+  trust_landing+       v2x r5: Trust opened mid-way. Reload and Back with §03 80 px under the top (390@2 and 320@2 touch,
+                       1024) and §02/§04 at 20/80/500 (390): the section's top within 2 px of where it was, the largest
+                       layout-shift window < 0.01   [r5-perf issues 2, 4]
+  offscreen_reveals+   v2x r5: /evidence.html, / and /platform.html at 412x823@2, touch, 4x CPU, sampled every 50 ms until
+                       1.5 s after site.js sets its reveals up: no CSS transition on an off-screen [data-reveal]   [r5-perf issue 3]
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -595,6 +600,87 @@ async def loader_curtain(b):
                 f"beat (curtain transition start + delay - '100' pulse start) median {med} ms, range {min(beats) if beats else None}-{max(beats) if beats else None} ms "
                 f"({len(off)} outside 85-110; {len(unread)} unread{': ' + str(unread[:3]) if unread else ''}); "
                 "budget: 20/20, none alone, every beat 85-110 ms"), (max(beats) if beats else float("inf"))
+
+
+# v2x r5 (system; r5-perf issues 2/4): Trust starts its engines after the first paint and ledger.css holds its replay's
+# live size, so a reload or Back lands where the reader was. (width, the <main> section's place, px under the top)
+TRUST_LAND = ((390, 3, 80), (320, 3, 80), (1024, 3, 80),
+              (390, 2, 20), (390, 2, 80), (390, 2, 500), (390, 4, 20), (390, 4, 80), (390, 4, 500))
+TRUST_TOP = "(k) => { const el = document.querySelector('main > section:nth-of-type(' + k + ')'); return el ? Math.round(el.getBoundingClientRect().top) : null; }"
+
+
+@check
+@frames
+async def trust_landing(b):
+    """v2x r5 (system; r5-perf issues 2 and 4): Trust opened mid-way. With §03's top 80 px under the top at 390 and 320
+    (touch, DPR 2) and 1024, and §02/§04 at 20, 80 and 500 px at 390, a reload and a Back (via /access.html) each put the
+    section's top within 2 px of where it was, and the largest layout-shift window (no recent input) is < 0.01. r4's
+    Trust (engines before the paint, the inspector unheld) landed 73 / 109 / 27 px off for §03+80 at 390 / 320 / 1024.
+    Based on system's .shots/v2x/work/system-r5/land.py (36/36 exact, CLS <= 0.0001)."""
+    ok, out, worst = True, [], 0.0
+    for w, k, off in TRUST_LAND:
+        touch = w < 600
+        for case in ("reload", "back"):
+            ctx, pg = await land_ctx(b, w, 844 if touch else 900, touch)
+            await pg.goto(f"{V.BASE}/trust.html", wait_until="load"); await pg.wait_for_timeout(2500)
+            await pg.evaluate("([k, off]) => { const el = document.querySelector('main > section:nth-of-type(' + k + ')'); if (el) window.scrollTo({top: el.getBoundingClientRect().top + scrollY - off, behavior: 'instant'}); }", [k, off])
+            await pg.wait_for_timeout(1200)
+            before = await pg.evaluate(TRUST_TOP, k)
+            if case == "reload": await pg.reload(wait_until="load")
+            else:
+                await pg.goto(f"{V.BASE}/access.html", wait_until="load"); await pg.wait_for_timeout(600)
+                await pg.go_back(wait_until="load")
+            await pg.wait_for_timeout(4000)
+            after = await pg.evaluate(TRUST_TOP, k); cls = shift_window(await pg.evaluate("window.__ls || []"))
+            await ctx.close()
+            worst = max(worst, cls)
+            good = None not in (before, after) and abs(after - before) <= 2 and cls < 0.01
+            ok = ok and good
+            if not good or case == "reload" and (w, k, off) in ((390, 3, 80), (320, 3, 80), (1024, 3, 80)):
+                out.append(f"{case} §{k:02d}+{off}@{w}: at {after} (was {before}), CLS {cls:.4f}" + ("" if good else " FAIL"))
+    n = len(TRUST_LAND) * 2
+    return ok, (f"{n} landings ({', '.join(out)}); worst CLS window {worst:.4f}; "
+                "budget: within 2 px of where the section was, CLS < 0.01 in every landing"), worst
+
+
+# v2x r5 (system; r5-perf issue 3): from DOMContentLoaded, every 50 ms, the CSS transitions running on a [data-reveal]
+# target (or inside one) that lies wholly off the screen, on the properties a reveal moves (opacity, transform, a stroke's
+# dash, a clip; not colour: Home's swarm lab turns its gate list's colour as it mounts, 300 ms, not a reveal); and when
+# site.js first set a reveal up (.will-reveal)
+REVEAL_SAMPLER = r"""(() => { const REVEAL_PROPS = /^(opacity|transform|translate|scale|rotate|stroke-dashoffset|clip-path|visibility|filter)$/; const R = window.__rv = { setup: null, worst: 0, at: null, what: [], samples: 0 }; const t0 = performance.now();
+  addEventListener('DOMContentLoaded', () => { const iv = setInterval(() => { const t = Math.round(performance.now() - t0); R.samples++;
+    if (R.setup === null && document.querySelector('.will-reveal')) R.setup = t;
+    const vh = innerHeight; let n = 0; const what = new Set();
+    for (const a of document.getAnimations()) { if (a.playState !== 'running' || !REVEAL_PROPS.test(a.transitionProperty || '')) continue; const el = a.effect && a.effect.target;
+      const host = el && el.closest && el.closest('[data-reveal]'); if (!host) continue; const r = el.getBoundingClientRect(); if (r.bottom > 0 && r.top < vh) continue;
+      n++; what.add((host.closest('section[id]') ? '#' + host.closest('section[id]').id + ' ' : '') + host.tagName.toLowerCase() + ':' + a.transitionProperty); }
+    if (n > R.worst) { R.worst = n; R.at = t; R.what = [...what].slice(0, 4); }
+    if ((R.setup !== null && t > R.setup + 1500) || t > 8000) clearInterval(iv); }, 50); }); })();"""
+
+
+@check
+@frames
+async def offscreen_reveals(b):
+    """v2x r5 (system; r5-perf issue 3): a reveal set up below the first screen hides at once, with no fade-out the
+    reader cannot see. On /evidence.html, /index.html and /platform.html at 412x823@2 (touch, 4x CPU), sampled every 50 ms
+    from DOMContentLoaded until 1.5 s after site.js first sets a reveal up: no CSS transition of a property a reveal moves
+    (opacity, transform, a stroke's dash, a clip) runs on an off-screen [data-reveal] target (or inside one) in any sample. r4's site.js ran ~430 such transitions on Proof at 0.6-0.8 s
+    (Home ~110, Platform 60+), each a 0.5-0.6 s fade-out off screen. Based on the r5-perf critic's anims5.py."""
+    ok, out = True, []
+    for path in ("evidence.html", "index.html", "platform.html"):
+        ctx = await b.new_context(viewport={"width": 412, "height": 823}, device_scale_factor=2, has_touch=True, is_mobile=True)
+        await ctx.add_init_script(REVEAL_SAMPLER)
+        pg = await ctx.new_page(); pg.set_default_navigation_timeout(60000)
+        cdp = await ctx.new_cdp_session(pg); await cdp.send("Emulation.setCPUThrottlingRate", {"rate": 4})
+        await pg.goto(f"{V.BASE}/{path}", wait_until="load")
+        await V.until(pg, "(() => { const R = window.__rv; return !!R && R.setup !== null && performance.now() > R.setup + 1700; })()", 15000)
+        r = await pg.evaluate("Object.assign({}, window.__rv || {})")
+        await ctx.close()
+        good = r.get("setup") is not None and r.get("worst", 1) == 0
+        ok = ok and good
+        out.append(f"{path}: reveals set up at {r.get('setup')} ms, {r.get('samples')} samples, at most {r.get('worst')} off-screen reveal transitions"
+                   + (f" (at {r.get('at')} ms: {r.get('what')})" if r.get("worst") else "") + ("" if good else " FAIL"))
+    return ok, "; ".join(out) + "; budget: 0 in every sample, and the set-up seen", 0
 
 
 def parse_cal(argv):
