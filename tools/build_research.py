@@ -90,8 +90,11 @@ CAPTIONS = {
 # own side has no room (a phone's stage), figure.js looks for another free slot round its point; and if there is none,
 # the plate shows no labels at all, so a drawing never names its parts without their hedge (data-keep). "keep=t,tl,tr"
 # limits the slots to those sides: "above the floor" never stands below the columns it describes.
-def _cols():  # note 09: ten columns, x = -1.08 + c * 0.24 (figure.js sessions), numbered and lit in the record's order
-    return [(f"{c + 1:02d}", None, (round(-1.08 + c * 0.24, 2), -0.78, 0), "b", "" if c in (0, 9) else "minor", (c / 10, (c + 0.9) / 10))
+def _cols():  # note 09: ten columns, x = -1.08 + c * 0.24 (figure.js sessions), numbered in the record's order
+    # award a1 (a1-pixel, D5): the numbers are the drawing's axis, read as one row (figure.js sets them on one baseline),
+    # at one weight and one dot size: the pulse no longer lights them one by one (a still showed a row that faded from
+    # left to right); it still runs through the columns themselves
+    return [(f"{c + 1:02d}", None, (round(-1.08 + c * 0.24, 2), -0.78, 0), "b", "" if c in (0, 9) else "minor", None)
             for c in range(10)]
 def _loop(n):  # note 03: node n of figure.js lifecycle (a ring of r 0.95, tilted 0.9, from angle 0.5)
     a = n / 6 * math.tau + 0.5; x, z = math.cos(a) * 0.95, math.sin(a) * 0.95
@@ -186,6 +189,176 @@ def library_still():
     w = math.ceil(xm + 6)
     return (f'<svg class="rs-still" viewBox="{-w} -100 {2 * w} 200" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'
             f'{"".join(out)}</svg>')
+# award a1 (a1-dev, polish): every note's hero carries its formation as a still in the page, as the index's library has
+# since r2: without JavaScript or WebGL the hero's right half was empty, and with them the drawing arrived only after
+# figure.js started. FORMS below is figure.js's FORMS ported line for line, with its random generator (the same LCG, the
+# same seeds, the same order of draws), so the still's dots are the points the plate draws, seen by the same camera in
+# the pose it rests in (face-on; eye 0, 0.35, 4.4; fov 0.62; --figure-scale .84 x figure.js FIT). Every K-th point that
+# is not dust, as a zero-length stroke with round caps (a dot), one path per colour and depth step. research.css sizes
+# it as the stage sizes the points (.fs-still) and fades it out under them once they are drawn. A change to a formation
+# in figure.js needs the same change here (the build cannot see it): the still would then disagree with the plate.
+TAU = 2 * math.pi
+def _rng(seed):
+    s = [seed & 0xFFFFFFFF]
+    def r():
+        s[0] = (s[0] * 1664525 + 1013904223) & 0xFFFFFFFF
+        return s[0] / 4294967296
+    return r
+def _n(x): return math.ceil(x)  # JS "for (i = 0; i < x; i++)": ceil(x) passes for x > 0
+def _forms(name, N, rnd, g):
+    P = []; push = P.append
+    if name == "horizon":
+        floorN, curveN, stairN = math.floor(N * 0.18), math.floor(N * 0.30), math.floor(N * 0.34)
+        for i in range(floorN): push([(rnd() * 2 - 1) * 1.25, -0.72 + g() * 0.004, (rnd() * 2 - 1) * 0.5, 7])
+        for i in range(curveN):
+            t = rnd(); y = -0.72 + 1.3 * math.pow(0.986, t * 160); push([-1.15 + t * 2.3, y + g() * 0.02, (rnd() - 0.5) * 0.08 - 0.12, 0])
+        for i in range(stairN):
+            t = rnd(); step = math.floor(t * 10); y = 0.52 - (step % 2) * 0.05 + g() * 0.012; push([-1.15 + t * 2.3, y, (rnd() - 0.5) * 0.08 + 0.14, 2])
+        gateN = math.floor(N * 0.011)
+        for s in range(11):
+            x = -1.15 + s * 0.23
+            for i in range(gateN): push([x + g() * 0.004, -0.72 + rnd() * 1.26, 0.14 + g() * 0.01, 1])
+    elif name == "weights":
+        sph = math.floor(N * 0.42)
+        for i in range(sph):
+            la = math.asin(rnd() * 2 - 1); lo = rnd() * TAU; r = 0.46 * math.pow(rnd(), 0.25)
+            push([r * math.cos(la) * math.sin(lo), 0.22 + r * math.sin(la), r * math.cos(la) * math.cos(lo), 2 if rnd() < 0.08 else 0])
+        for k, (tx, tz) in enumerate([(0.35, 0.2), (1.25, 0.9), (2.1, -0.6)]):
+            for i in range(_n(N * 0.09)):
+                a = rnd() * TAU; x = math.cos(a) * 0.72; y = g() * 0.01; z = math.sin(a) * 0.72
+                y1 = y * math.cos(tx) - z * math.sin(tx); z1 = y * math.sin(tx) + z * math.cos(tx)
+                x1 = x * math.cos(tz) - y1 * math.sin(tz); y1 = x * math.sin(tz) + y1 * math.cos(tz)
+                push([x1, 0.22 + y1, z1, 2 if k == 1 else 1])
+        for b in range(5):
+            y = -0.42 - b * 0.16
+            for i in range(_n(N * 0.04)):
+                e = rnd(); w, h = 0.13, 0.05; side = math.floor(e * 4); t = rnd() * 2 - 1
+                pt = [t * w, h] if side == 0 else [t * w, -h] if side == 1 else [-w, t * h] if side == 2 else [w, t * h]
+                push([pt[0] + g() * 0.003, y + pt[1] + g() * 0.003, (rnd() - 0.5) * 0.02, 2])
+            for i in range(_n(N * 0.006)): push([0, y + 0.05 + rnd() * 0.06, 0, 7])
+    elif name == "lifecycle":
+        ringN, nodeN, tilt = math.floor(N * 0.34), math.floor(N * 0.05), 0.9
+        def on(a, r, lift):
+            x, z = math.cos(a) * r, math.sin(a) * r
+            return [x, lift + z * math.sin(tilt) * 0.5, z * math.cos(tilt)]
+        for i in range(ringN):
+            a = rnd() * TAU; r = 0.95 + g() * 0.02; lift = g() * 0.015; p = on(a, r, lift)
+            push([p[0], p[1], p[2], 2 if rnd() < 0.15 else 0])
+        for n in range(6):
+            p = on(n / 6 * TAU + 0.5, 0.95, 0)
+            for i in range(nodeN): push([p[0] + g() * 0.045, p[1] + g() * 0.045, p[2] + g() * 0.045, 2 if n == 5 else 0])
+        for i in range(_n(N * 0.18)):
+            a = rnd() * TAU; r = 0.2 + rnd() * 0.7; p = on(a, r, 0)
+            push([p[0] + g() * 0.01, p[1] + g() * 0.01, p[2] + g() * 0.01, 7])
+    elif name == "swarm":
+        mono = math.floor(N * 0.30)
+        for i in range(mono):
+            la = math.asin(rnd() * 2 - 1); lo = rnd() * TAU; r = 0.42 * math.pow(rnd(), 0.4)
+            push([-0.72 + r * math.cos(la) * math.sin(lo), r * math.sin(la), r * math.cos(la) * math.cos(lo), 1])
+        for i in range(_n(N * 0.56)):
+            gx = math.floor(rnd() * 7); gy = math.floor(rnd() * 7); gz = math.floor(rnd() * 3)
+            push([0.28 + gx * 0.12 + g() * 0.014, -0.42 + gy * 0.14 + g() * 0.014, -0.16 + gz * 0.16 + g() * 0.014, 2 if rnd() < 0.55 else 0])
+        for i in range(_n(N * 0.06)): push([-0.2 + g() * 0.01, (rnd() * 2 - 1) * 0.7, (rnd() - 0.5) * 0.3, 7])
+    elif name == "boundary":
+        per = math.floor(N * 0.085)
+        for l in range(8):
+            y = 0.7 - l * 0.2
+            for i in range(per):
+                rim = rnd() < 0.3; x = (rnd() * 2 - 1) * 0.8; z = (rnd() * 2 - 1) * 0.36
+                if rim:
+                    if rnd() < 0.5: z = (-1 if rnd() < 0.5 else 1) * 0.36
+                    else: x = (-1 if rnd() < 0.5 else 1) * 0.8
+                push([x + g() * 0.004, y + g() * 0.006, z + g() * 0.004, (2 if rnd() < 0.7 else 0) if l == 2 else (0 if l < 4 else 1)])
+        for i in range(_n(N * 0.14)): push([(rnd() * 2 - 1) * 0.92, 0.0 + g() * 0.004, (rnd() * 2 - 1) * 0.46, 2])
+    elif name == "rulebook":
+        cube = math.floor(N * 0.62)
+        for i in range(cube):
+            x = (rnd() * 2 - 1) * 0.5; y = (rnd() * 2 - 1) * 0.5; z = (rnd() * 2 - 1) * 0.5
+            push([x, y, z, 2] if math.hypot(x, y, z) < 0.22 else [x, y, z, 0 if rnd() < 0.5 else 1])
+        for d in range(6):
+            a = d / 6 * TAU; cx = math.cos(a) * 1.05; cz = math.sin(a) * 1.05; cy = (d % 3 - 1) * 0.35
+            for i in range(_n(N * 0.03)): push([cx + (rnd() - 0.5) * 0.02, cy + (rnd() - 0.5) * 0.22, cz + (rnd() - 0.5) * 0.16, 0])
+            for i in range(_n(N * 0.015)):
+                t = rnd(); push([cx * (1 - t) + g() * 0.01, cy * (1 - t) + g() * 0.01, cz * (1 - t) + g() * 0.01, 7])
+    elif name == "council":
+        for i in range(_n(N * 0.18)):
+            t = rnd(); a = rnd() * TAU; r = 0.36 + 0.24 * math.sqrt(rnd())
+            push([math.cos(a) * r * 0.55 + g() * 0.004, 0.1 + 0.02 * math.sin(a), math.sin(a) * r * 0.55 + g() * 0.004, 0])
+        for i in range(_n(N * 0.28)):
+            t = rnd(); push([g() * 0.09 * (1 - t) + g() * 0.02, 1.05 - t * 0.9, g() * 0.09 * (1 - t), 1])
+        for i in range(_n(N * 0.24)):
+            t = rnd(); push([g() * 0.05, 0.05 - t * 1.05, g() * 0.05, 2])
+        for i in range(_n(N * 0.09)):
+            t = rnd(); push([0.05 + t * 1.1, 0.06 - t * 0.55, g() * 0.03, 3])
+        for i in range(_n(N * 0.06)): push([(rnd() * 2 - 1) * 0.6, -1.02 + g() * 0.004, (rnd() * 2 - 1) * 0.3, 2])
+    elif name == "ledger":
+        blocks = 8
+        for b in range(blocks):
+            t = b / (blocks - 1); cx = -1.0 + t * 2.0; cy = 0.55 - t * 1.1; cz = math.sin(t * math.pi) * 0.25
+            for i in range(_n(N * 0.075)):
+                f = math.floor(rnd() * 6); u = rnd() * 2 - 1; v = rnd() * 2 - 1; w, h, d = 0.11, 0.07, 0.07
+                pt = ([u * w, v * h, d] if f == 0 else [u * w, v * h, -d] if f == 1 else [u * w, h, v * d] if f == 2 else
+                      [u * w, -h, v * d] if f == 3 else [w, u * h, v * d] if f == 4 else [-w, u * h, v * d])
+                push([cx + pt[0], cy + pt[1], cz + pt[2], 2 if b == blocks - 1 else 0])
+            if b:
+                q = (b - 1) / (blocks - 1); px = -1.0 + q * 2.0; py = 0.55 - q * 1.1; pz = math.sin(q * math.pi) * 0.25
+                for i in range(_n(N * 0.03)):
+                    s = rnd(); push([px + (cx - px) * s + g() * 0.004, py + (cy - py) * s + g() * 0.004, pz + (cz - pz) * s + g() * 0.004, 2])
+    elif name == "sessions":
+        per = math.floor(N * 0.082); B, F = -0.72, 0.48; U = (F - B) / 10; w = 0.07; o0 = F + 0.025; o1 = o0 + U
+        for c in range(10):
+            x = -1.08 + c * 0.24; k = 2 if REGIMES[c] == "p" else 0
+            for i in range(per):
+                if rnd() < 0.86: push([x + (rnd() - 0.5) * 2 * w, B + rnd() * (F - B), (rnd() - 0.5) * 0.1, k]); continue
+                e = rnd() * (4 * w + 2 * U)
+                if e < 2 * w: px, py = x - w + e, o0
+                elif e < 4 * w: px, py = x - w + (e - 2 * w), o1
+                elif e < 4 * w + U: px, py = x - w, o0 + (e - 4 * w)
+                else: px, py = x + w, o0 + (e - 4 * w - U)
+                push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, k])
+        for i in range(_n(N * 0.08)): push([(rnd() * 2 - 1) * 1.25, F + g() * 0.005, 0.07, 1])
+    elif name == "mastercopy":
+        def sphere(cx, cy, cz, r, n, k):
+            for i in range(n):
+                la = math.asin(rnd() * 2 - 1); lo = rnd() * TAU; rr = r * math.pow(rnd(), 0.3)
+                push([cx + rr * math.cos(la) * math.sin(lo), cy + rr * math.sin(la), cz + rr * math.cos(la) * math.cos(lo), k])
+        sphere(0, 0.6, 0, 0.3, math.floor(N * 0.28), 2)
+        for c in range(5):
+            a = (c / 4 - 0.5) * 2.4; cx = math.sin(a) * 1.0; cy = -0.35; cz = math.cos(a) * 0.35 - 0.2
+            sphere(cx, cy, cz, 0.17, math.floor(N * 0.07), 0 if c == 0 else 1)
+            for i in range(_n(N * 0.035)):
+                s = rnd(); push([cx * s + g() * 0.006, 0.6 + (cy - 0.6) * s + g() * 0.006, cz * s + g() * 0.006, 7])
+        for i in range(_n(N * 0.1)): push([(rnd() * 2 - 1) * 1.3, -0.75 + g() * 0.004, (rnd() * 2 - 1) * 0.5, 1])
+    else:
+        raise KeyError(name)
+    return P[:N]
+FIT_JS = {"lifecycle": 1.16, "rulebook": 1.12}  # figure.js FIT: the flat ring and the small cube are drawn larger
+def note_still(fig, every=7):
+    """the note's formation as a still: dots where the plate's points land at rest (see the comment above _rng)"""
+    N = 15000; r = _rng(len(fig) * 977 + 13)
+    g = lambda: (r() + r() + r() - 1.5) * 0.82
+    pts = _forms(fig, N, r, g)
+    f, eye, S0 = 1 / math.tan(0.31), (0.0, 0.35, 4.4), 0.84 * FIT_JS.get(fig, 1)
+    n = math.hypot(*eye); zx, zy, zz = (e / n for e in eye)
+    xx, xz = zz, -zx; n = math.hypot(xx, xz) or 1; xx, xz = xx / n, xz / n
+    yx, yy, yz = zy * xz, zz * xx - zx * xz, -zy * xx
+    paths, xm, i = {}, 0.0, 0
+    for p in pts:
+        if p[3] >= 7: continue
+        i += 1
+        if i % every: continue
+        x, y, z = p[0] * S0, p[1] * S0, p[2] * S0
+        v0 = xx * x + xz * z - (xx * eye[0] + xz * eye[2])
+        v1 = yx * x + yy * y + yz * z - (yx * eye[0] + yy * eye[1] + yz * eye[2])
+        v2 = zx * x + zy * y + zz * z - (zx * eye[0] + zy * eye[1] + zz * eye[2])
+        sx, sy = 200 * f * v0 / -v2, -200 * f * v1 / -v2  # the stage's height is 400 units, centred
+        depth = min(1, max(0, (v2 + 5.6) / 2.6))  # figure.js: nearer the eye, brighter
+        xm = max(xm, abs(sx))
+        paths.setdefault((p[3], depth > 0.5), []).append(f"M{round(sx)} {round(sy)}h0")
+    w = math.ceil(xm + 12)
+    body = "".join(f'<path class="k{k}{" far" if not near else ""}" d="{"".join(d)}"/>' for (k, near), d in sorted(paths.items()))
+    return (f'<svg class="fs-still" viewBox="{-w} -200 {2 * w} 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'
+            f'{body}</svg>')
 # v2x: notes link to the instruments they describe (PAGES.md §6.4, NL-01..NL-10); targets are relative to research/
 RUN = {
     "horizon": [("Watch the Council verify proposals in the swarm lab", "../index.html#lc01")],
@@ -317,12 +490,12 @@ def title_html(t):
     # r5: inside each part, the line breaks between its phrases (PHRASES; bound, disp())
     m = re.match(r"^(.+\.) ([A-Z].+)$", t)
     return f'<span class="t-head">{disp(m.group(1))}</span> <span class="t-rest">{phrased(m.group(2))}</span>' if m else phrased(t)
-def cap_html(fig, cls="figcap", title=False):
+def cap_html(fig, cls="figcap", title=False, attrs=""):
     """cut (1 Nov): beside a drawing, its hedge; the index's strip also has the line that says what is drawn (phones only,
     where the labels do not fit; research.js writes it from the row)"""
     t, h = CAPTIONS[fig]
     tt = '<span class="figcap-t"></span>' if title else ""
-    return f'<p class="{cls}">{tt}<span class="figcap-h">{H.escape(h, quote=False)}</span></p>'
+    return f'<p class="{cls}"{attrs}>{tt}<span class="figcap-h">{H.escape(h, quote=False)}</span></p>'
 
 # ---------------- templates from the live homepage ----------------
 index_html = read(os.path.join(ROOT, "index.html"))
@@ -354,7 +527,11 @@ def chrome(prefix, current):
     foot = FOOTER.replace('href="', f'href="{prefix}').replace(f'href="{prefix}http', 'href="http').replace(f'href="{prefix}mailto', 'href="mailto')
     return nav, foot
 
-def og(prefix, url, title, desc):
+# award a1 (system's request, a1-dev): the share card's alt text says what the card shows (the page's H1, then the globe the
+# research cards carry), as launch_meta_v9.py writes it for the top pages, plus twitter:image:alt and og:locale
+CARD_ALT = " Beside it, the dotted globe of the OpenEXA mark."
+def og(prefix, url, title, desc, h1=None):
+    alt = (h1 or title).rstrip(); alt = (alt if alt[-1] in ".!?" else alt + ".") + CARD_ALT  # a title without its own stop gets one
     return f'''  <meta name="description" content="{H.escape(desc, quote=True)}">
   <meta name="theme-color" content="#0E1512">
   <link rel="canonical" href="{url}">
@@ -364,13 +541,15 @@ def og(prefix, url, title, desc):
   <meta property="og:title" content="{H.escape(title, quote=True)}">
   <meta property="og:description" content="{H.escape(desc, quote=True)}">
   <meta property="og:image" content="{og_image(url)}">
-  <meta property="og:image:alt" content="{H.escape(title, quote=True)}">
+  <meta property="og:image:alt" content="{H.escape(alt, quote=True)}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{H.escape(title, quote=True)}">
   <meta name="twitter:description" content="{H.escape(desc, quote=True)}">
   <meta name="twitter:image" content="{og_image(url)}">
+  <meta name="twitter:image:alt" content="{H.escape(alt, quote=True)}">
   {ROBOTS}
   {FEED_LINKS[0]}
   {FEED_LINKS[1]}
@@ -417,7 +596,7 @@ for i, post in enumerate(ordered):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{H.escape(title)} — OpenEXA Research</title>
-{og("../", url, title + " — OpenEXA Research", dek)}
+{og("../", url, title + " — OpenEXA Research", dek, title)}
   {ld({"@type": "TechArticle", "@id": url + "#article", "headline": title, "description": dek, "url": url, "mainEntityOfPage": url,
         "datePublished": PUBLISHED, "inLanguage": "en", "image": [og_image(url)], "author": ORG, "publisher": ORG,
         "isPartOf": SERIES_LD, "position": post["order"], "wordCount": post["words"], "timeRequired": f"PT{post['minutes']}M"},
@@ -429,14 +608,14 @@ for i, post in enumerate(ordered):
 {nav}
   <main id="main">
     <section class="page-hero page-hero--dark is-dark grain article-hero">
-      <div class="figure-stage article-figure" data-figure="{post['fig']}"{stage_data(post['fig'])} data-spin="0.10" data-plate data-rest="2.5" aria-hidden="true"><canvas></canvas>{labels_html(post['fig'])}</div>
+      <div class="figure-stage article-figure has-still" data-figure="{post['fig']}"{stage_data(post['fig'])} data-spin="0.10" data-plate data-rest="2.5" data-bbox aria-hidden="true">{note_still(post['fig'])}<canvas></canvas>{labels_html(post['fig'])}</div>
       <div class="container">
         <div class="article-hero-grid">
           <div>
             <h1 class="display-1 article-title{' article-title--long' if long_title else ''}{' article-title--split' if 't-head' in title_html(title) else ''}" data-reveal data-split>{title_html(title)}</h1>
             <div class="article-meta" data-reveal style="--d:120ms"><span>Founder’s notes</span><span>{post['minutes']}{NB}min read</span></div>
           </div>
-          {cap_html(post['fig'], "figcap article-figcap")}
+          {cap_html(post['fig'], "figcap article-figcap", attrs=" data-hang")}
         </div>
       </div>
     </section>
@@ -512,7 +691,7 @@ index_page = f'''<!DOCTYPE html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{INDEX_TITLE}</title>
-{og("", url, INDEX_TITLE, desc).replace('content="article"', 'content="website"')}
+{og("", url, INDEX_TITLE, desc, "The thinking behind the swarm.").replace('content="article"', 'content="website"')}
   {ld({"@type": "CollectionPage", "@id": url + "#webpage", "url": url, "name": "Research — OpenEXA", "description": desc,
        "isPartOf": WEBSITE, "primaryImageOfPage": og_image(url), "inLanguage": "en",
        "mainEntity": {"@type": "ItemList", "itemListElement": [

@@ -413,8 +413,10 @@
         rowC = btns.map((b) => { const r = b.getBoundingClientRect(); return r.top - fr.top + r.height / 2; });
         const br = bRow.getBoundingClientRect(); by = br.top - fr.top + br.height / 2;
         if (fRow) { const r = fRow.getBoundingClientRect(); fy = r.top - fr.top + r.height / 2; } // level with its label
-        cx = (readR + listL) / 2; halfW = clamp((listL - readR) / 2 - 42, 96, 178);
-        F0 = 19 * DEG; thick = 7; base = rowC.slice();
+        // above 1920 the page grows with the window (root = 100vw / 120): the drawing's px caps grow with it (a1, 4K)
+        const k = Math.max(1, (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16);
+        cx = (readR + listL) / 2; halfW = clamp((listL - readR) / 2 - 42 * k, 96 * k, 178 * k);
+        F0 = 19 * DEG; thick = 7 * k; base = rowC.slice();
       } else {
         reserve();
         halfW = clamp(W * (W < 560 ? 0.29 : 0.27), 84, 196); cx = W * (W < 560 ? 0.39 : 0.38);
@@ -423,8 +425,11 @@
         // a phone on its side: the whole stack fits under the bar (v2x r2)
         const room = shortMQ.matches ? window.innerHeight - navH() - 24 : 0, g = room ? 1.75 : 1.5;
         if (room) halfW = Math.min(halfW, Math.max(56, (room - 20 - thick - flH - 10) / (2 + (N - 2 + 2 * g) * k) / Math.sin(F0)));
-        // the labels right of the stack (10 px mono caps, ~7.3 px a character)
-        const wl = (s) => (s.length + 2) * 7.3, shortB = wl('Executes'), longB = Math.max(wl(noDot(UP.t)), wl(noDot(DN.t)));
+        // the labels right of the stack: mono caps, measured (one read per measure): Plex Mono advances .6em, plus the tracking
+        // (11 px label at .12em: 7.9 px a character; Home's phones set 12 px) (integrate a1, home's request)
+        const tcs = svg.querySelector('text') && getComputedStyle(svg.querySelector('text')), tfs = tcs ? parseFloat(tcs.fontSize) || 11 : 11;
+        const tls = tcs ? parseFloat(tcs.letterSpacing) : NaN, cw = 1.015 * (tfs * 0.6 + (isFinite(tls) ? tls : tfs * 0.12));
+        const wl = (s) => (s.length + 2) * cw, shortB = wl('Executes'), longB = Math.max(wl(noDot(UP.t)), wl(noDot(DN.t)));
         const roomB = () => W - 8 - (cx + 1.16 * halfW + 12), slack = () => cx - 1.16 * halfW - 16;
         if (roomB() < longB && roomB() + slack() >= longB) cx -= longB - roomB(); // a little to the left buys the long labels
         if (roomB() < shortB) { cx = W - 8 - 12 - shortB - 1.16 * halfW; if (cx - 1.16 * halfW < 4) { halfW = (W - 24 - shortB) / 2.32; cx = 4 + 1.16 * halfW; } }
@@ -436,7 +441,7 @@
         stag = tags && pitch < 24; list.classList.toggle('is-stag', stag);
         const gap = Math.max(pitch * g, stag ? 36 : 0), top = (room ? 20 : 30) + hh;
         if (stag) { // room for the left tags: the stack moves right while its right side still fits, else numbers only
-          const lo = (t) => halfW + 26 + t.length * 7.3, lft = Math.max(...plates.map((p) => lo(p.numLong)));
+          const lo = (t) => halfW + 26 + t.length * cw, lft = Math.max(...plates.map((p) => lo(p.numLong)));
           if (roomyP && cx < lft && W - 8 - (lft + halfW + 12) >= lft - halfW - 26 && roomB() + cx - lft >= shortB) cx = lft;
           if (cx < lft) roomyP = false;
           cx = Math.max(cx, lo('01')); roomyB = roomB() >= longB;
@@ -472,6 +477,9 @@
     /* ---------------- 5 · state ---------------- */
     let hover = -1, focus = -1, open = -1, hot = -2, kbd = false, hoverTimer = 0, pointerOn = false;
     let reduced = reduceMQ.matches, paused = false, visible = false, started = false, exStart = -1, ex = 0, t = 0;
+    // (award a1, a1-dev) the first measure waits until the instrument is within a screen of the window: an arrival (and its
+    // view transition) lays out no explorer it cannot see, and a chapter skipped by content-visibility stays skipped
+    let near = false;
     let beadsDirty = true, pointerIn = false, focusIn = false, lastActive = performance.now(), wasBusy = true; // for the idle stop
     let restAcc = 1, lastF = 0; // frames owed at the rest rate: 20 a second with nobody at the instrument, 30 with someone
     let prerolled = false; // the flow, run ahead once when the stack opens
@@ -586,6 +594,7 @@
       hint.textContent = spec ? (wide && fineMQ.matches ? 'Point at a layer · ↑ ↓ · Enter for its spec' : fineMQ.matches ? 'Click a plate for its spec' : 'Tap a plate for its spec')
         : wide && fineMQ.matches ? 'Point at a layer · ↑ ↓ to move · Enter to open' : fineMQ.matches ? 'Click a layer to open it' : 'Tap a layer to open it';
       hot = -2; setHot();
+      if (!near) return; // measured when it comes near (below)
       if (defer) requestAnimationFrame(() => { measure(); kick(true); }); // the build reads no layout: geometry in its first frame
       else { measure(); kick(true); }
     }
@@ -1017,12 +1026,18 @@
     // a new size is measured in the next frame, not inside the observer
     let roQueued = false;
     const ro = new ResizeObserver(() => {
-      if (roQueued) return;
+      if (roQueued || !near) return;
       roQueued = true;
       requestAnimationFrame(() => { roQueued = false; measure(); measureCard(); kick(true); });
     });
     ro.observe(bodyEl); ro.observe(list);
-    if (document.fonts && document.fonts.ready) requestAnimationFrame(() => document.fonts.ready.then(() => { measure(); measureCard(); kick(true); }));
+    if (document.fonts && document.fonts.ready) requestAnimationFrame(() => document.fonts.ready.then(() => { if (near) { measure(); measureCard(); kick(true); } }));
+    const nearIO = new IntersectionObserver((entries) => {
+      if (near || !entries.some((e) => e.isIntersecting)) return;
+      near = true; nearIO.disconnect();
+      requestAnimationFrame(() => { measure(); measureCard(); kick(true); });
+    }, { rootMargin: '100% 0px' });
+    nearIO.observe(inst);
     new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (e.isIntersecting && !visible) lastActive = performance.now(); // back in view: awake again

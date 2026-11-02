@@ -115,7 +115,7 @@
       const shelf = st.closest('.rs-shelf'); if (shelf) shelf.classList.add('no-plate');
       $$('.posts-list .post.is-current').forEach(li => li.classList.remove('is-current'));
     }
-    else if (!st.classList.contains('has-still')) { const host = st.closest('section'); if (host) host.classList.add('no-figure-cap'); } // (r2: the index hero keeps its still, so its caption stays true)
+    else { const host = st.closest('section'); if (host) host.classList.add(st.classList.contains('has-still') ? 'still-cap' : 'no-figure-cap'); } // (r2: the index hero keeps its still; a1: so does every note, and its hedge shows beside it)
   };
   document.addEventListener('figure:none', e => noFigure(e.target));
   $$('.figure-stage.no-figure').forEach(noFigure);

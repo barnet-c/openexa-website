@@ -22,6 +22,16 @@ def meta(s, name, prop=False):
 KIND = {"company.html": "AboutPage", "access.html": "ContactPage"}
 CRUMB = {"platform.html": "Platform", "lifecycles.html": "Lifecycles", "evidence.html": "Proof", "trust.html": "Trust & governance",
          "company.html": "Company", "access.html": "Request access"}
+def card_alt(s):
+    """award a1: the share card's alt text describes the card (build_og.py): the page's headline, then its picture, the
+    page's hero plate in the plate's own words (its aria-label), else the dotted globe of the mark."""
+    h1 = re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S)
+    h1 = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", h1.group(1)))).replace("‐", "-").strip() if h1 else ""
+    m = re.search(r'<figure class="hero-plate[^"]*"[^>]*\baria-label="([^"]*)"', s)
+    pic = html.unescape(m.group(1)).strip() if m else ""
+    pic = "Beside it, the page’s plate: " + pic[0].lower() + pic[1:] if pic else "Beside it, the dotted globe of the OpenEXA mark"
+    return (h1 + " " if h1 else "") + (pic if pic.endswith(".") else pic + ".")
+
 pages = []
 for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
     name = os.path.basename(path)
@@ -45,13 +55,15 @@ for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
     if not meta(s, "og:description", True): block.append(f'<meta property="og:description" content="{html.escape(og_desc, quote=True)}">')
     block += [
         f'<meta property="og:image" content="{og_image(url)}">',
-        f'<meta property="og:image:alt" content="{html.escape(og_title, quote=True)}">',
+        f'<meta property="og:image:alt" content="{html.escape(card_alt(s), quote=True)}">',
         '<meta property="og:image:width" content="1200">',
         '<meta property="og:image:height" content="630">',
+        '<meta property="og:locale" content="en_US">',
         '<meta name="twitter:card" content="summary_large_image">',
         f'<meta name="twitter:title" content="{html.escape(og_title, quote=True)}">',
         f'<meta name="twitter:description" content="{html.escape(og_desc, quote=True)}">',
         f'<meta name="twitter:image" content="{og_image(url)}">',
+        f'<meta name="twitter:image:alt" content="{html.escape(card_alt(s), quote=True)}">',
         ROBOTS, *FEED_LINKS,
         '<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">',
         '<link rel="manifest" href="site.webmanifest">',
@@ -125,6 +137,14 @@ page404 = f'''<!DOCTYPE html>
               <a class="btn" href="index.html">Back to the start <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
               <a class="btn btn--ghost" href="platform.html">The platform</a>
             </div>
+            <nav class="nf-more" aria-label="More of the site">
+              <ul>
+                <li><a href="evidence.html">Proof</a></li>
+                <li><a href="trust.html">Trust</a></li>
+                <li><a href="research.html">Research</a></li>
+                <li><a href="blog/index.html">Blog</a></li>
+              </ul>
+            </nav>
           </div>
         </div>
         {PLATE}

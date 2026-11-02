@@ -23,7 +23,7 @@
 .sw-key .k-b::before { width: 14px; height: 6px; background: rgba(245, 242, 236, .92); border-radius: 1px; }
 /* forced colours: the key keeps the canvas's swatches */
 @media (forced-colors: active) { .sw-key :is(.k-s, .k-r)::before { forced-color-adjust: none; } .sw-key .k-b::before { forced-color-adjust: none; background: CanvasText; } }
-.swarm-live .sw-follow { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 14px 8px 12px; border: 1px solid rgba(79, 203, 147, .55); border-radius: 2px; color: var(--accent); font: inherit; letter-spacing: var(--track-label, .12em); text-transform: uppercase; transition: background .2s, color .2s, border-color .2s; }
+.swarm-live .sw-follow { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 14px 8px 12px; border: 1px solid rgba(79, 203, 147, .55); border-radius: 2px; color: var(--accent); font: inherit; letter-spacing: var(--track-label, .12em); text-transform: uppercase; transition: background .2s var(--ease-out), color .2s var(--ease-out), border-color .2s var(--ease-out); }
 .sw-follow::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid currentColor; box-sizing: border-box; }
 @media (hover: hover) { .sw-follow:hover { background: rgba(79, 203, 147, .12); } }
 .sw-follow[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #0B110F; }
@@ -32,13 +32,15 @@
 
 /* the stage: the canvas fills a fixed band at the top (--sw-h) */
 .sw-stage { --sw-h: clamp(330px, calc(32vw + 70px), 560px); position: relative; background: radial-gradient(110% 95% at 6% 0%, rgba(30, 122, 90, .17), rgba(30, 122, 90, 0) 56%), radial-gradient(70% 60% at 52% 46%, rgba(245, 242, 236, .025), rgba(245, 242, 236, 0) 70%), linear-gradient(180deg, #0E1512 0%, #0B110F 100%); }
+/* above 1920 the cap is in rem (560 px at 1920, 1,120 at 3840): the lab keeps its 1920 proportion instead of a 4.4:1 strip */
+@media (min-width: 1921px) { .sw-stage { --sw-h: clamp(330px, calc(32vw + 70px), 35rem); } }
 .sw-on .sw-stage { padding-top: var(--sw-h); }
 .sw-stage canvas { display: none; }
 .sw-on .sw-stage canvas { display: block; position: absolute; left: 0; top: 0; width: 100%; height: var(--sw-h); touch-action: pan-y; }
 
 /* the six gates: a static diagram without JavaScript ... */
 .sw-gates { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0 14px; margin: 0; padding: 34px 22px 32px; list-style: none; }
-.sw-gates li { position: relative; padding: 20px 0 0; border-top: 1px solid var(--line-strong); font: 500 .66rem/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg); }
+.sw-gates li { position: relative; padding: 20px 0 0; border-top: 1px solid var(--line-strong); font: 500 var(--fs-label)/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg); }
 .sw-gates li::before { content: ""; position: absolute; left: 0; top: -4px; width: 7px; height: 7px; border-radius: 50%; background: var(--paper); }
 .sw-gates li.is-council::before { left: -4px; top: -8px; width: 15px; height: 15px; border: 1.5px solid var(--accent); background: none; box-sizing: border-box; }
 .sw-gates li:nth-child(n+5)::before { border-radius: 1px; background: var(--accent); }
@@ -53,15 +55,15 @@
 }
 /* ... and labels projected from the 3D gates with it (the descriptions stay for screen readers) */
 .sw-on .sw-gates { display: block; position: absolute; left: 0; top: 0; width: 100%; height: var(--sw-h); padding: 0; pointer-events: none; }
-.sw-on .sw-gates li { position: absolute; left: 0; top: 0; padding: 0; border: 0; white-space: nowrap; font-size: var(--mono-tick); line-height: 1.45; letter-spacing: var(--track-label, .12em); color: rgba(245, 242, 236, .8); transition: color .3s; will-change: transform; }
+.sw-on .sw-gates li { position: absolute; left: 0; top: 0; padding: 0; border: 0; white-space: nowrap; font-size: var(--mono-tick); line-height: 1.45; letter-spacing: var(--track-label, .12em); color: rgba(245, 242, 236, .8); transition: color .3s var(--ease-out); will-change: transform; }
 .sw-on .sw-gates li::before { display: none; }
-.sw-on .sw-gates b { margin-right: .35em; color: rgba(245, 242, 236, .5); transition: color .3s; }
+.sw-on .sw-gates b { margin-right: .35em; color: rgba(245, 242, 236, .5); transition: color .3s var(--ease-out); }
 .sw-on .sw-gates li.is-council span, .sw-on .sw-gates li.is-council b, .sw-on .sw-gates li:last-child b { color: var(--accent); }
 .sw-on .sw-gates li.is-hit b { color: var(--accent); } .sw-on .sw-gates li.is-hit span { color: var(--paper); }
 .sw-on .sw-gates small { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .swarm-live.is-halted .sw-gates li:first-child, .swarm-live.is-halted .sw-gates li:first-child b { color: var(--khaki); }
 /* the council's live state at 04: what it approves, what it rejects */
-.sw-on .sw-limit { display: block; margin-top: 2px; font-style: normal; font-size: var(--mono-tick); letter-spacing: .04em; text-transform: none; color: rgba(245, 242, 236, .62); transition: color .45s; }
+.sw-on .sw-limit { display: block; margin-top: 2px; font-style: normal; font-size: var(--mono-tick); letter-spacing: .04em; text-transform: none; color: rgba(245, 242, 236, .62); transition: color .45s var(--ease-out); }
 .sw-limit.is-all > span:nth-child(n+2) { display: none; }
 .sw-on .sw-gates li.is-tuned .sw-limit { color: var(--accent); transition-duration: .1s; }
 .sw-on.is-narrow .sw-limit:not(.is-all) > span:nth-child(-n+2) { display: none; }
@@ -88,7 +90,7 @@
 .sw-trace-state.is-live { color: var(--accent); } .sw-trace-state.is-ok { color: var(--accent); } .sw-trace-state.is-bad { color: var(--reject-bright); }
 .sw-trace-close { margin-left: auto; min-height: 34px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 2px; color: var(--fg-2); font: inherit; letter-spacing: var(--track-label, .12em); text-transform: uppercase; }
 @media (hover: hover) { .sw-trace-close:hover { border-color: var(--line-strong); color: var(--paper); } }
-.sw-log { margin: 0; padding: 3px 14px 7px; list-style: none; font-size: .64rem; line-height: 1.45; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
+.sw-log { margin: 0; padding: 3px 14px 7px; list-style: none; font-size: var(--fs-label); line-height: 1.45; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
 .sw-log li { display: grid; grid-template-columns: 4.4em 8.4em minmax(0, 1fr); align-items: center; gap: 10px; min-height: 2.1em; padding: 2px 0; border-bottom: 1px solid rgba(245, 242, 236, .08); color: var(--fg-2); }
 .sw-log li:last-child { border-bottom: 0; }
 .sw-log li[data-k="led"] { min-height: 34px; } /* the ledger row holds the record button's height from the start */
@@ -105,7 +107,7 @@
 .sw-log li.is-filled { animation: sw-fill .6s var(--ease) both; }
 @keyframes sw-fill { from { opacity: .4; } to { opacity: 1; } }
 /* the ledger's answer: the record it was chained into, one click from the ledger itself */
-.sw-rec { display: inline-flex; align-items: center; gap: 8px; min-height: 30px; margin: -3px 0; padding: 3px 10px; border: 1px solid rgba(79, 203, 147, .5); border-radius: 2px; color: var(--accent); font: inherit; letter-spacing: .03em; cursor: pointer; transition: background .2s, border-color .2s; }
+.sw-rec { display: inline-flex; align-items: center; gap: 8px; min-height: 30px; margin: -3px 0; padding: 3px 10px; border: 1px solid rgba(79, 203, 147, .5); border-radius: 2px; color: var(--accent); font: inherit; letter-spacing: .03em; cursor: pointer; transition: background .2s var(--ease-out), border-color .2s var(--ease-out); }
 @media (hover: hover) { .sw-rec:hover { background: rgba(79, 203, 147, .12); border-color: var(--accent); } }
 .sw-rec i { font-style: normal; transition: transform .25s var(--ease); }
 @media (hover: hover) { .sw-rec:hover i { transform: translateY(2px); } }
@@ -122,7 +124,7 @@
 .swarm-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: 1.9rem; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .swarm-stats span { display: block; margin-top: 8px; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); white-space: nowrap; }
 .swarm-controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 18px; align-items: end; padding: 14px 18px 12px; }
-.swarm-controls label { display: grid; gap: 6px; font-family: var(--mono); font-size: .66rem; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-2); }
+.swarm-controls label { display: grid; gap: 6px; font-family: var(--mono); font-size: var(--fs-label); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-2); }
 .swarm-controls output { color: var(--accent); }
 .swarm-controls output::before { content: "· "; color: var(--fg-2); } /* the separator is drawn, so the label's text is its name ('Agents in this model') plus the value */
 .swarm-controls input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; margin: 0; cursor: pointer; font-size: 16px; }
@@ -142,7 +144,7 @@
   .swarm-controls input[type=range]::-moz-range-track { height: 0; border-top: 1px solid CanvasText; }
 }
 .sw-btns { display: flex; flex-direction: column; flex-wrap: wrap; align-items: stretch; gap: 4px; align-self: end; } /* wraps: at 400% zoom (320 x 256) Pause takes its own row inside the lab */
-.swarm-controls .halt { font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; min-width: 7.6em; min-height: 44px; padding: 10px 18px; border: 1px solid var(--reject); color: var(--reject); border-radius: 2px; transition: background .25s, color .25s; }
+.swarm-controls .halt { font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; min-width: 7.6em; min-height: 44px; padding: 10px 18px; border: 1px solid var(--reject); color: var(--reject); border-radius: 2px; transition: background .25s var(--ease-out), color .25s var(--ease-out); }
 @media (hover: hover) { .swarm-controls .halt:hover { background: var(--reject); color: #0B110F; } }
 .swarm-live.is-halted .halt { background: var(--paper); color: #0B110F; border-color: var(--paper); }
 /* Pause motion: the overture's control, in the lab's own row */
@@ -256,7 +258,7 @@
 @media (scripting: enabled) {
   .swarm-live:not(.sw-on) :is(.sw-live, .sw-follow, .sw-key, .swarm-bar) { visibility: hidden; }
   .swarm-live:not(.sw-on) .sw-stage { min-height: var(--sw-h); }
-  .swarm-live:not(.sw-on) .sw-gates { position: absolute; left: 0; right: 0; top: 0; visibility: hidden; animation: sw-late 0s 6s forwards; animation-play-state: running !important; } /* one step: not paused off screen */
+  .swarm-live:not(.sw-on) .sw-gates { position: absolute; left: 0; right: 0; top: 0; visibility: hidden; animation: sw-late 0s var(--ease-out) 6s forwards; animation-play-state: running !important; } /* one step: not paused off screen */
   @keyframes sw-late { to { visibility: visible; } }
   @media (prefers-reduced-motion: no-preference) {
     .swarm-live:not(.sw-on) .sw-btns::after { content: ""; min-height: 30px; } /* Pause motion's place */

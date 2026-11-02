@@ -11,7 +11,7 @@
 
 /* without JavaScript: the same sessions as a plain list (home) — the evidence page has its table */
 .proof-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
-.proof-list li { display: grid; gap: 6px; padding: 14px 12px 12px; background: var(--bg); font-family: var(--mono); font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); }
+.proof-list li { display: grid; gap: 6px; padding: 14px 12px 12px; background: var(--bg); font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); }
 .proof-list b { font-weight: 500; color: var(--fg); }
 @media (max-width: 520px) { .proof-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
@@ -46,19 +46,19 @@
 .pf-gut { position: relative; font-family: var(--mono); font-size: var(--mono-tick); line-height: 1.3; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 .pf-y { position: absolute; left: 0; right: 10px; }
 .pf-y b { font-weight: 400; }
-.pf-y small { display: block; margin-top: 4px; font: .68rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); max-width: 15ch; }
+.pf-y small { display: block; margin-top: 4px; font: var(--fs-label)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); max-width: 15ch; }
 .pf-y .pf-n { font-style: normal; color: var(--fg); margin-left: .7em; }
 .pf-y .pf-ls { display: none; } /* a long label's short form, for the narrowest charts */
 .y-above { top: 0; }
 .y-floor { top: calc(var(--zg) + 7px); color: var(--fg-2); }
-.y-floor small { font: .7rem/1.3 var(--mono); letter-spacing: .02em; color: var(--fg); }
+.y-floor small { font: var(--fs-label)/1.3 var(--mono); letter-spacing: .02em; color: var(--fg); }
 .y-zero { top: var(--top); transform: translateY(-50%); }
 .y-prem { top: calc(var(--top) + var(--zr) * .22); transform: translateY(-50%); }
 .y-nav { top: calc(var(--top) + var(--zr) * .5); transform: translateY(-50%); }
 .y-disc { top: calc(var(--top) + var(--zr) * .78); transform: translateY(-50%); }
 .y-day { top: calc(var(--top) + var(--zr) + var(--zd) / 2); transform: translateY(-50%); }
 .y-ok { top: calc(var(--top) + var(--zr) + var(--zd) + var(--zo) / 2); transform: translateY(-50%); }
-@container (max-width: 540px) { .pf-y .pf-n { display: none; } .pf-y small { font-size: .625rem; } .pf-gut { letter-spacing: .06em; } .pf-y { right: 4px; } }
+@container (max-width: 540px) { .pf-y .pf-n { display: none; } .pf-y small { font-size: var(--fs-label); } .pf-gut { letter-spacing: .06em; } .pf-y { right: 4px; } }
 /* phones under ~340 px: a narrower gutter keeps every lane (the tap target) at least 24 px wide */
 @container (max-width: 300px) {
   .pf, .proof:not(.is-built)::before { --gut: 38px; }
@@ -71,12 +71,12 @@
 @supports not (width: 1cqi) {
   @media (max-width: 340px) { .pf, .proof:not(.is-built)::before { --gut: 38px; } .pf-gut { letter-spacing: .02em; } .pf-y { right: 2px; } .pf-y .pf-lw, .y-above small, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { font-size: var(--mono-tick); letter-spacing: 0; white-space: nowrap; } }
 }
-/* 4K at 100 % (Home; Proof has its own in proof.css): the root grows with the viewport (home.css), so the chart's gutter,
+/* 4K at 100 % (Home; Proof has its own in proof.css): above 1920 the root grows with the viewport (site.css), so the chart's gutter,
    blocks and zones move to rem with its labels. In px the gutter stopped at 108 px while the type grew, and at 3840
    "exact value not published" wrapped to three lines across the floor rule. Now the chart is the 1440 chart, scaled:
    the hedge on two lines above the floor (zone = one open block + 2.25rem, as at 1440). The unbuilt box (r4) takes the
-   same sizes, so the build still moves nothing. */
-@media (min-width: 2400px) {
+   same sizes, so the build still moves nothing. From 1921 px, where the root starts growing (equal at 1920; integrate a1). */
+@media (min-width: 1921px) {
   @supports (width: 1cqi) {
     body[data-page="home"] .pf, body[data-page="home"] .proof:not(.is-built)::before {
       --gut: clamp(4rem, 15cqi, 6.75rem); --b: clamp(.5625rem, calc(var(--lane) * .34), 1.0625rem); --g: clamp(.125rem, calc(var(--b) * .2), .1875rem);
@@ -100,7 +100,7 @@
 
 .pf-plot { position: relative; min-width: 0; }
 .pf-trace { position: absolute; left: 0; top: var(--top); width: 100%; height: var(--zr); overflow: visible; pointer-events: none; clip-path: inset(-4px 0 -4px 0); } /* explicit, so the entrance wipe can interpolate */
-.pf-trace path { fill: none; stroke: var(--fg-3); stroke-width: 1px; transition: stroke .25s var(--ease), stroke-width .25s; }
+.pf-trace path { fill: none; stroke: var(--fg-3); stroke-width: 1px; transition: stroke .25s var(--ease), stroke-width .25s var(--ease-out); }
 .pf-trace .pf-riser { stroke: var(--line-strong); }
 .pf-trace .pf-seg.is-on { stroke: var(--fg); stroke-width: 2px; }
 .pf-trace .pf-area { fill: var(--fg); stroke: none; opacity: .05; transition: opacity .25s var(--ease); }
@@ -130,12 +130,12 @@
 
 /* the regime dot (on the trace), the day, the broker tick */
 .pf-r { position: relative; width: 100%; transition: opacity .3s var(--ease); }
-.pf-r i { position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--fg-2); box-shadow: 0 0 0 2px var(--bg); transition: background .25s, transform .3s var(--ease); }
+.pf-r i { position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--fg-2); box-shadow: 0 0 0 2px var(--bg); transition: background .25s var(--ease-out), transform .3s var(--ease); }
 .pf-lane[data-side="1"] .pf-r i { top: 22%; }
 .pf-lane[data-side="-1"] .pf-r i { top: 78%; }
 .pf-lane[data-side="0"] .pf-r i { background: var(--bg); box-shadow: inset 0 0 0 1px var(--fg-3), 0 0 0 2px var(--bg); }
 .pf-lane.is-on .pf-r i { background: var(--fg); transform: scale(1.3); }
-.pf-d { align-self: center; font-family: var(--mono); font-size: .66rem; letter-spacing: .06em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color .25s; }
+.pf-d { align-self: center; font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .06em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color .25s var(--ease-out); }
 .pf-lane.is-on .pf-d { color: var(--fg); }
 .pf-o { align-self: center; display: grid; place-items: center; transition: opacity .3s var(--ease); }
 .pf-o svg { width: 12px; height: 12px; fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -151,8 +151,8 @@
 .pf-cells { display: grid; grid-template-columns: .8fr 1.1fr 1fr 1.45fr .8fr; column-gap: 12px; }
 .pf-cell { min-width: 0; padding-top: 18px; }
 .pf-k { display: block; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
-.pf-v { display: block; margin-top: 10px; font-family: var(--serif); font-size: 1.35rem; font-size: clamp(1.2rem, 2.6cqi, 1.6rem); line-height: 1.05; letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; }
-.pf-s { display: block; margin-top: 7px; font-size: .74rem; line-height: 1.35; color: var(--fg-2); }
+.pf-v { display: block; margin-top: 10px; font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.05; letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; }
+.pf-s { display: block; margin-top: 7px; font-size: var(--fs-small); line-height: 1.35; color: var(--fg-2); }
 @container (max-width: 660px) {
   .pf-cells { grid-template-columns: 1fr 1fr; column-gap: 16px; }
   .pf-cell:first-child { grid-column: 1 / -1; }
@@ -175,18 +175,18 @@
 @media screen {
   .proof.pf-now, .proof.pf-now *, .proof.pf-now *::before, .proof.pf-now *::after { transition: none !important; animation: none !important; }
   .proof.is-armed:not(.is-in) .pf-floor { transform: scaleX(0); }
-  .proof.is-armed .pf-floor { transition: transform .5s cubic-bezier(.65, 0, .35, 1); }
-  .proof.is-armed.is-in .pf-floor { animation: pf-lit .3s ease-out .8s both; }
+  .proof.is-armed .pf-floor { transition: transform .5s var(--ease-move); }
+  .proof.is-armed.is-in .pf-floor { animation: pf-lit .3s var(--ease-out) .8s both; }
   .proof.is-armed:not(.is-in) .pf-c i { opacity: 0; transform: translateY(-12px); }
-  .proof.is-armed .pf-c i { transition: opacity .12s linear, transform .28s cubic-bezier(.34, 1.56, .64, 1); transition-delay: calc(120ms + var(--k) * 52ms + var(--l) * 4ms); }
+  .proof.is-armed .pf-c i { transition: opacity .12s linear, transform .28s var(--ease-out); transition-delay: calc(120ms + var(--k) * 52ms + var(--l) * 4ms); }
   .proof.is-armed:not(.is-in) .pf-g i { opacity: 0; transform: translateY(8px); }
   .proof.is-armed .pf-g i { transition: opacity .18s linear, transform .26s var(--ease); transition-delay: calc(120ms + (var(--n) + var(--k)) * 52ms + var(--l) * 4ms); }
   .proof.is-armed:not(.is-in) :is(.pf-gut, .pf-base, .pf-nav) { opacity: 0; }
   .proof.is-armed :is(.pf-gut, .pf-base, .pf-nav) { transition: opacity .45s var(--ease) 60ms; }
   .proof.is-armed:not(.is-in) .pf-trace { clip-path: inset(-4px 100% -4px 0); }
-  .proof.is-armed .pf-trace { transition: clip-path .74s cubic-bezier(.65, 0, .35, 1) .2s; }
+  .proof.is-armed .pf-trace { transition: clip-path .74s var(--ease-move) .2s; }
   .proof.is-armed:not(.is-in) .pf-r i { opacity: 0; transform: scale(.2); }
-  .proof.is-armed .pf-r i { transition: opacity .18s linear, transform .28s cubic-bezier(.34, 1.56, .64, 1); transition-delay: calc(320ms + var(--l) * 48ms); }
+  .proof.is-armed .pf-r i { transition: opacity .18s linear, transform .28s var(--ease-out); transition-delay: calc(320ms + var(--l) * 48ms); }
   .proof.is-armed:not(.is-in) .pf-d { opacity: 0; }
   .proof.is-armed .pf-d { transition: opacity .34s var(--ease) calc(260ms + var(--l) * 36ms); }
   .proof.is-armed:not(.is-in) .pf-o path { stroke-dashoffset: 1; }
@@ -201,11 +201,11 @@
 .pf { --pf-sheen: rgba(30, 122, 90, .55); }
 .is-dark .pf { --pf-sheen: rgba(214, 255, 233, .75); }
 @keyframes pf-sheen { 0% { transform: translateX(-100%); opacity: 0; } 14%, 76% { opacity: 1; } 100% { transform: translateX(567%); opacity: 0; } } /* at 567% of its own 15% its right edge rests on the floor's end, never past it */
-.proof.is-in .pf-floor::after { animation: pf-sheen 1.6s cubic-bezier(.45, 0, .55, 1) 1.2s both; }
+.proof.is-in .pf-floor::after { animation: pf-sheen 1.6s var(--ease-move) 1.2s both; }
 .proof.is-away .pf-floor::after { animation-play-state: paused; }
 /* the session in hand counts itself up to the floor, one basis point at a time */
 @keyframes pf-count { 0%, 100% { filter: none; } 35% { filter: brightness(1.75) saturate(1.1); } }
-.proof:not(.is-armed) .pf-lane.is-on .pf-c i:not(.is-void) { animation: pf-count .5s ease-out both; animation-delay: calc(var(--k) * 26ms); }
+.proof:not(.is-armed) .pf-lane.is-on .pf-c i:not(.is-void) { animation: pf-count .5s var(--ease-out) both; animation-delay: calc(var(--k) * 26ms); }
 @media (prefers-reduced-motion: reduce) { .proof *, .proof *::before, .proof *::after { animation: none !important; transition: none !important; } }
 
 /* print: the figure as drawn, in ink and signal green */

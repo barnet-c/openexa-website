@@ -4,22 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Trust &amp; governance — OpenEXA · Nothing settles that didn’t pass.</title>
-  <meta name="description" content="How OpenEXA governs autonomous agents: the Execution Council gate on every proposal, scoped and revocable permissions, custody that never moves, three operating modes, a database-backed halt and an append-only, hash-chained ledger.">
+  <meta name="description" content="Agents propose; the Execution Council approves or rejects every proposal against your policy. Scoped, revocable permissions; a hash-chained, append-only ledger.">
   <meta name="theme-color" content="#F5F2EC">
   <link rel="canonical" href="https://www.openexa.com/trust.html">
   <meta property="og:url" content="https://www.openexa.com/trust.html">
   <meta property="og:site_name" content="OpenEXA">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Trust &amp; governance — OpenEXA · Nothing settles that didn’t pass.">
-  <meta property="og:description" content="How OpenEXA governs autonomous agents: the Execution Council gate on every proposal, scoped and revocable permissions, custody that never moves, three operating modes, a database-backed halt and an append-only, hash-chained ledger.">
+  <meta property="og:description" content="Agents propose; the Execution Council approves or rejects every proposal against your policy. Scoped, revocable permissions; a hash-chained, append-only ledger.">
   <meta property="og:image" content="https://www.openexa.com/assets/img/og/trust.jpg">
-  <meta property="og:image:alt" content="Trust &amp; governance — OpenEXA · Nothing settles that didn’t pass.">
+  <meta property="og:image:alt" content="Nothing settles that didn’t pass. Beside it, the page’s plate: the Council over the record: a proposal passes and settles; a rejected one is logged. Schematic.">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Trust &amp; governance — OpenEXA · Nothing settles that didn’t pass.">
-  <meta name="twitter:description" content="How OpenEXA governs autonomous agents: the Execution Council gate on every proposal, scoped and revocable permissions, custody that never moves, three operating modes, a database-backed halt and an append-only, hash-chained ledger.">
+  <meta name="twitter:description" content="Agents propose; the Execution Council approves or rejects every proposal against your policy. Scoped, revocable permissions; a hash-chained, append-only ledger.">
   <meta name="twitter:image" content="https://www.openexa.com/assets/img/og/trust.jpg">
+  <meta name="twitter:image:alt" content="Nothing settles that didn’t pass. Beside it, the page’s plate: the Council over the record: a proposal passes and settles; a rejected one is logged. Schematic.">
   <meta name="robots" content="max-image-preview:large">
   <link rel="alternate" type="application/atom+xml" title="OpenEXA Blog" href="/blog/feed.xml">
   <link rel="alternate" type="application/atom+xml" title="OpenEXA Research" href="/research/feed.xml">
@@ -31,7 +33,7 @@
   <link rel="stylesheet" href="assets/css/site.css">
   <link rel="stylesheet" href="assets/css/ledger.css">
   <link rel="stylesheet" href="assets/css/proof.css">
-  <script type="application/ld+json" id="ld-page">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"https://www.openexa.com/trust.html#webpage","url":"https://www.openexa.com/trust.html","name":"Trust & governance — OpenEXA · Nothing settles that didn’t pass.","description":"How OpenEXA governs autonomous agents: the Execution Council gate on every proposal, scoped and revocable permissions, custody that never moves, three operating modes, a database-backed halt and an append-only, hash-chained ledger.","isPartOf":{"@type":"WebSite","@id":"https://www.openexa.com/#website","name":"OpenEXA","url":"https://www.openexa.com/"},"primaryImageOfPage":"https://www.openexa.com/assets/img/og/trust.jpg","inLanguage":"en"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenEXA","item":"https://www.openexa.com/"},{"@type":"ListItem","position":2,"name":"Trust & governance","item":"https://www.openexa.com/trust.html"}]}]}</script>
+  <script type="application/ld+json" id="ld-page">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"https://www.openexa.com/trust.html#webpage","url":"https://www.openexa.com/trust.html","name":"Trust & governance — OpenEXA · Nothing settles that didn’t pass.","description":"Agents propose; the Execution Council approves or rejects every proposal against your policy. Scoped, revocable permissions; a hash-chained, append-only ledger.","isPartOf":{"@type":"WebSite","@id":"https://www.openexa.com/#website","name":"OpenEXA","url":"https://www.openexa.com/"},"primaryImageOfPage":"https://www.openexa.com/assets/img/og/trust.jpg","inLanguage":"en"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenEXA","item":"https://www.openexa.com/"},{"@type":"ListItem","position":2,"name":"Trust & governance","item":"https://www.openexa.com/trust.html"}]}]}</script>
 </head>
 <body data-page="trust">
   <a class="skip" href="#main">Skip to content</a>
@@ -110,6 +112,8 @@
             </span>
             <span class="sr-only" role="status" data-lt-say></span>
           </div>
+          <!-- the inspected record's lineage, one line, from the same records (trust.js; 1200 px and up, with scripts) -->
+          <p class="tr-lin" data-lt-lin aria-hidden="true"></p>
           <div class="lt-stage">
           <div class="lt-view">
             <ol class="lt-track" aria-label="Ledger records, oldest first">
@@ -178,9 +182,9 @@
             <h2 class="display-2" data-reveal>Custody.</h2>
             <p class="body-lg mt-3" data-reveal style="--d:80ms">Assets stay in your brokerage account; agents act through scoped permissions, revocable per agent, and can never withdraw.</p>
           </div>
-          <figure class="col-8 tr-cu-plate" data-reveal style="--d:120ms" role="img" aria-label="Your broker holds the assets; an agent acts through one scoped, revocable permission; a withdrawal stops at the account's wall. Schematic.">
-            <div class="hp-art tr-cud" aria-hidden="true"><svg viewBox="0 0 600 160" focusable="false"><rect class="hp-h hp-strong" x="250" y="14" width="344" height="132" rx="2"/><path class="hp-h" d="M266 128H582"/><rect class="hp-rec" x="420" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="448" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="476" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="504" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="532" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="560" y="118" width="20" height="10" rx="1.2"/><circle class="hp-g" cx="64" cy="64" r="7"/><path class="hp-gl" d="M71 64H330V117"/><rect class="hp-gf" x="246.5" y="60.5" width="7" height="7" rx="1"/><rect class="hp-gf" x="323" y="118" width="14" height="10" rx="1.2"/><path class="hp-r hp-dash" d="M430 116C410 100 330 96 258 96"/><path class="hp-r hp-lit" d="M250 84V108"/></svg><div class="hp-labs"><span class="hp-lab hp-lab--c tr-cu-xs" style="--x:10.7;--y:27.5">Agent</span><span class="hp-lab hp-lab--c hp-lab--acc tr-cu-xs" style="--x:26.3;--y:31.2">Scoped · revocable</span><span class="hp-lab" style="--x:44.3;--y:21.2">Your broker</span><span class="hp-lab hp-lab--r hp-lab--rej" style="--x:40.0;--y:60.0">No withdrawal</span><span class="hp-lab hp-lab--c tr-cu-xs" style="--x:84.0;--y:65.0">Assets</span></div></div>
-            <figcaption class="figure-cap" aria-hidden="true"><span class="fc-h">Schematic</span></figcaption>
+          <figure class="col-8 tr-cu-plate" data-reveal style="--d:120ms">
+            <div class="hp-art tr-cud" role="img" aria-label="Your broker holds the assets; an agent acts through one scoped, revocable permission; a withdrawal stops at the account's wall."><svg viewBox="0 0 600 160" focusable="false"><rect class="hp-h hp-strong" x="250" y="14" width="344" height="132" rx="2"/><path class="hp-h" d="M266 128H582"/><rect class="hp-rec" x="420" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="448" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="476" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="504" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="532" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="560" y="118" width="20" height="10" rx="1.2"/><circle class="hp-g" cx="64" cy="64" r="7"/><path class="hp-gl" d="M71 64H330V117"/><rect class="hp-gf" x="246.5" y="60.5" width="7" height="7" rx="1"/><rect class="hp-gf" x="323" y="118" width="14" height="10" rx="1.2"/><path class="hp-r hp-dash" d="M430 116C410 100 330 96 258 96"/><path class="hp-r hp-lit" d="M250 84V108"/></svg><div class="hp-labs"><span class="hp-lab hp-lab--c tr-cu-xs" style="--x:10.7;--y:27.5">Agent</span><span class="hp-lab hp-lab--c hp-lab--acc tr-cu-xs" style="--x:26.3;--y:31.2">Scoped · revocable</span><span class="hp-lab" style="--x:44.3;--y:21.2">Your broker</span><span class="hp-lab hp-lab--r hp-lab--rej" style="--x:40.0;--y:60.0">No withdrawal</span><span class="hp-lab hp-lab--c tr-cu-xs" style="--x:84.0;--y:65.0">Assets</span></div></div>
+            <figcaption class="figure-cap"><span class="fc-h">Schematic</span></figcaption>
           </figure>
         </div>
       </div>

@@ -39,11 +39,11 @@
 .hero-stats b em { font-style: normal; color: var(--signal-bright); }
 .hero-stats span { display: block; margin-top: 9px; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58); line-height: 1.4; }
 /* Lifecycle 01: a numeral like its neighbours, with the live dot */
-.hero-stats .live { display: inline-block; width: 6px; height: 6px; margin-left: 9px; border-radius: 50%; background: var(--signal-bright); vertical-align: .62em; animation: pulse 2s ease-in-out infinite; }
+.hero-stats .live { display: inline-block; width: 6px; height: 6px; margin-left: 9px; border-radius: 50%; background: var(--signal-bright); vertical-align: .62em; animation: pulse 2s var(--ease-move) 3; } /* three beats, then still, as .badge i (WCAG 2.2.2; award a1: it was the one CSS animation on the site that never stopped) */
 /* the chapter mark: absent at rest; inside a hand-over the incoming scene's numeral rises above the copy column and rolls over */
 .story-num { position: absolute; left: var(--story-in-l); top: calc(var(--nav-h) + clamp(16px, 4.5vh, 48px)); opacity: 0; pointer-events: none; color: var(--paper); will-change: opacity, transform; }
 .story-num b, .story-num span { display: block; overflow: hidden; transform-origin: 0 0; }
-.story-num i { display: block; font-style: normal; transform: translate3d(0, calc(var(--roll, 0) * -100%), 0); transition: transform .6s cubic-bezier(.2, .9, .25, 1.12); } /* two lines, rolled like a counter */
+.story-num i { display: block; font-style: normal; transform: translate3d(0, calc(var(--roll, 0) * -100%), 0); transition: transform .6s var(--ease-move); } /* two lines, rolled like a counter */
 .story-num b { height: 1em; font: 400 clamp(6rem, 12vw, 10.5rem)/1 var(--serif); letter-spacing: -0.045em; color: rgba(245, 242, 236, .16); font-variant-numeric: tabular-nums; }
 .story-num b i { height: 1em; }
 .story-num span { height: 1.4em; margin-top: 4px; font: var(--mono-tick)/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .62); }
@@ -65,18 +65,18 @@
 .story-labels { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
 .story-leaders { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 /* callouts, leaders and nodes take their opacity from story.js */
-.story-leader { fill: none; stroke: rgba(245, 242, 236, .3); stroke-width: 1; opacity: 0; transition: stroke .25s; }
+.story-leader { fill: none; stroke: rgba(245, 242, 236, .3); stroke-width: 1; opacity: 0; transition: stroke .25s var(--ease-out); }
 .story-leader.is-live, .story-leader.is-council, .story-leader.bound { stroke: rgba(79, 203, 147, .5); }
 .story-leader.is-hot { stroke: rgba(245, 242, 236, .75); }
 .story-node { fill: rgba(245, 242, 236, .86); opacity: 0; } /* where a leader meets its own ring */
 .story-node.is-live { fill: var(--signal-bright); }
-.story-lab { position: absolute; left: 0; top: 0; font: 400 var(--mono-tick)/1.35 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .66); white-space: nowrap; opacity: 0; transition: color .25s; user-select: text; pointer-events: none; }
+.story-lab { position: absolute; left: 0; top: 0; font: 400 var(--mono-tick)/1.35 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .66); white-space: nowrap; opacity: 0; transition: color .25s var(--ease-out); user-select: text; pointer-events: none; }
 .story-lab.is-on { pointer-events: auto; }
 button.story-lab { cursor: pointer; text-align: left; }
 button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outline-offset: 3px; }
 .story-lab b { font-weight: 500; color: rgba(245, 242, 236, .86); }
 .story-lab .k { color: rgba(245, 242, 236, .92); font-variant-numeric: tabular-nums; }
-.story-lab .n { color: rgba(245, 242, 236, .6); transition: color .25s; }
+.story-lab .n { color: rgba(245, 242, 236, .6); transition: color .25s var(--ease-out); }
 .story-lab .dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } /* read by screen readers; shown in the inspector */
 .story-lab.ring, .story-lab.layer, .story-lab.gate, .story-lab.note, .story-lab.bound { display: flex; align-items: center; gap: 10px; min-height: 22px; padding: 2px 0; }
 .story-lab .st { padding: 3px 6px 2px; border: 1px solid rgba(245, 242, 236, .24); border-radius: 2px; font-size: var(--mono-tick); letter-spacing: .12em; color: rgba(245, 242, 236, .7); }
@@ -114,7 +114,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-bar .container { height: 100%; display: flex; align-items: center; gap: 22px; }
 .story-idx { pointer-events: auto; margin-right: auto; }
 .story-idx ol { display: flex; gap: 6px; }
-.story-idx button { position: relative; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 14px 4px 0; font: var(--mono-tick)/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: rgba(245, 242, 236, .54); transition: color .3s; }
+.story-idx button { position: relative; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 14px 4px 0; font: var(--mono-tick)/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: rgba(245, 242, 236, .54); transition: color .3s var(--ease-out); }
 .story-idx button .n { font-variant-numeric: tabular-nums; }
 .story-idx button::before, .story-idx button i { content: ""; position: absolute; left: 0; right: 14px; bottom: 9px; height: 1px; background: rgba(245, 242, 236, .16); }
 .story-idx button i { background: rgba(245, 242, 236, .8); transform: scaleX(var(--fill, 0)); transform-origin: left; }
@@ -227,12 +227,12 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
   html { --story-net: 4s; }
   html.story-wait { --story-net: 20s; }
   html.story-failed { --story-net: 0s; }
-  html:not(.story-ready):not(.no-webgl) .story { animation: story-static-h 1ms var(--story-net) forwards; }
-  html:not(.story-ready):not(.no-webgl) .story-stage { animation: story-static-stage 1ms var(--story-net) forwards; }
-  html:not(.story-ready):not(.no-webgl) .story-ui { animation: story-static-ui 1ms var(--story-net) forwards; }
-  html:not(.story-ready):not(.no-webgl) .beat { animation: story-static-beat 1ms var(--story-net) forwards; }
-  html:not(.story-ready):not(.no-webgl) .beat [data-split] .wi { animation: story-static-wi 1ms var(--story-net) forwards; }
-  html:not(.story-ready):not(.no-webgl) .story-bar, html:not(.story-ready):not(.no-webgl) .story-labels { animation: story-static-off 1ms var(--story-net) forwards; }
+  html:not(.story-ready):not(.no-webgl) .story { animation: story-static-h 1ms var(--ease-out) var(--story-net) forwards; }
+  html:not(.story-ready):not(.no-webgl) .story-stage { animation: story-static-stage 1ms var(--ease-out) var(--story-net) forwards; }
+  html:not(.story-ready):not(.no-webgl) .story-ui { animation: story-static-ui 1ms var(--ease-out) var(--story-net) forwards; }
+  html:not(.story-ready):not(.no-webgl) .beat { animation: story-static-beat 1ms var(--ease-out) var(--story-net) forwards; }
+  html:not(.story-ready):not(.no-webgl) .beat [data-split] .wi { animation: story-static-wi 1ms var(--ease-out) var(--story-net) forwards; }
+  html:not(.story-ready):not(.no-webgl) .story-bar, html:not(.story-ready):not(.no-webgl) .story-labels { animation: story-static-off 1ms var(--ease-out) var(--story-net) forwards; }
 }
 @keyframes story-static-h { to { height: auto; } }
 @keyframes story-static-stage { to { position: relative; height: auto; min-height: 100svh; } }
@@ -326,3 +326,5 @@ html.story-tiny .story .story-coda { display: none; }
   .story, .story * { color: #000 !important; }
 }
 /* v2:overture:end */
+/* wide screens (award a1): above 1920 px the page grows with the window (site.css); the live dot grows with it */
+@media (min-width: 1921px) { .hero-stats .live { width: .375rem; height: .375rem; margin-left: .5625rem; } }

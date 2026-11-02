@@ -472,13 +472,20 @@
     t.focus({ preventScroll: true });
   }
 
-  /* ---------------- page transitions: leaving the overture holds its last frame ---------------- */
+  /* ---------------- page transitions: leaving the overture fades like every other page ----------------
+     (award a1) A WebGL canvas is not kept for the outgoing snapshot, so leaving the stage used to skip the transition (a
+     hard cut). Now the stage's canvases are hidden for the snapshot (html.vt-out, site.css): the dark stage and its copy
+     fade out as any page does. Back from the bfcache, the class is gone before the page shows. */
   const stageEl = $('.story-stage');
-  if (stageEl) window.addEventListener('pageswap', e => {
-    if (!e.viewTransition) return;
-    const r = stageEl.getBoundingClientRect();
-    if (r.height > 0 && r.bottom > 0 && r.top < window.innerHeight) e.viewTransition.skipTransition();
-  });
+  if (stageEl) {
+    window.addEventListener('pageswap', e => {
+      if (!e.viewTransition) return;
+      const r = stageEl.getBoundingClientRect();
+      if (r.height > 0 && r.bottom > 0 && r.top < window.innerHeight) root.classList.add('vt-out');
+    });
+    window.addEventListener('pageshow', () => root.classList.remove('vt-out'));
+    window.addEventListener('pagereveal', () => root.classList.remove('vt-out'));
+  }
 
   if (nav) {
     // (v2x) no layout read in a script task: every measure waits for the frame, which lays out anyway. (r2: fonts.ready
@@ -609,7 +616,7 @@
   const bottom = $('.footer .bottom');
   if (bottom) {
     const span = document.createElement('span'); span.className = 'clocks';
-    span.innerHTML = '<span><b>Seattle</b> <time data-tz="America/Los_Angeles"></time></span><span><b>New York</b> <time data-tz="America/New_York"></time></span>';
+    span.innerHTML = '<span><b>Seattle</b> <time data-tz="America/Los_Angeles"></time></span> <span><b>New York <small>· market time</small></b> <time data-tz="America/New_York"></time></span>';
     bottom.appendChild(span);
     const fmts = $$('time[data-tz]', span).map(t => ({ t, f: new Intl.DateTimeFormat('en-US', { timeZone: t.dataset.tz, hourCycle: 'h23', hour: '2-digit', minute: '2-digit' }) }));
     const tick = () => { const now = new Date(); fmts.forEach(({ t, f }) => { t.textContent = f.format(now); t.dateTime = now.toISOString(); }); setTimeout(tick, 60050 - now % 60000); };

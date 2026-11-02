@@ -209,7 +209,9 @@
     arm(j); f.focus();
     try { const r = document.createRange(), s = getSelection(); r.selectNodeContents(f); s.removeAllRanges(); s.addRange(r); } catch (err) { /* the caret stays where focus put it */ }
   }
-  idx.forEach((b, j) => b.addEventListener('click', () => edit(j)));
+  // a1-dev: the whole record row is the press target (the number alone was 15 x 20 px on a phone); a press inside a
+  // field still puts the caret where it lands
+  list.addEventListener('click', e => { const j = rows.indexOf(e.target.closest('li')); if (j >= 0 && !e.target.closest('[contenteditable]')) edit(j); });
   list.addEventListener('focusin', e => { const f = e.target.closest('.ev, .what'); if (f && f.isContentEditable) arm(rows.indexOf(f.parentNode)); });
   list.addEventListener('focusout', e => { const to = e.relatedTarget; if (armed >= 0 && !(to && to.parentNode === rows[armed] && to.matches('.ev, .what'))) arm(-1); });
   let t = 0;

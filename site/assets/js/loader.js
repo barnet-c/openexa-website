@@ -8,15 +8,16 @@
    arriving from another page of the site) gets the short version: the mark, no count, for as long as the stage needs and
    no longer.
    The failsafe: 1.9-2.2 s after navigation the loader is gone (v2x; it was 2.3-2.6 s). A fade on the document timeline (the compositor runs it, so
-   scripts that hold the main thread cannot delay it) takes it away at that moment unless the curtain has lifted; a
-   count that has not reached 100 by then is never shown again (the loader is removed at once: no count, no curtain),
-   and a timer removes it then whatever else is running. A count that reached 100 before it always lifts its curtain:
-   .is-done comes with '100', and site.css holds a first visit's curtain for a 90 ms beat in its own transition delay, on
+   scripts that hold the main thread cannot delay it) takes it away at that moment unless the hand-off has run; a
+   count that has not reached 100 by then is never shown again (the loader is removed at once: no count, no hand-off),
+   and a timer removes it then whatever else is running. A count that reached 100 before it always hands off:
+   .is-done comes with '100', and site.css holds a first visit's hand-off for a 90 ms beat in its own transition delay, on
    the compositor, so no long task can stretch the beat or skip it (r4; it was a 90 ms timer). Without this script a CSS
    animation (v2:nav) still fades it out 1.9-2.2 s after its first frame. While the loader is up, Tab stays on the skip link:
    nothing hidden beneath the loader takes keyboard focus. (The page is not made inert, which would restyle all of it
    twice on the loader's path; reading the loader's own animations needs only the styles its first frame computes.)
-   v2x (30 Oct): shorter (a first visit holds 600 ms to 1.2 s, the curtain lifts in .7 s) and cheaper: the count and the
+   award a1 (1 Nov): the curtain is gone; at '100' the loader hands off to the overture (AWARD_BAR L4, below).
+   v2x (30 Oct): shorter (a first visit holds 600 ms to 1.2 s, the hand-off takes .7 s) and cheaper: the count and the
    dial are written only when the count's number changes (at most 100 small writes, not one per frame), the idle sweep
    is read from the clock instead of from computed style, and the page is told it is ready in a task of its own, so what
    answers 'oxa:loaded' does not run inside the loader's frame. */
@@ -33,7 +34,7 @@
   const skip = document.querySelector('.skip');
   const trap = e => { if (e.key === 'Tab' && skip) { e.preventDefault(); skip.focus(); } };
   const hold = on => { if (on) document.addEventListener('keydown', trap, true); else document.removeEventListener('keydown', trap, true); };
-  // the overture's first headline rises as the curtain lifts; the page is told it is ready
+  // the overture's first headline rises as the loader hands off; the page is told it is ready
   const loaded = () => {
     document.querySelectorAll('.beat-0 [data-split]').forEach(el => el.classList.add('is-in'));
     root.classList.add('is-loaded');
@@ -41,7 +42,7 @@
     setTimeout(() => document.dispatchEvent(new CustomEvent('oxa:loaded')), 0);
   };
   let gone = false;
-  const drop = () => { // at once: no count, no curtain (the page is told it is ready in the next task, so the loader's
+  const drop = () => { // at once: no count, no hand-off (the page is told it is ready in the next task, so the loader's
     // removal is not held up by everything that answers 'oxa:loaded' on a busy device)
     if (gone) return;
     gone = true;
@@ -90,6 +91,37 @@
     shown = t; count.textContent = t;
     if (dial && !seen) dial.style.setProperty('--lp', (n / 100).toFixed(2));
   };
+  /* the hand-off (award a1, AWARD_BAR L4): where the dial goes. The overture publishes its globe's place on <html> as
+     inline custom properties (--globe-x, --globe-y, --globe-r: px in the window; story.js, home); until it does, the
+     place is estimated as the overture lays it out: right of the opening copy (wide), or above it (stacked: phones,
+     tablets); a window too short for either dissolves where it is. Read once, after load. */
+  const RM = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const handoff = () => {
+    if (RM.matches || !dial) return;
+    try {
+      const st = root.style, W = window.innerWidth, H = window.innerHeight;
+      let x = parseFloat(st.getPropertyValue('--globe-x')), y = parseFloat(st.getPropertyValue('--globe-y')), r = parseFloat(st.getPropertyValue('--globe-r'));
+      if (!(r > 0)) {
+        const copy = document.querySelector('.beat-0 .beat-text'), b = copy && H >= 420 ? copy.getBoundingClientRect() : null;
+        const g = Math.max(20, Math.min(56, W * 0.04)) * Math.max(1, W / 1920), nav = (W < 961 ? 64 : 72) * Math.max(1, W / 1920);
+        if (b && b.right > 0 && W >= 961) { // beside the copy, between the bar and the scene index
+          const x0 = Math.min(b.right + 36, W * 0.56), x1 = W - g, y0 = nav + 22, y1 = H - nav;
+          x = (x0 + x1) / 2; y = (y0 + y1) / 2; r = Math.min(x1 - x0, y1 - y0) / 2 * 0.7;
+        } else if (b && b.top > H * 0.3) { // stacked (phones, tablets): above the copy, under the scene index
+          const x0 = g / 2, x1 = W - g / 2, y0 = nav + 56, y1 = b.top - 14;
+          if (y1 - y0 > 120) { x = (x0 + x1) / 2; y = (y0 + y1) / 2; r = Math.min(x1 - x0, y1 - y0) / 2 * 0.85; }
+        }
+      }
+      const d = dial.getBoundingClientRect(), half = d.width / 2;
+      if (!(half > 0)) return;
+      if (r > 0) {
+        loader.style.setProperty('--hx', (x - (d.left + half)).toFixed(1) + 'px');
+        loader.style.setProperty('--hy', (y - (d.top + half)).toFixed(1) + 'px');
+        loader.style.setProperty('--hr', (r / half).toFixed(3)); // the tick ring opens to the globe's limb
+        loader.style.setProperty('--hm', (r / half).toFixed(3)); // the mark grows with the ring (a third of the globe) as it gives way to the globe's points
+      }
+    } catch (e) { /* the CSS defaults: a dissolve in place */ }
+  };
   const complete = () => {
     if (completed || gone) return;
     completed = true;
@@ -99,10 +131,11 @@
     body.classList.remove('is-loading');
     hold(false);
     loaded();
-    // the curtain, in the frame that shows '100' (.is-done also stops the CSS failsafe); a first visit's decision reads
+    // the hand-off, in the frame that shows '100' (.is-done also stops the CSS failsafe); a first visit's decision reads
     // for a beat (the aperture pulses green) while its transitions wait out their 90 ms delay (site.css)
+    handoff();
     loader.classList.add('is-done');
-    setTimeout(() => { if (!gone) { gone = true; loader.remove(); } }, seen ? 500 : 990);
+    setTimeout(() => { if (!gone) { gone = true; loader.remove(); } }, seen ? 760 : 990);
   };
   const schedule = () => {
     if (finishAt) return;

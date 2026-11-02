@@ -6,6 +6,10 @@ og:description as the sub-line, a mono kicker naming the section, over the dark 
 mark, set in the site's own fonts. Rendered in headless Chromium (Playwright) and saved as JPEG to
 site/assets/img/og/<page path with / as ->.jpg; launch_meta_v9.py, build_research.py and build_blog.py point each page's
 og:image / twitter:image there. No names appear on a card (people stay on Company and in blog bylines).
+award a1 (system): the four pages with an engraved hero plate (Platform's stack, Lifecycles' rings, Proof's ten ticks,
+Trust's Council) carry that plate on their card, cut from the page itself and drawn with the site's own stylesheets
+(finished state: reduced motion), in place of the dotted globe every other card keeps; its hedge ("Schematic") rides
+under it. PLATE_ALT is the picture's description, the plate's own aria-label (launch_meta_v9.py writes og:image:alt).
 Run last, after the other builders. Cards are cached by a hash of their inputs (data/og_cards.json), so a rerun only
 re-renders the pages whose headline, description or kicker changed and leaves every other JPEG byte-identical.
 """
@@ -83,7 +87,34 @@ def card(rel):
     sub, h1 = meta(s, "og:description"), flat(text(unhy(re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S).group(1))))
     if flat(sub).startswith(h1) and len(sub) > len(h1): sub = sub[len(h1):].lstrip()
     sub = SUB.get(rel, sub)
-    return {"rel": rel, "kicker": kicker, "headline": headline(s), "sub": sub, "foot": foot}
+    return {"rel": rel, "kicker": kicker, "headline": headline(s), "sub": sub, "foot": foot, "plate": plate(rel)}
+
+# award a1: the cards that carry their page's hero plate; group sheet and the data-page their selectors key on
+PLATE_PAGES = {"platform.html": ("platform", "platform.css"), "lifecycles.html": ("lifecycles", "platform.css"),
+               "evidence.html": ("proof", "proof.css"), "trust.html": ("trust", "proof.css")}
+CSS = (ROOT / "assets" / "css")
+
+def plate(rel):
+    """The page's hero plate (its <figure class="hero-plate ...">), as on the page: the drawing and its labels, the
+    hedge kept, the controls (Replay) and the key left out. '' for a page without one."""
+    if rel not in PLATE_PAGES: return ""
+    s = (ROOT / rel).read_text(encoding="utf-8")
+    m = re.search(r'<figure class="hero-plate[^"]*"[^>]*>.*?</figure>', s, re.S)
+    if not m: return ""
+    f = m.group(0)
+    f = re.sub(r'<button\b[^>]*>.*?</button>', "", f, flags=re.S)
+    f = re.sub(r'<span class="hp-key"[^>]*>.*?</span></span></span>', "", f, flags=re.S)
+    f = re.sub(r'<span class="sr-only"[^>]*>.*?</span>', "", f, flags=re.S)
+    f = re.sub(r'\s(?:data-reveal|data-plate-replay)(?:="[^"]*")?', "", f)
+    if rel == "evidence.html": f = '<div class="pf-record">' + f + "</div>"
+    return f
+
+def plate_alt(rel):
+    """The plate's own description (its aria-label), for the card's alt text; '' without a plate."""
+    if rel not in PLATE_PAGES: return ""
+    s = (ROOT / rel).read_text(encoding="utf-8")
+    m = re.search(r'<figure class="hero-plate[^"]*"[^>]*\baria-label="([^"]*)"', s)
+    return H.unescape(m.group(1)) if m else ""
 
 def pages():
     out = list(TOP)
@@ -94,7 +125,7 @@ def pages():
 FONT = (ROOT / "assets" / "fonts").as_uri()
 # inlined: Chromium won't use a file:// image as a CSS mask (masks are CORS fetches)
 GLOBE = "data:image/svg+xml;base64," + base64.b64encode((ROOT / "assets" / "img" / "globe.svg").read_bytes()).decode("ascii")
-TEMPLATE = """<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+TEMPLATE = """<!DOCTYPE html><html><head><meta charset="utf-8">%(links)s<style>
 @font-face { font-family: 'Instrument Serif'; font-style: normal; src: url(%(F)s/instrument-serif-400-latin.woff2); }
 @font-face { font-family: 'Instrument Serif'; font-style: italic; src: url(%(F)s/instrument-serif-400i-latin.woff2); }
 @font-face { font-family: 'Inter'; font-weight: 400 600; src: url(%(F)s/inter-var-latin.woff2); }
@@ -120,10 +151,18 @@ body { position: relative; background: #0E1512; color: #F5F2EC; font-family: 'In
 .s { margin-top: 30px; width: 640px; font-size: 25px; line-height: 1.4; color: rgba(245,242,236,.78); text-wrap: pretty; }
 .foot { position: absolute; left: 72px; right: 72px; bottom: 48px; display: flex; justify-content: space-between; }
 .foot i { display: inline-block; width: 7px; height: 7px; border-radius: 50%%; background: #4FCB93; margin-right: 14px; vertical-align: 2px; }
-</style></head><body>
-<div class="glow"></div><div class="disc"></div><div class="globe"></div>
+/* award a1: a plate card: the copy keeps 600 px, the page's own hero plate stands in the right-hand field */
+.has-plate .copy { width: 590px; }
+.has-plate .s { width: 590px; }
+.card-plate { position: absolute; left: 700px; top: 118px; width: 440px; height: 410px; display: flex; flex-direction: column; justify-content: center; font-family: 'Inter', sans-serif; }
+.card-plate .hero-plate, .card-plate .pf-record { width: 100%% !important; max-width: none !important; margin: 0 !important; }
+.card-plate .hp-cap { margin-top: 10px; }
+.card-plate .hp-cap .fc-h { font-size: 15px; text-align: left; color: rgba(245,242,236,.56); }
+</style></head><body%(bodyattr)s>
+%(art)s
 <div class="top"><i class="m"></i><span class="w">OpenEXA</span><i class="sep"></i><span class="k">%(kicker)s</span></div>
 <div class="copy"><h1 class="h">%(headline)s</h1><p class="s">%(sub)s</p></div>
+%(plate)s
 <div class="foot"><span><i></i>%(foot)s</span><span>openexa.com</span></div>
 <script>
   // measured once the faces are in: the largest headline size that fits in three lines (four once it is small); a sub-line
@@ -137,7 +176,9 @@ body { position: relative; background: #0E1512; color: #F5F2EC; font-family: 'In
     const room = () => Math.floor((box.clientHeight - h.getBoundingClientRect().height - 30) / lh);
     while (size > 44 && (lines() > (size > 70 ? 3 : 4) || h.scrollWidth > h.clientWidth)) set(size - 2);
     const need = Math.round(s.getBoundingClientRect().height / lh);
-    if (need <= 2) while (size > 72 && room() < need) set(size - 2);
+    // a plate card's copy is narrower (590 px): its sub-line stays whole up to three lines, the headline giving way to 60 px
+    const plate = document.body.classList.contains('has-plate');
+    if (need <= 2 || (plate && need <= 3)) while (size > (plate ? 60 : 72) && room() < need) set(size - 2);
     const n = Math.max(0, Math.min(3, room()));
     if (n === 0) s.remove();
     else if (need > n) {
@@ -160,16 +201,25 @@ async def main():
     cards = [card(p) for p in pages()]
     todo = []
     for c in cards:
-        c["key"] = hashlib.sha256((TEMPLATE + GLOBE + json.dumps(c, sort_keys=True)).encode("utf-8")).hexdigest()[:16]
+        sheets = "".join((CSS / f).read_text(encoding="utf-8") for f in (["site.css", PLATE_PAGES[c["rel"]][1]] if c["plate"] else []))
+        c["key"] = hashlib.sha256((TEMPLATE + GLOBE + sheets + json.dumps(c, sort_keys=True)).encode("utf-8")).hexdigest()[:16]
         if cache.get(c["rel"]) != c["key"] or not (OUT / og_name(c["rel"])).exists(): todo.append(c)
     if todo:
         async with async_playwright() as pw:
             browser = await pw.chromium.launch()
-            pg = await browser.new_page(viewport={"width": 1200, "height": 630}, device_scale_factor=1)
+            # reduced motion: a plate is drawn finished (its draw-in runs only for motion)
+            pg = await browser.new_page(viewport={"width": 1200, "height": 630}, device_scale_factor=1, reduced_motion="reduce")
             for c in todo:
                 fill = {k: (c[k] if k == "headline" else H.escape(c[k], quote=False)) for k in ("kicker", "headline", "sub", "foot")}
+                if c["plate"]:
+                    page, sheet = PLATE_PAGES[c["rel"]]
+                    links = "".join(f'<link rel="stylesheet" href="{(CSS / f).as_uri()}">' for f in ("site.css", sheet))
+                    extra = dict(links=links, bodyattr=f' class="has-plate" data-page="{page}"', art='<div class="glow"></div>',
+                                 plate=f'<div class="card-plate is-dark" style="background:none">{c["plate"]}</div>')
+                else:
+                    extra = dict(links="", bodyattr="", art='<div class="glow"></div><div class="disc"></div><div class="globe"></div>', plate="")
                 src = SHOTS / "og-card.html"
-                src.write_text(TEMPLATE % dict(fill, F=FONT, G=GLOBE), encoding="utf-8")
+                src.write_text(TEMPLATE % dict(fill, F=FONT, G=GLOBE, **extra), encoding="utf-8")
                 await pg.goto(src.as_uri()); await pg.wait_for_selector("body[data-ready]")
                 img = Image.open(io.BytesIO(await pg.screenshot(type="png"))).convert("RGB")
                 img.save(OUT / og_name(c["rel"]), "JPEG", quality=90, subsampling=0, optimize=True, progressive=True)

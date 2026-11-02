@@ -122,7 +122,8 @@
       // one ink for both sides; the side is a glyph: ▲ price above NAV (create), ▼ below (redeem)
       const side = document.createElement('i'); side.className = 'dk-side'; side.setAttribute('aria-hidden', 'true');
       const b = document.createElement('b'); b.textContent = rec.kind;
-      ev.append(side, b, ` · ${rec.clock}`);
+      const dot = document.createElement('span'); dot.className = 'dk-dot'; dot.textContent = ' · '; // a phone shows a space here (platform.css)
+      ev.append(side, b, dot, rec.clock);
       const line = document.createElement('span'); line.className = 'dk-line'; line.setAttribute('aria-hidden', 'true');
       const blk = document.createElement('i'); blk.className = 'dk-blk';
       const link = document.createElement('span'); link.className = 'dk-link';
@@ -539,4 +540,30 @@
     draw(); stats();
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopFrames(); else requestFrame(); });
+})();
+
+/* The orbit (Lifecycles §04; award a1, a1-dev): each list of twelve callouts is one Tab stop, and the arrow keys (Home,
+   End) move between its items, so a keyboard reaches the call to action without twelve stops that do nothing. Without
+   JavaScript every callout stays a stop. */
+(function () {
+  'use strict';
+  [['.orbit-cs', '.orb-c'], ['.orbit-list', 'li']].forEach(([ls, is]) => {
+    const list = document.querySelector(ls);
+    const items = list ? [...list.querySelectorAll(is)].filter((el) => el.hasAttribute('tabindex')) : [];
+    if (items.length < 2) return;
+    const live = items.findIndex((el) => el.classList.contains('is-live') || !!el.querySelector('.is-live'));
+    const take = (k) => items.forEach((el, i) => el.setAttribute('tabindex', i === k ? '0' : '-1'));
+    take(Math.max(0, live));
+    list.addEventListener('focusin', (e) => { const k = items.indexOf(e.target.closest(is)); if (k >= 0) take(k); });
+    list.addEventListener('keydown', (e) => {
+      const i = items.indexOf(e.target.closest(is));
+      if (i < 0) return;
+      const n = { ArrowDown: i + 1, ArrowRight: i + 1, ArrowUp: i - 1, ArrowLeft: i - 1, Home: 0, End: items.length - 1 }[e.key];
+      if (n === undefined) return;
+      e.preventDefault();
+      const k = (n + items.length) % items.length;
+      take(k);
+      items[k].focus();
+    });
+  });
 })();

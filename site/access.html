@@ -13,13 +13,15 @@
   <meta property="og:title" content="Request access — OpenEXA">
   <meta property="og:description" content="Request access to OpenEXA as an institution bringing a lifecycle, a manager deploying agents on the stack, a partner, or a qualified investor. Onboarding under Reg D 506(c).">
   <meta property="og:image" content="https://www.openexa.com/assets/img/og/access.jpg">
-  <meta property="og:image:alt" content="Request access — OpenEXA">
+  <meta property="og:image:alt" content="Tell us who you are. Beside it, the dotted globe of the OpenEXA mark.">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Request access — OpenEXA">
   <meta name="twitter:description" content="Request access to OpenEXA as an institution bringing a lifecycle, a manager deploying agents on the stack, a partner, or a qualified investor. Onboarding under Reg D 506(c).">
   <meta name="twitter:image" content="https://www.openexa.com/assets/img/og/access.jpg">
+  <meta name="twitter:image:alt" content="Tell us who you are. Beside it, the dotted globe of the OpenEXA mark.">
   <meta name="robots" content="max-image-preview:large">
   <link rel="alternate" type="application/atom+xml" title="OpenEXA Blog" href="/blog/feed.xml">
   <link rel="alternate" type="application/atom+xml" title="OpenEXA Research" href="/research/feed.xml">
@@ -68,66 +70,60 @@
   <main id="main">
 
     <section class="page-hero access-hero">
-      <div class="container">
-        <h1 class="display-1" data-reveal style="--d:60ms"><span class="keep">Tell us</span> <span class="keep">who you are.</span></h1>
-      </div>
-    </section>
-
-    <section class="section access-body">
-      <div class="container">
-        <div class="grid t-2 access-grid">
-          <div class="col-6 access-form">
-            <form class="form" data-access data-reveal style="--d:80ms" aria-label="Request access to OpenEXA">
-              <div class="f">
-                <label id="interest-label">I am requesting</label>
-                <div class="seg" role="radiogroup" aria-labelledby="interest-label">
-                  <div class="opt" id="lifecycles" data-interest="Bring a lifecycle"><label><input type="radio" name="interest" value="Bring a lifecycle" checked><span><b class="seg-k" aria-hidden="true"></b>Bring a lifecycle</span></label></div>
-                  <div class="opt" id="managers" data-interest="Manager platform"><label><input type="radio" name="interest" value="Manager platform"><span><b class="seg-k" aria-hidden="true"></b>Manager platform</span></label></div>
-                  <div class="opt" id="partners" data-interest="Platform partnership"><label><input type="radio" name="interest" value="Platform partnership"><span><b class="seg-k" aria-hidden="true"></b>Platform partnership</span></label></div>
-                  <div class="opt" id="investors" data-interest="Qualified investor"><label><input type="radio" name="interest" value="Qualified investor"><span><b class="seg-k" aria-hidden="true"></b>Qualified investor</span></label></div>
-                </div>
+      <div class="container access-grid">
+        <h1 class="display-1 access-h1" data-reveal style="--d:60ms"><span class="keep">Tell us</span> <span class="keep">who you are.</span></h1>
+        <div class="access-form">
+          <form class="form" data-access data-reveal style="--d:80ms" aria-label="Request access to OpenEXA">
+            <div class="f">
+              <label id="interest-label">I am requesting</label>
+              <div class="seg" role="radiogroup" aria-labelledby="interest-label">
+                <div class="opt" id="lifecycles" data-interest="Bring a lifecycle"><label><input type="radio" name="interest" value="Bring a lifecycle" checked><span><b class="seg-k" aria-hidden="true"></b>Bring a lifecycle</span></label></div>
+                <div class="opt" id="managers" data-interest="Manager platform"><label><input type="radio" name="interest" value="Manager platform"><span><b class="seg-k" aria-hidden="true"></b>Manager platform</span></label></div>
+                <div class="opt" id="partners" data-interest="Platform partnership"><label><input type="radio" name="interest" value="Platform partnership"><span><b class="seg-k" aria-hidden="true"></b>Platform partnership</span></label></div>
+                <div class="opt" id="investors" data-interest="Qualified investor"><label><input type="radio" name="interest" value="Qualified investor"><span><b class="seg-k" aria-hidden="true"></b>Qualified investor</span></label></div>
               </div>
-              <div class="two">
-                <div class="f"><label for="name">Name<span class="f-q"> · required</span></label><input id="name" name="name" type="text" autocomplete="name" maxlength="120" required></div>
-                <div class="f"><label for="email">Work email<span class="f-q"> · required</span></label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
-              </div>
-              <div class="two">
-                <div class="f"><label for="org">Organization</label><input id="org" name="organization" type="text" autocomplete="organization" maxlength="120"></div>
-                <div class="f"><label for="role">Role</label><input id="role" name="role" type="text" autocomplete="organization-title" maxlength="120"></div>
-              </div>
-              <div class="f">
-                <label for="assets">Assets you are considering</label>
-                <select id="assets" name="assets">
-                  <option value="">Select a range</option>
-                  <option>Under $5M</option>
-                  <option>$5M–$25M</option>
-                  <option>$25M–$100M</option>
-                  <option>$100M–$1B</option>
-                  <option>Over $1B</option>
-                </select>
-              </div>
-              <div class="f"><label for="msg">Anything we should know</label><textarea id="msg" name="message" maxlength="1200" placeholder="Mandate, timeline, custody arrangements, questions…"></textarea></div>
-              <div class="f">
-                <label class="f-check"><input type="checkbox" name="accredited" value="yes"><span>I am, or represent, an accredited investor or a regulated financial institution, and I understand that nothing on this site is an offer of securities.</span></label>
-              </div>
-              <p class="form-error small" data-form-error role="alert" hidden></p>
-              <div class="form-go">
-                <button class="btn" type="submit"><span data-submit-label>Prepare request</span> <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></button>
-                <p class="form-note" data-form-note>This prepares an email in your mail app; nothing is sent until you send it.</p>
-              </div>
-              <noscript><p class="form-error small">The request form needs JavaScript to prepare the email. Enable it and reload. Nothing has been submitted.</p></noscript>
-            </form>
-            <div class="form-ok" role="region" tabindex="-1" aria-labelledby="request-result">
-              <h2 class="display-3" id="request-result" data-result-title>Your draft is ready.</h2>
-              <div class="row mt-3"><a class="btn" data-mailto href="#main">Open the email <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a><button type="button" class="link-arrow" data-form-edit>Edit your details</button></div>
             </div>
+            <div class="two">
+              <div class="f"><label for="name">Name<span class="f-q"> · required</span></label><input id="name" name="name" type="text" autocomplete="name" maxlength="120" required></div>
+              <div class="f"><label for="email">Work email<span class="f-q"> · required</span></label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
+            </div>
+            <div class="two">
+              <div class="f"><label for="org">Organization</label><input id="org" name="organization" type="text" autocomplete="organization" maxlength="120"></div>
+              <div class="f"><label for="role">Role</label><input id="role" name="role" type="text" autocomplete="organization-title" maxlength="120"></div>
+            </div>
+            <div class="f">
+              <label for="assets">Assets you are considering</label>
+              <select id="assets" name="assets">
+                <option value="">Select a range</option>
+                <option>Under $5M</option>
+                <option>$5M–$25M</option>
+                <option>$25M–$100M</option>
+                <option>$100M–$1B</option>
+                <option>Over $1B</option>
+              </select>
+            </div>
+            <div class="f"><label for="msg">Anything we should know</label><textarea id="msg" name="message" maxlength="1200" placeholder="Mandate, timeline, custody arrangements, questions…"></textarea></div>
+            <div class="f">
+              <label class="f-check"><input type="checkbox" name="accredited" value="yes"><span>I am, or represent, an accredited investor or a regulated financial institution, and I understand that nothing on this site is an offer of securities.</span></label>
+            </div>
+            <p class="form-error small" data-form-error role="alert" hidden></p>
+            <div class="form-go">
+              <button class="btn" type="submit"><span data-submit-label>Prepare request</span> <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></button>
+              <p class="form-note" data-form-note>This prepares an email in your mail app; <span class="keep">nothing is sent until you send it.</span></p>
+            </div>
+            <noscript><p class="form-error small">The request form needs JavaScript to prepare the email. Enable it and reload. Nothing has been submitted.</p></noscript>
+          </form>
+          <div class="form-ok" role="region" tabindex="-1" aria-labelledby="request-result">
+            <h2 class="display-3" id="request-result" data-result-title>Your draft is ready.</h2>
+            <div class="row mt-3"><a class="btn" data-mailto href="#main">Open the email <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a><button type="button" class="link-arrow" data-form-edit>Edit your details</button></div>
           </div>
-          <div class="col-5 offset-7 access-letter">
-            <div class="sticky">
-              <div class="eyebrow mb-2" id="letter-h" role="heading" aria-level="2">The email this page writes</div>
-              <figure class="letter" data-letter aria-labelledby="letter-h">
-                <figcaption class="letter-head"><span><b>To</b><span data-letter-to>OpenEXA</span></span><span><b>Subject</b><span data-letter-subject>OpenEXA introduction · Bring a lifecycle</span></span></figcaption>
-                <div class="letter-body" data-letter-body>Hello OpenEXA,
+        </div>
+        <div class="access-letter">
+          <div class="sticky">
+            <div class="eyebrow" id="letter-h" role="heading" aria-level="2">The email this page writes</div>
+            <figure class="letter" data-letter aria-labelledby="letter-h">
+              <figcaption class="letter-head"><span><b>To</b><span data-letter-to>OpenEXA</span></span><span><b>Subject</b><span data-letter-subject>OpenEXA introduction · Bring a lifecycle</span></span></figcaption>
+              <div class="letter-body" data-letter-body>Hello OpenEXA,
 
 I am <span class="slot" data-slot="name">your name</span><span class="slot is-opt" data-slot="role">, your role</span><span class="slot is-opt" data-slot="organization"> at your organization</span>. I would like to <span class="slot is-filled" data-slot="ask">bring a lifecycle to OpenEXA and scope it against the six traits.</span>
 
@@ -138,10 +134,10 @@ I am <span class="slot" data-slot="name">your name</span><span class="slot is-op
 
 Please reply to <span class="slot" data-slot="email">your work email</span>.
 
-<span class="slot" data-slot="name">your name</span></div>
-              </figure>
-              <p class="letter-note" data-letter-note></p>
-            </div>
+<span class="slot is-sign" data-slot="name">your name</span></div>
+              <span class="plate-marks" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            </figure>
+            <p class="letter-note" data-letter-note></p>
           </div>
         </div>
       </div>

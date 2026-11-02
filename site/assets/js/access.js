@@ -10,7 +10,11 @@
    is the letter's form with its blanks.
    cut (1 Nov, the owner's word budget): the result panel is its title, its two actions and the letter (no
    [data-result-body] line; showResult skips it when absent); the note under the letter is empty until a message is too
-   long for one email link. */
+   long for one email link.
+   award a1 (1 Nov): the letter is the page's plate, set like a letter (Inter for the running lines, the salutation and
+   the signature in the serif; company.css). A signal tick in its margin marks the line being written: it ticks in
+   (.18 s) when that line changes, follows the typing and leaves when the form loses focus. The signature is the last
+   line, in the draft too (wrapped in a span; the text is the draft's, word for word). */
 (function () {
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
@@ -99,6 +103,7 @@
       if (d.assets) { t('Assets we are considering: '); slot('assets', d.assets); t('.'); } else slot('assets', '', 'Assets we are considering: a range', true);
       t('\n'); slot('accredited', d.accredited ? attest : '', 'The attestation, if you tick it', true);
       t('\n\nPlease reply to '); slot('email', d.email, 'your work email'); t('.\n\n'); slot('name', d.name, 'your name');
+      letterBody.lastElementChild.classList.add('is-sign');
       const subject = $('[data-letter-subject]', letter);
       if (subject) subject.textContent = 'OpenEXA introduction · ' + d.interest;
       if (letterNote) { // say so before they press anything: the link has room for about a page, not more
@@ -122,15 +127,42 @@
         else if (r.bottom > b.bottom - pad) letterBody.scrollTop += r.bottom - b.bottom + pad; // a long message: its newest line
       });
     };
+    // a1: the margin tick beside the line being written (reads, then two writes, in the next frame). It ticks in when
+    // the line changes (another field, the next line of a long entry, a blank filled); hidden when that line is
+    // scrolled out of the letter's body, when nothing in the form has focus and once the draft is final
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const tickEl = letter && letterBody && !endpoint ? letter.appendChild(document.createElement('i')) : null;
+    let tickAt = '', tickFrame = 0;
+    const mark = () => {
+      if (!tickEl || tickFrame) return;
+      tickFrame = requestAnimationFrame(() => {
+        tickFrame = 0;
+        const sp = focusKey && !letter.classList.contains('is-final') ? $('.slot.is-here', letterBody) : null;
+        const rs = sp ? sp.getClientRects() : [], r = rs[rs.length - 1];
+        const L = letter.getBoundingClientRect(), B = letterBody.getBoundingClientRect();
+        if (!r || r.bottom < B.top + 4 || r.top > B.bottom - 4) { letter.classList.remove('has-tick'); tickAt = ''; return; }
+        const y = Math.round(r.top - L.top), at = focusKey + ' ' + y + ' ' + sp.classList.contains('is-filled'), shown = letter.classList.contains('has-tick');
+        letter.style.setProperty('--tick-y', y + 'px'); letter.style.setProperty('--tick-h', Math.round(r.height) + 'px');
+        if (at === tickAt && shown) return;
+        tickAt = at;
+        const tick = () => { letter.classList.add('has-tick'); if (!still.matches && tickEl.animate) tickEl.animate([{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: 180, easing: 'cubic-bezier(.2, .7, .2, 1)' }); };
+        if (shown) tick(); else requestAnimationFrame(tick); // from hidden it appears in place (company.css moves it only while shown)
+      });
+    };
+    if (tickEl) {
+      tickEl.className = 'letter-tick'; tickEl.setAttribute('aria-hidden', 'true');
+      letterBody.addEventListener('scroll', mark, { passive: true });
+      window.addEventListener('resize', mark, { passive: true });
+    }
     const here = key => {
       focusKey = key || '';
       if (letterBody) $$('.slot', letterBody).forEach(sp => sp.classList.toggle('is-here', !!key && sp.dataset.slot === key));
       const subject = letter && $('[data-letter-subject]', letter); // choosing a path rewrites the subject line too
       if (subject) subject.classList.toggle('is-here', key === 'ask');
-      keep();
+      keep(); mark();
     };
-    form.addEventListener('input', () => { live(); keep(); });
-    form.addEventListener('change', live);
+    form.addEventListener('input', () => { live(); keep(); mark(); });
+    form.addEventListener('change', () => { live(); mark(); });
     form.addEventListener('focusin', e => here(KEYS[e.target.name]));
     form.addEventListener('focusout', () => here(''));
     // the letter sits beside the form; on phones it waits for the result panel and appears there, under its buttons, so
@@ -232,7 +264,11 @@
           const put = (sel, text) => { const el = $(sel, letter); if (el) el.textContent = text; };
           put('[data-letter-to]', 'OpenEXA');
           put('[data-letter-subject]', 'OpenEXA introduction · ' + data.interest);
-          put('[data-letter-body]', body.replace(/\r\n/g, '\n'));
+          const text = body.replace(/\r\n/g, '\n'), k = text.lastIndexOf('\n\n'), lb = $('[data-letter-body]', letter);
+          if (lb && k > 0 && text.slice(k + 2) === data.name) { // the signature keeps its line (the same text, word for word)
+            const sign = document.createElement('span'); sign.className = 'is-sign'; sign.textContent = data.name;
+            lb.textContent = text.slice(0, k + 2); lb.appendChild(sign);
+          } else put('[data-letter-body]', text);
           letter.classList.add('is-final');
           letter.hidden = false;
           if (letterNote) letterNote.hidden = true;

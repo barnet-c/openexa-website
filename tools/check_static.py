@@ -797,6 +797,66 @@ def check_heads():
     if not (ROOT / "favicon.ico").is_file(): fail("favicon.ico", "heads: missing")
 
 
+
+OFFSCREEN_CHROME = (".loader", ".nav", "view-transition", ".is-landing", "html[data-jump", ".skip")  # not inside a band
+# a featureless last compound ('> :not(.x)') names no element the pause can list: the children it reaches, by class
+OFFSCREEN_CHILDREN = {"lt-rec": {"lt-meta", "lt-ev", "lt-sub", "lt-t"}}  # ledger.js record(): meta, ev, sub, t (and the line)
+
+
+def check_offscreen_pause():
+    """Every CSS animation inside a page band pauses while its band is wholly off screen (site.js toggles .is-offscreen on
+    main's bands and the footer). Since award a1 the pause names the animated elements instead of `*` (the toggle then
+    restyles a handful of elements, not ~1,200), so each animated selector's last compound must share a class with the
+    pause list (for ::before / ::after, with that pseudo-element's list; a bare element type, with a 'class type' entry
+    whose class the selector names). The chrome (loader, nav, view transitions, landings) is outside every band."""
+    sheets = REGION_CSS + GROUP_CSS + ["assets/css/notfound.css"]
+    strip = lambda css: re.sub(r"/\*.*?\*/", " ", css, flags=re.S)
+    site = strip((ROOT / "assets/css/site.css").read_text(encoding="utf-8"))
+    pause = {"": set(), "::before": set(), "::after": set()}
+    pairs = set()
+    for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", site):
+        if ".is-offscreen" not in m[1] or not re.search(r"animation-play-state\s*:\s*paused\s*!important", m[2]): continue
+        for sel in split_top(m[1], ",")[0]:
+            sel = " ".join(sel.split())
+            a = re.match(r"\.is-offscreen\s+:is\((.*)\)(::before|::after)?$", sel)
+            if not a: continue
+            for arg in split_top(a[1], ",")[0]:
+                cs = compounds(arg)
+                if not cs: continue
+                pause[a[2] or ""].update(re.findall(r"\.([\w-]+)", cs[-1]))
+                if len(cs) > 1 and not re.search(r"[.#]", cs[-1]):  # 'class type' or 'class [attr]'
+                    pairs.update((c, cs[-1]) for c in re.findall(r"\.([\w-]+)", " ".join(cs[:-1])))
+    if not pause[""]: fail("assets/css/site.css", "offscreen_pause: no '.is-offscreen :is(...) { animation-play-state: paused !important }' rule"); return
+    def lasts(sel):  # the last compound of a complex selector; an :is()/:where() last compound is opened up
+        cs = compounds(sel)
+        if not cs: return []
+        w = re.match(r"^:(?:is|where)\(([^()]*(?:\([^()]*\)[^()]*)*)\)(::(?:before|after))?$", cs[-1])
+        if w:
+            pre = sel.strip()[: len(sel.strip()) - len(cs[-1])] if len(cs) > 1 else ""
+            return [x for arg in split_top(w[1], ",")[0] for x in lasts(pre + arg.strip() + (w[2] or ""))]
+        return [(cs, cs[-1])]
+    for rel in sheets:
+        if not (ROOT / rel).is_file(): continue
+        css = strip((ROOT / rel).read_text(encoding="utf-8"))
+        for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", css):
+            pre = " ".join(m[1].split())
+            if pre.startswith("@") or re.match(r"^(from|to|[\d.]+%)\b", pre): continue
+            am = re.search(r"(?<![-\w])animation(?:-name)?\s*:\s*([^;]+)", m[2])
+            if not am or am[1].strip().startswith("none"): continue
+            for sel in split_top(pre, ",")[0]:
+                if any(k in sel for k in OFFSCREEN_CHROME): continue
+                for cs, last in lasts(sel):
+                    pe = (re.search(r"::(before|after)$", last) or [None, None])[1]
+                    slot = f"::{pe}" if pe else ""
+                    cls = set(re.findall(r"\.([\w-]+)", re.sub(r":not\([^)]*\)", "", last)))
+                    if cls & pause[slot]: continue
+                    key = re.sub(r"::?[\w-]+(\([^)]*\))?", "", last)  # 'span', '[pathLength]' ('' when featureless)
+                    named = set(re.findall(r"\.([\w-]+)", " ".join(cs[:-1])))
+                    if not cls and not pe and key and any(t == key and c in named for c, t in pairs): continue
+                    if not cls and not pe and not key and any(c in named and kids <= pause[""] for c, kids in OFFSCREEN_CHILDREN.items()): continue
+                    fail(rel, f"offscreen_pause: {sel.strip()!r} animates but site.css's .is-offscreen pause does not name it")
+
+
 SUBLINE = "OpenEXA builds the end-to-end infrastructure on which swarms of domain-specific AI agents run the world's high-value lifecycles."
 
 
@@ -827,7 +887,7 @@ def check_decisions():
 GUARDS = [check_count_not_on_proof, check_count_static_final, check_regime_split, check_research09_regimes, check_has_guard,
           check_has_regions, check_figure_labels, check_blog_placeholder, check_proof_plate, check_table_th,
           check_hover_guard, check_weight, check_story_fallback, check_cost_definitions, check_platform04, check_chrome_sync,
-          check_headers, check_csp_markup, check_footer, check_landmarks, check_heads, check_decisions]
+          check_headers, check_csp_markup, check_footer, check_landmarks, check_heads, check_decisions, check_offscreen_pause]
 only = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--only=")), None)
 if "--only" in sys.argv[1:-1]: only = sys.argv[sys.argv.index("--only") + 1]
 for g in GUARDS:

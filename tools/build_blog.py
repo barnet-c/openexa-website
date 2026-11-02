@@ -141,7 +141,7 @@ def clean_body(p):
         name = src.rsplit("/", 1)[-1]
         alt = alt or ALT.get(name, "")
         shutil.copyfile(OLD / "img" / name, IMG / name) if (OLD / "img" / name).exists() else None
-        return f'<img src="../assets/img/blog/{name}"{body_srcset(name)} alt="{esc(alt)}"{size(name)} loading="lazy" decoding="async">'
+        return f'<img src="../assets/img/blog/{name}"{body_srcset(name)} alt="{esc(alt)}"{size(name)}{body_cap(name)} loading="lazy" decoding="async">'
     b = re.sub(r'<img[^>]*src="(/graphics/[^"]+)"[^>]*>', img, b)
     b = re.sub(r"<figure>\s*(<img[^>]+>)\s*</figure>", r"<figure>\1</figure>", b)
     b = re.sub(r"<p>\s*(<img[^>]+>)\s*</p>", r"<figure>\1</figure>", b)
@@ -169,7 +169,10 @@ def size(name):
 # 39.2rem - 24px (603 px) wide from 961 px, 36rem - 24px (552 px) on tablets (r2: the notes' reading column); on phones it
 # is the column less the gutters and the mat.
 BODY_W = 800
-BODY_SIZES = "(max-width: 660px) calc(100vw - 64px), (max-width: 960px) 552px, 603px"
+# award a1 (4K inspector, art director, a1-dev): from 1921 px the root grows with the window (site.css: 100vw / 120), so
+# the mat is 39.2rem = 32.67vw and the picture in it 37.7rem = 31.4vw (1,206 px at 3840): 4K and 1920 at 2x now load
+# the 1,800 px file instead of stretching the 800 px copy 1.5 times
+BODY_SIZES = "(min-width: 1921px) 31.4vw, (max-width: 660px) calc(100vw - 64px), (max-width: 960px) 552px, 603px"
 BODY_COPIES = set()
 def body_srcset(name):
     d = dims(name)
@@ -177,6 +180,18 @@ def body_srcset(name):
     BODY_COPIES.add(name)
     stem = name.rsplit(".", 1)[0]; src = "../assets/img/blog/"
     return f' srcset="{src}{stem}-{BODY_W}w.webp {BODY_W}w, {src}{name} {d[0]}w" sizes="{BODY_SIZES}"'
+def body_cap(name):
+    """award a1 (4K inspector): a picture is never drawn wider than its pixels. Its widest file in CSS px (so a 1x screen
+    never stretches it: the 700 px Medium figures at 2560 and 3840); a macOS screenshot (a 2x capture) at half its
+    captured width, the size its interface had (the two tall tearsheet tables: 368 and 364 px, not 603). Centred on its
+    mat. Nothing for a picture that fills the mat up to a 5K screen"""
+    d = dims(name)
+    if not d: return ""
+    w = d[0]
+    if "screenshot-" in name:
+        from PIL import Image
+        w = min(w, Image.open(OLD / "img" / name).size[0] // 2)
+    return f' style="max-width:{w}px"' if w < 1400 else ""
 # card-size copies of each hero image for the blog cards' srcset: a card is ~440 px wide, a hero up to 1800
 THUMB_W = (480, 800)
 # one sizes value for the cards and the (smaller) series rail, so a post shown in both loads the same file once
@@ -251,12 +266,19 @@ def smart_html(h):
         txt = H.unescape(part)
         s = smart(txt, prev)
         # r5: an article's headings are display lines too; they bind their function words as the titles do (post_title)
-        out.append(tight_hy(esc_text(bind(s) if head_ else s)) if head_ or quote_ else esc_text(s)); prev = s[-1] if s else prev
+        # award a1: in the article's serif lines (blockquotes at the heading step since a1, and its heads) a hyphenated
+        # compound is never split at its hyphen ("The Next Phase of Gen- / AI's" at 390): it is one unbreakable word
+        out.append(keep_compounds(tight_hy(esc_text(bind(s) if head_ else s))) if head_ or quote_ else esc_text(s)); prev = s[-1] if s else prev
     return "".join(out)
 def tight_hy(escaped):
     """a serif line: the ASCII hyphen between letters (still found by find-in-page), set tight (site.css .hy)"""
     return SERIF_HY.sub('<span class="hy">-</span>', escaped)
 def esc_text(s): return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+COMPOUND = re.compile(r"[^\W\d_][\w’']*(?:<span class=\"hy\">-</span>[^\W\d_][\w’']*)+")
+def keep_compounds(h):
+    """a tight_hy() line's hyphenated words in site.css .nowrap (short words in the article's serif lines only; titles
+    keep their break opportunities, where a long compound must still fit a phone's column)"""
+    return COMPOUND.sub(lambda m: f'<span class="nowrap">{m.group(0)}</span>', h)
 def serif(s):
     """escaped text for a serif line: real quotes and dashes, and the hyphen between letters in span.hy (Instrument
     Serif draws U+002D as 'Domain – Specific'; SYSTEM.md §3, r2). Feeds and JSON-LD keep plain ASCII."""
@@ -333,7 +355,11 @@ for p in kept:
         shutil.copyfile(OLD / "img" / p["hero_file"], IMG / p["hero_file"])
     words = len(plain(p["body"]).split())
     p["stub"] = words < 40  # link-only posts (e.g. a column hosted elsewhere) become outbound cards
-    p["minutes"] = max(1, int(re.sub(r"\D", "", p["minutes"]) or round(words / 220)))
+    # award a1 (a1-ux 22, C-146): the read time is counted from the words on the page (220 a minute), for every post; the
+    # old CMS's minutes understated the long posts (the Gen-AI introduction, ~1,380 words, said 3) and overstated the
+    # excerpts (5-6 for ~160-330 words). Claim-level: listed for the owner's second sign-off
+    p["cms_minutes"] = int(re.sub(r"\D", "", p["minutes"]) or 0)
+    p["minutes"] = max(1, round(words / 220))
     ex = p["description"] or plain(p["body"])
     p["excerpt"] = (ex[:190].rsplit(" ", 1)[0] + "…") if len(ex) > 190 else ex
     if p["stub"]: p["excerpt"] = "Published on " + re.sub(r"^www\.", "", re.search(r"//([^/]+)", p["source"]).group(1)) + "."
@@ -353,7 +379,14 @@ def chrome():
     nav = NAV.replace('href="', f'href="{PFX}').replace(f'href="{PFX}#', 'href="#')
     foot = FOOTER.replace('href="', f'href="{PFX}').replace(f'href="{PFX}http', 'href="http').replace(f'href="{PFX}mailto', 'href="mailto')
     return nav, foot
-def head(url, title, desc, kind="article", extra=""):
+# award a1 (system's request, ~18:00): the share card's alt says what the card shows, as launch_meta_v9's card_alt() does
+# for the top pages: the page's H1 (plain spaces), then its picture (blog cards keep the dotted globe); og:locale too
+CARD_PIC = "Beside it, the dotted globe of the OpenEXA mark."
+def card_alt(h1):
+    t = re.sub(r"\s+", " ", h1.replace(" ", " ")).strip()
+    return t + ("" if t[-1:] in ".?!" else ".") + " " + CARD_PIC  # a title without closing punctuation still ends its sentence
+def head(url, title, desc, kind="article", extra="", h1="", links=""):
+    alt = esc(card_alt(h1 or title))
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -363,19 +396,21 @@ def head(url, title, desc, kind="article", extra=""):
   <meta name="description" content="{esc(desc)}">
   <meta name="theme-color" content="#0E1512">
   <link rel="canonical" href="{url}">
-  <meta property="og:url" content="{url}">
+{links}  <meta property="og:url" content="{url}">
   <meta property="og:site_name" content="OpenEXA">
   <meta property="og:type" content="{kind}">
   <meta property="og:title" content="{esc(title)}">
   <meta property="og:description" content="{esc(desc)}">
   <meta property="og:image" content="{og_image(url)}">
-  <meta property="og:image:alt" content="{esc(title)}">
+  <meta property="og:image:alt" content="{alt}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{esc(title)}">
   <meta name="twitter:description" content="{esc(desc)}">
   <meta name="twitter:image" content="{og_image(url)}">
+  <meta name="twitter:image:alt" content="{alt}">
   {ROBOTS}
   {FEED_LINKS[0]}
   {FEED_LINKS[1]}
@@ -413,7 +448,8 @@ assert all(shown(a) in read(ROOT / "company.html") for a in ("Ajit K Dubey", "Ti
 def href(p): return p["source"] if p["stub"] else f'{p["slug"]}.html'
 
 # the 2024 Gen-AI series (Ajit): an introduction and a three-part finance series that cross-link one another
-SERIES = [("in-search-gen-ai-business-model", "Introduction", "The business model"),
+# award a1: "Business model" (was "The business model"): the four short names in one form, none with an article
+SERIES = [("in-search-gen-ai-business-model", "Introduction", "Business model"),
           ("rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies", "Part 1", "Relative value"),
           ("tearsheet-how-to-use-tearsheet-in-the-face-of-volatile-crypto-and-bond-markets-as-a-means-of-capital-preservation-and-asset-appreciation", "Part 2", "Guardrails & tearsheets"),
           ("empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way", "Part 3", "AI agents")]
@@ -435,11 +471,22 @@ def iso(p): return p["dt"].strftime("%Y-%m-%d")
 # its date and read time; the excerpt stays the post's meta description and feed summary). A collection says its
 # author and years once, in its head
 day = lambda d: d.strftime("%b %-d") if os.name != "nt" else d.strftime("%b %#d")
-def card(p):
+def card(p, lead=False, kicker=""):
+    """lead (award a1, art director + a1-ux 16): a collection's newest post leads its grid, two columns by two rows, its
+    plate drawn larger; the rest stay compact. Same plate, same title: no new words. kicker: a line over the title (the
+    fifth AI post's "Also in AI & agents"); a post with a short name (SHORT_TITLE) shows it, as the rail's parts do"""
     ext = ' target="_blank" rel="noopener"' if p["stub"] else ""
-    return f'''          <a class="blog-card" href="{esc(href(p))}"{ext}>
-            {plate(p)}<div class="blog-card-body"><h3>{post_title(p["title"])}{(" " + OUTB) if p["stub"] else ""}</h3></div>
+    k = f'<span class="k">{esc(kicker)}</span>' if kicker else ""
+    t = esc(SHORT_TITLE[p["slug"]]) if p["slug"] in SHORT_TITLE else post_title(p["title"])
+    return f'''          <a class="blog-card{' blog-card--lead' if lead else ''}" href="{esc(href(p))}"{ext}>
+            {plate(p)}<div class="blog-card-body">{k}<h3>{t}{(" " + OUTB) if p["stub"] else ""}</h3></div>
           </a>'''
+# award a1 (art director, a1-ux 21): the AI collection's fifth post sat under the series rail with no word saying what it
+# was. It is marked as S-42 signed it off ("Also in AI & agents"), and the index names it by the question its own title
+# and its slug lead with (as the rail names the series' parts; its page's H1 keeps the full title). 13 words -> 3 + 4
+SHORT_TITLE = {"why-banks-exist-unveiling-the-vital-role-of-credit-in-the-financial-system": "Why Banks Exist?"}
+assert all(v in SLUGS[k]["title"] for k, v in SHORT_TITLE.items()), "a short title must be the post's own words"
+ALSO_AI = "Also in AI & agents"
 def row(p):
     """a post as a line of the register (Market structure & economics): its year, its title, the arrow"""
     ext = ' target="_blank" rel="noopener"' if p["stub"] else ""
@@ -485,9 +532,10 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     span_ = span(by_col[k][-1]["dt"].year, by_col[k][0]["dt"].year)
     authors = {p["author"] for p in by_col[k]}
     assert len(authors) == 1, (k, authors)  # collections are assigned by author: the head can carry the byline once
+    # award a1: the phone's markets head plate (collection_svg) went: the lead card's own plate heads the list on a phone
+    # as on a desk, so the collection opens on one post's drawing everywhere
     shead = f'''        <div class="blog-head" data-reveal><h2 class="display-2">{serif(HEADS[k])}</h2><p class="blog-by">{byline_link(authors.pop())}<span>{span_}</span></p></div>
-''' + (f'''        <div class="blog-headplate" aria-hidden="true"><div class="bh-art">{collection_svg(k)}</div></div>
-''' if k == "markets" else "")  # a phone's markets list keeps one drawing at its head (the cards' plates are wider screens')
+'''
     if k == "economics":
         # v2x lab (blog-editorial): eight cards carried one mark eight times (r1-art M6, r1-mobile 9). The collection
         # is set as a register, the way Research lists its notes, beside its plate, shown once.
@@ -501,12 +549,12 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     elif k == "ai":
         rest = [p for p in by_col[k] if p["slug"] not in in_series]
         body = SERIES_BLOCK + f'''        <div class="blog-grid blog-grid--wide" data-reveal>
-{chr(10).join(card(p) for p in rest)}
+{chr(10).join(card(p, kicker=ALSO_AI) for p in rest)}
         </div>
 '''
     else:
-        body = f'''        <div class="blog-grid" data-reveal>
-{chr(10).join(card(p) for p in by_col[k])}
+        body = f'''        <div class="blog-grid blog-grid--lead" data-reveal>
+{chr(10).join(card(p, lead=not i) for i, p in enumerate(by_col[k]))}
         </div>
 '''
     # chapters for the nav readout come from the section's own attributes (site.js), as on Home since the cut: no
@@ -522,16 +570,24 @@ years = sorted(p["dt"].year for p in kept)
 assert sum(1 for p in by_col["ai"] if p["slug"] in in_series) == 4
 # cut (1 Nov): the plate's title ("The library") and its sentence went (the drawing shows it: three bundles, the
 # collections' names under them, the series in green). The page's one hedge for every plate on it stays, short
+# (award a1: "Schematic · no data plotted", was "Schematic · no plate plots data": same hedge, one word shorter, so the
+# specific H1 fits the index's 250 words)
+INDEX_HEDGE = "Schematic · no data plotted"
+# award a1 (art director, a1-ux 15): "The blog." was the site's last template headline. The H1 says what the blog is,
+# with its count bound to the posts (C-139). One text box (verify_v9 reflow_400 reads phrase spans that wrap as crossing
+# boxes): the count keeps its noun and bind() its function words, so it breaks only by sense ("29 posts on AI / and
+# markets." from 1024 up)
+INDEX_H1 = (f"{len(kept)} posts", "on AI and markets.")
 LIBRARY = f'''<figure class="lib-plate">
           <div class="lib-stage">{library_svg((SHORT["markets"], SHORT["ai"], SHORT["economics"]), tuple(len(by_col[k]) for k in ("markets", "ai", "economics")), sum(1 for p in by_col["ai"] if p["slug"] in in_series))}</div>
-          <figcaption><span class="pp-h">Schematic · no plate plots data</span></figcaption>
+          <figcaption><span class="pp-h">{INDEX_HEDGE}</span></figcaption>
         </figure>'''
 desc = f"The OpenEXA blog: {len(kept)} posts from {years[0]} to {years[-1]} on AI agents in finance, financial markets research and market structure."
 blog_ld = ld(dict(BLOG_LD, description=desc, inLanguage="en", publisher=ORG, blogPost=[
     {"@type": "BlogPosting", "headline": ld_text(p["title"]), "url": BASE + p["slug"] + ".html", "datePublished": p["dt"].strftime("%Y-%m-%d"),
      "author": person(p["author"])} for p in sorted(kept, key=lambda p: p["dt"], reverse=True) if not p["stub"]]),
     crumbs(("Blog", BASE)))
-page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n").replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
+page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".join(INDEX_H1)).replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
 <body data-page="blog" data-nav="dark-start" class="blog-page">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -540,7 +596,7 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n").replace
     <section class="page-hero page-hero--dark is-dark grain blog-hero">
       <div class="container blog-hero-grid">
         <div class="blog-hero-copy">
-          <h1 class="display-1 blog-h1" data-reveal>The blog.</h1>
+          <h1 class="display-1 blog-h1" data-reveal>{esc(bind(INDEX_H1[0].replace(" ", chr(0xA0)) + " " + INDEX_H1[1]))}</h1>
         </div>
         {LIBRARY}
       </div>
@@ -598,7 +654,7 @@ for p in order:
     # cut (1 Nov): the side column went (its links repeated the crumb, the pager and the article end: "N posts in this
     # collection", "All 29 posts", "The original on <host>", "The papers on Google Scholar", and the series list, which
     # the crumb and the pager now carry)
-    hero_img = (f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}"{body_srcset(p["hero_file"])} alt=""{size(p["hero_file"])} decoding="async"></figure>\n            '
+    hero_img = (f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}"{body_srcset(p["hero_file"])} alt=""{size(p["hero_file"])}{body_cap(p["hero_file"])} decoding="async"></figure>\n            '
                 if p.get("hero_file") and p["slug"] in KEEP_HERO else "")
     # the pager: where it goes and the title (cut: the dates under the titles, and the end cards' second lines)
     pcard = lambda cls, url, k, h: f"<a class='pager-card {cls}' href='{url}'><span class='k'>{k}</span><h3>{h}</h3></a>"
@@ -620,12 +676,37 @@ for p in order:
         post_ld["position"] = j + 1
     # cut (1 Nov): "Originally published on openexa.com, <date>." (C-147: likely false for the pre-2023 posts) and the
     # separate "The original on <host>" link. A post that summarises work published elsewhere keeps saying so, with the link
-    original = (f'<p>A summary of work first published on <a href="{esc(p["source"])}" target="_blank" rel="noopener">{esc(src_host)}{OUTB}</a>.</p>'
+    original = (f'<p class="ps-src">A summary of work first published on <a href="{esc(p["source"])}" target="_blank" rel="noopener">{esc(src_host)}{OUTB}</a>.</p>'
                 if p["source"] else "")
+    # award a1 (art director, big; AWARD_BAR post 2): the reading column's left side carries the post's wayfinding, as a
+    # note's "In this note" does, so posts and notes are one long-read template. The bodies have no section heads to
+    # list (one h2 in 29 posts), so: the Gen-AI series as an upright rail (the index rail's grammar: a node per part,
+    # the part being read filled green), on the series' four posts and on Ajit's fifth (no part filled there); and where
+    # the post summarises work published elsewhere, that line, moved here from the article's end so it is read first.
+    # In the source it follows the article (keyboard order = reading order); placed beside it from 961 px and sticky;
+    # on tablets and phones the line follows the article as before and the rail is left to the crumb and the pager
+    side = ""
+    if p["col"] == "ai":
+        rail_ = "".join(
+            (f'<li class="is-on"><span aria-current="page">{esc(short)}</span></li>' if s == p["slug"]
+             else f'<li><a href="{s}.html">{esc(short)}</a></li>') for s, _, short in SERIES)
+        side += f'<nav class="ps-series" aria-label="{SERIES_NAME}"><p class="ps-k">{SERIES_NAME}</p><ol class="ps-rail" role="list">{rail_}</ol></nav>'
+    side += original
+    # (a post whose column holds the series alone shows nothing there on tablets and phones: no empty row after the text)
+    side = f'''
+          <div class="post-side{'' if original else ' post-side--nav'}"><div class="ps-in">{side}</div></div>''' if side else ""
     byline = f'<a href="{PFX}company.html#{PEOPLE_ID[person(p["author"])["name"]]}">{esc(shown(p["author"]))}</a>' if person(p["author"]).get("name") in PEOPLE_ID else esc(shown(p["author"]))
     # r4-copy (r3 point 12): what search results and link previews show is set as the H1 is (’, and the house dash with a
     # no-break space before it); JSON-LD and the feed keep the title as published
-    page = head(url, f'{smart(p["title"])} — OpenEXA Blog', smart(p["excerpt"]), "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (ld_text(p["title"]), url)))}\n') + f'''
+    # award a1 (a1-dev 23): the series is a sequence for crawlers too: rel prev / next between its four parts (isPartOf
+    # is already the CreativeWorkSeries, with its position)
+    rel_links = ""
+    if p["slug"] in SERIES_POS:
+        j = SERIES_POS[p["slug"]]
+        if j: rel_links += f'  <link rel="prev" href="{BASE}{SERIES[j - 1][0]}.html">\n'
+        if j + 1 < len(SERIES): rel_links += f'  <link rel="next" href="{BASE}{SERIES[j + 1][0]}.html">\n'
+    page = head(url, f'{smart(p["title"])} — OpenEXA Blog', smart(p["excerpt"]), "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (ld_text(p["title"]), url)))}\n',
+                h1=ld_text(p["title"]), links=rel_links) + f'''
 <body data-page="post" data-nav="dark-start" class="article-page blog-post">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -647,8 +728,8 @@ for p in order:
         <div class="grid">
           <article class="col-7 article blog-article">
             {hero_img + lead(hang(smart_html(p["body"])))}
-            <div class="article-end"><span class="mark" aria-hidden="true"></span>{original}</div>
-          </article>
+            <div class="article-end"><span class="mark" aria-hidden="true"></span></div>
+          </article>{side}
         </div>
       </div>
     </section>

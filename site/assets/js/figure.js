@@ -171,7 +171,7 @@
   const VS = `
   precision highp float;
   attribute vec4 a_a; attribute vec4 a_b; attribute vec4 a_rand;
-  uniform mat4 u_proj, u_view; uniform float u_time, u_mix, u_pr, u_spin, u_scale, u_halo, u_maxpt, u_flow, u_pulse, u_sweep, u_reveal;
+  uniform mat4 u_proj, u_view; uniform float u_time, u_mix, u_pr, u_spin, u_scale, u_halo, u_ha, u_maxpt, u_flow, u_pulse, u_sweep, u_reveal;
   varying float v_alpha; varying float v_size; varying vec3 v_col;
   mat3 rotY(float a) { float c = cos(a), s = sin(a); return mat3(c, 0., -s, 0., 1., 0., s, 0., c); }
   vec3 kcol(float k) {
@@ -203,7 +203,7 @@
     float al = (0.26 + 0.6 * depth) * dust * (accent > 1.0 ? 1.15 : 1.0) * (1.0 + 1.15 * glow) * vis;
     float px = min(sz * u_pr * (u_halo > 0.5 ? 3.6 : 1.0), u_maxpt);
     gl_PointSize = px; v_size = px;
-    v_alpha = u_halo > 0.5 ? al * (accent > 1.0 ? 0.17 : 0.038) : al;
+    v_alpha = u_halo > 0.5 ? al * (accent > 1.0 ? 0.17 : 0.038) * u_ha : al;
     v_col = mix(mix(kcol(kA), kcol(kB), t), vec3(1.0), 0.14 * glow);
   }`;
   /* Sprites are resolution-aware: the disc edge is one device pixel wide whatever the size, so points stay round
@@ -277,7 +277,7 @@
             const target = build(current); mix = 1; // a restore lands on the current formation
             if (plate && gen === 1 && !reduced.matches) reveal = -0.06; // a plate's first draw is written left to right
             bufA = buf('a_a', target); bufB = buf('a_b', target); buf('a_rand', RAND);
-            ['u_proj', 'u_view', 'u_time', 'u_mix', 'u_pr', 'u_spin', 'u_scale', 'u_halo', 'u_maxpt', 'u_flow', 'u_pulse', 'u_sweep', 'u_reveal'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+            ['u_proj', 'u_view', 'u_time', 'u_mix', 'u_pr', 'u_spin', 'u_scale', 'u_halo', 'u_ha', 'u_maxpt', 'u_flow', 'u_pulse', 'u_sweep', 'u_reveal'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
             gl.uniform1f(U.u_maxpt, (gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE) || [1, 64])[1]);
             gl.enable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
             done();
@@ -298,6 +298,23 @@
     // the size changes with the morph
     const FIT = { lifecycle: 1.16, rulebook: 1.12 }; let fitA = plate ? FIT[initial] || 1 : 1, fitB = fitA;
     const fitNow = () => fitA + (fitB - fitA) * mix * mix * (3 - 2 * mix);
+    /* award a1 (W2): a plate is sized from its column, not the viewport. A formation drawn by the stage's height alone ran
+       past the content edge on wide, short screens (the library at 1920x1080 by 33 px, its "03-10 the series" dropped;
+       note 09's columns 09-10 unnamed). widthFit() shrinks a formation, only ever down, until its points stand inside the
+       stage's safe box in the pose it rests in (face-on), and the words beside them too, but for the words by at most
+       15 % (a wider label then slides, swaps sides or waits, as before: note 03's ring on a phone was 0.6 of itself with
+       every word kept, a smaller drawing than the words were worth); per formation, again on resize */
+    let wfit = {};
+    const fitOf = name => { if (!plate) return 1; if (!wfit[name]) { wfit[name] = widthFit(name); stage.dataset.fit = `${name} ${wfit[name].toFixed(3)}`; } return (FIT[name] || 1) * wfit[name]; };
+    /* award a1 (D3, "same visual weight at every density"): a point's size follows the drawing, not only the device's
+       pixel ratio. u is the root's step above 1920 (site.css: 3840 x 2160 is the 1920 x 1080 page at twice the size), so
+       a plate at 3840@1 draws exactly what it draws at 1920@2 (it was dust: 2 % of its box lit against 15 %). Then, by
+       the square root of the formation's drawn size (stage height x scale) against the size its weight was tuned at
+       (--figure-ref, px at 1440; Company's 432 by default), and of the points a stage draws (phones 7,000, not 15,000),
+       never below .75 or above 1.1: a small stage's points no longer run together (390@3: neon bars). Linear in the
+       drawing's size overshot (measured, award-a1 p1: 3840 twice as heavy as 1440); the eye reads weight sub-linearly.
+       The halo is a little lighter at 2.5x DPR and up. The words beside the points take the same u (rules, dots, gaps) */
+    let ref = 432, u = 1;
     const SWAY = 0.2, FLOW_S = 1.5; // radians either side of face-on; seconds per pass of the pulse
     const groups = {}; let grp = null, grpOn = false;
     stage.querySelectorAll('.fig-labels').forEach(el => { groups[el.dataset.for] = { el, items: Array.from(el.querySelectorAll('.fl')).map(l => ({ el: l, at: l.dataset.at.split(',').map(Number), side: l.dataset.side || 'r', ph: l.dataset.ph ? l.dataset.ph.split(',').map(Number) : null, to: l.dataset.to ? l.dataset.to.split(',').map(Number) : null, keep: l.hasAttribute('data-keep'), sides: (l.dataset.keep || '').split(' ').filter(Boolean), lead: 19, w: 0, h: 0, w1: 0, h1: 0, drop: 0, one: false, dropSet: 0, oneSet: false, x: NaN, y: NaN, dx: 0, out: false, lit: false })) }; });
@@ -314,10 +331,94 @@
     const wake = home => { woke = performance.now(); if (rest && home) homing = true; };
     // the formation's size: data-scale, or the stage's --figure-scale (a stylesheet may size it per layout; read on resize)
     const baseScale = parseFloat(stage.dataset.scale || '1'); let scale = baseScale;
-    const cssScale = () => { const v = parseFloat(getComputedStyle(stage).getPropertyValue('--figure-scale')); scale = v > 0 ? v : baseScale; };
+    const cssScale = () => {
+      const cs = getComputedStyle(stage), v = parseFloat(cs.getPropertyValue('--figure-scale')), rf = parseFloat(cs.getPropertyValue('--figure-ref'));
+      scale = v > 0 ? v : baseScale; ref = rf > 0 ? rf : 432;
+      u = (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16;
+    };
+    const weight = sc => u * Math.min(1.1, Math.max(0.75, Math.sqrt(H * sc / (u * ref)) * Math.pow(15000 / N, 0.25)));
+    const restView = new Float32Array(16); lookAt(restView, [0, 0.35, 4.4]); // the pose a plate rests in (no tilt)
+    // the factor (<= 1) that brings the formation's points and the words beside them inside the safe box, at rest
+    function widthFit(name) {
+      if (W < 2 || H < 2 || !proj[0]) return 1;
+      const pts = build(name), g = groups[name], cx = W / 2, cy = H / 2;
+      const Lx = safe.l + 6 * u, Rx = safe.r - 6 * u, Ty = safe.t + 4 * u, By = H - 4 * u;
+      let f = 1;
+      for (let pass = 0; pass < 2; pass++) {
+        const sc = scale * (narrow() ? 0.86 : 1) * (FIT[name] || 1) * f;
+        let limP = Infinity, limL = Infinity, words = false;
+        const cap = v => { if (words) { if (v < limL) limL = v; } else if (v < limP) limP = v; };
+        const fitX = (a, lo, hi) => { if (a > 0) cap((Rx - cx - hi) / a); else if (a < 0) cap((cx + lo - Lx) / -a); };
+        const fitY = (b, lo, hi) => { if (b > 0) cap((By - cy - hi) / b); else if (b < 0) cap((cy + lo - Ty) / -b); };
+        for (let i = 0, step = Math.max(1, Math.floor(N / 3000)); i < N; i += step) {
+          if (pts[i * 4 + 3] >= 6.5 || !project(pts[i * 4], pts[i * 4 + 1], pts[i * 4 + 2], 0, 1, sc, restView)) continue;
+          fitX(scr[0] - cx, 0, 0); fitY(scr[1] - cy, 0, 0);
+        }
+        words = true;
+        if (g) g.items.forEach(it => {
+          const t = it.el.firstElementChild, w = t ? t.offsetWidth : 0, h = t ? t.offsetHeight : 0;
+          if (!w || !project(it.at[0], it.at[1], it.at[2], 0, 1, sc, restView)) return;
+          const a = scr[0] - cx, b = scr[1] - cy, sd = it.side, gap = 18 * u;
+          // words beside a point cannot slide off their rule: they must fit; words above or below it slide (place())
+          if (sd === 'l' || sd === 'r') {
+            let x = a, lead = 19 * u;
+            if (it.to && project(it.to[0], it.to[1], it.to[2], 0, 1, sc, restView)) { x = scr[0] - cx; lead = 0; }
+            if (sd === 'l') fitX(x, -lead - w, -lead); else fitX(x, lead, lead + w);
+          } else if (sd[0] === 't') fitY(b, -gap - h, 0); else fitY(b, 0, gap + h);
+        });
+        f = Math.min(1, f * limP, Math.max(f * limL, 0.85));
+      }
+      return Math.max(0.6, f);
+    }
+    // a hero's caption hangs from the drawing (data-bbox on the stage, data-hang on the caption): the formation's left
+    // edge and the foot of the words under it, as --fig-l and --fig-b on the caption, in its containing block's px (.is-hung)
+    function publish() {
+      if (!('bbox' in stage.dataset) || !stage.parentElement) return;
+      const pts = built[current], host = stage.parentElement; if (!pts) return;
+      const hung = Array.from(host.querySelectorAll('[data-hang]')).filter(el => el.offsetParent); if (!hung.length) return;
+      const sc = scale * (narrow() ? 0.86 : 1) * fitOf(current);
+      let x0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (let i = 0, step = Math.max(1, Math.floor(N / 3000)); i < N; i += step) {
+        if (pts[i * 4 + 3] >= 6.5 || !project(pts[i * 4], pts[i * 4 + 1], pts[i * 4 + 2], 0, 1, sc, restView)) continue;
+        if (scr[0] < x0) x0 = scr[0]; if (scr[0] > x1) x1 = scr[0]; if (scr[1] > y1) y1 = scr[1];
+      }
+      const g = groups[current];
+      if (g) g.items.forEach(it => {
+        const t = it.el.firstElementChild, h = t ? t.offsetHeight : 0;
+        if (h && it.side[0] === 'b' && project(it.at[0], it.at[1], it.at[2], 0, 1, sc, restView)) y1 = Math.max(y1, scr[1] + 18 * u + h);
+      });
+      if (!isFinite(x0)) return;
+      const rs = stage.getBoundingClientRect();
+      hung.forEach(el => {
+        const cb = el.offsetParent.getBoundingClientRect();
+        el.style.setProperty('--fig-l', `${Math.round(rs.left - cb.left + x0)}px`); el.style.setProperty('--fig-r', `${Math.round(rs.left - cb.left + x1)}px`);
+        el.style.setProperty('--fig-b', `${Math.round(rs.top - cb.top + Math.min(H, y1))}px`); el.classList.add('is-hung');
+      });
+    }
     // render at the device's full resolution (up to 3x), within a UHD pixel budget so a large stage on a 3x display stays fluid
     const PIXEL_BUDGET = 3840 * 2160;
-    function resize() { if (!prog || lost) return; cssScale(); if (plate) { measureSafe(); if (grpOn) labelsOn(); } const r = cv.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height); dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / (W * H))); cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); gl.viewport(0, 0, cv.width, cv.height); perspective(proj, 0.62, W / H, 0.1, 30); gl.uniform1f(U.u_pr, dpr); draw(true); }
+    function resize() {
+      if (!prog || lost) return; cssScale(); if (plate) { measureSafe(); if (grpOn) labelsOn(); }
+      const r = cv.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height); dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / (W * H)));
+      cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); gl.viewport(0, 0, cv.width, cv.height); perspective(proj, 0.62, W / H, 0.1, 30);
+      gl.uniform1f(U.u_ha, (window.devicePixelRatio || 1) >= 2.5 ? 0.78 : 1);
+      if (plate) refit();
+      draw(true);
+    }
+    /* the fit and the hung caption in a task of their own, after the frame (Lighthouse mobile: in the start-up task they
+       added ~25 ms of blocking time; a plate's first frames are its left-to-right reveal, so a frame at the old fit shows
+       nothing). Under reduced motion the figure is drawn whole at once, so it is fitted first. The still is fitted alike */
+    let refitQ = 0;
+    const fitNowAll = () => {
+      refitQ = 0; if (!prog || lost) return;
+      wfit = {}; fitA = fitB = fitOf(current);
+      if (stage.classList.contains('has-still')) stage.style.setProperty('--fig-fit', (wfit[current] || 1).toFixed(3));
+      publish(); grpOn = false;
+    };
+    function refit() {
+      if (reduced.matches) { clearTimeout(refitQ); fitNowAll(); if (prog && !lost) draw(true); return; }
+      if (!refitQ) refitQ = setTimeout(() => { fitNowAll(); if (prog && !lost) { draw(true); request(); } }, 0);
+    }
     function draw(force) {
       const now = performance.now(); const dt = Math.min(0.05, (now - last) / 1000); last = now;
       const moving = !reduced.matches && !paused;
@@ -330,7 +431,7 @@
       gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniformMatrix4fv(U.u_proj, false, proj); gl.uniformMatrix4fv(U.u_view, false, view);
       const spin = plate ? SWAY * Math.sin(time * 0.5) * (rest ? vel : 1) : time * spinBase, sc = scale * (narrow() ? 0.86 : 1) * fitNow();
-      gl.uniform1f(U.u_time, time); gl.uniform1f(U.u_mix, mix); gl.uniform1f(U.u_spin, spin); gl.uniform1f(U.u_scale, sc);
+      gl.uniform1f(U.u_time, time); gl.uniform1f(U.u_mix, mix); gl.uniform1f(U.u_spin, spin); gl.uniform1f(U.u_scale, sc); gl.uniform1f(U.u_pr, dpr * weight(sc));
       const at = (flow / FLOW_S % 1) * 1.32 - 0.12, amp = plate && moving && landed() ? (rest ? vel : 1) * Math.min(1, flow * 2.5) : 0;
       gl.uniform1f(U.u_sweep, sweep); gl.uniform1f(U.u_flow, at);
       gl.uniform1f(U.u_pulse, amp); gl.uniform1f(U.u_reveal, reveal);
@@ -344,6 +445,7 @@
       grpOn = true; planned = false; grp.items.forEach(it => {
         if (it.oneSet) { it.el.classList.remove('is-one'); it.oneSet = false; }
         const t = it.el.firstElementChild; it.w = t ? t.offsetWidth : 0; it.h = t ? t.offsetHeight : 0; it.x = NaN; it.sd = it.side; it.blocked = false; it.drop = 0; it.one = false;
+        if (!it.to) { const l = Math.round(19 * u); if (l !== it.lead) { it.lead = l; it.el.style.setProperty('--lead', `${l}px`); } } // the rule's reach in the root's step (a1)
         // a hedge label's words on one line, measured for the slot search (r3)
         it.w1 = it.h1 = 0;
         if (it.keep && t && t.querySelector('small')) { it.el.classList.add('is-one'); it.w1 = t.offsetWidth; it.h1 = t.offsetHeight; it.el.classList.remove('is-one'); }
@@ -352,9 +454,9 @@
     }
     // the formation's point (x, y, z), turned by the sway and sized, onto the stage (px); false behind the eye
     const scr = [0, 0];
-    function project(x, y, z, s, c, sc) {
-      const X = (c * x + s * z) * sc, Y = y * sc, Z = (-s * x + c * z) * sc;
-      const v0 = view[0] * X + view[4] * Y + view[8] * Z + view[12], v1 = view[1] * X + view[5] * Y + view[9] * Z + view[13], v2 = view[2] * X + view[6] * Y + view[10] * Z + view[14], v3 = view[3] * X + view[7] * Y + view[11] * Z + view[15];
+    function project(x, y, z, s, c, sc, vm) {
+      const X = (c * x + s * z) * sc, Y = y * sc, Z = (-s * x + c * z) * sc, V = vm || view;
+      const v0 = V[0] * X + V[4] * Y + V[8] * Z + V[12], v1 = V[1] * X + V[5] * Y + V[9] * Z + V[13], v2 = V[2] * X + V[6] * Y + V[10] * Z + V[14], v3 = V[3] * X + V[7] * Y + V[11] * Z + V[15];
       const w = proj[3] * v0 + proj[7] * v1 + proj[11] * v2 + proj[15] * v3; if (w <= 0) return false;
       scr[0] = Math.round(((proj[0] * v0 + proj[4] * v1 + proj[8] * v2 + proj[12] * v3) / w * 0.5 + 0.5) * W);
       scr[1] = Math.round((0.5 - (proj[1] * v0 + proj[5] * v1 + proj[9] * v2 + proj[13] * v3) / w * 0.5) * H);
@@ -365,7 +467,7 @@
        a grid of 8 px cells. A label whose words would cover more than three occupied cells takes the other side of its
        point (left/right, above/below); if that is covered too, or off the stage, it is not shown: the caption says the
        same words. The side chosen holds until the next plan, so a swaying plate never flips its labels. */
-    const CELL = 8; let occ = null, oc = 0, orow = 0, occN = 0, planned = false;
+    let CELL = 8, occ = null, oc = 0, orow = 0, occN = 0, planned = false;
     const hits = (x0, y0, x1, y1) => {
       let n = 0; const c0 = Math.max(0, Math.floor(x0 / CELL)), c1 = Math.min(oc - 1, Math.floor(x1 / CELL)), r0 = Math.max(0, Math.floor(y0 / CELL)), r1 = Math.min(orow - 1, Math.floor(y1 / CELL));
       for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) n += occ[r * oc + c];
@@ -374,7 +476,7 @@
     function plan(sc) {
       planned = true;
       const pts = built[current]; if (!pts) return;
-      oc = Math.ceil(W / CELL); orow = Math.ceil(H / CELL);
+      CELL = Math.max(8, Math.round(8 * u)); oc = Math.ceil(W / CELL); orow = Math.ceil(H / CELL);
       if (!occ || occ.length < oc * orow) occ = new Uint16Array(oc * orow); else occ.fill(0);
       let S = 0;
       for (let i = 0, step = Math.max(1, Math.floor(N / 3000)); i < N; i += step) {
@@ -399,49 +501,60 @@
     const SIDES = ['t', 'b', 'r', 'l', 'tr', 'tl', 'br', 'bl'], DROPS = [0, -8, 12, 24, 36, 48, 60, 72, 84, 96];
     const setOut = (it, out) => { if (out !== it.out) { it.el.classList.toggle('is-out', out); it.out = out; } };
     function place(spin, sc, planning) {
-      const s = Math.sin(spin), c = Math.cos(spin), M = 6, L = safe.l + M, R = safe.r - M, T = safe.t + 4, B = H - 4, taken = [];
+      const s = Math.sin(spin), c = Math.cos(spin), M = 6 * u, L = safe.l + M, R = safe.r - M, T = safe.t + 4 * u, B = H - 4 * u, taken = [];
       let bare = false; // the hedge label is not shown, so no other label is
+      /* award a1 (D5): words below (or above) points that share a height in the formation stand on one baseline. Note 09's
+         ten column numbers climbed 12 device px from 01 to 10 while the plate swayed (the near columns project lower);
+         each word now drops to the row's lowest point (rises to its highest), its rule taking up the difference */
+      const rows = new Map();
+      if (!planning) grp.items.forEach(it => {
+        const d = (it.sd || it.side)[0]; if (d !== 'b' && d !== 't') return;
+        if (!project(it.at[0], it.at[1], it.at[2], s, c, sc)) return;
+        const k = d + it.at[1] + ',' + it.at[2], r = rows.get(k);
+        if (!r) rows.set(k, { n: 1, v: scr[1], d }); else { r.n++; r.v = d === 'b' ? Math.max(r.v, scr[1]) : Math.min(r.v, scr[1]); }
+      });
       grp.items.forEach(it => {
         if (!project(it.at[0], it.at[1], it.at[2], s, c, sc)) { if (it.keep) { bare = true; setOut(it, true); } return; }
         const px = scr[0], py = scr[1];
         // a label whose point lies inside the drawing (data-to: where its words begin, in the formation's space) reaches
         // out on a longer rule, so its words stand clear of what surrounds the point
-        if (it.to && project(it.to[0], it.to[1], it.to[2], s, c, sc)) { const lead = Math.max(19, Math.round(Math.abs(scr[0] - px))); if (lead !== it.lead) { it.lead = lead; it.el.style.setProperty('--lead', `${lead}px`); } }
+        if (it.to && project(it.to[0], it.to[1], it.to[2], s, c, sc)) { const lead = Math.max(Math.round(19 * u), Math.round(Math.abs(scr[0] - px))); if (lead !== it.lead) { it.lead = lead; it.el.style.setProperty('--lead', `${lead}px`); } }
         // keep the words inside the safe box: the text slides along its rule, the point stays where it is; a label whose
         // point or words would stand outside it (beyond the content edge, under the bar), or wider than it, is not shown
-        const off = (d, w) => d === 'l' ? -it.lead - w : d === 'r' ? it.lead : d.length > 1 ? (d[1] === 'l' ? 6 - w : -6) : -w / 2;
+        const off = (d, w) => d === 'l' ? -it.lead - w : d === 'r' ? it.lead : d.length > 1 ? (d[1] === 'l' ? 6 * u - w : -6 * u) : -w / 2;
         const over = q => Math.max(L - q.left, q.left + q.w - R, 0);
         const at = (sd, drop, one) => {
-          const w = one ? it.w1 : it.w, h = one ? it.h1 : it.h, left = px + off(sd, w), top = sd[0] === 't' ? py - 18 - drop - h : sd[0] === 'b' ? py + 18 + drop : py - 7;
+          const w = one ? it.w1 : it.w, h = one ? it.h1 : it.h, left = px + off(sd, w), top = sd[0] === 't' ? py - 18 * u - drop - h : sd[0] === 'b' ? py + 18 * u + drop : py - 7 * u;
           const dx = left < L ? L - left : left + w > R ? R - left - w : 0;
-          return { sd, drop, one, w, h, left, top, dx, bad: top < T || top + h > B || Math.abs(dx) > w * 0.5 + 12 || w > R - L };
+          return { sd, drop, one, w, h, left, top, dx, bad: top < T || top + h > B || Math.abs(dx) > w * 0.5 + 12 * u || w > R - L };
         };
         if (planning) {
           // words beside a point that lack room on their side (more than a short slide) stand on the other, if they fit
           // there; words that would lie on the drawing do the same, or are not shown
           let g = at(it.side, 0, false);
-          if ((g.sd === 'l' || g.sd === 'r') && over(g) > 16) { const o = at(mirror(g.sd), 0, false); if (!over(o)) g = o; }
+          if ((g.sd === 'l' || g.sd === 'r') && over(g) > 16 * u) { const o = at(mirror(g.sd), 0, false); if (!over(o)) g = o; }
           const covered = q => hits(q.left + q.dx, q.top, q.left + q.dx + q.w, q.top + q.h) > Math.max(6, 0.35 * occN * q.w * q.h / (W * H));
           it.blocked = false;
           if (it.w && covered(g)) { const o = at(mirror(g.sd), 0, false); if (!o.bad && !covered(o)) g = o; else it.blocked = true; }
           if (it.keep && it.w && (it.blocked || g.bad)) {
             it.blocked = true;
-            const clear = q => hits(q.left + q.dx, q.top, q.left + q.dx + q.w, q.top + q.h) <= 3 && !(px > q.left + q.dx - 4 && px < q.left + q.dx + q.w + 4 && py > q.top - 3 && py < q.top + q.h + 3);
+            const clear = q => hits(q.left + q.dx, q.top, q.left + q.dx + q.w, q.top + q.h) <= 3 && !(px > q.left + q.dx - 4 * u && px < q.left + q.dx + q.w + 4 * u && py > q.top - 3 * u && py < q.top + q.h + 3 * u);
             const sides = [it.side, mirror(it.side), ...SIDES].filter(sd => !it.sides.length || it.sides.includes(sd));
-            search: for (const drop of DROPS) for (const one of it.w1 ? [false, true] : [false]) for (const sd of sides) {
+            search: for (const drop of DROPS.map(d => Math.round(d * u))) for (const one of it.w1 ? [false, true] : [false]) for (const sd of sides) {
               if (drop && (sd === 'l' || sd === 'r')) continue;
               const q = at(sd, drop, one); if (!q.bad && clear(q)) { g = q; it.blocked = false; break search; }
             }
           }
           it.sd = g.sd; it.drop = g.drop; it.one = g.one; return;
         }
-        const { sd, left, top, dx, bad, w, h } = at(it.sd || it.side, it.drop, it.one);
+        const row = rows.get((it.sd || it.side)[0] + it.at[1] + ',' + it.at[2]), drop = it.drop + (row && row.n > 1 ? Math.abs(row.v - py) : 0);
+        const { sd, left, top, dx, bad, w, h } = at(it.sd || it.side, drop, it.one);
         if (sd !== it.el.dataset.side) it.el.dataset.side = sd;
-        if (it.drop !== it.dropSet) { it.el.style.setProperty('--drop', `${it.drop}px`); it.dropSet = it.drop; }
+        if (drop !== it.dropSet) { it.el.style.setProperty('--drop', `${drop}px`); it.dropSet = drop; }
         if (it.one !== it.oneSet) { it.el.classList.toggle('is-one', it.one); it.oneSet = it.one; }
         let out = bare || it.blocked || px < safe.l || px > safe.r || py < T || py > B || bad;
         // words never cross words: a label that would touch one shown before it (the table's order is the priority) waits
-        if (!out && w) { const x0 = left + dx - 4, x1 = left + dx + w + 4; if (taken.some(b => x0 < b[2] && x1 > b[0] && top - 3 < b[3] && top + h + 3 > b[1])) out = true; else taken.push([x0, top, x1, top + h], [px - 5, py - 5, px + 5, py + 5]); }
+        if (!out && w) { const x0 = left + dx - 4 * u, x1 = left + dx + w + 4 * u, p5 = 5 * u; if (taken.some(b => x0 < b[2] && x1 > b[0] && top - 3 * u < b[3] && top + h + 3 * u > b[1])) out = true; else taken.push([x0, top, x1, top + h], [px - p5, py - p5, px + p5, py + p5]); }
         if (it.keep && out) bare = true;
         if (px !== it.x || py !== it.y) { it.el.style.transform = `translate(${px}px, ${py}px)`; it.x = px; it.y = py; }
         if (dx !== it.dx) { it.el.style.setProperty('--dx', `${Math.round(dx)}px`); it.dx = dx; }
@@ -474,7 +587,7 @@
         if (!FORMS[name] || name === current) return;
         stage.dataset.figureCurrent = name;
         if (!prog || lost) { current = name; if (plate) { labelsOff(); grp = groups[name] || null; fitA = fitB = FIT[name] || 1; } return; } // not drawing yet: setup or the restore starts on this formation
-        if (plate) { fitA = fitNow(); fitB = FIT[name] || 1; }
+        if (plate) { fitA = fitNow(); fitB = fitOf(name); }
         // the current target becomes the origin; snapping mid-morph is invisible at these speeds
         gl.bindBuffer(gl.ARRAY_BUFFER, bufA); gl.bufferData(gl.ARRAY_BUFFER, build(current), gl.DYNAMIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, bufB); gl.bufferData(gl.ARRAY_BUFFER, build(name), gl.DYNAMIC_DRAW);
@@ -490,7 +603,8 @@
     cv.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; prog = null; stop(); stage.classList.add('no-figure'); syncMotion(); });
     cv.addEventListener('webglcontextrestored', () => { lost = false; setup(() => { stage.classList.remove('no-figure'); resize(); request(); syncMotion(); }); });
     if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { const was = visible; visible = e.isIntersecting; if (visible) { if (plate && rest && !was) wake(); request(); } else stop(); }, { threshold: 0 }).observe(stage);
-    if (plate && document.fonts) document.fonts.ready.then(() => { if (grpOn) { grpOn = false; if (prog && !lost) draw(true); } }); // labels measured in their own face
+    // labels measured in their own face (and the fit, which counts their widths)
+    if (plate && document.fonts) document.fonts.ready.then(() => { if (prog && !lost) refit(); });
     document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else request(); });
     reduced.addEventListener('change', () => { mouse.tx = mouse.ty = 0; request(); syncMotion(); });
     if ('ResizeObserver' in window) new ResizeObserver(() => { resize(); syncMotion(); }).observe(stage); else window.addEventListener('resize', () => { resize(); syncMotion(); });

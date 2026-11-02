@@ -332,7 +332,7 @@
   precision highp float;
   attribute vec4 a_from, a_to, a_rand, a_key;
   uniform mat4 u_view, u_proj;
-  uniform float u_time, u_m, u_spread, u_swirl, u_lift, u_keyIdx, u_sA, u_sB, u_spin, u_pr, u_dist, u_fogR, u_halo, u_maxpt, u_intro, u_shade;
+  uniform float u_time, u_m, u_spread, u_swirl, u_lift, u_keyIdx, u_sA, u_sB, u_spin, u_pr, u_dist, u_fogR, u_halo, u_maxpt, u_intro, u_shade, u_gather;
   uniform vec3 u_liftDir, u_light;
   uniform vec3 u_rU[12]; uniform vec3 u_rV[12]; uniform float u_rW[12];
   uniform float u_hov[24]; uniform float u_hovOn, u_hovScene, u_sceneA, u_sceneB, u_hovLift;
@@ -470,6 +470,17 @@
     if (u_hovOn > 0.001 && abs(sc - u_hovScene) < 0.5) h = u_hov[int(clamp(g, 0.0, 23.0) + 0.5)];
     P.y += h * u_hovLift;
     vec4 mv = u_view * vec4(P, 1.0);
+    // the hand-off: on a first visit the loader's ring opens onto the globe's limb, and each globe point arrives from
+    // that ring as it draws in (band by band, from the top), so the ring's dots become the globe
+    float iaG = clamp(u_intro * 1.7 - a_key.x * 0.7, 0.0, 1.0);
+    float gw = u_gather * step(u_sceneA, 0.5) * step(0.5, mA) * step(mA, 1.5) * (1.0 - tc) * (1.0 - iaG) * (1.0 - iaG);
+    if (gw > 0.0) {
+      vec4 o0 = u_view * vec4(0.0, 0.0, 0.0, 1.0);
+      vec2 dq = mv.xy - o0.xy;
+      float lq = length(dq);
+      vec2 dir = lq > 1e-4 ? dq / lq : vec2(cos(a_rand.x * TAU), sin(a_rand.x * TAU));
+      mv.xyz = mix(mv.xyz, vec3(o0.xy + dir * u_sA, o0.z), gw);
+    }
     gl_Position = u_proj * mv;
     vec4 pr = kprop(k), prB = kprop(kB), prA = kprop(kA);
     vec3 col = mix(kcol(kA), kcol(kB), tc);
@@ -655,7 +666,7 @@
         if (!gl.getProgramParameter(p.prog, gl.LINK_STATUS)) throw new Error('story shader: ' + (gl.getShaderInfoLog(p.v) || gl.getShaderInfoLog(p.f) || gl.getProgramInfoLog(p.prog)));
       });
       Object.assign(P, progs);
-      bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ', 'u_dc'], ['a_from', 'a_to', 'a_rand', 'a_key']);
+      bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_gather', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ', 'u_dc'], ['a_from', 'a_to', 'a_rand', 'a_key']);
       bindProgram(P.line, ['u_view', 'u_proj', 'u_res', 'u_pr', 'u_dist', 'u_fogR', 'u_occ'], ['a_corner', 'a_p0', 'a_p1', 'a_col', 'a_w']);
       bindProgram(P.act, ['u_view', 'u_proj', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt'], ['a_pos', 'a_col', 'a_shp']);
       const buf = (data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage || gl.STATIC_DRAW); return b; };
@@ -909,7 +920,7 @@
 
   /* ================= scene state ================= */
   // the clocks start mid-flow: the ledger already holds records, proposals are already in the lane
-  let sNow = 0, sTarget = 0, xNow = 0, xTarget = 0, xeNow = 0, time = 14.3, intro = 0, introStart = -1;
+  let sNow = 0, sTarget = 0, xNow = 0, xTarget = 0, xeNow = 0, time = 14.3, intro = 0, introStart = -1, gather = 0;
   let seg = 0, mRaw = 0, mE = 0, scale = [1, 1];
   // the copy's own position.
   let copyS = 0, copyMode = 'follow', copyFrom = 0, copyTo = 0, copyT0 = 0, lastInput = -1e9, touchDown = false, idleTimer = 0;
@@ -1388,8 +1399,8 @@
     if (!labelHost) return;
     const settledScene = labelScene >= 0 && xNow < 0.4 ? labelScene : -1;
     if (settledScene !== tabScene) { // only the shown scene's callouts are reachable (and announced)
-      tabScene = settledScene;
-      labels.forEach(l => { if (l.group == null) return; const on = l.scene === tabScene; l.el.tabIndex = on ? 0 : -1; if (on) l.el.removeAttribute('aria-hidden'); else l.el.setAttribute('aria-hidden', 'true'); });
+      const was = tabScene; tabScene = settledScene; // only the scene that left and the one that arrived change
+      labels.forEach(l => { if (l.group == null || (l.scene !== was && l.scene !== tabScene)) return; const on = l.scene === tabScene; l.el.tabIndex = on ? 0 : -1; if (on) l.el.removeAttribute('aria-hidden'); else l.el.setAttribute('aria-hidden', 'true'); });
       if (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('story-lab') && document.activeElement.tabIndex < 0) stage.focus({ preventScroll: true });
       if (hoverPtr && hoverPtr.scene !== tabScene) { hoverPtr = null; setHover(); } // a new scene starts uninspected
     }
@@ -1625,10 +1636,13 @@
       if (bo < 0.08) bo = 0; // (the exit fades it too) no ghost paragraph
       const o = op.toFixed(3), tr = `translate3d(0, ${dy.toFixed(1)}px, 0)`, e = eo.toFixed(3), ww = w.toFixed(3), bb = bo.toFixed(3);
       if (s.op !== o) b.style.opacity = s.op = o;
-      if (s.tr !== tr) b.style.transform = s.tr = tr;
-      if (s.eo !== e) b.style.setProperty('--eo', s.eo = e);
-      if (s.w !== ww) b.style.setProperty('--w', s.w = ww);
-      if (s.bo !== bb) b.style.setProperty('--bo', s.bo = bb);
+      // a beat nobody can see skips the frames in between: it keeps its place, and its parts are written only when they
+      // come to rest (0 or 1), so a hidden beat never holds a stale state (award a1: 60 fps at 4K)
+      const seen = o !== '0.000', rest = v => v === '0.000' || v === '1.000';
+      if (seen && s.tr !== tr) b.style.transform = s.tr = tr;
+      if (s.eo !== e && (seen || rest(e))) b.style.setProperty('--eo', s.eo = e);
+      if (s.w !== ww && (seen || rest(ww))) b.style.setProperty('--w', s.w = ww);
+      if (s.bo !== bb && (seen || rest(bb))) b.style.setProperty('--bo', s.bo = bb);
       const act = op * bo > 0.5; // only a scene whose buttons are showing takes the pointer
       if (s.on !== act) b.classList.toggle('is-active', s.on = act);
       const gone = bo === 0; // a paragraph (buttons, key) at 0 is not there at all: no ghost text, no invisible hit target
@@ -1650,7 +1664,7 @@
       let co = 0, top = 0;
       if (xe > 0) {
         const fy = lean ? project(0, Y_FLOOR * layouts[4].s, 0).y : H * FLOOR_END(); // portrait: above the line as it settles
-        top = Math.max(navH + 14, fy - (stacked ? 52 : 40) - codaH); // just above the floor it names, clear of the ticks
+        top = Math.max(navH + 14, fy - (stacked ? 52 : 44 * Math.max(1, W / 1920)) - codaH); // just above the floor it names, clear of the ticks (and the hedge with it)
         co = codaA;
         const room0 = top - navH, tC = top < navH + 14.5 || (ov > 0 && (room0 <= 6 || ov >= room0 - 6 - Math.min(150, H * 0.2) / 2)) ? 0 : 1; // the leave, on a threshold
         leaveC += clamp(tC - leaveC, -k, k); if (leaveC !== tC) fading = true;
@@ -1691,7 +1705,7 @@
 
   /* ================= the frame ================= */
   let running = true, visible = true, paused = false, frameId = 0, t0 = performance.now(), simTime = 14.3, settledOnce = false, pointerDirty = false, ptr = null, firstFrame = -1;
-  const PIXEL_BUDGET = 3840 * 2160;
+  const PIXEL_BUDGET = 3840 * 2160, LITE_BUDGET = 3.0e6;
   // a resize or a rotation keeps the reader's scene
   function readingPoint() {
     if (!(lastP >= 0)) return null;
@@ -1770,8 +1784,8 @@
     const keep = tinyBack ? null : readingPoint(); // before anything moves
     if (sized) {
       W = w; H = h; ratio = r;
-      // phones (LITE) draw at most 2 device px per CSS px
-      dpr = Math.min(LITE ? 2 : 3, r, Math.sqrt(PIXEL_BUDGET / Math.max(1, W * H)));
+      // phones (LITE) draw at their own density inside a phone budget (390 x 844 @3 = 2.96 M device px: crisp orbits; was 2x, upscaled)
+      dpr = Math.min(3, r, Math.sqrt((LITE ? LITE_BUDGET : PIXEL_BUDGET) / Math.max(1, W * H)));
       ptK = Math.max(1, W / 1600); // wide screens: points, glows and actors grow with the frame, so the globe and the swarm read as dense as at 1440 (4K: 2.4x)
       cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr);
       gl.viewport(0, 0, cv.width, cv.height);
@@ -1780,11 +1794,20 @@
       setModes(); // the copy's mode first: the frames are fitted around the copy it leaves
     }
     measureScroll(); // the toolbar alone (stage unchanged): only the scroll geometry, the callouts keep their layout
-    if (sized) fitScenes();
+    if (sized) { fitScenes(); publishGlobe(); }
     if (tinyBack) { placeTo(tinyBack); tinyBack = null; scrollY = window.scrollY; } // back from the static sequence, at the reader's scene
     else restore(keep);
     sceneScroll();
     requestFrame();
+  }
+  // the globe's place on <html> (--globe-x/-y: its centre, --globe-r: its radius; px in the window) for the loader's
+  // hand-off (loader.js, system): three writes, no reads
+  function publishGlobe() {
+    const L0 = layouts[0], st = root.style;
+    if (!(L0.cy > 0) || frameTiny[0]) { ['--globe-x', '--globe-y', '--globe-r'].forEach(v => st.removeProperty(v)); return; }
+    st.setProperty('--globe-x', L0.cx.toFixed(1) + 'px');
+    st.setProperty('--globe-y', (L0.cy + Math.max(0, storyTop - scrollY)).toFixed(1) + 'px');
+    st.setProperty('--globe-r', (L0.s * pxuOf(H)).toFixed(1) + 'px');
   }
   function drawBulk(halo) {
     const pr = P.bulk, u = pr.u;
@@ -1798,7 +1821,7 @@
     gl.uniform1f(u.u_sA, scale[0]); gl.uniform1f(u.u_sB, scale[1]);
     gl.uniform1f(u.u_spin, time * 0.07 + 0.6);
     gl.uniform1f(u.u_pr, dpr * ptK); gl.uniform1f(u.u_dist, CAM_D); gl.uniform1f(u.u_fogR, 1.7 * Math.max(scale[0], scale[1]));
-    gl.uniform1f(u.u_maxpt, maxPt); gl.uniform1f(u.u_intro, intro); gl.uniform1f(u.u_halo, halo ? 1 : 0);
+    gl.uniform1f(u.u_maxpt, maxPt); gl.uniform1f(u.u_intro, intro); gl.uniform1f(u.u_gather, gather); gl.uniform1f(u.u_halo, halo ? 1 : 0);
     gl.uniform1f(u.u_shade, lerp(SHADE[seg], SHADE[seg + 1], mE));
     gl.uniform1fv(u.u_hov, hov); gl.uniform1f(u.u_hovOn, hoverOn); gl.uniform1f(u.u_hovScene, hoverScene);
     gl.uniform1f(u.u_sceneA, seg); gl.uniform1f(u.u_sceneB, seg + 1);
@@ -1856,7 +1879,13 @@
     if (moving) { time += dt; simTime += dt; mouse.x += (mouse.tx - mouse.x) * (1 - Math.exp(-dt * 3)); mouse.y += (mouse.ty - mouse.y) * (1 - Math.exp(-dt * 3)); }
     // the intro: when the loader lifts, the globe draws in from the top band down
     if (firstFrame < 0) firstFrame = now;
-    if (introStart < 0 && (!document.body.classList.contains('is-loading') || now - firstFrame > 2400)) introStart = now; // never wait on a slow loader
+    if (introStart < 0 && (!document.body.classList.contains('is-loading') || now - firstFrame > 2400)) { // never wait on a slow loader
+      // a first visit whose loader travels to the globe (loader.js wrote its target): the points gather in from its ring,
+      // starting as the ring nears the limb; a repeat visit, reduced motion or a slow loader keep the plain draw-in
+      const ld = document.querySelector('.loader');
+      gather = !red && ld && !ld.classList.contains('is-quick') && ld.style.getPropertyValue('--hr') ? 1 : 0;
+      introStart = now + gather * 200;
+    }
     intro = red || introStart < 0 ? (introStart < 0 ? 0 : 1) : clamp((now - introStart) / 1100, 0, 1);
     if (red && introStart >= 0) intro = 1;
     // scroll with a little weight: the instrument follows, it does not snap (reduced motion: it does)

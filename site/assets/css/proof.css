@@ -25,32 +25,38 @@
 
 /* ======================= Proof (evidence.html) ======================= */
 
-/* the hero plate draws at first paint: ten records land on the line, then one tick per broker confirmation, in order,
-   each wiped in from the left. The moving marks are small HTML boxes over the still SVG (a box clips the same 346 x 252
-   drawing, aligned with it; sizes in drawing units), so only transform and opacity move and the compositor runs it: SVG
-   children animate on the main thread, under the page's first scripts (r4 perf). Screen only: print and reduced motion
-   get the finished plate. */
-[data-page="proof"] .pf-pl { position: absolute; inset: 0; color: var(--fg); pointer-events: none; }
-[data-page="proof"] .pf-pl > span { position: absolute; overflow: hidden; left: calc(var(--u) / 3.46 * 1%); top: calc(var(--v) / 2.52 * 1%); width: calc(var(--w) / 3.46 * 1%); height: calc(var(--h) / 2.52 * 1%); }
-[data-page="proof"] .pf-pl svg { position: absolute; display: block; left: calc(var(--u) / var(--w) * -100%); top: calc(var(--v) / var(--h) * -100%); width: calc(34600% / var(--w)); max-width: none; height: calc(25200% / var(--h)); overflow: visible; }
+/* hero plate (a1): ten open blocks on the 10 bps floor (C-023, S-13), a broker tick over each. They land, then one
+   pass of signal ink runs the floor and ticks 01-10 (L5). What moves is HTML boxes over the still SVG (r4 perf); print,
+   reduced motion and no JS get the finished plate. */
+[data-page="proof"] .pf-pl { --W: 346; --H: 88; position: absolute; inset: 0; color: var(--fg); pointer-events: none; }
+[data-page="proof"] .pf-pl > span { position: absolute; overflow: hidden; left: calc(var(--u) / var(--W) * 100%); top: calc(var(--v) / var(--H) * 100%); width: calc(var(--w) / var(--W) * 100%); height: calc(var(--h) / var(--H) * 100%); }
+[data-page="proof"] .pf-pl svg { position: absolute; display: block; left: calc(var(--u) / var(--w) * -100%); top: calc(var(--v) / var(--h) * -100%); width: calc(var(--W) / var(--w) * 100%); max-width: none; height: calc(var(--H) / var(--h) * 100%); overflow: visible; }
 @supports (width: 1cqw) { /* placed from the plate itself, so a box's rounding never scales up into the drawing */
   [data-page="proof"] .pf-pl { container-type: size; }
-  [data-page="proof"] .pf-pl > span { left: calc(var(--u) / 3.46 * 1cqw); top: calc(var(--v) / 2.52 * 1cqh); width: calc(var(--w) / 3.46 * 1cqw); height: calc(var(--h) / 2.52 * 1cqh); }
-  [data-page="proof"] .pf-pl svg { left: calc(var(--u) / -3.46 * 1cqw); top: calc(var(--v) / -2.52 * 1cqh); width: 100cqw; height: 100cqh; }
+  [data-page="proof"] .pf-pl > span { left: calc(var(--u) / var(--W) * 100cqw); top: calc(var(--v) / var(--H) * 100cqh); width: calc(var(--w) / var(--W) * 100cqw); height: calc(var(--h) / var(--H) * 100cqh); }
+  [data-page="proof"] .pf-pl svg { left: calc(var(--u) / var(--W) * -100cqw); top: calc(var(--v) / var(--H) * -100cqh); width: 100cqw; height: 100cqh; }
 }
-[data-page="proof"] .pf-tk > span { position: absolute; inset: 0; }
-[data-page="proof"] .pf-rec { --v: 184; --w: 16; --h: 12; transform-origin: 50% 91.667%; } /* the record's foot */
-[data-page="proof"] .pf-tk { --v: 23; --w: 17; --h: 14; }
-[data-page="proof"] .pf-fine { --u: 104; --v: 40; --w: 224; --h: 143; }
-@media (forced-colors: active) { [data-page="proof"] .pf-pl { color: CanvasText; } }
+[data-page="proof"] .pf-tk > span, [data-page="proof"] .pf-lit > span { position: absolute; inset: 0; }
+[data-page="proof"] .pf-rec { --v: 33; --w: 18; --h: 14; transform-origin: 50% 92.857%; } /* the block's foot, on the floor */
+[data-page="proof"] .pf-tk { --v: 17; --w: 18; --h: 14; }
+[data-page="proof"] .pf-lit { --u: 0; --v: 38; --w: 346; --h: 16; }
+/* above the floor a session is one open block (C-023, S-13); the floor, lit */
+[data-page="proof"] .hero-plate--records .hp-rec { fill: none; stroke: currentColor; stroke-opacity: .86; stroke-width: calc(1.25 * var(--stroke)); }
+[data-page="proof"] .pf-fl { fill: none; stroke: var(--accent); stroke-width: calc(1.25 * var(--stroke)); }
+[data-page="proof"] .pf-glow { fill: none; stroke: var(--accent); stroke-opacity: .14; stroke-width: calc(6 * var(--stroke)); }
+/* the floor's label stands on its rule like the blocks: the box's foot a fifth of an em above the line, so "bps" clears it */
+[data-page="proof"] .pf-l-fl { transform: translate(0, calc(-100% - .2em)); }
+[data-page="proof"] .pf-l-fl small { text-transform: none; letter-spacing: .02em; color: var(--fg); }
+@media (forced-colors: active) { [data-page="proof"] .pf-pl { color: CanvasText; } [data-page="proof"] .pf-fl { stroke: CanvasText; } [data-page="proof"] .pf-glow { display: none; } }
 @media screen and (prefers-reduced-motion: no-preference) {
-  [data-page="proof"] .pf-rec { animation: pf-land .5s var(--ease) calc(120ms + var(--i, 0) * 50ms) backwards; }
-  [data-page="proof"] .pf-fine { animation: pf-fade .6s var(--ease) .6s backwards; }
-  [data-page="proof"] .pf-tk, [data-page="proof"] .pf-tk > span { animation: pf-wipe .36s var(--ease) calc(820ms + var(--i, 0) * 95ms) backwards; }
-  [data-page="proof"] .pf-tk > span { animation-name: pf-hold; } /* the window slides right, the tick stays put */
-  [data-page="proof"] .hero-plate--records .hp-lab--acc { animation: pf-fade .5s var(--ease) 1.7s backwards; }
+  [data-page="proof"] .pf-rec { animation: pf-rec-land .45s var(--ease-out) calc(120ms + var(--i, 0) * 45ms) backwards; }
+  [data-page="proof"] .pf-lit, [data-page="proof"] .pf-lit > span { animation: pf-wipe .9s var(--ease-draw) .56s backwards; }
+  [data-page="proof"] .pf-tk, [data-page="proof"] .pf-tk > span { animation: pf-wipe .3s var(--ease-out) var(--t, 1s) backwards; }
+  [data-page="proof"] :is(.pf-lit, .pf-tk) > span { animation-name: pf-hold; } /* the window slides right, the mark stays put */
+  [data-page="proof"] .hero-plate--records .pf-l-ok { animation: pf-fade .5s var(--ease-out) 1.35s backwards; }
 }
-@keyframes pf-land { from { opacity: 0; transform: translateY(-83.333%) scaleY(.6); } } /* 10 drawing units up */
+@keyframes pf-rec-land { from { opacity: 0; transform: translateY(-71.429%) scaleY(.6); } } /* 10 drawing units up */
+@keyframes pf-land { from { opacity: 0; transform: translateY(-83.333%) scaleY(.6); } } /* Trust's records */
 @keyframes pf-fade { from { opacity: 0; } }
 @keyframes pf-wipe { from { transform: translateX(-100%); } }
 @keyframes pf-hold { from { transform: translateX(100%); } }
@@ -58,10 +64,12 @@
 /* §01 Fig. 1.1: one open block above the floor, no chevron, and the narrow chart's room for its note are shared with
    home §04 now (proofchart.css) */
 
+/* Fig. 1.1 on the page's type steps (a1, W4/D1): proofchart.css now, for Home §04 too (integrate a1) */
+
 /* §01: the hedge points at the disclosures, and reaches them (site.js opens the fold). Graphite, not slate: the qualifier
    beside the chart a regulator reads is never the dimmest line on the page (r4-a11y) */
 [data-page="proof"] .pf-hedge { color: var(--fg-2); }
-.pf-hedge a { color: var(--fg-2); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; transition: color .2s, text-decoration-color .2s; }
+.pf-hedge a { color: var(--fg-2); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; transition: color var(--dur-feedback) var(--ease-out), text-decoration-color var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { .pf-hedge a:hover { color: var(--fg); text-decoration-color: currentColor; } }
 .pf-hedge a:focus-visible { color: var(--fg); text-decoration-color: currentColor; }
 
@@ -98,26 +106,82 @@
 .pf-list b { font-weight: 600; color: var(--fg); }
 
 
-/* §02: the three documents are their names on the hash line; the last one opens the ledger on Trust */
-[data-page="proof"] .pf-doc h3 a { display: inline-flex; align-items: baseline; gap: .3em; border-bottom: 1px solid var(--line-strong); transition: border-color .2s; }
+/* §02 the paper trail (a1): three sheets, one session's fill on the same row of each (matched line by line, C-028);
+   one line of signal ink runs through that row once (L5). A border, so forced colours keep it. Phones: a spine. */
+[data-page="proof"] .pf-trail .pf-doc { --F: calc(106 / 180); padding: 0; }
+[data-page="proof"] .pf-trail .pf-doc::after { content: none; }
+[data-page="proof"] .pf-trail .pf-doc::before { content: none; }
+[data-page="proof"] .pf-sheet { position: relative; margin: 0 0 clamp(1.125rem, 1.8vw, 1.625rem); color: var(--fg); }
+[data-page="proof"] .pf-tr { position: absolute; top: calc(var(--F) * 100%); left: var(--t0, 0%); right: var(--t1, 0%); height: 0; margin-top: calc(-.75px * var(--stroke)); border-top: calc(1.5px * var(--stroke)) solid var(--accent); transform-origin: 0 50%; }
+[data-page="proof"] .pf-trail .pf-doc:nth-child(1) { --t0: 10%; --t1: calc(-1 * var(--cg)); --tw: 300ms; --tt: 150ms; --tm: 80ms; }
+[data-page="proof"] .pf-trail .pf-doc:nth-child(2) { --t1: calc(-1 * var(--cg)); --tw: 350ms; --tt: 450ms; --tm: 480ms; }
+[data-page="proof"] .pf-trail .pf-doc:nth-child(3) { --t1: 93.75%; --tw: 50ms; --tt: 800ms; --tm: 820ms; }
+[data-page="proof"] .pf-trail-cap { margin-top: clamp(1.25rem, 2vw, 2rem); }
+@media screen and (prefers-reduced-motion: no-preference) {
+  [data-page="proof"] .pf-tr { transition: transform var(--tw) linear var(--tt); }
+  [data-page="proof"] .pf-sheet .pf-mk { transition: opacity var(--dur-move) var(--ease-out) var(--tm); }
+  [data-page="proof"] .pf-trail .pf-doc.will-reveal:not(.is-in) .pf-tr { transform: scaleX(0); }
+  [data-page="proof"] .pf-trail .pf-doc.will-reveal:not(.is-in) .pf-mk { opacity: 0; }
+  [data-page="proof"] .pf-trail .pf-doc.is-cut :is(.pf-tr, .pf-mk), [data-page="proof"] .pf-trail .pf-doc.is-cut::before { transition: none; }
+}
+[data-page="proof"] .pf-doc h3 a { display: inline-flex; align-items: baseline; gap: .3em; border-bottom: 1px solid var(--line-strong); transition: border-color var(--dur-feedback) var(--ease-out); }
 [data-page="proof"] .pf-doc h3 .arr { width: .55em; height: .55em; flex: none; }
-@media (hover: hover) { [data-page="proof"] .pf-doc h3 a:hover { border-color: currentColor; } }
+@media (hover: hover) { [data-page="proof"] .pf-doc h3 a:hover { border-color: currentColor; text-decoration-color: currentColor; } }
+/* tablets: the trail stays three across */
+@media (min-width: 601px) and (max-width: 899px) {
+  [data-page="proof"] .pf-trail { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 0; }
+  [data-page="proof"] .pf-trail .pf-doc h3 { font-size: 1.35rem; }
+}
+@media (max-width: 600px) {
+  [data-page="proof"] .pf-trail { row-gap: 1.375rem; }
+  [data-page="proof"] .pf-trail .pf-doc { --sw: 8.5rem; display: grid; grid-template-columns: var(--sw) minmax(0, 1fr); column-gap: 1.125rem; align-items: start; padding-left: 1.125rem; }
+  [data-page="proof"] .pf-trail .pf-doc h3 { align-self: center; font-size: 1.35rem; }
+  /* the link wraps here: its rule follows the words and the arrow stays with "record" */
+  [data-page="proof"] .pf-doc h3 a { display: inline; border-bottom: 0; text-decoration: underline 1px var(--line-strong); text-underline-offset: .22em; }
+  [data-page="proof"] .pf-doc h3 .arr { display: inline-block; margin-left: .25em; vertical-align: .05em; }
+  [data-page="proof"] .pf-sheet { margin: 0; }
+  /* the spine: from this sheet's row down to the next sheet's (the row sits at --F of a sheet --sw * 180 / 320 tall) */
+  [data-page="proof"] .pf-trail .pf-doc:not(:last-child)::before { content: ""; position: absolute; left: 0; top: calc(var(--sw) * 180 / 320 * var(--F) - .75px); width: 0; height: calc(100% + 1.375rem); border-left: calc(1.5px * var(--stroke)) solid var(--accent); background: none; transform-origin: 50% 0; -webkit-mask-image: none; mask-image: none; }
+  [data-page="proof"] .pf-trail .pf-doc:nth-child(1) { --t0: -1.125rem; --t1: 93.75%; --tw: 100ms; --tt: 150ms; --tm: 80ms; --sp: 250ms; }
+  [data-page="proof"] .pf-trail .pf-doc:nth-child(2) { --t0: -1.125rem; --t1: 41.25%; --tw: 180ms; --tt: 450ms; --tm: 560ms; --sp: 630ms; }
+  [data-page="proof"] .pf-trail .pf-doc:nth-child(3) { --t0: -1.125rem; --t1: 93.75%; --tw: 100ms; --tt: 830ms; --tm: 900ms; }
+  [data-page="proof"] .pf-trail .pf-doc:nth-child(1) .pf-tr { transform-origin: 100% 50%; } /* the first leaves its row leftwards, for the spine */
+}
+@media screen and (max-width: 600px) and (prefers-reduced-motion: no-preference) {
+  [data-page="proof"] .pf-trail .pf-doc::before { transition: transform 200ms linear var(--sp, 0ms); }
+  [data-page="proof"] .pf-trail .pf-doc.will-reveal:not(.is-in)::before { transform: scaleY(0); }
+}
 
 /* §03: the stack's key (.pf-ck) is shared with home §05: proofchart.css */
+/* §03 (a1): "Technology" and "Management" in full; Management a tier up (phones: Technology right, Management a
+   third tier) */
+[data-page="proof"] .cost-bar > i:last-of-type > span { padding-bottom: 2.4545em; } /* 27 px at the 11 px label: one tier up */
+[data-page="proof"] .cost-row:first-child { padding-top: 3.25rem; }
+@container cost (max-width: 860px) {
+  [data-page="proof"] .cost-row:first-child { padding-top: 0; }
+  [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: 3.25rem; }
+}
+@container cost (max-width: 560px) {
+  [data-page="proof"] .cost-bar > i:nth-of-type(3) > span { left: auto; right: 0; padding: 0 7px 9px 0; border-left: 0; border-right: 1px solid var(--line-strong); }
+  [data-page="proof"] .cost-bar > i:last-of-type > span { padding-bottom: 4.0909em; } /* 45 px: two tiers up */
+  [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: 4.375rem; }
+}
 
 /* the hero: the words on the left; on the right the record, drawn (the plate) */
 @media (min-width: 961px) {
   [data-page="proof"] .page-hero--dark { padding-top: calc(var(--nav-h) + clamp(44px, 4.8vw, 72px)); padding-bottom: clamp(44px, 4.4vw, 64px); }
-  [data-page="proof"] .pf-record { grid-column: 8 / -1; justify-self: end; width: 100%; max-width: 480px; min-width: 0; }
-  [data-page="proof"] .pf-record > .hero-plate { max-width: none; }
-}
-/* the plate is the page's first moment: with the terms gone it takes the room they left (alone in its column) */
-@media (min-width: 1200px) {
-  [data-page="proof"] .page-hero--plate > .hero-copy { grid-column: 1 / span 6; }
-  [data-page="proof"] .pf-record { grid-column: 7 / -1; max-width: 600px; }
-  /* "The broker confirmed it." is .03em wider than six columns from 1420 to 1890 px and fell to three lines: the head
-     may reach an eighth of an em into the gutter (its text still ends >= 30 px short of the plate; work/proof/cut/h1_sweep.py) */
-  [data-page="proof"] .page-hero h1 { margin-inline-end: -.125em; }
+  /* a1: the floor sits on the H1's last baseline (the copy opens with display: contents; the plate's box ends at its
+     floor, (88 - 46) / 346 of its width above the bottom) */
+  [data-page="proof"] .page-hero--plate { row-gap: 0; }
+  [data-page="proof"] .page-hero--plate > .hero-copy { display: contents; }
+  [data-page="proof"] .hero-copy > * { grid-column: 1 / span 7; }
+  [data-page="proof"] .hero-copy > h1 { grid-row: 1; align-self: last baseline; }
+  [data-page="proof"] .pf-record { grid-column: 8 / -1; grid-row: 1; align-self: last baseline; justify-self: stretch; min-width: 0; }
+  [data-page="proof"] .pf-record > .hero-plate { max-width: none; margin-bottom: calc(-100% * 42 / 346); }
+  /* the record line runs on, faint, edge to edge (L2) */
+  [data-page="proof"] .page-hero--dark { overflow-x: clip; }
+  [data-page="proof"] .pf-record { position: relative; }
+  [data-page="proof"] .pf-record::before { content: ""; position: absolute; left: -100vw; right: -100vw; bottom: 0; height: 0; border-top: 1px solid var(--line); pointer-events: none; }
 }
 @media (max-width: 960px) { [data-page="proof"] .pf-record { grid-column: 1 / -1; min-width: 0; } }
 /* tablets: the record as a spread, the plate and its terms side by side; §01's heading beside its text */
@@ -130,9 +194,8 @@
 [data-page="proof"] .page-hero h1 { max-width: none; }
 @media (min-width: 601px) { [data-page="proof"] .page-hero .lede { max-width: 44ch; } }
 @media (max-width: 360px) { [data-page="proof"] .page-hero h1 { font-size: 2.6rem; } }
-/* phones: the plate under the hero copy must not move when Inter or Instrument Serif lands after the first paint (perf
-   r1 S1: CLS 0.197 on early-paint runs). Each block reserves the lines the web font sets it in, or the metric-matched
-   fallback's where that is more (measured every 4 px from 320 to 600, work/proof/r1/hero_fit.py; the lede again in r2, r2/hero_lines.py). A floor, never a cap. */
+/* phones: each hero block reserves the lines its web font or metric fallback sets it in, so the plate under it holds
+   still (perf r1 S1; work/proof/r1/hero_fit.py, r2/hero_lines.py). A floor, never a cap. */
 @media (max-width: 600px) {
   [data-page="proof"] .page-hero h1 { min-height: 2lh; }
   [data-page="proof"] .page-hero .lede { min-height: 2lh; }
@@ -164,8 +227,6 @@
   .proof-table .pf-dt::after { font-size: 1.45rem; transform: translateY(.3em); }
   .proof-table .tag { padding: 3px 6px; }
   .pf-legend { font-size: .8rem; }
-  /* the three documents: short rows on the drawn line */
-  [data-page="proof"] .pf-docs { row-gap: 34px; }
 }
 @media print {
   .proof-table .pf-dt > * { position: static; width: auto; height: auto; clip-path: none; }
@@ -179,32 +240,32 @@
    without JS and in print): the record so far lands on the line; a proposal comes down into the Council; the one that
    passes settles (green); then the Council's other answer, a reject, runs down the spur and is logged on the record
    (red, open). Nothing reaches the line without passing through the ring. One link goes to the ledger. */
-[data-page="trust"] .tr-go { margin-top: clamp(24px, 2.6vw, 36px); }
+[data-page="trust"] .tr-go { margin-top: clamp(1.5rem, 2.6vw, 2.25rem); }
 @media (min-width: 601px) { [data-page="trust"] .page-hero .lede { max-width: 44ch; } } /* four even lines */
 /* phones: the lede reserves its lines, so the plate under it holds still when Inter lands late (as on Proof) */
 @media (max-width: 600px) { [data-page="trust"] .page-hero .lede { min-height: 2lh; } }
 @media (max-width: 435.98px) { [data-page="trust"] .page-hero .lede { min-height: 3lh; } }
 @media screen and (prefers-reduced-motion: no-preference) {
   [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) :is(.tp-rec, .tp-set, .tp-rj, .tp-prop) { transform-box: fill-box; transform-origin: 50% 100%; }
-  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .hp-s1 { animation: pf-fade .6s var(--ease) 0s backwards; }
-  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-rec { animation: pf-land .42s var(--ease) calc(100ms + var(--i, 0) * 60ms) backwards; }
-  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .hp-lab { animation: pf-fade .5s var(--ease) .29s backwards; }
-  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-prop { animation: tp-drop .55s var(--ease) .51s backwards; }
-  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-l-prop { animation: pf-fade .4s var(--ease) .66s backwards; }
-  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-pass { animation: pf-fade .4s var(--ease) .93s backwards; }
-  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-set { animation: pf-land .42s var(--ease) 1.12s backwards; }
-  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-l-set { animation: pf-fade .4s var(--ease) 1.19s backwards; }
-  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-out { animation: pf-fade .45s var(--ease) 1.48s backwards; }
-  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-rj { animation: pf-land .42s var(--ease) 1.74s backwards; }
-  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-l-rj { animation: pf-fade .4s var(--ease) 1.80s backwards; }
+  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .hp-s1 { animation: pf-fade .6s var(--ease-out) 0s backwards; }
+  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-rec { animation: pf-land .42s var(--ease-out) calc(100ms + var(--i, 0) * 60ms) backwards; }
+  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .hp-lab { animation: pf-fade .5s var(--ease-out) .29s backwards; }
+  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-prop { animation: tp-drop .55s var(--ease-out) .51s backwards; }
+  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-l-prop { animation: pf-fade .4s var(--ease-out) .66s backwards; }
+  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-pass { animation: pf-fade .4s var(--ease-out) .93s backwards; }
+  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-set { animation: pf-land .42s var(--ease-out) 1.12s backwards; }
+  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-l-set { animation: pf-fade .4s var(--ease-out) 1.19s backwards; }
+  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-out { animation: pf-fade .45s var(--ease-out) 1.48s backwards; }
+  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-rj { animation: pf-land .42s var(--ease-out) 1.74s backwards; }
+  [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-l-rj { animation: pf-fade .4s var(--ease-out) 1.80s backwards; }
 }
 @keyframes tp-drop { from { opacity: 0; transform: translateY(-22px); } }
 
 /* §01 the ledger, first: the instrument closer to its heading */
-.tr-ledger .tr-lead { row-gap: 20px; }
+.tr-ledger .tr-lead { row-gap: 1.25rem; }
 /* the head takes seven columns where it sits beside the paragraph, so "and every link after it fails." stays one line */
 @media (min-width: 961px) { .tr-ledger .tr-lead > .col-6 { grid-column-end: span 7; } }
-.tr-lt { margin-top: clamp(36px, 4vw, 60px); }
+.tr-lt { margin-top: clamp(2.25rem, 4vw, 3.75rem); }
 /* the head: title and controls, then the status */
 .tr-lt .lt-head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title ctrl" ". state"; row-gap: 10px; column-gap: 24px; padding-top: 12px; padding-bottom: 12px; }
 .tr-lt .lt-state { justify-self: end; }
@@ -224,7 +285,7 @@
 .tr-lt .lt-rec.is-broken .lt-lc { border-color: rgba(217, 103, 93, .6); }
 .tr-lt .lt-rec.is-edited .lt-node { background: transparent; box-shadow: none; outline: 1.5px dashed var(--khaki); outline-offset: -1.5px; }
 /* broken: from the edited record on, every record and its link turn red as the walk reaches them, and stay red */
-.tr-lt { transition: border-color .5s var(--ease); }
+.tr-lt { transition: border-color .5s var(--ease-out); }
 .tr-lt.is-broken { border-color: rgba(217, 103, 93, .55); }
 .tr-lt.is-broken .lt-state { color: var(--reject); }
 .tr-lt .lt-rec.is-broken .lt-node { background: transparent; outline: 0; box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 14px rgba(217, 103, 93, .45); }
@@ -245,13 +306,13 @@
 .tr-lt .lt-rec.is-broken .lt-ev, .tr-lt .lt-rec.is-broken .lt-sub, .tr-lt .lt-rec.is-broken .lt-id, .tr-lt .lt-rec.is-broken .lt-lc { color: var(--reject); }
 .tr-lt .lt-rec.is-broken::after { opacity: 1; background: rgba(217, 103, 93, .07); }
 @media (prefers-reduced-motion: no-preference) {
-  .tr-lt .lt-rec.is-broken .lt-node { animation: tr-break .5s cubic-bezier(.3, .7, .3, 1) backwards; }
+  .tr-lt .lt-rec.is-broken .lt-node { animation: tr-break .5s var(--ease-out) backwards; }
 }
 @keyframes tr-break { 0% { transform: scale(1.6); box-shadow: inset 0 0 0 6px var(--reject), 0 0 22px rgba(217, 103, 93, .8); } }
 /* the selected record's event and detail can be typed over: the text box is a block inside its dd, so the list stays a
    list of terms and definitions (r3: axe definition-list, aria-allowed-role) */
 .tr-lt .lt-insp dd > [data-f="ev"] { display: block; }
-.tr-lt .lt-insp [contenteditable] { outline: 2px solid transparent; outline-offset: 2px; cursor: text; border-radius: 1px; box-shadow: inset 0 -1px 0 var(--line-strong); transition: box-shadow .2s, background .2s; }
+.tr-lt .lt-insp [contenteditable] { outline: 2px solid transparent; outline-offset: 2px; cursor: text; border-radius: 1px; box-shadow: inset 0 -1px 0 var(--line-strong); transition: box-shadow var(--dur-feedback) var(--ease-out), background var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { .tr-lt .lt-insp [contenteditable]:hover { box-shadow: inset 0 -1px 0 var(--fg-2); } }
 .tr-lt .lt-insp [contenteditable]:focus { box-shadow: inset 0 -1px 0 var(--accent); background: rgba(245, 242, 236, .07); }
 /* while a field is typed in, the next step under it: Enter verifies (the controls may be off a short screen); on a
@@ -269,15 +330,27 @@
   .tr-lt .lt-insp.is-typing > .tr-enter { grid-column: 1; grid-row: 3; }
 }
 
+/* a1 UX: the inspected record's lineage in one serif line (trust.js); height reserved; wide screens with JS only */
+.tr-lt .tr-lin { display: none; }
+@media (scripting: enabled) and (min-width: 1200px) {
+  .tr-lt .tr-lin { display: flex; align-items: baseline; gap: 0 .875rem; min-height: calc(var(--fs-heading) * 1.2); margin: 0; padding: 1.25rem 1.25rem 0; font: 400 var(--fs-heading)/1.2 var(--serif); letter-spacing: -.005em; color: var(--fg); white-space: nowrap; overflow: hidden; }
+  .tr-lt .tr-lin-s b { margin-left: .4em; font: 500 var(--fs-label)/1 var(--mono); letter-spacing: .06em; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+  .tr-lt .tr-lin > i { flex: none; align-self: center; width: 2.25rem; height: 0; border-top: 1px solid var(--line-strong); }
+  .tr-lt .tr-lin-s.is-wait { color: var(--fg-3); }
+  .tr-lt .tr-lin-s.is-bad, .tr-lt .tr-lin-s.is-bad b { color: var(--reject); }
+}
+/* one mono size (a1) */
+.tr-lt .lt-ev { font-size: var(--fs-label); }
+
 /* §02 the control plane: six engraved plates on one ruled sheet, each a drawing and its name */
-.tr-cp { row-gap: 40px; }
-.tr-k { --kp: clamp(20px, 2.2vw, 30px); border-left: 0; border-top: 1px solid var(--line-strong); }
-.tr-k > .tr-kp { display: flex; flex-direction: column; padding: clamp(22px, 2.2vw, 30px) var(--kp) clamp(24px, 2.4vw, 32px); background: transparent; border-radius: 0; transition: background .3s var(--ease); }
+.tr-cp { row-gap: 2.5rem; }
+.tr-k { --kp: clamp(1.25rem, 2.2vw, 1.875rem); border-left: 0; border-top: 1px solid var(--line-strong); }
+.tr-k > .tr-kp { display: flex; flex-direction: column; padding: clamp(1.375rem, 2.2vw, 1.875rem) var(--kp) clamp(1.5rem, 2.4vw, 2rem); background: transparent; border-radius: 0; transition: background .3s var(--ease-out); }
 /* the sheet's outer columns run flush to its edges, so every plate's drawing is the same width and each row's drawings,
    titles and rules line up (r5 art: odd plates were 30 px wider, their titles 5-8 px lower) */
 .tr-k > .tr-kp:nth-child(2n) { border-right: 0; padding-right: 0; }
 .tr-k > .tr-kp:nth-child(2n + 1) { padding-left: 0; }
-.tr-kd { margin: 4px 0 22px; color: var(--fg); }
+.tr-kd { margin: .25rem 0 1.375rem; color: var(--fg); }
 .tr-kd .tr-k-o6 { fill-opacity: .5; }
 .tr-kd .tr-k-o3 { fill-opacity: .28; }
 /* the words meet AA on paper-2 (a11y r1 M2): green text in its ink form; a refusal's word in graphite, its red kept on
@@ -288,15 +361,15 @@
 @media (hover: hover) {
   .tr-k > .tr-kp:hover { background: rgba(14, 21, 18, .025); }
 }
-.tr-k-cap { margin-top: 16px; }
+.tr-k-cap { margin-top: 1rem; }
 /* each plate arrives as structure first; the stop it makes (red) or the approval it signs (green) lands a beat later */
 @media screen and (prefers-reduced-motion: no-preference) {
-  .tr-kd :is(.hp-rrec, .hp-gf, .hp-g, .hp-gl, .hp-lab--rej, .hp-lab--acc) { transition: opacity .35s var(--ease) .3s; }
+  .tr-kd :is(.hp-rrec, .hp-gf, .hp-g, .hp-gl, .hp-lab--rej, .hp-lab--acc) { transition: opacity .35s var(--ease-out) .3s; }
   .tr-kp.will-reveal:not(.is-in) .tr-kd :is(.hp-rrec, .hp-gf, .hp-g, .hp-gl, .hp-lab--rej, .hp-lab--acc) { opacity: 0; }
   .tr-kp:is(.is-cut, .is-instant) .tr-kd * { transition: none; }
 }
 @media (min-width: 1200px) {
-  .tr-cp-copy { position: sticky; top: calc(var(--nav-h) + 32px); align-self: start; }
+  .tr-cp-copy { position: sticky; top: calc(var(--nav-h) + 2rem); align-self: start; }
 }
 /* small desktops: the heading takes the row, the six plates sit three by two under it */
 @media (min-width: 961px) and (max-width: 1199px) {
@@ -322,25 +395,25 @@
 }
 
 /* §03 custody: the account drawn (one scoped port in, nothing out) beside its one line */
-.tr-cu { row-gap: 32px; align-items: center; }
+.tr-cu { row-gap: 2rem; align-items: center; }
 .tr-cu-plate { margin: 0; }
 .tr-cud { color: var(--fg); }
 .tr-cud .hp-lab--acc { color: var(--signal-ink); }
 .tr-cud .hp-lab--rej { color: var(--fg-2); }
-.tr-cu-plate .figure-cap { margin-top: 14px; }
+.tr-cu-plate .figure-cap { margin-top: .875rem; }
 @media (max-width: 960px) { .tr-cu > * { grid-column: 1 / -1; } }
 /* phones: the drawing is a third of its desktop size; the two words that carry it stay (the line above says the rest) */
 @media (max-width: 600px) { .tr-cud .tr-cu-xs { display: none; } }
 @media screen and (prefers-reduced-motion: no-preference) {
-  .tr-cud :is(.hp-r, .hp-gl, .hp-gf, .hp-lab--rej, .hp-lab--acc) { transition: opacity .35s var(--ease) .35s; }
+  .tr-cud :is(.hp-r, .hp-gl, .hp-gf, .hp-lab--rej, .hp-lab--acc) { transition: opacity .35s var(--ease-out) .35s; }
   .tr-cu-plate.will-reveal:not(.is-in) .tr-cud :is(.hp-r, .hp-gl, .hp-gf, .hp-lab--rej, .hp-lab--acc) { opacity: 0; }
 }
 
 /* §04 the refusals: three lines, each led by a short reject-red rule, the stop the plates draw (1 Nov: the open squares
    read as unticked checkboxes, a to-do list on the governance page). A border, not a fill, so forced colours keep it. */
-.tr-no { row-gap: 28px; }
+.tr-no { row-gap: 1.75rem; }
 .tr-no-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line-strong); }
-.tr-no-list > li { display: flex; align-items: baseline; gap: .875rem; padding: 18px 0 19px; border-bottom: 1px solid var(--line); font: 500 var(--fs-body)/1.45 var(--sans); color: var(--fg); text-wrap: pretty; } /* the refusals at the size they had (running text, bold lead): set, not shouted */
+.tr-no-list > li { display: flex; align-items: baseline; gap: .875rem; padding: 1.125rem 0 1.1875rem; border-bottom: 1px solid var(--line); font: 500 var(--fs-body)/1.45 var(--sans); color: var(--fg); text-wrap: pretty; } /* the refusals at the size they had (running text, bold lead): set, not shouted */
 .tr-no-list > li > i { flex: none; width: .875rem; height: 0; border-top: .125rem solid var(--reject); transform: translateY(-.34em); }
 @media (max-width: 960px) { .tr-no > * { grid-column: 1 / -1; } }
 
@@ -396,16 +469,37 @@
 @keyframes tr-form-v { 0% { transform: scaleY(.3); background: var(--accent); } 55% { transform: none; background: var(--accent); } 100% { background: var(--line-strong); } }
 @media (min-width: 601px) and (max-width: 1199px) { .tr-lt .lt-x { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
 
-/* 4K at 100 % (as Home): the page keeps its proportions instead of shrinking into a 1,600 px strip; root = viewport / 150 */
-@media (min-width: 2400px) {
-  html:has(> body:is([data-page="proof"], [data-page="trust"])) { font-size: calc(100vw / 150); }
-  body:is([data-page="proof"], [data-page="trust"]) { --max: clamp(1320px, 70vw, 100rem); }
-  [data-page="proof"] .pf-record { max-width: 37.5rem; }
-  [data-page="trust"] .hero-plate--council { max-width: 35rem; }
+/* wide screens (a1): site.css grows the root from 1921 px; px sizes here follow in rem */
+@media (min-width: 1921px) {
   /* Fig. 1.1 in rem, so its blocks and gutter grow with its labels (proofchart.css sizes them in px) */
   [data-page="proof"] .pf { --gut: clamp(4rem, 15cqi, 6.75rem); --b: clamp(.5625rem, calc(var(--lane) * .34), 1.0625rem); --g: clamp(.125rem, calc(var(--b) * .2), .1875rem);
     --zr: clamp(4.25rem, 12cqi, 5.5rem); --zd: 1.875rem; --zo: 1.625rem; --zg: calc(var(--ng, 1) * (var(--b) + var(--g)) + 3.6rem); }
   [data-page="trust"] .lt { --lt-col: 9.25rem; --lt-bleed: 1rem; --lt-pr: 1.125rem; }
+  /* the replay's px frame (ledger.css) in rem, so it grows with its type (a1) */
+  .tr-lt .lt-head { min-height: 3.5rem; padding: .75rem .75rem .75rem 1.25rem; row-gap: .625rem; column-gap: 1.5rem; }
+  .tr-lt .lt-ctrl { gap: .5rem; }
+  .tr-lt .lt-btn { min-height: 2.125rem; padding: 0 .8125rem; gap: .5rem; }
+  .tr-lt .lt-btn svg { width: .8125rem; height: .8125rem; }
+  .tr-lt .lt-state { gap: .5625rem; }
+  .tr-lt .lt-state i { width: .375rem; height: .375rem; }
+  .tr-lt .lt-track { padding: 1rem 1.75rem .75rem; }
+  .tr-lt .lt-rec { padding-top: .75rem; padding-bottom: 1.875rem; }
+  .tr-lt .lt-rec::after { inset: 0 .375rem 2.75rem .375rem; }
+  .tr-lt .lt-meta { gap: .625rem; }
+  .tr-lt .lt-ev { margin-top: .625rem; }
+  .tr-lt .lt-sub { margin-top: .375rem; }
+  .tr-lt .lt-t { margin-top: .5rem; }
+  .tr-lt .lt-line { height: 1.5rem; margin-top: .875rem; }
+  .tr-lt .lt-node { top: .375rem; width: .75rem; height: .75rem; }
+  .tr-lt .lt-seg { left: .75rem; top: .75rem; }
+  .tr-lt .lt-tag { left: calc(50% + .375rem); top: .75rem; padding: .125rem .375rem; }
+  .tr-lt .lt-gap { left: calc(50% + .375rem); top: 1.3125rem; }
+  .tr-lt .lt-now { left: calc(50% + .375rem); top: 1.5625rem; padding: 0 .375rem; }
+  .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-gap { top: 2.4375rem; }
+  .tr-lt .lt-insp { gap: .625rem 3.5rem; padding: .875rem 1.25rem 1.375rem; }
+  .tr-lt .lt-insp dl { gap: .5625rem; }
+  .tr-lt .lt-insp dl > div { gap: .875rem; }
+  .tr-lt .lt-foot { gap: .375rem 1.125rem; padding: .75rem 1.25rem; }
 }
 
 @media print {

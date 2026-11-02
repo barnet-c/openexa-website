@@ -238,11 +238,33 @@
   }
   const toVerify = () => { ui.verify.focus({ preventScroll: true }); place(false); };
 
+  /* ---- the inspected record's lineage, one serif line over the strip (1440 px and up; a1 UX): the proposal it comes
+     from, the Council's answer, the fill, and the hash the record produces now, read from the same records ---- */
+  const lin = root.querySelector('[data-lt-lin]');
+  function lineage(r, a) {
+    const i = recs.indexOf(r);
+    if (!lin || i < 0) return;
+    const is = (k, re) => re.test(recs[k].ev);
+    let p = i, c = -1, f = -1;
+    while (p > 0 && !is(p, /^PROPOSED/)) p--;
+    for (let k = p + 1; k <= i; k++) { if (c < 0 && is(k, /^(APPROVED|REJECTED)/)) c = k; if (is(k, /^(FILLED|PARTIAL)/)) f = k; }
+    const no = c >= 0 && is(c, /^REJECTED/), id = k => (k < 0 ? '' : recs[k].id);
+    const steps = [['Proposed', id(p)], [c < 0 ? 'Council' : no ? 'Council rejected' : 'Council approved', id(c), c < 0, no],
+      [no ? 'No fill' : f < 0 ? 'Fill' : is(f, /^PARTIAL/) ? 'Partly filled' : 'Filled', id(f), f < 0],
+      ['Hash', (a ? a.now : r.hash).slice(0, 8), false, !!a && !a.ok]];
+    lin.replaceChildren(...steps.flatMap(([w, v, wait, bad], k) => {
+      const e = T.node('span', 'tr-lin-s' + (wait ? ' is-wait' : '') + (bad ? ' is-bad' : ''), w + (v ? ' ' : ''));
+      if (v) e.append(T.node('b', null, v));
+      return k ? [T.node('i'), e] : [e];
+    }));
+  }
+
   /* ---- wiring: the hooks ledger.js calls, then the controls ---- */
   X.whole = whole;
   X.check = r => { // the inspector's checks; a record that no longer verifies loses its green 'settled' tone there too
     const a = X.v ? at(r) || { linked: true, now: r.hash, ok: true } : null;
     if (a && !a.ok && F.ev) F.ev.classList.remove('is-settled');
+    lineage(r, a);
     return a;
   };
   X.built = (r, li) => { if (X.v && li.classList.contains('is-edited')) nowTag(li, at(r)); };

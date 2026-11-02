@@ -47,9 +47,10 @@ The checks (the item each one guards in brackets):
                        (0.037 at 1440 today, from §04's chart building on screen: tighten to 0.01 once its live height is
                        reserved); /#proof, /#lc01, /#governance fresh, five loads each at both widths: the target's top at
                        the bar's bottom (2 px) and that window < 0.1 in every load   [r3-motion M1, r3-perf moderate]
-  loader_curtain+      v2x r3: 20 first visits to / at 390x844@2, touch, 4x CPU: every visit lifts its curtain (the loader's
-                       .is-done comes, and before the loader is removed; none ends at .is-complete alone) and the beat
-                       .is-done - .is-complete is < 150 ms in every visit (designed 90)   [r3-perf moderate, r3-motion minor]
+  loader_curtain+      v2x r3: 20 first visits to / at 390x844@2, touch, 4x CPU: every visit ends with the loader's exit (the
+                       curtain until a1, the hand-off since: .is-done comes, and before the loader is removed; none ends at
+                       .is-complete alone) and the beat (the exit's transition start + delay - the '100' pulse) is 85-110 ms
+                       in every visit (designed 90)   [r3-perf moderate, r3-motion minor; award a1]
   trust_landing+       v2x r5: Trust opened mid-way. Reload and Back with §03 80 px under the top (390@2 and 320@2 touch,
                        1024) and §02/§04 at 20/80/500 (390): the section's top within 2 px of where it was, the largest
                        layout-shift window < 0.01   [r5-perf issues 2, 4]
@@ -551,10 +552,12 @@ async def home_landing(b):
 
 
 CURTAIN = r"""(() => { const E = window.__ev = {}, A = window.__an = {}; const mark = k => { if (!(k in E)) E[k] = Math.round(performance.now()); };
-  // v2x r4 (system): when .is-done appears, find the curtain's transform transition and the dial's 'loader-pulse' (it
-  // starts in the '100' frame) and read their start times once the compositor has set them (rAF until both are set)
+  // v2x r4 (system): when .is-done appears, find the exit's transition and the dial's 'loader-pulse' (it starts in the
+  // '100' frame) and read their start times once the compositor has set them (rAF until both are set).
+  // award a1 (system): the curtain became the hand-off: the exit is the ground's opacity transition on .loader::before
+  // (the dial travels to the globe meanwhile); it exists one frame after .is-done, so it is read in the next frame
   const grab = l => { try {
-    const tr = l.getAnimations().find(a => a.transitionProperty === 'transform');
+    const tr = l.getAnimations({ subtree: true }).find(a => a.transitionProperty === 'opacity' && a.effect && a.effect.pseudoElement === '::before');
     const dial = l.querySelector('.loader-dial'), pu = dial && dial.getAnimations().find(a => a.animationName === 'loader-pulse');
     A.found = [!!tr, !!pu];
     const rd = () => { if (tr) { A.tr_start = tr.startTime == null ? null : tr.startTime; A.tr_delay = tr.effect.getTiming().delay; }
@@ -563,7 +566,7 @@ CURTAIN = r"""(() => { const E = window.__ev = {}, A = window.__an = {}; const m
     rd(); } catch (e) { A.err = String(e); } };
   new MutationObserver(ms => { for (const m of ms) {
     if (m.type === 'attributes') { const el = m.target, c = el.classList; if (c && c.contains('loader')) { for (const k of ['is-complete', 'is-done']) if (c.contains(k)) mark('loader.' + k);
-      if (c.contains('is-done') && !A.found) grab(el); } }
+      if (c.contains('is-done') && !A.found) requestAnimationFrame(() => grab(el)); } }
     else for (const n of m.removedNodes) if (n.classList && n.classList.contains('loader')) mark('loader.removed'); } })
     .observe(document, { attributes: true, attributeFilter: ['class'], subtree: true, childList: true }); })();"""
 
@@ -578,7 +581,10 @@ async def loader_curtain(b):
     nothing. The beat is read as the visitor sees it: the curtain's transform transition starts (startTime + its delay)
     85-110 ms after the dial's 'loader-pulse' animation, which starts in the frame that shows '100' (both start times are
     the compositor's frame time). Based on system's .shots/v2x/work/system-r4/beat.py (20/20 at 90 ms; a 150 ms long
-    task after '100' leaves it at 90; v2 under the same task 183-200)."""
+    task after '100' leaves it at 90; v2 under the same task 183-200).
+    award a1 (system, AWARD_BAR L4): the curtain is gone; at '100' the ground (.loader::before) fades by an opacity
+    transition delayed by the beat while the dial travels to the overture's globe. Same principle, read on that
+    transition (system's .shots/v2x/work/system-a1/beat_handoff.py: 20/20 hand off, beat 90 ms in all 20)."""
     runs = []
     for _ in range(20):
         ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
@@ -600,8 +606,8 @@ async def loader_curtain(b):
     unread = [(x["found"], x["err"]) for x in runs if x["beat"] is None]
     ok = curt == len(runs) and not alone and len(beats) == len(runs) and not off
     med = statistics.median(beats) if beats else None
-    return ok, (f"20 first visits at 390x844@2, 4x CPU: {curt}/20 lift the curtain before the loader goes, {alone} end at .is-complete alone; "
-                f"beat (curtain transition start + delay - '100' pulse start) median {med} ms, range {min(beats) if beats else None}-{max(beats) if beats else None} ms "
+    return ok, (f"20 first visits at 390x844@2, 4x CPU: {curt}/20 hand off before the loader goes, {alone} end at .is-complete alone; "
+                f"beat (the ground's fade start + delay - '100' pulse start) median {med} ms, range {min(beats) if beats else None}-{max(beats) if beats else None} ms "
                 f"({len(off)} outside 85-110; {len(unread)} unread{': ' + str(unread[:3]) if unread else ''}); "
                 "budget: 20/20, none alone, every beat 85-110 ms"), (max(beats) if beats else float("inf"))
 
