@@ -19,7 +19,8 @@
     const cap = $('.rs-cap', plate);
     const part = k => $('.figcap-' + k, cap);
     let current = null, swap = 0;
-    const write = li => ['t', 'h'].forEach(k => {
+    // award a2: 'k', a figure's colour key (note 09: green premium, white discount), between the two; empty for the others
+    const write = li => ['t', 'k', 'h'].forEach(k => {
       const el = part(k); if (el) el.textContent = li.dataset['cap' + k.toUpperCase()] || '';
     });
     function choose(li) {
@@ -81,17 +82,26 @@
        current one put back in one task, so nothing is painted in between. Again when the width changes and once the
        fonts are in */
     const box = $('.rs-caption', plate), strip = window.matchMedia('(max-width: 759.98px)');
+    /* award a2: a colour key (note 09) stands on the strip where the strip has the room: it shares the title's held
+       slot, at its foot (.rs-k-fits, research.css), and only if that leaves the strip's height as it was (2 px of
+       rounding allowed), so a swap still moves nothing and the strip is no taller for the other nine notes */
     const slots = [['t', '--rs-t-h'], ['h', '--rs-h-h']];
     let measuredW = -1;
     const reserve = () => {
       if (!box || !cap) return;
-      if (!strip.matches || plate.closest('.no-plate')) { slots.forEach(([, v]) => plate.style.removeProperty(v)); measuredW = -1; return; }
+      if (!strip.matches || plate.closest('.no-plate')) { slots.forEach(([, v]) => plate.style.removeProperty(v)); plate.classList.remove('rs-k-fits'); measuredW = -1; return; }
       const w = box.clientWidth; if (w === measuredW) return; measuredW = w;
       slots.forEach(([, v]) => plate.style.setProperty(v, '0px'));
-      const max = { t: 0, h: 0 };
-      rows.forEach(li => { write(li); slots.forEach(([k]) => { const el = part(k); if (el) max[k] = Math.max(max[k], el.offsetHeight); }); });
+      plate.classList.add('rs-k-fits'); // measured as it would stand
+      const max = { t: 0, h: 0 }; let tk = 0;
+      rows.forEach(li => {
+        write(li); slots.forEach(([k]) => { const el = part(k); if (el) max[k] = Math.max(max[k], el.offsetHeight); });
+        const t = part('t'), k = part('k'); if (t && k && k.textContent) tk = Math.max(tk, t.offsetHeight + k.offsetHeight); // as the title's next line
+      });
       write(current);
-      slots.forEach(([k, v]) => plate.style.setProperty(v, `${Math.ceil(max[k])}px`));
+      const hold = th => slots.forEach(([k, v]) => plate.style.setProperty(v, `${Math.ceil(k === 't' ? th : max[k])}px`));
+      plate.classList.remove('rs-k-fits'); hold(max.t);
+      if (tk) { const h0 = plate.offsetHeight; plate.classList.add('rs-k-fits'); hold(Math.max(max.t, tk)); if (plate.offsetHeight > h0 + 2) { plate.classList.remove('rs-k-fits'); hold(max.t); } }
     };
     // r4 (r4-a11y m2): the strip's height, so a row focused from the keyboard scrolls clear of it (research.css
     // scroll-margin-bottom). Read after the slots are held; the strip's height also follows the screen's height

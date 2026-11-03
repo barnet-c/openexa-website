@@ -922,7 +922,9 @@
   // the record button: brings the ledger into view (centred under the nav), then
   let inspectRaf = 0;
   function ledgerY() { // the scroll position that centres the ledger in the room under the bar (top-aligned when taller)
-    const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0;
+    // the bar's height in px (award a2: above 1920 --nav-h is '4.5rem'; parseFloat of the token read 4.5): a probe resolves it
+    const pr = document.createElement('i'), ps = pr.style; ps.position = 'absolute'; ps.left = ps.top = '0'; ps.width = '0'; ps.height = 'var(--nav-h)'; ps.visibility = 'hidden'; ps.pointerEvents = 'none';
+    document.body.appendChild(pr); const navH = parseFloat(getComputedStyle(pr).height) || 0; pr.remove();
     const r = LEDGER.getBoundingClientRect(), room = window.innerHeight - navH;
     return Math.max(0, Math.min(document.documentElement.scrollHeight - window.innerHeight, Math.round(window.scrollY + r.top - navH - Math.max(0, (room - r.height) / 2))));
   }

@@ -4,7 +4,7 @@
    land on the static figures, shorter than the live ones). .story-wait / .story-failed mark story.js. */
 (function () {
   'use strict';
-  // §06 on phones: the chain shows records 01-04; the control, an edit or 'Alter record 03' opens all eight
+  // §06 on phones: the chain shows records 01-04; the control, an edit or 'Change record 03' opens all eight
   const chain = document.querySelector('[data-chain]'), more = chain && chain.querySelector('[data-chain-more]');
   if (more) {
     const set = (open) => {
@@ -31,16 +31,39 @@
   if (!list.length) return;
   if (list.some(src => /story\.js$/.test(src))) root.classList.add('story-wait');
   const FIRST = /(?:^|\/)(?:loader|story|site)\.js$/;
-  const add = (src) => {
+  // (award a2) the instruments at the curtain run one per frame, in the list's order: fetched at once (preload), each a
+  // frame after the one before it has run (together they made one 100+ ms frame in the hand-off on a 4x-throttled phone).
+  // The first batch (loader, story, site) still runs at once: the loader's hand-off, and so the headline, waits for the
+  // overture's first frame and the window's load, and spacing that batch put both ~75 ms later in Lighthouse.
+  const queue = [];
+  let pumping = false;
+  const script = (src) => {
     const s = document.createElement('script');
     s.src = src;
     s.async = false;
-    if (/story\.js$/.test(src)) s.onerror = () => root.classList.add('story-failed');
-    document.body.appendChild(last = s);
+    if (/story\.js$/.test(src)) s.addEventListener('error', () => root.classList.add('story-failed'));
+    return s;
+  };
+  const pump = () => {
+    const src = queue.shift();
+    if (!src) { pumping = false; return; }
+    pumping = true;
+    const s = script(src), on = () => { if (document.hidden) setTimeout(pump, 0); else requestAnimationFrame(() => setTimeout(pump, 0)); };
+    s.addEventListener('load', on); s.addEventListener('error', on);
+    document.body.appendChild(s);
+  };
+  const add = (srcs, done) => { // at once, in order
+    let last = null;
+    srcs.forEach(src => document.body.appendChild(last = script(src)));
+    if (done && last) { last.addEventListener('load', done); last.addEventListener('error', done); }
+  };
+  const spread = (srcs) => {
+    srcs.forEach(src => { const l = document.createElement('link'); l.rel = 'preload'; l.as = 'script'; l.href = src; document.head.appendChild(l); queue.push(src); });
+    if (!pumping) pump();
   };
   const nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {}, H = history, K = 'oxa:at';
   const back = /^(reload|back)/.test(nav.type);
-  let started = false, later = back || location.hash.length > 1, last, at = null, moved = 0;
+  let started = false, later = back || location.hash.length > 1, at = null, moved = 0;
   const secs = () => [...document.querySelectorAll('main > section[id]')];
   // while the instruments grow, the chapters above the place are no scroll anchors: the place holds
   const hold = (on) => { for (const c of secs()) { if (c.id === at[0]) break; c.style.overflowAnchor = on ? 'none' : ''; } };
@@ -57,7 +80,7 @@
     addEventListener('pageshow', e => { if (e.persisted) H.scrollRestoration = 'auto'; });
   } catch (e) { /* no storage */ }
   if (at) { ['wheel', 'touchstart', 'keydown'].forEach(t => addEventListener(t, () => { moved = 1; }, { once: true, passive: true })); hold(1); requestAnimationFrame(land); }
-  const rest = () => { if (later) return; later = true; list.filter(src => !FIRST.test(src)).forEach(add); };
+  const rest = () => { if (later) return; later = true; spread(list.filter(src => !FIRST.test(src))); };
   // '100' sets the curtain going (.is-done; its beat is a CSS delay the compositor runs): the instruments start then
   const lifted = () => {
     const l = document.querySelector('.loader'), up = () => !l.isConnected || l.classList.contains('is-done');
@@ -68,8 +91,7 @@
   const start = () => {
     if (started) return;
     started = true;
-    list.filter(src => later || FIRST.test(src)).forEach(add);
-    if (at) last.onload = last.onerror = () => requestAnimationFrame(() => { land(); hold(0); H.scrollRestoration = 'auto'; });
+    add(list.filter(src => later || FIRST.test(src)), at ? () => requestAnimationFrame(() => { land(); hold(0); H.scrollRestoration = 'auto'; }) : null);
     if (root.classList.contains('is-loaded')) lifted();
     else document.addEventListener('oxa:loaded', lifted, { once: true });
     setTimeout(rest, 2500);

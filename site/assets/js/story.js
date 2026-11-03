@@ -338,6 +338,7 @@
   uniform float u_hov[24]; uniform float u_hovOn, u_hovScene, u_sceneA, u_sceneB, u_hovLift;
   uniform float u_dc[24];
   uniform vec4 u_occ;
+  uniform vec2 u_band;
   varying vec3 v_col; varying float v_a, v_size, v_soft, v_halo;
   const float PI = 3.14159265, TAU = 6.2831853;
   mat3 rotY(float a) { float c = cos(a), s = sin(a); return mat3(c, 0.0, -s, 0.0, 1.0, 0.0, s, 0.0, c); }
@@ -515,6 +516,8 @@
     // the intro: the globe draws in band by band, from the top
     float ia = clamp(u_intro * 1.7 - a_key.x * 0.7, 0.0, 1.0);
     al *= ia;
+    // (award a2) nothing drawn among the nav's words (or, portrait, the scene index's): points fade out under the bars
+    al *= 1.0 - smoothstep(u_band.x, u_band.y, gl_Position.y / max(gl_Position.w, 1e-4));
     float persp = u_dist / max(0.2, -mv.z);
     float size = pr.x * (1.55 + 1.15 * a_rand.x) * mix(0.82, 1.18, persp - 0.5) * (1.0 + 0.3 * h) * mix(1.1, 0.8, fz) * (0.55 + 0.45 * ia) * limb * u_pr;
     v_soft = soft; v_halo = 0.0;
@@ -666,7 +669,7 @@
         if (!gl.getProgramParameter(p.prog, gl.LINK_STATUS)) throw new Error('story shader: ' + (gl.getShaderInfoLog(p.v) || gl.getShaderInfoLog(p.f) || gl.getProgramInfoLog(p.prog)));
       });
       Object.assign(P, progs);
-      bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_gather', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ', 'u_dc'], ['a_from', 'a_to', 'a_rand', 'a_key']);
+      bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_gather', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ', 'u_dc', 'u_band'], ['a_from', 'a_to', 'a_rand', 'a_key']);
       bindProgram(P.line, ['u_view', 'u_proj', 'u_res', 'u_pr', 'u_dist', 'u_fogR', 'u_occ'], ['a_corner', 'a_p0', 'a_p1', 'a_col', 'a_w']);
       bindProgram(P.act, ['u_view', 'u_proj', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt'], ['a_pos', 'a_col', 'a_shp']);
       const buf = (data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage || gl.STATIC_DRAW); return b; };
@@ -735,6 +738,13 @@
   // the stage shows below the nav's bar: past the pin the stage leaves with the page
   let belowBar = true;
   const pxuOf = (h) => (h / 2) / (CAM_D * Math.tan(FOV / 2)); // CSS px per world unit at the target's depth
+  // the bar's height in px (award a2: above 1920 --nav-h is '4.5rem', and parseFloat of the token read 4.5, so the stage
+  // fitted under a 4.5 px bar at 4K): a hidden probe of that height resolves it
+  let navProbe = null;
+  const navPx = () => {
+    if (!navProbe) { navProbe = document.createElement('i'); navProbe.setAttribute('aria-hidden', 'true'); const ps = navProbe.style; ps.position = 'absolute'; ps.left = ps.top = '0'; ps.width = '0'; ps.height = 'var(--nav-h)'; ps.visibility = 'hidden'; ps.pointerEvents = 'none'; stage.appendChild(navProbe); }
+    return parseFloat(getComputedStyle(navProbe).height) || 0;
+  };
   const l4 = (px) => px / Math.max(1e-4, layouts[4].s * pxuOf(H)); // S4 local units for a length in CSS px
   // where the story sits and how long it pins: the stage is 100svh
   function measureScroll() {
@@ -760,8 +770,7 @@
   }
   function measureBeats() { beats.forEach((b, i) => measureBeat(i)); }
   function measureLayout() {
-    const cs = getComputedStyle(stage);
-    navH = parseFloat(cs.getPropertyValue('--nav-h')) || 72;
+    navH = navPx() || 72;
     const bar = stage.querySelector('.story-bar');
     barH = bar ? bar.offsetHeight : 64;
     const cont = stage.querySelector('.story-ui .container');
@@ -887,6 +896,8 @@
         y1 = Math.min(Math.max(y0 + 120, Math.min(H * 0.8, br.t) - 14), br.t - 14);
       }
       if (i === 4) { // the columns, the floor's tag left of column 01, and the band of records
+        // (award a2) wide: the row ends on the column's content edge, as it lands (it ran 12-64 px past it above 1440)
+        if (!stacked && contR > x0) x1 = Math.min(x1, contR);
         const xa = x0 + floorW + 14;
         s = Math.max(0.05, Math.min((x1 - xa) / ((COL_SPAN + 0.24) * pxu), (y1 - y0 - band4()) / ((H_COL + 0.34) * pxu)));
         if (!stacked) s = Math.min(s, (H * 0.74) / (EXT[4][1] * pxu));
@@ -899,6 +910,7 @@
           if (l.el.style.minWidth !== mw) { l.el.style.minWidth = mw; if (l.ink) l.ink.style.minWidth = mw; l.w = l.el.offsetWidth; }
         });
         cx = (xa + x1) / 2;
+        if (!stacked) { const tw = Math.max(15, ...(lab.days || []).map(l => l.w || 0)); cx = Math.max(cx, x1 - COL_X(NCOL - 1) * s * pxu - tw / 2); } // the last tag's edge on the column's
         const fy = stacked ? y1 - band4() : Math.min(y1 - DAY_BAND, (y0 + y1) / 2 + 0.6 * s * pxu);
         cy = fy - 0.6 * s * pxu;
         floorL = -COL_SPAN / 2 - 0.04 - (floorW + 10) / (s * pxu);
@@ -1727,7 +1739,7 @@
     const ov = (lastP - 1) * run;
     return ov < stageH ? { at: 4 } : { below: ov - stageH };
   }
-  const navNow = () => parseFloat(getComputedStyle(stage).getPropertyValue('--nav-h')) || navH; // (the zoomed page's own nav)
+  const navNow = () => navPx() || navH; // (the zoomed page's own nav)
   function staticPlace() { // the reader's place in the static sequence: the beat at the nav's lower edge, or below the overture
     const y = window.scrollY, bottom = story.getBoundingClientRect().top + y + story.offsetHeight, nh = navNow();
     if (y + nh >= bottom) return { below: y - bottom };
@@ -1822,6 +1834,9 @@
     gl.uniform1f(u.u_spin, time * 0.07 + 0.6);
     gl.uniform1f(u.u_pr, dpr * ptK); gl.uniform1f(u.u_dist, CAM_D); gl.uniform1f(u.u_fogR, 1.7 * Math.max(scale[0], scale[1]));
     gl.uniform1f(u.u_maxpt, maxPt); gl.uniform1f(u.u_intro, intro); gl.uniform1f(u.u_gather, gather); gl.uniform1f(u.u_halo, halo ? 1 : 0);
+    // (clip space, from CSS px of the stage) the fade: whole 12 px under the bar's rule, gone by the middle of the nav's words;
+    // portrait screens carry the scene index and Pause motion under the nav, so the band takes them in too
+    { const t = navH + (stacked ? barH : 0), z = stacked ? navH + barH * 0.3 : navH * 0.5; gl.uniform2f(u.u_band, 1 - 2 * (t + 12) / H, 1 - 2 * z / H); }
     gl.uniform1f(u.u_shade, lerp(SHADE[seg], SHADE[seg + 1], mE));
     gl.uniform1fv(u.u_hov, hov); gl.uniform1f(u.u_hovOn, hoverOn); gl.uniform1f(u.u_hovScene, hoverScene);
     gl.uniform1f(u.u_sceneA, seg); gl.uniform1f(u.u_sceneB, seg + 1);
@@ -2052,7 +2067,7 @@
       if (root.classList.contains('is-loaded')) setTimeout(() => { relayReady = true; requestFrame(); }, 1500);
       // late layout (fonts, load) refits the stage around the reader's place as the page has it now
       const refit = () => { scrollY = window.scrollY; sceneScroll(); resize(true); };
-      if (document.fonts && document.fonts.ready) requestAnimationFrame(() => document.fonts.ready.then(refit)); // (in a frame: reading it lays the page out)
+      if (document.fonts && document.fonts.ready) requestAnimationFrame(() => requestAnimationFrame(() => document.fonts.ready.then(refit))); // (in a frame: reading it lays the page out; a2: the frame after the first frame's, so the start-up's measure, first frame and refit each have a frame)
       window.addEventListener('load', refit, { once: true });
       // a mouse inspects what it moves over
       stage.addEventListener('pointermove', e => {
@@ -2092,6 +2107,8 @@
     stopFrames();
     frame(performance.now(), true);
     root.classList.add('gl-ready'); document.dispatchEvent(new Event('story:gl-ready')); // the loader waits for this (capped)
+    // (award a2: deferring this first frame by a frame split its ~95 ms frame on a 4x phone but held the loader, and so
+    // the hand-off's headline (the LCP), a frame later: reverted; the fonts refit moved off this frame instead)
   }
   // the GPU dropped the context: nothing is drawn, the copy and the index keep following the reader (callouts hidden).
   let lostTimer = 0;

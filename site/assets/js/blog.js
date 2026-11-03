@@ -1,40 +1,83 @@
-/* OpenEXA — blog collections filter. Chips narrow the page to one collection; the hash keeps it linkable
-   (/blog/#markets). Without JavaScript the chips are plain jump links and every collection shows. */
+/* OpenEXA: the blog index (group "blog"; award a2). The collections' chips filter this file drove went with the cut
+   (1 Nov); this is what the index does now.
+   - Financial markets research: one plate beside the register shows the drawing of the post pointed at or focused,
+     and while the list scrolls (pointer elsewhere, or a touch screen), of the post at the reading line, as Research's
+     plate follows its notes (research.js). The row whose drawing is on the plate is marked (.is-current).
+   - Market structure & economics: the rings turn a step for each paper pointed at, focused or read (v2 turned them
+     under the pointer). Not under reduced motion.
+   Only where the plate stands beside the list (641 px and up: tablets and desks). Without JavaScript the plate shows
+   the first row's drawing and the rings turn on hover (blog.css). No inline script or style (CSP); nothing here is
+   needed to read.
+   Nothing runs while the page is first laid out (a2 Lighthouse: a media query read at load forced the page's first
+   style pass inside this file's task, ahead of the first paint): a list is set up when it comes within half a screen. */
 (function () {
   'use strict';
-  const chips = Array.from(document.querySelectorAll('[data-blog-filter]'));
-  const sections = Array.from(document.querySelectorAll('[data-blog-collection]'));
-  if (!chips.length || !sections.length) return;
-  const keys = sections.map(s => s.dataset.blogCollection);
-  function apply(key, scroll) {
-    const k = keys.includes(key) ? key : 'all';
-    const shown = []; // lab blog-moment: only what the filter has just un-hidden is revealed at once
-    sections.forEach(s => { const was = s.hidden; s.hidden = k !== 'all' && s.dataset.blogCollection !== k; if (was && !s.hidden) shown.push(s); });
-    const series = document.querySelector('[data-blog-series]');
-    if (series) { const was = series.hidden; series.hidden = !(k === 'all' || k === 'ai'); if (was && !series.hidden) shown.push(series); }
-    chips.forEach(c => { if (c.dataset.blogFilter !== k) c.removeAttribute('aria-current'); else if (!c.hasAttribute('aria-current')) c.setAttribute('aria-current', 'true'); });
-    // keep the active chip visible in the horizontally scrolling row (phones) without moving the page. Not on a plain
-    // load of the whole blog ('All' is the row's first cell): reading the row's width there forced a layout of the
-    // page (25 plates) before its first paint, the blog's one long task (blog r4, r4-perf)
-    const active = chips.find(c => c.dataset.blogFilter === k), row = active && active.parentElement;
-    if (row && (scroll || k !== 'all') && row.scrollWidth > row.clientWidth) row.scrollLeft += active.getBoundingClientRect().left - row.getBoundingClientRect().left - (row.clientWidth - active.offsetWidth) / 2;
-    // revealed-on-scroll content inside a newly shown section must not stay hidden; the rest keeps arriving on scroll
-    // (v2x forced every visible reveal in at load, so the series rail drew itself off-screen before anyone got there)
-    shown.forEach(s => s.querySelectorAll('[data-reveal]').forEach(el => el.classList.add('is-in')));
-    if (scroll) {
-      // to the bar's place in the page (the top of the collections), not where it is stuck: from mid-page the bar's
-      // rect is the stuck one, and the page stayed put inside the chosen collection (blog r4)
-      const top = document.querySelector('.blog-index');
-      const y = top ? top.getBoundingClientRect().top + window.scrollY - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 72) : 0;
-      window.scrollTo({ top: Math.max(0, y), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  const boxes = Array.from(document.querySelectorAll('[data-blog-follow], [data-blog-turn]'));
+  if (!boxes.length || !('IntersectionObserver' in window)) return;
+  let wide, touch;
+
+  // rows: the list's links' items; choose(i): show row i. Pointer and focus choose at once; otherwise the row whose
+  // top has passed the reading line (two-fifths down the screen) is chosen on each scrolled frame while the list is
+  // on screen (research.js r1: read positions, not a band the rows cross, so a jump cannot skip a row)
+  function follow(box, choose) {
+    const list = box.querySelector('.blog-register');
+    const rows = list ? Array.from(list.children) : [];
+    if (!rows.length) return null;
+    let current = -1, onList = false, near = false, queued = false, keyed = false;
+    const set = i => { if (i !== current) { current = i; choose(i, rows); } };
+    // a row the keyboard reached keeps the plate until the pointer really moves: the page scrolling a focused row into
+    // view slides other rows under a resting pointer, and that is not a choice (a2 probe: focus on row 4, plate on 7)
+    const keyFocus = () => { const f = document.activeElement; return !!f && list.contains(f) && f.matches(':focus-visible'); };
+    rows.forEach((li, i) => {
+      li.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch' && wide.matches && !keyed) set(i); });
+      li.addEventListener('focusin', () => { if (!wide.matches) return; keyed = keyFocus(); set(i); });
+    });
+    list.addEventListener('pointermove', e => {
+      if (!keyed || e.pointerType === 'touch' || !(e.movementX || e.movementY)) return;
+      keyed = false; const li = e.target.closest && e.target.closest('li'); const i = rows.indexOf(li);
+      if (i >= 0 && wide.matches) set(i);
+    });
+    list.addEventListener('focusout', e => { if (!list.contains(e.relatedTarget)) keyed = false; });
+    list.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') onList = true; });
+    list.addEventListener('pointerleave', () => { onList = false; });
+    const atLine = () => {
+      queued = false;
+      if (!near || !wide.matches || (onList && !touch.matches) || keyFocus()) return;
+      const line = window.innerHeight * 0.4; let k = 0;
+      for (let i = 0; i < rows.length; i++) { if (rows[i].getBoundingClientRect().top <= line) k = i; else break; }
+      set(k);
+    };
+    const queue = () => { if (!queued) { queued = true; requestAnimationFrame(atLine); } };
+    new IntersectionObserver(es => { near = es[0].isIntersecting; if (near) queue(); }).observe(list);
+    window.addEventListener('scroll', queue, { passive: true });
+    return set;
+  }
+
+  function start(box) {
+    if (!wide) {
+      wide = window.matchMedia('(min-width: 641px)');
+      touch = window.matchMedia('(hover: none)');
+    }
+    if (box.hasAttribute('data-blog-follow')) {
+      const panel = box.querySelector('.blog-panel');
+      const plates = panel ? Array.from(panel.querySelectorAll('.bpn')) : [];
+      if (!plates.length) return;
+      const set = follow(box, (i, rows) => {
+        rows.forEach((li, j) => li.classList.toggle('is-current', j === i));
+        plates.forEach((p, j) => p.classList.toggle('is-on', j === i));
+        panel.classList.add('is-live'); // from the first change on, a plate that arrives engraves its green line again
+      });
+      // the plate starts on the first row (its drawing is in the markup); mark that row where the plate is beside it
+      if (set && wide.matches) box.querySelector('.blog-register > li').classList.add('is-current');
+    } else if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      box.classList.add('js-turn');
+      // six degrees a paper, v2's own turn under the pointer
+      follow(box, i => box.style.setProperty('--turn', (-6 * i) + 'deg'));
     }
   }
-  chips.forEach(c => c.addEventListener('click', e => {
-    e.preventDefault();
-    const k = c.dataset.blogFilter;
-    history.replaceState(null, '', k === 'all' ? location.pathname : '#' + k);
-    apply(k, true);
-  }));
-  window.addEventListener('hashchange', () => apply(location.hash.slice(1), false));
-  apply(location.hash.slice(1), false);
+
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { io.unobserve(e.target); start(e.target); }
+  }), { rootMargin: '50% 0px' });
+  boxes.forEach(b => io.observe(b));
 })();

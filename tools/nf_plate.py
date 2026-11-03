@@ -117,7 +117,8 @@ def plate():
     v, _ = col.draw("nf-v", 88, 312, 1.04, 2)
     left, top = hdot[0] / 1200 * 100, hdot[1] / 216 * 100
     out_h = f'<span class="nf-out nf-out--h" data-nf-path style="left:{left:.2f}%;top:{top:.2f}%">this address</span>'
-    return ('<figure class="nf-plate" aria-hidden="true">' + keys() + '<div class="nf-draw">' + h + v + out_h + "</div></figure>")
+    # a div, not a figure: the plate is hidden from assistive tech and has no caption (a2 markup lint)
+    return ('<div class="nf-plate" aria-hidden="true">' + keys() + '<div class="nf-draw">' + h + v + out_h + "</div></div>")
 
 
 if __name__ == "__main__":

@@ -12,21 +12,21 @@
 /* the head is a grid: what changes in it never re-wraps it */
 .lt-head { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "title latest state ctrl"; align-items: center; gap: 6px 20px; min-height: 56px; padding: 10px 12px 10px 20px; border-bottom: 1px solid var(--line); font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); }
 .lt-title { grid-area: title; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); }
-.lt-state { grid-area: state; justify-self: end; display: inline-flex; align-items: center; gap: 9px; min-width: 0; max-width: 100%; color: var(--accent); letter-spacing: var(--track-label, .12em); transition: color .3s var(--ease-out); }
+.lt-state { grid-area: state; justify-self: end; display: inline-flex; align-items: center; gap: 9px; min-width: 0; max-width: 100%; color: var(--accent); letter-spacing: var(--track-label, .12em); transition: color var(--dur-move) var(--ease-out); }
 .lt-state > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lt-state i { flex: none; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 /* (v2x) the dot holds still while the stream runs: a breathing dot reads as "live", and this stream is illustrative; the word 'Running' carries the state */
 .lt.is-paused .lt-state, .lt.is-inspecting .lt-state { color: var(--fg-2); }
 .lt.is-inspecting .lt-state i { background: transparent; box-shadow: inset 0 0 0 1px currentColor; }
 .lt-ctrl { grid-area: ctrl; display: inline-flex; gap: 8px; }
-.lt-btn, .chain-try, .chain-restore { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 34px; padding: 0 13px; border: 1px solid var(--line-strong); border-radius: 2px; font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); white-space: nowrap; transition: border-color .25s var(--ease-out), color .25s var(--ease-out), background .25s var(--ease-out); }
+.lt-btn, .chain-try, .chain-restore { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 34px; padding: 0 13px; border: 1px solid var(--line-strong); border-radius: 2px; font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); white-space: nowrap; transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), background var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { .lt-btn:hover, .chain-try:hover { border-color: var(--accent); color: var(--accent); } } /* a tap never leaves a hover look behind */
 .lt-btn:focus-visible, .chain-try:focus-visible, .chain-restore:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .lt-btn svg { flex: none; width: 13px; height: 13px; }
 .lt-btn .i-play, .lt-btn.is-paused .i-pause { display: none; }
 .lt-btn.is-paused .i-play { display: inline; }
 /* back to the newest record: a pill in the head row, never over the records */
-.lt-latest { grid-area: latest; justify-self: start; display: inline-flex; align-items: center; gap: 7px; min-height: 30px; padding: 0 11px; border: 1px solid var(--accent); border-radius: 15px; font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--accent); white-space: nowrap; animation: lt-fade .3s var(--ease) backwards; transition: background .25s var(--ease-out), color .25s var(--ease-out); }
+.lt-latest { grid-area: latest; justify-self: start; display: inline-flex; align-items: center; gap: 7px; min-height: 30px; padding: 0 11px; border: 1px solid var(--accent); border-radius: 15px; font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--accent); white-space: nowrap; animation: lt-fade .3s var(--ease) backwards; transition: background var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { .lt-latest:hover { background: var(--accent); color: var(--ink); } }
 .lt-latest:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .lt-latest svg { flex: none; width: 13px; height: 13px; }
@@ -42,9 +42,9 @@
 .lt-track { position: relative; display: flex; width: max-content; min-width: 100%; margin: 0; padding: 16px 28px 12px; list-style: none; }
 
 /* one record = one contained column on the line */
-.lt-rec { flex: none; position: relative; isolation: isolate; contain: layout style paint; width: calc(var(--lt-col) + var(--lt-bleed)); margin-left: calc(var(--lt-bleed) * -1); padding: 12px var(--lt-pr) 10px var(--lt-bleed); cursor: pointer; outline: none; transition: opacity .35s var(--ease); }
+.lt-rec { flex: none; position: relative; isolation: isolate; contain: layout style paint; width: calc(var(--lt-col) + var(--lt-bleed)); margin-left: calc(var(--lt-bleed) * -1); padding: 12px var(--lt-pr) 10px var(--lt-bleed); cursor: pointer; outline: none; transition: opacity var(--dur-move) var(--ease); }
 /* pointing at a record lifts its block off the panel; the link row below stays on the line */
-.lt-rec::after { content: ""; position: absolute; z-index: -1; inset: 0 6px 44px 6px; border-radius: 2px; background: rgba(245, 242, 236, .045); opacity: 0; transition: opacity .25s var(--ease); pointer-events: none; }
+.lt-rec::after { content: ""; position: absolute; z-index: -1; inset: 0 6px 44px 6px; border-radius: 2px; background: rgba(245, 242, 236, .045); opacity: 0; transition: opacity var(--dur-feedback) var(--ease); pointer-events: none; }
 .lt-rec.is-sel::after { opacity: 1; background: rgba(245, 242, 236, .07); }
 @media (hover: hover) { .lt-rec:hover::after { opacity: 1; } }
 .lt-meta { display: flex; justify-content: space-between; gap: 10px; font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: .08em; color: var(--fg-3); white-space: nowrap; }
@@ -57,9 +57,9 @@
 .lt-t { display: block; margin-top: 8px; font: var(--mono-tick)/1.3 var(--mono); letter-spacing: .03em; color: var(--fg-3); font-variant-numeric: tabular-nums; }
 /* the line: a 12 px block per record, and out of it the link that carries the record's SHA-256 */
 .lt-line { position: relative; display: block; height: 24px; margin: 14px calc(var(--lt-pr) * -1) 0 0; }
-.lt-node { position: absolute; left: 0; top: 6px; width: 12px; height: 12px; background: var(--fg); transition: transform .3s var(--ease), box-shadow .3s var(--ease), background .3s var(--ease-out), opacity .35s var(--ease); }
-.lt-seg { position: absolute; left: 12px; right: 0; top: 12px; height: 1px; background: var(--line-strong); transform-origin: 0 50%; transition: opacity .35s var(--ease); }
-.lt-tag { position: absolute; left: calc(50% + 6px); top: 12px; transform: translate(-50%, -50%); padding: 2px 6px; background: var(--lt-bg); font: var(--mono-tick)/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-2); white-space: nowrap; font-variant-numeric: tabular-nums; transition: color .3s var(--ease-out); }
+.lt-node { position: absolute; left: 0; top: 6px; width: 12px; height: 12px; background: var(--fg); transition: transform var(--dur-move) var(--ease), box-shadow var(--dur-move) var(--ease), background var(--dur-move) var(--ease-out), opacity var(--dur-move) var(--ease); }
+.lt-seg { position: absolute; left: 12px; right: 0; top: 12px; height: 1px; background: var(--line-strong); transform-origin: 0 50%; transition: opacity var(--dur-move) var(--ease); }
+.lt-tag { position: absolute; left: calc(50% + 6px); top: 12px; transform: translate(-50%, -50%); padding: 2px 6px; background: var(--lt-bg); font: var(--mono-tick)/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-2); white-space: nowrap; font-variant-numeric: tabular-nums; transition: color var(--dur-move) var(--ease-out); }
 .lt-gap { position: absolute; left: calc(50% + 6px); top: 21px; transform: translateX(-50%); font: var(--mono-tick)/1 var(--mono); letter-spacing: .1em; color: var(--khaki); white-space: nowrap; }
 .lt-rec.is-settled .lt-node { background: var(--accent); }
 .lt-rec.is-settled .lt-ev { color: var(--accent); }
@@ -89,7 +89,7 @@
 .lt-rec.is-sel .lt-seg, .lt-rec.is-before-sel .lt-seg { background: var(--accent); }
 .lt-rec.is-sel.is-head .lt-seg { background: repeating-linear-gradient(90deg, var(--accent) 0 3px, transparent 3px 7px); }
 .lt-rec.is-sel .lt-tag, .lt-rec.is-before-sel .lt-tag { color: var(--accent); }
-.lt-rec > :not(.lt-line) { transition: opacity .35s var(--ease); }
+.lt-rec > :not(.lt-line) { transition: opacity var(--dur-move) var(--ease); }
 .lt-rec:focus-visible::before { content: ""; position: absolute; inset: 0 6px 6px 6px; border: 1px solid var(--accent); border-radius: 2px; pointer-events: none; }
 /* a record asked for (or followed) rings out twice: transform and opacity only */
 .lt-node::after { content: ""; position: absolute; inset: -4px; border: 1.5px solid var(--accent); opacity: 0; pointer-events: none; }
@@ -98,7 +98,7 @@
 
 /* the inspector: at rest every field keeps a fixed number of lines, so the panel never changes height */
 .lt-insp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 10px 56px; padding: 14px 20px 22px; border-top: 1px solid var(--line); }
-.lt-insp-k { grid-column: 1 / -1; margin: 0; font: 500 var(--mono-tick)/1.6 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .3s var(--ease-out); }
+.lt-insp-k { grid-column: 1 / -1; margin: 0; font: 500 var(--mono-tick)/1.6 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color var(--dur-move) var(--ease-out); }
 .lt-insp-k.is-followed { color: var(--accent); }
 .lt-insp dl { display: grid; align-content: start; gap: 9px; margin: 0; }
 .lt-insp dl > div { display: grid; grid-template-columns: 6.4rem minmax(0, 1fr); gap: 14px; align-items: baseline; }
@@ -119,7 +119,7 @@
 .lt.is-inspecting .lt-insp [data-f="d"], .lt.is-inspecting .lt-insp [data-f="src"] { min-height: 3.3em; }
 .lt.is-inspecting .lt-check { min-height: var(--lt-chk, 1.6em); }
 .lt.is-inspecting :is(.lt-lc, .lt-ev, .lt-insp-k, .lt-check, .lt-insp [data-f="rec"], .lt-insp [data-f="ev"]) { white-space: normal; overflow: visible; }
-.lt-leader { position: absolute; left: var(--x, 0); top: var(--y, 0); z-index: 2; width: 1px; height: var(--h, 0); background: linear-gradient(var(--accent), rgba(79, 203, 147, .35)); opacity: 0; pointer-events: none; transition: opacity .25s var(--ease-out); }
+.lt-leader { position: absolute; left: var(--x, 0); top: var(--y, 0); z-index: 2; width: 1px; height: var(--h, 0); background: linear-gradient(var(--accent), rgba(79, 203, 147, .35)); opacity: 0; pointer-events: none; transition: opacity var(--dur-feedback) var(--ease-out); }
 .lt-leader::after { content: ""; position: absolute; left: -2px; bottom: -3px; width: 5px; height: 5px; background: var(--accent); }
 .lt-leader.is-on { opacity: 1; }
 .lt-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 18px; padding: 12px 20px; border-top: 1px solid var(--line); font: var(--mono-tick)/1.5 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
@@ -156,10 +156,10 @@
 .lt-rec.is-verified .lt-tag { animation: lt-lit 1.2s var(--ease) backwards; }
 
 /* ---------- the chain (chain.js): edit a record and every link below it snaps ---------- */
-.chain { --lt-bg: var(--ink-2); position: relative; color: var(--fg); background: var(--ink-2); border: 1px solid var(--line-strong); border-radius: var(--r); transition: border-color .5s var(--ease); }
+.chain { --lt-bg: var(--ink-2); position: relative; color: var(--fg); background: var(--ink-2); border: 1px solid var(--line-strong); border-radius: var(--r); transition: border-color var(--dur-draw) var(--ease); }
 .chain.is-broken { border-color: rgba(217, 103, 93, .55); }
 .chain-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; min-height: 56px; padding: 10px 12px 10px 20px; border-bottom: 1px solid var(--line); }
-.chain-status { display: inline-flex; align-items: center; gap: 9px; font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--accent); transition: color .3s var(--ease-out); }
+.chain-status { display: inline-flex; align-items: center; gap: 9px; font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--accent); transition: color var(--dur-move) var(--ease-out); }
 .chain-status i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .chain.is-broken .chain-status { color: var(--reject); }
 .chain.is-broken:not(.is-away) .chain-status i { animation: pulse 1s var(--ease-move) 3; } /* three beats, then still, as .badge i (the red words carry the state; r2 motion) */
@@ -170,28 +170,28 @@
 .chain-genesis i { position: relative; flex: none; width: 11px; height: 11px; margin-left: 9px; border: 1px solid var(--line-strong); }
 .chain-genesis i::after { content: ""; position: absolute; left: 4px; top: 12px; width: 1px; height: 18px; background: var(--line-strong); }
 .chain-list { margin: 0; padding: 4px 20px 8px; list-style: none; font: var(--mono-m, .75rem)/1.6 var(--mono); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
-.chain-list > li { position: relative; display: grid; grid-template-columns: 2.4em 6.2em 9.4em minmax(0, 1fr) auto; column-gap: 14px; align-items: baseline; padding: 8px 12px 32px 44px; border-radius: 2px; color: var(--fg-2); transition: background .45s var(--ease); }
-.chain-list .i, .chain-list .who { color: var(--fg-3); transition: color .35s var(--ease-out); }
+.chain-list > li { position: relative; display: grid; grid-template-columns: 2.4em 6.2em 9.4em minmax(0, 1fr) auto; column-gap: 14px; align-items: baseline; padding: 8px 12px 32px 44px; border-radius: 2px; color: var(--fg-2); transition: background var(--dur-move) var(--ease); }
+.chain-list .i, .chain-list .who { color: var(--fg-3); transition: color var(--dur-move) var(--ease-out); }
 .chain-ready .chain-list > li { cursor: pointer; } /* the whole row edits its record (chain.js, proof a1); its fields keep the text cursor */
 .chain-list .i[role="button"] { justify-self: start; cursor: pointer; } /* the record number is chain.js's roving stop: its ring hugs the number (proof r4) */
 @media (hover: hover) { .chain-list .i[role="button"]:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; } .chain-list > li:not(.is-broken) .i[role="button"]:hover { color: var(--accent); } } /* the way in answers a pointer, in the hash links' green (a broken record keeps its red; r5) */
-.chain-list .ev { justify-self: start; max-width: 100%; font-weight: 500; letter-spacing: .08em; color: var(--fg); transition: color .35s var(--ease-out), box-shadow .25s var(--ease-out), background .25s var(--ease-out); }
-.chain-list .what { justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); transition: color .35s var(--ease-out), box-shadow .25s var(--ease-out), background .25s var(--ease-out); }
+.chain-list .ev { justify-self: start; max-width: 100%; font-weight: 500; letter-spacing: .08em; color: var(--fg); transition: color var(--dur-move) var(--ease-out), box-shadow var(--dur-feedback) var(--ease-out), background var(--dur-feedback) var(--ease-out); }
+.chain-list .what { justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); transition: color var(--dur-move) var(--ease-out), box-shadow var(--dur-feedback) var(--ease-out), background var(--dur-feedback) var(--ease-out); }
 .chain-list [contenteditable] { outline: 2px solid transparent; outline-offset: 2px; border-radius: 1px; cursor: text; box-shadow: inset 0 -1px 0 transparent; }
 @media (hover: hover) { .chain-list [contenteditable]:hover { box-shadow: inset 0 -1px 0 var(--line-strong); } }
 .chain-list [contenteditable]:focus { box-shadow: inset 0 -1px 0 var(--accent); background: rgba(245, 242, 236, .07); }
-.chain-node { position: absolute; left: 9px; top: 13px; width: 11px; height: 11px; background: var(--fg); transition: background .3s var(--ease-out), box-shadow .3s var(--ease-out); }
+.chain-node { position: absolute; left: 9px; top: 13px; width: 11px; height: 11px; background: var(--fg); transition: background var(--dur-move) var(--ease-out), box-shadow var(--dur-move) var(--ease-out); }
 .chain-seg { position: absolute; left: 14px; top: 27px; bottom: -10px; width: 1px; }
-.chain-seg::before, .chain-seg::after { content: ""; position: absolute; left: 0; width: 1px; height: calc(50% - 1px); background: var(--line-strong); transition: transform .55s var(--ease-move) 55ms, background .3s var(--ease-out) 55ms, box-shadow .3s var(--ease-out) 55ms; }
+.chain-seg::before, .chain-seg::after { content: ""; position: absolute; left: 0; width: 1px; height: calc(50% - 1px); background: var(--line-strong); transition: transform var(--dur-draw) var(--ease-move) 55ms, background var(--dur-move) var(--ease-out) 55ms, box-shadow var(--dur-move) var(--ease-out) 55ms; }
 .chain-seg::before { top: 0; } .chain-seg::after { bottom: 0; }
 .chain-link { position: absolute; left: 44px; bottom: 9px; display: flex; align-items: center; font: var(--mono-tick)/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
-.chain-link::before { content: ""; position: absolute; left: -26px; top: 50%; width: 18px; height: 1px; background: var(--line); transition: background .3s var(--ease-out) 55ms; }
-.chain-link b { font-weight: 400; color: var(--accent); transition: color .3s var(--ease-out) 55ms; }
+.chain-link::before { content: ""; position: absolute; left: -26px; top: 50%; width: 18px; height: 1px; background: var(--line); transition: background var(--dur-move) var(--ease-out) 55ms; }
+.chain-link b { font-weight: 400; color: var(--accent); transition: color var(--dur-move) var(--ease-out) 55ms; }
 /* the hash this link stored when the chain was written */
 .chain-link s { display: block; max-width: 0; margin-right: 0; overflow: hidden; white-space: nowrap; opacity: 0; visibility: hidden; color: var(--fg-3); text-decoration-color: rgba(217, 103, 93, .9);
-  transition: max-width .34s var(--ease) 40ms, margin .34s var(--ease) 40ms, opacity .2s var(--ease) 40ms, visibility 0s linear 380ms; }
+  transition: max-width var(--dur-move) var(--ease) 40ms, margin var(--dur-move) var(--ease) 40ms, opacity var(--dur-feedback) var(--ease) 40ms, visibility 0s linear 380ms; }
 .chain-list > li.is-broken .chain-link s { max-width: 10ch; margin-right: 8px; opacity: 1; visibility: visible;
-  transition: max-width .36s var(--ease) 55ms, margin .36s var(--ease) 55ms, opacity .3s var(--ease) 150ms, visibility 0s linear 55ms; }
+  transition: max-width var(--dur-move) var(--ease) 55ms, margin var(--dur-move) var(--ease) 55ms, opacity var(--dur-move) var(--ease) 150ms, visibility 0s linear 55ms; }
 .chain-flag { align-self: center; font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--reject); border: 1px solid rgba(217, 103, 93, .55); padding: 4px 6px 3px; animation: lt-fade .3s var(--ease) both; }
 /* the last record's hash waits for a record that does not exist yet */
 .chain-list > li:last-child .chain-seg { bottom: 4px; }

@@ -19,8 +19,13 @@
   [data-page="company"] .company-sculpture { aspect-ratio: 1.25; }
 }
 [data-page="company"] .company-sculpture .figure-stage.no-figure::after { display: none; }
-[data-page="company"] .eyebrow, [data-page="access"] .eyebrow { align-items: baseline; }
-[data-page="company"] .eyebrow::before, [data-page="access"] .eyebrow::before { align-self: flex-start; margin-top: calc(.5lh - .5px); } /* centred on the first line, also when the kicker wraps (phones) */
+/* a2 (art director): the phrase that opens Home opens Company in Home's voice: site.css's .hero-kicker (the italic
+   serif behind a khaki rule) at Home's size; "· Seattle, WA" keeps its line; if it wraps, the rule stays on the first */
+[data-page="company"] .company-kicker { --b: calc(1px * var(--stroke)); font-size: var(--fs-body); margin-bottom: 0; align-items: baseline; gap: 1rem; }
+[data-page="company"] .company-kicker::before { flex: none; align-self: flex-start; width: 2.25rem; height: var(--b); margin-top: calc(.5lh - var(--b) / 2); }
+[data-page="company"] .company-kicker .nowrap { margin-left: .14em; } /* the dot clears the italic y's tail */
+@media (max-width: 960px) and (max-height: 520px) and (min-width: 600px) { [data-page="company"] .company-hero .company-kicker + h1 { margin-top: 12px; } }
+[data-page="access"] .eyebrow { align-items: baseline; }
 .plate-still { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 1s var(--ease); }
 .figure-stage.figure-ready ~ .plate-still { opacity: 0; }
 .plate-still pattern circle { fill: rgba(245, 242, 236, .62); }
@@ -58,15 +63,24 @@
 [data-page="company"] .story-h { max-width: 15ch; margin: 0 0 clamp(2.75rem, 6vw, 5.5rem); text-wrap: balance; }
 [data-page="company"] .timeline { list-style: none; margin: 0; padding: 0; gap: 0 clamp(1.125rem, 2.4vw, 2rem); }
 [data-page="company"] .timeline::before, [data-page="company"] .timeline::after { display: none; }
-[data-page="company"] .timeline .step { padding: 1.75rem 0 0; border-top: 1px solid var(--fg); }
-[data-page="company"] .timeline .step::before { top: calc(-.34375rem - .5px); width: .6875rem; height: .6875rem; background: var(--bg); border: 1px solid var(--fg); box-shadow: none; transition: none; } /* a1: in rem, centred on the rule */
-[data-page="company"] .timeline .step.now { border-top: 2px solid var(--accent); }
-[data-page="company"] .timeline .step.now::before { top: calc(-.375rem - 1px); width: .75rem; height: .75rem; background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 .25rem var(--bg); }
-[data-page="company"] .timeline .step.is-next { border-top: 1px dashed var(--khaki-deep); }
-[data-page="company"] .timeline .step.is-next::before { border: 1px dashed var(--khaki-deep); }
+[data-page="company"] .timeline { --w: calc(1px * var(--stroke)); } /* a2: the line and its nodes on the stroke token (2 px at 3840, as 1920@2) */
+[data-page="company"] .timeline .step { padding: 1.75rem 0 0; border-top: var(--w) solid var(--fg); }
+[data-page="company"] .timeline .step::before { top: calc(-.34375rem - var(--w) / 2); width: .6875rem; height: .6875rem; background: var(--bg); border: var(--w) solid var(--fg); box-shadow: none; transition: none; } /* a1: in rem, centred on the rule */
+[data-page="company"] .timeline .step.now { border-top: calc(2 * var(--w)) solid var(--accent); }
+@media (min-width: 601px) { [data-page="company"] .timeline .step.now { padding-top: calc(1.75rem - var(--w)); } } /* a2: the steps beside it share its baseline */
+[data-page="company"] .timeline .step.now::before { top: calc(-.375rem - var(--w)); width: .75rem; height: .75rem; background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 .25rem var(--bg); }
+[data-page="company"] .timeline .step.is-next { border-top: var(--w) dashed var(--khaki-deep); }
+[data-page="company"] .timeline .step.is-next::before { border: var(--w) dashed var(--khaki-deep); }
 [data-page="company"] .timeline .k { margin-bottom: .875rem; }
 [data-page="company"] .timeline .now .k { color: var(--signal-ink); }
 [data-page="company"] .timeline h3 { max-width: 16ch; text-wrap: balance; }
+/* a2 (UX): "Next" opens note 10, where master and copy and the open rails are explained: the same words, the site's
+   link hairline under them (it inks on hover and focus) and the drawn arrow riding the last word */
+[data-page="company"] .story-link { text-decoration: underline max(1px, .0625rem) var(--line-strong); text-underline-offset: .2em; transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
+[data-page="company"] .story-link .arr { display: inline-block; width: .6em; height: .6em; margin-left: .25em; vertical-align: .04em; transition: transform var(--dur-move) var(--ease-out); }
+[data-page="company"] .story-link:focus-visible { text-decoration-color: currentColor; }
+@media (hover: hover) { [data-page="company"] .story-link:hover { text-decoration-color: currentColor; } [data-page="company"] .story-link:hover .arr { transform: translateX(.2em); } }
+@media (prefers-reduced-motion: reduce) { [data-page="company"] .story-link, [data-page="company"] .story-link .arr { transition: none; } }
 @media (min-width: 601px) and (max-width: 960px) { [data-page="company"] .timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 44px; } }
 @media (max-width: 860px) { [data-page="company"] .timeline .step { padding-left: 0; } }
 @media (max-width: 600px) { [data-page="company"] .timeline { grid-template-columns: 1fr; row-gap: 26px; } [data-page="company"] .timeline .step { padding-top: 20px; } [data-page="company"] .timeline .k { margin-bottom: 8px; } [data-page="company"] .timeline h3 { max-width: none; } }
@@ -140,7 +154,7 @@
   of the sentence above (the page grid's last five columns: 5 columns and 4 gaps of 12); name and line share a baseline */
   [data-page="company"] .crew > li { --g: clamp(1rem, 2.2vw, 2rem); grid-template-columns: 6rem minmax(0, 1fr) calc((100% - 11 * var(--g)) / 12 * 5 + 4 * var(--g)); column-gap: var(--g); }
 }
-@media (max-width: 1024px) and (min-width: 961px) { [data-page="company"] .crew .ph { width: 80px; height: 80px; } [data-page="company"] .crew > li { grid-template-columns: 80px minmax(0, 3fr) minmax(0, 5fr); } }
+@media (max-width: 1024px) and (min-width: 961px) { [data-page="company"] .crew .ph { width: 80px; height: 80px; } [data-page="company"] .crew--advisors .ph { width: 4rem; height: 4rem; } [data-page="company"] .crew > li { grid-template-columns: 80px minmax(0, 3fr) minmax(0, 5fr); } }
 /* tablets and phones: portrait | name, kicker, and under them the line, "Bio" and the links, so an open bio reads
    across the whole column beside the portrait */
 @media (max-width: 960px) {
@@ -261,8 +275,8 @@
    size): three by two from 601 px, each name on two lines; a list on phones, the status under the name. */
 [data-page="company"] .class-row { grid-template-columns: repeat(3, minmax(0, 1fr)); border-left: 0; border-top-color: var(--line-strong); }
 [data-page="company"] .class-row > li { justify-content: flex-start; gap: 1.125rem; min-height: 0; padding: 1.5rem clamp(1rem, 2.4vw, 2rem) 1.625rem; background: none; font-size: var(--fs-heading); line-height: 1.12; }
-[data-page="company"] .class-row > li::before { width: 3.5rem; height: 1.5rem; border-width: calc(1.5px * var(--stroke)); }
-[data-page="company"] .class-row > .cr-next::before { border-width: calc(1.25px * var(--stroke)); }
+[data-page="company"] .class-row > li::before { width: 3.5rem; height: 1.5rem; border-width: calc(1px * var(--stroke)); } /* a2: whole-pixel tokens (system) */
+[data-page="company"] .class-row > .cr-live::before { border-width: calc(1px * var(--stroke-2)); }
 [data-page="company"] .class-row > li:nth-child(3n) { border-right: 0; }
 [data-page="company"] .class-row > li:nth-child(3n + 1) { padding-left: 0; }
 [data-page="company"] .class-row .cr-n, [data-page="company"] .class-row .cr-n > span { display: block; } /* two phrases, two lines */
@@ -362,7 +376,11 @@
   [data-page="access"] .form :is(input, textarea, select):is(:autofill, :-webkit-autofill):focus-visible { box-shadow: 0 1px 0 0 var(--accent), inset 0 0 0 100vmax var(--bg); }
   [data-page="access"] .form [aria-invalid="true"]:is(:autofill, :-webkit-autofill):focus-visible { box-shadow: 0 1px 0 0 var(--reject), inset 0 0 0 100vmax var(--bg); }
 }
-[data-page="access"] .f-err { margin: -.125rem 0 0; font-size: var(--fs-small); line-height: 1.45; color: var(--reject); }
+[data-page="access"] .f-err { margin: -.125rem 0 0; font-size: var(--fs-small); line-height: 1.45; color: var(--reject); text-wrap: balance; }
+/* a2 (dev juror): the form checks itself (access.js): the refused field's "· required" in red beside the line under it,
+   its blank in the letter underlined in red, and the field lands under the bar with its label when it takes focus */
+[data-page="access"] .form .f > :is(input, select, textarea) { scroll-margin-top: 2.5rem; }
+[data-page="access"] .form .f.is-refused .f-q { color: var(--reject); }
 [data-page="access"] .f-err:empty { display: none; }
 /* the select: no native chrome, the site's chevron */
 [data-page="access"] .form select { -webkit-appearance: none; appearance: none; padding-right: 1.875rem; cursor: pointer; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230E1512' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E") right .125rem center / 1rem 1rem no-repeat; }
@@ -381,25 +399,27 @@
 .letter[hidden] { display: none; }
 [data-page="access"] .access-letter .letter { margin-top: 0; }
 [data-page="access"] .access-letter .eyebrow { display: flex; margin: 0 0 1rem; } /* on the form's first label */
-.letter .plate-marks { position: absolute; inset: -.5rem; pointer-events: none; }
-.letter .plate-marks i { position: absolute; width: .875rem; height: .875rem; border: 0 solid var(--fg-3); }
-.letter .plate-marks i:nth-child(1) { left: 0; top: 0; border-width: 1px 0 0 1px; }
-.letter .plate-marks i:nth-child(2) { right: 0; top: 0; border-width: 1px 1px 0 0; }
-.letter .plate-marks i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 1px 1px; }
-.letter .plate-marks i:nth-child(4) { right: 0; bottom: 0; border-width: 0 1px 1px 0; }
+.letter .plate-marks { position: absolute; inset: calc(-.5rem - 1px); pointer-events: none; } /* a2: .5rem outside the sheet's 1 px edge (the right marks end on the column edge) */
+.letter .plate-marks i { --b: calc(1px * var(--stroke)); position: absolute; width: .875rem; height: .875rem; border: 0 solid var(--fg-3); }
+.letter .plate-marks i:nth-child(1) { left: 0; top: 0; border-width: var(--b) 0 0 var(--b); }
+.letter .plate-marks i:nth-child(2) { right: 0; top: 0; border-width: var(--b) var(--b) 0 0; }
+.letter .plate-marks i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 var(--b) var(--b); }
+.letter .plate-marks i:nth-child(4) { right: 0; bottom: 0; border-width: 0 var(--b) var(--b) 0; }
+@media (min-width: 601px) { [data-page="access"] .access-letter { padding-right: .5rem; } } /* a2 (system): the marks' right edge on the column edge, as .hp-reg */
 .letter-head { display: grid; gap: .375rem; padding: .875rem 1.75rem; border-bottom: 1px solid var(--line); font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; color: var(--fg-2); }
 .letter-head > span { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: .75rem; }
 .letter-head b { font-weight: 400; color: var(--fg-3); }
 .letter-head [data-letter-subject] { text-wrap: balance; } /* the path's name keeps its line */
 /* set as a letter: the running lines in Inter at the body step; the salutation (its first line) and the signature (its
    last) in the serif at the heading step */
-.letter-body { padding: 1.375rem 1.75rem 1.75rem; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--sans); font-size: var(--fs-body); line-height: 1.6; color: var(--fg); }
+.letter-body { padding: 1.375rem 1.75rem 1.75rem; white-space: pre-wrap; text-wrap: pretty; overflow-wrap: anywhere; font-family: var(--sans); font-size: var(--fs-body); line-height: 1.6; color: var(--fg); }
 .letter-body::first-line { font-family: var(--serif); font-size: var(--fs-heading); letter-spacing: -0.01em; }
 .letter .is-sign { font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.2; letter-spacing: -0.01em; }
 /* the blanks: a solid rule to fill, a dashed one that is left out if empty; the part being typed carries the highlighter */
 .letter .slot { border-radius: 2px; -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: background-color var(--dur-feedback) var(--ease-out), box-shadow var(--dur-feedback) var(--ease-out); }
-.letter .slot:not(.is-filled) { color: var(--fg-3); text-decoration: underline 1px var(--line-strong); text-underline-offset: .24em; }
+.letter .slot:not(.is-filled) { color: var(--fg-3); text-decoration: underline max(1px, .0625rem) var(--line-strong); text-underline-offset: .24em; }
 .letter .slot.is-opt { text-decoration-style: dashed; }
+.letter .slot.is-missing { text-decoration: underline max(1px, .0625rem) var(--reject); text-underline-offset: .24em; } /* a2: after the blank's own underline, which it replaces */
 .letter .slot.is-here, .letter [data-letter-subject].is-here { background: rgba(30, 122, 90, .16); box-shadow: 0 0 0 2px rgba(30, 122, 90, .16); }
 .letter [data-letter-subject] { border-radius: 2px; transition: background-color var(--dur-feedback) var(--ease-out), box-shadow var(--dur-feedback) var(--ease-out); }
 /* the tick in the margin beside the line being written (access.js places it; it moves only while shown) */
@@ -433,15 +453,15 @@
 /* what happens next: three steps on one hairline, each a node, a title and what it takes (a1: one line across, nodes
    in rem, titles in Inter at the body step); on phones the line runs down the left */
 [data-page="access"] .access-next-h { max-width: none; margin: 0 0 clamp(2rem, 4vw, 3.25rem); text-wrap: balance; }
-[data-page="access"] .access-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.625rem clamp(1.125rem, 2.4vw, 2rem); border-top: 1px solid var(--fg); }
+[data-page="access"] .access-steps { --w: calc(1px * var(--stroke)); list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.625rem clamp(1.125rem, 2.4vw, 2rem); border-top: var(--w) solid var(--fg); }
 [data-page="access"] .access-steps li { position: relative; padding-top: 1.375rem; }
-[data-page="access"] .access-steps li::before { content: ""; position: absolute; left: 0; top: calc(-.34375rem - .5px); width: .6875rem; height: .6875rem; border-radius: 50%; border: 1px solid var(--fg); background: var(--bg); }
+[data-page="access"] .access-steps li::before { content: ""; position: absolute; left: 0; top: calc(-.34375rem - var(--w) / 2); width: .6875rem; height: .6875rem; border-radius: 50%; border: var(--w) solid var(--fg); background: var(--bg); }
 [data-page="access"] .access-steps h3 { margin: 0; font-family: var(--sans); font-weight: 400; font-size: var(--fs-body); line-height: 1.3; letter-spacing: 0; }
 [data-page="access"] .access-steps span { display: block; margin-top: .375rem; font-size: var(--fs-small); color: var(--fg-2); }
 @media (max-width: 600px) {
-  [data-page="access"] .access-steps { grid-template-columns: minmax(0, 1fr); row-gap: 1.5rem; padding-left: 1.5rem; border-top: 0; border-left: 1px solid var(--fg); }
+  [data-page="access"] .access-steps { grid-template-columns: minmax(0, 1fr); row-gap: 1.5rem; padding-left: 1.5rem; border-top: 0; border-left: var(--w) solid var(--fg); }
   [data-page="access"] .access-steps li { padding-top: 0; }
-  [data-page="access"] .access-steps li::before { left: calc(-1.5rem - .34375rem - .5px); top: .3125rem; }
+  [data-page="access"] .access-steps li::before { left: calc(-1.5rem - .34375rem - var(--w) / 2); top: .3125rem; }
 }
 @media (min-width: 421px) and (max-width: 600px) { [data-page="access"] .form > .two + .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } } /* organization | role share a line where each field is wide enough */
 @media (max-width: 420px) { [data-page="access"] .seg { grid-template-columns: minmax(0, 1fr); } }
@@ -462,3 +482,9 @@
 @media (min-width: 1921px) {
   [data-page="company"] .company-sculpture .frame i { width: .875rem; height: .875rem; }
 }
+/* a2: the hero's corner marks on the stroke token (2 px at 3840, as 1920@2; 1 px below 2400) */
+[data-page="company"] .company-sculpture .frame i { --b: calc(1px * var(--stroke)); }
+[data-page="company"] .company-sculpture .frame i:nth-child(1) { border-width: var(--b) 0 0 var(--b); }
+[data-page="company"] .company-sculpture .frame i:nth-child(2) { border-width: var(--b) var(--b) 0 0; }
+[data-page="company"] .company-sculpture .frame i:nth-child(3) { border-width: 0 0 var(--b) var(--b); }
+[data-page="company"] .company-sculpture .frame i:nth-child(4) { border-width: 0 var(--b) var(--b) 0; }

@@ -10,6 +10,10 @@ award a1 (system): the four pages with an engraved hero plate (Platform's stack,
 Trust's Council) carry that plate on their card, cut from the page itself and drawn with the site's own stylesheets
 (finished state: reduced motion), in place of the dotted globe every other card keeps; its hedge ("Schematic") rides
 under it. PLATE_ALT is the picture's description, the plate's own aria-label (launch_meta_v9.py writes og:image:alt).
+award a2 (system): every other card carries its page's own drawing too, cut from the page as the page draws it without
+script: Research its library still, the blog index its open book, Company its plate still, each note its formation still,
+each post its own plate; Home and Access (no drawing of their own in the first screen) the site's fine-dot globe (the chunky
+globe.svg was off the mark). STILL_ALT describes each for og:image:alt.
 Run last, after the other builders. Cards are cached by a hash of their inputs (data/og_cards.json), so a rerun only
 re-renders the pages whose headline, description or kicker changed and leaves every other JPEG byte-identical.
 """
@@ -87,7 +91,8 @@ def card(rel):
     sub, h1 = meta(s, "og:description"), flat(text(unhy(re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S).group(1))))
     if flat(sub).startswith(h1) and len(sub) > len(h1): sub = sub[len(h1):].lstrip()
     sub = SUB.get(rel, sub)
-    return {"rel": rel, "kicker": kicker, "headline": headline(s), "sub": sub, "foot": foot, "plate": plate(rel)}
+    return {"rel": rel, "kicker": kicker, "headline": headline(s), "sub": sub, "foot": foot, "plate": plate(rel), "still": still(rel),
+            "hedge": still_hedge(rel)}
 
 # award a1: the cards that carry their page's hero plate; group sheet and the data-page their selectors key on
 PLATE_PAGES = {"platform.html": ("platform", "platform.css"), "lifecycles.html": ("lifecycles", "platform.css"),
@@ -116,6 +121,42 @@ def plate_alt(rel):
     m = re.search(r'<figure class="hero-plate[^"]*"[^>]*\baria-label="([^"]*)"', s)
     return H.unescape(m.group(1)) if m else ""
 
+# award a2: the page's own still drawing (the svg the page shows before and without WebGL), its sheet and the selectors'
+# context. (cut, sheet, data-page, body class). Posts: the post's own plate; notes: the note's formation still.
+def still_spec(rel):
+    if rel in PLATE_PAGES: return None
+    if rel == "research.html": return ("rs-still", "research.css", "research", "")
+    if rel == "company.html": return ("plate-still", "company.css", "company", "")
+    if rel == "blog/index.html": return ("lib-art", "blog.css", "blog", "blog-page")
+    if rel.startswith("research/"): return ("fs-still", "research.css", "note", "")
+    if rel.startswith("blog/"): return ("bp-art", "blog.css", "post", "blog-post")
+    return None
+
+def still(rel):
+    """The page's still drawing as the card shows it, '' where the card keeps the fine-dot globe."""
+    spec = still_spec(rel)
+    if not spec: return ""
+    s = (ROOT / rel).read_text(encoding="utf-8")
+    m = re.search(r'<svg class="%s[^"]*"[^>]*>.*?</svg>' % spec[0], s, re.S)
+    if not m: return ""
+    svg = re.sub(r"</?a[^>]*>", "", m.group(0))  # the open book's leaves are links on the page: on a card, a drawing
+    return svg
+
+def still_hedge(rel):
+    """The hedge the page sets beside the drawing ("Illustrative", "Illustrative · heights not to scale"): a card keeps it
+    under the still, as the plate cards keep "Schematic". '' where the page sets none (the blog's book and plates)."""
+    spec = still_spec(rel)
+    if not spec: return ""
+    s = (ROOT / rel).read_text(encoding="utf-8")
+    m = (re.search(r'company-readout">.*?class="fc-h">([^<]*)<', s, re.S) if rel == "company.html"
+         else re.search(r'figcap-h">([^<]*)<', s) if spec[0] in ("rs-still", "fs-still") else None)
+    return H.unescape(m.group(1)).strip() if m else ""
+
+# what each still shows, for og:image:alt (launch_meta_v9 for the top pages; build_research and build_blog for theirs)
+STILL_ALT = {"research.html": "the page’s library figure, the notes drawn as stippled leaves",
+             "company.html": "the page’s figure, a dotted sphere in its rings",
+             "blog/index.html": "the page’s open book, one leaf for each collection"}
+
 def pages():
     out = list(TOP)
     out += sorted("research/" + p.name for p in (ROOT / "research").glob("*.html"))
@@ -125,6 +166,8 @@ def pages():
 FONT = (ROOT / "assets" / "fonts").as_uri()
 # inlined: Chromium won't use a file:// image as a CSS mask (masks are CORS fetches)
 GLOBE = "data:image/svg+xml;base64," + base64.b64encode((ROOT / "assets" / "img" / "globe.svg").read_bytes()).decode("ascii")
+# a2: the field's globe is the site's own fine-dot mark (the CTA band's and the overture's static globe), not the chunky one
+FINE = "data:image/svg+xml;base64," + base64.b64encode((ROOT / "assets" / "img" / "globe-fine.svg").read_bytes()).decode("ascii")
 TEMPLATE = """<!DOCTYPE html><html><head><meta charset="utf-8">%(links)s<style>
 @font-face { font-family: 'Instrument Serif'; font-style: normal; src: url(%(F)s/instrument-serif-400-latin.woff2); }
 @font-face { font-family: 'Instrument Serif'; font-style: italic; src: url(%(F)s/instrument-serif-400i-latin.woff2); }
@@ -136,8 +179,7 @@ body { position: relative; background: #0E1512; color: #F5F2EC; font-family: 'In
 .glow { position: absolute; left: 520px; top: -165px; width: 960px; height: 960px; border-radius: 50%%;
   background: radial-gradient(closest-side, rgba(30,122,90,.30), rgba(30,122,90,.10) 52%%, rgba(14,21,18,0) 100%%); }
 .disc { position: absolute; left: 690px; top: 105px; width: 420px; height: 420px; border-radius: 50%%; background: rgba(9,15,12,.55); }
-.globe { position: absolute; left: 808px; top: 58px; width: 514px; height: 514px; background: rgba(245,242,236,.52);
-  -webkit-mask: url(%(G)s) center / contain no-repeat; }
+.globe { position: absolute; left: 790px; top: 40px; width: 550px; height: 550px; background: url(%(FG)s) center / contain no-repeat, url(%(FG)s) center / contain no-repeat; } /* twice: the mark's hairlines at the old globe's presence */
 .top { position: absolute; left: 72px; top: 62px; display: flex; align-items: center; gap: 14px; }
 .top .m { width: 40px; height: 40px; background: rgba(245,242,236,.78); -webkit-mask: url(%(G)s) center / contain no-repeat; }
 .top .w { font-family: 'Instrument Serif'; font-size: 36px; letter-spacing: -.01em; }
@@ -158,6 +200,13 @@ body { position: relative; background: #0E1512; color: #F5F2EC; font-family: 'In
 .card-plate .hero-plate, .card-plate .pf-record { width: 100%% !important; max-width: none !important; margin: 0 !important; }
 .card-plate .hp-cap { margin-top: 10px; }
 .card-plate .hp-cap .fc-h { font-size: 15px; text-align: left; color: rgba(245,242,236,.56); }
+.card-plate .pf-record::before { content: none; } /* a2: Proof's record line runs edge to edge on the H1's baseline; a card has no such baseline (it struck through the headline) */
+/* a2: a still card: the page's drawing in the right-hand field, where the globe was; the copy keeps its 700 px */
+.card-still { position: absolute; left: 800px; top: 112px; width: 344px; height: 420px; display: grid; place-items: center; }
+.card-still > svg { position: static !important; inset: auto !important; width: 100%% !important; height: 100%% !important; scale: 1 !important; opacity: 1 !important; overflow: visible; }
+.card-still.is-wide { left: 784px; width: 392px; }
+.card-hedge { position: absolute; left: 800px; top: 538px; font-size: 15px; color: rgba(245,242,236,.56); }
+
 </style></head><body%(bodyattr)s>
 %(art)s
 <div class="top"><i class="m"></i><span class="w">OpenEXA</span><i class="sep"></i><span class="k">%(kicker)s</span></div>
@@ -169,6 +218,18 @@ body { position: relative; background: #0E1512; color: #F5F2EC; font-family: 'In
   // written to fit two lines stays whole (the headline gives up a little size for it, never under 72 px); a longer one
   // takes the height left, up to three lines, cut at a word with an ellipsis (never mid-word, never "...")
   document.fonts.ready.then(() => {
+    // a2: a still is fitted to what it draws (its viewBox becomes the drawing's own box, a 4 per cent margin), so every page's
+    // drawing fills the field whatever room its page gave it
+    document.querySelectorAll('.card-still > svg').forEach((svg) => {
+      const b = svg.getBBox(), m = Math.max(b.width, b.height) * .04;
+      if (b.width > 0 && b.height > 0) { svg.setAttribute('viewBox', [b.x - m, b.y - m, b.width + 2 * m, b.height + 2 * m].join(' ')); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); }
+      // its hedge sits under the drawing's own lower-left corner, as "Schematic" does under a plate
+      const hedge = document.querySelector('.card-hedge'), r = svg.getBoundingClientRect(), a = (b.width + 2 * m) / (b.height + 2 * m);
+      if (hedge && b.width > 0) {
+        const w = Math.min(r.width, r.height * a), hh = w / a;
+        hedge.style.left = (r.left + (r.width - w) / 2) + 'px'; hedge.style.top = Math.min(548, r.top + (r.height + hh) / 2 + 10) + 'px';
+      }
+    });
     const h = document.querySelector('.h'), s = document.querySelector('.s'), box = document.querySelector('.copy');
     const lh = 25 * 1.4, set = (v) => { size = v; h.style.fontSize = v + 'px'; };
     let size = 96; set(96);
@@ -201,8 +262,9 @@ async def main():
     cards = [card(p) for p in pages()]
     todo = []
     for c in cards:
-        sheets = "".join((CSS / f).read_text(encoding="utf-8") for f in (["site.css", PLATE_PAGES[c["rel"]][1]] if c["plate"] else []))
-        c["key"] = hashlib.sha256((TEMPLATE + GLOBE + sheets + json.dumps(c, sort_keys=True)).encode("utf-8")).hexdigest()[:16]
+        spec = still_spec(c["rel"]) if c["still"] else None
+        sheets = "".join((CSS / f).read_text(encoding="utf-8") for f in (["site.css", PLATE_PAGES[c["rel"]][1]] if c["plate"] else ["site.css", spec[1]] if spec else []))
+        c["key"] = hashlib.sha256((TEMPLATE + GLOBE + FINE + sheets + json.dumps(c, sort_keys=True)).encode("utf-8")).hexdigest()[:16]
         if cache.get(c["rel"]) != c["key"] or not (OUT / og_name(c["rel"])).exists(): todo.append(c)
     if todo:
         async with async_playwright() as pw:
@@ -216,10 +278,17 @@ async def main():
                     links = "".join(f'<link rel="stylesheet" href="{(CSS / f).as_uri()}">' for f in ("site.css", sheet))
                     extra = dict(links=links, bodyattr=f' class="has-plate" data-page="{page}"', art='<div class="glow"></div>',
                                  plate=f'<div class="card-plate is-dark" style="background:none">{c["plate"]}</div>')
+                elif c["still"]:
+                    cut, sheet, page, bcls = still_spec(c["rel"])
+                    links = "".join(f'<link rel="stylesheet" href="{(CSS / f).as_uri()}">' for f in ("site.css", sheet))
+                    wide = (" is-wide" if cut in ("lib-art", "bp-art") else "") + " k-" + cut
+                    extra = dict(links=links, bodyattr=f' class="has-still {bcls}" data-page="{page}"', art='<div class="glow"></div>',
+                                 plate=f'<div class="card-still is-dark{wide}" style="background:none">{c["still"]}</div>'
+                                       + (f'<p class="card-hedge">{H.escape(c["hedge"], quote=False)}</p>' if c["hedge"] else ""))
                 else:
-                    extra = dict(links="", bodyattr="", art='<div class="glow"></div><div class="disc"></div><div class="globe"></div>', plate="")
+                    extra = dict(links="", bodyattr="", art='<div class="glow"></div><div class="globe"></div>', plate="")
                 src = SHOTS / "og-card.html"
-                src.write_text(TEMPLATE % dict(fill, F=FONT, G=GLOBE, **extra), encoding="utf-8")
+                src.write_text(TEMPLATE % dict(fill, F=FONT, G=GLOBE, FG=FINE, **extra), encoding="utf-8")
                 await pg.goto(src.as_uri()); await pg.wait_for_selector("body[data-ready]")
                 img = Image.open(io.BytesIO(await pg.screenshot(type="png"))).convert("RGB")
                 img.save(OUT / og_name(c["rel"]), "JPEG", quality=90, subsampling=0, optimize=True, progressive=True)

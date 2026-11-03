@@ -655,7 +655,8 @@
     }
     // the swarm's trace asks to see a record: bring the ledger to the middle of the screen below the bar
     function bringIntoView() {
-      const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 72;
+      // the bar's own height: above 1920 --nav-h is a rem token and parseFloat would read 4.5 (a2, home's request)
+      const bar = document.querySelector('header.nav'), navH = (bar && bar.getBoundingClientRect().height) || 72;
       let b = root.getBoundingClientRect(), shift = 0;
       try { shift = new DOMMatrixReadOnly(getComputedStyle(root).transform).m42 || 0; } catch (e) { shift = 0; }
       const top = b.top - shift, avail = window.innerHeight - navH;

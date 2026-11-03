@@ -535,6 +535,34 @@ def rings(turn):
             for k, (rx, ry, rot) in enumerate(RINGS)]
 
 
+# award a2 (art director, medium): the economics register's plate stands at the list's full height. The same six rings,
+# one green, risen on a diagonal (the whole constellation turned RINGS_RISE degrees, each ring keeping its own tilt), so
+# a tall plate is filled by the mark instead of holding a thin band of it in an empty panel. Fitted to TALL_FILL of a
+# portrait sheet (TW x TH drawing units, the 5:8 of the register beside it at 1440); written at K like every plate
+RINGS_RISE, TW, TH, TALL_FILL = -58, 225, 360, .9
+
+
+def _rings_box(rise):
+    """the constellation's bounding box (unit scale, about its centre) when turned by rise degrees"""
+    xs_, ys_ = [], []
+    for rx, ry, rot in RINGS:
+        a = math.radians(rot + rise)
+        for i in range(360):
+            t = math.radians(i)
+            x, y = rx * math.cos(t), ry * math.sin(t)
+            xs_.append(x * math.cos(a) - y * math.sin(a)); ys_.append(x * math.sin(a) + y * math.cos(a))
+    return min(xs_), max(xs_), min(ys_), max(ys_)
+
+
+def rings_tall():
+    x0, x1, y0, y1 = _rings_box(RINGS_RISE)
+    k_ = TALL_FILL * min(TW / (x1 - x0), TH / (y1 - y0))
+    cx, cy = TW / 2 - k_ * (x0 + x1) / 2, TH / 2 - k_ * (y0 + y1) / 2
+    inner = [f'<ellipse class="{"pg" if k == 0 else "pb"}" cx="{f(cx)}" cy="{f(cy)}" rx="{f(rx * k_)}" ry="{f(ry * k_)}" transform="rotate({rot + RINGS_RISE} {f(cx)} {f(cy)})"' + (' pathLength="1"' if k == 0 else "") + "/>"
+             for k, (rx, ry, rot) in enumerate(RINGS)]
+    return f'<svg class="bp-art bp-rings bp-tall" viewBox="0 0 {TW * K} {TH * K}" fill="none" focusable="false" aria-hidden="true">{"".join(inner)}</svg>'
+
+
 # ---------------------------------------------------------------- the register: slug -> what the plate draws
 
 # label: the plate's name (mono, on the card and over the caption); draw: the drawer; quote: a sentence from the post

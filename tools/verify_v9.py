@@ -1152,6 +1152,80 @@ async def resolution(b):
     await ctx.close()
 
 
+# a2 (system's request): the draw-ins rest whole at any scale. Every [pathLength] element shown at rest, after the page
+# has been scrolled through (each reveal drawn) and the 404's walk waited out: its stroke-dasharray, its vector-effect and
+# its on-screen scale (getScreenCTM). From award/a2-design/dashprobe.py and work/system-a2/dashprobe_a2.py.
+DRAW_REST = r"""async () => {
+  const H = document.documentElement.scrollHeight;
+  for (let y = 0; y < H; y += innerHeight * .6) { scrollTo(0, y); await new Promise(r => setTimeout(r, 250)); }
+  scrollTo(0, H); await new Promise(r => setTimeout(r, 3500));
+  const out = { n: 0, ns: 0, bad: [] };
+  document.querySelectorAll('[pathLength]').forEach(e => {
+    const cs = getComputedStyle(e);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return;
+    const m = e.getScreenCTM(); if (!m) return;
+    // at rest = after its draw: a band that left the screen pauses its draw-in mid-line (site.css .is-offscreen), so
+    // finish the element's own animations and read the style it keeps
+    e.getAnimations().forEach(a => { try { a.finish(); } catch (_) {} });
+    out.n++;
+    if (cs.vectorEffect !== 'non-scaling-stroke') return;
+    out.ns++;
+    const sc = Math.hypot(m.a, m.b);
+    if (cs.strokeDasharray !== 'none' && sc > 1.01) out.bad.push([e.getAttribute('class') || e.tagName, +sc.toFixed(2), cs.strokeDasharray, cs.animationName]);
+  });
+  return out;
+}"""
+DRAW_PAGES = [("index.html", "Home"), ("platform.html", "Platform"), ("lifecycles.html", "Lifecycles"), ("blog/index.html", "the blog"),
+              ("this-page-does-not-exist", "the 404")]
+
+
+@check
+async def draw_rest(b):
+    """a2 (system's request; the 4K bar: a line is whole at any width): at 1440, 2048, 2560 and 3840 (16:9), on Home,
+    Platform, Lifecycles, the blog index and the 404, once the page has been scrolled through and every draw-in has had
+    3.5 s to finish (an element's own animations are then finished: a band that leaves the screen pauses its draw-in
+    mid-line), no [pathLength] element whose stroke is non-scaling and which is drawn above 1:1 rests with a
+    stroke-dasharray (a dash sized for the 1920 drawing stopped the line at 1/scale of its length above 1920). Never
+    vacuous: [pathLength] elements are read on every page, and non-scaling ones above 1:1 at 2560 and 3840."""
+    bad, seen, wide = [], 0, 0
+    for w in (1440, 2048, 2560, 3840):
+        h = round(w * 9 / 16)
+        for path, label in DRAW_PAGES:
+            ctx, pg = await open_page(b, path, w, h, loaded=path != "this-page-does-not-exist")
+            r = await pg.evaluate(DRAW_REST)
+            await ctx.close()
+            seen += r["n"]
+            if w >= 2560: wide += r["ns"]
+            if not r["n"]: bad.append(f"{label}@{w}: no [pathLength] element read")
+            bad += [f"{label}@{w}: .{c} at scale {sc} rests with stroke-dasharray {da} (animation {an})" for c, sc, da, an in r["bad"][:6]]
+    assert seen and wide, f"draw_rest: vacuous ({seen} [pathLength] elements read, {wide} non-scaling at 2560/3840)"
+    assert not bad, f"draw_rest: {len(bad)} problems:\n  " + "\n  ".join(bad[:20])
+    print(f"draw_rest: {seen} [pathLength] elements read over 5 pages at 1440/2048/2560/3840 ({wide} non-scaling at 2560+), every one at rest whole")
+
+
+NAV_H = """(() => { const v = getComputedStyle(document.documentElement).getPropertyValue('--nav-h'), n = document.querySelector('header.nav, .nav');
+  return { raw: v.trim(), px: parseFloat(v), bar: n ? Math.round(n.getBoundingClientRect().height * 100) / 100 : null }; })()"""
+
+
+@check
+async def nav_h_px(b):
+    """a2 (home's request): every script reads the bar's height as parseFloat(getComputedStyle(root).getPropertyValue(
+    '--nav-h')). Above 1920 the wide step sets it in rem, and an unregistered custom property's computed value is its
+    token ("4.5rem" read as 4.5 px against a 144 px bar at 3840). site.css registers it as a <length>, so the value read
+    is resolved: at 3840x2160, 2560x1440, 1440x900 and 390x844, on Home, Lifecycles and Trust, the number read equals the
+    bar's height within 0.5 px."""
+    bad, n = [], 0
+    for w, h in ((3840, 2160), (2560, 1440), (1440, 900), (390, 844)):
+        for path in ("index.html", "lifecycles.html", "trust.html"):
+            ctx, pg = await open_page(b, path, w, h, loaded=False)
+            r = await pg.evaluate(NAV_H)
+            await ctx.close()
+            n += 1
+            if r["bar"] is None or not (abs(r["px"] - r["bar"]) <= 0.5): bad.append(f"{path}@{w}x{h}: --nav-h reads {r['raw']!r} ({r['px']}), the bar is {r['bar']} px")
+    assert n == 12 and not bad, "nav_h_px:\n  " + "\n  ".join(bad)
+    print(f"nav_h_px: --nav-h reads the bar's height in px on {n} page/width pairs (3840, 2560, 1440, 390)")
+
+
 DEEP_OFF = """(id => { const el = document.getElementById(id), sp = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
   return el ? Math.round(el.getBoundingClientRect().top - sp) : null; })"""
 

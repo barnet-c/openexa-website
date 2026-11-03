@@ -203,6 +203,10 @@
     }
 
     /* ---------------- 3 · the drawing ---------------- */
+    // circles drawn in CSS px: above 1920 they grow with the root (RK = root / 16; measure() sets it) (award a2, 4K)
+    let RK = 1;
+    const pxR = [];
+    const PX = (e) => { pxR.push([e, parseFloat(e.getAttribute('r'))]); return e; };
     const defs = S('defs', null, svg);
     const grad = (tag, gid, attrs, stops) => { const g = S(tag, Object.assign({ id: `${pre}-${gid}` }, attrs), defs); stops.forEach(([o, c, a]) => S('stop', { offset: o, 'stop-color': c, 'stop-opacity': a }, g)); return `url(#${pre}-${gid})`; };
     const gTop = grad('linearGradient', 'top', { x1: 0, y1: 0, x2: 1, y2: 1 }, [[0, '#2A3530', 1], [0.5, '#18211D', 1], [1, '#111815', 1]]);
@@ -217,7 +221,7 @@
       fl.hatch = S('path', { fill: 'none', stroke: KHAKI, 'stroke-opacity': 0, 'stroke-width': 1 }, g);
       fl.line = S('line', { stroke: KHAKI, 'stroke-opacity': 0, 'stroke-width': 1 }, g);
       fl.lead = S('line', { stroke: KHAKI, 'stroke-opacity': 0, 'stroke-width': 1, 'stroke-dasharray': '1 3' }, g);
-      fl.node = S('circle', { r: 1.8, fill: KHAKI, 'fill-opacity': 0 }, g);
+      fl.node = PX(S('circle', { r: 1.8, fill: KHAKI, 'fill-opacity': 0 }, g));
       fl.mark = S('line', { stroke: GREEN, 'stroke-opacity': 0, 'stroke-width': 1.6 }, g); // where a settled action lands
       fl.t1 = S('text', { class: 'af-t', 'text-anchor': 'middle' }, g);
       fl.t2 = S('text', { class: 'af-t', 'text-anchor': 'middle' }, g);
@@ -290,11 +294,11 @@
     }
     const leads = plates.map(() => ({
       line: S('line', { stroke: IVORY, 'stroke-width': 1, 'stroke-opacity': 0.16 }, gLead),
-      a: S('circle', { r: 1.6, fill: IVORY, 'fill-opacity': 0.4 }, gLead),
-      b: S('circle', { r: 2, fill: GREEN, 'fill-opacity': 0 }, gLead),
+      a: PX(S('circle', { r: 1.6, fill: IVORY, 'fill-opacity': 0.4 }, gLead)),
+      b: PX(S('circle', { r: 2, fill: GREEN, 'fill-opacity': 0 }, gLead)),
     }));
     const cardLead = S('polyline', { fill: 'none', stroke: IVORY, 'stroke-opacity': 0, 'stroke-width': 1 }, gLead);
-    const cardNode = S('circle', { r: 2.2, fill: GREEN, 'fill-opacity': 0 }, gLead);
+    const cardNode = PX(S('circle', { r: 2.2, fill: GREEN, 'fill-opacity': 0 }, gLead));
 
     /* each plate's surface, in its own plane coordinates (u, v in -1..1) */
     function pattern(p) {
@@ -304,7 +308,7 @@
       const beadsAt = (n, spread, rMin, rMax, amp, h0) => {
         for (let k = 0; k < n; k++) {
           const b = { u0: (rnd() - 0.5) * 2 * spread, v0: (rnd() - 0.5) * 2 * spread, h0: h0 + rnd() * 0.05, a: amp * (0.6 + rnd() * 0.8), w1: 2.4 + rnd() * 3.2, w2: 2 + rnd() * 3.6, p1: rnd() * 6.28, p2: rnd() * 6.28 };
-          b.el = S('circle', { r: f1(rMin + rnd() * (rMax - rMin)), fill: gBead, 'fill-opacity': f3(0.55 + rnd() * 0.45) }, p.bg[p.beads.length % 3]);
+          b.el = PX(S('circle', { r: f1(rMin + rnd() * (rMax - rMin)), fill: gBead, 'fill-opacity': f3(0.55 + rnd() * 0.45) }, p.bg[p.beads.length % 3]));
           p.beads.push(b);
         }
       };
@@ -314,7 +318,7 @@
         S('circle', { r: 0.05, fill: GREEN, 'fill-opacity': 0.8 }, g);
         for (let k = 0; k < 20; k++) {
           const b = { mote: true, a: rnd() * 6.283, sp: 0.16 + rnd() * 0.18, ph: rnd(), h0: 0.03 };
-          b.el = S('circle', { r: f1(1 + rnd() * 0.8), fill: IVORY, 'fill-opacity': 0 }, p.bg[p.beads.length % 3]);
+          b.el = PX(S('circle', { r: f1(1 + rnd() * 0.8), fill: IVORY, 'fill-opacity': 0 }, p.bg[p.beads.length % 3]));
           p.beads.push(b);
         }
       } else if (role === 1) { // Model Layer: a matrix of learned weights, and attention wandering over it
@@ -328,7 +332,7 @@
         beadsAt(52, 0.84, 1.3, 2.3, 0.032, 0.02);
         for (let k = 0; k < 5; k++) {
           const b = { u0: (rnd() - 0.5) * 1.5, v0: (rnd() - 0.5) * 1.5, h0: 0.06, a: 0.04, w1: 1.6 + rnd(), w2: 1.4 + rnd(), p1: rnd() * 6.28, p2: rnd() * 6.28 };
-          b.el = S('circle', { r: 3.2, fill: 'none', stroke: GREEN, 'stroke-width': 1.2, 'stroke-opacity': 0.9 }, p.bg[p.beads.length % 3]);
+          b.el = PX(S('circle', { r: 3.2, fill: 'none', stroke: GREEN, 'stroke-width': 1.2, 'stroke-opacity': 0.9 }, p.bg[p.beads.length % 3]));
           p.beads.push(b);
         }
       } else if (role === 3) { // Execution Council: the aperture; it pulses once per decision
@@ -340,7 +344,7 @@
         S('circle', { r: 0.045, fill: GREEN }, g);
         for (let k = 0; k < 9; k++) {
           const a = k / 9 * 6.283 + 0.3, b = { u0: Math.cos(a) * 0.72, v0: Math.sin(a) * 0.72, h0: 0.04, a: 0.03, w1: 2.6 + rnd() * 2, w2: 2.2 + rnd() * 2, p1: rnd() * 6.28, p2: rnd() * 6.28 };
-          b.el = S('circle', { r: 2.8, fill: 'none', stroke: GREEN, 'stroke-width': 1.1, 'stroke-opacity': 0.75 }, p.bg[p.beads.length % 3]);
+          b.el = PX(S('circle', { r: 2.8, fill: 'none', stroke: GREEN, 'stroke-width': 1.1, 'stroke-opacity': 0.75 }, p.bg[p.beads.length % 3]));
           p.beads.push(b);
         }
       } else if (role === 4) { // Routing Layer: Manhattan routes from the hub to the rails; the scored best path in green
@@ -400,6 +404,9 @@
       beadsDirty = true; // a new projection: every bead is placed again
     }
     function measure() {
+      // above 1920 the page grows with the window (root = 100vw / 120): the drawing's px caps and radii grow with it (a1, a2: 4K)
+      const k = Math.max(1, (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16);
+      if (k !== RK) { RK = k; pxR.forEach(([e, r]) => setA(e, 'r', f1(r * k))); }
       let fr = fig.getBoundingClientRect();
       W = Math.max(1, fr.width);
       if (wide) {
@@ -413,8 +420,6 @@
         rowC = btns.map((b) => { const r = b.getBoundingClientRect(); return r.top - fr.top + r.height / 2; });
         const br = bRow.getBoundingClientRect(); by = br.top - fr.top + br.height / 2;
         if (fRow) { const r = fRow.getBoundingClientRect(); fy = r.top - fr.top + r.height / 2; } // level with its label
-        // above 1920 the page grows with the window (root = 100vw / 120): the drawing's px caps grow with it (a1, 4K)
-        const k = Math.max(1, (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16);
         cx = (readR + listL) / 2; halfW = clamp((listL - readR) / 2 - 42 * k, 96 * k, 178 * k);
         F0 = 19 * DEG; thick = 7 * k; base = rowC.slice();
       } else {
@@ -460,7 +465,7 @@
       view.tF = F0; if (!pointerOn) view.F = F0;
       setA(svg, 'viewBox', `0 0 ${f1(W)} ${f1(Hh)}`);
       field.style.setProperty('--seam', f1(by) + 'px'); field.style.setProperty('--cx', f1(cx) + 'px');
-      figTop = fig.getBoundingClientRect().top; navHc = navH();
+      if (wide) { figTop = fig.getBoundingClientRect().top; navHc = navH(); } // the card's place (wide only): no read after the write
       geoDirty = true;
     }
     // the floor's label under the drawing (narrow): one line if it fits, else two
@@ -591,8 +596,9 @@
       if (!tags) heads.forEach((hd) => { setS(hd, 'transform', ''); setS(hd, 'opacity', ''); });
       inst.style.removeProperty('--arch-cardh'); minH = 0;
       placePanels();
-      hint.textContent = spec ? (wide && fineMQ.matches ? 'Point at a layer · ↑ ↓ · Enter for its spec' : fineMQ.matches ? 'Click a plate for its spec' : 'Tap a plate for its spec')
-        : wide && fineMQ.matches ? 'Point at a layer · ↑ ↓ to move · Enter to open' : fineMQ.matches ? 'Click a layer to open it' : 'Tap a layer to open it';
+      // one sentence in Inter (award a2, ux): the keys stay in it, as the way in without a pointer
+      hint.textContent = wide && fineMQ.matches ? 'Choose a layer, or use ↑ ↓ and Enter' : spec ? (fineMQ.matches ? 'Click a plate for its spec' : 'Tap a plate for its spec')
+        : fineMQ.matches ? 'Click a layer to open it' : 'Tap a layer to open it';
       hot = -2; setHot();
       if (!near) return; // measured when it comes near (below)
       if (defer) requestAnimationFrame(() => { measure(); kick(true); }); // the build reads no layout: geometry in its first frame
@@ -682,8 +688,8 @@
       segs.push({ type: 'exit', at: N - 1, d: 0.95 });
       const g = S('g', null);
       const f = { st, segs, s: 0, t: 0, reject: rnd() < 0.16, decided: false, kind: 'signal', g, lvl: null, alpha: 0, x: 0, y: 0, side: rnd() < 0.5 ? -1 : 1, ringR: 3.6, regT: -1, sqT: -1 };
-      f.halo = S('circle', { r: 8, fill: IVORY, 'fill-opacity': 0.1 }, g);
-      f.dot = S('circle', { r: 1.9, fill: IVORY }, g);
+      f.halo = S('circle', { r: f1(8 * RK), fill: IVORY, 'fill-opacity': 0.1 }, g);
+      f.dot = S('circle', { r: f1(1.9 * RK), fill: IVORY }, g);
       // one mark for the proposal and what it becomes
       f.mk = S('rect', { fill: GREEN, 'fill-opacity': 0, stroke: GREEN, 'stroke-width': 1.4, display: 'none' }, g);
       // registration ticks: they close on the mark as it settles
@@ -692,14 +698,14 @@
     }
     const stationXY = (k, u, v, h) => { const q = proj(u, v, h); return [cx + q[0], plateY(k) + q[1]]; };
     function setMark(f, m) { // m: 0 = the proposal's ring, 1 = a settled square
-      const s = 2 * f.ringR * (1 - m) + 5.6 * m, rx = (s / 2) * (1 - m) + 0.4 * m;
+      const s0 = 2 * f.ringR * (1 - m) + 5.6 * m, s = s0 * RK, rx = ((s0 / 2) * (1 - m) + 0.4 * m) * RK;
       setA(f.mk, 'x', f1(-s / 2)); setA(f.mk, 'y', f1(-s / 2)); setA(f.mk, 'width', f1(s)); setA(f.mk, 'height', f1(s)); setA(f.mk, 'rx', f1(rx));
       setA(f.mk, 'fill-opacity', f3(m)); setA(f.mk, 'stroke-opacity', f3(1 - m));
     }
     function setKind(f, kind) {
       f.kind = kind;
       setA(f.dot, 'display', kind === 'signal' || kind === 'reject' ? 'inline' : 'none');
-      setA(f.dot, 'fill', kind === 'reject' ? RED : IVORY); setA(f.dot, 'r', kind === 'reject' ? '2.6' : '1.9');
+      setA(f.dot, 'fill', kind === 'reject' ? RED : IVORY); setA(f.dot, 'r', f1((kind === 'reject' ? 2.6 : 1.9) * RK));
       setA(f.mk, 'display', kind === 'proposal' || kind === 'settled' ? 'inline' : 'none');
       if (kind === 'proposal') setMark(f, 0); else if (kind === 'settled') setMark(f, 1);
       setA(f.halo, 'fill', kind === 'signal' ? IVORY : kind === 'reject' ? RED : GREEN);
@@ -726,13 +732,13 @@
           if (k < council) { u += 0.03 * Math.sin(t * 7 + n); v += 0.03 * Math.cos(t * 6.1 + n * 2); }
           [x, y] = stationXY(k, u, v, 0.03); toLevel(f, k);
           if (k === council && !f.decided && p > 0.45) decide(f);
-          if (f.kind === 'reject') { const q = clamp((p - 0.45) / 0.55, 0, 1); x += f.side * 26 * q; y += 30 * q * q; a = 1 - q; toLevel(f, 'front'); }
+          if (f.kind === 'reject') { const q = clamp((p - 0.45) / 0.55, 0, 1); x += f.side * 26 * RK * q; y += 30 * RK * q * q; a = 1 - q; toLevel(f, 'front'); }
         } else if (seg.type === 'move') {
           const sa = f.st[seg.from], sb = f.st[seg.to];
           const A = stationXY(seg.from, sa.u, sa.v, 0.03), B = stationXY(seg.to, sb.u, sb.v, 0.03);
           let e;
           if (seg.to <= council) { // estimation: a curved path, eased
-            e = inout(p); x = A[0] + (B[0] - A[0]) * e + Math.sin(Math.PI * p) * 12 * f.side; y = A[1] + (B[1] - A[1]) * e;
+            e = inout(p); x = A[0] + (B[0] - A[0]) * e + Math.sin(Math.PI * p) * 12 * RK * f.side; y = A[1] + (B[1] - A[1]) * e;
           } else { // deterministic: straight, and it snaps in at the end
             e = p < 0.78 ? inout(p / 0.78) * 0.97 : 0.97 + 0.03 * ease3((p - 0.78) / 0.22); x = A[0] + (B[0] - A[0]) * e; y = A[1] + (B[1] - A[1]) * e;
           }
@@ -761,7 +767,7 @@
         if (f.regT >= 0) { // the snap: ticks close on the square in ~220 ms, then let go
           f.regT += dt;
           const r = f.regT, k = 1 + 1.3 * (1 - ease3(Math.min(1, r / 0.22)));
-          setA(f.reg, 'transform', `scale(${f3(k)})`);
+          setA(f.reg, 'transform', `scale(${f3(k * RK)})`);
           setA(f.reg, 'stroke-opacity', f3(r < 0.22 ? 0.95 : Math.max(0, 0.95 * (1 - (r - 0.22) / 0.34))));
           if (r > 0.56) { f.regT = -1; setA(f.reg, 'stroke-opacity', '0'); }
         }
@@ -787,14 +793,14 @@
     function decide(f) {
       f.decided = true; pulse = 1;
       if (f.reject) { setKind(f, 'reject'); f.segs.length = f.s + 1; } // its way ends here: it falls away
-      else { f.ringR = 4.2; setA(f.mk, 'stroke-width', '2'); setMark(f, 0); } // approved: the ring brightens and goes on
+      else { f.ringR = 4.2; setA(f.mk, 'stroke-width', f1(2 * RK)); setMark(f, 0); } // approved: the ring brightens and goes on
     }
 
     /* ---------------- 8 · the frame ---------------- */
     let raf = 0, last = 0;
     function targets() {
       plates.forEach((p, i) => {
-        p.tOff = hot < 0 ? 0 : i === hot ? -14 : i < hot ? -9 : 9;
+        p.tOff = (hot < 0 ? 0 : i === hot ? -14 : i < hot ? -9 : 9) * RK;
         p.tHeat = i === hot ? 1 : 0;
         // only the plate right above overlaps the lifted one (not across the boundary's gap)
         p.tFade = hot < 0 || i === hot ? 0 : i === hot - 1 && hot !== bIndex ? 1 : 0.5;
@@ -949,7 +955,7 @@
           setA(floor.t2, 'x', at(floor.w2 || 0)); setA(floor.t2, 'y', f1(fy + 33));
           setA(floor.t1, 'opacity', f3(fa)); setA(floor.t2, 'opacity', f3(fa));
         }
-        setA(floor.mark, 'x1', f1(floor.lx - 9)); setA(floor.mark, 'x2', f1(floor.lx + 9)); setA(floor.mark, 'y1', f1(fy)); setA(floor.mark, 'y2', f1(fy));
+        setA(floor.mark, 'x1', f1(floor.lx - 9 * RK)); setA(floor.mark, 'x2', f1(floor.lx + 9 * RK)); setA(floor.mark, 'y1', f1(fy)); setA(floor.mark, 'y2', f1(fy));
         setA(floor.mark, 'stroke-opacity', f3(0.95 * floor.land));
       }
       // leader lines: plate -> its button (wide), plate -> readout card (wide, the plate you point at)
@@ -957,14 +963,14 @@
         const L = leads[i];
         if (!wide) { setA(L.line, 'display', 'none'); setA(L.a, 'display', 'none'); setA(L.b, 'display', 'none'); return; }
         setA(L.line, 'display', 'inline'); setA(L.a, 'display', 'inline'); setA(L.b, 'display', 'inline');
-        const y = plateY(i), xa = cx + C[0] + 9, ya = y + C[1], xb = listL - 4, yb = rowC[i], h = p.heat.x, on = clamp((exOf(i) - 0.82) / 0.18, 0, 1);
+        const y = plateY(i), xa = cx + C[0] + 9 * RK, ya = y + C[1], xb = listL - 4 * RK, yb = rowC[i], h = p.heat.x, on = clamp((exOf(i) - 0.82) / 0.18, 0, 1);
         setA(L.line, 'x1', f1(xa)); setA(L.line, 'y1', f1(ya)); setA(L.line, 'x2', f1(xb)); setA(L.line, 'y2', f1(yb));
         setA(L.line, 'stroke-opacity', f3((0.15 + 0.55 * h) * (1 - 0.4 * p.fade.x) * on));
         setA(L.a, 'cx', f1(xa)); setA(L.a, 'cy', f1(ya)); setA(L.a, 'fill-opacity', f3((0.35 + 0.6 * h) * on));
         setA(L.b, 'cx', f1(xb)); setA(L.b, 'cy', f1(yb)); setA(L.b, 'fill-opacity', f3(h * on));
       });
       if (wide && hot >= 0) { // a technical callout: out of the plate, along, and into the readout at its title
-        const y = plateY(hot), xa = cx + A[0] - 9, ya = y + A[1], xe = readR + 14, xm = Math.max(xe + 6, Math.min(xa - 12, readR + 30));
+        const y = plateY(hot), xa = cx + A[0] - 9 * RK, ya = y + A[1], xe = readR + 14 * RK, xm = Math.max(xe + 6 * RK, Math.min(xa - 12 * RK, readR + 30 * RK));
         setA(cardLead, 'points', `${f1(xa)},${f1(ya)} ${f1(xm)},${f1(ya)} ${f1(xm)},${f1(cardTop)} ${f1(xe)},${f1(cardTop)}`);
         setA(cardLead, 'stroke-opacity', f3(0.5 * plates[hot].heat.x));
         setA(cardNode, 'cx', f1(xa)); setA(cardNode, 'cy', f1(ya)); setA(cardNode, 'fill-opacity', f3(plates[hot].heat.x));
@@ -1023,19 +1029,18 @@
       if (reduced) { flows.splice(0).forEach((f) => f.g.remove()); pulse = permit = 0; bound.flash = bound.ripT = 0; if (floor) floor.land = 0; ex = exStart >= 0 ? 1 : ex; }
       kick(true);
     });
-    // a new size is measured in the next frame, not inside the observer
-    let roQueued = false;
-    const ro = new ResizeObserver(() => {
-      if (roQueued || !near) return;
-      roQueued = true;
-      requestAnimationFrame(() => { roQueued = false; measure(); measureCard(); kick(true); });
-    });
+    // a new size is measured in the next frame, not inside the observer; every trigger shares one queued measure
+    let mQ = 0;
+    const remeasure = () => { if (near && !mQ) mQ = requestAnimationFrame(() => { mQ = 0; measure(); measureCard(); kick(true); }); };
+    const ro = new ResizeObserver(remeasure);
     ro.observe(bodyEl); ro.observe(list);
-    if (document.fonts && document.fonts.ready) requestAnimationFrame(() => document.fonts.ready.then(() => { if (near) { measure(); measureCard(); kick(true); } }));
+    // (award a2, a2-dev) document.fonts.ready is read only once the explorer is near: reading it while the script is
+    // evaluated forced the page's first style and layout inside arch.js (~270 ms at 4x CPU on a phone)
     const nearIO = new IntersectionObserver((entries) => {
       if (near || !entries.some((e) => e.isIntersecting)) return;
       near = true; nearIO.disconnect();
-      requestAnimationFrame(() => { measure(); measureCard(); kick(true); });
+      remeasure();
+      if (document.fonts && document.fonts.status !== 'loaded') document.fonts.ready.then(remeasure);
     }, { rootMargin: '100% 0px' });
     nearIO.observe(inst);
     new IntersectionObserver((entries) => {

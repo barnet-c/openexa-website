@@ -1,32 +1,20 @@
-/* ==========================================================================
-   OpenEXA: page styles for the Blog
-   Loaded after site.css on blog/index.html and the posts in blog/ (tools/build_blog.py writes their heads) only. site.css holds the system (tokens, type, grid, chrome, the
-   instruments); this file holds what only these pages need, so pages can change without touching each other.
-   - Use the tokens: var(--paper), var(--ink), var(--signal), var(--serif)... No new colours, faces or hex values.
-   - Scope every rule to these pages (body[data-page="blog"] or body[data-page="post"], a section id or a page class).
-   - :hover only inside @media (hover: hover); no :has() that restyles a subtree (check_static guards both here).
-   - Anything that moves has a still state under prefers-reduced-motion; anything printed reads on white.
-   - Budget: gzip -9 <= 12,000 bytes (check_static weight).
-   v2x (30 Oct 2026, blog group): plates instead of photographs (tools/blog_plates.py draws them), the Gen-AI series as
-   a dated rail inside AI & agents, rows on phones.
-   Cut (1 Nov, the owner: "so many words everywhere"): the index is its titles and its drawings. One head per
-   collection with its author and years; no chips bar, captions, excerpts, datelines or read times on the index; a
-   post's hero is its crumb, title, one byline line and its plate. Four type steps on a screen (site.css): display,
-   heading, body, small; the plates keep their own engraved lettering.
-   Award a1 (1 Nov): composition lengths in rem (16 px up to 1920, so nothing below moves; above 1920 site.css grows the
-   root, and 3840 is the 1920 page at twice the size); the motion tokens; a lead card per grid; the post's left column.
-   ========================================================================== */
+/* OpenEXA: the Blog's page styles (blog/index.html and the posts; tools/build_blog.py writes their heads). After site.css.
+   Tokens only (no new colours or faces); every rule scoped to these pages; :hover only inside (hover: hover); a still
+   state under reduced motion; print reads on white. Budget: gzip -9 <= 12,000 B (check_static). Lengths in rem: 16 px
+   up to 1920, then site.css grows the root (3840 = the 1920 page at twice the size). History: .shots/v2x/notes/blog.md */
 
 /* ---------- plates: the line language (cards, the post hero, the phone head plate) ---------- */
 .blog-page .bp-art, .blog-post .bp-art { display: block; width: 100%; height: 100%; overflow: visible; }
-/* --u: one drawing unit in the svg's own units: the plates are written at twice their drawing (viewBox 800 x 450, whole
-   numbers; r4-perf); the library's faces keep 1, their strokes are non-scaling (screen px) */
+/* --u: a drawing unit (plates are written at 2x, viewBox 800 x 450); the library's faces are non-scaling */
 .bp-art { --u: 2px; } .lf-face { --u: calc(var(--stroke) * 1px); } /* a1: the library's non-scaling hairlines keep their weight at 4K (site.css --stroke) */
 :is(.bp-art, .lf-face) .pa { stroke: currentColor; stroke-opacity: .74; stroke-width: var(--u); stroke-linejoin: round; stroke-linecap: round; }
 :is(.bp-art, .lf-face) .pb { stroke: currentColor; stroke-opacity: .44; stroke-width: var(--u); stroke-linejoin: round; }
 :is(.bp-art, .lf-face) .pc { stroke: currentColor; stroke-opacity: .2; stroke-width: calc(.8 * var(--u)); }
 :is(.bp-art, .lf-face) .pd { stroke: currentColor; stroke-opacity: .52; stroke-width: var(--u); stroke-dasharray: calc(3 * var(--u)) calc(4 * var(--u)); }
 :is(.bp-art, .lf-face) .pr { stroke: currentColor; stroke-opacity: .3; stroke-width: var(--u); }
+/* a2: the faces' strokes and dashes on site.css's tokens (whole pixels) */
+.lf-face .pg { stroke-width: calc(var(--stroke-2) * 1px); } .lf-face .pc { stroke-width: calc(var(--stroke) * 1px); }
+.lf-face .pd { stroke-dasharray: calc(3 * var(--dash-u)) calc(4 * var(--dash-u)); }
 .bp-art .pr { shape-rendering: crispEdges; } /* a1 (4K inspector): the axis rules are level or plumb: on whole device pixels, never a grey two-pixel blur */
 :is(.bp-art, .lf-face) .pg { stroke: var(--accent); stroke-opacity: 1; stroke-width: calc(1.5 * var(--u)); stroke-linecap: round; stroke-linejoin: round; }
 :is(.bp-art, .lf-face) .pk { fill: currentColor; fill-opacity: .62; }
@@ -42,19 +30,18 @@
 .blog-page .blog-thumb .pt { display: none; }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .blog-card:hover .bp-art .pg[pathLength] { animation: bp-redraw 1.1s var(--ease); }
-  .blog-card:hover .bp-rings, .blog-econ:hover .bp-rings { transform: rotate(-6deg); }
+  .blog-econ:not(.js-turn):hover .bp-rings { transform: rotate(-6deg); } /* without JS; with it, blog.js turns them a step a row */
 }
 @media (prefers-reduced-motion: no-preference) {
   .blog-card:focus-visible .bp-art .pg[pathLength] { animation: bp-redraw 1.1s var(--ease); }
-  .blog-econ:focus-within .bp-rings { transform: rotate(-6deg); }
+  .blog-econ:not(.js-turn):focus-within .bp-rings { transform: rotate(-6deg); }
 }
 @keyframes bp-redraw { from { stroke-dasharray: 1; stroke-dashoffset: 1; } to { stroke-dasharray: 1; stroke-dashoffset: 0; } }
 @keyframes bp-fade { from { opacity: 0; } }
 /* a hedge, said once beside its drawing (the post heroes' and the index's) */
 .pp-h { font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); }
 
-/* ---------- index: the hero is the title and the library (tools/blog_plates.py library_svg): one leaf per post, filed
-   by collection, the Gen-AI series in green; each bundle leads to its collection ---------- */
+/* ---------- index: the hero, the title and the library (one leaf per post; blog_plates.library_svg) ---------- */
 .blog-page .blog-hero { padding-top: calc(var(--nav-h) + clamp(3rem, 6.5vw, 6.5rem)); padding-bottom: clamp(3rem, 6vw, 5.5rem); }
 .blog-hero-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(2rem, 4.5vw, 5rem); align-items: end; }
 /* a1: a specific H1 (art director, a1-ux) on the plate pages' step (v2's own, 89 px at 1440), one phrase a line */
@@ -107,7 +94,6 @@
 .blog-by a .arr { width: .8125rem; height: .8125rem; }
 @media (hover: hover) { .blog-by a:hover { border-color: currentColor; } }
 .blog-collection > .container { position: relative; }
-.blog-headplate { display: none; }
 
 /* ---------- AI & agents: the series as a dated rail ---------- */
 .blog-series { --rg: clamp(1rem, 2vw, 1.75rem); }
@@ -144,62 +130,75 @@
 .blog-page .blog-grid--wide h3 { margin: 0; max-width: 30ch; }
 .blog-page .blog-grid--wide .k { display: block; margin-bottom: .5rem; }
 
-/* ---------- Financial markets research: a gallery of plates, each with its title ---------- */
+/* ---------- the cards (the fifth AI post, the markets lead) ---------- */
 .blog-page .blog-card-body { padding: clamp(1.125rem, 1.9vw, 1.625rem) clamp(1.25rem, 2.2vw, 1.875rem) clamp(1.5rem, 2.6vw, 2.25rem); }
 .blog-page .blog-card h3 { margin-top: 0; }
 .blog-page .blog-card h3 .arr { width: .6em; height: .6em; margin-left: .15em; } /* a post hosted elsewhere */
-/* a grid's last row closes (r2-art): a card left alone on it takes the row as a horizontal card, its plate in the first
-   column and its title across the rest; with two left, the second takes the last two columns. Read from the count by
-   :nth-child, so a new post rebalances the grid */
-@media (min-width: 1081px) {
-  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:nth-child(3n + 1):last-child { grid-column: 1 / -1; --pw: calc(100% / 3); }
-  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:nth-child(3n + 2):last-child { grid-column: span 2; --pw: 50%; }
-  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:last-child:not(:nth-child(3n)) { flex-direction: row; }
-  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:last-child:not(:nth-child(3n)) .blog-thumb { flex: 0 0 var(--pw); border-bottom: 0; border-right: 1px solid var(--line); }
-  .blog-page .blog-grid:not(.blog-grid--wide) > .blog-card:last-child:not(:nth-child(3n)) .blog-card-body { justify-content: center; }
-}
-@media (min-width: 641px) and (max-width: 1080px) {
-  .blog-page .blog-grid:not(.blog-grid--wide, .blog-grid--lead) > .blog-card:nth-child(2n + 1):last-child,
-  .blog-page .blog-grid--lead > .blog-card:nth-child(2n):last-child { grid-column: 1 / -1; flex-direction: row; }
-  .blog-page .blog-grid:not(.blog-grid--wide, .blog-grid--lead) > .blog-card:nth-child(2n + 1):last-child .blog-thumb,
-  .blog-page .blog-grid--lead > .blog-card:nth-child(2n):last-child .blog-thumb { flex: 0 0 50%; border-bottom: 0; border-right: 1px solid var(--line); }
-  .blog-page .blog-grid:not(.blog-grid--wide, .blog-grid--lead) > .blog-card:nth-child(2n + 1):last-child .blog-card-body,
-  .blog-page .blog-grid--lead > .blog-card:nth-child(2n):last-child .blog-card-body { justify-content: center; }
-}
-/* a1 (art director, a1-ux): the grid opens on its newest post, drawn larger: two columns by two rows on a desk (four
-   cells, so the last-row rules above still count right), the first row on a tablet, and the one plate a phone shows.
-   Same plate, same title: no new words */
-@media (min-width: 1081px) {
-  .blog-page .blog-grid--lead > .blog-card--lead { grid-column: span 2; grid-row: span 2; }
-  .blog-page .blog-grid--lead > .blog-card--lead .blog-thumb { aspect-ratio: auto; flex: 1 1 auto; min-height: 0; }
-  .blog-page .blog-grid--lead > .blog-card--lead .blog-card-body { flex: 0 0 auto; }
-}
-@media (min-width: 641px) and (max-width: 1080px) { .blog-page .blog-grid--lead > .blog-card--lead { grid-column: 1 / -1; } }
-/* the lead's drawing is about twice a card's width: half the unit keeps one engraving weight across the grid */
-@media (min-width: 641px) { .blog-page .blog-card--lead .bp-art { --u: 1px; } }
 
-/* ---------- Market structure & economics: a register (year, title) beside its plate, shown once ---------- */
-.blog-econ { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2.2vw, 2rem); align-items: start; }
+/* ---------- the research collections (a2): a register (year once per year, title, arrow) beside one plate. Markets:
+   a lead card, then the rows beside the plate of the row being read (blog.js). Economics: the rings at the list's height */
+.blog-reg { --rg: clamp(1rem, 2.2vw, 2rem); display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--rg); align-items: start; }
 .blog-register { grid-column: 1 / span 7; list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-strong); }
 .blog-register > li { border-bottom: 1px solid var(--line); }
-.blog-page .blog-row { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) auto; column-gap: clamp(1rem, 2vw, 1.75rem); align-items: baseline; padding: 1.5rem 0 1.625rem; background: none; border: 0; overflow: visible; transition: padding .35s var(--ease); }
-.blog-page .blog-row::after { left: 0; right: auto; top: 0; bottom: -1px; width: 2px; height: auto; transform: scaleY(0); transform-origin: top; } /* the Research register's mark */
+.blog-register > li.br-g { border-top: 1px solid var(--line-strong); margin-top: -1px; }
+.blog-page .blog-row { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) auto; column-gap: clamp(1rem, 2vw, 1.75rem); align-items: baseline; padding: 1.5rem 0 1.625rem; background: none; border: 0; overflow: visible; }
+/* the register's mark hangs in the margin: nothing indents */
+.blog-page .blog-row::after { left: -1.125rem; right: auto; top: 0; bottom: -1px; width: 2px; height: auto; transform: scaleY(0); transform-origin: top; }
 .br-date { font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .blog-page .blog-row h3 { margin-top: 0; max-width: 28ch; }
 .br-min { display: inline-flex; align-items: center; color: var(--fg-3); }
-.br-min .arr { width: 1rem; height: 1rem; transition: transform .35s var(--ease), color .3s var(--ease-out); }
-.blog-register > li > .blog-row:focus-visible { padding-left: 1.125rem; background-color: transparent; outline-offset: 4px; } /* a row, not a link in running text: the ring and the rule, no highlighter */
-.blog-row:focus-visible::after { transform: scaleY(1); }
+.br-min .arr { width: 1rem; height: 1rem; transition: transform var(--dur-move) var(--ease), color var(--dur-feedback) var(--ease-out); }
+.blog-register > li > .blog-row:focus-visible { background-color: transparent; outline-offset: 4px; } /* a row, not a link in running text: the ring and the rule, no highlighter */
+.blog-row:focus-visible::after, .blog-register > li.is-current > .blog-row::after { transform: scaleY(1); }
 .blog-row:focus-visible .br-min { color: var(--accent); }
 @media (hover: hover) {
-  .blog-page .blog-row:hover { background: none; padding-left: 1.125rem; }
+  .blog-page .blog-row:hover { background: none; }
   .blog-row:hover::after { transform: scaleY(1); }
   .blog-row:hover .br-min { color: var(--accent); }
   .blog-row:hover .br-min .arr { transform: translateX(.3125rem); }
 }
-.blog-econ-plate { grid-column: 8 / -1; position: sticky; top: calc(var(--nav-h) + 4.5rem); margin: 0; color: var(--ink); }
-.blog-econ-art { position: relative; aspect-ratio: 16 / 11; background: var(--paper-3); box-shadow: inset 0 0 0 .5625rem var(--paper-3), inset 0 0 0 calc(.5625rem + var(--stroke) * 1px) rgba(14, 21, 18, .16); }
-.blog-econ-art .bp-art { position: absolute; inset: 6% 4%; width: 92%; height: 88%; }
+/* the plate beside a register: the third paper with the plate mark (a plate standing alone) */
+.blog-panel, .blog-econ-plate { grid-column: 8 / -1; margin: 0; color: var(--ink); }
+.blog-panel-art, .blog-econ-art { position: relative; background: var(--paper-3); box-shadow: inset 0 0 0 .5625rem var(--paper-3), inset 0 0 0 calc(.5625rem + var(--stroke) * 1px) rgba(14, 21, 18, .16); }
+
+/* Financial markets research: the lead, then the register beside the plate that follows it */
+.blog-page .blog-lead { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2.2vw, 2rem); border: 0; background: none; overflow: visible; }
+.blog-page .blog-lead .blog-thumb { grid-column: 1 / span 7; border: 0; }
+/* the lead's words are the register's row drawn to the plate's height: the year and the arrow on the rule, the title
+   on the plate's foot */
+.blog-page .blog-lead .blog-card-body { grid-column: 8 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); column-gap: 1rem; padding: 1.25rem 0 .125rem; border-top: 1px solid var(--line-strong); }
+.blog-page .blog-lead .br-date { grid-area: 1 / 1; }
+.blog-page .blog-lead .br-min { grid-area: 1 / 2; }
+.blog-page .blog-lead h3 { grid-area: 2 / 1 / 3 / -1; align-self: end; max-width: 20ch; }
+.blog-lead:focus-visible .br-min { color: var(--accent); }
+.blog-page .blog-lead::after { right: auto; width: calc((100% - 11 * clamp(1rem, 2.2vw, 2rem)) / 12 * 7 + 6 * clamp(1rem, 2.2vw, 2rem)); } /* the green rule under the plate */
+@media (min-width: 641px) { .blog-page .blog-lead .bp-art { --u: 1.4px; } } /* the lead's drawing is ~1.75 cards wide: one engraving weight with the plate beside the list */
+@media (hover: hover) {
+  .blog-page .blog-lead:hover { background: none; }
+  .blog-lead:hover .br-min { color: var(--accent); }
+  .blog-lead:hover .br-min .arr { transform: translateX(.3125rem); }
+}
+.blog-mkt { margin-top: clamp(2.5rem, 4.4vw, 4rem); }
+.blog-panel { position: sticky; top: calc(var(--nav-h) + 4.5rem); }
+.blog-panel-art { aspect-ratio: 16 / 11; }
+.bpn { position: absolute; inset: 6% 4%; opacity: 0; visibility: hidden; transition: opacity var(--dur-move) var(--ease), visibility 0s linear var(--dur-move); }
+.bpn.is-on { opacity: 1; visibility: visible; transition: opacity var(--dur-move) var(--ease); }
+.bpn .pt { display: none; }
+.bpn, .blog-econ-art .bp-art { content-visibility: auto; } /* the 15 plates and the rings are skipped until the list nears the screen, as the card plates were (r4-perf) */
+@media (prefers-reduced-motion: no-preference) { .blog-panel.is-live .bpn.is-on .pg[pathLength] { animation: bp-redraw 1.1s var(--ease) .1s backwards; } } /* the new plate's green line is engraved again */
+
+/* Market structure & economics: the rings at the register's full height (risen on a diagonal: blog_plates.rings_tall) */
+.blog-econ-plate { align-self: stretch; }
+.blog-econ-art { height: 100%; min-height: 20rem; }
+.blog-econ-art .bp-art { position: absolute; inset: 5% 6%; width: 88%; height: 90%; }
+.blog-econ-art .bp-art:not(.bp-tall) { display: none; }
+.blog-econ-art .bp-tall { --u: 1px; transform-origin: 50% 50%; } /* ~1 px of plate per unit, as the plate beside the markets list */
+.blog-econ.js-turn .bp-rings { transform: rotate(var(--turn, 0deg)); }
+/* narrow columns (the list far taller than the drawing): the plate keeps 5:8 and sticks beside the rows */
+@media (min-width: 641px) and (max-width: 1080px) {
+  .blog-econ-plate { align-self: start; position: sticky; top: calc(var(--nav-h) + 4.5rem); }
+  .blog-econ-art { height: auto; min-height: 0; aspect-ratio: 5 / 8; }
+}
 
 /* ---------- the close: one head, one way on ---------- */
 .blog-page .cta-band .row { margin-top: clamp(28px, 3vw, 40px); }
@@ -213,25 +212,35 @@
   .blog-page .blog-grid--wide .blog-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .blog-page .blog-grid--wide .blog-card-body { grid-column: 2; }
 }
-@media (max-width: 960px) { /* tablets: the plate heads the collection, the register takes the measure */
-  .blog-econ { display: flex; flex-direction: column; }
-  .blog-econ-plate { order: -1; position: static; width: min(100%, 520px); margin-bottom: 36px; }
-  .blog-econ-art { aspect-ratio: 2 / 1; }
-  .blog-register { width: 100%; }
+@media (max-width: 960px) { /* tablets: the register beside its plate as on a desk; a row's year sits over its title */
+  .blog-page .blog-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; padding: 1.125rem 0 1.25rem; }
+  .blog-page .blog-row .br-date { grid-column: 1 / -1; }
+  .br-date:empty { display: none; } /* a row under its year's head */
+  .blog-page .blog-row::after { left: -.75rem; }
+  .blog-panel, .blog-econ-plate { top: calc(var(--nav-h) + 2rem); }
 }
 
 /* ---------- phones: rows, one drawing per collection, the rail stands upright ---------- */
 @media (max-width: 640px) {
   .blog-head { flex-direction: column; gap: 8px; margin-bottom: 28px; }
-  .blog-headplate { display: block; margin: -8px 0 8px; }
-  .bh-art { position: relative; aspect-ratio: 2 / 1; background: var(--paper-3); color: var(--ink); box-shadow: inset 0 0 0 7px var(--paper-3), inset 0 0 0 8px rgba(14, 21, 18, .16); }
-  .blog-headplate .bp-art { position: absolute; inset: 4% 3%; width: 94%; height: 92%; }
-  .blog-headplate .pt { display: none; }
   .blog-page .blog-grid { grid-template-columns: 1fr; border-left: 0; }
   .blog-page .blog-grid .blog-thumb { display: none; }
-  .blog-page .blog-grid .blog-card--lead .blog-thumb { display: block; }
   .blog-page .blog-grid .blog-card { border-right: 0; }
-  .blog-page .blog-grid .blog-card-body { padding: 18px 0 20px; }
+  /* the register takes the measure; one plate heads each list (the lead's, the economics mark) */
+  .blog-reg { display: flex; flex-direction: column; }
+  .blog-econ-art { height: auto; min-height: 0; aspect-ratio: 2 / 1; }
+  .blog-econ-art .bp-art:not(.bp-tall) { display: block; }
+  .blog-econ-art .bp-tall { display: none; }
+  .blog-register { width: 100%; }
+  .blog-panel { display: none; }
+  .blog-page .blog-lead { display: block; }
+  .blog-page .blog-lead .blog-card-body { grid-template-rows: auto auto; row-gap: 4px; align-items: baseline; padding: 16px 0 18px; border-top: 0; }
+  .blog-page .blog-lead .br-date { grid-area: 1 / 1 / 2 / -1; }
+  .blog-page .blog-lead h3 { grid-area: 2 / 1; align-self: auto; }
+  .blog-page .blog-lead .br-min { grid-area: 2 / 2; }
+  .br-cont { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } /* the lead just said this year: read out, not shown twice */
+  .blog-page .blog-lead::after { width: 100%; }
+  .blog-mkt { margin-top: 0; }
   /* the rail, upright: date, then the part's name; the rule runs down the left */
   .blog-page .series-rail { grid-template-columns: 1fr; row-gap: 0; }
   .blog-page .series-rail > li { padding: 0 0 26px 26px; }
@@ -247,13 +256,11 @@
   .blog-page .blog-grid--wide .blog-card { display: block; }
   .blog-page .blog-grid--wide .blog-card-body { padding: 14px 0 0; }
   /* the register on a phone: year over title; the plate heads it as elsewhere */
-  .blog-econ-plate { width: 100%; margin: -8px 0 20px; }
+  .blog-econ-plate { order: -1; align-self: auto; width: 100%; margin: -8px 0 20px; }
   .blog-econ-art { box-shadow: inset 0 0 0 7px var(--paper-3), inset 0 0 0 8px rgba(14, 21, 18, .16); }
-  .blog-page .blog-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; padding: 16px 0 18px; }
-  .br-date { grid-column: 1 / -1; }
-  .blog-row:focus-visible { padding-left: 10px; }
+  .blog-page .blog-row { padding: 16px 0 18px; }
+  .blog-page .blog-row::after { left: -10px; }
 }
-@media (hover: hover) and (max-width: 640px) { .blog-page .blog-row:hover { padding-left: 10px; } }
 /* phones held sideways (r1-mobile 8): the title beside the figure */
 @media (min-width: 540px) and (max-width: 960px) and (max-height: 520px) and (orientation: landscape) { /* not at 400% zoom (320x256): one column there, as in v2 (r2-a11y) */
   .blog-page .blog-hero { padding: calc(var(--nav-h) + 24px) 0 28px; }
@@ -267,8 +274,7 @@
 .blog-post .blog-post-hero { display: block; padding-top: calc(var(--nav-h) + clamp(3rem, 6.5vw, 6.5rem)); padding-bottom: clamp(3rem, 6vw, 5.5rem); }
 .post-hero { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: clamp(2rem, 5vw, 5.5rem); align-items: center; }
 .blog-post .blog-title { max-width: 22ch; } /* the size is site.css's --h1-article (one step with the notes, 65 px at 1440) */
-/* the crumb and the byline line in the small step; the crumb's links and the byline are 24 px targets or more (the box
-   grows upward, the underline keeps its place) */
+/* crumb and byline in the small step; their links are 24 px targets (the box grows upward) */
 .post-crumb { margin: 0; font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-3); }
 .post-crumb a, .post-byline a { display: inline-block; padding-top: .375rem; margin-top: -.375rem; color: var(--fg-2); border-bottom: 1px solid var(--line-strong); transition: border-color .3s var(--ease), color .3s var(--ease); }
 .post-byline { display: flex; flex-wrap: wrap; gap: .5rem 1.625rem; margin: 1.75rem 0 0; font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-3); font-variant-numeric: tabular-nums; }
@@ -289,8 +295,7 @@
   .post-plate .bp-art .pq { animation: bp-fade .5s var(--ease-out) 1.6s both; }
 }
 @keyframes bp-draw { from { stroke-dasharray: 1; stroke-dashoffset: 1; } to { stroke-dasharray: 1; stroke-dashoffset: 0; } } /* the dash only while drawing: a solid line after */
-/* the plate's lettering never under the 10 px tick floor: hidden where the plate is small (phones; 961-1280, the hero's
-   narrow fifth), a step larger where it shows beside the title */
+/* plate lettering never under 10 px: hidden where the plate is small */
 @media (max-width: 640px), (min-width: 961px) and (max-width: 1280px) { .post-plate .pt { display: none; } }
 @media (min-width: 1281px) { .post-plate .pt { font-size: calc(9.2 * var(--u)); } }
 @media (max-width: 960px) {
@@ -307,10 +312,8 @@
 
 /* the reading column stands where a note's does (columns 4-10), under the title's three columns of air */
 @media (min-width: 961px) { .blog-post .blog-article { grid-column: 4 / span 7; } }
-/* a1 (art director, big): the left columns carry the post's wayfinding, as a note's "In this note" does: the Gen-AI
-   series as an upright rail (the index rail's grammar: a node per part, the part being read filled green), and where the
-   post summarises work published elsewhere, that line. In the source it follows the article (reading order); beside it
-   and sticky from 961 px. On tablets and phones the series is the crumb's and the pager's, and the line closes the text */
+/* a1: the left columns carry the post's wayfinding (the series rail, the source line); after the article in the source,
+   sticky beside it from 961 px */
 .blog-post .post-side { grid-column: 1 / -1; }
 .post-side .ps-series { display: none; }
 .ps-in > * + * { margin-top: 2rem; }
@@ -324,6 +327,9 @@
 .ps-rail li.is-on::after { background: var(--accent); box-shadow: none; }
 .ps-rail a { color: var(--fg-2); border-bottom: 1px solid var(--line-strong); transition: color .25s var(--ease-out), border-color .25s var(--ease-out); }
 .ps-rail .is-on span { color: var(--fg); }
+/* a2: "Part 1 · Relative value": the part in grey, in the rail and the pager */
+.ps-rail .ps-p, .ps-rail .is-on .ps-p { color: var(--fg-3); }
+.blog-post .pager-card .k .ps-p { color: inherit; }
 @media (hover: hover) { .ps-rail a:hover { color: var(--fg); border-color: currentColor; } }
 .ps-src { max-width: 60ch; margin: 0; font: 400 var(--fs-small)/1.55 var(--sans); color: var(--fg-3); text-wrap: pretty; }
 .ps-src a { color: var(--fg); border-bottom: 1px solid var(--line-strong); transition: border-color .25s var(--ease-out); }
@@ -339,26 +345,21 @@
   .blog-post .post-side--nav { display: none; }
 }
 
-/* ---------- post: the notes' reading column (r2: one column for posts and notes; research.css "a note: the reading
-   column"): 19 px type on 1.68 leading across 39.2rem, 66-72 characters a line from 768 up; 18 px on tablets and 17 px
-   on phones, on 36rem. Text, quotes and exhibits share the measure ---------- */
+/* ---------- post: the notes' reading column (19 / 1.68 on 39.2rem; 18 and 17 px on 36rem) ---------- */
 .blog-post .blog-article { --measure: 39.2rem; font-size: 1.1875rem; line-height: 1.68; }
 @media (max-width: 960px) { .blog-post .blog-article { --measure: 36rem; font-size: 1.0625rem; } }
 @media (min-width: 601px) and (max-width: 960px) { .blog-post .blog-article { font-size: 1.125rem; } }
 .blog-article > :is(p, ul, ol, blockquote, figure, h2, h3, .article-end) { max-width: var(--measure); }
 .blog-article > p { hyphens: manual; }
-/* the notes' lead and drop initial (site.css .article > p.lead, research.css): the size steps up, the ink darkens.
-   Where the browser sets initial letters (Chrome, Safari) the initial sinks exactly two lines. */
-/* a1 (4K inspector): the lead takes the body's size, leading and colour (site.css set it at --fs-body, 18 px beside 19 px
-   text, darker and tighter: two styles colliding); the initial alone marks the start, with a little more air after it */
+/* the notes' lead and two-line initial */
+/* a1: the lead is the body's size and colour; the initial alone marks it */
 .blog-article > p.lead { font-size: inherit; line-height: inherit; color: var(--fg-2); }
 .blog-article > p.lead::first-letter { font-size: 3.3em; line-height: .74; margin: .07em .1em 0 -.02em; }
 @supports (initial-letter: 2) or (-webkit-initial-letter: 2) {
   .blog-article > p.lead::first-letter { float: none; margin: 0 .24em 0 0; font-size: inherit; line-height: inherit; -webkit-initial-letter: 2; initial-letter: 2; }
 }
 
-/* a1: the posts' four blockquotes (the author's own standfirsts and pull lines, words unchanged) take the heading step in
-   the serif: site.css set them at 18 px beside 19 px text, a size a pixel away from the body's */
+/* a1: the author's blockquotes on the heading step (not 18 px beside 19) */
 .blog-post .blog-article blockquote { font-size: var(--fs-heading); line-height: 1.24; letter-spacing: -.01em; margin: 0 0 1.2em; padding-left: 1.25rem; text-wrap: balance; }
 .blog-post .blog-article blockquote + p.lead { margin-top: 0; }
 
@@ -377,8 +378,7 @@
 /* the pager: where it goes, then the title; two-line serif titles keep a straight left edge in both cells */
 .blog-post .pager-card.next { text-align: left; justify-items: start; }
 .blog-post .pager-card h3 { max-width: 30ch; }
-/* as on the notes (research.css, r2): hover and focus draw the green rule along the card's top edge, from the side the
-   card points to, and light its label */
+/* as on the notes: a green top rule from the side the card points to */
 .blog-post .pager-card { position: relative; }
 .blog-post .pager-card::before { content: ""; position: absolute; left: -1px; right: 0; top: -1px; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .45s var(--ease); }
 .blog-post .pager-card.next::before { transform-origin: right; }
@@ -390,11 +390,12 @@
   .blog-post .pager-card:hover .k { color: var(--signal-ink); }
 }
 
-/* 4K: site.css grows the root above 1920 px for every page (a1); this sheet's lengths are in rem, so it follows */
+/* a2, above 1920: the text centred right of the rail, as a note's (it sat at 31-64 % at 3840) */
+@media (min-width: 1921px) { .blog-post .blog-article { grid-column: 4 / -1; justify-self: center; width: min(100%, var(--measure)); } }
 
 /* ---------- print ---------- */
 @media print {
-  .blog-page .blog-thumb, .blog-headplate, .blog-econ-plate { display: none !important; }
+  .blog-page .blog-thumb, .blog-panel, .blog-econ-plate { display: none !important; }
   .blog-register > li, .blog-row { break-inside: avoid; }
   .blog-article figure { box-shadow: none; border: 1px solid rgba(14, 21, 18, .4); }
   .blog-article figure img { mix-blend-mode: normal; }
@@ -403,6 +404,6 @@
   .lib-plate { max-width: 70%; break-inside: avoid; } .lib-plate * { animation: none !important; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bp-rings, .sr-date::before, .blog-row, .br-min .arr, .blog-post .pager-card::before { transition: none; }
+  .bp-rings, .sr-date::before, .br-min .arr, .bpn, .bpn.is-on, .blog-post .pager-card::before { transition: none; }
   .series-rail.will-reveal > li::before { transform: none; }
 }

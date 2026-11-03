@@ -31,9 +31,13 @@
   const here = pageKey(location.pathname);
   const section = /\/research\/[^/]+$/.test(location.pathname) ? 'research' : here; // an article sits under Research
   // marks where the reader is (the footer: that page only); never removes a mark the page states
+  // the blog has no link of its own in the bar: it reads under Research, its front door (a2), marked as the section
+  const blog = /^\/blog(\/|$)/.test(location.pathname);
   $$('.nav-links a, .nav-sheet a, .nav .btn, .footer ul a').forEach(a => {
     const k = pageKey(a.pathname);
-    if (a.host === location.host && (a.closest('.footer') ? k === here && !a.hash : k === here || k === section)) a.setAttribute('aria-current', 'page');
+    if (a.host !== location.host || a.hasAttribute('aria-current')) return;
+    if (a.closest('.footer') ? k === here && !a.hash : k === here || k === section) a.setAttribute('aria-current', 'page');
+    else if (blog && k === 'research' && !a.closest('.footer')) a.setAttribute('aria-current', 'true');
   });
 
   /* chapters: [data-chapter] sections, else numbered sections (.sec-head), else an article's table of contents. */
@@ -110,8 +114,10 @@
     }
     return line;
   }
-  /* phones: the full label wherever it fits; else the section's short form; else '§NN / total'. */
+  /* phones: the full label wherever it fits; else the section's short form; else '§NN / total'. The bar from 961 to 1279
+     px (a2): the name, else the short form, else the number, in the room the links leave. */
   const narrowMQ = window.matchMedia('(max-width: 960px)'), phoneMQ = window.matchMedia('(max-width: 600px)');
+  const midMQ = window.matchMedia('(min-width: 961px) and (max-width: 1279.98px)');
   let fitKey = '';
   function fitModes() {
     if (!ui.roll || !live.length) return;
@@ -119,13 +125,18 @@
     if (key === fitKey) return;
     fitKey = key;
     live.forEach(c => { c.mode = 'full'; });
-    if (narrowMQ.matches) {
+    const links = midMQ.matches && $('.nav-links', nav);
+    if (narrowMQ.matches || links) {
       const box = document.createElement('span'); box.className = 'nav-ch-measure'; box.setAttribute('aria-hidden', 'true');
       const forms = [];
       live.forEach(c => { forms.push([c, 'full', lineFor(c.k, 'full')]); if (c.short && c.short !== c.title) forms.push([c, 'short', lineFor(c.k, 'short')]); });
       forms.forEach(f => box.appendChild(f[2]));
       ui.btn.appendChild(box);
-      const avail = ui.wrap.getBoundingClientRect().width - (ui.btn.getBoundingClientRect().width - ui.roll.getBoundingClientRect().width) - 1;
+      const r0 = ui.roll.getBoundingClientRect();
+      // the bar: up to the links, less the bar's gap and the button's caret (the roll shrinks before anything moves)
+      const avail = links ? Math.min(parseFloat(getComputedStyle(ui.roll).maxWidth) || 1e4, links.getBoundingClientRect().left
+          - (parseFloat(getComputedStyle(links.parentNode).columnGap) || 24) - (ui.btn.getBoundingClientRect().right - r0.right) - r0.left - 2)
+        : ui.wrap.getBoundingClientRect().width - (ui.btn.getBoundingClientRect().width - r0.width) - 1;
       const w = new Map(forms.map(([c, m, l]) => [c.k + m, l.getBoundingClientRect().width]));
       box.remove();
       let compact = false;
@@ -136,7 +147,7 @@
         else { compact = true; c.fit = false; }
       });
       // the compact form is a number: a chapter without one
-      if (compact) live.forEach(c => { if (/^\d+$/.test(c.n) || c.fit === false) c.mode = 'compact'; });
+      if (compact) live.forEach(c => { if ((!links && /^\d+$/.test(c.n)) || c.fit === false) c.mode = 'compact'; });
       live.forEach(c => { delete c.fit; });
     }
     const c = chapters[shownK];
@@ -493,6 +504,8 @@
     // without a loader; both forced the page's first full layout inside site.js's task: 340 ms at 4x on Lifecycles.)
     let mRaf = 0;
     const measureSoon = () => { if (!mRaf) mRaf = requestAnimationFrame(() => { mRaf = 0; measure(); }); };
+    // (a2: deferring this to idle after the first paint was measured worse, LoAF at 4x: the reveal's first-frame writes
+    // invalidate the layout, so a later read forces a second one; here it shares the page's one first layout)
     measureSoon();
     window.addEventListener('scroll', queue, { passive: true });
     window.addEventListener('resize', measure);
@@ -688,10 +701,18 @@
   let rio = null, sio = null;
   if ('IntersectionObserver' in window && !prefersReduced) requestAnimationFrame(() => {
     const fold = window.innerHeight;
-    const rects = watched.map(el => el.getBoundingClientRect()); // every read first, then every write
+    // every read first, then every write. A chapter that starts below the fold makes all its elements "later" from its own
+    // top: reading each element's rect inside a content-visibility chapter would force that chapter's layout (a2, home)
+    const tops = new Map(), secTop = s => { if (!tops.has(s)) tops.set(s, s.getBoundingClientRect().top); return tops.get(s); };
+    const rects = watched.map(el => { const s = el.closest('main > section'); return s && secTop(s) >= fold - 1 ? { top: secTop(s), width: 1, height: 1 } : el.getBoundingClientRect(); });
     const later = watched.filter((el, k) => { const r = rects[k]; return (r.width || r.height) && r.top >= fold - 1; });
     watched.forEach(el => { if (!later.includes(el)) el.classList.add('is-in'); });
-    const show = el => { el.classList.add('is-in'); rio.unobserve(el); };
+    // a drawn line's dash is its drawing's scale on screen while it draws (site.css .dr; a2: whole at any size)
+    const drawScale = el => $$('.dr', el).forEach(d => {
+      const svg = d.ownerSVGElement, m = svg && !svg.style.getPropertyValue('--dr-k') && svg.getScreenCTM();
+      if (m) svg.style.setProperty('--dr-k', Math.max(1, Math.hypot(m.a, m.b) * 1.02 + .02).toFixed(3));
+    });
+    const show = el => { drawScale(el); el.classList.add('is-in'); rio.unobserve(el); };
     rio = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) show(e.target); });
     }, { rootMargin: '0px 0px -4% 0px', threshold: 0 });

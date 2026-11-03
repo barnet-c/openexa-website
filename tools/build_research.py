@@ -74,6 +74,10 @@ CAPTIONS = {
     "sessions": ("Ten sessions, one column each, in the order of the record.", "Illustrative · heights not to scale"),
     "mastercopy": ("One proven agent above, its copies below, on one control plane.", "Illustrative · roadmap"),
 }
+# award a2 (a2-ux, medium): a figure that colours its parts says what the colours mean. Note 09 draws each session in
+# its NAV regime's colour (figure.js 'sessions', from #oxa-sessions: Days 03-06 and 08 premium, the others discount;
+# Proof's table says the same per day): the key, in words, stands before the hedge, so green never reads as "better"
+KEYS = {"sessions": "Green: premium · white: discount"}
 # v2x lab (research moment): every figure is read as a plate. Its labels pin to points of the formation (figure.js, a
 # stage with data-plate projects data-at, the formation's own x,y,z, onto the screen each frame) and say what each part
 # is, in the words of its caption or its note: no new fact, no number the caption does not already state. Points are
@@ -136,10 +140,16 @@ LABELS = {
     "library": [("01–02 research notes", None, (-0.873, 0.47, 0.095), "t", "acc", (0.0, 0.16)),
                 ("03–10 the series", None, (0.873, 0.47, 0.095), "t", "", (0.19, 0.9))],
 }
+# award a2 (a2-pixel, medium): a plate's rules, drawn as lines over its points in the labels' space (figure.js .fl-line:
+# both ends projected each frame, so the line sways with the drawing and rests level, on whole pixels). Note 09's 10 bps
+# floor was 1,200 khaki points, a 6-8 px soft band at 1:1, while Proof draws the same floor as a crisp rule; it is now
+# one hairline (--stroke), from end to end of where those points lay. It is part of the drawing, not a label: it shows
+# whenever the plate's words could not (a phone's strip, a hedge with no room)
+RULES = {"sessions": [((-1.25, 0.48, 0.07), (1.25, 0.48, 0.07))]}
 def _keep(flags): return next((f for f in flags.split() if f.split("=")[0] == "keep"), None)
 assert all(not _keep(l[4]) for ls in LABELS.values() for l in ls[1:]), "a hedge label (keep) is listed first"
 def labels_html(fig):
-    out = []
+    out = [f'<span class="fl-line" data-at="{a[0]:g},{a[1]:g},{a[2]:g}" data-line="{b[0]:g},{b[1]:g},{b[2]:g}"></span>' for a, b in RULES.get(fig, [])]
     for i, (text, sub, (x, y, z), side, flags, path, *to) in enumerate(LABELS[fig]):
         k = _keep(flags)
         cls = "".join(f" fl--{f}" for f in flags.split() if f != "minorsub" and f != k)
@@ -316,7 +326,7 @@ def _forms(name, N, rnd, g):
                 elif e < 4 * w + U: px, py = x - w, o0 + (e - 4 * w)
                 else: px, py = x + w, o0 + (e - 4 * w - U)
                 push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, k])
-        for i in range(_n(N * 0.08)): push([(rnd() * 2 - 1) * 1.25, F + g() * 0.005, 0.07, 1])
+        # award a2: the floor is a rule (RULES), no longer a band of points
     elif name == "mastercopy":
         def sphere(cx, cy, cz, r, n, k):
             for i in range(n):
@@ -342,21 +352,29 @@ def note_still(fig, every=7):
     n = math.hypot(*eye); zx, zy, zz = (e / n for e in eye)
     xx, xz = zz, -zx; n = math.hypot(xx, xz) or 1; xx, xz = xx / n, xz / n
     yx, yy, yz = zy * xz, zz * xx - zx * xz, -zy * xx
+    def proj(px, py, pz):
+        x, y, z = px * S0, py * S0, pz * S0
+        v0 = xx * x + xz * z - (xx * eye[0] + xz * eye[2])
+        v1 = yx * x + yy * y + yz * z - (yx * eye[0] + yy * eye[1] + yz * eye[2])
+        v2 = zx * x + zy * y + zz * z - (zx * eye[0] + zy * eye[1] + zz * eye[2])
+        return 200 * f * v0 / -v2, -200 * f * v1 / -v2, v2  # the stage's height is 400 units, centred
     paths, xm, i = {}, 0.0, 0
     for p in pts:
         if p[3] >= 7: continue
         i += 1
         if i % every: continue
-        x, y, z = p[0] * S0, p[1] * S0, p[2] * S0
-        v0 = xx * x + xz * z - (xx * eye[0] + xz * eye[2])
-        v1 = yx * x + yy * y + yz * z - (yx * eye[0] + yy * eye[1] + yz * eye[2])
-        v2 = zx * x + zy * y + zz * z - (zx * eye[0] + zy * eye[1] + zz * eye[2])
-        sx, sy = 200 * f * v0 / -v2, -200 * f * v1 / -v2  # the stage's height is 400 units, centred
+        sx, sy, v2 = proj(p[0], p[1], p[2])
         depth = min(1, max(0, (v2 + 5.6) / 2.6))  # figure.js: nearer the eye, brighter
         xm = max(xm, abs(sx))
         paths.setdefault((p[3], depth > 0.5), []).append(f"M{round(sx)} {round(sy)}h0")
+    # award a2: the plate's rules (RULES: note 09's floor) as lines, a hairline at any scale (research.css .fs-still .rule)
+    rules = []
+    for a, b in RULES.get(fig, []):
+        (ax, ay, _), (bx, by, _) = proj(*a), proj(*b)
+        xm = max(xm, abs(ax), abs(bx)); rules.append(f"M{ax:.1f} {ay:.1f}L{bx:.1f} {by:.1f}")
     w = math.ceil(xm + 12)
     body = "".join(f'<path class="k{k}{" far" if not near else ""}" d="{"".join(d)}"/>' for (k, near), d in sorted(paths.items()))
+    body += f'<path class="rule" d="{"".join(rules)}"/>' if rules else ""
     return (f'<svg class="fs-still" viewBox="{-w} -200 {2 * w} 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'
             f'{body}</svg>')
 # v2x: notes link to the instruments they describe (PAGES.md §6.4, NL-01..NL-10); targets are relative to research/
@@ -495,7 +513,10 @@ def cap_html(fig, cls="figcap", title=False, attrs=""):
     where the labels do not fit; research.js writes it from the row)"""
     t, h = CAPTIONS[fig]
     tt = '<span class="figcap-t"></span>' if title else ""
-    return f'<p class="{cls}"{attrs}>{tt}<span class="figcap-h">{H.escape(h, quote=False)}</span></p>'
+    # award a2: the colour key (KEYS) before the hedge; the index plate's caption always has the slot (research.js fills it)
+    k = KEYS.get(fig, "")
+    kk = f'<span class="figcap-k">{H.escape(k, quote=False)}</span>' if k or title else ""
+    return f'<p class="{cls}"{attrs}>{tt}{kk}<span class="figcap-h">{H.escape(h, quote=False)}</span></p>'
 
 # ---------------- templates from the live homepage ----------------
 index_html = read(os.path.join(ROOT, "index.html"))
@@ -529,9 +550,13 @@ def chrome(prefix, current):
 
 # award a1 (system's request, a1-dev): the share card's alt text says what the card shows (the page's H1, then the globe the
 # research cards carry), as launch_meta_v9.py writes it for the top pages, plus twitter:image:alt and og:locale
-CARD_ALT = " Beside it, the dotted globe of the OpenEXA mark."
-def og(prefix, url, title, desc, h1=None):
-    alt = (h1 or title).rstrip(); alt = (alt if alt[-1] in ".!?" else alt + ".") + CARD_ALT  # a title without its own stop gets one
+# award a2 (system's request): build_og.py now gives each note's card the note's own still (svg.fs-still) in place of the
+# globe, and the index's card its library still; the index's alt is launch_meta_v9.py's STILL_PIC, word for word, so the
+# head this build writes is the head the chain leaves
+CARD_ALT = " Beside it, the note’s figure, drawn as a still."
+INDEX_CARD_ALT = " Beside it, the page’s library figure: the notes as an open book of stippled leaves."
+def og(prefix, url, title, desc, h1=None, pic=CARD_ALT):
+    alt = (h1 or title).rstrip(); alt = (alt if alt[-1] in ".!?" else alt + ".") + pic  # a title without its own stop gets one
     return f'''  <meta name="description" content="{H.escape(desc, quote=True)}">
   <meta name="theme-color" content="#0E1512">
   <link rel="canonical" href="{url}">
@@ -583,6 +608,10 @@ for i, post in enumerate(ordered):
         else:
             body.append(f'<p{" class=\"lead\"" if first_p else ""}>{inline(t)}</p>'); first_p = False
     dek = post["dek"] or post["short"]
+    # award a2 (a2-dev): a search result shows ~160 characters; notes 01 and 02 described themselves with the author's
+    # standfirst (295 and 251), cut mid-sentence. Their meta, share and card description is now the note's own one-line
+    # summary (META, as on Home's cards and in the feed); the standfirst still opens the body and stays the schema's
+    meta_desc = dek if len(dek) <= 160 else post["short"]
     title = post["title"]
     url = f"https://www.openexa.com/{post['file']}"
     n = f"{post['order']:02d}"
@@ -596,7 +625,7 @@ for i, post in enumerate(ordered):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{H.escape(title)} — OpenEXA Research</title>
-{og("../", url, title + " — OpenEXA Research", dek, title)}
+{og("../", url, title + " — OpenEXA Research", meta_desc, title)}
   {ld({"@type": "TechArticle", "@id": url + "#article", "headline": title, "description": dek, "url": url, "mainEntityOfPage": url,
         "datePublished": PUBLISHED, "inLanguage": "en", "image": [og_image(url)], "author": ORG, "publisher": ORG,
         "isPartOf": SERIES_LD, "position": post["order"], "wordCount": post["words"], "timeRequired": f"PT{post['minutes']}M"},
@@ -666,7 +695,7 @@ rows = []
 # phone strip) and the hedge
 for post in ordered:
     t, h = CAPTIONS[post["fig"]]
-    cap = " ".join(f'data-cap-{k}="{H.escape(v, quote=True)}"' for k, v in (("t", t), ("h", h)))
+    cap = " ".join(f'data-cap-{k}="{H.escape(v, quote=True)}"' for k, v in (("t", t), ("k", KEYS.get(post["fig"], "")), ("h", h)) if v)
     rows.append(f'''          <li class="post" data-figure-target="{post['fig']}" data-figure-stage="research-figure" {cap}>
             <a href="{post['file']}">
               <span class="post-n">{post['order']:02d}</span>
@@ -681,17 +710,23 @@ url = "https://www.openexa.com/research.html"
 # r2: the share title is the <title>, as launch_meta_v9.py writes it, so research.html no longer differs between the
 # research build and the chain's last step (r1 open issue: built alone it said "Research — OpenEXA")
 INDEX_TITLE = "Research — OpenEXA · The thinking behind agentic lifecycles"
-desc ="Ten notes on the research behind swarm-based agentic lifecycles: compounding error and decomposition, post-training a model to a rulebook, the Execution Council, the hash-chained ledger, and ten sessions on real capital."
-# cut (1 Nov): the blog's three collections as three titles with their size and years; each card is the link
+# award a2 (a2-dev, polish): 159 characters, not 220 (search results cut at ~160); the same topics in the same words
+desc = "Ten notes on swarm-based agentic lifecycles: compounding error, post-training, the Execution Council, the hash-chained ledger and ten sessions on real capital."
+assert len(desc) <= 160, len(desc)
+# cut (1 Nov): the blog's three collections as three titles with their size and years; each row is the link.
+# award a2 (a2-design, polish: "three tall ruled cells hold only a title and a count; the row reads empty at every
+# width"): the section is a spread, as Trust's "What the agents do not do." and Platform's roles: the heading on the
+# left, the three collections as ruled rows on the right, each title with its count and years on one baseline, as the
+# notes' rows above (title, read time, arrow), then the two links. A list of three links, not three cards
 def years(c): return str(c["years"][0]) if c["years"][0] == c["years"][1] else f'{c["years"][0]}–{c["years"][1]}'
-collections = "\n".join(f'          <a class="card research-card" href="blog/index.html#{c["key"]}"><h3 class="h4">{H.escape(c["label"])}</h3><div class="n"><span>{c["count"]}{NB}posts · {years(c)}</span>{ARROW}</div></a>' for c in BLOG['collections'])
+collections = "\n".join(f'              <li><a href="blog/index.html#{c["key"]}"><h3>{H.escape(c["label"])}</h3><span class="rs-coll-m"><span>{c["count"]}{NB}posts · {years(c)}</span>{ARROW}</span></a></li>' for c in BLOG['collections'])
 index_page = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{INDEX_TITLE}</title>
-{og("", url, INDEX_TITLE, desc, "The thinking behind the swarm.").replace('content="article"', 'content="website"')}
+{og("", url, INDEX_TITLE, desc, "The thinking behind the swarm.", INDEX_CARD_ALT).replace('content="article"', 'content="website"')}
   {ld({"@type": "CollectionPage", "@id": url + "#webpage", "url": url, "name": "Research — OpenEXA", "description": desc,
        "isPartOf": WEBSITE, "primaryImageOfPage": og_image(url), "inLanguage": "en",
        "mainEntity": {"@type": "ItemList", "itemListElement": [
@@ -720,7 +755,7 @@ index_page = f'''<!DOCTYPE html>
          and the list takes the full width (research.css, @media (scripting: none)). Cut (1 Nov): no chapter heads; the
          two research notes and the eight-part series read as one contents page, a wider gap between 02 and 03 -->
     <div class="rs-shelf">
-      <section class="section" id="notes" data-chapter="Research notes" data-n="01">
+      <section class="section" id="notes" data-chapter="Research notes" data-chapter-short="Notes" data-n="01">
         <div class="container">
           <div class="rs-col">
             <h2 class="sr-only">Research notes</h2>
@@ -754,12 +789,14 @@ index_page = f'''<!DOCTYPE html>
 
     <section class="section is-paper-2" id="blog" data-chapter="The blog" data-n="03">
       <div class="container">
-        <div class="grid t-2 rs-blog-head">
-          <div class="col-6"><h2 class="display-2" data-reveal data-split>{PH("Three collections,", "from market structure", "to AI agents.")}</h2></div>
-          <div class="col-5 offset-7 row-links" data-reveal><a class="link-arrow" href="blog/index.html">All {BLOG['total']} posts {ARROW}</a><a class="link-arrow scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">The papers on Google Scholar {OUTB}</a></div>
-        </div>
-        <div class="card-grid card-grid--{len(BLOG['collections'])}" data-reveal style="--d:80ms">
+        <div class="grid rs-blog">
+          <h2 class="display-2 col-6" data-reveal data-split>{PH("Three collections,", "from market structure", "to AI agents.")}</h2>
+          <div class="col-6 rs-blog-side">
+            <ul class="rs-coll" data-reveal style="--d:80ms">
 {collections}
+            </ul>
+            <div class="row-links" data-reveal style="--d:140ms"><a class="link-arrow" href="blog/index.html">All {BLOG['total']} posts {ARROW}</a><a class="link-arrow scholar-link" href="{SCHOLAR}" target="_blank" rel="noopener">The papers on Google Scholar {OUTB}</a></div>
+          </div>
         </div>
       </div>
     </section>

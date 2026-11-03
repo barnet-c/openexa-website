@@ -59,6 +59,8 @@
 .y-day { top: calc(var(--top) + var(--zr) + var(--zd) / 2); transform: translateY(-50%); }
 .y-ok { top: calc(var(--top) + var(--zr) + var(--zd) + var(--zo) / 2); transform: translateY(-50%); }
 @container (max-width: 540px) { .pf-y .pf-n { display: none; } .pf-y small { font-size: var(--fs-label); } .pf-gut { letter-spacing: .06em; } .pf-y { right: 4px; } }
+/* a2: phones set the label at 12 px (site.css), so the gutter holds "Confirmed" (71 px) with room before the first tick */
+@container (min-width: 301px) and (max-width: 540px) { .pf, .proof:not(.is-built)::before { --gut: clamp(80px, 15cqi, 108px); } }
 /* phones under ~340 px: a narrower gutter keeps every lane (the tap target) at least 24 px wide */
 @container (max-width: 300px) {
   .pf, .proof:not(.is-built)::before { --gut: 38px; }
@@ -100,44 +102,44 @@
 
 .pf-plot { position: relative; min-width: 0; }
 .pf-trace { position: absolute; left: 0; top: var(--top); width: 100%; height: var(--zr); overflow: visible; pointer-events: none; clip-path: inset(-4px 0 -4px 0); } /* explicit, so the entrance wipe can interpolate */
-.pf-trace path { fill: none; stroke: var(--fg-3); stroke-width: 1px; transition: stroke .25s var(--ease), stroke-width .25s var(--ease-out); }
+.pf-trace path { fill: none; stroke: var(--fg-3); stroke-width: calc(1px * var(--stroke)); transition: stroke var(--dur-feedback) var(--ease), stroke-width var(--dur-feedback) var(--ease-out); }
 .pf-trace .pf-riser { stroke: var(--line-strong); }
-.pf-trace .pf-seg.is-on { stroke: var(--fg); stroke-width: 2px; }
-.pf-trace .pf-area { fill: var(--fg); stroke: none; opacity: .05; transition: opacity .25s var(--ease); }
+.pf-trace .pf-seg.is-on { stroke: var(--fg); stroke-width: calc(2px * var(--stroke)); }
+.pf-trace .pf-area { fill: var(--fg); stroke: none; opacity: .05; transition: opacity var(--dur-feedback) var(--ease); }
 .pf-trace .pf-area.is-on { opacity: .13; }
 .proof[data-side="1"] .y-prem, .proof[data-side="-1"] .y-disc { color: var(--fg); }
-.pf-y { transition: color .25s var(--ease); }
+.pf-y { transition: color var(--dur-feedback) var(--ease); }
 
 .pf-lanes { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(var(--cols, 10), minmax(0, 1fr)); }
 .pf-lane { position: relative; display: grid; grid-template-rows: var(--zg) var(--zc) var(--zr) var(--zd) var(--zo); justify-items: center; cursor: pointer; outline: 0; touch-action: manipulation; }
 .pf-lane::before, .pf-lane::after { content: ""; position: absolute; inset: 0 2px; border-radius: 2px; pointer-events: none; }
-.pf-lane::before { background: var(--fg); opacity: 0; transition: opacity .25s var(--ease); }
+.pf-lane::before { background: var(--fg); opacity: 0; transition: opacity var(--dur-feedback) var(--ease); }
 @media (hover: hover) { .pf-lane:hover::before { opacity: .035; } }
 .pf-lane.is-on::before { opacity: .065; }
 .pf-lane:focus-visible::after { box-shadow: inset 0 0 0 2px var(--accent); }
 
 /* blocks: solid up to the floor (one per basis point), open above it */
-.pf-g, .pf-c { position: relative; z-index: 1; display: flex; flex-direction: column-reverse; align-items: center; gap: var(--g); transition: opacity .3s var(--ease); }
+.pf-g, .pf-c { position: relative; z-index: 1; display: flex; flex-direction: column-reverse; align-items: center; gap: var(--g); transition: opacity var(--dur-move) var(--ease); }
 .pf-g { justify-content: flex-start; padding-bottom: var(--g); }
 .pf-c { padding-top: var(--g); }
 .pf-g i, .pf-c i { display: block; flex: none; width: var(--b); height: var(--b); border-radius: 1px; }
 .pf-c i { background: var(--accent); opacity: calc(.62 + .38 * var(--k) / (var(--n) - 1)); }
-.pf-c i.is-void { background: none; box-shadow: inset 0 0 0 1px var(--line-strong); opacity: 1; }
+.pf-c i.is-void { background: none; box-shadow: inset 0 0 0 calc(1px * var(--stroke)) var(--line-strong); opacity: 1; } /* whole device pixels at every density (a2) */
 .pf-g i { position: relative; --ga: calc(.66 - var(--k) * .16); }
 .pf-g i::before { content: ""; position: absolute; inset: 0; border-radius: 1px; box-shadow: inset 0 0 0 1px var(--accent); opacity: var(--ga); }
 /* above the floor each session is ONE open block and nothing more: no chevron over it (the value above is not published,
    so nothing is drawn to suggest how far; the cut's truth rule, 1 Nov, on Home and Proof alike) */
 
 /* the regime dot (on the trace), the day, the broker tick */
-.pf-r { position: relative; width: 100%; transition: opacity .3s var(--ease); }
-.pf-r i { position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--fg-2); box-shadow: 0 0 0 2px var(--bg); transition: background .25s var(--ease-out), transform .3s var(--ease); }
+.pf-r { position: relative; width: 100%; transition: opacity var(--dur-move) var(--ease); }
+.pf-r i { position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--fg-2); box-shadow: 0 0 0 2px var(--bg); transition: background var(--dur-feedback) var(--ease-out), transform var(--dur-move) var(--ease); }
 .pf-lane[data-side="1"] .pf-r i { top: 22%; }
 .pf-lane[data-side="-1"] .pf-r i { top: 78%; }
 .pf-lane[data-side="0"] .pf-r i { background: var(--bg); box-shadow: inset 0 0 0 1px var(--fg-3), 0 0 0 2px var(--bg); }
 .pf-lane.is-on .pf-r i { background: var(--fg); transform: scale(1.3); }
-.pf-d { align-self: center; font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .06em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color .25s var(--ease-out); }
+.pf-d { align-self: center; font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .06em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color var(--dur-feedback) var(--ease-out); }
 .pf-lane.is-on .pf-d { color: var(--fg); }
-.pf-o { align-self: center; display: grid; place-items: center; transition: opacity .3s var(--ease); }
+.pf-o { align-self: center; display: grid; place-items: center; transition: opacity var(--dur-move) var(--ease); }
 .pf-o svg { width: 12px; height: 12px; fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .pf-o path { stroke-dasharray: 1; stroke-dashoffset: 0; }
 .pf-o-no { display: block; width: 8px; height: 1px; background: var(--fg-3); }
@@ -145,7 +147,7 @@
 
 /* the inspector: the summary, or one session's record; the bracket spans what it describes */
 .pf-read { position: relative; margin-top: 12px; border-top: 1px solid var(--line); overflow-x: clip; } /* a pinned bracket that slides on a resize never widens the page */
-.pf-bracket { position: absolute; top: -1px; height: 2px; left: calc(var(--gut) + (100% - var(--gut)) * var(--i, 0) / var(--cols, 10)); width: calc((100% - var(--gut)) * var(--span, 10) / var(--cols, 10)); background: var(--accent); transition: left .42s var(--ease), width .42s var(--ease); }
+.pf-bracket { position: absolute; top: -1px; height: 2px; left: calc(var(--gut) + (100% - var(--gut)) * var(--i, 0) / var(--cols, 10)); width: calc((100% - var(--gut)) * var(--span, 10) / var(--cols, 10)); background: var(--accent); transition: left var(--dur-move) var(--ease), width var(--dur-move) var(--ease); }
 .pf-bracket::before, .pf-bracket::after { content: ""; position: absolute; top: -5px; width: 1px; height: 7px; background: var(--accent); }
 .pf-bracket::before { left: 0; } .pf-bracket::after { right: 0; }
 .pf-cells { display: grid; grid-template-columns: .8fr 1.1fr 1fr 1.45fr .8fr; column-gap: 12px; }
@@ -161,7 +163,7 @@
 @supports not (width: 1cqi) { @media (max-width: 700px) { .pf-cells { grid-template-columns: 1fr 1fr; column-gap: 16px; } .pf-cell:first-child { grid-column: 1 / -1; } } }
 
 /* the evidence table, linked to the chart */
-.proof-table tbody tr { transition: background-color .2s var(--ease); }
+.proof-table tbody tr { transition: background-color var(--dur-feedback) var(--ease); }
 .proof-table td:nth-child(2) { white-space: nowrap; }
 .proof-table tbody tr.is-hot { background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .proof-table tbody tr.is-hot td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
@@ -175,24 +177,24 @@
 @media screen {
   .proof.pf-now, .proof.pf-now *, .proof.pf-now *::before, .proof.pf-now *::after { transition: none !important; animation: none !important; }
   .proof.is-armed:not(.is-in) .pf-floor { transform: scaleX(0); }
-  .proof.is-armed .pf-floor { transition: transform .5s var(--ease-move); }
+  .proof.is-armed .pf-floor { transition: transform var(--dur-draw) var(--ease-move); }
   .proof.is-armed.is-in .pf-floor { animation: pf-lit .3s var(--ease-out) .8s both; }
   .proof.is-armed:not(.is-in) .pf-c i { opacity: 0; transform: translateY(-12px); }
-  .proof.is-armed .pf-c i { transition: opacity .12s linear, transform .28s var(--ease-out); transition-delay: calc(120ms + var(--k) * 52ms + var(--l) * 4ms); }
+  .proof.is-armed .pf-c i { transition: opacity var(--dur-feedback) linear, transform var(--dur-move) var(--ease-out); transition-delay: calc(120ms + var(--k) * 52ms + var(--l) * 4ms); }
   .proof.is-armed:not(.is-in) .pf-g i { opacity: 0; transform: translateY(8px); }
-  .proof.is-armed .pf-g i { transition: opacity .18s linear, transform .26s var(--ease); transition-delay: calc(120ms + (var(--n) + var(--k)) * 52ms + var(--l) * 4ms); }
+  .proof.is-armed .pf-g i { transition: opacity var(--dur-feedback) linear, transform var(--dur-feedback) var(--ease); transition-delay: calc(120ms + (var(--n) + var(--k)) * 52ms + var(--l) * 4ms); }
   .proof.is-armed:not(.is-in) :is(.pf-gut, .pf-base, .pf-nav) { opacity: 0; }
-  .proof.is-armed :is(.pf-gut, .pf-base, .pf-nav) { transition: opacity .45s var(--ease) 60ms; }
+  .proof.is-armed :is(.pf-gut, .pf-base, .pf-nav) { transition: opacity var(--dur-move) var(--ease) 60ms; }
   .proof.is-armed:not(.is-in) .pf-trace { clip-path: inset(-4px 100% -4px 0); }
-  .proof.is-armed .pf-trace { transition: clip-path .74s var(--ease-move) .2s; }
+  .proof.is-armed .pf-trace { transition: clip-path var(--dur-draw) var(--ease-move) .2s; }
   .proof.is-armed:not(.is-in) .pf-r i { opacity: 0; transform: scale(.2); }
-  .proof.is-armed .pf-r i { transition: opacity .18s linear, transform .28s var(--ease-out); transition-delay: calc(320ms + var(--l) * 48ms); }
+  .proof.is-armed .pf-r i { transition: opacity var(--dur-feedback) linear, transform var(--dur-move) var(--ease-out); transition-delay: calc(320ms + var(--l) * 48ms); }
   .proof.is-armed:not(.is-in) .pf-d { opacity: 0; }
-  .proof.is-armed .pf-d { transition: opacity .34s var(--ease) calc(260ms + var(--l) * 36ms); }
+  .proof.is-armed .pf-d { transition: opacity var(--dur-move) var(--ease) calc(260ms + var(--l) * 36ms); }
   .proof.is-armed:not(.is-in) .pf-o path { stroke-dashoffset: 1; }
-  .proof.is-armed .pf-o path { transition: stroke-dashoffset .3s var(--ease) calc(380ms + var(--l) * 46ms); }
+  .proof.is-armed .pf-o path { transition: stroke-dashoffset var(--dur-move) var(--ease) calc(380ms + var(--l) * 46ms); }
   .proof.is-armed:not(.is-in) .pf-read { opacity: 0; transform: translateY(8px); }
-  .proof.is-armed .pf-read { transition: opacity .6s var(--ease) .26s, transform .6s var(--ease) .26s; }
+  .proof.is-armed .pf-read { transition: opacity var(--dur-draw) var(--ease) .26s, transform var(--dur-draw) var(--ease) .26s; }
 }
 @keyframes pf-lit { 0%, 100% { box-shadow: var(--pf-glow); } 30% { box-shadow: 0 0 22px 2px color-mix(in srgb, var(--accent) 70%, transparent); } }
 
@@ -250,7 +252,7 @@
 .cost-blk .is-part { background: linear-gradient(90deg, var(--c) var(--f), transparent 0); }
 .cost-blk .is-rest { background: none; box-shadow: inset 0 0 0 1px var(--c); }
 .cost-blk .is-gone { background: none; box-shadow: none; border: 1px dashed rgba(14, 21, 18, .34); }
-.cost-rows .cost-blk i { transition: opacity .3s linear, transform .4s var(--ease); transition-delay: calc(var(--d, 0ms) + 120ms + var(--j) * 5ms); }
+.cost-rows .cost-blk i { transition: opacity var(--dur-move) linear, transform var(--dur-move) var(--ease); transition-delay: calc(var(--d, 0ms) + 120ms + var(--j) * 5ms); }
 .cost-row + .cost-row .cost-blk i { transition-delay: calc(var(--d, 0ms) + 420ms + var(--j) * 4ms); }
 .cost-rows.will-reveal:not(.is-in) .cost-blk i { opacity: 0; transform: scale(.35); }
 @container cost (max-width: 860px) {
@@ -298,8 +300,8 @@
 /* the three documents (Proof §02): records on one hash line (no hash text), hairline columns */
 .pf-docs { --cg: clamp(28px, 3.6vw, 56px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--cg); }
 .pf-doc { position: relative; padding-top: 36px; }
-.pf-doc::after { content: ""; position: absolute; left: 0; top: 0; width: 13px; height: 13px; border-radius: 1px; background: var(--fg); transition: transform .4s var(--ease) calc(var(--d, 0ms) + 120ms); }
-.pf-doc::before { content: ""; position: absolute; left: 13px; top: 6px; width: calc(100% + var(--cg) - 13px); height: 1px; background: var(--line-strong); transform-origin: 0 0; transition: transform .8s var(--ease) calc(var(--d, 0ms) + 260ms); }
+.pf-doc::after { content: ""; position: absolute; left: 0; top: 0; width: 13px; height: 13px; border-radius: 1px; background: var(--fg); transition: transform var(--dur-move) var(--ease) calc(var(--d, 0ms) + 120ms); }
+.pf-doc::before { content: ""; position: absolute; left: 13px; top: 6px; width: calc(100% + var(--cg) - 13px); height: 1px; background: var(--line-strong); transform-origin: 0 0; transition: transform var(--dur-draw) var(--ease) calc(var(--d, 0ms) + 260ms); }
 .pf-doc:last-child::before { width: 38%; background: repeating-linear-gradient(90deg, var(--line-strong) 0 3px, transparent 3px 7px); -webkit-mask-image: linear-gradient(90deg, #000 30%, transparent); mask-image: linear-gradient(90deg, #000 30%, transparent); }
 .pf-doc.will-reveal:not(.is-in)::before { transform: scaleX(0); }
 .pf-doc.will-reveal:not(.is-in)::after { transform: scale(0); }
@@ -328,3 +330,5 @@
   .cost-blk .is-rest { box-shadow: none; border: 1px solid CanvasText; }
 }
 /* v2:proof:end */
+/* a2 (4K): the open unit's mark rides with its label above 1920 (its stroke is in its own 12-unit drawing) */
+@media (min-width: 1921px) { .pf-o svg { width: .75rem; height: .75rem; } .pf-o-no { width: .5rem; height: .0625rem; } }

@@ -209,7 +209,7 @@
   }
 
   /* ---------------- drawing ---------------- */
-  let W = 0, H = 0, dpr = 1, hover = null;
+  let W = 0, H = 0, CW = 0, CH = 0, dpr = 1, K = 1, hover = null;
   const RANGE = 30; // ±bps shown
   const PADL = 14, PADT = 18, PADB = 30;
   let PADR = 92;
@@ -217,9 +217,12 @@
   const yOf = (g) => PADT + (0.5 - g / (2 * RANGE)) * (H - PADT - PADB);
   function resize() {
     dpr = Math.min(3, window.devicePixelRatio || 1);
-    const r = cv.getBoundingClientRect(); W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height));
+    // above 1920 the page grows with the window (root = 100vw / 120): the chart is the 1920 chart, scaled (a2, 4K)
+    K = Math.max(1, (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16);
+    const r = cv.getBoundingClientRect(); CW = Math.max(1, Math.floor(r.width)); CH = Math.max(1, Math.floor(r.height));
+    W = CW / K; H = CH / K;
     PADR = W < 600 ? 74 : 92;
-    cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cv.width = Math.floor(CW * dpr); cv.height = Math.floor(CH * dpr); ctx.setTransform(dpr * K, 0, 0, dpr * K, 0, 0);
     draw();
     // a narrower strip shows fewer records: the rest join the count, once the size has settled (a passing resize, such
     // as a page capture's, never drops records)
@@ -248,7 +251,7 @@
   function draw() {
     const now = performance.now();
     ctx.clearRect(0, 0, W, H);
-    ctx.font = '500 10px "IBM Plex Mono", monospace'; ctx.textBaseline = 'middle';
+    ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textBaseline = 'middle';
     // the labels on the right: the threshold's two keep a label's height clear of NAV's, and a grid value that would
     // print under either of them is left out (its hairline stays)
     const yT = yOf(thr), yB = yOf(-thr), x0 = PADL, x1 = W - PADR, LH = 13, yN = yOf(0);
@@ -304,7 +307,7 @@
         ctx.strokeStyle = `rgba(${IVORY}, .25)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, PADT); ctx.lineTo(x, H - PADB); ctx.stroke();
         ctx.fillStyle = `rgba(${IVORY}, 1)`; ctx.beginPath(); ctx.arc(x, y, 3, 0, 6.283); ctx.fill();
         const label = `${clock(st)} · ${sg > 0 ? '+' : '−'}${Math.abs(sg).toFixed(1)} bps ${Math.abs(sg) > thr ? (sg > 0 ? '· create' : '· redeem') : '· hold'}`;
-        ctx.font = '500 10px "IBM Plex Mono", monospace'; const tw = ctx.measureText(label).width + 16;
+        ctx.font = '500 11px "IBM Plex Mono", monospace'; const tw = ctx.measureText(label).width + 16;
         const bx = Math.min(W - PADR - tw, Math.max(PADL, x - tw / 2)), by = PADT - 4;
         ctx.fillStyle = 'rgba(14, 21, 18, .92)'; ctx.fillRect(bx, by, tw, 20); ctx.strokeStyle = `rgba(${IVORY}, .2)`; ctx.strokeRect(bx + .5, by + .5, tw - 1, 19);
         ctx.fillStyle = `rgba(${IVORY}, .95)`; ctx.textAlign = 'left'; ctx.fillText(label, bx + 8, by + 10);
@@ -501,7 +504,7 @@
     draw(); stats();
   }
   motion.addEventListener('click', togglePause);
-  cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); hover = e.clientX - r.left; if (reduced.matches || paused) draw(); }, { passive: true });
+  cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); hover = (e.clientX - r.left) / K; if (reduced.matches || paused) draw(); }, { passive: true });
   cv.addEventListener('pointerleave', () => { hover = null; if (reduced.matches || paused) draw(); });
 
   // The desk sits screens below the fold: it sizes, runs its morning and draws only when it comes within one and a half
@@ -516,7 +519,7 @@
     if (reduced.matches) still(); else { warm(); draw(); stats(); }
     if ('ResizeObserver' in window) new ResizeObserver(([e]) => {
       const r = e.contentRect;
-      if (Math.floor(r.width) !== W || Math.floor(r.height) !== H) resize();
+      if (Math.floor(r.width) !== CW || Math.floor(r.height) !== CH) resize();
     }).observe(cv);
     else window.addEventListener('resize', resize);
     // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time

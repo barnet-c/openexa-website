@@ -44,6 +44,9 @@ Changes from the source, deliberately:
     name each one's area; the rest is in the bio). The four team members keep their card line. The expander reads
     "Bio" (+ / x), with the person's name for screen readers. The section is named for the bar's chapter list by
     data-chapter (02: §01 Mission left the page). Every bio, name, kicker, link and portrait is unchanged.
+  - 2026-11-01 (award a2, 4K): the portraits' sizes attribute follows the page above 1920 px (5vw = 6rem there) and
+    the advisors carry their own, smaller sizes (SIZES_ADV), so no portrait is upscaled at 3840 and no advisor fetches
+    twice the pixels it shows. Markup otherwise unchanged.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -129,7 +132,12 @@ SIZE, HEAD_W, HEAD_TOP = 560, 0.40, 0.11  # r1 (31 Oct): 0.34 / 0.14 left faces 
 INK, PAPER, MID = (14, 21, 18), (245, 242, 236), (112, 112, 104)
 TUNE = {"Mike Lockhart": dict(k=1.0, soft=True), "Subuddh Parekh": dict(k=0.66, top=0.035), "John Shuster": dict(k=1.15)}
 SMALL = (160, 320)
-SIZES = "(max-width: 600px) 64px, (max-width: 1024px) 80px, 96px"  # company.css: one portrait size, 96 / 80 / 64 px
+# company.css: the team's portraits are 96 / 80 / 64 px, the advisors' 64 / 56 / 48 px; above 1920 px the page grows
+# with the window (site.css: root 100vw / 120), so 6rem is 5vw and 4rem 3.34vw there (award a2: rem inside sizes is
+# 16 px, so at 3840 the team got the 160w file for a 192 px circle). Each list says its own size, so an advisor on a
+# 2x laptop or a 3x phone takes the 160w file (it took the 320w).
+SIZES = "(max-width: 600px) 64px, (max-width: 1024px) 80px, (min-width: 1921px) 5vw, 96px"
+SIZES_ADV = "(max-width: 600px) 48px, (max-width: 960px) 56px, (min-width: 1921px) 3.34vw, 64px"
 def subject(path):
     im = Image.open(path).convert("RGBA"); box = im.getchannel("A").point(lambda v: 255 if v > 12 else 0).getbbox()
     return im, box
@@ -205,7 +213,7 @@ def rows(people, line):
         where, h = portrait(slug, src, v1); report.append((name, where, h))
         l = links(src, extra, name)
         card = f'<p>{whole(H.escape(curly(short), quote=False))}</p>' if line else ''
-        items.append(f'''          <li id="{slug}" data-reveal style="--d:{(i % 3) * 40}ms"><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{slug}-v2x.webp" srcset="{srcset(slug)}" sizes="{SIZES}" alt="" width="560" height="560" loading="lazy" decoding="async"></div><div class="who"><h3>{H.escape(name)}</h3><div class="role">{H.escape(title)}</div></div><div class="what">{card}<details class="crew-more"><summary><span class="crew-more-l">Bio</span><span class="sr-only"> of {H.escape(name)}</span></summary><div class="crew-bio">{bio(src)}</div></details>{f'<div class="links">{l}</div>' if l else ''}</div></li>''')
+        items.append(f'''          <li id="{slug}" data-reveal style="--d:{(i % 3) * 40}ms"><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{slug}-v2x.webp" srcset="{srcset(slug)}" sizes="{SIZES if line else SIZES_ADV}" alt="" width="560" height="560" loading="lazy" decoding="async"></div><div class="who"><h3>{H.escape(name)}</h3><div class="role">{H.escape(title)}</div></div><div class="what">{card}<details class="crew-more"><summary><span class="crew-more-l">Bio</span><span class="sr-only"> of {H.escape(name)}</span></summary><div class="crew-bio">{bio(src)}</div></details>{f'<div class="links">{l}</div>' if l else ''}</div></li>''')
     return "\n".join(items), report
 
 team_html, r1 = rows(TEAM, True)

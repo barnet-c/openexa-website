@@ -80,7 +80,7 @@
       <div class="story-stage grain" role="group" aria-label="Five scenes">
         <canvas class="story-gl" aria-hidden="true"></canvas>
         <canvas class="story-2d" data-swarm aria-hidden="true" hidden></canvas>
-        <img class="story-static-mark" src="assets/img/globe-fine.svg" alt="" aria-hidden="true">
+        <img class="story-static-mark" src="assets/img/globe-fine.svg" width="240" height="240" alt="" aria-hidden="true">
         <div class="story-ui">
           <div class="container">
 
@@ -94,9 +94,11 @@
                   <a class="btn btn--ghost" href="#stack">See the stack</a>
                 </div>
               </div>
-              <div class="hero-stats hero-lc01">
-                <p class="lc-line"><b class="lc-n" aria-hidden="true"><i class="live"></i></b><span class="lc-t"><span class="lc-k">Lifecycle&nbsp;01</span> is live on real capital: <a class="lc-proof" href="evidence.html"><span data-story-n="above" data-story-as="words">ten</span> sessions above <span data-story-n="floor">10</span>&nbsp;bps</a>.</span></p>
-                <p class="lc-hedge">Limited proof-of-concept period<span class="lc-sep"> ·</span> <span class="nowrap">not a forecast</span></p>
+              <div class="hero-stats" role="group" aria-label="Key figures">
+                <div><b>5k<em>–</em>50k</b><span>agents per lifecycle</span></div>
+                <div><b>90%</b><span>cost &amp; risk eliminated</span></div>
+                <div><b>6</b><span>lifecycle classes</span></div>
+                <div><b>01<i class="live" aria-hidden="true"></i></b><span>Lifecycle live · ETF create &amp; redeem on real capital</span></div>
               </div>
             </div>
 
@@ -158,8 +160,10 @@
     <!-- ============ 01 LIFECYCLES ============ -->
     <section class="section" id="lifecycles" data-chapter="The work" data-n="01">
       <div class="container">
-        <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">Six lifecycles.</span> <span class="ph">One is live.</span></h2>
-        <p class="ch-line" data-reveal style="--d:60ms">Trillions sit in 17,000 ETFs.</p>
+        <div class="ch-head ch-spread">
+          <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">Six lifecycles.</span> <span class="ph">One is live.</span></h2>
+          <p class="ch-line" data-reveal style="--d:60ms">Trillions sit in 17,000 ETFs.</p>
+        </div>
         <div class="card-grid card-grid--3 lc-reg" data-reveal style="--d:80ms">
           <div class="card"><div class="n n--ring"><span class="lc-code"><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-live" cx="14" cy="14" r="11"/><circle class="orb-bead is-live" cx="22.4" cy="6.9" r="3.4"/></svg></span><span class="badge">Live: ETF creation &amp; redemption</span></div><h3 class="h4">Financial markets &amp; insurance</h3></div>
           <div class="card"><div class="n n--ring"><span class="lc-code"><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-next" cx="14" cy="14" r="11"/></svg></span><span class="st-next">Next</span></div><h3 class="h4">International trade · letters of credit</h3></div>
@@ -200,7 +204,7 @@
           <h2 class="display-2 ch-title" data-reveal data-split>Lifecycle 01, <span class="ph">gate by gate.</span></h2>
           <p class="ch-line" data-reveal style="--d:80ms">Tighten the Council and watch what it rejects.</p>
         </div>
-        <div class="swarm-live is-dark" data-swarm-live data-reveal style="--d:120ms" role="group" aria-label="Swarm lab: an illustrative model of the swarm">
+        <div class="swarm-live is-dark" data-swarm-live data-reveal style="--d:120ms" role="group" aria-label="Swarm lab: an illustrative model of the swarm" aria-describedby="lc01-cap">
           <div class="sw-head">
             <span class="sw-live"><i></i><span data-sw-state>Running</span></span>
             <span class="sw-kicker">Illustrative</span>
@@ -242,6 +246,7 @@
             </div>
           </div>
         </div>
+        <p class="figure-cap lab-cap" id="lc01-cap" data-reveal><span class="fc-h">Illustrative · not production data · <span class="nowrap">scaled down</span> for your browser</span></p>
         <a class="link-arrow ch-link" href="lifecycles.html#lc01" data-reveal>Lifecycle 01 in depth <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
       </div>
     </section>
@@ -288,7 +293,15 @@
     <!-- ============ 05 ECONOMICS ============ -->
     <section class="section is-paper-2" id="economics" data-chapter="Why agents" data-n="05">
       <div class="container">
-        <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">90% of</span> <span class="ph">cost and risk,</span> <span class="ph">eliminated.</span></h2>
+        <div class="ch-head ch-spread eco-head">
+          <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">90% of</span> <span class="ph">cost and risk,</span> <span class="ph">eliminated.</span></h2>
+          <dl class="pf-ck eco-key" aria-label="Key to Fig. 5.1" data-reveal style="--d:80ms">
+            <div><dt><i style="--c:var(--ink)"></i>Cost of carry</dt><dd>Interest on working capital</dd></div>
+            <div><dt><i style="--c:var(--slate)"></i>Counterparty risk</dt><dd>Settlement &amp; credit exposure</dd></div>
+            <div><dt><i style="--c:var(--khaki-deep)"></i>Technology</dt><dd>Infrastructure, routing, reconciliation</dd></div>
+            <div><dt><i style="--c:var(--khaki)"></i>Management</dt><dd>Research, oversight, operations</dd></div>
+          </dl>
+        </div>
         <!-- the indexed stack, as on the Proof page (evidence §03): the same markup, weights and key (production's four
              definitions; check_static cost_definitions). proof.js draws each bar as 100 index blocks from the --w weights (one
              block per point, traditional = 100); without it the runs stay flat -->
@@ -314,12 +327,6 @@
               <div class="cost-val is-acc">&lt;10</div>
             </div>
           </div>
-          <dl class="pf-ck" data-reveal style="--d:160ms">
-            <div><dt><i style="--c:var(--ink)"></i>Cost of carry</dt><dd>Interest on working capital</dd></div>
-            <div><dt><i style="--c:var(--slate)"></i>Counterparty risk</dt><dd>Settlement &amp; credit exposure</dd></div>
-            <div><dt><i style="--c:var(--khaki-deep)"></i>Technology</dt><dd>Infrastructure, routing, reconciliation</dd></div>
-            <div><dt><i style="--c:var(--khaki)"></i>Management</dt><dd>Research, oversight, operations</dd></div>
-          </dl>
           <figcaption class="figure-cap" data-reveal><span class="fc-h">Illustrative weights · <span class="nowrap">traditional = 100</span> · <span class="nowrap">OpenEXA operating model</span></span></figcaption>
         </figure>
       </div>
@@ -332,7 +339,7 @@
         <div class="grid chain-row">
           <div class="col-4 ch-head">
             <h2 class="display-2 ch-title" data-reveal data-split>Try to change <span class="ph">the past.</span></h2>
-            <p class="ch-line" data-reveal style="--d:60ms">Edit any record and watch every one after it stop verifying.</p>
+            <p class="ch-line" data-reveal style="--d:60ms">Change any record and watch every one after it stop verifying.</p>
           </div>
           <div class="col-8">
             <div class="chain is-dark" data-chain data-reveal style="--d:80ms">
@@ -340,7 +347,7 @@
                 <span class="chain-status" data-chain-status><i></i>Eight records · one chain</span>
                 <span class="sr-only" role="status" data-chain-say></span>
                 <span class="chain-acts" hidden>
-                  <button type="button" class="chain-try" data-chain-try hidden>Alter record 03</button>
+                  <button type="button" class="chain-try" data-chain-try hidden>Change record 03</button>
                   <button type="button" class="chain-restore" data-chain-restore hidden>Restore the original records</button>
                 </span>
               </div>
@@ -367,13 +374,15 @@
     <!-- ============ 07 RESEARCH ============ -->
     <section class="section is-paper-2" id="research" data-chapter="Research" data-n="07">
       <div class="container">
-        <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">The thinking</span> <span class="ph">behind the swarm.</span></h2>
-        <div class="card-grid card-grid--3" data-reveal style="--d:120ms">
-          <a class="card research-card" href="research/01-compounding-error.html"><h3 class="h4">Compounding Error and&nbsp;the&nbsp;Case for&nbsp;Decomposition.</h3><span class="link-arrow" aria-hidden="true"><svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
-          <a class="card research-card" href="research/02-post-training-and-audit.html"><h3 class="h4">Specializing a&nbsp;Model to&nbsp;a&nbsp;Rulebook and&nbsp;Proving What&nbsp;It&nbsp;Did.</h3><span class="link-arrow" aria-hidden="true"><svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
-          <a class="card research-card" href="research/03-not-tasks-lifecycles.html"><h3 class="h4"><span class="t-head">Not Tasks. Lifecycles.</span> Why&nbsp;We&nbsp;Stopped Building Assistants</h3><span class="link-arrow" aria-hidden="true"><svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
+        <div class="ch-head ch-spread rs-head">
+          <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">The thinking</span> <span class="ph">behind the swarm.</span></h2>
+          <a class="link-arrow ch-link" href="research.html" data-reveal style="--d:60ms">All ten notes <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
         </div>
-        <a class="link-arrow ch-link" href="research.html" data-reveal>All ten notes <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+        <div class="card-grid card-grid--3" data-reveal style="--d:120ms">
+          <a class="card research-card" href="research/01-compounding-error.html"><img class="rc-mark" src="assets/img/home/note-01.svg" width="299" height="250" alt="" loading="lazy" decoding="async"><h3 class="h4">Compounding Error and&nbsp;the&nbsp;Case for&nbsp;Decomposition.</h3><span class="link-arrow" aria-hidden="true"><svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
+          <a class="card research-card" href="research/02-post-training-and-audit.html"><img class="rc-mark" src="assets/img/home/note-02.svg" width="186" height="250" alt="" loading="lazy" decoding="async"><h3 class="h4">Specializing a&nbsp;Model to&nbsp;a&nbsp;Rulebook and&nbsp;Proving What&nbsp;It&nbsp;Did.</h3><span class="link-arrow" aria-hidden="true"><svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
+          <a class="card research-card" href="research/03-not-tasks-lifecycles.html"><img class="rc-mark" src="assets/img/home/note-03.svg" width="282" height="250" alt="" loading="lazy" decoding="async"><h3 class="h4"><span class="t-head">Not Tasks. Lifecycles.</span> Why&nbsp;We&nbsp;Stopped Building Assistants</h3><span class="link-arrow" aria-hidden="true"><svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
+        </div>
       </div>
     </section>
 

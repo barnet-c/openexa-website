@@ -4,7 +4,7 @@
    No JS: .layers, a readable list. arch.js builds .arch: readout, the exploded stack (SVG), the layers as buttons, one
    boundary; data-arch-spec (Platform) keeps the list as the spec under it; --arch-minh holds the wide instrument. */
 .layers { display: grid; gap: 0; border: 1px solid var(--line); }
-.layers .layer { display: grid; grid-template-columns: 80px 1.1fr 1.6fr; gap: 28px; padding: clamp(22px, 3vw, 40px); border-bottom: 1px solid var(--line); align-items: start; background: var(--bg); transition: background .3s var(--ease-out); }
+.layers .layer { display: grid; grid-template-columns: 80px 1.1fr 1.6fr; gap: 28px; padding: clamp(22px, 3vw, 40px); border-bottom: 1px solid var(--line); align-items: start; background: var(--bg); transition: background var(--dur-move) var(--ease-out); }
 .layers .layer:last-child { border-bottom: 0; }
 @media (hover: hover) { .layers .layer:hover { background: var(--bg-2); } } /* no stuck hover after a tap */
 .layers .layer .k, .layers .layer-boundary .k, .layers .layer-floor .k { font-family: var(--mono); font-size: var(--mono-m, .75rem); letter-spacing: .1em; color: var(--fg-3); padding-top: 6px; }
@@ -42,7 +42,7 @@
 [data-arch-spec] > .layer > div > .io > div:last-child dt { color: color-mix(in srgb, var(--signal) 80%, var(--ink)); }
 [data-arch-spec] > .layer > div > .io > div:last-child dt::before { content: "\2192\00a0"; content: "\2192\00a0" / ""; }
 /* a layer the explorer leads to: a green rule beside it, and the entry lights for a moment */
-[data-arch-spec] > .layer::before { content: ""; position: absolute; left: -14px; top: clamp(24px, 2.6vw, 34px); bottom: clamp(24px, 2.6vw, 34px); width: 2px; background: var(--accent); transform: scaleY(0); transform-origin: 50% 0; transition: transform .45s var(--ease); }
+[data-arch-spec] > .layer::before { content: ""; position: absolute; left: -14px; top: clamp(24px, 2.6vw, 34px); bottom: clamp(24px, 2.6vw, 34px); width: 2px; background: var(--accent); transform: scaleY(0); transform-origin: 50% 0; transition: transform var(--dur-move) var(--ease); }
 [data-arch-spec] > .layer::after { content: ""; position: absolute; inset: 0 -14px; z-index: -1; background: color-mix(in srgb, var(--accent) 9%, transparent); opacity: 0; pointer-events: none; }
 [data-arch-spec] > .layer.is-lit::before { transform: scaleY(1); }
 [data-arch-spec] > .layer.is-flash::after { animation: arch-lit 2.4s var(--ease) forwards; }
@@ -104,7 +104,11 @@
 .arch-legend .lg-ring { border-radius: 50%; border: 1.5px solid var(--signal-bright); width: 9px; height: 9px; }
 .arch-legend .lg-sq { background: var(--signal-bright); }
 .arch-hint { color: var(--fg-3); }
-.arch-motion { min-height: 34px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 2px; font: var(--mono-tick)/1.5 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-2); white-space: nowrap; transition: border-color .25s var(--ease-out), color .25s var(--ease-out); }
+.arch-motion { min-height: 34px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 2px; font: var(--mono-tick)/1.5 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-2); white-space: nowrap; transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out); }
+/* a2 (UX juror, big; owner: mono caps only on live data): the head speaks Inter at the small step, sentence case, on Home
+   and Platform alike (was platform.css's, Platform only): the title, the khaki hedge with its marks, the hint, Pause motion */
+.arch-head, .arch-motion { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; }
+.arch-motion { line-height: 1.5; }
 @media (hover: hover) { .arch-motion:hover { border-color: var(--accent); color: var(--accent); } }
 @media (pointer: coarse) { .arch-motion { min-height: 44px; } } /* a finger's target */
 .arch-motion:focus-visible, .arch-layer:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
@@ -126,14 +130,14 @@
 
 /* the layers, as buttons: each is the label of its plate */
 .arch-h { margin: 0; font: inherit; }
-.arch-layer { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto 18px; align-items: center; column-gap: 12px; width: 100%; min-height: 64px; padding: 8px 6px 8px 16px; text-align: left; border-top: 1px solid var(--line); color: var(--fg-2); transition: color .25s var(--ease), background-color .25s var(--ease); }
-.arch-layer .n { font-family: var(--mono); font-size: var(--mono-s, .6875rem); letter-spacing: .1em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color .25s var(--ease-out); }
+.arch-layer { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto 18px; align-items: center; column-gap: 12px; width: 100%; min-height: 64px; padding: 8px 6px 8px 16px; text-align: left; border-top: 1px solid var(--line); color: var(--fg-2); transition: color var(--dur-feedback) var(--ease), background-color var(--dur-feedback) var(--ease); }
+.arch-layer .n { font-family: var(--mono); font-size: var(--mono-s, .6875rem); letter-spacing: .1em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color var(--dur-feedback) var(--ease-out); }
 .arch-layer .nm { font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.1; letter-spacing: -0.01em; }
-.arch-layer .vb { font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); transition: color .25s var(--ease-out); }
-.arch-layer::after { content: "+"; content: "+" / ""; font-family: var(--mono); font-size: .95rem; line-height: 1; color: var(--fg-3); text-align: center; transition: color .25s var(--ease-out), transform .3s var(--ease); }
+.arch-layer .vb { font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); transition: color var(--dur-feedback) var(--ease-out); }
+.arch-layer::after { content: "+"; content: "+" / ""; font-family: var(--mono); font-size: .95rem; line-height: 1; color: var(--fg-3); text-align: center; transition: color var(--dur-feedback) var(--ease-out), transform var(--dur-move) var(--ease); }
 .arch-layer[aria-expanded="true"]::after { content: "\2212"; content: "\2212" / ""; color: var(--accent); } /* decoration: aria-expanded carries the state */
 .arch--spec .arch-layer::after { content: "\2193"; content: "\2193" / ""; } /* spec: it leads down to the layer's entry */
-.arch-layer::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; background: var(--accent); transform: scaleY(0); transition: transform .3s var(--ease); }
+.arch-layer::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; background: var(--accent); transform: scaleY(0); transition: transform var(--dur-move) var(--ease); }
 .arch-layer.is-hot { color: var(--fg); background-color: rgba(79, 203, 147, .07); }
 .arch-layer.is-hot .n, .arch-layer.is-hot .vb, .arch-layer[aria-expanded="true"] .n, .arch-layer.is-hot::after { color: var(--accent); }
 .arch-layer.is-hot::before, .arch-layer[aria-expanded="true"]::before { transform: scaleY(1); }
@@ -153,6 +157,8 @@
 .arch-floor .gl { flex: none; width: 30px; height: 7px; border-top: 1px solid rgba(172, 166, 142, .75); background: repeating-linear-gradient(-45deg, transparent 0 3px, rgba(172, 166, 142, .5) 3px 4px); }
 .arch-floor .fa, .arch-floor .fb { white-space: nowrap; }
 @container (max-width: 399px) { .arch-floor .fs { display: none; } .arch-floor .fa, .arch-floor .fb { display: block; } }
+/* a2 (the same item, Home's half): the boundary's two sides and the floor are words, not live data: Inter, as the chip */
+.arch-bound .sides, .arch-floor { font: 400 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; text-transform: none; }
 /* a layer's detail: inline under its button on narrow screens, in the readout on wide ones */
 .arch .arch-panel { padding: 2px 6px 24px 58px; }
 .arch .arch-panel > p { color: var(--fg-2); font-size: var(--fs-small); line-height: 1.6; max-width: 62ch; }
@@ -169,7 +175,7 @@
 
 /* the readout (wide only): the overview straddles the boundary; the card follows the layer you point at. */
 .arch-read { position: relative; }
-.arch-ov { position: absolute; left: 0; right: 0; top: 0; height: 0; transition: opacity .22s var(--ease) .09s; }
+.arch-ov { position: absolute; left: 0; right: 0; top: 0; height: 0; transition: opacity var(--dur-feedback) var(--ease) .09s; }
 .arch-ov > div { position: absolute; left: 0; right: 0; max-width: 34ch; }
 .arch-ov .ov-up { bottom: 20px; } .arch-ov .ov-dn { top: 20px; }
 .arch-ov b { display: block; font-family: var(--mono); font-weight: 500; font-size: var(--mono-tick); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--accent); }
@@ -178,9 +184,9 @@
 .arch-ov p { margin-top: 10px; font-size: var(--fs-small); line-height: 1.5; color: var(--fg-2); }
 .arch-ov .ov-up p { margin: 0 0 0; }
 .arch-ov small { display: block; max-width: 42ch; margin-top: 12px; font-family: var(--mono); font-size: var(--mono-tick); line-height: 1.6; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); text-wrap: balance; }
-.arch-card { position: absolute; left: 0; right: 0; top: 0; opacity: 0; visibility: hidden; transition: opacity .09s linear, visibility 0s var(--ease-out) .09s; will-change: transform; }
-.arch.has-hot .arch-card { opacity: 1; visibility: visible; transition: opacity .22s var(--ease) .09s, visibility 0s var(--ease-out); }
-.arch.has-hot .arch-ov, .arch-ov[data-in="0"] { opacity: 0; transition: opacity .09s linear; }
+.arch-card { position: absolute; left: 0; right: 0; top: 0; opacity: 0; visibility: hidden; transition: opacity var(--dur-feedback) linear, visibility 0s var(--ease-out) .09s; will-change: transform; }
+.arch.has-hot .arch-card { opacity: 1; visibility: visible; transition: opacity var(--dur-feedback) var(--ease) .09s, visibility 0s var(--ease-out); }
+.arch.has-hot .arch-ov, .arch-ov[data-in="0"] { opacity: 0; transition: opacity var(--dur-feedback) linear; }
 .arch-sum .sum-k { display: flex; justify-content: space-between; gap: 12px; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); }
 .arch-sum .sum-k b { font-weight: 500; color: var(--accent); }
 .arch-sum .sum-nm { margin-top: 10px; font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.02; letter-spacing: -0.018em; color: var(--fg); }
@@ -195,7 +201,7 @@
 @keyframes arch-tick { 0% { color: var(--fg); } 100% { color: var(--fg-3); } }
 @keyframes arch-dot { 0% { opacity: 1; transform: scale(1.4); } 100% { opacity: 0; transform: scale(.6); } }
 .arch-sum .sum-cue { margin-top: 10px; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
-.arch-sum.is-out { opacity: 0; transition: opacity .09s linear; }
+.arch-sum.is-out { opacity: 0; transition: opacity var(--dur-feedback) linear; }
 .arch-sum.is-swap { animation: arch-swap .22s var(--ease); }
 @keyframes arch-swap { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .arch-card .arch-panel { padding: 16px 0 0; margin-top: 16px; border-top: 1px solid var(--line); }
@@ -282,30 +288,6 @@
 .arch-svg text.ab-t.is-below, .arch-svg text.af-t { fill: var(--khaki); }
 .arch.is-wide .arch-svg text.ap-num, .arch.is-wide .arch-svg text.ab-t, .arch.is-wide .arch-svg text.af-t { display: none; }
 
-/* ---------- Platform §02, One boundary: adaptive above, deterministic below, the explorer's boundary drawn between ---------- */
-.bnd { display: grid; }
-.bnd-side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); grid-template-areas: "n n" "h ul"; column-gap: clamp(28px, 4vw, 72px); align-items: start; isolation: isolate; overflow: hidden; }
-.bnd-side .n { grid-area: n; }
-.bnd-side h3 { grid-area: h; }
-.bnd-side .checks { grid-area: ul; }
-.bnd-side .checks li:first-child { padding-top: 4px; }
-.bnd-side .checks li:first-child::before { top: 10px; }
-.bnd-side .checks li:last-child { border-bottom: 0; }
-.bnd-line.arch-bound { min-height: 104px; padding: 0; border-top: 0; font-size: var(--mono-s, .6875rem); color: var(--fg-2); }
-.bnd-line::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--signal); box-shadow: 0 0 0 .5px rgba(30, 122, 90, .2), 0 0 14px 1px rgba(30, 122, 90, .3); }
-.bnd-line .chip { padding: 7px 11px; border-color: var(--signal); background: var(--paper); color: color-mix(in srgb, var(--signal) 80%, var(--ink)); }
-.bnd-line .sides { gap: 22px; }
-.bnd-line .sides > span { background: none; }
-.bnd-line .sides > span:first-child { color: color-mix(in srgb, var(--signal) 80%, var(--ink)); }
-.bnd-line .sides > span:last-child { color: var(--fg-2); }
-@media (max-width: 860px) {
-  .bnd-side { grid-template-columns: minmax(0, 1fr); grid-template-areas: "n" "h" "ul"; }
-  .bnd-side .checks { margin-top: 22px; }
-  .bnd-side .checks li:first-child { padding-top: 12px; }
-  .bnd-side .checks li:first-child::before { top: 18px; }
-}
-@media (max-width: 480px) { .bnd-line .sides > span { white-space: normal; } .bnd-line.arch-bound { min-height: 96px; } }
-
 /* ---------- Platform §05, Deployment: three spec columns, each under a static plate ---------- */
 .dpl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 44px clamp(24px, 3vw, 48px); }
 .dpl-col { min-width: 0; }
@@ -346,3 +328,26 @@
   .dpl-col { break-inside: avoid; }
 }
 /* v2:arch:end */
+/* a2 (4K): the explorer draws in CSS px (arch.js grows its geometry with the root above 1920, not its strokes): above
+   1920 its stroke widths and dashes follow the page's tokens, so 3840 is 1920@2 (it was engraved at half weight) */
+@media (min-width: 1921px) {
+  .arch-svg :is([stroke-width="1"], [stroke-width="1.1"], [stroke-width="1.2"]), .arch-svg [vector-effect="non-scaling-stroke"]:not([stroke-width]) { stroke-width: var(--stroke); }
+  .arch-svg :is([stroke-width="1.4"], [stroke-width="1.5"], [stroke-width="1.6"]) { stroke-width: var(--stroke-2); }
+  .arch-svg [stroke-width="3.5"] { stroke-width: calc(3.5px * var(--stroke)); }
+  .arch-svg [stroke-width="9"] { stroke-width: calc(9px * var(--stroke)); }
+  .arch-svg [stroke-dasharray="1 3"] { stroke-dasharray: calc(1 * var(--dash-u)) calc(3 * var(--dash-u)); }
+  .arch-svg [stroke-dasharray="2 3"] { stroke-dasharray: calc(2 * var(--dash-u)) calc(3 * var(--dash-u)); }
+}
+/* a2 (4K): the ground's motes and their fade ride with the page above 1920 (in px they were half their 1920@2 size and
+   twice as dense at 3840) */
+@media (min-width: 1921px) {
+  .arch-field .af-up {
+    background-image: radial-gradient(circle at 31% 42%, rgba(245, 242, 236, .62) .0375rem, transparent .08125rem), radial-gradient(circle at 74% 17%, rgba(245, 242, 236, .5) .0375rem, transparent .08125rem),
+      radial-gradient(circle at 12% 81%, rgba(245, 242, 236, .44) .0375rem, transparent .08125rem), radial-gradient(circle at 58% 66%, rgba(245, 242, 236, .56) .0375rem, transparent .08125rem),
+      radial-gradient(circle at 88% 93%, rgba(245, 242, 236, .4) .0375rem, transparent .08125rem);
+    background-size: 1.4375rem 1.8125rem, 2.3125rem 1.9375rem, 2.5625rem 2.9375rem, 3.3125rem 2.6875rem, 3.8125rem 4.1875rem;
+    -webkit-mask-image: linear-gradient(to top, #000, rgba(0, 0, 0, .35) 5.625rem, transparent 14.375rem); mask-image: linear-gradient(to top, #000, rgba(0, 0, 0, .35) 5.625rem, transparent 14.375rem); }
+  .arch-field .af-dn {
+    background-image: radial-gradient(circle, rgba(245, 242, 236, .42) .04375rem, transparent .075rem); background-size: 1rem 1rem; background-position: calc(var(--cx, 50%) - .5rem) 0;
+    -webkit-mask-image: linear-gradient(to bottom, #000, rgba(0, 0, 0, .35) 5.625rem, transparent 15.625rem); mask-image: linear-gradient(to bottom, #000, rgba(0, 0, 0, .35) 5.625rem, transparent 15.625rem); }
+}

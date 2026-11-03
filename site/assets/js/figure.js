@@ -136,7 +136,8 @@
           P.push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, k]);
         }
       }
-      for (let i = 0; i < N * 0.08; i++) P.push([(rnd() * 2 - 1) * 1.25, F + g() * 0.005, 0.07, 1]);
+      // award a2 (a2-pixel): the 10 bps floor is a rule over the points (.fl-line, build_research RULES), crisp at any
+      // density; as 1,200 khaki points it was a 6-8 px soft band at 1:1, where Proof draws the same floor as a hairline
       while (P.length < N) P.push([(rnd() * 2 - 1) * 1.4, (rnd() * 2 - 1) * 0.9, -0.9 - rnd() * 0.6, 7]);
       return P;
     },
@@ -201,9 +202,11 @@
     float pulse = accent > 1.0 ? (0.86 + 0.14 * sin(u_time * 2.2 + a_rand.w * 6.283)) : 1.0;
     float sz = (1.65 + a_rand.x * 2.0) * (0.6 + depth * 0.8) * accent * (dust < 0.5 ? 0.7 : 1.0) * pulse * (1.0 + 0.4 * glow) * mix(0.3, 1.0, vis);
     float al = (0.26 + 0.6 * depth) * dust * (accent > 1.0 ? 1.15 : 1.0) * (1.0 + 1.15 * glow) * vis;
-    float px = min(sz * u_pr * (u_halo > 0.5 ? 3.6 : 1.0), u_maxpt);
+    /* award a2 (a2-pixel): the accent's halo is half the radius and half the alpha it was (1.8x the point, .085): the green
+       points read as sharp as the ivory ones at 1:1 (3840@1, 390@3), a glow at their edge, not a blur round them */
+    float px = min(sz * u_pr * (u_halo > 0.5 ? (accent > 1.0 ? 1.8 : 3.6) : 1.0), u_maxpt);
     gl_PointSize = px; v_size = px;
-    v_alpha = u_halo > 0.5 ? al * (accent > 1.0 ? 0.17 : 0.038) * u_ha : al;
+    v_alpha = u_halo > 0.5 ? al * (accent > 1.0 ? 0.085 : 0.038) * u_ha : al;
     v_col = mix(mix(kcol(kA), kcol(kB), t), vec3(1.0), 0.14 * glow);
   }`;
   /* Sprites are resolution-aware: the disc edge is one device pixel wide whatever the size, so points stay round
@@ -317,7 +320,7 @@
     let ref = 432, u = 1;
     const SWAY = 0.2, FLOW_S = 1.5; // radians either side of face-on; seconds per pass of the pulse
     const groups = {}; let grp = null, grpOn = false;
-    stage.querySelectorAll('.fig-labels').forEach(el => { groups[el.dataset.for] = { el, items: Array.from(el.querySelectorAll('.fl')).map(l => ({ el: l, at: l.dataset.at.split(',').map(Number), side: l.dataset.side || 'r', ph: l.dataset.ph ? l.dataset.ph.split(',').map(Number) : null, to: l.dataset.to ? l.dataset.to.split(',').map(Number) : null, keep: l.hasAttribute('data-keep'), sides: (l.dataset.keep || '').split(' ').filter(Boolean), lead: 19, w: 0, h: 0, w1: 0, h1: 0, drop: 0, one: false, dropSet: 0, oneSet: false, x: NaN, y: NaN, dx: 0, out: false, lit: false })) }; });
+    stage.querySelectorAll('.fig-labels').forEach(el => { groups[el.dataset.for] = { el, items: Array.from(el.querySelectorAll('.fl')).map(l => ({ el: l, at: l.dataset.at.split(',').map(Number), side: l.dataset.side || 'r', ph: l.dataset.ph ? l.dataset.ph.split(',').map(Number) : null, to: l.dataset.to ? l.dataset.to.split(',').map(Number) : null, keep: l.hasAttribute('data-keep'), sides: (l.dataset.keep || '').split(' ').filter(Boolean), lead: 19, w: 0, h: 0, w1: 0, h1: 0, drop: 0, one: false, dropSet: 0, oneSet: false, x: NaN, y: NaN, dx: 0, out: false, lit: false })), lines: Array.from(el.querySelectorAll('.fl-line')).map(l => ({ el: l, a: l.dataset.at.split(',').map(Number), b: l.dataset.line.split(',').map(Number), k: '' })) }; });
     grp = groups[initial] || null;
     // where the words may stand (stage px): inside the page's content edge, never under the bar (a hero stage starts at
     // the top of the page); a label that cannot stand there whole is not shown
@@ -354,6 +357,7 @@
           if (pts[i * 4 + 3] >= 6.5 || !project(pts[i * 4], pts[i * 4 + 1], pts[i * 4 + 2], 0, 1, sc, restView)) continue;
           fitX(scr[0] - cx, 0, 0); fitY(scr[1] - cy, 0, 0);
         }
+        if (g) g.lines.forEach(ln => [ln.a, ln.b].forEach(q => { if (project(q[0], q[1], q[2], 0, 1, sc, restView)) { fitX(scr[0] - cx, 0, 0); fitY(scr[1] - cy, 0, 0); } })); // a2: a rule's ends
         words = true;
         if (g) g.items.forEach(it => {
           const t = it.el.firstElementChild, w = t ? t.offsetWidth : 0, h = t ? t.offsetHeight : 0;
@@ -383,6 +387,7 @@
         if (scr[0] < x0) x0 = scr[0]; if (scr[0] > x1) x1 = scr[0]; if (scr[1] > y1) y1 = scr[1];
       }
       const g = groups[current];
+      if (g) g.lines.forEach(ln => [ln.a, ln.b].forEach(q => { if (project(q[0], q[1], q[2], 0, 1, sc, restView)) { if (scr[0] < x0) x0 = scr[0]; if (scr[0] > x1) x1 = scr[0]; } }));
       if (g) g.items.forEach(it => {
         const t = it.el.firstElementChild, h = t ? t.offsetHeight : 0;
         if (h && it.side[0] === 'b' && project(it.at[0], it.at[1], it.at[2], 0, 1, sc, restView)) y1 = Math.max(y1, scr[1] + 18 * u + h);
@@ -483,6 +488,7 @@
         if (pts[i * 4 + 3] >= 6.5 || !project(pts[i * 4], pts[i * 4 + 1], pts[i * 4 + 2], 0, 1, sc)) continue;
         if (scr[0] >= 0 && scr[1] >= 0 && scr[0] < W && scr[1] < H) { occ[Math.floor(scr[1] / CELL) * oc + Math.floor(scr[0] / CELL)]++; S++; }
       }
+      grp.lines.forEach(ln => { for (let j = 0; j <= 64; j++) { const t = j / 64; if (project(ln.a[0] + (ln.b[0] - ln.a[0]) * t, ln.a[1] + (ln.b[1] - ln.a[1]) * t, ln.a[2] + (ln.b[2] - ln.a[2]) * t, 0, 1, sc) && scr[0] >= 0 && scr[1] >= 0 && scr[0] < W && scr[1] < H) { occ[Math.floor(scr[1] / CELL) * oc + Math.floor(scr[0] / CELL)]++; S++; } } });
       occN = S; place(0, sc, true);
     }
     function labelsOff() { if (grp) { grp.el.classList.remove('is-on'); grp.items.forEach(it => { if (it.lit) { it.el.classList.remove('is-lit'); it.lit = false; } }); } grpOn = false; }
@@ -559,6 +565,18 @@
         if (px !== it.x || py !== it.y) { it.el.style.transform = `translate(${px}px, ${py}px)`; it.x = px; it.y = py; }
         if (dx !== it.dx) { it.el.style.setProperty('--dx', `${Math.round(dx)}px`); it.dx = dx; }
         setOut(it, out);
+      });
+      /* award a2 (a2-pixel): a plate's rule (note 09's 10 bps floor) is a line between two of the formation's points, drawn
+         over the points in the labels' space: both ends projected with the sway, so it moves with the drawing, and level
+         (no rotation) when its ends land on one pixel row, as at rest, so it is one crisp hairline at any density. It is
+         the drawing, not a word: never hidden with the labels (bare, out) */
+      if (!planning) grp.lines.forEach(ln => {
+        if (!project(ln.a[0], ln.a[1], ln.a[2], s, c, sc)) return; const x0 = scr[0], y0 = scr[1];
+        if (!project(ln.b[0], ln.b[1], ln.b[2], s, c, sc)) return;
+        const ddx = scr[0] - x0, ddy = scr[1] - y0, len = Math.round(Math.hypot(ddx, ddy)), ang = ddy ? Math.atan2(ddy, ddx) : 0;
+        const k = `${x0} ${y0} ${len} ${ang}`; if (k === ln.k) return; ln.k = k;
+        // a 1 px box stretched by scaleX: a transform only, so a swaying rule costs no layout
+        ln.el.style.transform = `translate(${x0}px, ${y0}px)` + (ang ? ` rotate(${ang.toFixed(4)}rad)` : '') + ` scaleX(${len})`;
       });
     }
     function frame() { frameId = 0; if (!visible || document.hidden || lost || paused) return; draw(false); }

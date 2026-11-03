@@ -43,7 +43,7 @@
 /* the chapter mark: absent at rest; inside a hand-over the incoming scene's numeral rises above the copy column and rolls over */
 .story-num { position: absolute; left: var(--story-in-l); top: calc(var(--nav-h) + clamp(16px, 4.5vh, 48px)); opacity: 0; pointer-events: none; color: var(--paper); will-change: opacity, transform; }
 .story-num b, .story-num span { display: block; overflow: hidden; transform-origin: 0 0; }
-.story-num i { display: block; font-style: normal; transform: translate3d(0, calc(var(--roll, 0) * -100%), 0); transition: transform .6s var(--ease-move); } /* two lines, rolled like a counter */
+.story-num i { display: block; font-style: normal; transform: translate3d(0, calc(var(--roll, 0) * -100%), 0); transition: transform var(--dur-draw) var(--ease-move); } /* two lines, rolled like a counter */
 .story-num b { height: 1em; font: 400 clamp(6rem, 12vw, 10.5rem)/1 var(--serif); letter-spacing: -0.045em; color: rgba(245, 242, 236, .16); font-variant-numeric: tabular-nums; }
 .story-num b i { height: 1em; }
 .story-num span { height: 1.4em; margin-top: 4px; font: var(--mono-tick)/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .62); }
@@ -65,18 +65,18 @@
 .story-labels { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
 .story-leaders { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 /* callouts, leaders and nodes take their opacity from story.js */
-.story-leader { fill: none; stroke: rgba(245, 242, 236, .3); stroke-width: 1; opacity: 0; transition: stroke .25s var(--ease-out); }
+.story-leader { fill: none; stroke: rgba(245, 242, 236, .3); stroke-width: var(--stroke); opacity: 0; transition: stroke var(--dur-feedback) var(--ease-out); }
 .story-leader.is-live, .story-leader.is-council, .story-leader.bound { stroke: rgba(79, 203, 147, .5); }
 .story-leader.is-hot { stroke: rgba(245, 242, 236, .75); }
 .story-node { fill: rgba(245, 242, 236, .86); opacity: 0; } /* where a leader meets its own ring */
 .story-node.is-live { fill: var(--signal-bright); }
-.story-lab { position: absolute; left: 0; top: 0; font: 400 var(--mono-tick)/1.35 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .66); white-space: nowrap; opacity: 0; transition: color .25s var(--ease-out); user-select: text; pointer-events: none; }
+.story-lab { position: absolute; left: 0; top: 0; font: 400 var(--mono-tick)/1.35 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .66); white-space: nowrap; opacity: 0; transition: color var(--dur-feedback) var(--ease-out); user-select: text; pointer-events: none; }
 .story-lab.is-on { pointer-events: auto; }
 button.story-lab { cursor: pointer; text-align: left; }
 button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outline-offset: 3px; }
 .story-lab b { font-weight: 500; color: rgba(245, 242, 236, .86); }
 .story-lab .k { color: rgba(245, 242, 236, .92); font-variant-numeric: tabular-nums; }
-.story-lab .n { color: rgba(245, 242, 236, .6); transition: color .25s var(--ease-out); }
+.story-lab .n { color: rgba(245, 242, 236, .6); transition: color var(--dur-feedback) var(--ease-out); }
 .story-lab .dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } /* read by screen readers; shown in the inspector */
 .story-lab.ring, .story-lab.layer, .story-lab.gate, .story-lab.note, .story-lab.bound { display: flex; align-items: center; gap: 10px; min-height: 22px; padding: 2px 0; }
 .story-lab .st { padding: 3px 6px 2px; border: 1px solid rgba(245, 242, 236, .24); border-radius: 2px; font-size: var(--mono-tick); letter-spacing: .12em; color: rgba(245, 242, 236, .7); }
@@ -103,7 +103,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-lab.sum .sep { display: block; }
 .story-lab.sum .lg-t::after { content: ""; display: inline-block; width: 8px; height: 4px; margin-left: 8px; border: solid var(--signal-bright); border-width: 0 0 1.5px 1.5px; transform: translateY(-3px) rotate(-45deg); }
 .story-insp { position: absolute; left: 0; top: 0; z-index: 2; max-width: 260px; padding: 9px 12px 10px; border-left: 1px solid var(--signal-bright); background: rgba(11, 17, 15, .96); font: var(--mono-tick)/1.55 var(--mono); letter-spacing: .07em; color: rgba(245, 242, 236, .8); opacity: 0; pointer-events: none; white-space: normal; }
-.story-insp.is-on { opacity: 1; transition: opacity .2s var(--ease); } /* it comes up softly and goes at once */
+.story-insp.is-on { opacity: 1; transition: opacity var(--dur-feedback) var(--ease); } /* it comes up softly and goes at once */
 .story-insp b { display: block; margin-bottom: 3px; color: var(--paper); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
 .story-insp em { font-style: normal; color: var(--signal-bright); }
 /* while the inspector is up, the caption and the summary give way to it (classes only: no :has()) */
@@ -114,7 +114,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-bar .container { height: 100%; display: flex; align-items: center; gap: 22px; }
 .story-idx { pointer-events: auto; margin-right: auto; }
 .story-idx ol { display: flex; gap: 6px; }
-.story-idx button { position: relative; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 14px 4px 0; font: var(--mono-tick)/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: rgba(245, 242, 236, .54); transition: color .3s var(--ease-out); }
+.story-idx button { position: relative; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 14px 4px 0; font: var(--mono-tick)/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: rgba(245, 242, 236, .54); transition: color var(--dur-move) var(--ease-out); }
 .story-idx button .n { font-variant-numeric: tabular-nums; }
 .story-idx button::before, .story-idx button i { content: ""; position: absolute; left: 0; right: 14px; bottom: 9px; height: 1px; background: rgba(245, 242, 236, .16); }
 .story-idx button i { background: rgba(245, 242, 236, .8); transform: scaleX(var(--fill, 0)); transform-origin: left; }
@@ -123,7 +123,7 @@ button.story-lab:focus-visible { outline: 1px solid var(--signal-bright); outlin
 .story-idx button:focus-visible { outline: 1px solid var(--signal-bright); outline-offset: 2px; }
 .story-keys { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .story-stage:focus-visible .story-keys { position: static; width: auto; height: auto; overflow: visible; clip-path: none; font: var(--mono-tick)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--signal-bright); }
-.story-motion { pointer-events: auto; min-height: 44px; padding: 0 2px; font: var(--fs-small)/1 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .66); transition: opacity .2s var(--ease); } /* a control, in Inter (1 Nov) */
+.story-motion { pointer-events: auto; min-height: 44px; padding: 0 2px; font: var(--fs-small)/1 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .66); transition: opacity var(--dur-feedback) var(--ease); } /* a control, in Inter (1 Nov) */
 .story-labels.has-insp ~ .story-bar .story-motion { opacity: .35; } /* the inspector is up: the control steps back */
 .story-motion[hidden] { display: none; }
 .story.is-scrolled .hero-stats .live, .story.is-paused .hero-stats .live { animation-play-state: paused; } /* its loop (transform, opacity) stops once S0 has gone, and with Pause motion */
@@ -328,3 +328,11 @@ html.story-tiny .story .story-coda { display: none; }
 /* v2:overture:end */
 /* wide screens (award a1): above 1920 px the page grows with the window (site.css); the live dot grows with it */
 @media (min-width: 1921px) { .hero-stats .live { width: .375rem; height: .375rem; margin-left: .5625rem; } }
+/* a2 (4K): the scene index rides with the page above 1920 (its rules were 34 x 1 px at 3840, half their 1920@2 size) */
+@media (min-width: 1921px) {
+  .story-bar .container { gap: 1.375rem; }
+  .story-idx ol { gap: .375rem; }
+  .story-idx button { min-height: 2.75rem; gap: .5625rem; padding: 0 .875rem .25rem 0; }
+  .story-idx button::before, .story-idx button i { right: .875rem; bottom: .5625rem; height: .0625rem; }
+  .story-motion { min-height: 2.75rem; }
+}

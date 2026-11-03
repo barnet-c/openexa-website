@@ -196,8 +196,9 @@
     const read = sec && sec.querySelector('.stats') ? null : mute(h('div', 'pf-read'));
     const bracket = h('i', 'pf-bracket');
     const cells = h('div', 'pf-cells');
-    const out = ['Session', 'NAV regime', 'Captured', 'Verification', 'Status'].map(k => {
-      const cell = h('div', 'pf-cell'), v = h('span', 'pf-v'), note = h('span', 'pf-s');
+    // a2: at rest only the two totals; pf-cell--s cells speak for a session in hand
+    const out = ['Session', 'NAV regime', 'Captured', 'Verification', 'Status'].map((k, j) => {
+      const cell = h('div', j < 3 ? 'pf-cell pf-cell--s' : 'pf-cell'), v = h('span', 'pf-v'), note = h('span', 'pf-s');
       cell.append(h('span', 'pf-k', k), v, note); cells.append(cell); return { v, note };
     });
     const said = h('p', 'sr-only', summarySaid); said.id = id + '-sum';
@@ -221,6 +222,7 @@
       if (!read) return;
       bracket.style.setProperty('--i', i >= 0 ? i : 0);
       bracket.style.setProperty('--span', i >= 0 ? 1 : N);
+      cells.classList.toggle('is-rest', i < 0);
       const vals = i >= 0 ? recordOf(sessions[i], i) : SUMMARY;
       out.forEach((o, k) => {
         const v = vals[k][0], note = vals[k][1] || ' ';

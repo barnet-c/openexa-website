@@ -14,7 +14,9 @@
    award a1 (1 Nov): the letter is the page's plate, set like a letter (Inter for the running lines, the salutation and
    the signature in the serif; company.css). A signal tick in its margin marks the line being written: it ticks in
    (.18 s) when that line changes, follows the typing and leaves when the form loses focus. The signature is the last
-   line, in the draft too (wrapped in a span; the text is the draft's, word for word). */
+   line, in the draft too (wrapped in a span; the text is the draft's, word for word).
+   award a2 (1 Nov): no browser bubble. With JavaScript the form is novalidate and says what is missing in its own words,
+   under the field (aria-describedby, aria-invalid), marks the field's blank in the letter and focuses the first one. */
 (function () {
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
@@ -28,6 +30,10 @@
     'Qualified investor': 'talk about the qualified-investor path for Lifecycle 01.',
   };
   const SHORT = '… [shortened to fit an email link: paste the rest here]';
+  // a2: the subject as the letter shows it: the dot ends a line, never starts one (the mailto's subject has a plain space);
+  // the ask's last word keeps the one before it (no lone "traits." at 768). Display only: the draft keeps plain spaces
+  const SUBJ = 'OpenEXA introduction\u00a0· ';
+  const tail = s => s.replace(/ (\S+)$/, '\u00a0$1');
 
   /* ---------------- forms (no backend: mailto handoff or configured endpoint) ---------------- */
   $$('form[data-access]').forEach(form => {
@@ -89,23 +95,24 @@
       const d = read();
       const t = s => letterBody.appendChild(document.createTextNode(s));
       const slot = (key, text, blank, optional) => {
-        const sp = document.createElement('span');
-        sp.className = 'slot' + (text ? ' is-filled' : optional ? ' is-opt' : '') + (key === focusKey ? ' is-here' : '');
+        const sp = document.createElement('span'), fld = form.elements.namedItem(key); // a2: a refused field's blank stays marked
+        sp.className = 'slot' + (text ? ' is-filled' : optional ? ' is-opt' : '') + (key === focusKey ? ' is-here' : '')
+          + (fld && fld.getAttribute && fld.getAttribute('aria-invalid') === 'true' ? ' is-missing' : '');
         sp.dataset.slot = key; sp.textContent = text || blank; letterBody.appendChild(sp);
       };
       letterBody.textContent = '';
       t('Hello OpenEXA,\n\nI am '); slot('name', d.name, 'your name');
       if (d.role) { t(', '); slot('role', d.role); } else slot('role', '', ', your role', true);
       if (d.organization) { t(' at '); slot('organization', d.organization); } else slot('organization', '', ' at your organization', true);
-      t('. I would like to '); slot('ask', ASK[d.interest] || `talk about ${d.interest}.`);
+      t('. I would like to '); slot('ask', tail(ASK[d.interest] || `talk about ${d.interest}.`));
       t('\n\n'); slot('message', d.message, 'Your message, if you add one', true);
       t('\n\n');
-      if (d.assets) { t('Assets we are considering: '); slot('assets', d.assets); t('.'); } else slot('assets', '', 'Assets we are considering: a range', true);
+      if (d.assets) { t('Assets we are considering: '); slot('assets', d.assets); t('.'); } else slot('assets', '', 'Assets we are considering: a\u00a0range', true);
       t('\n'); slot('accredited', d.accredited ? attest : '', 'The attestation, if you tick it', true);
       t('\n\nPlease reply to '); slot('email', d.email, 'your work email'); t('.\n\n'); slot('name', d.name, 'your name');
       letterBody.lastElementChild.classList.add('is-sign');
       const subject = $('[data-letter-subject]', letter);
-      if (subject) subject.textContent = 'OpenEXA introduction · ' + d.interest;
+      if (subject) subject.textContent = SUBJ + d.interest;
       if (letterNote) { // say so before they press anything: the link has room for about a page, not more
         const long = !!d.message && !fits(d, bodyWith(Object.assign({}, d, { name: d.name || 'x', email: d.email || 'x' }), d.message));
         letterNote.textContent = long ? 'Too long for one email link: the message will be shortened, with a note where to paste the rest.' : NOTE;
@@ -194,26 +201,38 @@
     choosePath();
     live();
     window.addEventListener('hashchange', choosePath);
-    if (name) name.addEventListener('input', () => name.setCustomValidity(''));
     // keyboard focus on the choices: WebKit stops matching :focus-visible after an arrow key moves the radio, so the
     // group marks keyboard use itself and company.css rings the focused choice (qa-webkit, 31 Oct)
     const seg = $('.seg', form);
     if (seg) { seg.addEventListener('keydown', () => seg.classList.add('is-kbd')); seg.addEventListener('pointerdown', () => seg.classList.remove('is-kbd')); }
-    // an invalid field says so under itself (aria-invalid and a line it is described by), not only in the browser's
-    // bubble, which goes on the next keystroke; the line clears as soon as the field is valid (lab company-editorial)
-    $$('input:not([type="radio"]):not([type="checkbox"]), select, textarea', form).forEach(f => {
-      if (!f.id) return;
-      const say = text => {
-        let m = document.getElementById(f.id + '-err');
-        if (!m) {
-          m = document.createElement('p'); m.className = 'f-err'; m.id = f.id + '-err';
-          f.insertAdjacentElement('afterend', m);
-          f.setAttribute('aria-describedby', ((f.getAttribute('aria-describedby') || '') + ' ' + m.id).trim());
-        }
-        m.textContent = text;
-      };
-      f.addEventListener('invalid', () => { f.setAttribute('aria-invalid', 'true'); say(f.validationMessage); });
-      f.addEventListener('input', () => { if (f.hasAttribute('aria-invalid') && f.checkValidity()) { f.removeAttribute('aria-invalid'); say(''); } });
+    // award a2 (dev juror): the form checks itself, in the page's words. novalidate is set here, so without JavaScript
+    // the browser's own check stays; with it, an empty submit no longer puts the browser's bubble over the page. A refused
+    // field says why on a line under it that it is described by (aria-describedby), carries aria-invalid, its
+    // "· required" turns red and its blank in the letter is marked; the first one takes focus. The line clears as soon as
+    // the field is right and is rewritten when the visitor leaves it (not on every keystroke).
+    form.noValidate = true;
+    const WHY = {
+      name: f => f.value.trim() ? '' : 'Add your name: it signs the letter.',
+      email: f => !f.value.trim() ? 'Add a work email we can reply to.'
+        : !f.validity.valid ? 'This address needs an @ and a domain.' : '',
+    };
+    const checked = Object.keys(WHY).map(k => $(`[name="${k}"]`, form)).filter(f => f && f.id);
+    const flag = (f, text) => {
+      let m = document.getElementById(f.id + '-err');
+      if (!m && text) {
+        m = document.createElement('p'); m.className = 'f-err'; m.id = f.id + '-err';
+        f.insertAdjacentElement('afterend', m);
+        f.setAttribute('aria-describedby', ((f.getAttribute('aria-describedby') || '') + ' ' + m.id).trim());
+      }
+      if (m) m.textContent = text;
+      if (text) f.setAttribute('aria-invalid', 'true'); else f.removeAttribute('aria-invalid');
+      const box = f.closest('.f'); if (box) box.classList.toggle('is-refused', !!text);
+      if (letterBody) $$(`.slot[data-slot="${f.name}"]`, letterBody).forEach(sp => sp.classList.toggle('is-missing', !!text));
+    };
+    const refused = f => f.getAttribute('aria-invalid') === 'true';
+    checked.forEach(f => {
+      f.addEventListener('input', () => { if (refused(f) && !WHY[f.name](f)) flag(f, ''); });
+      f.addEventListener('change', () => { if (refused(f)) flag(f, WHY[f.name](f)); });
     });
     const showError = message => {
       errorBox.textContent = message;
@@ -247,8 +266,10 @@
     });
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (name) name.setCustomValidity(name.value.trim() ? '' : 'Please enter your name.');
-      if (!form.reportValidity() || submit.disabled) return;
+      if (submit.disabled) return;
+      // a2: every refused field says why; the first takes focus (it reads its label, "invalid" and the line under it)
+      const wrong = checked.filter(f => { const why = WHY[f.name](f); flag(f, why); return !!why; });
+      if (wrong.length) { wrong[0].focus(); return; }
       errorBox.hidden = true;
       const data = read();
       if (!endpoint) {
@@ -263,7 +284,7 @@
         if (letter) { // the letter becomes the draft, word for word
           const put = (sel, text) => { const el = $(sel, letter); if (el) el.textContent = text; };
           put('[data-letter-to]', 'OpenEXA');
-          put('[data-letter-subject]', 'OpenEXA introduction · ' + data.interest);
+          put('[data-letter-subject]', SUBJ + data.interest);
           const text = body.replace(/\r\n/g, '\n'), k = text.lastIndexOf('\n\n'), lb = $('[data-letter-body]', letter);
           if (lb && k > 0 && text.slice(k + 2) === data.name) { // the signature keeps its line (the same text, word for word)
             const sign = document.createElement('span'); sign.className = 'is-sign'; sign.textContent = data.name;

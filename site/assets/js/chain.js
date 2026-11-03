@@ -136,7 +136,7 @@
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
   function line(broken) {
     const n = red();
-    if (!n) return 'Chain intact · every record points at the one before it';
+    if (!n) return 'Chain intact'; // a2 (UX juror, VOICE 5.10): the label only; the lede says what a chain is
     if (broken < 0) return `Restoring · ${plural(n, 'record still fails', 'records still fail')}`;
     const first = rows.findIndex(li => li.classList.contains('is-broken'));
     return `Chain broken at record ${pad(first + 1)} · ${plural(n, 'record no longer verifies', 'records no longer verify')}`;

@@ -46,13 +46,13 @@
 .nf-h { width: 100%; height: auto; --dx: 696px; --dy: 0px; }
 .nf-plate .nf-v { display: none; --dx: 0px; --dy: 180.96px; }
 .nf-plate .nf-ahead { opacity: .55; }
-.nf-plate .nf-ahead .ln { stroke-dasharray: 2 4; }
-.nf-plate .nf-rest { stroke: currentColor; stroke-dasharray: 2 4; opacity: .45; }
-.nf-plate .nf-rail { stroke: currentColor; stroke-width: calc(1.25 * var(--stroke)); }
+.nf-plate .nf-ahead .ln { stroke-dasharray: calc(2 * var(--dash-u)) calc(4 * var(--dash-u)); }
+.nf-plate .nf-rest { stroke: currentColor; stroke-dasharray: calc(2 * var(--dash-u)) calc(4 * var(--dash-u)); opacity: .45; }
+.nf-plate .nf-rail { stroke: currentColor; stroke-width: var(--stroke); }
 .nf-plate .nf-o, .nf-plate .nf-tok { fill: currentColor; }
 .nf-plate .nf-tok { opacity: 0; } /* the proposal itself shows only while it walks */
-.nf-plate .nf-rj { stroke: var(--reject); stroke-width: calc(1.6 * var(--stroke)); }
-.nf-plate .nf-spur { stroke: var(--reject); stroke-width: calc(1.25 * var(--stroke)); }
+.nf-plate .nf-rj { stroke: var(--reject); stroke-width: var(--stroke-2); }
+.nf-plate .nf-spur { stroke: var(--reject); stroke-width: var(--stroke); }
 .nf-plate .nf-fall { fill: var(--reject); }
 
 /* the stations' names, laid on the lane: equal columns over the row (x = (i - .5) / 6), equal rows beside the column */
@@ -82,7 +82,7 @@
 
 /* ---------- the walk: one proposal, gate by gate (stops at 01, 02, 03), turned away at 04 ---------- */
 @media (prefers-reduced-motion: no-preference) {
-  .nf-plate .nf-rail { stroke-dasharray: 1 2; animation: nf-rail 1.8s linear .4s both; }
+  .nf-plate .nf-rail { animation: nf-rail 1.8s linear .4s backwards; }
   .nf-plate .nf-tok { animation: nf-tok 1.8s linear .4s both, nf-gone .2s var(--ease-out) 2.3s forwards; }
   .nf-plate .nf-s { animation: nf-lit .35s var(--ease) var(--at, 0s) both; }
   .nf-keys li:not(.is-ahead) { animation: nf-key .35s var(--ease) var(--at, 0s) both; }
@@ -91,18 +91,21 @@
   .nf-plate .s3, .nf-keys li:nth-child(3) { --at: 1.67s; }
   .nf-plate .s4, .nf-keys li:nth-child(4) { --at: 2.2s; }
   .nf-plate .nf-rj { animation: nf-in .2s var(--ease-out) 2.3s both; }
-  .nf-plate .nf-spur { stroke-dasharray: 1 2; animation: nf-fall .45s var(--ease-draw) 2.38s both; }
+  .nf-plate .nf-spur { animation: nf-fall .45s var(--ease-draw) 2.38s backwards; }
   .nf-plate .nf-fall, .nf-plate .nf-out { animation: nf-in .3s var(--ease-out) 2.8s both; }
 }
+/* the rail and the spur rest undashed (a2): a non-scaling stroke is dashed in screen space, so while they draw the dash
+   is the drawing's scale (--k, notfound.js) and the walk's stops are fractions of it; at rest the line is whole at any
+   size (it stopped at gate 02 at 3840 when it rested on a pathLength dash) */
 @keyframes nf-rail {
-  0% { stroke-dashoffset: 1; animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
-  11% { stroke-dashoffset: .8621; }
-  17.7% { stroke-dashoffset: .8621; animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
-  40.7% { stroke-dashoffset: .5747; }
-  47.4% { stroke-dashoffset: .5747; animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
-  70.3% { stroke-dashoffset: .2874; }
-  77% { stroke-dashoffset: .2874; animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
-  100% { stroke-dashoffset: 0; }
+  0% { stroke-dasharray: var(--k, 1) calc(2 * var(--k, 1)); stroke-dashoffset: var(--k, 1); animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
+  11% { stroke-dashoffset: calc(var(--k, 1) * .8621); }
+  17.7% { stroke-dashoffset: calc(var(--k, 1) * .8621); animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
+  40.7% { stroke-dashoffset: calc(var(--k, 1) * .5747); }
+  47.4% { stroke-dashoffset: calc(var(--k, 1) * .5747); animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
+  70.3% { stroke-dashoffset: calc(var(--k, 1) * .2874); }
+  77% { stroke-dashoffset: calc(var(--k, 1) * .2874); animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
+  100% { stroke-dasharray: var(--k, 1) calc(2 * var(--k, 1)); stroke-dashoffset: 0; }
 }
 @keyframes nf-tok {
   0% { opacity: 1; transform: none; animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
@@ -118,7 +121,10 @@
 @keyframes nf-key { from { color: var(--fg-3); } }
 @keyframes nf-in { from { opacity: 0; } }
 @keyframes nf-gone { to { opacity: 0; } }
-@keyframes nf-fall { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes nf-fall {
+  from { stroke-dasharray: var(--k, 1) calc(2 * var(--k, 1)); stroke-dashoffset: var(--k, 1); }
+  to { stroke-dasharray: var(--k, 1) calc(2 * var(--k, 1)); stroke-dashoffset: 0; }
+}
 
 /* forced colours: the engraving takes the user's text colour (an SVG keeps its own otherwise: paper on a light theme) */
 @media (forced-colors: active) {

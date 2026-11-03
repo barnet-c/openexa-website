@@ -10,7 +10,7 @@ import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
 from meta import HOME, ORG, FEED_LINKS, ROBOTS, ld, crumbs, atom
-from blog_plates import PLATES, plate_svg, collection_svg, library_svg
+from blog_plates import PLATES, plate_svg, collection_svg, library_svg, rings_tall
 import html as H, io, json, os, re, shutil
 from datetime import datetime
 from pathlib import Path
@@ -380,13 +380,16 @@ def chrome():
     foot = FOOTER.replace('href="', f'href="{PFX}').replace(f'href="{PFX}http', 'href="http').replace(f'href="{PFX}mailto', 'href="mailto')
     return nav, foot
 # award a1 (system's request, ~18:00): the share card's alt says what the card shows, as launch_meta_v9's card_alt() does
-# for the top pages: the page's H1 (plain spaces), then its picture (blog cards keep the dotted globe); og:locale too
-CARD_PIC = "Beside it, the dotted globe of the OpenEXA mark."
-def card_alt(h1):
+# for the top pages: the page's H1 (plain spaces), then its picture; og:locale too.
+# award a2 (system's request, ~23:30): build_og.py now draws the blog index's card with its open book (svg.lib-art) and
+# each post's with its own plate (the post's first svg.bp-art), not the globe. The book has one leaf per post, filed in
+# its three collections (library_svg), so the alt says "one leaf for each post" (system's draft: "each collection")
+CARD_PIC = {"index": "Beside it, the blog’s open book, one leaf for each post.", "post": "Beside it, the post’s engraved plate."}
+def card_alt(h1, pic):
     t = re.sub(r"\s+", " ", h1.replace(" ", " ")).strip()
-    return t + ("" if t[-1:] in ".?!" else ".") + " " + CARD_PIC  # a title without closing punctuation still ends its sentence
-def head(url, title, desc, kind="article", extra="", h1="", links=""):
-    alt = esc(card_alt(h1 or title))
+    return t + ("" if t[-1:] in ".?!" else ".") + " " + CARD_PIC[pic]  # a title without closing punctuation still ends its sentence
+def head(url, title, desc, kind="article", extra="", h1="", links="", pic="post"):
+    alt = esc(card_alt(h1 or title, pic))
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -455,6 +458,12 @@ SERIES = [("in-search-gen-ai-business-model", "Introduction", "Business model"),
           ("empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way", "Part 3", "AI agents")]
 SERIES_NAME = "The Gen-AI series"
 SERIES_POS = {s: i for i, (s, _, _) in enumerate(SERIES)}
+def part_name(i):
+    """award a2 (a2-ux 16: one post carried three names, "Introduction" in the crumb, "Business model" in the rails, and
+    "Part 1" in the pager for the post the rail calls "Relative value"): on a post, the series rail and the pager name a
+    part by both, "Part 1 · Relative value", so the crumb's word and the index rail's word are each in it. The part leads
+    in the small step's grey (span.ps-p), the name follows in the link's colour"""
+    return f'<span class="ps-p">{esc(SERIES[i][1])}</span> · {esc(SERIES[i][2])}'
 assert all(s in SLUGS and not SLUGS[s]["stub"] for s, _, _ in SERIES)
 assert all(any(k in p["title"] for p in kept) for k in KEEP), [k for k in KEEP if not any(k in p["title"] for p in kept)]  # a stale keep-together term
 _runs = [(max(bind(smart(p["title"])).split(" "), key=len), p["slug"]) for p in kept]
@@ -487,14 +496,36 @@ def card(p, lead=False, kicker=""):
 SHORT_TITLE = {"why-banks-exist-unveiling-the-vital-role-of-credit-in-the-financial-system": "Why Banks Exist?"}
 assert all(v in SLUGS[k]["title"] for k, v in SHORT_TITLE.items()), "a short title must be the post's own words"
 ALSO_AI = "Also in AI & agents"
-def row(p):
-    """a post as a line of the register (Market structure & economics): its year, its title, the arrow"""
-    ext = ' target="_blank" rel="noopener"' if p["stub"] else ""
-    return f'''          <li><a class="blog-card blog-row" href="{esc(href(p))}"{ext}>
-            <time class="br-date" datetime="{iso(p)}">{p["dt"].year}</time>
+def register(posts, col, after=None):
+    """posts as the lines of a register (both research collections since award a2): the year, the title, the arrow.
+    award a2 (a2-ux 8: "give every card its year"; the index has a 250-word budget): the year is said once, at the head of
+    its rows, as an archive sets it (Financial markets research: 3 years for 15 rows, not 15; Market structure &
+    economics: 6 for 8), and a new year opens on a darker rule. The rows under it keep their date for machines (an
+    empty <time datetime>) and are described by it (aria-describedby), so a list of links still says each post's year.
+    after: the year said just above the list (the markets lead's): on a phone the lead is the list's first row, so a first
+    year equal to it is not shown twice there (.br-cont: still read out)"""
+    out, last = [], None
+    for i, p in enumerate(posts):
+        y = p["dt"].year; first = y != last; last = y
+        yid = f"y-{col}-{y}"
+        ext = ' target="_blank" rel="noopener"' if p["stub"] else ""
+        cont = ' br-cont' if not i and y == after else ''
+        when = (f'<time class="br-date{cont}" id="{yid}" datetime="{iso(p)}">{y}</time>' if first
+                else f'<time class="br-date" datetime="{iso(p)}"></time>')
+        out.append(f'''          <li{' class="br-g"' if first and i else ''}><a class="blog-card blog-row" href="{esc(href(p))}"{ext}{'' if first else f' aria-describedby="{yid}"'}>
+            {when}
             <h3>{post_title(p["title"])}</h3>
             <span class="br-min">{OUTB if p["stub"] else ARROW}</span>
-          </a></li>'''
+          </a></li>''')
+    return "\n".join(out)
+def lead_card(p):
+    """award a2: Financial markets research opens on its newest post as a card across the collection, its plate on the
+    register's seven columns and its year and title beside it (a1's two-by-two lead, kept as the lead; the grid it led
+    is now the register below)"""
+    return f'''        <a class="blog-card blog-lead" href="{esc(href(p))}" data-reveal>
+          {plate(p)}<div class="blog-card-body"><time class="br-date" datetime="{iso(p)}">{p["dt"].year}</time><h3>{post_title(p["title"])}</h3><span class="br-min">{OUTB if p["stub"] else ARROW}</span></div>
+        </a>
+'''
 rail = []
 for i, (s, part, short) in enumerate(SERIES):
     p = SLUGS[s]
@@ -539,11 +570,14 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     if k == "economics":
         # v2x lab (blog-editorial): eight cards carried one mark eight times (r1-art M6, r1-mobile 9). The collection
         # is set as a register, the way Research lists its notes, beside its plate, shown once.
-        body = f'''        <div class="blog-econ">
+        # award a2 (art director, medium): the plate stands at the register's full height, the rings risen on a diagonal
+        # to fill it (blog_plates.rings_tall); tablets and phones keep the wide mark over the list. blog.js turns the
+        # rings a step for each paper pointed at, focused or read (v2's hover turn, per row)
+        body = f'''        <div class="blog-reg blog-econ" data-blog-turn>
           <ol class="blog-register" role="list" data-reveal>
-{chr(10).join(row(p) for p in by_col[k])}
+{register(by_col[k], k)}
           </ol>
-          <div class="blog-econ-plate" aria-hidden="true"><div class="blog-econ-art">{collection_svg(k)}</div></div>
+          <div class="blog-econ-plate" aria-hidden="true"><div class="blog-econ-art">{rings_tall()}{collection_svg(k)}</div></div>
         </div>
 '''
     elif k == "ai":
@@ -553,8 +587,19 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
         </div>
 '''
     else:
-        body = f'''        <div class="blog-grid blog-grid--lead" data-reveal>
-{chr(10).join(card(p, lead=not i) for i, p in enumerate(by_col[k]))}
+        # award a2 (art director, medium: the grid ended on an orphan card with ~70% of its row empty; a2-ux 8: fifteen
+        # title-only cards ran ~3.5 screens at 1440 with no years). The lead card stays; the other fifteen are the
+        # economics register's pattern (year, title, arrow) beside one plate that shows the drawing of the post pointed
+        # at, focused or read (blog.js; Research's sticky figure, in the blog's plates). Every post's own plate is still
+        # on the index, drawn larger than its card was; without JavaScript the plate shows the first row's. Phones and
+        # tablets: the lead's plate heads the list, as the phone did since a1
+        lead_p, rest_ = by_col[k][0], by_col[k][1:]  # not "lead": that name is the posts' lead() below
+        panel = "".join(f'<div class="bpn{" is-on" if i == 0 else ""}">{plate_svg(p["slug"], p["col"])}</div>' for i, p in enumerate(rest_))
+        body = lead_card(lead_p) + f'''        <div class="blog-reg blog-mkt" data-blog-follow>
+          <ol class="blog-register" role="list" data-reveal>
+{register(rest_, k, after=lead_p["dt"].year)}
+          </ol>
+          <div class="blog-panel" aria-hidden="true"><div class="blog-panel-art">{panel}</div></div>
         </div>
 '''
     # chapters for the nav readout come from the section's own attributes (site.js), as on Home since the cut: no
@@ -587,7 +632,7 @@ blog_ld = ld(dict(BLOG_LD, description=desc, inLanguage="en", publisher=ORG, blo
     {"@type": "BlogPosting", "headline": ld_text(p["title"]), "url": BASE + p["slug"] + ".html", "datePublished": p["dt"].strftime("%Y-%m-%d"),
      "author": person(p["author"])} for p in sorted(kept, key=lambda p: p["dt"], reverse=True) if not p["stub"]]),
     crumbs(("Blog", BASE)))
-page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".join(INDEX_H1)).replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
+page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".join(INDEX_H1), pic="index").replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
 <body data-page="blog" data-nav="dark-start" class="blog-page">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -617,6 +662,7 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".
 
 {foot}
   <script src="{PFX}assets/js/site.js" defer></script>
+  <script src="{PFX}assets/js/blog.js" defer></script>
 </body>
 </html>
 '''
@@ -669,8 +715,8 @@ for p in order:
         crumb = f' · <a href="index.html#series">{SERIES_NAME}</a> · {esc(part)}'
         sp = SLUGS[SERIES[j - 1][0]] if j else None; sn = SLUGS[SERIES[j + 1][0]] if j + 1 < len(SERIES) else None
         pager = "".join([
-            pcard("prev", f"{sp['slug']}.html", f"← {esc(SERIES[j - 1][1])}", post_title(sp["title"])) if sp else pcard("prev", "index.html#series", "← The blog", f"{SERIES_NAME}."),
-            pcard("next", f"{sn['slug']}.html", f"{esc(SERIES[j + 1][1])} →", post_title(sn["title"])) if sn else pcard("next", f"{PFX}research.html", "Research →", "The thinking behind the swarm."),
+            pcard("prev", f"{sp['slug']}.html", f"← {part_name(j - 1)}", post_title(sp["title"])) if sp else pcard("prev", "index.html#series", "← The blog", f"{SERIES_NAME}."),
+            pcard("next", f"{sn['slug']}.html", f"{part_name(j + 1)} →", post_title(sn["title"])) if sn else pcard("next", f"{PFX}research.html", "Research →", "The thinking behind the swarm."),
         ])
         post_ld["isPartOf"] = [BLOG_LD, {"@type": "CreativeWorkSeries", "name": f"{SERIES_NAME} — OpenEXA Blog", "url": BASE + "#series"}]
         post_ld["position"] = j + 1
@@ -688,8 +734,8 @@ for p in order:
     side = ""
     if p["col"] == "ai":
         rail_ = "".join(
-            (f'<li class="is-on"><span aria-current="page">{esc(short)}</span></li>' if s == p["slug"]
-             else f'<li><a href="{s}.html">{esc(short)}</a></li>') for s, _, short in SERIES)
+            (f'<li class="is-on"><span aria-current="page">{part_name(i)}</span></li>' if s == p["slug"]
+             else f'<li><a href="{s}.html">{part_name(i)}</a></li>') for i, (s, _, _) in enumerate(SERIES))
         side += f'<nav class="ps-series" aria-label="{SERIES_NAME}"><p class="ps-k">{SERIES_NAME}</p><ol class="ps-rail" role="list">{rail_}</ol></nav>'
     side += original
     # (a post whose column holds the series alone shows nothing there on tablets and phones: no empty row after the text)
@@ -796,6 +842,9 @@ HEADERS = {
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "same-origin",
     "X-Content-Type-Options": "nosniff",
+    # award a2 (a2-dev polish 18; system's request ~23:30, with system's consent to the header change): HTTPS only, for a
+    # year. No includeSubDomains and no preload: those commit every subdomain and the browsers' lists, the owner's call
+    "Strict-Transport-Security": "max-age=31536000",
     # instant navigation: Chrome/Edge prefetch a page's HTML when a link is hovered (prefetch only - no script runs early)
     "Speculation-Rules": '"/speculation.specrules"',
 }

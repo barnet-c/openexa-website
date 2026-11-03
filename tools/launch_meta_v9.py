@@ -22,15 +22,18 @@ def meta(s, name, prop=False):
 KIND = {"company.html": "AboutPage", "access.html": "ContactPage"}
 CRUMB = {"platform.html": "Platform", "lifecycles.html": "Lifecycles", "evidence.html": "Proof", "trust.html": "Trust & governance",
          "company.html": "Company", "access.html": "Request access"}
-def card_alt(s):
+def card_alt(s, name=""):
     """award a1: the share card's alt text describes the card (build_og.py): the page's headline, then its picture, the
     page's hero plate in the plate's own words (its aria-label), else the dotted globe of the mark."""
     h1 = re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S)
     h1 = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", h1.group(1)))).replace("‐", "-").strip() if h1 else ""
     m = re.search(r'<figure class="hero-plate[^"]*"[^>]*\baria-label="([^"]*)"', s)
     pic = html.unescape(m.group(1)).strip() if m else ""
-    pic = "Beside it, the page’s plate: " + pic[0].lower() + pic[1:] if pic else "Beside it, the dotted globe of the OpenEXA mark"
+    pic = "Beside it, the page’s plate: " + pic[0].lower() + pic[1:] if pic else STILL_PIC.get(name, "Beside it, the dotted globe of the OpenEXA mark")
     return (h1 + " " if h1 else "") + (pic if pic.endswith(".") else pic + ".")
+# award a2: the cards of Research and Company carry their page's own still (build_og.py); Home and Access keep the globe
+STILL_PIC = {"research.html": "Beside it, the page’s library figure: the notes as an open book of stippled leaves",
+             "company.html": "Beside it, the page’s figure, the swarm as one body: a dotted sphere inside its rings"}
 
 pages = []
 for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
@@ -55,7 +58,7 @@ for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
     if not meta(s, "og:description", True): block.append(f'<meta property="og:description" content="{html.escape(og_desc, quote=True)}">')
     block += [
         f'<meta property="og:image" content="{og_image(url)}">',
-        f'<meta property="og:image:alt" content="{html.escape(card_alt(s), quote=True)}">',
+        f'<meta property="og:image:alt" content="{html.escape(card_alt(s, name), quote=True)}">',
         '<meta property="og:image:width" content="1200">',
         '<meta property="og:image:height" content="630">',
         '<meta property="og:locale" content="en_US">',
@@ -63,7 +66,7 @@ for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
         f'<meta name="twitter:title" content="{html.escape(og_title, quote=True)}">',
         f'<meta name="twitter:description" content="{html.escape(og_desc, quote=True)}">',
         f'<meta name="twitter:image" content="{og_image(url)}">',
-        f'<meta name="twitter:image:alt" content="{html.escape(card_alt(s), quote=True)}">',
+        f'<meta name="twitter:image:alt" content="{html.escape(card_alt(s, name), quote=True)}">',
         ROBOTS, *FEED_LINKS,
         '<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">',
         '<link rel="manifest" href="site.webmanifest">',

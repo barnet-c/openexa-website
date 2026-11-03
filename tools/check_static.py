@@ -613,6 +613,7 @@ HEADERS = {
     "Permissions-Policy": "accelerometer=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), hid=(), "
                           "magnetometer=(), microphone=(), midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=()",
     "X-Frame-Options": "DENY", "Referrer-Policy": "same-origin", "X-Content-Type-Options": "nosniff",
+    "Strict-Transport-Security": "max-age=31536000",  # a2 (system's decision): no includeSubDomains, no preload
     "Speculation-Rules": '"/speculation.specrules"',
 }
 CACHE_ROUTES = [  # (route, Cache-Control), in order: the first match wins on Azure (contracts §1.13)
