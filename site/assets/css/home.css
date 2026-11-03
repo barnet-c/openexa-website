@@ -379,3 +379,8 @@ body[data-page="home"] #research { --cis: 36rem; } body[data-page="home"] .cta-b
 @media print { body[data-page="home"] main > .story ~ section { content-visibility: visible; } }
 /* §03: the link sits one chapter step under the lab (swarm.css adds 40 px below it) */
 body[data-page="home"] #lc01 .swarm-live { margin-bottom: 0; }
+/* owner, 2 Nov: Home keeps v2's four figures (overture.css styles them); above 1920 px their px caps get rem twins */
+@media (min-width: 1921px) {
+  body[data-page="home"] .beat-0 .hero-stats { max-width: min(52%, 40rem); gap: 1.25rem; margin-top: 2.125rem; padding-top: 1.25rem; }
+  body[data-page="home"] .beat-0 .hero-stats span { margin-top: .5625rem; }
+}
