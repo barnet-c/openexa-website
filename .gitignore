@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 .netlify/
 tools/research_cards.html
+# local AI hand-off notes: internal, never published (this repository is public)
+CLAUDE.md

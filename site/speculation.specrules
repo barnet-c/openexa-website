@@ -1,0 +1,32 @@
+{
+ "prefetch": [
+  {
+   "where": {
+    "and": [
+     {
+      "href_matches": "/*"
+     },
+     {
+      "not": {
+       "href_matches": [
+        "/*.xml",
+        "/*.jpg",
+        "/*.png",
+        "/*.webp",
+        "/*.ico",
+        "/*.webmanifest",
+        "/*.specrules"
+       ]
+      }
+     },
+     {
+      "not": {
+       "selector_matches": "[href^='#'], [target=_blank], [rel~=nofollow]"
+      }
+     }
+    ]
+   },
+   "eagerness": "moderate"
+  }
+ ]
+}

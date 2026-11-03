@@ -1,0 +1,464 @@
+/* ==========================================================================
+   OpenEXA: page styles for Company and Access
+   Loaded after site.css on company.html and access.html only. site.css holds the system (tokens, type, grid, chrome, the
+   instruments); this file holds what only these pages need, so pages can change without touching each other.
+   - Use the tokens: var(--paper), var(--ink), var(--signal), var(--serif)... No new colours, faces or hex values.
+   - Scope every rule to these pages (body[data-page="company"] or body[data-page="access"], a section id or a page class).
+   - :hover only inside @media (hover: hover); no :has() that restyles a subtree (check_static guards both here).
+   - Anything that moves has a still state under prefers-reduced-motion; anything printed reads on white.
+   - Budget: gzip -9 <= 12,000 bytes (check_static weight).
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- Company: the hero (v2x) */
+/* The plate is drawn twice: a still engraving in inline SVG (first paint, no JavaScript, no WebGL) and the WebGL
+   swarm, which takes over when it is ready. Under it, one caption line (the mode's name and its hedge) and the three
+   modes; the plate does the explaining (cut, 1 Nov: the mode paragraphs went). */
+@media (min-width: 961px) {
+  [data-page="company"] .company-hero .container { grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr); }
+  [data-page="company"] .company-intro .lede { max-width: 36ch; }
+  [data-page="company"] .company-sculpture { aspect-ratio: 1.25; }
+}
+[data-page="company"] .company-sculpture .figure-stage.no-figure::after { display: none; }
+[data-page="company"] .eyebrow, [data-page="access"] .eyebrow { align-items: baseline; }
+[data-page="company"] .eyebrow::before, [data-page="access"] .eyebrow::before { align-self: flex-start; margin-top: calc(.5lh - .5px); } /* centred on the first line, also when the kicker wraps (phones) */
+.plate-still { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 1s var(--ease); }
+.figure-stage.figure-ready ~ .plate-still { opacity: 0; }
+.plate-still pattern circle { fill: rgba(245, 242, 236, .62); }
+.plate-still .ps-rim { fill: none; stroke: rgba(245, 242, 236, .22); stroke-width: 1; }
+.plate-still .ps-o { fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 0 6.5; }
+.plate-still .ps-o--paper { stroke: rgba(245, 242, 236, .55); }
+.plate-still .ps-o--khaki { stroke: var(--khaki); opacity: .7; }
+.plate-still .ps-o--green { stroke: var(--signal-bright); stroke-width: 2.6; }
+/* captions: site.css's .figure-cap is the one grammar (system r2); the hero readout is a .figure-cap that sits closer */
+.company-readout { margin: .875rem 0 0; }
+[data-page="company"] .company-readout .fc-t { color: var(--fg); }
+[data-page="company"] .company-modes { margin-top: 1.125rem; }
+.arr--down { transform: rotate(90deg); }
+@media (hover: hover) { .btn:hover .arr--down { transform: rotate(90deg) translateX(3px); } }
+@media (min-width: 601px) and (max-width: 960px) { /* tablet: copy left, plate right (not a stretched phone) */
+  [data-page="company"] .company-hero { padding-top: calc(var(--nav-h) + 48px); padding-bottom: 56px; }
+  [data-page="company"] .company-hero .container { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 28px; }
+  [data-page="company"] .company-sculpture { margin-top: 0; }
+}
+@media (max-width: 960px) { [data-page="company"] .company-hero .hero-cta { gap: 10px; } [data-page="company"] .company-hero .hero-cta .btn { padding-left: 1.1em; padding-right: 1.1em; } }
+@media (max-width: 600px) {
+  [data-page="company"] .company-hero { padding-bottom: 44px; }
+  [data-page="company"] .company-plate { margin-top: 8px; }
+  [data-page="company"] .company-hero .hero-cta { margin-top: 28px; }
+}
+
+/* ---------------------------------------------------------------- Company: paired heads (A8) */
+@media (min-width: 601px) { [data-page="company"] .team-head { align-items: first baseline; } }
+:is([data-page="company"], [data-page="access"]) .keep { display: inline-block; }
+
+/* ---------------------------------------------------------------- Company §01: the story as a register */
+/* One head, then four entries, each a word and a title. Each sits under a rule that says its status in the site's ring
+   code: done (ink), now (green, filled), next (dashed khaki, the "not yet" mark). No progress line (v2 drew one to 68%,
+   a progress claim with no basis). */
+[data-page="company"] .story-h { max-width: 15ch; margin: 0 0 clamp(2.75rem, 6vw, 5.5rem); text-wrap: balance; }
+[data-page="company"] .timeline { list-style: none; margin: 0; padding: 0; gap: 0 clamp(1.125rem, 2.4vw, 2rem); }
+[data-page="company"] .timeline::before, [data-page="company"] .timeline::after { display: none; }
+[data-page="company"] .timeline .step { padding: 1.75rem 0 0; border-top: 1px solid var(--fg); }
+[data-page="company"] .timeline .step::before { top: calc(-.34375rem - .5px); width: .6875rem; height: .6875rem; background: var(--bg); border: 1px solid var(--fg); box-shadow: none; transition: none; } /* a1: in rem, centred on the rule */
+[data-page="company"] .timeline .step.now { border-top: 2px solid var(--accent); }
+[data-page="company"] .timeline .step.now::before { top: calc(-.375rem - 1px); width: .75rem; height: .75rem; background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 .25rem var(--bg); }
+[data-page="company"] .timeline .step.is-next { border-top: 1px dashed var(--khaki-deep); }
+[data-page="company"] .timeline .step.is-next::before { border: 1px dashed var(--khaki-deep); }
+[data-page="company"] .timeline .k { margin-bottom: .875rem; }
+[data-page="company"] .timeline .now .k { color: var(--signal-ink); }
+[data-page="company"] .timeline h3 { max-width: 16ch; text-wrap: balance; }
+@media (min-width: 601px) and (max-width: 960px) { [data-page="company"] .timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 44px; } }
+@media (max-width: 860px) { [data-page="company"] .timeline .step { padding-left: 0; } }
+@media (max-width: 600px) { [data-page="company"] .timeline { grid-template-columns: 1fr; row-gap: 26px; } [data-page="company"] .timeline .step { padding-top: 20px; } [data-page="company"] .timeline .k { margin-bottom: 8px; } [data-page="company"] .timeline h3 { max-width: none; } }
+
+/* ---------------------------------------------------------------- Company §02: the register */
+/* One row per person: portrait, name and kicker, then (the team) the card line, and the bio behind "Bio" with the
+   links on its line. A bio opens inside its own row. The advisors' rows are the same row without the card line and a
+   smaller portrait. One portrait treatment: the masters are printed ink on paper by build_team.py, so no filter at rest
+   and no colour on hover; the hover and focus state is the green ring. Four sizes: the head, names and figures (heading),
+   the one sentence (body), everything else (small). */
+[data-page="company"] .team-head { margin-bottom: 0; }
+[data-page="company"] .crew-sub { display: block; border-top: 0; padding-top: 0; margin: clamp(3.5rem, 7vw, 6rem) 0 1.125rem; }
+[data-page="company"] .crew-sub--team { margin-top: clamp(3rem, 6vw, 5rem); }
+[data-page="company"] .crew { display: block; border: 0; border-top: 1px solid var(--line-strong); }
+[data-page="company"] .crew > li { display: grid; grid-template-columns: 6rem minmax(0, 3fr) minmax(0, 5fr); grid-template-areas: "ph who what"; column-gap: clamp(1.125rem, 2.4vw, 2.25rem); align-items: first baseline; padding: 1.75rem 0; border: 0; border-bottom: 1px solid var(--line); background: none; overflow: visible; }
+[data-page="company"] .crew > li::after { display: none; }
+[data-page="company"] .crew .ph { grid-area: ph; align-self: start; width: 6rem; height: 6rem; margin: 0; }
+[data-page="company"] .crew--advisors > li { padding: 1.25rem 0; }
+[data-page="company"] .crew--advisors .ph { width: 4rem; height: 4rem; }
+[data-page="company"] .crew .ph img { filter: none; transform: none; transition: none; will-change: auto; }
+[data-page="company"] .crew .ph::before { opacity: .3; transition: none; } /* r1: the dot field quieter, so a photo cut beside the head (John) does not read as a different background */
+[data-page="company"] .crew .ph.grain::after { opacity: .14; }
+[data-page="company"] .crew > li:focus-within .ph img { filter: none; transform: none; }
+[data-page="company"] .crew > li:focus-within .ph::before { transform: none; opacity: .3; } /* r3: the dot field only */
+/* hover and focus: a green ring drawn outside the portrait, a paper gap between (the ring of site.css sat under the clip) */
+[data-page="company"] .crew .ph { transition: box-shadow .35s var(--ease); }
+[data-page="company"] .crew .ph .ring { display: none; }
+[data-page="company"] .crew > li:focus-within .ph { box-shadow: inset 0 0 0 1px var(--line), 0 0 0 4px var(--bg), 0 0 0 5px var(--accent); }
+[data-page="company"] .crew .who { grid-area: who; min-width: 0; }
+[data-page="company"] .crew h3 { margin: 0; font-size: var(--fs-heading); line-height: 1.1; text-wrap: balance; }
+/* the kicker is a person's title, not data: Inter, in the text colour (green is the site's "live, settled" mark) */
+[data-page="company"] .crew .role { margin-top: .375rem; font-family: var(--sans); font-size: var(--fs-small); line-height: 1.45; letter-spacing: 0; text-transform: none; color: var(--fg-2); }
+/* the line, then "Bio" and the links on one line; an open bio takes the full width and the links follow it, so the
+   control that was pressed does not move */
+[data-page="company"] .crew .what { grid-area: what; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 1.5rem; }
+[data-page="company"] .crew .what > p { flex: 0 0 100%; max-width: none; margin: 0 0 .375rem; font-size: var(--fs-small); line-height: 1.6; color: var(--fg-2); text-wrap: pretty; } /* the whole row (site.css caps it at 40ch), so Bio and the links start the next line */
+[data-page="company"] .crew .links { margin: 0; padding-top: 0; gap: .25rem 1.25rem; font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; }
+[data-page="company"] .crew .links a { min-height: 2rem; text-underline-offset: 5px; }
+[data-page="company"] .crew .links .ext { text-decoration: none; display: inline-block; }
+/* an internal link ends in the site's drawn arrow, clear of the underline; it leans on hover */
+[data-page="company"] .crew .links .arr { width: 1em; height: 1em; margin-left: .43em; transition: transform var(--dur-move) var(--ease-out); } /* a1: em, so it rides with its text */
+@media (hover: hover) { [data-page="company"] .crew .links a:hover .arr { transform: translateX(.3em); } }
+[data-page="company"] .crew-more { margin: 0; min-width: 0; }
+[data-page="company"] .crew-more[open] { flex-basis: 100%; }
+[data-page="company"] .crew-more summary { min-height: 2rem; gap: .5rem; padding: 0; border-bottom: 0; font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; text-transform: none; color: var(--fg); }
+[data-page="company"] .crew-more-l { text-decoration: underline 1px var(--line-strong); text-underline-offset: 5px; transition: text-decoration-color .3s var(--ease); }
+[data-page="company"] .crew-more summary::after { color: var(--fg-3); }
+[data-page="company"] .crew-more summary:focus-visible .crew-more-l, [data-page="company"] .crew-more[open] .crew-more-l { text-decoration-color: currentColor; }
+[data-page="company"] .crew-more[open] summary { color: var(--fg); }
+[data-page="company"] .crew-more[open] summary::after { transform: rotate(45deg); }
+[data-page="company"] .crew-bio { padding: .625rem 0 .875rem; }
+[data-page="company"] .crew-bio p { font-size: var(--fs-small); max-width: 64ch; text-wrap: pretty; }
+/* the three figures: a ruled summary, figures in the serif (lining, tabular), their labels in Inter on one line */
+[data-page="company"] .crew-stats { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 0; margin-top: 2rem; padding-top: 0; border-top: 1px solid var(--line-strong); }
+[data-page="company"] .crew-stats > div { padding: 1.125rem 1.75rem 0; border-left: 1px solid var(--line); }
+[data-page="company"] .crew-stats > div:first-child { padding-left: 0; border-left: 0; }
+[data-page="company"] .crew-stats b { font-size: var(--fs-heading); font-variant-numeric: lining-nums tabular-nums; }
+[data-page="company"] .crew-stats span { max-width: none; margin-top: .5rem; font-family: var(--sans); font-size: var(--fs-small); line-height: 1.35; letter-spacing: 0; text-transform: none; color: var(--fg-2); }
+@media (max-width: 960px) { /* tablets and phones: the three figures' cells close up so no label wraps */
+  [data-page="company"] .crew-stats > div { padding-left: 16px; padding-right: 16px; }
+  [data-page="company"] .crew-stats > div:first-child { padding-left: 0; }
+}
+@media (hover: hover) {
+  [data-page="company"] .crew-more summary:hover .crew-more-l { text-decoration-color: currentColor; }
+  [data-page="company"] .crew > li:hover .ph img { filter: none; transform: none; }
+  [data-page="company"] .crew > li:hover .ph::before { transform: none; opacity: .3; }
+  [data-page="company"] .crew > li:hover .ph { box-shadow: inset 0 0 0 1px var(--line), 0 0 0 4px var(--bg), 0 0 0 5px var(--accent); }
+  [data-page="company"] .crew > li:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; text-decoration-color: var(--line-strong); }
+}
+@media screen and (min-width: 1025px) { /* portrait | name, set against the portrait | line, bio and links on the column
+  of the sentence above (the page grid's last five columns: 5 columns and 4 gaps of 12); name and line share a baseline */
+  [data-page="company"] .crew > li { --g: clamp(1rem, 2.2vw, 2rem); grid-template-columns: 6rem minmax(0, 1fr) calc((100% - 11 * var(--g)) / 12 * 5 + 4 * var(--g)); column-gap: var(--g); }
+}
+@media (max-width: 1024px) and (min-width: 961px) { [data-page="company"] .crew .ph { width: 80px; height: 80px; } [data-page="company"] .crew > li { grid-template-columns: 80px minmax(0, 3fr) minmax(0, 5fr); } }
+/* tablets and phones: portrait | name, kicker, and under them the line, "Bio" and the links, so an open bio reads
+   across the whole column beside the portrait */
+@media (max-width: 960px) {
+  [data-page="company"] .crew > li { grid-template-columns: 80px minmax(0, 1fr); grid-template-areas: "ph who" "ph what"; row-gap: 12px; }
+  [data-page="company"] .crew .ph { width: 80px; height: 80px; }
+  [data-page="company"] .crew--advisors .ph { width: 56px; height: 56px; }
+  [data-page="company"] .crew-bio p { max-width: 60ch; }
+}
+@media (max-width: 600px) {
+  [data-page="company"] .crew > li { grid-template-columns: 64px minmax(0, 1fr); column-gap: 16px; row-gap: 10px; padding: 20px 0; }
+  [data-page="company"] .crew--advisors > li { padding: 16px 0; }
+  [data-page="company"] .crew .ph { width: 64px; height: 64px; }
+  [data-page="company"] .crew--advisors .ph { width: 48px; height: 48px; }
+  [data-page="company"] .crew .what { column-gap: 20px; }
+  [data-page="company"] .crew-sub { margin-top: 48px; }
+  [data-page="company"] .crew-sub--team { margin-top: 40px; }
+}
+@media (prefers-reduced-motion: reduce) { [data-page="company"] .crew .ph, [data-page="company"] .crew .links .arr, [data-page="company"] .crew-more-l { transition: none; } }
+
+/* ---------------------------------------------------------------- Company §03: the constants plate */
+/* The section's idea, drawn: one loop of gates that changes with each lifecycle, and the four constants that do not
+   (the boundary, agents scoped to their gate, the stop short of custody, the ledger). Inline SVG:
+   it paints with the page, reads complete without JavaScript and holds still under reduced motion. company.js runs it:
+   a proposal walks the gates above the boundary (dashed: agents estimate), crosses it, walks the gates below (solid:
+   code executes) and is written to the ledger once the counterparty confirms; one in four is rejected at the Council
+   and written too; every second pass the loop takes another shape and nothing else moves. From 961 px the constants
+   are one column and the plate stays beside them; the constant being read (or pointed at) is marked on the plate.
+   Cut (1 Nov): each constant is its line; the plate shows the rest. Fix (1 Nov): no register codes, in the list or on
+   the plate; the constant being read lights its part of the plate (its words and marks in green, the rest back).
+   a1 (1 Nov): the plate has a head, as Home's lab does: a band closed by a hairline (level with the first constant's
+   rule), Pause motion at its right; the hedge closes the plate under the caption's rule: the plate sits between two. */
+#constants { overflow: clip; }
+.kplate { position: relative; margin: 0; }
+.kplate::before { content: ""; display: block; height: 2.75rem; margin-bottom: 1.125rem; border-bottom: 1px solid var(--line); }
+.kplate-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.kplate .kl { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; fill: var(--fg-3); }
+.kplate .k-state { fill: var(--fg-2); }
+.kplate .k-loop { fill: none; stroke: var(--fg-3); stroke-width: 1.2; }
+.kplate .k-loop--up { stroke-dasharray: 3 4; }
+.kplate .k-gate { fill: var(--bg); stroke: var(--fg-2); stroke-width: 1.2; }
+.kplate .k-gate--up > circle { fill: var(--bg); stroke: inherit; }
+.kplate .k-agent { fill: var(--fg-2); stroke: none; }
+.kplate .k-council circle { fill: none; stroke: var(--fg-2); stroke-width: 1; stroke-dasharray: 2 2; }
+.kplate .k-bnd { stroke: var(--accent); stroke-width: 1.2; }
+.kplate .k-box { fill: none; stroke: var(--fg-3); stroke-width: 1; }
+.kplate .k-stop { fill: none; stroke: var(--fg-3); stroke-width: 1.2; stroke-dasharray: 3 3; }
+.kplate .k-bar { fill: none; stroke: var(--fg-2); stroke-width: 1.5; }
+.kplate .k-strip { stroke: var(--line-strong); stroke-width: 1; }
+.kplate .k-lead { fill: none; stroke: var(--line-strong); stroke-width: 1; }
+.kplate .k-rec { fill: var(--fg-2); }
+.kplate .k-rec--rej { fill: var(--bg); stroke: var(--reject); stroke-width: 1.2; }
+.kplate .k-rec--new { fill: var(--accent); }
+.kplate .k-tok { fill: var(--fg); stroke: var(--bg); stroke-width: 2; }
+.kplate .kl--box { fill: var(--fg-3); }
+.kplate .k-tok.is-ok { fill: var(--accent); }
+.kplate .k-tok.is-rej { fill: var(--reject); }
+.kplate .k-spur { fill: none; stroke: var(--reject); stroke-width: 1.2; stroke-dasharray: 2 3; }
+/* a moment of the walk: the gate the proposal stands on, the boundary as it crosses, the leader as it is written */
+.kplate .is-hit { stroke: var(--accent); }
+.kplate .k-gate--up.is-hit > circle { stroke: var(--accent); }
+.kplate .k-gate--dn.is-hit { fill: var(--accent); stroke: var(--accent); }
+.kplate .k-gate.is-no > circle { stroke: var(--reject); }
+.kplate .k-lead.is-hit { stroke: var(--accent); }
+/* the constant being read: the rest of the plate steps back */
+.kplate :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate .k-loop, .kplate .k-council > circle { transition: opacity .35s var(--ease), fill .35s var(--ease); }
+.kplate[data-on] :where(.k-c1, .k-c2, .k-c3, .k-c4) > :where(:not(text)) { opacity: .3; }
+.kplate[data-on] :where(.k-c1, .k-c3, .k-c4) > text { opacity: .6; }
+.kplate[data-on] .k-loop, .kplate[data-on] .k-council > circle { opacity: .55; }
+.kplate[data-on="c1"] .k-c1 > *, .kplate[data-on="c2"] .k-c2 > *, .kplate[data-on="c3"] .k-c3 > *, .kplate[data-on="c4"] .k-c4 > * { opacity: 1; }
+.kplate[data-on="c1"] .k-c1 .kl:not(.kl--dim), .kplate[data-on="c2"] .k-agent, .kplate[data-on="c3"] .k-c3 .kl, .kplate[data-on="c4"] .k-c4 .kl { fill: var(--accent); }
+.kplate .figure-cap { margin-top: 1.125rem; padding-top: .625rem; row-gap: .25rem; border-top: 1px solid var(--line); }
+.kplate .figure-cap .fc-h { text-align: left; }
+.kplate > .figure-motion { top: 0; right: 0; min-height: 2.75rem; padding: 0; }
+[data-page="company"] .constants > div::after { display: none; }
+@media (min-width: 961px) {
+  [data-page="company"] .k-grid { align-items: start; margin-top: clamp(2rem, 4vw, 3.5rem); }
+  [data-page="company"] .k-side { grid-column: 6 / -1; position: sticky; top: calc(var(--nav-h) + 2.5rem); padding: 0 0 0 clamp(1rem, 2vw, 2rem); margin-top: calc(1px - 2.75rem); } /* a1: the plate's top rule on the first constant's rule */
+  [data-page="company"] .k-text { grid-column: 1 / span 5; }
+  /* one column of constants, a rule between them; the one being read carries a green rule */
+  [data-page="company"] .constants { display: block; border: 0; }
+  [data-page="company"] .constants > div { background: none; border: 0; border-top: 1px solid var(--line); padding: 1.5rem 0 2.25rem; transition: border-color .35s var(--ease); }
+  [data-page="company"] .constants > div.is-on { border-top-color: var(--accent); }
+}
+@media (min-width: 961px) and (max-width: 1279px) { .kplate .kl { font-size: 14px; } }
+@media (max-width: 960px) {
+  [data-page="company"] .k-grid { display: flex; flex-direction: column; }
+  [data-page="company"] .k-text { display: contents; }
+  [data-page="company"] .k-side { order: 3; margin-top: clamp(32px, 5vw, 48px); }
+  [data-page="company"] .k-text > .constants { order: 4; margin-top: clamp(40px, 6vw, 56px); }
+  [data-page="company"] .k-text > .mt-4 { order: 5; }
+  .kplate .kl { font-size: 13px; }
+  /* tablet: the quadrants (two hairlines); phone: four blocks with rules between */
+  [data-page="company"] .constants { border: 0; }
+  [data-page="company"] .constants > div { background: none; border: 0; padding: clamp(26px, 3vw, 44px) clamp(22px, 3vw, 44px) clamp(30px, 3.4vw, 48px) 0; }
+  [data-page="company"] .constants > div:nth-child(even) { padding-left: clamp(22px, 3vw, 44px); padding-right: 0; }
+  [data-page="company"] .constants > div:nth-child(odd) { border-right: 1px solid var(--line); }
+  [data-page="company"] .constants > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 600px) { /* phones: the plate keeps its four words (either side of the boundary, custody, the ledger);
+   the layers, the Council and the running line give way; "Agents decide" steps down to sit on the boundary as
+   "Code executes" sits under it */
+  .kplate .kl--word { display: none; }
+  .kplate .k-c1 .kl--word:not(.kl--dim), .kplate .k-c4 .kl--word { display: inline; }
+  .kplate .kl { font-size: 22px; letter-spacing: .06em; }
+  .kplate .k-c1 .kl--word:not(.kl--dim):first-of-type { transform: translateY(18px); }
+  .kplate::before { margin-bottom: .75rem; }
+}
+@media (max-width: 760px) {
+  [data-page="company"] .constants > div, [data-page="company"] .constants > div:nth-child(n) { padding: 22px 0 24px; border-right: 0; border-bottom: 1px solid var(--line); }
+  [data-page="company"] .constants > div:nth-child(n):last-child { border-bottom: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .kplate :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate .k-loop, .kplate .k-council > circle, [data-page="company"] .constants > div { transition: none; } }
+
+/* ---------------------------------------------------------------- Company §04: the six classes, status in words */
+/* a1 (UX juror): the six carry Home's names (one name per thing), and the live one says what is live ("Live: ETF
+   creation & redemption", Home's words), so the row no longer reads as all of financial markets being live. The names
+   are set as Home's cards set them, in the serif at the heading step (at 18 px the serif was a display face at text
+   size): three by two from 601 px, each name on two lines; a list on phones, the status under the name. */
+[data-page="company"] .class-row { grid-template-columns: repeat(3, minmax(0, 1fr)); border-left: 0; border-top-color: var(--line-strong); }
+[data-page="company"] .class-row > li { justify-content: flex-start; gap: 1.125rem; min-height: 0; padding: 1.5rem clamp(1rem, 2.4vw, 2rem) 1.625rem; background: none; font-size: var(--fs-heading); line-height: 1.12; }
+[data-page="company"] .class-row > li::before { width: 3.5rem; height: 1.5rem; border-width: calc(1.5px * var(--stroke)); }
+[data-page="company"] .class-row > .cr-next::before { border-width: calc(1.25px * var(--stroke)); }
+[data-page="company"] .class-row > li:nth-child(3n) { border-right: 0; }
+[data-page="company"] .class-row > li:nth-child(3n + 1) { padding-left: 0; }
+[data-page="company"] .class-row .cr-n, [data-page="company"] .class-row .cr-n > span { display: block; } /* two phrases, two lines */
+/* the status is a word, not a micro-label: Inter at the small step */
+[data-page="company"] .class-row small { display: block; margin-top: auto; padding-top: .25rem; font-family: var(--sans); font-size: var(--fs-small); line-height: 1.4; letter-spacing: 0; text-transform: none; color: var(--fg-3); }
+[data-page="company"] .class-row .cr-live small { color: var(--signal-ink); }
+[data-page="company"] .class-note { margin: 1rem 0 0; font-size: var(--fs-small); color: var(--fg-3); }
+@media (max-width: 600px) {
+  [data-page="company"] .class-row { grid-template-columns: minmax(0, 1fr); }
+  [data-page="company"] .class-row > li, [data-page="company"] .class-row > li:nth-child(n) { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr); align-items: center; gap: .125rem 1rem; padding: .75rem 0; border-right: 0; }
+  [data-page="company"] .class-row > li::before { grid-row: 1 / span 2; width: 2.5rem; height: 1.0625rem; }
+  [data-page="company"] .class-row .cr-n > span { display: inline-block; }
+  [data-page="company"] .class-row small { grid-column: 2; margin: 0; padding: 0; }
+}
+
+/* ---------------------------------------------------------------- Company: print */
+@media print {
+  .plate-still, .company-readout, .company-modes { display: none !important; }
+  [data-page="company"] .crew > li { break-inside: avoid; }
+  [data-page="company"] .crew .ph { display: none; }
+  [data-page="company"] .crew > li { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); grid-template-areas: "who what"; grid-template-rows: auto; align-items: first baseline; }
+}
+
+/* ================================================================ Access */
+/* The H1 is "Tell us who you are." (S-38's first sentence; cut, 1 Nov). Beside the form, the email this page writes,
+   written as the visitor types (access.js), and "nothing is sent until you send it" beside the button. The four paths
+   are the four choices, by name only: the letter's ask line changes with the choice, so it says what each path is. On
+   phones the letter appears in the result.
+   award a1 (1 Nov): one band, no rule under the H1: the H1, then the form beside the letter, so at 1440 x 900 the whole
+   form, its button and the note are on the first screen. The letter is the page's plate: a sheet of paper-2 stock with
+   the hero plate's corner marks (L7), set as a letter (salutation and signature in the serif at the heading step, the
+   running lines in Inter at the body step), with a signal tick in its margin beside the line being written. Sizes in
+   rem, so 3840 is 1920 at twice the size. */
+[data-page="access"] .access-hero { border-bottom: 0; padding-bottom: var(--sec-foot); }
+[data-page="access"] .access-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2.2vw, 2rem); align-items: start; } /* the page grid's gaps (64 px at 3840) */
+[data-page="access"] .access-h1 { grid-column: 1 / -1; max-width: none; margin: 0 0 clamp(1.5rem, 3.4vh, 3rem); }
+[data-page="access"] .access-form { grid-column: 1 / span 6; min-width: 0; }
+[data-page="access"] .access-letter { grid-column: 8 / -1; align-self: stretch; min-width: 0; }
+@media (min-width: 961px) { [data-page="access"] .access-hero { padding-top: calc(var(--nav-h) + clamp(1.5rem, 3.4vh, 3rem)); } }
+@media (min-width: 601px) and (max-width: 960px) {
+  [data-page="access"] .access-letter { grid-column: 7 / -1; padding-left: clamp(1rem, 2.2vw, 2rem); }
+  [data-page="access"] .form .two { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  [data-page="access"] .access-hero { padding-top: calc(var(--nav-h) + 2.25rem); }
+  [data-page="access"] .access-form { grid-column: 1 / -1; }
+  [data-page="access"] .access-letter { display: none; }
+}
+/* the form, compact: a label, its field, a short gap; field labels are words a person reads (Inter, the qualifier a
+   step quieter); a field being written takes the green rule and its label turns green (two marks, a1) */
+[data-page="access"] .form { gap: clamp(.875rem, 2vh, 1.25rem); }
+[data-page="access"] .form .f { gap: .375rem; }
+[data-page="access"] .form .two { gap: clamp(.875rem, 2vh, 1.25rem) clamp(1rem, 2.2vw, 2rem); }
+[data-page="access"] .form :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { padding: .5rem 0; }
+[data-page="access"] .form textarea { min-height: 5.5rem; }
+/* a laptop shorter than 880 px (1536 x 864): the form closes up a step so its button stays on the first screen */
+@media (min-width: 961px) and (max-height: 880px) {
+  [data-page="access"] .form, [data-page="access"] .form .two { row-gap: .75rem; }
+  [data-page="access"] .form textarea { min-height: 4.75rem; }
+}
+[data-page="access"] .form .f > label:not(.f-check) { font-family: var(--sans); font-size: var(--fs-small); line-height: 1.4; letter-spacing: 0; text-transform: none; color: var(--fg); transition: color var(--dur-feedback) var(--ease-out); }
+[data-page="access"] .form .f:focus-within > label:not(.f-check) { color: var(--signal-ink); }
+[data-page="access"] .form .f-q { color: var(--fg-3); }
+[data-page="access"] .f-check span { text-wrap: pretty; }
+/* the four choices, two by two: a drawn ring, a green dot in it when chosen; the chosen one draws its rule in signal
+   from the left (a1); the whole cell chooses */
+[data-page="access"] .seg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+[data-page="access"] .seg .opt { position: relative; background: var(--bg); transition: background-color var(--dur-feedback) var(--ease-out); scroll-margin-top: calc(var(--nav-h) + 1.5rem); }
+[data-page="access"] .seg .opt::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: .125rem; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; transition: transform var(--dur-move) var(--ease-out); pointer-events: none; }
+[data-page="access"] .seg .opt:has(input:checked) { background: var(--bg-2); }
+[data-page="access"] .seg .opt:has(input:checked)::after { transform: none; }
+[data-page="access"] .seg label, [data-page="access"] .seg label:has(input:checked) { position: static; background: transparent; box-shadow: none; padding: .875rem 1rem .875rem 2.875rem; line-height: 1.4; }
+[data-page="access"] .seg label::after { content: ""; position: absolute; inset: 0; }
+[data-page="access"] .seg .seg-k { position: absolute; left: 1rem; top: 50%; width: 1.125rem; height: 1.125rem; margin-top: -.5625rem; border-radius: 50%; border: 1px solid rgba(14, 21, 18, .55); transition: background-color var(--dur-feedback) var(--ease-out), box-shadow var(--dur-feedback) var(--ease-out), border-color var(--dur-feedback) var(--ease-out); }
+[data-page="access"] .seg input:checked + span .seg-k { background: var(--accent); border-color: var(--accent); box-shadow: inset 0 0 0 .25rem var(--bg-2); }
+[data-page="access"] .seg input:checked + span { color: var(--fg); }
+/* focus rings the whole choice (the site's 2 px signal ring) */
+[data-page="access"] .seg label:has(input:focus-visible) { outline: none; }
+[data-page="access"] .seg .opt:has(input:focus-visible), [data-page="access"] .seg.is-kbd .opt:has(input:focus) { outline: 2px solid var(--accent); outline-offset: -2px; z-index: 1; }
+@media (hover: hover) {
+  [data-page="access"] .seg .opt:hover .seg-k { border-color: var(--fg); }
+  [data-page="access"] .seg .opt:hover { background: var(--bg-2); }
+  [data-page="access"] .form input:hover, [data-page="access"] .form select:hover, [data-page="access"] .form textarea:hover { border-color: var(--fg); }
+  [data-page="access"] .form .f-check:hover input:not(:checked) { border-color: var(--fg); background-color: rgba(14, 21, 18, .04); }
+}
+/* fields: focus draws the rule twice as thick in green; in forced colours the transparent outline becomes a ring */
+[data-page="access"] .form input:focus-visible, [data-page="access"] .form select:focus-visible, [data-page="access"] .form textarea:focus-visible { border-color: var(--accent); box-shadow: 0 1px 0 0 var(--accent); outline: 2px solid transparent; outline-offset: 3px; }
+[data-page="access"] .form textarea::placeholder { color: var(--fg-3); }
+/* a field the browser refused: its rule and a line under it in the rejection red (access.js writes the line); the one the
+   visitor is sent to keeps the red and takes the site's ring on top (r3-a11y; 2.4.13) */
+[data-page="access"] .form [aria-invalid="true"], [data-page="access"] .form [aria-invalid="true"]:focus-visible { border-color: var(--reject); }
+[data-page="access"] .form [aria-invalid="true"]:focus-visible { box-shadow: 0 1px 0 0 var(--reject); outline: 2px solid var(--accent); outline-offset: 3px; }
+/* r5: a field the browser fills in stays on paper, in ink (Chromium paints #E8F0FE and Safari yellow): the inset shadow
+   covers the fill, the long transition holds it off, and the focus and refusal marks are restated over it */
+@media (forced-colors: none) {
+  [data-page="access"] .form :is(input, textarea, select):is(:autofill, :-webkit-autofill) { -webkit-text-fill-color: var(--fg); caret-color: var(--fg); box-shadow: inset 0 0 0 100vmax var(--bg); transition: border-color .25s, background-color 9999s 0s; }
+  [data-page="access"] .form :is(input, textarea, select):is(:autofill, :-webkit-autofill):focus-visible { box-shadow: 0 1px 0 0 var(--accent), inset 0 0 0 100vmax var(--bg); }
+  [data-page="access"] .form [aria-invalid="true"]:is(:autofill, :-webkit-autofill):focus-visible { box-shadow: 0 1px 0 0 var(--reject), inset 0 0 0 100vmax var(--bg); }
+}
+[data-page="access"] .f-err { margin: -.125rem 0 0; font-size: var(--fs-small); line-height: 1.45; color: var(--reject); }
+[data-page="access"] .f-err:empty { display: none; }
+/* the select: no native chrome, the site's chevron */
+[data-page="access"] .form select { -webkit-appearance: none; appearance: none; padding-right: 1.875rem; cursor: pointer; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230E1512' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E") right .125rem center / 1rem 1rem no-repeat; }
+/* the attestation: a drawn box, a paper tick on ink when ticked */
+[data-page="access"] .f-check { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .75rem; align-items: start; font-family: var(--sans); font-size: var(--fs-small); line-height: 1.55; letter-spacing: 0; text-transform: none; color: var(--fg-2); cursor: pointer; }
+[data-page="access"] .form .f-check input { -webkit-appearance: none; appearance: none; width: 1.25rem; height: 1.25rem; margin: .0625rem 0 0; padding: 0; border: 1px solid rgba(14, 21, 18, .55); border-radius: var(--r); background: transparent center / .875rem .875rem no-repeat; cursor: pointer; transition: background-color var(--dur-feedback) var(--ease-out), border-color var(--dur-feedback) var(--ease-out); }
+[data-page="access"] .form .f-check input:checked { background-color: var(--fg); border-color: var(--fg); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23F5F2EC' stroke-width='1.8'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E"); }
+[data-page="access"] .form .f-check input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; box-shadow: none; }
+/* the button and, beside it, what it does (two lines; under it where the column is narrow) */
+[data-page="access"] .form-go { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.5rem; }
+[data-page="access"] .form-note { flex: 1 1 15rem; margin: 0; max-width: 40ch; font-size: var(--fs-small); line-height: 1.5; color: var(--fg-3); text-wrap: wrap; } /* the second clause keeps its line (.keep) */
+/* the result: the letter the page wrote, as the visitor's mail app will show it */
+[data-page="access"] .form-ok { padding: clamp(1.375rem, 3vw, 2.125rem); scroll-margin-top: 1rem; } /* access.js scrolls it under the bar */
+/* the letter: a sheet of paper-2 stock, the hero plate's corner marks just outside its corners */
+.letter { position: relative; margin: 1.5rem 0 0; border: 1px solid var(--line); background: var(--bg-2); }
+.letter[hidden] { display: none; }
+[data-page="access"] .access-letter .letter { margin-top: 0; }
+[data-page="access"] .access-letter .eyebrow { display: flex; margin: 0 0 1rem; } /* on the form's first label */
+.letter .plate-marks { position: absolute; inset: -.5rem; pointer-events: none; }
+.letter .plate-marks i { position: absolute; width: .875rem; height: .875rem; border: 0 solid var(--fg-3); }
+.letter .plate-marks i:nth-child(1) { left: 0; top: 0; border-width: 1px 0 0 1px; }
+.letter .plate-marks i:nth-child(2) { right: 0; top: 0; border-width: 1px 1px 0 0; }
+.letter .plate-marks i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 1px 1px; }
+.letter .plate-marks i:nth-child(4) { right: 0; bottom: 0; border-width: 0 1px 1px 0; }
+.letter-head { display: grid; gap: .375rem; padding: .875rem 1.75rem; border-bottom: 1px solid var(--line); font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; color: var(--fg-2); }
+.letter-head > span { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: .75rem; }
+.letter-head b { font-weight: 400; color: var(--fg-3); }
+.letter-head [data-letter-subject] { text-wrap: balance; } /* the path's name keeps its line */
+/* set as a letter: the running lines in Inter at the body step; the salutation (its first line) and the signature (its
+   last) in the serif at the heading step */
+.letter-body { padding: 1.375rem 1.75rem 1.75rem; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--sans); font-size: var(--fs-body); line-height: 1.6; color: var(--fg); }
+.letter-body::first-line { font-family: var(--serif); font-size: var(--fs-heading); letter-spacing: -0.01em; }
+.letter .is-sign { font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.2; letter-spacing: -0.01em; }
+/* the blanks: a solid rule to fill, a dashed one that is left out if empty; the part being typed carries the highlighter */
+.letter .slot { border-radius: 2px; -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: background-color var(--dur-feedback) var(--ease-out), box-shadow var(--dur-feedback) var(--ease-out); }
+.letter .slot:not(.is-filled) { color: var(--fg-3); text-decoration: underline 1px var(--line-strong); text-underline-offset: .24em; }
+.letter .slot.is-opt { text-decoration-style: dashed; }
+.letter .slot.is-here, .letter [data-letter-subject].is-here { background: rgba(30, 122, 90, .16); box-shadow: 0 0 0 2px rgba(30, 122, 90, .16); }
+.letter [data-letter-subject] { border-radius: 2px; transition: background-color var(--dur-feedback) var(--ease-out), box-shadow var(--dur-feedback) var(--ease-out); }
+/* the tick in the margin beside the line being written (access.js places it; it moves only while shown) */
+.letter-tick { position: absolute; left: .75rem; top: calc(var(--tick-y, 1px) - 1px); width: .125rem; height: var(--tick-h, 1.5rem); background: var(--accent); transform-origin: 50% 0; opacity: 0; pointer-events: none; }
+.letter.has-tick .letter-tick { opacity: 1; transition: top var(--dur-feedback) var(--ease-out), height var(--dur-feedback) var(--ease-out); }
+.letter-note { margin: .75rem 0 0; max-width: 46ch; font-size: var(--fs-small); line-height: 1.5; color: var(--fg-3); }
+.letter-note.is-long { color: var(--fg); }
+.letter-note:empty { display: none; } /* it speaks only when a message is too long for one email link (access.js) */
+/* beside the form the letter is a sheet as tall as the form beside it that never outgrows the screen (a phone held sideways, a small
+   laptop, a long message): its body scrolls inside and access.js keeps the part being typed in view (r2-mobile) */
+@media (min-width: 601px) {
+  [data-page="access"] .access-letter .sticky { --top: calc(var(--nav-h) + 1.75rem); position: sticky; top: var(--top); display: flex; flex-direction: column; max-height: calc(100svh - var(--top) - 1rem); }
+  [data-page="access"] .access-letter .letter:not([hidden]) { display: flex; flex-direction: column; min-height: min(37.5rem, 100svh - var(--top) - 4.5rem); }
+  [data-page="access"] .access-letter .letter-head { flex: none; }
+  [data-page="access"] .access-letter .letter-body { flex: 1 1 auto; min-height: 4.5lh; overflow-y: auto; } /* a wheel at its end goes on to the page */
+}
+@media (min-width: 601px) and (max-height: 760px) { [data-page="access"] .access-letter .sticky { --top: calc(var(--nav-h) + .75rem); } }
+/* a phone held sideways (844 x 390): the letter stands beside the H1 and the form from the top of the band, so it fits
+   the screen before the page moves (the H1 is short there: the plate step's short size) */
+@media (min-width: 601px) and (max-width: 960px) and (max-height: 520px) {
+  [data-page="access"] .access-h1 { grid-column: 1 / span 6; }
+  [data-page="access"] .access-letter { grid-row: 1 / span 2; }
+  [data-page="access"] .access-letter .sticky { --top: calc(var(--nav-h) + 28px); }
+}
+@media (max-width: 600px) {
+  .letter-head { padding: .875rem 1rem; }
+  .letter-head > span { grid-template-columns: 4rem minmax(0, 1fr); }
+  .letter-body { padding: 1rem 1rem 1.25rem; }
+  .letter-tick { left: .375rem; }
+}
+/* what happens next: three steps on one hairline, each a node, a title and what it takes (a1: one line across, nodes
+   in rem, titles in Inter at the body step); on phones the line runs down the left */
+[data-page="access"] .access-next-h { max-width: none; margin: 0 0 clamp(2rem, 4vw, 3.25rem); text-wrap: balance; }
+[data-page="access"] .access-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.625rem clamp(1.125rem, 2.4vw, 2rem); border-top: 1px solid var(--fg); }
+[data-page="access"] .access-steps li { position: relative; padding-top: 1.375rem; }
+[data-page="access"] .access-steps li::before { content: ""; position: absolute; left: 0; top: calc(-.34375rem - .5px); width: .6875rem; height: .6875rem; border-radius: 50%; border: 1px solid var(--fg); background: var(--bg); }
+[data-page="access"] .access-steps h3 { margin: 0; font-family: var(--sans); font-weight: 400; font-size: var(--fs-body); line-height: 1.3; letter-spacing: 0; }
+[data-page="access"] .access-steps span { display: block; margin-top: .375rem; font-size: var(--fs-small); color: var(--fg-2); }
+@media (max-width: 600px) {
+  [data-page="access"] .access-steps { grid-template-columns: minmax(0, 1fr); row-gap: 1.5rem; padding-left: 1.5rem; border-top: 0; border-left: 1px solid var(--fg); }
+  [data-page="access"] .access-steps li { padding-top: 0; }
+  [data-page="access"] .access-steps li::before { left: calc(-1.5rem - .34375rem - .5px); top: .3125rem; }
+}
+@media (min-width: 421px) and (max-width: 600px) { [data-page="access"] .form > .two + .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } } /* organization | role share a line where each field is wide enough */
+@media (max-width: 420px) { [data-page="access"] .seg { grid-template-columns: minmax(0, 1fr); } }
+/* forced colours (r1-a11y M1): the chosen path and the ticked box keep a visible state; native controls come back */
+@media (forced-colors: active) {
+  [data-page="access"] .seg .opt:has(input:checked) { outline: 2px solid Highlight; outline-offset: -2px; }
+  [data-page="access"] .seg input:checked + span .seg-k { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+  [data-page="access"] .form .f-check input, [data-page="access"] .form select { -webkit-appearance: auto; appearance: auto; background-image: none; }
+  .letter-tick { forced-color-adjust: none; background: Highlight; }
+}
+@media (prefers-reduced-motion: reduce) { [data-page="access"] :is(.seg .opt, .seg .seg-k, .form .f-check input, .form .f > label), [data-page="access"] .seg .opt::after, .letter .slot, .letter [data-letter-subject], .letter.has-tick .letter-tick { transition: none; } }
+@media print { [data-page="access"] .access-letter { display: none !important; } }
+
+/* ================================================================ 4K (a1)
+   site.css grows the whole page from 1921 px (root max(100%, 100vw / 120), the column 100rem: 3840 is the 1920 page at
+   twice the size). This sheet sets its composition in rem, so it follows; the hero plate's corner marks (site.css,
+   14 px) get their rem twin here, from the same width. */
+@media (min-width: 1921px) {
+  [data-page="company"] .company-sculpture .frame i { width: .875rem; height: .875rem; }
+}

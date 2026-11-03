@@ -8,3 +8,13 @@ DIST = REPO / "dist"                     # deploy ZIPs (git-ignored)
 ARCHIVE = REPO.parent / "openexa-versions"   # optional sibling checkout of barnet-c/openexa-website-versions
 SHOTS.mkdir(exist_ok=True)
 DIST.mkdir(exist_ok=True)
+
+def og_name(path):
+    """File name of the social card tools/build_og.py renders for a page: 'research/01-x.html' -> 'research-01-x.jpg'."""
+    path = path or "index.html"
+    if path.endswith("/"): path += "index.html"
+    return path[:-5].replace("/", "-") + ".jpg"
+
+def og_image(url):
+    """Absolute og:image URL for the page at `url` (https://www.openexa.com/...)."""
+    return "https://www.openexa.com/assets/img/og/" + og_name(url.replace("https://www.openexa.com/", ""))

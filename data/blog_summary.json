@@ -8,7 +8,7 @@
     "name": "The Gen-AI series",
     "first": "in-search-gen-ai-business-model",
     "count": 4,
-    "minutes": 28
+    "minutes": 31
   },
   "collections": [
     {
@@ -19,7 +19,7 @@
         2024,
         2024
       ],
-      "lede": "The first notes on AI copilots, guardrails and autonomous agents in financial markets — the thinking that became OpenEXA's agentic infrastructure."
+      "lede": "The first notes on AI copilots, guardrails and autonomous agents in financial markets. The thinking in them became OpenEXA's agentic infrastructure."
     },
     {
       "key": "markets",
@@ -39,7 +39,7 @@
         2008,
         2023
       ],
-      "lede": "Summaries of academic research on how financial markets shape real decisions — information, contracting, credit, automation and the labour share."
+      "lede": "Summaries of academic research on how financial markets shape real decisions — information, contracting, credit, automation and the labor share."
     }
   ]
 }

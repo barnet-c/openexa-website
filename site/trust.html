@@ -2,163 +2,205 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Trust &amp; governance — OpenEXA · Autonomous agents, accountable by construction</title>
-  <meta name="description" content="How OpenEXA governs autonomous agents: the Execution Council gate on every proposal, scoped and revocable permissions, custody that never moves, three operating modes, a database-backed halt and an append-only, hash-chained ledger.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Trust &amp; governance — OpenEXA · Nothing settles that didn’t pass.</title>
+  <meta name="description" content="Agents propose; the Execution Council approves or rejects every proposal against your policy. Scoped, revocable permissions; a hash-chained, append-only ledger.">
   <meta name="theme-color" content="#F5F2EC">
   <link rel="canonical" href="https://www.openexa.com/trust.html">
   <meta property="og:url" content="https://www.openexa.com/trust.html">
   <meta property="og:site_name" content="OpenEXA">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Trust &amp; governance — OpenEXA · Autonomous agents, accountable by construction">
-  <meta property="og:description" content="How OpenEXA governs autonomous agents: the Execution Council gate on every proposal, scoped and revocable permissions, custody that never moves, three operating modes, a database-backed halt and an append-only, hash-chained ledger.">
-  <meta property="og:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta property="og:title" content="Trust &amp; governance — OpenEXA · Nothing settles that didn’t pass.">
+  <meta property="og:description" content="Agents propose; the Execution Council approves or rejects every proposal against your policy. Scoped, revocable permissions; a hash-chained, append-only ledger.">
+  <meta property="og:image" content="https://www.openexa.com/assets/img/og/trust.jpg">
+  <meta property="og:image:alt" content="Nothing settles that didn’t pass. Beside it, the page’s plate: the Council over the record: a proposal passes and settles; a rejected one is logged. Schematic.">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Trust &amp; governance — OpenEXA · Autonomous agents, accountable by construction">
-  <meta name="twitter:description" content="How OpenEXA governs autonomous agents: the Execution Council gate on every proposal, scoped and revocable permissions, custody that never moves, three operating modes, a database-backed halt and an append-only, hash-chained ledger.">
-  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og.png">
+  <meta name="twitter:title" content="Trust &amp; governance — OpenEXA · Nothing settles that didn’t pass.">
+  <meta name="twitter:description" content="Agents propose; the Execution Council approves or rejects every proposal against your policy. Scoped, revocable permissions; a hash-chained, append-only ledger.">
+  <meta name="twitter:image" content="https://www.openexa.com/assets/img/og/trust.jpg">
+  <meta name="twitter:image:alt" content="Nothing settles that didn’t pass. Beside it, the page’s plate: the Council over the record: a proposal passes and settles; a rejected one is logged. Schematic.">
+  <meta name="robots" content="max-image-preview:large">
+  <link rel="alternate" type="application/atom+xml" title="OpenEXA Blog" href="/blog/feed.xml">
+  <link rel="alternate" type="application/atom+xml" title="OpenEXA Research" href="/research/feed.xml">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/ledger.css">
+  <link rel="stylesheet" href="assets/css/proof.css">
+  <script type="application/ld+json" id="ld-page">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"https://www.openexa.com/trust.html#webpage","url":"https://www.openexa.com/trust.html","name":"Trust & governance — OpenEXA · Nothing settles that didn’t pass.","description":"Agents propose; the Execution Council approves or rejects every proposal against your policy. Scoped, revocable permissions; a hash-chained, append-only ledger.","isPartOf":{"@type":"WebSite","@id":"https://www.openexa.com/#website","name":"OpenEXA","url":"https://www.openexa.com/"},"primaryImageOfPage":"https://www.openexa.com/assets/img/og/trust.jpg","inLanguage":"en"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenEXA","item":"https://www.openexa.com/"},{"@type":"ListItem","position":2,"name":"Trust & governance","item":"https://www.openexa.com/trust.html"}]}]}</script>
 </head>
-<body>
+<body data-page="trust">
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="nav nav--solid">
     <div class="container">
-      <a class="brand" href="index.html" aria-label="OpenEXA home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <a class="brand" href="index.html" aria-label="OpenEXA, home"><i class="mark"></i>OpenEXA</a>
       <nav class="nav-links" aria-label="Primary">
         <a href="platform.html">Platform</a>
         <a href="lifecycles.html">Lifecycles</a>
         <a href="evidence.html">Proof</a>
-        <a href="trust.html">Trust</a>
+        <a href="trust.html" aria-current="page">Trust</a>
         <a href="research.html">Research</a>
         <a href="company.html">Company</a>
+        <i class="nav-ink" aria-hidden="true"></i>
       </nav>
-      <a class="btn btn--sm" href="access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
-      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
+      <a class="btn btn--sm" href="access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <button class="nav-toggle" type="button" popovertarget="site-menu" aria-label="Menu"><span></span></button>
     </div>
   </header>
   <div class="nav-menu">
-    <a href="platform.html">Platform</a>
-    <a href="lifecycles.html">Lifecycles</a>
-    <a href="evidence.html">Proof</a>
-    <a href="trust.html">Trust</a>
-    <a href="research.html">Research</a>
-    <a href="company.html">Company</a>
-    <a class="btn" href="access.html">Request access</a>
+    <nav class="nav-sheet is-dark grain" id="site-menu" popover aria-label="Menu">
+      <ol class="nav-sheet-links">
+        <li><a href="platform.html">Platform</a></li>
+        <li><a href="lifecycles.html">Lifecycles</a></li>
+        <li><a href="evidence.html">Proof</a></li>
+        <li><a href="trust.html" aria-current="page">Trust</a></li>
+        <li><a href="research.html">Research</a></li>
+        <li><a href="company.html">Company</a></li>
+      </ol>
+      <a class="btn" href="access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+    </nav>
   </div>
 
   <main id="main">
-
     <section class="page-hero">
       <div class="container">
-        <div class="grid">
-          <div class="col-8">
-            <div class="eyebrow" data-reveal>Trust &amp; governance</div>
-            <h1 class="display-1" data-reveal style="--d:60ms">Autonomous agents. Accountable by construction.</h1>
+        <div class="grid page-hero--plate">
+          <div class="hero-copy">
+            <h1 class="display-1" data-reveal style="--d:60ms">Nothing settles that didn’t&nbsp;pass.</h1>
+            <p class="lede" data-reveal style="--d:120ms">Agents propose; the Execution Council approves or rejects every proposal against your&nbsp;policy.</p>
+            <p class="tr-go" data-reveal style="--d:160ms"><a class="link-arrow" href="#ledger" data-lt-go>Try to change the past <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></p>
           </div>
-          <div class="col-4 offset-9">
-            <p class="lede" data-reveal style="--d:120ms">Autonomy is a dial, not a leap. Agents propose; the Execution Council approves or rejects against your policy; scoped permissions bound what any agent can touch; custody never moves; and every transition is written to a ledger you can replay.</p>
-          </div>
+          <!-- Hero plate (schematic): the council aperture over the record line (beat 3); rejects are recorded too. It writes itself once at first paint (proof.css, CSS only): the record so far, a proposal into the Council, the pass that settles, the reject that is logged. -->
+          <figure class="hero-plate hero-plate--council" data-reveal style="--d:180ms; --hp-ar:1.273" aria-label="The Council over the record: a proposal passes and settles; a rejected one is logged. Schematic.">
+            <div class="hp-art">
+              <svg viewBox="0 0 420 330" aria-hidden="true" focusable="false"><g class="hp-s1"><g class="hp-d tp-sig"><circle cx="180.4" cy="18.3" r=".95" opacity="0.3"/><circle cx="194.7" cy="30.1" r=".95" opacity="0.4"/><circle cx="207.6" cy="31.9" r=".95" opacity="0.5"/><circle cx="185.3" cy="35.8" r=".95" opacity="0.4"/><circle cx="166" cy="28.7" r=".95" opacity="0.5"/><circle cx="145.9" cy="47.1" r=".95" opacity="0.4"/><circle cx="183.2" cy="38.4" r=".95" opacity="0.3"/><circle cx="189.3" cy="40.7" r=".95" opacity="0.3"/><circle cx="148.7" cy="17.4" r=".95" opacity="0.4"/></g><path class="hp-h" d="M176 30V100"/><path class="hp-i hp-ap" d="M209 146L217 146M208.9 148.9L216.8 149.6M208.5 151.7L216.4 153.1M207.9 154.5L215.6 156.6M207 157.3L214.5 160M205.9 159.9L213.2 163.3M204.6 162.5L211.5 166.5M201.3 167.2L207.4 172.4M199.3 169.3L205 175M197.2 171.3L202.4 177.4M194.9 173L199.5 179.6M192.5 174.6L196.5 181.5M189.9 175.9L193.3 183.2M187.3 177L190 184.5M184.5 177.9L186.6 185.6M181.7 178.5L183.1 186.4M178.9 178.9L179.6 186.8M173.1 178.9L172.4 186.8M170.3 178.5L168.9 186.4M167.5 177.9L165.4 185.6M164.7 177L162 184.5M162.1 175.9L158.7 183.2M159.5 174.6L155.5 181.5M157.1 173L152.5 179.6M154.8 171.3L149.6 177.4M152.7 169.3L147 175M150.7 167.2L144.6 172.4M149 164.9L142.4 169.5M147.4 162.5L140.5 166.5M146.1 159.9L138.8 163.3M145 157.3L137.5 160M144.1 154.5L136.4 156.6M143.5 151.7L135.6 153.1M143.1 148.9L135.2 149.6M143 146L135 146M143.1 143.1L135.2 142.4M143.5 140.3L135.6 138.9M144.1 137.5L136.4 135.4M145 134.7L137.5 132M146.1 132.1L138.8 128.7M147.4 129.5L140.5 125.5M149 127.1L142.4 122.5M150.7 124.8L144.6 119.6M152.7 122.7L147 117M154.8 120.7L149.6 114.6M157.1 119L152.5 112.4M159.5 117.4L155.5 110.5M162.1 116.1L158.7 108.8M164.7 115L162 107.5M167.5 114.1L165.4 106.4M170.3 113.5L168.9 105.6M173.1 113.1L172.4 105.2M176 113L176 105M178.9 113.1L179.6 105.2M181.7 113.5L183.1 105.6M184.5 114.1L186.6 106.4M187.3 115L190 107.5M189.9 116.1L193.3 108.8M192.5 117.4L196.5 110.5M194.9 119L199.5 112.4M197.2 120.7L202.4 114.6M199.3 122.7L205 117M201.3 124.8L207.4 119.6M203 127.1L209.6 122.5M204.6 129.5L211.5 125.5M205.9 132.1L213.2 128.7M207 134.7L214.5 132M207.9 137.5L215.6 135.4M208.5 140.3L216.4 138.9M208.9 143.1L216.8 142.4"/><circle class="hp-h hp-faint" cx="176" cy="146" r="27"/><path class="hp-h" d="M176 196V280"/><path class="hp-h hp-strong" d="M14 286H222"/><path class="hp-h hp-faint hp-dash" d="M222 286H410"/><rect class="hp-rec tp-rec" style="--i:0" x="10" y="282.5" width="12" height="7" rx="1"/><rect class="hp-rec tp-rec" style="--i:1" x="42" y="282.5" width="12" height="7" rx="1"/><rect class="hp-rec tp-rec" style="--i:2" x="74" y="282.5" width="12" height="7" rx="1"/><rect class="hp-rec tp-rec" style="--i:3" x="106" y="282.5" width="12" height="7" rx="1"/><rect class="hp-rec tp-rec" style="--i:4" x="138" y="282.5" width="12" height="7" rx="1"/><rect class="hp-rec tp-rec" style="--i:5" x="170" y="282.5" width="12" height="7" rx="1"/></g><g class="hp-s2"><circle class="hp-glow tp-pass" cx="176" cy="146" r="37"/><path class="hp-g tp-pass" d="M186.9 189.7A45 45 0 0 1 165.1 189.7"/><path class="hp-g hp-lit tp-pass" d="M176 174V196"/><path class="hp-r hp-lit tp-out" d="M201.4 163.8L212 171.2"/><circle class="hp-g tp-prop" cx="176" cy="64" r="6"/><rect class="hp-gf tp-set" x="172" y="248" width="8" height="8" rx="1"/><path class="hp-r hp-dash tp-out" d="M212 171.2C238 185.2 230 228 208 278"/><rect class="hp-rrec tp-rj" x="202" y="282.5" width="12" height="7" rx="1"/></g></svg>
+              <div class="hp-labs" aria-hidden="true"><span class="hp-lab" style="--x:45.2;--y:5.5">Signals</span><span class="hp-lab tp-l-prop" style="--x:45.2;--y:19.4">Proposal</span><span class="hp-lab" style="--x:54.8;--y:44.2">Council<small>Approve · reject</small></span><span class="hp-lab hp-lab--r hp-lab--acc tp-l-set" style="--x:39;--y:76.4">Settled</span><span class="hp-lab hp-lab--rej tp-l-rj" style="--x:47.6;--y:93.3">Rejected · logged</span><span class="hp-lab" style="--x:3.3;--y:93.3">Records<small>hash-chained</small></span></div>
+            </div>
+            <figcaption class="figure-cap hp-cap" id="hero-plate-cap"><span class="fc-h">Schematic</span></figcaption>
+          </figure>
         </div>
       </div>
     </section>
 
-    <!-- 01 GOVERNANCE MODEL -->
-    <section class="section">
+    <!-- 01 THE LEDGER (moved up from 03: the replay, and the record a visitor can try to break, open the page) -->
+    <section class="section section--open is-dark grain tr-ledger" id="ledger" data-chapter-short="Ledger">
       <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">01</span><span class="lab">The governance model</span><span class="aside">Six commitments</span></div>
-        <ol class="list-rule list-rule--3" data-reveal>
-          <li><span class="k">T-01</span><div><h3>Every proposal passes the Council</h3><p>No agent executes its own idea. Proposals go to the Execution Council, which checks policy, limits and conflicts and returns approve or reject — automatically, or by handing the decision to a human.</p></div><div class="mono small muted">Propose → Council → approve / reject</div></li>
-          <li><span class="k">T-02</span><div><h3>Custody never moves</h3><p>Assets stay in your brokerage account. Agents act through scoped API permissions — they can operate within your limits; they can never withdraw. Permissions are revocable per agent, instantly.</p></div><div class="mono small muted">Broker-held · scoped · revocable</div></li>
-          <li><span class="k">T-03</span><div><h3>The ledger is the truth</h3><p>Append-only, hash-chained records preserve every proposal, Council decision, submission, fill and reconciliation — including the rejects. Nothing is edited after the fact; every record points at the one before it.</p></div><div class="mono small muted">Append-only · hash-chained · replayable</div></li>
-          <li><span class="k">T-04</span><div><h3>Autonomy per lifecycle, per mandate</h3><p>Fully automatic, auto-with-approval and manual modes support different mandates and oversight levels — switchable at any time, without redeploying an agent.</p></div><div class="mono small muted">Automatic · with approval · manual</div></li>
-          <li><span class="k">T-05</span><div><h3>Deterministic below the agents</h3><p>Limits live in the execution layer, not in the model that proposed the action. Whatever an agent believes, the state machine enforces caps, gates and idempotency before anything exists as an order.</p></div><div class="mono small muted">Enforced in code · not in a prompt</div></li>
-          <li><span class="k">T-06</span><div><h3>Resilient by default</h3><p>The emergency halt is database-backed and available in every mode. Counterparty and API disruptions are met with retries, exponential backoff and circuit breakers. Compliance framing — Reg D 506(c), accredited investors — is built into onboarding.</p></div><div class="mono small muted">Halt · retry · backoff · circuit-break</div></li>
-        </ol>
+        <div class="sec-head" data-reveal><span class="idx">01</span><span class="lab">The ledger</span></div>
+        <div class="grid t-2 tr-lead">
+          <div class="col-6"><h2 class="display-2" data-reveal><span class="ln">Edit one record.</span> <span class="ln"><span class="ph">Every link</span> <span class="ph">after it&nbsp;fails.</span></span></h2></div>
+          <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Any state can be replayed with the inputs that produced it, by an operator, an auditor or a&nbsp;regulator.</p></div>
+        </div>
+
+        <!-- the ledger trace: a fixed excerpt, replayable, verifiable and editable in the browser (ledger.js). Change a record:
+             it and every record after it stop verifying when the chain is verified; Restore puts the excerpt back. -->
+        <div class="lt lt--excerpt tr-lt" data-ledger="replay" data-reveal style="--d:120ms" role="group" aria-label="Illustrative log excerpt, hash-chained">
+          <div class="lt-head">
+            <span class="lt-title">Lifecycle 01 · IBIT · create</span>
+            <span class="lt-state"><i></i><span data-lt-state>Illustrative excerpt</span></span>
+            <span class="lt-ctrl" hidden>
+              <button type="button" class="lt-btn lt-btn--ico" data-lt-replay hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M13.2 8.6A5.2 5.2 0 1 1 11.7 4.3"/><path d="M12.4 1.6v3.2H9.2"/></svg><span>Replay</span></button>
+              <button type="button" class="lt-btn lt-btn--ico" data-lt-edit hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 13.5l.7-3.1 7.7-7.7 2.4 2.4-7.7 7.7z"/><path d="M9.6 4l2.4 2.4"/></svg><span>Change<span class="lt-xs"> a record</span></span></button>
+              <button type="button" class="lt-btn lt-btn--ico lt-btn--restore" data-lt-restore hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.8 8.6A5.2 5.2 0 1 0 4.3 4.3"/><path d="M3.6 1.6v3.2h3.2"/></svg><span>Restore<span class="lt-x"> the original records</span></span></button>
+              <button type="button" class="lt-btn lt-btn--ico" data-lt-verify hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 8.4l3.4 3.3 7.6-7.6"/></svg><span>Verify<span class="lt-xs"> the chain</span></span></button>
+            </span>
+            <span class="sr-only" role="status" data-lt-say></span>
+          </div>
+          <!-- the inspected record's lineage, one line, from the same records (trust.js; 1200 px and up, with scripts) -->
+          <p class="tr-lin" data-lt-lin aria-hidden="true"></p>
+          <div class="lt-stage">
+          <div class="lt-view">
+            <ol class="lt-track" aria-label="Ledger records, oldest first">
+              <li class="ln lt-rec" data-d="agent=strategy:s-0412 · create 2,600"><span class="lt-meta"><span class="lt-id">#4f1a</span><span class="lt-lc"></span></span><b class="lt-ev">PROPOSED</b><span class="lt-sub">strategy s-0412 · create 2,600</span><time class="lt-t">09:31:03.902</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec is-rejected" data-d="council · notional cap exceeded"><span class="lt-meta"><span class="lt-id">#4f1b</span><span class="lt-lc"></span></span><b class="lt-ev">REJECTED</b><span class="lt-sub">council · notional cap exceeded</span><time class="lt-t">09:31:03.951</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="agent=strategy:s-0412 · create 2,000"><span class="lt-meta"><span class="lt-id">#4f1c</span><span class="lt-lc"></span></span><b class="lt-ev">PROPOSED</b><span class="lt-sub">strategy s-0412 · create 2,000</span><time class="lt-t">09:31:04.071</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="schema ✓ policy ✓ caps ✓ hours ✓"><span class="lt-meta"><span class="lt-id">#4f1d</span><span class="lt-lc"></span></span><b class="lt-ev">VALIDATED</b><span class="lt-sub">schema ✓ policy ✓ caps ✓ hours ✓</span><time class="lt-t">09:31:04.118</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="council · mode=auto-with-approval · by=operator:op-02"><span class="lt-meta"><span class="lt-id">#4f1e</span><span class="lt-lc"></span></span><b class="lt-ev">APPROVED</b><span class="lt-sub">council · auto-with-approval · op-02</span><time class="lt-t">09:31:04.203</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="agent=exec:e-0088 · venue=dark · idem=7a…e2"><span class="lt-meta"><span class="lt-id">#4f1f</span><span class="lt-lc"></span></span><b class="lt-ev">SUBMITTED</b><span class="lt-sub">exec e-0088 · venue=dark</span><time class="lt-t">09:31:04.377</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="1,400 / 2,000"><span class="lt-meta"><span class="lt-id">#4f20</span><span class="lt-lc"></span></span><b class="lt-ev">PARTIAL</b><span class="lt-sub">1,400 / 2,000</span><time class="lt-t">09:31:05.910</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec" data-d="2,000 / 2,000"><span class="lt-meta"><span class="lt-id">#4f21</span><span class="lt-lc"></span></span><b class="lt-ev">FILLED</b><span class="lt-sub">2,000 / 2,000</span><time class="lt-t">09:31:06.442</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+              <li class="ln lt-rec is-settled" data-d="agent=recon:r-0031 · internal ≡ broker · Δ 0"><span class="lt-meta"><span class="lt-id">#4f22</span><span class="lt-lc"></span></span><b class="lt-ev">RECONCILED</b><span class="lt-sub">internal ≡ broker · Δ 0</span><time class="lt-t">16:05:12.006</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
+            </ol>
+          </div>
+          </div>
+          <div class="lt-insp" data-lt-insp hidden>
+            <p class="lt-insp-k" data-f="k">Newest record in view</p>
+            <dl>
+              <div><dt>Record</dt><dd data-f="rec">—</dd></div>
+              <div><dt>Event</dt><dd><span data-f="ev">—</span></dd></div>
+              <div><dt>Detail</dt><dd><span data-f="d">—</span></dd></div>
+            </dl>
+            <p class="tr-enter" data-lt-enter hidden><span class="tr-key">Press Enter to verify the chain</span><span class="tr-tap">Tap Go or Enter to verify the chain</span></p>
+            <span id="lt-how" hidden></span>
+            <dl>
+              <div><dt>Prev hash</dt><dd><code data-f="prev">—</code><span class="lt-check" data-f="prevok"></span></dd></div>
+              <div><dt>Hash</dt><dd><code data-f="hash">—</code><span class="lt-check" data-f="next"></span></dd></div>
+            </dl>
+          </div>
+          <i class="lt-leader" aria-hidden="true"></i>
+          <div class="lt-foot"><span>Illustrative excerpt · real <span class="nw">SHA-256</span>, computed in your browser</span><span class="lt-key" aria-hidden="true"><s>Struck</s>: the hash it was sealed with · <b>red</b>: the hash it produces now</span><noscript><span class="tr-nojs">Turn on JavaScript to hash these records and try to change one.</span></noscript></div>
+        </div>
       </div>
     </section>
 
-    <!-- 02 CONTROL PLANE -->
-    <section class="section is-paper-2">
+    <!-- 02 CONTROL PLANE: the six controls, each drawn in the plate language; the drawing and its name say it -->
+    <section class="section is-paper-2" id="control" data-chapter-short="Control plane">
       <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">02</span><span class="lab">Control plane</span><span class="aside">What you set. What agents obey.</span></div>
-        <div class="grid">
-          <div class="col-4">
+        <div class="sec-head" data-reveal><span class="idx">02</span><span class="lab">Control plane</span></div>
+        <div class="grid tr-cp">
+          <div class="col-4 tr-cp-copy">
             <h2 class="display-2" data-reveal>Limits are not suggestions.</h2>
-            <p class="body-lg mt-3" data-reveal style="--d:80ms">Every constraint below is enforced in the deterministic execution layer — before an action exists — not in the agent that proposed it. Change any of them at any time; the swarm obeys on the next proposal.</p>
+            <p class="body-lg mt-3" data-reveal style="--d:80ms">Enforced in the deterministic execution layer, before an action exists, not in the agent that proposed&nbsp;it.</p>
           </div>
-          <div class="col-8">
-            <div class="card-grid card-grid--2">
-              <div class="card" data-reveal><div class="n"><span>K-01</span><span>Scope</span></div><h3 class="h4">Instruments &amp; venues</h3><p>Whitelisted instruments and routing venues per lifecycle. Anything else is rejected at validation.</p></div>
-              <div class="card" data-reveal style="--d:60ms"><div class="n"><span>K-02</span><span>Size</span></div><h3 class="h4">Position &amp; notional caps</h3><p>Per-instrument and per-pool position limits, notional caps per action and per session.</p></div>
-              <div class="card" data-reveal style="--d:120ms"><div class="n"><span>K-03</span><span>Time</span></div><h3 class="h4">Market-hours gates</h3><p>Actions only inside defined windows; no after-hours surprises from an agent that never sleeps.</p></div>
-              <div class="card" data-reveal style="--d:180ms"><div class="n"><span>K-04</span><span>Approval</span></div><h3 class="h4">Who signs</h3><p>The Council alone, a delegate, or you — and change it whenever the mandate changes.</p></div>
-              <div class="card" data-reveal style="--d:240ms"><div class="n"><span>K-05</span><span>Visibility</span></div><h3 class="h4">Positions, NAV, fills, decisions</h3><p>Operators and investors see positions, NAV, strategy-level performance and every Council decision in real time.</p></div>
-              <div class="card" data-reveal style="--d:300ms"><div class="n"><span>K-06</span><span>Stop</span></div><h3 class="h4">Emergency halt</h3><p>One action, any operator, every mode. Halts new proposals and works open actions down safely.</p></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 03 LEDGER -->
-    <section class="section is-dark grain" id="ledger">
-      <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">03</span><span class="lab">The ledger</span><span class="aside">Append-only · hash-chained</span></div>
-        <div class="grid">
-          <div class="col-5">
-            <h2 class="display-2" data-reveal>Not a black box. A book of record.</h2>
-            <p class="body-lg mt-3" data-reveal style="--d:80ms">Every transition is traceable to the agent that proposed it and the decision that allowed it. Any state — proposed, rejected, approved, submitted, partially filled, filled, reconciled — can be replayed with the inputs that produced it, by an operator, an auditor or a regulator.</p>
-          </div>
-          <div class="col-7 offset-6" data-reveal style="--d:120ms">
-            <div class="card card--tint mono small" style="line-height:1.9;font-size:.78rem">
-              <div class="n"><span>lifecycle 01 · IBIT · create</span><span>chain ✓</span></div>
-              <div style="color:var(--fg-3)">#4f1a · 09:31:03.902 · PROPOSED · agent=strategy:s-0412 · create 2,600 · prev 8c1d</div>
-              <div style="color:var(--reject)">#4f1b · 09:31:03.951 · REJECTED · council · notional cap exceeded · prev 4f1a</div>
-              <div style="color:var(--fg-3)">#4f20 · 09:31:04.071 · PROPOSED · agent=strategy:s-0412 · create 2,000 · prev 4f1b</div>
-              <div style="color:var(--fg-3)">#4f21 · 09:31:04.118 · VALIDATED · schema ✓ policy ✓ caps ✓ hours ✓ · prev 4f20</div>
-              <div style="color:var(--fg-3)">#4f22 · 09:31:04.203 · APPROVED · council · mode=auto-with-approval · by=operator:bs · prev 4f21</div>
-              <div style="color:var(--fg-3)">#4f23 · 09:31:04.377 · SUBMITTED · agent=exec:e-0088 · venue=dark · idem=7a…e2 · prev 4f22</div>
-              <div style="color:var(--fg-3)">#4f24 · 09:31:05.910 · PARTIAL · 1,400 / 2,000 · prev 4f23</div>
-              <div style="color:var(--fg-3)">#4f25 · 09:31:06.442 · FILLED · 2,000 / 2,000 · prev 4f24</div>
-              <div style="color:var(--accent)">#4f26 · 16:05:12.006 · RECONCILED · agent=recon:r-0031 · internal ≡ broker · Δ 0 · prev 4f25</div>
-              <div class="figure-cap" style="margin-top:14px"><span>Illustrative log excerpt · rejects are recorded too</span><span>Every record references its predecessor's hash</span></div>
-            </div>
+          <div class="col-8 tr-cp-plates">
+            <ol class="card-grid card-grid--2 tr-k" role="list">
+              <li class="card tr-kp" data-reveal><div class="hp-art tr-kd" aria-hidden="true"><svg viewBox="0 0 300 84" focusable="false"><path class="hp-h" d="M6 62H294"/><path class="hp-i" d="M66 30H58V70H66M194 30H202V70H194"/><rect class="hp-rec" x="80" y="58" width="14" height="8" rx="1"/><rect class="hp-rec" x="123" y="58" width="14" height="8" rx="1"/><rect class="hp-rec" x="166" y="58" width="14" height="8" rx="1"/><path class="hp-i hp-fine" d="M245 12V52"/><rect class="hp-rrec" x="238" y="58" width="14" height="8" rx="1"/></svg><div class="hp-labs"><span class="hp-lab hp-lab--c" style="--x:43.3;--y:26">Whitelist</span><span class="hp-lab hp-lab--c hp-lab--rej" style="--x:81.7;--y:92">Rejected</span></div></div><div class="tr-kt"><h3 class="h4">Instruments &amp; venues</h3></div></li>
+              <li class="card tr-kp" data-reveal style="--d:60ms"><div class="hp-art tr-kd" aria-hidden="true"><svg viewBox="0 0 300 84" focusable="false"><path class="hp-h" d="M6 70H294"/><path class="hp-h hp-strong" d="M40 30H294"/><rect class="hp-rec" x="58" y="64" width="18" height="6" rx=".8"/><rect class="hp-rec" x="58" y="56" width="18" height="6" rx=".8"/><rect class="hp-rec" x="58" y="48" width="18" height="6" rx=".8"/><rect class="hp-rec" x="98" y="64" width="18" height="6" rx=".8"/><rect class="hp-rec" x="98" y="56" width="18" height="6" rx=".8"/><rect class="hp-rec" x="98" y="48" width="18" height="6" rx=".8"/><rect class="hp-rec" x="98" y="40" width="18" height="6" rx=".8"/><rect class="hp-rec" x="138" y="64" width="18" height="6" rx=".8"/><rect class="hp-rec" x="138" y="56" width="18" height="6" rx=".8"/><rect class="hp-rec" x="138" y="48" width="18" height="6" rx=".8"/><rect class="hp-rec" x="138" y="40" width="18" height="6" rx=".8"/><rect class="hp-rec" x="138" y="32" width="18" height="6" rx=".8"/><rect class="hp-rrec" x="178" y="64" width="18" height="6" rx=".8"/><rect class="hp-rrec" x="178" y="56" width="18" height="6" rx=".8"/><rect class="hp-rrec" x="178" y="48" width="18" height="6" rx=".8"/><rect class="hp-rrec" x="178" y="40" width="18" height="6" rx=".8"/><rect class="hp-rrec" x="178" y="32" width="18" height="6" rx=".8"/><rect class="hp-rrec" x="178" y="24" width="18" height="6" rx=".8"/><rect class="hp-rrec" x="178" y="16" width="18" height="6" rx=".8"/><rect class="hp-rec" x="218" y="64" width="18" height="6" rx=".8"/><rect class="hp-rec" x="218" y="56" width="18" height="6" rx=".8"/><rect class="hp-rec" x="218" y="48" width="18" height="6" rx=".8"/><rect class="hp-rec" x="218" y="40" width="18" height="6" rx=".8"/><rect class="hp-rec" x="218" y="32" width="18" height="6" rx=".8"/><rect class="hp-rec" x="258" y="64" width="18" height="6" rx=".8"/><rect class="hp-rec" x="258" y="56" width="18" height="6" rx=".8"/></svg><div class="hp-labs"><span class="hp-lab" style="--x:0;--y:35.7">Cap</span><span class="hp-lab hp-lab--c hp-lab--rej" style="--x:62.3;--y:6">Over the cap</span></div></div><div class="tr-kt"><h3 class="h4">Position &amp; notional caps</h3></div></li>
+              <li class="card tr-kp" data-reveal style="--d:120ms"><div class="hp-art tr-kd" aria-hidden="true"><svg viewBox="0 0 300 84" focusable="false"><path class="hp-h" d="M6 62H294"/><path class="hp-h" d="M30 62v5M60 62v5M90 62v5M120 62v5M150 62v5M180 62v5M210 62v5M240 62v5M270 62v5"/><path class="hp-i" d="M84 62V28H216V62"/><rect class="hp-rec" x="100" y="54" width="14" height="8" rx="1"/><rect class="hp-rec" x="143" y="54" width="14" height="8" rx="1"/><rect class="hp-rec" x="186" y="54" width="14" height="8" rx="1"/><path class="hp-i hp-fine" d="M253 12V50"/><rect class="hp-rrec" x="246" y="54" width="14" height="8" rx="1"/></svg><div class="hp-labs"><span class="hp-lab hp-lab--c" style="--x:50;--y:24">Window</span><span class="hp-lab hp-lab--c hp-lab--rej" style="--x:84.3;--y:92">Outside</span></div></div><div class="tr-kt"><h3 class="h4">Market<span class="hy">-</span>hours gates</h3></div></li>
+              <li class="card tr-kp" data-reveal style="--d:180ms"><div class="hp-art tr-kd" aria-hidden="true"><svg viewBox="0 0 300 84" focusable="false"><path class="hp-h" d="M6 66H294"/><circle class="hp-g" cx="66" cy="20" r="6"/><circle class="hp-h" cx="150" cy="20" r="6"/><circle class="hp-h" cx="234" cy="20" r="6"/><path class="hp-gl" d="M72 22L148 45"/><path class="hp-h hp-dash" d="M150 26V43M228 22L152 45"/><circle class="hp-i" cx="150" cy="47" r="2.5"/><path class="hp-g" d="M150 50V61"/><rect class="hp-rec" x="48" y="62" width="14" height="8" rx="1"/><rect class="hp-rec" x="96" y="62" width="14" height="8" rx="1"/><rect class="hp-gf" x="143" y="62" width="14" height="8" rx="1"/><path class="hp-h hp-dash" d="M160 66H294"/></svg><div class="hp-labs"><span class="hp-lab hp-lab--c hp-lab--acc" style="--x:22;--y:4">Council</span><span class="hp-lab hp-lab--c" style="--x:50;--y:4">Delegate</span><span class="hp-lab hp-lab--c" style="--x:78;--y:4">You</span></div></div><div class="tr-kt"><h3 class="h4">Who signs</h3></div></li>
+              <li class="card tr-kp" data-reveal style="--d:240ms"><div class="hp-art tr-kd" aria-hidden="true"><svg viewBox="0 0 300 84" focusable="false"><path class="hp-h hp-strong" d="M62 18H294"/><path class="hp-h" d="M62 66H294"/><path class="hp-i hp-fine" d="M79 58V24"/><path class="hp-i" d="M79 14V22"/><rect class="hp-rec" x="72" y="62" width="14" height="8" rx="1"/><path class="hp-i hp-fine" d="M117 58V24"/><path class="hp-i" d="M117 14V22"/><rect class="hp-rec" x="110" y="62" width="14" height="8" rx="1"/><path class="hp-i hp-fine" d="M155 58V24"/><path class="hp-i" d="M155 14V22"/><rect class="hp-rec" x="148" y="62" width="14" height="8" rx="1"/><path class="hp-i hp-fine" d="M193 58V24"/><path class="hp-i" d="M193 14V22"/><rect class="hp-rec" x="186" y="62" width="14" height="8" rx="1"/><path class="hp-i hp-fine" d="M231 58V24"/><path class="hp-i" d="M231 14V22"/><rect class="hp-rec" x="224" y="62" width="14" height="8" rx="1"/><path class="hp-i hp-fine" d="M269 58V24"/><path class="hp-i" d="M269 14V22"/><rect class="hp-gf" x="262" y="62" width="14" height="8" rx="1"/></svg><div class="hp-labs"><span class="hp-lab" style="--x:0;--y:21.4">View</span><span class="hp-lab" style="--x:0;--y:78.6">Record</span></div></div><div class="tr-kt"><h3 class="h4">Positions, NAV, fills, decisions</h3></div></li>
+              <li class="card tr-kp" data-reveal style="--d:300ms"><div class="hp-art tr-kd" aria-hidden="true"><svg viewBox="0 0 300 84" focusable="false"><path class="hp-h" d="M6 58H294"/><rect class="hp-h hp-dash" x="40" y="54" width="14" height="8" rx="1"/><rect class="hp-h hp-dash" x="76" y="54" width="14" height="8" rx="1"/><rect class="hp-h hp-dash" x="112" y="54" width="14" height="8" rx="1"/><rect class="hp-rec" x="147" y="18" width="4" height="58"/><rect class="hp-rec" x="176" y="54" width="14" height="8" rx="1"/><rect class="hp-rec tr-k-o6" x="214" y="55" width="11" height="6" rx="1"/><rect class="hp-rec tr-k-o3" x="248" y="56" width="8" height="4" rx="1"/></svg><div class="hp-labs"><span class="hp-lab hp-lab--c" style="--x:49.7;--y:9">Halt</span><span class="hp-lab hp-lab--c" style="--x:26;--y:88">Halted</span><span class="hp-lab hp-lab--c" style="--x:72.7;--y:88">Worked down</span></div></div><div class="tr-kt"><h3 class="h4">Emergency halt</h3></div></li>
+            </ol>
+            <div class="figure-cap tr-k-cap" data-reveal><span class="fc-h">Schematic</span></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 04 PLAIN LANGUAGE -->
-    <section class="section">
+    <!-- 03 CUSTODY: drawn, not listed (the account, one scoped port in, nothing out) -->
+    <section class="section" id="custody" data-chapter-short="Custody">
       <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">04</span><span class="lab">Plain language</span><span class="aside">What the agents do — and do not do</span></div>
-        <div class="two-col">
-          <div data-reveal>
-            <div class="eyebrow mb-2">What the agents do</div>
-            <ul class="checks">
-              <li>Run selected lifecycles end to end — signal, decision, execution, settlement, reconciliation — under risk limits and Council governance.</li>
-              <li>Give operators and investors real-time visibility into positions, NAV, strategy-level performance and every decision.</li>
-              <li>Act through API permissions you grant and can revoke, with your broker as custodian throughout.</li>
-              <li>Write every transition, including rejects, to an append-only, hash-chained ledger you can inspect.</li>
-            </ul>
+        <div class="sec-head" data-reveal><span class="idx">03</span><span class="lab">Custody</span></div>
+        <div class="grid tr-cu">
+          <div class="col-4 tr-cu-copy">
+            <h2 class="display-2" data-reveal>Custody.</h2>
+            <p class="body-lg mt-3" data-reveal style="--d:80ms">Assets stay in your brokerage account; agents act through scoped permissions, revocable per agent, and can never withdraw.</p>
           </div>
-          <div data-reveal style="--d:80ms">
-            <div class="eyebrow mb-2">What the agents do not do</div>
-            <ul class="checks">
-              <li>They do not custody funds. Ever.</li>
-              <li>They do not promise guaranteed returns. Performance is market-dependent and capital is at risk.</li>
-              <li>They do not hide decisions inside a model. The execution layer is deterministic and every action is attributable to an agent and a Council decision.</li>
-              <li>They do not act outside the mode you set — and they stop, in every mode, when any operator says halt.</li>
-            </ul>
-          </div>
+          <figure class="col-8 tr-cu-plate" data-reveal style="--d:120ms">
+            <div class="hp-art tr-cud" role="img" aria-label="Your broker holds the assets; an agent acts through one scoped, revocable permission; a withdrawal stops at the account's wall."><svg viewBox="0 0 600 160" focusable="false"><rect class="hp-h hp-strong" x="250" y="14" width="344" height="132" rx="2"/><path class="hp-h" d="M266 128H582"/><rect class="hp-rec" x="420" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="448" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="476" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="504" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="532" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="560" y="118" width="20" height="10" rx="1.2"/><circle class="hp-g" cx="64" cy="64" r="7"/><path class="hp-gl" d="M71 64H330V117"/><rect class="hp-gf" x="246.5" y="60.5" width="7" height="7" rx="1"/><rect class="hp-gf" x="323" y="118" width="14" height="10" rx="1.2"/><path class="hp-r hp-dash" d="M430 116C410 100 330 96 258 96"/><path class="hp-r hp-lit" d="M250 84V108"/></svg><div class="hp-labs"><span class="hp-lab hp-lab--c tr-cu-xs" style="--x:10.7;--y:27.5">Agent</span><span class="hp-lab hp-lab--c hp-lab--acc tr-cu-xs" style="--x:26.3;--y:31.2">Scoped · revocable</span><span class="hp-lab" style="--x:44.3;--y:21.2">Your broker</span><span class="hp-lab hp-lab--r hp-lab--rej" style="--x:40.0;--y:60.0">No withdrawal</span><span class="hp-lab hp-lab--c tr-cu-xs" style="--x:84.0;--y:65.0">Assets</span></div></div>
+            <figcaption class="figure-cap"><span class="fc-h">Schematic</span></figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 PLAIN LANGUAGE: the refusals -->
+    <section class="section is-paper-2" id="plain" data-chapter-short="Plain language">
+      <div class="container">
+        <div class="sec-head" data-reveal><span class="idx">04</span><span class="lab">Plain language</span></div>
+        <div class="grid tr-no">
+          <div class="col-5"><h2 class="display-2" data-reveal><span class="ln">What the agents</span> <span class="ln">do not&nbsp;do.</span></h2></div>
+          <ul class="col-7 tr-no-list" role="list">
+            <li data-reveal><i aria-hidden="true"></i>They do not promise guaranteed returns.</li>
+            <li data-reveal style="--d:60ms"><i aria-hidden="true"></i>They do not hide decisions inside a&nbsp;model.</li>
+            <li data-reveal style="--d:120ms"><i aria-hidden="true"></i>They do not act outside the mode you&nbsp;set.</li>
+          </ul>
         </div>
       </div>
     </section>
@@ -166,11 +208,9 @@
     <section class="cta-band is-dark grain">
       <i class="mark globe" aria-hidden="true"></i>
       <div class="container">
-        <div class="eyebrow" data-reveal>Access</div>
-        <h2 class="display-2 mt-2" data-reveal style="--d:60ms">Bring your compliance team.</h2>
-        <p class="lede mt-3" data-reveal style="--d:120ms">We will walk through the Council, the permissions, the control plane and the ledger with the people whose job is to say no.</p>
-        <div class="row" data-reveal style="--d:180ms">
-          <a class="btn" href="access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+        <h2 class="display-2" data-reveal style="--d:60ms"><span class="ph">Bring</span> <span class="ph">your compliance team.</span></h2>
+        <div class="row" data-reveal style="--d:120ms">
+          <a class="btn" href="access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
           <a class="btn btn--ghost" href="platform.html">Inside the stack</a>
         </div>
       </div>
@@ -184,22 +224,21 @@
           <a class="brand" href="index.html"><i class="mark"></i>OpenEXA</a>
           <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
         </div>
-        <div><h4>Product</h4><ul><li><a href="platform.html">Platform</a></li><li><a href="lifecycles.html">Lifecycles</a></li><li><a href="evidence.html">Proof</a></li><li><a href="trust.html">Trust &amp; governance</a></li></ul></div>
-        <div><h4>Company</h4><ul><li><a href="company.html">About OpenEXA</a></li><li><a href="research.html">Research</a></li><li><a href="blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
-        <div><h4>Access</h4><ul><li><a href="access.html">Request access</a></li><li><a href="access.html#managers">For managers</a></li><li><a href="access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+        <div><h2>Product</h2><ul><li><a href="platform.html">Platform</a></li><li><a href="lifecycles.html">Lifecycles</a></li><li><a href="evidence.html">Proof</a></li><li><a href="trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h2>Company</h2><ul><li><a href="company.html">About OpenEXA</a></li><li><a href="research.html">Research</a></li><li><a href="blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk <span aria-hidden="true">↗</span></a></li></ul></div>
+        <div><h2>Access</h2><ul><li><a href="access.html">Request access</a></li><li><a href="access.html#managers">For managers</a></li><li><a href="access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
       </div>
-      <div class="disc">
+      <div class="disc" id="disclosures">
         <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>
-        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
+        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client’s broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
       </div>
       <div class="bottom">
         <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
-        <span>Infrastructure for agentic lifecycles</span>
       </div>
-      <div class="wordmark" aria-hidden="true">OpenEXA</div>
+      <div class="wordmark" aria-hidden="true" data-word="OpenEXA"></div>
     </div>
   </footer>
 
-  <script src="assets/js/site.js" defer></script>
+  <script src="assets/js/afterpaint.js" defer data-after-paint="assets/js/ledger.js assets/js/site.js assets/js/trust.js"></script>
 </body>
 </html>

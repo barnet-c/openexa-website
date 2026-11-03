@@ -3,8 +3,9 @@
 The source of the OpenEXA website: an AI agentic company building the end-to-end infrastructure on which swarms of
 domain-specific AI agents run the world's high-value lifecycles.
 
-- **Live:** <https://thankful-mushroom-0dd42611e.3.azurestaticapps.net/> (Azure Static Web Apps). Every push to `main`
-  deploys it; there is no other deploy step.
+- **Live:** <https://www.openexa.com> (Azure Static Web Apps; origin
+  <https://thankful-mushroom-0dd42611e.3.azurestaticapps.net/>). Every push to `main` deploys it; there is no other
+  deploy step.
 - `site/` is byte-for-byte what is deployed. Running the builders in `tools/` reproduces it exactly.
 - Earlier versions (v1–v17, when the site was on Netlify) are archived in
   [barnet-c/openexa-website-versions](https://github.com/barnet-c/openexa-website-versions); from here on, this repo's
@@ -22,9 +23,13 @@ data/     their inputs: the old openexa.com blog and team (scraped), the researc
 ## Preview
 
 ```
-python -m http.server 8125 --directory site
+python tools/serve.py
 # open http://127.0.0.1:8125/
 ```
+
+`serve.py` behaves like Azure: it applies `site/staticwebapp.config.json` (security headers including the
+Content-Security-Policy, cache headers, redirects, clean URLs, the 404 page), so a policy violation shows up in the
+browser console locally rather than first in production.
 
 ## Rebuild the generated parts
 
@@ -35,30 +40,42 @@ Most pages are hand-written. These are generated; edit the script or its data, n
 | `tools/build_blog.py` | `site/blog/`, blog images, `site/staticwebapp.config.json` (Azure routes), `data/blog_summary.json` | `data/oldblog/` (old openexa.com blog) |
 | `tools/build_research.py` | `site/research.html`, `site/research/01-…10-*.html` | `data/openexa-research-blogs.md`, `data/blog_summary.json` |
 | `tools/build_team.py` | team section of `site/company.html`, `site/assets/img/team/` | `data/oldteam/` (old About page), `data/v1-team/` |
-| `tools/launch_meta_v9.py` | `site/sitemap.xml`, `robots.txt`, `site.webmanifest`, `404.html` | the pages in `site/` |
+| `tools/launch_meta_v9.py` | the canonical / Open Graph / feed / JSON-LD block of each top-level page's head, `site/sitemap.xml` (dates from `data/lastmod.json`), `robots.txt`, `site.webmanifest`, `favicon.ico`, `404.html` | the pages in `site/` |
+| `tools/build_og.py` | `site/assets/img/og/*.jpg`, one 1200×630 share card per page (cached in `data/og_cards.json`) | each page's `<h1>` and description |
 
-Run them in that order (the research page reads the blog summary):
+Run them in that order (the research page reads the blog summary; the cards read the finished pages):
 
 ```
 python tools/build_blog.py
 python tools/build_research.py
 python tools/build_team.py
 python tools/launch_meta_v9.py
+python tools/build_og.py
 ```
 
-Requirements: Python 3.11+, `pip install pillow ftfy playwright` and `playwright install chromium` for the checks.
+`build_blog.py` also writes `site/blog/feed.xml` and `site/staticwebapp.config.json` (redirects, security headers,
+cache rules); `build_research.py` writes `site/research/feed.xml`. Shared pieces live in `tools/meta.py` (schema.org,
+feeds, lastmod) and `tools/paths.py`. `tools/vendor_fonts.py` is run once, to update the self-hosted fonts in
+`site/assets/fonts/` and the `@font-face` block at the top of `site.css`.
+
+Requirements: Python 3.12, `pip install -r tools/requirements.txt` and `playwright install chromium` for the checks.
 
 ## Check
 
 ```
 python tools/linkcheck_tree.py          # every internal link and anchor resolves
-python tools/verify_v9.py               # all key pages at 1440 and 390 in a real browser (needs the preview server)
-python tools/verify_editorial.py        # research figures, articles, company modes (needs the preview server)
+python tools/check_static.py            # content rules, h1/canonical/JSON-LD/share image on every page, sitemap, feeds
+python tools/verify_v9.py               # all key pages at 1440 and 390 in a real browser (needs tools/serve.py running)
+python tools/verify_editorial.py        # research figures, articles, company modes (needs tools/serve.py running)
 python tools/verify_live.py <url>        # a deploy is byte-identical to site/
 python tools/verify_redirects.py <url>   # every old openexa.com URL and moved page is handled correctly
 python tools/probe_routes.py <url>       # quick routing probe: clean URLs, moved blog, legacy URLs, 404s
 python tools/smoke_live.py <url>         # browser smoke test of a deploy
 ```
+
+Every pull request runs these on GitHub (`.github/workflows/checks.yml`): the generators are rerun and must reproduce
+the committed files, then the link check, `check_static.py`, and the two browser suites against `serve.py`. The browser
+suites are heavy (software WebGL); prefer letting CI run them.
 
 ## Deploy
 
@@ -81,4 +98,7 @@ Azure serves `/company` as `company.html` and `/blog/` as `blog/index.html` by i
 - The 2023–24 crypto/token-product posts of the old blog are held back (`EXCLUDE` in `tools/build_blog.py`).
 - Native cursor; every object readable without JavaScript and without WebGL.
 
-`tools/verify_v9.py` enforces the first three.
+`tools/rules.py` holds these rules; `check_static.py` (every page) and `verify_v9.py` (in a browser) enforce them.
+- Everything is same-origin (fonts are self-hosted, no CDNs, no tracking), which is what lets the Content-Security-Policy
+  be strict. Adding any third-party script, style, font, image or frame needs a matching change to `CSP` in
+  `tools/build_blog.py`.

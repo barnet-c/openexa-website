@@ -2,22 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Not found — OpenEXA</title>
   <meta name="description" content="This page did not pass the gate.">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0E1512">
   <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="/assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/site.css">
+  <link rel="stylesheet" href="/assets/css/notfound.css">
 </head>
-<body data-nav="dark-start">
+<body data-page="404" data-nav="dark-start">
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="nav">
     <div class="container">
-      <a class="brand" href="/index.html" aria-label="OpenEXA home"><i class="mark"></i>OpenEXA<small>Agentic infrastructure</small></a>
+      <a class="brand" href="/index.html" aria-label="OpenEXA, home"><i class="mark"></i>OpenEXA</a>
       <nav class="nav-links" aria-label="Primary">
         <a href="/platform.html">Platform</a>
         <a href="/lifecycles.html">Lifecycles</a>
@@ -25,33 +26,51 @@
         <a href="/trust.html">Trust</a>
         <a href="/research.html">Research</a>
         <a href="/company.html">Company</a>
+        <i class="nav-ink" aria-hidden="true"></i>
       </nav>
-      <a class="btn btn--sm" href="/access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
-      <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>
+      <a class="btn btn--sm" href="/access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+      <button class="nav-toggle" type="button" popovertarget="site-menu" aria-label="Menu"><span></span></button>
     </div>
   </header>
   <div class="nav-menu">
-    <a href="/platform.html">Platform</a>
-    <a href="/lifecycles.html">Lifecycles</a>
-    <a href="/evidence.html">Proof</a>
-    <a href="/trust.html">Trust</a>
-    <a href="/research.html">Research</a>
-    <a href="/company.html">Company</a>
-    <a class="btn" href="/access.html">Request access</a>
+    <nav class="nav-sheet is-dark grain" id="site-menu" popover aria-label="Menu">
+      <ol class="nav-sheet-links">
+        <li><a href="/platform.html">Platform</a></li>
+        <li><a href="/lifecycles.html">Lifecycles</a></li>
+        <li><a href="/evidence.html">Proof</a></li>
+        <li><a href="/trust.html">Trust</a></li>
+        <li><a href="/research.html">Research</a></li>
+        <li><a href="/company.html">Company</a></li>
+      </ol>
+      <a class="btn" href="/access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+    </nav>
   </div>
 
   <main id="main">
     <section class="notfound is-dark grain">
-      <canvas class="notfound-swarm" data-swarm aria-hidden="true"></canvas>
       <div class="container">
-        <div class="eyebrow" data-reveal>404 · Rejected at the gate</div>
-        <h1 class="display-1" data-reveal data-split style="--d:60ms">This page didn't pass.</h1>
-        <p class="lede mt-3" data-reveal style="--d:120ms">The address is wrong, has moved, or never existed. Nothing was executed. The attempt is on the record.</p>
-        <div class="row mt-3" data-reveal style="--d:180ms">
-          <a class="btn" href="/index.html">Back to the start <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
-          <a class="btn btn--ghost" href="/platform.html">The platform</a>
+        <div class="nf-copy">
+          <div class="nf-title">
+            <h1 class="display-1">This page didn’t pass.</h1>
+          </div>
+          <div class="nf-next">
+            <p class="lede">The address is wrong, has moved, or never existed. Nothing&nbsp;was&nbsp;executed.</p>
+            <div class="row mt-3">
+              <a class="btn" href="/index.html">Back to the start <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+              <a class="btn btn--ghost" href="/platform.html">The platform</a>
+            </div>
+            <nav class="nf-more" aria-label="More of the site">
+              <ul>
+                <li><a href="/evidence.html">Proof</a></li>
+                <li><a href="/trust.html">Trust</a></li>
+                <li><a href="/research.html">Research</a></li>
+                <li><a href="/blog/index.html">Blog</a></li>
+              </ul>
+            </nav>
+          </div>
         </div>
-        <p class="notfound-log" data-reveal style="--d:240ms"><span>REJECTED</span> · gate 04 · reason: unknown route · logged</p>
+        <figure class="nf-plate" aria-hidden="true"><ol class="nf-keys"><li><b>01</b> Signal</li><li><b>02</b> Predict</li><li><b>03</b> Decide</li><li><b>04</b> Approve<small>Execution Council</small><span class="nf-out nf-out--v" data-nf-path>this address</span></li><li class="is-ahead"><b>05</b> Execute<small>Not reached</small></li><li class="is-ahead"><b>06</b> Settle<small>Not reached</small></li></ol><div class="nf-draw"><svg class="nf-h lcp" viewBox="0 0 1200 216" width="1200" height="216" fill="none" focusable="false"><g class="nf-ahead"><path class="ln" d="M771 32.3 L817 7.7 L817 167.7 L771 192.3 Z"/><path class="ln" d="M821.2 52 L1082.4 52 M821.2 76 L1082.4 76 M821.2 100 L1082.4 100 M821.2 124 L1082.4 124 M821.2 148 L1082.4 148"/><path class="ln" d="M1086.3 26.5 L1113.7 11.9 L1113.7 173.5 L1086.3 188.1 Z"/></g><path class="nf-rest" d="M724 100 L821.2 100"/><path class="nf-rail" pathLength="1" d="M4 100 L700 100"/><g class="nf-s s1"><path class="ln" d="M86.3 32.1 L113.7 17.5 L113.7 167.9 L86.3 182.5 Z"/><path class="tk" d="M87.2 176.2 L112.8 162.6 M87.2 170.5 L112.8 156.9 M87.2 164.7 L112.8 151.1 M87.2 159 L112.8 145.4 M87.2 153.2 L112.8 139.6 M87.2 147.4 L112.8 133.8 M87.2 141.7 L112.8 128.1 M87.2 135.9 L112.8 122.3 M87.2 130.2 L112.8 116.6 M87.2 124.4 L112.8 110.8 M87.2 118.6 L112.8 105 M87.2 112.9 L112.8 99.3 M87.2 107.1 L112.8 93.5 M87.2 101.4 L112.8 87.8 M87.2 95.6 L112.8 82 M87.2 89.8 L112.8 76.2 M87.2 84.1 L112.8 70.5 M87.2 78.3 L112.8 64.7 M87.2 72.6 L112.8 59 M87.2 66.8 L112.8 53.2 M87.2 61 L112.8 47.4 M87.2 55.3 L112.8 41.7 M87.2 49.5 L112.8 35.9 M87.2 43.8 L112.8 30.2 M87.2 38 L112.8 24.4"/></g><g class="nf-s s2"><path class="ln" d="M286.3 32.1 L313.7 17.5 L313.7 167.9 L286.3 182.5 Z"/><path class="tk" d="M287.2 176.2 L312.8 162.6 M287.2 170.5 L312.8 156.9 M287.2 164.7 L312.8 151.1 M287.2 159 L312.8 145.4 M287.2 153.2 L312.8 139.6 M287.2 147.4 L312.8 133.8 M287.2 141.7 L312.8 128.1 M287.2 135.9 L312.8 122.3 M287.2 130.2 L312.8 116.6 M287.2 124.4 L312.8 110.8 M287.2 118.6 L312.8 105 M287.2 112.9 L312.8 99.3 M287.2 107.1 L312.8 93.5 M287.2 101.4 L312.8 87.8 M287.2 95.6 L312.8 82 M287.2 89.8 L312.8 76.2 M287.2 84.1 L312.8 70.5 M287.2 78.3 L312.8 64.7 M287.2 72.6 L312.8 59 M287.2 66.8 L312.8 53.2 M287.2 61 L312.8 47.4 M287.2 55.3 L312.8 41.7 M287.2 49.5 L312.8 35.9 M287.2 43.8 L312.8 30.2 M287.2 38 L312.8 24.4"/></g><g class="nf-s s3"><path class="ln" d="M486.3 32.1 L513.7 17.5 L513.7 167.9 L486.3 182.5 Z"/><path class="tk" d="M487.2 176.2 L512.8 162.6 M487.2 170.5 L512.8 156.9 M487.2 164.7 L512.8 151.1 M487.2 159 L512.8 145.4 M487.2 153.2 L512.8 139.6 M487.2 147.4 L512.8 133.8 M487.2 141.7 L512.8 128.1 M487.2 135.9 L512.8 122.3 M487.2 130.2 L512.8 116.6 M487.2 124.4 L512.8 110.8 M487.2 118.6 L512.8 105 M487.2 112.9 L512.8 99.3 M487.2 107.1 L512.8 93.5 M487.2 101.4 L512.8 87.8 M487.2 95.6 L512.8 82 M487.2 89.8 L512.8 76.2 M487.2 84.1 L512.8 70.5 M487.2 78.3 L512.8 64.7 M487.2 72.6 L512.8 59 M487.2 66.8 L512.8 53.2 M487.2 61 L512.8 47.4 M487.2 55.3 L512.8 41.7 M487.2 49.5 L512.8 35.9 M487.2 43.8 L512.8 30.2 M487.2 38 L512.8 24.4"/></g><g class="nf-s s4"><path class="ln2" d="M671.9 43 L728.1 13 L728.1 157 L671.9 187 Z"/><path class="ln" d="M721.6 88.5 L721.5 84.3 L721.3 80.3 L720.9 76.4 L720.3 72.8 L719.6 69.3 L718.7 66 L717.7 63 L716.5 60.3 L715.3 57.9 L713.9 55.8 L712.4 54.1 L710.8 52.7 L709.1 51.6 L707.4 51 L705.6 50.7 L703.8 50.7 L701.9 51.2 L700 52 L698.1 53.2 L696.2 54.7 L694.4 56.6 L692.6 58.8 L690.9 61.4 L689.2 64.2 L687.6 67.3 L686.1 70.6 L684.7 74.2 L683.5 78 L682.3 81.9 L681.3 86 L680.4 90.2 L679.7 94.4 L679.1 98.7 L678.7 103 L678.5 107.3 L678.4 111.5 L678.5 115.7 L678.7 119.7 L679.1 123.6 L679.7 127.2 L680.4 130.7 L681.3 134 L682.3 137 L683.5 139.7 L684.7 142.1 L686.1 144.2 L687.6 145.9 L689.2 147.3 L690.9 148.4 L692.6 149 L694.4 149.3 L696.2 149.3 L698.1 148.8 L700 148 L701.9 146.8 L703.8 145.3 L705.6 143.4 L707.4 141.2 L709.1 138.6 L710.8 135.8 L712.4 132.7 L713.9 129.4 L715.3 125.8 L716.5 122 L717.7 118.1 L718.7 114 L719.6 109.8 L720.3 105.6 L720.9 101.3 L721.3 97 L721.5 92.7 Z"/><path class="tk2" d="M721.6 88.5 L724.8 86.8 M721.4 82.7 L724.7 80.1 M721 77.2 L724.1 73.8 M720.2 72 L723.2 67.9 M719.1 67.3 L721.9 62.4 M717.7 63 L720.3 57.5 M716.1 59.3 L718.5 53.2 M714.2 56.2 L716.3 49.6 M712.1 53.8 L713.9 46.8 M709.8 52 L711.3 44.8 M707.4 51 L708.5 43.6 M704.9 50.6 L705.6 43.2 M702.3 51.1 L702.6 43.7 M699.6 52.2 L699.6 45 M697 54.1 L696.5 47.2 M694.4 56.6 L693.6 50.1 M691.9 59.8 L690.7 53.8 M689.5 63.6 L688 58.1 M687.3 67.9 L685.4 63.1 M685.3 72.8 L683.1 68.7 M683.5 78 L681 74.7 M681.9 83.5 L679.2 81 M680.6 89.3 L677.7 87.7 M679.6 95.3 L676.5 94.6 M678.9 101.3 L675.7 101.5 M678.5 107.3 L675.3 108.4 M678.4 113.2 L675.2 115.2 M678.7 118.9 L675.5 121.7 M679.2 124.3 L676.1 127.9 M680.1 129.4 L677.1 133.8 M681.3 134 L678.5 139.1 M682.7 138.1 L680.2 143.8 M684.5 141.6 L682.1 147.9 M686.4 144.6 L684.4 151.2 M688.6 146.8 L686.8 153.8 M690.9 148.4 L689.5 155.6 M693.3 149.2 L692.3 156.6 M695.9 149.3 L695.3 156.7 M698.5 148.7 L698.3 156 M701.1 147.3 L701.3 154.4 M703.8 145.3 L704.3 152.1 M711.1 135.2 L712.8 140.5 M713.3 130.7 L715.3 135.3 M715.3 125.8 L717.6 129.7 M717 120.5 L719.6 123.5 M718.5 114.8 L721.3 117.1 M719.7 109 L722.7 110.3 M720.7 103 L723.8 103.5 M721.3 97 L724.5 96.5 M721.6 91 L724.8 89.7"/><path class="nf-rj" d="M707.1 139.8 L708.7 148.7"/><path class="nf-spur" pathLength="1" d="M708.7 148.7 C722.3 149.1 736.8 163.7 740 205.6"/><circle class="nf-fall" cx="740" cy="208.8" r="2.6"/></g><circle class="nf-o" cx="4" cy="100" r="2.4"/><circle class="nf-tok" cx="4" cy="100" r="4"/></svg><svg class="nf-v lcp" viewBox="0 0 88 312" width="88" height="312" fill="none" focusable="false"><g class="nf-ahead"><path class="ln" d="M12.3 204.4 L0.7 226 L75.7 226 L87.3 204.4 Z"/><path class="ln" d="M21.5 227.9 L21.5 277.8 M32.8 227.9 L32.8 277.8 M44 227.9 L44 277.8 M55.2 227.9 L55.2 277.8 M66.5 227.9 L66.5 277.8"/><path class="ln" d="M9.5 279.6 L2.7 292.4 L78.5 292.4 L85.3 279.6 Z"/></g><path class="nf-rest" d="M44 193.2 L44 227.9"/><path class="nf-rail" pathLength="1" d="M44 1 L44 182"/><g class="nf-s s1"><path class="ln" d="M12.2 19.6 L5.3 32.4 L75.8 32.4 L82.7 19.6 Z"/><path class="tk" d="M79.7 20 L73.4 32 M74.3 20 L68 32 M68.9 20 L62.6 32 M63.5 20 L57.2 32 M58.1 20 L51.8 32 M52.7 20 L46.4 32 M47.3 20 L41 32 M41.9 20 L35.6 32 M36.5 20 L30.2 32 M31.1 20 L24.8 32 M25.7 20 L19.4 32 M20.3 20 L14 32 M14.9 20 L8.6 32"/></g><g class="nf-s s2"><path class="ln" d="M12.2 71.6 L5.3 84.4 L75.8 84.4 L82.7 71.6 Z"/><path class="tk" d="M79.7 72 L73.4 84 M74.3 72 L68 84 M68.9 72 L62.6 84 M63.5 72 L57.2 84 M58.1 72 L51.8 84 M52.7 72 L46.4 84 M47.3 72 L41 84 M41.9 72 L35.6 84 M36.5 72 L30.2 84 M31.1 72 L24.8 84 M25.7 72 L19.4 84 M20.3 72 L14 84 M14.9 72 L8.6 84"/></g><g class="nf-s s3"><path class="ln" d="M12.2 123.6 L5.3 136.4 L75.8 136.4 L82.7 123.6 Z"/><path class="tk" d="M79.7 124 L73.4 136 M74.3 124 L68 136 M68.9 124 L62.6 136 M63.5 124 L57.2 136 M58.1 124 L51.8 136 M52.7 124 L46.4 136 M47.3 124 L41 136 M41.9 124 L35.6 136 M36.5 124 L30.2 136 M31.1 124 L24.8 136 M25.7 124 L19.4 136 M20.3 124 L14 136 M14.9 124 L8.6 136"/></g><g class="nf-s s4"><path class="ln2" d="M17.3 168.8 L3.2 195.2 L70.7 195.2 L84.8 168.8 Z"/><path class="ln" d="M38.6 192.1 L36.7 192.1 L34.8 192 L33 191.8 L31.2 191.5 L29.6 191.2 L28.1 190.8 L26.7 190.3 L25.4 189.8 L24.3 189.2 L23.3 188.5 L22.5 187.8 L21.8 187.1 L21.3 186.3 L21 185.5 L20.9 184.6 L20.9 183.8 L21.1 182.9 L21.5 182 L22.1 181.1 L22.8 180.2 L23.7 179.4 L24.7 178.5 L25.9 177.7 L27.2 176.9 L28.7 176.2 L30.2 175.5 L31.9 174.8 L33.7 174.2 L35.5 173.7 L37.4 173.2 L39.4 172.8 L41.4 172.5 L43.4 172.2 L45.4 172 L47.4 171.9 L49.4 171.9 L51.3 171.9 L53.2 172 L55 172.2 L56.8 172.5 L58.4 172.8 L59.9 173.2 L61.3 173.7 L62.6 174.2 L63.7 174.8 L64.7 175.5 L65.5 176.2 L66.2 176.9 L66.7 177.7 L67 178.5 L67.1 179.4 L67.1 180.2 L66.9 181.1 L66.5 182 L65.9 182.9 L65.2 183.8 L64.3 184.6 L63.3 185.5 L62.1 186.3 L60.8 187.1 L59.3 187.8 L57.8 188.5 L56.1 189.2 L54.3 189.8 L52.5 190.3 L50.6 190.8 L48.6 191.2 L46.6 191.5 L44.6 191.8 L42.6 192 L40.6 192.1 Z"/><path class="tk2" d="M38.6 192.1 L37.8 193.6 M35.9 192 L34.7 193.6 M33.3 191.8 L31.7 193.3 M30.9 191.5 L28.9 192.9 M28.7 190.9 L26.4 192.3 M26.7 190.3 L24.1 191.5 M24.9 189.5 L22.1 190.7 M23.5 188.6 L20.4 189.6 M22.3 187.7 L19.1 188.5 M21.5 186.6 L18.1 187.3 M21 185.5 L17.6 186 M20.9 184.3 L17.4 184.6 M21.1 183.1 L17.6 183.2 M21.6 181.8 L18.2 181.8 M22.5 180.6 L19.2 180.4 M23.7 179.4 L20.6 179 M25.2 178.2 L22.3 177.6 M26.9 177.1 L24.4 176.4 M29 176 L26.7 175.2 M31.2 175.1 L29.3 174.1 M33.7 174.2 L32.1 173.1 M36.3 173.5 L35.1 172.2 M39 172.9 L38.2 171.5 M41.8 172.4 L41.4 171 M44.6 172.1 L44.7 170.6 M47.4 171.9 L47.9 170.4 M50.2 171.9 L51.1 170.4 M52.9 172 L54.2 170.5 M55.4 172.3 L57.1 170.8 M57.8 172.7 L59.8 171.3 M59.9 173.2 L62.3 171.9 M61.9 173.9 L64.5 172.7 M63.5 174.7 L66.4 173.6 M64.9 175.6 L68 174.7 M65.9 176.6 L69.2 175.8 M66.7 177.7 L70.1 177.1 M67.1 178.9 L70.5 178.4 M67.1 180.1 L70.6 179.8 M66.8 181.3 L70.2 181.2 M66.2 182.5 L69.5 182.6 M65.2 183.8 L68.4 184 M60.5 187.2 L63 188 M58.4 188.2 L60.6 189.2 M56.1 189.2 L57.9 190.2 M53.6 190 L55 191.2 M51 190.7 L52 192 M48.2 191.2 L48.9 192.6 M45.4 191.7 L45.6 193.1 M42.6 192 L42.4 193.5 M39.8 192.1 L39.2 193.6"/><path class="nf-rj" d="M62.7 185.3 L66.8 186.1"/><path class="nf-spur" pathLength="1" d="M66.8 186.1 C67 192.5 74.3 199.2 95 197"/><circle class="nf-fall" cx="96.5" cy="197" r="2.6"/></g><circle class="nf-o" cx="44" cy="1" r="2.4"/><circle class="nf-tok" cx="44" cy="1" r="4"/></svg><span class="nf-out nf-out--h" data-nf-path style="left:61.67%;top:96.67%">this address</span></div></figure>
+        <p class="notfound-log"><span>REJECTED</span>&nbsp;· gate&nbsp;04&nbsp;· reason:&nbsp;unknown&nbsp;route</p>
       </div>
     </section>
   </main>
@@ -63,22 +82,22 @@
           <a class="brand" href="/index.html"><i class="mark"></i>OpenEXA</a>
           <p class="tag">End-to-end infrastructure for agentic lifecycles.</p>
         </div>
-        <div><h4>Product</h4><ul><li><a href="/platform.html">Platform</a></li><li><a href="/lifecycles.html">Lifecycles</a></li><li><a href="/evidence.html">Proof</a></li><li><a href="/trust.html">Trust &amp; governance</a></li></ul></div>
-        <div><h4>Company</h4><ul><li><a href="/company.html">About OpenEXA</a></li><li><a href="/research.html">Research</a></li><li><a href="/blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk ↗</a></li></ul></div>
-        <div><h4>Access</h4><ul><li><a href="/access.html">Request access</a></li><li><a href="/access.html#managers">For managers</a></li><li><a href="/access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
+        <div><h2>Product</h2><ul><li><a href="/platform.html">Platform</a></li><li><a href="/lifecycles.html">Lifecycles</a></li><li><a href="/evidence.html">Proof</a></li><li><a href="/trust.html">Trust &amp; governance</a></li></ul></div>
+        <div><h2>Company</h2><ul><li><a href="/company.html">About OpenEXA</a></li><li><a href="/research.html">Research</a></li><li><a href="/blog/index.html">Blog</a></li><li><a href="https://sentiment.openexa.com/" rel="noopener">Sentiment desk <span aria-hidden="true">↗</span></a></li></ul></div>
+        <div><h2>Access</h2><ul><li><a href="/access.html">Request access</a></li><li><a href="/access.html#managers">For managers</a></li><li><a href="/access.html#lifecycles">Bring a lifecycle</a></li></ul></div>
       </div>
-      <div class="disc">
+      <div class="disc" id="disclosures">
         <p><strong>Important disclosures.</strong> OpenEXA Inc. builds AI agent infrastructure. Its first lifecycle operates in regulated financial markets. Nothing on this website constitutes an offer to sell, or a solicitation of an offer to buy, any security or investment product. Any offering will be made only to accredited investors under Rule 506(c) of Regulation D and only by means of definitive offering documents, which will contain a full description of risks.</p>
-        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client's broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
+        <p>Yield and performance figures describe targets and proof-of-concept results over a limited period; they are not forecasts or guarantees. Performance is market-dependent and capital is at risk. OpenEXA does not take custody of client assets; assets remain with the client’s broker. Lifecycle classes beyond Lifecycle 01 describe roadmap intent. Third-party names are trademarks of their respective owners and do not endorse OpenEXA.</p>
       </div>
       <div class="bottom">
         <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
-        <span>Infrastructure for agentic lifecycles</span>
       </div>
-      <div class="wordmark" aria-hidden="true">OpenEXA</div>
+      <div class="wordmark" aria-hidden="true" data-word="OpenEXA"></div>
     </div>
   </footer>
 
   <script src="/assets/js/site.js" defer></script>
+  <script src="/assets/js/notfound.js" defer></script>
 </body>
 </html>

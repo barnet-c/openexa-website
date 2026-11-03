@@ -6,6 +6,7 @@ from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE
 import asyncio, sys
 from pathlib import Path
 from playwright.async_api import async_playwright, expect
+from rules import PEOPLE, GONE  # the site's content rules (tools/rules.py), as check_static and verify_v9 apply them
 
 ARG = sys.argv[1] if len(sys.argv) > 1 else "https://thankful-mushroom-0dd42611e.3.azurestaticapps.net"
 BASE = ARG.rstrip("/")
@@ -17,6 +18,8 @@ async def main():
         b = await p.chromium.launch(args=["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"])
         ctx = await b.new_context(viewport={"width": 1440, "height": 900})
         pg = await ctx.new_page()
+        # a slow preview or a loaded PC: 90 s for a navigation and an action, as verify_v9 allows (patience only)
+        pg.set_default_navigation_timeout(90000); pg.set_default_timeout(90000)
         errs = []
         pg.on("pageerror", lambda e: errs.append("PAGEERROR " + str(e)))
         pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
@@ -57,24 +60,34 @@ async def main():
 
         await pg.goto(f"{BASE}/", wait_until="load")
         await pg.wait_for_timeout(3000)
-        assert await pg.locator(".chapters a").count() == 7
+        assert await pg.locator(".nav-ch-list a").count() == 7 and await pg.locator(".chapters").count() == 0
         await pg.locator("#research").scroll_into_view_if_needed()
         await pg.wait_for_timeout(1200)
         await pg.screenshot(path=str(OUT / "home-research.png"))
         # the team lives on the company page only
         await pg.goto(f"{BASE}/company", wait_until="load")
-        await pg.locator(".crew--team").scroll_into_view_if_needed(); await pg.wait_for_timeout(1500)
+        # the advisors' portraits are loading="lazy": walk the page so every one is fetched before counting them
+        for y in range(0, await pg.evaluate("document.body.scrollHeight"), 400):
+            await pg.evaluate(f"scrollTo(0, {y})"); await pg.wait_for_timeout(120)
+        await pg.locator(".crew--team").scroll_into_view_if_needed()
+        # polled with evaluate: the site's CSP has no 'unsafe-eval', so wait_for_function(<string>) cannot run there
+        for _ in range(75):
+            if await pg.evaluate("[...document.querySelectorAll('.crew img')].every(i => i.complete && i.naturalWidth === 560)"): break
+            await pg.wait_for_timeout(200)
         team = await pg.evaluate("[...document.querySelectorAll('.crew img')].map(i => i.complete && i.naturalWidth === 560)")
         assert len(team) == 13 and all(team), team
-        await pg.locator(".crew").first.screenshot(path=str(OUT / "team.png"))
+        # a clipped page screenshot (round 2): never Locator.screenshot's 'element is stable' wait
+        box = await pg.evaluate("(() => { const r = document.querySelector('.crew').getBoundingClientRect(); const y0 = Math.max(0, r.top), y1 = Math.min(innerHeight, r.bottom); return {x: Math.max(0, r.left), y: y0, width: Math.min(innerWidth, r.right) - Math.max(0, r.left), height: y1 - y0}; })()")
+        if box["width"] >= 1 and box["height"] >= 1: await pg.screenshot(path=str(OUT / "team.png"), clip=box, animations="disabled")
         for path in ("/company", "/blog/", "/research"):
             await pg.goto(f"{BASE}{path}", wait_until="load")
             txt = await pg.evaluate("document.body.innerText")
-            assert not any(n in txt for n in ("Barnet", "Sherman", "Braintree")), (path, "Barnet Sherman must not appear")
+            assert not any(n in txt for n in ("Barnet", "Sherman", "Braintree")) and not GONE.search(txt), (path, "Barnet Sherman must not appear", GONE.findall(txt))
         for path in ("/", "/research", "/platform", "/trust"):
             await pg.goto(f"{BASE}{path}", wait_until="load")
             txt = await pg.evaluate("document.body.innerText")
             assert not any(n in txt for n in ("Dubey", "Leung", "Lockhart", "Gamolsky", "Choudhri", "Schuster", "Ekeroma", "Nanawati")), path
+            assert not PEOPLE.search(txt), (path, "names outside Company and the blog (v2x: every name in rules.PEOPLE)", sorted(set(PEOPLE.findall(txt))))
         assert not errs, errs
         print(f"live smoke OK: team on /company only (13 portraits), no Barnet anywhere, company figure + modes, research hover morph, article 02 (toc {toc} = h2 {h2}), insights -> research, 7 chapters, 0 errors")
         await b.close()

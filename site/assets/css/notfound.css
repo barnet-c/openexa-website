@@ -1,0 +1,144 @@
+/* The 404 (system; loaded by 404.html only, after site.css; the page and its plate: tools/launch_meta_v9.py and
+   tools/nf_plate.py). Lab 31 Oct 2026: the plate is Home's Fig. 3.1 lane, engraved the same way (site.css .lcp), carrying
+   one proposal: the address that was asked for walks gates 01-03, stops at the Council's aperture and falls away in
+   red. The boundary, the rails and the settle gate stay dashed: nothing crossed, nothing was executed. One motion, CSS
+   only, once; its end state is the still state (reduced motion, no animation support, print hides the plate). */
+
+.notfound { position: relative; min-height: 100svh; display: grid; align-items: center; padding: calc(var(--nav-h) + clamp(28px, 6vh, 64px)) 0 clamp(40px, 7vh, 80px); overflow: hidden; }
+.notfound .container { position: relative; z-index: 1; }
+.notfound .display-1 { max-width: 14ch; }
+.notfound .lede { max-width: 46ch; }
+.notfound .row { display: flex; flex-wrap: wrap; gap: 14px; }
+.nf-next { margin-top: clamp(22px, 3vw, 30px); }
+/* award a1: the other likely ways in (most lost visitors come from old research and blog addresses), as a ruled row
+   under the two buttons: hairlines above and below, one cell per page, the bar's grammar on hover and focus (a dashed
+   rule draws in under the name) */
+.nf-more { margin-top: 26px; }
+.nf-more ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid var(--line); }
+.nf-more li + li { border-left: 1px solid var(--line); }
+.nf-more a { position: relative; display: flex; align-items: center; min-height: 44px; padding: 0 14px; font: 500 var(--fs-small)/1.3 var(--sans); color: var(--fg-2); transition: color var(--dur-feedback) var(--ease-out); }
+.nf-more li:first-child a { padding-left: 0; }
+.nf-more a::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 11px; height: 1px; background: repeating-linear-gradient(90deg, currentColor 0 3px, transparent 3px 6px); transform: scaleX(0); transform-origin: left; transition: transform var(--dur-move) var(--ease-out); }
+.nf-more li:first-child a::after { left: 0; }
+.nf-more a:focus-visible { color: var(--fg); outline-offset: -2px; }
+.nf-more a:focus-visible::after { transform: scaleX(1); }
+@media (hover: hover) { .nf-more a:hover { color: var(--fg); } .nf-more a:hover::after { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .nf-more a::after { transition: none; } }
+@media (max-width: 420px) {
+  .nf-more ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nf-more li:nth-child(3) { border-left: 0; }
+  .nf-more li:nth-child(3) a { padding-left: 0; } .nf-more li:nth-child(3) a::after { left: 0; }
+  .nf-more li:nth-child(n + 3) { border-top: 1px solid var(--line); }
+}
+.notfound-log { margin-top: 24px; font-family: var(--mono); font-size: var(--fs-small); letter-spacing: .02em; color: var(--fg-3); } /* the gate's record: data, at the small step (1 Nov) */
+.notfound-log span { color: var(--reject); }
+/* a spread from 961 px: the headline left, the way on beside its foot; the plate across the page below */
+@media (min-width: 961px) {
+  .nf-copy { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: clamp(16px, 2.2vw, 32px); align-items: end; }
+  .nf-next { margin: 0 0 10px; }
+  .notfound .row { margin-top: 26px; }
+}
+
+/* ---------- the plate ---------- */
+.nf-plate { position: relative; margin: clamp(40px, 6.5vh, 72px) 0 0; color: var(--fg); }
+.nf-draw { position: relative; }
+.nf-plate svg { display: block; overflow: visible; }
+.nf-h { width: 100%; height: auto; --dx: 696px; --dy: 0px; }
+.nf-plate .nf-v { display: none; --dx: 0px; --dy: 180.96px; }
+.nf-plate .nf-ahead { opacity: .55; }
+.nf-plate .nf-ahead .ln { stroke-dasharray: 2 4; }
+.nf-plate .nf-rest { stroke: currentColor; stroke-dasharray: 2 4; opacity: .45; }
+.nf-plate .nf-rail { stroke: currentColor; stroke-width: calc(1.25 * var(--stroke)); }
+.nf-plate .nf-o, .nf-plate .nf-tok { fill: currentColor; }
+.nf-plate .nf-tok { opacity: 0; } /* the proposal itself shows only while it walks */
+.nf-plate .nf-rj { stroke: var(--reject); stroke-width: calc(1.6 * var(--stroke)); }
+.nf-plate .nf-spur { stroke: var(--reject); stroke-width: calc(1.25 * var(--stroke)); }
+.nf-plate .nf-fall { fill: var(--reject); }
+
+/* the stations' names, laid on the lane: equal columns over the row (x = (i - .5) / 6), equal rows beside the column */
+.nf-keys {
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0 0 4px; padding: 0; list-style: none; text-align: center;
+  font: 500 .6875rem/1.45 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg);
+}
+.nf-keys b { font-weight: 500; color: var(--fg-3); margin-right: .3em; }
+.nf-keys small { display: block; font-size: inherit; font-weight: 400; letter-spacing: .1em; color: var(--fg-3); }
+.nf-keys .is-ahead { color: var(--fg-3); }
+/* the address that was asked for, where it fell (written by notfound.js; "this address" without script) */
+.nf-out { font: 400 .875rem/1.35 var(--mono); letter-spacing: .02em; text-transform: none; color: var(--reject); white-space: nowrap; }
+.nf-out--h { position: absolute; max-width: calc(37% - 12px); transform: translate(12px, -.68em); white-space: normal; overflow-wrap: anywhere; } /* its first line on the fall; a long address wraps inside the grid */
+.nf-out--v { display: none; }
+@media (min-width: 700px) and (max-width: 899.98px) { .nf-out--h { font-size: .8125rem; } } /* 33 characters still fit beside the fall */
+
+/* phones and tablets: the lane runs down the page, the names beside it */
+@media (max-width: 699.98px) {
+  .nf-plate { display: grid; grid-template-columns: 88px minmax(0, 1fr); column-gap: 20px; max-width: 30rem; }
+  .nf-draw { grid-column: 1; grid-row: 1; }
+  .nf-plate :is(.nf-h, .nf-out--h) { display: none; }
+  .nf-plate .nf-v { display: block; width: 88px; height: 312px; }
+  .nf-keys { grid-column: 2; grid-row: 1; height: 312px; margin: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(6, minmax(0, 1fr)); text-align: left; }
+  .nf-keys li { align-self: center; min-width: 0; }
+  .nf-out--v { display: block; white-space: normal; overflow-wrap: anywhere; } /* a long address wraps; it is never cut */
+}
+
+/* ---------- the walk: one proposal, gate by gate (stops at 01, 02, 03), turned away at 04 ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .nf-plate .nf-rail { stroke-dasharray: 1 2; animation: nf-rail 1.8s linear .4s both; }
+  .nf-plate .nf-tok { animation: nf-tok 1.8s linear .4s both, nf-gone .2s var(--ease-out) 2.3s forwards; }
+  .nf-plate .nf-s { animation: nf-lit .35s var(--ease) var(--at, 0s) both; }
+  .nf-keys li:not(.is-ahead) { animation: nf-key .35s var(--ease) var(--at, 0s) both; }
+  .nf-plate .s1, .nf-keys li:nth-child(1) { --at: .6s; }
+  .nf-plate .s2, .nf-keys li:nth-child(2) { --at: 1.13s; }
+  .nf-plate .s3, .nf-keys li:nth-child(3) { --at: 1.67s; }
+  .nf-plate .s4, .nf-keys li:nth-child(4) { --at: 2.2s; }
+  .nf-plate .nf-rj { animation: nf-in .2s var(--ease-out) 2.3s both; }
+  .nf-plate .nf-spur { stroke-dasharray: 1 2; animation: nf-fall .45s var(--ease-draw) 2.38s both; }
+  .nf-plate .nf-fall, .nf-plate .nf-out { animation: nf-in .3s var(--ease-out) 2.8s both; }
+}
+@keyframes nf-rail {
+  0% { stroke-dashoffset: 1; animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
+  11% { stroke-dashoffset: .8621; }
+  17.7% { stroke-dashoffset: .8621; animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
+  40.7% { stroke-dashoffset: .5747; }
+  47.4% { stroke-dashoffset: .5747; animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
+  70.3% { stroke-dashoffset: .2874; }
+  77% { stroke-dashoffset: .2874; animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
+  100% { stroke-dashoffset: 0; }
+}
+@keyframes nf-tok {
+  0% { opacity: 1; transform: none; animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
+  11% { opacity: 1; transform: translate(calc(var(--dx) * .1379), calc(var(--dy) * .1379)); }
+  17.7% { opacity: 1; transform: translate(calc(var(--dx) * .1379), calc(var(--dy) * .1379)); animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
+  40.7% { opacity: 1; transform: translate(calc(var(--dx) * .4253), calc(var(--dy) * .4253)); }
+  47.4% { opacity: 1; transform: translate(calc(var(--dx) * .4253), calc(var(--dy) * .4253)); animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
+  70.3% { opacity: 1; transform: translate(calc(var(--dx) * .7126), calc(var(--dy) * .7126)); }
+  77% { opacity: 1; transform: translate(calc(var(--dx) * .7126), calc(var(--dy) * .7126)); animation-timing-function: cubic-bezier(.45, 0, .3, 1); }
+  100% { opacity: 1; transform: translate(var(--dx), var(--dy)); }
+}
+@keyframes nf-lit { from { opacity: .3; } }
+@keyframes nf-key { from { color: var(--fg-3); } }
+@keyframes nf-in { from { opacity: 0; } }
+@keyframes nf-gone { to { opacity: 0; } }
+@keyframes nf-fall { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+/* forced colours: the engraving takes the user's text colour (an SVG keeps its own otherwise: paper on a light theme) */
+@media (forced-colors: active) {
+  .nf-plate svg { color: CanvasText; forced-color-adjust: none; }
+  .nf-plate :is(.nf-rj, .nf-spur) { stroke: CanvasText; }
+  .nf-plate .nf-fall { fill: CanvasText; }
+}
+@media print { .nf-plate { display: none !important; } }
+
+/* wide screens (award a1): site.css grows the page above 1920 px (root = window / 120); what this sheet caps in px moves
+   to rem, so the 404 is the 1920 page at the window's scale, as every other page is */
+@media (min-width: 1921px) {
+  .notfound { padding: calc(var(--nav-h) + 4rem) 0 5rem; }
+  .nf-next { margin: 0 0 .625rem; }
+  .notfound .row { margin-top: 1.625rem; gap: .875rem; }
+  .nf-copy { column-gap: 2rem; }
+  .nf-plate { margin-top: 4.5rem; }
+  .notfound-log { margin-top: 1.5rem; }
+  .nf-more { margin-top: 1.625rem; }
+  .nf-more a { min-height: 2.75rem; padding: 0 .875rem; }
+  .nf-more a::after { left: .875rem; right: .875rem; bottom: .6875rem; }
+  .nf-more li:first-child a { padding-left: 0; } .nf-more li:first-child a::after { left: 0; }
+}
