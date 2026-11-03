@@ -52,7 +52,11 @@
   const navH = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 72; // the bar's height
 
   let uid = 0;
-  roots.forEach((root) => explorer(root, uid++));
+  const buildAll = () => roots.forEach((root) => explorer(root, uid++));
+  // (award a3, a3-dev) a page reached by a view transition, at its top, builds its explorers once the transition is over
+  // (they sit a screen or more below): built at once, the build ran inside the transition's frames
+  const vt = !location.hash && document.activeViewTransition;
+  if (vt && vt.finished) vt.finished.then(buildAll, buildAll); else buildAll();
 
   function explorer(root, id) {
     const pre = `arch${id}`;

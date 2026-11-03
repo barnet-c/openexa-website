@@ -22,7 +22,8 @@ W, H = 400, 225
 X0, X1 = 28, 372
 # r4-perf: the drawers work in 400 x 225 units; the svg is written at K times that, on an 800 x 450 viewBox, in whole
 # numbers (half a drawing unit, a third of a pixel on the largest plate), so the index carries no decimals in its 25
-# plates (27.4 -> ~21 KB gzip). blog.css sets the strokes and lettering in the same doubled units (--u).
+# plates (27.4 -> ~21 KB gzip). blog.css sets the lettering in the same doubled units (--lu); since award a3 every line is a
+# non-scaling stroke on site.css's whole-pixel tokens (--u = 1 px x --stroke; the green line --stroke-2).
 K = 2
 
 
@@ -537,9 +538,13 @@ def rings(turn):
 
 # award a2 (art director, medium): the economics register's plate stands at the list's full height. The same six rings,
 # one green, risen on a diagonal (the whole constellation turned RINGS_RISE degrees, each ring keeping its own tilt), so
-# a tall plate is filled by the mark instead of holding a thin band of it in an empty panel. Fitted to TALL_FILL of a
-# portrait sheet (TW x TH drawing units, the 5:8 of the register beside it at 1440); written at K like every plate
-RINGS_RISE, TW, TH, TALL_FILL = -58, 225, 360, .9
+# a tall plate is filled by the mark instead of holding a thin band of it in an empty panel; written at K like every plate.
+# award a3 (art director, polish: "the drawing fills about half its frame"): the a2 sheet was a 5:8 viewBox with the
+# rings at 90% of its width, so on a desk (the frame about 5:7) the drawing stood in about two-thirds of the frame each
+# way. The viewBox is now the constellation's own box, taken over every angle blog.js turns it to (RINGS_STEP degrees a
+# paper, as many steps as the register has rows after its first), so the sheet's margins in blog.css are the drawing's:
+# it fills the frame at rest and never leaves it while it turns
+RINGS_RISE, RINGS_STEP = -58, -6   # RINGS_STEP: blog.js's turn per row (--turn = -6deg x the row's index)
 
 
 def _rings_box(rise):
@@ -554,13 +559,32 @@ def _rings_box(rise):
     return min(xs_), max(xs_), min(ys_), max(ys_)
 
 
-def rings_tall():
-    x0, x1, y0, y1 = _rings_box(RINGS_RISE)
-    k_ = TALL_FILL * min(TW / (x1 - x0), TH / (y1 - y0))
-    cx, cy = TW / 2 - k_ * (x0 + x1) / 2, TH / 2 - k_ * (y0 + y1) / 2
-    inner = [f'<ellipse class="{"pg" if k == 0 else "pb"}" cx="{f(cx)}" cy="{f(cy)}" rx="{f(rx * k_)}" ry="{f(ry * k_)}" transform="rotate({rot + RINGS_RISE} {f(cx)} {f(cy)})"' + (' pathLength="1"' if k == 0 else "") + "/>"
+def rings_tall(rows=8):
+    """the rings on a sheet as tall as the register beside them (rows: its papers): a viewBox that is the constellation's
+    box over its whole turn (RINGS_RISE to RINGS_RISE + RINGS_STEP x (rows - 1)), centred on the rings' common centre
+    (blog.css turns the svg about its own centre), with a stroke's room at the edges"""
+    w = h = 0.0
+    turn = RINGS_STEP * (rows - 1)
+    for t in range(0, turn - 1, -1):
+        x0, x1, y0, y1 = _rings_box(RINGS_RISE + t)
+        w, h = max(w, x1 - x0), max(h, y1 - y0)
+    vw, vh = math.ceil(w / 2 + 1) * 2, math.ceil(h / 2 + 1) * 2   # whole even drawing units: the centre lands on a whole unit
+    cx, cy = vw / 2, vh / 2
+    inner = [f'<ellipse class="{"pg" if k == 0 else "pb"}" cx="{f(cx)}" cy="{f(cy)}" rx="{f(rx)}" ry="{f(ry)}" transform="rotate({rot + RINGS_RISE} {f(cx)} {f(cy)})"' + (' pathLength="1"' if k == 0 else "") + "/>"
              for k, (rx, ry, rot) in enumerate(RINGS)]
-    return f'<svg class="bp-art bp-rings bp-tall" viewBox="0 0 {TW * K} {TH * K}" fill="none" focusable="false" aria-hidden="true">{"".join(inner)}</svg>'
+    return f'<svg class="bp-art bp-rings bp-tall" viewBox="0 0 {vw * K} {vh * K}" fill="none" focusable="false" aria-hidden="true">{"".join(inner)}</svg>'
+
+
+def rings_wide():
+    """award a3: the economics mark where it heads its list on a phone (a 2:1 plate): the six rings lying flat, as the
+    cards and the library draw them, on a viewBox that is their own box (they stood in about 45% of the card sheet's
+    width there, the rest of the plate empty); written at K like every plate"""
+    x0, x1, y0, y1 = _rings_box(0)
+    vw, vh = math.ceil((x1 - x0) / 2 + 1) * 2, math.ceil((y1 - y0) / 2 + 1) * 2
+    cx, cy = vw / 2, vh / 2
+    inner = [f'<ellipse class="{"pg" if k == 0 else "pb"}" cx="{f(cx)}" cy="{f(cy)}" rx="{f(rx)}" ry="{f(ry)}" transform="rotate({rot} {f(cx)} {f(cy)})"/>'
+             for k, (rx, ry, rot) in enumerate(RINGS)]
+    return f'<svg class="bp-art bp-rings bp-wide" viewBox="0 0 {vw * K} {vh * K}" fill="none" focusable="false" aria-hidden="true">{"".join(inner)}</svg>'
 
 
 # ---------------------------------------------------------------- the register: slug -> what the plate draws
@@ -653,7 +677,7 @@ def plate_svg(slug, col, turn=0):
 
 def collection_svg(col):
     """the plate a collection shows once at its head on phones (where the cards drop their plates)"""
-    if col == "economics": return svg(rings(0), "bp-art bp-rings")
+    if col == "economics": return rings_wide()
     if col == "markets": return svg(decomposition(rng("markets"), 3))
     return svg(five_stages(rng("ai")))
 
@@ -697,9 +721,12 @@ def _mx(m, ox, oy):
     return f"matrix({a * LIB_S:.2f},{b * LIB_S:.2f},{c * LIB_S:.2f},{d * LIB_S:.2f},{e * LIB_S + ox:.1f},{f_ * LIB_S + oy:.1f})"
 
 
-def library_svg(labels=("Markets", "AI & agents", "Economics"), counts=(16, 5, 8), lit=4):
-    """the hero plate of the blog index (see the note above). Bundles are links to their collections (tabindex -1: the
-    nav's chapter list is the keyboard's way since the chips bar was cut on 1 Nov; the svg is aria-hidden)."""
+def library_svg(counts=(16, 5, 8), lit=4):
+    """the hero plate of the blog index (see the note above). Bundles are links to their collections for the pointer
+    (tabindex -1; the svg is aria-hidden). award a3 (a3-ux 6): the plate carries no lettering. The collections' names
+    under it (MARKETS · AI & AGENTS · ECONOMICS, in the drawing's order, not the page's) looked like tabs and did
+    nothing; the names are now links under the H1 (build_blog.py), keyboard-first and in the page's order, and each
+    bundle answers its link (blog.css)."""
     deg = math.radians
     # (key, angles, green leaves, face index, face drawing); angles run from the outermost leaf to the top one
     bundles = [
@@ -708,7 +735,7 @@ def library_svg(labels=("Markets", "AI & agents", "Economics"), counts=(16, 5, 8
         ("ai", [deg(-55 + 34 * k / max(counts[1] - 1, 1)) for k in range(counts[1])], set(range(counts[1] - lit, counts[1])), counts[1] - 1, five_stages(rng("ai"))),
         ("economics", [deg(88.6 - 4.4 * k / max(counts[2] - 1, 1)) for k in range(counts[2])], set(), counts[2] - 1, rings(0)),
     ]
-    # fit: the corners of every leaf at rest and fanned (hover), plus room for the lettering underneath
+    # fit: the corners of every leaf at rest and fanned (hover)
     pts = []
     for _, angs, _, _, _ in bundles:
         for a in angs + [a * 1.16 for a in angs]:
@@ -721,7 +748,7 @@ def library_svg(labels=("Markets", "AI & agents", "Economics"), counts=(16, 5, 8
     ox, oy = -x0 + pad, -y0 + pad
     vw = round(x1 - x0 + 2 * pad)
     face_t = f"scale({1 / (W * K):.7f},{1 / (H * K):.7f}) translate(0,{H * K}) scale(1,-1)"   # plate y down -> leaf t (front at the bottom)
-    groups = []
+    groups, low = [], oy   # low: the album's lowest point at rest (the spine, or a leaf's front fore-edge corner)
     for bi, (key, angs, green, face_i, face) in enumerate(bundles):
         leaves = []
         for i, a in enumerate(angs):
@@ -735,18 +762,8 @@ def library_svg(labels=("Markets", "AI & agents", "Economics"), counts=(16, 5, 8
                 inner += f'<g class="lf-face" transform="{face_t}{mirror}">{compact(face)}</g>'
             leaves.append((depth, f'<g class="lf-w" transform="{_mx(m, ox, oy)}"{style}>{inner}</g>'))
         leaves.sort(key=lambda t: -t[0])  # far first
-        # the lowest point of the bundle's front edge (the spine is at 0; a leaf's fore-edge corner at its u)
-        lows = [(m_[0] * LIB_S + ox, m_[1] * LIB_S + oy) for m_ in (_lib_matrix(a)[0] for a in angs)]
-        groups.append((key, "".join(h for _, h in leaves), lows))
-    # lettering on one line under the album, as an engraving's: Markets at the left stack's fore-edge, AI & agents at
-    # the spine the leaves turn on, Economics at the right stack's fore-edge
-    spine = (ox, oy)
-    base = max(max(y for _, y in g[2]) for g in groups) + 26
-    at = {"markets": (min(x for x, _ in groups[0][2]), "start"), "ai": (spine[0], "middle"),
-          "economics": (max(x for x, _ in groups[2][2]), "end")}
-    vh = round(base + 6)
-    groups = [f'<a class="lib-b lib-{key}" href="#{key}" tabindex="-1">{body}<text class="lib-t" x="{at[key][0]:.0f}" '
-              f'y="{base:.0f}" text-anchor="{at[key][1]}">{lab.replace("&", "&amp;")}</text></a>'
-              for (key, body, _), lab in zip(groups, labels)]
+        low = max([low] + [_lib_matrix(a)[0][1] * LIB_S + oy for a in angs])
+        groups.append(f'<a class="lib-b lib-{key}" href="#{key}" tabindex="-1">{"".join(h for _, h in leaves)}</a>')
+    vh = round(low + pad)   # the album's foot: no band for lettering under it since a3 (the names are links under the H1)
     return (f'<svg class="lib-art" viewBox="0 0 {vw} {vh}" fill="none" focusable="false" aria-hidden="true">'
             + "".join(groups) + "</svg>")

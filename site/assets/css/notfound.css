@@ -4,23 +4,23 @@
    red. The boundary, the rails and the settle gate stay dashed: nothing crossed, nothing was executed. One motion, CSS
    only, once; its end state is the still state (reduced motion, no animation support, print hides the plate). */
 
-.notfound { position: relative; min-height: 100svh; display: grid; align-items: center; padding: calc(var(--nav-h) + clamp(28px, 6vh, 64px)) 0 clamp(40px, 7vh, 80px); overflow: hidden; }
+.notfound { position: relative; min-height: 100svh; display: grid; align-items: center; padding: calc(var(--nav-h) + clamp(1.75rem, 6vh, 4rem)) 0 clamp(2.5rem, 7vh, 5rem); overflow: hidden; }
 .notfound .container { position: relative; z-index: 1; }
 .notfound .display-1 { max-width: 14ch; }
 .notfound .lede { max-width: 46ch; }
-.notfound .row { display: flex; flex-wrap: wrap; gap: 14px; }
-.nf-next { margin-top: clamp(22px, 3vw, 30px); }
+.notfound .row { display: flex; flex-wrap: wrap; gap: .875rem; }
+.nf-next { margin-top: clamp(1.375rem, 3vw, 1.875rem); }
 /* award a1: the other likely ways in (most lost visitors come from old research and blog addresses), as a ruled row
    under the two buttons: hairlines above and below, one cell per page, the bar's grammar on hover and focus (a dashed
    rule draws in under the name) */
-.nf-more { margin-top: 26px; }
-.nf-more ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid var(--line); }
-.nf-more li + li { border-left: 1px solid var(--line); }
-.nf-more a { position: relative; display: flex; align-items: center; min-height: 44px; padding: 0 14px; font: 500 var(--fs-small)/1.3 var(--sans); color: var(--fg-2); transition: color var(--dur-feedback) var(--ease-out); }
+.nf-more { margin-top: 1.625rem; }
+.nf-more ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: var(--hair) solid var(--line); }
+.nf-more li + li { border-left: var(--hair) solid var(--line); }
+.nf-more a { position: relative; display: flex; align-items: center; min-height: 2.75rem; padding: 0 .875rem; font: 500 var(--fs-small)/1.3 var(--sans); color: var(--fg-2); transition: color var(--dur-feedback) var(--ease-out); }
 .nf-more li:first-child a { padding-left: 0; }
-.nf-more a::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 11px; height: 1px; background: repeating-linear-gradient(90deg, currentColor 0 3px, transparent 3px 6px); transform: scaleX(0); transform-origin: left; transition: transform var(--dur-move) var(--ease-out); }
+.nf-more a::after { content: ""; position: absolute; left: .875rem; right: .875rem; bottom: .6875rem; height: var(--hair); background: repeating-linear-gradient(90deg, currentColor 0 calc(3 * var(--hair)), transparent calc(3 * var(--hair)) .375rem); transform: scaleX(0); transform-origin: left; transition: transform var(--dur-move) var(--ease-out); }
 .nf-more li:first-child a::after { left: 0; }
-.nf-more a:focus-visible { color: var(--fg); outline-offset: -2px; }
+.nf-more a:focus-visible { color: var(--fg); outline-offset: -.125rem; }
 .nf-more a:focus-visible::after { transform: scaleX(1); }
 @media (hover: hover) { .nf-more a:hover { color: var(--fg); } .nf-more a:hover::after { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { .nf-more a::after { transition: none; } }
@@ -28,23 +28,23 @@
   .nf-more ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .nf-more li:nth-child(3) { border-left: 0; }
   .nf-more li:nth-child(3) a { padding-left: 0; } .nf-more li:nth-child(3) a::after { left: 0; }
-  .nf-more li:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  .nf-more li:nth-child(n + 3) { border-top: var(--hair) solid var(--line); }
 }
-.notfound-log { margin-top: 24px; font-family: var(--mono); font-size: var(--fs-small); letter-spacing: .02em; color: var(--fg-3); } /* the gate's record: data, at the small step (1 Nov) */
+.notfound-log { margin-top: 1.5rem; font-family: var(--mono); font-size: var(--fs-small); letter-spacing: .02em; color: var(--fg-3); } /* the gate's record: data, at the small step (1 Nov) */
 .notfound-log span { color: var(--reject); }
 /* a spread from 961 px: the headline left, the way on beside its foot; the plate across the page below */
 @media (min-width: 961px) {
-  .nf-copy { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: clamp(16px, 2.2vw, 32px); align-items: end; }
-  .nf-next { margin: 0 0 10px; }
-  .notfound .row { margin-top: 26px; }
+  .nf-copy { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: clamp(1rem, 2.2vw, 2rem); align-items: end; }
+  .nf-next { margin: 0 0 .625rem; }
+  .notfound .row { margin-top: 1.625rem; }
 }
 
 /* ---------- the plate ---------- */
-.nf-plate { position: relative; margin: clamp(40px, 6.5vh, 72px) 0 0; color: var(--fg); }
+.nf-plate { position: relative; margin: clamp(2.5rem, 6.5vh, 4.5rem) 0 0; color: var(--fg); }
 .nf-draw { position: relative; }
 .nf-plate svg { display: block; overflow: visible; }
-.nf-h { width: 100%; height: auto; --dx: 696px; --dy: 0px; }
-.nf-plate .nf-v { display: none; --dx: 0px; --dy: 180.96px; }
+.nf-h { width: 100%; height: auto; --dx: 43.5rem; --dy: 0px; }
+.nf-plate .nf-v { display: none; --dx: 0px; --dy: 11.31rem; }
 .nf-plate .nf-ahead { opacity: .55; }
 .nf-plate .nf-ahead .ln { stroke-dasharray: calc(2 * var(--dash-u)) calc(4 * var(--dash-u)); }
 .nf-plate .nf-rest { stroke: currentColor; stroke-dasharray: calc(2 * var(--dash-u)) calc(4 * var(--dash-u)); opacity: .45; }
@@ -57,25 +57,25 @@
 
 /* the stations' names, laid on the lane: equal columns over the row (x = (i - .5) / 6), equal rows beside the column */
 .nf-keys {
-  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0 0 4px; padding: 0; list-style: none; text-align: center;
-  font: 500 .6875rem/1.45 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg);
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0 0 .25rem; padding: 0; list-style: none; text-align: center;
+  font: 500 var(--fs-label)/1.45 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg); /* the one label: 12 px on phones (a3) */
 }
 .nf-keys b { font-weight: 500; color: var(--fg-3); margin-right: .3em; }
 .nf-keys small { display: block; font-size: inherit; font-weight: 400; letter-spacing: .1em; color: var(--fg-3); }
 .nf-keys .is-ahead { color: var(--fg-3); }
 /* the address that was asked for, where it fell (written by notfound.js; "this address" without script) */
 .nf-out { font: 400 .875rem/1.35 var(--mono); letter-spacing: .02em; text-transform: none; color: var(--reject); white-space: nowrap; }
-.nf-out--h { position: absolute; max-width: calc(37% - 12px); transform: translate(12px, -.68em); white-space: normal; overflow-wrap: anywhere; } /* its first line on the fall; a long address wraps inside the grid */
+.nf-out--h { position: absolute; max-width: calc(37% - .75rem); transform: translate(.75rem, -.68em); white-space: normal; overflow-wrap: anywhere; } /* its first line on the fall; a long address wraps inside the grid */
 .nf-out--v { display: none; }
 @media (min-width: 700px) and (max-width: 899.98px) { .nf-out--h { font-size: .8125rem; } } /* 33 characters still fit beside the fall */
 
 /* phones and tablets: the lane runs down the page, the names beside it */
 @media (max-width: 699.98px) {
-  .nf-plate { display: grid; grid-template-columns: 88px minmax(0, 1fr); column-gap: 20px; max-width: 30rem; }
+  .nf-plate { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); column-gap: 1.25rem; max-width: 30rem; }
   .nf-draw { grid-column: 1; grid-row: 1; }
   .nf-plate :is(.nf-h, .nf-out--h) { display: none; }
-  .nf-plate .nf-v { display: block; width: 88px; height: 312px; }
-  .nf-keys { grid-column: 2; grid-row: 1; height: 312px; margin: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(6, minmax(0, 1fr)); text-align: left; }
+  .nf-plate .nf-v { display: block; width: 5.5rem; height: 19.5rem; }
+  .nf-keys { grid-column: 2; grid-row: 1; height: 19.5rem; margin: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(6, minmax(0, 1fr)); text-align: left; }
   .nf-keys li { align-self: center; min-width: 0; }
   .nf-out--v { display: block; white-space: normal; overflow-wrap: anywhere; } /* a long address wraps; it is never cut */
 }

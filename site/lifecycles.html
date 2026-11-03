@@ -74,7 +74,7 @@
         <div class="grid page-hero--plate">
           <div class="hero-copy">
             <h1 class="display-1" data-reveal style="--d:60ms"><span class="ln"><span class="ph">A lifecycle runs</span></span> <span class="ln"><span class="ph">from signal</span> <span class="ph">to record.</span></span></h1>
-            <p class="hero-act" data-reveal style="--d:140ms"><a class="link-arrow" href="#desk">Run one simulated session <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></p>
+            <p class="hero-act" data-reveal style="--d:140ms"><a class="link-arrow" href="#desk" data-gap-go>Run one simulated session <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></p>
           </div>
           <!-- Hero plate (schematic; award a1): Fig. 4.1 seen in perspective. The same six rings, twelve opportunities and swarm at the core, tilted onto a plane; LC-01 solid signal (live), LC-02/03 dashed (next), LC-04-06 dotted khaki (roadmap), the statuses in the key. On first view one pass of signal ink runs once around LC-01 (CSS only; the still state under reduced motion, without JavaScript and in print is the same drawing). -->
           <figure class="hero-plate hero-plate--rings" style="--hp-ar:1.711" aria-label="Six lifecycle classes, status by ring">
@@ -145,7 +145,7 @@
         </div>
         <div class="desk is-dark" data-gap data-reveal style="--d:120ms" role="group" aria-label="Illustrative model of one trading session">
           <div class="desk-head">
-            <span class="desk-kicker">Illustrative · not market data</span>
+            <span class="desk-kicker">Illustrative · <span>not market data</span></span>
             <span class="live"><i></i><span data-gap-state>Model running</span></span>
             <span class="t" data-gap-time>09:30 ET</span>
           </div>
@@ -181,7 +181,7 @@
           </div>
           <!-- the ledger strip: one block per record, newest on the right; each link carries the SHA-256 of the record it leaves -->
           <div class="desk-ledger">
-            <p class="dl-k">Ledger<span>this session · hash-chained</span></p>
+            <p class="dl-k">Ledger<span>This session · hash-chained</span></p>
             <ol class="desk-log" data-gap-log role="list" aria-live="off" aria-label="Records of this session"></ol>
           </div>
         </div>

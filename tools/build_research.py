@@ -129,11 +129,13 @@ LABELS = {
     "ledger": [("record 01", None, (-1.0, 0.63, 0), "t", "", (0.0, 0.06)),
                ("hash of the previous record", None, (0, 0.02, 0.24), "tr", "", (0.43, 0.45)),
                ("newest", None, (1.0, -0.63, 0), "b", "acc", (0.875, 0.9))],
-    # the floor is read like an axis: its value at the line's left end, the first line on the rule
+    # the floor is read like an axis, named at the line's left end, the first line on the rule. Award a3 (a3-design): the
+    # site's one order for it, the word then its value ("floor" over "10 bps", as Proof's Fig. 1.1 "Floor / 10 bps" and
+    # Home's overture "FLOOR 10 bps"), in the figure labels' own lowercase
     # r3: each hedge label first ("keep", below). Cut (1 Nov): "above the floor" points at the top of the one open unit
     # each column carries (figure.js sessions: the floor F = 0.48, the open unit up to 0.625)
     "sessions": [("above the floor", "how far is not published", (0, 0.65, 0), "t", "keep=t,tl,tr", None),
-                 ("10\u00a0bps", "floor", (-1.25, 0.48, 0.07), "l", "", None)] + _cols(),
+                 ("floor", "10\u00a0bps", (-1.25, 0.48, 0.07), "l", "", None)] + _cols(),
     "mastercopy": [("copies", "phase two, on the roadmap", (0.93, -0.18, -0.07), "tl", "keep", (0.74, 0.74)),
                    ("master agent", None, (0.31, 0.62, 0), "r", "acc", (0.0, 0.06)),
                    ("one control plane", None, (-1.3, -0.77, 0), "br", "", (0.9, 0.9))],
@@ -343,8 +345,9 @@ def _forms(name, N, rnd, g):
         raise KeyError(name)
     return P[:N]
 FIT_JS = {"lifecycle": 1.16, "rulebook": 1.12}  # figure.js FIT: the flat ring and the small cube are drawn larger
-def note_still(fig, every=7):
-    """the note's formation as a still: dots where the plate's points land at rest (see the comment above _rng)"""
+def _projected(fig):
+    """the note's formation as the plate rests: every point that is not dust, projected (x, y in units where the hero
+    stage's height is 400, centred; depth 0..1, nearer the eye brighter; kind), and the plate's rules (RULES) as lines"""
     N = 15000; r = _rng(len(fig) * 977 + 13)
     g = lambda: (r() + r() + r() - 1.5) * 0.82
     pts = _forms(fig, N, r, g)
@@ -358,36 +361,93 @@ def note_still(fig, every=7):
         v1 = yx * x + yy * y + yz * z - (yx * eye[0] + yy * eye[1] + yz * eye[2])
         v2 = zx * x + zy * y + zz * z - (zx * eye[0] + zy * eye[1] + zz * eye[2])
         return 200 * f * v0 / -v2, -200 * f * v1 / -v2, v2  # the stage's height is 400 units, centred
-    paths, xm, i = {}, 0.0, 0
+    dots = []
     for p in pts:
         if p[3] >= 7: continue
-        i += 1
-        if i % every: continue
         sx, sy, v2 = proj(p[0], p[1], p[2])
-        depth = min(1, max(0, (v2 + 5.6) / 2.6))  # figure.js: nearer the eye, brighter
+        dots.append((sx, sy, min(1, max(0, (v2 + 5.6) / 2.6)), p[3]))  # figure.js: nearer the eye, brighter
+    rules = [(proj(*a)[:2], proj(*b)[:2]) for a, b in RULES.get(fig, [])]
+    return dots, rules
+def note_still(fig, every=7):
+    """the note's formation as a still: dots where the plate's points land at rest (see the comment above _rng)"""
+    dots, rules = _projected(fig)
+    paths, xm = {}, 0.0
+    for i, (sx, sy, depth, k) in enumerate(dots, 1):
+        if i % every: continue
         xm = max(xm, abs(sx))
-        paths.setdefault((p[3], depth > 0.5), []).append(f"M{round(sx)} {round(sy)}h0")
+        paths.setdefault((k, depth > 0.5), []).append(f"M{round(sx)} {round(sy)}h0")
     # award a2: the plate's rules (RULES: note 09's floor) as lines, a hairline at any scale (research.css .fs-still .rule)
-    rules = []
-    for a, b in RULES.get(fig, []):
-        (ax, ay, _), (bx, by, _) = proj(*a), proj(*b)
-        xm = max(xm, abs(ax), abs(bx)); rules.append(f"M{ax:.1f} {ay:.1f}L{bx:.1f} {by:.1f}")
+    xm = max([xm] + [abs(q[0]) for ln in rules for q in ln])
     w = math.ceil(xm + 12)
     body = "".join(f'<path class="k{k}{" far" if not near else ""}" d="{"".join(d)}"/>' for (k, near), d in sorted(paths.items()))
-    body += f'<path class="rule" d="{"".join(rules)}"/>' if rules else ""
+    body += f'<path class="rule" d="{"".join(f"M{a[0]:.1f} {a[1]:.1f}L{b[0]:.1f} {b[1]:.1f}" for a, b in rules)}"/>' if rules else ""
     return (f'<svg class="fs-still" viewBox="{-w} -200 {2 * w} 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'
             f'{body}</svg>')
+def still_geo(fig, every=7):
+    """award a3 (4K inspector): where the hero still's drawing lies in its stage, for the caption without JavaScript (or
+    WebGL). research.css hangs the hedge under the drawing's left edge, as figure.js does with the live drawing (--fig-l,
+    --fig-b), from three numbers in units of the stage's height (the viewBox's 400): the viewBox's width (--fs-w), how far
+    the drawing reaches left of the centre (--fs-x) and below it (--fs-y). Every point counts, as figure.js's edge sample"""
+    dots, rules = _projected(fig)
+    xm = max([abs(d[0]) for i, d in enumerate(dots, 1) if not i % every] + [abs(q[0]) for ln in rules for q in ln])
+    x0 = min([d[0] for d in dots] + [q[0] for ln in rules for q in ln]); y1 = max(d[1] for d in dots)
+    return f"--fs-w:{2 * math.ceil(xm + 12) / 400:.4f};--fs-x:{-x0 / 400:.4f};--fs-y:{y1 / 400:.4f}"
+def margin_still(fig, every=5):
+    """award a3 (a3-design, big): the margin plate beside a note's text (from 1440 px; research.css .np-rail) is the
+    note's own still, drawn again for its size: the drawing cropped to its own extent (plus a margin), every 5th point
+    (the hero's still has every 7th over four times the area: at this size the plate needs more to read as the same
+    drawing, not dust), at the same depth and colour steps; the box's shape is the drawing's, between square and 8:5, so
+    a flat ring and a tall council both fill their plate. Each dot is a relative move in a 300-wide box.
+    It is a file (site/assets/img/research/plate-<fig>.svg, presentation attributes in the tokens' values: no style
+    element, so the CSP's style-src holds for it too), not inline: inline it took note 02's HTML from 13.3 to 16.7 KB
+    gzip, past the first round trip (Lighthouse FCP +120 ms on every note); as a lazy <img> in a rail that phones never
+    show, a phone never fetches it. Its dots scale with the plate (2 px at 1440, 5 at 3840 = 1920 doubled). A plate's
+    rule (note 09's floor) is not in the file: research.css draws it over the image as a hairline (--hair), crisp at any
+    density. Returns the <img> (and the rule) for the note's markup. Its caption is the hero's (cap_html: the hedge, note
+    09's key): no new words beside a repeated drawing"""
+    dots, rules = _projected(fig)
+    pick = [d for i, d in enumerate(dots, 1) if not i % every]
+    xs = [d[0] for d in pick] + [q[0] for ln in rules for q in ln]; ys = [d[1] for d in pick] + [q[1] for ln in rules for q in ln]
+    x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+    w, h = x1 - x0, y1 - y0
+    W, H = w * 1.16, h * 1.2  # the drawing with a margin; then the box's shape clamped to 1:1 .. 8:5 (a tall drawing in
+    W = max(W, H); H = max(H, W / 1.6)  # a square, a flat one in an 8:5 box, centred)
+    s = 300 / W; hb = round(H * s)
+    ox, oy = (x0 + x1) / 2, (y0 + y1) / 2
+    X = lambda x: round((x - ox) * s + 150); Y = lambda y: round((y - oy) * s + H * s / 2)
+    groups = {}
+    # pass 3: nearer than the drawing's own median depth is the bright half (a fixed 0.5 left note 09's columns and the
+    # council all "far": grey beside the key's "white", and dimmer than the hero they repeat)
+    med = sorted(d[2] for d in pick)[len(pick) // 2]
+    for sx, sy, depth, k in pick: groups.setdefault((k, depth > med), set()).add((Y(sy), X(sx)))
+    num = lambda v: str(v) if v < 0 else f" {v}"
+    # site.css's tokens: --paper, --khaki, --signal-bright, --reject-bright (the hero still's .fs-still .k0-.k3)
+    COL = {0: "#F5F2EC", 1: "#ACA68E", 2: "#4FCB93", 3: "#D9675D"}
+    OP = {(2, True): ".95", (2, False): ".74"}
+    paths = []
+    for (k, near), pts in sorted(groups.items()):
+        d, px, py = [], None, None
+        for y, x in sorted(pts):
+            d.append(f"M{x} {y}h0" if px is None else f"m{x - px}{num(y - py)}h0"); px, py = x, y
+        paths.append(f'<path stroke="{COL[k]}" stroke-opacity="{OP.get((k, near), ".9" if near else ".58")}" d="{"".join(d)}"/>')
+    write(os.path.join(ROOT, "assets", "img", "research", f"plate-{fig}.svg"),
+          f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 {hb}" width="300" height="{hb}"><g fill="none" stroke-width="2.16" stroke-linecap="round">'
+          + "".join(paths) + "</g></svg>\n")
+    rule = "".join(f'<i class="np-rule" style="--y:{((a[1] - oy) * s + H * s / 2) / hb * 100:.2f}%;--x0:{((a[0] - ox) * s + 150) / 3:.2f}%;--x1:{((b[0] - ox) * s + 150) / 3:.2f}%"></i>' for a, b in rules)
+    return f'<img class="np-still" src="../assets/img/research/plate-{fig}.svg" width="300" height="{hb}" alt="" loading="lazy" decoding="async">{rule}'
 # v2x: notes link to the instruments they describe (PAGES.md §6.4, NL-01..NL-10); targets are relative to research/
+# award a3 (a3-ux): the desk is Lifecycles #desk (its own hero links there; the cut moved it off #lc01), and the act on
+# the chain has one verb sitewide, "Change a record" (Home §06, Trust)
 RUN = {
     "horizon": [("Watch the Council verify proposals in the swarm lab", "../index.html#lc01")],
-    "weights": [("Edit a record and watch the chain fail", "../index.html#governance")],
+    "weights": [("Change a record and watch the chain fail", "../index.html#governance")],
     "lifecycle": [("The lifecycle test, trait by trait", "../lifecycles.html#test")],
     "swarm": [("See the swarm by role in the swarm lab", "../platform.html#swarm")],
     "boundary": [("Explore the eight layers and the boundary", "../platform.html#architecture")],
     "rulebook": [("Find the model layer in the architecture explorer", "../platform.html#architecture")],
     "council": [("Tighten the Council in the swarm lab", "../index.html#lc01")],
     "ledger": [("Replay a ledger excerpt, then try to change the past", "../trust.html#ledger")],
-    "sessions": [("See the ten sessions on the Proof page", "../evidence.html"), ("Run one simulated session on the desk", "../lifecycles.html#lc01")],
+    "sessions": [("See the ten sessions on the Proof page", "../evidence.html"), ("Run one simulated session on the desk", "../lifecycles.html#desk")],
     "mastercopy": [("The six lifecycle classes, status by ring", "../lifecycles.html#classes")],
 }
 SERIES_DISCLOSURE_RE = r"^\*Disclosures: (.+)\*$"  # the series disclosure at the end of the markdown (Post 10): one block, every note
@@ -636,7 +696,7 @@ for i, post in enumerate(ordered):
 
 {nav}
   <main id="main">
-    <section class="page-hero page-hero--dark is-dark grain article-hero">
+    <section class="page-hero page-hero--dark is-dark grain article-hero" style="{still_geo(post['fig'])}">
       <div class="figure-stage article-figure has-still" data-figure="{post['fig']}"{stage_data(post['fig'])} data-spin="0.10" data-plate data-rest="2.5" data-bbox aria-hidden="true">{note_still(post['fig'])}<canvas></canvas>{labels_html(post['fig'])}</div>
       <div class="container">
         <div class="article-hero-grid">
@@ -663,6 +723,7 @@ for i, post in enumerate(ordered):
             <div class="note-run"><ul>{run}</ul></div>
             <div class="note-disc"><p>{H.escape(SERIES_DISCLOSURE, quote=False)} <a href="#disclosures">See the disclosures.</a></p></div>
           </article>
+          <div class="np-rail" aria-hidden="true"><figure class="np-plate"><div class="np-stage is-dark">{margin_still(post['fig'])}</div><figcaption>{cap_html(post['fig'], "figcap np-cap")}</figcaption></figure></div>
         </div>
       </div>
     </section>
@@ -807,8 +868,8 @@ index_page = f'''<!DOCTYPE html>
         <h2 class="display-2" data-reveal data-split>Three of these ideas run in your browser.</h2>
         <div class="row" data-reveal style="--d:120ms">
           <a class="btn" href="index.html#lc01">Open the swarm lab {ARROW}</a>
-          <a class="btn btn--ghost" href="index.html#governance">Break the chain</a>
-          <a class="btn btn--ghost" href="lifecycles.html#lc01">Run the desk</a>
+          <a class="btn btn--ghost" href="index.html#governance">Change a record</a>
+          <a class="btn btn--ghost" href="lifecycles.html#desk">Run the desk</a>
         </div>
       </div>
     </section>

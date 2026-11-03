@@ -83,6 +83,12 @@ DESC = {
     "modern-trends-in-financial-engineering":
         "This new book series, Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.",
 }
+# award a3 (a3-dev 12): a meta description is at most 160 characters. One excerpt is the post's own 164-character
+# sentence; its meta (description, og:, twitter:) drops "new", a word dated by the post (May 2022; no claim gets stronger). The
+# card text, the feed and JSON-LD keep the sentence as the post has it
+META_DESC = {"modern-trends-in-financial-engineering":
+    "This book series, Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering."}
+assert all(len(v) <= 160 for v in META_DESC.values())
 # v2x: the two hero images that are screenshots of the author's own 2024 work (the relative-value map; the create and
 # redeem loop) stay in their articles as the first figure. Every other hero image (stock photos, a 3D render, a logo,
 # clip-art) leaves the page: cards and post heroes are drawn as plates (blog_plates.py). The files stay in assets.
@@ -139,13 +145,16 @@ def clean_body(p):
         src = m.group(1); alt = (re.search(r'alt="([^"]*)"', m.group(0)) or [None, ""])[1]
         if alt == "__wf_reserved_inherit": alt = ""  # a Webflow placeholder, not a description: screen readers read it out
         name = src.rsplit("/", 1)[-1]
-        alt = alt or ALT.get(name, "")
+        alt = smart(alt or ALT.get(name, ""))   # award a3: the alt text's apostrophes and quotes as the page sets them
         shutil.copyfile(OLD / "img" / name, IMG / name) if (OLD / "img" / name).exists() else None
         return f'<img src="../assets/img/blog/{name}"{body_srcset(name)} alt="{esc(alt)}"{size(name)}{body_cap(name)} loading="lazy" decoding="async">'
     b = re.sub(r'<img[^>]*src="(/graphics/[^"]+)"[^>]*>', img, b)
     b = re.sub(r"<figure>\s*(<img[^>]+>)\s*</figure>", r"<figure>\1</figure>", b)
     b = re.sub(r"<p>\s*(<img[^>]+>)\s*</p>", r"<figure>\1</figure>", b)
     b = re.sub(r"(?<!<figure>)(<img[^>]+>)(?!</figure>)", r"<figure>\1</figure>", b)
+    # award a3 (4K inspector): a picture capped at its own pixels (body_cap) names its cap on its figure, so the caption
+    # under it starts on the picture's edge, not the mat's
+    b = re.sub(r'<figure><img([^>]*) style="max-width:(\d+px)"', r'<figure style="--cap:\2"><img\1 style="max-width:\2"', b)
     levels = [int(n) for n in re.findall(r"<h([2-6])[\s>]", b)]
     if levels and min(levels) > 2:  # no h2 under the page's h1: shift the post's headings up, class keeps the old look
         k = min(levels) - 2
@@ -180,6 +189,10 @@ def body_srcset(name):
     BODY_COPIES.add(name)
     stem = name.rsplit(".", 1)[0]; src = "../assets/img/blog/"
     return f' srcset="{src}{stem}-{BODY_W}w.webp {BODY_W}w, {src}{name} {d[0]}w" sizes="{BODY_SIZES}"'
+def fig_cap(name):
+    """the cap of body_cap() on its figure, for the caption (award a3)"""
+    m = re.search(r"max-width:(\d+px)", body_cap(name) if name else "")
+    return f' style="--cap:{m.group(1)}"' if m else ""
 def body_cap(name):
     """award a1 (4K inspector): a picture is never drawn wider than its pixels. Its widest file in CSS px (so a 1x screen
     never stretches it: the 700 px Medium figures at 2560 and 3840); a macOS screenshot (a 2x capture) at half its
@@ -313,8 +326,14 @@ def post_title(s):
 def ld_text(s): return smart(s).replace("\u00a0", " ")
 def prose(s): return esc(smart(s))
 def hang(h):
-    """a paragraph that opens on a quote mark hangs it in the margin, so the text's left edge stays straight"""
-    return re.sub(r'<p( class="[^"]*")?>([“‘])', r'<p\1><span class="hang">\2</span>', h)
+    """a paragraph that opens on a quote mark hangs it in the margin, so the text's left edge stays straight (also when
+    the mark opens an italic quotation: marks_in_em)"""
+    return re.sub(r'<p( class="[^"]*")?>(<em>)?([“‘])', r'<p\1>\2<span class="hang">\3</span>', h)
+def marks_in_em(h):
+    """award a3 (4K inspector): a quotation set in italic between quote marks (“<em>...</em>”) takes its marks into the
+    italic, so they are drawn in the quotation's face (Instrument Serif italic, blog.css), not in upright Inter beside it,
+    where the closing mark read as a straight one. Typography only: the same characters in the same order"""
+    return re.sub(r"</em>”", "”</em>", re.sub(r"“<em>", "<em>“", h))
 def lead(h):
     """the post's lead (larger, with the notes' drop initial): its first paragraph, unless a heading or list comes
     first. Jury (blog): a label line is not a lead. A one-line bold subhead ('Regime-Switching Market') passes the lead
@@ -577,7 +596,7 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
           <ol class="blog-register" role="list" data-reveal>
 {register(by_col[k], k)}
           </ol>
-          <div class="blog-econ-plate" aria-hidden="true"><div class="blog-econ-art">{rings_tall()}{collection_svg(k)}</div></div>
+          <div class="blog-econ-plate" aria-hidden="true"><div class="blog-econ-art">{rings_tall(len(by_col[k]))}{collection_svg(k)}</div></div>
         </div>
 '''
     elif k == "ai":
@@ -614,7 +633,7 @@ years = sorted(p["dt"].year for p in kept)
 # this page drew the wrong library. The leaf counts come from the collections, so a new post adds a leaf.
 assert sum(1 for p in by_col["ai"] if p["slug"] in in_series) == 4
 # cut (1 Nov): the plate's title ("The library") and its sentence went (the drawing shows it: three bundles, the
-# collections' names under them, the series in green). The page's one hedge for every plate on it stays, short
+# series in green; since award a3 the collections' names are links under the H1, HERO_INDEX). The page's one hedge for every plate on it stays, short
 # (award a1: "Schematic · no data plotted", was "Schematic · no plate plots data": same hedge, one word shorter, so the
 # specific H1 fits the index's 250 words)
 INDEX_HEDGE = "Schematic · no data plotted"
@@ -624,9 +643,16 @@ INDEX_HEDGE = "Schematic · no data plotted"
 # markets." from 1024 up)
 INDEX_H1 = (f"{len(kept)} posts", "on AI and markets.")
 LIBRARY = f'''<figure class="lib-plate">
-          <div class="lib-stage">{library_svg((SHORT["markets"], SHORT["ai"], SHORT["economics"]), tuple(len(by_col[k]) for k in ("markets", "ai", "economics")), sum(1 for p in by_col["ai"] if p["slug"] in in_series))}</div>
+          <div class="lib-stage">{library_svg(tuple(len(by_col[k]) for k in ("markets", "ai", "economics")), sum(1 for p in by_col["ai"] if p["slug"] in in_series))}</div>
           <figcaption><span class="pp-h">{INDEX_HEDGE}</span></figcaption>
         </figure>'''
+# award a3 (a3-ux 6: "a 29-post page whose hero offers no way in"; the plate's lettering looked like tabs and did nothing):
+# the collections' short names (SHORT, the bar's readout words) as links under the H1, in the page's order, the first
+# stops after the skip link and the bar. They replace the plate's lettering, so each name is on the page once there.
+# Under the H1, not the plate: the plate files Markets left, AI & agents at the spine, Economics right; a row in the
+# page's order under it would put each name under another bundle. Hovering or focusing a name lights its bundle (CSS)
+HERO_INDEX = (f'<nav class="blog-idx" aria-label="Collections" data-reveal style="--d:120ms">'
+              + "".join(f'<a href="#{k}">{esc(SHORT[k])}{ARROW}</a>' for k, _, _ in COLLECTIONS) + "</nav>")
 desc = f"The OpenEXA blog: {len(kept)} posts from {years[0]} to {years[-1]} on AI agents in finance, financial markets research and market structure."
 blog_ld = ld(dict(BLOG_LD, description=desc, inLanguage="en", publisher=ORG, blogPost=[
     {"@type": "BlogPosting", "headline": ld_text(p["title"]), "url": BASE + p["slug"] + ".html", "datePublished": p["dt"].strftime("%Y-%m-%d"),
@@ -642,6 +668,7 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".
       <div class="container blog-hero-grid">
         <div class="blog-hero-copy">
           <h1 class="display-1 blog-h1" data-reveal>{esc(bind(INDEX_H1[0].replace(" ", chr(0xA0)) + " " + INDEX_H1[1]))}</h1>
+          {HERO_INDEX}
         </div>
         {LIBRARY}
       </div>
@@ -681,8 +708,27 @@ def post_plate(p):
     econ = p["col"] == "economics" or p["slug"] not in PLATES
     cap = "" if econ else f'\n          <figcaption class="pp-h">{PLATES_HEDGE}</figcaption>'
     return f'''<figure class="post-plate" id="plate">
-          <div class="post-plate-art" aria-hidden="true">{plate_svg(p["slug"], p["col"], turn(p))}</div>{cap}
+          <div class="post-plate-art" aria-hidden="true">{plate_svg(p["slug"], p["col"], turn(p))}{REG}</div>{cap}
         </figure>'''
+# award a3 (4K inspector, polish; AWARD_BAR L7): the post's hero plate was the site's one box-framed hero plate. It takes
+# the hero plates' registration marks (site.css .hp-reg, the same four corners; blog.css places them on the old box)
+REG = '<span class="hp-reg" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
+# a long read: words, and a figure as about 150 words of column (the 8 longest posts; the others end within about a screen)
+LONG_READ = 600
+def long_read(p): return len(plain(p["body"]).split()) + 150 * p["body"].count("<figure") >= LONG_READ
+def margin_plate(p):
+    """award a3 (art director, medium: "at 1920 the body runs 31-64% with the right 36% empty for about nine screens"):
+    on a long read (long_read), from 1440 px the reading grid has three parts, as a note's: the post's wayfinding
+    (columns 1-3), the text (4-9) and, sticky beside it, the post's own plate (10-12) on the index's sheet (the same plate
+    as the hero's, the same hedge under it; the economics rings carry none, as in the hero). aria-hidden: the hero's plate
+    and hedge are the ones read out. It starts half a screen down the column and rises with the text until it sticks
+    (blog.css), so one screen never shows the hero's drawing and this one together. A short post ends within about a
+    screen: no plate, its a2 layout"""
+    if not long_read(p): return ""
+    econ = p["col"] == "economics" or p["slug"] not in PLATES
+    cap = "" if econ else f'<p class="pp-h">{PLATES_HEDGE}</p>'
+    return f'''
+          <div class="post-mp" aria-hidden="true"><div class="post-mp-in"><div class="post-mp-art">{plate_svg(p["slug"], p["col"], turn(p))}</div>{cap}</div></div>'''
 for p in order:
     if p["stub"]: continue
     if p["col"] != "economics":
@@ -700,7 +746,7 @@ for p in order:
     # cut (1 Nov): the side column went (its links repeated the crumb, the pager and the article end: "N posts in this
     # collection", "All 29 posts", "The original on <host>", "The papers on Google Scholar", and the series list, which
     # the crumb and the pager now carry)
-    hero_img = (f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}"{body_srcset(p["hero_file"])} alt=""{size(p["hero_file"])}{body_cap(p["hero_file"])} decoding="async"></figure>\n            '
+    hero_img = (f'<figure class="blog-hero-img"{fig_cap(p["hero_file"])}><img src="{PFX}assets/img/blog/{p["hero_file"]}"{body_srcset(p["hero_file"])} alt=""{size(p["hero_file"])}{body_cap(p["hero_file"])} decoding="async"></figure>\n            '
                 if p.get("hero_file") and p["slug"] in KEEP_HERO else "")
     # the pager: where it goes and the title (cut: the dates under the titles, and the end cards' second lines)
     pcard = lambda cls, url, k, h: f"<a class='pager-card {cls}' href='{url}'><span class='k'>{k}</span><h3>{h}</h3></a>"
@@ -751,7 +797,7 @@ for p in order:
         j = SERIES_POS[p["slug"]]
         if j: rel_links += f'  <link rel="prev" href="{BASE}{SERIES[j - 1][0]}.html">\n'
         if j + 1 < len(SERIES): rel_links += f'  <link rel="next" href="{BASE}{SERIES[j + 1][0]}.html">\n'
-    page = head(url, f'{smart(p["title"])} — OpenEXA Blog', smart(p["excerpt"]), "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (ld_text(p["title"]), url)))}\n',
+    page = head(url, f'{smart(p["title"])} — OpenEXA Blog', smart(META_DESC.get(p["slug"], p["excerpt"])), "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (ld_text(p["title"]), url)))}\n',
                 h1=ld_text(p["title"]), links=rel_links) + f'''
 <body data-page="post" data-nav="dark-start" class="article-page blog-post">
   <a class="skip" href="#main">Skip to content</a>
@@ -771,11 +817,11 @@ for p in order:
 
     <section class="section article-body-section">
       <div class="container">
-        <div class="grid">
+        <div class="grid{' has-mp' if long_read(p) else ''}">
           <article class="col-7 article blog-article">
-            {hero_img + lead(hang(smart_html(p["body"])))}
+            {hero_img + lead(hang(marks_in_em(smart_html(p["body"]))))}
             <div class="article-end"><span class="mark" aria-hidden="true"></span></div>
-          </article>{side}
+          </article>{side}{margin_plate(p)}
         </div>
       </div>
     </section>

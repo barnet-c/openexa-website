@@ -754,6 +754,7 @@ HEAD_INDEXED = ['<link rel="alternate" type="application/atom+xml" title="OpenEX
                 '<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">', '<link rel="manifest" href="site.webmanifest">']
 
 
+ITALIC_PRELOAD = ['<link rel="preload" href="assets/fonts/instrument-serif-400i-latin.woff2" as="font" type="font/woff2" crossorigin>']
 def check_heads():
     """The shared head (contracts §1.8, §1.32.5): every page's head has the charset, viewport and icon as index.html
     writes them, preloads exactly index.html's fonts (each a woff2 file in assets/fonts), and one theme-color, ink
@@ -761,7 +762,11 @@ def check_heads():
     the two feed links, the touch icon and the manifest, a canonical URL that is its own address and an og:url equal to
     it. robots.txt points at the sitemap; the manifest parses, its colours are ink and its icons exist; favicon.ico exists."""
     head_lines = lambda s: [l.strip() for l in s.split("</head>", 1)[0].split("\n")]
-    want_pre = [l for l in head_lines((ROOT / "index.html").read_text(encoding="utf-8")) if l.startswith('<link rel="preload"')]
+    # award a3 (system): the italic serif is preloaded only where it sets the first screen (Home's eyebrow, Company's H1;
+    # Lighthouse found it late on the critical path there, median of 3: Home 95 -> 96, Company 95 -> 97); every other page
+    # preloads the two shared faces only
+    extra = {"index.html": ITALIC_PRELOAD, "company.html": ITALIC_PRELOAD}
+    want_pre = [l for l in head_lines((ROOT / "index.html").read_text(encoding="utf-8")) if l.startswith('<link rel="preload"') and l not in ITALIC_PRELOAD]
     for l in want_pre:
         href = (re.search(r'\shref="([^"]*)"', l) or [None, ""])[1]
         if not re.fullmatch(r"assets/fonts/[\w.-]+\.woff2", href) or not (ROOT / href).is_file() or 'as="font"' not in l:
@@ -777,7 +782,7 @@ def check_heads():
         missing = [l for l in need if l not in lines]
         if missing: fail(rel, "heads: missing or changed:", missing)
         preloads = [l for l in lines if l.startswith('<link rel="preload"')]
-        if not want_pre or preloads != want_pre: fail(rel, "heads: preloads differ from index.html's fonts:", preloads)
+        if not want_pre or preloads != want_pre + extra.get(rel, []): fail(rel, "heads: preloads differ from the shared fonts (and the page's own):", preloads)
         tc = re.findall(r'<meta name="theme-color" content="([^"]*)">', head)
         dark = bool(re.search(r'<body\b[^>]*\sdata-nav="dark-start"', s))
         if tc != ["#0E1512" if dark else "#F5F2EC"]: fail(rel, f"heads: theme-color {tc}; want {'#0E1512 (opens dark)' if dark else '#F5F2EC (opens on paper)'}")

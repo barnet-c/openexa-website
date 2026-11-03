@@ -104,7 +104,7 @@
       t('Hello OpenEXA,\n\nI am '); slot('name', d.name, 'your name');
       if (d.role) { t(', '); slot('role', d.role); } else slot('role', '', ', your role', true);
       if (d.organization) { t(' at '); slot('organization', d.organization); } else slot('organization', '', ' at your organization', true);
-      t('. I would like to '); slot('ask', tail(ASK[d.interest] || `talk about ${d.interest}.`));
+      t('. I\u00a0would like to '); slot('ask', tail(ASK[d.interest] || `talk about ${d.interest}.`)); // display only: "I" keeps "would" (the draft keeps its plain space)
       t('\n\n'); slot('message', d.message, 'Your message, if you add one', true);
       t('\n\n');
       if (d.assets) { t('Assets we are considering: '); slot('assets', d.assets); t('.'); } else slot('assets', '', 'Assets we are considering: a\u00a0range', true);

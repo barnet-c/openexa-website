@@ -451,6 +451,24 @@
     el.follow.addEventListener('click', () => { if (follow.state === 'idle') startFollow(); else stopFollow('Stopped following.'); });
   }
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && follow.state !== 'idle') stopFollow('Stopped following.'); });
+  // award a3 (a3-dev): the hero's "Run one simulated session" (a[data-gap-go]) lands on the instrument, not on its
+  // chapter's head: the desk under the bar with Follow in view, and focus on Follow, so the act is the next key press (as
+  // Trust's jump). site.js makes the jump (a cut when it is long) and lands #desk; this moves the landing in the same
+  // frame (oxa:jump), or after the browser's own short jump (hashchange). The chapter menu's #desk keeps the head.
+  let goAt = 0;
+  document.addEventListener('click', (e) => {
+    if (!e.button && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.target.closest && e.target.closest('a[data-gap-go]')) goAt = performance.now();
+  }, true);
+  const arrive = () => {
+    if (!goAt || performance.now() - goAt > 2500 || !el.follow || el.follow.hidden) return;
+    goAt = 0;
+    root.scrollIntoView({ block: 'start', behavior: 'instant' });
+    const over = el.follow.getBoundingClientRect().bottom - (window.innerHeight - 16);
+    if (over > 0) window.scrollBy({ top: over, behavior: 'instant' });
+    el.follow.focus({ preventScroll: true });
+  };
+  document.addEventListener('oxa:jump', arrive);
+  window.addEventListener('hashchange', () => setTimeout(arrive, 0));
 
   /* ---------------- loop ---------------- */
   let visible = false, last = performance.now(), uiTick = 0, frameId = 0, fresh = false;
@@ -543,6 +561,19 @@
     draw(); stats();
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopFrames(); else requestFrame(); });
+})();
+
+/* The hero rings (award a3, 4K): once their one draw is over, the plate's animations let go (each ends on the plate's
+   own style), so the browser paints the plate straight onto the page again: while an animation holds its end state the
+   plate sits on a layer at a fractional offset, and every hairline spreads over three device rows. */
+(function () {
+  'use strict';
+  const fig = document.querySelector('.hero-plate--rings');
+  if (!fig || typeof fig.getAnimations !== 'function') return;
+  requestAnimationFrame(() => {
+    const all = fig.getAnimations({ subtree: true });
+    if (all.length) Promise.all(all.map((a) => a.finished)).then(() => all.forEach((a) => a.cancel()), () => {});
+  });
 })();
 
 /* The orbit (Lifecycles §04; award a1, a1-dev): each list of twelve callouts is one Tab stop, and the arrow keys (Home,

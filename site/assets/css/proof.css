@@ -18,22 +18,22 @@
 
 /* ======================= Proof (evidence.html) ======================= */
 
-/* hero plate (a1, a2): ten open blocks on the 10 bps floor (C-023, S-13), a tick over each, each linked to the next */
-[data-page="proof"] .hero-plate--records { --lead: calc(4.9 * var(--mono-xs)); position: relative; }
-[data-page="proof"] .hero-plate--records .hp-art { margin-inline: 1rem; padding: 0 0 0 var(--lead); }
-[data-page="proof"] .hero-plate--records .hp-art > :is(.pf-pl, .hp-labs) { left: var(--lead); }
-[data-page="proof"] .hero-plate--records .hp-reg { inset: -.75rem -1rem; } /* the marks as far above the header as below the days */
-[data-page="proof"] .hero-plate--records .hp-cap { margin: 1.25rem 1rem 0; }
-@media (max-width: 600px) {
-  [data-page="proof"] .hero-plate--records .hp-art { margin-inline: .5rem; }
-  [data-page="proof"] .hero-plate--records .hp-reg { inset: -.75rem -.5rem; }
-  [data-page="proof"] .hero-plate--records .hp-cap { margin: 1rem .5rem 0; }
-  /* the header stands on the ticks (its foot 3.5 units over them), however large the phone's 12 px label is against the drawing */
-  [data-page="proof"] .hero-plate--records .pf-l-ok { top: calc(100% * 19 / 74); transform: translate(0, -100%); }
-}
-/* the lead-in's own piece of the floor where no baseline runs edge to edge (under 961 px) */
-[data-page="proof"] .hero-plate--records .hp-art::before { content: ""; position: absolute; left: 0; width: var(--lead); top: calc(100% * 50 / 74); border-top: 1px solid var(--line); }
-[data-page="proof"] .pf-pl { --W: 266; --H: 74; position: absolute; inset: 0; color: var(--fg); pointer-events: none; }
+/* hero plate (a1-a3): the record line on Fig. 1.1's own column, gutter and ten lanes, so it drops straight into the
+   chart (Co3); ten open blocks on the 10 bps floor (C-023, S-13), each linked to the next; under the floor Fig. 1.1's
+   axis: the floor's name, the days, the broker's ticks. Rows in label ems (--ax-l) */
+[data-page="proof"] :is(.page-hero, .hero-plate--records) { --ax-l: var(--mono-tick); --ax-h: calc(8.5 * var(--ax-l)); } /* the figure too: the share card (build_og) has no hero */
+[data-page="proof"] .pf-record { container-type: inline-size; min-width: 0; }
+[data-page="proof"] .pf-record > .hero-plate { max-width: none; }
+[data-page="proof"] .hero-plate--records { --G: clamp(4rem, 15cqi, 6.75rem); position: relative; } /* Fig. 1.1's gutter (proofchart.css) */
+@container (max-width: 540px) { [data-page="proof"] .hero-plate--records { --G: clamp(5rem, 15cqi, 6.75rem); } }
+@container (max-width: 300px) { [data-page="proof"] .hero-plate--records { --G: 2.375rem; } } /* the chart's narrow gutter: lanes stay 24 px */
+[data-page="proof"] .hero-plate--records .hp-art { padding: 0; }
+[data-page="proof"] .hero-plate--records .hp-reg { inset: -.75rem 0 -1rem; } /* the frame is the column */
+[data-page="proof"] .hero-plate--records .hp-cap { margin: 1.5rem 0 0; } /* flush with the marks, as on Platform */
+[data-page="proof"] .pf-top { position: relative; padding-left: var(--G); color: var(--fg); }
+[data-page="proof"] .pf-top > svg { display: block; width: 100%; height: auto; overflow: visible; }
+[data-page="proof"] .pf-top::before { content: ""; position: absolute; left: 0; bottom: calc(-.5px * var(--stroke)); width: var(--G); border-top: calc(1px * var(--stroke)) solid currentColor; opacity: .72; } /* the floor under the gutter */
+[data-page="proof"] .pf-pl { --W: 260; --H: 22; position: absolute; inset: 0 0 0 var(--G); color: var(--fg); pointer-events: none; }
 [data-page="proof"] .pf-pl > span { position: absolute; overflow: hidden; left: calc(var(--u) / var(--W) * 100%); top: calc(var(--v) / var(--H) * 100%); width: calc(var(--w) / var(--W) * 100%); height: calc(var(--h) / var(--H) * 100%); }
 [data-page="proof"] .pf-pl svg { position: absolute; display: block; left: calc(var(--u) / var(--w) * -100%); top: calc(var(--v) / var(--h) * -100%); width: calc(var(--W) / var(--w) * 100%); max-width: none; height: calc(var(--H) / var(--h) * 100%); overflow: visible; }
 @supports (width: 1cqw) { /* placed from the plate itself, so a box's rounding never scales up into the drawing */
@@ -42,18 +42,29 @@
   [data-page="proof"] .pf-pl svg { left: calc(var(--u) / var(--W) * -100cqw); top: calc(var(--v) / var(--H) * -100cqh); width: 100cqw; height: 100cqh; }
 }
 [data-page="proof"] .pf-tk > span, [data-page="proof"] .pf-lit > span { position: absolute; inset: 0; }
-[data-page="proof"] .pf-rec { --v: 37; --w: 28; --h: 14; transform-origin: 32.143% 92.857%; } /* a block and its link; the foot on the floor */
-[data-page="proof"] .pf-tk { --v: 21; --w: 18; --h: 14; }
-[data-page="proof"] .pf-lit { --u: 0; --v: 42; --w: 266; --h: 16; }
-/* above the floor a session is one open block (C-023, S-13); the floor, lit; whole-pixel strokes (a2) */
+[data-page="proof"] .pf-rec { --v: 6; --w: 28; --h: 17; transform-origin: 30.357% 94.118%; } /* a block and its link; the foot on the floor */
+[data-page="proof"] .pf-lit { --u: 0; --v: 18; --w: 260; --h: 8; }
 [data-page="proof"] .hero-plate--records .hp-rec { fill: none; stroke: currentColor; stroke-opacity: .86; stroke-width: var(--stroke); }
 [data-page="proof"] .hero-plate--records .pf-ln { stroke-opacity: .62; }
+[data-page="proof"] .hero-plate--records :is(.hp-strong, .pf-fl, .pf-ln) { shape-rendering: crispEdges; } /* level lines on whole device pixels (4K bar) */
 [data-page="proof"] .pf-fl { fill: none; stroke: var(--accent); stroke-width: var(--stroke); }
 [data-page="proof"] .pf-glow { fill: none; stroke: var(--accent); stroke-opacity: .14; stroke-width: calc(6 * var(--stroke)); }
-/* the floor's label stands on its rule like the blocks, in the lead-in: the box's foot a fifth of an em above the line */
-[data-page="proof"] .pf-l-fl { left: calc(-1 * var(--lead)); transform: translate(0, calc(-100% - .2em)); }
-[data-page="proof"] .pf-l-fl small { text-transform: none; letter-spacing: .02em; color: var(--fg); }
-@media (forced-colors: active) { [data-page="proof"] .pf-pl { color: CanvasText; } [data-page="proof"] .pf-fl { stroke: CanvasText; } [data-page="proof"] .pf-glow { display: none; } }
+/* under the floor: the gutter + ten lanes, as Fig. 1.1 (FLOOR / DAY / CONFIRMED) */
+[data-page="proof"] .pf-ax { display: grid; grid-template-columns: var(--G) repeat(10, minmax(0, 1fr)); grid-template-rows: calc(2.6 * var(--ax-l)) calc(2 * var(--ax-l)) calc(2.8 * var(--ax-l)); box-sizing: border-box; height: var(--ax-h); padding: calc(.5 * var(--ax-l)) 0 calc(.6 * var(--ax-l)); align-items: center; font: 500 var(--ax-l)/1.3 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); }
+[data-page="proof"] .pf-ax-l { grid-column: 1; justify-self: start; max-width: calc(var(--G) - .625rem); color: var(--fg-2); }
+[data-page="proof"] .pf-l-fl { grid-row: 1; align-self: start; }
+[data-page="proof"] .pf-l-fl small { display: block; font: inherit; letter-spacing: .02em; text-transform: none; color: var(--fg); }
+[data-page="proof"] .pf-l-ok { grid-row: 3; color: var(--accent); }
+[data-page="proof"] .pf-ax-n { grid-row: 2; grid-column: var(--c); justify-self: center; font-weight: 400; letter-spacing: .04em; }
+[data-page="proof"] .pf-ax .pf-tk { grid-row: 3; grid-column: var(--c); justify-self: center; position: relative; overflow: hidden; width: max(38.5%, min(60%, .875rem)); aspect-ratio: 4 / 3; } /* phones: no smaller than the block */
+[data-page="proof"] .pf-ax .pf-tk svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
+/* the narrowest phones (after the rules it overrides): "Broker confirmed" moves under its ticks, one line */
+@container (max-width: 300px) {
+  [data-page="proof"] .pf-ax { grid-template-rows: calc(2.6 * var(--ax-l)) calc(2 * var(--ax-l)) calc(1.8 * var(--ax-l)) calc(1.6 * var(--ax-l)); height: calc(9.1 * var(--ax-l)); }
+  [data-page="proof"] .pf-ax-l { max-width: none; white-space: nowrap; letter-spacing: .02em; }
+  [data-page="proof"] .pf-l-ok { grid-row: 4; grid-column: 1 / -1; align-self: end; }
+}
+@media (forced-colors: active) { [data-page="proof"] :is(.pf-pl, .pf-top) { color: CanvasText; } [data-page="proof"] .pf-fl { stroke: CanvasText; } [data-page="proof"] .pf-glow { display: none; } }
 @media screen and (prefers-reduced-motion: no-preference) {
   [data-page="proof"] .pf-rec { animation: pf-rec-land .45s var(--ease-out) calc(120ms + var(--i, 0) * 45ms) backwards; }
   [data-page="proof"] .pf-lit, [data-page="proof"] .pf-lit > span { animation: pf-wipe .9s var(--ease-draw) .56s backwards; }
@@ -61,7 +72,7 @@
   [data-page="proof"] :is(.pf-lit, .pf-tk) > span { animation-name: pf-hold; } /* the window slides right, the mark stays put */
   [data-page="proof"] .hero-plate--records .pf-l-ok { animation: pf-fade .5s var(--ease-out) 1.35s backwards; }
 }
-@keyframes pf-rec-land { from { opacity: 0; transform: translateY(-71.429%) scaleY(.6); } } /* 10 drawing units up */
+@keyframes pf-rec-land { from { opacity: 0; transform: translateY(-58.824%) scaleY(.6); } } /* 10 drawing units up */
 @keyframes pf-land { from { opacity: 0; transform: translateY(-83.333%) scaleY(.6); } } /* Trust's records */
 @keyframes pf-fade { from { opacity: 0; } }
 @keyframes pf-wipe { from { transform: translateX(-100%); } }
@@ -78,38 +89,38 @@
 
 /* §01: the hedge points at the disclosures, and reaches them (site.js opens the fold). */
 [data-page="proof"] .pf-hedge { color: var(--fg-2); }
-.pf-hedge a { color: var(--fg-2); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; transition: color var(--dur-feedback) var(--ease-out), text-decoration-color var(--dur-feedback) var(--ease-out); }
+.pf-hedge a { color: var(--fg-2); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: .1875rem; transition: color var(--dur-feedback) var(--ease-out), text-decoration-color var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { .pf-hedge a:hover { color: var(--fg); text-decoration-color: currentColor; } }
 .pf-hedge a:focus-visible { color: var(--fg); text-decoration-color: currentColor; }
 
 /* Table 1.1, folded: a value equal to the one above it is a ditto mark; the words stay for AT, copy and print */
-.proof-table .pf-dt > * { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.proof-table .pf-dt > * { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .proof-table .pf-dt::after { content: "\201D" / ""; display: inline-block; font: 400 1.7rem/.5 var(--serif); color: var(--fg-3); transform: translateY(.42em); }
-.proof-table td.num.pf-dt { padding-right: 40px; }
-.proof-table td.pf-dt:not(.num) { padding-left: 18px; }
+.proof-table td.num.pf-dt { padding-right: 2.5rem; }
+.proof-table td.pf-dt:not(.num) { padding-left: 1.125rem; }
 /* each mark sits under the middle of the value it repeats (Day 01's 'Broker confirmation' and 'Settled') */
-@media (min-width: 601px) { .proof-table td.pf-dt:nth-child(4) { padding-left: 81px; } .proof-table td.pf-dt:nth-child(5) { padding-left: 46px; } }
-.proof-table tbody tr + tr td { padding-block: 11px; }
-.proof-table tbody tr:first-child td { padding-block: 16px; }
+@media (min-width: 601px) { .proof-table td.pf-dt:nth-child(4) { padding-left: 5.0625rem; } .proof-table td.pf-dt:nth-child(5) { padding-left: 2.875rem; } }
+.proof-table tbody tr + tr td { padding-block: .6875rem; }
+.proof-table tbody tr:first-child td { padding-block: 1rem; }
 /* the row under the pointer spells itself out (proof.js lights it and its session in Fig. 1.1) */
 @media (hover: hover) and (min-width: 601px) {
   .proof-table tbody tr:hover .pf-dt > * { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
   .proof-table tbody tr:hover .pf-dt::after { display: none; }
-  .proof-table tbody tr:hover td.pf-dt, .proof-table tbody tr:hover td.pf-dt:nth-child(n) { padding-inline: 14px; }
-  .proof-table tbody tr:hover .pf-dt .tag { margin-block: -3px; }
+  .proof-table tbody tr:hover td.pf-dt, .proof-table tbody tr:hover td.pf-dt:nth-child(n) { padding-inline: .875rem; }
+  .proof-table tbody tr:hover .pf-dt .tag { margin-block: calc(-3 * var(--hair)); }
 }
-.pf-tcap { margin: 0 0 clamp(14px, 1.4vw, 20px); }
-.proof-table { border-bottom: 1px solid var(--line-strong); }
-.pf-legend { display: flex; gap: 10px; align-items: baseline; max-width: 64ch; margin: 12px 0 0; font: .82rem/1.5 var(--sans); color: var(--fg-3); }
+.pf-tcap { margin: 0 0 clamp(.875rem, 1.4vw, 1.25rem); }
+.proof-table { border-bottom: var(--hair) solid var(--line-strong); }
+.pf-legend { display: flex; gap: .625rem; align-items: baseline; max-width: 64ch; margin: .75rem 0 0; font: .82rem/1.5 var(--sans); color: var(--fg-3); }
 .pf-legend b { flex: none; font: 400 1.5rem/.6 var(--serif); color: var(--fg-2); transform: translateY(.3em); }
 
 /* the open / filled marks */
-.pf-lk { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; font: 400 clamp(1.35rem, 1.8vw, 1.6rem)/1.2 var(--serif); letter-spacing: -.01em; color: var(--fg); }
+.pf-lk { display: flex; align-items: center; gap: .75rem; margin: 0 0 1rem; font: 400 clamp(1.35rem, 1.8vw, 1.6rem)/1.2 var(--serif); letter-spacing: -.01em; color: var(--fg); }
 /* the chart's own marks: a filled block for what the record shows, an open block for what it does not */
-.pf-lk i { flex: none; width: 11px; height: 11px; background: var(--fg); }
-.pf-lk--not i { background: transparent; border: 1px solid var(--fg-2); }
-.pf-list { border-top: 1px solid var(--line-strong); }
-.pf-list > li { padding: 14px 0 15px; border-bottom: 1px solid var(--line); font-size: 1rem; line-height: 1.5; color: var(--fg-2); text-wrap: pretty; }
+.pf-lk i { flex: none; width: .6875rem; height: .6875rem; background: var(--fg); }
+.pf-lk--not i { background: transparent; border: var(--hair) solid var(--fg-2); }
+.pf-list { border-top: var(--hair) solid var(--line-strong); }
+.pf-list > li { padding: .875rem 0 .9375rem; border-bottom: var(--hair) solid var(--line); font-size: 1rem; line-height: 1.5; color: var(--fg-2); text-wrap: pretty; }
 .pf-list b { font-weight: 600; color: var(--fg); }
 
 
@@ -130,7 +141,7 @@
   [data-page="proof"] .pf-trail .pf-doc.will-reveal:not(.is-in) .pf-mk { opacity: 0; }
   [data-page="proof"] .pf-trail .pf-doc.is-cut :is(.pf-tr, .pf-mk), [data-page="proof"] .pf-trail .pf-doc.is-cut::before { transition: none; }
 }
-[data-page="proof"] .pf-doc h3 a { display: inline-flex; align-items: baseline; gap: .3em; border-bottom: 1px solid var(--line-strong); transition: border-color var(--dur-feedback) var(--ease-out); }
+[data-page="proof"] .pf-doc h3 a { display: inline-flex; align-items: baseline; gap: .3em; border-bottom: var(--hair) solid var(--line-strong); transition: border-color var(--dur-feedback) var(--ease-out); }
 [data-page="proof"] .pf-doc h3 .arr { width: .55em; height: .55em; flex: none; }
 @media (hover: hover) { [data-page="proof"] .pf-doc h3 a:hover { border-color: currentColor; text-decoration-color: currentColor; } }
 /* tablets: the trail stays three across */
@@ -143,7 +154,7 @@
   [data-page="proof"] .pf-trail .pf-doc { --sw: 8.5rem; display: grid; grid-template-columns: var(--sw) minmax(0, 1fr); column-gap: 1.125rem; align-items: start; padding-left: 1.125rem; }
   [data-page="proof"] .pf-trail .pf-doc h3 { align-self: center; font-size: 1.35rem; }
   /* the link wraps here: its rule follows the words and the arrow stays with "record" */
-  [data-page="proof"] .pf-doc h3 a { display: inline; border-bottom: 0; text-decoration: underline 1px var(--line-strong); text-underline-offset: .22em; }
+  [data-page="proof"] .pf-doc h3 a { display: inline; border-bottom: 0; text-decoration: underline var(--hair) var(--line-strong); text-underline-offset: .22em; }
   [data-page="proof"] .pf-doc h3 .arr { display: inline-block; margin-left: .25em; vertical-align: .05em; }
   [data-page="proof"] .pf-sheet { margin: 0; }
   /* the spine: from this sheet's row down to the next sheet's (the row sits at --F of a sheet --sw * 180 / 320 tall) */
@@ -168,37 +179,35 @@
   [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: 3.25rem; }
 }
 @container cost (max-width: 560px) {
-  [data-page="proof"] .cost-bar > i:nth-of-type(3) > span { left: auto; right: 0; padding: 0 7px 9px 0; border-left: 0; border-right: 1px solid var(--line-strong); }
+  [data-page="proof"] .cost-bar > i:nth-of-type(3) > span { left: auto; right: 0; padding: 0 .4375rem .5625rem 0; border-left: 0; border-right: var(--hair) solid var(--line-strong); }
   [data-page="proof"] .cost-bar > i:last-of-type > span { padding-bottom: 4.0909em; } /* 45 px: two tiers up */
   [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: 4.375rem; }
 }
 
-/* the hero: the words on the left; on the right the record, drawn (the plate) */
+/* the hero (a3): section 01's spread - the H1 across, then the copy in 01's 4fr column and the record in Fig. 1.1's 8fr
+   column (proofchart.css's grid and gap), both standing on one floor that runs on, faint, edge to edge (L2) */
 @media (min-width: 961px) {
-  [data-page="proof"] .page-hero--dark { padding-top: calc(var(--nav-h) + clamp(44px, 4.8vw, 72px)); padding-bottom: clamp(44px, 4.4vw, 64px); }
-  /* a1: the floor sits on the H1's last baseline (the copy opens with display: contents) */
-  [data-page="proof"] .page-hero--plate { row-gap: 0; }
+  [data-page="proof"] .page-hero--dark { padding-top: calc(var(--nav-h) + clamp(2.75rem, 4.8vw, 4.5rem)); padding-bottom: clamp(2.75rem, 4.4vw, 4rem); overflow-x: clip; }
+  [data-page="proof"] .page-hero--plate { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: clamp(2rem, 4vw, 4.5rem); row-gap: 0; padding-bottom: calc(var(--ax-h) + 3rem); }
   [data-page="proof"] .page-hero--plate > .hero-copy { display: contents; }
-  [data-page="proof"] .hero-copy > * { grid-column: 1 / span 7; }
-  [data-page="proof"] .hero-copy > h1 { grid-row: 1; align-self: last baseline; }
-  [data-page="proof"] .pf-record { grid-column: 8 / -1; grid-row: 1; align-self: last baseline; justify-self: stretch; min-width: 0; }
-  [data-page="proof"] .pf-record > .hero-plate { max-width: none; margin-bottom: calc((100% - 2rem - var(--lead)) * -24 / 266); }
-  /* the caption hangs under the marks, out of the row (the row's foot is the floor) */
+  [data-page="proof"] .hero-copy > h1 { grid-column: 1 / -1; grid-row: 1; }
+  [data-page="proof"] .hero-copy > .lede { grid-column: 1; grid-row: 2; }
+  [data-page="proof"] .hero-copy > .pf-lc-hedge { grid-column: 1; grid-row: 3; align-self: end; padding-bottom: 1.125rem; }
+  /* the frame stands from the lede's top to the axis: the blocks on the floor at its foot, the zone above them open */
+  [data-page="proof"] .pf-record { grid-column: 2; grid-row: 2 / span 2; align-self: stretch; display: flex; flex-direction: column; position: relative; margin-top: 1.625rem; } /* the lede's top (site.css) */
+  [data-page="proof"] .pf-record > .hero-plate { flex: 1 0 auto; display: flex; flex-direction: column; margin-bottom: calc(-1 * var(--ax-h)); } /* the row's foot is the floor */
+  [data-page="proof"] .page-hero .hero-plate--records .hp-art { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: flex-end; }
+  [data-page="proof"] .page-hero .hero-plate--records .hp-reg { top: .25rem; }
   [data-page="proof"] .hero-plate--records .hp-cap { position: absolute; left: 0; top: 100%; }
-  [data-page="proof"] .hero-plate--records .hp-art::before { content: none; }
-  /* the record line runs on, faint, edge to edge (L2) */
-  [data-page="proof"] .page-hero--dark { overflow-x: clip; }
-  [data-page="proof"] .pf-record { position: relative; }
-  [data-page="proof"] .pf-record::before { content: ""; position: absolute; left: -100vw; right: -100vw; bottom: 0; height: 0; border-top: 1px solid var(--line); pointer-events: none; }
+  [data-page="proof"] .pf-record::before { content: ""; position: absolute; left: -100vw; right: -100vw; bottom: calc(-.5 * var(--hair)); height: 0; border-top: var(--hair) solid var(--line); pointer-events: none; } /* centred on the floor, as the plate's own */
 }
-/* a2: from 1760 px the H1's last line ends a gutter and more before column 7: the plate takes columns 7-12 */
-@media (min-width: 1760px) { [data-page="proof"] .pf-record { grid-column: 7 / -1; } }
-@media (max-width: 960px) { [data-page="proof"] .pf-record { grid-column: 1 / -1; min-width: 0; } }
+/* up to 1279 px the lede runs four lines in its column: the frame keeps to the record (no tall empty field above it) */
+@media (min-width: 961px) and (max-width: 1279.98px) { [data-page="proof"] .pf-record { align-self: end; margin-top: 0; } [data-page="proof"] .page-hero .hero-plate--records .hp-reg { top: -.75rem; } }
+@media (max-width: 960px) { [data-page="proof"] .pf-record { grid-column: 1 / -1; } }
 /* tablets: the record as a spread, the plate and its terms side by side; §01's heading beside its text */
 @media (min-width: 601px) and (max-width: 960px) {
-  [data-page="proof"] .pf-record > .hero-plate { max-width: none; } /* a2: the strip takes the column */
   [data-page="trust"] .page-hero--plate > .hero-plate--council { max-width: min(100%, calc(52svh * var(--hp-ar))); }
-  [data-page="proof"] .proof-copy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(24px, 4vw, 40px); align-items: start; }
+  [data-page="proof"] .proof-copy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(1.5rem, 4vw, 2.5rem); align-items: start; }
   [data-page="proof"] .proof-copy > h2 { grid-row: 1 / span 2; }
   [data-page="proof"] .proof-copy > .body-lg { margin-top: 0; }
 }
@@ -216,17 +225,17 @@
 @media (max-width: 359.98px) { [data-page="proof"] .page-hero .lede { min-height: 4lh; } }
 @media (max-width: 344.98px) { [data-page="proof"] .page-hero h1 { min-height: 4lh; } }
 /* the first statement of the result carries its hedge, as on Home's hero (VOICE 5.5) */
-[data-page="proof"] .pf-lc-hedge { margin-top: 16px; font: 400 .875rem/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); }
+[data-page="proof"] .pf-lc-hedge { margin-top: 1rem; font: 400 .875rem/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); }
 
 @media (max-width: 600px) {
-  .pf-list > li { padding: 12px 0 13px; font-size: .97rem; }
+  .pf-list > li { padding: .75rem 0 .8125rem; font-size: .97rem; }
   /* Table 1.1 on a phone: one record in full, then nine one-line rows: the day, the regime, and three ditto marks */
-  [data-page="proof"] .proof-table > tbody > tr { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: 4px 12px; padding: 10px 0 9px; }
-  [data-page="proof"] .proof-table > tbody > tr:first-child { padding: 14px 0 16px; row-gap: 10px; }
-  [data-page="proof"] .proof-table > tbody > tr + tr { grid-template-columns: 4.6em minmax(0, 1fr) repeat(3, 1.5em); align-items: center; column-gap: 8px; padding: 8px 0; }
+  [data-page="proof"] .proof-table > tbody > tr { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: .25rem .75rem; padding: .625rem 0 .5625rem; }
+  [data-page="proof"] .proof-table > tbody > tr:first-child { padding: .875rem 0 1rem; row-gap: .625rem; }
+  [data-page="proof"] .proof-table > tbody > tr + tr { grid-template-columns: 4.6em minmax(0, 1fr) repeat(3, 1.5em); align-items: center; column-gap: .5rem; padding: .5rem 0; }
   [data-page="proof"] .proof-table > tbody > tr > td:first-child { grid-column: 1; padding: 0; }
   [data-page="proof"] .proof-table > tbody > tr:first-child > td:nth-child(2) { grid-column: 2 / -1; }
-  [data-page="proof"] .proof-table > tbody > tr:first-child > td:first-child { align-self: end; padding-bottom: 16px; } /* "Day 01" on the text line of its regime (whose cell keeps the first row's 16 px) */
+  [data-page="proof"] .proof-table > tbody > tr:first-child > td:first-child { align-self: end; padding-bottom: 1rem; } /* "Day 01" on the text line of its regime (whose cell keeps the first row's 16 px) */
   [data-page="proof"] .proof-table > tbody > tr + tr > td:nth-child(2) { grid-column: auto; }
   [data-page="proof"] .proof-table > tbody > tr > td:nth-child(n + 3) { font-size: .88rem; }
   [data-page="proof"] .proof-table > tbody > tr + tr td[data-th]::before { display: none; }
@@ -234,12 +243,12 @@
   [data-page="proof"] .proof-table td.num { text-align: left; }
   .proof-table td.num.pf-dt, .proof-table td.pf-dt:not(.num) { padding: 0; line-height: 1; text-align: center; }
   .proof-table .pf-dt::after { font-size: 1.45rem; transform: translateY(.3em); }
-  .proof-table .tag { padding: 3px 6px; }
+  .proof-table .tag { padding: .1875rem .375rem; }
   .pf-legend { font-size: .8rem; }
 }
 @media print {
   .proof-table .pf-dt > * { position: static; width: auto; height: auto; clip-path: none; }
-  .proof-table td.pf-dt, .proof-table td.pf-dt:nth-child(n) { padding-inline: 14px; } /* the words under Day 01's, not at the ditto offsets */
+  .proof-table td.pf-dt, .proof-table td.pf-dt:nth-child(n) { padding-inline: .875rem; } /* the words under Day 01's, not at the ditto offsets */
   .proof-table .pf-dt::after, .pf-legend { display: none; }
 }
 
@@ -265,18 +274,19 @@
   [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-rj { animation: pf-land .42s var(--ease-out) 1.74s backwards; }
   [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-l-rj { animation: pf-fade .4s var(--ease-out) 1.80s backwards; }
 }
-@keyframes tp-drop { from { opacity: 0; transform: translateY(-22px); } }
+@keyframes tp-drop { from { opacity: 0; transform: translateY(-1.375rem); } }
 /* a2: the plate on columns 7-12 as tall as the copy, the ring 1.5x (trust_plate.py), marks on the column edges */
 [data-page="trust"] .hero-plate--council .hp-art { margin-inline: 1rem; padding: 0; }
 [data-page="trust"] .hero-plate--council .hp-reg { inset: -.75rem -1rem; }
-[data-page="trust"] .hero-plate--council .hp-cap { margin: 1.25rem 1rem 0; }
+[data-page="trust"] .hero-plate--council .hp-cap { margin: 1.25rem 0 0; } /* flush with the marks (a3) */
 /* the labels under the record line hang from it (their tops a few units under the line), so two lines never reach it */
 [data-page="trust"] .hero-plate--council .tp-l-low { transform: translate(var(--tx, 0%), 0); }
-@media (max-width: 380px) { [data-page="trust"] .hero-plate--council :is(.tp-l-cou small, .tp-l-rj) { width: 7.6em; white-space: normal; } }
+/* a3: a dot-joined pair stays on one line; where it cannot (under 381 px), it breaks before the dot and drops it */
+@media (max-width: 380px) { [data-page="trust"] .tp-dot { display: block; height: 0; overflow: hidden; } }
 @media (max-width: 600px) {
   [data-page="trust"] .hero-plate--council .hp-art { margin-inline: .5rem; }
   [data-page="trust"] .hero-plate--council .hp-reg { inset: -.75rem -.5rem; }
-  [data-page="trust"] .hero-plate--council .hp-cap { margin: 1rem .5rem 0; }
+  [data-page="trust"] .hero-plate--council .hp-cap { margin: 1rem 0 0; }
 }
 @media (min-width: 961px) {
   [data-page="trust"] .page-hero--plate > .hero-copy { grid-column: 1 / span 6; }
@@ -289,43 +299,42 @@
 @media (min-width: 961px) { .tr-ledger .tr-lead > .col-6 { grid-column-end: span 7; } }
 .tr-lt { margin-top: clamp(2.25rem, 4vw, 3.75rem); }
 /* the head: title and controls, then the status */
-.tr-lt .lt-head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title ctrl" ". state"; row-gap: 10px; column-gap: 24px; padding-top: 12px; padding-bottom: 12px; }
+.tr-lt .lt-head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title ctrl" ". state"; row-gap: .625rem; column-gap: 1.5rem; padding-top: .75rem; padding-bottom: .75rem; }
 .tr-lt .lt-state { justify-self: end; }
 @media (max-width: 960px) {
-  .tr-lt .lt-head { grid-template-areas: "title ctrl" "state state"; row-gap: 8px; }
+  .tr-lt .lt-head { grid-template-areas: "title ctrl" "state state"; row-gap: .5rem; }
   .tr-lt .lt-state { justify-self: start; }
 }
 .tr-lt [data-lt-say] { text-transform: none; letter-spacing: 0; }
 .tr-lt .lt-btn--restore { border-color: rgba(217, 103, 93, .6); color: var(--fg); }
 @media (hover: hover) { .tr-lt .lt-btn--restore:hover { border-color: var(--reject); background: var(--reject); color: var(--ink); } }
-/* a2 (UX juror): the controls speak in the site's button voice (Inter, sentence case) */
-.tr-lt .lt-btn { font: 500 var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; border-radius: var(--r); }
-.tr-lt :is([data-lt-edit], [data-lt-verify], [data-lt-restore]) { background-image: linear-gradient(var(--signal), var(--signal)); background-repeat: no-repeat; background-size: 0 2px; background-position: 0 100%; transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), background-color var(--dur-feedback) var(--ease-out), background-size var(--dur-move) var(--ease); }
+/* a2 (UX juror): the controls speak in the site's button voice (Inter, sentence case: ledger.css since system a3) */
+.tr-lt :is([data-lt-edit], [data-lt-verify], [data-lt-restore]) { background-image: linear-gradient(var(--signal), var(--signal)); background-repeat: no-repeat; background-size: 0 calc(2 * var(--hair)); background-position: 0 100%; transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), background-color var(--dur-feedback) var(--ease-out), background-size var(--dur-move) var(--ease); }
 .tr-lt [data-lt-edit], .tr-lt.is-edited [data-lt-verify], .tr-lt.is-broken:not(.is-edited) [data-lt-restore] { border-color: var(--paper); background-color: var(--paper); color: var(--ink); }
 @media (hover: hover) {
-  .tr-lt [data-lt-edit]:hover, .tr-lt.is-edited [data-lt-verify]:hover, .tr-lt.is-broken:not(.is-edited) [data-lt-restore]:hover { border-color: var(--paper); background-color: color-mix(in srgb, var(--paper) 86%, var(--ink)); background-size: 100% 2px; color: var(--ink); }
+  .tr-lt [data-lt-edit]:hover, .tr-lt.is-edited [data-lt-verify]:hover, .tr-lt.is-broken:not(.is-edited) [data-lt-restore]:hover { border-color: var(--paper); background-color: color-mix(in srgb, var(--paper) 86%, var(--ink)); background-size: 100% calc(2 * var(--hair)); color: var(--ink); }
 }
-@media (forced-colors: active) { .tr-lt [data-lt-edit], .tr-lt.is-edited [data-lt-verify], .tr-lt.is-broken:not(.is-edited) [data-lt-restore] { border: 2px solid ButtonText; } }
+@media (forced-colors: active) { .tr-lt [data-lt-edit], .tr-lt.is-edited [data-lt-verify], .tr-lt.is-broken:not(.is-edited) [data-lt-restore] { border: calc(2 * var(--hair)) solid ButtonText; } }
 .tr-lt.is-edited .lt-state { color: var(--khaki); }
-.tr-lt.is-edited .lt-state i { background: transparent; box-shadow: inset 0 0 0 1px currentColor; }
+.tr-lt.is-edited .lt-state i { background: transparent; box-shadow: inset 0 0 0 var(--hair) currentColor; }
 /* edited, not yet verified: the record's block is drawn open and dashed (the site's "not yet" mark), its tag says so */
-.tr-lt .lt-rec.is-edited .lt-lc { margin-block: -1px; padding: 0 5px; border: 1px dashed var(--khaki); border-radius: 1px; color: var(--khaki); } /* the box adds no height: the line stays level */
+.tr-lt .lt-rec.is-edited .lt-lc { margin-block: calc(-1 * var(--hair)); padding: 0 .3125rem; border: var(--hair) dashed var(--khaki); border-radius: .0625rem; color: var(--khaki); } /* the box adds no height: the line stays level */
 .tr-lt .lt-rec.is-broken .lt-lc { border-color: rgba(217, 103, 93, .6); }
-.tr-lt .lt-rec.is-edited .lt-node { background: transparent; box-shadow: none; outline: 1.5px dashed var(--khaki); outline-offset: -1.5px; }
+.tr-lt .lt-rec.is-edited .lt-node { background: transparent; box-shadow: none; outline: .09375rem dashed var(--khaki); outline-offset: -.09375rem; }
 /* broken: from the edited record on, every record and its link turn red as the walk reaches them, and stay red */
 .tr-lt { transition: border-color .5s var(--ease-out); }
 .tr-lt.is-broken { border-color: rgba(217, 103, 93, .55); }
 .tr-lt.is-broken .lt-state { color: var(--reject); }
-.tr-lt .lt-rec.is-broken .lt-node { background: transparent; outline: 0; box-shadow: inset 0 0 0 1.5px var(--reject), 0 0 14px rgba(217, 103, 93, .45); }
+.tr-lt .lt-rec.is-broken .lt-node { background: transparent; outline: 0; box-shadow: inset 0 0 0 .09375rem var(--reject), 0 0 .875rem rgba(217, 103, 93, .45); }
 .tr-lt .lt-rec.is-broken .lt-seg { background: var(--reject); }
 /* sealed vs now: the hash the record was sealed with is struck; under it, in red, the hash it produces now */
 /* each column keeps room under its link for both hashes and the wait below them (a record is paint-contained) */
-@media (min-width: 601px) { .tr-lt .lt-rec { padding-bottom: 30px; } }
-.tr-lt .lt-rec.is-broken .lt-tag { color: var(--fg-3); text-decoration: line-through var(--reject) 1px; }
-.tr-lt .lt-now { display: none; position: absolute; left: calc(50% + 6px); top: 25px; transform: translateX(-50%); padding: 0 6px; font: var(--mono-xs)/1.2 var(--mono); letter-spacing: .06em; color: var(--reject); white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (min-width: 601px) { .tr-lt .lt-rec { padding-bottom: 1.875rem; } }
+.tr-lt .lt-rec.is-broken .lt-tag { color: var(--fg-3); text-decoration: line-through var(--reject) var(--hair); }
+.tr-lt .lt-now { display: none; position: absolute; left: calc(50% + .375rem); top: 1.5625rem; transform: translateX(-50%); padding: 0 .375rem; font: var(--mono-xs)/1.2 var(--mono); letter-spacing: .06em; color: var(--reject); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tr-lt .lt-rec.is-edited .lt-now { display: block; color: var(--khaki); }
 .tr-lt .lt-rec.is-broken .lt-now { display: block; color: var(--reject); }
-@media (min-width: 601px) { .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-gap { top: 39px; } }
+@media (min-width: 601px) { .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-gap { top: 2.4375rem; } }
 .tr-lt .lt-key { display: none; }
 .tr-lt.is-broken .lt-key { display: inline; }
 .tr-lt .lt-key s { text-decoration-color: var(--reject); }
@@ -335,12 +344,12 @@
 @media (prefers-reduced-motion: no-preference) {
   .tr-lt .lt-rec.is-broken .lt-node { animation: tr-break .5s var(--ease-out) backwards; }
 }
-@keyframes tr-break { 0% { transform: scale(1.6); box-shadow: inset 0 0 0 6px var(--reject), 0 0 22px rgba(217, 103, 93, .8); } }
+@keyframes tr-break { 0% { transform: scale(1.6); box-shadow: inset 0 0 0 .375rem var(--reject), 0 0 1.375rem rgba(217, 103, 93, .8); } }
 /* the selected record's event and detail can be typed over */
 .tr-lt .lt-insp dd > [data-f="ev"] { display: block; }
-.tr-lt .lt-insp [contenteditable] { outline: 2px solid transparent; outline-offset: 2px; cursor: text; border-radius: 1px; box-shadow: inset 0 -1px 0 var(--line-strong); transition: box-shadow var(--dur-feedback) var(--ease-out), background var(--dur-feedback) var(--ease-out); }
-@media (hover: hover) { .tr-lt .lt-insp [contenteditable]:hover { box-shadow: inset 0 -1px 0 var(--fg-2); } }
-.tr-lt .lt-insp [contenteditable]:focus { box-shadow: inset 0 -1px 0 var(--accent); background: rgba(245, 242, 236, .07); }
+.tr-lt .lt-insp [contenteditable] { outline: calc(2 * var(--hair)) solid transparent; outline-offset: .125rem; cursor: text; border-radius: .0625rem; box-shadow: inset 0 calc(-1 * var(--hair)) 0 var(--line-strong); transition: box-shadow var(--dur-feedback) var(--ease-out), background var(--dur-feedback) var(--ease-out); }
+@media (hover: hover) { .tr-lt .lt-insp [contenteditable]:hover { box-shadow: inset 0 calc(-1 * var(--hair)) 0 var(--fg-2); } }
+.tr-lt .lt-insp [contenteditable]:focus { box-shadow: inset 0 calc(-1 * var(--hair)) 0 var(--accent); background: rgba(245, 242, 236, .07); }
 /* while a field is typed in, the next step under it */
 .tr-lt .tr-enter { margin: 0; font: 400 .8125rem/1.45 var(--sans); letter-spacing: 0; color: var(--fg-2); }
 .tr-lt .tr-tap { display: none; }
@@ -355,12 +364,13 @@
   .tr-lt .lt-insp.is-typing > .tr-enter { grid-column: 1; grid-row: 3; }
 }
 
-/* a1 UX: the inspected record's lineage in one serif line (trust.js); height reserved; wide screens with JS only */
+/* a1 UX: the inspected record's lineage in one serif line (trust.js); height reserved, padding included (border-box: the
+   line filling in no longer moves the strip, a3); wide screens with JS only */
 .tr-lt .tr-lin { display: none; }
 @media (scripting: enabled) and (min-width: 1200px) {
-  .tr-lt .tr-lin { display: flex; align-items: baseline; gap: 0 .875rem; min-height: calc(var(--fs-heading) * 1.2); margin: 0; padding: 1.25rem 1.25rem 0; font: 400 var(--fs-heading)/1.2 var(--serif); letter-spacing: -.005em; color: var(--fg); white-space: nowrap; overflow: hidden; }
+  .tr-lt .tr-lin { display: flex; align-items: baseline; gap: 0 .875rem; min-height: calc(var(--fs-heading) * 1.2 + 1.25rem); margin: 0; padding: 1.25rem 1.25rem 0; font: 400 var(--fs-heading)/1.2 var(--serif); letter-spacing: -.005em; color: var(--fg); white-space: nowrap; overflow: hidden; }
   .tr-lt .tr-lin-s b { margin-left: .4em; font: 500 var(--fs-label)/1 var(--mono); letter-spacing: .06em; color: var(--fg-3); font-variant-numeric: tabular-nums; }
-  .tr-lt .tr-lin > i { flex: none; align-self: center; width: 2.25rem; height: 0; border-top: 1px solid var(--line-strong); }
+  .tr-lt .tr-lin > i { flex: none; align-self: center; width: 2.25rem; height: 0; border-top: var(--hair) solid var(--line-strong); }
   .tr-lt .tr-lin-s.is-wait { color: var(--fg-3); }
   .tr-lt .tr-lin-s.is-bad, .tr-lt .tr-lin-s.is-bad b { color: var(--reject); }
 }
@@ -369,7 +379,7 @@
 
 /* §02 the control plane: six engraved plates on one ruled sheet, each a drawing and its name */
 .tr-cp { row-gap: 2.5rem; }
-.tr-k { --kp: clamp(1.25rem, 2.2vw, 1.875rem); border-left: 0; border-top: 1px solid var(--line-strong); }
+.tr-k { --kp: clamp(1.25rem, 2.2vw, 1.875rem); border-left: 0; border-top: var(--hair) solid var(--line-strong); }
 .tr-k > .tr-kp { display: flex; flex-direction: column; padding: clamp(1.375rem, 2.2vw, 1.875rem) var(--kp) clamp(1.5rem, 2.4vw, 2rem); background: transparent; border-radius: 0; transition: background .3s var(--ease-out); }
 /* the sheet's outer columns run flush to its edges, so every plate's drawing is the same width */
 .tr-k > .tr-kp:nth-child(2n) { border-right: 0; padding-right: 0; }
@@ -380,6 +390,7 @@
 /* the words meet AA on paper-2 (a11y r1 M2) */
 .tr-kd .hp-lab--acc { color: var(--signal-ink); }
 .tr-kd .hp-lab--rej { color: var(--fg-2); }
+.tr-kd .tr-k-full { display: none; } /* K-05: its lines start after VIEW / RECORD; where the labels go (phones) they start at the edge, as the other five */
 .tr-kt h3 { margin: 0; }
 @media (hover: hover) {
   .tr-k > .tr-kp:hover { background: rgba(14, 21, 18, .025); }
@@ -397,11 +408,11 @@
 /* small desktops: the heading takes the row, the six plates sit three by two under it */
 @media (min-width: 961px) and (max-width: 1199px) {
   .tr-cp > .tr-cp-copy, .tr-cp > .tr-cp-plates { grid-column: 1 / -1; }
-  .tr-cp-copy { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 48px; align-items: end; }
+  .tr-cp-copy { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 3rem; align-items: end; }
   .tr-cp-copy .body-lg { margin-top: 0; }
   /* three across: the middle plate pads both sides, so its column is wider by one padding (equal drawings) */
   .tr-k { grid-template-columns: minmax(0, 1fr) calc((100% + 2 * var(--kp)) / 3) minmax(0, 1fr); }
-  .tr-k > .tr-kp:nth-child(n) { border-right: 1px solid var(--line); padding-left: var(--kp); padding-right: var(--kp); }
+  .tr-k > .tr-kp:nth-child(n) { border-right: var(--hair) solid var(--line); padding-left: var(--kp); padding-right: var(--kp); }
   .tr-k > .tr-kp:nth-child(3n) { border-right: 0; padding-right: 0; }
   .tr-k > .tr-kp:nth-child(3n + 1) { padding-left: 0; }
 }
@@ -411,10 +422,7 @@
 
 /* the closing band: "Bring your compliance team." on one line where it fits (20ch held it 5 px short) */
 [data-page="trust"] .cta-band h2 { max-width: 21ch; }
-@media (max-width: 359.98px) {
-  [data-page="trust"] .cta-band h2 { font-size: min(2.6rem, calc((100vw - 40px) / 7.45)); }
-  [data-page="proof"] .cta-band h2 { font-size: min(2.6rem, calc((100vw - 40px) / 7.05)); }
-}
+/* (a3) the 320 px size steps went: at the phone H2 (34 px) both closing lines fit by themselves */
 
 /* §03 custody: the account drawn (one scoped port in, nothing out) beside its one line */
 .tr-cu { row-gap: 2rem; align-items: center; }
@@ -433,8 +441,8 @@
 
 /* §04 the refusals: three lines, each led by a short reject-red rule, the stop the plates draw */
 .tr-no { row-gap: 1.75rem; }
-.tr-no-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line-strong); }
-.tr-no-list > li { display: flex; align-items: baseline; gap: .875rem; padding: 1.125rem 0 1.1875rem; border-bottom: 1px solid var(--line); font: 500 var(--fs-body)/1.45 var(--sans); color: var(--fg); text-wrap: pretty; } /* the refusals at the size they had (running text, bold lead): set, not shouted */
+.tr-no-list { margin: 0; padding: 0; list-style: none; border-top: var(--hair) solid var(--line-strong); }
+.tr-no-list > li { display: flex; align-items: baseline; gap: .875rem; padding: 1.125rem 0 1.1875rem; border-bottom: var(--hair) solid var(--line); font: 500 var(--fs-body)/1.45 var(--sans); color: var(--fg); text-wrap: pretty; } /* the refusals at the size they had (running text, bold lead): set, not shouted */
 .tr-no-list > li > i { flex: none; width: .875rem; height: 0; border-top: .125rem solid var(--reject); transform: translateY(-.34em); }
 @media (max-width: 960px) { .tr-no > * { grid-column: 1 / -1; } }
 
@@ -442,85 +450,53 @@
 @media (max-width: 600px) {
   .tr-lt .lt-state > span { white-space: normal; }
   .tr-lt .lt-view { overflow: visible; -webkit-mask-image: none !important; mask-image: none !important; }
-  .tr-lt .lt-track { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; width: auto; min-width: 0; padding: 4px 12px 12px 10px; } /* start: a replay holds the column's height (trust.js) and the rows must not stretch into it */
-  .tr-lt .lt-rec { contain: layout style; width: auto; margin-left: 0; padding: 11px 8px 12px 34px; display: grid; grid-template-columns: 4.4em minmax(0, 1fr) auto; grid-template-areas: "meta ev t" "meta sub ."; column-gap: 10px; row-gap: 4px; align-items: baseline; }
-  .tr-lt .lt-rec::after { inset: 2px 0; }
-  .tr-lt .lt-meta { grid-area: meta; flex-direction: column; gap: 2px; }
+  .tr-lt .lt-track { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; width: auto; min-width: 0; padding: .25rem .75rem .75rem .625rem; } /* start: a replay holds the column's height (trust.js) and the rows must not stretch into it */
+  .tr-lt .lt-rec { contain: layout style; width: auto; margin-left: 0; padding: .6875rem .5rem .75rem 2.125rem; display: grid; grid-template-columns: 4.4em minmax(0, 1fr) auto; grid-template-areas: "meta ev t" "meta sub ."; column-gap: .625rem; row-gap: .25rem; align-items: baseline; }
+  .tr-lt .lt-rec::after { inset: .125rem 0; }
+  .tr-lt .lt-meta { grid-area: meta; flex-direction: column; gap: calc(2 * var(--hair)); }
   .tr-lt .lt-ev { grid-area: ev; margin-top: 0; }
   .tr-lt .lt-t { grid-area: t; margin-top: 0; }
   .tr-lt .lt-sub { grid-area: sub; margin-top: 0; min-height: 0; -webkit-line-clamp: 2; }
   .tr-lt .lt-line { position: absolute; inset: 0; height: auto; margin: 0; pointer-events: none; }
-  .tr-lt .lt-node { left: 10px; top: 15px; }
-  .tr-lt .lt-seg { left: 15.5px; right: auto; top: 29px; bottom: -15px; width: 1px; height: auto; transform-origin: 50% 0; }
+  .tr-lt .lt-node { left: .625rem; top: .9375rem; }
+  .tr-lt .lt-seg { left: .96875rem; right: auto; top: 1.8125rem; bottom: -.9375rem; width: var(--hair); height: auto; transform-origin: 50% 0; }
   .tr-lt .lt-rec.is-head .lt-seg { display: none; }
-  .tr-lt .lt-rec .lt-tag { left: auto; right: 8px; top: auto; bottom: 13px; transform: none; padding: 0; background: none; }
-  .tr-lt .lt-now { left: auto; right: 8px; top: auto; bottom: 13px; transform: none; padding: 0; }
-  .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-tag { right: calc(20px + 5.3em); }
-  .tr-lt .lt-gap { left: 26px; top: auto; bottom: -6px; transform: none; }
+  .tr-lt .lt-rec .lt-tag { left: auto; right: .5rem; top: auto; bottom: .8125rem; transform: none; padding: 0; background: none; }
+  .tr-lt .lt-now { left: auto; right: .5rem; top: auto; bottom: .8125rem; transform: none; padding: 0; }
+  .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-tag { right: calc(1.25rem + 5.3em); }
+  .tr-lt .lt-gap { left: 1.625rem; top: auto; bottom: -.375rem; transform: none; }
   .tr-lt .lt-rec.is-linking .lt-seg { animation-name: tr-form-v; }
   .tr-lt .lt-leader { display: none; }
-  .tr-lt .lt-rec:focus-visible::before { inset: 2px 0; }
+  .tr-lt .lt-rec:focus-visible::before { inset: .125rem 0; }
   /* the record's controls say what they do on a phone too (a pencil alone did not say "Change a record") */
-  .tr-lt .lt-head { grid-template-columns: minmax(0, 1fr); grid-template-areas: "title" "ctrl" "state" "hint"; row-gap: 10px; }
-  .tr-lt .lt-ctrl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .tr-lt .lt-btn--ico { width: auto; min-width: 0; padding: 0 8px; gap: 7px; }
+  .tr-lt .lt-head { grid-template-columns: minmax(0, 1fr); grid-template-areas: "title" "ctrl" "state" "hint"; row-gap: .625rem; }
+  .tr-lt .lt-ctrl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+  .tr-lt .lt-btn--ico { width: auto; min-width: 0; padding: 0 .5rem; gap: .4375rem; }
   .tr-lt .lt-btn--ico > span { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
-  .tr-lt .lt-btn--ico :is(.lt-x, .lt-xs) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .tr-lt .lt-btn--ico :is(.lt-x, .lt-xs) { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-  .tr-k > .tr-kp, .tr-k > .tr-kp:nth-child(n) { display: grid; grid-template-columns: 116px minmax(0, 1fr); column-gap: 18px; padding: 18px 0 20px; border-right: 0; }
+  .tr-k > .tr-kp, .tr-k > .tr-kp:nth-child(n) { display: grid; grid-template-columns: 7.25rem minmax(0, 1fr); column-gap: 1.125rem; padding: 1.125rem 0 1.25rem; border-right: 0; }
   .tr-kp { align-items: center; }
-  .tr-kd { margin: 2px 0 0; }
-  .tr-kd .hp-labs { display: none; }
+  .tr-kd { margin: .125rem 0 0; }
+  .tr-kd .hp-labs, .tr-kd .tr-k-at { display: none; }
+  .tr-kd .tr-k-full { display: inline; }
   .tr-kt h3 { font-size: 1.2rem; }
 }
 /* the narrowest phones: each record on three short lines (id beside event, detail, time), the plates narrower */
 @media (max-width: 400px) {
-  .tr-lt .lt-rec { grid-template-columns: 3.9em minmax(0, 1fr); grid-template-areas: "meta ev" "meta sub" "meta t"; row-gap: 3px; padding-right: 6px; }
+  .tr-lt .lt-rec { grid-template-columns: 3.9em minmax(0, 1fr); grid-template-areas: "meta ev" "meta sub" "meta t"; row-gap: calc(3 * var(--hair)); padding-right: .375rem; }
   .tr-lt .lt-ev { letter-spacing: .07em; }
-  .tr-lt .lt-t { margin-top: 2px; }
-  .tr-lt .lt-rec .lt-tag, .tr-lt .lt-now { bottom: 12px; right: 6px; }
-  .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-tag { right: calc(16px + 5.3em); }
-  .tr-k > .tr-kp, .tr-k > .tr-kp:nth-child(n) { grid-template-columns: 92px minmax(0, 1fr); column-gap: 14px; }
+  .tr-lt .lt-t { margin-top: calc(2 * var(--hair)); }
+  .tr-lt .lt-rec .lt-tag, .tr-lt .lt-now { bottom: .75rem; right: .375rem; }
+  .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-tag { right: calc(1rem + 5.3em); }
+  .tr-k > .tr-kp, .tr-k > .tr-kp:nth-child(n) { grid-template-columns: 5.75rem minmax(0, 1fr); column-gap: .875rem; }
 }
 /* the narrowest: no room for two hashes beside the time; the sealed one stands struck by the event, the new one below */
 @media (max-width: 360px) {
-  .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-tag { right: 6px; top: 13px; bottom: auto; }
+  .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-tag { right: .375rem; top: .8125rem; bottom: auto; }
 }
 @keyframes tr-form-v { 0% { transform: scaleY(.3); background: var(--accent); } 55% { transform: none; background: var(--accent); } 100% { background: var(--line-strong); } }
-@media (min-width: 601px) and (max-width: 1199px) { .tr-lt .lt-x { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
-
-/* wide screens (a1): site.css grows the root from 1921 px; px sizes here follow in rem */
-@media (min-width: 1921px) {
-  /* Fig. 1.1 in rem, so its blocks and gutter grow with its labels (proofchart.css sizes them in px) */
-  [data-page="proof"] .pf { --gut: clamp(4rem, 15cqi, 6.75rem); --b: clamp(.5625rem, calc(var(--lane) * .34), 1.0625rem); --g: clamp(.125rem, calc(var(--b) * .2), .1875rem);
-    --zr: clamp(4.25rem, 12cqi, 5.5rem); --zd: 1.875rem; --zo: 1.625rem; --zg: calc(var(--ng, 1) * (var(--b) + var(--g)) + 3.6rem); }
-  [data-page="trust"] .lt { --lt-col: 9.25rem; --lt-bleed: 1rem; --lt-pr: 1.125rem; }
-  /* the replay's px frame (ledger.css) in rem, so it grows with its type (a1) */
-  .tr-lt .lt-head { min-height: 3.5rem; padding: .75rem .75rem .75rem 1.25rem; row-gap: .625rem; column-gap: 1.5rem; }
-  .tr-lt .lt-ctrl { gap: .5rem; }
-  .tr-lt .lt-btn { min-height: 2.125rem; padding: 0 .8125rem; gap: .5rem; }
-  .tr-lt .lt-btn svg { width: .8125rem; height: .8125rem; }
-  .tr-lt .lt-state { gap: .5625rem; }
-  .tr-lt .lt-state i { width: .375rem; height: .375rem; }
-  .tr-lt .lt-track { padding: 1rem 1.75rem .75rem; }
-  .tr-lt .lt-rec { padding-top: .75rem; padding-bottom: 1.875rem; }
-  .tr-lt .lt-rec::after { inset: 0 .375rem 2.75rem .375rem; }
-  .tr-lt .lt-meta { gap: .625rem; }
-  .tr-lt .lt-ev { margin-top: .625rem; }
-  .tr-lt .lt-sub { margin-top: .375rem; }
-  .tr-lt .lt-t { margin-top: .5rem; }
-  .tr-lt .lt-line { height: 1.5rem; margin-top: .875rem; }
-  .tr-lt .lt-node { top: .375rem; width: .75rem; height: .75rem; }
-  .tr-lt .lt-seg { left: .75rem; top: .75rem; }
-  .tr-lt .lt-tag { left: calc(50% + .375rem); top: .75rem; padding: .125rem .375rem; }
-  .tr-lt .lt-gap { left: calc(50% + .375rem); top: 1.3125rem; }
-  .tr-lt .lt-now { left: calc(50% + .375rem); top: 1.5625rem; padding: 0 .375rem; }
-  .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-gap { top: 2.4375rem; }
-  .tr-lt .lt-insp { gap: .625rem 3.5rem; padding: .875rem 1.25rem 1.375rem; }
-  .tr-lt .lt-insp dl { gap: .5625rem; }
-  .tr-lt .lt-insp dl > div { gap: .875rem; }
-  .tr-lt .lt-foot { gap: .375rem 1.125rem; padding: .75rem 1.25rem; }
-}
+@media (min-width: 601px) and (max-width: 1199px) { .tr-lt .lt-x { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
 
 @media print {
   .tr-cp-copy { position: static; }

@@ -12,7 +12,7 @@
 /* ---------- figure captions (index plate, note heroes): Fig. NN, what is drawn, the note's words, the hedge ---------- */
 /* r2: the mark and the hedge are site.css's caption register; these captions are stacked, so the hedge keeps the
    legend's edge */
-:is(.research-page, .article-page) .figcap { display: grid; gap: 6px; margin: 0; }
+:is(.research-page, .article-page) .figcap { display: grid; gap: .375rem; margin: 0; }
 :is(.research-page, .article-page) .figcap .figcap-h { text-align: inherit; }
 /* cut (1 Nov): the figures' labels name their parts, so a caption is the hedge; the index's phone strip also says what
    is drawn (.figcap-t, written by research.js), because the labels do not fit there */
@@ -33,15 +33,15 @@
 /* tablets and phones: the figure, which figure.js draws down to 77 % of the stage's height on phones and 83 % from
    760 px, then the words */
 @media (max-width: 960px) {
-  .research-hero { padding-top: calc(var(--nav-h) + 51vw + 18px); }
+  .research-hero { padding-top: calc(var(--nav-h) + 51vw + 1.125rem); }
   .research-hero .figure-stage { --figure-scale: 1.3; }
 }
-@media (min-width: 760px) and (max-width: 960px) { .research-hero { padding-top: calc(var(--nav-h) + 54.7vw + 20px); } }
+@media (min-width: 760px) and (max-width: 960px) { .research-hero { padding-top: calc(var(--nav-h) + 54.7vw + 1.25rem); } }
 @media (max-width: 600px) { .research-hero h1.display-1 { font-size: min(var(--h1-plate), clamp(2.6rem, 14vw, 3.4rem)); } }
 
 /* ---------- research index: the shelf (the list, and the plate that shows the pointed note's figure) ---------- */
-.rs-shelf { position: relative; --rs-gap: clamp(16px, 2.2vw, 32px); }
-.rs-shelf + .section { border-top: 1px solid var(--line); }
+.rs-shelf { position: relative; --rs-gap: clamp(1rem, 2.2vw, 2rem); }
+.rs-shelf + .section { border-top: var(--hair) solid var(--line); }
 /* r2 (r2-fidelity): 01 and 02 are one ground. Cut (1 Nov): no chapter head between them; the two research notes and the
    series read as one contents page. Award a1 (a1-ux): one rhythm for all ten rows; the series opens on a stronger rule
    instead of a ~100 px hole under 02 */
@@ -52,7 +52,6 @@
 /* r5 (r5-art moderate): display heads break between phrases (build_research PH), as Home's do. A phrase is one unit
    that wraps inside itself only where its column is narrower than it, so no zoom or text size scrolls sideways */
 :is(.research-page, .article-page) :is(h1, h2, h3) .ph { display: inline-block; } /* the ten titles too (PHRASES) */
-@media (max-width: 359.98px) { .research-page h2.display-2 { font-size: 2.4rem; } } /* as Home §03's: "from market structure" fits a 320 column */
 .rs-rail { display: none; }
 .rs-plate { margin: 0; }
 .rs-stage { position: relative; overflow: hidden; border-radius: var(--r); }
@@ -62,7 +61,7 @@
 .rs-cap.is-swapping { opacity: 0; }
 /* the row whose figure is on the plate: v2's mark, held. It hangs in the margin, clear of the numeral, and nothing
    indents (hover included), so the numerals and titles keep one edge while the plate follows the pointer */
-.research-page .posts-list .post > a::before { left: calc(-1 * clamp(11px, 1.3vw, 18px)); }
+.research-page .posts-list .post > a::before { left: calc(-1 * clamp(.6875rem, 1.3vw, 1.125rem)); }
 .research-page .posts-list .post:focus-within > a { padding-left: 0; }
 @media (hover: hover) { .research-page .posts-list .post:hover > a { padding-left: 0; } }
 .posts-list .post.is-current > a::before { transform: scaleY(1); }
@@ -83,20 +82,20 @@
   .rs-rail { display: block; position: absolute; inset: 0; z-index: 2; pointer-events: none; }
   /* a2 (a2-pixel): the plate's top on the list's top rule, its foot on its last (it was 10vw: 48 px low at 1440) */
   .rs-rail-in { height: 100%; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--rs-gap); padding-block: var(--sec-close) var(--sec-foot); }
-  .rs-plate { grid-column: 8 / -1; align-self: start; position: sticky; top: calc(var(--nav-h) + 28px); pointer-events: auto; }
+  .rs-plate { grid-column: 8 / -1; align-self: start; position: sticky; top: calc(var(--nav-h) + 1.75rem); pointer-events: auto; }
   .rs-stage { aspect-ratio: 6 / 5; }
-  .rs-caption { padding-top: 14px; }
+  .rs-caption { padding-top: .875rem; }
   /* award a1 (a1-ux): the caption says what is drawn at every width, in the one caption grammar (S-47: what is drawn
      left, the hedge right, one baseline); it changes with the note, pointed at, focused or scrolled to */
-  .research-page .rs-cap { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 24px; } /* (0,2,0): after the stacked .figcap grid */
+  .research-page .rs-cap { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .25rem 1.5rem; } /* (0,2,0): after the stacked .figcap grid */
   .rs-cap .figcap-h { margin-left: auto; }
-  .research-page .posts-list .post > a { grid-template-columns: 56px minmax(0, 1fr) auto; gap: 20px; }
+  .research-page .posts-list .post > a { grid-template-columns: 3.5rem minmax(0, 1fr) auto; gap: 1.25rem; }
   .research-page .post-main h3 { max-width: 30ch; }
 }
 @media (scripting: enabled) and (min-width: 760px) and (max-width: 1023.98px) {
-  .research-page .posts-list .post > a { grid-template-columns: 40px minmax(0, 1fr); gap: 14px; }
+  .research-page .posts-list .post > a { grid-template-columns: 2.5rem minmax(0, 1fr); gap: .875rem; }
   .research-page .post-meta { grid-column: 2; padding-top: 0; }
-  .research-page .post-main h3 { font-size: 1.45rem; }
+  .research-page :is(.post-main h3, .post-n) { font-size: 1.45rem; } /* a3: the numeral at the title's size (21.6 beside 23.2) */
   .rs-stage { aspect-ratio: 1; }
 }
 /* phones: the plate is a strip pinned to the foot of the screen while the list is read; it settles after the last note */
@@ -104,15 +103,15 @@
   .rs-rail {
     display: block; position: sticky; bottom: 0; z-index: 4; background: var(--ink); color: var(--paper);
     --fg: var(--paper); --fg-2: rgba(245, 242, 236, .78); --fg-3: rgba(245, 242, 236, .56); --line: rgba(245, 242, 236, .14); --accent: var(--signal-bright);
-    box-shadow: 0 -1px 0 var(--line); padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 calc(-1 * var(--hair)) 0 var(--line); padding-bottom: env(safe-area-inset-bottom);
   }
-  .rs-plate { display: grid; grid-template-columns: minmax(0, 1fr) 40%; align-items: stretch; gap: 14px; min-height: clamp(108px, 31vw, 140px); }
+  .rs-plate { display: grid; grid-template-columns: minmax(0, 1fr) 40%; align-items: stretch; gap: .875rem; min-height: clamp(6.75rem, 31vw, 8.75rem); }
   .rs-stage { grid-column: 2; grid-row: 1; border-radius: 0; --figure-scale: 1.5; }
-  .rs-caption { grid-column: 1; grid-row: 1; align-self: center; padding-block: 12px; }
+  .rs-caption { grid-column: 1; grid-row: 1; align-self: center; padding-block: .75rem; }
   .rs-shelf .rs-rail { transform: translateY(101%); transition: transform .5s var(--ease-move); } /* a1 (W3): it travels */
   .rs-shelf.is-reading .rs-rail { transform: none; }
   .rs-rail .fig-labels .fl { display: none; } /* the words; a plate's rule (note 09's floor) is the drawing and stays */
-  .rs-cap { gap: 5px; }
+  .rs-cap { gap: .3125rem; }
   .rs-cap .figcap-t { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   /* r2 (r2-motion): the strip keeps one height whatever the note's caption, and each line its place: the title and
      the hedge are held at the longest of each at this width (research.js), so a caption swap moves nothing */
@@ -126,9 +125,9 @@
 /* small phones and short screens (r1 mobile): the strip is the size of its words, not a quarter of the screen; what is
    drawn and the hedge stay whole */
 @media (scripting: enabled) and (max-width: 360px), (scripting: enabled) and (max-width: 759.98px) and (max-height: 700px) {
-  .rs-plate { min-height: 92px; gap: 12px; grid-template-columns: minmax(0, 1fr) 34%; }
-  .rs-caption { padding-block: 9px; }
-  .rs-cap { gap: 4px; }
+  .rs-plate { min-height: 5.75rem; gap: .75rem; grid-template-columns: minmax(0, 1fr) 34%; }
+  .rs-caption { padding-block: .5625rem; }
+  .rs-cap { gap: .25rem; }
 }
 /* a short window (a phone held sideways, a desktop zoomed to 400 %): the strip is not pinned, so the list is never read
    through a slot; it stands under the list, as it does after the last note (qa-hostile, WCAG 1.4.10) */
@@ -139,27 +138,24 @@
 /* r4 (r4-a11y m2, WCAG 2.4.12): a row reached with the keyboard is scrolled clear of the pinned strip, not behind it.
    --rs-strip-h is the strip's own height (research.js; 154 px at 390x844, its safe-area padding included) */
 @media (scripting: enabled) and (max-width: 759.98px) and (min-height: 560px) {
-  .research-page .posts-list .post > a { scroll-margin-bottom: calc(var(--rs-strip-h, 9.75rem) + 16px); }
+  .research-page .posts-list .post > a { scroll-margin-bottom: calc(var(--rs-strip-h, 9.75rem) + 1rem); }
 }
 /* phones, with or without JavaScript: the read time and the arrow sit in the margin under the numeral, so each row is
    a line shorter (a contents page's marginal figure, not a fifth line under the dek) */
 @media (max-width: 759.98px) {
-  .research-page .posts-list .post > a { grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: auto 1fr; row-gap: 10px; }
+  .research-page .posts-list .post > a { grid-template-columns: 2.75rem minmax(0, 1fr); grid-template-rows: auto 1fr; row-gap: .625rem; }
   .research-page .post-n { grid-area: 1 / 1; }
   .research-page .post-main { grid-area: 1 / 2 / span 2; }
-  .research-page .post-meta { grid-area: 2 / 1; align-self: start; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .research-page .post-meta { grid-area: 2 / 1; align-self: start; flex-direction: column; align-items: flex-start; gap: .25rem; }
   /* a wrapped arrow link keeps its arrow after the last word, not stranded at the right edge */
   .research-page .row-links .link-arrow { display: inline; line-height: 1.6; }
-  .research-page .row-links .link-arrow .arr { display: inline; vertical-align: -2px; margin-left: .35em; }
+  .research-page .row-links .link-arrow .arr { display: inline; vertical-align: -.125rem; margin-left: .35em; }
 }
 @media (scripting: none) { .rs-rail { display: none; } }
 /* no figure (no JavaScript, or no WebGL: figure.js 'figure:none'): no plate, no caption, no empty frame for it on phones */
 .rs-shelf.no-plate .rs-rail, .no-figure-cap .figcap { display: none; }
 .rs-shelf.no-plate .rs-col { margin-right: 0; }
-/* award a1: every note's hero now draws its still (build_research note_still), as the index's has since r2, so without
-   JavaScript a note keeps its figure, its frame on phones and its hedge (r1-r5 hid the caption and shortened the hero
-   here, because nothing was drawn). Without WebGL (figure.js 'figure:none') the still stays and so does the hedge
-   (research.js .still-cap) */
+/* a1: without WebGL a note keeps its still and its hedge (research.js .still-cap) */
 .still-cap .figcap.article-figcap:not(.is-hung) { opacity: 1; visibility: visible; } /* (0,4,0): over the hidden state below */
 
 /* ---------- research index: the hero's still (r2) ----------
@@ -196,8 +192,8 @@
    a2 (a2-design): a spread, the heading left, three ruled rows right (title, size and years on its baseline, arrow), as
    the notes' rows; in rem, so above 1920 it is the 1920 spread at the root's step */
 .rs-blog { align-items: start; }
-.rs-coll { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-strong); }
-.rs-coll li { border-bottom: 1px solid var(--line); }
+.rs-coll { list-style: none; margin: 0; padding: 0; border-top: var(--hair) solid var(--line-strong); }
+.rs-coll li { border-bottom: var(--hair) solid var(--line); }
 .rs-coll a { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .375rem 1.25rem; padding-block: 1.375rem; }
 .rs-coll h3 { margin: 0; font: 400 var(--fs-heading)/1.15 var(--serif); letter-spacing: -0.015em; transition: color var(--dur-move, .32s) var(--ease-out); }
 .rs-coll-m { display: inline-flex; align-items: center; gap: 1.125rem; font: 400 var(--fs-small)/1.4 var(--sans); color: var(--fg-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -235,13 +231,23 @@
   .article-hero { padding-bottom: 0; }
   .article-hero .figure-stage { top: calc(var(--nav-h) * .6); bottom: 7.5rem; } /* cut: the drawing sits nearer its hedge */
   .article-hero-grid { padding-bottom: 11rem; }
-  /* cut (1 Nov): the hedge alone, under the drawing at the hero's foot; no rule over a single word. Award a1 (a1-design):
-     it hangs under the drawing's own left edge, a line under the foot of its words (figure.js writes both on the
-     caption, data-hang: --fig-l, --fig-b, .is-hung), instead of sitting right-aligned at the column's edge, 130 px away.
-     It comes in with the drawing */
-  /* until figure.js hangs it (and without JavaScript), it is centred under the stage, which the drawing is centred in */
+  /* the hedge hangs under the drawing's left edge, a line under its words (figure.js data-hang: --fig-l, --fig-b,
+     .is-hung); until then centred under the stage */
   .article-figcap { position: absolute; z-index: 1; left: 50%; right: max(var(--gutter), calc((100% - var(--max)) / 2 + var(--gutter))); bottom: 4.5rem; text-align: center; }
   .article-figcap.is-hung { left: var(--fig-l); right: auto; top: calc(var(--fig-b) + 1.25rem); bottom: auto; text-align: left; }
+}
+/* award a3: without JavaScript too the hedge hangs under the still's left edge (still_geo: --fs-w its width, --fs-x,
+   --fs-y its reach left of and below the centre, in stage heights). In the .container's box: the stage is 50% - R wide
+   from 50%, max(78svh, P + 100%) - .6 bar - 7.5rem tall, its centre .3 bar - 3.75rem - P / 2 from the box's (P: site.css
+   .page-hero padding-top). The left edge assumes the 78svh hero */
+@media (scripting: none) and (min-width: 961px) {
+  .article-hero { container-type: inline-size; }
+  .article-figcap {
+    --sw: calc(50cqw - max(var(--gutter), calc((100cqw - var(--max)) / 2 + var(--gutter)))); --p: calc(var(--nav-h) + clamp(3.5rem, 9vw, 7.5rem));
+    left: calc(50% + var(--sw) / 2 - var(--fs-x, .5) * min(78svh - var(--nav-h) * .6 - 7.5rem, var(--sw) / var(--fs-w, 1)));
+    top: calc(50% + var(--nav-h) * .3 - 2.5rem - var(--p) / 2 + var(--fs-y, .5) * min(max(78svh, var(--p) + 100%) - var(--nav-h) * .6 - 7.5rem, var(--sw) / var(--fs-w, 1)));
+    right: auto; bottom: auto; text-align: left;
+  }
 }
 /* with JavaScript the hedge comes in with the drawing, already in its place: hidden (not only transparent) until figure.js
    hangs it, so moving it is no layout shift (on phones it moved 80 px: CLS .003-.005 in Lighthouse) */
@@ -250,7 +256,7 @@
 @media (max-width: 960px) {
   /* the hedge stands under the drawing it hedges, before the title (cut, 1 Nov); since a1 under the drawing's left edge,
      as on desktop (figure.js's --fig-l, from the container's edge) */
-  .article-hero .figcap.article-figcap { order: -1; margin: 0 0 clamp(20px, 5vw, 32px); text-align: right; }
+  .article-hero .figcap.article-figcap { order: -1; margin: 0 0 clamp(1.25rem, 5vw, 2rem); text-align: right; }
   .article-hero .figcap.article-figcap.is-hung { text-align: left; padding-left: max(0px, calc(var(--fig-l) - max(var(--gutter), env(safe-area-inset-left)))); }
 }
 /* tablets: the figure above the title takes half the screen's width in height, not two thirds */
@@ -273,7 +279,7 @@
    marks the opening, so notes and posts are one long-read template */
 .article-page .article > p.lead { font-size: inherit; color: var(--fg-2); line-height: inherit; }
 /* a research note's standfirst (the author's italic line in the source) opens the body, set off by a rule (cut, 1 Nov) */
-.article-page .article > p.dek { margin: 0 0 1.6em; padding-bottom: 1.4em; border-bottom: 1px solid var(--line); color: var(--fg-2); }
+.article-page .article > p.dek { margin: 0 0 1.6em; padding-bottom: 1.4em; border-bottom: var(--hair) solid var(--line); color: var(--fg-2); }
 .article-page .article h2 { max-width: 30ch; text-wrap: balance; }
 .article-page .article > h2:first-child { margin-top: 0; } /* a note that opens on a heading (01) starts level with "In this note" */
 @media (min-width: 961px) { .article-page .article h2 { font-size: clamp(1.9rem, 2.6vw, 2.3rem); } } /* 30 px at 1024, not 27 over 19 px text */
@@ -295,6 +301,31 @@
    note's structure shows: 25.6 px at 320, 27.3 at 390, 28 from 400 (the tablet's lower bound) */
 @media (max-width: 600px) { .article-page .article h2 { font-size: clamp(1.6rem, 7vw, 1.75rem); line-height: 1.12; } }
 
+/* ---------- a note: the margin plate (award a3) ----------
+   From 1440 px, as the posts (blog.css .post-mp: one long-read template): contents (columns 1-3), text (4-9), and in
+   10-12 the hero's drawing again as a still (build_research margin_still: assets/img/research/plate-*.svg, lazy) with
+   the hero's caption, sticky level with the contents. research.js cuts its span to the first part head .. the end mark
+   (--np-t, --np-b; hidden until then) and fades it in once half the hero has left the screen (.is-in: a transition, not
+   a scroll-timeline animation, so nothing on a note animates), so a screen never shows the drawing twice. Without
+   JavaScript it starts half a screen down its column, as the posts' plate (blog.css .post-mp-in), and spans the text */
+.np-rail { display: none; }
+@media (min-width: 1440px) {
+  .article-page .article-body-section .article { grid-column: 4 / 10; }
+  .np-rail { display: block; grid-column: 10 / -1; grid-row: 1; margin: var(--np-t, 50svh) 0 var(--np-b, 0px); }
+  .np-plate { position: sticky; top: calc(var(--nav-h) + 2.5rem); margin: 0; }
+  .np-stage { position: relative; border-radius: var(--r); overflow: hidden; }
+  .np-still { display: block; width: 100%; height: auto; }
+  /* note 09's floor: a hairline over the image (its file draws the points), snapped to device pixels at any density */
+  .np-rule { position: absolute; top: var(--y); left: var(--x0); right: calc(100% - var(--x1)); height: var(--hair); margin-top: calc(var(--hair) / -2); background: var(--khaki); }
+  .np-cap { padding-top: .875rem; }
+}
+@media (scripting: enabled) and (min-width: 1440px) {
+  .np-rail:not(.is-set) { visibility: hidden; }
+  .np-plate { opacity: 0; transition: opacity .6s var(--ease-out); }
+  .np-rail.is-in .np-plate { opacity: 1; }
+}
+@media print, (forced-colors: active) { .np-rail { display: none !important; } } /* a repeat of the hero's drawing, on ink */
+
 /* ---------- a note: "In this note" (the part being read is marked by research.js) ---------- */
 .toc li a { position: relative; text-wrap: balance; } /* a two-line part never ends on one word */
 /* award a1 (a1-design): the numerals' column in rem on the text's baseline is site.css's now (integrate a1) */
@@ -302,27 +333,27 @@
 @media (max-width: 960px) {
   /* phones and tablets (cut, 1 Nov): no list of parts above the text; the menu lists them (site.js reads this list) */
   .article-page .article-side { display: none; }
-  .note-run { margin-top: 36px; }
-  .note-disc { margin-top: 32px; padding: 16px 18px; }
+  .note-run { margin-top: 2.25rem; }
+  .note-disc { margin-top: 2rem; padding: 1rem 1.125rem; }
 }
 
 /* ---------- a note: after the body (the instruments it describes; the series disclosure) ---------- */
-.note-run { margin-top: 40px; }
-.note-run ul { display: grid; gap: 14px; list-style: none; margin: 0; padding: 0; }
+.note-run { margin-top: 2.5rem; }
+.note-run ul { display: grid; gap: .875rem; list-style: none; margin: 0; padding: 0; }
 .note-run .link-arrow { font-size: inherit; line-height: 1.4; } /* the text's size: one size, not two a pixel apart */
-.note-disc { margin-top: 44px; padding: 20px 22px; background: var(--paper-2); border-radius: var(--r); max-width: 66ch; }
+.note-disc { margin-top: 2.75rem; padding: 1.25rem 1.375rem; background: var(--paper-2); border-radius: var(--r); max-width: 66ch; }
 .note-disc p { margin: 0; font-size: var(--fs-small); line-height: 1.6; color: var(--fg-2); }
 /* the end matter keeps the text's measure: its rules stop where the lines stop */
 .article-page .article > :is(.article-end, .note-run, .note-disc) { max-width: 39.2rem; }
 .article-page .pager-card h3 { max-width: 36ch; } /* both cards rag alike (v2: one balanced, one a single long line) */
 .article-page .pager-card h3 .t-head { display: block; }
 .article-page .pager-card h3 .title-sub { display: block; margin-top: .3em; font-size: var(--fs-body); line-height: 1.2; color: var(--fg-2); }
-.note-disc a { border-bottom: 1px solid var(--line-strong); transition: border-color .25s var(--ease); }
+.note-disc a { border-bottom: var(--hair) solid var(--line-strong); transition: border-color .25s var(--ease); }
 @media (hover: hover) { .note-disc a:hover { border-color: var(--fg); } }
 /* the pager: v2's hover set the card to the colour it already had (nothing moved). Hover and focus now draw the site's
    green rule along the card's top edge, from the side the card points to, and light its label */
 .article-page .pager-card { position: relative; }
-.article-page .pager-card::before { content: ""; position: absolute; left: -1px; right: 0; top: -1px; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .45s var(--ease-draw); } /* a1 (W3): a rule drawn */
+.article-page .pager-card::before { content: ""; position: absolute; left: calc(-1 * var(--hair)); right: 0; top: calc(-1 * var(--hair)); height: calc(2 * var(--hair)); background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .45s var(--ease-draw); } /* a1 (W3): a rule drawn */
 .article-page .pager-card.next::before { transform-origin: right; }
 .article-page .pager-card .k { transition: color .25s var(--ease); }
 .article-page .pager-card:focus-visible::before { transform: none; }
@@ -414,44 +445,18 @@
 /* a phone held sideways (short and wide): the hero two-up, words left, figure right; the plate capped to the screen.
    From 540 px only (r2, WCAG 1.4.10: a desktop at 400 % zoom is short and wide too, and stays one column) */
 @media (min-width: 540px) and (max-width: 960px) and (max-height: 520px) and (min-aspect-ratio: 23/20) {
-  .research-hero, .article-hero { padding-top: calc(var(--nav-h) + 24px); padding-bottom: 28px; }
+  .research-hero, .article-hero { padding-top: calc(var(--nav-h) + 1.5rem); padding-bottom: 1.75rem; }
   :is(.research-hero, .article-hero) .figure-stage[data-plate] { left: 54%; top: var(--nav-h); bottom: auto; height: calc(100vh - var(--nav-h)); height: calc(100svh - var(--nav-h)); }
   .research-hero .grid > .col-7, .article-hero-grid > div:first-child { max-width: 54%; }
   .research-hero h1.display-1, .article-hero .article-title { font-size: clamp(1.9rem, 10vh, 2.6rem); }
-  .research-hero .lede, .article-hero .lede { font-size: 1rem; margin-top: 14px; }
+  .research-hero .lede, .article-hero .lede { font-size: 1rem; margin-top: .875rem; }
   .article-hero .figure-stage[data-plate] { --figure-scale: .72; }
   .research-hero .figure-stage[data-plate] { --figure-scale: 1; } /* the wide formations (note 09's ten columns) fit the half-width stage */
 }
 
-/* ---------- wide screens (a1) ----------
-   site.css grows every page above 1920 (root = 100vw / 120: 3840 is the 1920 page at twice the size); what these pages
-   cap in px follows in rem: at 1921 the px of 1920, then the root's step */
-@media (min-width: 1921px) {
-  .rs-shelf { --rs-gap: 2rem; } /* the grid's gap above 1920 (site.css), so the list and the plate keep the grid's columns */
-  .rs-plate { top: calc(var(--nav-h) + 1.75rem); }
-  .rs-caption { padding-top: .875rem; }
-  .research-page .posts-list .post > a { grid-template-columns: 3.5rem minmax(0, 1fr) auto; gap: 1.25rem; padding-block: 1.875rem; }
-  .research-page .posts-list .post > a::before { left: -1.125rem; width: .125rem; }
-  .research-page .post-meta { gap: 1.125rem; }
-  /* a note */
-  .article-page .article-body-section { padding-top: 6rem; }
-  .article-page .article-side .sticky { top: calc(var(--nav-h) + 2.5rem); }
-  .article-page .article h2::before { width: 2.25rem; margin-bottom: 1.125rem; }
-  .article-page .article-end { margin-top: 3.5rem; padding-top: 1.375rem; gap: .875rem; }
-  .article-page .article-end .mark { width: 1.125rem; height: 1.125rem; }
-  .note-run { margin-top: 2.5rem; }
-  .note-run ul { gap: .875rem; }
-  .note-disc { margin-top: 2.75rem; padding: 1.25rem 1.375rem; }
-  .article-page .pager-card { padding: 2.25rem; gap: .625rem; }
-  .article-page .pager-card::before { height: .125rem; }
-  /* the text is centred in the field right of the contents (a1-pixel: in a 1600 px column the 69-character measure left
-     the right third of the paper empty, 41 % at 3840); the contents keep the column's left edge, under the title */
-  .article-page .article-body-section .article { grid-column: 4 / -1; justify-self: center; width: min(100%, 39.2rem); }
-}
-
 /* ---------- reduced motion and print ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .rs-cap, .rs-shelf .rs-rail, .fig-labels, .fig-labels.is-on, .article-page .pager-card::before, .rs-still, .fs-still, .article-figcap { transition: none; }
+  .rs-cap, .rs-shelf .rs-rail, .fig-labels, .fig-labels.is-on, .article-page .pager-card::before, .rs-still, .fs-still, .article-figcap, .np-plate { transition: none; }
   .fig-labels.is-on .fl { animation: none; }
   .fl, .fl-t, .fl::after { transition: none; }
 }
@@ -460,6 +465,6 @@
   .rs-col { margin-right: 0 !important; }
   .posts-list .post.is-current > a::before { transform: scaleY(0) !important; }
   .posts-list .post.is-current .post-n { color: inherit !important; }
-  .note-disc { background: none !important; border: 1px solid #bbb; }
+  .note-disc { background: none !important; border: var(--hair) solid #bbb; }
   .article-hero-grid { padding-bottom: 0 !important; }
 }

@@ -12,6 +12,18 @@
    style pass inside this file's task, ahead of the first paint): a list is set up when it comes within half a screen. */
 (function () {
   'use strict';
+  // award a3 (a3-ux 6): the collections' names under the H1 light their bundle in the hero's plate while pointed at or
+  // focused (and the series' leaves fan, blog.css). The plate carries the name ([data-lit]): CSS could reach it only by
+  // a :has() that restyles the hero on every hover (check_static has_guard). Listeners only: nothing is read at load
+  const idx = document.querySelector('.blog-idx'), lib = document.querySelector('.lib-plate');
+  if (idx && lib) {
+    const name = a => (a && idx.contains(a)) ? a.getAttribute('href').slice(1) : '';
+    const lit = k => { if (k) lib.setAttribute('data-lit', k); else lib.removeAttribute('data-lit'); };
+    idx.addEventListener('pointerover', e => { if (e.pointerType !== 'touch') lit(name(e.target.closest && e.target.closest('a'))); });
+    idx.addEventListener('pointerleave', () => lit(idx.contains(document.activeElement) ? name(document.activeElement) : ''));
+    idx.addEventListener('focusin', e => lit(name(e.target.closest && e.target.closest('a'))));
+    idx.addEventListener('focusout', e => { if (!idx.contains(e.relatedTarget)) lit(''); });
+  }
   const boxes = Array.from(document.querySelectorAll('[data-blog-follow], [data-blog-turn]'));
   if (!boxes.length || !('IntersectionObserver' in window)) return;
   let wide, touch;

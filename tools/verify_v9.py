@@ -1226,6 +1226,91 @@ async def nav_h_px(b):
     print(f"nav_h_px: --nav-h reads the bar's height in px on {n} page/width pairs (3840, 2560, 1440, 390)")
 
 
+# a3 (system's request, the 4K inspector's dom.py): hairlines at device pixels. Every CSS border drawn in the bar, <main>
+# and the footer, on every page, in device px; and the arrows' and carets' non-scaling strokes (--icon-stroke).
+CRISP_BORDERS = r"""() => {
+  const dpr = devicePixelRatio, wide = dpr * innerWidth >= 2880, out = {n: 0, frac: [], one: []};
+  for (const el of document.querySelectorAll('header.nav, header.nav *, main, main *, footer, footer *')) {
+    const cs = getComputedStyle(el); if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+    const r = el.getBoundingClientRect(); if (r.width < 1 || r.height < 1) continue;
+    for (const s of ['Top', 'Bottom', 'Left', 'Right']) {
+      const w = parseFloat(cs['border' + s + 'Width']);
+      if (!(w > 0) || cs['border' + s + 'Style'] === 'none' || /rgba\(0, 0, 0, 0\)|transparent/.test(cs['border' + s + 'Color'])) continue;
+      out.n++;
+      const d = w * dpr, k = (typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\s+/).join('.') : el.tagName.toLowerCase()).slice(0, 48) + ' ' + s.toLowerCase();
+      if (Math.abs(d - Math.round(d)) > 0.02) out.frac.push(k + ' ' + d.toFixed(2) + ' dpx');
+      else if (wide && Math.round(d) < 2) out.one.push(k + ' ' + d.toFixed(2) + ' dpx');
+    }
+  }
+  out.arrows = [...document.querySelectorAll('.arr path, .nav-ch-caret path, .nav-ch-top svg path')].filter(p => p.getClientRects().length).map(p => getComputedStyle(p).strokeWidth);
+  return out;
+}"""
+CRISP_PAGES = ["index.html", "platform.html", "lifecycles.html", "evidence.html", "trust.html", "research.html",
+               "research/09-lifecycle-01-ten-sessions.html", "company.html", "access.html", "blog/index.html",
+               "blog/in-search-gen-ai-business-model.html", "this-page-does-not-exist"]
+
+
+@check
+async def crisp_4k(b):
+    """a3 (system's request; the 4K bar: hairlines at device pixels). On all twelve page kinds at 1440x900@1, 3840x2160@1
+    and 1920x1080@2: every CSS border drawn in the bar, <main> and the footer is a whole number of device pixels, and at
+    3840 and 1920@2 none is a single device pixel (the 1920 page doubled: a 1 px hairline is 2); the arrows', the
+    readout caret's and Back to top's non-scaling strokes compute --icon-stroke: 1 px at 1440@1, 3 px at 3840@1, 1.5 px
+    (3 device px) at 1920@2. Never vacuous: borders and arrows are read on every page at every size."""
+    want = {(1440, 1): "1px", (3840, 1): "3px", (1920, 2): "1.5px"}
+    bad, nb, na = [], 0, 0
+    for (w, dpr), stroke in want.items():
+        h = round(w * 9 / 16) if w != 1440 else 900
+        for path in CRISP_PAGES:
+            ctx, pg = await open_page(b, path, w, h, dpr=dpr, loaded=path != "this-page-does-not-exist")
+            r = await pg.evaluate(CRISP_BORDERS)
+            await ctx.close()
+            nb += r["n"]; na += len(r["arrows"])
+            if not r["n"]: bad.append(f"{path}@{w}x{dpr}: no border read")
+            bad += [f"{path}@{w}x{dpr}: fractional border {x}" for x in r["frac"][:4]]
+            bad += [f"{path}@{w}x{dpr}: a one-device-pixel border at 4K {x}" for x in r["one"][:4]]
+            odd = sorted(set(r["arrows"]) - {stroke})
+            if odd: bad.append(f"{path}@{w}x{dpr}: arrow strokes {odd}, want {stroke}")
+    assert nb and na, f"crisp_4k: vacuous ({nb} borders, {na} arrow strokes read)"
+    assert not bad, f"crisp_4k: {len(bad)} problems:\n  " + "\n  ".join(bad[:24])
+    print(f"crisp_4k: {nb} CSS borders on 12 pages at 1440@1, 3840@1 and 1920@2 at whole device pixels (none single at 4K); {na} arrow strokes on --icon-stroke")
+
+
+READOUT_END = r"""async () => {
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const nav = document.querySelector('header.nav'), navH = nav.getBoundingClientRect().height, line = navH + (innerHeight - navH) * 0.3;
+  const band = document.querySelector('main .cta-band');
+  let last = band && band.previousElementSibling; while (last && last.tagName !== 'SECTION') last = last.previousElementSibling;
+  if (!document.querySelector('.nav-ch-btn') || !last || !band) return null;
+  const at = async y => { scrollTo({top: y, behavior: 'instant'}); await wait(450); dispatchEvent(new Event('scroll')); await wait(350);
+    const b = document.querySelector('.nav-ch-btn'); return {intro: b.classList.contains('is-intro'), txt: (b.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 40)}; };
+  const lr = last.getBoundingClientRect();
+  const inLast = await at(scrollY + lr.top + Math.min(lr.height * .5, 300) - line);
+  const inBand = await at(scrollY + band.getBoundingClientRect().top + 40 - line);
+  return {inLast, inBand, last: last.id};
+}"""
+
+
+@check
+async def readout_end(b):
+    """a3 (system's request): past the last chapter the bar's readout shows the wordmark only (it named the wrong place
+    over the closing band). On Home, Platform, Lifecycles, Proof, Trust, Company and Research at 1440x900 and 3840x2160:
+    with the reading line inside the last chapter the readout names it (.nav-ch-btn without .is-intro, text shown), and
+    with the closing band at the reading line it is .is-intro and empty."""
+    bad, n = [], 0
+    for w, h in ((1440, 900), (3840, 2160)):
+        for path in ("index.html", "platform.html", "lifecycles.html", "evidence.html", "trust.html", "company.html", "research.html"):
+            ctx, pg = await open_page(b, path, w, h, reduced=True)
+            r = await pg.evaluate(READOUT_END)
+            await ctx.close()
+            if not r: bad.append(f"{path}@{w}: no readout, last chapter or closing band"); continue
+            n += 1
+            if r["inLast"]["intro"] or not r["inLast"]["txt"]: bad.append(f"{path}@{w}: in its last chapter (#{r['last']}) the readout shows {r['inLast']}")
+            if not r["inBand"]["intro"] or r["inBand"]["txt"]: bad.append(f"{path}@{w}: over the closing band the readout shows {r['inBand']}")
+    assert n == 14 and not bad, "readout_end:\n  " + "\n  ".join(bad)
+    print(f"readout_end: on 7 pages at 1440 and 3840 the readout names the last chapter and shows the wordmark only over the closing band")
+
+
 DEEP_OFF = """(id => { const el = document.getElementById(id), sp = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
   return el ? Math.round(el.getBoundingClientRect().top - sp) : null; })"""
 
@@ -1281,7 +1366,8 @@ async def overture_net(b):
     for w, h, touch in ((390, 844, True), (1440, 900, False)):
         ctx = await b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch)
         pg = await ctx.new_page()
-        await pg.route("**/assets/js/story.js*", lambda r: r.abort())
+        # path-agnostic (a3): the deploy copy (tools/build_deploy.py) serves it at /assets/v/<hash>/js/story.js
+        await pg.route("**/js/story.js*", lambda r: r.abort())
         await pg.goto(f"{BASE}/index.html", wait_until="load")
         ok = await until(pg, "document.documentElement.classList.contains('story-failed') && getComputedStyle(document.querySelector('.story-stage')).position === 'relative'", limit)
         if not ok:

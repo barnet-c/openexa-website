@@ -110,6 +110,8 @@ from nf_plate import plate as nf_plate
 PLATE = nf_plate()
 index = read(os.path.join(ROOT, "index.html"))
 head_common = re.search(r'  <link rel="icon".*?<link rel="stylesheet" href="assets/css/site.css">\n', index, re.S).group(0)
+# award a3: Home also preloads the italic serif (its eyebrow is in the first screen); the 404 sets none
+head_common = re.sub(r'  <link rel="preload" href="assets/fonts/instrument-serif-400i-latin\.woff2"[^>]*>\n', "", head_common)
 NAV = re.search(r'  <header class="nav">.*?</header>\n  <div class="nav-menu">.*?</div>\n', index, re.S).group(0)
 FOOTER = re.search(r'  <footer class="footer">.*?</footer>\n', index, re.S).group(0)
 page404 = f'''<!DOCTYPE html>

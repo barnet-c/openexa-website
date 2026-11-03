@@ -49,10 +49,12 @@ jobs:
           python tools/build_team.py
           python tools/launch_meta_v9.py
           git diff --stat
-          git diff --exit-code -- '*.html' '*.xml' '*.json' '*.txt' '*.webmanifest' || {
+          git diff --exit-code -- '*.html' '*.xml' '*.json' '*.txt' '*.webmanifest' '*.svg' || {
             echo "::error::A generated file differs from what its generator writes: edit the generator or its data, rerun it, commit both."; exit 1; }
       - run: python tools/linkcheck_tree.py
       - run: python tools/check_static.py
+      - name: The deploy copy builds clean (minified CSS keeps its structure, scripts parse, every asset reference is versioned)
+        run: python tools/build_deploy.py --check
       - name: No placeholder or unfinished copy on any page (V2X-D2)
         run: python tools/check_placeholders.py
       - name: Routes, redirects and security headers as Azure serves them (tools/serve.py)
@@ -87,9 +89,9 @@ jobs:
           - shard: ledger
             only: ledger_height,ledger_wheel,ledger_time,counters,nav_handoff,chain_keys,chain_contrast
           - shard: nav
-            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures,deep_links,tab_walk,pill_focus,nav_h_px
+            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures,deep_links,tab_walk,pill_focus,nav_h_px,readout_end
           - shard: plates
-            only: draw_rest
+            only: draw_rest,crisp_4k
           - shard: desk-pages
             only: desk,desk_warm_start,desk_phone_follow,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab,trust_tamper
     steps:

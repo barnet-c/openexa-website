@@ -10,24 +10,23 @@
 
 /* the scene index: five rules, no text, on the baseline of "Pause motion" (.364 em of Inter under the bar's centre) */
 body[data-page="home"] .story-idx ol { align-items: center; }
-body[data-page="home"] .story-idx button { min-width: 46px; padding-right: 12px; }
-body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: 12px; bottom: auto; top: calc(50% + .364 * var(--fs-small)); height: calc(var(--stroke) * 1px); }
+body[data-page="home"] .story-idx button { min-width: 2.875rem; padding-right: .75rem; }
+body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: .75rem; bottom: auto; top: calc(50% + .364 * var(--fs-small)); height: calc(var(--stroke) * 1px); }
 body[data-page="home"] .story-idx button::before { background: rgba(245, 242, 236, .3); }
 body[data-page="home"] .story-idx button i { background: rgba(245, 242, 236, .86); }
 
 /* a phone held sideways: the five rules, as upright */
 @media (max-width: 759.98px) and (min-aspect-ratio: 23/20) {
   body[data-page="home"] .story-idx ol { gap: 0; }
-  body[data-page="home"] .story-idx button { min-width: 34px; padding-right: 10px; }
-  body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: 10px; }
+  body[data-page="home"] .story-idx button { min-width: 2.125rem; padding-right: .625rem; }
+  body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: .625rem; }
 }
 
 /* the plates' captions: a hedge only */
 body[data-page="home"] .story-lab.cap { display: flex; flex-wrap: wrap; column-gap: 1.5em; font: 400 .78rem/1.45 var(--sans); letter-spacing: 0; text-transform: none; text-wrap: balance; color: rgba(245, 242, 236, .78); }
 body[data-page="home"] .story-lab.cap .fc-h { text-align: left; color: rgba(245, 242, 236, .6); }
 
-/* the stage's focus ring is the site's */
-body[data-page="home"] .story-stage:focus-visible { outline: 2px solid var(--signal-bright); outline-offset: -2px; }
+/* the stage's focus ring (a frame inset under the bar): overture.css (integrate a3) */
 
 /* SC 2.5.8: callouts under 24 px apart are not pointer targets */
 @media (max-width: 599.98px) { body[data-page="home"] .story-lab.layer { pointer-events: none; } }
@@ -59,7 +58,7 @@ html.story-short body[data-page="home"] .story .beat-4 .body-lg { display: block
 
 /* §04: the hedge in the headline's group */
 body[data-page="home"] .proof-hedge { max-width: 46ch; font-size: .9rem; line-height: 1.55; color: var(--fg-2); }
-body[data-page="home"] .proof-hedge a { color: var(--fg); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: var(--line-strong); transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
+body[data-page="home"] .proof-hedge a { color: var(--fg); text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .1875rem; text-decoration-color: var(--line-strong); transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { body[data-page="home"] .proof-hedge a:hover { text-decoration-color: var(--accent); } }
 
 /* display heads break between phrases only */
@@ -72,8 +71,8 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
 /* from 900 px tall: the scenes at v2's portrait scale */
 @media (min-width: 600px) and (min-height: 900px) and (max-aspect-ratio: 23/20) {
   html.story-compact body[data-page="home"] .story .beat h2 { font-size: clamp(1.85rem, 7.2vw, 3rem); }
-  html.story-compact body[data-page="home"] .story .beat .body-lg { margin-top: 12px; font-size: clamp(.94rem, 2.3vw, 1.02rem); line-height: 1.55; }
-  html.story-compact body[data-page="home"] .story .beat-0 .hero-sub { margin-top: 12px; font-size: clamp(1rem, 2.6vw, 1.15rem); }
+  html.story-compact body[data-page="home"] .story .beat .body-lg { margin-top: .75rem; font-size: clamp(.94rem, 2.3vw, 1.02rem); line-height: 1.55; }
+  html.story-compact body[data-page="home"] .story .beat-0 .hero-sub { margin-top: .75rem; font-size: clamp(1rem, 2.6vw, 1.15rem); }
 }
 
 /* the coda on portrait screens: display size, on the floor it names */
@@ -83,7 +82,7 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
 
 /* (lab) wide screens: the coda stands on the line of ten records */
 @media (min-width: 640px) and (min-aspect-ratio: 23/20) and (min-height: 600.02px) {
-  html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story-coda { display: block; right: auto; width: min(46vw, 640px); }
+  html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story-coda { display: block; right: auto; width: min(46vw, 40rem); }
   body[data-page="home"] .story-coda-t { font-size: clamp(3rem, 6.2vw, 6.4rem); line-height: .96; letter-spacing: -0.025em; }
 }
 
@@ -91,14 +90,14 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
 @media (max-width: 600px) {
   /* the chain folds to records 01-04 (home.js) */
   body[data-page="home"] #governance .chain.is-folded .chain-list > li:nth-child(n + 5) { display: none; }
-  body[data-page="home"] #governance .chain-more { display: flex; align-items: center; gap: 10px; width: calc(100% - 24px); min-height: 44px; margin: 0 12px 8px; padding: 0 12px; border: 1px dashed var(--line-strong); border-radius: 2px; font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); }
+  body[data-page="home"] #governance .chain-more { display: flex; align-items: center; gap: .625rem; width: calc(100% - 1.5rem); min-height: 2.75rem; margin: 0 .75rem .5rem; padding: 0 .75rem; border: var(--hair) dashed var(--line-strong); border-radius: .125rem; font: 500 var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; color: var(--fg); } /* the site's button voice (a3) */
   body[data-page="home"] #governance .chain-more::before { content: "+"; content: "+" / ""; font-size: .9rem; color: var(--accent); }
   body[data-page="home"] #governance .chain-more[aria-expanded="true"]::before { content: "\2212"; content: "\2212" / ""; }
-  body[data-page="home"] #governance .chain-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  body[data-page="home"] #governance .chain-more:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
   /* §02: the explorer's rows at a phone's pitch */
-  body[data-page="home"] #stack .arch-layer { min-height: 50px; padding-block: 5px; }
+  body[data-page="home"] #stack .arch-layer { min-height: 3.125rem; padding-block: .3125rem; }
   /* the chain: who and event, the detail under them */
-  body[data-page="home"] #governance .chain-list > li { grid-template-columns: 2.2em auto minmax(0, 1fr) auto; grid-template-areas: "i who ev flag" "i what what what"; column-gap: 10px; padding-bottom: 28px; }
+  body[data-page="home"] #governance .chain-list > li { grid-template-columns: 2.2em auto minmax(0, 1fr) auto; grid-template-areas: "i who ev flag" "i what what what"; column-gap: .625rem; padding-bottom: 1.75rem; }
 }
 
 @media (min-width: 601px) { body[data-page="home"] #governance .chain-more { display: none; } }
@@ -109,7 +108,7 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
 body[data-page="home"] .figure-cap .fc-key { color: var(--fg-2); text-wrap: balance; }
 
 /* chapters close instead of trail */
-body[data-page="home"] main > .story + .section { padding-top: clamp(28px, 3.4vw, 48px); }
+body[data-page="home"] main > .story + .section { padding-top: clamp(1.75rem, 3.4vw, 3rem); }
 /* wide screens: the paper the overture leaves (its record line settles at 66 % of the frame) is this chapter's top margin */
 @media (min-width: 640px) and (min-aspect-ratio: 23/20) and (min-height: 600.02px) {
   html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] main > .story + .section { padding-top: 0; }
@@ -124,47 +123,52 @@ body[data-page="home"] #lifecycles .card .n--ring > .badge { padding: 0; border:
 @media (max-width: 600px) {
   body[data-page="home"] #governance .chain-list { font-size: .78rem; }
   body[data-page="home"] #governance .chain-list [contenteditable] { font-size: inherit; }
-  body[data-page="home"] #governance .chain-list > li { row-gap: 1px; }
+  body[data-page="home"] #governance .chain-list > li { row-gap: var(--hair); }
 }
-@media (max-width: 600px) and (pointer: coarse) { body[data-page="home"] #governance .chain-list [contenteditable]:focus { font-size: 16px; } }
-@media (pointer: coarse) { body[data-page="home"] #governance .chain-list :is(.ev, .what) { box-sizing: border-box; min-height: 24px; padding-block: 2px; } } /* 24 px targets (SC 2.5.8) */
+@media (max-width: 600px) and (pointer: coarse) { body[data-page="home"] #governance .chain-list [contenteditable]:focus { font-size: 1rem; } }
+@media (pointer: coarse) { body[data-page="home"] #governance .chain-list :is(.ev, .what) { box-sizing: border-box; min-height: 1.5rem; padding-block: .125rem; } } /* 24 px targets (SC 2.5.8) */
 
 /* the chart's key is a sentence */
 body[data-page="home"] .figure-cap .fc-key { font: 400 .8rem/1.5 var(--sans); letter-spacing: 0; color: var(--fg-2); }
 
 /* ========== v2x cut: one head, at most one line, then the instrument ========== */
 /* four sizes a screen: the display head, the line (Inter 1.1rem), the hedge (Inter .875rem), the instruments' mono */
-body[data-page="home"] main > .section { --ch-gap: clamp(36px, 4.4vw, 68px); }
+body[data-page="home"] main > .section { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
 body[data-page="home"] .ch-title { max-width: 15ch; text-wrap: balance; }
 body[data-page="home"] .ch-title + :not(.ch-line), body[data-page="home"] .ch-title + .ch-line + * { margin-top: var(--ch-gap); }
 body[data-page="home"] .ch-head { margin-bottom: var(--ch-gap); }
-body[data-page="home"] .ch-line { margin-top: 18px; max-width: 34ch; font-size: 1.1rem; line-height: 1.5; color: var(--fg-2); text-wrap: balance; }
-body[data-page="home"] .ch-note { margin-top: 16px; font-size: .875rem; line-height: 1.45; color: var(--fg-3); }
-body[data-page="home"] .ch-link { margin-top: clamp(32px, 3.4vw, 52px); }
+body[data-page="home"] .ch-line { margin-top: 1.125rem; max-width: 34ch; font-size: 1.1rem; line-height: 1.5; color: var(--fg-2); text-wrap: balance; }
+body[data-page="home"] .ch-note { margin-top: 1rem; font-size: .875rem; line-height: 1.45; color: var(--fg-3); }
+body[data-page="home"] .ch-link { margin-top: clamp(2rem, 3.4vw, 3.25rem); }
 body[data-page="home"] .is-dark .ch-note { color: rgba(245, 242, 236, .6); }
 /* captions here carry no figure number: no hanging indent */
 body[data-page="home"] main .figure-cap { padding-left: 0; }
 
 /* the first screen: the CEO's head and line, two buttons, then v2's four figures (overture.css) */
-body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(26px, 3.2vh, 36px); }
+body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(1.625rem, 3.2vh, 2.25rem); }
 
 /* §01 the six classes: a register of six cells, the live one first */
-body[data-page="home"] #lifecycles .lc-reg { grid-template-columns: repeat(3, minmax(0, 1fr)); border: 0; border-top: 1px solid var(--line-strong); }
-body[data-page="home"] #lifecycles .lc-reg > .card { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr; row-gap: clamp(30px, 3.6vw, 56px); align-items: start; padding: 18px clamp(18px, 2.2vw, 32px) 26px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; }
+body[data-page="home"] #lifecycles .lc-reg { grid-template-columns: repeat(3, minmax(0, 1fr)); border: 0; border-top: var(--hair) solid var(--line-strong); }
+body[data-page="home"] #lifecycles .lc-reg > .card { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr; row-gap: clamp(1.875rem, 3.6vw, 3.5rem); align-items: start; padding: 1.125rem clamp(1.125rem, 2.2vw, 2rem) 1.625rem; border: 0; border-bottom: var(--hair) solid var(--line); border-radius: 0; background: none; }
 body[data-page="home"] #lifecycles .lc-reg > .card:nth-child(3n + 1) { padding-left: 0; }
-body[data-page="home"] #lifecycles .lc-reg > .card:not(:nth-child(3n + 1)) { border-left: 1px solid var(--line); }
-body[data-page="home"] #lifecycles .lc-reg .card .n { grid-column: 1 / -1; grid-row: 1; justify-content: flex-start; gap: 12px; margin: 0; color: var(--fg-2); }
+body[data-page="home"] #lifecycles .lc-reg > .card:not(:nth-child(3n + 1)) { border-left: var(--hair) solid var(--line); }
+body[data-page="home"] #lifecycles .lc-reg .card .n { grid-column: 1 / -1; grid-row: 1; justify-content: flex-start; gap: .75rem; margin: 0; color: var(--fg-2); }
 body[data-page="home"] #lifecycles .lc-reg .lc-code { flex: none; }
 body[data-page="home"] #lifecycles .lc-reg .card .h4 { grid-column: 1 / -1; grid-row: 2; align-self: end; margin: 0; max-width: 13ch; font-size: clamp(1.5rem, 2.05vw, 2.05rem); line-height: 1.08; letter-spacing: -0.015em; color: var(--fg-2); text-wrap: balance; }
 body[data-page="home"] #lifecycles .lc-reg .card:first-child .h4 { color: var(--fg); }
-body[data-page="home"] #lifecycles .lc-reg .card:first-child { box-shadow: inset 0 2px 0 var(--accent); }
+/* a3: a dot-joined name breaks before its dot and drops it (the art director's rule): two lines in every cell */
+@media (min-width: 761px) {
+  body[data-page="home"] #lifecycles .lc-reg .card .h4 { max-width: 17ch; }
+  body[data-page="home"] #lifecycles .lc-reg .lc-dot { display: block; height: 0; overflow: hidden; }
+}
+body[data-page="home"] #lifecycles .lc-reg .card:first-child { box-shadow: inset 0 calc(2 * var(--hair)) 0 var(--accent); }
 @media (max-width: 760px) {
   body[data-page="home"] #lifecycles .lc-reg { grid-template-columns: minmax(0, 1fr); }
   /* a phone: ring | name, the status under the name */
-  body[data-page="home"] #lifecycles .lc-reg > .card, body[data-page="home"] #lifecycles .lc-reg > .card:nth-child(n) { grid-template-columns: 22px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 14px; row-gap: 3px; padding: 14px 0 15px; border-left: 0; align-items: center; }
+  body[data-page="home"] #lifecycles .lc-reg > .card, body[data-page="home"] #lifecycles .lc-reg > .card:nth-child(n) { grid-template-columns: 1.375rem minmax(0, 1fr); grid-template-rows: auto auto; column-gap: .875rem; row-gap: calc(3 * var(--hair)); padding: .875rem 0 .9375rem; border-left: 0; align-items: center; }
   body[data-page="home"] #lifecycles .lc-reg .card .n { display: contents; }
   body[data-page="home"] #lifecycles .lc-reg .lc-code { grid-column: 1; grid-row: 1 / span 2; align-self: center; }
-  body[data-page="home"] #lifecycles .lc-reg .lc-ring { width: 22px; height: 22px; }
+  body[data-page="home"] #lifecycles .lc-reg .lc-ring { width: 1.375rem; height: 1.375rem; }
   body[data-page="home"] #lifecycles .lc-reg .card .h4 { grid-column: 2; grid-row: 1; align-self: end; max-width: none; font-size: 1.1rem; line-height: 1.25; } /* the line's size: three sizes on this screen */
   body[data-page="home"] #lifecycles .lc-reg .card .n--ring > span:last-child { grid-column: 2; grid-row: 2; justify-self: start; }
 }
@@ -172,39 +176,40 @@ body[data-page="home"] #lifecycles .lc-reg .card:first-child { box-shadow: inset
 
 /* §04: the head, its hedge and two figures beside the chart */
 body[data-page="home"] #proof .proof-copy .ch-title { max-width: 11ch; }
-body[data-page="home"] #proof .proof-hedge { margin-top: 22px; max-width: 34ch; font-size: .875rem; line-height: 1.5; color: rgba(245, 242, 236, .66); }
-body[data-page="home"] #proof .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 clamp(24px, 3vw, 48px); margin-top: clamp(36px, 4.4vw, 64px); background: none; border: 0; }
-body[data-page="home"] #proof .stats > div { padding: 18px 0 0; background: none; border-top: 1px solid var(--line-strong); }
+body[data-page="home"] #proof .proof-hedge { margin-top: 1.375rem; max-width: 34ch; font-size: .875rem; line-height: 1.5; color: rgba(245, 242, 236, .66); }
+body[data-page="home"] #proof .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 clamp(1.5rem, 3vw, 3rem); margin-top: clamp(2.25rem, 4.4vw, 4rem); background: none; border: 0; }
+body[data-page="home"] #proof .stats > div { padding: 1.125rem 0 0; background: none; border-top: var(--hair) solid var(--line-strong); }
 body[data-page="home"] #proof .stats .v { font-size: clamp(2.4rem, 3.2vw, 3rem); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: lining-nums tabular-nums; }
-body[data-page="home"] #proof .stats .k { margin-top: 10px; font: 400 .875rem/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .66); }
+body[data-page="home"] #proof .stats .k { margin-top: .625rem; font: 400 .875rem/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .66); }
 body[data-page="home"] #proof .proof-fig .figure-cap { padding-left: 0; }
 body[data-page="home"] #proof .figure-cap .fc-key { font-size: .875rem; color: rgba(245, 242, 236, .6); }
 @media (min-width: 961px) { body[data-page="home"] #proof .proof-layout { align-items: end; } }
 
 /* §05: the head, then the stack of costs */
 body[data-page="home"] #economics .ch-title { max-width: 12ch; }
-body[data-page="home"] #economics .cost .figure-cap { margin-top: 18px; }
+body[data-page="home"] #economics .cost .figure-cap { margin-top: 1.125rem; }
 
 /* §06: the chain beside its head */
 body[data-page="home"] #governance .chain-row .ch-head { margin: 0; }
-body[data-page="home"] #governance .chain-row .ch-title { font-size: clamp(2.6rem, 4.6vw, 4.4rem); }
-@media (min-width: 961px) { body[data-page="home"] #governance .chain-row .ch-head { position: sticky; top: calc(var(--nav-h) + 32px); } }
+body[data-page="home"] #governance .chain-row .ch-title { font-size: clamp(2.125rem, 4.6vw, 4.4rem); }
+@media (max-width: 960px) { body[data-page="home"] #governance .chain-row .ch-title { font-size: var(--fs-display); } } /* stacked: the page's H2 (a3: under the H1 on phones) */
+@media (min-width: 961px) { body[data-page="home"] #governance .chain-row .ch-head { position: sticky; top: calc(var(--nav-h) + 2rem); } }
 
 /* §07: three titles, nothing else */
 body[data-page="home"] #research .card-grid--3 { border-left: 0; }
 body[data-page="home"] #research .research-card:last-child { border-right: 0; }
-body[data-page="home"] #research .research-card { display: flex; flex-direction: column; justify-content: space-between; gap: 28px; min-height: clamp(150px, 13vw, 210px); padding: 22px clamp(18px, 2.2vw, 32px) 20px; background: none; }
+body[data-page="home"] #research .research-card { display: flex; flex-direction: column; justify-content: space-between; gap: 1.75rem; min-height: clamp(9.375rem, 13vw, 13.125rem); padding: 1.375rem clamp(1.125rem, 2.2vw, 2rem) 1.25rem; background: none; }
 body[data-page="home"] #research .research-card:first-child { padding-left: 0; }
 body[data-page="home"] #research .research-card h3 { margin: 0; max-width: 20ch; font-size: clamp(1.3rem, 1.7vw, 1.6rem); line-height: 1.15; text-wrap: balance; }
 body[data-page="home"] #research .research-card h3 .t-head { display: block; }
 @media (max-width: 760px) {
   body[data-page="home"] #research .card-grid--3 { grid-template-columns: minmax(0, 1fr); }
-  body[data-page="home"] #research .research-card, body[data-page="home"] #research .research-card:first-child { min-height: 0; gap: 12px; padding: 18px 0; border-right: 0; }
+  body[data-page="home"] #research .research-card, body[data-page="home"] #research .research-card:first-child { min-height: 0; gap: .75rem; padding: 1.125rem 0; border-right: 0; }
   body[data-page="home"] #research .research-card h3 { font-size: 1.2rem; }
 }
 
 /* the close */
-body[data-page="home"] .cta-band .row { margin-top: clamp(28px, 3vw, 40px); }
+body[data-page="home"] .cta-band .row { margin-top: clamp(1.75rem, 3vw, 2.5rem); }
 
 /* one small register: hedges, notes, captions and the chapters' links share Inter .875rem */
 body[data-page="home"] .ch-link { font-size: .875rem; }
@@ -222,50 +227,19 @@ body[data-page="home"] #economics .cost-lab b, body[data-page="home"] #economics
 /* §07: the reading time is a note, not a data label */
 body[data-page="home"] #research .research-card .link-arrow { font: 400 .875rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; }
 
-/* above 1920 px site.css grows the root (1 rem = 16 px at 1920, 32 at 3840): every px cap that shapes Home's
-   composition gets its rem twin, so 3840 is the 1920 page at twice the size (award a1) */
-@media (min-width: 1921px) {
-  body[data-page="home"] .beat-text { max-width: min(44%, 35rem); }
-  body[data-page="home"] .beat-0 .beat-text { max-width: min(50%, 41.25rem); }
-  body[data-page="home"] .story-idx button { min-width: 2.875rem; padding-right: .75rem; }
-  body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: .75rem; } /* a2 (system): rem twins of the scene index's 46 / 12 px */
-  html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story-coda { width: min(46vw, 40rem); }
-  body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: 2.25rem; }
-  body[data-page="home"] main > .section { --ch-gap: 4.25rem; }
-  body[data-page="home"] .ch-line { margin-top: 1.125rem; }
-  body[data-page="home"] .ch-note { margin-top: 1rem; }
-  body[data-page="home"] .ch-link { margin-top: 3.25rem; }
-  body[data-page="home"] main > .story + .section { padding-top: 3rem; }
-  body[data-page="home"] #lifecycles .lc-reg > .card { row-gap: 3.5rem; padding: 1.125rem 2rem 1.625rem; }
-  body[data-page="home"] #lifecycles .lc-reg > .card:nth-child(3n + 1) { padding-left: 0; }
-  body[data-page="home"] #lifecycles .lc-reg .card .n { gap: .75rem; }
-  body[data-page="home"] #lifecycles .lc-reg .lc-ring { width: 1.75rem; height: 1.75rem; }
-  body[data-page="home"] #proof .proof-hedge { margin-top: 1.375rem; }
-  body[data-page="home"] #proof .stats { gap: 0 3rem; margin-top: 4rem; }
-  body[data-page="home"] #proof .stats > div { padding-top: 1.125rem; }
-  body[data-page="home"] #proof .stats .k { margin-top: .625rem; }
-  body[data-page="home"] #economics .cost .figure-cap { margin-top: 1.125rem; }
-  body[data-page="home"] #economics .cost-rows { gap: 1.625rem; }
-  body[data-page="home"] #economics .cost-row { grid-template-columns: 12.5rem minmax(0, 1fr) 4rem; column-gap: 1.25rem; padding-top: 2.125rem; } /* proofchart.css caps them in px: "Traditional" ran into its bar at 3840 */
-  body[data-page="home"] #governance .chain-row .ch-head { top: calc(var(--nav-h) + 2rem); }
-  body[data-page="home"] #research .research-card { gap: 1.75rem; min-height: 13.125rem; padding: 1.375rem 2rem 1.25rem; }
-  body[data-page="home"] #research .research-card:first-child { padding-left: 0; }
-  body[data-page="home"] .cta-band .row { margin-top: 2.5rem; }
-}
 /* wide screens: the opening scene's copy centred between the nav and the scene index, on the globe's centre line (not at
    the bottom under an empty dark field); the safety net (story.js never ran) still lays it out as a static block */
 @media (scripting: enabled) and (min-width: 1600px) and (min-height: 820px) and (min-aspect-ratio: 23/20) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story .beat-0 { top: var(--nav-h); bottom: var(--story-bar-h); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
   html:not(.story-ready):not(.no-webgl) body[data-page="home"] .story .beat-0 { animation: home-static-beat0 1ms var(--story-net) forwards; }
 }
-@keyframes home-static-beat0 { to { position: relative; left: auto; right: auto; top: auto; bottom: auto; opacity: 1; transform: none; pointer-events: auto; padding-top: clamp(56px, 9vh, 96px); padding-bottom: clamp(56px, 9vh, 96px); } }
+@keyframes home-static-beat0 { to { position: relative; left: auto; right: auto; top: auto; bottom: auto; opacity: 1; transform: none; pointer-events: auto; padding-top: clamp(3.5rem, 9vh, 6rem); padding-bottom: clamp(3.5rem, 9vh, 6rem); } }
 /* without JavaScript the chart is its list of sessions: its key has nothing to key */
 @media (scripting: none) { body[data-page="home"] #proof .proof-fig .figure-cap { display: none; } }
 
 /* ========== award a1 ========== */
 /* the coda carries its hedge in its own frame, at the small step (the paper's caption takes it over as the paper rises) */
-body[data-page="home"] .story-coda-s { max-width: 100%; margin-top: clamp(12px, 1.4vw, 20px); font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .72); text-wrap: balance; }
-@media (min-width: 1921px) { body[data-page="home"] .story-coda-s { margin-top: 1.25rem; } }
+body[data-page="home"] .story-coda-s { max-width: 100%; margin-top: clamp(.75rem, 1.4vw, 1.25rem); font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .72); text-wrap: balance; }
 /* §04: the head says what the chart adds */
 body[data-page="home"] #proof .proof-copy .ch-title { max-width: 12ch; }
 /* phones: the CEO's headline one step up, still two lines (44 px at 390); the CEO's sub-line and the scenes' lines at 16 px */
@@ -278,13 +252,12 @@ body[data-page="home"] #proof .proof-copy .ch-title { max-width: 12ch; }
 }
 /* phones: no text under 12 px. The label tokens are 12 px on phones site-wide (site.css, a2); the few literal sizes follow */
 @media (max-width: 599.98px) {
-  body[data-page="home"] #lc01 .swarm-controls .halt { font-size: .75rem; }
   body[data-page="home"] #proof .pf-y small, body[data-page="home"] #proof .y-floor small { font-size: .75rem; }
 }
 /* narrow phones: the scene index's five rules a little shorter, so "Pause motion" keeps one line beside them */
 @media (max-width: 379.98px) {
-  body[data-page="home"] .story-idx button { min-width: 36px; padding-right: 10px; }
-  body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: 10px; }
+  body[data-page="home"] .story-idx button { min-width: 2.25rem; padding-right: .625rem; }
+  body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: .625rem; }
   body[data-page="home"] .story-motion { white-space: nowrap; }
 }
 /* the cost index says "Technology" and "Management" in full, as Proof's Fig. 3.1 (proof a1; integrate a1): Management's
@@ -297,7 +270,7 @@ body[data-page="home"] #economics .cost-row:first-child { padding-top: 3.25rem; 
   body[data-page="home"] #economics .cost-row:first-child .cost-bar { margin-top: 3.25rem; }
 }
 @container cost (max-width: 560px) {
-  body[data-page="home"] #economics .cost-bar > i:nth-of-type(3) > span { left: auto; right: 0; padding: 0 7px 9px 0; border-left: 0; border-right: 1px solid var(--line-strong); }
+  body[data-page="home"] #economics .cost-bar > i:nth-of-type(3) > span { left: auto; right: 0; padding: 0 .4375rem .5625rem 0; border-left: 0; border-right: var(--hair) solid var(--line-strong); }
   body[data-page="home"] #economics .cost-bar > i:last-of-type > span { padding-bottom: 4.0909em; } /* two tiers up */
   body[data-page="home"] #economics .cost-row:first-child .cost-bar { margin-top: 4.375rem; }
 }
@@ -306,22 +279,33 @@ body[data-page="home"] #economics .cost-row:first-child { padding-top: 3.25rem; 
    width band, so the page, the scrollbar and the nav ruler are as long at load as when drawn; "auto" keeps its real size once drawn. The footer is
    always drawn: a link to #disclosures inside its fold lands only if it is laid out. */
 body[data-page="home"] main > .story ~ section { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
-body[data-page="home"] #lifecycles { --cis: 40rem; } body[data-page="home"] #stack { --cis: 79rem; } body[data-page="home"] #lc01 { --cis: 71rem; }
-body[data-page="home"] #proof { --cis: 50.5rem; } body[data-page="home"] #economics { --cis: 49rem; } body[data-page="home"] #governance { --cis: 50rem; }
-body[data-page="home"] #research { --cis: 36.5rem; } body[data-page="home"] .cta-band { --cis: 8.5rem; }
+body[data-page="home"] #lifecycles { --cis: 39rem; } body[data-page="home"] #stack { --cis: 74.5rem; } body[data-page="home"] #lc01 { --cis: 69rem; }
+body[data-page="home"] #proof { --cis: 49.5rem; } body[data-page="home"] #economics { --cis: 45.5rem; } body[data-page="home"] #governance { --cis: 49rem; }
+body[data-page="home"] #research { --cis: 35.5rem; } body[data-page="home"] .cta-band { --cis: 7.5rem; }
 @media (min-width: 600px) {
-  body[data-page="home"] #lifecycles { --cis: 34rem; } body[data-page="home"] #stack { --cis: 90rem; } body[data-page="home"] #lc01 { --cis: 57rem; }
-  body[data-page="home"] #proof { --cis: 53rem; } body[data-page="home"] #economics { --cis: 38.5rem; } body[data-page="home"] #governance { --cis: 59rem; }
-  body[data-page="home"] #research { --cis: 48.5rem; } body[data-page="home"] .cta-band { --cis: 7rem; }
+  body[data-page="home"] #lifecycles { --cis: 39rem; } body[data-page="home"] #stack { --cis: 91rem; } body[data-page="home"] #lc01 { --cis: 57.5rem; }
+  body[data-page="home"] #proof { --cis: 54rem; } body[data-page="home"] #economics { --cis: 35.5rem; } body[data-page="home"] #governance { --cis: 59rem; }
+  body[data-page="home"] #research { --cis: 35.5rem; } body[data-page="home"] .cta-band { --cis: 7rem; }
 }
+@media (min-width: 761px) and (max-width: 960px) { body[data-page="home"] #lifecycles { --cis: 32.25rem; } body[data-page="home"] #research { --cis: 30.5rem; } } /* 768's §01; the three notes in a row */
 @media (min-width: 961px) {
-  body[data-page="home"] #lifecycles { --cis: 43rem; } body[data-page="home"] #stack { --cis: max(1010px, 38.75rem); } body[data-page="home"] #lc01 { --cis: 68.5rem; }
-  body[data-page="home"] #proof { --cis: 34.75rem; } body[data-page="home"] #economics { --cis: 34rem; } body[data-page="home"] #governance { --cis: max(695px, 30rem); }
-  body[data-page="home"] #research { --cis: 35rem; } body[data-page="home"] .cta-band { --cis: 10rem; }
+  body[data-page="home"] #lifecycles { --cis: 39.75rem; } body[data-page="home"] #stack { --cis: 63.125rem; } body[data-page="home"] #lc01 { --cis: 64.5rem; }
+  body[data-page="home"] #proof { --cis: 34.75rem; } body[data-page="home"] #economics { --cis: 28.5rem; } body[data-page="home"] #governance { --cis: 43.4375rem; }
+  body[data-page="home"] #research { --cis: 37.5rem; } body[data-page="home"] .cta-band { --cis: 10rem; }
 }
-/* above 1920 the stack explorer grows with the page (arch.css rem twins, integrate a1): its stand-in follows (1,016 px at 1920,
-   2,026 at 3840 measured) */
-@media (min-width: 1921px) { body[data-page="home"] #stack { --cis: 63.5rem; } }
+/* small desktops: 961-1099 the 1024 heights, 1100-1359 the 1280 heights (the spreads start at 1100; re-measured a3) */
+@media (min-width: 961px) and (max-width: 1099.98px) {
+  body[data-page="home"] #lifecycles { --cis: 35rem; } body[data-page="home"] #stack { --cis: 59.5rem; } body[data-page="home"] #lc01 { --cis: 61rem; }
+  body[data-page="home"] #proof { --cis: 29rem; } body[data-page="home"] #economics { --cis: 35rem; } body[data-page="home"] #governance { --cis: 42.5rem; }
+  body[data-page="home"] #research { --cis: 33.5rem; } body[data-page="home"] .cta-band { --cis: 8rem; }
+}
+@media (min-width: 1100px) and (max-width: 1359.98px) {
+  body[data-page="home"] #lifecycles { --cis: 36.5rem; } body[data-page="home"] #stack { --cis: 61.75rem; } body[data-page="home"] #lc01 { --cis: 59.5rem; }
+  body[data-page="home"] #proof { --cis: 32rem; } body[data-page="home"] #economics { --cis: 27rem; } body[data-page="home"] #governance { --cis: 43rem; }
+  body[data-page="home"] #research { --cis: 34.5rem; } body[data-page="home"] .cta-band { --cis: 9.5rem; }
+}
+/* from 1680 (rem above 1920, so 3840 is 1920 doubled): the 1920 heights (re-measured a3; §01's lands "See the stack" under the bar) */
+@media (min-width: 1680px) { body[data-page="home"] #lifecycles { --cis: 41.375rem; } body[data-page="home"] #stack { --cis: 63.5rem; } body[data-page="home"] #lc01 { --cis: 66.75rem; } body[data-page="home"] #research { --cis: 39.5rem; } }
 @media print { body[data-page="home"] main > .story ~ section { content-visibility: visible; } }
 /* §03: the link sits one chapter step under the lab (swarm.css adds 40 px below it) */
 body[data-page="home"] #lc01 .swarm-live { margin-bottom: 0; }
@@ -329,30 +313,21 @@ body[data-page="home"] #lc01 .swarm-live { margin-bottom: 0; }
 /* ========== award a2 ========== */
 /* the static globe keeps the shape its width and height attributes give it */
 body[data-page="home"] .story-static-mark { height: auto; }
-/* above 1920: the index's rem twins */
-@media (min-width: 1921px) {
-  body[data-page="home"] .story-idx button { min-width: 2.875rem; padding-right: .75rem; }
-  body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: .75rem; }
-}
 /* a chapter's head as a spread: its one line, key or link hangs right on the head's last baseline */
 @media (min-width: 1100px) {
   body[data-page="home"] .ch-spread { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: last baseline; }
   body[data-page="home"] .ch-spread > .ch-title { grid-column: 1 / span 2; }
   body[data-page="home"] .ch-spread > :not(.ch-title) { grid-column: 3; margin: 0; }
   /* §01: the line starts where the third lifecycle's name starts */
-  body[data-page="home"] #lifecycles .ch-spread > .ch-line { padding-left: clamp(18px, 2.2vw, 32px); }
+  body[data-page="home"] #lifecycles .ch-spread > .ch-line { padding-left: clamp(1.125rem, 2.2vw, 2rem); }
   /* §05: the key as a register on hairlines */
-  body[data-page="home"] .eco-head { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(16px, 2.2vw, 32px); }
+  body[data-page="home"] .eco-head { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2.2vw, 2rem); }
   body[data-page="home"] .eco-head > .ch-title { grid-column: 1 / span 6; }
   body[data-page="home"] .eco-head > .eco-key { grid-column: 7 / -1; }
 }
-@media (min-width: 1921px) {
-  body[data-page="home"] #lifecycles .ch-spread > .ch-line { padding-left: 2rem; }
-  body[data-page="home"] .eco-head { column-gap: 2rem; }
-}
 body[data-page="home"] #economics .eco-head { margin-bottom: var(--ch-gap); }
-body[data-page="home"] #economics .eco-key { grid-template-columns: minmax(0, 1fr); gap: 0; margin: var(--ch-gap) 0 0; padding: 0; border-top: 0; border-bottom: 1px solid var(--line); }
-body[data-page="home"] #economics .eco-key > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); column-gap: 1.25rem; align-items: baseline; padding: .7em 0 .62em; border-top: 1px solid var(--line); }
+body[data-page="home"] #economics .eco-key { grid-template-columns: minmax(0, 1fr); gap: 0; margin: var(--ch-gap) 0 0; padding: 0; border-top: 0; border-bottom: var(--hair) solid var(--line); }
+body[data-page="home"] #economics .eco-key > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); column-gap: 1.25rem; align-items: baseline; padding: .7em 0 .62em; border-top: var(--hair) solid var(--line); }
 body[data-page="home"] #economics .eco-key dd { margin: 0; }
 @media (min-width: 1100px) { body[data-page="home"] #economics .eco-key { margin: 0; } }
 @media (max-width: 599.98px) {
@@ -360,24 +335,21 @@ body[data-page="home"] #economics .eco-key dd { margin: 0; }
   body[data-page="home"] #economics .eco-key dd { margin-left: 1.28em; }
 }
 /* §07: "All ten notes" over the third note */
-@media (min-width: 1100px) { body[data-page="home"] #research .rs-head > .ch-link { justify-self: start; margin-left: clamp(18px, 2.2vw, 32px); } }
-@media (min-width: 1921px) { body[data-page="home"] #research .rs-head > .ch-link { margin-left: 2rem; } }
+@media (min-width: 1100px) { body[data-page="home"] #research .rs-head > .ch-link { justify-self: start; margin-left: clamp(1.125rem, 2.2vw, 2rem); } }
 /* §03: the lab's hedge under its counters */
-body[data-page="home"] #lc01 .lab-cap { margin-top: 14px; }
-@media (min-width: 1921px) { body[data-page="home"] #lc01 .lab-cap { margin-top: .875rem; } }
+body[data-page="home"] #lc01 .lab-cap { margin-top: .875rem; }
 /* §07: each note's still is its cell's mark (one scale for the three) */
 body[data-page="home"] #research .research-card { display: grid; grid-template-rows: auto auto 1fr; justify-content: stretch; row-gap: 0; }
-body[data-page="home"] #research .research-card .link-arrow { align-self: end; margin-top: 22px; }
+body[data-page="home"] #research .research-card .link-arrow { align-self: end; margin-top: 1.375rem; }
 /* (files in assets/img/home: the tokens' colours as attributes; strokes scale with the mark, so 4K keeps the weight) */
-body[data-page="home"] #research .rc-mark { display: block; width: auto; height: clamp(7.5rem, 9.4vw, 8.5rem); max-width: 100%; margin: 4px 0 clamp(20px, 2.2vw, 28px); opacity: .88; transition: opacity var(--dur-feedback) var(--ease-out); }
+body[data-page="home"] #research .rc-mark { display: block; width: auto; height: clamp(7.5rem, 9.4vw, 8.5rem); max-width: 100%; margin: .25rem 0 clamp(1.25rem, 2.2vw, 1.75rem); opacity: .88; transition: opacity var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { body[data-page="home"] #research .research-card:hover .rc-mark { opacity: 1; } }
-@media (min-width: 1921px) { body[data-page="home"] #research .rc-mark { margin: .25rem 0 1.75rem; } body[data-page="home"] #research .research-card .link-arrow { margin-top: 1.375rem; } }
 /* phones: the mark beside the title, small */
 @media (max-width: 760px) {
-  body[data-page="home"] #research .research-card, body[data-page="home"] #research .research-card:first-child { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 18px; }
+  body[data-page="home"] #research .research-card, body[data-page="home"] #research .research-card:first-child { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 1.125rem; }
   body[data-page="home"] #research .rc-mark { grid-column: 2; grid-row: 1 / span 2; align-self: center; height: 5.5rem; margin: 0; }
   body[data-page="home"] #research .research-card h3 { grid-column: 1; grid-row: 1; }
-  body[data-page="home"] #research .research-card .link-arrow { grid-column: 1; grid-row: 2; margin-top: 10px; }
+  body[data-page="home"] #research .research-card .link-arrow { grid-column: 1; grid-row: 2; margin-top: .625rem; }
 }
 /* without JavaScript: the first screen is the first scene alone (scene 2's plate and its labels start under the fold),
    each scene is as tall as its plate, and the static globe is drawn at its own weight */
@@ -387,23 +359,40 @@ body[data-page="home"] #research .rc-mark { display: block; width: auto; height:
 }
 /* portrait (phones, upright tablets): the globe above the copy, centred, as the live overture stacks it; the copy under it */
 @media (scripting: none) and (max-width: 639.98px), (scripting: none) and (max-aspect-ratio: 23/20) {
-  body[data-page="home"] .story-static-mark { top: calc(var(--nav-h) + 24px); right: 50%; width: min(60vw, 280px); transform: translateX(50%); }
-  body[data-page="home"] .story .beat-0 { padding-top: calc(var(--nav-h) + 64px + min(60vw, 280px)); }
+  body[data-page="home"] .story-static-mark { top: calc(var(--nav-h) + 1.5rem); right: 50%; width: min(60vw, 17.5rem); transform: translateX(50%); }
+  body[data-page="home"] .story .beat-0 { padding-top: calc(var(--nav-h) + 4rem + min(60vw, 17.5rem)); }
 }
 @media (scripting: none) and (min-aspect-ratio: 23/20) and (min-width: 640px) {
-  body[data-page="home"] .story-static-mark { top: calc(var(--nav-h) + (100svh - var(--nav-h)) / 2); width: min(34%, 460px); transform: translateY(-50%); }
-  body[data-page="home"] .story .beat:not(.beat-0) { min-height: calc(min(46vw, 560px) * .7 + 2 * clamp(56px, 9vh, 96px)); display: flex; flex-direction: column; justify-content: center; }
+  body[data-page="home"] .story-static-mark { top: calc(var(--nav-h) + (100svh - var(--nav-h)) / 2); width: min(34%, 28.75rem); transform: translateY(-50%); }
+  body[data-page="home"] .story .beat:not(.beat-0) { min-height: calc(min(46vw, 35rem) * .7 + 2 * clamp(3.5rem, 9vh, 6rem)); display: flex; flex-direction: column; justify-content: center; }
 }
 @media (scripting: none) and (min-width: 1921px) and (min-aspect-ratio: 23/20) {
-  /* 1920's first screen, enlarged: the copy's drop in rem, the globe's right edge on the column's */
-  body[data-page="home"] .story .beat-0 { padding-top: calc(var(--nav-h) + clamp(6rem, 20vh, 13.75rem)); }
-  body[data-page="home"] .story-static-mark { width: min(34%, 28.75rem); right: calc((100% - var(--max)) / 2 + var(--gutter)); }
-  body[data-page="home"] .beat-fig { width: min(46vw, 35rem); }
-  body[data-page="home"] .story .beat:not(.beat-0) { min-height: calc(min(46vw, 35rem) * .7 + 2 * clamp(56px, 9vh, 6rem)); }
+  /* 1920's first screen, enlarged: the globe's right edge on the column's */
+  body[data-page="home"] .story-static-mark { right: calc((100% - var(--max)) / 2 + var(--gutter)); }
 }
 html.no-webgl:not(.story-tiny) body[data-page="home"] .story .beat-0 { min-height: 100vh; min-height: 100svh; }
-/* owner, 2 Nov: Home keeps v2's four figures (overture.css styles them); above 1920 px their px caps get rem twins */
-@media (min-width: 1921px) {
-  body[data-page="home"] .beat-0 .hero-stats { max-width: min(52%, 40rem); gap: 1.25rem; margin-top: 2.125rem; padding-top: 1.25rem; }
-  body[data-page="home"] .beat-0 .hero-stats span { margin-top: .5625rem; }
+
+/* ========== award a3 ========== */
+/* §03's lab name, its 320 px gate tracking and the ledger's ink halo: swarm.css (integrate a3, for Home and Platform) */
+/* §07: the stills as plates, not icons: one scale for the three, the widest half its cell (the grid is their container) */
+@media (min-width: 761px) {
+  body[data-page="home"] #research .card-grid--3 { container-type: inline-size; }
+  body[data-page="home"] #research .rc-mark { height: max(7.5rem, 13.9cqi); }
 }
+/* scene 4: the floor tag in the chart grammar Proof and §04 use ("FLOOR" tracked, the unit as written: "10 bps") */
+body[data-page="home"] .story-lab.floor .u { letter-spacing: .02em; text-transform: none; color: rgba(245, 242, 236, .9); }
+/* §07 on tablets (761-960): the three notes in one row, as on desktop (site.css's 2 + 1 left the third alone under two);
+   a still wider than its cell keeps its shape */
+body[data-page="home"] #research .rc-mark { object-fit: contain; object-position: left center; }
+@media (min-width: 761px) and (max-width: 960px) {
+  body[data-page="home"] #research .card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  body[data-page="home"] #research .card-grid--3 > :last-child:nth-child(odd) { grid-column: auto; }
+}
+/* a3 p5: a dot-joined label never ends a line on its dot. §04's "Runs · lifecycle executions" and §05's caption break
+   before the dot and drop it on phones (Trust's .tp-dot); §04's hedge above the floor keeps "not published" together
+   (balanced; on phones it was 1 px short at 12 px: -0.01em) */
+@media (max-width: 600px) {
+  body[data-page="home"] .ph-dot { display: block; height: 0; overflow: hidden; }
+}
+@media (min-width: 961px) and (max-width: 1064px) { body[data-page="home"] #proof .stats .ph-dot { display: block; height: 0; overflow: hidden; } } /* the stat's column is 160-175 px: "Runs" over "lifecycle executions" */
+/* the hedge above the floor ("exact value / not published"): proofchart.css (integrate a3, for Home §04 and Proof) */

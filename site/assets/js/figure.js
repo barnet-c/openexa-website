@@ -633,8 +633,15 @@
     // the context in this task, the program in the next: two shorter tasks, not one long one (r1 perf)
     setTimeout(() => { if (!lost) setup(() => { resize(); request(); addMotion(); }); }, 0);
   }
-  // after the first paint, one stage per task: context creation and shader compilation never hold up a frame
-  requestAnimationFrame(() => stages.forEach(s => setTimeout(() => init(s), 0)));
+  // after the first paint, one stage per task: context creation and shader compilation never hold up a frame. Award a3
+  // (a3-dev: 82 + 69 ms tasks at a phone's start on Research): on a phone, a stage that is not on the screen at the start
+  // (the index's strip, below the screen until the list is read) starts when it first comes on, not in the first second
+  // (an observer answers after the frame's own layout: no layout is forced to ask)
+  requestAnimationFrame(() => stages.forEach(s => {
+    if (!narrow() || !('IntersectionObserver' in window)) { setTimeout(() => init(s), 0); return; }
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { io.disconnect(); setTimeout(() => init(s), 0); } });
+    io.observe(s);
+  }));
 
   // the research index: point at a post, the sculpture becomes that post's figure
   document.querySelectorAll('[data-figure-target]').forEach(el => {

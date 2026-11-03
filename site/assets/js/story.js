@@ -1314,7 +1314,7 @@
     lab.days = SESSIONS.map((s, c) => label(4, `<span class="k">${s.day}</span><span class="dt">Day ${s.day} · ${s.regime} · ${esc(valueT(s))} · ${s.confirmed ? 'broker-confirmed' : 'confirmation not stated'}</span>`,
       { cls: 'day' + (s.regime === 'premium' ? ' is-prem' : ''), kind: 'tag', group: c, side: 's', keep: true, col: c, dy: U_DAY - 6, info: [`Day ${s.day}`, capw(s.regime), `${s.above ? 'Above' : 'Not above'} the ${FLOOR_T} floor (${esc(valueT(s))}) · ${s.confirmed ? 'confirmed against the broker’s records' : 'confirmation not stated'}`], anchor: () => [COL_X(c), Y_FLOOR, 0] }));
     // the floor's tag sits on the line, left of column 01 (never across it)
-    label(4, `<span>${FLOOR_T}</span> <span>floor</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
+    label(4, `<span>Floor</span> <span class="u">${FLOOR_T}</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
     label(4, 'NAV', { cls: 'navtag', kind: 'tag', out: [0.05, 0.22], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR - l4(U_NAV), 0], side: 'w' }); // the regime ticks' baseline
     // (the derived summary is the coda's: 'Ten of ten above the floor.')
   }

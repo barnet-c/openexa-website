@@ -62,12 +62,14 @@
     };
     // phones: the plate is a strip at the foot of the screen; it comes up once the list is being read (research.css)
     const shelf = plate.closest('.rs-shelf');
-    let queued = false;
+    let queued = false, held = () => {};
     const reading = () => {
       queued = false;
       // cut (1 Nov): the hero is shorter, so the first row now starts on a phone's first screen; the strip still waits
       // for the reader's first scroll, so it never covers the first screen
-      if (shelf) shelf.classList.toggle('is-reading', window.scrollY > 24 && rows[0].getBoundingClientRect().top < window.innerHeight * 0.78);
+      const on = window.scrollY > 24 && rows[0].getBoundingClientRect().top < window.innerHeight * 0.78;
+      if (on) held(); // the strip's slots are measured before it first comes up (a3)
+      if (shelf) shelf.classList.toggle('is-reading', on);
       atLine();
     };
     const queue = () => { if (!queued) { queued = true; requestAnimationFrame(reading); } };
@@ -115,8 +117,13 @@
     const queueReserve = () => { if (!rq) { rq = true; requestAnimationFrame(() => { rq = false; reserve(); stripH(); }); } };
     window.addEventListener('resize', queueReserve, { passive: true });
     strip.addEventListener('change', queueReserve);
-    queueReserve();
-    if (document.fonts) requestAnimationFrame(() => document.fonts.ready.then(() => { measuredW = -1; queueReserve(); }));
+    /* award a3 (a3-dev): the ten captions are written and measured once the page is idle, not in its first frames (a
+       phone's start: ~20 ms of forced layout at 4x); the strip is off the screen until the list is read, and the first
+       scroll that brings it up measures first if idle has not come (reading(), above), so it never grows on screen */
+    const idle = window.requestIdleCallback ? f => window.requestIdleCallback(f, { timeout: 1200 }) : f => setTimeout(f, 300);
+    held = () => { if (strip.matches && measuredW < 0) { reserve(); stripH(); } };
+    idle(queueReserve);
+    if (document.fonts) document.fonts.ready.then(() => idle(() => { measuredW = -1; queueReserve(); }));
   }
 
   /* ---------- a stage that cannot draw (figure.js 'figure:none'): no caption for a figure that is not there ---------- */
@@ -151,5 +158,31 @@
     window.addEventListener('scroll', queue, { passive: true });
     window.addEventListener('resize', queue, { passive: true });
     requestAnimationFrame(mark);
+  }
+
+  /* ---------- a note: the margin plate (award a3) stands from the first part head to the end mark ----------
+     research.css shows it from 1440 px; here its rail is cut to that span (--np-t, --np-b, from the text's own box), again
+     whenever the text's box changes (fonts in, a new width). It is hidden until placed, so it never moves on screen, and
+     it fades in (.is-in) once half the hero has left the screen, so no screen shows the drawing twice */
+  const npRail = $('.np-rail'), art = $('.article-body-section .article');
+  if (npRail && art) {
+    const first = $('h2', art), end = $('.article-end', art), wide = window.matchMedia('(min-width: 1440px)');
+    let placing = false;
+    const place = () => {
+      placing = false;
+      if (!wide.matches || !npRail.getClientRects().length) return; // below 1440 (no layout read) or not shown
+      const a = art.getBoundingClientRect();
+      npRail.style.setProperty('--np-t', `${Math.max(0, Math.round(first ? first.getBoundingClientRect().top - a.top : 0))}px`);
+      npRail.style.setProperty('--np-b', `${Math.max(0, Math.round(end ? a.bottom - end.getBoundingClientRect().top : 0))}px`);
+      npRail.classList.add('is-set');
+    };
+    const queuePlace = () => { if (!placing) { placing = true; requestAnimationFrame(place); } };
+    if ('ResizeObserver' in window) new ResizeObserver(queuePlace).observe(art); else window.addEventListener('resize', queuePlace, { passive: true });
+    wide.addEventListener('change', queuePlace);
+    queuePlace();
+    const hero = $('.article-hero');
+    if (hero && 'IntersectionObserver' in window) {
+      new IntersectionObserver(([e]) => npRail.classList.toggle('is-in', e.intersectionRatio < 0.5), { threshold: [0, 0.5, 1] }).observe(hero);
+    } else npRail.classList.add('is-in');
   }
 })();

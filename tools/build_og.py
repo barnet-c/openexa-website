@@ -302,4 +302,6 @@ async def main():
     CACHE.write_text(json.dumps(cache, indent=1, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     print(f"{len(cards)} cards, {len(todo)} rendered")
 
-asyncio.run(main())
+# importable (proof's a3 request: previewing a card imported this module and re-rendered every stale card)
+if __name__ == "__main__":
+    asyncio.run(main())

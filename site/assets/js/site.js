@@ -275,11 +275,14 @@
       if (Math.abs(p - g.p) > 0.001) { g.p = p; g.b.style.transform = `scaleX(${p.toFixed(4)})`; }
       if (y >= g.s && (y < g.e || j === segs.length - 1)) on = j;
     });
-    segs.forEach((g, j) => g.i.classList.toggle('is-on', j === on && g.p > 0 && live.length > 0)); // green marks a chapter
+    segs.forEach((g, j) => g.i.classList.toggle('is-on', j === on && g.p > 0 && live.length > 0 && g.part !== 'edge')); // green marks a chapter (a3: not the run-in or the run-out, where the readout is the wordmark only)
     // the readout
     if (!live.length) return;
     let k = -1;
     for (const c of live) if (y >= c.s) k = c.k;
+    // (a3) past the last chapter (the closing band, the footer) the bar shows the wordmark only: it named the wrong place
+    const last = live[live.length - 1];
+    if (k === last.k && y >= last.e && last.e < maxScroll - 1) k = -1;
     live.forEach(c => {
       const p = c.e > c.s ? clamp01((y - c.s) / (c.e - c.s)) : (y >= c.e ? 1 : 0);
       if (Math.abs(p - (c.p || 0)) > 0.004 || c.p === undefined) { c.p = p; c.bar.style.setProperty('--p', p.toFixed(3)); }
