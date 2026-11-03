@@ -61,8 +61,7 @@
   --gutter: clamp(1.25rem, 4vw, 3.5rem);
   /* chapters (r2): open on --sec-close, or --sec-open (.section--open) when an instrument comes first; close on --sec-foot */
   --sec-close: clamp(3.5rem, 6.67vw, 6rem); --sec-open: clamp(4rem, 10.4vw, 9.375rem); --sec-foot: clamp(2.75rem, 5vw, 4.5rem);
-  /* the column: 1320 at 1440, opening linearly to 1600 at 1920, where the wide step's 100rem takes over (a2: the column
-     jumped from 1344 to 1601 across 1920/1921) */
+  /* the column: 1320 at 1440, opening linearly to 1600 at 1920, where 100rem takes over (a2) */
   --max: clamp(82.5rem, calc(82.5rem + (100vw - 90rem) * .5834), 100rem);
   --nav-h: 4.5rem;
   --r: .1875rem;
@@ -74,19 +73,16 @@
   --dur-feedback: .18s; --dur-move: .32s; --dur-draw: .6s;
   /* the one mono label (a1, W4): 11 px */
   --fs-label: .6875rem;
-  /* plate strokes (non-scaling), in whole device pixels (a2): the hairline and the heavy line (gates, rejections, the live
-     ring). 1 / 2 px; 1 / 1.5 at 2x (2 and 3 device px); from 2880 px 2 / 3. Dash and dot lengths are in --dash-u, a px of the
-     1920 page, so a dashed line keeps its texture as the page grows */
+  /* plate strokes (non-scaling), whole device pixels (a2): the hairline and the heavy line. 1 / 2 px; 1 / 1.5 at 2x; from
+     2880 px 2 / 3. Dashes in --dash-u (a px of the 1920 page), so a dashed line keeps its texture as the page grows */
   --stroke: 1; --stroke-2: 2;
   --dash-u: .0625rem;
-  /* a3: the CSS hairline (borders, rules, rings) on the same whole-pixel steps as --stroke, so 3840 has one line weight;
-     lengths are rem (16 px to 1920, so nothing below moves; 3840 = 1920@2). --icon-stroke: the arrows and carets */
+  /* a3: the CSS hairline on --stroke's whole-pixel steps (one line weight at 3840). --icon-stroke: the arrows and carets */
   --hair: calc(1px * var(--stroke));
-  --icon-stroke: 1px;
+  --icon-stroke: 1px; --icon-shift: .5px;
 
   /* type, four steps (1 Nov; the owner: "<= 4 type sizes on any screen") */
-  /* the H2 (a3): 76.8 px from 1422 as before; below, one line down to 34 px at 680 and under, so on phones and tablets the
-     head of a chapter is ~0.82 of the H1 beside it (41.6 / 34 at 390, 47.6 / 39 at 768), not its twin */
+  /* the H2 (a3): 76.8 px from 1422; down to 34 px at 680 and under, so on phones a chapter's head is ~0.82 of the H1 */
   --fs-display: clamp(2.125rem, calc(5.772vw - .33rem), 4.8rem);
   --fs-heading: clamp(1.35rem, 1.8vw, 1.6rem);          /* 25.6 / 21.6 */
   --fs-body: clamp(1.0625rem, .98rem + .15vw, 1.125rem); /* 18 / 17 */
@@ -100,11 +96,10 @@
   --track-label: .12em;
   --track-eyebrow: .14em;
 
-  /* the H1 is the page's display. The plate step (a3): v2's 6.2vw at every width, floored at 41.6 px (the cut's phone size,
-     so the longest H1s keep their lines at 320 and 390) and capped at its 1440 size (a2); one line through 961 (it
-     jumped 52 -> 60 px there) */
+  /* the H1 is the page's display. The plate step: v2's 6.2vw, floored at 41.6 px (the longest H1s keep their lines at 320
+     and 390), capped at its 1440 size; tablets rise to 58 px from 768 to 935 (a4; 48.7 at 600), 1024 and up unchanged */
   --h1-statement: clamp(3.4rem, 8.2vw, 7.6rem);
-  --h1-plate: clamp(2.6rem, 6.2vw, 5.58rem);
+  --h1-plate: clamp(2.6rem, max(6.2vw, min(.98rem + 5.5vw, 3.625rem)), 5.58rem);
   --h1-article: clamp(2.3rem, 4.5vw, 4.3rem);
 }
 @media (max-width: 960px) { :root { --h1-article: clamp(2.2rem, 9vw, 3.2rem); } } /* one column: the title leads the plate */
@@ -119,16 +114,19 @@
     --sec-close: 6rem; --sec-open: 9.375rem; --sec-foot: 4.5rem;
   }
 }
+/* browser zoom above 1920 (a4): site.js's --uz gives a zoom step its factor back (it cancelled against the step above);
+   at least 60.1rem of room stays (a 961 px page's). Not set: no-JS, zoom 100%, Firefox */
+:root.uz:has(> body[data-page]) { font-size: max(100%, min(100vw / 120 * var(--uz), 100vw / 60.1)); }
 @media (min-resolution: 2dppx) { :root { --stroke-2: 1.5; } }
 @media (min-resolution: 2dppx) and (min-width: 2400px) { :root { --stroke: 1.5; --stroke-2: 2.5; } }
 @media (min-width: 2880px) { :root { --stroke: 2; --stroke-2: 3; } }
-/* the icon stroke (a3): the arrows' and carets' 1.5/16 drawn at whole device pixels: 1 px; 3 device px at 2x; 2 px from 2400;
-   3 px from 3360, so 3840 matches 1920@2 (they drew 1.25 / 1.75 / 2.75 device px: soft lines between two weights) */
-@media (min-resolution: 2dppx) { :root { --icon-stroke: 1.5px; } }
-@media (min-width: 2400px) { :root { --icon-stroke: 2px; } }
-@media (min-width: 3360px) { :root { --icon-stroke: 3px; } }
-@media (min-resolution: 2dppx) and (min-width: 2400px) { :root { --icon-stroke: 2px; } }
-@media (max-width: 960px) and (max-height: 520px) and (min-width: 600px) { :root { --h1-statement: clamp(2.3rem, 10vh, 3rem); } } /* sideways phones: the plate step's short size (r4) */
+/* the icon stroke (a3, a4): whole device pixels on whole rows. A shaft on its box's pixel boundary needs a half-pixel
+   shift for an odd device width: 1 px moved .5 at 1x; 2 device px at 2x and from 2400 (1920@2 = 3840); 4 at 3x */
+@media (min-resolution: 2dppx) { :root { --icon-stroke: 1px; --icon-shift: 0px; } }
+@media (min-width: 2400px) { :root { --icon-stroke: 2px; --icon-shift: 0px; } }
+/* 3x phones (a4): 4 device px for the heavy line and the arrows (they drew 4.5) */
+@media (min-resolution: 3dppx) { :root { --stroke-2: 1.33334; --icon-stroke: 1.33334px; } }
+@media (max-width: 960px) and (max-height: 520px) and (min-width: 600px) { :root { --h1-statement: clamp(2.3rem, 10vh, 3rem); --h1-plate: clamp(2.6rem, 6.2vw, 5.58rem); } } /* sideways phones (r4, a4) */
 
 /* ---------- reset ---------- */
 *, *::before, *::after { box-sizing: border-box; }
@@ -241,6 +239,7 @@ main > .section > .container > .mt-4:last-child { margin-top: clamp(1.75rem, 3vw
 .link-arrow { display: inline-flex; align-items: center; gap: .5em; font-weight: 500; font-size: var(--fs-small); border-bottom: var(--hair) solid var(--line-strong); padding-bottom: .125rem; transition: border-color var(--dur-feedback) var(--ease-out); }
 .link-arrow .arr { width: .875rem; height: .875rem; transition: transform var(--dur-move) var(--ease); }
 .arr path, .nav-ch-caret path, .nav-ch-top svg path { vector-effect: non-scaling-stroke; stroke-width: var(--icon-stroke); } /* a3 */
+.arr { translate: 0 var(--icon-shift); } .nav-ch-top svg { translate: var(--icon-shift) 0; } /* a4 (Back to top's is upright) */
 @media (hover: hover) { .link-arrow:hover { border-color: var(--fg); } }
 @media (hover: hover) { .link-arrow:hover .arr { transform: translateX(.25rem); } }
 
@@ -271,9 +270,8 @@ main > .section > .container > .mt-4:last-child { margin-top: clamp(1.75rem, 3vw
 
 /* ---------- reveal ---------- */
 /* .will-reveal (site.js) only below the first screen, whole about .6 s after arrival; never without JS or with reduced motion */
-/* the fade belongs to the arrival (.is-in) only: hiding below the fold is never a transition, even when a chapter's style is
-   computed late (content-visibility skips it until something reads it: Home's #governance faded out off screen ~1.6 s
-   after load, verify_budget offscreen_reveals; integrate a1). :where() keeps the old weight */
+/* the fade belongs to the arrival (.is-in) only: hiding below the fold is never a transition, even when content-visibility
+   computes a chapter's style late (verify_budget offscreen_reveals). :where() keeps the old weight */
 [data-reveal]:where(.is-in) { transition: opacity var(--dur-draw) var(--ease), transform var(--dur-draw) var(--ease); transition-delay: calc(var(--d, 0ms) * .5); }
 [data-reveal].will-reveal:not(.is-in) { opacity: 0; transform: translateY(.75rem); }
 [data-reveal].is-in { opacity: 1; transform: none; }
@@ -403,7 +401,9 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 .footer .disc p { max-width: 34em; }
 .footer .disc strong { color: var(--fg-2); font-weight: 500; }
 .footer .bottom { margin-top: 1.375rem; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .5rem 1.5rem; font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; color: var(--fg-3); } /* the company line is prose; the clocks are data (mono) */
-.footer .wordmark { font-family: var(--serif); font-size: clamp(5rem, 18vw, 17rem); line-height: 1; letter-spacing: -0.04em; color: var(--fg); opacity: .06; margin: clamp(.5rem, 2vw, 1.75rem) 0 -0.3em -.035em; user-select: none; white-space: nowrap; }
+/* the ghost masthead (a4): its ink spans the column (2.896em of ink, measured), with a rem floor */
+.footer > .container { container-type: inline-size; }
+.footer .wordmark { font-family: var(--serif); font-size: clamp(5rem, 100cqi / 2.9, 60rem); line-height: 1; letter-spacing: -0.04em; color: var(--fg); opacity: .06; margin: clamp(.5rem, 2vw, 1.75rem) 0 -0.3em -.035em; user-select: none; white-space: nowrap; }
 .footer .wordmark::before { content: attr(data-word); content: attr(data-word) / ""; } /* drawn, not text: a logotype, not copy for a contrast audit */
 @media (max-width: 600px) { .footer .disc { grid-template-columns: 1fr; } }
 @media (min-width: 601px) and (max-width: 860px) { .footer { --fc: minmax(0, 1.3fr) repeat(3, minmax(0, 1fr)); --fg-gap: 1.5rem; } .footer .tag { font-size: var(--fs-body); } } /* tablets: one row */
@@ -855,10 +855,9 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 /* v2:nav:start */
 /* The frame of every page: nav and chapter readout, menu sheet, loader, page transitions, controls and focus (site.js) */
 
-/* ---------- off-screen: a band of the page that is wholly out of view runs no CSS animation ----------
-   The pause names the elements that animate (not `*`), so the toggle (site.js, as a band enters or leaves) restyles those,
-   not the whole band: Home's §01 and the overture restyled ~1,200 elements in one frame (a1-dev: 97 ms at 1440, 146 ms at
-   3840; integrate a1, home's request). A new CSS animation inside a band adds its class here (check_static offscreen_pause). */
+/* ---------- off-screen: a band wholly out of view runs no CSS animation ----------
+   The pause names what animates (not `*`), so the toggle restyles only those (a1). A new CSS animation in a band adds its
+   class here (check_static offscreen_pause). */
 .is-offscreen, .is-offscreen :is(.live, .badge i, .chain-status i, .lt-seg, .lt-node, .lt-tag, .lt-rec, .lt-meta, .lt-ev, .lt-sub, .lt-t, .lt-latest,
   .chain-node, .chain-flag, .layers, .story, .story-stage, .story-ui, .story-bar, .story-labels, .story-static-mark, .beat, .beat-0, .wi, .sw-gates,
   .sw-trace, .is-filled, .pf-floor, .pf-c i, .pf-lit, .pf-tk, .pf-lit > span, .pf-tk > span, .pf-rec, .pf-l-ok, .hp-lab, .hp-lab--n, .hp-lab--bd,
@@ -870,8 +869,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 .is-offscreen :is(.chain-seg, .lt-node, .pf-floor, .layer, .is-ping)::after { animation-play-state: paused !important; }
 
 /* ---------- rhythm & anchors: nothing scrolls or focuses under the fixed nav ---------- */
-/* a2 (home's request): registered as a length, so its computed value is resolved ("144px" at 3840, not the wide step's
-   "4.5rem" token) and every script that reads it with parseFloat gets the bar's real height */
+/* a2: registered as a length, so scripts reading it with parseFloat get the bar's real height ("144px" at 3840) */
 @property --nav-h { syntax: "<length>"; inherits: true; initial-value: 72px; }
 :root { --nav-h: 4.5rem; }
 @media (max-width: 960px) { :root { --nav-h: 4rem; } }
@@ -952,8 +950,7 @@ html { scroll-padding-top: var(--nav-h); }
 /* (1 Nov) the readout shows the chapter's number, never a running head: its title is in the list it opens. At the top
    of a page it is not drawn until a keyboard reaches it. */
 .nav-ch-line .t, .nav-ch-line .t-short, .nav-ch-line .t-wide { display: none; }
-/* a1: where the bar has room the chapter's name follows its number ("03 Lifecycle 01"); a2: from 961 px its short form
-   (data-chapter-short, else the name), the full name from 1280 */
+/* where the bar has room the chapter's name follows its number: from 961 its short form (data-chapter-short), from 1280 in full */
 @media (min-width: 1280px) { .nav-ch-line .t { display: inline; font-family: var(--sans); font-weight: 400; letter-spacing: 0; } }
 @media (min-width: 961px) and (max-width: 1279.98px) {
   .nav-ch-line .t, .nav-ch-line .t-sh { font-family: var(--sans); font-weight: 400; letter-spacing: 0; }
@@ -992,6 +989,7 @@ html { scroll-padding-top: var(--nav-h); }
   box-shadow: 0 1.875rem 4.375rem -1.625rem rgba(0, 0, 0, .7), 0 0 0 var(--hair) rgba(0, 0, 0, .2);
 }
 .nav-ch.is-open .nav-ch-panel { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; }
+.nav-ch-head { display: none; } /* (a4) shown in the phone sheet */
 .nav-ch-list { padding: .5rem 0 .375rem; }
 .nav-ch-list a {
   position: relative; display: grid; grid-template-columns: 1.875rem minmax(0, 1fr) 2.75rem; align-items: last baseline; align-content: center; column-gap: .75rem;
@@ -1111,8 +1109,9 @@ html { scroll-padding-top: var(--nav-h); }
     visibility: visible; opacity: 1; transform: none; transition: none; animation: sheet-rise .7s var(--ease) both; animation-delay: 40ms;
   }
   .nav-sheet > .nav-ch-panel .nav-ch-list { padding: .125rem 0 0; }
-  .nav-sheet > .nav-ch-panel .nav-ch-list a { min-height: 2.75rem; padding: .375rem 0; grid-template-columns: minmax(0, 1fr) 2.5rem; column-gap: .5rem; } /* the pages' column: no numbers in the sheet (1 Nov) */
-  .nav-sheet > .nav-ch-panel .nav-ch-list .n { display: none; }
+  /* (a4) named and numbered as in the bar's panel, so the chapters never read as the pages below them */
+  .nav-sheet > .nav-ch-panel .nav-ch-head { display: block; margin: 0 0 .25rem; font: var(--fs-small)/1.4 var(--sans); letter-spacing: 0; color: var(--p-fg-3); }
+  .nav-sheet > .nav-ch-panel .nav-ch-list a { min-height: 2.75rem; padding: .375rem 0; grid-template-columns: 1.875rem minmax(0, 1fr) 2.5rem; column-gap: .5rem; }
   .nav-sheet > .nav-ch-panel .nav-ch-list a::before { left: -.75rem; }
   .nav-sheet > .nav-ch-panel .nav-ch-list .t { font-size: var(--fs-body); }
   .nav-sheet > .nav-ch-panel .nav-ch-top { margin: .25rem 0 0; padding: .75rem 0 .125rem; }
@@ -1211,8 +1210,7 @@ body.nav-open { overflow: hidden; }
 .loader.is-quick .loader-ring, .loader.is-quick .loader-dial::after { opacity: 0; }
 @keyframes loader-out { from { opacity: 1; } to { opacity: 0; } }
 body.is-loading { overflow: hidden; }
-/* as the loader hands off, the bar arrives first, whole, over the clearing ground (a2: the name and the way out lead;
-   they came .4-.7 s after the headline); only the dial travels on to the globe */
+/* as the loader hands off, the bar arrives first, whole, over the clearing ground (a2); only the dial travels on */
 .loader.is-done ~ .nav { z-index: 1001; }
 .loader.is-done ~ .nav .container > * { animation: nav-arrive var(--dur-move) var(--ease-out) both; }
 @keyframes nav-arrive { from { opacity: 0; transform: translateY(-.625rem); } }
@@ -1431,12 +1429,11 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lane .lk-n { color: var(--fg-3); }
 .lane .lk-nm { color: var(--fg); }
 /* the plate's labels scale with it: user units sized so they print at >= 10 px from 961 px up */
-.lane-h { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); } /* px, not rem (integrate a3): the text is in the drawing's own units and the drawing scales with its viewBox, so a rem size would grow twice above 1920 */
+.lane-h { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); } /* px, not rem: the drawing scales with its viewBox (integrate a3) */
 /* the council's aperture, the boundary plane and the approved path carry 1.4 px */
 .lane-h .ap-r, .lane-h .g:not(.gw), .lane-h .bd { stroke-width: var(--stroke-2); }
-/* one draw-in when the plate is revealed; nothing loops. At rest a drawn line has no dash (a2): a non-scaling stroke is
-   dashed in screen space, so a pathLength dash covered 1/scale of the path above 1920. While it draws, the dash is the
-   drawing's scale (--dr-k, site.js at the reveal), so the line ends whole at any size; no JS, reduced motion: no dash */
+/* one draw-in at the reveal; nothing loops. At rest a drawn line has no dash (a2); while it draws, the dash is the drawing's
+   scale (--dr-k, site.js), so a non-scaling line ends whole at any size; no JS, reduced motion: no dash */
 .lane .dr, .lane-v .dr, .lc-orbit .dr, .lc-pipe .dr { stroke-dasharray: none; }
 [data-reveal].will-reveal:not(.is-in) .dr { visibility: hidden; }
 [data-reveal].will-reveal.is-in:not(.is-cut) .dr { animation: dr-in .78s var(--ease-draw) var(--dd, 80ms) backwards; }
@@ -1635,7 +1632,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 }
 /* ---------- Fig. 4.1, the orbit (Lifecycles §04): six class rings in plan view, the swarm at the centre ---------- */
 .lc-orbit { margin: 3rem 0 0; }
-.orbit-svg { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); } /* px, not rem (integrate a3): the text is in the drawing's own units and the drawing scales with its viewBox, so a rem size would grow twice above 1920 */
+.orbit-svg { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); } /* px, not rem: the drawing scales with its viewBox (integrate a3) */
 .lcp .orb-live { fill: none; stroke: var(--accent); stroke-width: var(--stroke); }
 .lcp .orb-next { fill: none; stroke: currentColor; stroke-width: var(--stroke); stroke-dasharray: calc(5 * var(--dash-u)) calc(4 * var(--dash-u)); opacity: .62; }
 .lcp .orb-road { fill: none; stroke: var(--khaki-deep); stroke-width: calc(1.5 * var(--stroke)); stroke-dasharray: calc(.01 * var(--dash-u)) calc(4.4 * var(--dash-u)); stroke-linecap: round; }
@@ -1668,7 +1665,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 
 /* ---------- Platform §04, Fig. 4.1: the deterministic half of the lane ---------- */
 .lc-pipe { margin: 0 0 2.5rem; }
-.pipe-svg { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); } /* px, not rem (integrate a3): the text is in the drawing's own units and the drawing scales with its viewBox, so a rem size would grow twice above 1920 */
+.pipe-svg { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); } /* px, not rem: the drawing scales with its viewBox (integrate a3) */
 .lcp .cp { fill: none; stroke: currentColor; stroke-width: var(--stroke); stroke-dasharray: calc(3 * var(--dash-u)) calc(3 * var(--dash-u)); opacity: .7; }
 .lcp .cpl { fill: none; stroke: currentColor; stroke-width: var(--stroke); stroke-dasharray: calc(1 * var(--dash-u)) calc(3 * var(--dash-u)); opacity: .55; }
 .lcp .cpk { fill: none; stroke: currentColor; stroke-width: var(--stroke); opacity: .7; }
@@ -1906,11 +1903,9 @@ svg.tg * { fill: none; stroke: currentColor; stroke-width: var(--stroke); vector
   .company-sculpture { padding-top: var(--co-h); margin-top: 0; }
   .company-sculpture .figure-stage, .company-sculpture .frame { height: var(--co-h); aspect-ratio: auto; }
 }
-/* registration marks (AWARD_BAR L7): a hero plate's corners, one mark site-wide, plates only (`<span class="hp-reg"
-   aria-hidden="true"><i></i><i></i><i></i><i></i></span>` inside .hp-art; Platform and Lifecycles; lifted from platform.css,
-   integrate a1). Hairlines that grow with the page (rem, --stroke) */
-/* a2: the frame registers on the column: its right marks sit on the content edge (the bar's button edge), the drawing one
-   mark-length inside it (they hung 16 px past the column at 1440, 32 at 3840) */
+/* registration marks: a hero plate's corners, one mark site-wide (`<span class="hp-reg" aria-hidden="true">` with four
+   `<i>` inside .hp-art). Hairlines that grow with the page */
+/* a2: the frame registers on the column: its right marks on the content edge, the drawing one mark-length inside */
 .hero-plate .hp-art:has(> .hp-reg) { padding-right: 1rem; }
 .hero-plate .hp-reg { position: absolute; inset: -1.25rem 0 -.75rem -1rem; pointer-events: none; }
 .hero-plate .hp-reg i { --b: calc(1px * var(--stroke)); position: absolute; width: .875rem; height: .875rem; border: 0 solid var(--line-strong); }
@@ -1924,5 +1919,4 @@ svg.tg * { fill: none; stroke: currentColor; stroke-width: var(--stroke); vector
 @media (prefers-reduced-motion: no-preference) { .hero-plate .hp-reg { animation: hp-reg-in .6s var(--ease-out) .3s both; } }
 /* v2:pages:end */
 
-/* v2:wide (a1-a2: rem twins of the px caps above 1920) is gone since a3: every length above is rem, so a 3840 page is its
-   1920 page doubled with no second copy; only the root step (top of the sheet) stays */
+/* v2:wide is gone since a3: every length above is rem, so 3840 is the 1920 page doubled (the root step, top of the sheet) */

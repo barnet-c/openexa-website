@@ -34,11 +34,17 @@
   }
   const later = () => { if (!queued) queued = requestAnimationFrame(fit); };
   later();
-  // the sequence over, its animations let go (each ends on the plate's own style): while any holds its end state the
-  // browser keeps the plate on a layer at a fractional offset, and every hairline spreads over three device rows
+  // each element's animations let go once all of that element's own have finished (each ends on the plate's own style):
+  // while any finished one holds its end state the browser keeps the plate on a layer at a fractional offset, and every
+  // hairline spreads over three device rows. a3 let them go at the sequence's end (~3.8 s); a4: as each part lands, so the
+  // rules drawn first are whole while the proposals still run (a grab at 2.5 s read 216/166/166/216; now two full rows)
   const release = () => {
     const all = anims;
-    if (all && all.length) Promise.all(all.map((a) => a.finished)).then(() => { all.forEach((a) => a.cancel()); later(); }, () => {});
+    if (!all || !all.length) return;
+    const by = new Map();
+    all.forEach((a) => { const el = a.effect && a.effect.target; if (!by.has(el)) by.set(el, []); by.get(el).push(a); });
+    by.forEach((own) => Promise.all(own.map((a) => a.finished)).then(() => own.forEach((a) => a.cancel()), () => {}));
+    Promise.all(all.map((a) => a.finished)).then(later, () => {});
   };
   if ('ResizeObserver' in window) new ResizeObserver(later).observe(svg);
   else window.addEventListener('resize', later);

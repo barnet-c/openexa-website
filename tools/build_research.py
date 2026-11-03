@@ -345,12 +345,9 @@ def _forms(name, N, rnd, g):
         raise KeyError(name)
     return P[:N]
 FIT_JS = {"lifecycle": 1.16, "rulebook": 1.12}  # figure.js FIT: the flat ring and the small cube are drawn larger
-def _projected(fig):
-    """the note's formation as the plate rests: every point that is not dust, projected (x, y in units where the hero
-    stage's height is 400, centred; depth 0..1, nearer the eye brighter; kind), and the plate's rules (RULES) as lines"""
-    N = 15000; r = _rng(len(fig) * 977 + 13)
-    g = lambda: (r() + r() + r() - 1.5) * 0.82
-    pts = _forms(fig, N, r, g)
+def _camera(fig):
+    """figure.js's camera as the plate rests: a point of the formation (its own space) to the hero stage's units (its
+    height is 400, centred) and the depth term v2"""
     f, eye, S0 = 1 / math.tan(0.31), (0.0, 0.35, 4.4), 0.84 * FIT_JS.get(fig, 1)
     n = math.hypot(*eye); zx, zy, zz = (e / n for e in eye)
     xx, xz = zz, -zx; n = math.hypot(xx, xz) or 1; xx, xz = xx / n, xz / n
@@ -361,21 +358,35 @@ def _projected(fig):
         v1 = yx * x + yy * y + yz * z - (yx * eye[0] + yy * eye[1] + yz * eye[2])
         v2 = zx * x + zy * y + zz * z - (zx * eye[0] + zy * eye[1] + zz * eye[2])
         return 200 * f * v0 / -v2, -200 * f * v1 / -v2, v2  # the stage's height is 400 units, centred
+    return proj
+def _projected(fig, model=False):
+    """the note's formation as the plate rests: every point that is not dust, projected (x, y in units where the hero
+    stage's height is 400, centred; depth 0..1, nearer the eye brighter; kind; with model=True also the point in the
+    formation's own space, for PARTS), and the plate's rules (RULES) as lines"""
+    N = 15000; r = _rng(len(fig) * 977 + 13)
+    g = lambda: (r() + r() + r() - 1.5) * 0.82
+    pts = _forms(fig, N, r, g)
+    proj = _camera(fig)
     dots = []
     for p in pts:
         if p[3] >= 7: continue
         sx, sy, v2 = proj(p[0], p[1], p[2])
-        dots.append((sx, sy, min(1, max(0, (v2 + 5.6) / 2.6)), p[3]))  # figure.js: nearer the eye, brighter
+        d = (sx, sy, min(1, max(0, (v2 + 5.6) / 2.6)), p[3])  # figure.js: nearer the eye, brighter
+        dots.append(d + (tuple(p[:3]),) if model else d)
     rules = [(proj(*a)[:2], proj(*b)[:2]) for a, b in RULES.get(fig, [])]
     return dots, rules
 def note_still(fig, every=7):
     """the note's formation as a still: dots where the plate's points land at rest (see the comment above _rng)"""
     dots, rules = _projected(fig)
     paths, xm = {}, 0.0
+    # award a4 (r4): the bright half is the nearer half of the drawing (its own median depth), as the margin plate's since
+    # a3. A fixed 0.5 put every point of note 09's columns, the council's stream and the copies on the dim side (none of
+    # 09's 1,757 dots was "near"): the discount columns read mid-grey under the key's "white", which the still now carries
+    med = sorted(d[2] for i, d in enumerate(dots, 1) if not i % every)[len(dots) // every // 2]
     for i, (sx, sy, depth, k) in enumerate(dots, 1):
         if i % every: continue
         xm = max(xm, abs(sx))
-        paths.setdefault((k, depth > 0.5), []).append(f"M{round(sx)} {round(sy)}h0")
+        paths.setdefault((k, depth > med), []).append(f"M{round(sx)} {round(sy)}h0")
     # award a2: the plate's rules (RULES: note 09's floor) as lines, a hairline at any scale (research.css .fs-still .rule)
     xm = max([xm] + [abs(q[0]) for ln in rules for q in ln])
     w = math.ceil(xm + 12)
@@ -383,16 +394,93 @@ def note_still(fig, every=7):
     body += f'<path class="rule" d="{"".join(f"M{a[0]:.1f} {a[1]:.1f}L{b[0]:.1f} {b[1]:.1f}" for a, b in rules)}"/>' if rules else ""
     return (f'<svg class="fs-still" viewBox="{-w} -200 {2 * w} 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'
             f'{body}</svg>')
+# award a4 (a4-pixel, polish): a figure whose labels are its key (note 09: the floor and its value, the 01-10 axis, and so,
+# by r3's rule, the hedge label "above the floor / how far is not published") keeps that key on its still, where figure.js
+# cannot set the labels (no JavaScript, no WebGL), and on the margin plate. Same words, sides and flags as LABELS
+KEYED = {"sessions"}
+def _fl(lab, style, cls="", attrs="", plate=False):
+    """one label as static markup, in figure.js's .fl grammar (research.css): the point, its rule and the words. On a
+    margin plate (plate=True) a gloss ("minorsub") is dropped, as on a small stage; a hedge (keep) never is"""
+    text, sub, _at, side, flags = lab[:5]
+    k = _keep(flags); fl = flags.split()
+    if plate and "minorsub" in fl: sub = None
+    c = "".join(f" fl--{f}" for f in fl if f != "minorsub" and f != k)
+    gloss = ' class="fl-minor"' if "minorsub" in fl else ""
+    small = f"<small{gloss}>{H.escape(sub, quote=False)}</small>" if sub else ""
+    return f'<span class="fl{c}{cls}" data-side="{side}"{attrs} style="{style}"><span class="fl-t">{H.escape(text, quote=False)}{small}</span></span>'
+def still_keys(fig):
+    """the key over the hero's still (KEYED): each label at its point in the still's own units (the viewBox: the stage's
+    height is 400, centred), placed by research.css from the stage's size (.fs-keys: shown without JavaScript and when
+    figure.js cannot draw; figure.js sets its own labels over the live drawing)"""
+    if fig not in KEYED: return ""
+    proj = _camera(fig)
+    out = []
+    for lab in LABELS[fig]:
+        x, y, _ = proj(*lab[2])
+        out.append(_fl(lab, f"--x:{x:.1f};--y:{y:.1f}"))
+    return f'<div class="fs-keys" aria-hidden="true">{"".join(out)}</div>'
 def still_geo(fig, every=7):
     """award a3 (4K inspector): where the hero still's drawing lies in its stage, for the caption without JavaScript (or
     WebGL). research.css hangs the hedge under the drawing's left edge, as figure.js does with the live drawing (--fig-l,
     --fig-b), from three numbers in units of the stage's height (the viewBox's 400): the viewBox's width (--fs-w), how far
-    the drawing reaches left of the centre (--fs-x) and below it (--fs-y). Every point counts, as figure.js's edge sample"""
+    the drawing reaches left of the centre (--fs-x) and below it (--fs-y). Every point counts, as figure.js's edge sample.
+    award a4: a keyed still (KEYED) also gives the viewBox's width in its units (--fs-vbw), for its labels, and the hedge
+    hangs under the key's words"""
     dots, rules = _projected(fig)
     xm = max([abs(d[0]) for i, d in enumerate(dots, 1) if not i % every] + [abs(q[0]) for ln in rules for q in ln])
     x0 = min([d[0] for d in dots] + [q[0] for ln in rules for q in ln]); y1 = max(d[1] for d in dots)
-    return f"--fs-w:{2 * math.ceil(xm + 12) / 400:.4f};--fs-x:{-x0 / 400:.4f};--fs-y:{y1 / 400:.4f}"
-def margin_still(fig, every=5):
+    vbw = 2 * math.ceil(xm + 12)
+    if fig not in KEYED: return f"--fs-w:{vbw / 400:.4f};--fs-x:{-x0 / 400:.4f};--fs-y:{y1 / 400:.4f}"
+    # the hedge hangs under the key's lowest words (the axis): their point, then 18 px of rule and a 15 px line (--fs-kb)
+    proj = _camera(fig); y1 = max([y1] + [proj(*l[2])[1] for l in LABELS[fig] if l[3] == "b"])
+    return f"--fs-w:{vbw / 400:.4f};--fs-x:{-x0 / 400:.4f};--fs-y:{y1 / 400:.4f};--fs-vbw:{vbw};--fs-kb:2.0625rem"
+# award a4 (a4-design, medium: "the figure follows the argument"): the part of a note's drawing that a part of the note
+# names. While "In this note" marks that part (research.js), the margin plate lights it: its dots at full strength over
+# the rest of the drawing, which recedes, and its label (the hero's words, LABELS) beside it, in the figure.js pulse's
+# grammar (.is-lit). Only where the note's own text names a part the drawing has (its heading or its words); every other
+# part of the note shows the whole still, as before. Keys: the part heads, word for word (the build stops otherwise);
+# the label LABELS names; which of the formation's points are that part (figure.js FORMS: x, y, z, kind; None: the
+# plate's rule, note 09's floor). No new data and no new words: a label the hero already shows, a part already drawn
+PARTS = {
+    "horizon": [("The problem is horizon, not capability", "p to the power n", lambda x, y, z, k: k == 0),  # "p to the n"
+                ("Decomposition changes the exponent", "a gate after every step", lambda x, y, z, k: k in (1, 2))],  # the gate after step k
+    "weights": [("Post-training moves the rulebook into the weights", "one base model", lambda x, y, z, k: math.hypot(x, y - 0.22, z) < 0.5),
+                ("Parameter-efficient specialization and the forgetting problem", "adapters", lambda x, y, z, k: 0.71 < math.hypot(x, y - 0.22, z) < 0.73),
+                (("Part two: proving what happened", "What must go in the record", "Replay as off-policy evaluation"), "the record", lambda x, y, z, k: y < -0.36)],
+    "swarm": [("The verification argument", "one gate, one job each", lambda x, y, z, k: x > 0.15)],  # "small agents are verifiable ... at which gate"
+    "boundary": [(("Why the boundary sits there", "MCP as the structural interface"), "the boundary", lambda x, y, z, k: abs(y) < 0.03),
+                 ("Idempotency as a safety property", "05–08 execute", lambda x, y, z, k: y < -0.05)],  # "the execution layer"
+    "rulebook": [("Exceptions are the training set", "documents, exceptions", lambda x, y, z, k: math.hypot(x, z) > 0.9),
+                 ("Why this creates a defensible position", "the post-trained model", lambda x, y, z, k: math.hypot(x, z) < 0.8)],  # "a post-trained model is a moat"
+    "council": [("What the council checks", "Execution Council", lambda x, y, z, k: k == 0),
+                ("Three operating modes", "approved", lambda x, y, z, k: k == 2 and y > -1.0),  # "every approved proposal"
+                ("Conflict arbitration", "proposals", lambda x, y, z, k: k == 1)],  # "two decision agents propose actions"
+    "ledger": [("Why append-only", "hash of the previous record", lambda x, y, z, k: k == 2 and not (x > 0.885 and y < -0.475))],  # the links, not the newest block
+    "sessions": [("The result", "floor", None)],  # "every one above the floor we set of ten basis points": the rule
+    "mastercopy": [("Phase one: prove one", "master agent", lambda x, y, z, k: k == 2),
+                   ("Phase two: master and copy", "copies", lambda x, y, z, k: k in (0, 1) and y > -0.6)],
+}
+# a label's words beside its point on a margin plate, in CSS px where the plate is narrowest (1440: 278 px for its 300
+# units); research.css .fl / .fl-t: 11 px mono (an advance of .62 em with the tracking), 1.35 leading, the rule's 19 px
+# lead beside the point, 18 px above or below it, the tl/tr words 6 px past it. Where no side fits, the box grows
+_PU, _CH, _LH = 278 / 300, 0.62 * 11, 1.35 * 11
+_NEAR = {"r": "tr br l tl bl t b", "l": "tl bl r tr br t b", "t": "tl tr b bl br r l", "b": "bl br t tl tr l r",
+         "tl": "t tr l bl r", "tr": "t tl r br l", "bl": "b br l tl r", "br": "b bl r tr l"}
+_NEAR = {k: v.split() for k, v in _NEAR.items()}
+# where a part's label stands on the small plate when the hero's point would put its words on its own part or past the
+# plate's edge: another point of the same part (the formation's own space) and its side. "hash of the previous record"
+# on the link between records 02 and 03, its words in the empty corner above the chain; "05-08 execute" under the
+# lowest layer; "one base model" over the sphere's top (beside its left edge the words took a third of the plate)
+PLATE_AT = {"hash of the previous record": ((-0.571, 0.314, 0.156), "tr"), "05–08 execute": ((0.0, -0.71, 0.0), "b"),
+            "one base model": ((0.0, 0.68, 0.0), "t")}
+def _lbox(side, ax, ay, w, h):
+    if side in ("r", "l"):
+        x0 = ax + 19 if side == "r" else ax - 19 - w
+        return x0, ay - 0.675 * 11, x0 + w, ay - 0.675 * 11 + h
+    y0 = ay - 18 - h if side[0] == "t" else ay + 18
+    x0 = ax - w / 2 if len(side) == 1 else ax + 6 - w if side[1] == "l" else ax - 6
+    return x0, y0, x0 + w, y0 + h
+def margin_still(fig, slugs=(), every=5):
     """award a3 (a3-design, big): the margin plate beside a note's text (from 1440 px; research.css .np-rail) is the
     note's own still, drawn again for its size: the drawing cropped to its own extent (plus a margin), every 5th point
     (the hero's still has every 7th over four times the area: at this size the plate needs more to read as the same
@@ -404,37 +492,104 @@ def margin_still(fig, every=5):
     show, a phone never fetches it. Its dots scale with the plate (2 px at 1440, 5 at 3840 = 1920 doubled). A plate's
     rule (note 09's floor) is not in the file: research.css draws it over the image as a hairline (--hair), crisp at any
     density. Returns the <img> (and the rule) for the note's markup. Its caption is the hero's (cap_html: the hedge, note
-    09's key): no new words beside a repeated drawing"""
-    dots, rules = _projected(fig)
+    09's key).
+    award a4: each part a part of the note names (PARTS) is a second file, plate-<fig>-<n>.svg: the same dots of that
+    part, at full strength, laid over the still and shown while the note's contents mark that part (research.js;
+    research.css .np-part); its label stands beside it then. A keyed figure (KEYED: note 09) carries its key on the plate
+    at all times. The box grows until every label it may show fits inside it at 1440, on its own side or the next free one"""
+    dots, rules = _projected(fig, model=True)
     pick = [d for i, d in enumerate(dots, 1) if not i % every]
+    proj = _camera(fig)
+    byname = {l[0]: l for l in LABELS[fig]}
+    parts = []
+    for heads_, name, test in PARTS.get(fig, []):
+        hs = heads_ if isinstance(heads_, tuple) else (heads_,)
+        for h_ in hs: assert slugify(h_) in slugs, f"PARTS[{fig!r}]: “{h_}” is not a part head of its note"
+        parts.append((" ".join(slugify(h_) for h_ in hs), byname[name], test))
+    # the labels the plate may show: the key (always), each part's label (while lit); a key label a part names is lit too
+    labs = {}
+    if fig in KEYED:
+        for l in LABELS[fig]:
+            if "minor" not in l[4].split(): labs[l[0]] = [l, True, [], []]
+    for ss, l, test in parts:
+        e = labs.setdefault(l[0], [l, False, [], []]); e[2].append(ss)
+        if test: e[3].append(test)
     xs = [d[0] for d in pick] + [q[0] for ln in rules for q in ln]; ys = [d[1] for d in pick] + [q[1] for ln in rules for q in ln]
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
-    w, h = x1 - x0, y1 - y0
-    W, H = w * 1.16, h * 1.2  # the drawing with a margin; then the box's shape clamped to 1:1 .. 8:5 (a tall drawing in
-    W = max(W, H); H = max(H, W / 1.6)  # a square, a flat one in an 8:5 box, centred)
-    s = 300 / W; hb = round(H * s)
-    ox, oy = (x0 + x1) / 2, (y0 + y1) / 2
-    X = lambda x: round((x - ox) * s + 150); Y = lambda y: round((y - oy) * s + H * s / 2)
-    groups = {}
+    for _ in range(16):
+        w, h = x1 - x0, y1 - y0
+        W, H = w * 1.16, h * 1.2  # the drawing with a margin; then the box's shape clamped to 1:1 .. 8:5 (a tall drawing in
+        W = max(W, H); H = max(H, W / 1.6)  # a square, a flat one in an 8:5 box, centred)
+        s = 300 / W; hb = round(H * s)
+        ox, oy = (x0 + x1) / 2, (y0 + y1) / 2
+        fx = lambda x: (x - ox) * s + 150; fy = lambda y: (y - oy) * s + H * s / 2
+        placed, grow = [], [0.0, 0.0, 0.0, 0.0]
+        for l, perm, sss, tests in labs.values():
+            text, sub, at, side, flags = l[:5]
+            if "minorsub" in flags.split(): sub = None
+            k = _keep(flags); allowed = k.partition("=")[2].split(",") if k and "=" in k else None
+            if l[0] in PLATE_AT: at, side = PLATE_AT[l[0]]
+            ax, ay = proj(*at)[:2]
+            px, py = fx(ax) * _PU, fy(ay) * _PU
+            tw, th = max(len(t) for t in (text, sub) if t) * _CH, (2 if sub else 1) * _LH
+            # a key keeps the hero's side (its own, or a hedge's allowed ones); a part's label, shown only while the rest
+            # of the drawing recedes, may take another side round its point, so long as no dot of its own part is under
+            # its words
+            order = [side] + [sd for sd in (allowed or (() if perm else _NEAR[side])) if sd != side]
+            lit_px = [(fx(d[0]) * _PU, fy(d[1]) * _PU) for d in pick if any(t(*d[4], d[3]) for t in tests)]
+            under = lambda b: sum(1 for x, y in lit_px if b[0] - 3 <= x <= b[2] + 3 and b[1] - 3 <= y <= b[3] + 3)
+            for sd in order:
+                b = _lbox(sd, px, py, tw, th)
+                if b[0] >= 4 and b[1] >= 4 and b[2] <= 300 * _PU - 4 and b[3] <= hb * _PU - 4 and not under(b):
+                    placed.append((l, perm, sss, sd, ax, ay)); break
+            else:  # no side fits: the drawing's extent grows, on the side that keeps the drawing largest (a taller box
+                # costs nothing while the box is wider than tall; a wider one shrinks the drawing)
+                P, best = s * _PU, None
+                for sd in [sd for sd in order if not under(_lbox(sd, px, py, tw, th))] or order[:1]:
+                    b = _lbox(sd, px, py, tw, th)
+                    g = [max(0.0, (4 - b[0]) / P), max(0.0, (b[2] - 300 * _PU + 4) / P), max(0.0, (4 - b[1]) / P), max(0.0, (b[3] - hb * _PU + 4) / P)]
+                    w2, h2 = (x1 - x0) + g[0] + g[1], (y1 - y0) + g[2] + g[3]
+                    sc = 1 / max(w2 * 1.16, h2 * 1.2)
+                    if best is None or sc > best[0] + 1e-9: best = (sc, g)
+                grow = [max(a, b) for a, b in zip(grow, best[1])]
+        if not any(g > 0 for g in grow): break
+        x0 -= max(0.0, grow[0]) + 0.5 * (grow[0] > 0); x1 += max(0.0, grow[1]) + 0.5 * (grow[1] > 0); y0 -= max(0.0, grow[2]) + 0.5 * (grow[2] > 0); y1 += max(0.0, grow[3]) + 0.5 * (grow[3] > 0)
+    else:
+        raise AssertionError(f"margin_still({fig!r}): a label does not fit its plate")
+    X = lambda x: round(fx(x)); Y = lambda y: round(fy(y))
     # pass 3: nearer than the drawing's own median depth is the bright half (a fixed 0.5 left note 09's columns and the
     # council all "far": grey beside the key's "white", and dimmer than the hero they repeat)
     med = sorted(d[2] for d in pick)[len(pick) // 2]
-    for sx, sy, depth, k in pick: groups.setdefault((k, depth > med), set()).add((Y(sy), X(sx)))
     num = lambda v: str(v) if v < 0 else f" {v}"
     # site.css's tokens: --paper, --khaki, --signal-bright, --reject-bright (the hero still's .fs-still .k0-.k3)
     COL = {0: "#F5F2EC", 1: "#ACA68E", 2: "#4FCB93", 3: "#D9675D"}
-    OP = {(2, True): ".95", (2, False): ".74"}
-    paths = []
-    for (k, near), pts in sorted(groups.items()):
-        d, px, py = [], None, None
-        for y, x in sorted(pts):
-            d.append(f"M{x} {y}h0" if px is None else f"m{x - px}{num(y - py)}h0"); px, py = x, y
-        paths.append(f'<path stroke="{COL[k]}" stroke-opacity="{OP.get((k, near), ".9" if near else ".58")}" d="{"".join(d)}"/>')
-    write(os.path.join(ROOT, "assets", "img", "research", f"plate-{fig}.svg"),
-          f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 {hb}" width="300" height="{hb}"><g fill="none" stroke-width="2.16" stroke-linecap="round">'
-          + "".join(paths) + "</g></svg>\n")
-    rule = "".join(f'<i class="np-rule" style="--y:{((a[1] - oy) * s + H * s / 2) / hb * 100:.2f}%;--x0:{((a[0] - ox) * s + 150) / 3:.2f}%;--x1:{((b[0] - ox) * s + 150) / 3:.2f}%"></i>' for a, b in rules)
-    return f'<img class="np-still" src="../assets/img/research/plate-{fig}.svg" width="300" height="{hb}" alt="" loading="lazy" decoding="async">{rule}'
+    def svg(name, sel, op):
+        groups = {}
+        for d in sel: groups.setdefault((d[3], d[2] > med), set()).add((Y(d[1]), X(d[0])))
+        paths = []
+        for (k, near), pts in sorted(groups.items()):
+            dd, px, py = [], None, None
+            for y, x in sorted(pts):
+                dd.append(f"M{x} {y}h0" if px is None else f"m{x - px}{num(y - py)}h0"); px, py = x, y
+            paths.append(f'<path stroke="{COL[k]}" stroke-opacity="{op(k, near)}" d="{"".join(dd)}"/>')
+        write(os.path.join(ROOT, "assets", "img", "research", name),
+              f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 {hb}" width="300" height="{hb}"><g fill="none" stroke-width="2.16" stroke-linecap="round">'
+              + "".join(paths) + "</g></svg>\n")
+    svg(f"plate-{fig}.svg", pick, lambda k, near: {(2, True): ".95", (2, False): ".74"}.get((k, near), ".9" if near else ".58"))
+    lit = {}  # the rule's parts
+    out = [f'<img class="np-still" src="../assets/img/research/plate-{fig}.svg" width="300" height="{hb}" alt="" loading="lazy" decoding="async">']
+    for n, (ss, l, test) in enumerate(parts, 1):
+        if test is None: lit.setdefault("rule", []).append(ss); continue
+        sel = [d for d in pick if test(*d[4], d[3])]
+        assert sel, f"PARTS[{fig!r}]: “{l[0]}” selects no point"
+        svg(f"plate-{fig}-{n}.svg", sel, lambda k, near: "1" if near or k == 2 else ".8")  # the part at full strength
+        out.append(f'<img class="np-part" data-parts="{ss}" src="../assets/img/research/plate-{fig}-{n}.svg" width="300" height="{hb}" alt="" loading="lazy" decoding="async">')
+    rp = f' data-parts="{" ".join(lit["rule"])}"' if "rule" in lit else ""
+    out += [f'<i class="np-rule"{rp} style="--y:{fy(a[1]) / hb * 100:.2f}%;--x0:{fx(a[0]) / 3:.2f}%;--x1:{fx(b[0]) / 3:.2f}%"></i>' for a, b in rules]
+    for l, perm, sss, sd, ax, ay in placed:
+        out.append(_fl((l[0], l[1], l[2], sd, l[4]), f"--x:{fx(ax) / 3:.2f}%;--y:{fy(ay) / hb * 100:.2f}%", " np-key" if perm else "",
+                       f' data-parts="{" ".join(sss)}"' if sss else "", plate=True))
+    return "".join(out)
 # v2x: notes link to the instruments they describe (PAGES.md §6.4, NL-01..NL-10); targets are relative to research/
 # award a3 (a3-ux): the desk is Lifecycles #desk (its own hero links there; the cut moved it off #lc01), and the act on
 # the chain has one verb sitewide, "Change a record" (Home §06, Trust)
@@ -615,12 +770,12 @@ def chrome(prefix, current):
 # head this build writes is the head the chain leaves
 CARD_ALT = " Beside it, the note’s figure, drawn as a still."
 INDEX_CARD_ALT = " Beside it, the page’s library figure: the notes as an open book of stippled leaves."
-def og(prefix, url, title, desc, h1=None, pic=CARD_ALT):
+def og(prefix, url, title, desc, h1=None, pic=CARD_ALT, links=""):
     alt = (h1 or title).rstrip(); alt = (alt if alt[-1] in ".!?" else alt + ".") + pic  # a title without its own stop gets one
     return f'''  <meta name="description" content="{H.escape(desc, quote=True)}">
   <meta name="theme-color" content="#0E1512">
   <link rel="canonical" href="{url}">
-  <meta property="og:url" content="{url}">
+{links}  <meta property="og:url" content="{url}">
   <meta property="og:site_name" content="OpenEXA">
   <meta property="og:type" content="article">
   <meta property="og:title" content="{H.escape(title, quote=True)}">
@@ -676,6 +831,9 @@ for i, post in enumerate(ordered):
     url = f"https://www.openexa.com/{post['file']}"
     n = f"{post['order']:02d}"
     run = "".join(f'<li><a class="link-arrow" href="{href}">{H.escape(text, quote=False)}{NB}{ARROW}</a></li>' for text, href in RUN[post["fig"]])
+    # award a4 (a4-dev, polish): the ten notes are one series for crawlers too, as the blog's series is: rel prev / next in
+    # the reading order 01-10 (isPartOf is already the CreativeWorkSeries, with its position)
+    rel_links = "".join(f'  <link rel="{r}" href="{HOME}{q["file"]}">\n' for r, q in (("prev", prev), ("next", nxt)) if q)
     long_title = len(re.sub(r" A Research Note on .+$", "", title)) > 52
     first = "<a class='pager-card' href='../research.html'><span class='k'>← Research</span><h3>All ten notes</h3></a>"
     last = "<a class='pager-card next' href='../access.html'><span class='k'>Next →</span><h3>Bring us a lifecycle.</h3></a>"
@@ -685,7 +843,7 @@ for i, post in enumerate(ordered):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{H.escape(title)} — OpenEXA Research</title>
-{og("../", url, title + " — OpenEXA Research", meta_desc, title)}
+{og("../", url, title + " — OpenEXA Research", meta_desc, title, links=rel_links)}
   {ld({"@type": "TechArticle", "@id": url + "#article", "headline": title, "description": dek, "url": url, "mainEntityOfPage": url,
         "datePublished": PUBLISHED, "inLanguage": "en", "image": [og_image(url)], "author": ORG, "publisher": ORG,
         "isPartOf": SERIES_LD, "position": post["order"], "wordCount": post["words"], "timeRequired": f"PT{post['minutes']}M"},
@@ -697,7 +855,7 @@ for i, post in enumerate(ordered):
 {nav}
   <main id="main">
     <section class="page-hero page-hero--dark is-dark grain article-hero" style="{still_geo(post['fig'])}">
-      <div class="figure-stage article-figure has-still" data-figure="{post['fig']}"{stage_data(post['fig'])} data-spin="0.10" data-plate data-rest="2.5" data-bbox aria-hidden="true">{note_still(post['fig'])}<canvas></canvas>{labels_html(post['fig'])}</div>
+      <div class="figure-stage article-figure has-still" data-figure="{post['fig']}"{stage_data(post['fig'])} data-spin="0.10" data-plate data-rest="2.5" data-bbox aria-hidden="true">{note_still(post['fig'])}{still_keys(post['fig'])}<canvas></canvas>{labels_html(post['fig'])}</div>
       <div class="container">
         <div class="article-hero-grid">
           <div>
@@ -723,7 +881,7 @@ for i, post in enumerate(ordered):
             <div class="note-run"><ul>{run}</ul></div>
             <div class="note-disc"><p>{H.escape(SERIES_DISCLOSURE, quote=False)} <a href="#disclosures">See the disclosures.</a></p></div>
           </article>
-          <div class="np-rail" aria-hidden="true"><figure class="np-plate"><div class="np-stage is-dark">{margin_still(post['fig'])}</div><figcaption>{cap_html(post['fig'], "figcap np-cap")}</figcaption></figure></div>
+          <div class="np-rail" aria-hidden="true"><figure class="np-plate"><div class="np-stage is-dark">{margin_still(post['fig'], {a for a, _ in heads})}</div><figcaption>{cap_html(post['fig'], "figcap np-cap")}</figcaption></figure></div>
         </div>
       </div>
     </section>

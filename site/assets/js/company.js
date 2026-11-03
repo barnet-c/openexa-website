@@ -11,7 +11,9 @@
       with the proposal on the boundary: what readers see without JavaScript and under reduced motion. It runs only on
       screen, with Pause motion; the constant being read (from 961 px) or pointed at is marked on the plate.
       The still SVG in company.html is maintained by hand: it is draw(lay(SHAPES[0])) with the proposal on the boundary,
-      so a change to SHAPES[0], CX/CY or the label positions means redrawing it to match (r1, 31 Oct). */
+      so a change to SHAPES[0], CX/CY or the label positions means redrawing it to match (r1, 31 Oct).
+      award a4 (pixel): the labels are HTML over the drawing (.kl-labs, at the plate-label token, so they no longer scale
+      with the plate); the running line is .k-state there, and the Council's label follows the Council. */
 (function () {
   'use strict';
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -46,7 +48,8 @@
     const mix = (A, B, t) => { const o = {}; for (const k in A) o[k] = Array.isArray(A[k]) ? A[k].map((v, i) => lerp(v, B[k][i], t)) : lerp(A[k], B[k], t); return o; };
     const loopUp = one('.k-loop--up'), loopDn = one('.k-loop--dn'), gUp = all('.k-gate--up'), gDn = all('.k-gate--dn');
     const council = one('.k-council'), stop = one('.k-stop'), bar = one('.k-bar'), lead = one('.k-lead');
-    const tok = one('.k-tok'), recs = one('.k-recs'), bnd = all('.k-bnd'), state = one('.k-state');
+    const tok = one('.k-tok'), recs = one('.k-recs'), bnd = all('.k-bnd'), state = fig.querySelector('.k-state');
+    const clab = fig.querySelector('.kl--council'), pc = (v, d) => String(Math.round(v / d * 1e4) / 100); // % of 640 x 470
     const say = t => { if (state && state.textContent !== t) state.textContent = t; };
     const spur = document.createElementNS(NS, 'path');
     spur.setAttribute('class', 'k-spur'); spur.setAttribute('opacity', '0'); council.parentNode.insertBefore(spur, council);
@@ -65,6 +68,7 @@
       });
       gDn.forEach((g, j) => { const [x, y] = pt(L, L.dn[j]); at(g, x, y); g.setAttribute('opacity', f(L.do[j])); });
       const [cx, cy] = pt(L, lastOf(L.up, L.uo)); at(council, cx, cy);
+      if (clab) { clab.style.setProperty('--x', pc(cx + 16, 640)); clab.style.setProperty('--y', pc(cy + 24, 470)); }
       const [ex, ey] = pt(L, L.dn[0]); stop.setAttribute('d', `M${f(ex - 9)} ${f(ey)}H160`); bar.setAttribute('d', `M156 ${f(ey - 8)}V${f(ey + 8)}`);
       const [sx, sy] = pt(L, lastOf(L.dn, L.do)); lead.setAttribute('d', `M${f(sx)} ${f(sy + 8)}V372H${LX}V${LY - 6}`);
     }

@@ -11,6 +11,8 @@
     {"route": "/for-managers", "redirect": "/access#managers", "statusCode": 301},
     {"route": "/for-investors", "redirect": "/access#investors", "statusCode": 301},
     {"route": "/beta", "redirect": "/access", "statusCode": 301},
+    {"route": "/proof", "redirect": "/evidence", "statusCode": 301},
+    {"route": "/proof.html", "redirect": "/evidence", "statusCode": 301},
     {"route": "/research/blog/tearsheet-how-to-use-tearsheet-in-the-face-of-volatile-crypto-and-bond-markets-as-a-means-of-capital-preservation-and-asset-appreciation*", "redirect": "/blog/tearsheet-how-to-use-tearsheet-in-the-face-of-volatile-crypto-and-bond-markets-as-a-means-of-capital-preservation-and-asset-appreciation.html", "statusCode": 301},
     {"route": "/research/blog/rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies*", "redirect": "/blog/rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies.html", "statusCode": 301},
     {"route": "/research/blog/empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way*", "redirect": "/blog/empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way.html", "statusCode": 301},

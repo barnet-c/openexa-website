@@ -817,7 +817,7 @@
   // the copy's mode, measured: compact on portrait screens that would leave a scene under 40% of the stage
   function setModes() {
     stacked = stackedMQ.matches; CAM = stacked ? CAM_ST : CAM_W;
-    root.classList.remove('story-compact', 'story-short');
+    root.classList.remove('story-compact', 'story-short', 'story-figs-01');
     beats.forEach(b => b.classList.remove('is-tight', 'is-snug'));
     compact = stacked && (H < 780 || W < 600); short = !stacked && H < 600; // (a portrait phone is compact in CSS from the first paint)
     if (stacked && !compact) {
@@ -827,6 +827,9 @@
     }
     root.classList.toggle('story-compact', compact); root.classList.toggle('story-short', short);
     measureLayout();
+    // (award a4) a portrait tablet keeps v2's four figures under the buttons (owner, 2 Nov); where they would leave the globe
+    // under 36% of the stage, the row falls back to the phone's 01 line, never to nothing
+    if (compact && W >= 600 && beatRects[0] && beatRects[0].t - 14 - (navH + barH + capH[0] + 8) < 0.36 * H) { root.classList.add('story-figs-01'); measureLayout(); }
     const lim = navH + (stacked ? barH : 0) + 6;
     let tight = false;
     // a short screen: the hero's definition gives way first, so the CEO's sub-line keeps its place where it can
@@ -1765,7 +1768,7 @@
     tiny = on;
     if (on) {
       stopFrames(); clearTimeout(idleTimer);
-      root.classList.remove('story-compact', 'story-short'); root.classList.add('story-tiny');
+      root.classList.remove('story-compact', 'story-short', 'story-figs-01'); root.classList.add('story-tiny');
       beats.forEach(b => { b.style.opacity = b.style.transform = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-tight', 'is-snug', 'is-bo0'); });
       if (bar) bar.style.opacity = bar.style.visibility = '';
       if (paper) paper.style.height = paper.style.visibility = '';
@@ -1812,14 +1815,22 @@
     sceneScroll();
     requestFrame();
   }
-  // the globe's place on <html> (--globe-x/-y: its centre, --globe-r: its radius; px in the window) for the loader's
-  // hand-off (loader.js, system): three writes, no reads
+  // the globe's place for the loader's hand-off (loader.js, system): its centre and radius, px in the window, as
+  // html[data-globe] "x y r" (an attribute no selector reads: writing it restyles nothing) and, while the loader is up and
+  // does not say it reads that (html[data-globe-read]), as --globe-x/-y/-r on <html>'s inline style. (award a4: any inline
+  // style write on <html> restyles the whole drawn page, 857 elements, 30-50 ms at 4x CPU in the overture's first frame;
+  // it is now written only when the place changes and only while the loader can still read it)
+  let shownGlobe = null;
   function publishGlobe() {
-    const L0 = layouts[0], st = root.style;
-    if (!(L0.cy > 0) || frameTiny[0]) { ['--globe-x', '--globe-y', '--globe-r'].forEach(v => st.removeProperty(v)); return; }
-    st.setProperty('--globe-x', L0.cx.toFixed(1) + 'px');
-    st.setProperty('--globe-y', (L0.cy + Math.max(0, storyTop - scrollY)).toFixed(1) + 'px');
-    st.setProperty('--globe-r', (L0.s * pxuOf(H)).toFixed(1) + 'px');
+    const L0 = layouts[0];
+    const v = !(L0.cy > 0) || frameTiny[0] ? '' : `${L0.cx.toFixed(1)} ${(L0.cy + Math.max(0, storyTop - scrollY)).toFixed(1)} ${(L0.s * pxuOf(H)).toFixed(1)}`;
+    if (v === shownGlobe) return;
+    shownGlobe = v;
+    if (v) root.dataset.globe = v; else delete root.dataset.globe;
+    if (root.hasAttribute('data-globe-read') || !document.querySelector('.loader:not(.is-done)')) return;
+    const st = root.style, [x, y, r] = v.split(' ');
+    if (!v) { ['--globe-x', '--globe-y', '--globe-r'].forEach(k => st.removeProperty(k)); return; }
+    st.setProperty('--globe-x', x + 'px'); st.setProperty('--globe-y', y + 'px'); st.setProperty('--globe-r', r + 'px');
   }
   function drawBulk(halo) {
     const pr = P.bulk, u = pr.u;
@@ -2003,7 +2014,7 @@
     }
     running = false; stopFrames(); clearTimeout(lostTimer); clearTimeout(idleTimer);
     beats.forEach(b => { b.style.opacity = b.style.transform = b.style.visibility = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-relay', 'is-tight', 'is-snug', 'is-bo0'); });
-    root.classList.remove('story-compact', 'story-short', 'story-tiny');
+    root.classList.remove('story-compact', 'story-short', 'story-tiny', 'story-figs-01');
     beatLinks.forEach(list => list.forEach(el => el.removeAttribute('tabindex')));
     labels.forEach(l => l.el.remove()); leaders.remove();
     if (bar) bar.style.opacity = bar.style.visibility = '';

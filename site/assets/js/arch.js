@@ -17,6 +17,7 @@
   const ease3 = (t) => 1 - Math.pow(1 - t, 3);
   const inout = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   const f1 = (v) => (Math.round(v * 10) / 10).toString();
+  const f2 = (v) => (Math.round(v * 100) / 100).toString();
   const f3 = (v) => (Math.round(v * 1000) / 1000).toString();
   function S(tag, attrs, parent) {
     const e = document.createElementNS(NS, tag);
@@ -77,6 +78,12 @@
     const N = items.length;
     if (N < 2 || items.some((it) => !it.body || it.body.tagName !== 'DIV' || !it.name)) { root.classList.add('is-plain'); return; } // not the markup this expects: leave the list
     if (bIndex < 1 || bIndex >= N) bIndex = Math.ceil(N / 2);
+    // (award a4) data-arch-rest: with nothing pointed at, the readout (wide) rests on one layer's card, still, so the
+    // instrument never opens on an empty third: the layer the attribute names ("04"), else the one just above the
+    // boundary, the Execution Council every proposal passes. Without the attribute the overview rests there, as before.
+    const restAttr = root.getAttribute('data-arch-rest');
+    let restI = restAttr === null ? -1 : items.findIndex((it) => it.num === restAttr.trim());
+    if (restAttr !== null && restI < 0) restI = bIndex - 1;
     const floorTxt = fEl ? txt(fEl.querySelector('p') || fEl).replace(/^[—–-]\s*/, '') : ''; // what the stack stands on: the rails
     const sideOf = (sel) => {
       const p = bEl && bEl.querySelector(sel);
@@ -424,6 +431,8 @@
         rowC = btns.map((b) => { const r = b.getBoundingClientRect(); return r.top - fr.top + r.height / 2; });
         const br = bRow.getBoundingClientRect(); by = br.top - fr.top + br.height / 2;
         if (fRow) { const r = fRow.getBoundingClientRect(); fy = r.top - fr.top + r.height / 2; } // level with its label
+        dpr = window.devicePixelRatio || 1;
+        leadW = Math.max(1, Math.round((parseFloat(getComputedStyle(cardLead).strokeWidth) || 1) * dpr));
         cx = (readR + listL) / 2; halfW = clamp((listL - readR) / 2 - 42 * k, 96 * k, 178 * k);
         F0 = 19 * DEG; thick = 7 * k; base = rowC.slice();
       } else {
@@ -484,7 +493,7 @@
     }
 
     /* ---------------- 5 · state ---------------- */
-    let hover = -1, focus = -1, open = -1, hot = -2, kbd = false, hoverTimer = 0, pointerOn = false;
+    let hover = -1, focus = -1, open = -1, hot = -2, show = -2, kbd = false, hoverTimer = 0, pointerOn = false;
     let reduced = reduceMQ.matches, paused = false, visible = false, started = false, exStart = -1, ex = 0, t = 0;
     // (award a1, a1-dev) the first measure waits until the instrument is within a screen of the window: an arrival (and its
     // view transition) lays out no explorer it cannot see, and a chapter skipped by content-visibility stays skipped
@@ -494,6 +503,10 @@
     let prerolled = false; // the flow, run ahead once when the stack opens
     const cardY = { x: 0, v: 0 };
     let cardTop = 0, cardH = 0, titleOff = 0, cardVis = 0, figTop = 0, navHc = 72;
+    // (a4) the callout's level runs on whole device rows: the browser snaps the drawing's origin to a device pixel, so a
+    // run's centre goes on a row centre (odd device widths) or a row edge (even); its width is read once per measure
+    let dpr = 1, leadW = 1;
+    const snapTo = (v) => (Math.round(v * dpr - leadW / 2) + leadW / 2) / dpr;
     const measureCard = () => { cardH = card.offsetHeight; titleOff = snm.offsetTop + snm.offsetHeight / 2; };
     // at rest the plates hold still (the beads, the flow and the Council's pulse carry the motion)
     const plateY = (i) => by + (base[i] - by) * exOf(i) + plates[i].off.x;
@@ -516,7 +529,7 @@
       sside.classList.toggle('is-below', !above);
       scue.textContent = open === i ? '' : spec ? (fineMQ.matches ? 'Click, or press Enter, to read its spec below' : 'Tap to read its spec below')
         : fineMQ.matches ? 'Click, or press Enter, to read more' : 'Tap to read more';
-      scue.hidden = open === i;
+      scue.hidden = open === i || (i === show && hot < 0); // the rest card is no layer you are at: no cue
     }
     /* One layer's summary gives way to the next out, then in, never both at once */
     let swapTimer = 0, swapTo = -1, swapEnd = 0;
@@ -531,7 +544,7 @@
       if (swapTo >= 0 || now < swapEnd) { swapNow(i); swapEnd = now + 310; return; } // mid-swap: no waiting, no fading
       swapTo = i; swapEnd = now + 310;
       sum.classList.remove('is-swap'); sum.classList.add('is-out');
-      swapTimer = setTimeout(() => { if (swapTo >= 0) swapIn(hot >= 0 ? hot : swapTo); }, 90);
+      swapTimer = setTimeout(() => { if (swapTo >= 0) swapIn(show >= 0 ? show : swapTo); }, 90);
     }
     /* The instrument never changes height while you point around it */
     let peekMax = 0, openH = 0;
@@ -544,7 +557,7 @@
       openH = 0;
       if (open >= 0) { fillSum(open); card.classList.remove('is-peek'); openH = card.offsetHeight; }
       card.classList.toggle('is-peek', was);
-      if (hot >= 0) fillSum(hot);
+      if (show >= 0) fillSum(show);
       measureCard();
       const need = Math.ceil(readTop + Math.max(peekMax, openH) + 40);
       if (Math.abs(need - minH) > 1) { minH = need; inst.style.setProperty('--arch-cardh', need + 'px'); }
@@ -553,14 +566,16 @@
     function setHot(deferred) {
       if (deferred) { if (!hotQ) hotQ = requestAnimationFrame(() => { hotQ = 0; setHot(); }); return; }
       const h = hover >= 0 ? hover : focus >= 0 ? focus : open;
-      if (h === hot) return;
-      const was = hot;
-      hot = h;
-      inst.classList.toggle('has-hot', hot >= 0 && wide);
+      const s = h >= 0 ? h : restI >= 0 && wide && started ? restI : -1; // the card shown: the hot layer's, else the rest card
+      if (h === hot && s === show) return;
+      const was = show;
+      hot = h; show = s;
+      inst.classList.toggle('has-hot', show >= 0 && wide);
+      inst.classList.toggle('is-rest', show >= 0 && hot < 0);
       btns.forEach((b, i) => b.classList.toggle('is-hot', i === hot));
       plates.forEach((p, i) => setA(p.num, 'class', 'ap-num' + (i === hot ? ' is-hot' : '')));
-      card.classList.toggle('is-peek', hot !== open);
-      if (hot >= 0) { figTop = fig.getBoundingClientRect().top; fillCard(hot, wide && was >= 0 && cardVis > 0.5); }
+      card.classList.toggle('is-peek', show !== open);
+      if (show >= 0) { figTop = fig.getBoundingClientRect().top; fillCard(show, wide && was >= 0 && cardVis > 0.5); }
       kick();
     }
     function placePanels() {
@@ -576,7 +591,7 @@
       if (open >= 0) { btns[open].setAttribute('aria-expanded', 'true'); panels[open].hidden = false; }
       inst.classList.toggle('has-open', open >= 0);
       placePanels();
-      hot = -2; setHot();
+      hot = show = -2; setHot();
       reserve();
       kick();
     }
@@ -603,7 +618,7 @@
       // one sentence in Inter (award a2, ux): the keys stay in it, as the way in without a pointer
       hint.textContent = wide && fineMQ.matches ? 'Choose a layer, or use ↑ ↓ and Enter' : spec ? (fineMQ.matches ? 'Click a plate for its spec' : 'Tap a plate for its spec')
         : fineMQ.matches ? 'Click a layer to open it' : 'Tap a layer to open it';
-      hot = -2; setHot();
+      hot = show = -2; setHot();
       if (!near) return; // measured when it comes near (below)
       if (defer) requestAnimationFrame(() => { measure(); kick(true); }); // the build reads no layout: geometry in its first frame
       else { measure(); kick(true); }
@@ -797,7 +812,7 @@
     function decide(f) {
       f.decided = true; pulse = 1;
       if (f.reject) { setKind(f, 'reject'); f.segs.length = f.s + 1; } // its way ends here: it falls away
-      else { f.ringR = 4.2; setA(f.mk, 'stroke-width', f1(2 * RK)); setMark(f, 0); } // approved: the ring brightens and goes on
+      else { f.ringR = 4.2; setA(f.mk, 'stroke-width', '1.6'); setMark(f, 0); } // approved: the ring brightens and goes on (1.6: arch.css's --stroke-2, whole device px; a4)
     }
 
     /* ---------------- 8 · the frame ---------------- */
@@ -805,7 +820,7 @@
     function targets() {
       plates.forEach((p, i) => {
         p.tOff = (hot < 0 ? 0 : i === hot ? -14 : i < hot ? -9 : 9) * RK;
-        p.tHeat = i === hot ? 1 : 0;
+        p.tHeat = i === hot ? 1 : hot < 0 && i === show ? 0.35 : 0; // the rest card's plate: lit a little, not lifted
         // only the plate right above overlaps the lifted one (not across the boundary's gap)
         p.tFade = hot < 0 || i === hot ? 0 : i === hot - 1 && hot !== bIndex ? 1 : 0.5;
       });
@@ -826,17 +841,18 @@
       }
       if (exStart >= 0 && ex < 1) { ex = reduced ? 1 : clamp((performance.now() - exStart) / 1300, 0, 1); if (ex < 1) busy = true; }
       if (ex >= 1 && !inst.classList.contains('is-ready')) inst.classList.add('is-ready'); // the stack is open (a hook for tests)
-      const cvT = wide && hot >= 0 ? 1 : 0;
+      const cvT = wide && show >= 0 ? 1 : 0;
       cardVis = snap ? cvT : cardVis + (cvT - cardVis) * (1 - Math.exp(-dt * 11));
       if (Math.abs(cardVis - cvT) > 0.01) busy = true; else cardVis = cvT;
-      // the readout card follows the plate you point at (wide)
-      if (wide && hot >= 0) {
+      // the readout card follows the plate you point at (wide); the rest card stays level with its plate (no screen clamp)
+      if (wide && show >= 0) {
         const inLo = readTop, inHi = Math.max(readTop, Hh - 40 - cardH);       // inside the instrument
         const vTop = navHc + 14 - figTop, vBot = window.innerHeight - 14 - figTop; // on screen, in the drawing's coordinates
-        let lo = Math.max(inLo, vTop), hi = Math.min(inHi, vBot - cardH);
-        if (lo > hi) { lo = Math.max(14, vTop); hi = Math.max(lo, Math.min(Hh - 14 - cardH, vBot - cardH)); } // tight: use the padding too
-        const target = clamp(plateY(hot) - titleOff, lo, hi) - readTop;
-        if (snap || !card.__placed) { cardY.x = target; cardY.v = 0; card.__placed = true; } else if (dt > 0) spring(cardY, target, dt, 15);
+        let lo = hot >= 0 ? Math.max(inLo, vTop) : inLo, hi = hot >= 0 ? Math.min(inHi, vBot - cardH) : inHi;
+        if (lo > hi) { lo = Math.max(14, hot >= 0 ? vTop : 14); hi = Math.max(lo, Math.min(Hh - 14 - cardH, hot >= 0 ? vBot - cardH : Hh)); } // tight: use the padding too
+        const target = clamp(plateY(show) - titleOff, lo, hi) - readTop;
+        // while the stack opens the rest card rides with its plate (no spring lag: the callout stays one straight line)
+        if (snap || !card.__placed || (hot < 0 && ex < 1)) { cardY.x = target; cardY.v = 0; card.__placed = true; } else if (dt > 0) spring(cardY, target, dt, 15);
         if (!still(cardY, target)) busy = true;
         card.style.transform = `translateY(${f1(cardY.x)}px)`;
         cardTop = readTop + cardY.x + titleOff;
@@ -973,11 +989,13 @@
         setA(L.a, 'cx', f1(xa)); setA(L.a, 'cy', f1(ya)); setA(L.a, 'fill-opacity', f3((0.35 + 0.6 * h) * on));
         setA(L.b, 'cx', f1(xb)); setA(L.b, 'cy', f1(yb)); setA(L.b, 'fill-opacity', f3(h * on));
       });
-      if (wide && hot >= 0) { // a technical callout: out of the plate, along, and into the readout at its title
-        const y = plateY(hot), xa = cx + A[0] - 9 * RK, ya = y + A[1], xe = readR + 14 * RK, xm = Math.max(xe + 6 * RK, Math.min(xa - 12 * RK, readR + 30 * RK));
-        setA(cardLead, 'points', `${f1(xa)},${f1(ya)} ${f1(xm)},${f1(ya)} ${f1(xm)},${f1(cardTop)} ${f1(xe)},${f1(cardTop)}`);
-        setA(cardLead, 'stroke-opacity', f3(0.5 * plates[hot].heat.x));
-        setA(cardNode, 'cx', f1(xa)); setA(cardNode, 'cy', f1(ya)); setA(cardNode, 'fill-opacity', f3(plates[hot].heat.x));
+      if (wide && show >= 0) { // a technical callout: out of the plate, along, and into the readout at its title
+        const y = plateY(show), xa = cx + A[0] - 9 * RK, ya = y + A[1], xe = readR + 14 * RK, xm = Math.max(xe + 6 * RK, Math.min(xa - 12 * RK, readR + 30 * RK));
+        const lh = hot >= 0 ? plates[show].heat.x : 0.6 * cardVis; // at rest a quieter callout, in with the card
+        const y1 = snapTo(ya), y2 = Math.abs(cardTop - ya) < 6 * RK ? y1 : snapTo(cardTop), xs = snapTo(xm); // a step under 6 px reads as a slip: one line
+        setA(cardLead, 'points', `${f2(xa)},${f2(y1)} ${f2(xs)},${f2(y1)} ${f2(xs)},${f2(y2)} ${f2(xe)},${f2(y2)}`);
+        setA(cardLead, 'stroke-opacity', f3(0.5 * lh));
+        setA(cardNode, 'cx', f1(xa)); setA(cardNode, 'cy', f1(ya)); setA(cardNode, 'fill-opacity', f3(lh));
       } else { setA(cardLead, 'stroke-opacity', '0'); setA(cardNode, 'fill-opacity', '0'); }
       if (wide) { const ovT = `translateY(${f1(by - readTop)}px)`; if (ov.style.transform !== ovT) ov.style.transform = ovT; }
       setA(ov, 'data-in', ex >= 0.9 ? '1' : '0');
@@ -1053,7 +1071,7 @@
         visible = e.isIntersecting;
         // open the stack once a fair part of it is on screen
         const seen = e.intersectionRect.height >= Math.min(window.innerHeight * 0.32, e.boundingClientRect.height * 0.3);
-        if (visible && seen && exStart < 0) { exStart = performance.now(); started = true; if (reduced) ex = 1; }
+        if (visible && seen && exStart < 0) { exStart = performance.now(); started = true; if (reduced) ex = 1; if (restI >= 0) setHot(); }
       });
       kick();
     }, { threshold: [0, 0.05, 0.1, 0.2, 0.3, 0.5] }).observe(inst);

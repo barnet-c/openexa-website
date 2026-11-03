@@ -388,9 +388,11 @@
       }
       const g = groups[current];
       if (g) g.lines.forEach(ln => [ln.a, ln.b].forEach(q => { if (project(q[0], q[1], q[2], 0, 1, sc, restView)) { if (scr[0] < x0) x0 = scr[0]; if (scr[0] > x1) x1 = scr[0]; } }));
+      // award a4 (r4): the words below the drawing on the side the plan gave them (a hedge label with no room on its own
+      // side drops below on a small stage: note 10's "copies" on a sideways phone) and at the plan's drop
       if (g) g.items.forEach(it => {
-        const t = it.el.firstElementChild, h = t ? t.offsetHeight : 0;
-        if (h && it.side[0] === 'b' && project(it.at[0], it.at[1], it.at[2], 0, 1, sc, restView)) y1 = Math.max(y1, scr[1] + 18 * u + h);
+        const sd = it.sd || it.side, t = it.el.firstElementChild, h = (it.one ? it.h1 : it.h) || (t ? t.offsetHeight : 0);
+        if (h && sd[0] === 'b' && !it.blocked && project(it.at[0], it.at[1], it.at[2], 0, 1, sc, restView)) y1 = Math.max(y1, scr[1] + 18 * u + Math.max(0, it.drop || 0) + h);
       });
       if (!isFinite(x0)) return;
       const rs = stage.getBoundingClientRect();
@@ -490,6 +492,8 @@
       }
       grp.lines.forEach(ln => { for (let j = 0; j <= 64; j++) { const t = j / 64; if (project(ln.a[0] + (ln.b[0] - ln.a[0]) * t, ln.a[1] + (ln.b[1] - ln.a[1]) * t, ln.a[2] + (ln.b[2] - ln.a[2]) * t, 0, 1, sc) && scr[0] >= 0 && scr[1] >= 0 && scr[0] < W && scr[1] < H) { occ[Math.floor(scr[1] / CELL) * oc + Math.floor(scr[0] / CELL)]++; S++; } } });
       occN = S; place(0, sc, true);
+      // a plan that set a label below the drawing where its table did not (or lower) hangs the caption again, under it
+      if ('bbox' in stage.dataset && grp.items.some(it => !it.blocked && it.sd && it.sd[0] === 'b' && (it.side[0] !== 'b' || it.drop > 0))) publish();
     }
     function labelsOff() { if (grp) { grp.el.classList.remove('is-on'); grp.items.forEach(it => { if (it.lit) { it.el.classList.remove('is-lit'); it.lit = false; } }); } grpOn = false; }
     // the pulse names each part as it passes: a label whose part (data-ph, the span of the formation's own path it

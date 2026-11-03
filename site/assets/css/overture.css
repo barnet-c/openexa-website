@@ -146,13 +146,14 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-paper-cap { display: flex; justify-content: space-between; gap: .375rem 1.5rem; flex-wrap: wrap; padding-bottom: .875rem; border-bottom: var(--hair) solid var(--rule-strong); font: var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: var(--slate); } /* a caption, not data: the small step in Inter (1 Nov) */
 
 /* the layout modes story.js measures. */
-.story-compact .story-legend, .story-compact .beat-0 .hero-stats { display: none; }
+.story-compact .story-legend { display: none; }
+@media (max-width: 599.98px) { .story-compact .beat-0 .hero-stats { display: none; } } /* a4: portrait tablets keep v2's four figures (owner, 2 Nov) */
 .story-compact .beat h2 { font-size: clamp(1.55rem, 6.4vw, 2.1rem); }
 .story-compact .beat-0 .display-1 { font-size: clamp(2.1rem, 8.8vw, 3.4rem); }
 .story-compact .beat-0 .hero-kicker { margin-bottom: .5rem; font-size: .95rem; }
 .story-compact .beat .eyebrow { margin-bottom: .5rem; }
 .story-compact .beat .body-lg, .story-compact .beat-0 .hero-sub { margin-top: .625rem; font-size: .86rem; line-height: 1.5; }
-.story-compact .beat .hero-cta, .story-short .beat .hero-cta { flex-wrap: nowrap; gap: .625rem; margin-top: .875rem; }
+.story-compact .beat .hero-cta, .story-short .beat .hero-cta { flex-wrap: wrap; gap: .625rem; margin-top: .875rem; } /* a4: a larger reader font wraps the second button, never cuts it */
 .story-compact .beat .hero-cta .btn, .story-short .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
 /* a portrait phone is always compact: the same rules from the first paint */
 @media (scripting: enabled) and (max-width: 599.98px) {
@@ -162,7 +163,7 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
   html:not(.no-webgl) .beat-0 .hero-kicker { margin-bottom: .5rem; font-size: .95rem; }
   html:not(.no-webgl) .beat .eyebrow { margin-bottom: .5rem; }
   html:not(.no-webgl) .beat .body-lg, html:not(.no-webgl) .beat-0 .hero-sub { margin-top: .625rem; font-size: .86rem; line-height: 1.5; }
-  html:not(.no-webgl) .beat .hero-cta { flex-wrap: nowrap; gap: .625rem; margin-top: .875rem; }
+  html:not(.no-webgl) .beat .hero-cta { flex-wrap: wrap; gap: .625rem; margin-top: .875rem; }
   html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
 }
 /* a landscape phone is short from the first paint too */
@@ -177,13 +178,25 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
   html:not(.no-webgl) .beat-0 .hero-stats > div:last-child .live { width: .3125rem; height: .3125rem; margin-left: .4375rem; vertical-align: .15em; }
   html:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { margin-top: 0; }
 }
+/* a4: a tablet whose four figures would leave the globe under 36% of the stage takes the same 01 line (story.js) */
+html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats { display: block; max-width: 100%; margin-top: 1rem; padding-top: .75rem; }
+html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:not(:last-child) { display: none; }
+html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child { display: flex; align-items: baseline; gap: .625rem; }
+html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child b { flex: none; font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: .12em; color: var(--paper); }
+html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child .live { width: .3125rem; height: .3125rem; margin-left: .4375rem; vertical-align: .15em; }
+html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { margin-top: 0; }
 @media (min-width: 600px) and (min-height: 740px) {
   html.story-compact:not(.no-webgl) .beat .body-lg { font-size: .94rem; }
   html.story-compact:not(.no-webgl) .beat h2 { font-size: clamp(1.7rem, 7vw, 2.2rem); }
 }
 @media (scripting: enabled) and (max-height: 599.98px) and (min-aspect-ratio: 23/20) {
-  html:not(.no-webgl) .beat .hero-cta { flex-wrap: nowrap; gap: .625rem; margin-top: .875rem; }
+  html:not(.no-webgl) .beat .hero-cta { flex-wrap: wrap; gap: .625rem; margin-top: .875rem; }
   html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
+}
+/* 320-359 px (a4): less side padding keeps the two buttons on one row at the default size */
+@media (scripting: enabled) and (max-width: 359.98px) {
+  .story-compact .beat .hero-cta, html:not(.no-webgl) .beat .hero-cta { column-gap: .5rem; }
+  .story-compact .beat .hero-cta .btn, html:not(.no-webgl) .beat .hero-cta .btn { padding-inline: .875em; }
 }
 .story-short .beat-4 .body-lg { display: none; } /* its callouts and the paper's caption carry the record */
 .beat.is-tight .body-lg, .beat-0.is-tight .hero-sub { display: none; }

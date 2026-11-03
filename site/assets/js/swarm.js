@@ -334,7 +334,9 @@
     }
   }
   // fit the scene into the stage: labels above, a little air below
-  let W = 1, H = 1, dpr = 1, narrow = false, tight = false, rowTop = 14, rowH = 30, botH = 0;
+  // W x H: the stage in logical units, CSS px / SK (award a4: SK is the root's growth above 1920, 2 at 3840, so the scene's
+  // points, rings, trails and hairlines double with the page's type and frame; 1 at and below 1920: nothing there moves)
+  let W = 1, H = 1, CW = 1, CH = 1, SK = 1, dpr = 1, narrow = false, tight = false, rowTop = 14, rowH = 30, botH = 0;
   function fit() {
     camera();
     const keep = { cx: cam.cx, cy: cam.cy, F: cam.F };
@@ -406,7 +408,7 @@
   function blit(kind, x, y, size, alpha) {
     if (alpha <= 0.004 || size <= 0) return;
     ctx.globalAlpha = alpha > 1 ? 1 : alpha;
-    const c = spr(kind, size * dpr * 1.25);
+    const c = spr(kind, size * dpr * SK * 1.25);
     ctx.drawImage(ATLAS, c[0], c[1], c[2], c[2], x - size / 2, y - size / 2, size, size);
   }
 
@@ -430,7 +432,7 @@
   }
   function draw() {
     if (lost) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.setTransform(dpr * SK, 0, 0, dpr * SK, 0, 0);
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     ctx.clearRect(0, 0, W, H);
     ctx.lineCap = 'butt'; ctx.lineJoin = 'bevel'; // round caps tessellate per segment: only the followed path gets them
@@ -616,7 +618,7 @@
     }
     // dense screens draw them on their own layer at 1.25 device px per CSS px, composited in one drawImage
     const g = tctx || ctx, kd = tctx ? tdpr : dpr;
-    if (tctx) { tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.globalAlpha = 1; tctx.clearRect(0, 0, tcv.width, tcv.height); tctx.setTransform(tdpr, 0, 0, tdpr, 0, 0); }
+    if (tctx) { tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.globalAlpha = 1; tctx.clearRect(0, 0, tcv.width, tcv.height); tctx.setTransform(tdpr * SK, 0, 0, tdpr * SK, 0, 0); }
     const hair = Math.min(1, 1 / kd), boost = kd > 1.4 ? 1.35 : 1;
     const cols = [IV, GR, RD], base = [0.24 * boost, 0.34 * boost, 0.55 * boost], dim = (1 - 0.72 * follow.dim) * (1 - 0.6 * roleK);
     const at = (i, k) => (i * TRAIL + ((hHead - k + TRAIL * 2) % TRAIL)) * 2; // k-th sample back from the newest
@@ -748,32 +750,42 @@
   /* ---------------- DOM labels, projected from 3D anchors ---------------- */
   const lw = [];
   // The labels' layout is chosen by measured fit, at any stage size
+  // (award a4) a third form, for a large reader font (24 px on a 390 phone the tight upper row needs 389 px of 330): the
+  // gates' numbers give way, their names stay
+  let tiny = false;
+  const nums = (show) => el.gates.forEach((li) => { const b = li.firstElementChild; if (b && b.tagName === 'B') b.hidden = !show; });
   function measure() {
-    const was = narrow, wasT = tight;
+    const was = narrow, wasT = tight, wasN = tiny;
+    if (wasN) { nums(true); tiny = false; }
     if (wasT) root.classList.remove('is-tight');
     if (was) root.classList.remove('is-narrow');
     let need = 14 * (el.gates.length - 1);
-    for (const li of el.gates) need += li.offsetWidth;
+    for (const li of el.gates) need += li.offsetWidth / SK;
     narrow = W < 560 || need > W - 8 - (was ? 72 : 0);
     tight = false;
     if (narrow) {
       root.classList.add('is-narrow');
-      const g = el.gates, up = g.length === 6 ? g[1].offsetWidth + g[3].offsetWidth + g[5].offsetWidth + 16 : 0;
+      const g = el.gates, up = g.length === 6 ? (g[1].offsetWidth + g[3].offsetWidth + g[5].offsetWidth) / SK + 16 : 0;
       tight = up > W - 8 - (wasT ? 24 : 0);
-      if (tight) root.classList.add('is-tight');
+      if (tight) {
+        root.classList.add('is-tight');
+        tiny = g.length === 6 && (g[1].offsetWidth + g[3].offsetWidth + g[5].offsetWidth) / SK + 16 > W - 8 - (wasN ? 24 : 0);
+        if (tiny) nums(false);
+      }
     }
     const rows = narrow ? '2' : '1'; if (root.dataset.swRows !== rows) root.dataset.swRows = rows;
-    el.gates.forEach((li, g) => { lw[g] = [li.offsetWidth, li.offsetHeight]; });
-    if (el.ledger) lw[6] = [el.ledger.offsetWidth, el.ledger.offsetHeight];
-    if (el.banner) lw[7] = [el.banner.offsetWidth, el.banner.offsetHeight];
-    if (el.bound) lw[8] = [el.bound.offsetWidth, el.bound.offsetHeight];
+    const box = (n) => [n.offsetWidth / SK, n.offsetHeight / SK]; // in the stage's logical units
+    el.gates.forEach((li, g) => { lw[g] = box(li); });
+    if (el.ledger) lw[6] = box(el.ledger);
+    if (el.banner) lw[7] = box(el.banner);
+    if (el.bound) lw[8] = box(el.bound);
     // the row heights: in two rows the lower one (01 03 05) holds single lines
     const h = (g) => (lw[g] ? lw[g][1] : 24);
     rowH = Math.max(24, ...el.gates.map((li, g) => (!narrow || g % 2 ? h(g) : 0)));
     botH = narrow ? Math.max(16, ...el.gates.map((li, g) => (g % 2 ? 0 : h(g)))) : 0;
-    return narrow !== was || tight !== wasT;
+    return narrow !== was || tight !== wasT || tiny !== wasN;
   }
-  const setPos = (node, x, y) => { const v = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`; if (node.__t !== v) { node.style.transform = v; node.__t = v; } };
+  const setPos = (node, x, y) => { const v = `translate3d(${(x * SK).toFixed(1)}px, ${(y * SK).toFixed(1)}px, 0)`; if (node.__t !== v) { node.style.transform = v; node.__t = v; } };
   function spread(row) { // 1-D: keep each label over its gate, push neighbours apart when they would touch
     if (!row.length) return;
     row.sort((p, q) => p.ax - q.ax); // gate order (by anchor): a wide label (04 with its policy line) must not jump a neighbour
@@ -833,10 +845,10 @@
       if (b && b.textContent !== TG.b) b.textContent = TG.b;
       if (s && s.textContent !== TG.s) s.textContent = TG.s;
       el.tag.classList.toggle('is-ok', TG.cls === 'ok'); el.tag.classList.toggle('is-bad', TG.cls === 'bad');
-      TG.w = el.tag.offsetWidth || 120; TG.h = el.tag.offsetHeight || 34; TG.shown = TG.ver;
+      TG.w = el.tag.offsetWidth || 120 * SK; TG.h = el.tag.offsetHeight || 34 * SK; TG.shown = TG.ver;
     }
     proj(follow.x, follow.y, follow.z);
-    const w = TG.w, h = TG.h, gap = narrow ? 16 : 26;
+    const w = TG.w / SK, h = TG.h / SK, gap = narrow ? 16 : 26;
     // the side with room; when neither side holds the whole tag
     const roomR = W - 6 - (P_X + gap), roomL = P_X - gap - 6;
     const side = roomR >= w ? 1 : roomL >= w ? -1 : roomR >= roomL ? 1 : -1;
@@ -1178,7 +1190,7 @@
     const id = pid(UID[hover]), b = t.firstElementChild;
     if (t.hidden) t.hidden = false;
     if (b && b.textContent !== id) { b.textContent = id; t.__w = t.offsetWidth; t.__h = t.offsetHeight; }
-    const w = t.__w || 120, h = t.__h || 32, x = PX[hover], y = clamp(PY[hover] - (t.__h || 32) - 12, 4, H - h - 4);
+    const w = (t.__w || 120 * SK) / SK, h = (t.__h || 32 * SK) / SK, x = PX[hover], y = clamp(PY[hover] - h - 12, 4, H - h - 4);
     let px = x + 16 + w < W - 6 ? x + 16 : x - 16 - w;
     if (hits(px, y, w, h, tagBox)) px = px > x ? x - 16 - w : x + 16;
     if (hits(px, y, w, h, tagBox) || px < 2 || px + w > W - 2) { t.hidden = true; return; }
@@ -1233,17 +1245,34 @@
     const t = node.firstChild;
     if (t && t.nodeType === 3 && !t.nextSibling) { if (t.data !== s) t.data = s; } else if (node.textContent !== s) node.textContent = s;
   };
+  // (award a4) the live counts are set in Instrument Serif, whose figures are proportional (a '1' is half a '0'): each
+  // figure sits in a cell as wide as the widest (.46em), centred, so a count that ticks moves no other figure. The cells
+  // are built when the count's shape changes (digits, commas) and their text nodes rewritten in place after that.
+  const putNum = (node, s) => {
+    if (!node || node.__s === s) return;
+    const shape = (v) => v.replace(/[0-9]/g, '0');
+    if (!node.__c || shape(node.__s) !== shape(s)) {
+      node.textContent = ''; node.__c = [];
+      for (const ch of s) {
+        const c = document.createElement('i'), cs = c.style;
+        cs.fontStyle = 'normal'; cs.letterSpacing = '0';
+        if (/[0-9]/.test(ch)) { cs.display = 'inline-block'; cs.width = '.46em'; cs.textAlign = 'center'; }
+        c.textContent = ch; node.appendChild(c); node.__c.push(c.firstChild);
+      }
+    } else for (let k = 0; k < s.length; k++) if (node.__c[k].data !== s[k]) node.__c[k].data = s[k];
+    node.__s = s;
+  };
   function stats() {
-    put(el.inflight, fmt(inflight));
-    put(el.recorded, fmt(S.settled));
-    put(el.rejected, fmt(S.rejected));
+    putNum(el.inflight, fmt(inflight));
+    putNum(el.recorded, fmt(S.settled));
+    putNum(el.rejected, fmt(S.rejected));
     // halted and drained, nothing is settling: the weighted rate's tail is not shown as settlements
-    put(el.rate, fmt(halted && inflight === 0 ? 0 : Math.round(S.rate)));
+    putNum(el.rate, fmt(halted && inflight === 0 ? 0 : Math.round(S.rate)));
     put(el.state, reduced.matches ? (halted ? 'Halted' : 'Static study') : paused ? (halted ? 'Halted · paused' : 'Paused') : halted ? 'Halted' : 'Running');
     root.classList.toggle('is-halted', halted);
     if (el.banner) {
       const txt = !halted ? '' : inflight ? `Halted · no new proposals · ${fmt(inflight)} in flight, draining` : 'Halted · drained · nothing in flight';
-      if (el.banner.textContent !== txt) { el.banner.textContent = txt; el.banner.hidden = !txt; if (txt) lw[7] = [el.banner.offsetWidth, el.banner.offsetHeight]; }
+      if (el.banner.textContent !== txt) { el.banner.textContent = txt; el.banner.hidden = !txt; if (txt) lw[7] = [el.banner.offsetWidth / SK, el.banner.offsetHeight / SK]; }
     }
   }
   const showN = () => {
@@ -1310,7 +1339,7 @@
     if (!(root.contains(t) || !t || t === document.body || t === document.documentElement)) return;
     stopFollow(); if (el.follow) el.follow.focus({ preventScroll: true });
   });
-  const local = (e) => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const local = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / SK, y: (e.clientY - r.top) / SK }; };
   cv.addEventListener('pointerdown', (e) => { pointerTouch = e.pointerType !== 'mouse'; });
   cv.addEventListener('pointermove', (e) => {
     if (e.pointerType !== 'mouse') return;
@@ -1375,17 +1404,18 @@
     if (tdpr > dpr - 0.01) { tcv = null; tctx = null; return; }
     if (!tcv) { tcv = document.createElement('canvas'); tctx = tcv.getContext('2d'); }
     if (!tctx) { tcv = null; return; }
-    tcv.width = Math.round(W * tdpr); tcv.height = Math.round(H * tdpr);
+    tcv.width = Math.round(CW * tdpr); tcv.height = Math.round(CH * tdpr);
   }
   let stale = false;
   function paint() { if (onScreen && !lost) { stale = false; draw(); } else stale = true; } // nothing is drawn off screen
   function resize() {
     const r = cv.getBoundingClientRect(); // the canvas band, not the stage (on phones the trace flows below it)
-    W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
-    const ndpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(3840 * 2160 / (W * H)));
+    CW = Math.max(1, Math.round(r.width)); CH = Math.max(1, Math.round(r.height));
+    SK = Math.max(1, (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16); W = CW / SK; H = CH / SK;
+    const ndpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(3840 * 2160 / (CW * CH)));
     const rebuild = ndpr !== dpr || !SPR.bead; dpr = ndpr;
     root.classList.toggle('is-stacked', W < 820); // the trace flows under the canvas instead of over it
-    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    cv.width = Math.round(CW * dpr); cv.height = Math.round(CH * dpr);
     // a dense backing store (DPR 2+ or over 2 MP) starts without the estimation field's trails
     const qStart = dpr >= 2 || cv.width * cv.height > 2e6 ? 1 : 2;
     if (quality > qStart) { quality = qStart; root.dataset.swQuality = quality; }
@@ -1465,7 +1495,7 @@
   // a still study is re-run on resize (its trails live in screen space)
   if ('ResizeObserver' in window) new ResizeObserver(([e]) => {
     if (!booted) return;
-    const r = e && e.contentRect; if (r && Math.round(r.width) === W && Math.round(r.height) === H) return; // its first report repeats boot's size
+    const r = e && e.contentRect; if (r && Math.round(r.width) === CW && Math.round(r.height) === CH) return; // its first report repeats boot's size
     resize(); if (reduced.matches && !follow.show) still();
   }).observe(cv);
   else window.addEventListener('resize', () => { if (booted) resize(); });

@@ -15,7 +15,7 @@ site/ stays the source, commented and readable; every check and browser suite re
 The deploy job (.github/workflows/azure-static-web-apps-*.yml) runs this and uploads dist/site; the checks job runs it
 with --check (into a temporary folder; fails on any finding). To see the deployed site locally:
     python tools/build_deploy.py && python tools/serve.py 8140 --root dist/site
-    python tools/build_deploy.py [--check] [--out DIR] [--no-node]"""
+    python tools/build_deploy.py [--check] [--out DIR] [--no-node] [--css-bundle rest|all|none]"""
 import hashlib, json, os, posixpath, re, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
@@ -200,8 +200,50 @@ def node_ok(path):
     try: return subprocess.run(["node", "--check", str(path)], capture_output=True, timeout=60).returncode == 0
     except (OSError, subprocess.SubprocessError): return None
 
+# ---------------------------------------------------------------------------------------------------------- bundles
+LINK = re.compile(r'<link rel="stylesheet" href="([^"]+)">')
+
+def bundle_css(out, versioned, mode):
+    """(award a4) A page's run of stylesheet links, joined into one versioned sheet in the same order (the cascade is
+    the same: one sheet after another is one sheet). mode "rest" keeps site.css on its own, so the sheet every page
+    shares stays cached from page to page, and joins what follows it (Home 7 -> 2, Platform 4 -> 2, Proof and Trust
+    3 -> 2; a page with one sheet after site.css is unchanged); "all" joins the run whole (one sheet a page, site.css in
+    each). The bodies are the versioned copies (url()s already from the site root)."""
+    vbody = {rel: (out / v).read_text(encoding="utf-8") for rel, v in versioned.items() if rel.startswith("assets/css/")}
+    back = {v: rel for rel, v in versioned.items()}
+    made = {}
+    for page in sorted(out.rglob("*.html")):
+        prel = page.relative_to(out).as_posix()
+        pdir = posixpath.dirname(prel)
+        s = page.read_text(encoding="utf-8")
+        def target(u):
+            t = u.lstrip("/") if u.startswith("/") else posixpath.normpath(posixpath.join(pdir, u))
+            return back.get(t)
+        def join(m):
+            run = m.group(0)
+            links = LINK.findall(run)
+            rels = [target(u) for u in links]
+            if None in rels: return run
+            head, rels = ([], rels) if mode == "all" else (rels[:1], rels[1:]) if rels[0] == "assets/css/site.css" else ([], rels)
+            if len(rels) < 2: return run
+            body = "".join(vbody[r] if vbody[r].endswith("\n") else vbody[r] + "\n" for r in rels)
+            h = hashlib.sha256(body.encode("utf-8")).hexdigest()[:8]
+            name = "-".join(posixpath.splitext(posixpath.basename(r))[0] for r in rels)
+            vrel = f"assets/v/{h}/css/set-{name}.css"
+            if vrel not in made:
+                (out / vrel).parent.mkdir(parents=True, exist_ok=True)
+                (out / vrel).write_text(body, encoding="utf-8", newline="\n")
+                made[vrel] = rels
+            href = lambda v: "/" + v if links[0].startswith("/") else posixpath.relpath(v, pdir or ".")
+            sep = re.search(r">(\s*)<link", run)
+            gap = sep.group(1) if sep else "\n"
+            return gap.join([f'<link rel="stylesheet" href="{href(versioned[r])}">' for r in head] + [f'<link rel="stylesheet" href="{href(vrel)}">'])
+        s2 = re.sub(r'(?:<link rel="stylesheet" href="[^"]+">\s*)*<link rel="stylesheet" href="[^"]+">', join, s)
+        if s2 != s: page.write_text(s2, encoding="utf-8", newline="\n")
+    return len(made)
+
 # ----------------------------------------------------------------------------------------------------------- build
-def build(out, use_node=True):
+def build(out, use_node=True, css_bundle="rest"):
     if out == REPO or out == SRC or SRC in out.parents or out in SRC.parents:
         sys.exit(f"build_deploy: refusing to write into {out} (it holds the source)")
     if out.exists(): shutil.rmtree(out)
@@ -256,6 +298,7 @@ def build(out, use_node=True):
         left += [u for m in re.findall(r'data-after-paint="([^"]*)"', s2) for u in m.split() if resolve(u)]
         if left: problems.append(f"{prel}: unversioned asset references left: {left}")
         if s2 != s: page.write_text(s2, encoding="utf-8", newline="\n"); pages += 1
+    report["bundles"] = bundle_css(out, versioned, css_bundle) if css_bundle != "none" else 0
     # every versioned reference resolves to a file
     for page in out.rglob("*.html"):
         pdir = posixpath.dirname(page.relative_to(out).as_posix())
@@ -275,9 +318,11 @@ if __name__ == "__main__":
     check = "--check" in args
     use_node = "--no-node" not in args
     out = Path(args[args.index("--out") + 1]) if "--out" in args else (Path(tempfile.mkdtemp()) / "site" if check else REPO / "dist" / "site")
-    rep = build(out.resolve(), use_node)
+    css_bundle = args[args.index("--css-bundle") + 1] if "--css-bundle" in args else "rest"
+    if css_bundle not in ("none", "rest", "all"): sys.exit("build_deploy: --css-bundle none|rest|all")
+    rep = build(out.resolve(), use_node, css_bundle)
     print(f"build_deploy: {rep['pages']} pages, {rep['files']} versioned assets in {out}; CSS {rep['css']} sheets "
-          f"-{rep['css_saved']:,} B; JS {rep['js']} scripts -{rep['js_saved']:,} B" +
+          f"-{rep['css_saved']:,} B; JS {rep['js']} scripts -{rep['js_saved']:,} B; {rep['bundles']} stylesheet sets ({css_bundle})" +
           (f"; shipped as written: {', '.join(rep['js_kept'])}" if rep["js_kept"] else ""))
     for p in problems: print("PROBLEM", p)
     if check: shutil.rmtree(out.parent if out.name == "site" and out.parent.name.startswith("tmp") else out, ignore_errors=True)

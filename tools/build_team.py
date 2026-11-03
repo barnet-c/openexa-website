@@ -47,6 +47,9 @@ Changes from the source, deliberately:
   - 2026-11-01 (award a2, 4K): the portraits' sizes attribute follows the page above 1920 px (5vw = 6rem there) and
     the advisors carry their own, smaller sizes (SIZES_ADV), so no portrait is upscaled at 3840 and no advisor fetches
     twice the pixels it shows. Markup otherwise unchanged.
+  - 2026-11-03 (award a4, design jury): on wide screens company.css sets the advisors as two ruled columns that read
+    down; the list carries its row count (--rows, half the advisors, rounded up) so the columns follow the roster.
+    Words, order and markup otherwise unchanged.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -237,7 +240,7 @@ SECTION = f'''    <!-- 03 THE TEAM -->
 {team_html}
         </ol>
         <div class="crew-sub" data-reveal><h3 class="crew-sub-h">Advisors</h3></div>
-        <ol class="crew crew--advisors" role="list" aria-label="OpenEXA advisors">
+        <ol class="crew crew--advisors" role="list" aria-label="OpenEXA advisors" style="--rows:{math.ceil(len(ADVISORS) / 2)}">
 {adv_html}
         </ol>
       </div>

@@ -8,6 +8,7 @@
    Only where the plate stands beside the list (641 px and up: tablets and desks). Without JavaScript the plate shows
    the first row's drawing and the rings turn on hover (blog.css). No inline script or style (CSP); nothing here is
    needed to read.
+   - Posts (a4): the long reads with figures load this file for one thing, the margin plate's rest (below).
    Nothing runs while the page is first laid out (a2 Lighthouse: a media query read at load forced the page's first
    style pass inside this file's task, ahead of the first paint): a list is set up when it comes within half a screen. */
 (function () {
@@ -23,6 +24,19 @@
     idx.addEventListener('pointerleave', () => lit(idx.contains(document.activeElement) ? name(document.activeElement) : ''));
     idx.addEventListener('focusin', e => lit(name(e.target.closest && e.target.closest('a'))));
     idx.addEventListener('focusout', e => { if (!idx.contains(e.relatedTarget)) lit(''); });
+  }
+  // award a4 (a4-ux medium, a4-design polish): a long read's margin plate (.post-mp, from 1440 px) rests, its hedge with
+  // it, while one of the post's own figures is on screen, so "no data is plotted" is never read as a data chart's caption
+  // and two pictures never stand side by side. Loaded only on the long reads with figures; without JavaScript, as before
+  const mp = document.querySelector('.post-mp-in');
+  const figs = mp ? document.querySelectorAll('.blog-article figure') : [];
+  if (figs.length && 'IntersectionObserver' in window) {
+    const seen = new Set();
+    const rest = new IntersectionObserver(es => {
+      es.forEach(e => { if (e.isIntersecting) seen.add(e.target); else seen.delete(e.target); });
+      mp.classList.toggle('is-rest', seen.size > 0);
+    }, { rootMargin: '-10% 0px -12% 0px' }); // under the bar, and not for a figure just peeking at the foot
+    figs.forEach(f => rest.observe(f));
   }
   const boxes = Array.from(document.querySelectorAll('[data-blog-follow], [data-blog-turn]'));
   if (!boxes.length || !('IntersectionObserver' in window)) return;

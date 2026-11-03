@@ -334,6 +334,11 @@ def marks_in_em(h):
     italic, so they are drawn in the quotation's face (Instrument Serif italic, blog.css), not in upright Inter beside it,
     where the closing mark read as a straight one. Typography only: the same characters in the same order"""
     return re.sub(r"</em>”", "”</em>", re.sub(r"“<em>", "<em>“", h))
+def bare_marks(h):
+    """award a4 (blog's own find): the CMS left bold or italic round a lone mark: a bold comma in the Gen-AI introduction,
+    an italic full stop, italic and bold spaces, bold zero-width joiners (6 posts). Since a3 an italic is Instrument Serif
+    at 1.08em, so such a mark showed in another face. The tags go; the characters stay, in the same order"""
+    return re.sub(r"<(strong|b|em|i)>([^<\w]*)</\1>", r"\2", h)
 def lead(h):
     """the post's lead (larger, with the notes' drop initial): its first paragraph, unless a heading or list comes
     first. Jury (blog): a label line is not a lead. A one-line bold subhead ('Regime-Switching Market') passes the lead
@@ -797,6 +802,10 @@ for p in order:
         j = SERIES_POS[p["slug"]]
         if j: rel_links += f'  <link rel="prev" href="{BASE}{SERIES[j - 1][0]}.html">\n'
         if j + 1 < len(SERIES): rel_links += f'  <link rel="next" href="{BASE}{SERIES[j + 1][0]}.html">\n'
+    article = hero_img + lead(hang(marks_in_em(bare_marks(smart_html(p["body"])))))
+    # award a4 (a4-ux medium, a4-design polish): a long read with figures loads blog.js for one thing, the margin
+    # plate's rest while a figure is on screen (blog.js; the other posts load no script of their own)
+    post_js = f'\n  <script src="{PFX}assets/js/blog.js" defer></script>' if long_read(p) and "<figure" in article else ""
     page = head(url, f'{smart(p["title"])} — OpenEXA Blog', smart(META_DESC.get(p["slug"], p["excerpt"])), "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (ld_text(p["title"]), url)))}\n',
                 h1=ld_text(p["title"]), links=rel_links) + f'''
 <body data-page="post" data-nav="dark-start" class="article-page blog-post">
@@ -819,7 +828,7 @@ for p in order:
       <div class="container">
         <div class="grid{' has-mp' if long_read(p) else ''}">
           <article class="col-7 article blog-article">
-            {hero_img + lead(hang(marks_in_em(smart_html(p["body"]))))}
+            {article}
             <div class="article-end"><span class="mark" aria-hidden="true"></span></div>
           </article>{side}{margin_plate(p)}
         </div>
@@ -832,7 +841,7 @@ for p in order:
   </main>
 
 {foot}
-  <script src="{PFX}assets/js/site.js" defer></script>
+  <script src="{PFX}assets/js/site.js" defer></script>{post_js}
 </body>
 </html>
 '''
@@ -859,7 +868,10 @@ json.dump({"total": len(kept), "years": [years[0], years[-1]],
 def rd(route, to): return {"route": route, "redirect": to, "statusCode": 301}
 OLD_PAGES = [("/strategies", "/lifecycles"), ("/trust-risk", "/trust"), ("/status", "/evidence"),
              ("/for-managers", "/access#managers"), ("/for-investors", "/access#investors"), ("/beta", "/access")]
-routes = [rd(src, dst) for src, dst in OLD_PAGES]
+# award a4 (a4-dev polish 11): the bar, the footer and the share card say "Proof"; the page's file is evidence.html (its
+# old route, /status, above). A visitor who types the name gets the page, not the 404
+ALIASES = [("/proof", "/evidence"), ("/proof.html", "/evidence")]
+routes = [rd(src, dst) for src, dst in OLD_PAGES + ALIASES]
 # the blog's previous home (a link to it was shared on 2026-09-30); longest slugs first so no prefix shadows another
 for p in sorted(kept, key=lambda q: -len(q["slug"])):
     routes.append(rd(f'/research/blog/{p["slug"]}*', p["source"] if p["stub"] else f'/blog/{p["slug"]}.html'))
@@ -915,6 +927,7 @@ if (ROOT / "_redirects").exists(): (ROOT / "_redirects").unlink()  # Netlify-onl
 # the same old-URL map, for tools/verify_redirects.py
 rules = []
 for src, dst in OLD_PAGES: rules.append(f"{src}/  {dst}  301")
+for src, dst in ALIASES: rules.append(f"{src}  {dst}  301")
 for p in posts:
     s = p["slug"]
     if s in EXCLUDE or s in REMOVED: rules.append(f"/blog/{s}/  /blog/  301")

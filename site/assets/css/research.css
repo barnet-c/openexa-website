@@ -1,13 +1,6 @@
-/* ==========================================================================
-   OpenEXA: page styles for Research
-   Loaded after site.css on research.html and the ten notes in research/ (tools/build_research.py writes their heads) only. site.css holds the system (tokens, type, grid, chrome, the
-   instruments); this file holds what only these pages need, so pages can change without touching each other.
-   - Use the tokens: var(--paper), var(--ink), var(--signal), var(--serif)... No new colours, faces or hex values.
-   - Scope every rule to these pages (body[data-page="research"] or body[data-page="note"], a section id or a page class).
-   - :hover only inside @media (hover: hover); no :has() that restyles a subtree (check_static guards both here).
-   - Anything that moves has a still state under prefers-reduced-motion; anything printed reads on white.
-   - Budget: gzip -9 <= 12,000 bytes (check_static weight).
-   ========================================================================== */
+/* OpenEXA: Research (research.html and the ten notes; heads by tools/build_research.py), after site.css. Tokens only,
+   no new colours or faces; rules scoped to these pages; :hover inside (hover: hover); no subtree :has(); a still state
+   under reduced motion; print reads on white. Budget: gzip -9 <= 12,000 B (check_static) */
 
 /* ---------- figure captions (index plate, note heroes): Fig. NN, what is drawn, the note's words, the hedge ---------- */
 /* r2: the mark and the hedge are site.css's caption register; these captions are stacked, so the hedge keeps the
@@ -23,9 +16,7 @@
 .figcap-k:empty { display: none; }
 
 /* ---------- research index: hero ---------- */
-/* the H1 sets in two lines, "The thinking / behind the swarm.", not three with "behind" alone (v2's rag). The plate step
-   (site.css --h1-plate) at every width; the phone rule only caps it (two lines at 320). Cut (1 Nov): the H1, one line
-   and the library figure; no kicker, no meta row, no plate caption */
+/* the H1 in two lines ("The thinking / behind the swarm.") on the plate step (--h1-plate); the phone rule caps it */
 .research-hero h1.display-1 { font-size: var(--h1-plate); }
 @media (min-width: 961px) {
   .research-hero h1.display-1 { line-height: .97; max-width: 7.2em; } /* two lines at every width ("The thinking / behind the swarm."): at 4K one line ran into the drawing */
@@ -42,9 +33,8 @@
 /* ---------- research index: the shelf (the list, and the plate that shows the pointed note's figure) ---------- */
 .rs-shelf { position: relative; --rs-gap: clamp(1rem, 2.2vw, 2rem); }
 .rs-shelf + .section { border-top: var(--hair) solid var(--line); }
-/* r2 (r2-fidelity): 01 and 02 are one ground. Cut (1 Nov): no chapter head between them; the two research notes and the
-   series read as one contents page. Award a1 (a1-ux): one rhythm for all ten rows; the series opens on a stronger rule
-   instead of a ~100 px hole under 02 */
+/* r2/cut/a1: the two research notes and the series are one contents page, one row rhythm; the series opens on a
+   stronger rule */
 .rs-shelf > #series { border-top: 0; padding-top: 0; }
 .rs-shelf > #notes { padding-bottom: 0; }
 .rs-shelf > #notes .post:last-child { border-bottom: 0; } /* the series opens on its own rule */
@@ -158,13 +148,11 @@
 /* a1: without WebGL a note keeps its still and its hedge (research.js .still-cap) */
 .still-cap .figcap.article-figcap:not(.is-hung) { opacity: 1; visibility: visible; } /* (0,4,0): over the hidden state below */
 
-/* ---------- research index: the hero's still (r2) ----------
-   The library figure engraved in the page (build_research.library_still, figure.js's camera): before WebGL draws and
-   without it. Scaled as --figure-scale scales the points (drawn at .92; .86 on narrow screens); fades out under them */
+/* ---------- research index: the hero's still (r2): the library engraved (build_research.library_still), before and
+   without WebGL, scaled as the points (.92; .86 on phones); it fades out under them ---------- */
 .rs-still { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke-linecap: round; stroke-linejoin: round; scale: calc(var(--figure-scale, 1) / .92 * var(--fig-fit, 1)); transition: opacity 1.2s var(--ease); }
 @media (max-width: 759.98px) { .rs-still { scale: calc(var(--figure-scale, 1) / .92 * .86 * var(--fig-fit, 1)); } }
-/* stippled, as the points are: each rim and rule is a line of dots (round caps on zero-length dashes; in rem since a1, so
-   the stipple keeps its weight above 1920; --fig-fit: figure.js's width fit, so the still lies where the points land) */
+/* stippled as the points: round caps on zero-length dashes, in rem (a1); --fig-fit: figure.js's width fit */
 .rs-still path { vector-effect: non-scaling-stroke; stroke-width: .08125rem; stroke-dasharray: 0 .2625rem; }
 .rs-still .ls-r { stroke: var(--paper); stroke-width: .10625rem; stroke-dasharray: 0 .1875rem; }
 .rs-still .ls-l { stroke: var(--khaki); }
@@ -172,21 +160,29 @@
 .rs-still .ls-gl { stroke-width: .09375rem; stroke-dasharray: 0 .225rem; }
 .figure-ready > :is(.rs-still, .fs-still) { opacity: 0; }
 .figure-stage.no-figure > :is(.rs-still, .fs-still) { opacity: 1; } /* a lost context: the still comes back, not an empty field */
-/* a note's still (award a1): its formation's points as dots, where the plate's points land at rest (figure.js FORMS,
-   ported line for line in build_research.py), at the plate's own scale (--figure-scale, drawn at .84; .86 more on narrow
-   screens, as figure.js); "meet" keeps it inside its stage. Colours and depth as the points: ivory, khaki, signal, red */
+/* a note's still (award a1): its formation's points as dots where the plate's land at rest (build_research's port of
+   figure.js FORMS), at the plate's scale (drawn at .84; .86 more on phones); colours and depth as the points */
 .fs-still { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke-linecap: round; scale: calc(var(--figure-scale, 1) / .84); transition: opacity 1.2s var(--ease); }
-@media (max-width: 759.98px) { .fs-still { scale: calc(var(--figure-scale, 1) / .84 * .86); } .fs-still path { stroke-width: .125rem; } } /* a phone's drawing is a third the size */
 .fs-still path { vector-effect: non-scaling-stroke; stroke: var(--paper); stroke-width: .1875rem; stroke-opacity: .7; }
+/* a phone's drawing is a third the size; its dots 2 px (award a4: this rule had stood before the one above, so phones drew
+   3 px dots, heavier than the stipple, since r1) */
+@media (max-width: 759.98px) { .fs-still { scale: calc(var(--figure-scale, 1) / .84 * .86); } .fs-still path { stroke-width: .125rem; } }
 .fs-still .far { stroke-opacity: .4; }
 .fs-still .k1 { stroke: var(--khaki); }
 .fs-still .k2 { stroke: var(--signal-bright); stroke-opacity: .9; }
 .fs-still .k2.far { stroke-opacity: .6; }
 .fs-still .k3 { stroke: var(--reject-bright); }
-/* a2: a plate's rule as a line. No crispEdges: on it, note 09's first figure.js task ran 115-180 ms, not 10-25
-   (Lighthouse mobile 79-86, HEAD 99; A/B in work/research-a2/lh_ab.jsonl) */
+/* a2: a plate's rule as a line; no crispEdges (it made note 09's first figure.js task 115-180 ms) */
 .fs-still .rule { stroke: var(--khaki); stroke-width: calc(1px * var(--stroke, 1)); stroke-opacity: 1; stroke-linecap: butt; }
 .figure-stage.has-still.no-figure::after { content: none; } /* no globe mark over a drawn figure */
+/* award a4 (a4-pixel): a keyed still (build_research KEYED: note 09) carries its labels where figure.js cannot (no JS,
+   no WebGL): at their points in the still's units (--x, --y; viewBox --fs-vbw x 400, "meet", scaled as .fs-still), from
+   the stage's size (a size container); the small-stage rule drops the axis's middle numerals */
+.article-hero .figure-stage.has-still { container-type: size; }
+.fs-keys { display: none; position: absolute; inset: 0; pointer-events: none; --u: calc(min(100cqw / var(--fs-vbw, 400), 100cqh / 400) * var(--figure-scale, 1) / .84); }
+@media (max-width: 759.98px) { .fs-keys { --u: calc(min(100cqw / var(--fs-vbw, 400), 100cqh / 400) * var(--figure-scale, 1) / .84 * .86); } }
+@supports (width: 1cqh) { @media (scripting: none) { .fs-keys { display: block; } } .figure-stage.no-figure > .fs-keys { display: block; } } /* (no container units: no key) */
+.fs-keys .fl { left: calc(50% + var(--x) * var(--u)); top: calc(50% + var(--y) * var(--u)); }
 
 /* ---------- research index: the blog's three collections ----------
    a2 (a2-design): a spread, the heading left, three ruled rows right (title, size and years on its baseline, arrow), as
@@ -217,15 +213,21 @@
 /* r3 (system's H1 scale): every note's title is on site.css's article step (--h1-article, 65 px at 1440), the size the
    long titles had; only the measures are Research's */
 .article-title { max-width: 18ch; }
-/* r5: note 02's phrase "and Proving What It Did." holds one line (four lines in 16ch). (0,2,0): site.css's ".page-hero h1
-   { 16ch }" (0,1,1) had outranked the (0,1,0) rules here, so every unsplit title was set in 16ch; note 06, the other
-   long one, breaks as it did */
+/* r5: (0,2,0), over site.css's ".page-hero h1 { 16ch }": note 02's "and Proving What It Did." holds one line */
 .article-hero .article-title--long { max-width: 21ch; }
 .article-title .title-sub { display: block; margin-top: .5em; font-size: var(--fs-heading); line-height: 1.18; letter-spacing: -0.005em; color: var(--fg-2); max-width: 30ch; }
 /* a series title breaks at its sense break: "Lifecycle 01." / "What Ten Sessions on Real Markets Taught Us" */
 .article-title .t-head { display: block; }
 .article-hero .article-title--split { max-width: 22ch; } /* "Governance in Milliseconds" holds one line under its head */
 :is(.research-page, .article-page) .nw { white-space: nowrap; } /* compounds never break inside */
+/* award a4 (a4-dev, with blog.css): beside the drawing the title starts at the one-column 51.2 px and grows from 1138 px
+   (no 51 -> 43 px step at 961); to 1280 its measure is held to the room left of the stage, so it wraps, not collides */
+@media (min-width: 961px) { .article-hero .article-title { font-size: max(var(--h1-article), 3.2rem); } }
+@media (min-width: 961px) and (max-width: 1279.98px) {
+  .article-hero .article-title { max-width: min(16ch, calc(50vw - var(--gutter) - 2rem)); }
+  .article-hero .article-title--long { max-width: min(21ch, calc(50vw - var(--gutter) - 2rem)); }
+  .article-hero .article-title--split { max-width: min(22ch, calc(50vw - var(--gutter) - 2rem)); }
+}
 /* a1: with or without JavaScript, as every note now draws its still (it was the scripted layout only) */
 @media (min-width: 961px) {
   .article-hero { padding-bottom: 0; }
@@ -236,18 +238,30 @@
   .article-figcap { position: absolute; z-index: 1; left: 50%; right: max(var(--gutter), calc((100% - var(--max)) / 2 + var(--gutter))); bottom: 4.5rem; text-align: center; }
   .article-figcap.is-hung { left: var(--fig-l); right: auto; top: calc(var(--fig-b) + 1.25rem); bottom: auto; text-align: left; }
 }
-/* award a3: without JavaScript too the hedge hangs under the still's left edge (still_geo: --fs-w its width, --fs-x,
-   --fs-y its reach left of and below the centre, in stage heights). In the .container's box: the stage is 50% - R wide
-   from 50%, max(78svh, P + 100%) - .6 bar - 7.5rem tall, its centre .3 bar - 3.75rem - P / 2 from the box's (P: site.css
-   .page-hero padding-top). The left edge assumes the 78svh hero */
-@media (scripting: none) and (min-width: 961px) {
-  .article-hero { container-type: inline-size; }
-  .article-figcap {
-    --sw: calc(50cqw - max(var(--gutter), calc((100cqw - var(--max)) / 2 + var(--gutter)))); --p: calc(var(--nav-h) + clamp(3.5rem, 9vw, 7.5rem));
-    left: calc(50% + var(--sw) / 2 - var(--fs-x, .5) * min(78svh - var(--nav-h) * .6 - 7.5rem, var(--sw) / var(--fs-w, 1)));
-    top: calc(50% + var(--nav-h) * .3 - 2.5rem - var(--p) / 2 + var(--fs-y, .5) * min(max(78svh, var(--p) + 100%) - var(--nav-h) * .6 - 7.5rem, var(--sw) / var(--fs-w, 1)));
-    right: auto; bottom: auto; text-align: left;
-  }
+/* award a3: without JavaScript the hedge hangs under the still's left edge too (still_geo --fs-w/-x/-y, in stage
+   heights), from the stage's geometry in the .container's box; it assumes the 78svh hero. Award a4: so it does where
+   figure.js cannot draw (.still-cap), and on phones and tablets (the stage the hero's width, 66vw high) */
+.article-hero .figcap.article-figcap {
+  --sw: calc(50cqw - max(var(--gutter), calc((100cqw - var(--max)) / 2 + var(--gutter)))); --p: calc(var(--nav-h) + clamp(3.5rem, 9vw, 7.5rem));
+  --hl: calc(50% + var(--sw) / 2 - var(--fs-x, .5) * min(78svh - var(--nav-h) * .6 - 7.5rem, var(--sw) / var(--fs-w, 1)));
+  --ht: calc(50% + var(--nav-h) * .3 - 2.5rem - var(--p) / 2 + var(--fs-y, .5) * min(max(78svh, var(--p) + 100%) - var(--nav-h) * .6 - 7.5rem, var(--sw) / var(--fs-w, 1)) + var(--fs-kb, 0rem));
+  --hp: max(0px, calc(50cqw - var(--fs-x, .5) * min(100cqw / var(--fs-w, 1), 66vw) / .84 * var(--hs, 1) - max(var(--gutter), env(safe-area-inset-left))));
+}
+@media (max-width: 759.98px) { .article-hero .figcap.article-figcap { --hs: .86; } }
+@media (scripting: none) { .article-hero { container-type: inline-size; } }
+.article-hero.still-cap { container-type: inline-size; }
+@supports (width: 1cqw) {
+  @media (scripting: none) and (min-width: 961px) { .article-hero .figcap.article-figcap { left: var(--hl); top: var(--ht); right: auto; bottom: auto; text-align: left; } }
+  @media (min-width: 961px) { .article-hero.still-cap .figcap.article-figcap:not(.is-hung) { left: var(--hl); top: var(--ht); right: auto; bottom: auto; text-align: left; } }
+  @media (scripting: none) and (max-width: 960px) { .article-hero .figure-stage.has-still ~ .container .figcap.article-figcap { text-align: left; padding-left: var(--hp); } }
+  @media (max-width: 960px) { .article-hero.still-cap .figcap.article-figcap:not(.is-hung) { text-align: left; padding-left: var(--hp); } }
+}
+/* (a phone held sideways stands the drawing in the right half: without a hang the hedge stands at its top right, the
+   key is not set; the hero's sideways block, below) */
+@media (min-width: 540px) and (max-width: 960px) and (max-height: 520px) and (min-aspect-ratio: 23/20) {
+  @media (scripting: none) { .article-hero .figure-stage.has-still ~ .container .figcap.article-figcap { padding-left: 0; text-align: right; } }
+  .article-hero.still-cap .figcap.article-figcap:not(.is-hung) { padding-left: 0; text-align: right; }
+  .fs-keys { display: none !important; }
 }
 /* with JavaScript the hedge comes in with the drawing, already in its place: hidden (not only transparent) until figure.js
    hangs it, so moving it is no layout shift (on phones it moved 80 px: CLS .003-.005 in Lighthouse) */
@@ -270,21 +284,17 @@
 }
 
 /* ---------- a note: the reading column ---------- */
-/* v2 set Inter at 17.9 px across 691 px: 78–83 characters a line at 1440, 85–89 on a tablet. The column now holds
-   66–72 at every width from 768 up (a 39.2rem measure, 19 px type, 1.68 leading) */
+/* 66-72 characters a line from 768 up (v2: 78-89): a 39.2rem measure, 19 px type, 1.68 leading */
 .article-page .article { font-size: 1.1875rem; line-height: 1.68; }
 .article-page .article > p { max-width: 39.2rem; }
-/* the text's size, not site.css's --fs-body (17.8 px beside 19 px text at 1440). Award a1 (blog's request, the 4K
-   inspector's "two styles colliding"): and the text's leading and colour, as the posts' lead now; the drop initial alone
-   marks the opening, so notes and posts are one long-read template */
+/* the text's size, leading and colour (as the posts' lead: one long-read template); the drop initial marks it */
 .article-page .article > p.lead { font-size: inherit; color: var(--fg-2); line-height: inherit; }
 /* a research note's standfirst (the author's italic line in the source) opens the body, set off by a rule (cut, 1 Nov) */
 .article-page .article > p.dek { margin: 0 0 1.6em; padding-bottom: 1.4em; border-bottom: var(--hair) solid var(--line); color: var(--fg-2); }
 .article-page .article h2 { max-width: 30ch; text-wrap: balance; }
 .article-page .article > h2:first-child { margin-top: 0; } /* a note that opens on a heading (01) starts level with "In this note" */
 @media (min-width: 961px) { .article-page .article h2 { font-size: clamp(1.9rem, 2.6vw, 2.3rem); } } /* 30 px at 1024, not 27 over 19 px text */
-/* the initial: exactly two lines deep, its top on the cap line and its foot on the second baseline (initial-letter);
-   where that is not supported, a float sized to stay inside two lines (v2's ran into a third line on phones) */
+/* the initial: two lines deep (initial-letter); elsewhere a float sized to stay inside two lines */
 .article-page .article > p.lead::first-letter { font-size: 3.3em; line-height: .74; margin: .07em .1em 0 -.02em; }
 @supports (initial-letter: 2) or (-webkit-initial-letter: 2) {
   .article-page .article > p.lead::first-letter { float: none; font-size: inherit; line-height: inherit; margin: 0 .24em 0 0; -webkit-initial-letter: 2; initial-letter: 2; }
@@ -297,17 +307,14 @@
   .article-page .article { font-size: 1.125rem; }
   .article-page .article h2 { font-size: clamp(1.75rem, 4.2vw, 2.1rem); }
 }
-/* award a1 (a1-ux): on phones a part's head is a clear step over the 17 px text (it was 21.6 px, barely larger), so the
-   note's structure shows: 25.6 px at 320, 27.3 at 390, 28 from 400 (the tablet's lower bound) */
+/* a1 (a1-ux): on phones a part's head is a clear step over 17 px text (25.6 px at 320, 28 from 400) */
 @media (max-width: 600px) { .article-page .article h2 { font-size: clamp(1.6rem, 7vw, 1.75rem); line-height: 1.12; } }
 
 /* ---------- a note: the margin plate (award a3) ----------
-   From 1440 px, as the posts (blog.css .post-mp: one long-read template): contents (columns 1-3), text (4-9), and in
-   10-12 the hero's drawing again as a still (build_research margin_still: assets/img/research/plate-*.svg, lazy) with
-   the hero's caption, sticky level with the contents. research.js cuts its span to the first part head .. the end mark
-   (--np-t, --np-b; hidden until then) and fades it in once half the hero has left the screen (.is-in: a transition, not
-   a scroll-timeline animation, so nothing on a note animates), so a screen never shows the drawing twice. Without
-   JavaScript it starts half a screen down its column, as the posts' plate (blog.css .post-mp-in), and spans the text */
+   From 1440 px (one long-read template with blog.css .post-mp): contents 1-3, text 4-9, and in 10-12 the hero's drawing
+   as a still (build_research margin_still: img/research/plate-*.svg, lazy) with its caption, sticky. research.js trims
+   its span to the first part head .. the end mark (--np-t, --np-b) and fades it in once half the hero has gone (.is-in,
+   a transition). Without JavaScript it starts half a screen down and spans the text */
 .np-rail { display: none; }
 @media (min-width: 1440px) {
   .article-page .article-body-section .article { grid-column: 4 / 10; }
@@ -318,12 +325,25 @@
   /* note 09's floor: a hairline over the image (its file draws the points), snapped to device pixels at any density */
   .np-rule { position: absolute; top: var(--y); left: var(--x0); right: calc(100% - var(--x1)); height: var(--hair); margin-top: calc(var(--hair) / -2); background: var(--khaki); }
   .np-cap { padding-top: .875rem; }
+  /* award a4 (a4-design): the part the note's marked part names (build_research PARTS; research.js .is-lit) is drawn
+     again at full strength, the rest recedes, its label (the hero's words) beside it. Note 09's key (.np-key) stays */
+  .np-part { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .32s var(--ease-out); }
+  .np-part.is-lit { opacity: 1; }
+  .np-still { transition: opacity .32s var(--ease-out); }
+  .np-stage.has-lit .np-still { opacity: .4; }
+  .np-rule { transition: background-color .32s var(--ease-out); }
+  .np-rule.is-lit { background: var(--paper); }
+  /* a label at its point (--x, --y: % of the plate, from the generator, which grew the box until the words fit at 1440) */
+  .np-stage .fl { left: var(--x); top: var(--y); transition: opacity .32s var(--ease-out), color .32s var(--ease); }
+  .np-stage .fl:not(.np-key, .is-lit) { opacity: 0; }
 }
 @media (scripting: enabled) and (min-width: 1440px) {
   .np-rail:not(.is-set) { visibility: hidden; }
   .np-plate { opacity: 0; transition: opacity .6s var(--ease-out); }
   .np-rail.is-in .np-plate { opacity: 1; }
 }
+/* without JavaScript nothing is lit: the parts' labels stay hidden, the still and the key stand */
+@media (scripting: none) { .np-part, .np-stage .fl:not(.np-key) { display: none; } }
 @media print, (forced-colors: active) { .np-rail { display: none !important; } } /* a repeat of the hero's drawing, on ink */
 
 /* ---------- a note: "In this note" (the part being read is marked by research.js) ---------- */
@@ -333,8 +353,6 @@
 @media (max-width: 960px) {
   /* phones and tablets (cut, 1 Nov): no list of parts above the text; the menu lists them (site.js reads this list) */
   .article-page .article-side { display: none; }
-  .note-run { margin-top: 2.25rem; }
-  .note-disc { margin-top: 2rem; padding: 1rem 1.125rem; }
 }
 
 /* ---------- a note: after the body (the instruments it describes; the series disclosure) ---------- */
@@ -452,11 +470,23 @@
   .research-hero .lede, .article-hero .lede { font-size: 1rem; margin-top: .875rem; }
   .article-hero .figure-stage[data-plate] { --figure-scale: .72; }
   .research-hero .figure-stage[data-plate] { --figure-scale: 1; } /* the wide formations (note 09's ten columns) fit the half-width stage */
+  /* award a4 (r4): the hero is the screen the stage fills (it ended at 78svh or its words: the open book, note 07's ground
+     and note 09's axis were cut at the paper), the words centred in it; the note's stage leaves 1.5rem under the
+     drawing, and its hedge hangs there, under the drawing's left edge, as on desktop (it stood over the drawing's top
+     labels: note 09's "above the floor"). Out of the flow from the start, so hanging it moves nothing; unhung (no
+     JavaScript, no WebGL) it stands at the top right */
+  .research-hero, .article-hero { display: flex; align-items: stretch; min-height: 100vh; min-height: 100svh; }
+  :is(.research-hero, .article-hero) > .container { display: grid; align-content: center; }
+  .article-hero .figure-stage[data-plate] { height: calc(100vh - var(--nav-h) - 1.5rem); height: calc(100svh - var(--nav-h) - 1.5rem); }
+  .article-hero .figcap.article-figcap { position: absolute; top: 0; right: max(var(--gutter), env(safe-area-inset-right)); max-width: 44%; margin: 0; }
+  .article-hero .figcap.article-figcap.is-hung { --hx: var(--fig-l); left: var(--hx); right: auto; top: calc(var(--fig-b) + .75rem); max-width: calc(100% - var(--hx) - max(var(--gutter), env(safe-area-inset-right))); padding-left: 0; text-align: left; }
 }
+/* the narrowest (568 x 320): the drawing is ~120 px wide, so its hedge starts at its column's edge, not the drawing's */
+@media (min-width: 540px) and (max-width: 639.98px) and (max-height: 520px) and (min-aspect-ratio: 23/20) { .article-hero .figcap.article-figcap.is-hung { --hx: min(var(--fig-l), 54%); } }
 
 /* ---------- reduced motion and print ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .rs-cap, .rs-shelf .rs-rail, .fig-labels, .fig-labels.is-on, .article-page .pager-card::before, .rs-still, .fs-still, .article-figcap, .np-plate { transition: none; }
+  .rs-cap, .rs-shelf .rs-rail, .fig-labels, .fig-labels.is-on, .article-page .pager-card::before, .rs-still, .fs-still, .article-figcap, .np-plate, .np-part, .np-still, .np-rule, .np-stage .fl { transition: none; }
   .fig-labels.is-on .fl { animation: none; }
   .fl, .fl-t, .fl::after { transition: none; }
 }

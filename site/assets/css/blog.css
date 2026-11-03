@@ -285,6 +285,10 @@
 .blog-post .blog-post-hero { display: block; padding-top: calc(var(--nav-h) + clamp(3rem, 6.5vw, 6.5rem)); padding-bottom: clamp(3rem, 6vw, 5.5rem); }
 .post-hero { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: clamp(2rem, 5vw, 5.5rem); align-items: center; }
 .blog-post .blog-title { max-width: 22ch; } /* the size is site.css's --h1-article (one step with the notes, 65 px at 1440) */
+/* a4 (a4-dev polish): beside its plate the title starts at the one-column size (51 px at 960) and grows from where
+   4.5vw meets it (1139 px), not 51 -> 43 px across one pixel. The plate is a grid column, so nothing can collide: every
+   post's hero at 961-1138 is no taller than at 1139 (work/blog/a4/h1probe.py: at most 6 lines, 611 px) */
+@media (min-width: 961px) { .blog-post .blog-title { font-size: max(var(--h1-article), 3.2rem); } }
 /* crumb and byline in the small step; their links are 24 px targets (the box grows upward) */
 .post-crumb { margin: 0; font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-3); }
 .post-crumb a, .post-byline a { display: inline-block; padding-top: .375rem; margin-top: -.375rem; color: var(--fg-2); border-bottom: var(--hair) solid var(--line-strong); transition: border-color .3s var(--ease), color .3s var(--ease); }
@@ -372,6 +376,11 @@
 @media (min-width: 601px) and (max-width: 960px) { .blog-post .blog-article { font-size: 1.125rem; } }
 .blog-article > :is(p, ul, ol, blockquote, figure, h2, h3, .article-end) { max-width: var(--measure); }
 .blog-article > p { hyphens: manual; }
+/* a4 (4K pixel inspector, medium): the lists keep their markers (site.css's reset took them), hung in the 1.3em gutter:
+   numbers for the ordered steps, an en dash for the rest; one step quieter than the text */
+.blog-article > ol { list-style: decimal outside; }
+.blog-article > ul { list-style: "\2013\2002" outside; }
+.blog-article > :is(ol, ul) > li::marker { color: var(--fg-3); font-variant-numeric: tabular-nums; }
 /* the notes' lead and two-line initial */
 /* a1: the lead is the body's size and colour; the initial alone marks it */
 .blog-article > p.lead { font-size: inherit; line-height: inherit; color: var(--fg-2); }
@@ -427,6 +436,9 @@
   .post-mp-art .bp-art { position: absolute; inset: 7% 5%; width: 90%; height: 86%; }
   .post-mp-art .pt { display: none; }
   .post-mp .pp-h { margin: .75rem 0 0; }
+  /* a4: at rest, hedge and all, while a figure of the post's own is on screen (blog.js) */
+  .post-mp-in { transition: opacity var(--dur-move) var(--ease); }
+  .post-mp-in.is-rest { opacity: 0; }
 }
 /* a short post: its text centred in the field right of the wayfinding from 1600 px (a3 design: at 1920 the right 36% was empty) */
 @media (min-width: 1600px) { .blog-post .grid:not(.has-mp) > .blog-article { grid-column: 4 / -1; justify-self: center; width: min(100%, var(--measure)); } }
@@ -442,6 +454,6 @@
   .lib-plate { max-width: 70%; break-inside: avoid; } .lib-plate * { animation: none !important; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bp-rings, .sr-date::before, .br-min .arr, .bpn, .bpn.is-on, .blog-post .pager-card::before { transition: none; }
+  .bp-rings, .sr-date::before, .br-min .arr, .bpn, .bpn.is-on, .blog-post .pager-card::before, .post-mp-in { transition: none; }
   .series-rail.will-reveal > li::before { transform: none; }
 }

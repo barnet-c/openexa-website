@@ -238,6 +238,11 @@
 .cost-val.is-acc { color: var(--signal-ink, #186B4F); }
 .cost-bar { --cols: 50; --rows: 2; --g: .1875rem; --bw: calc((100cqi - (var(--cols) - 1) * var(--g)) / var(--cols));
   position: relative; display: flex; container-type: inline-size; }
+/* (a4) equal units: the bar takes a whole number of device pixels per block, the spare pixels at its end (without
+   round() it spans its column, as before) */
+.cost-bar { --bq: 1px; max-width: calc(var(--cols) * round(down, (100% - (var(--cols) - 1) * var(--g)) / var(--cols), var(--bq)) + (var(--cols) - 1) * var(--g)); }
+@media (min-resolution: 2dppx) { .cost-bar { --bq: .5px; } }
+@media (min-resolution: 3dppx) { .cost-bar { --bq: calc(1px / 3); } }
 .cost-bar > i { position: relative; flex: none; width: var(--w); height: calc(var(--rows) * var(--bw) + (var(--rows) - 1) * var(--g)); font-style: normal; background: var(--c); box-shadow: inset 0 0 0 var(--hair) rgba(14, 21, 18, .5); }
 .cost-bar:not(.is-blocks) > i { margin-right: calc(var(--s, var(--w)) - var(--w)); }
 .cost-bar:not(.is-blocks) > i + i { width: calc(var(--w) - .125rem); margin-left: calc(2 * var(--hair)); }

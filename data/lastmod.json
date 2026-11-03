@@ -1,7 +1,7 @@
 {
  "access.html": {
   "date": "2026-11-03",
-  "sha": "f69aeaf9aa33ff7a"
+  "sha": "50c0e8f0df963c8d"
  },
  "blog/an-optimization-algorithm-for-sparse-mean-reverting-portfolio-selection.html": {
   "date": "2026-11-03",
@@ -41,11 +41,11 @@
  },
  "blog/empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way.html": {
   "date": "2026-11-03",
-  "sha": "2efa41ed78329e22"
+  "sha": "fa1db18a920fa6ec"
  },
  "blog/encoding-market-view-via-a-randomized-brownian-bridge.html": {
   "date": "2026-11-03",
-  "sha": "a3c80a1e98eb2d84"
+  "sha": "f2e14cb4318a5848"
  },
  "blog/esg-a-panacea-for-market-power.html": {
   "date": "2026-11-03",
@@ -53,11 +53,11 @@
  },
  "blog/examining-the-drawdown-risk-of-sector-etfs-2022.html": {
   "date": "2026-11-03",
-  "sha": "6a70c02e7d2ded3d"
+  "sha": "bd9d2ca8b6c95e6d"
  },
  "blog/in-search-gen-ai-business-model.html": {
   "date": "2026-11-03",
-  "sha": "f97c2af9e1b52671"
+  "sha": "451b77e4940f5868"
  },
  "blog/index.html": {
   "date": "2026-11-03",
@@ -77,7 +77,7 @@
  },
  "blog/multiscale-decomposition-and-analysis-of-sector-etf-price-dynamics.html": {
   "date": "2026-11-03",
-  "sha": "53251a67372f1081"
+  "sha": "4a613195f072e060"
  },
  "blog/multiscale-financial-signal-processing.html": {
   "date": "2026-11-03",
@@ -97,7 +97,7 @@
  },
  "blog/rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies.html": {
   "date": "2026-11-03",
-  "sha": "8c941792c3946615"
+  "sha": "c460c416c12d87ef"
  },
  "blog/stochastic-storage-cost-model-for-grains-futures.html": {
   "date": "2026-11-03",
@@ -105,11 +105,11 @@
  },
  "blog/tearsheet-how-to-use-tearsheet-in-the-face-of-volatile-crypto-and-bond-markets-as-a-means-of-capital-preservation-and-asset-appreciation.html": {
   "date": "2026-11-03",
-  "sha": "ed7c9de5c08abe66"
+  "sha": "a41ff08c8e904257"
  },
  "blog/the-drawdown-risk-and-portfolio-concentration-of-sector-etfs.html": {
   "date": "2026-11-03",
-  "sha": "cb91b6d936574b30"
+  "sha": "1e4f5cf9e4ebd90a"
  },
  "blog/the-labor-market-for-bankers-and-regulators.html": {
   "date": "2026-11-03",
@@ -125,15 +125,15 @@
  },
  "company.html": {
   "date": "2026-11-03",
-  "sha": "4ff91fe6bc3371cc"
+  "sha": "33f348e946e3b3d7"
  },
  "evidence.html": {
   "date": "2026-11-03",
-  "sha": "1752d3269629a4a8"
+  "sha": "b5ed437b7a28fb44"
  },
  "index.html": {
   "date": "2026-11-03",
-  "sha": "e33c34b0eecebc43"
+  "sha": "046ae1aa815ec326"
  },
  "lifecycles.html": {
   "date": "2026-11-03",
@@ -141,7 +141,7 @@
  },
  "platform.html": {
   "date": "2026-11-03",
-  "sha": "2cb4c5e872321da2"
+  "sha": "4fb592f271a51f5d"
  },
  "research.html": {
   "date": "2026-11-03",
@@ -149,43 +149,43 @@
  },
  "research/01-compounding-error.html": {
   "date": "2026-11-03",
-  "sha": "b6622d4570746a38"
+  "sha": "0c5388fb139fe0ce"
  },
  "research/02-post-training-and-audit.html": {
   "date": "2026-11-03",
-  "sha": "7f174f2920f3acd5"
+  "sha": "347c86436d3b6cd5"
  },
  "research/03-not-tasks-lifecycles.html": {
   "date": "2026-11-03",
-  "sha": "399085bb74ba2ecf"
+  "sha": "1b784de17403f1fb"
  },
  "research/04-five-thousand-small-agents.html": {
   "date": "2026-11-03",
-  "sha": "6b010c49f565d24f"
+  "sha": "4fb1e1d61f1b3ddd"
  },
  "research/05-agents-decide-code-executes.html": {
   "date": "2026-11-03",
-  "sha": "61ca0c7f8d847a10"
+  "sha": "090eabe3a6f53c3f"
  },
  "research/06-post-training-on-a-rulebook.html": {
   "date": "2026-11-03",
-  "sha": "01d330fbce63cd93"
+  "sha": "a3c438ab53396a46"
  },
  "research/07-the-execution-council.html": {
   "date": "2026-11-03",
-  "sha": "e15bbf4814edfcf9"
+  "sha": "f637d579fcf95cd6"
  },
  "research/08-a-ledger-nobody-can-edit.html": {
   "date": "2026-11-03",
-  "sha": "a90657366f1cb196"
+  "sha": "35c36a92d1ffb0ba"
  },
  "research/09-lifecycle-01-ten-sessions.html": {
   "date": "2026-11-03",
-  "sha": "1eedfd84706dc6c0"
+  "sha": "dd9bcb320563e347"
  },
  "research/10-master-and-copy.html": {
   "date": "2026-11-03",
-  "sha": "3d5beeebd73d714d"
+  "sha": "02438bc21ed75a74"
  },
  "trust.html": {
   "date": "2026-11-03",

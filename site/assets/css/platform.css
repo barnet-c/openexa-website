@@ -82,8 +82,15 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
   body[data-page="platform"] .hero-plate--stack { max-width: min(100%, 35rem); }
 }
 
-.hero-plate--stack .hp-art > svg { width: calc(var(--hp-s, 1) * 100%); }
-.hero-plate--stack .hp-labs { right: auto; width: calc(var(--hp-s, 1) * 100%); }
+/* (a4) a larger browser font: the drawing gives way to its labels (rem), so they stay inside the frame (at 150 % they ran
+   up to 31 px off a phone's screen); --hp-k is the widest label's room. Never binds at the default font (probed 320-3840) */
+.hero-plate--stack { container-type: inline-size; }
+.hero-plate--stack .hp-art { --hp-k: 7.5rem; --hp-p: 1rem; }
+@media (max-width: 600px) { .hero-plate--stack .hp-art { --hp-p: .5rem; } }
+@container (max-width: 23.75rem) { .hero-plate--stack :is(.hp-lab--side, .hp-lab--fl) { letter-spacing: .03em; } .hero-plate--stack .hp-art { --hp-k: 6.64rem; } }
+@container (max-width: 15rem) { .hero-plate--stack .hp-lab { font-size: calc(.8 * var(--mono-xs)); } .hero-plate--stack .hp-art { --hp-k: 5.35rem; } }
+.hero-plate--stack .hp-art > svg { width: min(calc(var(--hp-s, 1) * 100%), calc((100% - var(--hp-k)) / .668)); }
+.hero-plate--stack .hp-labs { right: auto; width: min(calc(var(--hp-s, 1) * 100%), calc((100% - var(--hp-p) - var(--hp-k)) / .668 + var(--hp-p))); }
 @media (max-width: 420px) { .hero-plate--stack :is(.hp-lab--side, .hp-lab--fl) { letter-spacing: .03em; } }
 @media (max-width: 380px) { .hero-plate--stack { --hp-s: .97; } }
 @media (max-width: 350px) { .hero-plate--stack { --hp-s: .89; } }
@@ -141,7 +148,8 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
   body[data-page="lifecycles"] .page-hero--plate > .hero-plate--rings { grid-column: 7 / -1; justify-self: stretch; max-width: none; }
 }
 .hero-plate--rings .lr-1 { stroke-width: var(--stroke-2); }
-.hero-plate--rings .lr-n { opacity: .8; }
+body[data-page="lifecycles"] .lcp .orb-next { opacity: .8; }
+@media (min-width: 961px) { body[data-page="lifecycles"] .lcp .orb-road { stroke-width: calc(2 * var(--stroke)); } }
 .hero-plate--rings .lr-ax { fill: none; stroke: currentColor; stroke-opacity: .32; stroke-width: var(--stroke); }
 .hero-plate--rings .orb-swarm .mote { opacity: .62; }
 .hero-plate--rings .lr-trace { fill: none; stroke: var(--accent); stroke-linecap: round; opacity: 0; }
@@ -219,6 +227,11 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 .desk .desk-stats b { font-size: 2.3rem; }
 .desk .desk-controls { flex: 1 0 auto; align-content: center; gap: 1.625rem; padding: 1.5rem 1.125rem; }
 @media (min-width: 1200px) { .desk .desk-body { grid-template-columns: minmax(0, 1fr) 22.5rem; } }
+@media (min-width: 961px) {
+  .desk .desk-controls { grid-template-rows: 1fr 1fr; align-content: stretch; gap: 0; padding: 0; }
+  .desk .desk-controls label { align-content: center; padding: 1rem 1.125rem; }
+  .desk .desk-controls label + label { border-top: var(--hair) solid var(--line); }
+}
 @media (min-width: 961px) and (max-width: 1199px) { .desk .desk-stats > div { padding: 1.25rem .625rem 1.125rem; } .desk .desk-stats b { font-size: 1.9rem; } }
 
 .desk .desk-log, .desk .desk-log.has-more { -webkit-mask-image: none; mask-image: none; }
@@ -247,9 +260,11 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .ln { display: block; text-wrap: balance; }
 
-:is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(h1, h2) .ph { white-space: nowrap; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(.ch-head, .hero-copy):has(> :is(h1, h2) .ph) { container-type: inline-size; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(h1, h2) .ph { display: inline-block; width: max-content; max-width: calc(100cqi + var(--ph-hang, 0px)); white-space: normal; }
+@media (min-width: 961px) { body[data-page="platform"] #modes .modes-head { --ph-hang: 2rem; } }
 
-@media (max-width: 374.98px) { body[data-page="platform"] .modes-head h2 .ws-a { white-space: nowrap; } body[data-page="platform"] .modes-head h2 .ws-b { white-space: normal; } }
+@media (max-width: 374.98px) { body[data-page="platform"] .modes-head h2 .ph:has(> .ws-b) { display: inline; width: auto; } body[data-page="platform"] .modes-head h2 .ws-a { white-space: nowrap; } }
 @media (max-width: 329.98px) { body[data-page="platform"] .modes-head h2 { letter-spacing: -.032em; } }
 
 :is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(dd, .list-rule p, .layer p, .sw-role p) { text-wrap: pretty; }

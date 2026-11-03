@@ -16,7 +16,11 @@
    (.18 s) when that line changes, follows the typing and leaves when the form loses focus. The signature is the last
    line, in the draft too (wrapped in a span; the text is the draft's, word for word).
    award a2 (1 Nov): no browser bubble. With JavaScript the form is novalidate and says what is missing in its own words,
-   under the field (aria-describedby, aria-invalid), marks the field's blank in the letter and focuses the first one. */
+   under the field (aria-describedby, aria-invalid), marks the field's blank in the letter and focuses the first one.
+   award a4 (3 Nov): the press shows on the letter. A refused press sets the missing blanks in reject red and the margin
+   tick beside the focused one turns red; a valid press makes the letter final (.is-final) and, once it is on screen,
+   closed (.is-closed: company.css draws its frame shut). On phones the final letter sits between the result's title and its buttons, so it is read before
+   "Open the email" (the buttons stay on screen: company.css). */
 (function () {
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
@@ -150,6 +154,7 @@
         if (!r || r.bottom < B.top + 4 || r.top > B.bottom - 4) { letter.classList.remove('has-tick'); tickAt = ''; return; }
         const y = Math.round(r.top - L.top), at = focusKey + ' ' + y + ' ' + sp.classList.contains('is-filled'), shown = letter.classList.contains('has-tick');
         letter.style.setProperty('--tick-y', y + 'px'); letter.style.setProperty('--tick-h', Math.round(r.height) + 'px');
+        tickEl.classList.toggle('is-no', sp.classList.contains('is-missing')); // a4: beside a refused blank, red
         if (at === tickAt && shown) return;
         tickAt = at;
         const tick = () => { letter.classList.add('has-tick'); if (!still.matches && tickEl.animate) tickEl.animate([{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: 180, easing: 'cubic-bezier(.2, .7, .2, 1)' }); };
@@ -172,12 +177,12 @@
     form.addEventListener('change', () => { live(); mark(); });
     form.addEventListener('focusin', e => here(KEYS[e.target.name]));
     form.addEventListener('focusout', () => here(''));
-    // the letter sits beside the form; on phones it waits for the result panel and appears there, under its buttons, so
-    // "Open the email" is on the first screen after "Prepare request" (r3-mobile: the letter is 600-700 px on a phone)
+    // the letter sits beside the form; on phones it waits for the result panel and appears there, above its buttons (a4:
+    // read before it is sent); the buttons stay on the screen (company.css), as r3-mobile asked of "Open the email"
     const place = () => {
       if (!letter || !home) return;
       const inPanel = result.classList.contains('show') && narrow.matches;
-      if (inPanel && letter.parentElement !== result) result.appendChild(letter);
+      if (inPanel && letter.parentElement !== result) result.insertBefore(letter, $('.row', result));
       else if (!inPanel && letter.parentElement !== home) home.insertBefore(letter, letterNote && letterNote.parentElement === home ? letterNote : null);
     };
     narrow.addEventListener('change', place);
@@ -260,7 +265,7 @@
     if (edit) edit.addEventListener('click', () => {
       result.classList.remove('show');
       form.hidden = false;
-      if (letter) { letter.classList.remove('is-final'); place(); live(); }
+      if (letter) { letter.classList.remove('is-final', 'is-closed'); place(); live(); }
       if (letterNote) letterNote.hidden = false;
       if (name) name.focus();
     });
@@ -295,6 +300,7 @@
           if (letterNote) letterNote.hidden = true;
         }
         showResult(false);
+        if (letter) { void getComputedStyle(letter).getPropertyValue('--lp'); letter.classList.add('is-closed'); } // a4: styled open first, so the frame draws
         return;
       }
       submit.disabled = true;

@@ -14,6 +14,33 @@
   const root = document.documentElement;
   const unhash = h => { try { return decodeURIComponent(h); } catch (e) { return h; } }; // (#% must not stop the script)
 
+  /* ---------------- browser zoom on wide screens (a4) ----------------
+     Above 1920 px the root grows with the window (site.css), and a zoom step narrows the CSS window by as much as it
+     enlarges the pixel: the two cancelled (3840: nothing changed up to 200%; 2560: 125% changed nothing, 200% gave 1.46x;
+     WCAG 1.4.4). Chromium and WebKit give outerWidth in screen points, which zoom does not change, so outer / inner is the
+     zoom. It counts only as one of the browsers' zoom steps, and only if the pixel ratio agrees (it carries the zoom too:
+     what is left must be a screen's own scale), so a side panel or docked developer tools do not read as a zoom (they
+     could only by leaving exactly the screen scale's share of the window). --uz then gives the step its factor back
+     (site.css :root.uz). Firefox reads 1, and no-JS and 100% stay as they were. A window under 1200 points (phones,
+     tablets) never reaches the step and is not read further: on a phone innerWidth would force the layout in this task. */
+  const ZOOMS = [0.25, 1 / 3, 0.5, 2 / 3, 0.75, 0.8, 0.85, 0.9, 1.1, 1.15, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5]; // Chromium's and Safari's steps
+  function readZoom() {
+    const ow = window.outerWidth;
+    if (!(ow >= 1200) && !root.classList.contains('uz')) return;
+    const zr = ow / window.innerWidth, dpr = window.devicePixelRatio || 1;
+    let uz = 1;
+    const z = zr > 0 && isFinite(zr) ? ZOOMS.find(p => Math.abs(zr / p - 1) < 0.015) : 0;
+    if (z) {
+      const base = dpr / z, s = Math.round(base * 4) / 4;
+      if (s >= 1 && Math.abs(base - s) < 0.02) uz = Math.round(z * 1000) / 1000;
+    }
+    if (uz === 1) { if (root.classList.contains('uz')) { root.classList.remove('uz'); root.style.removeProperty('--uz'); } return; }
+    root.style.setProperty('--uz', String(uz));
+    root.classList.add('uz');
+  }
+  readZoom();
+  window.addEventListener('resize', readZoom); // every zoom step fires one; first, so the measures below read the new root
+
   /* ---------------- nav: the frame of every page ---------------- */
   const nav = $('.nav');
   const darkStart = document.body.dataset.nav === 'dark-start';
@@ -25,7 +52,7 @@
   let paperTop = null, paperWatch = 0;
   const toggle = $('.nav-toggle');
   const sheet = $('.nav-sheet');
-  let navH = 72, vh = 0, maxScroll = 1, clearUntil = -1, bands = [], navRaf = 0, menuOpen = false;
+  let navH = 72, vh = 0, maxScroll = 1, clearUntil = -1, bands = [], navRaf = 0, menuOpen = false, lastY = 0;
 
   const pageKey = path => path.replace(/(\/index)?(\.html)?\/*$/, '').split('/').pop() || 'index';
   const here = pageKey(location.pathname);
@@ -79,7 +106,8 @@
     wrap.innerHTML =
       '<button class="nav-ch-btn is-intro" type="button" aria-expanded="false" aria-controls="nav-ch-panel"><span class="nav-ch-roll"></span>' +
       '<svg class="nav-ch-caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.6l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></button>' +
-      '<div class="nav-ch-panel" id="nav-ch-panel"><ol class="nav-ch-list"></ol>' +
+      // (a4) the list's name; drawn in the phone sheet only, where this page's chapters sit above the site's pages
+      '<div class="nav-ch-panel" id="nav-ch-panel"><p class="nav-ch-head" id="nav-ch-head">On this page</p><ol class="nav-ch-list" aria-labelledby="nav-ch-head"></ol>' +
       '<a class="nav-ch-top" href="#"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 8.5V1.8M2 4.6l3-3 3 3" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>Back to top</a></div>';
     brand.after(wrap);
     ui.btn = $('.nav-ch-btn', wrap); ui.roll = $('.nav-ch-roll', wrap); ui.panel = $('.nav-ch-panel', wrap); ui.list = $('.nav-ch-list', wrap);
@@ -121,11 +149,13 @@
   let fitKey = '';
   function fitModes() {
     if (!ui.roll || !live.length) return;
-    const key = [window.innerWidth, live.map(c => c.k).join(), document.fonts ? document.fonts.status : ''].join('|');
+    const zoomed = root.classList.contains('uz'), rootPx = zoomed ? parseFloat(getComputedStyle(root).fontSize) || 16 : 16;
+    const key = [window.innerWidth, rootPx, live.map(c => c.k).join(), document.fonts ? document.fonts.status : ''].join('|');
     if (key === fitKey) return;
     fitKey = key;
     live.forEach(c => { c.mode = 'full'; });
-    const links = midMQ.matches && $('.nav-links', nav);
+    // (a4) zoomed in on a wide screen the bar has a 961-1279 px page's room in rem: it fits its forms as that bar does
+    const links = (midMQ.matches || (zoomed && !narrowMQ.matches && window.innerWidth / rootPx < 80)) && $('.nav-links', nav);
     if (narrowMQ.matches || links) {
       const box = document.createElement('span'); box.className = 'nav-ch-measure'; box.setAttribute('aria-hidden', 'true');
       const forms = [];
@@ -241,7 +271,7 @@
 
   function update() {
     if (!nav) return;
-    const y = window.scrollY;
+    const y = lastY = window.scrollY;
     // the bar's surface: the ground of the section that meets its lower edge
     let dark = false, band = null;
     const edge = y + navH + 1;
@@ -513,7 +543,20 @@
     window.addEventListener('scroll', queue, { passive: true });
     window.addEventListener('resize', measure);
     window.addEventListener('load', measureSoon);
-    ['story:gl-ready', 'story:no-webgl', 'oxa:loaded'].forEach(t => document.addEventListener(t, measureSoon));
+    // (a4) the overture's and the loader's hand-offs change the bar's state, not the page's geometry: a change of height
+    // reaches the ResizeObserver below (a full measure). Here the clear stretch is recomputed from the bands already
+    // measured, with no layout read: the measure that ran in their frame forced a layout after story.js's writes (59-61 ms
+    // at 4x, 50 of it forced style and layout, inside the phone's 158-162 ms first-second frame)
+    const handoff = () => {
+      const sb = story && bands.find(b => b.el === story);
+      if (!sb || mRaf) { measureSoon(); return; } // not measured yet (or a measure already waits): measure
+      const pinned = root.classList.contains('story-ready') && !root.classList.contains('no-webgl');
+      clearUntil = !darkStart ? -1 : pinned ? sb.bottom - vh : 16;
+      // at the top the bar is clear either way and nothing has risen to it: no frame needed (update reads the paper's box;
+      // the last scroll position is update's own, as reading scrollY here would force the layout too)
+      if (lastY > 16 || menuOpen) queue();
+    };
+    ['story:gl-ready', 'story:no-webgl', 'oxa:loaded'].forEach(t => document.addEventListener(t, story ? handoff : measureSoon));
     // content that changes height
     if ('ResizeObserver' in window) new ResizeObserver(measureSoon).observe(document.body);
     // (reading document.fonts.ready updates style and layout in Chromium: it too waits for the frame)

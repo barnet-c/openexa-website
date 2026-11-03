@@ -109,9 +109,10 @@ body[data-page="home"] .figure-cap .fc-key { color: var(--fg-2); text-wrap: bala
 
 /* chapters close instead of trail */
 body[data-page="home"] main > .story + .section { padding-top: clamp(1.75rem, 3.4vw, 3rem); }
-/* wide screens: the paper the overture leaves (its record line settles at 66 % of the frame) is this chapter's top margin */
+/* wide screens: the paper the overture leaves is this chapter's top margin (a4: from .story-wait, the first frame; set at
+   story-ready it moved every chapter 48 px, a reload's 0.033 shift) */
 @media (min-width: 640px) and (min-aspect-ratio: 23/20) and (min-height: 600.02px) {
-  html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] main > .story + .section { padding-top: 0; }
+  html:is(.story-ready, .story-wait):not(.no-webgl):not(.story-tiny):not(.story-failed) body[data-page="home"] main > .story + .section { padding-top: 0; }
 }
 
 /* §01 the six classes: the ring, then the status in words (no codes, no mono capitals) */
@@ -227,8 +228,8 @@ body[data-page="home"] #economics .cost-lab b, body[data-page="home"] #economics
 /* §07: the reading time is a note, not a data label */
 body[data-page="home"] #research .research-card .link-arrow { font: 400 .875rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; }
 
-/* wide screens: the opening scene's copy centred between the nav and the scene index, on the globe's centre line (not at
-   the bottom under an empty dark field); the safety net (story.js never ran) still lays it out as a static block */
+/* wide screens: the opening copy centred on the globe's centre line between the nav and the index; the safety net (no
+   story.js) lays it out as a static block */
 @media (scripting: enabled) and (min-width: 1600px) and (min-height: 820px) and (min-aspect-ratio: 23/20) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story .beat-0 { top: var(--nav-h); bottom: var(--story-bar-h); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
   html:not(.story-ready):not(.no-webgl) body[data-page="home"] .story .beat-0 { animation: home-static-beat0 1ms var(--story-net) forwards; }
@@ -260,9 +261,7 @@ body[data-page="home"] #proof .proof-copy .ch-title { max-width: 12ch; }
   body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: .625rem; }
   body[data-page="home"] .story-motion { white-space: nowrap; }
 }
-/* the cost index says "Technology" and "Management" in full, as Proof's Fig. 3.1 (proof a1; integrate a1): Management's
-   label one tier up; in the phone container Technology ends at its block's right edge and Management takes a third tier
-   (the rules are proof.css's "§03 (a1)", scoped to §05) */
+/* the cost index names "Technology" and "Management" in full, as Proof's Fig. 3.1 (proof.css's "§03 (a1)", scoped to §05) */
 body[data-page="home"] #economics .cost-bar > i:last-of-type > span { padding-bottom: 2.4545em; } /* 27 px at the 11 px label */
 body[data-page="home"] #economics .cost-row:first-child { padding-top: 3.25rem; }
 @container cost (max-width: 860px) {
@@ -274,23 +273,21 @@ body[data-page="home"] #economics .cost-row:first-child { padding-top: 3.25rem; 
   body[data-page="home"] #economics .cost-bar > i:last-of-type > span { padding-bottom: 4.0909em; } /* two tiers up */
   body[data-page="home"] #economics .cost-row:first-child .cost-bar { margin-top: 4.375rem; }
 }
-/* the chapters after the overture are laid out only near the viewport: the first frame styles the
-   overture, not 2,000 elements below it. Each one's stand-in is its measured content height (padding comes on top) for the
-   width band, so the page, the scrollbar and the nav ruler are as long at load as when drawn; "auto" keeps its real size once drawn. The footer is
-   always drawn: a link to #disclosures inside its fold lands only if it is laid out. */
+/* the chapters after the overture are laid out near the viewport only; each stand-in is its measured content height for the
+   width band (padding on top), so the page is as long at load as drawn. The footer is always drawn (#disclosures lands) */
 body[data-page="home"] main > .story ~ section { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
-body[data-page="home"] #lifecycles { --cis: 39rem; } body[data-page="home"] #stack { --cis: 74.5rem; } body[data-page="home"] #lc01 { --cis: 69rem; }
-body[data-page="home"] #proof { --cis: 49.5rem; } body[data-page="home"] #economics { --cis: 45.5rem; } body[data-page="home"] #governance { --cis: 49rem; }
+body[data-page="home"] #lifecycles { --cis: 39.125rem; } body[data-page="home"] #stack { --cis: 74rem; } body[data-page="home"] #lc01 { --cis: 67.625rem; }
+body[data-page="home"] #proof { --cis: 49.375rem; } body[data-page="home"] #economics { --cis: 46rem; } body[data-page="home"] #governance { --cis: 47.5rem; }
 body[data-page="home"] #research { --cis: 35.5rem; } body[data-page="home"] .cta-band { --cis: 7.5rem; }
 @media (min-width: 600px) {
-  body[data-page="home"] #lifecycles { --cis: 39rem; } body[data-page="home"] #stack { --cis: 91rem; } body[data-page="home"] #lc01 { --cis: 57.5rem; }
+  body[data-page="home"] #lifecycles { --cis: 39rem; } body[data-page="home"] #stack { --cis: 88.5rem; } body[data-page="home"] #lc01 { --cis: 57.5rem; }
   body[data-page="home"] #proof { --cis: 54rem; } body[data-page="home"] #economics { --cis: 35.5rem; } body[data-page="home"] #governance { --cis: 59rem; }
   body[data-page="home"] #research { --cis: 35.5rem; } body[data-page="home"] .cta-band { --cis: 7rem; }
 }
-@media (min-width: 761px) and (max-width: 960px) { body[data-page="home"] #lifecycles { --cis: 32.25rem; } body[data-page="home"] #research { --cis: 30.5rem; } } /* 768's §01; the three notes in a row */
+@media (min-width: 761px) and (max-width: 960px) { body[data-page="home"] #lifecycles { --cis: 32.25rem; } body[data-page="home"] #stack { --cis: 92.5rem; } body[data-page="home"] #research { --cis: 30.5rem; } } /* 768-834's §01 and §02 (a4 p2); the three notes in a row */
 @media (min-width: 961px) {
-  body[data-page="home"] #lifecycles { --cis: 39.75rem; } body[data-page="home"] #stack { --cis: 63.125rem; } body[data-page="home"] #lc01 { --cis: 64.5rem; }
-  body[data-page="home"] #proof { --cis: 34.75rem; } body[data-page="home"] #economics { --cis: 28.5rem; } body[data-page="home"] #governance { --cis: 43.4375rem; }
+  body[data-page="home"] #lifecycles { --cis: 39.625rem; } body[data-page="home"] #stack { --cis: 63rem; } body[data-page="home"] #lc01 { --cis: 64.375rem; }
+  body[data-page="home"] #proof { --cis: 34.75rem; } body[data-page="home"] #economics { --cis: 27.75rem; } body[data-page="home"] #governance { --cis: 43.4375rem; }
   body[data-page="home"] #research { --cis: 37.5rem; } body[data-page="home"] .cta-band { --cis: 10rem; }
 }
 /* small desktops: 961-1099 the 1024 heights, 1100-1359 the 1280 heights (the spreads start at 1100; re-measured a3) */
@@ -305,7 +302,7 @@ body[data-page="home"] #research { --cis: 35.5rem; } body[data-page="home"] .cta
   body[data-page="home"] #research { --cis: 34.5rem; } body[data-page="home"] .cta-band { --cis: 9.5rem; }
 }
 /* from 1680 (rem above 1920, so 3840 is 1920 doubled): the 1920 heights (re-measured a3; §01's lands "See the stack" under the bar) */
-@media (min-width: 1680px) { body[data-page="home"] #lifecycles { --cis: 41.375rem; } body[data-page="home"] #stack { --cis: 63.5rem; } body[data-page="home"] #lc01 { --cis: 66.75rem; } body[data-page="home"] #research { --cis: 39.5rem; } }
+@media (min-width: 1680px) { body[data-page="home"] #lifecycles { --cis: 38.375rem; } body[data-page="home"] #stack { --cis: 63.5rem; } body[data-page="home"] #lc01 { --cis: 66.75rem; } body[data-page="home"] #economics { --cis: 29.25rem; } body[data-page="home"] #research { --cis: 39.625rem; } }
 @media print { body[data-page="home"] main > .story ~ section { content-visibility: visible; } }
 /* §03: the link sits one chapter step under the lab (swarm.css adds 40 px below it) */
 body[data-page="home"] #lc01 .swarm-live { margin-bottom: 0; }
@@ -351,8 +348,7 @@ body[data-page="home"] #research .rc-mark { display: block; width: auto; height:
   body[data-page="home"] #research .research-card h3 { grid-column: 1; grid-row: 1; }
   body[data-page="home"] #research .research-card .link-arrow { grid-column: 1; grid-row: 2; margin-top: .625rem; }
 }
-/* without JavaScript: the first screen is the first scene alone (scene 2's plate and its labels start under the fold),
-   each scene is as tall as its plate, and the static globe is drawn at its own weight */
+/* no JavaScript: the first screen is the first scene alone, each scene as tall as its plate, the static globe at weight */
 @media (scripting: none) {
   body[data-page="home"] .story .beat-0 { min-height: 100vh; min-height: 100svh; }
   body[data-page="home"] .story-static-mark { opacity: 1; }
@@ -381,18 +377,24 @@ html.no-webgl:not(.story-tiny) body[data-page="home"] .story .beat-0 { min-heigh
 }
 /* scene 4: the floor tag in the chart grammar Proof and §04 use ("FLOOR" tracked, the unit as written: "10 bps") */
 body[data-page="home"] .story-lab.floor .u { letter-spacing: .02em; text-transform: none; color: rgba(245, 242, 236, .9); }
-/* §07 on tablets (761-960): the three notes in one row, as on desktop (site.css's 2 + 1 left the third alone under two);
-   a still wider than its cell keeps its shape */
+/* §07 on tablets (761-960): the three notes in one row, as on desktop; a still wider than its cell keeps its shape */
 body[data-page="home"] #research .rc-mark { object-fit: contain; object-position: left center; }
 @media (min-width: 761px) and (max-width: 960px) {
   body[data-page="home"] #research .card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   body[data-page="home"] #research .card-grid--3 > :last-child:nth-child(odd) { grid-column: auto; }
 }
-/* a3 p5: a dot-joined label never ends a line on its dot. §04's "Runs · lifecycle executions" and §05's caption break
-   before the dot and drop it on phones (Trust's .tp-dot); §04's hedge above the floor keeps "not published" together
-   (balanced; on phones it was 1 px short at 12 px: -0.01em) */
+/* a3 p5: a dot-joined label never ends a line on its dot: it breaks before the dot and drops it (Trust's .tp-dot) */
 @media (max-width: 600px) {
   body[data-page="home"] .ph-dot { display: block; height: 0; overflow: hidden; }
 }
 @media (min-width: 961px) and (max-width: 1064px) { body[data-page="home"] #proof .stats .ph-dot { display: block; height: 0; overflow: hidden; } } /* the stat's column is 160-175 px: "Runs" over "lifecycle executions" */
 /* the hedge above the floor ("exact value / not published"): proofchart.css (integrate a3, for Home §04 and Proof) */
+
+/* ========== award a4 ========== */
+/* tablets keep v2's four figures under the buttons (owner, 2 Nov), or the phone's 01 line where they would squeeze the
+   globe (story.js .story-figs-01): overture.css (integrate a4) */
+/* §01 from 1680 (so 4K is 1920 doubled): the six cells closer to their content (the design juror: "large and quiet at 4K") */
+@media (min-width: 1680px) { body[data-page="home"] #lifecycles .lc-reg > .card { row-gap: 2rem; } }
+/* §02 at 1000-1099 px (the list under 340 px): the boundary's two side lines each wrap in two; tighter leading keeps all
+   four inside the 4.5rem row (they ran 6-7 px over both hairlines), the plane's line between them (a4 p2) */
+@container (max-width: 340px) { body[data-page="home"] #stack .arch.is-wide .arch-bound .sides { gap: .375rem; } body[data-page="home"] #stack .arch.is-wide .arch-bound .sides > span { line-height: 1.2; } }

@@ -4,7 +4,8 @@
    caption comes from the row (data-cap-t, what is drawn, shown on phones only; data-cap-h, the hedge; written by
    tools/build_research.py) and changes with it (cut, 1 Nov: the caption paragraphs and "Fig. NN" are gone). The row whose figure is
    on the plate is marked (.is-current). Without JavaScript the plate is not drawn (research.css) and the list is v2's.
-   Notes: "In this note" marks the part being read (.is-on, aria-current), which v2 had styled but no longer set.
+   Notes: "In this note" marks the part being read (.is-on, aria-current), which v2 had styled but no longer set; from
+   1440 px the margin plate lights the part of the drawing that part names (award a4).
    No inline script or style (CSP); nothing here is needed to read a page. */
 (function () {
   'use strict';
@@ -141,6 +142,15 @@
   const toc = $$('.toc a[href^="#"]');
   if (toc.length) {
     const heads = toc.map(a => document.getElementById(decodeURIComponent(a.hash.slice(1))));
+    /* award a4 (a4-design): the margin plate lights the part of the drawing that the marked part of the note names
+       (build_research PARTS: [data-parts] lists the part heads' ids; research.css .is-lit, .has-lit). Class toggles only,
+       once per change of part: no layout is read for it */
+    const npStage = $('.np-stage'), lits = npStage ? $$('[data-parts]', npStage) : [];
+    const light = id => {
+      let any = false;
+      lits.forEach(el => { const on = !!id && el.dataset.parts.split(' ').indexOf(id) > -1; el.classList.toggle('is-lit', on); any = any || on; });
+      npStage.classList.toggle('has-lit', any);
+    };
     let on = -2, queued = false;
     function mark() {
       queued = false;
@@ -153,6 +163,7 @@
         a.parentElement.classList.toggle('is-on', i === k);
         if (i === k) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current');
       });
+      if (lits.length) light(k > -1 && heads[k] ? heads[k].id : '');
     }
     const queue = () => { if (!queued) { queued = true; requestAnimationFrame(mark); } };
     window.addEventListener('scroll', queue, { passive: true });

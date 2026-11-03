@@ -1,6 +1,5 @@
-/* OpenEXA: page styles for Proof and Trust, after site.css on evidence.html and trust.html only. Tokens only (no new
-   colours or faces); every rule scoped to these pages; :hover only inside (hover: hover); a still state under reduced
-   motion; print reads on white. Budget: gzip -9 <= 12,000 bytes (check_static). Reasoning: .shots/v2x/notes/proof.md */
+/* OpenEXA: Proof and Trust (evidence.html, trust.html), after site.css. Tokens only; scoped; :hover in (hover: hover);
+   still under reduced motion; print on white. gzip -9 <= 12,000 B (check_static). Why: .shots/v2x/notes/proof.md */
 
 /* ======================= both pages: the reading layer ======================= */
 /* display lines break by sense: one sentence to a line where it fits, each sentence balanced on its own */
@@ -18,21 +17,23 @@
 
 /* ======================= Proof (evidence.html) ======================= */
 
-/* hero plate (a1-a3): the record line on Fig. 1.1's own column, gutter and ten lanes, so it drops straight into the
-   chart (Co3); ten open blocks on the 10 bps floor (C-023, S-13), each linked to the next; under the floor Fig. 1.1's
-   axis: the floor's name, the days, the broker's ticks. Rows in label ems (--ax-l) */
-[data-page="proof"] :is(.page-hero, .hero-plate--records) { --ax-l: var(--mono-tick); --ax-h: calc(8.5 * var(--ax-l)); } /* the figure too: the share card (build_og) has no hero */
+/* hero plate (a1-a4): the record on Fig. 1.1's gutter and lanes (Co3); ten open blocks on the floor (C-023, S-13);
+   under it Fig. 1.1's axis. Rows in label ems (--ax-l) */
+[data-page="proof"] :is(.page-hero, .hero-plate--records) { --ax-l: var(--mono-tick); --ax-h: calc(8.5 * var(--ax-l)); --m: 1.75rem; } /* the figure too: the share card (build_og) has no hero */
 [data-page="proof"] .pf-record { container-type: inline-size; min-width: 0; }
 [data-page="proof"] .pf-record > .hero-plate { max-width: none; }
 [data-page="proof"] .hero-plate--records { --G: clamp(4rem, 15cqi, 6.75rem); position: relative; } /* Fig. 1.1's gutter (proofchart.css) */
+/* a4: the frame --m above the blocks and below the ticks (--tkw: .pf-tk's width; --fb: its reach under the axis) */
+[data-page="proof"] .hero-plate--records { --lane: calc((100cqi - var(--G)) / 10); --tkw: max(.385 * var(--lane), min(.6 * var(--lane), .875rem)); --fb: calc(var(--m) - 2 * var(--ax-l) + .375 * var(--tkw)); }
 @container (max-width: 540px) { [data-page="proof"] .hero-plate--records { --G: clamp(5rem, 15cqi, 6.75rem); } }
 @container (max-width: 300px) { [data-page="proof"] .hero-plate--records { --G: 2.375rem; } } /* the chart's narrow gutter: lanes stay 24 px */
 [data-page="proof"] .hero-plate--records .hp-art { padding: 0; }
-[data-page="proof"] .hero-plate--records .hp-reg { inset: -.75rem 0 -1rem; } /* the frame is the column */
-[data-page="proof"] .hero-plate--records .hp-cap { margin: 1.5rem 0 0; } /* flush with the marks, as on Platform */
+[data-page="proof"] .hero-plate--records .hp-reg { inset: calc(7 * var(--lane) / 26 - var(--m)) 0 calc(-1 * var(--fb)); } /* blocks 7/26 lane down */
+[data-page="proof"] .hero-plate--records .hp-cap { margin: calc(var(--fb) + .5rem) 0 0; } /* flush with the marks, as on Platform */
 [data-page="proof"] .pf-top { position: relative; padding-left: var(--G); color: var(--fg); }
 [data-page="proof"] .pf-top > svg { display: block; width: 100%; height: auto; overflow: visible; }
-[data-page="proof"] .pf-top::before { content: ""; position: absolute; left: 0; bottom: calc(-.5px * var(--stroke)); width: var(--G); border-top: calc(1px * var(--stroke)) solid currentColor; opacity: .72; } /* the floor under the gutter */
+/* a4: the floor, its lit pass and the faint line beyond are HTML rules on one edge: the same device rows */
+[data-page="proof"] .pf-fl0 { position: absolute; left: 0; right: 0; bottom: calc(-.5 * var(--hair)); height: 0; border-top: var(--hair) solid currentColor; opacity: .72; }
 [data-page="proof"] .pf-pl { --W: 260; --H: 22; position: absolute; inset: 0 0 0 var(--G); color: var(--fg); pointer-events: none; }
 [data-page="proof"] .pf-pl > span { position: absolute; overflow: hidden; left: calc(var(--u) / var(--W) * 100%); top: calc(var(--v) / var(--H) * 100%); width: calc(var(--w) / var(--W) * 100%); height: calc(var(--h) / var(--H) * 100%); }
 [data-page="proof"] .pf-pl svg { position: absolute; display: block; left: calc(var(--u) / var(--w) * -100%); top: calc(var(--v) / var(--h) * -100%); width: calc(var(--W) / var(--w) * 100%); max-width: none; height: calc(var(--H) / var(--h) * 100%); overflow: visible; }
@@ -42,13 +43,14 @@
   [data-page="proof"] .pf-pl svg { left: calc(var(--u) / var(--W) * -100cqw); top: calc(var(--v) / var(--H) * -100cqh); width: 100cqw; height: 100cqh; }
 }
 [data-page="proof"] .pf-tk > span, [data-page="proof"] .pf-lit > span { position: absolute; inset: 0; }
-[data-page="proof"] .pf-rec { --v: 6; --w: 28; --h: 17; transform-origin: 30.357% 94.118%; } /* a block and its link; the foot on the floor */
-[data-page="proof"] .pf-lit { --u: 0; --v: 18; --w: 260; --h: 8; }
+[data-page="proof"] .pf-rec { --v: 6; --w: 28; --h: 16; transform-origin: 30.357% 100%; } /* a block and its link, clipped at the floor: never a device row under it */
+[data-page="proof"] .pf-pl > .pf-lit { left: 0; top: auto; bottom: calc(-3.5 * var(--hair)); width: 100%; height: calc(7 * var(--hair)); }
+[data-page="proof"] .pf-lit > span::before, [data-page="proof"] .pf-lit > span::after { content: ""; position: absolute; left: 0; right: 0; }
+[data-page="proof"] .pf-lit > span::before { z-index: 1; top: calc(3 * var(--hair)); height: 0; border-top: var(--hair) solid var(--accent); }
+[data-page="proof"] .pf-lit > span::after { top: calc(.5 * var(--hair)); height: calc(6 * var(--hair)); background: var(--accent); opacity: .14; } /* the glow */
 [data-page="proof"] .hero-plate--records .hp-rec { fill: none; stroke: currentColor; stroke-opacity: .86; stroke-width: var(--stroke); }
 [data-page="proof"] .hero-plate--records .pf-ln { stroke-opacity: .62; }
-[data-page="proof"] .hero-plate--records :is(.hp-strong, .pf-fl, .pf-ln) { shape-rendering: crispEdges; } /* level lines on whole device pixels (4K bar) */
-[data-page="proof"] .pf-fl { fill: none; stroke: var(--accent); stroke-width: var(--stroke); }
-[data-page="proof"] .pf-glow { fill: none; stroke: var(--accent); stroke-opacity: .14; stroke-width: calc(6 * var(--stroke)); }
+[data-page="proof"] .hero-plate--records .pf-ln { shape-rendering: crispEdges; } /* level lines on whole device pixels (4K bar) */
 /* under the floor: the gutter + ten lanes, as Fig. 1.1 (FLOOR / DAY / CONFIRMED) */
 [data-page="proof"] .pf-ax { display: grid; grid-template-columns: var(--G) repeat(10, minmax(0, 1fr)); grid-template-rows: calc(2.6 * var(--ax-l)) calc(2 * var(--ax-l)) calc(2.8 * var(--ax-l)); box-sizing: border-box; height: var(--ax-h); padding: calc(.5 * var(--ax-l)) 0 calc(.6 * var(--ax-l)); align-items: center; font: 500 var(--ax-l)/1.3 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); }
 [data-page="proof"] .pf-ax-l { grid-column: 1; justify-self: start; max-width: calc(var(--G) - .625rem); color: var(--fg-2); }
@@ -63,8 +65,10 @@
   [data-page="proof"] .pf-ax { grid-template-rows: calc(2.6 * var(--ax-l)) calc(2 * var(--ax-l)) calc(1.8 * var(--ax-l)) calc(1.6 * var(--ax-l)); height: calc(9.1 * var(--ax-l)); }
   [data-page="proof"] .pf-ax-l { max-width: none; white-space: nowrap; letter-spacing: .02em; }
   [data-page="proof"] .pf-l-ok { grid-row: 4; grid-column: 1 / -1; align-self: end; }
+  [data-page="proof"] .hero-plate--records { --fb: calc(var(--m) - .6 * var(--ax-l)); } /* the label row is the foot */
 }
-@media (forced-colors: active) { [data-page="proof"] :is(.pf-pl, .pf-top) { color: CanvasText; } [data-page="proof"] .pf-fl { stroke: CanvasText; } [data-page="proof"] .pf-glow { display: none; } }
+@media (forced-colors: active) { [data-page="proof"] :is(.pf-pl, .pf-top) { color: CanvasText; } [data-page="proof"] .pf-lit > span::before { border-color: CanvasText; } [data-page="proof"] .pf-lit > span::after { display: none; } }
+@media print { [data-page="proof"] .pf-fl0 { border-color: #000 !important; } [data-page="proof"] .pf-lit > span::before { border-color: #1E7A5A !important; } }
 @media screen and (prefers-reduced-motion: no-preference) {
   [data-page="proof"] .pf-rec { animation: pf-rec-land .45s var(--ease-out) calc(120ms + var(--i, 0) * 45ms) backwards; }
   [data-page="proof"] .pf-lit, [data-page="proof"] .pf-lit > span { animation: pf-wipe .9s var(--ease-draw) .56s backwards; }
@@ -72,13 +76,13 @@
   [data-page="proof"] :is(.pf-lit, .pf-tk) > span { animation-name: pf-hold; } /* the window slides right, the mark stays put */
   [data-page="proof"] .hero-plate--records .pf-l-ok { animation: pf-fade .5s var(--ease-out) 1.35s backwards; }
 }
-@keyframes pf-rec-land { from { opacity: 0; transform: translateY(-58.824%) scaleY(.6); } } /* 10 drawing units up */
+@keyframes pf-rec-land { from { opacity: 0; transform: translateY(-62.5%) scaleY(.6); } } /* 10 drawing units up */
 @keyframes pf-land { from { opacity: 0; transform: translateY(-83.333%) scaleY(.6); } } /* Trust's records */
 @keyframes pf-fade { from { opacity: 0; } }
 @keyframes pf-wipe { from { transform: translateX(-100%); } }
 @keyframes pf-hold { from { transform: translateX(100%); } }
 
-/* §01 Fig. 1.1: one open block above the floor, no chevron, and the narrow chart's room for its note are shared with Home §04 (proofchart.css) */
+/* §01 Fig. 1.1: shared with Home §04 (proofchart.css) */
 
 /* Fig. 1.1 on the page's type steps (a1, W4/D1): proofchart.css now, for Home §04 too (integrate a1) */
 /* a2 (UX juror): Fig. 1.1's register reads the two totals at rest, all five cells for a session in hand */
@@ -124,7 +128,7 @@
 .pf-list b { font-weight: 600; color: var(--fg); }
 
 
-/* §02 the paper trail (a1): three sheets, one session's fill on the same row of each (matched line by line, C-028) */
+/* §02 the paper trail (a1): one fill on the same row of each sheet (C-028) */
 [data-page="proof"] .pf-trail .pf-doc { --F: calc(106 / 180); padding: 0; }
 [data-page="proof"] .pf-trail .pf-doc::after { content: none; }
 [data-page="proof"] .pf-trail .pf-doc::before { content: none; }
@@ -157,7 +161,7 @@
   [data-page="proof"] .pf-doc h3 a { display: inline; border-bottom: 0; text-decoration: underline var(--hair) var(--line-strong); text-underline-offset: .22em; }
   [data-page="proof"] .pf-doc h3 .arr { display: inline-block; margin-left: .25em; vertical-align: .05em; }
   [data-page="proof"] .pf-sheet { margin: 0; }
-  /* the spine: from this sheet's row down to the next sheet's (the row sits at --F of a sheet --sw * 180 / 320 tall) */
+  /* the spine: this sheet's row to the next's */
   [data-page="proof"] .pf-trail .pf-doc:not(:last-child)::before { content: ""; position: absolute; left: 0; top: calc(var(--sw) * 180 / 320 * var(--F) - .5px * var(--stroke-2)); width: 0; height: calc(100% + 1.375rem); border-left: calc(1px * var(--stroke-2)) solid var(--accent); background: none; transform-origin: 50% 0; -webkit-mask-image: none; mask-image: none; }
   [data-page="proof"] .pf-trail .pf-doc:nth-child(1) { --t0: -1.125rem; --t1: 93.75%; --tw: 100ms; --tt: 150ms; --tm: 80ms; --sp: 250ms; }
   [data-page="proof"] .pf-trail .pf-doc:nth-child(2) { --t0: -1.125rem; --t1: 41.25%; --tw: 180ms; --tt: 450ms; --tm: 560ms; --sp: 630ms; }
@@ -170,8 +174,7 @@
 }
 
 /* §03: the stack's key (.pf-ck) is shared with home §05: proofchart.css */
-/* §03 (a1): "Technology" and "Management" in full; Management a tier up (phones: Technology right, Management a
-   third tier) */
+/* §03 (a1): both labels in full, Management a tier up */
 [data-page="proof"] .cost-bar > i:last-of-type > span { padding-bottom: 2.4545em; } /* 27 px at the 11 px label: one tier up */
 [data-page="proof"] .cost-row:first-child { padding-top: 3.25rem; }
 @container cost (max-width: 860px) {
@@ -184,26 +187,26 @@
   [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: 4.375rem; }
 }
 
-/* the hero (a3): section 01's spread - the H1 across, then the copy in 01's 4fr column and the record in Fig. 1.1's 8fr
-   column (proofchart.css's grid and gap), both standing on one floor that runs on, faint, edge to edge (L2) */
+/* the hero (a3, a4): the H1 across; the lede (01's 4fr) and the record (Fig. 1.1's 8fr) on one floor, faint edge to
+   edge; under it the hedge and the way to the documents, beside the axis */
 @media (min-width: 961px) {
   [data-page="proof"] .page-hero--dark { padding-top: calc(var(--nav-h) + clamp(2.75rem, 4.8vw, 4.5rem)); padding-bottom: clamp(2.75rem, 4.4vw, 4rem); overflow-x: clip; }
-  [data-page="proof"] .page-hero--plate { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: clamp(2rem, 4vw, 4.5rem); row-gap: 0; padding-bottom: calc(var(--ax-h) + 3rem); }
+  [data-page="proof"] .page-hero--plate { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: clamp(2rem, 4vw, 4.5rem); row-gap: 0; padding-bottom: 2rem; }
   [data-page="proof"] .page-hero--plate > .hero-copy { display: contents; }
   [data-page="proof"] .hero-copy > h1 { grid-column: 1 / -1; grid-row: 1; }
-  [data-page="proof"] .hero-copy > .lede { grid-column: 1; grid-row: 2; }
-  [data-page="proof"] .hero-copy > .pf-lc-hedge { grid-column: 1; grid-row: 3; align-self: end; padding-bottom: 1.125rem; }
-  /* the frame stands from the lede's top to the axis: the blocks on the floor at its foot, the zone above them open */
-  [data-page="proof"] .pf-record { grid-column: 2; grid-row: 2 / span 2; align-self: stretch; display: flex; flex-direction: column; position: relative; margin-top: 1.625rem; } /* the lede's top (site.css) */
-  [data-page="proof"] .pf-record > .hero-plate { flex: 1 0 auto; display: flex; flex-direction: column; margin-bottom: calc(-1 * var(--ax-h)); } /* the row's foot is the floor */
-  [data-page="proof"] .page-hero .hero-plate--records .hp-art { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: flex-end; }
-  [data-page="proof"] .page-hero .hero-plate--records .hp-reg { top: .25rem; }
+  [data-page="proof"] .hero-copy > .lede { grid-column: 1; grid-row: 2; align-self: end; padding-bottom: .75rem; }
+  /* the foot keeps the axis's rows: the link on the broker's row */
+  [data-page="proof"] .hero-copy > .pf-foot { grid-column: 1; grid-row: 3; display: grid; grid-template-rows: minmax(calc(4.6 * var(--ax-l)), auto) calc(2.8 * var(--ax-l)); align-content: start; min-height: calc(var(--ax-h) + var(--m)); padding-top: calc(.5 * var(--ax-l)); }
+  [data-page="proof"] .pf-foot > .pf-lc-hedge { margin-top: -.125rem; } /* cap height = the floor label's */
+  [data-page="proof"] .pf-foot > .pf-go { margin-top: 0; align-self: center; justify-self: start; }
+  [data-page="proof"] .pf-record { grid-column: 2; grid-row: 2; align-self: end; display: flex; flex-direction: column; position: relative; margin-top: 2.5rem; }
+  [data-page="proof"] .pf-record > .hero-plate { margin-bottom: calc(-1 * var(--ax-h)); } /* the floor; the axis hangs */
   [data-page="proof"] .hero-plate--records .hp-cap { position: absolute; left: 0; top: 100%; }
   [data-page="proof"] .pf-record::before { content: ""; position: absolute; left: -100vw; right: -100vw; bottom: calc(-.5 * var(--hair)); height: 0; border-top: var(--hair) solid var(--line); pointer-events: none; } /* centred on the floor, as the plate's own */
 }
-/* up to 1279 px the lede runs four lines in its column: the frame keeps to the record (no tall empty field above it) */
-@media (min-width: 961px) and (max-width: 1279.98px) { [data-page="proof"] .pf-record { align-self: end; margin-top: 0; } [data-page="proof"] .page-hero .hero-plate--records .hp-reg { top: -.75rem; } }
+@media (min-width: 1921px) { [data-page="proof"] .pf-foot > .pf-lc-hedge { margin-top: -.0625rem; } } /* 2560, 3840 */
 @media (max-width: 960px) { [data-page="proof"] .pf-record { grid-column: 1 / -1; } }
+@media (max-width: 600px) { [data-page="proof"] :is(.page-hero, .hero-plate--records) { --m: 1.25rem; } [data-page="proof"] .pf-record { margin-top: .75rem; } } /* a4: the frame clear of the link */
 /* tablets: the record as a spread, the plate and its terms side by side; §01's heading beside its text */
 @media (min-width: 601px) and (max-width: 960px) {
   [data-page="trust"] .page-hero--plate > .hero-plate--council { max-width: min(100%, calc(52svh * var(--hp-ar))); }
@@ -212,6 +215,8 @@
   [data-page="proof"] .proof-copy > .body-lg { margin-top: 0; }
 }
 [data-page="proof"] .page-hero h1 { max-width: none; }
+/* a4: the H1 has the full column: the full-column step (Company, Access, 404); phones keep theirs */
+@media (min-width: 601px) { [data-page="proof"] .page-hero h1 { font-size: var(--h1-statement); } }
 @media (min-width: 601px) { [data-page="proof"] .page-hero .lede { max-width: 44ch; } }
 @media (max-width: 360px) { [data-page="proof"] .page-hero h1 { font-size: 2.6rem; } }
 /* phones: each hero block reserves its lines (web font or metric fallback), so the plate under it holds still */
@@ -224,8 +229,13 @@
 @media (max-width: 451.98px) { [data-page="proof"] .pf-lc-hedge { min-height: 2lh; } }
 @media (max-width: 359.98px) { [data-page="proof"] .page-hero .lede { min-height: 4lh; } }
 @media (max-width: 344.98px) { [data-page="proof"] .page-hero h1 { min-height: 4lh; } }
+/* §01 Fig. 1.1 (a4): the broker's ticks are drawn once, in the hero; the register counts them */
+[data-page="proof"] .pf, [data-page="proof"] .proof:not(.is-built)::before { --zo: 0px; }
+[data-page="proof"] .proof :is(.y-ok, .pf-o) { display: none; }
 /* the first statement of the result carries its hedge, as on Home's hero (VOICE 5.5) */
 [data-page="proof"] .pf-lc-hedge { margin-top: 1rem; font: 400 .875rem/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); }
+/* a4: the hero's next step (§02) */
+[data-page="proof"] .pf-go { margin-top: clamp(1.25rem, 2vw, 1.75rem); }
 
 @media (max-width: 600px) {
   .pf-list > li { padding: .75rem 0 .8125rem; font-size: .97rem; }
@@ -275,11 +285,11 @@
   [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-l-rj { animation: pf-fade .4s var(--ease-out) 1.80s backwards; }
 }
 @keyframes tp-drop { from { opacity: 0; transform: translateY(-1.375rem); } }
-/* a2: the plate on columns 7-12 as tall as the copy, the ring 1.5x (trust_plate.py), marks on the column edges */
+/* a2: the plate on columns 7-12, as tall as the copy */
 [data-page="trust"] .hero-plate--council .hp-art { margin-inline: 1rem; padding: 0; }
 [data-page="trust"] .hero-plate--council .hp-reg { inset: -.75rem -1rem; }
 [data-page="trust"] .hero-plate--council .hp-cap { margin: 1.25rem 0 0; } /* flush with the marks (a3) */
-/* the labels under the record line hang from it (their tops a few units under the line), so two lines never reach it */
+/* labels hang from the record line */
 [data-page="trust"] .hero-plate--council .tp-l-low { transform: translate(var(--tx, 0%), 0); }
 /* a3: a dot-joined pair stays on one line; where it cannot (under 381 px), it breaks before the dot and drops it */
 @media (max-width: 380px) { [data-page="trust"] .tp-dot { display: block; height: 0; overflow: hidden; } }
@@ -295,7 +305,7 @@
 
 /* §01 the ledger, first: the instrument closer to its heading */
 .tr-ledger .tr-lead { row-gap: 1.25rem; }
-/* the head takes seven columns where it sits beside the paragraph, so "and every link after it fails." stays one line */
+/* the head: seven columns beside the paragraph (one line) */
 @media (min-width: 961px) { .tr-ledger .tr-lead > .col-6 { grid-column-end: span 7; } }
 .tr-lt { margin-top: clamp(2.25rem, 4vw, 3.75rem); }
 /* the head: title and controls, then the status */
@@ -306,9 +316,10 @@
   .tr-lt .lt-state { justify-self: start; }
 }
 .tr-lt [data-lt-say] { text-transform: none; letter-spacing: 0; }
+.tr-lt .lt-btn svg path { vector-effect: non-scaling-stroke; stroke-width: var(--icon-stroke); } /* a4: whole device px */
 .tr-lt .lt-btn--restore { border-color: rgba(217, 103, 93, .6); color: var(--fg); }
 @media (hover: hover) { .tr-lt .lt-btn--restore:hover { border-color: var(--reject); background: var(--reject); color: var(--ink); } }
-/* a2 (UX juror): the controls speak in the site's button voice (Inter, sentence case: ledger.css since system a3) */
+/* a2: the controls in the site's button voice */
 .tr-lt :is([data-lt-edit], [data-lt-verify], [data-lt-restore]) { background-image: linear-gradient(var(--signal), var(--signal)); background-repeat: no-repeat; background-size: 0 calc(2 * var(--hair)); background-position: 0 100%; transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), background-color var(--dur-feedback) var(--ease-out), background-size var(--dur-move) var(--ease); }
 .tr-lt [data-lt-edit], .tr-lt.is-edited [data-lt-verify], .tr-lt.is-broken:not(.is-edited) [data-lt-restore] { border-color: var(--paper); background-color: var(--paper); color: var(--ink); }
 @media (hover: hover) {
@@ -317,19 +328,19 @@
 @media (forced-colors: active) { .tr-lt [data-lt-edit], .tr-lt.is-edited [data-lt-verify], .tr-lt.is-broken:not(.is-edited) [data-lt-restore] { border: calc(2 * var(--hair)) solid ButtonText; } }
 .tr-lt.is-edited .lt-state { color: var(--khaki); }
 .tr-lt.is-edited .lt-state i { background: transparent; box-shadow: inset 0 0 0 var(--hair) currentColor; }
-/* edited, not yet verified: the record's block is drawn open and dashed (the site's "not yet" mark), its tag says so */
+/* edited, not yet verified: open and dashed ("not yet") */
 .tr-lt .lt-rec.is-edited .lt-lc { margin-block: calc(-1 * var(--hair)); padding: 0 .3125rem; border: var(--hair) dashed var(--khaki); border-radius: .0625rem; color: var(--khaki); } /* the box adds no height: the line stays level */
 .tr-lt .lt-rec.is-broken .lt-lc { border-color: rgba(217, 103, 93, .6); }
 .tr-lt .lt-rec.is-edited .lt-node { background: transparent; box-shadow: none; outline: .09375rem dashed var(--khaki); outline-offset: -.09375rem; }
-/* broken: from the edited record on, every record and its link turn red as the walk reaches them, and stay red */
+/* broken: red from the edited record on, as the walk reaches each */
 .tr-lt { transition: border-color .5s var(--ease-out); }
 .tr-lt.is-broken { border-color: rgba(217, 103, 93, .55); }
 .tr-lt.is-broken .lt-state { color: var(--reject); }
 .tr-lt .lt-rec.is-broken .lt-node { background: transparent; outline: 0; box-shadow: inset 0 0 0 .09375rem var(--reject), 0 0 .875rem rgba(217, 103, 93, .45); }
 .tr-lt .lt-rec.is-broken .lt-seg { background: var(--reject); }
 /* sealed vs now: the hash the record was sealed with is struck; under it, in red, the hash it produces now */
-/* each column keeps room under its link for both hashes and the wait below them (a record is paint-contained) */
-@media (min-width: 601px) { .tr-lt .lt-rec { padding-bottom: 1.875rem; } }
+/* each column keeps room for both hashes and the wait */
+@media (min-width: 601px) { .tr-lt .lt-rec { padding-bottom: 1.875rem; } .tr-lt .lt-sub { -webkit-line-clamp: 4; } } /* a4: room for 1.4.12 text spacing */
 .tr-lt .lt-rec.is-broken .lt-tag { color: var(--fg-3); text-decoration: line-through var(--reject) var(--hair); }
 .tr-lt .lt-now { display: none; position: absolute; left: calc(50% + .375rem); top: 1.5625rem; transform: translateX(-50%); padding: 0 .375rem; font: var(--mono-xs)/1.2 var(--mono); letter-spacing: .06em; color: var(--reject); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tr-lt .lt-rec.is-edited .lt-now { display: block; color: var(--khaki); }
@@ -354,9 +365,9 @@
 .tr-lt .tr-enter { margin: 0; font: 400 .8125rem/1.45 var(--sans); letter-spacing: 0; color: var(--fg-2); }
 .tr-lt .tr-tap { display: none; }
 @media (hover: none) and (pointer: coarse) { .tr-lt .tr-key { display: none; } .tr-lt .tr-tap { display: inline; } }
-/* the excerpt's hedge in the foot reads as words, as on Home's stream: Inter at the small step, Home's hedge tone */
+/* the excerpt's hedge as words, as on Home's stream */
 .tr-lt .lt-foot > span:first-child { font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; line-height: 1.45; text-transform: none; color: rgba(245, 242, 236, .72); }
-/* without JavaScript the hint and the controls stay hidden; the foot says why (Home's chain sentence; r5 copy) */
+/* no JS: hint and controls hidden; the foot says why */
 .tr-lt .tr-nojs { flex-basis: 100%; font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; line-height: 1.45; color: rgba(245, 242, 236, .72); }
 @media (scripting: enabled) { .tr-lt .tr-nojs { display: none; } }
 @media (min-width: 961px) {
@@ -364,8 +375,7 @@
   .tr-lt .lt-insp.is-typing > .tr-enter { grid-column: 1; grid-row: 3; }
 }
 
-/* a1 UX: the inspected record's lineage in one serif line (trust.js); height reserved, padding included (border-box: the
-   line filling in no longer moves the strip, a3); wide screens with JS only */
+/* a1: the inspected record's lineage in one serif line (trust.js); its height reserved, padding included (a3) */
 .tr-lt .tr-lin { display: none; }
 @media (scripting: enabled) and (min-width: 1200px) {
   .tr-lt .tr-lin { display: flex; align-items: baseline; gap: 0 .875rem; min-height: calc(var(--fs-heading) * 1.2 + 1.25rem); margin: 0; padding: 1.25rem 1.25rem 0; font: 400 var(--fs-heading)/1.2 var(--serif); letter-spacing: -.005em; color: var(--fg); white-space: nowrap; overflow: hidden; }
@@ -390,13 +400,13 @@
 /* the words meet AA on paper-2 (a11y r1 M2) */
 .tr-kd .hp-lab--acc { color: var(--signal-ink); }
 .tr-kd .hp-lab--rej { color: var(--fg-2); }
-.tr-kd .tr-k-full { display: none; } /* K-05: its lines start after VIEW / RECORD; where the labels go (phones) they start at the edge, as the other five */
+.tr-kd .tr-k-full { display: none; } /* K-05: lines after VIEW / RECORD; from the edge on phones */
 .tr-kt h3 { margin: 0; }
 @media (hover: hover) {
   .tr-k > .tr-kp:hover { background: rgba(14, 21, 18, .025); }
 }
 .tr-k-cap { margin-top: 1rem; }
-/* each plate arrives as structure first; the stop it makes (red) or the approval it signs (green) lands a beat later */
+/* structure first; the stop or the approval a beat later */
 @media screen and (prefers-reduced-motion: no-preference) {
   .tr-kd :is(.hp-rrec, .hp-gf, .hp-g, .hp-gl, .hp-lab--rej, .hp-lab--acc) { transition: opacity .35s var(--ease-out) .3s; }
   .tr-kp.will-reveal:not(.is-in) .tr-kd :is(.hp-rrec, .hp-gf, .hp-g, .hp-gl, .hp-lab--rej, .hp-lab--acc) { opacity: 0; }
@@ -430,9 +440,10 @@
 .tr-cud { color: var(--fg); }
 .tr-cud .hp-lab--acc { color: var(--signal-ink); }
 .tr-cud .hp-lab--rej { color: var(--fg-2); }
+.tr-cud .hp-lab--r { max-width: calc(var(--x) * 1%); white-space: normal; text-wrap: balance; } /* a4: wraps, not off the plate */
 .tr-cu-plate .figure-cap { margin-top: .875rem; }
 @media (max-width: 960px) { .tr-cu > * { grid-column: 1 / -1; } }
-/* phones: the drawing is a third of its desktop size; the two words that carry it stay (the line above says the rest) */
+/* phones: a third of the drawing; its two words stay */
 @media (max-width: 600px) { .tr-cud .tr-cu-xs { display: none; } }
 @media screen and (prefers-reduced-motion: no-preference) {
   .tr-cud :is(.hp-r, .hp-gl, .hp-gf, .hp-lab--rej, .hp-lab--acc) { transition: opacity .35s var(--ease-out) .35s; }
@@ -446,24 +457,27 @@
 .tr-no-list > li > i { flex: none; width: .875rem; height: 0; border-top: .125rem solid var(--reject); transform: translateY(-.34em); }
 @media (max-width: 960px) { .tr-no > * { grid-column: 1 / -1; } }
 
-/* phones: the ledger stands in one column (every record readable, no swiping); the plates become short rows */
+/* phones: the ledger in one column; the plates short rows */
 @media (max-width: 600px) {
   .tr-lt .lt-state > span { white-space: normal; }
   .tr-lt .lt-view { overflow: visible; -webkit-mask-image: none !important; mask-image: none !important; }
   .tr-lt .lt-track { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; width: auto; min-width: 0; padding: .25rem .75rem .75rem .625rem; } /* start: a replay holds the column's height (trust.js) and the rows must not stretch into it */
-  .tr-lt .lt-rec { contain: layout style; width: auto; margin-left: 0; padding: .6875rem .5rem .75rem 2.125rem; display: grid; grid-template-columns: 4.4em minmax(0, 1fr) auto; grid-template-areas: "meta ev t" "meta sub ."; column-gap: .625rem; row-gap: .25rem; align-items: baseline; }
+  .tr-lt .lt-rec { contain: layout style; width: auto; margin-left: 0; padding: .6875rem .5rem .75rem 2.125rem; display: grid; grid-template-columns: 4.6875rem minmax(0, 1fr) auto; grid-template-areas: "meta ev t" "meta sub ."; column-gap: .625rem; row-gap: .25rem; align-items: baseline; }
   .tr-lt .lt-rec::after { inset: .125rem 0; }
   .tr-lt .lt-meta { grid-area: meta; flex-direction: column; gap: calc(2 * var(--hair)); }
   .tr-lt .lt-ev { grid-area: ev; margin-top: 0; }
   .tr-lt .lt-t { grid-area: t; margin-top: 0; }
-  .tr-lt .lt-sub { grid-area: sub; margin-top: 0; min-height: 0; -webkit-line-clamp: 2; }
+  .tr-lt .lt-sub { grid-area: sub; display: block; margin-top: 0; min-height: 0; overflow: visible; } /* a4: in full (a clamp cut "op-02") */
   .tr-lt .lt-line { position: absolute; inset: 0; height: auto; margin: 0; pointer-events: none; }
   .tr-lt .lt-node { left: .625rem; top: .9375rem; }
   .tr-lt .lt-seg { left: .96875rem; right: auto; top: 1.8125rem; bottom: -.9375rem; width: var(--hair); height: auto; transform-origin: 50% 0; }
   .tr-lt .lt-rec.is-head .lt-seg { display: none; }
   .tr-lt .lt-rec .lt-tag { left: auto; right: .5rem; top: auto; bottom: .8125rem; transform: none; padding: 0; background: none; }
   .tr-lt .lt-now { left: auto; right: .5rem; top: auto; bottom: .8125rem; transform: none; padding: 0; }
-  .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-tag { right: calc(1.25rem + 5.3em); }
+  /* a4: once a record is changed, each takes a hash line under its text (struck seal, then now): Verify moves nothing */
+  .tr-lt.is-changed .lt-rec { padding-bottom: calc(1.125rem + 1.2 * var(--mono-tick)); }
+  .tr-lt.is-changed .lt-rec .lt-tag { left: 7.4375rem; right: auto; top: auto; bottom: .75rem; }
+  .tr-lt .lt-now { left: calc(7.4375rem + 8ch + .48em + .75rem); right: auto; bottom: .75rem; }
   .tr-lt .lt-gap { left: 1.625rem; top: auto; bottom: -.375rem; transform: none; }
   .tr-lt .lt-rec.is-linking .lt-seg { animation-name: tr-form-v; }
   .tr-lt .lt-leader { display: none; }
@@ -482,18 +496,27 @@
   .tr-kd .tr-k-full { display: inline; }
   .tr-kt h3 { font-size: 1.2rem; }
 }
-/* the narrowest phones: each record on three short lines (id beside event, detail, time), the plates narrower */
-@media (max-width: 400px) {
-  .tr-lt .lt-rec { grid-template-columns: 3.9em minmax(0, 1fr); grid-template-areas: "meta ev" "meta sub" "meta t"; row-gap: calc(3 * var(--hair)); padding-right: .375rem; }
+/* the narrowest phones: three short lines a record (id beside event, detail, time). In em (a4): 25em = 400 px at 16 px */
+@media (max-width: 25em) {
+  .tr-lt .lt-rec { grid-template-columns: 4.125rem minmax(0, 1fr); grid-template-areas: "meta ev" "meta sub" "meta t"; row-gap: calc(3 * var(--hair)); padding-right: .375rem; }
   .tr-lt .lt-ev { letter-spacing: .07em; }
   .tr-lt .lt-t { margin-top: calc(2 * var(--hair)); }
-  .tr-lt .lt-rec .lt-tag, .tr-lt .lt-now { bottom: .75rem; right: .375rem; }
-  .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-tag { right: calc(1rem + 5.3em); }
+  .tr-lt .lt-rec .lt-tag { bottom: .75rem; right: .375rem; }
+  .tr-lt.is-changed .lt-rec .lt-tag { left: 6.875rem; right: auto; } /* the text column */
+  .tr-lt .lt-now { left: calc(6.875rem + 8ch + .48em + .75rem); }
   .tr-k > .tr-kp, .tr-k > .tr-kp:nth-child(n) { grid-template-columns: 5.75rem minmax(0, 1fr); column-gap: .875rem; }
 }
-/* the narrowest: no room for two hashes beside the time; the sealed one stands struck by the event, the new one below */
-@media (max-width: 360px) {
-  .tr-lt .lt-rec:is(.is-edited, .is-broken) .lt-tag { right: .375rem; top: .8125rem; bottom: auto; }
+/* a4: no room for a hash beside the time (320; 390 at a 20 px font): its own line */
+@media (max-width: 21.5em) {
+  .tr-lt .lt-rec { padding-bottom: calc(1.125rem + 1.2 * var(--mono-tick)); }
+  .tr-lt .lt-rec .lt-tag { left: 6.875rem; right: auto; top: auto; bottom: .75rem; }
+}
+@media (max-width: 22em) { .tr-lt .lt-check[data-f="next"] { --lt-chk: 4.8em; -webkit-line-clamp: 3; } } /* a4: at rest the hash's verdict has the 3 lines its longest needs below 352 px ("...this excerpt" was cut at 320) */
+/* too narrow for both hashes (24 px font): the new one under */
+@media (max-width: 18em) {
+  .tr-lt.is-changed .lt-rec { padding-bottom: calc(1.5rem + 2.4 * var(--mono-tick)); }
+  .tr-lt.is-changed .lt-rec .lt-tag { bottom: calc(1.125rem + 1.2 * var(--mono-tick)); }
+  .tr-lt .lt-now { left: 6.875rem; }
 }
 @keyframes tr-form-v { 0% { transform: scaleY(.3); background: var(--accent); } 55% { transform: none; background: var(--accent); } 100% { background: var(--line-strong); } }
 @media (min-width: 601px) and (max-width: 1199px) { .tr-lt .lt-x { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }

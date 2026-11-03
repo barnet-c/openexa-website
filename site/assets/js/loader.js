@@ -26,6 +26,9 @@
   const loader = document.querySelector('.loader');
   if (!loader) return;
   const root = document.documentElement, body = document.body;
+  // the overture reads this and then publishes its globe's place only as html[data-globe] (award a4: an inline style
+  // write on <html> restyles the whole drawn page; the attribute restyles nothing, no selector reads it)
+  root.dataset.globeRead = '';
   const LATE = 1900; // ms from navigation start: the failsafe's moment (v2:nav's .loader fade starts 1.9 s into its clock)
   const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
   const pad = n => String(n).padStart(2, '0');
@@ -92,7 +95,8 @@
     if (dial && !seen) dial.style.setProperty('--lp', (n / 100).toFixed(2));
   };
   /* the hand-off (award a1, AWARD_BAR L4): where the dial goes. The overture publishes its globe's place on <html> as
-     inline custom properties (--globe-x, --globe-y, --globe-r: px in the window; story.js, home); until it does, the
+     html[data-globe] "x y r" (px in the window; story.js, home; a4; the a1 inline custom properties --globe-x, --globe-y,
+     --globe-r stay a fallback, written only while html[data-globe-read] is absent); until it does, the
      place is estimated as the overture lays it out: right of the opening copy (wide), or above it (stacked: phones,
      tablets); a window too short for either dissolves where it is. Read once, after load. */
   const RM = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -100,7 +104,9 @@
     if (RM.matches || !dial) return;
     try {
       const st = root.style, W = window.innerWidth, H = window.innerHeight;
-      let x = parseFloat(st.getPropertyValue('--globe-x')), y = parseFloat(st.getPropertyValue('--globe-y')), r = parseFloat(st.getPropertyValue('--globe-r'));
+      const g = (root.dataset.globe || '').split(' ').map(parseFloat);
+      let x = g[0], y = g[1], r = g[2];
+      if (!(r > 0)) { x = parseFloat(st.getPropertyValue('--globe-x')); y = parseFloat(st.getPropertyValue('--globe-y')); r = parseFloat(st.getPropertyValue('--globe-r')); }
       if (!(r > 0)) {
         const copy = document.querySelector('.beat-0 .beat-text'), b = copy && H >= 420 ? copy.getBoundingClientRect() : null;
         const g = Math.max(20, Math.min(56, W * 0.04)) * Math.max(1, W / 1920), nav = (W < 961 ? 64 : 72) * Math.max(1, W / 1920);

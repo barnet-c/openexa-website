@@ -90,7 +90,8 @@
               <div class="hp-labs" aria-hidden="true"><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:8.9;--i:0">01</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:18.5;--i:1">02</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:28.0;--i:2">03</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:37.5;--i:3">04</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:57.1;--i:3">05</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:66.7;--i:2">06</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:76.2;--i:1">07</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:85.7;--i:0">08</span><span class="hp-lab hp-lab--side" style="--x:66.8;--y:23.2">Estimate<small>Above · 01–04</small></span><span class="hp-lab hp-lab--acc hp-lab--bd" style="--x:68.9;--y:47.3">Boundary</span><span class="hp-lab hp-lab--side" style="--x:66.8;--y:71.4">Deterministic<small>Below · 05–08</small></span><span class="hp-lab hp-lab--fl" style="--x:66.8;--y:96.4">Counterparties</span></div>
               <span class="hp-reg" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
             </div>
-            <figcaption class="figure-cap hp-cap"><span class="fc-h">Schematic<button class="hp-replay" type="button" data-plate-replay hidden>Replay</button></span><span class="hp-key" aria-hidden="true"><span><i class="k-ring"></i>Proposal</span><span><i class="k-rej"></i>Rejected</span><span><i class="k-sq"></i>Settled</span></span><span class="sr-only" id="hero-plate-desc">A rejected proposal stops at the Council, above the boundary; an approved one crosses it and settles with a counterparty.</span></figcaption>
+            <figcaption class="figure-cap hp-cap"><span class="fc-h">Schematic<button class="hp-replay" type="button" data-plate-replay hidden>Replay</button></span><span class="hp-key" aria-hidden="true"><span><i class="k-ring"></i>Proposal</span><span><i class="k-rej"></i>Rejected</span><span><i class="k-sq"></i>Settled</span></span></figcaption>
+            <span class="sr-only" id="hero-plate-desc">A rejected proposal stops at the Council, above the boundary; an approved one crosses it and settles with a counterparty.</span>
           </figure>
         </div>
       </div>
@@ -103,7 +104,7 @@
           <h2 class="display-2 ch-title" data-reveal>One job per layer.</h2>
         </div>
         <!-- the architecture explorer (arch.js): point at a layer for its job; without JavaScript, the eight layers as a list -->
-        <div class="layers" data-arch data-arch-label="The agentic stack" data-reveal style="--d:100ms">
+        <div class="layers" data-arch data-arch-rest data-arch-label="The agentic stack" data-reveal style="--d:100ms">
           <div class="layer" data-job="Watches the lifecycle’s live data and keeps re-estimating risk, price and regime."><div class="k">01</div><h3>Signal intelligence<small>Perceive</small></h3><div></div></div>
           <div class="layer" data-job="The post-trained model every agent reasons on. It can propose anything and execute nothing on its own."><div class="k">02</div><h3>Model layer<small>Reason</small></h3><div></div></div>
           <div class="layer" data-job="Thousands of narrow agents, each built for one job: read a feed, score a gap, size an order, check a limit, match a fill."><div class="k">03</div><h3>Domain<span class="hy">-</span>specific agents<small>Act</small></h3><div></div></div>

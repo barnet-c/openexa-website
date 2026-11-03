@@ -179,6 +179,7 @@
     const ed = anyEdited();
     if (ui.restore) ui.restore.hidden = !ed;
     ui.edit.hidden = ed;
+    T.flag('is-changed', ed); // a4: a record differs from the excerpt, through Verify (which clears is-edited) until Restore
   }
   function typed(e) {
     const el = e.currentTarget, r = T.sel !== null ? T.bySeq(T.sel) : null, o = r && orig().get(r.seq);

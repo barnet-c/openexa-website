@@ -67,6 +67,17 @@ async def main():
                 await pg.evaluate("document.querySelector('.article').scrollIntoView()"); await pg.wait_for_timeout(600)
                 await pg.screenshot(path=shot(f"article-{i+1:02d}-body.png"))
             print(f"article {i+1:02d} {fig['name']:11} toc={toc} ok")
+        # award a4 (research): the margin plate (from 1440 px) lights the part of the drawing that the marked contents entry
+        # names: on note 09, "The result" lights the floor's rule; "The setup" lights nothing
+        await pg.goto(f"{BASE}/research/09-lifecycle-01-ten-sessions.html", wait_until="load"); await pg.wait_for_timeout(1200)
+        lit = {}
+        for head in ("the-result", "the-setup"):
+            await pg.evaluate(f"(() => {{ const h = document.getElementById('{head}'); scrollTo(0, scrollY + h.getBoundingClientRect().top - innerHeight / 4); }})()")
+            await pg.wait_for_timeout(500)
+            lit[head] = await pg.evaluate("(() => { const s = document.querySelector('.np-stage'); return s ? { has: s.classList.contains('has-lit'), rule: !!s.querySelector('.np-rule.is-lit'), n: s.querySelectorAll('.is-lit').length, shown: !!s.getClientRects().length } : null; })()")
+        assert lit["the-result"] and lit["the-result"]["shown"] and lit["the-result"]["has"] and lit["the-result"]["rule"], ("note 09 at 'The result': the plate's rule lit", lit)
+        assert not lit["the-setup"]["has"] and lit["the-setup"]["n"] == 0, ("note 09 at 'The setup': nothing lit", lit)
+        print(f"note 09: the margin plate lights its rule at 'The result' ({lit['the-result']['n']} parts) and nothing at 'The setup'")
         # company: sculpture + modes + timeline (1 Nov cut: the mode's copy is the plate's caption, the mode's name; the
         # manifesto and #mission left the page, see .shots/v2x/TESTS.md section 16)
         await pg.goto(f"{BASE}/company.html", wait_until="load"); await pg.wait_for_timeout(2500)
@@ -108,6 +119,17 @@ async def main():
             await pg.screenshot(path=shot(f"m-{name.replace('/', '-').replace('.html', '')}-2.png"))
         assert not errs, errs
         print("mobile: no overflow on research, article, company")
+        await ctx.close()
+        # award a4 (research): without JavaScript note 09's hero still carries its key: floor, 10 bps, 01 and 10 shown, the
+        # minor numerals not
+        ctx = await b.new_context(viewport={"width": 390, "height": 844}, java_script_enabled=False)
+        pg = await ctx.new_page()
+        await pg.goto(f"{BASE}/research/09-lifecycle-01-ten-sessions.html", wait_until="load"); await pg.wait_for_timeout(600)
+        keys = await pg.evaluate(r"[...document.querySelectorAll('.fs-keys .fl')].map(e => ({ t: e.textContent.replace(/\s+/g, ' ').trim(), minor: e.classList.contains('fl--minor'), on: !!e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && getComputedStyle(e).display !== 'none' }))")
+        shown = [k["t"] for k in keys if k["on"]]
+        assert any(t.startswith("floor") and "10 bps" in t for t in shown) and "01" in shown and "10" in shown, ("no-JS note 09 key", shown)
+        assert not [k for k in keys if k["minor"] and k["on"]], ("no-JS note 09: a minor numeral shown", keys)
+        print(f"no-JS note 09 at 390: the still's key shown ({', '.join(shown)}), no minor numeral")
         await raw.close()
     print(f"EDITORIAL CHECKS PASSED in {time.monotonic() - t_run:.0f} s")
 asyncio.run(main())

@@ -83,7 +83,12 @@
     // the stored hash, struck beside the new one once a link snaps
     rows.forEach((li, i) => { li.querySelector('.chain-was').textContent = stored[i][1].slice(0, 8); });
     paint(c, -1, true);
-    rows.forEach(li => li.querySelectorAll('.ev, .what').forEach(field => field.setAttribute('contenteditable', 'plaintext-only')));
+    // the fields become editable as the chain nears the screen, or on a first touch or focus inside it: each set lays
+    // out the chain, which on Home sits far below the overture (a4, home's request: the phone's second second)
+    let editable = false;
+    const arm = () => { if (editable) return; editable = true; rows.forEach(li => li.querySelectorAll('.ev, .what').forEach(field => field.setAttribute('contenteditable', 'plaintext-only'))); };
+    if ('IntersectionObserver' in window) { const io = new IntersectionObserver(es => { if (es.some(en => en.isIntersecting)) { io.disconnect(); arm(); } }, { rootMargin: '100% 0px' }); io.observe(root); } else arm();
+    root.addEventListener('pointerdown', arm, { once: true, capture: true }); root.addEventListener('focusin', arm, { once: true, capture: true });
     if (tryIt) tryIt.hidden = false;
     syncActs();
   }

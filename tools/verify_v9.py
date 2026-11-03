@@ -1047,7 +1047,8 @@ async def company(b):
     assert await until(pg, f"[...document.querySelectorAll('.k-recs rect')].map(r => r.getAttribute('class')).join() !== {first!r} || document.querySelectorAll('.k-recs rect').length > {kp['recs']}", 12000), "the plate wrote no record"
     await pg.locator('#constants [data-k="c3"]').hover(); await pg.wait_for_timeout(500)
     assert await pg.evaluate("document.querySelector('[data-kplate]').dataset.on") == "c3", "pointing at the third constant did not mark it on the plate"
-    lit = await pg.evaluate("(() => { const t = document.querySelector('[data-kplate] .k-c3 .kl--box'), r = document.querySelector('[data-kplate] .k-c1 .kl--word'); return t && r ? [getComputedStyle(t).fill, getComputedStyle(r).fill] : null; })()")
+    # a4 (company): the plate's labels are HTML now (.kl-labs), so their ink is `color`, not the SVG's `fill`
+    lit = await pg.evaluate("(() => { const t = document.querySelector('[data-kplate] .k-c3 .kl--box'), r = document.querySelector('[data-kplate] .k-c1 .kl--word'); return t && r ? [getComputedStyle(t).color, getComputedStyle(r).color] : null; })()")
     assert lit and lit[0] != lit[1], ("pointing at the third constant should light 'Custody' on the plate, not the boundary words", lit)
     assert not errs, errs
     await ctx.close()
@@ -1243,6 +1244,10 @@ CRISP_BORDERS = r"""() => {
     }
   }
   out.arrows = [...document.querySelectorAll('.arr path, .nav-ch-caret path, .nav-ch-top svg path')].filter(p => p.getClientRects().length).map(p => getComputedStyle(p).strokeWidth);
+  // a4: the shift that puts an even-sized arrow's shaft (y 8 of 16) on whole device rows (.arr down, Back to top's across)
+  const off = (e, i) => { const t = getComputedStyle(e).translate; if (!t || t === 'none') return 0; const v = t.split(' ').map(parseFloat); return v[i] || 0; };
+  out.shifts = [...[...document.querySelectorAll('.arr')].filter(e => e.getClientRects().length).map(e => off(e, 1)),
+                ...[...document.querySelectorAll('.nav-ch-top svg')].filter(e => e.getClientRects().length).map(e => off(e, 0))].map(v => +v.toFixed(3));
   return out;
 }"""
 CRISP_PAGES = ["index.html", "platform.html", "lifecycles.html", "evidence.html", "trust.html", "research.html",
@@ -1255,10 +1260,14 @@ async def crisp_4k(b):
     """a3 (system's request; the 4K bar: hairlines at device pixels). On all twelve page kinds at 1440x900@1, 3840x2160@1
     and 1920x1080@2: every CSS border drawn in the bar, <main> and the footer is a whole number of device pixels, and at
     3840 and 1920@2 none is a single device pixel (the 1920 page doubled: a 1 px hairline is 2); the arrows', the
-    readout caret's and Back to top's non-scaling strokes compute --icon-stroke: 1 px at 1440@1, 3 px at 3840@1, 1.5 px
-    (3 device px) at 1920@2. Never vacuous: borders and arrows are read on every page at every size."""
-    want = {(1440, 1): "1px", (3840, 1): "3px", (1920, 2): "1.5px"}
-    bad, nb, na = [], 0, 0
+    readout caret's and Back to top's non-scaling strokes compute --icon-stroke on whole device pixels: 1 px at 1440@1,
+    2 px at 3840@1 (1440's doubled), 1 px (2 device px) at 1920@2 (a4: was a3's 3 / 1.5 px); and each arrow sits on whole
+    device rows: an odd device-px stroke (1440@1) is shifted half a pixel (--icon-shift .5 px: the shaft of an even-sized
+    arrow on one row), an even one (3840@1, 1920@2) is not shifted. Never vacuous: borders and arrows are read on every
+    page at every size."""
+    want = {(1440, 1): "1px", (3840, 1): "2px", (1920, 2): "1px"}
+    shift = {(1440, 1): 0.5, (3840, 1): 0.0, (1920, 2): 0.0}
+    bad, nb, na, ns = [], 0, 0, 0
     for (w, dpr), stroke in want.items():
         h = round(w * 9 / 16) if w != 1440 else 900
         for path in CRISP_PAGES:
@@ -1271,10 +1280,46 @@ async def crisp_4k(b):
             bad += [f"{path}@{w}x{dpr}: a one-device-pixel border at 4K {x}" for x in r["one"][:4]]
             odd = sorted(set(r["arrows"]) - {stroke})
             if odd: bad.append(f"{path}@{w}x{dpr}: arrow strokes {odd}, want {stroke}")
-    assert nb and na, f"crisp_4k: vacuous ({nb} borders, {na} arrow strokes read)"
+            ns += len(r["shifts"])
+            off = sorted(set(x for x in r["shifts"] if abs(x - shift[(w, dpr)]) > 0.01))
+            if off: bad.append(f"{path}@{w}x{dpr}: arrow shifts {off} px, want {shift[(w, dpr)]} (the shaft on whole device rows)")
+    assert nb and na and ns, f"crisp_4k: vacuous ({nb} borders, {na} arrow strokes, {ns} arrow shifts read)"
     assert not bad, f"crisp_4k: {len(bad)} problems:\n  " + "\n  ".join(bad[:24])
-    print(f"crisp_4k: {nb} CSS borders on 12 pages at 1440@1, 3840@1 and 1920@2 at whole device pixels (none single at 4K); {na} arrow strokes on --icon-stroke")
+    print(f"crisp_4k: {nb} CSS borders on 12 pages at 1440@1, 3840@1 and 1920@2 at whole device pixels (none single at 4K); {na} arrow strokes on --icon-stroke; {ns} arrows on whole device rows")
 
+
+# a4 (system's optional request; a4-dev item 1): browser zoom on wide screens. A monitor of M screen points at zoom z is a
+# CSS window of M/z at devicePixelRatio z (scale 1); Chromium reports outerWidth in screen points (emulated here).
+ZOOM_READ = r"""() => { const p = [...document.querySelectorAll('main p')].find(e => e.getClientRects().length && getComputedStyle(e).fontFamily.includes('Inter'));
+  return { uz: document.documentElement.classList.contains('uz'), body: p ? parseFloat(getComputedStyle(p).fontSize) * devicePixelRatio : 0,
+           sw: document.documentElement.scrollWidth - innerWidth }; }"""
+
+
+@check
+async def zoom_wide(b):
+    """a4 (system; WCAG 1.4.4 above 1920): a browser zoom step enlarges the page on a wide screen. At 200 % on a 2560 and a
+    3840 monitor, body text is at least 1.9x its size at 100 % in device pixels and html.uz is set; at 100 % html.uz is
+    absent; a side panel (2560 window, 2200 page at 1x) and docked developer tools (2560 / 1800 at 2x) never read as a
+    zoom. No sideways scroll in any case. Platform and a blog post (the plate pages' and the prose template's root)."""
+    cases = [("2560@100%", 2560, 2560, 1, False), ("2560@200%", 2560, 1280, 2, True), ("3840@100%", 3840, 3840, 1, False),
+             ("3840@200%", 3840, 1920, 2, True), ("side panel", 2560, 2200, 1, False), ("devtools 2x", 2560, 1800, 2, False)]
+    bad, n, ratios = [], 0, []
+    for path in ["platform.html", "blog/in-search-gen-ai-business-model.html"]:
+        got = {}
+        for name, mon, w, dpr, zoomed in cases:
+            ctx, pg = await open_page(b, path, w, round(w * 9 / 16), dpr=dpr, reduced=True,
+                                      init=f"Object.defineProperty(window, 'outerWidth', {{ get: () => {mon} }});")
+            r = got[name] = await pg.evaluate(ZOOM_READ)
+            await ctx.close(); n += 1
+            if not r["body"]: bad.append(f"{path} {name}: no body paragraph read")
+            if r["uz"] != zoomed: bad.append(f"{path} {name}: html.uz {r['uz']}, want {zoomed}")
+            if r["sw"] > 1: bad.append(f"{path} {name}: scrolls sideways by {r['sw']} px")
+        for mon in (2560, 3840):
+            a, z = got[f"{mon}@100%"]["body"], got[f"{mon}@200%"]["body"]
+            if a: ratios.append(f"{path.split('/')[-1].split('.')[0][:12]} {mon} {z / a:.2f}x")
+            if not (a and round(z / a, 2) >= 1.9): bad.append(f"{path} {mon}: body text {a:.1f} -> {z:.1f} device px at 200 % (want >= 1.9x)")  # (the ratio to 2 places: 45.6 / 24 is 1.9)
+    assert not bad, "zoom_wide:\n  " + "\n  ".join(bad)
+    print(f"zoom_wide: {n} windows; 200 % on 2560 and 3840 enlarges body text >= 1.9x (html.uz; {', '.join(ratios)}); 100 %, a side panel and docked devtools read no zoom; no sideways scroll")
 
 READOUT_END = r"""async () => {
   const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -1395,6 +1440,13 @@ async def phone(b):
     assert await pg.evaluate("document.querySelector('#arch0-p4').previousElementSibling === document.querySelectorAll('#stack h3.arch-h')[3]")
     assert await pg.evaluate("document.documentElement.scrollWidth") == 390
     await pg.locator(".nav-toggle").click()  # v2x cut (1 Nov): on phones the toggle opens the sheet; its first items are the chapters
+    # a4 (system): the sheet names this page's chapters ("On this page", the list labelled by it) and numbers them, so
+    # they never read as the site's pages below them
+    await pg.locator("#site-menu .nav-ch-head").wait_for(state="visible", timeout=3000)
+    sheet = await pg.evaluate("""(() => { const h = document.querySelector('#site-menu .nav-ch-head'), l = document.querySelector('#site-menu .nav-ch-list');
+      const ns = [...l.querySelectorAll('a .n')].filter(n => n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden' && n.textContent.trim());
+      return { head: h.textContent.trim(), by: l.getAttribute('aria-labelledby') === h.id, links: l.querySelectorAll('a').length, nums: ns.map(n => n.textContent.trim()) }; })()""")
+    assert sheet["head"] == "On this page" and sheet["by"] and sheet["links"] >= 3 and len(sheet["nums"]) == sheet["links"], ("390: the sheet's chapter head and numbers", sheet)
     await pg.locator("#site-menu .nav-ch-list a").nth(3).click()
     land = await until(pg, "(() => { const t = document.querySelector('#proof').getBoundingClientRect().top, b = document.querySelector('.nav').getBoundingClientRect().bottom; return Math.abs(t - b) <= 2 ? [t, b] : null; })()", 6000)
     assert land, ("chapter 04 did not land under the bar at 390", await pg.evaluate("[document.querySelector('#proof').getBoundingClientRect().top, document.querySelector('.nav').getBoundingClientRect().bottom]"))
@@ -1418,7 +1470,7 @@ async def phone(b):
     assert foot and not short, ("390: footer links that answer over less than 32 px (text, box height, span)", short, len(foot))
     assert not errs, errs
     await ctx.close()
-    print(f"phone: explorer accordion opens inline, chapter 04 lands under the bar, menu sheet opens (page inert) and Escape closes it, also from a link inside it ({inside!r}: focus back on the toggle); "
+    print(f"phone: explorer accordion opens inline, the sheet's chapters headed \"On this page\" and numbered ({', '.join(sheet['nums'])}), chapter 04 lands under the bar, menu sheet opens (page inert) and Escape closes it, also from a link inside it ({inside!r}: focus back on the toggle); "
           f"{len(foot)} footer links answer over >= 32 px (least {min(x['span'] for x in foot)})")
 
 
