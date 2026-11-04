@@ -1358,6 +1358,13 @@ async def readout_end(b):
 
 DEEP_OFF = """(id => { const el = document.getElementById(id), sp = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
   return el ? Math.round(el.getBoundingClientRect().top - sp) : null; })"""
+# award budgets (integrate): every scroll position the page passes through, and where it stood at its first paint
+DEEP_GLIDE = """(() => { window.__sc = []; window.__fcp = null;
+  addEventListener('scroll', () => window.__sc.push(Math.round(scrollY)), { passive: true });
+  new PerformanceObserver(l => l.getEntries().forEach(e => { if (e.name === 'first-contentful-paint') window.__fcp = Math.round(scrollY); }))
+    .observe({ type: 'paint', buffered: true }); })();"""
+# pages whose scripts start after the first paint (afterpaint.js), one deep link each
+DEEP_AFTER_PAINT = (("lifecycles.html", "desk"), ("trust.html", "ledger"), ("research.html", "series"), ("blog/index.html", "series"))
 
 
 @check
@@ -1367,8 +1374,32 @@ async def deep_links(b):
     comes to within 2 px of scroll-padding-top and stays there for four samples 0.75 s apart (v2's site.js read the
     overture's own scrolling as the reader's and stopped 3,355 px past or 535 px short). /platform#%E0%A4%A and /#% (a
     malformed escape threw URIError and stopped site.js) load with no page error, and the footer's clocks and legal fold,
-    which site.js builds, exist."""
+    which site.js builds, exist.
+    award budgets (integrate): on the pages that start their scripts after the first paint (Lifecycles, Trust, Research,
+    the blog index) a deep link lands at once, not in a glide from the top: at 1440x900 every scroll position the page
+    passes through, and its position at the first paint, are within 40 px of where it settles; the target's top within
+    2 px of scroll-padding-top; and once site.js has run, html scrolls smoothly again (an in-page link still glides).
+    (site.css: scroll-behavior auto until html.is-loaded; before it, the browser's own fragment scroll ran under smooth
+    and the page painted at 172 px of Lifecycles' 2,527 and slid there.)"""
     bad, got = [], []
+    for path, hid in DEEP_AFTER_PAINT:
+        ctx = await b.new_context(viewport={"width": 1440, "height": 900})
+        await ctx.add_init_script(DEEP_GLIDE)
+        pg = await ctx.new_page(); errs = []
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        await pg.goto(f"{BASE}/{path}#{hid}", wait_until="load")
+        loaded = await until(pg, "document.documentElement.classList.contains('is-loaded')", 8000)
+        await pg.wait_for_timeout(1500)
+        r = await pg.evaluate(f"""(() => ({{ y: Math.round(scrollY), sc: window.__sc, fcp: window.__fcp, off: {DEEP_OFF}({hid!r}),
+          sb: getComputedStyle(document.documentElement).scrollBehavior }}))()""")
+        far = [y for y in r["sc"] if abs(y - r["y"]) > 40]
+        if far or r["fcp"] is None or abs(r["fcp"] - r["y"]) > 40:
+            bad.append(f"{path}#{hid}@1440: a glide: scroll positions {r['sc'][:8]} (settled {r['y']}), first paint at {r['fcp']} (within 40 px of the settled position wanted)")
+        if r["off"] is None or abs(r["off"]) > 2: bad.append(f"{path}#{hid}@1440: the target's top against scroll-padding-top {r['off']} px (within 2 wanted)")
+        if not loaded or r["sb"] != "smooth": bad.append(f"{path}#{hid}@1440: after site.js (is-loaded {bool(loaded)}) html's scroll-behavior is {r['sb']!r}, want 'smooth'")
+        if errs: bad.append(f"{path}#{hid}@1440: page errors {errs[:2]}")
+        got.append(f"{path.split('.')[0]}#{hid} {r['off']}")
+        await ctx.close()
     for w, h, touch in ((390, 844, True), (1440, 900, False)):
         for hid in ("lc01", "governance"):
             ctx = await b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch)
@@ -1397,7 +1428,7 @@ async def deep_links(b):
         if errs or not ok: bad.append(f"{path}@390: page errors {errs[:2]}; footer clocks and legal fold built: {bool(ok)}")
         await ctx.close()
     assert not bad, "deep_links:\n  " + "\n  ".join(bad)
-    print(f"deep_links: Home's deep links land under the bar and stay ({'; '.join(got)} px); two malformed addresses load with site.js running (clocks, legal fold) and no page error")
+    print(f"deep_links: the after-paint pages' deep links paint at their target, no glide, and Home's land under the bar and stay ({'; '.join(got)} px); two malformed addresses load with site.js running (clocks, legal fold) and no page error")
 
 
 @check

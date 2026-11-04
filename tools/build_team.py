@@ -22,7 +22,8 @@ Changes from the source, deliberately:
     bios (FIX: a subject for the fragments, one comma splice, curly apostrophes); every claim keeps its words. One
     portrait treatment for all thirteen (portrait()): the head is measured and set at one size and height, the tones
     are normalised and printed ink on paper, so photos from different cameras sit together. New file names
-    (<slug>-v2x.webp); the old files are left in place for pages cached before the change.
+    (<slug>-v2x.webp); the old files stayed for pages cached before the change, and went a day after the live site
+    switched to the new ones (published 2 Nov 2026; deleted 4 Nov, integrate award budgets).
   - 2026-10-31 (lab company-editorial, ported in r1): the card line keeps hyphenated compounds whole (span.nowrap, the
     site's utility), so a two-line line never breaks at "capital-|markets"; words unchanged.
   - 2026-10-31 (v2x r1): one portrait, set closer (the head is 40% of the frame's width, its top 11% down, so the eyes
@@ -184,7 +185,7 @@ def portrait(slug, src_name, v1_name):
     for w in SMALL:  # r1: the sizes a 64-96 px circle needs at 1-3x (the srcset in rows())
         out.resize((w, w), Image.LANCZOS).save(IMGDIR / f"{slug}-v2x-{w}.webp", "WEBP", quality=86, method=6)
     return best.parent.name, h
-IMGDIR.mkdir(parents=True, exist_ok=True)  # v2x: the v2 files stay for pages cached before the change
+IMGDIR.mkdir(parents=True, exist_ok=True)  # never wiped: a renamed portrait's old file stays until a day after its publish
 
 # ---------------- markup ----------------
 def bio(src_name):

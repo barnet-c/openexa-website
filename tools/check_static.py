@@ -572,6 +572,9 @@ def chrome_norm(s, rel):
     """the chrome as index.html would write it for this page: no current-page marks, no 'nav--solid' start state,
     links as written from the site root"""
     s = re.sub(r' aria-current="page"', "", s).replace('<header class="nav nav--solid">', '<header class="nav">')
+    # award budgets (blog): the blog's chrome states its section mark, Research's aria-current="true" (site.js set it at
+    # start); only that mark on that link is not drift (integrate: a stray "true" elsewhere still is)
+    if rel.startswith("blog/"): s = re.sub(r'(<a href="(?:\.\./)*research\.html") aria-current="true"', r"\1", s)
     depth = rel.count("/")
     if rel == "404.html": s = s.replace('href="/', 'href="')
     elif depth: s = s.replace('href="' + "../" * depth, 'href="')
@@ -755,6 +758,16 @@ HEAD_INDEXED = ['<link rel="alternate" type="application/atom+xml" title="OpenEX
 
 
 ITALIC_PRELOAD = ['<link rel="preload" href="assets/fonts/instrument-serif-400i-latin.woff2" as="font" type="font/woff2" crossorigin>']
+def own_preloads(rel, s):
+    """the faces a page preloads beside the shared two: Home and Company the italic serif (a3: their first screen sets it);
+    award budgets (blog): a post whose article sets text in em/i (blog.css a3: Instrument Serif italic), found in the CSS
+    during layout and so at the end of the render chain, +300 ms on mobile FCP and LCP. Both ways: no post preloads it
+    without using it."""
+    if rel in ("index.html", "company.html"): return ITALIC_PRELOAD
+    if rel.startswith("blog/") and rel != "blog/index.html":
+        a = re.search(r'<article class="[^"]*\bblog-article\b[^"]*">(.*?)</article>', s, re.S)
+        if a and re.search(r"<(em|i)\b[^>]*>(?:\s|<[^>]*>)*[^\s<]", a.group(1)): return ITALIC_PRELOAD
+    return []
 def check_heads():
     """The shared head (contracts §1.8, §1.32.5): every page's head has the charset, viewport and icon as index.html
     writes them, preloads exactly index.html's fonts (each a woff2 file in assets/fonts), and one theme-color, ink
@@ -763,9 +776,8 @@ def check_heads():
     it. robots.txt points at the sitemap; the manifest parses, its colours are ink and its icons exist; favicon.ico exists."""
     head_lines = lambda s: [l.strip() for l in s.split("</head>", 1)[0].split("\n")]
     # award a3 (system): the italic serif is preloaded only where it sets the first screen (Home's eyebrow, Company's H1;
-    # Lighthouse found it late on the critical path there, median of 3: Home 95 -> 96, Company 95 -> 97); every other page
-    # preloads the two shared faces only
-    extra = {"index.html": ITALIC_PRELOAD, "company.html": ITALIC_PRELOAD}
+    # Lighthouse found it late on the critical path there, median of 3: Home 95 -> 96, Company 95 -> 97); award budgets:
+    # and on a post whose article sets it (own_preloads); every other page preloads the two shared faces only
     want_pre = [l for l in head_lines((ROOT / "index.html").read_text(encoding="utf-8")) if l.startswith('<link rel="preload"') and l not in ITALIC_PRELOAD]
     for l in want_pre:
         href = (re.search(r'\shref="([^"]*)"', l) or [None, ""])[1]
@@ -782,7 +794,7 @@ def check_heads():
         missing = [l for l in need if l not in lines]
         if missing: fail(rel, "heads: missing or changed:", missing)
         preloads = [l for l in lines if l.startswith('<link rel="preload"')]
-        if not want_pre or preloads != want_pre + extra.get(rel, []): fail(rel, "heads: preloads differ from the shared fonts (and the page's own):", preloads)
+        if not want_pre or preloads != want_pre + own_preloads(rel, s): fail(rel, "heads: preloads differ from the shared fonts (and the page's own):", preloads)
         tc = re.findall(r'<meta name="theme-color" content="([^"]*)">', head)
         dark = bool(re.search(r'<body\b[^>]*\sdata-nav="dark-start"', s))
         if tc != ["#0E1512" if dark else "#F5F2EC"]: fail(rel, f"heads: theme-color {tc}; want {'#0E1512 (opens dark)' if dark else '#F5F2EC (opens on paper)'}")

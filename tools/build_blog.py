@@ -402,6 +402,8 @@ PFX = "../"
 def chrome():
     nav = NAV.replace('href="', f'href="{PFX}').replace(f'href="{PFX}#', 'href="#')
     foot = FOOTER.replace('href="', f'href="{PFX}').replace(f'href="{PFX}http', 'href="http').replace(f'href="{PFX}mailto', 'href="mailto')
+    # award budgets: the section mark site.js set at start (aria-current="true" on Research, in the bar and the sheet)
+    nav = nav.replace(f'<a href="{PFX}research.html">Research</a>', f'<a href="{PFX}research.html" aria-current="true">Research</a>')
     return nav, foot
 # award a1 (system's request, ~18:00): the share card's alt says what the card shows, as launch_meta_v9's card_alt() does
 # for the top pages: the page's H1 (plain spaces), then its picture; og:locale too.
@@ -412,7 +414,19 @@ CARD_PIC = {"index": "Beside it, the blog’s open book, one leaf for each post.
 def card_alt(h1, pic):
     t = re.sub(r"\s+", " ", h1.replace(" ", " ")).strip()
     return t + ("" if t[-1:] in ".?!" else ".") + " " + CARD_PIC[pic]  # a title without closing punctuation still ends its sentence
-def head(url, title, desc, kind="article", extra="", h1="", links="", pic="post"):
+# award budgets (the guard's big item for the post, system's lines): a post whose article sets text in em/i (blog.css a3:
+# Instrument Serif italic) preloads that face as Home and Company do. Found in the CSS during layout, it loaded at
+# VeryHigh at the end of the render chain (site.css -> the face), +300 ms on mobile FCP and LCP. Only where it is used:
+# a preload nobody uses is a warning and 23 KB of a phone's first second
+ITALIC_PRE = f'  <link rel="preload" href="{PFX}assets/fonts/instrument-serif-400i-latin.woff2" as="font" type="font/woff2" crossorigin>\n'
+def sets_italic(article):
+    return bool(re.search(r"<(em|i)\b[^>]*>(?:\s|<[^>]*>)*[^\s<]", article))  # an em or i with something to set
+# award budgets: the scripts start after the first paint (system's afterpaint.js: site.js at the paint, then the rest on
+# oxa:loaded), as Lifecycles, Trust and Research do. As defer tags their download and evaluation were counted into
+# Lighthouse's simulated first paint. Without JavaScript nothing changes; with it the first screen is the same
+def after_paint(scripts):
+    return f'  <script src="{PFX}assets/js/afterpaint.js" defer data-after-paint="{" ".join(PFX + "assets/js/" + n for n in scripts)}"></script>'
+def head(url, title, desc, kind="article", extra="", h1="", links="", pic="post", italic=False):
     alt = esc(card_alt(h1 or title, pic))
     return f'''<!DOCTYPE html>
 <html lang="en">
@@ -446,7 +460,7 @@ def head(url, title, desc, kind="article", extra="", h1="", links="", pic="post"
   <link rel="icon" type="image/svg+xml" href="{PFX}assets/img/favicon.svg">
   <link rel="preload" href="{PFX}assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{PFX}assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="{PFX}assets/css/site.css">
+{ITALIC_PRE if italic else ""}  <link rel="stylesheet" href="{PFX}assets/css/site.css">
   <link rel="stylesheet" href="{PFX}assets/css/blog.css">
 {extra}</head>'''
 span = lambda a, b: f"{a}" if a == b else f"{a}–{b}"
@@ -498,6 +512,10 @@ assert all(len(r) <= CHAIN_MAX for r, _ in _runs), [(r, s) for r, s in _runs if 
 # collection's five posts), drawn as a dated rail; v2 showed it as a featured band and then again as four cards of the
 # AI grid. The chips stick only over the collections (a wrapper ends them before the closing band and the footer).
 nav, foot = chrome()
+assert nav.count('aria-current="true"') == 2, "the bar and the sheet each mark Research once"
+# the index is the footer's Blog page (site.js marked it at start, as the footer marks its own page everywhere)
+foot_index = foot.replace(f'<a href="{PFX}blog/index.html">Blog</a>', f'<a href="{PFX}blog/index.html" aria-current="page">Blog</a>', 1)
+assert foot_index != foot
 def iso(p): return p["dt"].strftime("%Y-%m-%d")
 # cut (1 Nov, the owner: "so many words everywhere"; the index's budget is 250 words and the 29 titles alone are 242):
 # a card is its plate and its title. The dateline, the excerpt and the read time left the index (each post page keeps
@@ -692,9 +710,8 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".
     </section>
   </main>
 
-{foot}
-  <script src="{PFX}assets/js/site.js" defer></script>
-  <script src="{PFX}assets/js/blog.js" defer></script>
+{foot_index}
+{after_paint(("site.js", "blog.js"))}
 </body>
 </html>
 '''
@@ -805,9 +822,9 @@ for p in order:
     article = hero_img + lead(hang(marks_in_em(bare_marks(smart_html(p["body"])))))
     # award a4 (a4-ux medium, a4-design polish): a long read with figures loads blog.js for one thing, the margin
     # plate's rest while a figure is on screen (blog.js; the other posts load no script of their own)
-    post_js = f'\n  <script src="{PFX}assets/js/blog.js" defer></script>' if long_read(p) and "<figure" in article else ""
+    post_js = ("site.js",) + (("blog.js",) if long_read(p) and "<figure" in article else ())
     page = head(url, f'{smart(p["title"])} — OpenEXA Blog', smart(META_DESC.get(p["slug"], p["excerpt"])), "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (ld_text(p["title"]), url)))}\n',
-                h1=ld_text(p["title"]), links=rel_links) + f'''
+                h1=ld_text(p["title"]), links=rel_links, italic=sets_italic(article)) + f'''
 <body data-page="post" data-nav="dark-start" class="article-page blog-post">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -841,7 +858,7 @@ for p in order:
   </main>
 
 {foot}
-  <script src="{PFX}assets/js/site.js" defer></script>{post_js}
+{after_paint(post_js)}
 </body>
 </html>
 '''

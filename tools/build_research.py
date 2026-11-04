@@ -386,11 +386,21 @@ def note_still(fig, every=7):
     for i, (sx, sy, depth, k) in enumerate(dots, 1):
         if i % every: continue
         xm = max(xm, abs(sx))
-        paths.setdefault((k, depth > med), []).append(f"M{round(sx)} {round(sy)}h0")
+        paths.setdefault((k, depth > med), set()).add((round(sx), round(sy)))
+    # award budgets: each path's dots once (2,706 of the ten stills' dots repeated a dot of their own path) and in column
+    # order, each from the one before it (m dx dy), as the margin plates are written: the same dots in the same places, so
+    # the same picture (one path is one stroke: neither order nor a repeat changes a pixel), in 20.4 KB of gzip for the
+    # ten notes, not 46.8 (the notes' HTML -2.6 KB each on average; note 02 13.6 -> 10.7 KB, inside a first round trip)
+    num = lambda v: str(v) if v < 0 else f" {v}"
+    def rel(pts):
+        dd, px, py = [], None, None
+        for x, y in sorted(pts):
+            dd.append(f"M{x} {y}h0" if px is None else f"m{x - px}{num(y - py)}h0"); px, py = x, y
+        return "".join(dd)
     # award a2: the plate's rules (RULES: note 09's floor) as lines, a hairline at any scale (research.css .fs-still .rule)
     xm = max([xm] + [abs(q[0]) for ln in rules for q in ln])
     w = math.ceil(xm + 12)
-    body = "".join(f'<path class="k{k}{" far" if not near else ""}" d="{"".join(d)}"/>' for (k, near), d in sorted(paths.items()))
+    body = "".join(f'<path class="k{k}{" far" if not near else ""}" d="{rel(d)}"/>' for (k, near), d in sorted(paths.items()))
     body += f'<path class="rule" d="{"".join(f"M{a[0]:.1f} {a[1]:.1f}L{b[0]:.1f} {b[1]:.1f}" for a, b in rules)}"/>' if rules else ""
     return (f'<svg class="fs-still" viewBox="{-w} -200 {2 * w} 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'
             f'{body}</svg>')
@@ -757,6 +767,16 @@ OUTB = '<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" s
 SCHOLAR = "https://scholar.google.com/citations?user=P40aOHIAAAAJ"
 BLOG = json.load(open(os.path.join(str(DATA), "blog_summary.json"), encoding="utf-8"))  # written by build_blog.py
 
+# award budgets (the a4 jury's two big items, index and notes): the pages' three scripts start after the first paint, as
+# Lifecycles' and Trust's do (system's afterpaint.js: site.js at the paint, then figure.js and research.js in that order).
+# They were three defer tags, which run before the text's paint is counted: Lighthouse's simulated FCP and LCP took in
+# their download and their evaluation at 4x (mobile 97, 98-99 before the award pass). Without JavaScript nothing changes;
+# with it, the page paints from its HTML and CSS (the hero's still, the words), and the drawing starts as it did, a moment
+# later. Shared-engine tags are chrome: system signs this off (CHANGE_REQUESTS, award budgets)
+AFTER_PAINT = ("assets/js/figure.js", "assets/js/site.js", "assets/js/research.js")
+def after_paint(prefix):
+    return f'  <script src="{prefix}assets/js/afterpaint.js" defer data-after-paint="{" ".join(prefix + s for s in AFTER_PAINT)}"></script>'
+
 def chrome(prefix, current):
     nav = NAV.replace('href="', f'href="{prefix}').replace(f'href="{prefix}#', 'href="#')
     nav = nav.replace(f'<a href="{prefix}research.html">Research</a>', f'<a href="{prefix}research.html" aria-current="page">Research</a>') if current == "research" else nav
@@ -897,9 +917,7 @@ for i, post in enumerate(ordered):
   </main>
 
 {foot}
-  <script src="../assets/js/figure.js" defer></script>
-  <script src="../assets/js/site.js" defer></script>
-  <script src="../assets/js/research.js" defer></script>
+{after_paint("../")}
 </body>
 </html>
 '''
@@ -1034,9 +1052,7 @@ index_page = f'''<!DOCTYPE html>
   </main>
 
 {foot}
-  <script src="assets/js/figure.js" defer></script>
-  <script src="assets/js/site.js" defer></script>
-  <script src="assets/js/research.js" defer></script>
+{after_paint("")}
 </body>
 </html>
 '''

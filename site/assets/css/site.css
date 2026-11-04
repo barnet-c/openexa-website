@@ -133,6 +133,8 @@
 [hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; } /* (inherited) no browser flash on a tap: presses are the site's own */
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+/* award budgets: until site.js sets is-loaded a deep link lands at once (an after-paint page glided from the top) */
+@media (scripting: enabled) { html:not(.is-loaded) { scroll-behavior: auto; } }
 body {
   margin: 0;
   background: var(--paper);

@@ -311,10 +311,9 @@
 @media (max-width: 600px) { .article-page .article h2 { font-size: clamp(1.6rem, 7vw, 1.75rem); line-height: 1.12; } }
 
 /* ---------- a note: the margin plate (award a3) ----------
-   From 1440 px (one long-read template with blog.css .post-mp): contents 1-3, text 4-9, and in 10-12 the hero's drawing
-   as a still (build_research margin_still: img/research/plate-*.svg, lazy) with its caption, sticky. research.js trims
-   its span to the first part head .. the end mark (--np-t, --np-b) and fades it in once half the hero has gone (.is-in,
-   a transition). Without JavaScript it starts half a screen down and spans the text */
+   From 1440 px (as blog.css .post-mp): contents 1-3, text 4-9, in 10-12 the drawing's still (plate-*.svg, lazy) and its
+   caption, sticky. research.js trims its span to the first head .. the end mark (--np-t, --np-b) and fades it in once
+   half the hero has gone (.is-in). Without JavaScript it starts half a screen down */
 .np-rail { display: none; }
 @media (min-width: 1440px) {
   .article-page .article-body-section .article { grid-column: 4 / 10; }
@@ -470,11 +469,9 @@
   .research-hero .lede, .article-hero .lede { font-size: 1rem; margin-top: .875rem; }
   .article-hero .figure-stage[data-plate] { --figure-scale: .72; }
   .research-hero .figure-stage[data-plate] { --figure-scale: 1; } /* the wide formations (note 09's ten columns) fit the half-width stage */
-  /* award a4 (r4): the hero is the screen the stage fills (it ended at 78svh or its words: the open book, note 07's ground
-     and note 09's axis were cut at the paper), the words centred in it; the note's stage leaves 1.5rem under the
-     drawing, and its hedge hangs there, under the drawing's left edge, as on desktop (it stood over the drawing's top
-     labels: note 09's "above the floor"). Out of the flow from the start, so hanging it moves nothing; unhung (no
-     JavaScript, no WebGL) it stands at the top right */
+  /* award a4 (r4): the hero is the screen the stage fills (at 78svh the drawings were cut), its words centred; the
+     note's hedge hangs under the drawing's left edge, as on desktop, out of the flow (hanging moves nothing); unhung
+     (no JavaScript or WebGL) it stands top right */
   .research-hero, .article-hero { display: flex; align-items: stretch; min-height: 100vh; min-height: 100svh; }
   :is(.research-hero, .article-hero) > .container { display: grid; align-content: center; }
   .article-hero .figure-stage[data-plate] { height: calc(100vh - var(--nav-h) - 1.5rem); height: calc(100svh - var(--nav-h) - 1.5rem); }
