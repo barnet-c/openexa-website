@@ -164,9 +164,15 @@
 /* ---------------------------------------------------------------- Company §03: the constants plate */
 /* one loop of gates that changes with each lifecycle, and the four constants that do not. Inline SVG: complete
    without JS, still under reduced motion; company.js walks a proposal through it and lights the constant being read. */
-#constants { overflow: clip; }
+#constants { overflow: clip; --kh: 2.75rem; }
+@media (pointer: coarse) { #constants { --kh: 3.25rem; } } /* the head holds a finger's 44 px control with room above its rule */
 .kplate { position: relative; margin: 0; }
-.kplate::before { content: ""; display: block; height: 2.75rem; margin-bottom: 1.125rem; border-bottom: var(--hair) solid var(--line); }
+/* hc1: the plate's head (system's instrument frame): what is happening on the left, in the label register (the one live
+   line on the plate), Pause motion boxed at the right end. Its height (--kh) is the old empty strip's, and the column
+   beside it is lifted by the same --kh, so the hairline under it still meets the first constant's rule from 961 px */
+.kplate-head { display: flex; align-items: center; gap: 1rem; height: var(--kh); margin-bottom: 1.125rem; border-bottom: var(--hair) solid var(--line); }
+.kplate-head > .figure-motion { margin-left: auto; flex: none; }
+.kplate .k-state { margin: 0; min-width: 0; font: 500 var(--fs-label)/1.35 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-2); text-wrap: balance; }
 .kplate-art { position: relative; }
 .kplate-svg { display: block; width: 100%; height: auto; overflow: visible; }
 /* a4 (pixel): the plate's lines on the stroke tokens, whole device pixels at every size (non-scaling, as .hp-art);
@@ -200,8 +206,6 @@
 .kplate .kl--up { --ty: -100%; }
 .kplate .kl--dn { --ty: 0%; }
 .kplate .kl--in { --tx: -50%; }
-.kplate .kl--dim { font-weight: 400; }
-.kplate .k-state { color: var(--fg-2); }
 /* a moment of the walk */
 .kplate .is-hit { stroke: var(--accent); }
 .kplate .k-gate--up.is-hit > circle { stroke: var(--accent); }
@@ -216,14 +220,13 @@
 .kplate[data-on="c1"] :is(.kplate-svg .k-c1 > *, .kl.k-c1), .kplate[data-on="c2"] .kplate-svg .k-c2 > *, .kplate[data-on="c3"] :is(.kplate-svg .k-c3 > *, .kl.k-c3), .kplate[data-on="c4"] :is(.kplate-svg .k-c4 > *, .kl.k-c4) { opacity: 1; }
 .kplate[data-on="c2"] .k-agent { fill: var(--accent); }
 /* the lit word (fill too: verify_v9 company reads it) */
-.kplate[data-on="c1"] .k-c1 .kl--word:not(.kl--dim), .kplate[data-on="c3"] .k-c3 .kl--box, .kplate[data-on="c4"] .k-c4 .kl--word { color: var(--accent); fill: var(--accent); }
+.kplate[data-on="c1"] .k-c1 .kl--word, .kplate[data-on="c3"] .k-c3 .kl--box, .kplate[data-on="c4"] .k-c4 .kl--word { color: var(--accent); fill: var(--accent); }
 .kplate .figure-cap { margin-top: 1.125rem; padding-top: .625rem; row-gap: .25rem; border-top: var(--hair) solid var(--line); }
 .kplate .figure-cap .fc-h { text-align: left; }
-.kplate > .figure-motion { top: 0; right: 0; min-height: 2.75rem; padding: 0; }
 [data-page="company"] .constants > div::after { display: none; }
 @media (min-width: 961px) {
   [data-page="company"] .k-grid { align-items: start; margin-top: clamp(2rem, 4vw, 3.5rem); }
-  [data-page="company"] .k-side { grid-column: 6 / -1; position: sticky; top: calc(var(--nav-h) + 2.5rem); padding: 0 0 0 clamp(1rem, 2vw, 2rem); margin-top: calc(.0625rem - 2.75rem); }
+  [data-page="company"] .k-side { grid-column: 6 / -1; position: sticky; top: calc(var(--nav-h) + 2.5rem); padding: 0 0 0 clamp(1rem, 2vw, 2rem); margin-top: calc(.0625rem - var(--kh)); }
   [data-page="company"] .k-text { grid-column: 1 / span 5; }
   /* one column of constants; the one being read carries a green rule */
   [data-page="company"] .constants { display: block; border: 0; }
@@ -243,17 +246,17 @@
   [data-page="company"] .constants > div:nth-child(odd) { border-right: var(--hair) solid var(--line); }
   [data-page="company"] .constants > div:nth-child(-n+2) { border-bottom: var(--hair) solid var(--line); }
 }
-@media (max-width: 600px) { /* phones: the plate keeps its four words; the layers, the Council and the running line give way */
-  .kplate .kl > .kl--dim, .kplate .kl--council, .kplate .k-state { display: none; }
-  /* (top/left here: the inline --x/--y would win) at 12 px the words are wider than the room left of the loop: "Agents
-     decide" and "Code executes" name the loop's two halves from inside it, on the boundary; the box is too small for
-     its word, so the word goes under it, and the ledger's under its strip */
+@media (max-width: 600px) { /* phones: the plate keeps its four labels; the Council's and the running line give way */
+  .kplate .kl--council, .kplate .k-state { display: none; }
+  /* (top/left here: the inline --x/--y would win) at 12 px the labels are wider than the room left of the loop: the two
+     layer labels name the loop's halves from inside it, on the boundary; the box is too small for its word, so the
+     word goes under it, and the ledger's under its strip */
   .kplate .kl.k-c1 { --tx: -50%; left: 63.28%; }
   .kplate .kl--up.k-c1 { top: 39.6%; }
   .kplate .kl--dn { top: 43.6%; }
   .kplate .kl--in { --tx: 0%; --ty: 0%; left: 3.75%; top: 73.6%; }
   .kplate .kl--led { --ty: 0%; top: 90.2%; }
-  .kplate::before { margin-bottom: .75rem; }
+  .kplate-head { margin-bottom: .75rem; }
 }
 @media (max-width: 760px) {
   [data-page="company"] .constants > div, [data-page="company"] .constants > div:nth-child(n) { padding: 1.375rem 0 1.5rem; border-right: 0; border-bottom: var(--hair) solid var(--line); }

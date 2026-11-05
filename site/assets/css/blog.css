@@ -6,8 +6,8 @@
 /* ---------- plates: the line language (cards, the post hero, the panels, the library's faces) ---------- */
 .blog-page .bp-art, .blog-post .bp-art { display: block; width: 100%; height: 100%; overflow: visible; }
 /* a3: plate lines are non-scaling strokes on the whole-pixel tokens (--u hairline, --stroke-2 green, --dash-u dashes);
-   --lu: the lettering's unit; --bk: px per viewBox unit, so a pathLength draw-in dashed in screen space ends whole */
-.bp-art { --u: calc(var(--stroke) * 1px); --lu: 2px; --vbw: 800; --vbh: 450; --bk: min(calc(100cqw / var(--vbw)), calc(100cqh / var(--vbh))); }
+   --bk: px per viewBox unit, so a pathLength draw-in dashed in screen space ends whole */
+.bp-art { --u: calc(var(--stroke) * 1px); --vbw: 800; --vbh: 450; --bk: min(calc(100cqw / var(--vbw)), calc(100cqh / var(--vbh))); }
 :is(.post-plate-art, .blog-thumb, .bpn) > .bp-art { container-type: size; }
 .lf-face { --u: calc(var(--stroke) * 1px); }
 .bp-art * { vector-effect: non-scaling-stroke; }
@@ -21,14 +21,12 @@
 :is(.bp-art, .lf-face) .pk { fill: currentColor; fill-opacity: .62; }
 :is(.bp-art, .lf-face) .po { stroke: currentColor; stroke-opacity: .46; stroke-width: var(--u); }
 :is(.bp-art, .lf-face) .pq { fill: var(--accent); }
-.bp-art .pt { fill: currentColor; fill-opacity: .6; font: 400 calc(8.5 * var(--lu))/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .bp-rings { transform-origin: 53% 57.8%; transition: transform .9s var(--ease); } /* the rings' centre (212, 130) */
 
 /* the card's plate: the third paper, framed once by the card's own rules */
 .blog-page .blog-plate { background: var(--paper-3); color: var(--ink); }
 .blog-page .blog-thumb.blog-plate { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
 .blog-page .blog-thumb .bp-art { position: absolute; inset: 0; content-visibility: auto; } /* placed in a 16:9 box: skipped off screen, nothing shifts (r4-perf) */
-.blog-page .blog-thumb .pt { display: none; }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .blog-card:hover .bp-art .pg[pathLength] { animation: bp-redraw 1.1s var(--ease); }
   .blog-econ:not(.js-turn):hover .bp-rings { transform: rotate(-6deg); } /* without JS; with it, blog.js turns them a step a row */
@@ -52,7 +50,6 @@
 .lib-art .lf { fill: var(--bg); stroke: currentColor; stroke-opacity: .46; stroke-width: var(--stroke); stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .lib-art .lf-g { stroke: var(--accent); stroke-opacity: .95; }
 .lib-art .lf-face * { vector-effect: non-scaling-stroke; } /* hairlines stay hairlines on a foreshortened leaf (so no pathLength draw-ins here) */
-.lib-art .lf-face .pt { display: none; }
 .lib-b { cursor: pointer; outline: 0; }
 .lib-plate figcaption { margin-top: clamp(1.25rem, 2.2vw, 2rem); font: 400 var(--fs-small)/1.5 var(--sans); } /* one baseline with the links */
 /* a3: the collections' links under the H1; the one pointed at or focused lights its bundle (blog.js data-lit) */
@@ -193,7 +190,6 @@
 .blog-panel-art { aspect-ratio: 16 / 11; }
 .bpn { position: absolute; inset: 6% 4%; opacity: 0; visibility: hidden; transition: opacity var(--dur-move) var(--ease), visibility 0s linear var(--dur-move); }
 .bpn.is-on { opacity: 1; visibility: visible; transition: opacity var(--dur-move) var(--ease); }
-.bpn .pt { display: none; }
 .bpn, .blog-econ-art .bp-art { content-visibility: auto; } /* the 15 plates and the rings are skipped until the list nears the screen, as the card plates were (r4-perf) */
 @media (prefers-reduced-motion: no-preference) { .blog-panel.is-live .bpn.is-on .pg[pathLength] { animation: bp-redraw 1.1s var(--ease) .1s backwards; } } /* the new plate's green line is engraved again */
 
@@ -319,9 +315,11 @@
 }
 /* the dash only while drawing (a solid line after), the drawing's on-screen length (--bk): whole at any size */
 @keyframes bp-draw { from { stroke-dasharray: calc(1.02 * var(--bk)) calc(2.04 * var(--bk)); stroke-dashoffset: calc(1.02 * var(--bk)); } to { stroke-dasharray: calc(1.02 * var(--bk)) calc(2.04 * var(--bk)); stroke-dashoffset: 0; } }
-/* plate lettering never under 10 px: hidden where the plate is small */
+/* hc1: the hero's lettering in the caption register; hidden where the plate is small (sizes: notes/blog.md, hc1) */
+.post-plate .pt { fill: currentColor; fill-opacity: .56; font-family: var(--sans); }
 @media (max-width: 640px), (min-width: 961px) and (max-width: 1280px) { .post-plate .pt { display: none; } }
-@media (min-width: 1281px) { .post-plate .pt { font-size: calc(9.2 * var(--lu)); } }
+@media (min-width: 641px) and (max-width: 960px) { .post-plate .pt { font-size: calc(36.5px - 2.29vw); } }
+@media (min-width: 1281px) { .post-plate .pt { font-size: max(20.4px, 39.6px - 1vw); } }
 @media (max-width: 600px) { .post-plate .hp-reg i { width: .625rem; height: .625rem; } }
 @media (max-width: 960px) {
   .blog-post .blog-post-hero { padding-top: calc(var(--nav-h) + 2.25rem); }
@@ -398,7 +396,7 @@
 .blog-article figure img { mix-blend-mode: multiply; margin-inline: auto; } /* a picture capped at its own pixels (build_blog body_cap) sits centred on its mat */
 .blog-article .blog-hero-img { margin-top: 0; }
 /* a3: a caption starts on its picture's edge (a capped picture's figure carries --cap) */
-.blog-article figcaption { padding: .75rem 0 .125rem; border-top: 0; font: 400 .84rem/1.5 var(--sans); letter-spacing: 0; color: var(--fg-3); text-wrap: pretty; }
+.blog-article figcaption { padding: .75rem 0 .125rem; border-top: 0; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: var(--fg-3); text-wrap: pretty; }
 .blog-article figure[style] > figcaption { max-width: var(--cap); margin-inline: auto; }
 /* a3: em/i in Instrument Serif italic (no Inter italic ships), at Inter's x-height, on the line's own leading */
 .blog-article :is(p, li, figcaption) :is(em, i) { font-family: var(--serif); font-style: italic; font-size: 1.08em; line-height: 1; letter-spacing: 0; }
@@ -434,7 +432,6 @@
   .post-mp-in { position: sticky; top: calc(var(--nav-h) + 2.5rem); margin-top: 50svh; }
   .post-mp-art { position: relative; aspect-ratio: 16 / 9; background: var(--paper-3); color: var(--ink); }
   .post-mp-art .bp-art { position: absolute; inset: 7% 5%; width: 90%; height: 86%; }
-  .post-mp-art .pt { display: none; }
   .post-mp .pp-h { margin: .75rem 0 0; }
   /* a4: at rest, hedge and all, while a figure of the post's own is on screen (blog.js) */
   .post-mp-in { transition: opacity var(--dur-move) var(--ease); }

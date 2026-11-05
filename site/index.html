@@ -183,15 +183,15 @@
         <h2 class="display-2 ch-title" data-reveal data-split>Take the stack apart.</h2>
         <!-- the architecture explorer (arch.js): without JavaScript this is the readable list -->
         <div class="layers" data-arch data-arch-rest data-arch-label="The agentic stack" data-reveal style="--d:120ms">
-          <div class="layer" data-job="Watches the lifecycle’s live data and keeps re-estimating risk, price and regime."><div class="k">01</div><h3>Signal intelligence<small>Perceive</small></h3><div></div></div>
-          <div class="layer" data-job="The post-trained model every agent reasons on. It can propose anything and execute nothing on its own."><div class="k">02</div><h3>Model layer<small>Reason</small></h3><div></div></div>
-          <div class="layer" data-job="Thousands of narrow agents, each built for one job: read a feed, score a gap, size an order, check a limit, match a fill."><div class="k">03</div><h3>Domain<span class="hy">-</span>specific agents<small>Act</small></h3><div></div></div>
-          <div class="layer" data-job="The gate every proposal passes. It arbitrates between agents and enforces policy and mandate limits."><div class="k">04</div><h3>Execution Council<small>Govern</small></h3><div></div></div>
+          <div class="layer" data-job="Watches the lifecycle’s live data and keeps re-estimating risk, price and regime."><div class="k">01</div><h3>Signal intelligence</h3><div></div></div>
+          <div class="layer" data-job="The post-trained model every agent reasons on. It can propose anything and execute nothing on its own."><div class="k">02</div><h3>Model layer</h3><div></div></div>
+          <div class="layer" data-job="Thousands of narrow agents, each built for one job: read a feed, score a gap, size an order, check a limit, match a fill."><div class="k">03</div><h3>Domain<span class="hy">-</span>specific agents</h3><div></div></div>
+          <div class="layer" data-job="The gate every proposal passes. It arbitrates between agents and enforces policy and mandate limits."><div class="k">04</div><h3>Execution Council</h3><div></div></div>
           <div class="layer-boundary"><div class="k">—</div><p class="lb-t">The boundary</p><div class="lb-io"><p data-side="above"><b>Above</b> <strong>Intelligence decides.</strong></p><p data-side="below"><b>Below</b> <strong>Execution is deterministic.</strong></p></div></div>
-          <div class="layer" data-job="Scores a route for each approved action on live conditions and past performance."><div class="k">05</div><h3>Routing layer<small>Optimize</small></h3><div></div></div>
-          <div class="layer" data-job="Runs the lifecycle as a deterministic state machine, with retries, idempotency and reconciliation."><div class="k">06</div><h3>Execution layer<small>Orchestrate</small></h3><div></div></div>
-          <div class="layer" data-job="Gives agents authenticated connectivity to the rails, through secure, customer-scoped MCP servers."><div class="k">07</div><h3>MCP server<small>Connect</small></h3><div></div></div>
-          <div class="layer" data-job="Grants every agent, tool and counterparty exactly the permissions its workflow needs, and nothing more."><div class="k">08</div><h3>Authentication layer<small>Permit</small></h3><div></div></div>
+          <div class="layer" data-job="Scores a route for each approved action on live conditions and past performance."><div class="k">05</div><h3>Routing layer</h3><div></div></div>
+          <div class="layer" data-job="Runs the lifecycle as a deterministic state machine, with retries, idempotency and reconciliation."><div class="k">06</div><h3>Execution layer</h3><div></div></div>
+          <div class="layer" data-job="Gives agents authenticated connectivity to the rails, through secure, customer-scoped MCP servers."><div class="k">07</div><h3>MCP server</h3><div></div></div>
+          <div class="layer" data-job="Grants every agent, tool and counterparty exactly the permissions its workflow needs, and nothing more."><div class="k">08</div><h3>Authentication layer</h3><div></div></div>
           <div class="layer-floor"><div class="k">—</div><p>Brokers · Clearing · OTC · Venues · Counterparties</p></div>
         </div>
         <a class="link-arrow ch-link" href="platform.html" data-reveal>The platform <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
@@ -211,6 +211,7 @@
             <span class="sw-live"><i></i><span data-sw-state>Running</span></span>
             <ul class="sw-key" role="list" aria-label="Key"><li class="k-p">Proposal</li><li class="k-s">Settled</li><li class="k-r">Rejected</li><li class="k-b">Record</li></ul>
             <button class="sw-follow" type="button" data-sw-follow aria-pressed="false" aria-controls="sw-trace">Follow a proposal</button>
+            <button class="sw-motion" type="button" data-sw-motion hidden>Pause motion</button>
           </div>
           <div class="sw-stage" data-sw-stage>
             <canvas aria-hidden="true"></canvas>
@@ -243,7 +244,7 @@
             <div class="swarm-controls">
               <label><span>Agents in this model <output data-sw-n-out aria-live="off">1.8k</output></span><input type="range" min="0" max="100" step="1" value="52" data-sw-n aria-label="Agents in this model"></label>
               <label><span>Council strictness <output data-sw-strict-out aria-live="off">12%</output></span><input type="range" min="0" max="60" step="1" value="12" data-sw-strict aria-label="Council strictness"></label>
-              <div class="sw-btns"><button class="halt" type="button" data-sw-halt>Halt</button><button class="sw-motion" type="button" data-sw-motion hidden>Pause motion</button></div>
+              <div class="sw-btns"><button class="halt" type="button" data-sw-halt>Halt</button></div>
             </div>
           </div>
         </div>
@@ -311,10 +312,10 @@
             <div class="cost-row">
               <div class="cost-lab"><b>Traditional</b></div>
               <div class="cost-bar">
-                <i style="--w:45%;--c:var(--ink)"><span>Cost of carry</span></i>
-                <i style="--w:37%;--c:var(--slate)"><span>Counterparty risk</span></i>
-                <i style="--w:10%;--c:var(--khaki-deep)"><span>Technology</span></i>
-                <i style="--w:8%;--c:var(--khaki)"><span>Management</span></i>
+                <i style="--w:45%;--c:var(--ink)"></i>
+                <i style="--w:37%;--c:var(--slate)"></i>
+                <i style="--w:10%;--c:var(--khaki-deep)"></i>
+                <i style="--w:8%;--c:var(--khaki)"></i>
               </div>
               <div class="cost-val">100</div>
             </div>

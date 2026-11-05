@@ -13,7 +13,11 @@
       The still SVG in company.html is maintained by hand: it is draw(lay(SHAPES[0])) with the proposal on the boundary,
       so a change to SHAPES[0], CX/CY or the label positions means redrawing it to match (r1, 31 Oct).
       award a4 (pixel): the labels are HTML over the drawing (.kl-labs, at the plate-label token, so they no longer scale
-      with the plate); the running line is .k-state there, and the Council's label follows the Council. */
+      with the plate), and the Council's label follows the Council.
+      hc1 (4 Nov, the council's copy item and system's instrument frame): the plate names its halves by their layers only
+      (the list beside it says "Agents decide. Code executes."), the running line (.k-state) is the status in the plate's
+      head, not a footer line in the drawing, and says only what happens (no "Agents decide ·", no "Code executes · below
+      the boundary"); Pause motion ends that head, boxed (.figure-motion.is-head). */
 (function () {
   'use strict';
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -101,7 +105,7 @@
     function walk(from) {
       phase = 'walk'; s = from; stops = plan(); si = stops.findIndex(x => x.s > s + 1e-6); if (si < 0) si = stops.length;
       rejecting = pass % 4 === 3;
-      if (s < .5) say('Agents decide · a proposal, gate by gate');
+      if (s < .5) say('A proposal, gate by gate');
       tok.setAttribute('opacity', '1'); tok.setAttribute('class', 'k-tok' + (s >= .5 ? ' is-ok' : ''));
     }
     function arrive(x) {
@@ -121,7 +125,7 @@
         lead.classList.add('is-hit'); say('The counterparty confirms · written to the ledger');
         hold = 620; onStop = () => { el.classList.remove('is-hit'); lead.classList.remove('is-hit'); write('ok'); }; return;
       }
-      say(x.s < .5 ? 'Agents decide · a proposal, gate by gate' : 'Code executes · below the boundary');
+      if (x.s < .5) say('A proposal, gate by gate'); // below the boundary the crossing's line stands until the counterparty confirms
       hold = 300; onStop = () => el.classList.remove('is-hit');
     }
     function end() { tok.setAttribute('opacity', '0'); pass++; next = pass % 2 === 0 ? 'morph' : 'walk'; phase = 'gap'; gap = 700; si = stops.length; }
@@ -152,9 +156,10 @@
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
     let raf = 0, last = 0, visible = false, paused = false;
     const btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'figure-motion'; btn.textContent = 'Pause motion';
+    const head = fig.querySelector('.kplate-head');
+    btn.type = 'button'; btn.className = 'figure-motion' + (head ? ' is-head' : ''); btn.textContent = 'Pause motion';
     btn.addEventListener('click', () => { paused = !paused; btn.textContent = paused ? 'Resume motion' : 'Pause motion'; kick(); });
-    fig.appendChild(btn);
+    (head || fig).appendChild(btn);
     function frame(now) { raf = 0; tick(Math.min(64, now - last)); last = now; kick(); }
     function kick() {
       const go = visible && !paused && !reduce.matches && !document.hidden;

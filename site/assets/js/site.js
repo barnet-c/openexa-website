@@ -121,15 +121,15 @@
   }
 
   /* the readout: the line rolls up to the next chapter (down when going back); its width follows. It shows the chapter's
-     number only (1 Nov: no running head; the title is in the list); at the top of the page it is empty (site.css shows
-     it there only to a keyboard). */
+     number only (1 Nov: no running head; the title is in the list). At the top of the page it is empty; site.css draws
+     "On this page" there (hc1) for a keyboard or an open list, so the stop names what it opens. */
   const MODES = ['is-short', 'is-compact'];
   const total = () => pad(Math.max(0, ...chapters.map(c => /^\d+$/.test(c.n) ? +c.n : 0)) || chapters.length);
   function lineFor(k, mode) {
     const line = document.createElement('span');
     line.className = 'nav-ch-line';
     if (k < 0) {
-      line.classList.add('is-intro');
+      line.classList.add('is-intro'); // site.css draws its "On this page" (the name's first words) for a keyboard
     } else {
       const c = chapters[k], b = document.createElement('b'), t = document.createElement('span');
       b.textContent = c.n; if (/^\d+$/.test(c.n)) b.className = 'is-num';

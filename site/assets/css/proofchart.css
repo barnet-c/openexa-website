@@ -34,9 +34,7 @@
   }
 }
 @supports (width: 1cqi) and (width: round(down, 10.5px, 1px)) { .pf, .proof:not(.is-built)::before { --b: round(down, clamp(.5625rem, calc(var(--lane) * .34), 1.0625rem), 1px); } } /* whole pixels: crisp, even blocks */
-/* (r4) until proof.js builds the chart (Home: as the curtain lifts) its box is held at the lanes' height from the
-   chart's own variables (the rules above serve this ::before too; --cols/--n/--ng at Home's 10/10/1), the static list
-   in the same cell. The build moves nothing */
+/* (r4) until proof.js builds the chart its box is held at the lanes' height (Home's 10/10/1): the build moves nothing */
 @media (scripting: enabled) {
   .proof:not(.is-built) { display: grid; }
   .proof:not(.is-built) > *, .proof:not(.is-built)::before { grid-area: 1 / 1; }
@@ -58,6 +56,8 @@
 .y-disc { top: calc(var(--top) + var(--zr) * .78); transform: translateY(-50%); }
 .y-day { top: calc(var(--top) + var(--zr) + var(--zd) / 2); transform: translateY(-50%); }
 .y-ok { top: calc(var(--top) + var(--zr) + var(--zd) + var(--zo) / 2); transform: translateY(-50%); }
+/* hc1: the widest gutter sets the hedge in the gutter's mono; narrower, Inter keeps "not published" on one line */
+@container (min-width: 45rem) { .pf-y small { font-family: var(--mono); letter-spacing: 0; } }
 @container (max-width: 540px) { .pf-y .pf-n { display: none; } .pf-y small { font-size: var(--fs-label); } .pf-gut { letter-spacing: .06em; } .pf-y { right: .25rem; } }
 /* a2: phones set the label at 12 px (site.css), so the gutter holds "Confirmed" (71 px) with room before the first tick */
 @container (min-width: 301px) and (max-width: 540px) { .pf, .proof:not(.is-built)::before { --gut: clamp(5rem, 15cqi, 6.75rem); } .pf-y small { letter-spacing: -0.01em; } } /* a3: at 12 px "not published" needs 77 px of a 76 px column */
@@ -73,11 +73,8 @@
 @supports not (width: 1cqi) {
   @media (max-width: 340px) { .pf, .proof:not(.is-built)::before { --gut: 2.375rem; } .pf-gut { letter-spacing: .02em; } .pf-y { right: calc(2 * var(--hair)); } .pf-y .pf-lw, .y-above small, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { font-size: var(--mono-tick); letter-spacing: 0; white-space: nowrap; } }
 }
-/* 4K at 100 % (Home; Proof has its own in proof.css): above 1920 the root grows with the viewport (site.css), so the chart's gutter,
-   blocks and zones move to rem with its labels. In px the gutter stopped at 108 px while the type grew, and at 3840
-   "exact value not published" wrapped to three lines across the floor rule. Now the chart is the 1440 chart, scaled:
-   the hedge on two lines above the floor (zone = one open block + 2.25rem, as at 1440). The unbuilt box (r4) takes the
-   same sizes, so the build still moves nothing. From 1921 px, where the root starts growing (equal at 1920; integrate a1). */
+/* 4K (Home; Proof's is in proof.css): above 1920 the chart's gutter, blocks and zones are in rem, the 1440 chart scaled
+   (integrate a1; history: notes/system.md) */
 @media (min-width: 1921px) {
   @supports (width: 1cqi) {
     body[data-page="home"] .pf, body[data-page="home"] .proof:not(.is-built)::before {
@@ -140,7 +137,7 @@
 .pf-d { align-self: center; font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .06em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color var(--dur-feedback) var(--ease-out); }
 .pf-lane.is-on .pf-d { color: var(--fg); }
 .pf-o { align-self: center; display: grid; place-items: center; transition: opacity var(--dur-move) var(--ease); }
-.pf-o svg { width: .75rem; height: .75rem; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; } /* a3: 2 units of the 12-unit box, scaling with it: 2 px at 1440, 4 device px at 1920@2 and at 3840 (it drew 1.5 / 3.25); not non-scaling, which would rest its pathLength draw-in truncated above 1920 (verify_v9 draw_rest) */
+.pf-o svg { width: .75rem; height: .75rem; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; } /* a3: 2 units of the 12-unit box, scaling (non-scaling truncates the draw-in above 1920: draw_rest) */
 .pf-o path { stroke-dasharray: 1; stroke-dashoffset: 0; }
 .pf-o-no { display: block; width: .5rem; height: var(--hair); background: var(--fg-3); }
 .proof.has-on .pf-lane:not(.is-on) :is(.pf-g, .pf-c, .pf-r, .pf-o) { opacity: .3; }
@@ -232,8 +229,6 @@
 .cost-rows { display: grid; gap: 1.625rem; }
 .cost-row { display: grid; grid-template-columns: 12.5rem minmax(0, 1fr) 4rem; column-gap: 1.25rem; align-items: end; padding-top: 2.125rem; }
 .cost-lab b { display: block; font: 400 var(--fs-heading)/1.1 var(--serif); letter-spacing: -.01em; }
-.cost-lab span, .cost-bar > i > :is(span, em) { font: var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); color: var(--fg-3); }
-.cost-lab span, .cost-bar > i > :is(span, em) { text-transform: uppercase; }
 .cost-val { font: 400 var(--fs-heading)/1 var(--serif); letter-spacing: -.02em; text-align: right; }
 .cost-val.is-acc { color: var(--signal-ink, #186B4F); }
 .cost-bar { --cols: 50; --rows: 2; --g: .1875rem; --bw: calc((100cqi - (var(--cols) - 1) * var(--g)) / var(--cols));
@@ -248,9 +243,7 @@
 .cost-bar:not(.is-blocks) > i + i { width: calc(var(--w) - .125rem); margin-left: calc(2 * var(--hair)); }
 .cost-bar > .cost-gone { background: none; box-shadow: none; border: var(--hair) dashed rgba(14, 21, 18, .34); }
 .cost-bar.is-blocks > i { position: absolute; top: 0; bottom: 0; left: var(--x); height: auto; background: none; box-shadow: none; border: 0; }
-.cost-bar > i > span { position: absolute; left: 0; bottom: 100%; padding: 0 0 .5625rem .4375rem; border-left: var(--hair) solid var(--line-strong); color: var(--fg-2); white-space: nowrap; }
-.cost-bar > i:last-of-type > span { left: auto; right: 0; padding: 0 .4375rem .5625rem 0; border: 0; border-right: var(--hair) solid var(--line-strong); }
-.cost-gone em { position: absolute; left: 0; right: 0; bottom: 100%; padding-bottom: .75rem; }
+.cost-gone em { position: absolute; left: 0; right: 0; bottom: 100%; padding-bottom: .75rem; font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; color: var(--fg-2); } /* hc1: an annotation, the caption register; the key (.pf-ck) names the blocks, the bar carries no names */
 .cost-gone em::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(3 * var(--hair)); height: .3125rem; border: var(--hair) solid var(--line-strong); border-bottom: 0; }
 .cost-blk { display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--rows), var(--bw)); grid-auto-columns: var(--bw); gap: var(--g); width: 100%; }
 .cost-blk i { background: var(--c); box-shadow: inset 0 0 0 var(--hair) rgba(14, 21, 18, .55); border-radius: .0625rem; }
@@ -269,9 +262,7 @@
 }
 @container cost (max-width: 560px) {
   .cost-bar { --cols: 25; --rows: 4; --g: .125rem; }
-  .cost-bar > i > span { letter-spacing: .02em; }
   .cost-row:first-child .cost-bar { margin-top: 3.25rem; }
-  .cost-bar > i:nth-of-type(even) > span { padding-bottom: 1.6875rem; } /* two tiers */
   .cost-row + .cost-row .cost-bar { margin-top: 3rem; }
 }
 /* the key (home §05, Proof §03): each block of the stack defined in production's words, one line each, in the bar's
@@ -291,7 +282,7 @@
 .cost-cmp .cmp-g th { padding: 1.625rem 0 .625rem; color: var(--fg-2); }
 .cost-cmp tbody th[scope="row"] { width: 46%; font-weight: 500; color: var(--fg); }
 .cost-cmp small { display: block; margin-top: calc(3 * var(--hair)); font-size: var(--fs-small); font-weight: 400; color: var(--fg-3); }
-.cost-cmp td { width: 27%; font: var(--fs-small)/1.4 var(--mono); color: var(--fg-2); }
+.cost-cmp td { width: 27%; font: var(--fs-label)/1.4 var(--mono); letter-spacing: .04em; color: var(--fg-2); }
 .cost-cmp td + td { color: var(--signal-ink, #186B4F); }
 @media (max-width: 600px) {
   .cost-cmp thead { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); }

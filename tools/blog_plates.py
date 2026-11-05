@@ -13,7 +13,7 @@ the signal green (--accent, 1.5), dashed lines for bounds and the "not yet", sma
 dots for what is left out, vertical engraving strokes for areas. Drawn in 400 x 225 units (the cards' 16:9; written at
 K = 2, viewBox 800 x 450, r4); the top 44 units stay clear for the card's label. Classes (styled in assets/css/blog.css):
   pa main line · pb secondary · pc faint (hatching, many paths) · pd dashed bound · pr base rule · pg the green line
-  pk filled dot · po hollow dot · pq green dot · pt hero-only label (hidden on cards)
+  pk filled dot · po hollow dot · pq green dot · pt label (written on the post hero only: unlettered())
 pathLength="1" on pa/pg lets CSS draw them in (the post hero at first paint; the green line again on a card's hover).
 """
 import hashlib, math, random, re
@@ -66,7 +66,8 @@ def dot(x, y, cls="pk", r=1.6):
 
 
 def label(x, y, text, anchor="middle"):
-    return f'<text class="pt" x="{f(x)}" y="{f(y)}" text-anchor="{anchor}">{text}</text>'
+    """hero-only lettering, in sentence case (hill climb hc1: Inter in the caption register, no longer mono capitals)"""
+    return f'<text class="pt" x="{f(x)}" y="{f(y)}" text-anchor="{anchor}">{text[:1].upper() + text[1:]}</text>'
 
 
 def xs(n, a=X0, b=X1):
@@ -166,9 +167,18 @@ def leverage(r):
 
 
 def legend(x, ia, ib, lo, hi):
-    """names on the two lines where they part most in the first half: leveraged above its peak, index below its line"""
+    """names on the two lines: leveraged above its peak, where the two part most in the first half; index just above its
+    own line, where it has the most clear height over the word's width (hc1: under the leveraged peak, the word sat on
+    the dashed start line, crossed by both)"""
+    Y = lambda v: fit([v], 60, 190, lo, hi)[0]
+    y0, ya, yb = Y(1.0), [Y(v) for v in ia], [Y(v) for v in ib]
     k = max(range(len(x) // 2), key=lambda j: ib[j] - ia[j])
-    return [label(x[k], fit([ib[k]], 60, 190, lo, hi)[0] - 8, "leveraged"), label(x[k], fit([ia[k]], 60, 190, lo, hi)[0] + 15, "index")]
+    def room(t):   # (clear height above the index line over the word's 32 units, the line's top there)
+        win = [j for j in range(len(x)) if abs(x[j] - x[t]) <= 16]
+        top = min(ya[j] for j in win)
+        return top - max([44] + [o for j in win for o in (y0, yb[j]) if o < ya[j] - .5]), top
+    t = max((j for j in range(len(x)) if X0 + 16 <= x[j] <= X1 - 16), key=lambda j: room(j)[0])
+    return [label(x[k], Y(ib[k]) - 8, "leveraged"), label(x[t], room(t)[1] - 5, "index")]
 
 
 def decomposition(r, rows=3, bursts=False):
@@ -366,7 +376,7 @@ def exercise(r):
     out = [rule(), line(X0, ys, X1, ys, "pc"), line(x[vest], 54, x[vest], 200, "pd"),
            path(list(zip(x[vest:], yb)), "pd"), path(list(zip(x[:hit + 1], yp[:hit + 1])), "pa", True),
            path(list(zip(x[hit:], yp[hit:])), "pc"), dot(x[hit], yp[hit], "pq", 3.2), f'<circle class="pg" cx="{f(x[hit])}" cy="{f(yp[hit])}" r="{f(7)}"/>',
-           label(x[vest], 216, "vesting"), label(X1, ys - 5, "strike", "end")]
+           label(x[vest], 216, "vesting"), label(X1, ys + 14, "strike", "end")]   # hc1: under its line (the boundary meets it above)
     return out
 
 
@@ -453,7 +463,7 @@ def five_stages(r):
     a, b, top = cx[1] + 8, cx[2] - 8, cy - 62  # the bridge: an arc from the bell over to the line
     out.append(path([(a + (b - a) * t, cy - 40 - (cy - 40 - top) * 4 * t * (1 - t)) for t in [i / 24 for i in range(25)]], "pg", True))
     for i, (c, name) in enumerate(zip(cx, ("Aggregative", "Probabilistic", "Deterministic", "Restrictive", "Automatic"))):
-        out.append(label(c, 190 if i % 2 == 0 else 203, name))
+        out.append(label(c, 189 if i % 2 == 0 else 208, name))   # hc1: two rows 19 units apart (Inter at the caption step)
     return out
 
 
@@ -464,6 +474,7 @@ def cohort(r):
     for _ in range(64):
         x, y = r.uniform(X0 + 8, X1 - 8), r.uniform(60, 194)
         if (x - tx) ** 2 / 46 ** 2 + (y - ty) ** 2 / 30 ** 2 < 1.3: continue
+        if tx + 54 < x < tx + 108 and ty - 54 < y < ty - 28: continue   # hc1: clear of the lettering (the word, at the caption step)
         out.append(dot(x, y, "po", 2.2))
     for _ in range(11):
         a, rr = r.uniform(0, 6.28), math.sqrt(r.uniform(.12, 1))
@@ -667,19 +678,28 @@ def svg(inner, cls="bp-art"):
     return f'<svg class="{cls}" viewBox="0 0 {W * K} {H * K}" fill="none" focusable="false" aria-hidden="true">{compact(inner)}</svg>'
 
 
-def plate_svg(slug, col, turn=0):
-    """the plate for a post: its own drawing, or the economics rings (turned by the post's place in its collection)"""
+PT = re.compile(r'<text class="pt"[^>]*>[^<]*</text>')
+def unlettered(s):
+    """hill climb hc1: only the post hero draws its plate's lettering; every other copy (cards, the markets panel, the
+    margin plate, the library's faces, the collection plates) is written without it (CSS used to hide it there)"""
+    return PT.sub("", s)
+
+
+def plate_svg(slug, col, turn=0, lettering=False):
+    """the plate for a post: its own drawing, or the economics rings (turned by the post's place in its collection);
+    with its lettering on the post hero only"""
     if col == "economics" or slug not in PLATES:
         return svg(rings(turn), "bp-art bp-rings")
     _, fn, _ = PLATES[slug]
-    return svg(fn(rng(slug)))
+    out = svg(fn(rng(slug)))
+    return out if lettering else unlettered(out)
 
 
 def collection_svg(col):
     """the plate a collection shows once at its head on phones (where the cards drop their plates)"""
     if col == "economics": return rings_wide()
-    if col == "markets": return svg(decomposition(rng("markets"), 3))
-    return svg(five_stages(rng("ai")))
+    if col == "markets": return unlettered(svg(decomposition(rng("markets"), 3)))
+    return unlettered(svg(five_stages(rng("ai"))))
 
 
 # ---------------------------------------------------------------- the index hero: the library (lab: blog-moment)
@@ -759,7 +779,7 @@ def library_svg(counts=(16, 5, 8), lit=4):
             inner = f'<path class="lf{" lf-g" if i in green else ""}" d="M0 0H1V1H0Z"/>'
             if i == face_i:
                 mirror = f" translate({W * K},0) scale(-1,1)" if a < 0 else ""   # read from the fore-edge to the spine on the left
-                inner += f'<g class="lf-face" transform="{face_t}{mirror}">{compact(face)}</g>'
+                inner += f'<g class="lf-face" transform="{face_t}{mirror}">{unlettered(compact(face))}</g>'
             leaves.append((depth, f'<g class="lf-w" transform="{_mx(m, ox, oy)}"{style}>{inner}</g>'))
         leaves.sort(key=lambda t: -t[0])  # far first
         low = max([low] + [_lib_matrix(a)[0][1] * LIB_S + oy for a in angs])

@@ -30,7 +30,7 @@
   .nf-more li:nth-child(3) a { padding-left: 0; } .nf-more li:nth-child(3) a::after { left: 0; }
   .nf-more li:nth-child(n + 3) { border-top: var(--hair) solid var(--line); }
 }
-.notfound-log { margin-top: 1.5rem; font-family: var(--mono); font-size: var(--fs-small); letter-spacing: .02em; color: var(--fg-3); } /* the gate's record: data, at the small step (1 Nov) */
+.notfound-log { margin-top: 1.5rem; font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .06em; color: var(--fg-3); } /* the gate's record: data, at the one mono size (hc1) */
 .notfound-log span { color: var(--reject); }
 /* a spread from 961 px: the headline left, the way on beside its foot; the plate across the page below */
 @media (min-width: 961px) {
@@ -64,10 +64,9 @@
 .nf-keys small { display: block; font-size: inherit; font-weight: 400; letter-spacing: .1em; color: var(--fg-3); }
 .nf-keys .is-ahead { color: var(--fg-3); }
 /* the address that was asked for, where it fell (written by notfound.js; "this address" without script) */
-.nf-out { font: 400 .875rem/1.35 var(--mono); letter-spacing: .02em; text-transform: none; color: var(--reject); white-space: nowrap; }
+.nf-out { font: 400 var(--fs-label)/1.35 var(--mono); letter-spacing: .06em; text-transform: none; color: var(--reject); white-space: nowrap; }
 .nf-out--h { position: absolute; max-width: calc(37% - .75rem); transform: translate(.75rem, -.68em); white-space: normal; overflow-wrap: anywhere; } /* its first line on the fall; a long address wraps inside the grid */
 .nf-out--v { display: none; }
-@media (min-width: 700px) and (max-width: 899.98px) { .nf-out--h { font-size: .8125rem; } } /* 33 characters still fit beside the fall */
 
 /* phones and tablets: the lane runs down the page, the names beside it */
 @media (max-width: 699.98px) {

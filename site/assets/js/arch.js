@@ -71,7 +71,7 @@
         const k = el.querySelector('.k'), h3 = el.querySelector('h3'), small = h3 && h3.querySelector('small'), body = el.lastElementChild;
         const name = h3 ? Array.from(h3.childNodes).filter((n) => n !== small).map((n) => n.textContent).join('').replace(/\s+/g, ' ').trim() : '';
         const dd = body ? body.querySelectorAll('dl.io dd') : [];
-        items.push({ el, body, num: txt(k) || pad2(items.length + 1), name, verb: txt(small), job: el.dataset.job || '', inp: txt(dd[0]), out: txt(dd[1]) });
+        items.push({ el, body, num: txt(k) || pad2(items.length + 1), name, job: el.dataset.job || '', inp: txt(dd[0]), out: txt(dd[1]), more: !!(body && body.children.length) });
       } else if (el.classList.contains('layer-boundary')) { bIndex = items.length; bEl = el; }
       else if (el.classList.contains('layer-floor')) fEl = el;
     });
@@ -97,7 +97,7 @@
     const bTitle = (lbt && lbt.firstChild && lbt.firstChild.textContent.trim()) || 'The boundary';
     const bNote = lbt && lbt.querySelector('small') ? txt(lbt.querySelector('small')) : '';
     // a boundary given one line (Platform, owner's-eye fix 1 Nov): the line sits on the boundary row and replaces the
-    // arrows legend there and beside the plane on phones; the green plane is the boundary, the line says what it is
+    // arrows legend there; the green plane is the boundary, the line says what it is
     const bLine = bEl && bEl.querySelector('.lb-line') ? txt(bEl.querySelector('.lb-line')) : '';
     const noDot = (s) => s.replace(/[.\s]+$/, '');
 
@@ -116,7 +116,9 @@
     legend.setAttribute('aria-hidden', 'true');
     H('span', '', legend, 'Illustrative');
     [['lg-bead', 'Agent'], ['lg-ring', 'Proposal'], ['lg-sq', 'Settled']].forEach(([c, t]) => { const s = H('span', '', legend); H('i', c, s); s.appendChild(document.createTextNode(t)); });
+    // (hc1, director item 2) the keys' hint shows only while the keyboard is in the instrument (focusin below)
     const hint = H('span', 'arch-hint', head);
+    hint.hidden = true;
     const motionBtn = H('button', 'arch-motion', head, 'Pause motion');
     motionBtn.type = 'button';
     const bodyEl = H('div', 'arch-body');
@@ -131,19 +133,13 @@
 
     const btns = [], panels = [], heads = [];
     let bRow = null, fRow = null;
-    // a glyph of the stack: eight bars, the boundary between them, the layer in question lit
-    const glyph = (i) => {
-      const g = S('svg', { class: 'arch-glyph', viewBox: `0 0 16 ${N * 3 + 3}`, width: 16, height: N * 3 + 3, 'aria-hidden': 'true', focusable: 'false' });
-      for (let k = 0; k < N; k++) S('rect', { x: 1, y: k * 3 + (k >= bIndex ? 3 : 0), width: 14, height: 1.6, fill: k === i ? GREEN : IVORY, 'fill-opacity': k === i ? 1 : 0.3 }, g);
-      S('rect', { x: 0, y: bIndex * 3 + 0.6, width: 16, height: 0.9, fill: GREEN, 'fill-opacity': 0.9 }, g);
-      return g;
-    };
     items.forEach((it, i) => {
       // spec mode: the entries below carry the headings
       const hd = H(spec ? 'div' : 'h3', 'arch-h', list);
       const b = H('button', 'arch-layer', hd);
       b.type = 'button'; b.id = `${pre}-b${i + 1}`;
-      H('span', 'n', b, it.num); nameInto(H('span', 'nm', b), it.name); H('span', 'vb', b, it.verb);
+      // (hc1, director item 2) no verb column: the layer's name says it; arch.css's grid is number, name, "+"
+      H('span', 'n', b, it.num); nameInto(H('span', 'nm', b), it.name);
       const p = it.body;
       p.id = `${pre}-p${i + 1}`;
       if (spec) {
@@ -155,13 +151,8 @@
         b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-controls', p.id);
         p.className = 'arch-panel'; p.hidden = true;
         p.setAttribute('role', 'region'); p.setAttribute('aria-labelledby', b.id);
-        const above = i < bIndex;
-        const sd = document.createElement('p');
-        sd.className = 'arch-side' + (above ? '' : ' is-below');
-        sd.appendChild(glyph(i));
-        H('span', '', sd, above ? `Above the boundary · ${noDot(UP.t).toLowerCase()}` : `Below the boundary · ${noDot(DN.t).toLowerCase()}`);
-        p.insertBefore(sd, p.firstChild);
-        if (p.children.length === 1 && it.job) H('p', '', p, it.job); // a layer given only its job (Home): the job is its panel
+        // (hc1, director item 2) no "Above the boundary · ..." line in the panel: the boundary row in the list says it once
+        if (!p.children.length && it.job) H('p', '', p, it.job); // a layer given only its job (Home): the job is its panel
         list.appendChild(p);
       }
       btns.push(b); panels.push(p); heads.push(hd);
@@ -199,12 +190,13 @@
     const card = H('div', 'arch-card', read);
     const sum = H('div', 'arch-sum', card);
     sum.setAttribute('aria-hidden', 'true');
-    const sk = H('div', 'sum-k', sum), skL = H('span', '', sk), skR = H('b', '', sk);
+    // (hc1, director item 2) the card's head is the layer's place in the stack: no Decides / Executes tag beside it
+    const sk = H('div', 'sum-k', sum), skL = H('span', '', sk);
     const snm = H('div', 'sum-nm', sum), sjob = H('p', 'sum-job', sum);
     const sio = H('dl', 'io', sum);
     const ioRow = (k) => { const d = H('div', '', sio); H('dt', '', d, k); return H('dd', '', d); };
     const sIn = ioRow('In'), sOut = ioRow('Out');
-    const sside = H('p', 'sum-side', sum), scue = H('p', 'sum-cue', sum);
+    const scue = H('p', 'sum-cue', sum); // (hc1) no side-of-the-boundary footnote: the boundary row says it once
 
     inst.append(head, bodyEl);
     if (spec) { root.insertBefore(inst, root.firstChild); root.classList.add('is-built'); } // takes the room CSS held for it
@@ -280,9 +272,7 @@
       p.bead = S('g', { class: 'ap-beads' }, g);
       p.bg = [S('g', null, p.bead), S('g', null, p.bead), S('g', null, p.bead)]; // the beads drift in three groups
       p.num = S('text', { class: 'ap-num', 'dominant-baseline': 'middle' }, lv);
-      p.num.textContent = items[p.i].num + (items[p.i].verb ? ' · ' + items[p.i].verb : '');
-      p.numShort = items[p.i].num;
-      p.numLong = p.num.textContent;
+      p.num.textContent = items[p.i].num; // (hc1) the plate's number only: no verb column
       pattern(p);
     }
     function buildBoundary(lv) {
@@ -295,8 +285,6 @@
       b.glow2 = S('polygon', { fill: 'none', stroke: GREEN, 'stroke-width': 9, 'stroke-opacity': 0.045, 'stroke-linejoin': 'round' }, g);
       b.glow1 = S('polygon', { fill: 'none', stroke: GREEN, 'stroke-width': 3.5, 'stroke-opacity': 0.13, 'stroke-linejoin': 'round' }, g);
       b.core = S('polygon', { fill: 'none', stroke: GREEN, 'stroke-width': 1, 'stroke-opacity': 0.9, 'stroke-linejoin': 'round' }, g);
-      b.tUp = S('text', { class: 'ab-t', 'text-anchor': 'start' }, lv);
-      b.tDn = S('text', { class: 'ab-t is-below', 'text-anchor': 'start' }, lv);
       b.line0 = S('line', { stroke: GREEN, 'stroke-opacity': 0, 'stroke-width': 1 }, gLead);
       b.lineL = S('line', { stroke: GREEN, 'stroke-opacity': 0, 'stroke-width': 1 }, gLead);
       b.lineR = S('line', { stroke: GREEN, 'stroke-opacity': 0, 'stroke-width': 1 }, gLead);
@@ -385,7 +373,7 @@
 
     /* ---------------- 4 · geometry ---------------- */
     let wide = false, tags = false, W = 1, Hh = 1, cx = 0, halfW = 150, Sc = 1, F0 = 19 * DEG, thick = 7, figH = 0, minH = 0, tagH = 24, stag = false;
-    let base = new Array(N).fill(0), rowC = new Array(N).fill(0), by = 0, fy = 0, readL = 0, readR = 0, readTop = 0, listL = 0, listR = 0, roomyB = false, roomyP = false;
+    let base = new Array(N).fill(0), rowC = new Array(N).fill(0), by = 0, fy = 0, readL = 0, readR = 0, readTop = 0, listL = 0, listR = 0, roomyP = false;
     const view = { T: 45 * DEG, F: 19 * DEG, tT: 45 * DEG, tF: 19 * DEG };
     let geoDirty = true;
     const proj = (u, v, h) => {
@@ -443,26 +431,23 @@
         // a phone on its side: the whole stack fits under the bar (v2x r2)
         const room = shortMQ.matches ? window.innerHeight - navH() - 24 : 0, g = room ? 1.75 : 1.5;
         if (room) halfW = Math.min(halfW, Math.max(56, (room - 20 - thick - flH - 10) / (2 + (N - 2 + 2 * g) * k) / Math.sin(F0)));
-        // the labels right of the stack: mono caps, measured (one read per measure): Plex Mono advances .6em, plus the tracking
-        // (11 px label at .12em: 7.9 px a character; Home's phones set 12 px) (integrate a1, home's request)
+        // the plates' numbers right of the stack: mono, measured (one read per measure): Plex Mono advances .6em, plus the
+        // tracking (11 px label at .12em: 7.9 px a character; Home's phones set 12 px) (integrate a1, home's request). (hc1) The
+        // plane carries no words beside it on either page (the boundary row under the drawing says it), so no room is held for them
         const tcs = svg.querySelector('text') && getComputedStyle(svg.querySelector('text')), tfs = tcs ? parseFloat(tcs.fontSize) || 11 : 11;
         const tls = tcs ? parseFloat(tcs.letterSpacing) : NaN, cw = 1.015 * (tfs * 0.6 + (isFinite(tls) ? tls : tfs * 0.12));
-        const wl = (s) => (s.length + 2) * cw, shortB = wl('Executes'), longB = Math.max(wl(noDot(UP.t)), wl(noDot(DN.t)));
-        const roomB = () => W - 8 - (cx + 1.16 * halfW + 12), slack = () => cx - 1.16 * halfW - 16;
-        if (roomB() < longB && roomB() + slack() >= longB) cx -= longB - roomB(); // a little to the left buys the long labels
-        if (roomB() < shortB) { cx = W - 8 - 12 - shortB - 1.16 * halfW; if (cx - 1.16 * halfW < 4) { halfW = (W - 24 - shortB) / 2.32; cx = 4 + 1.16 * halfW; } }
-        roomyB = roomB() >= longB;
-        roomyP = W - 8 - (cx + halfW + 12) >= Math.max(...plates.map((p) => wl(p.numLong) - 14));
+        const wl = (s) => (s.length + 2) * cw, roomB = () => W - 8 - (cx + 1.16 * halfW + 12);
+        roomyP = W - 8 - (cx + halfW + 12) >= Math.max(...plates.map((p) => wl(p.num.textContent) - 14));
         const hh = halfW * Math.sin(F0), pitch = Math.max(room ? 14 : 30, hh * k);
         // short windows: the tags take both sides of the stack (odd layers left), each 24 px tall at twice the pitch (r4 a11y),
         // and the boundary keeps 36 px each side, so a focused tag's ring clears its two labels
         stag = tags && pitch < 24; list.classList.toggle('is-stag', stag);
         const gap = Math.max(pitch * g, stag ? 36 : 0), top = (room ? 20 : 30) + hh;
         if (stag) { // room for the left tags: the stack moves right while its right side still fits, else numbers only
-          const lo = (t) => halfW + 26 + t.length * cw, lft = Math.max(...plates.map((p) => lo(p.numLong)));
-          if (roomyP && cx < lft && W - 8 - (lft + halfW + 12) >= lft - halfW - 26 && roomB() + cx - lft >= shortB) cx = lft;
+          const lo = (t) => halfW + 26 + t.length * cw, lft = Math.max(...plates.map((p) => lo(p.num.textContent)));
+          if (roomyP && cx < lft && W - 8 - (lft + halfW + 12) >= lft - halfW - 26 && roomB() + cx - lft >= 0) cx = lft;
           if (cx < lft) roomyP = false;
-          cx = Math.max(cx, lo('01')); roomyB = roomB() >= longB;
+          cx = Math.max(cx, lo('01'));
         }
         const th = stag ? 24 : Math.min(24, Math.floor(pitch));
         if (th !== tagH) { tagH = th; list.style.setProperty('--tag-h', th + 'px'); }
@@ -516,20 +501,16 @@
       return ease3(clamp((ex * 1.5 - d) / 1, 0, 1));
     };
     function fillSum(i) {
-      const it = items[i], above = i < bIndex;
-      skL.textContent = `${it.num} / ${pad2(N)} · ${it.verb}`;
-      skR.textContent = above ? 'Decides' : 'Executes';
+      const it = items[i];
+      skL.textContent = `${it.num} / ${pad2(N)}`;
       nameInto(snm, it.name); sjob.textContent = it.job; sjob.hidden = !it.job;
       sIn.textContent = it.inp; sOut.textContent = it.out; sio.hidden = !(it.inp || it.out);
-      sside.textContent = '';
-      sside.appendChild(glyph(i));
-      const sl = H('span', 'sl', sside);
-      H('span', '', sl, above ? '↑ Above the boundary' : '↓ Below the boundary');
-      H('span', '', sl, noDot(above ? UP.t : DN.t));
-      sside.classList.toggle('is-below', !above);
-      scue.textContent = open === i ? '' : spec ? (fineMQ.matches ? 'Click, or press Enter, to read its spec below' : 'Tap to read its spec below')
+      // (hc1) the cue only where opening shows more than the card already does: a layer given only its job line (Home,
+      // Platform) opens to that same line, so no "read more" is promised (and no caps line under the card)
+      const cue = spec || it.more;
+      scue.textContent = !cue || open === i ? '' : spec ? (fineMQ.matches ? 'Click, or press Enter, to read its spec below' : 'Tap to read its spec below')
         : fineMQ.matches ? 'Click, or press Enter, to read more' : 'Tap to read more';
-      scue.hidden = open === i || (i === show && hot < 0); // the rest card is no layer you are at: no cue
+      scue.hidden = !cue || open === i || (i === show && hot < 0); // the rest card is no layer you are at: no cue
     }
     /* One layer's summary gives way to the next out, then in, never both at once */
     let swapTimer = 0, swapTo = -1, swapEnd = 0;
@@ -678,8 +659,10 @@
     const wake = () => { lastActive = performance.now(); kick(); };
     inst.addEventListener('pointerenter', () => { pointerIn = true; wake(); });
     inst.addEventListener('pointerleave', () => { pointerIn = false; lastActive = performance.now(); });
-    inst.addEventListener('focusin', () => { focusIn = true; wake(); });
-    inst.addEventListener('focusout', (e) => { if (!inst.contains(e.relatedTarget)) { focusIn = false; lastActive = performance.now(); } });
+    // (hc1) the keys' hint: shown while the keyboard is in the instrument (a focus the browser rings), gone with it
+    const kbdFocus = (el) => { try { return el.matches(':focus-visible'); } catch (_) { return true; } };
+    inst.addEventListener('focusin', (e) => { focusIn = true; hint.hidden = !kbdFocus(e.target); wake(); });
+    inst.addEventListener('focusout', (e) => { if (!inst.contains(e.relatedTarget)) { focusIn = false; hint.hidden = true; lastActive = performance.now(); } });
     motionBtn.addEventListener('click', () => {
       paused = !paused;
       motionBtn.textContent = paused ? 'Resume motion' : 'Pause motion';
@@ -934,15 +917,8 @@
       setA(bound.lineR, 'x1', f1(cx + BR[0] + 8)); setA(bound.lineR, 'x2', f1(x1)); setA(bound.lineR, 'y1', f1(by)); setA(bound.lineR, 'y2', f1(by));
       setA(bound.line0, 'stroke-opacity', f3(0.5 * bl * (1 - cardVis))); setA(bound.lineL, 'stroke-opacity', f3(0.5 * bl)); setA(bound.lineR, 'stroke-opacity', f3(0.5 * bl));
       if (!wide) {
-        const roomy = roomyB;
-        setA(bound.tUp, 'x', f1(cx + BR[0] + 12)); setA(bound.tUp, 'y', f1(by - 8));
-        setA(bound.tDn, 'x', f1(cx + BR[0] + 12)); setA(bound.tDn, 'y', f1(by + 16));
-        setA(bound.tUp, 'opacity', f3(bl)); setA(bound.tDn, 'opacity', f3(bl));
-        // a boundary given one line says it on the row under the drawing; beside the plane, the plane alone
-        const up = bLine ? '' : '↑ ' + (roomy ? noDot(UP.t) : 'Decides'), dnT = bLine ? '' : '↓ ' + (roomy ? noDot(DN.t) : 'Executes');
-        if (bound.tUp.textContent !== up) bound.tUp.textContent = up;
-        if (bound.tDn.textContent !== dnT) bound.tDn.textContent = dnT;
-        plates.forEach((p, i) => { const t2 = roomyP ? p.numLong : p.numShort; if (p.num.textContent !== t2) p.num.textContent = t2; setA(p.num, 'opacity', f3(clamp((exOf(i) - 0.8) / 0.2, 0, 1))); });
+        // the boundary says it once, on its row under the drawing (hc1, both pages): beside the plane, the plane alone
+        plates.forEach((p, i) => setA(p.num, 'opacity', f3(clamp((exOf(i) - 0.8) / 0.2, 0, 1))));
         if (tags) { // the labels are the layer buttons: each sits where its plate's label is drawn, and shows as it does
           list.classList.toggle('is-short', !roomyP);
           plates.forEach((p, i) => {

@@ -83,7 +83,7 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
 /* (lab) wide screens: the coda stands on the line of ten records */
 @media (min-width: 640px) and (min-aspect-ratio: 23/20) and (min-height: 600.02px) {
   html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story-coda { display: block; right: auto; width: min(46vw, 40rem); }
-  body[data-page="home"] .story-coda-t { font-size: clamp(3rem, 6.2vw, 6.4rem); line-height: .96; letter-spacing: -0.025em; }
+  body[data-page="home"] .story-coda-t { font-size: clamp(3rem, 6.2vw, 5.58rem); line-height: .96; letter-spacing: -0.025em; }
 }
 
 /* ---------- phones: shorter, nothing dropped but repeats ---------- */
@@ -133,12 +133,13 @@ body[data-page="home"] #lifecycles .card .n--ring > .badge { padding: 0; border:
 body[data-page="home"] .figure-cap .fc-key { font: 400 .8rem/1.5 var(--sans); letter-spacing: 0; color: var(--fg-2); }
 
 /* ========== v2x cut: one head, at most one line, then the instrument ========== */
-/* four sizes a screen: the display head, the line (Inter 1.1rem), the hedge (Inter .875rem), the instruments' mono */
+/* four sizes a screen: the display head, the line (Inter, --fs-body), the hedge (Inter .875rem), the instruments' mono;
+   the serif steps are site.css's tokens (hc1) */
 body[data-page="home"] main > .section { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
 body[data-page="home"] .ch-title { max-width: 15ch; text-wrap: balance; }
 body[data-page="home"] .ch-title + :not(.ch-line), body[data-page="home"] .ch-title + .ch-line + * { margin-top: var(--ch-gap); }
 body[data-page="home"] .ch-head { margin-bottom: var(--ch-gap); }
-body[data-page="home"] .ch-line { margin-top: 1.125rem; max-width: 34ch; font-size: 1.1rem; line-height: 1.5; color: var(--fg-2); text-wrap: balance; }
+body[data-page="home"] .ch-line { margin-top: 1.125rem; max-width: 34ch; font-size: var(--fs-body); line-height: 1.5; color: var(--fg-2); text-wrap: balance; }
 body[data-page="home"] .ch-note { margin-top: 1rem; font-size: .875rem; line-height: 1.45; color: var(--fg-3); }
 body[data-page="home"] .ch-link { margin-top: clamp(2rem, 3.4vw, 3.25rem); }
 body[data-page="home"] .is-dark .ch-note { color: rgba(245, 242, 236, .6); }
@@ -155,7 +156,7 @@ body[data-page="home"] #lifecycles .lc-reg > .card:nth-child(3n + 1) { padding-l
 body[data-page="home"] #lifecycles .lc-reg > .card:not(:nth-child(3n + 1)) { border-left: var(--hair) solid var(--line); }
 body[data-page="home"] #lifecycles .lc-reg .card .n { grid-column: 1 / -1; grid-row: 1; justify-content: flex-start; gap: .75rem; margin: 0; color: var(--fg-2); }
 body[data-page="home"] #lifecycles .lc-reg .lc-code { flex: none; }
-body[data-page="home"] #lifecycles .lc-reg .card .h4 { grid-column: 1 / -1; grid-row: 2; align-self: end; margin: 0; max-width: 13ch; font-size: clamp(1.5rem, 2.05vw, 2.05rem); line-height: 1.08; letter-spacing: -0.015em; color: var(--fg-2); text-wrap: balance; }
+body[data-page="home"] #lifecycles .lc-reg .card .h4 { grid-column: 1 / -1; grid-row: 2; align-self: end; margin: 0; max-width: 13ch; font-size: var(--fs-item); line-height: 1.08; letter-spacing: -0.015em; color: var(--fg-2); text-wrap: balance; }
 body[data-page="home"] #lifecycles .lc-reg .card:first-child .h4 { color: var(--fg); }
 /* a3: a dot-joined name breaks before its dot and drops it (the art director's rule): two lines in every cell */
 @media (min-width: 761px) {
@@ -170,7 +171,7 @@ body[data-page="home"] #lifecycles .lc-reg .card:first-child { box-shadow: inset
   body[data-page="home"] #lifecycles .lc-reg .card .n { display: contents; }
   body[data-page="home"] #lifecycles .lc-reg .lc-code { grid-column: 1; grid-row: 1 / span 2; align-self: center; }
   body[data-page="home"] #lifecycles .lc-reg .lc-ring { width: 1.375rem; height: 1.375rem; }
-  body[data-page="home"] #lifecycles .lc-reg .card .h4 { grid-column: 2; grid-row: 1; align-self: end; max-width: none; font-size: 1.1rem; line-height: 1.25; } /* the line's size: three sizes on this screen */
+  body[data-page="home"] #lifecycles .lc-reg .card .h4 { grid-column: 2; grid-row: 1; align-self: end; max-width: none; font-size: var(--fs-body); line-height: 1.25; } /* the line's size: three sizes on this screen */
   body[data-page="home"] #lifecycles .lc-reg .card .n--ring > span:last-child { grid-column: 2; grid-row: 2; justify-self: start; }
 }
 
@@ -180,7 +181,7 @@ body[data-page="home"] #proof .proof-copy .ch-title { max-width: 11ch; }
 body[data-page="home"] #proof .proof-hedge { margin-top: 1.375rem; max-width: 34ch; font-size: .875rem; line-height: 1.5; color: rgba(245, 242, 236, .66); }
 body[data-page="home"] #proof .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 clamp(1.5rem, 3vw, 3rem); margin-top: clamp(2.25rem, 4.4vw, 4rem); background: none; border: 0; }
 body[data-page="home"] #proof .stats > div { padding: 1.125rem 0 0; background: none; border-top: var(--hair) solid var(--line-strong); }
-body[data-page="home"] #proof .stats .v { font-size: clamp(2.4rem, 3.2vw, 3rem); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: lining-nums tabular-nums; }
+body[data-page="home"] #proof .stats .v { font-variant-numeric: lining-nums tabular-nums; } /* hc1: size from site.css's .stats, as §05's rows */
 body[data-page="home"] #proof .stats .k { margin-top: .625rem; font: 400 .875rem/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .66); }
 body[data-page="home"] #proof .proof-fig .figure-cap { padding-left: 0; }
 body[data-page="home"] #proof .figure-cap .fc-key { font-size: .875rem; color: rgba(245, 242, 236, .6); }
@@ -192,8 +193,6 @@ body[data-page="home"] #economics .cost .figure-cap { margin-top: 1.125rem; }
 
 /* §06: the chain beside its head */
 body[data-page="home"] #governance .chain-row .ch-head { margin: 0; }
-body[data-page="home"] #governance .chain-row .ch-title { font-size: clamp(2.125rem, 4.6vw, 4.4rem); }
-@media (max-width: 960px) { body[data-page="home"] #governance .chain-row .ch-title { font-size: var(--fs-display); } } /* stacked: the page's H2 (a3: under the H1 on phones) */
 @media (min-width: 961px) { body[data-page="home"] #governance .chain-row .ch-head { position: sticky; top: calc(var(--nav-h) + 2rem); } }
 
 /* §07: three titles, nothing else */
@@ -201,7 +200,7 @@ body[data-page="home"] #research .card-grid--3 { border-left: 0; }
 body[data-page="home"] #research .research-card:last-child { border-right: 0; }
 body[data-page="home"] #research .research-card { display: flex; flex-direction: column; justify-content: space-between; gap: 1.75rem; min-height: clamp(9.375rem, 13vw, 13.125rem); padding: 1.375rem clamp(1.125rem, 2.2vw, 2rem) 1.25rem; background: none; }
 body[data-page="home"] #research .research-card:first-child { padding-left: 0; }
-body[data-page="home"] #research .research-card h3 { margin: 0; max-width: 20ch; font-size: clamp(1.3rem, 1.7vw, 1.6rem); line-height: 1.15; text-wrap: balance; }
+body[data-page="home"] #research .research-card h3 { margin: 0; max-width: 20ch; font-size: var(--fs-heading); line-height: 1.15; text-wrap: balance; }
 body[data-page="home"] #research .research-card h3 .t-head { display: block; }
 @media (max-width: 760px) {
   body[data-page="home"] #research .card-grid--3 { grid-template-columns: minmax(0, 1fr); }
@@ -223,8 +222,6 @@ html.story-compact body[data-page="home"] .beat-0 .hero-kicker { font-size: .86r
 @media (scripting: enabled) and (max-width: 599.98px) { html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker { font-size: .86rem; } }
 @media (scripting: enabled) and (max-width: 599.98px) and (min-height: 800px) { html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker { font-size: .94rem; } }
 @media (min-width: 600px) and (min-height: 900px) and (max-aspect-ratio: 23/20) { html.story-compact body[data-page="home"] .story .beat-0 .hero-kicker { font-size: clamp(1rem, 2.6vw, 1.15rem); } }
-/* §05: the rows' names and their indices at one serif size */
-body[data-page="home"] #economics .cost-lab b, body[data-page="home"] #economics .cost-val { font-size: clamp(1.5rem, 1.9vw, 1.9rem); }
 /* §07: the reading time is a note, not a data label */
 body[data-page="home"] #research .research-card .link-arrow { font: 400 .875rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; }
 
@@ -261,48 +258,39 @@ body[data-page="home"] #proof .proof-copy .ch-title { max-width: 12ch; }
   body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: .625rem; }
   body[data-page="home"] .story-motion { white-space: nowrap; }
 }
-/* the cost index names "Technology" and "Management" in full, as Proof's Fig. 3.1 (proof.css's "§03 (a1)", scoped to §05) */
-body[data-page="home"] #economics .cost-bar > i:last-of-type > span { padding-bottom: 2.4545em; } /* 27 px at the 11 px label */
-body[data-page="home"] #economics .cost-row:first-child { padding-top: 3.25rem; }
-@container cost (max-width: 860px) {
-  body[data-page="home"] #economics .cost-row:first-child { padding-top: 0; }
-  body[data-page="home"] #economics .cost-row:first-child .cost-bar { margin-top: 3.25rem; }
-}
-@container cost (max-width: 560px) {
-  body[data-page="home"] #economics .cost-bar > i:nth-of-type(3) > span { left: auto; right: 0; padding: 0 .4375rem .5625rem 0; border-left: 0; border-right: var(--hair) solid var(--line-strong); }
-  body[data-page="home"] #economics .cost-bar > i:last-of-type > span { padding-bottom: 4.0909em; } /* two tiers up */
-  body[data-page="home"] #economics .cost-row:first-child .cost-bar { margin-top: 4.375rem; }
-}
+/* hc1: the key names the four costs once; the bar carries none (as Proof's Fig. 3.1) */
+body[data-page="home"] #economics .cost-row:first-child { padding-top: 1.5rem; }
+@container cost (max-width: 860px) { body[data-page="home"] #economics .cost-row:first-child { padding-top: 0; } body[data-page="home"] #economics .cost-row:first-child .cost-bar { margin-top: .875rem; } }
 /* the chapters after the overture are laid out near the viewport only; each stand-in is its measured content height for the
-   width band (padding on top), so the page is as long at load as drawn. The footer is always drawn (#disclosures lands) */
+   width band (padding and the hairline border on top: hc1 measures without the border), so the page is as long at load as drawn. The footer is always drawn (#disclosures lands) */
 body[data-page="home"] main > .story ~ section { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
-body[data-page="home"] #lifecycles { --cis: 39.125rem; } body[data-page="home"] #stack { --cis: 74rem; } body[data-page="home"] #lc01 { --cis: 67.625rem; }
-body[data-page="home"] #proof { --cis: 49.375rem; } body[data-page="home"] #economics { --cis: 46rem; } body[data-page="home"] #governance { --cis: 47.5rem; }
-body[data-page="home"] #research { --cis: 35.5rem; } body[data-page="home"] .cta-band { --cis: 7.5rem; }
+body[data-page="home"] #lifecycles { --cis: 38.796875rem; } body[data-page="home"] #stack { --cis: 73.9375rem; } body[data-page="home"] #lc01 { --cis: 69.140625rem; }
+body[data-page="home"] #proof { --cis: 48.234375rem; } body[data-page="home"] #economics { --cis: 42.140625rem; } body[data-page="home"] #governance { --cis: 47.40625rem; }
+body[data-page="home"] #research { --cis: 35.53125rem; } body[data-page="home"] .cta-band { --cis: 6.5rem; }
 @media (min-width: 600px) {
-  body[data-page="home"] #lifecycles { --cis: 39rem; } body[data-page="home"] #stack { --cis: 88.5rem; } body[data-page="home"] #lc01 { --cis: 57.5rem; }
-  body[data-page="home"] #proof { --cis: 54rem; } body[data-page="home"] #economics { --cis: 35.5rem; } body[data-page="home"] #governance { --cis: 59rem; }
+  body[data-page="home"] #lifecycles { --cis: 39rem; } body[data-page="home"] #stack { --cis: 88.5rem; } body[data-page="home"] #lc01 { --cis: 56rem; }
+  body[data-page="home"] #proof { --cis: 52.5rem; } body[data-page="home"] #economics { --cis: 32rem; } body[data-page="home"] #governance { --cis: 83.75rem; }
   body[data-page="home"] #research { --cis: 35.5rem; } body[data-page="home"] .cta-band { --cis: 7rem; }
 }
-@media (min-width: 761px) and (max-width: 960px) { body[data-page="home"] #lifecycles { --cis: 32.25rem; } body[data-page="home"] #stack { --cis: 92.5rem; } body[data-page="home"] #research { --cis: 30.5rem; } } /* 768-834's §01 and §02 (a4 p2); the three notes in a row */
+@media (min-width: 761px) and (max-width: 960px) { body[data-page="home"] #lifecycles { --cis: 32.25rem; } body[data-page="home"] #stack { --cis: 92.5rem; } body[data-page="home"] #research { --cis: 30.5rem; } body[data-page="home"] #governance { --cis: 61rem; } } /* 768-834's §01 and §02 (a4 p2); the three notes in a row */
 @media (min-width: 961px) {
-  body[data-page="home"] #lifecycles { --cis: 39.625rem; } body[data-page="home"] #stack { --cis: 63rem; } body[data-page="home"] #lc01 { --cis: 64.375rem; }
-  body[data-page="home"] #proof { --cis: 34.75rem; } body[data-page="home"] #economics { --cis: 27.75rem; } body[data-page="home"] #governance { --cis: 43.4375rem; }
-  body[data-page="home"] #research { --cis: 37.5rem; } body[data-page="home"] .cta-band { --cis: 10rem; }
+  body[data-page="home"] #lifecycles { --cis: 39.84375rem; } body[data-page="home"] #stack { --cis: 63rem; } body[data-page="home"] #lc01 { --cis: 63.265625rem; }
+  body[data-page="home"] #proof { --cis: 33.3125rem; } body[data-page="home"] #economics { --cis: 25.875rem; } body[data-page="home"] #governance { --cis: 42.796875rem; }
+  body[data-page="home"] #research { --cis: 36.890625rem; } body[data-page="home"] .cta-band { --cis: 10.0625rem; }
 }
 /* small desktops: 961-1099 the 1024 heights, 1100-1359 the 1280 heights (the spreads start at 1100; re-measured a3) */
 @media (min-width: 961px) and (max-width: 1099.98px) {
-  body[data-page="home"] #lifecycles { --cis: 35rem; } body[data-page="home"] #stack { --cis: 59.5rem; } body[data-page="home"] #lc01 { --cis: 61rem; }
-  body[data-page="home"] #proof { --cis: 29rem; } body[data-page="home"] #economics { --cis: 35rem; } body[data-page="home"] #governance { --cis: 42.5rem; }
-  body[data-page="home"] #research { --cis: 33.5rem; } body[data-page="home"] .cta-band { --cis: 8rem; }
+  body[data-page="home"] #lifecycles { --cis: 35rem; } body[data-page="home"] #stack { --cis: 59.5rem; } body[data-page="home"] #lc01 { --cis: 60.75rem; }
+  body[data-page="home"] #proof { --cis: 29rem; } body[data-page="home"] #economics { --cis: 33rem; } body[data-page="home"] #governance { --cis: 42rem; }
+  body[data-page="home"] #research { --cis: 33.75rem; } body[data-page="home"] .cta-band { --cis: 8rem; }
 }
 @media (min-width: 1100px) and (max-width: 1359.98px) {
-  body[data-page="home"] #lifecycles { --cis: 36.5rem; } body[data-page="home"] #stack { --cis: 61.75rem; } body[data-page="home"] #lc01 { --cis: 59.5rem; }
-  body[data-page="home"] #proof { --cis: 32rem; } body[data-page="home"] #economics { --cis: 27rem; } body[data-page="home"] #governance { --cis: 43rem; }
-  body[data-page="home"] #research { --cis: 34.5rem; } body[data-page="home"] .cta-band { --cis: 9.5rem; }
+  body[data-page="home"] #lifecycles { --cis: 36.734375rem; } body[data-page="home"] #stack { --cis: 61.703125rem; } body[data-page="home"] #lc01 { --cis: 58.03125rem; }
+  body[data-page="home"] #proof { --cis: 31.046875rem; } body[data-page="home"] #economics { --cis: 25.171875rem; } body[data-page="home"] #governance { --cis: 42.453125rem; }
+  body[data-page="home"] #research { --cis: 34.59375rem; } body[data-page="home"] .cta-band { --cis: 9.4375rem; }
 }
 /* from 1680 (rem above 1920, so 3840 is 1920 doubled): the 1920 heights (re-measured a3; §01's lands "See the stack" under the bar) */
-@media (min-width: 1680px) { body[data-page="home"] #lifecycles { --cis: 38.375rem; } body[data-page="home"] #stack { --cis: 63.5rem; } body[data-page="home"] #lc01 { --cis: 66.75rem; } body[data-page="home"] #economics { --cis: 29.25rem; } body[data-page="home"] #research { --cis: 39.625rem; } }
+@media (min-width: 1680px) { body[data-page="home"] #lifecycles { --cis: 38.34375rem; } body[data-page="home"] #stack { --cis: 63.484375rem; } body[data-page="home"] #lc01 { --cis: 65.734375rem; } body[data-page="home"] #proof { --cis: 33.53125rem; } body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 42.984375rem; } body[data-page="home"] #research { --cis: 39.609375rem; } }
 @media print { body[data-page="home"] main > .story ~ section { content-visibility: visible; } }
 /* §03: the link sits one chapter step under the lab (swarm.css adds 40 px below it) */
 body[data-page="home"] #lc01 .swarm-live { margin-bottom: 0; }

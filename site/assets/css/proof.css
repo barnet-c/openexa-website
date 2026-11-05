@@ -93,6 +93,10 @@
 
 /* §01: the hedge points at the disclosures, and reaches them (site.js opens the fold). */
 [data-page="proof"] .pf-hedge { color: var(--fg-2); }
+/* §01 (hc1): the regime line is the section's deck, in the display face at the item step (as the record's totals under
+   the chart), its hedge 1rem under it: the screen keeps four sizes (77, 26, 14, 11) */
+[data-page="proof"] .proof-copy > .body-lg { font: 400 var(--fs-heading)/1.15 var(--serif); letter-spacing: -.01em; }
+[data-page="proof"] .proof-copy > .pf-hedge { margin-top: 1rem; }
 .pf-hedge a { color: var(--fg-2); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: .1875rem; transition: color var(--dur-feedback) var(--ease-out), text-decoration-color var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { .pf-hedge a:hover { color: var(--fg); text-decoration-color: currentColor; } }
 .pf-hedge a:focus-visible { color: var(--fg); text-decoration-color: currentColor; }
@@ -173,22 +177,14 @@
   [data-page="proof"] .pf-trail .pf-doc.will-reveal:not(.is-in)::before { transform: scaleY(0); }
 }
 
-/* §03: the stack's key (.pf-ck) is shared with home §05: proofchart.css */
-/* §03 (a1): both labels in full, Management a tier up */
-[data-page="proof"] .cost-bar > i:last-of-type > span { padding-bottom: 2.4545em; } /* 27 px at the 11 px label: one tier up */
-[data-page="proof"] .cost-row:first-child { padding-top: 3.25rem; }
-@container cost (max-width: 860px) {
-  [data-page="proof"] .cost-row:first-child { padding-top: 0; }
-  [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: 3.25rem; }
-}
-@container cost (max-width: 560px) {
-  [data-page="proof"] .cost-bar > i:nth-of-type(3) > span { left: auto; right: 0; padding: 0 .4375rem .5625rem 0; border-left: 0; border-right: var(--hair) solid var(--line-strong); }
-  [data-page="proof"] .cost-bar > i:last-of-type > span { padding-bottom: 4.0909em; } /* 45 px: two tiers up */
-  [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: 4.375rem; }
-}
+/* §03: the stack's key (.pf-ck, proofchart.css) names the four blocks; the bar carries no names (hc1), so the first row
+   needs no room above it ("Eliminated" keeps its own over the second) */
+[data-page="proof"] .cost-row:first-child { padding-top: 1.5rem; } /* 4rem under the heading row, as §02's sheets */
+@container cost (max-width: 860px) { [data-page="proof"] .cost-row:first-child { padding-top: 0; } [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: .875rem; } }
 
-/* the hero (a3, a4): the H1 across; the lede (01's 4fr) and the record (Fig. 1.1's 8fr) on one floor, faint edge to
-   edge; under it the hedge and the way to the documents, beside the axis */
+/* the hero (a3, a4): the H1 across; the lede (01's 4fr) and the record (Fig. 1.1's 8fr) on one floor; under it the
+   hedge and the way to the documents, beside the axis. hc1: the floor is drawn inside the frame only (the faint line
+   that ran edge to edge cut the lede from its hedge) */
 @media (min-width: 961px) {
   [data-page="proof"] .page-hero--dark { padding-top: calc(var(--nav-h) + clamp(2.75rem, 4.8vw, 4.5rem)); padding-bottom: clamp(2.75rem, 4.4vw, 4rem); overflow-x: clip; }
   [data-page="proof"] .page-hero--plate { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: clamp(2rem, 4vw, 4.5rem); row-gap: 0; padding-bottom: 2rem; }
@@ -202,7 +198,6 @@
   [data-page="proof"] .pf-record { grid-column: 2; grid-row: 2; align-self: end; display: flex; flex-direction: column; position: relative; margin-top: 2.5rem; }
   [data-page="proof"] .pf-record > .hero-plate { margin-bottom: calc(-1 * var(--ax-h)); } /* the floor; the axis hangs */
   [data-page="proof"] .hero-plate--records .hp-cap { position: absolute; left: 0; top: 100%; }
-  [data-page="proof"] .pf-record::before { content: ""; position: absolute; left: -100vw; right: -100vw; bottom: calc(-.5 * var(--hair)); height: 0; border-top: var(--hair) solid var(--line); pointer-events: none; } /* centred on the floor, as the plate's own */
 }
 @media (min-width: 1921px) { [data-page="proof"] .pf-foot > .pf-lc-hedge { margin-top: -.0625rem; } } /* 2560, 3840 */
 @media (max-width: 960px) { [data-page="proof"] .pf-record { grid-column: 1 / -1; } }

@@ -1706,10 +1706,11 @@ async def no_js(b):
       return { loader: getComputedStyle(document.querySelector('.loader')).display, proof: q('.proof-list li'), stream: q('[data-ledger-stream] .lt-rec'),
         chain: q('.chain-list li'), gates: q('[data-sw-gates] li'), bar: getComputedStyle(document.querySelector('.swarm-bar')).display,
         layers: q('#stack .layers .layer'), before: bi < 0 ? -1 : kids.slice(0, bi).filter(e => e.classList.contains('layer')).length,
-        io: [...document.querySelectorAll('#stack .layers .layer')].every(l => { const h = l.querySelector('h3'), v = h && h.querySelector('small');
-          return !!v && v.textContent.trim().length > 0 && h.textContent.trim().length > v.textContent.trim().length && h.getClientRects().length > 0; }) }; })()""")
-    # v2x cut (1 Nov): each layer of the stack shows its name and verb (the In / Out pairs left the page; the job line is
-    # the explorer's, with JavaScript); the session list is the <noscript> record now, drawn here because scripts are off.
+        io: [...document.querySelectorAll('#stack .layers .layer')].every(l => { const h = l.querySelector('h3');
+          return !!h && h.textContent.trim().length > 0 && !h.querySelector('small') && h.getClientRects().length > 0; }) }; })()""")
+    # v2x cut (1 Nov): each layer of the stack shows its name (the In / Out pairs left the page; the job line is the
+    # explorer's, with JavaScript); integrate hc1 (4 Nov): the name alone, no verb column (HC1 item 2: the name says it, as
+    # on Platform), so a stray <small> verb fails; the session list is the <noscript> record now, drawn as scripts are off.
     # Owner's-eye fix (1 Nov): Home's agent log left the page (stream 0; it started from four records); the chain stays
     assert nj["loader"] == "none" and nj["proof"] == 10 and nj["stream"] == 0 and nj["chain"] == 8 and nj["gates"] == 6 and nj["bar"] == "none", nj
     assert nj["layers"] == 8 and nj["before"] == 4 and nj["io"], nj
@@ -2650,6 +2651,42 @@ async def platform_lab(b):
     await ctx.close()
     assert not bad, "platform_lab platform.html@1440x900:\n  " + "\n  ".join(bad)
     print(f"platform_lab: a running lab in Platform §03, marked {il[0]['t']!r}")
+
+
+LAB_BOXES = """(() => { const l = document.querySelector('[data-swarm-live]'), h = e => e ? +e.getBoundingClientRect().height.toFixed(1) : null;
+  return { on: l.classList.contains('sw-on'), lab: h(l), head: h(l.querySelector('.sw-head')), stage: h(l.querySelector('.sw-stage')),
+    bar: h(l.querySelector('.swarm-bar')), btns: h(l.querySelector('.sw-btns')) }; })()"""
+
+
+@check
+async def lab_hold(b):
+    """integrate hc1: the swarm lab's start moves nothing. With swarm.js blocked, the lab (Home §03, Platform §02) holds
+    the boxes the running lab draws: the lab, its head, stage, bar and controls within 1 px at 1440 and on a 390 phone.
+    hc1 moved Pause motion into the head; its place before the start moved with it (swarm.css), so a hold left in the
+    controls, or none in the head where the phone's glyph shares the name's line, fails here."""
+    bad, seen = [], []
+    limit = int(15000 * max(1.0, MODE["throttle"]))
+    for path, frag in (("index.html", "lc01"), ("platform.html", "swarm")):
+        for w, h, touch in ((1440, 900, False), (390, 844, True)):
+            got = []
+            for block in (True, False):
+                ctx = await b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch, device_scale_factor=2 if touch else 1)
+                pg = await ctx.new_page()
+                if block: await pg.route("**/js/swarm.js*", lambda r: r.abort())  # path-agnostic: the deploy copy is versioned
+                await pg.goto(f"{BASE}/{path}#{frag}", wait_until="load")
+                await pg.evaluate("document.fonts.ready.then(() => 1)")
+                if block: await pg.wait_for_timeout(int(2500 * max(1.0, MODE["throttle"])))
+                elif not await until(pg, "!!document.querySelector('[data-swarm-live].sw-on')", limit, 200):
+                    bad.append(f"{path}@{w}: the lab did not start within {limit} ms")
+                else: await pg.wait_for_timeout(1000)
+                got.append(await pg.evaluate(LAB_BOXES)); await ctx.close()
+            st, lv = got
+            if st["on"]: bad.append(f"{path}@{w}: the lab ran with swarm.js blocked")
+            diff = {k: (st[k], lv[k]) for k in ("lab", "head", "stage", "bar", "btns") if st[k] is None or lv[k] is None or abs(st[k] - lv[k]) > 1}
+            if diff: bad.append(f"{path}@{w}: static -> live boxes differ {diff}")
+            seen.append(f"{path[:-5]}@{w} {lv['lab']}")
+    assert not bad, "lab_hold:\n  " + "\n  ".join(bad)
+    print(f"lab_hold: the lab's static boxes equal its live ones ({', '.join(seen)} px)")
 
 
 # ================================================================ round 2 (v2) guards: the director's test list of 28 Oct

@@ -579,8 +579,9 @@ for i, (s, part, short) in enumerate(SERIES):
           </a></li>''')
 series_minutes = sum(SLUGS[s]["minutes"] for s, _, _ in SERIES)
 # a post hero's plate carries this hedge. The index says it once for all its plates, under the first one (cut, 1 Nov:
-# the markets grid's and the phone head plates' copies went with their caption lines)
-PLATES_HEDGE = "Schematic · no data is plotted"
+# the markets grid's and the phone head plates' copies went with their caption lines). Hill climb hc1: one hedge, one
+# wording again (r5's rule): the posts take the index's form (award a1's, one word shorter), "no data is plotted" went
+PLATES_HEDGE = "Schematic · no data plotted"
 in_series = {s for s, _, _ in SERIES}
 # cut (1 Nov): the series' two-line head, its paragraph, "Start with the introduction", the "Featured series" row and
 # the "Also in AI & agents" label went. The head is the series' name; the rail says the rest (four dated nodes, the
@@ -659,7 +660,7 @@ assert sum(1 for p in by_col["ai"] if p["slug"] in in_series) == 4
 # series in green; since award a3 the collections' names are links under the H1, HERO_INDEX). The page's one hedge for every plate on it stays, short
 # (award a1: "Schematic · no data plotted", was "Schematic · no plate plots data": same hedge, one word shorter, so the
 # specific H1 fits the index's 250 words)
-INDEX_HEDGE = "Schematic · no data plotted"
+INDEX_HEDGE = PLATES_HEDGE
 # award a1 (art director, a1-ux 15): "The blog." was the site's last template headline. The H1 says what the blog is,
 # with its count bound to the posts (C-139). One text box (verify_v9 reflow_400 reads phrase spans that wrap as crossing
 # boxes): the count keeps its noun and bind() its function words, so it breaks only by sense ("29 posts on AI / and
@@ -730,7 +731,7 @@ def post_plate(p):
     econ = p["col"] == "economics" or p["slug"] not in PLATES
     cap = "" if econ else f'\n          <figcaption class="pp-h">{PLATES_HEDGE}</figcaption>'
     return f'''<figure class="post-plate" id="plate">
-          <div class="post-plate-art" aria-hidden="true">{plate_svg(p["slug"], p["col"], turn(p))}{REG}</div>{cap}
+          <div class="post-plate-art" aria-hidden="true">{plate_svg(p["slug"], p["col"], turn(p), lettering=True)}{REG}</div>{cap}
         </figure>'''
 # award a3 (4K inspector, polish; AWARD_BAR L7): the post's hero plate was the site's one box-framed hero plate. It takes
 # the hero plates' registration marks (site.css .hp-reg, the same four corners; blog.css places them on the old box)

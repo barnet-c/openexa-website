@@ -1004,7 +1004,11 @@
       frust(L.cy + (H * FLOOR_END() - f) * (stacked ? sstep(EXIT.tall.cam[0], EXIT.tall.cam[1], xeNow) : sstep(0, 0.35, xeNow))); // portrait: it pushes the copy out
     }
   }
-  const FLOOR_END = () => (stacked ? 0.7 : short ? 0.76 : 0.66); // where the floor line, the paper's edge to be, ends on screen (share of the stage; wide: 0.76 -> 0.66 on 1 Nov, so the coda and its record line sit in the frame, not under a dark hole, and the paper under them stays short)
+  const CODA_GAP = () => (stacked ? 52 : 44 * Math.max(1, W / 1920)); // the coda's foot to the floor it names, clear of the ticks
+  // where the floor line, the paper's edge to be, ends on screen (share of the stage). Wide: 0.76 -> 0.66 on 1 Nov; hc1
+  // (4 Nov) lifts the coda and its record line together to the optical centre: 0.6, so the frame's block (headline to the
+  // paper's caption) has as much dark above it as paper below, a little high; never so high that the coda meets the bar
+  const FLOOR_END = () => (stacked ? 0.7 : short ? 0.76 : Math.min(0.66, Math.max(0.6, (navH + 22 + CODA_GAP() + codaH) / H)));
   // the way out, in shares of the exit.
   const EXIT = { wide: { copy: [0.1, 0.22], coda: [0.18, 0.28], paper: [0.26, 0.66], cap: [0.6, 0.76] }, tall: { cam: [0.3, 0.56], copy: [0.3, 0.42], coda: [0.38, 0.48], paper: [0.58, 0.86], cap: [0.84, 0.96] } }; // (portrait: the proof's copy has gone before the coda opens: one headline at a time)
   // (lab) the exit folds the ten columns down together with the floor line (the paper's edge); seals go into their records
@@ -1679,7 +1683,7 @@
       let co = 0, top = 0;
       if (xe > 0) {
         const fy = lean ? project(0, Y_FLOOR * layouts[4].s, 0).y : H * FLOOR_END(); // portrait: above the line as it settles
-        top = Math.max(navH + 14, fy - (stacked ? 52 : 44 * Math.max(1, W / 1920)) - codaH); // just above the floor it names, clear of the ticks (and the hedge with it)
+        top = Math.max(navH + 14, fy - CODA_GAP() - codaH); // just above the floor it names, clear of the ticks (and the hedge with it)
         co = codaA;
         const room0 = top - navH, tC = top < navH + 14.5 || (ov > 0 && (room0 <= 6 || ov >= room0 - 6 - Math.min(150, H * 0.2) / 2)) ? 0 : 1; // the leave, on a threshold
         leaveC += clamp(tC - leaveC, -k, k); if (leaveC !== tC) fading = true;

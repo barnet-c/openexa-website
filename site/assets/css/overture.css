@@ -30,7 +30,7 @@
 .story-ready .beat:not(.beat-0) [data-split] .wi, .story-ready .beat-0.is-relay [data-split] .wi { transform: translateY(calc((1 - clamp(0, var(--w, 1) * 1.5 - var(--i, 0) * .05, 1)) * 112%)); transition: none; }
 .beat-text { max-width: min(44%, 35rem); }
 .beat-0 .beat-text { max-width: min(50%, 41.25rem); }
-.beat-0 .display-1 { font-size: clamp(3rem, max(5.6vw, 2.1325rem + 3.23vw), 5.6rem); } /* a3: 67 px at 1024 (the portrait tablet's size; it was 57), v2's 5.6vw from 1440 */
+.beat-0 .display-1 { font-size: clamp(3rem, max(6.2vw, 2.1325rem + 3.23vw), 5.58rem); } /* hc1: the hero step (--fs-hero) from ~1150 (89 at 1440, where it was 80.6); a3's 67 px at 1024 */
 .beat-0 .hero-sub { max-width: 44ch; }
 .beat .eyebrow { margin-bottom: 1.125rem; color: rgba(245, 242, 236, .62); }
 .beat h2 { max-width: 15ch; text-wrap: balance; }
@@ -38,7 +38,7 @@
 .beat .body-lg { margin-top: 1.375rem; max-width: 46ch; font-size: 1.04rem; line-height: 1.62; }
 .beat .hero-cta { margin-top: 1.875rem; }
 .hero-stats { display: grid; grid-template-columns: 1fr 1fr .8fr 1.45fr; gap: 1.25rem; margin-top: 2.125rem; padding-top: 1.25rem; border-top: var(--hair) solid rgba(245, 242, 236, .14); max-width: min(52%, 40rem); }
-.hero-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: clamp(1.5rem, 2.1vw, 2.05rem); line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
+.hero-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: var(--fs-item); line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
 .hero-stats b em { font-style: normal; color: var(--signal-bright); }
 .hero-stats span { display: block; margin-top: .5625rem; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58); line-height: 1.4; }
 /* Lifecycle 01: a numeral like its neighbours, with the live dot */
@@ -122,13 +122,12 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-idx button::before, .story-idx button i { content: ""; position: absolute; left: 0; right: .875rem; bottom: .5625rem; height: var(--hair); background: rgba(245, 242, 236, .16); }
 .story-idx button i { background: rgba(245, 242, 236, .8); transform: scaleX(var(--fill, 0)); transform-origin: left; }
 .story-idx button.is-on { color: var(--paper); }
-@media (hover: hover) { .story-idx button:hover { color: var(--paper); } .story-motion:hover { color: var(--signal-bright); } } /* a tap leaves no lit button behind */
+@media (hover: hover) { .story-idx button:hover { color: var(--paper); } } /* a tap leaves no lit button behind */
 .story-idx button:focus-visible { outline: var(--hair) solid var(--signal-bright); outline-offset: .125rem; }
 .story-keys { position: absolute; width: var(--hair); height: var(--hair); margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .story-stage:focus-visible .story-keys { position: static; width: auto; height: auto; overflow: visible; clip-path: none; font: var(--mono-tick)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--signal-bright); }
-.story-motion { pointer-events: auto; min-height: 2.75rem; padding: 0 .125rem; font: var(--fs-small)/1 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .66); transition: opacity var(--dur-feedback) var(--ease); } /* a control, in Inter (1 Nov) */
+.story-motion { pointer-events: auto; } /* the instruments' one control (site.css, hc1), at the right end of the scene bar */
 .story-labels.has-insp ~ .story-bar .story-motion { opacity: .35; } /* the inspector is up: the control steps back */
-.story-motion[hidden] { display: none; }
 .story.is-scrolled .hero-stats .live, .story.is-paused .hero-stats .live { animation-play-state: paused; } /* its loop (transform, opacity) stops once S0 has gone, and with Pause motion */
 /* the hand-off: the columns drain into their records on the floor line */
 .story-paper { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; height: 0; overflow: hidden; visibility: hidden; background: var(--paper); color: var(--ink); pointer-events: none; }
