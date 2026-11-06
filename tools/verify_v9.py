@@ -512,9 +512,10 @@ async def home(b):
     await pg.wait_for_timeout(800)
     await expect(pg.locator(".chain-list li")).to_have_count(8)
     await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain intact")
+    broken3 = await chain_broken_3(pg, "home")
     await pg.locator(".chain-list li:nth-child(3) .ev").fill("REJECTED")
     await expect(pg.locator(".chain-list .is-broken")).to_have_count(6)
-    await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain broken at record 03")
+    await expect(pg.locator("[data-chain-status]")).to_contain_text(broken3)
     await still_shot(pg, "[data-chain]", OUT / "chain-broken.png")
     await pg.locator("[data-chain-restore]").click()
     await expect(pg.locator(".chain-list .is-broken")).to_have_count(0)
@@ -754,6 +755,20 @@ async def tab_walk(b):
     print("tab_walk: " + "; ".join(said) + "; no stop twice in a cycle")
 
 
+# hc3 (proof, home): Home §06's records carry Trust's ids (#4f23 ... #4f2a) and the break speaks Trust's words: it names
+# the record where the chain broke by its id and says every later link fails (was "Chain broken at record 03"). The
+# checks below break the third record, so they read its id from the page and expect the sentence that names it.
+CHAIN_ID3 = "(() => { const e = document.querySelector('.chain-list li:nth-child(3) .i'); return e ? e.textContent.trim() : ''; })()"
+
+
+async def chain_broken_3(pg, tag):
+    """the sentence the status must read once the third record is changed: 'Chain broken at #4f25 · every later link
+    fails' (the id read from the page; Home's ids start with '#', as Trust's)"""
+    i3 = await pg.evaluate(CHAIN_ID3)
+    assert i3.startswith("#") and len(i3) > 1, f"{tag}: the third record's id reads {i3!r} (Trust's ids, '#4f25', expected)"
+    return f"Chain broken at {i3} · every later link fails"
+
+
 CHAIN_AT = """(sel) => { const e = document.querySelector(sel); return !!e && document.activeElement === e; }"""
 CHAIN_STOPS = """() => ({ fields: [...document.querySelectorAll('.chain-list .ev, .chain-list .what')].filter(f => f.tabIndex >= 0).length,
   stops: [...document.querySelectorAll('.chain-list .i[role="button"]')].filter(i => i.tabIndex === 0).length,
@@ -763,9 +778,10 @@ CHAIN_STOPS = """() => ({ fields: [...document.querySelectorAll('.chain-list .ev
 @check
 async def chain_keys(b):
     """v2x r4 (proof; r4-a11y minor, Home §06): the chain is one roving Tab stop. On a fresh Home no record's Event or
-    Detail is a Tab stop and exactly one record number ('Edit record 01') is; ArrowDown twice reaches record 03's number,
-    Enter puts the caret in its Detail, typing breaks the chain at 03, Escape returns to the number; after Restore and
-    'Alter record 03', Tab from Restore lands on record 03's number. At 1440 and 390 (where 05-08 are folded and the
+    Detail is a Tab stop and exactly one record number ('Edit #4f23') is; ArrowDown twice reaches the third record's
+    number (#4f25), Enter puts the caret in its Detail, typing breaks the chain there (the status names #4f25; hc3: Trust's
+    ids), Escape returns to the number; after Restore and 'Change a record' (the third), Tab from Restore lands on the
+    third record's number. At 1440 and 390 (where 05-08 are folded and the
     arrows skip them). Based on proof's .shots/v2x/work/proof/r4/chain_probe.py. verify_v9 `home` keeps the pointer path
     (fill 'REJECTED' into record 03's Event, the one-tap Alter, Restore)."""
     said = []
@@ -777,19 +793,20 @@ async def chain_keys(b):
         st = await pg.evaluate(CHAIN_STOPS)
         assert st["fields"] == 0 and st["stops"] == 1 and st["numbers"] == 8, f"chain_keys@{w}: {st} (want no field in the Tab order, one roving stop of 8 record numbers)"
         r1, r3 = ".chain-list li:nth-child(1) .i", ".chain-list li:nth-child(3) .i"
+        broken3 = await chain_broken_3(pg, f"chain_keys@{w}")
         await pg.focus(r1)
         await pg.keyboard.press("ArrowDown"); await pg.keyboard.press("ArrowDown"); await pg.wait_for_timeout(80)
         assert await pg.evaluate(CHAIN_AT, r3), f"chain_keys@{w}: ArrowDown x2 from record 01 did not reach record 03's number"
         await pg.keyboard.press("Enter"); await pg.wait_for_timeout(120)
         assert await pg.evaluate(CHAIN_AT, ".chain-list li:nth-child(3) .what"), f"chain_keys@{w}: Enter on record 03's number did not put the caret in its Detail"
         await pg.keyboard.type("altered", delay=15)
-        await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain broken at record 03")
+        await expect(pg.locator("[data-chain-status]")).to_contain_text(broken3)
         await pg.keyboard.press("Escape"); await pg.wait_for_timeout(80)
         assert await pg.evaluate(CHAIN_AT, r3), f"chain_keys@{w}: Escape in record 03's Detail did not return to its number"
         await pg.locator("[data-chain-restore]").click()
         await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain intact")
         await pg.locator("[data-chain-try]").click()
-        await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain broken at record 03")
+        await expect(pg.locator("[data-chain-status]")).to_contain_text(broken3)
         await pg.focus("[data-chain-restore]"); await pg.keyboard.press("Tab"); await pg.wait_for_timeout(80)
         assert await pg.evaluate(CHAIN_AT, r3), f"chain_keys@{w}: Tab from Restore after 'Alter record 03' did not land on record 03's number"
         st2 = await pg.evaluate(CHAIN_STOPS)
@@ -797,7 +814,7 @@ async def chain_keys(b):
         await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain intact")
         await ctx.close()
         assert st2["stops"] == 1, f"chain_keys@{w}: {st2['stops']} record numbers are Tab stops after the walk (want 1)"
-        said.append(f"{w}: 0 fields and 1 of 8 numbers in the Tab order; Down x2, Enter, type, Escape, Alter, Tab from Restore all land on record 03")
+        said.append(f"{w}: 0 fields and 1 of 8 numbers in the Tab order; Down x2, Enter, type, Escape, Alter, Tab from Restore all land on the third record ({broken3.split()[3]}, named by the break)")
     print("chain_keys: " + "; ".join(said))
 
 
@@ -838,7 +855,7 @@ async def chain_contrast(b):
         await pg.locator("[data-chain]").scroll_into_view_if_needed()
         await expect(pg.locator("[data-chain].chain-ready")).to_have_count(1)
         await pg.locator("[data-chain-try]").click()
-        await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain broken at record 03")
+        await expect(pg.locator("[data-chain-status]")).to_contain_text(await chain_broken_3(pg, f"chain_contrast@{w}"))
         await pg.wait_for_timeout(600)  # the row's own transitions (colour, edge) settle
         r = await pg.evaluate(CHAIN_BROKEN_CONTRAST)
         mark = await pg.evaluate("""() => { const li = document.querySelector('.chain-list > li.is-broken'); if (!li) return null; const s = getComputedStyle(li);
@@ -1866,13 +1883,20 @@ async def ledger_height(b):
     pressed, document.body.scrollHeight stays within 1 px until the nine records are written again, and the layout
     shifts in that time (no input after the press) sum to < 0.01, at 1440 (a horizontal strip) and at 390 (a column).
     v2x cut, owner's-eye fix (1 Nov): until then this read Home's running stream ([data-ledger=live]), which left the site
-    with Home's agent log; Trust's replay is the one ledger still written while the reader watches."""
+    with Home's agent log; Trust's replay is the one ledger still written while the reader watches.
+    hc3 (proof, HC3 item 5): on phones (<= 600 px) the replay shows its first four records and a "Show all nine records"
+    control ([data-lt-more], aria-expanded) from the first paint; at 1440 there is no fold. At 390 the check asserts the
+    fold is drawn and closed, opens it (input: the page grows once, by the reader's press), then asks its question of the
+    open column: writing the nine records again never moves the page."""
     bad = []
     for w, h, orient in ((1440, 900, "horizontal"), (390, 844, "vertical")):
         ctx, pg = await open_page(b, "trust.html", w, h)
         await pg.evaluate("document.querySelector('[data-ledger=replay]').scrollIntoView({block: 'center', behavior: 'instant'})")
         if not await until(pg, "(() => { const l = document.querySelector('[data-ledger=replay]'), r = l.querySelector('[data-lt-replay]'); return l.classList.contains('lt-ready') && r && !r.hidden; })()", 8000 if MODE["throttle"] <= 1 else 30000):
             bad.append(f"trust.html@{w}x{h}: the excerpt did not mount with its Replay control"); await ctx.close(); continue
+        fold = await pg.evaluate("(() => { const m = document.querySelector('[data-ledger=replay] [data-lt-more]'); if (!m || !m.getClientRects().length) return null; const was = m.getAttribute('aria-expanded'); if (was === 'false') m.click(); return was; })()")
+        if orient == "vertical" and fold != "false": bad.append(f"trust.html@{w}x{h}: the phone replay's fold ([data-lt-more]) is {'not drawn' if fold is None else 'aria-expanded=' + repr(fold)} at load (drawn and closed expected)")
+        if orient == "horizontal" and fold is not None: bad.append(f"trust.html@{w}x{h}: the replay draws a fold ([data-lt-more]) at {w} px (phones only)")
         await pg.wait_for_timeout(1200)
         o = await pg.evaluate("(() => { const t = document.querySelector('[data-ledger=replay] .lt-track'); return t && t.getAttribute('aria-orientation'); })()")
         if o != orient: bad.append(f"trust.html@{w}x{h}: the excerpt's track is {o!r}, expected {orient!r}")
@@ -1893,7 +1917,7 @@ async def ledger_height(b):
         if cls >= 0.01: bad.append(f"trust.html@{w}x{h}: layout shifts during the replay sum to {cls:.4f} (budget < 0.01): {sorted(lsh, key=lambda x: -x[1])[:4]}")
         await ctx.close()
     assert not bad, "ledger_height:\n  " + "\n  ".join(bad)
-    print("ledger_height: Trust's replay writes its nine records again with body.scrollHeight constant (±1 px) and layout shifts < 0.01, at 1440 (strip) and 390 (column)")
+    print("ledger_height: Trust's replay writes its nine records again with body.scrollHeight constant (±1 px) and layout shifts < 0.01, at 1440 (strip, no fold) and 390 (column, its four-record fold drawn closed at load, opened first)")
 
 
 # ---- the overture: re-entry, the copy relay, the numeral (OV8, OV4)
@@ -2382,14 +2406,18 @@ async def proof_entrance(b):
 
 # ---- the lifecycle lane (LC1, LC2, D2) and the desk (LC2b)
 GATES = ["Signal", "Predict", "Decide", "Approve", "Execute", "Settle"]  # the canonical gate vocabulary (_cross)
-STEPS = [  # Lifecycles §02 (§03 before the cut): the six gates plus 07 Reconcile (D2), by name. v2x cut (1 Nov): the seven
-    # step sentences and the eyebrow left the page (one heading and one sentence per section; the stations name the gates)
-    "Signal", "Predict", "Decide", "Approve", "Execute", "Settle", "Reconcile",
+STEPS = [  # Lifecycles §02 (§03 before the cut): the six gates, by name. v2x cut (1 Nov): the seven step sentences and the
+    # eyebrow left the page (one heading and one sentence per section; the stations name the gates). hc3 (platform, HC3
+    # item 1): the station "07 Reconcile" went; its marks (the check and the two record blocks) are drawn under 06 Settle,
+    # as Platform §03 draws "06 Settle" over "Reconcile and report" (C-072; C-074 on the owner's sign-off list)
+    "Signal", "Predict", "Decide", "Approve", "Execute", "Settle",
 ]
 LANE_HOME = """(() => { const q = s => document.querySelectorAll(s); const items = [...q('#lc01 [data-sw-gates] > li')];
   return { flow: q('.flow').length, lane: q('#lc01 [data-lane]').length, gates: items.map(li => li.textContent.replace(/\\s+/g, ' ').trim()) }; })()"""
 LANE_STEPS = """(() => { const sec = document.querySelector('#lc01'), ol = sec && (sec.querySelector('.lane-v--steps') || sec.querySelector('.lane-v')); const items = ol ? [...ol.querySelectorAll(':scope > li[data-g]')] : [];
+  const last = items[items.length - 1], g = last && last.querySelector('svg');
   return { wall: document.querySelectorAll('.wall').length, lane: !!ol, steps: items.map(li => [li.dataset.g, ((li.querySelector('h3') || li).textContent || '').replace(/\\s+/g, ' ').trim()]),
+    recon: g ? { check: g.querySelectorAll('.g').length, blocks: g.querySelectorAll('rect.blk').length } : null,
     text: sec ? sec.textContent.replace(/\\s+/g, ' ') : '' }; })()"""
 
 
@@ -2412,9 +2440,11 @@ async def lifecycle_lane_home(b):
 
 @check
 async def lifecycle_lane_steps(b):
-    """Lifecycles #lc01: the vertical lane draws the six gates plus the 07 Reconcile station (D2), 01 Signal ... 07
-    Reconcile in order; no .wall on the page; with and without JavaScript. (v2x cut, 1 Nov: the seven step sentences and
-    the eyebrow 'Seven steps · one swarm · vertical execution' left the page by design; the stations stay.)"""
+    """Lifecycles #lc01: the vertical lane draws the six gates, 01 Signal ... 06 Settle in order, and the last station's
+    glyph still draws the reconciliation (D2: its check and its two record blocks, hc3: under 06 Settle); no .wall on the
+    page; with and without JavaScript. (v2x cut, 1 Nov: the seven step sentences and the eyebrow 'Seven steps · one swarm
+    · vertical execution' left the page by design; the stations stay. hc3, platform: '07 Reconcile' went as a station,
+    so the lane agrees with lifecycle_lane_home and C-072.)"""
     bad = []
     for js in (True, False):
         ctx, pg = await open_page(b, "lifecycles.html", 1440, 900, js=js, reduced=True)
@@ -2423,10 +2453,11 @@ async def lifecycle_lane_steps(b):
         gs = [g for g, t in m["steps"]]
         tag = f"lifecycles.html@1440x900 js={'on' if js else 'off'}"
         if m["wall"]: bad.append(f"{tag}: {m['wall']} .wall element(s)")
-        if not m["lane"] or names != STEPS or gs != [str(k) for k in range(1, 8)]: bad.append(f"{tag}: the lane's stations read {m['steps']} (lane: {m['lane']})")
+        if not m["lane"] or names != STEPS or gs != [str(k) for k in range(1, 7)]: bad.append(f"{tag}: the lane's stations read {m['steps']} (lane: {m['lane']})")
+        if not m["recon"] or m["recon"]["check"] < 1 or m["recon"]["blocks"] < 2: bad.append(f"{tag}: 06 Settle's glyph does not draw the reconciliation (a check and two record blocks): {m['recon']}")
         await ctx.close()
     assert not bad, "lifecycle_lane_steps:\n  " + "\n  ".join(bad)
-    print("lifecycle_lane_steps: six gates + 07 Reconcile by name, in order, no .wall, with and without JavaScript")
+    print("lifecycle_lane_steps: the six gates by name, 01 Signal ... 06 Settle in order, the reconciliation drawn under 06, no .wall, with and without JavaScript")
 
 
 @check

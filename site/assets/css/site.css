@@ -388,7 +388,8 @@ main > .section { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
 main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--hair)); }
 .footer .top { display: grid; grid-template-columns: var(--fc); gap: var(--fg-gap); }
 .footer .brand { font-size: 1.6rem; }
-.footer .tag { margin-top: .875rem; color: var(--fg-2); max-width: 30ch; font-family: var(--serif); font-size: var(--fs-body); line-height: 1.3; text-wrap: balance; }
+/* hc3: the tagline is a body line under the serif wordmark: Inter at the links' step (Instrument Serif thins under 25.6 px) */
+.footer .tag { margin-top: .75rem; color: var(--fg-2); max-width: 30ch; font-family: var(--sans); font-size: var(--fs-small); line-height: 1.45; text-wrap: balance; }
 .footer h2 { font-family: var(--sans); font-weight: 500; font-size: var(--fs-small); letter-spacing: 0; text-transform: none; color: var(--fg-3); margin-bottom: .75rem; }
 .footer ul li { padding: .25rem 0; font-size: var(--fs-small); }
 /* the footer speaks the bar's grammar: where you are is a solid rule; a link you point at or focus, a dashed one */
@@ -416,7 +417,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 .footer .wordmark { font-family: var(--serif); font-size: clamp(5rem, 100cqi / 2.9, 60rem); line-height: 1; letter-spacing: -0.04em; color: var(--fg); opacity: .06; margin: clamp(.5rem, 2vw, 1.75rem) 0 -0.3em -.035em; user-select: none; white-space: nowrap; }
 .footer .wordmark::before { content: attr(data-word); content: attr(data-word) / ""; } /* drawn, not text: a logotype, not copy for a contrast audit */
 @media (max-width: 600px) { .footer .disc { grid-template-columns: 1fr; } }
-@media (min-width: 601px) and (max-width: 860px) { .footer { --fc: minmax(0, 1.3fr) repeat(3, minmax(0, 1fr)); --fg-gap: 1.5rem; } .footer .tag { font-size: var(--fs-body); } } /* tablets: one row */
+@media (min-width: 601px) and (max-width: 860px) { .footer { --fc: minmax(0, 1.3fr) repeat(3, minmax(0, 1fr)); --fg-gap: 1.5rem; } } /* tablets: one row */
 @media (min-width: 601px) {
   .footer .bottom { display: grid; grid-template-columns: var(--fc); column-gap: var(--fg-gap); }
   .footer .bottom > * { white-space: nowrap; }
@@ -1444,15 +1445,13 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lane-v > .lv-rec::before { bottom: auto; height: .375rem; background: currentColor; opacity: .62; }
 .lane-v > .lv-rec > span { align-self: center; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
 .lane-v .lv-g .tk2 { opacity: .5; }
-/* Lifecycles §03: the page's seven steps beside the stations */
+/* Lifecycles §02: the six gates as stations (hc3: 07 Reconcile's marks are drawn under 06 Settle) */
 .lane-v--steps > li { padding-bottom: 1.625rem; }
 .lane-v--steps h3 { padding-top: .125rem; font-family: var(--serif); font-size: var(--fs-heading); font-weight: 400; line-height: 1.2; letter-spacing: -0.01em; }
 .lane-v--steps h3 .lk-n { display: block; margin-bottom: .25rem; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: .12em; color: var(--fg-3); }
 .lane-v--steps li[data-g="4"] h3 .lk-n, .lane-v--steps li[data-g="6"] h3 .lk-n { color: var(--accent); }
-.lane-v--steps p { margin-top: .5rem; color: var(--fg-2); text-wrap: pretty; }
 .lane-v--steps > li[data-g="6"]::before { top: 2.75rem; background: currentColor; opacity: .32; }
-.lane-v--steps > li[data-g="7"]::before { top: .625rem; bottom: 1.625rem; background: currentColor; opacity: .62; }
-/* the 'How it works' card travels beside the stations until 07 Reconcile */
+/* the 'How it works' card travels beside the stations until 06 Settle */
 @media (min-width: 1200px) and (min-height: 600px), (min-width: 961px) and (min-height: 680px) {
   .lc-how > .card { position: sticky; top: calc(var(--nav-h) + 2rem); }
 }
@@ -1483,6 +1482,14 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 }
 .dm--line { --dm: dr-in; }
 @keyframes dm-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+/* hc3: a card (a link) whose plate is [data-draw] answers the pointer or the keyboard in the plate's own language: its accent
+   draws again, once, 400 ms; never loops, never on touch, nothing under reduced motion */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  a:hover [data-draw]:not(.will-draw) .dm, a[data-draw]:hover:not(.will-draw) .dm { animation: var(--dm, dm-in) .4s var(--ease-draw); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  a:focus-visible [data-draw]:not(.will-draw) .dm, a[data-draw]:focus-visible:not(.will-draw) .dm { animation: var(--dm, dm-in) .4s var(--ease-draw); }
+}
 .lane-h [data-g="2"] { --dd: 120ms; } .lane-h [data-g="3"] { --dd: 160ms; } .lane-h [data-g="4"] { --dd: 200ms; }
 .lane-h [data-g="5"] { --dd: 140ms; } .lane-h [data-g="6"] { --dd: 120ms; }
 /* a gate pointed at or focused is lifted: its plate rises a few pixels, the others step back */
@@ -1735,7 +1742,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lc-reg > .card:not(:nth-child(3n + 1)) { border-left: var(--hair) solid var(--line); }
 .lc-reg > .card:first-child { box-shadow: inset 0 calc(2 * var(--hair)) 0 var(--accent); }
 .lc-reg .card .n { grid-column: 1 / -1; grid-row: 1; justify-content: flex-start; gap: .75rem; margin: 0; color: var(--fg-2); }
-.lc-reg .card .n--ring > span:last-child { font: 400 .875rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--khaki-ink); }
+.lc-reg .card .n--ring > span:last-child { font: 400 .875rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--khaki-ink); text-wrap: balance; } /* hc3: balanced, so "Live: ETF creation / & redemption" at 761-960 (.875rem kept: --fs-small is 13 on phones and moved Home's §04 landing by 8 px) */
 .lc-reg .card .n--ring > .badge { padding: 0; border: 0; } /* every status, live too, is the khaki ink above (integrate hc2: the green and fg-2 colours here never won) */
 .lc-reg .lc-code { flex: none; }
 .lc-reg .card .h4 { grid-column: 1 / -1; grid-row: 2; align-self: end; margin: 0; max-width: 13ch; font-size: var(--fs-item); line-height: 1.08; letter-spacing: -0.015em; color: var(--fg-2); text-wrap: balance; }
@@ -1837,13 +1844,16 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 }
 /* a1: the plate is as wide as its columns */
 @media (min-width: 1200px) { .hero-plate { max-width: 44rem; } }
-/* a1: a plate page's hero is its first screen (as Research's, Company's), centred under the bar */
+/* a1: a plate page's hero is its first screen (as Research's, Company's), centred under the bar. hc3: a paper hero is 7rem
+   short of it, so the next chapter's rule and the top of its heading show at the fold (rem: the same share at 4K); Proof's
+   dark hero keeps the screen (its next chapter opens on a band of empty paper) */
 @media (min-width: 961px) and (min-height: 700px) {
   .page-hero:has(> .container > .page-hero--plate) {
     --hero-pad: clamp(2.5rem, 7vh, 6rem);
     display: flex; flex-direction: column; justify-content: center;
     min-height: 100vh; min-height: 100svh; padding-top: calc(var(--nav-h) + var(--hero-pad)); padding-bottom: var(--hero-pad);
   }
+  .page-hero:not(.page-hero--dark):has(> .container > .page-hero--plate) { min-height: calc(100vh - 7rem); min-height: calc(100svh - 7rem); }
 }
 @media (max-width: 960px) {
   .page-hero--plate { row-gap: clamp(1.75rem, 6vw, 2.75rem); }

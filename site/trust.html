@@ -113,11 +113,9 @@
             </span>
             <span class="sr-only" role="status" data-lt-say></span>
           </div>
-          <!-- the inspected record's lineage, one line, from the same records (trust.js; 1200 px and up, with scripts) -->
-          <p class="tr-lin" data-lt-lin aria-hidden="true"></p>
           <div class="lt-stage">
           <div class="lt-view">
-            <ol class="lt-track" aria-label="Ledger records, oldest first">
+            <ol class="lt-track" id="tr-track" aria-label="Ledger records, oldest first">
               <li class="ln lt-rec" data-d="agent=strategy:s-0412 · create 2,600"><span class="lt-meta"><span class="lt-id">#4f1a</span><span class="lt-lc"></span></span><b class="lt-ev">PROPOSED</b><span class="lt-sub">strategy s-0412 · create 2,600</span><time class="lt-t">09:31:03.902</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
               <li class="ln lt-rec is-rejected" data-d="council · notional cap exceeded"><span class="lt-meta"><span class="lt-id">#4f1b</span><span class="lt-lc"></span></span><b class="lt-ev">REJECTED</b><span class="lt-sub">council · notional cap exceeded</span><time class="lt-t">09:31:03.951</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
               <li class="ln lt-rec" data-d="agent=strategy:s-0412 · create 2,000"><span class="lt-meta"><span class="lt-id">#4f1c</span><span class="lt-lc"></span></span><b class="lt-ev">PROPOSED</b><span class="lt-sub">strategy s-0412 · create 2,000</span><time class="lt-t">09:31:04.071</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
@@ -129,6 +127,8 @@
               <li class="ln lt-rec is-settled" data-d="agent=recon:r-0031 · internal ≡ broker · Δ 0"><span class="lt-meta"><span class="lt-id">#4f22</span><span class="lt-lc"></span></span><b class="lt-ev">RECONCILED</b><span class="lt-sub">internal ≡ broker · Δ 0</span><time class="lt-t">16:05:12.006</time><span class="lt-line" aria-hidden="true"><i class="lt-node"></i><i class="lt-seg"></i></span></li>
             </ol>
           </div>
+          <!-- phones, with scripts (hc3): the column shows #4f1a-#4f1d; this, Replay, Change or Verify shows all nine (trust.js) -->
+          <button type="button" class="lt-more" data-lt-more aria-controls="tr-track" aria-expanded="false">Show all nine records</button>
           </div>
           <div class="lt-insp" data-lt-insp hidden>
             <p class="lt-insp-k" data-f="k">Newest record in view</p>

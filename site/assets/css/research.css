@@ -62,7 +62,9 @@
 .research-page .posts-list .post > a { align-items: baseline; }
 .research-page .post-n { padding-top: 0; }
 .research-page .post-meta { padding-top: 0; }
-.research-page .post-main h3 .title-sub { display: block; margin-top: .3em; font-size: var(--fs-body); line-height: 1.2; color: var(--fg-2); }
+/* hc3: a subtitle is Inter (the serif only at display sizes): the caption step in a row or a card, the text's under a title */
+.research-page .post-main h3 .title-sub, .article-page .pager-card h3 .title-sub { display: block; margin-top: .5rem; font: 400 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; color: var(--fg-3); }
+.title-sub .hy { margin-inline: 0; } /* the serif's hyphen fix */
 .research-page .post-main h3 .t-head { display: block; }
 .research-page .scholar-link { font-family: var(--sans); letter-spacing: 0; text-transform: none; }
 
@@ -215,7 +217,7 @@
 .article-title { max-width: 18ch; }
 /* r5: (0,2,0), over site.css's ".page-hero h1 { 16ch }": note 02's "and Proving What It Did." holds one line */
 .article-hero .article-title--long { max-width: 21ch; }
-.article-title .title-sub { display: block; margin-top: .5em; font-size: var(--fs-heading); line-height: 1.18; letter-spacing: -0.005em; color: var(--fg-2); max-width: 30ch; }
+.article-title .title-sub { display: block; margin-top: 1rem; font: 400 var(--fs-note)/1.45 var(--sans); letter-spacing: 0; color: var(--fg-2); max-width: 46ch; }
 /* a series title breaks at its sense break: "Lifecycle 01." / "What Ten Sessions on Real Markets Taught Us" */
 .article-title .t-head { display: block; }
 .article-hero .article-title--split { max-width: 22ch; } /* "Governance in Milliseconds" holds one line under its head */
@@ -285,7 +287,8 @@
 
 /* ---------- a note: the reading column ---------- */
 /* 66-72 characters a line from 768 up (v2: 78-89): a 39.2rem measure, 19 px type, 1.68 leading */
-.article-page .article { font-size: 1.1875rem; line-height: 1.68; }
+.article-page { --fs-note: 1.1875rem; }
+.article-page .article { font-size: var(--fs-note); line-height: 1.68; }
 .article-page .article > p { max-width: 39.2rem; }
 /* the text's size, leading and colour (as the posts' lead: one long-read template); the drop initial marks it */
 .article-page .article > p.lead { font-size: inherit; color: var(--fg-2); line-height: inherit; }
@@ -300,11 +303,11 @@
   .article-page .article > p.lead::first-letter { float: none; font-size: inherit; line-height: inherit; margin: 0 .24em 0 0; -webkit-initial-letter: 2; initial-letter: 2; }
 }
 @media (max-width: 960px) {
-  .article-page .article { font-size: 1.0625rem; }
+  .article-page { --fs-note: 1.0625rem; }
   .article-page .article > p { max-width: 36rem; }
 }
 @media (min-width: 601px) and (max-width: 960px) {
-  .article-page .article { font-size: 1.125rem; }
+  .article-page { --fs-note: 1.125rem; }
   .article-page .article h2 { font-size: clamp(1.75rem, 4.2vw, 2.1rem); }
 }
 /* a1 (a1-ux): on phones a part's head is a clear step over 17 px text (25.6 px at 320, 28 from 400) */
@@ -364,7 +367,6 @@
 .article-page .article > :is(.article-end, .note-run, .note-disc) { max-width: 39.2rem; }
 .article-page .pager-card h3 { max-width: 36ch; } /* both cards rag alike (v2: one balanced, one a single long line) */
 .article-page .pager-card h3 .t-head { display: block; }
-.article-page .pager-card h3 .title-sub { display: block; margin-top: .3em; font-size: var(--fs-body); line-height: 1.2; color: var(--fg-2); }
 .note-disc a { border-bottom: var(--hair) solid var(--line-strong); transition: border-color .25s var(--ease); }
 @media (hover: hover) { .note-disc a:hover { border-color: var(--fg); } }
 /* the pager: v2's hover set the card to the colour it already had (nothing moved). Hover and focus now draw the site's
@@ -429,14 +431,16 @@
    one baseline (a1) */
 .fl:is([data-side="t"], [data-side="tl"], [data-side="tr"])::before { left: 0; top: calc(-.9375rem - var(--drop, 0px)); width: calc(1px * var(--stroke)); height: calc(.625rem + var(--drop, 0px)); }
 .fl:is([data-side="b"], [data-side="bl"], [data-side="br"])::before { left: 0; top: .3125rem; width: calc(1px * var(--stroke)); height: calc(.625rem + var(--drop, 0px)); }
+/* hc3: the paper plates' register (.hp-lab): Inter, sentence case; a numeral alone (.fl--n) or a value (.fl-v) mono */
 .fl-t {
   position: absolute; left: 0; top: 0; white-space: nowrap; translate: var(--dx, 0px) 0;
-  font: 400 var(--mono-s)/1.35 var(--mono); letter-spacing: .02em; color: var(--fg-2); font-variant-numeric: tabular-nums;
+  font: 400 var(--fs-small)/1.35 var(--sans); letter-spacing: 0; color: var(--fg-2); /* proportional: Inter's tabular forms widen the hyphen and the comma */
   text-shadow: 0 0 .125rem var(--ink), 0 0 .375rem var(--ink), 0 0 .75rem var(--ink); /* a knockout, not a glow: words stay legible over points */
 }
 .fl-t small { display: block; font-size: inherit; color: var(--fg-3); }
-/* a hedge label without room for two lines may stand as one: "above the floor · how far is not published" (r3) */
-.fl.is-one .fl-t small { display: inline; }
+.fl--n .fl-t, .fl-t .fl-v { font: 400 var(--fs-label)/1.35 var(--mono); letter-spacing: .04em; color: var(--fg-3); }
+/* a hedge label without room for two lines may stand as one: "Above the floor · how far is not published" (r3) */
+.fl.is-one .fl-t small { display: inline; text-transform: lowercase; }
 .fl.is-one .fl-t small::before { content: " · "; }
 .fl[data-side="r"] .fl-t { transform: translate(var(--lead, 1.1875rem), -.675em); } /* the first line on the rule */
 .fl[data-side="l"] .fl-t { transform: translate(calc(-100% - var(--lead, 1.1875rem)), -.675em); text-align: right; }

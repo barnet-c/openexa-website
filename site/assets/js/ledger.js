@@ -241,8 +241,12 @@
       if (li) li.classList.add('is-head');
       headLi = li;
     }
+    // a folded column (Trust's phone, hc3) hides its later records: the record shown at or nearest before li (li itself
+    // when nothing is laid out yet)
+    const drawn = li => { let x = li; while (x && !x.getClientRects().length) x = x.previousElementSibling; return x || li; };
     let tabStop = null;
     function stop(li) { // roving tabindex: the list is one tab stop
+      li = li && drawn(li);
       if (tabStop && tabStop !== li) tabStop.tabIndex = -1;
       tabStop = li || null; if (tabStop) tabStop.tabIndex = 0;
     }
@@ -298,8 +302,10 @@
     track.addEventListener('focusin', e => { const li = e.target.closest('.lt-rec'); if (li && +li.dataset.seq !== sel) select(li, false); });
     track.addEventListener('keydown', e => {
       const cur = e.target.closest('.lt-rec'); if (!cur) return;
-      const back = cur.previousElementSibling, on = cur.nextElementSibling;
-      const go = { ArrowLeft: back, ArrowRight: on, Home: track.firstElementChild, End: track.lastElementChild, ...(G.vert ? G.rev ? { ArrowUp: on, ArrowDown: back } : { ArrowUp: back, ArrowDown: on } : {}) }[e.key];
+      let back = cur.previousElementSibling, on = cur.nextElementSibling;
+      while (on && !on.getClientRects().length) on = on.nextElementSibling; // a folded record is skipped (hc3)
+      if (back) back = drawn(back);
+      const go = { ArrowLeft: back, ArrowRight: on, Home: track.firstElementChild, End: track.lastElementChild && drawn(track.lastElementChild), ...(G.vert ? G.rev ? { ArrowUp: on, ArrowDown: back } : { ArrowUp: back, ArrowDown: on } : {}) }[e.key];
       if (go !== undefined) { e.preventDefault(); if (go) select(go, true); return; }
       if (e.key === 'Escape') { e.preventDefault(); follow(); const b = [ui.play, ui.replay, ui.latest].find(x => x && !x.hidden); if (b) b.focus(); }
     });
@@ -341,7 +347,7 @@
     }
     // the newest record wholly inside the view (the head while the view rests on it)
     function inView(sl = view.scrollLeft) {
-      if (G.vert) return bySeq(rendered); // a column shows every record
+      if (G.vert) { const li = track.lastElementChild && drawn(track.lastElementChild); return li ? bySeq(+li.dataset.seq) : bySeq(rendered); } // a column shows every record, or its first few (hc3)
       const n = track.childElementCount; if (!n || G.col <= 0) return null;
       const i = Math.min(n - 1, Math.floor((sl + G.w + 1 - G.padL) / G.col) - 1);
       if (i < 0 || G.padL + i * G.col < sl - 1) return null;

@@ -452,6 +452,7 @@
       grpOn = true; planned = false; grp.items.forEach(it => {
         if (it.oneSet) { it.el.classList.remove('is-one'); it.oneSet = false; }
         const t = it.el.firstElementChild; it.w = t ? t.offsetWidth : 0; it.h = t ? t.offsetHeight : 0; it.x = NaN; it.sd = it.side; it.blocked = false; it.drop = 0; it.one = false;
+        it.em = (t && parseFloat(getComputedStyle(t).fontSize)) || 11 * u; // hc3: the words' own size (Inter, or a numeral's mono) sets where a beside-the-point first line sits
         if (!it.to) { const l = Math.round(19 * u); if (l !== it.lead) { it.lead = l; it.el.style.setProperty('--lead', `${l}px`); } } // the rule's reach in the root's step (a1)
         // a hedge label's words on one line, measured for the slot search (r3)
         it.w1 = it.h1 = 0;
@@ -509,9 +510,10 @@
        (at most three of its sampled points) and of its own point wins. If none does, no label of the group is shown: a
        part is never named without its hedge (the caption says it all) */
     const SIDES = ['t', 'b', 'r', 'l', 'tr', 'tl', 'br', 'bl'], DROPS = [0, -8, 12, 24, 36, 48, 60, 72, 84, 96];
+    const NEAR = { r: ['tr', 'br'], l: ['tl', 'bl'], t: ['tr', 'tl'], b: ['br', 'bl'], tr: ['t', 'r'], tl: ['t', 'l'], br: ['b', 'r'], bl: ['b', 'l'] };
     const setOut = (it, out) => { if (out !== it.out) { it.el.classList.toggle('is-out', out); it.out = out; } };
     function place(spin, sc, planning) {
-      const s = Math.sin(spin), c = Math.cos(spin), M = 6 * u, L = safe.l + M, R = safe.r - M, T = safe.t + 4 * u, B = H - 4 * u, taken = [];
+      const s = Math.sin(spin), c = Math.cos(spin), M = 6 * u, L = safe.l + M, R = safe.r - M, T = safe.t + 4 * u, B = H - 4 * u, taken = [], pl = [];
       let bare = false; // the hedge label is not shown, so no other label is
       /* award a1 (D5): words below (or above) points that share a height in the formation stand on one baseline. Note 09's
          ten column numbers climbed 12 device px from 01 to 10 while the plate swayed (the near columns project lower);
@@ -534,9 +536,12 @@
         const off = (d, w) => d === 'l' ? -it.lead - w : d === 'r' ? it.lead : d.length > 1 ? (d[1] === 'l' ? 6 * u - w : -6 * u) : -w / 2;
         const over = q => Math.max(L - q.left, q.left + q.w - R, 0);
         const at = (sd, drop, one) => {
-          const w = one ? it.w1 : it.w, h = one ? it.h1 : it.h, left = px + off(sd, w), top = sd[0] === 't' ? py - 18 * u - drop - h : sd[0] === 'b' ? py + 18 * u + drop : py - 7 * u;
+          const w = one ? it.w1 : it.w, h = one ? it.h1 : it.h, left = px + off(sd, w), top = sd[0] === 't' ? py - 18 * u - drop - h : sd[0] === 'b' ? py + 18 * u + drop : py - 0.675 * it.em;
           const dx = left < L ? L - left : left + w > R ? R - left - w : 0;
-          return { sd, drop, one, w, h, left, top, dx, bad: top < T || top + h > B || Math.abs(dx) > w * 0.5 + 12 * u || w > R - L };
+          // hc3: words beside their point may slide along the rule, never back over the point (at 320 "Execution Council"
+          // slid onto the council's bar)
+          const back = sd === 'l' ? left + dx + w > px - 5 * u : sd === 'r' ? left + dx < px + 5 * u : false;
+          return { sd, drop, one, w, h, left, top, dx, bad: top < T || top + h > B || Math.abs(dx) > w * 0.5 + 12 * u || w > R - L || back };
         };
         if (planning) {
           // words beside a point that lack room on their side (more than a short slide) stand on the other, if they fit
@@ -546,6 +551,14 @@
           const covered = q => hits(q.left + q.dx, q.top, q.left + q.dx + q.w, q.top + q.h) > Math.max(6, 0.35 * occN * q.w * q.h / (W * H));
           it.blocked = false;
           if (it.w && covered(g)) { const o = at(mirror(g.sd), 0, false); if (!o.bad && !covered(o)) g = o; else it.blocked = true; }
+          // hc3: a part's name with no room or no clear side tries the two slots nearest its own (above or below its
+          // point) before it is hidden, as a hedge label does; the first clear one inside the stage wins (note 08's link
+          // on phones)
+          if ((it.blocked || g.bad) && it.w && !it.keep) for (const sd of NEAR[it.side] || []) { const o = at(sd, 0, false); if (!o.bad && !covered(o)) { g = o; it.blocked = false; break; } }
+          // then, for words set above or below their point, the same slots on a longer rule (12 or 24 px), clear of the
+          // drawing's edge (note 10's "One control plane" at 1920 and 3840). Not for words beside a point: dropped under
+          // it they read as the name of the part below (tried: note 05's "The boundary", 07's "Approved" on phones)
+          if ((it.blocked || g.bad) && it.w && !it.keep && /^[tb]/.test(it.side)) drops: for (const d of [12, 24]) for (const sd of [it.side, ...(NEAR[it.side] || [])]) { if (!/^[tb]/.test(sd)) continue; const o = at(sd, Math.round(d * u), false); if (!o.bad && !covered(o)) { g = o; it.blocked = false; break drops; } }
           if (it.keep && it.w && (it.blocked || g.bad)) {
             it.blocked = true;
             const clear = q => hits(q.left + q.dx, q.top, q.left + q.dx + q.w, q.top + q.h) <= 3 && !(px > q.left + q.dx - 4 * u && px < q.left + q.dx + q.w + 4 * u && py > q.top - 3 * u && py < q.top + q.h + 3 * u);
@@ -555,6 +568,13 @@
               const q = at(sd, drop, one); if (!q.bad && clear(q)) { g = q; it.blocked = false; break search; }
             }
           }
+          // hc3: words never cross words, so a part's name whose planned words would touch an earlier label's tries its
+          // two nearest slots, then the other side, before it waits (note 04's "One gate, one job each" beside "One large
+          // agent" on phones); the margins are wider than place()'s, so the sway cannot bring them back into touch
+          const box = q => [q.left + q.dx - 8 * u, q.top - 5 * u, q.left + q.dx + q.w + 8 * u, q.top + q.h + 5 * u];
+          const crosses = q => { const a = box(q); return pl.some(b => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1]); };
+          if (it.w && !it.keep && !it.blocked && !g.bad && crosses(g)) for (const sd of [...(NEAR[g.sd] || []), mirror(g.sd)]) { const o = at(sd, 0, false); if (!o.bad && !covered(o) && !crosses(o)) { g = o; break; } }
+          if (it.w && !it.blocked && !g.bad) pl.push(box(g));
           it.sd = g.sd; it.drop = g.drop; it.one = g.one; return;
         }
         const row = rows.get((it.sd || it.side)[0] + it.at[1] + ',' + it.at[2]), drop = it.drop + (row && row.n > 1 ? Math.abs(row.v - py) : 0);

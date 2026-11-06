@@ -264,7 +264,7 @@
 @media (pointer: coarse) {
   .lt-btn, .chain-restore { min-height: 2.75rem; }
   .lt-btn--ico { min-width: 2.75rem; }
-  .chain-list [contenteditable] { font-size: 1rem; }
+  .chain-list [contenteditable]:focus { font-size: 1rem; } /* hc3 (home): only while edited; at rest the record's own size */
 }
 @media (prefers-reduced-motion: reduce) {
   .lt, .lt *, .lt *::before, .lt *::after, .chain, .chain *, .chain *::before, .chain *::after { animation: none !important; transition: none !important; }

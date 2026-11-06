@@ -716,7 +716,7 @@
   }
 
   /* ================= layout: each scene fitted into the frame the copy leaves free ================= */
-  let W = 1, H = 1, dpr = 1, ptK = 1, ratio = 0, stacked = false, compact = false, short = false, tiny = false, navH = 72, barH = 64, gutter = 24, contR, safeL = 0, safeR = 0, safeProbe = null;
+  let W = 1, H = 1, dpr = 1, ptK = 1, remK = 1, ratio = 0, stacked = false, compact = false, short = false, tiny = false, navH = 72, barH = 64, gutter = 24, contR, safeL = 0, safeR = 0, safeProbe = null;
   // local extent seen from each scene's camera (w, h)
   const EXT = [[2.9, 2.5], [3.3, 2.2], [2.75, 2.75], [2.55, 2.5], [3.8, 2.0]];
   const EXT_ST = [[2.45, 2.12], [3.3, 2.7], null, null, null];
@@ -726,11 +726,12 @@
   let CAM = CAM_W;
   const ROOM_W = [0, 250, 236, 214, 0]; // room kept on the right of the structure for its callouts (wide layouts)
   const ZONE = ['right', 'right', 'right', 'right', 'right']; // one horizon: every scene sits in the same band right of its copy
-  // under the S4 floor, in CSS px: the records hang from it
+  // under the S4 floor, in CSS px: the records hang from it (hc3: times remK, the root size's growth above 1920, as the
+  // tags and the ink records grow: 3840 draws 1920's chart doubled; it drew 1440's offsets under sprites 2.4x as large)
   const U_REC = 6.5, U_NAV = 22, U_TICK = 10, U_DAY = 35, DAY_BAND = 70;
   const MIN_FRAME = [0, 120, 110, 120, DAY_BAND + 90]; // portrait: the least frame each structure reads in (S0's globe always keeps its lede)
   const frameTiny = [false, false, false, false, false]; // stacked on a short screen: a frame too small to read drops its callouts
-  const band4 = () => (frameTiny[4] ? 8 : DAY_BAND); // S4's room under the floor: none for tags it leaves out
+  const band4 = () => (frameTiny[4] ? 8 : DAY_BAND * remK); // S4's room under the floor: none for tags it leaves out
   let dayPitch = 99, b4 = null;
   const layouts = Array.from({ length: 5 }, () => ({ cx: 0, cy: 0, s: 1, rect: [0, 0, 0, 0] }));
   const beatRects = [], capH = [0, 0, 0, 0, 0], labelMaxW = [0, 0, 0, 0, 0], roomOf = [0, 0, 0, 0, 0];
@@ -745,7 +746,7 @@
     if (!navProbe) { navProbe = document.createElement('i'); navProbe.setAttribute('aria-hidden', 'true'); const ps = navProbe.style; ps.position = 'absolute'; ps.left = ps.top = '0'; ps.width = '0'; ps.height = 'var(--nav-h)'; ps.visibility = 'hidden'; ps.pointerEvents = 'none'; stage.appendChild(navProbe); }
     return parseFloat(getComputedStyle(navProbe).height) || 0;
   };
-  const l4 = (px) => px / Math.max(1e-4, layouts[4].s * pxuOf(H)); // S4 local units for a length in CSS px
+  const l4 = (px) => px * remK / Math.max(1e-4, layouts[4].s * pxuOf(H)); // S4 local units for a length in CSS px (times remK)
   // where the story sits and how long it pins: the stage is 100svh
   function measureScroll() {
     scrollY = window.scrollY;
@@ -948,7 +949,7 @@
         });
         cx = (xa + x1) / 2;
         if (!stacked) { const tw = Math.max(15, ...(lab.days || []).map(l => l.w || 0)); cx = Math.max(cx, x1 - COL_X(NCOL - 1) * s * pxu - tw / 2); } // the last tag's edge on the column's
-        const fy = stacked ? y1 - band4() : Math.min(y1 - DAY_BAND, (y0 + y1) / 2 + 0.6 * s * pxu);
+        const fy = stacked ? y1 - band4() : Math.min(y1 - DAY_BAND * remK, (y0 + y1) / 2 + 0.6 * s * pxu);
         cy = fy - 0.6 * s * pxu;
         floorL = -COL_SPAN / 2 - 0.04 - (floorW + 10) / (s * pxu);
       } else {
@@ -1042,12 +1043,15 @@
   // where the floor line, the paper's edge to be, ends on screen (share of the stage). Wide: 0.76 -> 0.66 on 1 Nov; hc1
   // (4 Nov) lifts the coda and its record line together to the optical centre: 0.6, so the frame's block (headline to the
   // paper's caption) has as much dark above it as paper below, a little high; never so high that the coda meets the bar
-  const FLOOR_END = () => (stacked ? 0.7 : short ? 0.76 : Math.min(0.66, Math.max(0.6, (navH + 22 + CODA_GAP() + codaH) / H)));
+  // (hc3) short landscape: the floor rises as far as the rail's caption (the coda's hedge) needs to fit whole under the tags
+  const FLOOR_END = () => (stacked ? 0.7 : short ? Math.max((navH + 22 + CODA_GAP() + codaH) / H, Math.min(0.76, 1 - capRoom() / H)) : Math.min(0.66, Math.max(0.6, (navH + 22 + CODA_GAP() + codaH) / H)));
+  const capRoom = () => (U_DAY + 16) * remK + Math.max(14, ...(lab.days || []).map(l => l.h || 0)) + paperCapH + 12; // floor line to the caption's rule, and some air
   // the way out, in shares of the exit.
   // (hc2, wide) the proof moment holds as one frame before the paper comes: the columns fold by 0.22 and the row of ten
   // spreads across the column as the coda lands (0.16-0.4), so headline, hedge and the ten records stand together on the
   // dark, centred; the paper rises after (0.4-0.8; was 0.26-0.66, which covered the row while it was still spreading)
-  const EXIT = { wide: { copy: [0.1, 0.22], coda: [0.18, 0.28], paper: [0.4, 0.8], cap: [0.74, 0.9] }, tall: { cam: [0.3, 0.56], copy: [0.3, 0.42], coda: [0.38, 0.48], paper: [0.58, 0.86], cap: [0.84, 0.96] } }; // (portrait: the proof's copy has gone before the coda opens: one headline at a time)
+  // (hc3) the hedge is said once: the rail's caption comes with the coda, under the ten tags, and the paper turns it to ink
+  const EXIT = { wide: { copy: [0.1, 0.22], coda: [0.18, 0.28], paper: [0.4, 0.8] }, tall: { cam: [0.3, 0.56], copy: [0.3, 0.42], coda: [0.38, 0.48], paper: [0.58, 0.86] } }; // (portrait: the proof's copy has gone before the coda opens: one headline at a time)
   // (lab) the exit folds the ten columns down together with the floor line (the paper's edge); seals go into their records
   const foldE = () => sstep(0.02, stacked ? 0.3 : 0.22, xeNow), flY = () => lerp(Y_FL, Y_FLOOR + 0.02, foldE());
   const sealOf = (c) => clamp((xeNow - 0.03 - 0.12 * c / Math.max(1, NCOL - 1)) / 0.1, 0, 1);
@@ -1130,12 +1134,12 @@
       }
     } else { // S4: one status for every session above the floor
       // its record hangs from the floor line, hash-linked to the one before.
-      const rY = Y_FLOOR - l4(U_REC), tY = Y_FLOOR + l4(9), e = foldE();
+      const rY = Y_FLOOR - l4(U_REC), tY = Y_FLOOR + l4(9), e = foldE(), k4 = remK / ptK; // (hc3) S4's marks at the DOM's scale: an ink record covers its record exactly
       for (let c = 0; c < NCOL; c++) {
         const x = COL_X(c), ss = SESSIONS[c], dc = sealOf(c);
-        put('r' + c, x, rY, 0, C.ivory, 0.95, 2, 15, 0.4 * Math.sin(PI * sstep(0.3, 1, dc)), 0); // a brief light as its seal goes in
-        if (ss.above) put('s' + c, x, lerp(Y_FLOOR + l4(7), rY, sstep(0, 0.6, dc)), 0, C.green, 0.95 * (1 - sstep(0.4, 0.8, dc)), 1, 9, 0.6, 1);
-        if (ss.confirmed) put('t' + c, x, lerp(Y_CTOP + 0.1, tY, e), 0, C.green, 0.95, 3, 12, 0.5, 0);
+        put('r' + c, x, rY, 0, C.ivory, 0.95, 2, 15 * k4, 0.4 * Math.sin(PI * sstep(0.3, 1, dc)), 0); // a brief light as its seal goes in
+        if (ss.above) put('s' + c, x, lerp(Y_FLOOR + l4(7), rY, sstep(0, 0.6, dc)), 0, C.green, 0.95 * (1 - sstep(0.4, 0.8, dc)), 1, 9 * k4, 0.6, 1);
+        if (ss.confirmed) put('t' + c, x, lerp(Y_CTOP + 0.1, tY, e), 0, C.green, 0.95, 3, 12 * k4, 0.5, 0);
       }
     }
     return out;
@@ -1619,9 +1623,14 @@
     paperIn.insertBefore(ink, paperIn.firstChild);
   }
   let shownCap = '', shownLeaving = null, paperCapH = 0;
-  // portrait screens: as the paper covers the copy, the proof's statement reappears above the columns
-  const coda = story.querySelector('.story-coda'), codaS = coda && coda.querySelector('.story-coda-s');
-  let shownCoda = '', shownCodaTr = '', shownCodaS = '', codaH = 0;
+  // (hc3) the coda's hedge is the rail's caption, said once: its copy in the dark sits under the ten tags, exactly where the
+  // paper's caption is, so the rising paper turns it to ink as it turns the tags (the paper uncovers, it does not carry)
+  const capDark = paperCap && labelHost ? paperCap.cloneNode(true) : null;
+  if (capDark) { capDark.classList.add('story-cap'); capDark.setAttribute('aria-hidden', 'true'); labelHost.appendChild(capDark); }
+  let shownCapD = '', shownCapDO = '';
+  // as the paper covers the copy, the proof's statement reappears above the columns
+  const coda = story.querySelector('.story-coda');
+  let shownCoda = '', shownCodaTr = '', codaH = 0;
   const paperSum = story.querySelector('[data-story-sum]');
   if (paperSum) paperSum.textContent = `${FLOOR} ${UNIT} floor · ${N_PREM} premium · ${N_DISC} discount · ${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed`;
   // the records, printed: as the paper reaches the floor line
@@ -1637,7 +1646,7 @@
   const beatLinks = beats.map(b => Array.from(b.querySelectorAll('a[href], button')));
   let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownFill = [], shownCapO = '';
   let paperH = 0, relay0 = false, relayReady = false, shownBarOff = null;
-  let fadeT = 0, copyX = 0, codaA = 0, capA = 0, fading = false, kF = 1; // the exit's three fades: in or out over 0.25 s, never resting between
+  let fadeT = 0, copyX = 0, codaA = 0, fading = false, kF = 1; // the exit's two fades: in or out over 0.25 s, never resting between
   let leave4 = 1, leaveC = 1, barA = 1; // the leave too: the proof's copy, the coda and the bar
   // the index follows the scroll position itself: immediate
   function syncIndex() {
@@ -1659,9 +1668,9 @@
     const lean = stacked, X = stacked ? EXIT.tall : EXIT.wide; // portrait: on the way out the coda takes over from the proof's copy
     const tN = now || performance.now(), k = red || lost ? 1 : Math.min(1, (tN - fadeT) / 250), mid = (w) => xe >= (w[0] + w[1]) / 2 ? 1 : 0;
     fadeT = tN; kF = k;
-    const cw = mid(X.copy), aw = mid(X.coda), pw = mid(X.cap);
-    copyX += clamp(cw - copyX, -k, k); codaA += clamp(aw - codaA, -k, k); capA += clamp(pw - capA, -k, k);
-    fading = copyX !== cw || codaA !== aw || capA !== pw;
+    const cw = mid(X.copy), aw = mid(X.coda);
+    copyX += clamp(cw - copyX, -k, k); codaA += clamp(aw - codaA, -k, k);
+    fading = copyX !== cw || codaA !== aw;
     // the hand-off: once the columns have drained, the paper rises from the bottom edge to the floor line, which becomes its edge
     paperH = 0;
     if (xe > 0 && seg === 3) paperH = Math.max(0, H - project(0, Y_FLOOR * layouts[4].s, 0).y - 1) * sstep(X.paper[0], X.paper[1], xe);
@@ -1715,12 +1724,21 @@
     const barOff = +bo < 0.01;
     if (barOff !== shownBarOff) { shownBarOff = barOff; idx.concat(motionButton || []).forEach(el => { if (barOff) el.setAttribute('tabindex', '-1'); else el.removeAttribute('tabindex'); }); }
     if (shownLeaving !== xe > 0.05) story.classList.toggle('is-leaving', shownLeaving = xe > 0.05); // the covered tags take no pointer
-    // portrait and short landscape: while the proof's copy fades
+    placeLabels();
+    // (hc3) the rail's caption, the coda's one hedge: under the ten tags, kept whole on screen (the claim never shows
+    // without it), in the dark with the coda and in ink on the paper that rises over it
+    let capY = -1;
+    if (paperCap && xe > 0) {
+      let yb = 0;
+      if (lab.days) lab.days.forEach(l => { if (l.inkTr && l.h) yb = Math.max(yb, l.y + l.h); });
+      if (!yb) yb = (lean ? project(0, Y_FLOOR * layouts[4].s, 0).y : H * FLOOR_END()) + (U_DAY + 16) * remK;
+      capY = Math.round(Math.min(yb + 16 * remK, H - paperCapH - 2)); // 16 px under the tags, with the rem above 1920 (4K: 32)
+    }
     if (coda) {
       let co = 0, top = 0;
       if (xe > 0) {
         const fy = lean ? project(0, Y_FLOOR * layouts[4].s, 0).y : H * FLOOR_END(); // portrait: above the line as it settles
-        top = Math.max(navH + 14, fy - CODA_GAP() - codaH); // just above the floor it names, clear of the ticks (and the hedge with it)
+        top = Math.max(navH + 14, fy - CODA_GAP() - codaH); // just above the floor it names, clear of the ticks
         co = codaA;
         const room0 = top - navH, tC = top < navH + 14.5 || (ov > 0 && (room0 <= 6 || ov >= room0 - 6 - Math.min(150, H * 0.2) / 2)) ? 0 : 1; // the leave, on a threshold
         leaveC += clamp(tC - leaveC, -k, k); if (leaveC !== tC) fading = true;
@@ -1729,11 +1747,11 @@
       const v = co.toFixed(3), tr = `translate3d(0, ${(top + (red ? 0 : (1 - co) * 10)).toFixed(1)}px, 0)`;
       if (v !== shownCoda) coda.style.opacity = shownCoda = v;
       if (co > 0 && tr !== shownCodaTr) coda.style.transform = shownCodaTr = tr;
-      // portrait: its summary line gives way as the paper's caption, which states the same, comes in
-      const vs = (xe > 0 ? 1 - capA : 1).toFixed(3);
-      if (codaS && vs !== shownCodaS) codaS.style.opacity = shownCodaS = vs;
+      if (capDark) { // the caption comes and goes with the coda; it stays on the rail (no lift of its own)
+        if (capY >= 0) { const ct = `translate3d(0, ${capY}px, 0)`; if (ct !== shownCapD) capDark.style.transform = shownCapD = ct; }
+        if (v !== shownCapDO) capDark.style.opacity = shownCapDO = v;
+      }
     }
-    placeLabels();
     if (paperH > 0.5) {
       // the records in ink, exactly where they hung from the floor line
       if (inkRecs.length) {
@@ -1742,19 +1760,16 @@
         const key = xs.map(v => v.toFixed(1)).join() + ry.toFixed(1);
         if (key !== shownInk) {
           shownInk = key;
-          inkRecs.forEach((e, c) => { e.style.transform = `translate(${(xs[c] - 7.5).toFixed(1)}px, ${(ry - 3.5).toFixed(1)}px)`; });
+          const hw = inkRecs[0].offsetWidth / 2, hh = inkRecs[0].offsetHeight / 2; // (hc3) its own half size: rem grows above 1920 (it was 7.5 / 3.5 px, 7 px off at 3840)
+          inkRecs.forEach((e, c) => { e.style.transform = `translate(${(xs[c] - hw).toFixed(1)}px, ${(ry - hh).toFixed(1)}px)`; });
           if (inkLink) { inkLink.style.transform = `translate(${xs[0].toFixed(1)}px, ${ry.toFixed(1)}px)`; inkLink.style.width = (xs[xs.length - 1] - xs[0]).toFixed(1) + 'px'; }
         }
       }
-      // the paper's caption under the ink tags; left out where it would not fit whole (short landscape)
-      if (paperCap) {
-        let yb = 0;
-        if (lab.days) lab.days.forEach(l => { if (l.inkTr && l.h) yb = Math.max(yb, l.y + l.h); });
-        if (!yb) yb = H - paperH + 30;
-        const capY = Math.round(yb + 16), cap = `translate3d(0, ${capY}px, 0)`;
+      // the caption in ink, exactly over its dark copy: printed as the paper's edge passes it
+      if (paperCap && capY >= 0) {
+        const cap = `translate3d(0, ${capY}px, 0)`;
         if (cap !== shownCap) paperCap.style.transform = shownCap = cap;
-        const co = (capY + paperCapH > H ? 0 : red ? 1 : capA).toFixed(3);
-        if (co !== shownCapO) paperCap.style.opacity = shownCapO = co;
+        if (shownCapO !== '1') paperCap.style.opacity = shownCapO = '1';
       }
     }
   }
@@ -1802,7 +1817,7 @@
   function invalidate() { // every cached write is made again by the next frame
     shown.forEach(s => { s.op = s.tr = s.eo = s.w = s.bo = ''; s.on = s.gone = null; });
     shownIdx = labelScene = tabScene = -1; shownBarOff = shownLeaving = shownScrolled = shownHasInsp = null;
-    shownBar = shownPaper = shownCoda = shownCodaTr = shownCodaS = shownCap = shownCapO = shownInk = inspTr = '';
+    shownBar = shownPaper = shownCoda = shownCodaTr = shownCapD = shownCapDO = shownCap = shownCapO = shownInk = inspTr = '';
     labels.forEach(l => { l.tr = l.ov = l.d = l.nc = l.inkTr = ''; l.on = null; });
   }
   function setTiny(on) {
@@ -1814,6 +1829,7 @@
       if (bar) bar.style.opacity = bar.style.visibility = '';
       if (paper) paper.style.height = paper.style.visibility = '';
       if (coda) coda.style.opacity = coda.style.transform = '';
+      if (capDark) capDark.style.opacity = capDark.style.transform = '';
       beatLinks.forEach(list => list.forEach(el => el.removeAttribute('tabindex')));
       hoverPtr = hoverFocus = null; setHover();
       stage.removeAttribute('tabindex');
@@ -1843,6 +1859,8 @@
       // phones (LITE) draw at their own density inside a phone budget (390 x 844 @3 = 2.96 M device px: crisp orbits; was 2x, upscaled)
       dpr = Math.min(3, r, Math.sqrt((LITE ? LITE_BUDGET : PIXEL_BUDGET) / Math.max(1, W * H)));
       ptK = Math.max(1, W / 1600); // wide screens: points, glows and actors grow with the frame, so the globe and the swarm read as dense as at 1440 (4K: 2.4x)
+      remK = Math.max(1, (parseFloat(getComputedStyle(root).fontSize) || 16) / 16); // (hc3) the rem's growth (4K: 2x): S4's chart offsets, under rem-sized tags
+      if (lab.days) lab.days.forEach(l => { l.dy = U_DAY * remK - 6; });
       cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr);
       gl.viewport(0, 0, cv.width, cv.height);
       if (paperIn) paperIn.style.height = H + 'px'; // the paper's contents live in the stage's frame
@@ -2057,7 +2075,7 @@
     beats.forEach(b => { b.style.opacity = b.style.transform = b.style.visibility = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-relay', 'is-tight', 'is-snug', 'is-bo0'); });
     root.classList.remove('story-compact', 'story-short', 'story-tiny', 'story-figs-01');
     beatLinks.forEach(list => list.forEach(el => el.removeAttribute('tabindex')));
-    labels.forEach(l => l.el.remove()); leaders.remove();
+    labels.forEach(l => l.el.remove()); leaders.remove(); if (capDark) capDark.remove();
     if (bar) bar.style.opacity = bar.style.visibility = '';
     if (paper) paper.style.height = paper.style.visibility = '';
     if (coda) coda.style.opacity = coda.style.transform = '';

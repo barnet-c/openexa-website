@@ -748,6 +748,19 @@
   if (!prefersReduced) storySplit.forEach(splitWords);
   const watched = $$('[data-reveal], [data-split], [data-draw]').filter(el => !el.closest('.story'));
   let rio = null, sio = null;
+  // a drawn line's dash is its drawing's scale on screen while it draws (site.css .dr; a2: whole at any size)
+  const drawScale = (el, now) => $$('.dr, .dm--line', el).forEach(d => {
+    const svg = d.ownerSVGElement, k = svg && svg.style.getPropertyValue('--dr-k'), m = svg && (now || !k) && svg.getScreenCTM();
+    const v = m && Math.max(1, Math.hypot(m.a, m.b) * 1.02 + .02).toFixed(3);
+    if (v && v !== k) svg.style.setProperty('--dr-k', v);
+  });
+  // (hc3) a card whose plate is [data-draw] draws its accent again on hover or keyboard focus (site.css): its line's dash
+  // at the drawing's scale now
+  if (!prefersReduced && $('a[data-draw], a [data-draw]')) {
+    const again = e => { const a = e.target.closest && e.target.closest('a'); const p = a && (a.matches('[data-draw]') ? a : $('[data-draw]', a)); if (p) drawScale(p, true); };
+    document.addEventListener('pointerover', again, { passive: true });
+    document.addEventListener('focusin', again);
+  }
   if ('IntersectionObserver' in window && !prefersReduced) requestAnimationFrame(() => {
     const fold = window.innerHeight;
     // every read first, then every write. A chapter that starts below the fold makes all its elements "later" from its own
@@ -756,11 +769,6 @@
     const rects = watched.map(el => { const s = el.closest('main > section'); return s && secTop(s) >= fold - 1 ? { top: secTop(s), width: 1, height: 1 } : el.getBoundingClientRect(); });
     const later = watched.filter((el, k) => { const r = rects[k]; return (r.width || r.height) && r.top >= fold - 1; });
     watched.forEach(el => { if (!later.includes(el)) el.classList.add('is-in'); });
-    // a drawn line's dash is its drawing's scale on screen while it draws (site.css .dr; a2: whole at any size)
-    const drawScale = el => $$('.dr, .dm--line', el).forEach(d => {
-      const svg = d.ownerSVGElement, m = svg && !svg.style.getPropertyValue('--dr-k') && svg.getScreenCTM();
-      if (m) svg.style.setProperty('--dr-k', Math.max(1, Math.hypot(m.a, m.b) * 1.02 + .02).toFixed(3));
-    });
     const show = (el, k) => {
       drawScale(el);
       if (el.classList.contains('will-draw')) { el.style.setProperty('--draw-i', k); setTimeout(() => el.classList.remove('will-draw'), 1200 + k * 80); }

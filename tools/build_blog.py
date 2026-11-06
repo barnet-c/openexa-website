@@ -232,10 +232,16 @@ def thumb(name, sizes):
 # The old image files stay in assets/img/blog/ (the owner may want them back); only the markup stops using them.
 def pos_in_col(p): return [q["slug"] for q in by_col[p["col"]]].index(p["slug"])
 def turn(p): return (-8, -2, 4, 10)[pos_in_col(p) % 4]
+CARD_ACCENT = re.compile(r'<(path|circle|ellipse) class="pg"(?=[^>]*pathLength="1")')
 def plate(p, cls="blog-thumb"):
     """A card's plate: the drawing alone (cut, 1 Nov: the 'Plate · <name>' label over it went; the title names the
-    post). aria-hidden: the card's h3 names the post."""
-    return f'<div class="{cls} blog-plate" aria-hidden="true">{plate_svg(p["slug"], p["col"], turn(p))}</div>'
+    post). aria-hidden: the card's h3 names the post.
+    Hill climb hc3 (director, item 10): the plate is the site's [data-draw] plate (site.js, site.css .dm): its one green
+    line draws as the card arrives, and again, once, 400 ms, when the card is pointed at or focused, as every card's plate
+    does on the site (it was blog.css's own 1.1 s redraw on hover, and no draw on arrival)"""
+    s, n = CARD_ACCENT.subn(r'<\1 class="pg dm dm--line"', plate_svg(p["slug"], p["col"], turn(p)))
+    assert n == 1, f"{p['slug']}: a card's plate has one green line to draw ({n})"
+    return f'<div class="{cls} blog-plate" data-draw aria-hidden="true">{s}</div>'
 SERIF_HY = re.compile(r"(?<=[^\W\d_])-(?=[^\W\d_])")
 # v2x lab (blog-editorial, 31 Oct): typography on the page, never words (VOICE §7; r1-art M8, r1-copy 31). The old CMS
 # kept typewriter marks: straight quotes and apostrophes, a spaced hyphen for a dash, three dots. What the page shows
@@ -339,6 +345,24 @@ def bare_marks(h):
     an italic full stop, italic and bold spaces, bold zero-width joiners (6 posts). Since a3 an italic is Instrument Serif
     at 1.08em, so such a mark showed in another face. The tags go; the characters stay, in the same order"""
     return re.sub(r"<(strong|b|em|i)>([^<\w]*)</\1>", r"\2", h)
+def link_spaces(h):
+    """hill climb hc3 (blog's own find, 390): the CMS closed a link after a space ("... Marketing and Sales.” </a>"), so
+    the link's underline ran on under the space. The space moves out after the link: the same characters in the same
+    order"""
+    return re.sub(r"(\s+)</a>", r"</a>\1", h)
+QUOTED_MIN = 25  # words: longer than two lines of the 39.2rem column
+def quoted(h):
+    """hill climb hc3 (design director, item 8): a paragraph the author set wholly in italic, longer than two lines, is a
+    quotation from another writer (the Introduction's 89 words from a16z). In Instrument Serif italic at 20 px over seven
+    lines the face thins out; it is set as a quoted passage instead (blog.css p.pq: Inter, upright, the body's size, a
+    hairline rule). Its italic tags go (it is no longer set in italic, and so the post neither preloads the italic face
+    nor is held to: sets_italic, check_static own_preloads); the characters stay, in the same order"""
+    def one(m):
+        inner = m.group(1)
+        outside = plain(re.sub(r"<(em|i)\b[^>]*>.*?</\1>", " ", inner, flags=re.S)).strip("  ")
+        if outside or not re.search(r"<(em|i)\b", inner) or len(plain(inner).split()) < QUOTED_MIN: return m.group(0)
+        return '<p class="pq">' + re.sub(r"</?(?:em|i)\b[^>]*>", "", inner) + "</p>"
+    return re.sub(r"<p>(.*?)</p>", one, h, flags=re.S)
 def lead(h):
     """the post's lead (larger, with the notes' drop initial): its first paragraph, unless a heading or list comes
     first. Jury (blog): a label line is not a lead. A one-line bold subhead ('Regime-Switching Market') passes the lead
@@ -824,7 +848,7 @@ for p in order:
         j = SERIES_POS[p["slug"]]
         if j: rel_links += f'  <link rel="prev" href="{BASE}{SERIES[j - 1][0]}.html">\n'
         if j + 1 < len(SERIES): rel_links += f'  <link rel="next" href="{BASE}{SERIES[j + 1][0]}.html">\n'
-    article = hero_img + lead(hang(marks_in_em(bare_marks(smart_html(p["body"])))))
+    article = hero_img + lead(hang(quoted(marks_in_em(bare_marks(link_spaces(smart_html(p["body"])))))))
     # award a4 (a4-ux medium, a4-design polish): a long read with figures loads blog.js for one thing, the margin
     # plate's rest while a figure is on screen (blog.js; the other posts load no script of their own)
     post_js = ("site.js",) + (("blog.js",) if long_read(p) and "<figure" in article else ())

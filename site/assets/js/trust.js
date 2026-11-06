@@ -86,6 +86,7 @@
   // under it would otherwise shrink by eight records and grow back one at a time (v2x cut: verify_v9 ledger_height)
   function hold(on) { track.style.minHeight = on ? track.offsetHeight + 'px' : ''; }
   function replay() {
+    unfold(true);
     clearTimeout(replaying);
     sweep.forEach(clearTimeout); sweep = []; cancelAnimationFrame(glideRaf);
     armed = null; pending = false;
@@ -126,6 +127,7 @@
 
   /* ---- verify: an audit walks every link from the first record to the last ---- */
   function verify() {
+    unfold(true);
     if (T.sel !== null) { T.sel = null; T.markSel(); }
     T.following = false; T.inspect(); // the inspector rides along with the sweep
     armed = null; pending = false; tabs(); // a verdict ends the edit: the fields leave the Tab order (r3)
@@ -240,33 +242,31 @@
   }
   const toVerify = () => { ui.verify.focus({ preventScroll: true }); place(false); };
 
-  /* ---- the inspected record's lineage, one serif line over the strip (1440 px and up; a1 UX): the proposal it comes
-     from, the Council's answer, the fill, and the hash the record produces now, read from the same records ---- */
-  const lin = root.querySelector('[data-lt-lin]');
-  function lineage(r, a) {
-    const i = recs.indexOf(r);
-    if (!lin || i < 0) return;
-    const is = (k, re) => re.test(recs[k].ev);
-    let p = i, c = -1, f = -1;
-    while (p > 0 && !is(p, /^PROPOSED/)) p--;
-    for (let k = p + 1; k <= i; k++) { if (c < 0 && is(k, /^(APPROVED|REJECTED)/)) c = k; if (is(k, /^(FILLED|PARTIAL)/)) f = k; }
-    const no = c >= 0 && is(c, /^REJECTED/), id = k => (k < 0 ? '' : recs[k].id);
-    const steps = [['Proposed', id(p)], [c < 0 ? 'Council' : no ? 'Council rejected' : 'Council approved', id(c), c < 0, no],
-      [no ? 'No fill' : f < 0 ? 'Fill' : is(f, /^PARTIAL/) ? 'Partly filled' : 'Filled', id(f), f < 0],
-      ['Hash', (a ? a.now : r.hash).slice(0, 8), false, !!a && !a.ok]];
-    lin.replaceChildren(...steps.flatMap(([w, v, wait, bad], k) => {
-      const e = T.node('span', 'tr-lin-s' + (wait ? ' is-wait' : '') + (bad ? ' is-bad' : ''), w + (v ? ' ' : ''));
-      if (v) e.append(T.node('b', null, v));
-      return k ? [T.node('i'), e] : [e];
-    }));
+  /* ---- phones (hc3, HC3 director item 5): the replay's column shows its first four records (proof.css folds it before
+     the first paint, so nothing moves when this file arrives); the control opens all nine, and so does any action on the
+     chain (Replay, Change a record, Verify): a replay, an edit or an audit is read in full, as Home's chain opens ---- */
+  const more = root.querySelector('[data-lt-more]'), shut = more ? more.textContent : '';
+  function unfold(open) {
+    if (!more || root.classList.contains('is-open') === open) return;
+    root.classList.toggle('is-open', open);
+    more.setAttribute('aria-expanded', String(open));
+    more.textContent = open ? 'Show the first four records' : shut;
+    // a record folded away is no longer selected, nor the list's Tab stop; the inspector reads the newest record shown
+    if (!open) {
+      if (replaying) { clearTimeout(replaying); replaying = 0; whole(); } // a replay in progress completes at once (its held height goes)
+      const li = T.sel !== null ? els.get(T.sel) : null;
+      if (li && !li.getClientRects().length) { T.sel = null; T.markSel(); }
+      T.stop(T.sel !== null ? els.get(T.sel) : track.lastElementChild);
+    }
+    T.inspect(); T.state();
   }
+  if (more) more.addEventListener('click', () => unfold(!root.classList.contains('is-open')));
 
   /* ---- wiring: the hooks ledger.js calls, then the controls ---- */
   X.whole = whole;
   X.check = r => { // the inspector's checks; a record that no longer verifies loses its green 'settled' tone there too
     const a = X.v ? at(r) || { linked: true, now: r.hash, ok: true } : null;
     if (a && !a.ok && F.ev) F.ev.classList.remove('is-settled');
-    lineage(r, a);
     return a;
   };
   X.built = (r, li) => { if (X.v && li.classList.contains('is-edited')) nowTag(li, at(r)); };
@@ -292,7 +292,7 @@
       });
     });
     ui.edit.addEventListener('click', () => {
-      T.mount();
+      T.mount(); unfold(true);
       // the selected record, or the rejection: the record a visitor would most want to rewrite
       let li = T.sel !== null ? els.get(T.sel) : null;
       if (!li) { const r = recs.find(x => /^REJECTED/.test(x.ev)) || recs[0]; li = r ? els.get(r.seq) : null; }

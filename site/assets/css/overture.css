@@ -54,7 +54,6 @@
 /* portrait and short landscape screens: the proof's derived summary over the floor while the paper takes the copy's place */
 .story-coda { position: absolute; left: var(--story-in-l); right: var(--story-in-r); top: 0; display: none; opacity: 0; pointer-events: none; will-change: opacity, transform; }
 .story-coda-t { font: 400 clamp(1.9rem, 7.6vw, 3.1rem)/1.04 var(--serif); letter-spacing: -0.02em; color: var(--paper); text-wrap: balance; }
-.story-coda-s { margin-top: .75rem; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); text-wrap: balance; } /* the caption register (hc2; home.css's twin until home drops it) */
 /* the role-coded vocabulary, as a key */
 .story-lab i.lg-r, .story-lab i.lg-b { content: ""; display: inline-block; flex: none; width: .5625rem; height: .5625rem; box-sizing: border-box; }
 .story-lab i.lg-r { width: .4375rem; height: .4375rem; background: var(--reject-bright); border-radius: 50%; }
@@ -101,6 +100,9 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-lab.day.is-thin:not(:focus-visible), .story-ink .story-lab.is-thin { opacity: 0 !important; } /* columns too close for every tag: 01, 03 … 09 print */
 .story-lab.floor { color: rgba(245, 242, 236, .74); text-align: right; }
 .story-lab.navtag { color: rgba(245, 242, 236, .5); }
+/* hc3: scene 4 is recorded data, as Fig. 1.1: its words (Floor, NAV) in the caption register, its value and the days mono */
+.story-lab:is(.floor, .navtag) { font: 400 var(--fs-small)/1.35 var(--sans); letter-spacing: 0; text-transform: none; }
+.story-lab.floor .u { font: 400 var(--fs-label)/1 var(--mono); letter-spacing: .02em; }
 .story-lab.sum { text-align: right; line-height: 1.8; color: rgba(245, 242, 236, .62); }
 .story-lab.sum b { color: var(--paper); }
 .story-lab.sum .sep { display: block; }

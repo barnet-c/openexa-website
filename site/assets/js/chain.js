@@ -1,7 +1,8 @@
 /* OpenEXA — the chain, for real (Home §06). Eight records from the page, each hashed with SHA-256 over its content and
    the hash before it. Edit a field: that record and every one after it turn red in a cascade (110 ms a record), the
    status names the record where the chain broke (Trust's words; hc2) and its last sentence is announced once. Restore
-   heals from the top. */
+   heals from the top. hc3 (HC3 director item 4): a record's id is the page's own (.i): a ledger id such as "#4f23", as
+   Trust's replay writes them, is named as it is ("Chain broken at #4f25"); a bare number reads "record 03". */
 (function () {
   'use strict';
   const root = document.querySelector('[data-chain]');
@@ -32,26 +33,33 @@
     return;
   }
   const read = (li, s) => { const n = li.querySelector(s); return n ? n.textContent.trim() : ''; };
-  let RECORDS = Array.from(list.children).map(li => [read(li, '.who'), read(li, '.ev'), read(li, '.what')]).filter(r => r[0] && r[1]);
+  let RECORDS = Array.from(list.children).map(li => [read(li, '.who'), read(li, '.ev'), read(li, '.what'), read(li, '.i')]).filter(r => r[0] && r[1]);
   if (RECORDS.length < 2) RECORDS = [
-    ['A-0412', 'PROPOSED', 'lifecycle L-01 · next step'], ['A-0412', 'VALIDATED', 'schema ok · inputs complete'],
-    ['COUNCIL', 'APPROVED', 'policy v7 · scoped action'], ['A-0412', 'SUBMITTED', 'registry tool · key 9f3c'],
-    ['A-0412', 'RECEIVED', 'source receipt attached'], ['A-0412', 'EXECUTED', 'action complete · result stored'],
-    ['A-0891', 'RECONCILED', 'source receipt ↔ internal record'], ['A-0412', 'SETTLED', 'confirmed · appended · chained']];
+    ['s-0412', 'PROPOSED', 'Lifecycle 01 · next step', '#4f23'], ['s-0412', 'VALIDATED', 'schema ok · inputs complete', '#4f24'],
+    ['council', 'APPROVED', 'policy v7 · scoped action', '#4f25'], ['s-0412', 'SUBMITTED', 'registry tool · key 9f3c', '#4f26'],
+    ['s-0412', 'RECEIVED', 'source receipt attached', '#4f27'], ['s-0412', 'EXECUTED', 'action complete · result stored', '#4f28'],
+    ['r-0031', 'RECONCILED', 'source receipt ↔ internal record', '#4f29'], ['s-0412', 'SETTLED', 'confirmed · appended · chained', '#4f2a']];
   const ORIGINAL = RECORDS.map(r => r.slice());
   const enc = new TextEncoder();
   const hex = (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
   async function sha(s) { return hex(await crypto.subtle.digest('SHA-256', enc.encode(s))); }
   const pad = n => String(n).padStart(2, '0');
+  // each record's id as the page writes it, and as a sentence names it
+  const ID = RECORDS.map((r, i) => r[3] || pad(i + 1)), name = i => (/^#/.test(ID[i]) ? ID[i] : 'record ' + ID[i]);
 
   // a row per record: node, record, and the link carrying its hash to the next
   const rows = RECORDS.map((r, i) => {
     const li = document.createElement('li');
-    li.innerHTML = `<i class="chain-node" aria-hidden="true"></i><span class="i" role="button" tabindex="${i ? -1 : 0}" aria-label="Edit record ${pad(i + 1)}" aria-describedby="chain-how-i">${pad(i + 1)}</span><span class="who"></span>` +
-      `<b class="ev" tabindex="-1" spellcheck="false" role="textbox" aria-label="Event for record ${i + 1}" aria-multiline="false"></b>` +
-      `<span class="what" tabindex="-1" spellcheck="false" role="textbox" aria-label="Detail for record ${i + 1}" aria-multiline="false"></span>` +
+    li.innerHTML = `<i class="chain-node" aria-hidden="true"></i><span class="i" role="button" tabindex="${i ? -1 : 0}" aria-describedby="chain-how-i"></span><span class="who"></span>` +
+      `<b class="ev" tabindex="-1" spellcheck="false" role="textbox" aria-multiline="false"></b>` +
+      `<span class="what" tabindex="-1" spellcheck="false" role="textbox" aria-multiline="false"></span>` +
       `<span class="chain-flag" hidden>edited</span><i class="chain-seg" aria-hidden="true"></i>` +
-      `<span class="chain-link"><span class="sr-only">Hash of record ${i + 1}: </span><s><span class="sr-only">stored </span><span class="chain-was"></span><span class="sr-only">, now </span></s><b></b></span>`;
+      `<span class="chain-link"><span class="sr-only"></span><s><span class="sr-only">stored </span><span class="chain-was"></span><span class="sr-only">, now </span></s><b></b></span>`;
+    // the page's words go in as text, never as markup
+    const no = li.querySelector('.i'); no.textContent = ID[i]; no.setAttribute('aria-label', 'Edit ' + name(i));
+    li.querySelector('.ev').setAttribute('aria-label', 'Event for ' + name(i));
+    li.querySelector('.what').setAttribute('aria-label', 'Detail for ' + name(i));
+    li.querySelector('.chain-link > .sr-only').textContent = 'Hash of ' + name(i) + ': ';
     li.querySelector('.who').textContent = r[0];
     li.querySelector('.ev').textContent = r[1];
     li.querySelector('.what').textContent = r[2];
@@ -146,7 +154,7 @@
     if (broken < 0) return `Restoring · ${plural(n, 'record still fails', 'records still fail')}`;
     // hc2: one vocabulary with Trust's replay: 'Chain intact' or 'Chain broken at <record> · every later link fails'
     const first = rows.findIndex(li => li.classList.contains('is-broken'));
-    return `Chain broken at record ${pad(first + 1)}${first < rows.length - 1 ? ' · every later link fails' : ''}`;
+    return `Chain broken at ${name(first)}${first < rows.length - 1 ? ' · every later link fails' : ''}`;
   }
   let said = '';
   function settled(broken, quiet) { // the last record reached: the final sentence, announced once

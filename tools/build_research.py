@@ -84,7 +84,10 @@ KEYS = {"sessions": "Green: premium · white: discount"}
 # figure.js's geometry (FORMS): a formation that moves needs its labels moved here. Sides: r, l (text beside the point,
 # its first line on the rule), t, b (centred above, below), tl, tr, bl, br (above or below, text ending or starting at
 # the point). Flags: "minor" (dropped on a small stage), "minorsub" (its second line, a gloss, dropped on a small stage;
-# never for a hedge), "acc" (the green part), "rej" (a rejection: the only red text). An optional last item (r1) is where
+# never for a hedge), "acc" (the green part), "rej" (a rejection: the only red text), "n" (a numeral alone, as note 09's
+# axis: mono, as a paper plate's .hp-lab--n), "nsub" (its second line a value, "10 bps": mono). Hill climb hc3 (director
+# item 2): the words are the paper plates' caption register (research.css .fl-t: Inter, sentence case; numerals in a
+# phrase stay in it, tabular, as Platform's "Above · 01–04"). An optional last item (r1) is where
 # the words begin when the point lies inside the drawing: the rule reaches out to it (figure.js data-to, --lead).
 # Path: the span of the formation's own path (FORMS' fifth value, 0..1) the label names; while the pulse walks the
 # path it lights each label it passes, so the plate reads itself out in the note's order. None: the part is not on
@@ -98,49 +101,55 @@ def _cols():  # note 09: ten columns, x = -1.08 + c * 0.24 (figure.js sessions),
     # award a1 (a1-pixel, D5): the numbers are the drawing's axis, read as one row (figure.js sets them on one baseline),
     # at one weight and one dot size: the pulse no longer lights them one by one (a still showed a row that faded from
     # left to right); it still runs through the columns themselves
-    return [(f"{c + 1:02d}", None, (round(-1.08 + c * 0.24, 2), -0.78, 0), "b", "" if c in (0, 9) else "minor", None)
+    return [(f"{c + 1:02d}", None, (round(-1.08 + c * 0.24, 2), -0.78, 0), "b", "n" if c in (0, 9) else "minor n", None)
             for c in range(10)]
 def _loop(n):  # note 03: node n of figure.js lifecycle (a ring of r 0.95, tilted 0.9, from angle 0.5)
     a = n / 6 * math.tau + 0.5; x, z = math.cos(a) * 0.95, math.sin(a) * 0.95
     return (round(x, 3), round(z * math.sin(0.9) * 0.5, 3), round(z * math.cos(0.9), 3))
 LABELS = {
-    "horizon": [("verification gate", None, (-0.69, -0.74, 0.14), "b", "", (0.2, 0.2)),
-                ("a gate after every step", None, (0.72, 0.57, 0.14), "t", "acc", (0.81, 0.81)),
-                ("p to the power n", None, (0.92, -0.55, -0.12), "b", "", (0.9, 0.9))],
-    "weights": [("one base model", None, (-0.46, 0.22, 0), "l", "", None, (-0.84, 0.22, 0)),
-                ("adapters", None, (0.705, 0.363, 0), "r", "", (0.0, 0.5)),
-                ("the record", "each holds the previous hash", (0.14, -0.74, 0), "r", "minorsub", (0.55, 0.95))],
-    # the note's own definition of a lifecycle, in its order round the loop
-    "lifecycle": [("signal", None, _loop(0), "r", "", (0.0, 0.03)),
-                  ("decisions, approvals", None, _loop(2), "l", "", (0.18, 0.56)),
-                  ("executes against an external counterparty", None, _loop(4), "b", "minor", (0.74, 0.74)),
-                  ("record", None, _loop(5), "r", "acc", (0.93, 0.93))],
-    "swarm": [("one large agent", None, (-0.72, 0.45, 0), "t", "", None),
-              ("one gate, one job each", None, (0.64, 0.46, 0), "t", "acc", None)],
-    "boundary": [("01–04 decide", None, (-0.8, 0.4, 0.36), "l", "", (0.0, 0.34)),
-                 ("the boundary", None, (-0.92, 0, 0.46), "l", "acc", (0.44, 0.44)),
-                 ("05–08 execute", "deterministic code", (-0.8, -0.4, 0.36), "l", "minorsub", (0.55, 0.89))],
-    "rulebook": [("documents, exceptions", None, (1.05, -0.47, 0), "b", "", (0.08, 0.2)),
-                 ("the post-trained model", None, (0, 0.52, 0), "t", "", (0.96, 0.96))],
-    "council": [("proposals", None, (0.02, 0.95, 0), "r", "", (0.0, 0.1)),
+    "horizon": [("Verification gate", None, (-0.69, -0.74, 0.14), "b", "", (0.2, 0.2)),
+                ("A gate after every step", None, (0.72, 0.57, 0.14), "t", "acc", (0.81, 0.81)),
+                ("p to the power n", None, (0.92, -0.55, -0.12), "b", "", (0.9, 0.9))],  # p, the note's variable, keeps its case
+    "weights": [("One base model", None, (-0.46, 0.22, 0), "l", "", None, (-0.84, 0.22, 0)),
+                ("Adapters", None, (0.705, 0.363, 0), "r", "", (0.0, 0.5)),
+                ("The record", "Each holds the previous hash", (0.14, -0.74, 0), "r", "minorsub", (0.55, 0.95))],
+    # the note's own definition of a lifecycle, in its order round the loop. hc3: Inter's taller line beside a node lay on
+    # the ring's arc (figure.js hid "Record" at 1440 and 3840, "Decisions, approvals" on the index's plate), so the two
+    # side labels' words begin just past the ring's edge, the rule reaching out to them
+    "lifecycle": [("Signal", None, _loop(0), "r", "", (0.0, 0.03)),
+                  ("Decisions, approvals", None, _loop(2), "l", "", (0.18, 0.56), (-1.04,) + _loop(2)[1:]),
+                  ("Executes against an external counterparty", None, _loop(4), "b", "minor", (0.74, 0.74)),
+                  ("Record", None, _loop(5), "r", "acc", (0.93, 0.93), (1.04,) + _loop(5)[1:])],
+    "swarm": [("One large agent", None, (-0.72, 0.45, 0), "t", "", None),
+              ("One gate, one job each", None, (0.64, 0.46, 0), "t", "acc", None)],
+    "boundary": [("01–04 Decide", None, (-0.8, 0.4, 0.36), "l", "", (0.0, 0.34)),
+                 ("The boundary", None, (-0.92, 0, 0.46), "l", "acc", (0.44, 0.44)),
+                 ("05–08 Execute", "Deterministic code", (-0.8, -0.4, 0.36), "l", "minorsub", (0.55, 0.89))],
+    "rulebook": [("Documents, exceptions", None, (1.05, -0.47, 0), "b", "", (0.08, 0.2)),
+                 ("The post-trained model", None, (0, 0.52, 0), "t", "", (0.96, 0.96))],
+    "council": [("Proposals", None, (0.02, 0.95, 0), "r", "", (0.0, 0.1)),
                 ("Execution Council", None, (-0.34, 0.1, 0), "l", "", (0.42, 0.42)),
-                ("approved", None, (0, -0.86, 0), "l", "acc", (0.84, 0.92)),
-                ("rejected, logged", None, (1.15, -0.5, 0), "b", "rej", (0.9, 0.9))],
-    "ledger": [("record 01", None, (-1.0, 0.63, 0), "t", "", (0.0, 0.06)),
-               ("hash of the previous record", None, (0, 0.02, 0.24), "tr", "", (0.43, 0.45)),
-               ("newest", None, (1.0, -0.63, 0), "b", "acc", (0.875, 0.9))],
+                ("Approved", None, (0, -0.86, 0), "l", "acc", (0.84, 0.92)),
+                ("Rejected, logged", None, (1.15, -0.5, 0), "b", "rej", (0.9, 0.9))],
+    "ledger": [("Record 01", None, (-1.0, 0.63, 0), "t", "", (0.0, 0.06)),
+               # hc3: on the link between records 02 and 03 (the margin plate's point since a4), its words beside the next
+               # record, the rule reaching out past it (on phones figure.js sets them above, "tr"): at the chain's middle
+               # figure.js hid them on every desktop since r1, the words lying on the blocks
+               ("Hash of the previous record", None, (-0.571, 0.314, 0.156), "r", "", (0.17, 0.21), (-0.27, 0.314, 0.156)),
+               ("Newest", None, (1.0, -0.63, 0), "b", "acc", (0.875, 0.9))],
     # the floor is read like an axis, named at the line's left end, the first line on the rule. Award a3 (a3-design): the
-    # site's one order for it, the word then its value ("floor" over "10 bps", as Proof's Fig. 1.1 "Floor / 10 bps" and
-    # Home's overture "FLOOR 10 bps"), in the figure labels' own lowercase
-    # r3: each hedge label first ("keep", below). Cut (1 Nov): "above the floor" points at the top of the one open unit
+    # site's one order for it, the word then its value ("Floor" over "10 bps", as Proof's Fig. 1.1 and Home's overture,
+    # which since hc3 also set the word in Inter and the value in mono)
+    # r3: each hedge label first ("keep", below). Cut (1 Nov): "Above the floor" points at the top of the one open unit
     # each column carries (figure.js sessions: the floor F = 0.48, the open unit up to 0.625)
-    "sessions": [("above the floor", "how far is not published", (0, 0.65, 0), "t", "keep=t,tl,tr", None),
-                 ("floor", "10\u00a0bps", (-1.25, 0.48, 0.07), "l", "", None)] + _cols(),
-    "mastercopy": [("copies", "phase two, on the roadmap", (0.93, -0.18, -0.07), "tl", "keep", (0.74, 0.74)),
-                   ("master agent", None, (0.31, 0.62, 0), "r", "acc", (0.0, 0.06)),
-                   ("one control plane", None, (-1.3, -0.77, 0), "br", "", (0.9, 0.9))],
-    "library": [("01–02 research notes", None, (-0.873, 0.47, 0.095), "t", "acc", (0.0, 0.16)),
-                ("03–10 the series", None, (0.873, 0.47, 0.095), "t", "", (0.19, 0.9))],
+    "sessions": [("Above the floor", "How far is not published", (0, 0.65, 0), "t", "keep=t,tl,tr", None),
+                 ("Floor", "10\u00a0bps", (-1.25, 0.48, 0.07), "l", "nsub", None)] + _cols(),
+    "mastercopy": [("Copies", "Phase two, on the roadmap", (0.93, -0.18, -0.07), "tl", "keep", (0.74, 0.74)),
+                   ("Master agent", None, (0.31, 0.62, 0), "r", "acc", (0.0, 0.06)),
+                   ("One control plane", None, (-1.3, -0.77, 0), "br", "", (0.9, 0.9))],
+    # the index's two shelves, in the words of its two section heads ("Research notes", "The series")
+    "library": [("01–02 Research notes", None, (-0.873, 0.47, 0.095), "t", "acc", (0.0, 0.16)),
+                ("03–10 The series", None, (0.873, 0.47, 0.095), "t", "", (0.19, 0.9))],
 }
 # award a2 (a2-pixel, medium): a plate's rules, drawn as lines over its points in the labels' space (figure.js .fl-line:
 # both ends projected each frame, so the line sways with the drawing and rests level, on whole pixels). Note 09's 10 bps
@@ -149,15 +158,19 @@ LABELS = {
 # whenever the plate's words could not (a phone's strip, a hedge with no room)
 RULES = {"sessions": [((-1.25, 0.48, 0.07), (1.25, 0.48, 0.07))]}
 def _keep(flags): return next((f for f in flags.split() if f.split("=")[0] == "keep"), None)
+def _small(sub, fl):
+    """a label's second line: a gloss (minorsub: dropped on a small stage) or a value (nsub: mono, as .hp-lab--n)"""
+    if not sub: return ""
+    c = ' class="fl-minor"' if "minorsub" in fl else ' class="fl-v"' if "nsub" in fl else ""
+    return f"<small{c}>{H.escape(sub, quote=False)}</small>"
 assert all(not _keep(l[4]) for ls in LABELS.values() for l in ls[1:]), "a hedge label (keep) is listed first"
 def labels_html(fig):
     out = [f'<span class="fl-line" data-at="{a[0]:g},{a[1]:g},{a[2]:g}" data-line="{b[0]:g},{b[1]:g},{b[2]:g}"></span>' for a, b in RULES.get(fig, [])]
     for i, (text, sub, (x, y, z), side, flags, path, *to) in enumerate(LABELS[fig]):
         k = _keep(flags)
-        cls = "".join(f" fl--{f}" for f in flags.split() if f != "minorsub" and f != k)
+        cls = "".join(f" fl--{f}" for f in flags.split() if not f.endswith("sub") and f != k)
         keep = (f' data-keep="{k.partition("=")[2].replace(",", " ")}"' if "=" in k else " data-keep") if k else ""
-        gloss = ' class="fl-minor"' if "minorsub" in flags.split() else ""
-        small = f"<small{gloss}>{H.escape(sub, quote=False)}</small>" if sub else ""
+        small = _small(sub, flags.split())
         ph = f' data-ph="{path[0]:g},{path[1]:g}"' if path else ""
         reach = f' data-to="{to[0][0]:g},{to[0][1]:g},{to[0][2]:g}"' if to else ""
         out.append(f'<span class="fl{cls}" data-at="{x:g},{y:g},{z:g}"{reach} data-side="{side}"{ph}{keep} style="--i:{i}"><span class="fl-t">{H.escape(text, quote=False)}{small}</span></span>')
@@ -414,9 +427,8 @@ def _fl(lab, style, cls="", attrs="", plate=False):
     text, sub, _at, side, flags = lab[:5]
     k = _keep(flags); fl = flags.split()
     if plate and "minorsub" in fl: sub = None
-    c = "".join(f" fl--{f}" for f in fl if f != "minorsub" and f != k)
-    gloss = ' class="fl-minor"' if "minorsub" in fl else ""
-    small = f"<small{gloss}>{H.escape(sub, quote=False)}</small>" if sub else ""
+    c = "".join(f" fl--{f}" for f in fl if not f.endswith("sub") and f != k)
+    small = _small(sub, fl)
     return f'<span class="fl{c}{cls}" data-side="{side}"{attrs} style="{style}"><span class="fl-t">{H.escape(text, quote=False)}{small}</span></span>'
 def still_keys(fig):
     """the key over the hero's still (KEYED): each label at its point in the still's own units (the viewBox: the stage's
@@ -453,40 +465,51 @@ def still_geo(fig, every=7):
 # plate's rule, note 09's floor). No new data and no new words: a label the hero already shows, a part already drawn
 PARTS = {
     "horizon": [("The problem is horizon, not capability", "p to the power n", lambda x, y, z, k: k == 0),  # "p to the n"
-                ("Decomposition changes the exponent", "a gate after every step", lambda x, y, z, k: k in (1, 2))],  # the gate after step k
-    "weights": [("Post-training moves the rulebook into the weights", "one base model", lambda x, y, z, k: math.hypot(x, y - 0.22, z) < 0.5),
-                ("Parameter-efficient specialization and the forgetting problem", "adapters", lambda x, y, z, k: 0.71 < math.hypot(x, y - 0.22, z) < 0.73),
-                (("Part two: proving what happened", "What must go in the record", "Replay as off-policy evaluation"), "the record", lambda x, y, z, k: y < -0.36)],
-    "swarm": [("The verification argument", "one gate, one job each", lambda x, y, z, k: x > 0.15)],  # "small agents are verifiable ... at which gate"
-    "boundary": [(("Why the boundary sits there", "MCP as the structural interface"), "the boundary", lambda x, y, z, k: abs(y) < 0.03),
-                 ("Idempotency as a safety property", "05–08 execute", lambda x, y, z, k: y < -0.05)],  # "the execution layer"
-    "rulebook": [("Exceptions are the training set", "documents, exceptions", lambda x, y, z, k: math.hypot(x, z) > 0.9),
-                 ("Why this creates a defensible position", "the post-trained model", lambda x, y, z, k: math.hypot(x, z) < 0.8)],  # "a post-trained model is a moat"
+                ("Decomposition changes the exponent", "A gate after every step", lambda x, y, z, k: k in (1, 2))],  # the gate after step k
+    "weights": [("Post-training moves the rulebook into the weights", "One base model", lambda x, y, z, k: math.hypot(x, y - 0.22, z) < 0.5),
+                ("Parameter-efficient specialization and the forgetting problem", "Adapters", lambda x, y, z, k: 0.71 < math.hypot(x, y - 0.22, z) < 0.73),
+                (("Part two: proving what happened", "What must go in the record", "Replay as off-policy evaluation"), "The record", lambda x, y, z, k: y < -0.36)],
+    "swarm": [("The verification argument", "One gate, one job each", lambda x, y, z, k: x > 0.15)],  # "small agents are verifiable ... at which gate"
+    "boundary": [(("Why the boundary sits there", "MCP as the structural interface"), "The boundary", lambda x, y, z, k: abs(y) < 0.03),
+                 ("Idempotency as a safety property", "05–08 Execute", lambda x, y, z, k: y < -0.05)],  # "the execution layer"
+    "rulebook": [("Exceptions are the training set", "Documents, exceptions", lambda x, y, z, k: math.hypot(x, z) > 0.9),
+                 ("Why this creates a defensible position", "The post-trained model", lambda x, y, z, k: math.hypot(x, z) < 0.8)],  # "a post-trained model is a moat"
     "council": [("What the council checks", "Execution Council", lambda x, y, z, k: k == 0),
-                ("Three operating modes", "approved", lambda x, y, z, k: k == 2 and y > -1.0),  # "every approved proposal"
-                ("Conflict arbitration", "proposals", lambda x, y, z, k: k == 1)],  # "two decision agents propose actions"
-    "ledger": [("Why append-only", "hash of the previous record", lambda x, y, z, k: k == 2 and not (x > 0.885 and y < -0.475))],  # the links, not the newest block
-    "sessions": [("The result", "floor", None)],  # "every one above the floor we set of ten basis points": the rule
-    "mastercopy": [("Phase one: prove one", "master agent", lambda x, y, z, k: k == 2),
-                   ("Phase two: master and copy", "copies", lambda x, y, z, k: k in (0, 1) and y > -0.6)],
+                ("Three operating modes", "Approved", lambda x, y, z, k: k == 2 and y > -1.0),  # "every approved proposal"
+                ("Conflict arbitration", "Proposals", lambda x, y, z, k: k == 1)],  # "two decision agents propose actions"
+    "ledger": [("Why append-only", "Hash of the previous record", lambda x, y, z, k: k == 2 and not (x > 0.885 and y < -0.475))],  # the links, not the newest block
+    "sessions": [("The result", "Floor", None)],  # "every one above the floor we set of ten basis points": the rule
+    "mastercopy": [("Phase one: prove one", "Master agent", lambda x, y, z, k: k == 2),
+                   ("Phase two: master and copy", "Copies", lambda x, y, z, k: k in (0, 1) and y > -0.6)],
 }
 # a label's words beside its point on a margin plate, in CSS px where the plate is narrowest (1440: 278 px for its 300
-# units); research.css .fl / .fl-t: 11 px mono (an advance of .62 em with the tracking), 1.35 leading, the rule's 19 px
-# lead beside the point, 18 px above or below it, the tl/tr words 6 px past it. Where no side fits, the box grows
-_PU, _CH, _LH = 278 / 300, 0.62 * 11, 1.35 * 11
+# units); research.css .fl / .fl-t: Inter at --fs-small (14 px at 1440; hc3, was 11 px mono), a numeral alone or a value
+# line (n, nsub) 11 px mono (an advance of .64 em with the tracking), 1.35 leading, the rule's 19 px lead beside the
+# point, 18 px above or below it, the tl/tr words 6 px past it. Where no side fits, the box grows. Inter's advances
+# (thousandths of an em, measured in Chromium from the vendored inter-var-latin.woff2; digits at their tabular width;
+# kerning only narrows a word, so the box is never short)
+_PU, _FS, _FN = 278 / 300, 14, 11
+_ADV = {**dict(zip("abcdefghijklmnopqrstuvwxyz", (562, 612, 571, 612, 583, 370, 613, 591, 242, 242, 549, 242, 876, 591, 600, 612,
+                                                 612, 376, 528, 327, 591, 562, 818, 546, 562, 552))),
+        **dict(zip("ABCDEFGHIJKLMNOPQRSTUVWXYZ", (690, 654, 730, 722, 601, 590, 746, 743, 269, 571, 672, 565, 903, 753, 765, 639,
+                                                 765, 644, 642, 646, 744, 690, 985, 682, 679, 629))),
+        **{c: 650 for c in "0123456789"}, " ": 281, "\u00a0": 281, ",": 288, ".": 288, "-": 460, "–": 500}
+def _tw(t, mono=False): return len(t) * 0.64 * _FN if mono else sum(_ADV.get(c, 1000) for c in t) / 1000 * _FS
 _NEAR = {"r": "tr br l tl bl t b", "l": "tl bl r tr br t b", "t": "tl tr b bl br r l", "b": "bl br t tl tr l r",
          "tl": "t tr l bl r", "tr": "t tl r br l", "bl": "b br l tl r", "br": "b bl r tr l"}
 _NEAR = {k: v.split() for k, v in _NEAR.items()}
 # where a part's label stands on the small plate when the hero's point would put its words on its own part or past the
-# plate's edge: another point of the same part (the formation's own space) and its side. "hash of the previous record"
-# on the link between records 02 and 03, its words in the empty corner above the chain; "05-08 execute" under the
-# lowest layer; "one base model" over the sphere's top (beside its left edge the words took a third of the plate)
-PLATE_AT = {"hash of the previous record": ((-0.571, 0.314, 0.156), "tr"), "05–08 execute": ((0.0, -0.71, 0.0), "b"),
-            "one base model": ((0.0, 0.68, 0.0), "t")}
-def _lbox(side, ax, ay, w, h):
-    if side in ("r", "l"):
+# plate's edge: another point of the same part (the formation's own space) and its side. "Hash of the previous record"
+# on the link between records 02 and 03 (since hc3 the hero's point too), its words in the empty corner above the chain;
+# "05-08 execute" under the lowest layer; "one base model" over the sphere's top (beside its left edge the words took a third of the plate);
+# hc3: "Adapters" up and right from a point of the middle ring (Inter's taller line no longer fit beside the ring's right
+# edge, and the box grew right: the unlit drawing stood 26 units left of centre)
+PLATE_AT = {"Hash of the previous record": ((-0.571, 0.314, 0.156), "tr"), "05–08 Execute": ((0.0, -0.71, 0.0), "b"),
+            "One base model": ((0.0, 0.68, 0.0), "t"), "Adapters": ((0.526, 0.711, 0.036), "tr")}
+def _lbox(side, ax, ay, w, h, em=_FS):
+    if side in ("r", "l"):  # the first line on the rule (research.css: translate(.., -.675em))
         x0 = ax + 19 if side == "r" else ax - 19 - w
-        return x0, ay - 0.675 * 11, x0 + w, ay - 0.675 * 11 + h
+        return x0, ay - 0.675 * em, x0 + w, ay - 0.675 * em + h
     y0 = ay - 18 - h if side[0] == "t" else ay + 18
     x0 = ax - w / 2 if len(side) == 1 else ax + 6 - w if side[1] == "l" else ax - 6
     return x0, y0, x0 + w, y0 + h
@@ -541,7 +564,9 @@ def margin_still(fig, slugs=(), every=5):
             if l[0] in PLATE_AT: at, side = PLATE_AT[l[0]]
             ax, ay = proj(*at)[:2]
             px, py = fx(ax) * _PU, fy(ay) * _PU
-            tw, th = max(len(t) for t in (text, sub) if t) * _CH, (2 if sub else 1) * _LH
+            fl_ = flags.split(); em = _FN if "n" in fl_ else _FS
+            tw = max(_tw(text, "n" in fl_), _tw(sub, "nsub" in fl_) if sub else 0)
+            th = 1.35 * em + (1.35 * (_FN if "nsub" in fl_ else _FS) if sub else 0)
             # a key keeps the hero's side (its own, or a hedge's allowed ones); a part's label, shown only while the rest
             # of the drawing recedes, may take another side round its point, so long as no dot of its own part is under
             # its words
@@ -549,14 +574,14 @@ def margin_still(fig, slugs=(), every=5):
             lit_px = [(fx(d[0]) * _PU, fy(d[1]) * _PU) for d in pick if any(t(*d[4], d[3]) for t in tests)]
             under = lambda b: sum(1 for x, y in lit_px if b[0] - 3 <= x <= b[2] + 3 and b[1] - 3 <= y <= b[3] + 3)
             for sd in order:
-                b = _lbox(sd, px, py, tw, th)
+                b = _lbox(sd, px, py, tw, th, em)
                 if b[0] >= 4 and b[1] >= 4 and b[2] <= 300 * _PU - 4 and b[3] <= hb * _PU - 4 and not under(b):
                     placed.append((l, perm, sss, sd, ax, ay)); break
             else:  # no side fits: the drawing's extent grows, on the side that keeps the drawing largest (a taller box
                 # costs nothing while the box is wider than tall; a wider one shrinks the drawing)
                 P, best = s * _PU, None
-                for sd in [sd for sd in order if not under(_lbox(sd, px, py, tw, th))] or order[:1]:
-                    b = _lbox(sd, px, py, tw, th)
+                for sd in [sd for sd in order if not under(_lbox(sd, px, py, tw, th, em))] or order[:1]:
+                    b = _lbox(sd, px, py, tw, th, em)
                     g = [max(0.0, (4 - b[0]) / P), max(0.0, (b[2] - 300 * _PU + 4) / P), max(0.0, (4 - b[1]) / P), max(0.0, (b[3] - hb * _PU + 4) / P)]
                     w2, h2 = (x1 - x0) + g[0] + g[1], (y1 - y0) + g[2] + g[3]
                     sc = 1 / max(w2 * 1.16, h2 * 1.2)

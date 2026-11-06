@@ -92,9 +92,13 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
   body[data-page="home"] .story-coda-t { font-size: clamp(3rem, 6.2vw, 5.58rem); line-height: .96; letter-spacing: -0.015em; }
 }
 
+/* §06 (hc3, proof's request): the records carry Trust's ledger ids (#4f23 ...), five mono characters */
+body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em 4.8em 9.4em minmax(0, 1fr) auto; }
+@media (max-width: 760px) { body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em minmax(0, 1fr) auto; } }
+
 /* ---------- phones: shorter, nothing dropped but repeats ---------- */
 @media (max-width: 600px) {
-  /* the chain folds to records 01-04 (home.js) */
+  /* the chain folds to records #4f23-#4f26 (home.js) */
   body[data-page="home"] #governance .chain.is-folded .chain-list > li:nth-child(n + 5) { display: none; }
   body[data-page="home"] #governance .chain-more { display: flex; align-items: center; gap: .625rem; width: calc(100% - 1.5rem); min-height: 2.75rem; margin: 0 .75rem .5rem; padding: 0 .75rem; border: var(--hair) dashed var(--line-strong); border-radius: .125rem; font: 500 var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; color: var(--fg); } /* the site's button voice (a3) */
   body[data-page="home"] #governance .chain-more::before { content: "+"; content: "+" / ""; font-size: .9rem; color: var(--accent); }
@@ -103,7 +107,7 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
   /* §02: the explorer's rows at a phone's pitch */
   body[data-page="home"] #stack .arch-layer { min-height: 3.125rem; padding-block: .3125rem; }
   /* the chain: who and event, the detail under them */
-  body[data-page="home"] #governance .chain-list > li { grid-template-columns: 2.2em auto minmax(0, 1fr) auto; grid-template-areas: "i who ev flag" "i what what what"; column-gap: .625rem; padding-bottom: 1.75rem; }
+  body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em auto minmax(0, 1fr) auto; grid-template-areas: "i who ev flag" "i what what what"; column-gap: .625rem; padding-bottom: 1.75rem; }
 }
 
 @media (min-width: 601px) { body[data-page="home"] #governance .chain-more { display: none; } }
@@ -128,7 +132,12 @@ body[data-page="home"] main > .story + .section { padding-top: clamp(1.75rem, 3.
   body[data-page="home"] #governance .chain-list [contenteditable] { font-size: inherit; }
   body[data-page="home"] #governance .chain-list > li { row-gap: var(--hair); }
 }
-@media (max-width: 600px) and (pointer: coarse) { body[data-page="home"] #governance .chain-list [contenteditable]:focus { font-size: 1rem; } }
+/* touch (hc3): the fields keep the record's size at rest, as on phones and desktops, and take 16 px only while edited (no
+   zoom on focus). Tablets rested at 16 px beside 11 px ids, and "RECONCILED" broke in its 103 px column at 761-960 */
+@media (pointer: coarse) {
+  body[data-page="home"] #governance .chain-list [contenteditable] { font-size: inherit; }
+  body[data-page="home"] #governance .chain-list [contenteditable]:focus { font-size: 1rem; }
+}
 @media (pointer: coarse) { body[data-page="home"] #governance .chain-list :is(.ev, .what) { box-sizing: border-box; min-height: 1.5rem; padding-block: .125rem; } } /* 24 px targets (SC 2.5.8) */
 
 /* the chart's key is a sentence */
@@ -210,8 +219,6 @@ body[data-page="home"] #research .research-card .link-arrow { font: 400 .875rem/
 @media (scripting: none) { body[data-page="home"] #proof .proof-fig .figure-cap { display: none; } }
 
 /* ========== award a1 ========== */
-/* the coda carries its hedge in its own frame, at the small step (the paper's caption takes it over as the paper rises) */
-body[data-page="home"] .story-coda-s { max-width: 100%; margin-top: clamp(.75rem, 1.4vw, 1.25rem); }
 /* §04: the head says what the chart adds */
 body[data-page="home"] #proof .proof-copy .ch-title { max-width: 12ch; }
 /* phones: the CEO's headline one step up, still two lines (44 px at 390); the CEO's sub-line and the scenes' lines at 16 px */
@@ -222,10 +229,7 @@ body[data-page="home"] #proof .proof-copy .ch-title { max-width: 12ch; }
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-sub, html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker,
   html:not(.no-webgl) body[data-page="home"] .story .beat .body-lg { font-size: 1rem; line-height: 1.5; }
 }
-/* phones: no text under 12 px. The label tokens are 12 px on phones site-wide (site.css, a2); the few literal sizes follow */
-@media (max-width: 599.98px) {
-  body[data-page="home"] #proof .pf-y small, body[data-page="home"] #proof .y-floor small { font-size: .75rem; }
-}
+/* phones: no text under 12 px: the label tokens are 12 px on phones site-wide (site.css, a2); Fig. 1.1's are proofchart.css's (hc3) */
 /* narrow phones: the scene index's five rules a little shorter, so "Pause motion" keeps one line beside them */
 @media (max-width: 379.98px) {
   body[data-page="home"] .story-idx button { min-width: 2.25rem; padding-right: .625rem; }
@@ -242,14 +246,14 @@ body[data-page="home"] #lifecycles { --cis: 39.171875rem; } body[data-page="home
 body[data-page="home"] #proof { --cis: 48.234375rem; } body[data-page="home"] #economics { --cis: 42.140625rem; } body[data-page="home"] #governance { --cis: 49.453125rem; }
 body[data-page="home"] #research { --cis: 35.53125rem; } body[data-page="home"] .cta-band { --cis: 6.453125rem; }
 @media (min-width: 600px) {
-  body[data-page="home"] #lifecycles { --cis: 39.3125rem; } body[data-page="home"] #stack { --cis: 88.53125rem; } body[data-page="home"] #lc01 { --cis: 56.546875rem; }
-  body[data-page="home"] #proof { --cis: 51.453125rem; } body[data-page="home"] #economics { --cis: 31.1875rem; } body[data-page="home"] #governance { --cis: 83.8125rem; }
+  body[data-page="home"] #lifecycles { --cis: 39.3125rem; } body[data-page="home"] #stack { --cis: 86.953125rem; } body[data-page="home"] #lc01 { --cis: 56.546875rem; }
+  body[data-page="home"] #proof { --cis: 51.453125rem; } body[data-page="home"] #economics { --cis: 31.1875rem; } body[data-page="home"] #governance { --cis: 78.21875rem; }
   body[data-page="home"] #research { --cis: 35.671875rem; } body[data-page="home"] .cta-band { --cis: 6.5625rem; }
 }
 /* 761-960: the 820 heights (768-834 within 1rem; hc2) */
 @media (min-width: 761px) and (max-width: 960px) {
   body[data-page="home"] #lifecycles { --cis: 32.921875rem; } body[data-page="home"] #stack { --cis: 91.640625rem; } body[data-page="home"] #lc01 { --cis: 54.25rem; }
-  body[data-page="home"] #proof { --cis: 53.515625rem; } body[data-page="home"] #economics { --cis: 32.921875rem; } body[data-page="home"] #governance { --cis: 61.4375rem; }
+  body[data-page="home"] #proof { --cis: 53.515625rem; } body[data-page="home"] #economics { --cis: 32.921875rem; } body[data-page="home"] #governance { --cis: 57.046875rem; }
   body[data-page="home"] #research { --cis: 30.296875rem; } body[data-page="home"] .cta-band { --cis: 7.03125rem; }
 }
 @media (min-width: 961px) {
@@ -341,10 +345,10 @@ html.no-webgl:not(.story-tiny) body[data-page="home"] .story .beat-0 { min-heigh
   body[data-page="home"] #research .card-grid--3 { container-type: inline-size; }
   body[data-page="home"] #research .rc-mark { height: max(7.5rem, 13.9cqi); }
 }
-/* scene 4: the floor tag in the chart grammar Proof and §04 use ("FLOOR" tracked, the unit as written: "10 bps") */
-body[data-page="home"] .story-lab.floor .u { letter-spacing: .02em; text-transform: none; color: rgba(245, 242, 236, .9); }
-/* §07 on tablets (761-960): the three notes in one row, as on desktop; a still wider than its cell keeps its shape */
-body[data-page="home"] #research .rc-mark { object-fit: contain; object-position: left center; }
+/* scene 4: the floor's unit a step brighter than its name (overture.css sets the face, size and tracking; hc3) */
+body[data-page="home"] .story-lab.floor .u { color: rgba(245, 242, 236, .9); }
+/* §07 on tablets (761-960): the three notes in one row, as on desktop; a still wider than its cell keeps its shape (the
+   plate's preserveAspectRatio, xMinYMid: hc3 inlines the three so their green points redraw on hover and focus) */
 @media (min-width: 761px) and (max-width: 960px) {
   body[data-page="home"] #research .card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   body[data-page="home"] #research .card-grid--3 > :last-child:nth-child(odd) { grid-column: auto; }
@@ -362,3 +366,9 @@ body[data-page="home"] #research .rc-mark { object-fit: contain; object-position
 /* §02 at 1000-1099 px (the list under 340 px): the boundary's two side lines each wrap in two; tighter leading keeps all
    four inside the 4.5rem row (they ran 6-7 px over both hairlines), the plane's line between them (a4 p2) */
 @container (max-width: 340px) { body[data-page="home"] #stack .arch.is-wide .arch-bound .sides { gap: .375rem; } body[data-page="home"] #stack .arch.is-wide .arch-bound .sides > span { line-height: 1.2; } }
+
+/* ========== hill climb hc3 ========== */
+/* the coda's one hedge is the rail's caption (story.js clones the paper's into the callout layer): in the dark under the ten
+   tags, at the paper's place and step, so the rising paper turns it to ink. The tokens are the dark stage's */
+body[data-page="home"] .story-cap { position: absolute; left: 0; right: 0; top: 0; opacity: 0; pointer-events: none; will-change: opacity, transform; }
+body[data-page="home"] .story-cap .story-paper-cap { color: var(--fg-2); border-bottom-color: var(--line-strong); }

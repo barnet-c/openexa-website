@@ -27,12 +27,14 @@
 .blog-page .blog-plate { background: var(--paper-3); color: var(--ink); }
 .blog-page .blog-thumb.blog-plate { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
 .blog-page .blog-thumb .bp-art { position: absolute; inset: 0; content-visibility: auto; } /* placed in a 16:9 box: skipped off screen, nothing shifts (r4-perf) */
+/* hc3: a card's green line draws by site.css's card hook ([data-draw], build_blog.plate), dashed by the plate's own --bk
+   (a card is drawn under 1:1, where site.js's --dr-k stops at 1); no fade to wait for, so no delay */
+.blog-plate .dm--line { --dm: bp-redraw; }
+.blog-plate[data-draw] { --draw-d: 0ms; }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .blog-card:hover .bp-art .pg[pathLength] { animation: bp-redraw 1.1s var(--ease); }
   .blog-econ:not(.js-turn):hover .bp-rings { transform: rotate(-6deg); } /* without JS; with it, blog.js turns them a step a row */
 }
 @media (prefers-reduced-motion: no-preference) {
-  .blog-card:focus-visible .bp-art .pg[pathLength] { animation: bp-redraw 1.1s var(--ease); }
   .blog-econ:not(.js-turn):focus-within .bp-rings { transform: rotate(-6deg); }
 }
 @keyframes bp-redraw { from { stroke-dasharray: calc(1.02 * var(--bk)) calc(2.04 * var(--bk)); stroke-dashoffset: calc(1.02 * var(--bk)); } to { stroke-dasharray: calc(1.02 * var(--bk)) calc(2.04 * var(--bk)); stroke-dashoffset: 0; } }
@@ -111,14 +113,14 @@
 .blog-page .series-card::after { content: none; }
 .sr-date { position: relative; display: block; height: 3.5rem; font: 400 var(--fs-small)/1 var(--sans); color: var(--fg-3); font-variant-numeric: tabular-nums; }
 .sr-date::before { content: ""; position: absolute; left: 0; top: 1.625rem; width: .5625rem; height: .5625rem; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 var(--hair) var(--fg-3); transition: background .3s var(--ease), box-shadow .3s var(--ease), transform .3s var(--ease); }
-.blog-page .series-rail > li:first-child .sr-date::before { background: var(--fg-2); box-shadow: none; } /* the series starts here */
+.blog-page .series-rail > li:first-child .sr-date::before { background: var(--fg-2); box-shadow: none; } /* the series starts here (the hover and focus rules outrank it) */
 .blog-page .series-card .blog-thumb { margin: 0; border: 0; }
 .blog-page .series-card h3 { margin-top: 1.125rem; font-size: var(--fs-heading); }
-.blog-page .series-card:focus-visible .sr-date::before { background: var(--accent); box-shadow: none; transform: scale(1.35); }
+.blog-page .series-rail .series-card:focus-visible .sr-date::before { background: var(--accent); box-shadow: none; transform: scale(1.35); }
 .blog-page .series-card:focus-visible h3 { text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .3125rem; }
 .blog-page .series-rail > li > .series-card:focus-visible { background-color: transparent; } /* a card in a list: the ring, no highlighter */
 @media (hover: hover) {
-  .blog-page .series-card:hover .sr-date::before { background: var(--accent); box-shadow: none; transform: scale(1.35); }
+  .blog-page .series-rail .series-card:hover .sr-date::before { background: var(--accent); box-shadow: none; transform: scale(1.35); }
   .blog-page .series-card:hover { background: none; }
 }
 /* the rule is drawn left to right as the rail arrives (below the first screen only: site.js sets .will-reveal there) */
@@ -131,7 +133,7 @@
 .blog-page .blog-grid--wide { --rg: clamp(1rem, 2vw, 1.75rem); display: block; margin-top: clamp(2.5rem, 4.4vw, 4rem); padding-top: clamp(1.75rem, 3vw, 2.5rem); border: 0; border-top: var(--hair) solid var(--line-strong); }
 .blog-page .blog-grid--wide .blog-card { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: var(--rg); align-items: center; background: none; border: 0; overflow: visible; }
 .blog-page .blog-grid--wide .blog-card::after { content: none; }
-.blog-page .blog-grid--wide .blog-thumb { grid-column: 1; }
+.blog-page .blog-grid--wide .blog-thumb { grid-column: 1; border: 0; } /* no rule under it, as under every plate */
 .blog-page .blog-grid--wide .blog-card-body { grid-column: 2 / -1; padding: 0; }
 .blog-page .blog-grid--wide h3 { margin: 0; max-width: 30ch; }
 .blog-page .blog-grid--wide .k { display: block; margin-bottom: .5rem; }
@@ -392,6 +394,8 @@
 /* a1: the author's blockquotes on the heading step (not 18 px beside 19) */
 .blog-post .blog-article blockquote { font-size: var(--fs-heading); line-height: 1.24; letter-spacing: -.01em; margin: 0 0 1.2em; padding-left: 1.25rem; text-wrap: balance; }
 .blog-post .blog-article blockquote + p.lead { margin-top: 0; }
+/* hc3: another writer's passage (build_blog.quoted): the body's face and size, upright, on a hairline rule */
+.blog-article > p.pq { padding-left: 1.25rem; border-left: var(--hair) solid var(--line-strong); }
 
 /* ---------- post: figures are exhibits on a mat, the chart's white taking the paper (multiply) ---------- */
 .blog-article > figure, .blog-article figure { margin: 2.1em 0 2.3em; padding: .75rem; background: var(--paper-2); border: 0; box-shadow: inset 0 0 0 var(--hair) var(--line); }

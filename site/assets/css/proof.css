@@ -52,18 +52,19 @@
 [data-page="proof"] .hero-plate--records .pf-ln { stroke-opacity: .62; }
 [data-page="proof"] .hero-plate--records .pf-ln { shape-rendering: crispEdges; } /* level lines on whole device pixels (4K bar) */
 /* under the floor: the gutter + ten lanes, as Fig. 1.1 (FLOOR / DAY / CONFIRMED) */
-[data-page="proof"] .pf-ax { display: grid; grid-template-columns: var(--G) repeat(10, minmax(0, 1fr)); grid-template-rows: calc(2.6 * var(--ax-l)) calc(2 * var(--ax-l)) calc(2.8 * var(--ax-l)); box-sizing: border-box; height: var(--ax-h); padding: calc(.5 * var(--ax-l)) 0 calc(.6 * var(--ax-l)); align-items: center; font: 500 var(--ax-l)/1.3 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-3); }
+[data-page="proof"] .pf-ax { display: grid; grid-template-columns: var(--G) repeat(10, minmax(0, 1fr)); grid-template-rows: calc(2.6 * var(--ax-l)) calc(2 * var(--ax-l)) calc(2.8 * var(--ax-l)); box-sizing: border-box; height: var(--ax-h); padding: calc(.5 * var(--ax-l)) 0 calc(.6 * var(--ax-l)); align-items: center; font: 400 var(--fs-small)/1.2 var(--sans); color: var(--fg-3); } /* hc3: Fig. 1.1's caption register (words Inter; numerals mono) */
 [data-page="proof"] .pf-ax-l { grid-column: 1; justify-self: start; max-width: calc(var(--G) - .625rem); color: var(--fg-2); }
 [data-page="proof"] .pf-l-fl { grid-row: 1; align-self: start; }
-[data-page="proof"] .pf-l-fl small { display: block; font: inherit; letter-spacing: .02em; text-transform: none; color: var(--fg); }
+[data-page="proof"] :is(.pf-l-fl small, .pf-ax-n) { font: 400 var(--ax-l)/1.3 var(--mono); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+[data-page="proof"] .pf-l-fl small { display: block; color: var(--fg); }
 [data-page="proof"] .pf-l-ok { grid-row: 3; color: var(--accent); }
-[data-page="proof"] .pf-ax-n { grid-row: 2; grid-column: var(--c); justify-self: center; font-weight: 400; letter-spacing: .04em; }
+[data-page="proof"] .pf-ax-n { grid-row: 2; grid-column: var(--c); justify-self: center; }
 [data-page="proof"] .pf-ax .pf-tk { grid-row: 3; grid-column: var(--c); justify-self: center; position: relative; overflow: hidden; width: max(38.5%, min(60%, .875rem)); aspect-ratio: 4 / 3; } /* phones: no smaller than the block */
 [data-page="proof"] .pf-ax .pf-tk svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
 /* the narrowest phones (after the rules it overrides): "Broker confirmed" moves under its ticks, one line */
 @container (max-width: 300px) {
   [data-page="proof"] .pf-ax { grid-template-rows: calc(2.6 * var(--ax-l)) calc(2 * var(--ax-l)) calc(1.8 * var(--ax-l)) calc(1.6 * var(--ax-l)); height: calc(9.1 * var(--ax-l)); }
-  [data-page="proof"] .pf-ax-l { max-width: none; white-space: nowrap; letter-spacing: .02em; }
+  [data-page="proof"] .pf-ax-l { max-width: none; white-space: nowrap; }
   [data-page="proof"] .pf-l-ok { grid-row: 4; grid-column: 1 / -1; align-self: end; }
   [data-page="proof"] .hero-plate--records { --fb: calc(var(--m) - .6 * var(--ax-l)); } /* the label row is the foot */
 }
@@ -371,17 +372,17 @@
   .tr-lt .lt-insp.is-typing > .tr-enter { grid-column: 1; grid-row: 3; }
 }
 
-/* a1: the inspected record's lineage in one serif line (trust.js); its height reserved, padding included (a3) */
-.tr-lt .tr-lin { display: none; }
-@media (scripting: enabled) and (min-width: 1200px) {
-  .tr-lt .tr-lin { display: flex; align-items: baseline; gap: 0 .875rem; min-height: calc(var(--fs-heading) * 1.2 + 1.25rem); margin: 0; padding: 1.25rem 1.25rem 0; font: 400 var(--fs-heading)/1.2 var(--serif); letter-spacing: -.005em; color: var(--fg); white-space: nowrap; overflow: hidden; }
-  .tr-lt .tr-lin-s b { margin-left: .4em; font: 500 var(--fs-label)/1 var(--mono); letter-spacing: .06em; color: var(--fg-3); font-variant-numeric: tabular-nums; }
-  .tr-lt .tr-lin > i { flex: none; align-self: center; width: 2.25rem; height: 0; border-top: var(--hair) solid var(--line-strong); }
-  .tr-lt .tr-lin-s.is-wait { color: var(--fg-3); }
-  .tr-lt .tr-lin-s.is-bad, .tr-lt .tr-lin-s.is-bad b { color: var(--reject); }
-}
 /* one mono size (a1) */
 .tr-lt .lt-ev { font-size: var(--fs-label); }
+/* hc3: phones with scripts: the column folds to four records from the first paint (trust.js opens it) */
+.tr-lt .lt-more { display: none; }
+@media (scripting: enabled) and (max-width: 600px) {
+  .tr-lt:not(.is-open) .lt-track > li:nth-child(n + 5) { display: none; }
+  .tr-lt .lt-more { display: flex; align-items: center; gap: .625rem; width: calc(100% - 1.5rem); min-height: 2.75rem; margin: 0 .75rem .75rem; padding: 0 .75rem; border: var(--hair) dashed var(--line-strong); border-radius: .125rem; background: none; font: 500 var(--fs-small)/1 var(--sans); color: var(--fg); cursor: pointer; }
+  .tr-lt .lt-more::before { content: "+"; content: "+" / ""; font-size: .9rem; color: var(--accent); }
+  .tr-lt .lt-more[aria-expanded="true"]::before { content: "\2212"; content: "\2212" / ""; }
+  .tr-lt .lt-more:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
+}
 
 /* §02 the control plane: six engraved plates on one ruled sheet, each a drawing and its name */
 .tr-cp { row-gap: 2.5rem; }
@@ -483,7 +484,6 @@
   .tr-kd { margin: .125rem 0 0; }
   .tr-kd .hp-labs, .tr-kd .tr-k-at { display: none; }
   .tr-kd .tr-k-full { display: inline; }
-  .tr-kt h3 { font-size: 1.2rem; }
 }
 /* the narrowest phones: three short lines a record (id beside event, detail, time). In em (a4): 25em = 400 px at 16 px */
 @media (max-width: 25em) {

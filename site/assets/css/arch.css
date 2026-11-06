@@ -229,6 +229,7 @@
   .arch-head { gap: .75rem; padding-left: 1rem; }
   .arch-hint { display: none; }
   .arch-motion { margin-left: auto; }
+  .arch.is-narrow .arch-lab { flex-basis: calc(100% - 10rem); } /* hc3 (platform): line 1 the title and Pause ("Resume motion" included), line 2 the hedge and the key, at every phone width (was 14em: under ~345 px Pause fell to line 2 before the hedge, from ~520 px the hedge rose to line 1) */
   .arch-layer { grid-template-columns: 1.625rem minmax(0, 1fr) .875rem; column-gap: .625rem; padding-left: .75rem; min-height: 3.625rem; }
   .arch-layer .nm { font-size: var(--fs-heading); }
   .arch .arch-panel { padding: 0 .125rem 1.375rem .75rem; }

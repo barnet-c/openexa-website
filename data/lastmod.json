@@ -56,12 +56,12 @@
   "sha": "420047e12f7b04df"
  },
  "blog/in-search-gen-ai-business-model.html": {
-  "date": "2026-11-05",
-  "sha": "e1cf158c4710d49c"
+  "date": "2026-11-06",
+  "sha": "166f74277044a4bf"
  },
  "blog/index.html": {
-  "date": "2026-11-05",
-  "sha": "e401002630f1fade"
+  "date": "2026-11-06",
+  "sha": "b725ce3f021e1bf9"
  },
  "blog/leveraged-etfs-price-dynamics-and-options-valuation.html": {
   "date": "2026-11-05",
@@ -132,63 +132,63 @@
   "sha": "92dbf897109d87a6"
  },
  "index.html": {
-  "date": "2026-11-05",
-  "sha": "1c60f8f6c94a1e21"
+  "date": "2026-11-06",
+  "sha": "26cf3c9960271564"
  },
  "lifecycles.html": {
-  "date": "2026-11-05",
-  "sha": "c4319367cc98f5e6"
+  "date": "2026-11-06",
+  "sha": "0062d7b711befc55"
  },
  "platform.html": {
-  "date": "2026-11-05",
-  "sha": "63d56527f6424b9c"
+  "date": "2026-11-06",
+  "sha": "487e4ac31848965c"
  },
  "research.html": {
-  "date": "2026-11-04",
-  "sha": "2ec021e3a1290c4e"
+  "date": "2026-11-06",
+  "sha": "88b10cfbbf7650ad"
  },
  "research/01-compounding-error.html": {
-  "date": "2026-11-04",
-  "sha": "406b955115e6ffd8"
+  "date": "2026-11-06",
+  "sha": "11913967ea294e85"
  },
  "research/02-post-training-and-audit.html": {
-  "date": "2026-11-04",
-  "sha": "f7abc3d1de53ca36"
+  "date": "2026-11-06",
+  "sha": "9c132cb3575e1324"
  },
  "research/03-not-tasks-lifecycles.html": {
-  "date": "2026-11-04",
-  "sha": "cff83581eeb6ec1d"
+  "date": "2026-11-06",
+  "sha": "9ab63f2e45136b68"
  },
  "research/04-five-thousand-small-agents.html": {
-  "date": "2026-11-04",
-  "sha": "cbbd430892e2c886"
+  "date": "2026-11-06",
+  "sha": "984d1fa8febac7a7"
  },
  "research/05-agents-decide-code-executes.html": {
-  "date": "2026-11-04",
-  "sha": "72ea43ba3dcbe9e7"
+  "date": "2026-11-06",
+  "sha": "efb506286790e74d"
  },
  "research/06-post-training-on-a-rulebook.html": {
-  "date": "2026-11-04",
-  "sha": "6fad83e346f51059"
+  "date": "2026-11-06",
+  "sha": "f08687b7cf2f24fb"
  },
  "research/07-the-execution-council.html": {
-  "date": "2026-11-04",
-  "sha": "d0540bab4aaf46a7"
+  "date": "2026-11-06",
+  "sha": "e8b112414baa6a07"
  },
  "research/08-a-ledger-nobody-can-edit.html": {
-  "date": "2026-11-04",
-  "sha": "feec1cfd66052ca1"
+  "date": "2026-11-06",
+  "sha": "a1f56146ac34545a"
  },
  "research/09-lifecycle-01-ten-sessions.html": {
-  "date": "2026-11-04",
-  "sha": "d4a51caeee074930"
+  "date": "2026-11-06",
+  "sha": "75a10a4729dc4fdf"
  },
  "research/10-master-and-copy.html": {
-  "date": "2026-11-04",
-  "sha": "8acfe9bfb28e083e"
+  "date": "2026-11-06",
+  "sha": "152831dce66b3250"
  },
  "trust.html": {
-  "date": "2026-11-05",
-  "sha": "29d758fc1f18cd56"
+  "date": "2026-11-06",
+  "sha": "d86f8f8516e8e13d"
  }
 }

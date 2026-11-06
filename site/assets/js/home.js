@@ -4,7 +4,7 @@
    land on the static figures, shorter than the live ones). .story-wait / .story-failed mark story.js. */
 (function () {
   'use strict';
-  // §06 on phones: the chain shows records 01-04; the control, an edit or 'Change record 03' opens all eight
+  // §06 on phones: the chain shows records #4f23-#4f26; the control, an edit or 'Change a record' opens all eight
   const chain = document.querySelector('[data-chain]'), more = chain && chain.querySelector('[data-chain-more]');
   if (more) {
     const set = (open) => {

@@ -14,7 +14,8 @@ dots for what is left out, vertical engraving strokes for areas. Drawn in 400 x 
 K = 2, viewBox 800 x 450, r4); the top 44 units stay clear for the card's label. Classes (styled in assets/css/blog.css):
   pa main line · pb secondary · pc faint (hatching, many paths) · pd dashed bound · pr base rule · pg the green line
   pk filled dot · po hollow dot · pq green dot · pt label (written on the post hero only: unlettered())
-pathLength="1" on pa/pg lets CSS draw them in (the post hero at first paint; the green line again on a card's hover).
+pathLength="1" on pa/pg lets CSS draw them in (the post hero at first paint; a card's green line on arrival and again on
+hover or focus: build_blog.plate makes it site.css's .dm--line, hc3).
 """
 import hashlib, math, random, re
 
@@ -460,8 +461,11 @@ def five_stages(r):
     out.append(f'<ellipse class="pa" cx="{f(cx[4])}" cy="{f(cy)}" rx="{f(rr)}" ry="{f(rr)}" pathLength="1"/>')
     out += [dot(cx[4] + rr * math.cos(a), cy + rr * math.sin(a), "pk", 2.2) for a in (0.3, 2.4, 4.4)]
     out.append(path([(cx[4] + rr - 3, cy - 18), (cx[4] + rr + .5, cy - 10), (cx[4] + rr + 6, cy - 17)], "pa"))
-    a, b, top = cx[1] + 8, cx[2] - 8, cy - 62  # the bridge: an arc from the bell over to the line
-    out.append(path([(a + (b - a) * t, cy - 40 - (cy - 40 - top) * 4 * t * (1 - t)) for t in [i / 24 for i in range(25)]], "pg", True))
+    # the bridge ("bridge the gap from probabilistic models ... to ... deterministic systems", the post's words): an arc
+    # from the bell's peak to the line's last dot, the same small gap over each end (hc3: it hung over the gap, landing
+    # on neither); the ends sit level, the bell's peak and that dot being at one height
+    a, b, ends, top = cx[1], cx[2] + 21 * k_, cy - 30, cy - 60
+    out.append(path([(a + (b - a) * t, ends - (ends - top) * 4 * t * (1 - t)) for t in [i / 24 for i in range(25)]], "pg", True))
     for i, (c, name) in enumerate(zip(cx, ("Aggregative", "Probabilistic", "Deterministic", "Restrictive", "Automatic"))):
         out.append(label(c, 189 if i % 2 == 0 else 208, name))   # hc1: two rows 19 units apart (Inter at the caption step)
     return out

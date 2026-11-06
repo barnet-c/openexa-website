@@ -11,7 +11,7 @@
 
 /* without JavaScript: the same sessions as a plain list (home) — the evidence page has its table */
 .proof-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--hair); background: var(--line); border: var(--hair) solid var(--line); }
-.proof-list li { display: grid; gap: .375rem; padding: .875rem .75rem .75rem; background: var(--bg); font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); }
+.proof-list li { display: grid; gap: .375rem; padding: .875rem .75rem .75rem; background: var(--bg); font-size: var(--fs-small); line-height: 1.3; font-variant-numeric: tabular-nums; color: var(--fg-3); } /* hc3: recorded, not live: the caption register */
 .proof-list b { font-weight: 500; color: var(--fg); }
 @media (max-width: 520px) { .proof-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
@@ -41,38 +41,41 @@
   .proof:not(.is-built)::before { content: ""; height: calc(var(--top) + var(--zr) + var(--zd) + var(--zo)); }
 }
 .pf-body { position: relative; display: grid; grid-template-columns: var(--gut) minmax(0, 1fr); }
-.pf-gut { position: relative; font-family: var(--mono); font-size: var(--mono-tick); line-height: 1.3; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
+/* hc3: recorded data, not live: the gutter's words speak the plates' caption register (Inter, sentence case); its numerals
+   and units (0, 5, 10 bps) stay mono. Line-height 1.2: "Above" and its two-line hedge fit the zone over the floor as before */
+.pf-gut { position: relative; font: 400 var(--fs-small)/1.2 var(--sans); color: var(--fg-3); }
 .pf-y { position: absolute; left: 0; right: .625rem; }
 .pf-y b { font-weight: 400; }
-.pf-y small { display: block; margin-top: .25rem; font: var(--fs-label)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); max-width: 15ch; text-wrap: balance; } /* a3: "exact value / not published", never "not" alone */
-.pf-y .pf-n { font-style: normal; color: var(--fg); margin-left: .7em; }
+.pf-y small { display: block; font-size: inherit; color: var(--fg-3); max-width: 15ch; text-wrap: balance; } /* a3: "exact value / not published", never "not" alone */
+.pf-y .pf-n, .y-zero b, .y-floor small { font: 400 var(--fs-label)/1.3 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.pf-y .pf-n { font-style: normal; color: var(--fg); margin-left: .5em; }
 .pf-y .pf-ls { display: none; } /* a long label's short form, for the narrowest charts */
-.y-above { top: 0; }
+.y-above { top: -.25rem; right: .375rem; } /* the hedge's longest line, "not published", is 89.8 px at 14 px; it clears the floor by 9 px */
+.y-above b { color: var(--fg-2); } /* the two zones' names (Above, Floor) a step over the hedge */
 .y-floor { top: calc(var(--zg) + .4375rem); color: var(--fg-2); }
-.y-floor small { font: var(--fs-label)/1.3 var(--mono); letter-spacing: .02em; color: var(--fg); }
-.y-zero { top: var(--top); transform: translateY(-50%); }
+.y-floor small { margin-top: .125rem; color: var(--fg); }
+.y-zero { top: var(--top); transform: translateY(calc(-100% - .125rem)); } /* hc3: on the base rule, with the blocks it counts (not crowding Premium under it) */
 .y-prem { top: calc(var(--top) + var(--zr) * .22); transform: translateY(-50%); }
 .y-nav { top: calc(var(--top) + var(--zr) * .5); transform: translateY(-50%); }
 .y-disc { top: calc(var(--top) + var(--zr) * .78); transform: translateY(-50%); }
 .y-day { top: calc(var(--top) + var(--zr) + var(--zd) / 2); transform: translateY(-50%); }
 .y-ok { top: calc(var(--top) + var(--zr) + var(--zd) + var(--zo) / 2); transform: translateY(-50%); }
-/* hc1: a gutter of 87 px or more sets the hedge in the gutter's mono ("not published" is 86 px; hc2: from 40.5rem, so Home
-at 1280-1600 loses its one Inter 11); narrower, Inter keeps it on one line */
-@container (min-width: 40.5rem) { .pf-y small { font-family: var(--mono); letter-spacing: 0; } }
-@container (max-width: 540px) { .pf-y .pf-n { display: none; } .pf-y small { font-size: var(--fs-label); } .pf-gut { letter-spacing: .06em; } .pf-y { right: .25rem; } }
+/* a gutter under 96 px cannot hold it at the small step: the hedge takes the label size there (hc3; Home at 961-1270) */
+@container (max-width: 40rem) { .y-above small { font-size: var(--fs-label); line-height: 1.25; } }
+@container (max-width: 540px) { .pf-y .pf-n { display: none; } .pf-y { right: .25rem; } }
 /* a2: phones set the label at 12 px (site.css), so the gutter holds "Confirmed" (71 px) with room before the first tick */
-@container (min-width: 301px) and (max-width: 540px) { .pf, .proof:not(.is-built)::before { --gut: clamp(5rem, 15cqi, 6.75rem); } .pf-y small { letter-spacing: -0.01em; } } /* a3: at 12 px "not published" needs 77 px of a 76 px column */
+@container (min-width: 301px) and (max-width: 540px) { .pf, .proof:not(.is-built)::before { --gut: clamp(5rem, 15cqi, 6.75rem); } .y-above small { letter-spacing: -0.01em; } } /* a3: at 12 px "not published" needs 77 px of a 76 px column */
 /* phones under ~340 px: a narrower gutter keeps every lane (the tap target) at least 24 px wide */
 @container (max-width: 300px) {
   .pf, .proof:not(.is-built)::before { --gut: 2.375rem; }
-  .pf-gut { letter-spacing: .02em; }
+  .pf-gut { font-size: var(--fs-label); }
   .pf-y { right: calc(2 * var(--hair)); }
   .pf-y .pf-lw, .y-above small { display: none; }
   .pf-y .pf-ls { display: inline; }
-  .y-floor small { font-size: var(--mono-tick); letter-spacing: 0; white-space: nowrap; }
+  .y-floor small { letter-spacing: 0; white-space: nowrap; }
 }
 @supports not (width: 1cqi) {
-  @media (max-width: 340px) { .pf, .proof:not(.is-built)::before { --gut: 2.375rem; } .pf-gut { letter-spacing: .02em; } .pf-y { right: calc(2 * var(--hair)); } .pf-y .pf-lw, .y-above small, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { font-size: var(--mono-tick); letter-spacing: 0; white-space: nowrap; } }
+  @media (max-width: 340px) { .pf, .proof:not(.is-built)::before { --gut: 2.375rem; } .pf-gut { font-size: var(--fs-label); } .pf-y { right: calc(2 * var(--hair)); } .pf-y .pf-lw, .y-above small, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { letter-spacing: 0; white-space: nowrap; } }
 }
 /* 4K (Home; Proof's is in proof.css): above 1920 the chart's gutter, blocks and zones are in rem, the 1440 chart scaled
    (integrate a1; history: notes/system.md) */
@@ -150,7 +153,7 @@ at 1280-1600 loses its one Inter 11); narrower, Inter keeps it on one line */
 .pf-bracket::before { left: 0; } .pf-bracket::after { right: 0; }
 .pf-cells { display: grid; grid-template-columns: .8fr 1.1fr 1fr 1.45fr .8fr; column-gap: .75rem; }
 .pf-cell { min-width: 0; padding-top: 1.125rem; }
-.pf-k { display: block; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
+.pf-k { display: block; font-size: var(--fs-small); line-height: 1.3; color: var(--fg-3); } /* hc3: the caption register (recorded data) */
 .pf-v { display: block; margin-top: .625rem; font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.05; letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; }
 .pf-s { display: block; margin-top: .4375rem; font-size: var(--fs-small); line-height: 1.35; color: var(--fg-2); }
 @container (max-width: 660px) {

@@ -121,13 +121,14 @@ async def main():
         print("mobile: no overflow on research, article, company")
         await ctx.close()
         # award a4 (research): without JavaScript note 09's hero still carries its key: floor, 10 bps, 01 and 10 shown, the
-        # minor numerals not
+        # minor numerals not. hc3 (research): the particle plates' words are in the caption register, sentence case
+        # ("Floor" / "10 bps"), so the floor label is matched without regard to case
         ctx = await b.new_context(viewport={"width": 390, "height": 844}, java_script_enabled=False)
         pg = await ctx.new_page()
         await pg.goto(f"{BASE}/research/09-lifecycle-01-ten-sessions.html", wait_until="load"); await pg.wait_for_timeout(600)
         keys = await pg.evaluate(r"[...document.querySelectorAll('.fs-keys .fl')].map(e => ({ t: e.textContent.replace(/\s+/g, ' ').trim(), minor: e.classList.contains('fl--minor'), on: !!e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && getComputedStyle(e).display !== 'none' }))")
         shown = [k["t"] for k in keys if k["on"]]
-        assert any(t.startswith("floor") and "10 bps" in t for t in shown) and "01" in shown and "10" in shown, ("no-JS note 09 key", shown)
+        assert any(t.lower().startswith("floor") and "10 bps" in t for t in shown) and "01" in shown and "10" in shown, ("no-JS note 09 key", shown)
         assert not [k for k in keys if k["minor"] and k["on"]], ("no-JS note 09: a minor numeral shown", keys)
         print(f"no-JS note 09 at 390: the still's key shown ({', '.join(shown)}), no minor numeral")
         await raw.close()
