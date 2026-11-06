@@ -112,9 +112,10 @@
     const lab = H('span', 'arch-lab', head), labTxt = root.dataset.archLabel || 'The agentic stack';
     const lm = /^(Fig\.\s*\d[\d.]*?)\.?(?:\s+[—–·:-])?\s+(\S.*)$/.exec(labTxt);
     if (lm) { H('b', 'fc-n', lab, lm[1].replace(/\s+/, ' ')); H('span', 'fc-d', lab, ' · '); lab.append(lm[2]); } else lab.textContent = labTxt;
+    // (hc2, the one instrument head) the hedge right after the title, out of the key
+    H('span', 'arch-kicker', head, 'Illustrative');
     const legend = H('span', 'arch-legend', head);
     legend.setAttribute('aria-hidden', 'true');
-    H('span', '', legend, 'Illustrative');
     [['lg-bead', 'Agent'], ['lg-ring', 'Proposal'], ['lg-sq', 'Settled']].forEach(([c, t]) => { const s = H('span', '', legend); H('i', c, s); s.appendChild(document.createTextNode(t)); });
     // (hc1, director item 2) the keys' hint shows only while the keyboard is in the instrument (focusin below)
     const hint = H('span', 'arch-hint', head);

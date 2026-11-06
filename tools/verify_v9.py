@@ -564,7 +564,7 @@ async def interior(b):
     await expect(pg.locator("#performance .pf-read")).to_contain_text("Day 03")
     await pg.goto(f"{BASE}/trust.html", wait_until="load")
     await expect(pg.locator("[data-ledger=replay] .lt-rec")).to_have_count(9)
-    await expect(pg.locator("[data-ledger=replay] [data-lt-state]")).to_contain_text("9 records verify")
+    await expect(pg.locator("[data-ledger=replay] [data-lt-state]")).to_contain_text("Chain intact")  # hc2: Home's words (was "Chain ✓ · 9 records verify")
     await pg.locator("[data-lt-verify]").click()
     await expect(pg.locator("[data-ledger=replay] [data-lt-state]")).to_contain_text("Verified here · 8 of 8 links hold", timeout=10000)
     await pg.goto(f"{BASE}/platform.html", wait_until="load")
@@ -586,15 +586,18 @@ TT_FIRST = """(() => { const l = document.querySelector('[data-ledger=replay]'),
 async def trust_tamper(b):
     """Trust's record can be broken and Verify shows it (v2x tests pass, 30 Oct; EVOLVE Trust: 'Try to change the past'):
     typing over a record voids the verdict ('Edited · not verified'); Verify then fails from the edited record on (the
-    state names the first broken record and how many of the nine no longer verify, and exactly that many records, the
-    last ones in order, are marked broken) and selects that first broken record; Restore puts the excerpt back and Verify
-    holds again ('8 of 8 links hold'). v2x r2: at 1024x768, from the hero's way in, Enter in the edited field verifies,
+    state names the first broken record; every record from it on, the last ones in order, is marked broken) and selects
+    that first broken record; Restore puts the excerpt back and Verify holds again ('8 of 8 links hold'). v2x r2: at
+    1024x768, from the hero's way in, Enter in the edited field verifies,
     the cause is selected inside the strip's view, and Tab from the edited field reaches Verify.
     The hashes are real SHA-256 computed in the page, so this is the chain's own tamper evidence, not a canned state.
     v2x r5 (system r5, r5-perf issue 4): Trust starts ledger.js and trust.js after its first paint (afterpaint.js), so
     'load' no longer means they have run, and the hero's "Try to change the past" is the plain #ledger link (no edit)
     until trust.js arrives, by design. Each leg waits, as open_page does, until every script the after-paint tag lists
-    has run before it acts (integrate r5: the 1024 leg clicked the link ~40 ms before trust.js, 3 of 8 runs)."""
+    has run before it acts (integrate r5: the 1024 leg clicked the link ~40 ms before trust.js, 3 of 8 runs).
+    v2x hc2 (proof; HC2 director item 5, one chain vocabulary): the resting state reads "Chain intact" and a break reads
+    "Chain broken at #<id> · every later link fails" (Home's words; no count), so the check reads the id from the state and
+    asserts from the marks that the chain breaks at the edited record and every record after it is marked."""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     await ctx.add_init_script(SCRIPTS_RAN)
     pg = await ctx.new_page(); errs = []
@@ -603,20 +606,20 @@ async def trust_tamper(b):
     assert await until(pg, HOME_ENGINES, int(15000 * max(1.0, MODE["throttle"]))), "trust.html: the after-paint scripts (ledger.js, site.js, trust.js) did not all run"
     lt, state = pg.locator("[data-ledger=replay]"), pg.locator("[data-ledger=replay] [data-lt-state]")
     await expect(lt.locator(".lt-rec")).to_have_count(9)
-    await expect(state).to_contain_text("9 records verify")
+    await expect(state).to_contain_text("Chain intact")  # hc2 (proof): one chain vocabulary with Home
     await pg.locator("[data-lt-edit]").click()
     await pg.wait_for_timeout(300)
     await pg.keyboard.type("council · approved", delay=15)
     await expect(state).to_contain_text(re.compile(r"edited · not verified", re.I))
     await expect(pg.locator("[data-lt-restore]")).to_be_visible()
     await pg.locator("[data-lt-verify]").click()
-    await expect(state).to_contain_text(re.compile(r"Chain broken at #[0-9a-f]{4} · \d+ of 9 records no longer verify", re.I), timeout=15000)
+    await expect(state).to_contain_text(re.compile(r"Chain broken at #[0-9a-f]{4} · every later link fails", re.I), timeout=15000)
     said = await state.text_content()
-    m = re.search(r"#([0-9a-f]{4}) · (\d+) of 9", said, re.I)
+    m = re.search(r"#([0-9a-f]{4})", said, re.I)
     marks = await pg.evaluate("[...document.querySelectorAll('[data-ledger=replay] .lt-rec')].map(li => ({ id: (li.querySelector('.lt-id') || {}).textContent, broken: li.classList.contains('is-broken'), edited: li.classList.contains('is-edited') }))")
     broken = [k for k, x in enumerate(marks) if x["broken"]]
     first = next((k for k, x in enumerate(marks) if x["edited"]), None)
-    assert m and len(broken) == int(m[2]) and broken == list(range(9 - len(broken), 9)), ("the broken marks do not match the verdict", said, marks)
+    assert m and broken and broken == list(range(broken[0], 9)), ("the broken marks do not match the verdict: every record from the first broken one on must be marked", said, marks)
     assert first is not None and broken[0] == first and marks[first]["id"].lower().lstrip("#") == m[1].lower(), ("the chain must break at the edited record", said, marks)
     # v2x r2 (proof; r2-mobile): Verify selects the cause, the first broken record (the inspector opens on it)
     fb = await pg.evaluate(TT_FIRST)

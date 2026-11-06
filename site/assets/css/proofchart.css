@@ -56,8 +56,9 @@
 .y-disc { top: calc(var(--top) + var(--zr) * .78); transform: translateY(-50%); }
 .y-day { top: calc(var(--top) + var(--zr) + var(--zd) / 2); transform: translateY(-50%); }
 .y-ok { top: calc(var(--top) + var(--zr) + var(--zd) + var(--zo) / 2); transform: translateY(-50%); }
-/* hc1: the widest gutter sets the hedge in the gutter's mono; narrower, Inter keeps "not published" on one line */
-@container (min-width: 45rem) { .pf-y small { font-family: var(--mono); letter-spacing: 0; } }
+/* hc1: a gutter of 87 px or more sets the hedge in the gutter's mono ("not published" is 86 px; hc2: from 40.5rem, so Home
+at 1280-1600 loses its one Inter 11); narrower, Inter keeps it on one line */
+@container (min-width: 40.5rem) { .pf-y small { font-family: var(--mono); letter-spacing: 0; } }
 @container (max-width: 540px) { .pf-y .pf-n { display: none; } .pf-y small { font-size: var(--fs-label); } .pf-gut { letter-spacing: .06em; } .pf-y { right: .25rem; } }
 /* a2: phones set the label at 12 px (site.css), so the gutter holds "Confirmed" (71 px) with room before the first tick */
 @container (min-width: 301px) and (max-width: 540px) { .pf, .proof:not(.is-built)::before { --gut: clamp(5rem, 15cqi, 6.75rem); } .pf-y small { letter-spacing: -0.01em; } } /* a3: at 12 px "not published" needs 77 px of a 76 px column */
@@ -273,26 +274,6 @@
 .pf-ck dd { margin: .15em 0 0 1.28em; color: var(--fg-3); } /* in em: the swatch and the indent grow with the type at 4K */
 @media (max-width: 900px) { .pf-ck { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
-/* the comparison (Proof §03): a hairline list */
-.cost-cmp { width: 100%; border-collapse: collapse; }
-.cost-cmp th, .cost-cmp td { padding: 1rem 1rem 1rem 0; text-align: left; vertical-align: baseline; border-bottom: var(--hair) solid var(--line); font-weight: 400; }
-.cost-cmp thead th, .cmp-g th { font: var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
-.cost-cmp thead th { padding-top: 0; border-bottom-color: var(--line-strong); }
-.cost-cmp thead b { display: block; margin-top: .375rem; font: 400 var(--fs-heading)/1.1 var(--serif); letter-spacing: -.01em; text-transform: none; color: var(--fg); }
-.cost-cmp .cmp-g th { padding: 1.625rem 0 .625rem; color: var(--fg-2); }
-.cost-cmp tbody th[scope="row"] { width: 46%; font-weight: 500; color: var(--fg); }
-.cost-cmp small { display: block; margin-top: calc(3 * var(--hair)); font-size: var(--fs-small); font-weight: 400; color: var(--fg-3); }
-.cost-cmp td { width: 27%; font: var(--fs-label)/1.4 var(--mono); letter-spacing: .04em; color: var(--fg-2); }
-.cost-cmp td + td { color: var(--signal-ink, #186B4F); }
-@media (max-width: 600px) {
-  .cost-cmp thead { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); }
-  .cost-cmp tr { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1rem; border-bottom: var(--hair) solid var(--line); padding: .875rem 0; }
-  .cost-cmp tr.cmp-g { display: block; padding: 0; border: 0; }
-  .cost-cmp tbody th[scope="row"] { grid-column: 1 / -1; width: auto; padding: 0 0 .625rem; border: 0; }
-  .cost-cmp td { width: auto; padding: 0; border: 0; }
-  .cost-cmp td::before { content: attr(data-th); display: block; margin-bottom: calc(3 * var(--hair)); font: var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
-}
-
 /* the three documents (Proof §02): records on one hash line (no hash text), hairline columns */
 .pf-docs { --cg: clamp(1.75rem, 3.6vw, 3.5rem); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--cg); }
 .pf-doc { position: relative; padding-top: 2.25rem; }
@@ -302,7 +283,6 @@
 .pf-doc.will-reveal:not(.is-in)::before { transform: scaleX(0); }
 .pf-doc.will-reveal:not(.is-in)::after { transform: scale(0); }
 .pf-doc:is(.is-cut, .is-instant)::before, .pf-doc:is(.is-cut, .is-instant)::after { transition: none; }
-.pf-dh { display: flex; justify-content: space-between; gap: .75rem; margin-bottom: 1.375rem; font: var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 .pf-doc h3 { font-weight: 400; }
 .pf-doc p { color: var(--fg-2); font-size: var(--fs-small); }
 @media (max-width: 899px) {

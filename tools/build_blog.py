@@ -10,7 +10,7 @@ import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
 from meta import HOME, ORG, FEED_LINKS, ROBOTS, ld, crumbs, atom
-from blog_plates import PLATES, plate_svg, collection_svg, library_svg, rings_tall
+from blog_plates import PLATES, plate_svg, collection_svg, library_svg, rings_tall, phone_fit
 import html as H, io, json, os, re, shutil
 from datetime import datetime
 from pathlib import Path
@@ -592,6 +592,8 @@ SERIES_BLOCK = f'''        <div class="blog-series" id="series" data-blog-series
           </ol>
         </div>
 '''
+# hill climb hc2: the head is the site's chapter head (site.css .ch-head, .ch-title): the byline, one short line, stands
+# under the name at every width (it hung alone at the far right on desks, an 800 px jump: the director's orphan lede)
 # the collection's one head: its name (the series' name for AI & agents), then its author and years on one line. The
 # author is the collection's (collection() assigns by author); Tim Leung's name leads to his papers on Google Scholar
 # (v2x's "The papers on Google Scholar" link), the others to their place on Company, as a post's byline does
@@ -608,7 +610,7 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     assert len(authors) == 1, (k, authors)  # collections are assigned by author: the head can carry the byline once
     # award a1: the phone's markets head plate (collection_svg) went: the lead card's own plate heads the list on a phone
     # as on a desk, so the collection opens on one post's drawing everywhere
-    shead = f'''        <div class="blog-head" data-reveal><h2 class="display-2">{serif(HEADS[k])}</h2><p class="blog-by">{byline_link(authors.pop())}<span>{span_}</span></p></div>
+    shead = f'''        <div class="blog-head ch-head" data-reveal><h2 class="display-2 ch-title">{serif(HEADS[k])}</h2><p class="blog-by">{byline_link(authors.pop())}<span>{span_}</span></p></div>
 '''
     if k == "economics":
         # v2x lab (blog-editorial): eight cards carried one mark eight times (r1-art M6, r1-mobile 9). The collection
@@ -730,8 +732,10 @@ def post_plate(p):
     title says what the post is). A drawn plate keeps its hedge; the economics collection's mark (rings) has none to keep"""
     econ = p["col"] == "economics" or p["slug"] not in PLATES
     cap = "" if econ else f'\n          <figcaption class="pp-h">{PLATES_HEDGE}</figcaption>'
+    art = plate_svg(p["slug"], p["col"], turn(p), lettering=True)
+    # hill climb hc2: on a phone the drawing fills its 5:2 frame (blog_plates.phone_fit, placed by blog.css at <= 640 px)
     return f'''<figure class="post-plate" id="plate">
-          <div class="post-plate-art" aria-hidden="true">{plate_svg(p["slug"], p["col"], turn(p), lettering=True)}{REG}</div>{cap}
+          <div class="post-plate-art" style="{phone_fit(art)}" aria-hidden="true">{art}{REG}</div>{cap}
         </figure>'''
 # award a3 (4K inspector, polish; AWARD_BAR L7): the post's hero plate was the site's one box-framed hero plate. It takes
 # the hero plates' registration marks (site.css .hp-reg, the same four corners; blog.css places them on the old box)

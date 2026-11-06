@@ -4,7 +4,7 @@
    - Replay: the excerpt writes itself again at its own rhythm; a long wait between two records is marked on the link.
    - Verify the chain: every hash is recomputed from its record and the hash recomputed before it, and compared with the
      hash it was sealed with. The walk lights each link that holds; from the first record that does not, every record
-     turns red and stays red ('Chain broken at #4f1b · 8 of 9 records no longer verify').
+     turns red and stays red ('Chain broken at #4f1b · every later link fails': Home's chain says it the same way, hc2).
    - Change a record: the selected record's event and detail can be typed over in the inspector (the rejection when
      nothing is selected); Restore puts the excerpt back.
    - Sealed vs now: a record being typed over shows, beside the hash it was sealed with, the hash it produces now
@@ -39,10 +39,11 @@
   }
   const at = r => audit()[r.seq - recs[0].seq];
   const verified = () => audit().reduce((n, a) => n + (a.ok ? 1 : 0), 0);
+  // the chain's two states, in the words Home's chain uses (hc2): intact, or broken at a record with every later link failing
+  const brokeAt = i => `Chain broken at ${recs[i].id}${i < recs.length - 1 ? ' · every later link fails' : ''}`;
   function setIdle() {
     const n = recs.length, ok = verified();
-    T.idle = brokenAt >= 0 && recs[brokenAt] ? `Chain broken at ${recs[brokenAt].id} · ${n - ok} of ${n} records no longer verify`
-      : ok === n ? `Chain ✓ · ${n} records verify` : `${n - ok} of ${n} records fail verification`;
+    T.idle = brokenAt >= 0 && recs[brokenAt] ? brokeAt(brokenAt) : ok === n ? 'Chain intact' : `${n - ok} of ${n} records fail verification`;
   }
   let said = '';
   const say = t => { if (ui.say && t && t !== said) ui.say.textContent = said = t; };
@@ -133,7 +134,7 @@
     const reduced = T.reduced, res = audit(), ok = verified(), n = recs.length, lis = Array.from(track.children), STEP = 110;
     const first = res.findIndex(a => !a.ok), links = Math.max(0, n - 1);
     const done = ok === n ? `Verified here · ${links} of ${links} links hold`
-      : canEdit && first >= 0 ? `Chain broken at ${recs[first].id} · ${n - ok} of ${n} records no longer verify` : `${n - ok} of ${n} records fail verification`;
+      : canEdit && first >= 0 ? brokeAt(first) : `${n - ok} of ${n} records fail verification`;
     X.dirty = false; brokenAt = -1; unbreak();
     // the sweep pans with the walk; a broken chain stops one record before the break, which is then selected (r2)
     const cause = canEdit && first >= 0 ? els.get(recs[first].seq) : null, k = cause ? lis.indexOf(cause) : -1;

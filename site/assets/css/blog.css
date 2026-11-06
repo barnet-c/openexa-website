@@ -91,10 +91,9 @@
   .lib-plate figcaption { margin-top: 1rem; }
 }
 
-/* ---------- index: a collection's one head: its name, then its author and years on one line ---------- */
-.blog-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .875rem 2.5rem; margin-bottom: clamp(2.25rem, 4.5vw, 4rem); }
-.blog-head h2 { max-width: 24ch; text-wrap: balance; } /* "Financial markets research." on one line beside its byline from 1081 px */
-.blog-by { display: flex; flex-wrap: wrap; gap: .375rem 1.625rem; margin: 0; font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-3); font-variant-numeric: tabular-nums; }
+/* ---------- index: a collection's one head (site.css .ch-head): its name, then its author and years on one line under it ---------- */
+.blog-head h2 { max-width: 24ch; text-wrap: balance; } /* "Financial markets research." on one line from 1081 px */
+.blog-by { display: flex; flex-wrap: wrap; gap: .375rem 1.625rem; margin: 1.5rem 0 0; font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-3); font-variant-numeric: tabular-nums; } /* hc2: under its name, .ch-line's gap (was at the far right) */
 .blog-by > * { position: relative; }
 .blog-by > * + *::before { content: ""; position: absolute; left: -.8125rem; top: 50%; width: var(--hair); height: 1.1em; margin-top: -.55em; background: currentColor; opacity: .45; }
 .blog-by a { display: inline-flex; align-items: center; gap: .4em; padding-top: .375rem; margin-top: -.375rem; color: var(--fg); border-bottom: var(--hair) solid var(--line-strong); transition: border-color .25s var(--ease-out); } /* a1 (a1-dev): a 24 px target or more, grown upward as the post byline's */
@@ -230,7 +229,8 @@
 
 /* ---------- phones: rows, one drawing per collection, the rail stands upright ---------- */
 @media (max-width: 640px) {
-  .blog-head { flex-direction: column; gap: .5rem; margin-bottom: 1.75rem; }
+  .blog-head { margin-bottom: 1.75rem; }
+  .blog-by { margin-top: .75rem; }
   .blog-page .blog-grid { grid-template-columns: 1fr; border-left: 0; }
   .blog-page .blog-grid .blog-thumb { display: none; }
   .blog-page .blog-grid .blog-card { border-right: 0; }
@@ -331,6 +331,8 @@
   .post-hero { row-gap: 1.5rem; }
   .post-byline { margin-top: 1.25rem; }
   .post-plate-art { aspect-ratio: 5 / 2; }
+  /* hc2: the drawing (its lettering hidden here) fills the frame, centred; the box build_blog measured (phone_fit) */
+  .post-plate-art[style] > .bp-art { inset: var(--fy) auto auto var(--fx); width: var(--fw); height: var(--fh); }
 }
 
 /* the reading column stands where a note's does (columns 4-10), under the title's three columns of air */

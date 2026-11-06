@@ -172,7 +172,8 @@
    beside it is lifted by the same --kh, so the hairline under it still meets the first constant's rule from 961 px */
 .kplate-head { display: flex; align-items: center; gap: 1rem; height: var(--kh); margin-bottom: 1.125rem; border-bottom: var(--hair) solid var(--line); }
 .kplate-head > .figure-motion { margin-left: auto; flex: none; }
-.kplate .k-state { margin: 0; min-width: 0; font: 500 var(--fs-label)/1.35 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--fg-2); text-wrap: balance; }
+.kplate-head > .instr-hedge { flex: none; } /* hc2: the hedge first, as on every instrument head (site.css); the line under the frame went */
+.kplate .k-state { margin: 0; min-width: 0; font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); text-wrap: balance; } /* hc2: the instrument head's register (site.css) */
 .kplate-art { position: relative; }
 .kplate-svg { display: block; width: 100%; height: auto; overflow: visible; }
 /* a4 (pixel): the plate's lines on the stroke tokens, whole device pixels at every size (non-scaling, as .hp-art);
@@ -197,11 +198,12 @@
 .kplate .k-tok.is-ok { fill: var(--accent); }
 .kplate .k-tok.is-rej { fill: var(--reject); }
 .kplate .k-spur { fill: none; stroke: var(--reject); stroke-width: var(--stroke); stroke-dasharray: calc(2 * var(--dash-u)) calc(3 * var(--dash-u)); }
-/* a4 (pixel): the labels are HTML over the drawing at the plate-label token (.hp-lab's 11 px, 500), placed in the
+/* a4 (pixel): the labels are HTML over the drawing, placed in the
    plate's units (--x/--y in % of 640 x 470); a block above a line hangs from its bottom (--ty), so no size of the plate
-   brings a label onto its line. The Council's follows the Council (company.js) */
+   brings a label onto its line. The Council's follows the Council (company.js). hc2 (director item 2): the caption register
+   (Inter at the small step, sentence case, paper .72), the lab's drawing words' register, no longer mono capitals */
 .kl-labs { position: absolute; inset: 0; pointer-events: none; }
-.kplate .kl { position: absolute; left: calc(var(--x) * 1%); top: calc(var(--y) * 1%); transform: translate(var(--tx, 0%), var(--ty, -50%)); font: 500 var(--fs-label)/1.35 var(--mono); letter-spacing: var(--track-label); text-transform: uppercase; white-space: nowrap; color: var(--fg-3); }
+.kplate .kl { position: absolute; left: calc(var(--x) * 1%); top: calc(var(--y) * 1%); transform: translate(var(--tx, 0%), var(--ty, -50%)); font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; white-space: nowrap; color: rgba(245, 242, 236, .72); }
 .kplate .kl > span { display: block; }
 .kplate .kl--up { --ty: -100%; }
 .kplate .kl--dn { --ty: 0%; }
@@ -221,8 +223,6 @@
 .kplate[data-on="c2"] .k-agent { fill: var(--accent); }
 /* the lit word (fill too: verify_v9 company reads it) */
 .kplate[data-on="c1"] .k-c1 .kl--word, .kplate[data-on="c3"] .k-c3 .kl--box, .kplate[data-on="c4"] .k-c4 .kl--word { color: var(--accent); fill: var(--accent); }
-.kplate .figure-cap { margin-top: 1.125rem; padding-top: .625rem; row-gap: .25rem; border-top: var(--hair) solid var(--line); }
-.kplate .figure-cap .fc-h { text-align: left; }
 [data-page="company"] .constants > div::after { display: none; }
 @media (min-width: 961px) {
   [data-page="company"] .k-grid { align-items: start; margin-top: clamp(2rem, 4vw, 3.5rem); }
@@ -264,59 +264,17 @@
 }
 @media (prefers-reduced-motion: reduce) { .kplate :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate .k-loop, .kplate .k-council > circle, [data-page="company"] .constants > div { transition: none; } }
 
-/* ---------------------------------------------------------------- Company §04: the route out of the proving ground */
-/* award a3: the six classes leave Home's three-by-two grid. The story's register (§01) runs on: one stage per status
-   under the story's rules and nodes (live green and filled, next dashed, roadmap dotted), each class under its stage
-   with its ring; the status words once per stage. One, two, three: the order of the work. Own classes, not .timeline
-   (verify_editorial reads the story's). */
-[data-page="company"] .cr-route { --w: calc(1px * var(--stroke)); list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 clamp(1.125rem, 2.4vw, 2rem); align-items: start; }
-[data-page="company"] .cr-stage { position: relative; padding-top: 1.75rem; border-top: var(--w) solid var(--fg); }
-[data-page="company"] .cr-stage::before { content: ""; position: absolute; left: 0; top: calc(-.34375rem - var(--w) / 2); width: .6875rem; height: .6875rem; border-radius: 50%; background: var(--bg); border: var(--w) solid var(--fg); }
-[data-page="company"] .cr-stage.now { padding-top: calc(1.75rem - var(--w)); border-top: calc(2 * var(--w)) solid var(--accent); }
-[data-page="company"] .cr-stage.now::before { z-index: 1; top: calc(-.375rem - var(--w)); width: .75rem; height: .75rem; background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 .25rem var(--bg); }
-/* the live rule draws once from its node at the reveal, as the story's line does (§01), whole with the reveal's own
-   fade (--dur-draw); no JS, reduced motion: drawn */
-[data-page="company"] .cr-stage.now { border-top-color: transparent; }
-[data-page="company"] .cr-stage.now::after { content: ""; position: absolute; left: 0; right: 0; top: calc(-2 * var(--w)); height: calc(2 * var(--w)); background: var(--accent); transform-origin: left; transition: transform var(--dur-draw) var(--ease-draw) 60ms; }
-[data-page="company"] .cr-route.will-reveal:not(.is-in) .cr-stage.now::after { transform: scaleX(0); }
-@media (prefers-reduced-motion: reduce) { [data-page="company"] .cr-stage.now::after { transition: none; } }
-[data-page="company"] .cr-stage.is-next { border-top: var(--w) dashed var(--khaki-deep); }
-[data-page="company"] .cr-stage.is-next::before { border: var(--w) dashed var(--khaki-deep); }
-[data-page="company"] .cr-stage.is-road { border-top: var(--w) dotted var(--khaki-deep); }
-[data-page="company"] .cr-stage.is-road::before { border: var(--w) dotted var(--khaki-deep); }
-[data-page="company"] .cr-k { margin: 0 0 .25rem; font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; color: var(--fg-3); }
-[data-page="company"] .now .cr-k { color: var(--signal-ink); }
-[data-page="company"] .cr-list { list-style: none; margin: 0; padding: 0; }
-[data-page="company"] .cr-list > li { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr); align-items: center; column-gap: 1.25rem; padding: 1.125rem 0; border-bottom: var(--hair) solid var(--line); font: 400 var(--fs-heading)/1.12 var(--serif); letter-spacing: -0.01em; color: var(--fg-2); }
-[data-page="company"] .cr-list > li::before { content: ""; height: 1.5rem; border-radius: 50%; border: var(--w) dotted var(--khaki-deep); transform: rotate(-14deg); }
-[data-page="company"] .now .cr-list > li { color: var(--fg); }
-[data-page="company"] .now .cr-list > li::before { border: calc(1px * var(--stroke-2)) solid var(--accent); transform: rotate(-18deg); }
-[data-page="company"] .is-next .cr-list > li::before { border: var(--w) dashed var(--fg-2); transform: rotate(10deg); }
-[data-page="company"] .cr-n > span { display: block; }
-/* a two-line name breaks before its dot and drops it (the dot rule, as Home §01 and Trust; integrate a3); phones keep one line with the dot */
-@media (min-width: 601px) { [data-page="company"] .cr-dot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
-[data-page="company"] #lifecycles .display-2 { margin-bottom: clamp(2.25rem, 4vw, 3.5rem); }
+/* ---------------------------------------------------------------- Company §04: the six lifecycles */
+/* hc2 (director item 4, one drawing for the six): Home §01's register, site.css's .lc-reg, the same markup and words
+   (the a3 route of stages and ellipses is gone); the heading keeps the chapter head's gap, as on Home */
+[data-page="company"] #lifecycles .display-2 { margin-bottom: var(--ch-gap); }
 [data-page="company"] .class-note { margin: 1.25rem 0 0; font-size: var(--fs-small); color: var(--fg-3); }
-@media (min-width: 601px) and (max-width: 960px) { /* tablet: the three stages side by side, each ring over its name */
-  [data-page="company"] .cr-list > li { grid-template-columns: minmax(0, 1fr); row-gap: .75rem; padding: .875rem 0 1rem; }
-  [data-page="company"] .cr-list > li::before { width: 3.5rem; }
-}
-@media (max-width: 600px) {
-  [data-page="company"] .cr-route { grid-template-columns: minmax(0, 1fr); row-gap: 1.375rem; }
-  [data-page="company"] .cr-stage, [data-page="company"] .cr-stage.now { padding-top: 1rem; }
-  [data-page="company"] .cr-k { margin-bottom: 0; }
-  [data-page="company"] .cr-list > li { grid-template-columns: 2.5rem minmax(0, 1fr); column-gap: 1rem; padding: .625rem 0; }
-  [data-page="company"] .cr-list > li::before { height: 1.0625rem; }
-  [data-page="company"] .cr-n > span { display: inline; }
-}
 
 /* ---------------------------------------------------------------- Company: print */
 @media print {
   .plate-still, .company-readout, .company-modes { display: none !important; }
   [data-page="company"] .crew > li { break-inside: avoid; }
   [data-page="company"] .crew .ph { display: none; }
-  [data-page="company"] .cr-stage.now { border-top-color: var(--accent); }
-  [data-page="company"] .cr-stage.now::after { display: none; }
   [data-page="company"] .crew > li { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); grid-template-areas: "who what"; grid-template-rows: auto; align-items: first baseline; }
 }
 

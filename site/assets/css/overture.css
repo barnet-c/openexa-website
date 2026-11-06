@@ -24,9 +24,9 @@
 .beat.is-active .beat-text, .beat.is-active .hero-stats { pointer-events: auto; }
 /* the copy relay (story.js): each part of a beat follows the scroll position. --eo the eyebrow */
 .beat .eyebrow, .beat-0 .hero-kicker { opacity: var(--eo, 1); }
-.beat .body-lg, .beat-0 .hero-sub, .beat .hero-cta, .beat .story-legend, .beat-0 .hero-stats { opacity: var(--bo, 1); }
+.beat .body-lg, .beat-0 .hero-sub, .beat .hero-cta, .beat-0 .hero-stats { opacity: var(--bo, 1); }
 /* at 0 the paragraph, buttons, key and figures are not there at all */
-.beat.is-bo0 .body-lg, .beat.is-bo0 .hero-sub, .beat.is-bo0 .hero-cta, .beat.is-bo0 .story-legend, .beat.is-bo0 .hero-stats { visibility: hidden; }
+.beat.is-bo0 .body-lg, .beat.is-bo0 .hero-sub, .beat.is-bo0 .hero-cta, .beat.is-bo0 .hero-stats { visibility: hidden; }
 .story-ready .beat:not(.beat-0) [data-split] .wi, .story-ready .beat-0.is-relay [data-split] .wi { transform: translateY(calc((1 - clamp(0, var(--w, 1) * 1.5 - var(--i, 0) * .05, 1)) * 112%)); transition: none; }
 .beat-text { max-width: min(44%, 35rem); }
 .beat-0 .beat-text { max-width: min(50%, 41.25rem); }
@@ -54,15 +54,11 @@
 /* portrait and short landscape screens: the proof's derived summary over the floor while the paper takes the copy's place */
 .story-coda { position: absolute; left: var(--story-in-l); right: var(--story-in-r); top: 0; display: none; opacity: 0; pointer-events: none; will-change: opacity, transform; }
 .story-coda-t { font: 400 clamp(1.9rem, 7.6vw, 3.1rem)/1.04 var(--serif); letter-spacing: -0.02em; color: var(--paper); text-wrap: balance; }
-.story-coda-s { margin-top: .75rem; font: var(--mono-tick)/1.6 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .66); }
+.story-coda-s { margin-top: .75rem; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); text-wrap: balance; } /* the caption register (hc2; home.css's twin until home drops it) */
 /* the role-coded vocabulary, as a key */
-.story-legend { display: flex; flex-wrap: wrap; gap: .625rem 1.25rem; margin-top: 1.375rem; font: var(--mono-tick)/1 var(--mono); letter-spacing: .13em; text-transform: uppercase; color: rgba(245, 242, 236, .66); }
-.story-legend li { display: inline-flex; align-items: center; gap: .5rem; }
-.story-legend li::before, .story-lab i.lg-r, .story-lab i.lg-b { content: ""; display: inline-block; flex: none; width: .5625rem; height: .5625rem; box-sizing: border-box; }
-.story-legend .lg-p::before { border: .09375rem solid var(--signal-bright); border-radius: 50%; }
-.story-legend .lg-s::before { background: var(--signal-bright); border-radius: .09375rem; }
-.story-legend .lg-r::before, .story-lab i.lg-r { width: .4375rem; height: .4375rem; background: var(--reject-bright); border-radius: 50%; }
-.story-legend .lg-b::before, .story-lab i.lg-b { width: .875rem; height: .375rem; background: rgba(245, 242, 236, .92); border-radius: .0625rem; }
+.story-lab i.lg-r, .story-lab i.lg-b { content: ""; display: inline-block; flex: none; width: .5625rem; height: .5625rem; box-sizing: border-box; }
+.story-lab i.lg-r { width: .4375rem; height: .4375rem; background: var(--reject-bright); border-radius: 50%; }
+.story-lab i.lg-b { width: .875rem; height: .375rem; background: rgba(245, 242, 236, .92); border-radius: .0625rem; }
 
 /* callouts: DOM text projected from the instrument, with leader lines */
 .story-labels { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
@@ -79,11 +75,11 @@ button.story-lab { cursor: pointer; text-align: left; }
 button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright); outline-offset: .1875rem; }
 .story-lab b { font-weight: 500; color: rgba(245, 242, 236, .86); }
 .story-lab .k { color: rgba(245, 242, 236, .92); font-variant-numeric: tabular-nums; }
-.story-lab .n { color: rgba(245, 242, 236, .6); transition: color var(--dur-feedback) var(--ease-out); }
+.story-lab .n { color: rgba(245, 242, 236, .72); transition: color var(--dur-feedback) var(--ease-out); }
 .story-lab .dt { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); } /* read by screen readers; shown in the inspector */
 .story-lab.ring, .story-lab.layer, .story-lab.gate, .story-lab.note, .story-lab.bound { display: flex; align-items: center; gap: .625rem; min-height: 1.375rem; padding: .125rem 0; }
-.story-lab .st { padding: .1875rem .375rem .125rem; border: var(--hair) solid rgba(245, 242, 236, .24); border-radius: .125rem; font-size: var(--mono-tick); letter-spacing: .12em; color: rgba(245, 242, 236, .7); }
-.story-lab .st-live { color: var(--signal-bright); border-color: rgba(79, 203, 147, .55); }
+.story-lab .st { padding: .0625rem .4375rem; border: var(--hair) solid rgba(245, 242, 236, .24); border-radius: .125rem; font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .7); }
+.story-lab .st-live { color: var(--signal-bright); border-color: rgba(79, 203, 147, .55); } /* story.js writes st-live / st-next / st-roadmap from each ring's status */
 .story-lab .st-roadmap { color: var(--khaki); border-color: rgba(172, 166, 142, .34); border-style: dotted; }
 .story-lab .st-next { border-style: dashed; }
 .story-lab.is-live .k, .story-lab.is-council .k, .story-lab.is-council .n, .story-lab.bound .n { color: var(--signal-bright); }
@@ -91,6 +87,10 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-lab.is-hot::before { content: ""; position: absolute; left: -.875rem; top: 50%; width: .5rem; height: var(--hair); background: var(--paper); }
 .story-lab.day.is-hot::before { display: none; }
 .story-lab.note .n { color: rgba(245, 242, 236, .52); }
+/* hc2: the scenes' words in the plates' caption register (Inter at the small step, sentence case; names at paper .72),
+   as the swarm lab's gates below them; codes and numerals stay mono at the label step (data): .k, the days, the floor */
+.story-lab:is(.ring, .layer, .gate, .note, .bound) { font: 400 var(--fs-small)/1.35 var(--sans); letter-spacing: 0; text-transform: none; }
+.story-lab:is(.ring, .layer, .gate) .k { font: 500 var(--fs-label)/1 var(--mono); letter-spacing: .04em; }
 .story-lab.is-terse .n { display: none; } /* short landscape, where names would crowd the structure: code and status (the inspector names it) */
 /* a plate's caption leads with what kind of picture it is, and wraps rather than leave the screen */
 .story-lab.cap { white-space: normal; max-width: calc(100% - 2 * var(--gutter)); line-height: 1.5; letter-spacing: .12em; color: rgba(245, 242, 236, .6); } /* AA on the ground */
@@ -104,10 +104,9 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-lab.sum { text-align: right; line-height: 1.8; color: rgba(245, 242, 236, .62); }
 .story-lab.sum b { color: var(--paper); }
 .story-lab.sum .sep { display: block; }
-.story-lab.sum .lg-t::after { content: ""; display: inline-block; width: .5rem; height: .25rem; margin-left: .5rem; border: solid var(--signal-bright); border-width: 0 0 .09375rem .09375rem; transform: translateY(-.1875rem) rotate(-45deg); }
-.story-insp { position: absolute; left: 0; top: 0; z-index: 2; max-width: 16.25rem; padding: .5625rem .75rem .625rem; border-left: var(--hair) solid var(--signal-bright); background: rgba(11, 17, 15, .96); font: var(--mono-tick)/1.55 var(--mono); letter-spacing: .07em; color: rgba(245, 242, 236, .8); opacity: 0; pointer-events: none; white-space: normal; }
+.story-insp { position: absolute; left: 0; top: 0; z-index: 2; max-width: 16.25rem; padding: .5625rem .75rem .625rem; border-left: var(--hair) solid var(--signal-bright); background: rgba(11, 17, 15, .96); font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .8); opacity: 0; pointer-events: none; white-space: normal; }
 .story-insp.is-on { opacity: 1; transition: opacity var(--dur-feedback) var(--ease); } /* it comes up softly and goes at once */
-.story-insp b { display: block; margin-bottom: calc(3 * var(--hair)); color: var(--paper); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
+.story-insp b { display: block; margin-bottom: calc(3 * var(--hair)); color: var(--paper); font-weight: 500; }
 .story-insp em { font-style: normal; color: var(--signal-bright); }
 /* while the inspector is up, the caption and the summary give way to it (classes only: no :has()) */
 .story-labels.has-insp .story-lab.cap, .story-labels.has-insp .story-lab.sum { opacity: 0 !important; }
@@ -145,7 +144,6 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-paper-cap { display: flex; justify-content: space-between; gap: .375rem 1.5rem; flex-wrap: wrap; padding-bottom: .875rem; border-bottom: var(--hair) solid var(--rule-strong); font: var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: var(--slate); } /* a caption, not data: the small step in Inter (1 Nov) */
 
 /* the layout modes story.js measures. */
-.story-compact .story-legend { display: none; }
 @media (max-width: 599.98px) { .story-compact .beat-0 .hero-stats { display: none; } } /* a4: portrait tablets keep v2's four figures (owner, 2 Nov) */
 .story-compact .beat h2 { font-size: clamp(1.55rem, 6.4vw, 2.1rem); }
 .story-compact .beat-0 .display-1 { font-size: clamp(2.1rem, 8.8vw, 3.4rem); }
@@ -156,7 +154,7 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-compact .beat .hero-cta .btn, .story-short .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
 /* a portrait phone is always compact: the same rules from the first paint */
 @media (scripting: enabled) and (max-width: 599.98px) {
-  html:not(.no-webgl) .story-legend, html:not(.no-webgl) .beat-0 .hero-stats { display: none; }
+  html:not(.no-webgl) .beat-0 .hero-stats { display: none; }
   html:not(.no-webgl) .beat h2 { font-size: clamp(1.55rem, 6.4vw, 2.1rem); }
   html:not(.no-webgl) .beat-0 .display-1 { font-size: clamp(2.1rem, 8.8vw, 3.4rem); }
   html:not(.no-webgl) .beat-0 .hero-kicker { margin-bottom: .5rem; font-size: .95rem; }
@@ -215,7 +213,7 @@ html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { ma
   .beat { position: relative; left: auto; right: auto; bottom: auto; opacity: 1; transform: none; pointer-events: auto; padding: clamp(3.5rem, 9vh, 6rem) 0; border-top: var(--hair) solid rgba(245, 242, 236, .12); }
   .beat-0 { border-top: 0; padding-top: calc(var(--nav-h) + clamp(6rem, 20vh, 13.75rem)); }
   .beat .beat-text { pointer-events: auto; }
-  .story-labels, .story-bar, .story-gl, .story-paper, .story-legend, .story-num, .story-coda { display: none; }
+  .story-labels, .story-bar, .story-gl, .story-paper, .story-num, .story-coda { display: none; }
   .beat-fig { display: block; width: 100%; max-width: 27.5rem; height: auto; margin-top: 2.125rem; }
 }
 .no-webgl .story, .story-tiny .story { height: auto; }
@@ -225,8 +223,8 @@ html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { ma
 .no-webgl .beat-0, .story-tiny .beat-0 { border-top: 0; padding-top: calc(var(--nav-h) + clamp(6rem, 20vh, 13.75rem)); }
 .no-webgl .beat .beat-text, .story-tiny .beat .beat-text { pointer-events: auto; }
 .no-webgl .beat [data-split] .wi { transform: none; }
-.no-webgl .story-labels, .no-webgl .story-bar, .no-webgl .story-gl, .no-webgl .story-paper, .no-webgl .story-legend, .no-webgl .story-num, .no-webgl .story-coda,
-.story-tiny .story-labels, .story-tiny .story-bar, .story-tiny .story-gl, .story-tiny .story-paper, .story-tiny .story-legend, .story-tiny .story-num, .story-tiny .story-coda { display: none; }
+.no-webgl .story-labels, .no-webgl .story-bar, .no-webgl .story-gl, .no-webgl .story-paper, .no-webgl .story-num, .no-webgl .story-coda,
+.story-tiny .story-labels, .story-tiny .story-bar, .story-tiny .story-gl, .story-tiny .story-paper, .story-tiny .story-num, .story-tiny .story-coda { display: none; }
 .no-webgl .beat-fig, .story-tiny .beat-fig { display: block; width: 100%; max-width: 27.5rem; height: auto; margin-top: 2.125rem; }
 .no-webgl .story-2d { height: 100vh; height: 100svh; }
 @media (min-aspect-ratio: 23/20) and (min-width: 640px) {
@@ -266,7 +264,7 @@ html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { ma
 @media (max-height: 600px) and (min-aspect-ratio: 23/20) {
   .story { --story-bar-h: 2.875rem; }
   .beat .eyebrow { margin-bottom: .5rem; }
-  .beat-0 .hero-kicker, .beat-0 .hero-stats, .story-legend { display: none; }
+  .beat-0 .hero-kicker, .beat-0 .hero-stats { display: none; }
   .beat-0 .display-1 { font-size: clamp(1.9rem, 10vh, 3.4rem); }
   .beat h2 { font-size: clamp(1.35rem, 3.4vw, 1.7rem); max-width: 24ch; } /* a smaller short scale: the paragraphs keep their place */
   .beat .body-lg, .beat-0 .hero-sub { margin-top: .625rem; font-size: .86rem; line-height: 1.45; }
@@ -300,7 +298,6 @@ html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { ma
   .hero-stats { max-width: 100%; grid-template-columns: repeat(4, auto); justify-content: space-between; gap: .75rem .875rem; margin-top: 1.125rem; padding-top: .875rem; }
   .hero-stats b { font-size: clamp(1.15rem, 4.6vw, 1.6rem); }
   .hero-stats span { margin-top: .375rem; }
-  .story-legend { margin-top: .875rem; gap: .5rem .875rem; }
   .story-lab.gate .k { display: none; }
   .story-lab.floor span { display: block; } /* two short lines, left of column 01 */
   .story-lab.floor { line-height: 1.3; }
@@ -330,7 +327,7 @@ html.story-tiny .story .story-coda { display: none; }
 @media (prefers-reduced-motion: reduce) { .hero-stats .live { animation: none; } .story-lab, .story-leader, .story-node, .story-insp.is-on, .story-idx button, .story-num i { transition: none; } }
 /* print: the overture prints as its static sequence, ink on white */
 @media print {
-  .story-bar, .story-paper, .story-insp, .story-leaders, .story-legend { display: none !important; }
+  .story-bar, .story-paper, .story-insp, .story-leaders { display: none !important; }
   .story, .story-stage { height: auto !important; min-height: 0 !important; background: none !important; }
   .story-gl, .story-2d, .story-labels, .story-num, .story-coda, .story-static-mark, .beat-fig { display: none !important; }
   .story .beat { position: static !important; opacity: 1 !important; visibility: visible !important; transform: none !important; --eo: 1 !important; --w: 1 !important; --bo: 1 !important; }

@@ -695,6 +695,59 @@ def plate_svg(slug, col, turn=0, lettering=False):
     return out if lettering else unlettered(out)
 
 
+NUM = re.compile(r"-?\d+(?:\.\d+)?")
+INK = re.compile(r"<(path|circle|ellipse)\b([^>]*)>")
+def _attr(a, name):
+    m = re.search(rf'\b{name}="([^"]+)"', a)
+    return m and m[1]
+
+
+def ink_box(s):
+    """hill climb hc2: the box of what a plate draws, in its viewBox's units, its lettering left out (the phone hides
+    it): every path's points (d()'s format: an absolute start, then relative steps; compact() joins subpaths), every
+    dot's and circle's extent, every ring's extent at its tilt"""
+    assert not re.search(r"<(rect|line|polyline|polygon|use|image)\b", s), "ink_box measures path, circle and ellipse only"
+    x0 = y0 = math.inf; x1 = y1 = -math.inf
+    def take(ax, ay, bx, by):
+        nonlocal x0, y0, x1, y1
+        x0, y0, x1, y1 = min(x0, ax), min(y0, ay), max(x1, bx), max(y1, by)
+    for tag, a in INK.findall(PT.sub("", s)):
+        if tag == "path":
+            for sub in _attr(a, "d").split("M")[1:]:
+                head, _, steps = sub.partition("l")
+                x, y = map(float, NUM.findall(head))
+                take(x, y, x, y)
+                ns = list(map(float, NUM.findall(steps)))
+                for dx, dy in zip(ns[::2], ns[1::2]):
+                    x, y = x + dx, y + dy
+                    take(x, y, x, y)
+        else:
+            cx, cy = float(_attr(a, "cx")), float(_attr(a, "cy"))
+            rx = float(_attr(a, "r") or _attr(a, "rx")); ry = float(_attr(a, "r") or _attr(a, "ry"))
+            rot = _attr(a, "transform")
+            t = math.radians(float(NUM.findall(rot)[0])) if rot else 0.0
+            hw, hh = math.hypot(rx * math.cos(t), ry * math.sin(t)), math.hypot(rx * math.sin(t), ry * math.cos(t))
+            take(cx - hw, cy - hh, cx + hw, cy + hh)
+    assert x0 < x1 and y0 < y1, "a plate with nothing drawn"
+    return x0, y0, x1, y1
+
+
+# hc2 (4K/390 look: on a phone the hero's 16:9 drawing stood in a 5:2 frame at 44-59% of its width, the lettering that
+# fills it on a desk hidden): the frame's share the drawing may take on a phone, each way, and the frame's aspect there
+PHONE_FILL, PHONE_ASPECT, PHONE_ZOOM = (.84, .74), 5 / 2, 2.0
+def phone_fit(s):
+    """where a hero plate's svg box goes inside its 5:2 frame on a phone (blog.css, <= 640 px) so that what it draws,
+    centred, fills PHONE_FILL of the frame: --fx/--fw in % of the frame's width, --fy/--fh of its height. The box keeps
+    the viewBox's own shape (no letterbox), so the lines stay non-scaling hairlines and the dots grow with the drawing"""
+    vw, vh = (float(v) for v in re.search(r'viewBox="0 0 (\S+) (\S+)"', s).groups())
+    x0, y0, x1, y1 = ink_box(s)
+    # k: frame widths per viewBox unit; the frame is 1 wide and 1 / PHONE_ASPECT tall
+    k = min(PHONE_FILL[0] / (x1 - x0), PHONE_FILL[1] / PHONE_ASPECT / (y1 - y0), PHONE_ZOOM * min(.96 / vw, .94 / PHONE_ASPECT / vh))
+    pct = lambda v: f"{v * 100:.2f}".rstrip("0").rstrip(".") + "%"
+    return (f"--fx:{pct(.5 - k * (x0 + x1) / 2)};--fw:{pct(k * vw)};"
+            f"--fy:{pct(.5 - k * (y0 + y1) / 2 * PHONE_ASPECT)};--fh:{pct(k * vh * PHONE_ASPECT)}")
+
+
 def collection_svg(col):
     """the plate a collection shows once at its head on phones (where the cards drop their plates)"""
     if col == "economics": return rings_wide()

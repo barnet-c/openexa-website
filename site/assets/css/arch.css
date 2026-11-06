@@ -89,23 +89,17 @@
   background: radial-gradient(70% 60% at 50% 46%, rgba(79, 203, 147, .055), transparent 70%), radial-gradient(90% 70% at 8% 0%, rgba(79, 203, 147, .06), transparent 62%), var(--a-ground); }
 .arch--spec { margin-bottom: var(--arch-gap, 2.5rem); }
 .arch ::selection { background: var(--paper); color: var(--ink); }
-.arch-head { display: flex; align-items: center; gap: 1.375rem; min-height: 3.125rem; padding: .5rem .875rem .5rem 1.375rem; border-bottom: var(--hair) solid var(--line); font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); }
-/* the label speaks the caption register (r3-art): the mark in mono sentence case (.fc-n, "Fig. 1.1"), the title in
-   Inter; the legend, keys and Pause beside it stay mono labels */
-.arch-lab { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
+/* the head: site.css's one instrument head (hc2); a figure mark (.fc-n, "Fig. 1.1") in the title is paper */
+.arch-head { display: flex; align-items: center; gap: 1.375rem; min-height: 3.125rem; padding: .5rem .875rem .5rem 1.375rem; border-bottom: var(--hair) solid var(--line); }
 .arch-lab .fc-n { margin-right: .75em; color: var(--fg); }
 .arch-legend { display: flex; flex-wrap: wrap; gap: .375rem 1rem; margin-left: auto; }
 .arch-legend span { display: inline-flex; align-items: center; gap: .5rem; }
-.arch-legend > span:first-child { color: var(--khaki); }
 .arch.is-wide .arch-legend + .arch-hint { padding-left: 1.25rem; border-left: var(--hair) solid var(--line); }
 .arch-legend i { width: .4375rem; height: .4375rem; flex: none; }
 .arch-legend .lg-bead { border-radius: 50%; background: radial-gradient(circle at 35% 35%, var(--paper), rgba(245, 242, 236, .45)); }
 .arch-legend .lg-ring { border-radius: 50%; border: .09375rem solid var(--signal-bright); width: .5625rem; height: .5625rem; }
 .arch-legend .lg-sq { background: var(--signal-bright); }
 .arch-hint { color: var(--fg-3); }
-/* a2 (UX juror, big; owner: mono caps only on live data): the head speaks Inter at the small step, sentence case, on Home
-   and Platform alike (was platform.css's, Platform only): the title, the khaki hedge with its marks, the hint, Pause motion */
-.arch-head { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; } /* Pause motion: site.css's one control (hc1) */
 .arch-motion:focus-visible, .arch-layer:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: -.125rem; }
 .arch-body { position: relative; }
 .arch-fig { position: relative; }
@@ -220,8 +214,14 @@
 .arch.is-narrow .arch-head { flex-wrap: wrap; row-gap: .5rem; padding-top: .5625rem; padding-bottom: .625rem; }
 .arch.is-narrow .arch-lab { flex: 1 1 14em; }
 .arch.is-narrow .arch-hint { margin-left: auto; }
-.arch.is-narrow .arch-legend { order: 3; flex: 1 1 100%; margin-left: 0; gap: .375rem .75rem; }
-@media (max-width: 379px) { .arch.is-narrow .arch-legend > span:first-child { flex-basis: 100%; } } /* 'Illustrative' on a line of its own */
+.arch.is-narrow .arch-legend { order: 3; flex: 1 1 auto; margin-left: 0; gap: .375rem .75rem; }
+.arch.is-narrow .arch-kicker { order: 3; } /* with the key, under the title and Pause */
+/* tablets: the wide head's order (title, Illustrative, key, Pause at the end); the head fits one row from ~661 px (hc2) */
+@media (min-width: 601px) {
+  .arch.is-narrow :is(.arch-lab, .arch-legend) { flex: 0 1 auto; } /* title, hedge and key from the left; Pause at the right end */
+  .arch.is-narrow :is(.arch-hint, .arch-motion) { order: 4; }
+  .arch.is-narrow .arch-motion { margin-left: auto; }
+}
 @media (max-width: 1299px) { .arch.is-wide .arch-hint { display: none; } } /* below this the head would wrap */
 .arch.is-wide .arch-head > *, .arch.is-wide .arch-legend > span { white-space: nowrap; } /* one line: the wide height is fixed */
 .arch.is-wide .arch-legend { flex-wrap: nowrap; }

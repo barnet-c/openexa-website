@@ -817,6 +817,7 @@
   // the copy's mode, measured: compact on portrait screens that would leave a scene under 40% of the stage
   function setModes() {
     stacked = stackedMQ.matches; CAM = stacked ? CAM_ST : CAM_W;
+    clearLift(); // (measured at the stage's foot, then lifted again below)
     root.classList.remove('story-compact', 'story-short', 'story-figs-01');
     beats.forEach(b => b.classList.remove('is-tight', 'is-snug'));
     compact = stacked && (H < 780 || W < 600); short = !stacked && H < 600; // (a portrait phone is compact in CSS from the first paint)
@@ -842,7 +843,39 @@
       if (br.t - 14 - (navH + barH + capH[i] + 8) < MIN_FRAME[i]) { b.classList.add('is-tight'); tight = true; }
     });
     if (tight) measureLayout();
+    if (liftBeats()) measureBeats();
     beats.forEach((b, i) => { const br = beatRects[i]; frameTiny[i] = !!(stacked && br && (MIN_FRAME[i] || !i) && br.t - 14 - (navH + barH + capH[i] + 8) < (i === 4 ? 40 + DAY_BAND : 40)); }); // (S4's tags hang a band under the floor)
+  }
+  // (hc2) portrait (phones, upright tablets): scenes 1-4 lift their line off the stage's foot to one height, so each scene's
+  // group (the structure and its callouts over its line) stands on the stage's optical centre and the structure sits on its
+  // line, not over an empty sky (the director: "the text in the bottom fifth under 70% empty canvas"). Scene 0 (the CEO's
+  // first screen and its figures) keeps its place; landscape, the static sequence and the frames' fitting rules are unchanged.
+  const LIFT_AIR = 18, LIFT_K = 0.42; // the structure's air over its line (beyond the frame's own 14 px); the share of the
+  // free height left above the group (0.5 centres it; a little less sets it on the optical centre, the line in the middle third)
+  let lifted = false;
+  function clearLift() { if (!lifted) return; lifted = false; beats.forEach(b => { b.style.top = b.style.bottom = ''; }); }
+  function needOf(i) { // the height scene i's structure and callouts take at the width a phone gives them (fitScenes' stacked rules)
+    const room = Math.max([0, 0.13, 0.15, 0.1, 0][i] * W, labelMaxW[i] ? labelMaxW[i] + 28 : 0), x0 = gutter * 0.5, x1 = W - gutter * 0.5 - room;
+    if (i === 4) return (H_COL + 0.34) * (x1 - (x0 + floorW + 14)) / (COL_SPAN + 0.24) + band4();
+    const ext = EXT_ST[i] || EXT[i], list = labels.filter(l => l.scene === i && l.kind === 'list' && !l.wide);
+    const listH = list.length ? 14 + list.length * (Math.max(...list.map(l => l.h)) + 2) - 2 : 0; // the callouts' column (placeLabels)
+    return Math.max(Math.min((x1 - x0) * ext[1] / ext[0], H * 0.74), listH);
+  }
+  function liftBeats() {
+    if (!stacked || tiny) return false;
+    let T = -1e9, foot = 1e9, fit = 0;
+    for (let i = 1; i < 5; i++) {
+      const b = beats[i];
+      if (!b || !b.offsetParent || b.classList.contains('is-tight')) return false;
+      const y0 = navH + barH + capH[i] + 8, need = needOf(i), top = b.offsetTop;
+      const base = y0 + need + 14 + LIFT_AIR; // the tightest place for the line
+      T = Math.max(T, base + LIFT_K * (top - base)); // the group on the stage's optical centre
+      foot = Math.min(foot, top); fit = Math.max(fit, y0 + need + 14);
+    }
+    T = Math.round(Math.max(fit, Math.min(T, foot))); // one line for the four scenes: the lowest a scene asks for, never below the stage's foot
+    if (T > foot - 8) return false;
+    beats.forEach((b, i) => { if (i) { b.style.top = T + 'px'; b.style.bottom = 'auto'; } });
+    return (lifted = true);
   }
   // the six rings' projected outline at scale s (offsets from the camera target's screen point)
   const tmpV = new Float32Array(16), tmpP = new Float32Array(16), tmpVP = new Float32Array(16);
@@ -897,6 +930,7 @@
         x0 = gutter * 0.5; x1 = W - gutter * 0.5 - room;
         y0 = navH + barH + capH[i] + 8;
         y1 = Math.min(Math.max(y0 + 120, Math.min(H * 0.8, br.t) - 14), br.t - 14);
+        if (lifted && i) y0 = Math.max(y0, y1 - needOf(i) - LIFT_AIR); // (hc2) a lifted scene's structure stands on its line
       }
       if (i === 4) { // the columns, the floor's tag left of column 01, and the band of records
         // (award a2) wide: the row ends on the column's content edge, as it lands (it ran 12-64 px past it above 1440)
@@ -987,7 +1021,7 @@
 
   // where a scene's local point lands in the world, given the scene and the current fit
   function camera() {
-    if (b4) { const k = seg === 3 ? sstep(0.3, 0.6, xeNow) : 0; layouts[4].s = b4.s * lerp(1, b4.z, k); layouts[4].cx = lerp(b4.cx, W / 2, k); }
+    if (b4) { const k = seg === 3 ? (stacked ? sstep(0.3, 0.6, xeNow) : sstep(0.16, 0.4, xeNow)) : 0; layouts[4].s = b4.s * lerp(1, b4.z, k); layouts[4].cx = lerp(b4.cx, W / 2, k); } // (hc2, wide: the row spreads as the coda lands)
     const a = layouts[seg], b = layouts[seg + 1];
     const L = { cx: lerp(a.cx, b.cx, mE), cy: lerp(a.cy, b.cy, mE) };
     scale = [a.s, b.s];
@@ -1010,9 +1044,12 @@
   // paper's caption) has as much dark above it as paper below, a little high; never so high that the coda meets the bar
   const FLOOR_END = () => (stacked ? 0.7 : short ? 0.76 : Math.min(0.66, Math.max(0.6, (navH + 22 + CODA_GAP() + codaH) / H)));
   // the way out, in shares of the exit.
-  const EXIT = { wide: { copy: [0.1, 0.22], coda: [0.18, 0.28], paper: [0.26, 0.66], cap: [0.6, 0.76] }, tall: { cam: [0.3, 0.56], copy: [0.3, 0.42], coda: [0.38, 0.48], paper: [0.58, 0.86], cap: [0.84, 0.96] } }; // (portrait: the proof's copy has gone before the coda opens: one headline at a time)
+  // (hc2, wide) the proof moment holds as one frame before the paper comes: the columns fold by 0.22 and the row of ten
+  // spreads across the column as the coda lands (0.16-0.4), so headline, hedge and the ten records stand together on the
+  // dark, centred; the paper rises after (0.4-0.8; was 0.26-0.66, which covered the row while it was still spreading)
+  const EXIT = { wide: { copy: [0.1, 0.22], coda: [0.18, 0.28], paper: [0.4, 0.8], cap: [0.74, 0.9] }, tall: { cam: [0.3, 0.56], copy: [0.3, 0.42], coda: [0.38, 0.48], paper: [0.58, 0.86], cap: [0.84, 0.96] } }; // (portrait: the proof's copy has gone before the coda opens: one headline at a time)
   // (lab) the exit folds the ten columns down together with the floor line (the paper's edge); seals go into their records
-  const foldE = () => sstep(0.02, 0.3, xeNow), flY = () => lerp(Y_FL, Y_FLOOR + 0.02, foldE());
+  const foldE = () => sstep(0.02, stacked ? 0.3 : 0.22, xeNow), flY = () => lerp(Y_FL, Y_FLOOR + 0.02, foldE());
   const sealOf = (c) => clamp((xeNow - 0.03 - 0.12 * c / Math.max(1, NCOL - 1)) / 0.1, 0, 1);
   const dcArr = new Float32Array(24);
 
@@ -1212,7 +1249,7 @@
     } else {
       // the floor line (the paper's edge to be), the hash links between the records hanging from it
       const step = COL_SPAN / NCOL, rY = Y_FLOOR - l4(U_REC), yN = Y_FLOOR - l4(U_NAV), tk = l4(U_TICK), gap = l4(2), nav = 1 - sstep(0.06, 0.3, xeNow);
-      put('hz', [[-COL_SPAN / 2 - 0.12, Y_FLOOR, 0], [COL_SPAN / 2 + 0.12, Y_FLOOR, 0]], false, C.ivory, 0.3 * (1 - sstep(0.74, 0.9, xeNow)), 1, 0.9); // the foot: the records' rail, then the paper's own edge
+      put('hz', [[-COL_SPAN / 2 - 0.12, Y_FLOOR, 0], [COL_SPAN / 2 + 0.12, Y_FLOOR, 0]], false, C.ivory, 0.3 * (1 - (stacked ? sstep(0.74, 0.9, xeNow) : sstep(0.8, 0.94, xeNow))), 1, 0.9); // the foot: the records' rail, then the paper's own edge
       const fy = flY(); put('fl', [[floorL, fy, 0], [COL_SPAN / 2 + 0.12, fy, 0]], false, C.ivory, 0.62 * (1 - sstep(0.8, 1, foldE())), 1, 0.9); // the 10 bps floor: it comes down with the columns
       const dash = l4(4), per = l4(9);
       SESSIONS.forEach((ss, c) => {
@@ -1313,7 +1350,7 @@
       { cls: 'layer' + (p === 3 ? ' is-council' : ''), kind: 'list', group: p, leader: true, info: [`${pad2(p + 1)} · ${l[0]}`, l[1], `${l[2]} · ${p < 4 ? 'above' : 'below'} the boundary`], anchor: () => [PL_HX - 0.03, PL_Y(p) + hovFor(2, p) * 0.07, PL_HZ - 0.03] }));
     label(2, '<span class="n">Boundary</span><span class="dt">Intelligence decides above · execution is deterministic below</span>', { cls: 'bound', kind: 'list', leader: true, anchor: () => [PL_HX * 1.1 - 0.03, 0, PL_HZ * 1.12 - 0.03] });
     // S3: the six gates, then what leaves the lane and what it writes
-    GATES.forEach((g, i) => label(3, `<span class="k">${pad2(i + 1)}</span><span class="n">${g}${i === COUNCIL ? ' · council' : ''}</span>`, { cls: 'gate' + (i === COUNCIL ? ' is-council' : ''), kind: 'list', leader: true, anchor: () => [LX + GATE_HX, GATE_Y[i], 0] }));
+    GATES.forEach((g, i) => label(3, `<span class="k">${pad2(i + 1)}</span><span class="n">${g}${i === COUNCIL ? ' · Council' : ''}</span>`, { cls: 'gate' + (i === COUNCIL ? ' is-council' : ''), kind: 'list', leader: true, anchor: () => [LX + GATE_HX, GATE_Y[i], 0] }));
     label(3, '<i class="lg-r"></i><span class="n">Rejected · falls away</span>', { cls: 'note', kind: 'list', leader: true, wide: true, anchor: () => [LX + 0.74, GATE_Y[COUNCIL] - 0.36, 0] });
     label(3, '<i class="lg-b"></i><span class="n">Records · hash-linked</span>', { cls: 'note', kind: 'list', leader: true, wide: true, anchor: () => [LEDGER_X0 + LEDGER_DX * 3.5, Y_LEDGER + 0.05, 0] });
     // S4: the sessions under their columns (from the data), the floor, the derived summary
@@ -1464,7 +1501,7 @@
       const sc = listCol[0].scene, L = layouts[sc];
       const maxW = Math.max(...listCol.map(l => l.w)), colX = stacked ? W - Math.max(gutter * 0.5, safeR + 6) - maxW : Math.min(L.rect[2] + 22, Math.min(contR, W - safeR - 6) - maxW); // (wide: the column ends on the content edge)
       const gap = Math.max(...listCol.map(l => l.h)) + (stacked || short ? 2 : 6), top = navH + (stacked ? barH + capH[sc] + 22 : short ? 8 : 14);
-      let bottom = stacked ? beatRects[sc].t - 10 : H - barH - capH[sc] - (short ? 12 : 16);
+      let bottom = stacked ? beatRects[sc].t - 10 - (lifted ? LIFT_AIR : 0) : H - barH - capH[sc] - (short ? 12 : 16); // (a lifted line keeps its air)
       // landscape: should the column not fit above its scene's caption (a short window at a high zoom)
       if (!stacked && capH[sc] && capOf[sc] && (listCol.length - 1) * gap + listCol[listCol.length - 1].h > bottom - top) { bottom = H - barH - 12; capOf[sc].a = 0; }
       let y = -1e9;
@@ -1772,7 +1809,7 @@
     tiny = on;
     if (on) {
       stopFrames(); clearTimeout(idleTimer);
-      root.classList.remove('story-compact', 'story-short', 'story-figs-01'); root.classList.add('story-tiny');
+      root.classList.remove('story-compact', 'story-short', 'story-figs-01'); root.classList.add('story-tiny'); clearLift();
       beats.forEach(b => { b.style.opacity = b.style.transform = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-tight', 'is-snug', 'is-bo0'); });
       if (bar) bar.style.opacity = bar.style.visibility = '';
       if (paper) paper.style.height = paper.style.visibility = '';

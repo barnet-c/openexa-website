@@ -147,7 +147,7 @@
       inited = true;
       head = genesis = sha256('genesis|' + (excerpt[0] ? excerpt[0].id : '#4f20'));
       excerpt.forEach(write);
-      if (!stream) stateIdle = `Chain ✓ · ${recs.length} records verify`;
+      if (!stream) stateIdle = 'Chain intact'; // hc2: Home's chain's word (trust.js says how it broke)
       rendered = newest();
       counts(); state();
     }

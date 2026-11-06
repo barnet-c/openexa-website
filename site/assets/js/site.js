@@ -739,11 +739,14 @@
   /* ---------------- reveal on scroll ----------------
      (v2x) The first screen is never hidden, faded or split (the overture's beats excepted); sorted in the first frame.
      Below it a block fades in as its top crosses 96% of the screen; a headline is split 1.5 screens ahead. Without
-     JavaScript, and under reduced motion, nothing is hidden and nothing is split. */
+     JavaScript, and under reduced motion, nothing is hidden and nothing is split.
+     (hc2) A plate marked [data-draw] draws its one accent (.dm, site.css) as it arrives: plates that arrive together
+     step 80 ms apart; once drawn it never draws again (the class that animates it goes once the draw is over, or would
+     be: a mark that never animates, hidden at a width or paused off screen, cannot hold it). */
   $$('[data-stagger]').forEach(el => { Array.from(el.children).forEach((c, i) => c.style.setProperty('--i', i)); if (!el.hasAttribute('data-reveal')) el.setAttribute('data-reveal', ''); });
   const storySplit = $$('.story [data-split]');
   if (!prefersReduced) storySplit.forEach(splitWords);
-  const watched = $$('[data-reveal], [data-split]').filter(el => !el.closest('.story'));
+  const watched = $$('[data-reveal], [data-split], [data-draw]').filter(el => !el.closest('.story'));
   let rio = null, sio = null;
   if ('IntersectionObserver' in window && !prefersReduced) requestAnimationFrame(() => {
     const fold = window.innerHeight;
@@ -754,13 +757,18 @@
     const later = watched.filter((el, k) => { const r = rects[k]; return (r.width || r.height) && r.top >= fold - 1; });
     watched.forEach(el => { if (!later.includes(el)) el.classList.add('is-in'); });
     // a drawn line's dash is its drawing's scale on screen while it draws (site.css .dr; a2: whole at any size)
-    const drawScale = el => $$('.dr', el).forEach(d => {
+    const drawScale = el => $$('.dr, .dm--line', el).forEach(d => {
       const svg = d.ownerSVGElement, m = svg && !svg.style.getPropertyValue('--dr-k') && svg.getScreenCTM();
       if (m) svg.style.setProperty('--dr-k', Math.max(1, Math.hypot(m.a, m.b) * 1.02 + .02).toFixed(3));
     });
-    const show = el => { drawScale(el); el.classList.add('is-in'); rio.unobserve(el); };
+    const show = (el, k) => {
+      drawScale(el);
+      if (el.classList.contains('will-draw')) { el.style.setProperty('--draw-i', k); setTimeout(() => el.classList.remove('will-draw'), 1200 + k * 80); }
+      el.classList.add('is-in'); rio.unobserve(el);
+    };
     rio = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) show(e.target); });
+      let k = 0;
+      entries.forEach(e => { if (e.isIntersecting) show(e.target, e.target.hasAttribute('data-draw') ? k++ : 0); });
     }, { rootMargin: '0px 0px -4% 0px', threshold: 0 });
     sio = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) { sio.unobserve(e.target); if (!e.target.classList.contains('is-in')) splitWords(e.target); } });
@@ -768,6 +776,7 @@
     later.forEach(el => {
       if (el.hasAttribute('data-split')) sio.observe(el);
       if (el.hasAttribute('data-reveal')) { el.classList.add('will-reveal'); instant(el); } // hidden at once: no fade-out off screen (r5)
+      if (el.hasAttribute('data-draw') && $('.dm', el)) el.classList.add('will-draw');
       rio.observe(el);
     });
   }); else watched.forEach(el => el.classList.add('is-in'));

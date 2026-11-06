@@ -1,6 +1,7 @@
 /* OpenEXA — the chain, for real (Home §06). Eight records from the page, each hashed with SHA-256 over its content and
    the hash before it. Edit a field: that record and every one after it turn red in a cascade (110 ms a record), the
-   status counts what is red and its last sentence is announced once. Restore heals from the top. */
+   status names the record where the chain broke (Trust's words; hc2) and its last sentence is announced once. Restore
+   heals from the top. */
 (function () {
   'use strict';
   const root = document.querySelector('[data-chain]');
@@ -143,8 +144,9 @@
     const n = red();
     if (!n) return 'Chain intact'; // a2 (UX juror, VOICE 5.10): the label only; the lede says what a chain is
     if (broken < 0) return `Restoring · ${plural(n, 'record still fails', 'records still fail')}`;
+    // hc2: one vocabulary with Trust's replay: 'Chain intact' or 'Chain broken at <record> · every later link fails'
     const first = rows.findIndex(li => li.classList.contains('is-broken'));
-    return `Chain broken at record ${pad(first + 1)} · ${plural(n, 'record no longer verifies', 'records no longer verify')}`;
+    return `Chain broken at record ${pad(first + 1)}${first < rows.length - 1 ? ' · every later link fails' : ''}`;
   }
   let said = '';
   function settled(broken, quiet) { // the last record reached: the final sentence, announced once

@@ -179,8 +179,8 @@
 
 /* §03: the stack's key (.pf-ck, proofchart.css) names the four blocks; the bar carries no names (hc1), so the first row
    needs no room above it ("Eliminated" keeps its own over the second) */
-[data-page="proof"] .cost-row:first-child { padding-top: 1.5rem; } /* 4rem under the heading row, as §02's sheets */
-@container cost (max-width: 860px) { [data-page="proof"] .cost-row:first-child { padding-top: 0; } [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: .875rem; } }
+[data-page="proof"] .cost-row:first-child { padding-top: 0; } /* hc2: the chapter head's gap (--ch-gap) above it, as Home's */
+@container cost (max-width: 860px) { [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: .875rem; } }
 
 /* the hero (a3, a4): the H1 across; the lede (01's 4fr) and the record (Fig. 1.1's 8fr) on one floor; under it the
    hedge and the way to the documents, beside the axis. hc1: the floor is drawn inside the frame only (the faint line
@@ -210,8 +210,7 @@
   [data-page="proof"] .proof-copy > .body-lg { margin-top: 0; }
 }
 [data-page="proof"] .page-hero h1 { max-width: none; }
-/* a4: the H1 has the full column: the full-column step (Company, Access, 404); phones keep theirs */
-@media (min-width: 601px) { [data-page="proof"] .page-hero h1 { font-size: var(--h1-statement); } }
+/* hc2: the H1 is the site's one hero step (.display-1, director item 3); a4's full-column step is gone */
 @media (min-width: 601px) { [data-page="proof"] .page-hero .lede { max-width: 44ch; } }
 @media (max-width: 360px) { [data-page="proof"] .page-hero h1 { font-size: 2.6rem; } }
 /* phones: each hero block reserves its lines (web font or metric fallback), so the plate under it holds still */
@@ -303,13 +302,15 @@
 /* the head: seven columns beside the paragraph (one line) */
 @media (min-width: 961px) { .tr-ledger .tr-lead > .col-6 { grid-column-end: span 7; } }
 .tr-lt { margin-top: clamp(2.25rem, 4vw, 3.75rem); }
-/* the head: title and controls, then the status */
-.tr-lt .lt-head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title ctrl" ". state"; row-gap: .625rem; column-gap: 1.5rem; padding-top: .75rem; padding-bottom: .75rem; }
-.tr-lt .lt-state { justify-self: end; }
-@media (max-width: 960px) {
-  .tr-lt .lt-head { grid-template-areas: "title ctrl" "state state"; row-gap: .5rem; }
-  .tr-lt .lt-state { justify-self: start; }
-}
+/* the head in every instrument's order (hc2): title and "Illustrative", the state, the actions, on one row; where the
+   longest state ("Chain broken at #4f1b · every later link fails") and the widest actions (Restore) would not fit beside
+   each other, the state takes the row under the title (in em: a larger default font takes it sooner) */
+.tr-lt .lt-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: .125rem 1.375rem; }
+.tr-lt .lt-head { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "title state ctrl"; row-gap: .5rem; column-gap: 1.375rem; padding-top: .75rem; padding-bottom: .75rem; }
+.tr-lt .lt-state { justify-self: start; }
+@media (max-width: 79.99em) { .tr-lt .lt-head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title ctrl" "state state"; } }
+/* without scripts nothing is hashed: no state, and the foot says only how to try it */
+@media (scripting: none) { .tr-lt .lt-state, .tr-lt .lt-foot > span:first-child { display: none; } }
 .tr-lt [data-lt-say] { text-transform: none; letter-spacing: 0; }
 .tr-lt .lt-btn svg path { vector-effect: non-scaling-stroke; stroke-width: var(--icon-stroke); } /* a4: whole device px */
 .tr-lt .lt-btn--restore { border-color: rgba(217, 103, 93, .6); color: var(--fg); }
@@ -401,12 +402,8 @@
   .tr-k > .tr-kp:hover { background: rgba(14, 21, 18, .025); }
 }
 .tr-k-cap { margin-top: 1rem; }
-/* structure first; the stop or the approval a beat later */
-@media screen and (prefers-reduced-motion: no-preference) {
-  .tr-kd :is(.hp-rrec, .hp-gf, .hp-g, .hp-gl, .hp-lab--rej, .hp-lab--acc) { transition: opacity .35s var(--ease-out) .3s; }
-  .tr-kp.will-reveal:not(.is-in) .tr-kd :is(.hp-rrec, .hp-gf, .hp-g, .hp-gl, .hp-lab--rej, .hp-lab--acc) { opacity: 0; }
-  .tr-kp:is(.is-cut, .is-instant) .tr-kd * { transition: none; }
-}
+/* hc2: the stop or the approval draws in as the plate arrives (site.css [data-draw]: the one .dm mark per plate; it
+   replaces the fade of every accent and label); "Emergency halt" has no single accent and holds still */
 @media (min-width: 1200px) {
   .tr-cp-copy { position: sticky; top: calc(var(--nav-h) + 2rem); align-self: start; }
 }
@@ -440,10 +437,7 @@
 @media (max-width: 960px) { .tr-cu > * { grid-column: 1 / -1; } }
 /* phones: a third of the drawing; its two words stay */
 @media (max-width: 600px) { .tr-cud .tr-cu-xs { display: none; } }
-@media screen and (prefers-reduced-motion: no-preference) {
-  .tr-cud :is(.hp-r, .hp-gl, .hp-gf, .hp-lab--rej, .hp-lab--acc) { transition: opacity .35s var(--ease-out) .35s; }
-  .tr-cu-plate.will-reveal:not(.is-in) .tr-cud :is(.hp-r, .hp-gl, .hp-gf, .hp-lab--rej, .hp-lab--acc) { opacity: 0; }
-}
+/* hc2: the agent's one scoped line strokes into the account as the plate arrives (site.css [data-draw]); the rest holds */
 
 /* §04 the refusals: three lines, each led by a short reject-red rule, the stop the plates draw */
 .tr-no { row-gap: 1.75rem; }

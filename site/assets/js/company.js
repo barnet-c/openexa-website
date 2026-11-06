@@ -17,7 +17,8 @@
       hc1 (4 Nov, the council's copy item and system's instrument frame): the plate names its halves by their layers only
       (the list beside it says "Agents decide. Code executes."), the running line (.k-state) is the status in the plate's
       head, not a footer line in the drawing, and says only what happens (no "Agents decide ·", no "Code executes · below
-      the boundary"); Pause motion ends that head, boxed (.figure-motion.is-head). */
+      the boundary"); Pause motion ends that head, boxed (.figure-motion.is-head).
+      hc2 (5 Nov): the labels and the running line are in the caption register (Inter, sentence case; company.css). */
 (function () {
   'use strict';
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -54,7 +55,7 @@
     const council = one('.k-council'), stop = one('.k-stop'), bar = one('.k-bar'), lead = one('.k-lead');
     const tok = one('.k-tok'), recs = one('.k-recs'), bnd = all('.k-bnd'), state = fig.querySelector('.k-state');
     const clab = fig.querySelector('.kl--council'), pc = (v, d) => String(Math.round(v / d * 1e4) / 100); // % of 640 x 470
-    const say = t => { if (state && state.textContent !== t) state.textContent = t; };
+    const say = t => { t = t.replace(' · ', '\u00a0· '); if (state && state.textContent !== t) state.textContent = t; }; // hc2: a line that wraps (961-1099 px, beside the hedge) breaks after its dot, not before
     const spur = document.createElementNS(NS, 'path');
     spur.setAttribute('class', 'k-spur'); spur.setAttribute('opacity', '0'); council.parentNode.insertBefore(spur, council);
     const ledger = Array.from(recs.children).map(r => (r.classList.contains('k-rec--rej') ? 'rej' : 'ok'));

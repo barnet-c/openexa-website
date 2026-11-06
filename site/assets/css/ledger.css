@@ -10,32 +10,19 @@
   position: relative; color: var(--fg); background: var(--lt-bg); border: var(--hair) solid var(--line-strong); border-radius: var(--r); overflow: hidden;
 }
 /* the head is a grid: what changes in it never re-wraps it */
-.lt-head { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "title latest state ctrl"; align-items: center; gap: .375rem 1.25rem; min-height: 3.5rem; padding: .625rem .75rem .625rem 1.25rem; border-bottom: var(--hair) solid var(--line); font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); }
-.lt-title { grid-area: title; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); }
-.lt-state { grid-area: state; justify-self: end; display: inline-flex; align-items: center; gap: .5625rem; min-width: 0; max-width: 100%; color: var(--accent); letter-spacing: var(--track-label, .12em); transition: color var(--dur-move) var(--ease-out); }
+.lt-head { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "title latest state ctrl"; align-items: center; gap: .375rem 1.25rem; min-height: 3.5rem; padding: .625rem .75rem .625rem 1.25rem; border-bottom: var(--hair) solid var(--line); } /* the register: site.css's instrument head (hc2) */
+.lt-title { grid-area: title; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lt-state { grid-area: state; justify-self: end; min-width: 0; max-width: 100%; transition: color var(--dur-move) var(--ease-out); }
 .lt-state > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lt-state i { flex: none; width: .375rem; height: .375rem; border-radius: 50%; background: currentColor; }
 /* (v2x) the dot holds still while the stream runs: a breathing dot reads as "live", and this stream is illustrative; the word 'Running' carries the state */
 .lt.is-paused .lt-state, .lt.is-inspecting .lt-state { color: var(--fg-2); }
 .lt.is-inspecting .lt-state i { background: transparent; box-shadow: inset 0 0 0 var(--hair) currentColor; }
 .lt-ctrl { grid-area: ctrl; display: inline-flex; gap: .5rem; }
-.lt-btn, .chain-try, .chain-restore { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.125rem; padding: 0 .8125rem; border: var(--hair) solid var(--line-strong); border-radius: var(--r); font: 500 var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; color: var(--fg); white-space: nowrap; transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), background var(--dur-feedback) var(--ease-out); }
-@media (hover: hover) { .lt-btn:hover, .chain-try:hover { border-color: var(--accent); color: var(--accent); } } /* a tap never leaves a hover look behind */
-/* a3: the controls in the button voice; the chain's one act is the filled primary */
-.chain-try { border-color: var(--paper); background-color: var(--paper); color: var(--ink); background-image: linear-gradient(var(--signal), var(--signal)); background-repeat: no-repeat; background-size: 0 calc(2 * var(--hair)); background-position: 0 100%; transition: background-color var(--dur-feedback) var(--ease-out), background-size var(--dur-move) var(--ease-out); }
-@media (hover: hover) { .chain-try:hover { border-color: var(--paper); background-color: color-mix(in srgb, var(--paper) 86%, var(--ink)); background-size: 100% calc(2 * var(--hair)); color: var(--ink); } }
-@media (forced-colors: active) { .chain-try { border: calc(2 * var(--hair)) solid ButtonText; } }
-.lt-btn:focus-visible, .chain-try:focus-visible, .chain-restore:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
+.lt-btn, .chain-restore { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.25rem; padding: 0 .8125rem; border: var(--hair) solid var(--line-strong); border-radius: var(--r); font: 500 var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; color: var(--fg); white-space: nowrap; transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), background var(--dur-feedback) var(--ease-out); }
+@media (hover: hover) { .lt-btn:hover { border-color: var(--accent); color: var(--accent); } } /* a tap never leaves a hover look behind; the chain's one act is site.css's paper button */
+.lt-btn:focus-visible, .chain-restore:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
 .lt-btn svg { flex: none; width: .8125rem; height: .8125rem; }
-.lt-btn .i-play, .lt-btn.is-paused .i-pause { display: none; }
-.lt-btn.is-paused .i-play { display: inline; }
 /* back to the newest record: a pill in the head row, never over the records */
-.lt-latest { grid-area: latest; justify-self: start; display: inline-flex; align-items: center; gap: .4375rem; min-height: 1.875rem; padding: 0 .6875rem; border: var(--hair) solid var(--accent); border-radius: .9375rem; font: 500 var(--mono-tick)/1 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--accent); white-space: nowrap; animation: lt-fade .3s var(--ease) backwards; transition: background var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out); }
-@media (hover: hover) { .lt-latest:hover { background: var(--accent); color: var(--ink); } }
-.lt-latest:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .1875rem; }
-.lt-latest svg { flex: none; width: .8125rem; height: .8125rem; }
-.lt-latest span:not(:empty) { min-width: 3ch; padding: .1875rem .3125rem .125rem; border-radius: .0625rem; background: var(--accent); color: var(--ink); letter-spacing: .04em; text-align: center; }
-@media (hover: hover) { .lt-latest:hover span:not(:empty) { background: var(--ink); color: var(--accent); } }
 
 .lt-stage { position: relative; }
 .lt-view { position: relative; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; }
@@ -102,11 +89,11 @@
 
 /* the inspector: at rest every field keeps a fixed number of lines, so the panel never changes height */
 .lt-insp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: .625rem 3.5rem; padding: .875rem 1.25rem 1.375rem; border-top: var(--hair) solid var(--line); }
-.lt-insp-k { grid-column: 1 / -1; margin: 0; font: 500 var(--mono-tick)/1.6 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color var(--dur-move) var(--ease-out); }
+.lt-insp-k { grid-column: 1 / -1; margin: 0; font: 400 var(--fs-small)/1.25 var(--sans); color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color var(--dur-move) var(--ease-out); }
 .lt-insp-k.is-followed { color: var(--accent); }
 .lt-insp dl { display: grid; align-content: start; gap: .5625rem; margin: 0; }
 .lt-insp dl > div { display: grid; grid-template-columns: 6.4rem minmax(0, 1fr); gap: .875rem; align-items: baseline; }
-.lt-insp dt { font: 500 var(--mono-tick)/1.75 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg-3); white-space: nowrap; }
+.lt-insp dt { font: 400 var(--fs-small)/1.375 var(--sans); color: var(--fg-3); white-space: nowrap; } /* hc2: field names in the caption register, as the desk's and the lab's; the values stay mono (data) */
 .lt-insp dd { min-width: 0; margin: 0; font: var(--mono-s, .6875rem)/1.65 var(--mono); color: var(--fg-2); overflow-wrap: anywhere; }
 .lt-insp [data-f="rec"], .lt-insp [data-f="ev"] { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lt-insp [data-f="d"], .lt-insp [data-f="src"] { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; height: 3.3em; }
@@ -129,7 +116,6 @@
 .lt-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .375rem 1.125rem; padding: .75rem 1.25rem; border-top: var(--hair) solid var(--line); font: var(--mono-tick)/1.5 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
 /* the stream's tally has its own line, with room reserved for its longest form at each width */
 .lt[data-ledger="live"] .lt-foot { display: grid; justify-content: stretch; gap: .25rem; }
-.lt-counts { min-height: 1.5em; color: var(--fg-2); }
 
 /* motion: a record lands (settle snap), the link to it forms, verification sweeps the links */
 /* forced colours drop backgrounds: blocks and links in system colours (settled and rejected keep theirs) */
@@ -162,12 +148,11 @@
 /* ---------- the chain (chain.js): edit a record and every link below it snaps ---------- */
 .chain { --lt-bg: var(--ink-2); position: relative; color: var(--fg); background: var(--ink-2); border: var(--hair) solid var(--line-strong); border-radius: var(--r); transition: border-color var(--dur-draw) var(--ease); }
 .chain.is-broken { border-color: rgba(217, 103, 93, .55); }
-.chain-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .625rem 1rem; min-height: 3.5rem; padding: .625rem .75rem .625rem 1.25rem; border-bottom: var(--hair) solid var(--line); }
-.chain-status { display: inline-flex; align-items: center; gap: .5625rem; font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--accent); transition: color var(--dur-move) var(--ease-out); }
-.chain-status i { flex: none; width: .4375rem; height: .4375rem; border-radius: 50%; background: currentColor; }
+.chain-head { display: flex; align-items: center; flex-wrap: wrap; gap: .625rem 1.375rem; min-height: 3.5rem; padding: .625rem .75rem .625rem 1.25rem; border-bottom: var(--hair) solid var(--line); }
+.chain-status { transition: color var(--dur-move) var(--ease-out); }
 .chain.is-broken .chain-status { color: var(--reject); }
 .chain.is-broken:not(.is-away) .chain-status i { animation: pulse 1s var(--ease-move) 3; } /* three beats, then still, as .badge i (the red words carry the state; r2 motion) */
-.chain-acts { display: inline-flex; gap: .5rem; }
+.chain-acts { display: inline-flex; gap: .5rem; margin-left: auto; }
 .chain-restore { border-color: var(--reject); }
 @media (hover: hover) { .chain-restore:hover { border-color: var(--reject); background: var(--reject); color: var(--ink); } }
 .chain-genesis { position: relative; display: flex; align-items: center; gap: .875rem; margin: 0; padding: 1.125rem 1.25rem 0; font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
@@ -240,32 +225,6 @@
 .chain:not(.chain-ready) .chain-list > li:last-child::after { bottom: .25rem; background: repeating-linear-gradient(var(--line-strong) 0 calc(3 * var(--hair)), transparent calc(3 * var(--hair)) .375rem); }
 .chain-row { align-items: start; }
 .chain-row .display-3 { max-width: 13ch; }
-/* §06: the five governance terms as one spec row, leading into the ledger */
-.gov-spec { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: var(--hair) solid var(--line-strong); }
-.gov-spec li { padding: 1.125rem 1.375rem .125rem 0; color: var(--fg-2); font-size: var(--fs-small); line-height: 1.5; }
-.gov-spec li + li { padding-left: 1.375rem; border-left: var(--hair) solid var(--line); }
-.gov-spec b { display: flex; align-items: center; gap: .625rem; margin-bottom: .5rem; font: 500 var(--mono-s, .6875rem)/1.4 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); }
-.gov-spec b::before { content: ""; flex: none; width: .625rem; height: .625rem; border-radius: 50%; border: var(--hair) solid var(--accent); background: radial-gradient(circle at center, var(--accent) 0 calc(2 * var(--hair)), transparent .15625rem); }
-.gov-spec span { display: block; }
-@media (max-width: 960px) {
-  .gov-spec { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .gov-spec li, .gov-spec li + li { padding: 1rem 1.125rem .875rem 0; border-left: 0; border-bottom: var(--hair) solid var(--line); }
-  .gov-spec li:nth-child(even) { padding-left: 1.125rem; border-left: var(--hair) solid var(--line); }
-}
-@media (max-width: 600px) {
-  .gov-spec { grid-template-columns: minmax(0, 1fr); }
-  .gov-spec li:nth-child(even) { padding-left: 0; border-left: 0; }
-}
-/* the key: the chain's three marks, drawn in ink on paper */
-.chain-key { border-top: var(--hair) solid var(--line); }
-.chain-key li { display: grid; grid-template-columns: 1.75rem minmax(0, 1fr); gap: .875rem; align-items: start; padding: .875rem 0; border-bottom: var(--hair) solid var(--line); font-size: var(--fs-small); line-height: 1.5; color: var(--fg-2); }
-.chain-key b { display: block; margin-bottom: calc(2 * var(--hair)); font: 500 var(--mono-s, .6875rem)/1.6 var(--mono); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: var(--fg); }
-.chain-key i { position: relative; display: block; width: 1.75rem; height: 2.125rem; }
-.chain-key .k-node::before { content: ""; position: absolute; left: .5rem; top: .25rem; width: .6875rem; height: .6875rem; background: var(--ink); }
-.chain-key .k-link::before { content: ""; position: absolute; left: .8125rem; top: 0; bottom: 0; width: var(--hair); background: var(--fg-3); }
-.chain-key .k-link::after { content: ""; position: absolute; left: .8125rem; top: .9375rem; width: .75rem; height: var(--hair); background: var(--signal); }
-.chain-key .k-snap::before, .chain-key .k-snap::after { content: ""; position: absolute; left: .8125rem; width: var(--hair); height: .9375rem; background: var(--reject); }
-.chain-key .k-snap::before { top: 0; } .chain-key .k-snap::after { bottom: 0; transform: translateX(.3125rem); }
 
 @media (max-width: 960px) {
   .lt-insp { grid-template-columns: minmax(0, 1fr); gap: .5625rem; }
@@ -274,7 +233,6 @@
   .lt-state { justify-self: start; }
   .lt--excerpt .lt-title { white-space: normal; } /* a fixed title: it may wrap, nothing beside it ever changes */
 }
-@media (max-width: 799px) { .lt-counts { min-height: 3em; } }
 @media (max-width: 760px) {
   .chain-list { padding: .125rem .75rem .375rem; }
   .chain-list > li { grid-template-columns: 2.4em minmax(0, 1fr) auto; grid-template-areas: "i who flag" "i ev ev" "i what what"; row-gap: calc(2 * var(--hair)); padding: .5rem .5rem 2rem 2.25rem; }
@@ -296,12 +254,6 @@
   .lt-check { --lt-chk: 3.2em; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .lt-foot { padding: .6875rem .875rem; }
 }
-@media (max-width: 420px) { .lt-title-x { display: none; } } /* "Agent log": the head keeps one row on a phone */
-@media (max-width: 400px) { .lt-counts { min-height: 4.5em; } }
-@media (max-width: 360px) {
-  .lt-latest svg { display: none; }
-  .lt-state { letter-spacing: .06em; }
-}
 /* the narrowest phones: a tag such as 'Swarm digest' sits under the record's id, never cut beside it */
 @media (max-width: 359px) {
   .lt-track { padding-left: .875rem; padding-right: .875rem; }
@@ -310,8 +262,7 @@
 }
 /* touch: every control is at least 44 px, and the chain's editable fields are 16 px so a phone never zooms on focus */
 @media (pointer: coarse) {
-  .lt-btn, .lt-latest, .chain-try, .chain-restore { min-height: 2.75rem; }
-  .lt-latest { border-radius: 1.375rem; }
+  .lt-btn, .chain-restore { min-height: 2.75rem; }
   .lt-btn--ico { min-width: 2.75rem; }
   .chain-list [contenteditable] { font-size: 1rem; }
 }
@@ -321,7 +272,7 @@
 @media print {
   .lt-view { overflow: visible !important; -webkit-mask-image: none !important; mask-image: none !important; }
   .lt-track { flex-wrap: wrap; width: auto; row-gap: 6mm; }
-  .lt-insp, .lt-leader, .lt-ctrl, .lt-latest { display: none !important; }
+  .lt-insp, .lt-leader, .lt-ctrl { display: none !important; }
 }
 /* (r4) until ledger.js and chain.js run, the inspector, controls and rows hold their places unseen: the start moves nothing */
 @media (scripting: enabled) {
@@ -329,8 +280,7 @@
   /* until ledger.js mounts, hashes in view (Trust) take the width it writes, unseen (r5) */
   .lt:not(.lt-ready) .lt-insp > dl code:is([data-f="prev"], [data-f="hash"]) { font-size: 0; }
   .lt:not(.lt-ready) .lt-insp > dl code:is([data-f="prev"], [data-f="hash"])::after { content: "00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000"; font-size: var(--mono-s, .6875rem); visibility: hidden; }
-  .lt .lt-ctrl[hidden] { display: inline-flex !important; visibility: hidden; min-height: 2.125rem; }
-  .lt .lt-hint[hidden] { display: block !important; visibility: hidden; } /* Trust's how-to line in the head (r5) */
+  .lt .lt-ctrl[hidden] { display: inline-flex !important; visibility: hidden; min-height: 2.25rem; }
   @media (pointer: coarse) { .lt .lt-ctrl[hidden] { min-height: 2.75rem; } } /* a button's height */
   @media (min-width: 761px) { .chain:not(.chain-ready) .chain-list > li { padding-bottom: 2rem; } } /* the hash link's row, until chain.js */
 }

@@ -6,11 +6,24 @@
    (Platform §03, Lifecycles §04) scale with their 1200-unit viewBox: --pu is the caption step in their units at the
    container's widths (0.92 vw to 1313 px, 1208 px to 1440, then to 93 rem at 1920; within 0.3 px of --fs-small) */
 :is(.pipe-svg, .orbit-svg) { --pu: max(11.29px, 31.03px - 1.304vw, min(13.91px, 21.77px - .5458vw)); }
-.pipe-svg text.pp-l, .orbit-svg :is(.orb-tag, .orb-s) { font-family: var(--sans); font-weight: 400; letter-spacing: 0; }
+.pipe-svg text.pp-l, .orbit-svg .orb-s { font-family: var(--sans); font-weight: 400; letter-spacing: 0; }
 .pipe-svg text.pp-l { font-size: var(--pu); }
 .pipe-svg text.pp-l:not(.tg) { fill: var(--fg-2); }
 .pipe-svg .pp-k { font-family: var(--mono); font-size: .786em; letter-spacing: .04em; fill: var(--fg-3); }
 @media (min-width: 961px) { body[data-page="lifecycles"] .orbit-svg { font-size: var(--pu); } }
+/* tablets (601-960 px; site.css crops the drawing to its rails there): the gate names sit under it, each starting at
+   its gate's block as on the wide plate (14.67 %, 43.17 %; the third ends at the right). They are the phone list's own
+   items, set as one row (hc2: the P-01..P-03 tags they replace were the drawing's only words at these widths) */
+@media (min-width: 601px) and (max-width: 960px) {
+  body[data-page="platform"] .lane-v--pipe { display: grid; grid-template-columns: 14.67% 28.5% minmax(0, 1fr) auto; margin: .625rem 0 1rem; }
+  body[data-page="platform"] .lane-v--pipe > .lv-x, body[data-page="platform"] .lane-v--pipe .lv-g { display: none; }
+  body[data-page="platform"] .lane-v--pipe > li { display: block; min-height: 0; padding: 0 1rem 0 0; }
+  body[data-page="platform"] .lane-v--pipe > li::before, body[data-page="platform"] .lane-v--pipe > li::after { content: none; }
+  body[data-page="platform"] .lane-v--pipe > .pv-1 { grid-column: 2; }
+  body[data-page="platform"] .lane-v--pipe > .pv-2 { grid-column: 3; }
+  body[data-page="platform"] .lane-v--pipe > .pv-3 { grid-column: 4; padding-right: 0; text-align: right; }
+  body[data-page="platform"] .lane-v--pipe .lk { padding: 0; }
+}
 /* the same three gates on phones (the plate's list): the same register */
 .lane-v--pipe :is(.lk, .lk-who), .lane-v.lane-v--pipe > .lv-bound, .lane-v.lane-v--pipe > .lv-rec > span { font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; }
 .lane-v--pipe .lk-n { font: 400 var(--fs-label)/1.45 var(--mono); letter-spacing: .04em; }
@@ -41,15 +54,18 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 .hero-plate--stack .is-rej .pm-ring { opacity: 0; }
 .hero-plate--stack .pm-spur, .hero-plate--stack .pm-x { fill: none; stroke: var(--reject); stroke-width: var(--stroke-2); stroke-linecap: round; }
 
-.hero-plate--stack .hp-key { order: 3; flex-basis: 100%; display: flex; flex-wrap: wrap; gap: .25rem 1.125rem; }
+/* hc2 (the director: "Replay hides in the caption beside Schematic"): the caption reads hedge, key, then the action,
+   last and at the right; one row from 961 px */
+.hero-plate--stack .hp-cap { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: .5rem 1.5rem; }
+.hero-plate--stack .hp-key { margin-left: auto; display: flex; flex-wrap: wrap; gap: .25rem 1.125rem; }
 .hero-plate--stack .hp-key > span { display: inline-flex; align-items: center; gap: .4375rem; }
 .hero-plate--stack .hp-key i { width: .5625rem; height: .5625rem; flex: none; border: calc(1px * var(--stroke-2)) solid var(--accent); border-radius: 50%; }
 .hero-plate--stack .hp-key i.k-rej { border-color: var(--reject); }
 .hero-plate--stack .hp-key i.k-sq { width: .5rem; height: .5rem; border: 0; border-radius: .0625rem; background: var(--accent); }
 
-.hero-plate--stack .hp-replay { margin: -.25rem 0 -.25rem 1.1em; padding: .25rem 0; border: 0; background: none; font: inherit; letter-spacing: inherit; color: var(--fg-2); text-decoration: underline dashed; text-decoration-color: var(--line-strong); text-underline-offset: .1875rem; cursor: pointer; }
+.hero-plate--stack .hp-replay { margin: -.25rem 0; padding: .25rem 0; border: 0; background: none; font: inherit; letter-spacing: inherit; color: var(--fg-2); text-decoration: underline dashed; text-decoration-color: var(--line-strong); text-underline-offset: .1875rem; cursor: pointer; }
 @media (hover: hover) { .hero-plate--stack .hp-replay:hover { color: var(--fg); text-decoration-style: solid; text-decoration-color: currentColor; } }
-@media (pointer: coarse) { .hero-plate--stack .hp-replay { margin: -.5rem -.5rem -.5rem calc(1.1em - .5rem); padding: .5rem; } .hero-plate--stack .hp-replay:focus-visible { outline-offset: -.375rem; } }
+@media (pointer: coarse) { .hero-plate--stack .hp-replay { margin: -.5rem; padding: .5rem; } .hero-plate--stack .hp-replay:focus-visible { outline-offset: -.375rem; } }
 @media (prefers-reduced-motion: no-preference) {
   .hero-plate--stack .pl { animation: pl-in .8s var(--ease-out) both; animation-delay: calc(120ms + var(--i) * 95ms); }
   .hero-plate--stack :is(.pl-br, .pm-floor, .hp-lab--side, .hp-lab--fl) { animation: pl-fade .6s var(--ease-out) .5s both; }
@@ -90,7 +106,8 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 @keyframes pm-out { from { opacity: 1; } to { opacity: 0; } }
 @media print { .hero-plate--stack * { animation: none !important; } .hero-plate--stack .hp-replay { display: none; } }
 
-@media (max-width: 960px) { .hero-plate--stack .hp-key { flex-basis: auto; } }
+/* narrower, as Lifecycles' hero: the key right under the plate, then "Schematic ... Replay" */
+@media (max-width: 960px) { .hero-plate--stack .hp-key { flex-basis: 100%; margin-left: 0; } .hero-plate--stack .hp-cap > .fc-h { order: 2; } .hero-plate--stack .hp-replay { order: 3; margin-left: auto; } }
 
 @media (min-width: 601px) and (max-width: 960px) {
   body[data-page="platform"] .hero-plate--stack { max-width: min(100%, 35rem); }
@@ -173,12 +190,12 @@ body[data-page="lifecycles"] .lcp .orb-next { opacity: .8; }
 @media print { .hero-plate--rings .lr-trace { display: none; } }
 
 .hero-plate--rings .hp-cap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .375rem 1.5rem; }
-.lr-key { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem; color: var(--fg-2); }
-.lr-key > span { display: inline-flex; align-items: center; gap: .5rem; white-space: nowrap; }
-.lr-key i { display: block; flex: none; width: 1.5rem; height: 0; border-top: calc(1px * var(--stroke-2)) solid var(--accent); }
-.lr-key i.k-next { border-top: calc(1px * var(--stroke)) dashed currentColor; opacity: .8; }
-.lr-key i.k-road { border-top: calc(2px * var(--stroke)) dotted var(--khaki-deep); }
-.lr-key > span:first-child { color: var(--signal-ink); }
+/* hc2: one status key, the same under the hero and under Fig. 4.1, drawn in the site's status glyph (Home §01's grid,
+   the phone list): the class ring and its bead. No class codes: the key says Live, Next, Roadmap */
+:is(.lr-key, .orb-key) { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem; font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-2); }
+:is(.lr-key, .orb-key) > span { display: inline-flex; align-items: baseline; gap: .5rem; white-space: nowrap; }
+:is(.lr-key, .orb-key) .lc-ring { flex: none; align-self: center; width: 1.375em; height: 1.375em; } /* the key's baseline is its words', so a caption beside it lines up */
+:is(.lr-key, .orb-key) > span:first-child { color: var(--signal-ink); }
 
 @media (min-width: 601px) and (max-width: 960px) { body[data-page="lifecycles"] .hero-plate--rings { max-width: min(100%, 40rem); } }
 
@@ -226,11 +243,8 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 .desk .desk-lane > .desk-follow { grid-area: btn; }
 .desk .dl-gates { grid-area: gates; }
 .desk .dl-say { grid-area: say; }
-.desk .desk-follow { position: relative; margin: 0; min-height: 2.875rem; padding: .6875rem 1.25rem .6875rem 1rem; gap: .75rem; border: var(--hair) solid var(--paper); background: var(--paper); color: var(--ink); font: 500 .92rem/1.2 var(--sans); letter-spacing: 0; text-transform: none; transition: background var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), border-color var(--dur-feedback) var(--ease-out), box-shadow var(--dur-feedback) var(--ease-out), transform .12s var(--ease-out); }
-@media (hover: hover) { .desk .desk-follow:hover { background: color-mix(in srgb, var(--paper) 86%, var(--signal-bright)); box-shadow: inset 0 calc(-2 * var(--hair)) 0 var(--signal-bright); } }
-.desk .desk-follow:active { transform: translateY(.0625rem) scale(.985); }
-.desk .desk-follow[aria-pressed="true"] { background: transparent; border-color: var(--accent); color: var(--accent); box-shadow: none; }
-.desk .desk-follow:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .1875rem; }
+/* the desk's primary is site.css's one button (hc2, the instrument head): its place only */
+.desk .desk-follow { position: relative; margin: 0; min-height: 2.875rem; padding: .6875rem 1.25rem .6875rem 1rem; gap: .75rem; }
 
 .desk .dl-say:empty::before { content: none; }
 
@@ -254,7 +268,6 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 }
 @media (max-width: 600px) {
   .desk .desk-lane { grid-template-columns: minmax(0, 1fr); grid-template-areas: "btn" "gates" "say"; row-gap: 1.125rem; padding: 1rem .75rem .375rem; }
-  .desk .desk-follow { justify-content: center; }
   .desk .desk-stats > div { padding: 1rem .75rem .875rem; }
 
   .desk .desk-log { padding-right: .5rem; letter-spacing: .05em; }
@@ -266,7 +279,6 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 }
 
 @media (max-width: 380px) { .desk .desk-lane { padding-left: .375rem; padding-right: .375rem; } }
-@media (prefers-reduced-motion: reduce) { .desk .desk-follow { transition: none; } .desk .desk-follow:active { transform: none; } }
 
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .ln { display: block; text-wrap: balance; }
 
@@ -362,7 +374,6 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
   .desk .desk-controls output[data-gap-n-out]::before { content: none; }
 
   body[data-page="lifecycles"] .orbit-fig { max-width: 17.5rem; }
-  body[data-page="lifecycles"] .orbit-svg { font-size: clamp(.859375rem, calc(2.3375rem - 4.93vw), 1.36875rem); }
 }
 
 @media (max-width: 420px) {
@@ -375,10 +386,7 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 .desk .desk-stats .dk-sep { display: none; }
 
 
-:is(body[data-page="platform"], body[data-page="lifecycles"]) main > .section { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
-:is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-head { margin-bottom: var(--ch-gap); }
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-title { max-width: 16ch; text-wrap: balance; }
-:is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-line { margin-top: 1.125rem; max-width: 36ch; font-size: var(--fs-body); line-height: 1.5; color: var(--fg-2); text-wrap: pretty; }
 
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-link { margin-top: clamp(1.75rem, 3vw, 2.75rem); }
 
@@ -459,6 +467,7 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
 #desk .desk { border-color: var(--line-strong); }
 #desk .ch-link { margin-top: clamp(1.75rem, 3vw, 2.5rem); }
+#desk .ch-line { text-wrap: balance; } /* hc2: one short lede under its heading breaks evenly, never leaving "the ledger." alone */
 
 @media (min-width: 961px) {
   body[data-page="lifecycles"] .page-hero--plate { align-items: center; }
@@ -503,9 +512,6 @@ body[data-page="lifecycles"] .orbit-cs { position: absolute; inset: 0; width: 10
 }
 .orbit-cs .orb-c:focus-visible .orb-hit { stroke: var(--signal-ink, #186B4F); stroke-width: var(--stroke-2); }
 body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap: clamp(1.5rem, 3vw, 2.75rem); }
-.orb-key { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.125rem; font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-2); }
-.orb-key > span { display: inline-flex; align-items: center; gap: .4375rem; }
-.orb-key svg { display: block; flex: none; width: .86em; height: .86em; overflow: visible; }
 @media (min-width: 961px) { body[data-page="lifecycles"] .orbit-list { display: none; } }
 @media (max-width: 960px) {
   body[data-page="lifecycles"] .orbit-cs { display: none; }
@@ -537,9 +543,9 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
   #swarm .sw-legend .sw-at-b { align-items: baseline; }
   #swarm .sw-legend .sw-at b { display: inline; margin: 0; }
 
-  :is(#pipeline, #desk) .ch-head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap, clamp(1rem, 2.2vw, 2rem)); align-items: end; }
-  :is(#pipeline, #desk) .ch-head > .ch-title { grid-column: 1 / span 7; max-width: none; }
-  :is(#pipeline, #desk) .ch-head > .ch-line { grid-column: 9 / -1; margin: 0 0 .5rem; }
+  #pipeline .ch-head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap, clamp(1rem, 2.2vw, 2rem)); align-items: end; }
+  #pipeline .ch-head > .ch-title { grid-column: 1 / span 7; max-width: none; }
+  #pipeline .ch-head > .ch-line { grid-column: 9 / -1; margin: 0 0 .5rem; }
 
   #modes > .container { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap, clamp(1rem, 2.2vw, 2rem)); }
   #modes .modes-body { display: contents; }
@@ -617,16 +623,13 @@ body[data-page="lifecycles"] main > .cta-band { --cis: 9.625rem; }
 }
 
 body[data-page="lifecycles"] .desk { scroll-margin-top: clamp(.75rem, 1.6vw, 1.5rem); }
-body[data-page="lifecycles"] .desk :is(.desk-head, .desk-legend, .desk-legend .desk-axis, .desk-stats span, .desk-controls label, .dl-k, .dl-gates li, .dl-say b) { font-family: var(--sans); font-size: var(--fs-small); font-weight: 400; line-height: 1.35; letter-spacing: 0; text-transform: none; }
-body[data-page="lifecycles"] .desk .desk-kicker { font-weight: 400; letter-spacing: 0; color: var(--khaki); }
+body[data-page="lifecycles"] .desk :is(.desk-legend, .desk-legend .desk-axis, .desk-stats span, .desk-controls label, .dl-k, .dl-gates li, .dl-say b) { font-family: var(--sans); font-size: var(--fs-small); font-weight: 400; line-height: 1.35; letter-spacing: 0; text-transform: none; }
 body[data-page="lifecycles"] .desk .desk-kicker > span { white-space: nowrap; }
-body[data-page="lifecycles"] .desk :is(.desk-head .t, .desk-controls output, .dl-gates li b) { font: 500 var(--fs-label)/1.35 var(--mono); letter-spacing: .06em; }
-body[data-page="lifecycles"] .desk .desk-head .t { font-weight: 400; color: var(--fg); }
+body[data-page="lifecycles"] .desk :is(.desk-controls output, .dl-gates li b) { font: 500 var(--fs-label)/1.35 var(--mono); letter-spacing: .06em; }
 body[data-page="lifecycles"] .desk .dl-k { font-weight: 500; color: var(--fg); }
 body[data-page="lifecycles"] .desk .dl-k span { font-weight: 400; }
 body[data-page="lifecycles"] .desk .dl-say { font-size: var(--fs-small); }
 body[data-page="lifecycles"] .desk .dl-say b { font-weight: 500; }
-body[data-page="lifecycles"] .desk .desk-follow { font-size: var(--fs-small); }
 @media (max-width: 420px) { body[data-page="lifecycles"] .desk .dl-gates li:nth-child(even) b { margin-bottom: calc(1.35 * var(--fs-small)); } }
 @media (min-width: 700px) and (max-width: 900px) { body[data-page="lifecycles"] .desk-head > .desk-kicker { order: 0; flex-basis: auto; } }
 @media (min-width: 641px) and (max-width: 699.98px) { body[data-page="lifecycles"] .desk { --dh: 5.25rem; } }
