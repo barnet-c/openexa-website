@@ -101,6 +101,7 @@
     return { U: [cb, 0, sb], V: [ca * sb, sa, -ca * cb], N: [-sb * sa, ca, cb * sa] };
   }
   const OB = ORBITS.map(o => basis(o[1], o[2])), RB = RINGS.map(o => basis(o[1], o[2]));
+  const KH_ORB = 3; // (hc5) S0's khaki orbit, as Company's globe has one: the wide ring round the globe, which opens into a Roadmap ring (khaki in S1)
   const onLoop = (b, r, th, lift) => [(b.U[0] * Math.cos(th) + b.V[0] * Math.sin(th)) * r + b.N[0] * lift, (b.U[1] * Math.cos(th) + b.V[1] * Math.sin(th)) * r + b.N[1] * lift, (b.U[2] * Math.cos(th) + b.V[2] * Math.sin(th)) * r + b.N[2] * lift];
   // the globe band that opens into each ring: equatorial bands carry the most agents and go to the live ring
   const RING_OF_BAND = [4, 2, 0, 1, 3, 5];
@@ -127,6 +128,7 @@
   // the column's top: one open unit above the floor (the value above it is not published), as Fig. 4.1 draws it
   const Y_CTOP = Y_FL + (Y_FL - Y_FLOOR - 0.04) / (FLOOR > 0 && FLOOR < 30 ? Math.round(FLOOR) : 10);
   const COL_X = (c) => -COL_SPAN / 2 + COL_SPAN * (c + 0.5) / NCOL;
+  const NBK = FLOOR > 0 && FLOOR < 30 ? Math.round(FLOOR) : 10; // the floor in blocks: one per basis point (Fig. 4.1)
 
   /* ================= particles: identity, five scene targets, stagger keys ================= */
   const N_SURF = LITE ? 5400 : 10800, N_ORB = LITE ? 760 : 1500, N_SIG = LITE ? 520 : 960, N_DUST = LITE ? 520 : 1000;
@@ -160,14 +162,14 @@
       for (let j = 0; j < cnt[r]; j++, i++) {
         const l = (j + (r % 2) * 0.5) / cnt[r] * TAU, c = Math.cos(lat[r]);
         band[i] = b; lam[i] = l;
-        set(0, i, c * Math.cos(l), Math.sin(lat[r]), c * Math.sin(l), code(M.GLOBE, R(i, 0) < 0.022 ? K.GREEN : K.IVORY, 0));
+        set(0, i, c * Math.cos(l), Math.sin(lat[r]), c * Math.sin(l), code(M.GLOBE, R(i, 0) < 0.022 ? K.GREEN : R(i, 0) < 0.055 ? K.BRIGHT : K.IVORY, 0)); // (hc5) a few bright points, as Company's globe
         KEY[i * 4] = (b + 0.45 * (j / cnt[r])) / 6.45; // band by band, each band peeling round from one meridian
       }
     }
     yield;
     for (let q = 0; q < N_ORB; q++) {
       const ii = I_ORB + q, k = q % 6;
-      set(0, ii, R(ii, 0) * TAU, ORBITS[k][0] + gauss() * 0.01, gauss() * 0.006, code(M.ORBIT, K.DIM, k));
+      set(0, ii, R(ii, 0) * TAU, ORBITS[k][0] + gauss() * 0.01, gauss() * 0.006, code(M.ORBIT, k === KH_ORB ? K.KHAKI : K.DIM, k));
       KEY[ii * 4] = 0.12 + 0.5 * k / 6;
     }
     for (let q = 0; q < N_SIG; q++) {
@@ -336,7 +338,7 @@
   uniform vec3 u_liftDir, u_light;
   uniform vec3 u_rU[12]; uniform vec3 u_rV[12]; uniform float u_rW[12];
   uniform float u_hov[24]; uniform float u_hovOn, u_hovScene, u_sceneA, u_sceneB, u_hovLift;
-  uniform float u_dc[24];
+  uniform float u_dc[24]; uniform float u_colA;
   uniform vec4 u_occ;
   uniform vec2 u_band;
   varying vec3 v_col; varying float v_a, v_size, v_soft, v_halo;
@@ -411,12 +413,11 @@
     // a session column: solid up to the floor, open above it; on the way out all ten fold onto the foot together
     float hN = (s.y - ${Y_FLOOR.toFixed(3)}) / ${H_COL.toFixed(3)};
     al = 1.0 - step(${F_SOLID.toFixed(3)}, hN) * (1.0 - 0.62 * pow(1.0 - smoothstep(${F_SOLID.toFixed(3)}, 1.04, hN), 1.6));
+    // (hc5) on the way out the agents settle onto the coda's chart (a fold towards the foot, or a stretch: dc < 0) and
+    // give way to its blocks
     float dc = u_dc[int(clamp(grp, 0.0, 23.0) + 0.5)];
-    if (dc > 0.0) {
-      al *= 1.0 - smoothstep(0.6, 1.0, dc);
-      return vec3(s.x, mix(s.y, ${(Y_FLOOR + 0.02).toFixed(3)}, dc), s.z);
-    }
-    return s.xyz;
+    al *= u_colA;
+    return vec3(s.x, mix(s.y, ${(Y_FLOOR + 0.02).toFixed(3)}, dc), s.z);
   }
   vec3 kcol(float k) {
     if (k < 0.5) return vec3(0.94, 0.93, 0.90);
@@ -501,6 +502,8 @@
     float onGlobe = step(0.5, mA) * step(mA, 1.5) * (1.0 - tc), ndv = smoothstep(0.04, 0.5, abs(Nv.z));
     float limb = mix(1.0, mix(0.5, 1.0, ndv), onGlobe);
     al *= mix(1.0, mix(0.3, 1.0, ndv), onGlobe);
+    // (hc5) the first frame's globe at Company's particle weight: a step brighter, most where its points are smallest (1x screens)
+    al *= 1.0 + onGlobe * mix(1.0, 0.5, clamp((u_pr - 1.0) / 1.4, 0.0, 1.0));
     // the globe hides what is behind it
     if (u_occ.w > 0.0) {
       vec4 oc = u_view * vec4(u_occ.xyz, 1.0);
@@ -634,7 +637,12 @@
       float d = min(seg(q, vec2(-0.34, 0.02) * s, vec2(-0.1, 0.26) * s), seg(q, vec2(-0.1, 0.26) * s, vec2(0.36, -0.24) * s));
       a = clamp(max(1.0, s * 0.09) - d + 0.5, 0.0, 1.0);
     }
-    else { float d = length(q) / (s * 0.5); a = exp(-d * d * 3.0) * (1.0 - smoothstep(0.85, 1.0, d)); }
+    else if (shape < 4.5) { float d = length(q) / (s * 0.5); a = exp(-d * d * 3.0) * (1.0 - smoothstep(0.85, 1.0, d)); }
+    else { // (hc5) the coda's chart: a basis point's block (5) or the open unit above the floor (6); aux = height / width
+      vec2 hb = 0.5 * s * vec2(min(1.0, 1.0 / aux), min(1.0, aux));
+      if (shape < 5.5) a = clamp(0.5 - box(q, hb, min(1.0, s * 0.05)), 0.0, 1.0);
+      else { float sw = max(1.0, s * 0.06); a = clamp(0.5 + sw * 0.5 - abs(box(q, hb - sw * 0.5, 0.5)), 0.0, 1.0); }
+    }
     a *= v_col.a;
     gl_FragColor = vec4(v_col.rgb * a, a);
   }`;
@@ -643,7 +651,7 @@
   let gl = null, lost = false, ext = null, ready = false;
   const P = {}; // programs: {prog, u: {}, a: {}}
   const BUF = {};
-  let N_LINE_MAX = 6000, N_ACT_MAX = 160;
+  let N_LINE_MAX = 6000, N_ACT_MAX = 256; // (hc5) the coda's chart: 11 marks a session
   const lineData = new Float32Array(N_LINE_MAX * 11), actData = new Float32Array(N_ACT_MAX * 11);
   const guard = (fn) => { try { fn(); } catch (e) { if (gl && !gl.isContextLost()) fail(e); } };
   let setupGen = 0;
@@ -669,7 +677,7 @@
         if (!gl.getProgramParameter(p.prog, gl.LINK_STATUS)) throw new Error('story shader: ' + (gl.getShaderInfoLog(p.v) || gl.getShaderInfoLog(p.f) || gl.getProgramInfoLog(p.prog)));
       });
       Object.assign(P, progs);
-      bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_gather', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ', 'u_dc', 'u_band'], ['a_from', 'a_to', 'a_rand', 'a_key']);
+      bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_gather', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ', 'u_dc', 'u_colA', 'u_band'], ['a_from', 'a_to', 'a_rand', 'a_key']);
       bindProgram(P.line, ['u_view', 'u_proj', 'u_res', 'u_pr', 'u_dist', 'u_fogR', 'u_occ'], ['a_corner', 'a_p0', 'a_p1', 'a_col', 'a_w']);
       bindProgram(P.act, ['u_view', 'u_proj', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt'], ['a_pos', 'a_col', 'a_shp']);
       const buf = (data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage || gl.STATIC_DRAW); return b; };
@@ -965,7 +973,9 @@
     }
     // (lab) landing, the record line opens out to the page's measure: the rule the paper chapters continue (1.0x: its depth)
     const L4 = layouts[4], ml = beatRects[4] ? beatRects[4].l : gutter, tw = Math.max(15, ...(lab.days || []).map(l => l.ink ? l.ink.querySelector('.k').offsetWidth : 0)); // (the outer tags meet the margins)
-    b4 = { s: L4.s, cx: L4.cx, z: Math.max(1, (stacked ? 1.008 : 1.02) * (W - 2 * ml - tw) / (COL_SPAN * (NCOL - 1) / NCOL * L4.s * pxu)) };
+    // (hc5) the outer columns' blocks (wider than their tags) meet the margins, on the upright coda camera (wide: 1.0, was 1.02)
+    const bwEnd = Math.max(tw, Math.min(0.45, Math.max(0.18, 12 * remK * (NCOL - 1) / Math.max(1, W - 2 * ml - tw))) * (W - 2 * ml - tw) / (NCOL - 1));
+    b4 = { s: L4.s, cx: L4.cx, z: Math.max(1, (stacked ? 1.008 : 1) * (W - 2 * ml - bwEnd) / (COL_SPAN * (NCOL - 1) / NCOL * L4.s * pxu)) };
   }
 
   /* ================= scene state ================= */
@@ -1026,7 +1036,7 @@
     const a = layouts[seg], b = layouts[seg + 1];
     const L = { cx: lerp(a.cx, b.cx, mE), cy: lerp(a.cy, b.cy, mE) };
     scale = [a.s, b.s];
-    const el = lerp(CAM[seg][0], CAM[seg + 1][0], mE) + (reducedMQ.matches ? 0 : mouse.y * 0.06);
+    const el = (lerp(CAM[seg][0], CAM[seg + 1][0], mE) + (reducedMQ.matches ? 0 : mouse.y * 0.06)) * (seg === 3 ? 1 - foldE() : 1); // (hc5) the coda's chart faces the reader: its columns stand upright
     const az = lerp(CAM[seg][1], CAM[seg + 1][1], mE) + (reducedMQ.matches ? 0 : mouse.x * 0.11);
     const tc = [lerp(CENTER[seg][0] * a.s, CENTER[seg + 1][0] * b.s, mE), lerp(CENTER[seg][1] * a.s, CENTER[seg + 1][1] * b.s, mE), 0];
     target = tc;
@@ -1044,7 +1054,26 @@
   // (4 Nov) lifts the coda and its record line together to the optical centre: 0.6, so the frame's block (headline to the
   // paper's caption) has as much dark above it as paper below, a little high; never so high that the coda meets the bar
   // (hc3) short landscape: the floor rises as far as the rail's caption (the coda's hedge) needs to fit whole under the tags
-  const FLOOR_END = () => (stacked ? 0.7 : short ? Math.max((navH + 22 + CODA_GAP() + codaH) / H, Math.min(0.76, 1 - capRoom() / H)) : Math.min(0.66, Math.max(0.6, (navH + 22 + CODA_GAP() + codaH) / H)));
+  // (hc5) wide: the group (the coda, its chart, the records and the rail's caption) centred in the frame under the bar, a
+  // touch high (it was 0.6-0.66 round a coda on a hairline); short landscape as before, with the chart in the coda's room
+  const FLOOR_END = () => {
+    if (stacked) return 0.7;
+    const above = CODA_GAP() + codaH + chartPx(), below = capRoom();
+    if (short) return Math.max((navH + 22 + above) / H, Math.min(0.76, 1 - below / H));
+    return Math.min(1 - below / H, (navH + Math.max(22, (H - navH - above - below) * 0.46) + above) / H);
+  };
+  // (hc5) the coda draws Proof's chart in miniature (the director: the overture hands off the site's chart): on each
+  // session's column one solid block per basis point up to the floor, ONE open unit above it (the value above the floor is
+  // not published: nothing above it reads as a height), the broker's tick over that. CSS px with the rem's growth; the
+  // block pitch (2% of the frame) gives way where the coda's room is short
+  const CK_GAP = () => 8 * remK, CK_SZ = () => 12 * remK; // the tick's gap over the open unit, and its height
+  const chartRoom = () => (stacked ? H * 0.7 - navH - 14 : H - navH - 44 - capRoom()) - CODA_GAP() - codaH;
+  const bpOf = () => clamp(Math.min(0.02 * H, (chartRoom() - CK_GAP() - CK_SZ()) / (NBK + 1)), 3, 24 * remK);
+  const bgOf = (bp) => Math.max(1, Math.round(bp * 0.22));
+  const chartPx = () => (NBK + 1) * bpOf() + CK_GAP() + CK_SZ(); // the foot (the records' rail) to the ticks' tops
+  const floorPx = () => { const bp = bpOf(); return NBK * bp + bgOf(bp) / 2; }; // the floor line, between the blocks and the open unit
+  const lu = (px) => px / Math.max(1e-4, layouts[4].s * pxuOf(H)); // S4 local units for a length in CSS px
+  const bwOf = () => { const pitch = COL_SPAN / NCOL * layouts[4].s * pxuOf(H); return Math.min(pitch * 0.45, Math.max(pitch * 0.18, 12 * remK)); }; // a block's width, px
   const capRoom = () => (U_DAY + 16) * remK + Math.max(14, ...(lab.days || []).map(l => l.h || 0)) + paperCapH + 12; // floor line to the caption's rule, and some air
   // the way out, in shares of the exit.
   // (hc2, wide) the proof moment holds as one frame before the paper comes: the columns fold by 0.22 and the row of ten
@@ -1053,7 +1082,9 @@
   // (hc3) the hedge is said once: the rail's caption comes with the coda, under the ten tags, and the paper turns it to ink
   const EXIT = { wide: { copy: [0.1, 0.22], coda: [0.18, 0.28], paper: [0.4, 0.8] }, tall: { cam: [0.3, 0.56], copy: [0.3, 0.42], coda: [0.38, 0.48], paper: [0.58, 0.86] } }; // (portrait: the proof's copy has gone before the coda opens: one headline at a time)
   // (lab) the exit folds the ten columns down together with the floor line (the paper's edge); seals go into their records
-  const foldE = () => sstep(0.02, stacked ? 0.3 : 0.22, xeNow), flY = () => lerp(Y_FL, Y_FLOOR + 0.02, foldE());
+  // (hc5) the columns settle onto the chart's floor (dcEnd < 0: they stretch) instead of folding flat; the floor line with them
+  const foldE = () => sstep(0.02, stacked ? 0.3 : 0.22, xeNow), dcEnd = () => 1 - (lu(floorPx()) - 0.02) / (Y_FL - Y_FLOOR - 0.02);
+  const flY = () => lerp(Y_FL, Y_FLOOR + lu(floorPx()), foldE());
   const sealOf = (c) => clamp((xeNow - 0.03 - 0.12 * c / Math.max(1, NCOL - 1)) / 0.1, 0, 1);
   const dcArr = new Float32Array(24);
 
@@ -1134,12 +1165,18 @@
       }
     } else { // S4: one status for every session above the floor
       // its record hangs from the floor line, hash-linked to the one before.
-      const rY = Y_FLOOR - l4(U_REC), tY = Y_FLOOR + l4(9), e = foldE(), k4 = remK / ptK; // (hc3) S4's marks at the DOM's scale: an ink record covers its record exactly
+      const rY = Y_FLOOR - l4(U_REC), e = foldE(), k4 = remK / ptK; // (hc3) S4's marks at the DOM's scale: an ink record covers its record exactly
+      const bp = bpOf(), bg = bgOf(bp), bh = bp - bg, tY = Y_FLOOR + lu((NBK + 1) * bp + CK_GAP() + CK_SZ() / 2); // (hc5) the tick over the open unit
+      const bw = bwOf(), bA = sstep(0.3, 0.9, e);
       for (let c = 0; c < NCOL; c++) {
         const x = COL_X(c), ss = SESSIONS[c], dc = sealOf(c);
         put('r' + c, x, rY, 0, C.ivory, 0.95, 2, 15 * k4, 0.4 * Math.sin(PI * sstep(0.3, 1, dc)), 0); // a brief light as its seal goes in
         if (ss.above) put('s' + c, x, lerp(Y_FLOOR + l4(7), rY, sstep(0, 0.6, dc)), 0, C.green, 0.95 * (1 - sstep(0.4, 0.8, dc)), 1, 9 * k4, 0.6, 1);
         if (ss.confirmed) put('t' + c, x, lerp(Y_CTOP + 0.1, tY, e), 0, C.green, 0.95, 3, 12 * k4, 0.5, 0);
+        if (bA > 0 && ss.above) { // (hc5) the coda's chart: the blocks to the floor (the top one brightest, as Fig. 4.1), the open unit
+          for (let j = 0; j < NBK; j++) put('b' + c + '.' + j, x, Y_FLOOR + lu(bg + j * bp + bh / 2), 0, C.green, bA * (0.5 + 0.45 * j / Math.max(1, NBK - 1)), 5, Math.max(bw, bh) / ptK, 0, bh / bw);
+          put('u' + c, x, Y_FLOOR + lu(bg + NBK * bp + bh / 2), 0, C.green, bA * 0.85, 6, Math.max(bw, bh) / ptK, 0, bh / bw); // (open, in Fig. 4.1's green)
+        }
       }
     }
     return out;
@@ -1191,7 +1228,7 @@
   function linesFor(sc, T, out) {
     const put = (id, pts, closed, col, a, w, key, dy, dash) => out.set(id, { pts, closed, col, a, w: w || 1, key: key == null ? 0.5 : key, dy: dy || 0, dash: dash || 0 });
     if (sc === 0) {
-      ORBITS.forEach((o, k) => { const pts = geo('o0' + k, () => Array.from({ length: LOOP_N }, (_, j) => onLoop(OB[k], o[0], j / LOOP_N * TAU, 0))); put('o' + k, pts, true, k === 0 ? C.green : C.ivory, k === 0 ? 0.2 : 0.1, 1, 0.12 + 0.5 * k / 6); });
+      ORBITS.forEach((o, k) => { const pts = geo('o0' + k, () => Array.from({ length: LOOP_N }, (_, j) => onLoop(OB[k], o[0], j / LOOP_N * TAU, 0))); put('o' + k, pts, true, k === 0 ? C.green : k === KH_ORB ? C.khaki : C.ivory, k === 0 ? 0.34 : k === KH_ORB ? 0.55 : 0.16, 1 / dpr, 0.12 + 0.5 * k / 6); if (k === KH_ORB) put('kg', pts, true, C.khaki, 0.07, 6, 0.12 + 0.5 * k / 6); }); // (hc5) one device pixel, a step brighter; the khaki ring's soft band, as Company's ring of points
       put('hz', [[-1.35, -1.3, 0], [1.35, -1.3, 0]], false, C.ivory, stacked ? 0 : 0.07, 1, 0.9); // (stacked: it would cross the kicker)
       // the silhouette of a unit sphere seen from the eye
       const k = clamp(scale[0] / CAM_D, 0, 0.9), rl = Math.sqrt(1 - k * k), e = [eye[0] - target[0], eye[1] - target[1], eye[2] - target[2]], el = Math.hypot(e[0], e[1], e[2]) || 1;
@@ -1254,7 +1291,8 @@
       // the floor line (the paper's edge to be), the hash links between the records hanging from it
       const step = COL_SPAN / NCOL, rY = Y_FLOOR - l4(U_REC), yN = Y_FLOOR - l4(U_NAV), tk = l4(U_TICK), gap = l4(2), nav = 1 - sstep(0.06, 0.3, xeNow);
       put('hz', [[-COL_SPAN / 2 - 0.12, Y_FLOOR, 0], [COL_SPAN / 2 + 0.12, Y_FLOOR, 0]], false, C.ivory, 0.3 * (1 - (stacked ? sstep(0.74, 0.9, xeNow) : sstep(0.8, 0.94, xeNow))), 1, 0.9); // the foot: the records' rail, then the paper's own edge
-      const fy = flY(); put('fl', [[floorL, fy, 0], [COL_SPAN / 2 + 0.12, fy, 0]], false, C.ivory, 0.62 * (1 - sstep(0.8, 1, foldE())), 1, 0.9); // the 10 bps floor: it comes down with the columns
+      const fy = flY(), fe = foldE(), hw = lu(bwOf()) / 2; // (hc5) the blocks' half width
+      put('fl', [[lerp(floorL, COL_X(0) - hw, fe), fy, 0], [lerp(COL_SPAN / 2 + 0.12, COL_X(NCOL - 1) + hw, fe), fy, 0]], false, C.ivory.map((v, i) => lerp(v, C.green[i], fe)), lerp(0.62, 0.8, fe), 1, 0.9); // the 10 bps floor: (hc5) it stays, the coda chart's floor across its columns, green as Fig. 4.1's
       const dash = l4(4), per = l4(9);
       SESSIONS.forEach((ss, c) => {
         const x = COL_X(c), k = (c + 0.1) / (NCOL + 0.55);
@@ -1738,7 +1776,7 @@
       let co = 0, top = 0;
       if (xe > 0) {
         const fy = lean ? project(0, Y_FLOOR * layouts[4].s, 0).y : H * FLOOR_END(); // portrait: above the line as it settles
-        top = Math.max(navH + 14, fy - CODA_GAP() - codaH); // just above the floor it names, clear of the ticks
+        top = Math.max(navH + 14, fy - chartPx() - CODA_GAP() - codaH); // (hc5) over its chart, clear of the ticks
         co = codaA;
         const room0 = top - navH, tC = top < navH + 14.5 || (ov > 0 && (room0 <= 6 || ov >= room0 - 6 - Math.min(150, H * 0.2) / 2)) ? 0 : 1; // the leave, on a threshold
         leaveC += clamp(tC - leaveC, -k, k); if (leaveC !== tC) fading = true;
@@ -1910,8 +1948,8 @@
     gl.uniform1f(u.u_shade, lerp(SHADE[seg], SHADE[seg + 1], mE));
     gl.uniform1fv(u.u_hov, hov); gl.uniform1f(u.u_hovOn, hoverOn); gl.uniform1f(u.u_hovScene, hoverScene);
     gl.uniform1f(u.u_sceneA, seg); gl.uniform1f(u.u_sceneB, seg + 1);
-    dcArr.fill(seg === 3 ? foldE() : 0);
-    gl.uniform1fv(u.u_dc, dcArr);
+    dcArr.fill(seg === 3 ? foldE() * dcEnd() : 0);
+    gl.uniform1fv(u.u_dc, dcArr); gl.uniform1f(u.u_colA, seg === 3 ? 1 - sstep(0.25, 0.8, foldE()) : 1);
     gl.uniform1f(u.u_hovLift, reducedMQ.matches ? 0 : 0.07 * scale[hoverScene === seg ? 0 : 1] * (hoverScene === 2 ? 1 : 0));
     const occ = seg === 0 ? (1 - sstep(0, 0.55, mRaw)) : 0;
     gl.uniform4f(u.u_occ, 0, 0, 0, occ * scale[0] * 0.995);

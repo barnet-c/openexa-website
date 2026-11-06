@@ -331,23 +331,6 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
 @media (min-width: 601px) and (max-width: 960px) and (max-height: 719.98px) { #lc01 .lc-how > .lc-mech { position: static; } }
 
-#swarm .sw-legend { border: 0; }
-#swarm .sw-legend > .card { border-bottom: 0; background: none; }
-@media (min-width: 961px) {
-  #swarm .sw-legend > .card { padding-inline: clamp(1.125rem, 2vw, 1.75rem); }
-  #swarm .sw-legend > .card:first-child { padding-left: 0; }
-  #swarm .sw-legend > .card:last-child { padding-right: 0; border-right: 0; }
-}
-@media (min-width: 521px) and (max-width: 960px) {
-  #swarm .sw-legend > .card { padding-inline: 0 clamp(1.125rem, 3vw, 1.75rem); }
-  #swarm .sw-legend > .card:nth-child(even) { padding-inline: clamp(1.125rem, 3vw, 1.75rem) 0; border-right: 0; }
-  #swarm .sw-legend > .card:nth-child(-n + 2) { border-bottom: var(--hair) solid var(--line); }
-}
-@media (max-width: 520px) {
-  #swarm .sw-legend > .card { border-right: 0; }
-  #swarm .sw-legend > .card + .card { border-top: var(--hair) solid var(--line); }
-}
-
 @media (max-width: 360px) { body[data-page="lifecycles"] .orbit-list { grid-template-columns: minmax(0, 1fr); } body[data-page="lifecycles"] .orbit-list li { padding: .4375rem 0; } }
 
 @media (max-width: 600px) {
@@ -387,27 +370,9 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-link { margin-top: clamp(1.75rem, 3vw, 2.75rem); }
 
-:is(body[data-page="platform"], body[data-page="lifecycles"]) main .figure-cap { padding-left: 0; }
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .cta-band .row { margin-top: clamp(1.75rem, 3vw, 2.5rem); }
 
-#swarm .sw-legend { margin-bottom: clamp(1.25rem, 2.4vw, 2rem); }
-#swarm .sw-role .h4 { margin: 0; }
-#swarm .sw-role .sw-who { display: block; margin-top: .375rem; font: 400 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; color: var(--fg-3); }
-#swarm .sw-legend .card { padding-top: clamp(1.125rem, 1.8vw, 1.5rem); }
-/* hc4: a role is its title and its agents, nothing at the right (the lab below names the gates). The title is the
-   .sw-at that swarm.js wraps in its role button: pointing at or pressing a role still lights its gate in the lab */
-#swarm .sw-legend .sw-at { display: block; min-height: 0; margin: 0; padding: 0; border: 0; font: 400 var(--fs-heading)/1.2 var(--serif); letter-spacing: -0.01em; text-transform: none; color: var(--fg); }
-#swarm .sw-legend .sw-at-b { display: block; }
-#swarm .sw-at-b[aria-pressed="true"] .sw-who, #swarm .sw-at-b:focus-visible .sw-who { color: var(--signal-bright); }
-@media (hover: hover) { #swarm .sw-role:hover .sw-who { color: var(--fg-2); } #swarm .sw-role:hover .sw-at-b[aria-pressed="true"] .sw-who { color: var(--signal-bright); } }
-
-@media (max-width: 520px) {
-  #swarm .sw-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  #swarm .sw-legend > .card { display: block; padding: .875rem .75rem .75rem 0; border-right: 0; }
-  #swarm .sw-legend > .card + .card { border-top: 0; }
-  #swarm .sw-legend > .card:nth-child(n + 3) { border-top: var(--hair) solid var(--line); }
-  #swarm .sw-legend > .card:nth-child(even) { padding-left: .75rem; padding-right: 0; }
-}
+/* hc5: §02 is heading, line, the lab (the Watch / Decide / Act / Prove list is gone: the lab's six gates name the flow) */
 
 #test .card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); border: 0; border-top: var(--hair) solid var(--line-strong); }
 #test .card-grid--3 > .card { display: flex; flex-direction: column; justify-content: space-between; gap: 1.375rem; min-height: clamp(8rem, 11vw, 10.5rem); padding: 1.375rem clamp(1rem, 2vw, 1.75rem) 1.25rem 0; border: 0; border-bottom: var(--hair) solid var(--line); border-radius: 0; background: none; }
@@ -527,24 +492,13 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
 
 @media (min-width: 1100px) {
 
-  #swarm > .container { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap, clamp(1rem, 2.2vw, 2rem)); }
-  #swarm > .container > * { grid-column: 1 / -1; }
-  #swarm > .container > .ch-head { grid-column: 1 / span 6; align-self: end; }
-  #swarm .sw-legend { grid-column: 8 / -1; grid-template-columns: minmax(0, 1fr); align-self: end; margin-bottom: var(--ch-gap); border-bottom: var(--hair) solid var(--line); }
-  #swarm .sw-legend > .card.sw-role { display: block; padding: .95rem 0 .9rem; border-right: 0; }
-  #swarm .sw-legend .sw-role :is(.h4, .sw-at-b) { display: flex; align-items: baseline; gap: 1rem; }
-  #swarm .sw-legend .sw-role .sw-who { display: inline; margin: 0; }
-
-  #pipeline .ch-head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap, clamp(1rem, 2.2vw, 2rem)); align-items: end; }
-  #pipeline .ch-head > .ch-title { grid-column: 1 / span 7; max-width: none; }
-  #pipeline .ch-head > .ch-line { grid-column: 9 / -1; margin: 0 0 .5rem; }
-
   #modes > .container { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap, clamp(1rem, 2.2vw, 2rem)); }
   #modes .modes-body { display: contents; }
   #modes .ch-head { grid-column: 1 / span 6; grid-row: 1; }
   #modes .modes-body > .ledger-wrap { grid-column: 1 / span 6; grid-row: 2; }
   #modes .modes-body > .sec-plate--dial { grid-column: 8 / -1; grid-row: 1 / span 2; align-self: center; justify-self: stretch; width: 100%; max-width: 30rem; margin: 0 0 0 auto; }
   #modes .sec-plate--dial > .hp-art { max-width: none; }
+  #modes .sec-plate--dial > .hp-cap { --fc-ind: calc(24.5% - 4rem); } /* hc5 (system's request): under the drawing's first mark ("Fully automatic" ends at 24.5% and is 4rem wide) */
 
   #test > .container { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap, clamp(1rem, 2.2vw, 2rem)); align-items: start; }
   #test > .container > .ch-head { grid-column: 1 / span 5; position: sticky; top: calc(var(--nav-h) + 2.5rem); margin-bottom: 0; }
@@ -553,7 +507,21 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
   #test .card-grid--3 > .card:nth-child(even) { padding-left: clamp(1rem, 2vw, 1.75rem); border-left: var(--hair) solid var(--line); }
 }
 
+/* hc5 (director item 5): §06 is a spread from 961 px, as the hero: the heading and its line in columns 1-6, the
+   supply/demand plate in 7-12 from the heading's first line, its two halves stacked as on phones (the same scale as the
+   full-width row it was, a screen lower). Phones and tablets keep heading, line, plate */
+#marketplace .sp-panels { align-items: end; } /* the halves meet on their record line (the demand half is the shorter) */
+@media (max-width: 600px) { #marketplace .sp-half .hp-lab--khaki { transform: translate(0, calc(-50% - .375rem)); } } /* phones: the two-line side labels clear the first stream and the rail (at 320 they touched) */
+@media (min-width: 961px) {
+  #marketplace > .container { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2.2vw, 2rem); align-items: start; }
+  #marketplace .ch-head { grid-column: 1 / span 6; margin-bottom: 0; }
+  #marketplace .sec-plate--market { grid-column: 7 / -1; margin: 0; }
+  #marketplace .sp-panels { grid-template-columns: minmax(0, 1fr); row-gap: .875rem; }
+}
+
 #mcp .dpl-plate { max-width: 25rem; }
+/* hc5: the ruled row of three from 961 px (arch.css's plate-beside-title rows end at 960 px since integrate hc5; until
+   then they ran to 1099 px and this block undid them at 961-1099) */
 @media (min-width: 961px) {
   #mcp .dpl { column-gap: 0; border-top: var(--hair) solid var(--line-strong); border-bottom: var(--hair) solid var(--line); }
   #mcp .dpl-col { padding: 1.75rem clamp(.75rem, 1.6vw, 1.5rem) 1.5rem; }

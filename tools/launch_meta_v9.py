@@ -24,10 +24,13 @@ CRUMB = {"platform.html": "Platform", "lifecycles.html": "Lifecycles", "evidence
          "company.html": "Company", "access.html": "Request access"}
 def card_alt(s, name=""):
     """award a1: the share card's alt text describes the card (build_og.py): the page's headline, then its picture, the
-    page's hero plate in the plate's own words (its aria-label), else the dotted globe of the mark."""
+    page's hero plate in the plate's own words (its aria-label), else the dotted globe of the mark. hc5 (integrate): the
+    plate is read in the page's hero only (<section class="page-hero">), the plates build_og.py draws on a card: Home's §02
+    now shows Platform's plate further down the page, and its card keeps the globe."""
     h1 = re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S)
     h1 = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", h1.group(1)))).replace("‐", "-").strip() if h1 else ""
-    m = re.search(r'<figure class="hero-plate[^"]*"[^>]*\baria-label="([^"]*)"', s)
+    hero = re.search(r'<section\b[^>]*\bclass="[^"]*\bpage-hero\b[^"]*"[^>]*>.*?</section>', s, re.S)
+    m = re.search(r'<figure class="hero-plate[^"]*"[^>]*\baria-label="([^"]*)"', hero.group(0)) if hero else None
     pic = html.unescape(m.group(1)).strip() if m else ""
     pic = "Beside it, the page’s plate: " + pic[0].lower() + pic[1:] if pic else STILL_PIC.get(name, "Beside it, the dotted globe of the OpenEXA mark")
     return (h1 + " " if h1 else "") + (pic if pic.endswith(".") else pic + ".")

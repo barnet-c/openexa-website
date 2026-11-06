@@ -215,31 +215,13 @@
   .swarm-controls .sw-btns { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
 }
 
-/* Platform §03: the swarm's four facts as one compact static row */
-.sw-legend .card { display: flex; flex-direction: column; padding-top: clamp(1.5rem, 2.4vw, 2rem); }
-.sw-legend .card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: calc(2 * var(--hair)); background: var(--sw-tint, var(--line-strong)); }
-.sw-role--1 { --sw-tint: rgba(245, 242, 236, .72); }
-.sw-role--2 { --sw-tint: var(--signal-bright); }
-.sw-role--3 { --sw-tint: repeating-linear-gradient(90deg, var(--signal-bright) 0 .875rem, transparent .875rem 1.25rem); }
-.sw-role--4 { --sw-tint: linear-gradient(90deg, var(--signal-bright), rgba(245, 242, 236, .86)); }
-/* each card's legend line is its footer: on one hairline across the row (pushed to the card's foot) */
-/* the role's title (hc4: platform.css's #swarm .sw-legend .sw-at; the old right-hand cell's glyph, numeral and gate word went) */
-@media (max-width: 900px) { .sw-legend.card-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 520px) { .sw-legend.card-grid--4 { grid-template-columns: 1fr; } }
+/* hc5 (integrate, on platform's request): Platform §02's four role cards and the lab's roles view (data-sw-view="roles")
+   left the page (HC5 item 4); their rules went with them */
 
 @media (prefers-reduced-motion: reduce) {
   .sw-on .sw-trace:not([hidden]), .sw-log li.is-filled { animation: none; }
   .sw-rec i { transition: none; }
 }
-/* Platform's roles view: a legend card lights its role in the lab, the other gates' labels step back */
-.sw-legend + .swarm-live { margin-top: clamp(1.25rem, 2.4vw, 2rem); } /* Platform: the four roles stand right above the lab they light */
-.sw-on[data-sw-view="roles"] .sw-gates li { transition: opacity var(--dur-feedback) var(--ease); }
-.sw-on[data-sw-role] .sw-gates li:not(.is-role) { opacity: .34; }
-.sw-on[data-sw-role] .sw-gates li.is-role b, .sw-on[data-sw-role] .sw-gates li.is-role > span { color: var(--signal-bright); }
-.sw-at-b { display: flex; align-items: flex-start; gap: .625rem; width: 100%; margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; text-align: left; cursor: pointer; }
-.sw-at-b:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .375rem; }
-@media (pointer: coarse) { .sw-at-b { min-height: 2.75rem; } }
-@media (forced-colors: active) { .sw-at-b:focus-visible { outline-color: Highlight; } }
 @media (scripting: none) { .swarm-live :is(.sw-live, .sw-follow, .sw-key), .swarm-live .swarm-bar { display: none; } } /* no script: the static six-gate diagram, no dead controls */
 /* (r4) until swarm.js runs (Home: as the curtain lifts) the lab holds its live boxes, empty: head items laid out, not
    drawn; the stage at its band; the counters held. Its start moves nothing; the static gates show after 6 s if it never runs */

@@ -6,7 +6,6 @@
 /* the plate is drawn twice: a still SVG engraving (first paint, no JS, no WebGL), then the WebGL swarm over it */
 @media (min-width: 961px) {
   [data-page="company"] .company-hero .container { grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr); }
-  [data-page="company"] .company-intro .lede { max-width: 36ch; }
   [data-page="company"] .company-sculpture { aspect-ratio: 1.25; }
 }
 [data-page="company"] .company-sculpture .figure-stage.no-figure::after { display: none; }
@@ -42,8 +41,18 @@
   [data-page="company"] .company-hero .hero-cta { margin-top: 1.75rem; }
 }
 
-/* ---------------------------------------------------------------- Company: paired heads (A8) */
-@media (min-width: 601px) { [data-page="company"] .team-head { align-items: first baseline; } }
+/* ---------------------------------------------------------------- Company §02: the chapter head (hc5) */
+/* site.css's .ch-head: the heading, its line under it; from 1100 px the three figures are the spread's key, in the third
+   column on the heading's last baseline (row 1; the line is row 2), each label on one line in the column (1100 px: 337) */
+@media (min-width: 1100px) {
+  [data-page="company"] .team-head > .crew-stats { grid-row: 1; }
+  [data-page="company"] .team-head > .crew-stats > div { padding-inline: clamp(.875rem, 2vw - .5rem, 1.75rem); }
+  [data-page="company"] .team-head > .crew-stats span { white-space: nowrap; }
+}
+[data-page="company"] .crew-stats > div:last-child { padding-right: 0; }
+/* the line names seven firms, each kept whole (no-break spaces in build_team.py): 40ch, not the head's 36, sets them in
+   three lines, "… Goldman Sachs, / Bank of America and JPMorgan Chase." */
+[data-page="company"] .team-head > .ch-line { max-width: 40ch; }
 :is([data-page="company"], [data-page="access"]) .keep { display: inline-block; }
 
 /* ---------------------------------------------------------------- Company §01: the story as a register */

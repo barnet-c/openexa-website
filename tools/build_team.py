@@ -54,6 +54,9 @@ Changes from the source, deliberately:
   - 2026-11-06 (hill climb hc4, design director: "the team rows read as two unrelated columns"): from 1200 px the team
     takes the advisors' form, two ruled columns reading down, so the team list carries its row count too (--rows, half
     the team, rounded up). Words, order and markup otherwise unchanged.
+  - 2026-11-06 (hill climb hc5, one chapter-head pattern; system's request): the section's head is the site's chapter
+    head (.ch-head.ch-spread: the heading, its line under it, the three figures as the spread's key), not a heading
+    with its line top right; each firm in the line is kept whole (no-break spaces). Words unchanged.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -228,15 +231,13 @@ adv_html, r2 = rows(ADVISORS, False)
 SECTION = f'''    <!-- 03 THE TEAM -->
     <section class="section" id="team" data-chapter="The team" data-n="02">
       <div class="container">
-        <div class="grid t-2 team-head">
-          <div class="col-6"><h2 class="display-2" data-reveal data-split>Systems people and market people, under one roof.</h2></div>
-          <div class="col-5 offset-7">
-            <p class="body-lg" data-reveal style="--d:80ms">Between them, they have built and led work at Google, Microsoft, Amazon, PayPal, Goldman Sachs, Bank of America and JPMorgan&nbsp;Chase.</p>
-            <div class="crew-stats" data-reveal style="--d:140ms">
-              <div><b>{len(TEAM)}</b><span>Team members</span></div>
-              <div><b>{len(ADVISORS)}</b><span>Advisors</span></div>
-              <div><b>100+</b><span>Research papers</span></div>
-            </div>
+        <div class="ch-head ch-spread team-head">
+          <h2 class="display-2 ch-title" data-reveal data-split>Systems people and market people, under one roof.</h2>
+          <p class="ch-line" data-reveal style="--d:80ms">Between them, they have built and led work at Google, Microsoft, Amazon, PayPal, Goldman&nbsp;Sachs, Bank&nbsp;of&nbsp;America and JPMorgan&nbsp;Chase.</p>
+          <div class="crew-stats" data-reveal style="--d:140ms">
+            <div><b>{len(TEAM)}</b><span>Team members</span></div>
+            <div><b>{len(ADVISORS)}</b><span>Advisors</span></div>
+            <div><b>100+</b><span>Research papers</span></div>
           </div>
         </div>
         <div class="crew-sub crew-sub--team" data-reveal><h3 class="crew-sub-h">The team</h3></div>

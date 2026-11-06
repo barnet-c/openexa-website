@@ -178,23 +178,24 @@
     </section>
 
     <!-- ============ 02 THE STACK ============ -->
+    <!-- Platform's hero plate, still (hc5) -->
     <section class="section is-paper-2" id="stack" data-chapter="The stack" data-n="02">
       <div class="container">
-        <h2 class="display-2 ch-title" data-reveal data-split>Take the stack apart.</h2>
-        <!-- the architecture explorer (arch.js): without JavaScript this is the readable list -->
-        <div class="layers" data-arch data-arch-rest data-arch-label="The agentic stack" data-reveal style="--d:120ms">
-          <div class="layer" data-job="Watches the lifecycle’s live data and keeps re-estimating risk, price and regime."><div class="k">01</div><h3>Signal intelligence</h3><div></div></div>
-          <div class="layer" data-job="The post-trained model every agent reasons on. It can propose anything and execute nothing on its own."><div class="k">02</div><h3>Model layer</h3><div></div></div>
-          <div class="layer" data-job="Thousands of narrow agents, each built for one job: read a feed, score a gap, size an order, check a limit, match a fill."><div class="k">03</div><h3>Domain<span class="hy">-</span>specific agents</h3><div></div></div>
-          <div class="layer" data-job="The gate every proposal passes. It arbitrates between agents and enforces policy and mandate limits."><div class="k">04</div><h3>Execution Council</h3><div></div></div>
-          <div class="layer-boundary"><div class="k">—</div><p class="lb-t">The boundary</p><div class="lb-io"><p data-side="above"><b>Above</b> <strong>Intelligence decides.</strong></p><p data-side="below"><b>Below</b> <strong>Execution is deterministic.</strong></p></div></div>
-          <div class="layer" data-job="Scores a route for each approved action on live conditions and past performance."><div class="k">05</div><h3>Routing layer</h3><div></div></div>
-          <div class="layer" data-job="Runs the lifecycle as a deterministic state machine, with retries, idempotency and reconciliation."><div class="k">06</div><h3>Execution layer</h3><div></div></div>
-          <div class="layer" data-job="Gives agents authenticated connectivity to the rails, through secure, customer-scoped MCP servers."><div class="k">07</div><h3>MCP server</h3><div></div></div>
-          <div class="layer" data-job="Grants every agent, tool and counterparty exactly the permissions its workflow needs, and nothing more."><div class="k">08</div><h3>Authentication layer</h3><div></div></div>
-          <div class="layer-floor"><div class="k">—</div><p>Brokers · Clearing · OTC · Venues · Counterparties</p></div>
+        <div class="st-row">
+          <div class="st-head">
+            <h2 class="display-2 ch-title" data-reveal data-split>Take the stack apart.</h2>
+            <a class="link-arrow ch-link" href="platform.html#architecture" data-reveal>The platform <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+          </div>
+          <figure class="hero-plate hero-plate--stack" data-reveal style="--d:120ms" aria-label="Eight layers, one boundary" aria-describedby="stack-plate-desc">
+            <div class="hp-art">
+              <svg viewBox="0 0 420 336" aria-hidden="true" focusable="false"><image href="assets/img/home/stack-dots.svg" width="420" height="336"/><path class="hp-h hp-dash" d="M34 30L172 13L264 30L126 47Z"/><path class="hp-h hp-dash" d="M34 62L172 45L264 62L126 79Z"/><path class="hp-h hp-dash" d="M34 94L172 77L264 94L126 111Z"/><path class="hp-h hp-dash" d="M34 126L172 109L264 126L126 143Z"/><path class="hp-h" d="M34 192L172 175L264 192L126 209Z"/><path class="hp-h" d="M34 224L172 207L264 224L126 241Z"/><path class="hp-h" d="M34 256L172 239L264 256L126 273Z"/><path class="hp-h" d="M34 288L172 271L264 288L126 305Z"/><g><path class="hp-h" d="M268 13H272V143H268"/><path class="hp-h" d="M268 175H272V305H268"/></g><path class="hp-g2" d="M16.5 159L174.3 138.4L281.5 159L123.7 179.6Z"/><path class="hp-g" d="M22.5 159L174.3 142L275.5 159L123.7 176Z"/><path class="hp-h" d="M34 324H264"/><g><path class="pm-up" d="M92 99V131"/><path class="pm-up pm-up2" d="M92 131V164"/><path class="pm-down" d="M92 164V324"/><rect class="pm-step" x="89.1" y="194.1" width="5.8" height="5.8"/><rect class="pm-step" x="89.1" y="226.1" width="5.8" height="5.8"/><rect class="pm-step" x="89.1" y="258.1" width="5.8" height="5.8"/><rect class="pm-step" x="89.1" y="290.1" width="5.8" height="5.8"/><circle class="pm-cross" cx="92" cy="164" r="2.7"/><rect class="pm-settle" x="87.5" y="319.5" width="9" height="9" rx="1"/><circle class="pm-agent" cx="92" cy="99" r="2.3"/><circle class="pm-ring" cx="92" cy="131" r="6.2"/></g><g class="is-rej"><path class="pm-up" d="M146 91V123"/><circle class="pm-agent" cx="146" cy="91" r="2.3"/><circle class="pm-ring" cx="146" cy="123" r="6.2"/><circle class="pm-rring" cx="146" cy="123" r="6.2"/><path class="pm-spur" d="M152.1 124.1L170.7 127.5"/><path class="pm-x" d="M172.3 124.3l6 6m0 -6l-6 6"/></g><g><path class="pm-up" d="M205 97V129"/><path class="pm-up pm-up2" d="M205 129V162"/><path class="pm-down" d="M205 162V324"/><rect class="pm-step" x="202.1" y="192.1" width="5.8" height="5.8"/><rect class="pm-step" x="202.1" y="224.1" width="5.8" height="5.8"/><rect class="pm-step" x="202.1" y="256.1" width="5.8" height="5.8"/><rect class="pm-step" x="202.1" y="288.1" width="5.8" height="5.8"/><circle class="pm-cross" cx="205" cy="162" r="2.7"/><rect class="pm-settle" x="200.5" y="319.5" width="9" height="9" rx="1"/><circle class="pm-agent" cx="205" cy="97" r="2.3"/><circle class="pm-ring" cx="205" cy="129" r="6.2"/></g></svg>
+              <div class="hp-labs" aria-hidden="true"><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:8.9">01</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:18.5">02</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:28.0">03</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:37.5">04</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:57.1">05</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:66.7">06</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:76.2">07</span><span class="hp-lab hp-lab--r hp-lab--n" style="--x:6.2;--y:85.7">08</span><span class="hp-lab hp-lab--side" style="--x:66.8;--y:23.2">Estimate<small>Above · 01–04</small></span><span class="hp-lab hp-lab--acc hp-lab--bd" style="--x:68.9;--y:47.3">Boundary</span><span class="hp-lab hp-lab--side" style="--x:66.8;--y:71.4">Deterministic<small>Below · 05–08</small></span><span class="hp-lab hp-lab--fl" style="--x:66.8;--y:96.4">Counterparties</span></div>
+              <span class="hp-reg" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            </div>
+            <figcaption class="figure-cap hp-cap"><span class="fc-h">Schematic</span><span class="hp-key" aria-hidden="true"><span><i class="k-ring"></i>Proposal</span><span><i class="k-sq"></i>Settled</span><span><i class="k-rej"></i>Rejected</span></span></figcaption>
+            <span class="sr-only" id="stack-plate-desc">A rejected proposal stops at the Council, above the boundary; an approved one crosses it and settles with a counterparty.</span>
+          </figure>
         </div>
-        <a class="link-arrow ch-link" href="platform.html" data-reveal>The platform <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
       </div>
     </section>
 
@@ -260,10 +261,6 @@
           <div class="proof-copy">
             <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">How far above</span> <span class="ph">the floor,</span> <span class="ph">we do not publish.</span></h2>
             <p class="proof-hedge" data-reveal style="--d:120ms">Broker-confirmed, from a limited <span class="nowrap">proof-of-concept</span> period on live capital; <a class="nowrap" href="#disclosures">not a forecast</a>.</p>
-            <div class="stats" data-reveal style="--d:160ms">
-              <div><div class="v">3</div><div class="k">Beta customers</div></div>
-              <div><div class="v">5</div><div class="k">Runs<span class="ph-dot"> · </span><span class="nowrap">lifecycle executions</span></div></div>
-            </div>
           </div>
           <figure class="proof-fig">
             <!-- The one record of the ten sessions. assets/js/proof.js draws the chart from it and derives every session count on
@@ -424,6 +421,6 @@
     </div>
   </footer>
 
-  <script src="assets/js/home.js" defer data-after-paint="assets/js/loader.js assets/js/story.js assets/js/swarm.js assets/js/chain.js assets/js/arch.js assets/js/proof.js assets/js/site.js"></script>
+  <script src="assets/js/home.js" defer data-after-paint="assets/js/loader.js assets/js/story.js assets/js/swarm.js assets/js/chain.js assets/js/proof.js assets/js/site.js"></script>
 </body>
 </html>

@@ -22,8 +22,8 @@
   'use strict';
   const me = document.currentScript, root = document.documentElement;
   // an engine whose instrument the page does not draw is not fetched (a safety net: Home's list dropped ledger.js and
-  // lane.js on 1 Nov, when its lane and running log left the page)
-  const draws = { 'ledger.js': '[data-ledger]', 'lane.js': '[data-lane]' };
+  // lane.js on 1 Nov, when its lane and running log left the page; hc5: §02 draws Platform's plate, the explorer is Platform's)
+  const draws = { 'ledger.js': '[data-ledger]', 'lane.js': '[data-lane]', 'arch.js': '[data-arch]' };
   const list = ((me && me.getAttribute('data-after-paint')) || '').split(/\s+/).filter(src => {
     const k = src && draws[src.split('/').pop()];
     return !!src && (!k || !!document.querySelector(k));

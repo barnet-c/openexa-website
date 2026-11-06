@@ -19,8 +19,9 @@
 
 /* the hero (hc4, HC4 item 1): the headline and its evidence on one screen. The H1 across; under it the lede, its hedge
    and the way to the documents (4fr) beside Fig. 1.1, the ten sessions (8fr), which proof.js draws in the dark register
-   Home §04 uses (proofchart.css keys it on .is-dark). The lede stands level with the chart's top, the link on its caption
-   row. Phones and tablets: one column, the link after the chart. (a1-a4's ten-box strip and §01 went with it.) */
+   Home §04 uses (proofchart.css keys it on .is-dark). The lede stands level with the chart's top; its hedge and the link
+   follow it as one block (hc5, HC5 item 11: the link 1.5rem under the hedge, not on the chart's caption row 290 px
+   lower). Phones and tablets: one column, the link after the chart. (a1-a4's ten-box strip and §01 went with it.) */
 [data-page="proof"] .page-hero { --pf-gap: clamp(2rem, 6vw, 2.75rem); }
 [data-page="proof"] .page-hero h1 { max-width: none; }
 [data-page="proof"] .page-hero--plate { row-gap: 0; }
@@ -42,7 +43,7 @@
   [data-page="proof"] .hero-copy > h1 { grid-column: 1 / -1; grid-row: 1; }
   [data-page="proof"] .hero-copy > .lede { grid-column: 1; grid-row: 2; margin-top: var(--pf-gap); }
   [data-page="proof"] .hero-copy > .pf-lc-hedge { grid-column: 1; grid-row: 3; }
-  [data-page="proof"] .hero-copy > .pf-go { grid-column: 1; grid-row: 4; align-self: end; margin: 0; }
+  [data-page="proof"] .hero-copy > .pf-go { grid-column: 1; grid-row: 4; align-self: start; margin: 1.5rem 0 0; }
   [data-page="proof"] .pf-record { grid-column: 2; grid-row: 2 / span 3; }
 }
 @media (min-width: 601px) { [data-page="proof"] .page-hero .lede { max-width: 44ch; } }
@@ -91,7 +92,10 @@
 [data-page="proof"] .pf-trail .pf-doc:nth-child(1) { --t0: 10%; --t1: calc(-1 * var(--cg)); --tw: 300ms; --tt: 150ms; --tm: 80ms; }
 [data-page="proof"] .pf-trail .pf-doc:nth-child(2) { --t1: calc(-1 * var(--cg)); --tw: 350ms; --tt: 450ms; --tm: 480ms; }
 [data-page="proof"] .pf-trail .pf-doc:nth-child(3) { --t1: 93.75%; --tw: 50ms; --tt: 800ms; --tm: 820ms; }
-[data-page="proof"] .pf-trail-cap { margin-top: clamp(1.25rem, 2vw, 2rem); }
+/* the hedge (hc5, HC5 item 9): where the sheets stand in a row, the row has a foot rule and "Schematic" sits under its left
+   end, as under Trust §02's plates (SYSTEM.md: a plate's hedge under its lower-left corner); phones: under the list */
+[data-page="proof"] .pf-trail-cap { margin-top: 1rem; }
+@media (min-width: 601px) { [data-page="proof"] .pf-trail { padding-bottom: 1.75rem; border-bottom: var(--hair) solid var(--line); } }
 @media screen and (prefers-reduced-motion: no-preference) {
   [data-page="proof"] .pf-tr { transition: transform var(--tw) linear var(--tt); }
   [data-page="proof"] .pf-sheet .pf-mk { transition: opacity var(--dur-move) var(--ease-out) var(--tm); }
@@ -198,11 +202,8 @@
   [data-page="trust"] .page-hero--plate > .hero-plate--council { grid-column: 7 / -1; justify-self: stretch; max-width: none; margin-top: 0; align-self: center; }
 }
 
-/* §01 the ledger, first: the instrument closer to its heading */
-.tr-ledger .tr-lead { row-gap: 1.25rem; }
-/* the head: seven columns beside the paragraph (one line) */
-@media (min-width: 961px) { .tr-ledger .tr-lead > .col-6 { grid-column-end: span 7; } }
-.tr-lt { margin-top: clamp(2.25rem, 4vw, 3.75rem); }
+/* §01 the ledger, first. Its head is the chapter head (site.css .ch-head, hc5): the line under the heading, the
+   instrument one chapter gap under the line, as on every page */
 /* the head in every instrument's order (hc2): title and "Illustrative", the state, the actions, on one row; where the
    longest state ("Chain broken at #4f1b · every later link fails") and the widest actions (Restore) would not fit beside
    each other, the state takes the row under the title (in em: a larger default font takes it sooner) */
@@ -332,7 +333,7 @@
 .tr-cud .hp-lab--acc { color: var(--signal-ink); }
 .tr-cud .hp-lab--rej { color: var(--fg-2); }
 .tr-cud .hp-lab--r { max-width: calc(var(--x) * 1%); white-space: normal; text-wrap: balance; } /* a4: wraps, not off the plate */
-.tr-cu-plate .figure-cap { margin-top: .875rem; }
+.tr-cu-plate .figure-cap { --fc-ind: calc(100% * 57 / 600); margin-top: 0; } /* hc5 (HC5 item 9): the hedge under the drawing's first mark (the agent's ring, x 57 of 600), on the drawing's own margin; phones: the content edge, as every caption (site.css) */
 @media (max-width: 960px) { .tr-cu > * { grid-column: 1 / -1; } }
 /* phones: a third of the drawing; its two words stay */
 @media (max-width: 600px) { .tr-cud .tr-cu-xs { display: none; } }

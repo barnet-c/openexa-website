@@ -212,16 +212,16 @@ main > .section > .container > .mt-4:last-child { margin-top: clamp(1.75rem, 3vw
 
 /* section rows ("01 · Architecture · Eight layers") */
 .sec-head { position: absolute !important; width: var(--hair); height: var(--hair); margin: calc(-1 * var(--hair)); padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-/* the chapter head (hc2; home.css's and platform.css's twins): the heading, its one line 1.5rem under it. .ch-spread
-   hangs a key, a link or a lede of two lines or more (.ch-line--aside) in the third column on the heading's last
-   baseline from 1100 px; a one-line lede stays under its heading (no 800 px jump to an orphan) */
+/* the chapter head (hc2): the heading, its one line 1.5rem under it, in the heading's columns at every width (hc5: one
+   place for every lede, no aside variant). .ch-spread hangs only a key or a link in the third column on the heading's
+   last baseline from 1100 px */
 main > .section { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
 .ch-head { margin-bottom: var(--ch-gap); }
 .ch-line { margin-top: 1.5rem; max-width: 36ch; font-size: var(--fs-body); line-height: 1.5; color: var(--fg-2); text-wrap: pretty; }
 @media (min-width: 1100px) {
   .ch-spread { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: last baseline; }
   .ch-spread > :is(.ch-title, .ch-line) { grid-column: 1 / span 2; }
-  .ch-spread > :not(.ch-title, .ch-line), .ch-spread > .ch-line--aside { grid-column: 3; margin: 0; }
+  .ch-spread > :not(.ch-title, .ch-line) { grid-column: 3; margin: 0; }
 }
 
 /* ---------- dark scope ---------- */
@@ -1026,11 +1026,17 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-progress i { position: relative; flex: 1 1 0; min-width: 0; background: var(--nav-line); transition: background-color var(--dur-draw) var(--ease); }
 /* a fine tick where each chapter begins: the bar reads as a scale of the page */
 .nav-progress i + i::before { content: ""; position: absolute; left: calc(-2 * var(--hair)); bottom: 0; width: var(--hair); height: .3125rem; background: currentColor; opacity: .28; transition: opacity var(--dur-move) var(--ease), background-color var(--dur-move) var(--ease); }
-.nav-progress i.is-on::before { background: var(--accent); opacity: 1; }
+/* hc5: the chapter being read is drawn in the bar's own ink at 60% (two hairlines), not green: a green segment under a
+   nav label read as "you are here" on the wrong page. Green stays on the readout's number */
+.nav-progress i.is-on::before { opacity: .6; }
 .nav-progress i.is-edge { background: color-mix(in srgb, var(--nav-line) 70%, transparent); }
 .nav-progress b { position: absolute; left: 0; right: 0; bottom: 0; height: var(--hair); background: var(--nav-fill); transform: scaleX(0); transform-origin: left; }
-.nav-progress i.is-on b { height: calc(2 * var(--hair)); background: var(--accent); }
+.nav-progress i.is-on b { height: calc(2 * var(--hair)); background: color-mix(in srgb, currentColor 60%, transparent); }
 .nav:not(.nav--solid) .nav-progress i { background: rgba(245, 242, 236, .1); }
+/* hc5: over the pinned overture its own scene ruler counts: the page's scale waits as one faint hairline (one scale on the
+   phone's first screen) */
+html.story-ready:not(.no-webgl) .nav:not(.nav--solid) .nav-progress { gap: 0; }
+html.story-ready:not(.no-webgl) .nav:not(.nav--solid) .nav-progress i + i::before { opacity: 0; }
 
 /* ---------- the toggle: two hairlines that cross ---------- */
 .nav-toggle { display: none; position: relative; width: 2.75rem; height: 2.75rem; margin-right: -.6875rem; margin-left: auto; align-items: center; justify-content: center; flex: none; }
@@ -1698,6 +1704,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 
 /* ---------- Platform §04, Fig. 4.1: the deterministic half of the lane ---------- */
 .lc-pipe { margin: 0 0 2.5rem; }
+@media (min-width: 961px) { .lc-pipe > .figure-cap { margin-top: 0; } } /* hc5: the plate's foot, on the drawing's own margin under its labels */
 .pipe-svg { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); } /* px, not rem: the drawing scales with its viewBox (integrate a3) */
 .lcp .cp { fill: none; stroke: currentColor; stroke-width: var(--stroke); stroke-dasharray: calc(3 * var(--dash-u)) calc(3 * var(--dash-u)); opacity: .7; }
 .lcp .cpl { fill: none; stroke: currentColor; stroke-width: var(--stroke); stroke-dasharray: calc(1 * var(--dash-u)) calc(3 * var(--dash-u)); opacity: .55; }
@@ -1818,7 +1825,8 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .hp-lab--rej { color: var(--reject); }
 .hp-lab--khaki { color: var(--khaki-ink); } /* text: 5.21:1 on paper (--khaki-deep, 3.6:1, stays on strokes) */
 .is-dark .hp-lab--khaki, .is-dark .hp-k { color: var(--khaki); stroke: var(--khaki); }
-/* a1: the plate's hedge sits at the drawing's lower-left, no hairline row */
+/* a1: the plate's hedge sits at the drawing's lower-left, no hairline row. hc5, one place: under the plate's lower-left
+   corner (its crop mark or foot rule, else its first mark: --fc-ind where the drawing starts inside its box) */
 .hp-cap { margin-top: .5rem; padding-top: 0; border-top: 0; row-gap: calc(2 * var(--hair)); }
 .hp-cap .fc-h { color: var(--fg-3); }
 /* the staged reveal: the structure arrives with the figure, the accents */
@@ -1921,13 +1929,14 @@ svg.tg * { fill: none; stroke: currentColor; stroke-width: var(--stroke); vector
 .sp-read { fill: none; stroke: var(--khaki-deep); stroke-width: var(--stroke-2); }
 .modes-head { align-items: end; margin-bottom: clamp(2.25rem, 4.4vw, 4rem); }
 .modes-body { align-items: stretch; }
-/* the dial keeps to 300 px; its caption runs the column's width and shares Table 6.1's caption line */
+/* the dial keeps to 300 px; its caption is the plate's foot, on the drawing's own margin under "Emergency halt" (hc5:
+   it was pushed down to the table's last row, under nothing) */
 .sec-plate--dial { display: flex; flex-direction: column; }
-.sec-plate--dial > .hp-art { width: 100%; max-width: 18.75rem; margin-bottom: .875rem; }
-.sec-plate--dial > .hp-cap { margin-top: auto; }
+.sec-plate--dial > .hp-art { width: 100%; max-width: 18.75rem; }
+.sec-plate--dial > .hp-cap { margin-top: 0; }
 .sec-plate--market { margin: clamp(.5rem, 1.4vw, 1.25rem) 0 clamp(1.875rem, 3.6vw, 3.25rem); }
 .sp-panels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-@media (max-width: 960px) { .sec-plate--dial { margin-bottom: .5rem; } .sec-plate--dial > .hp-cap { margin-top: .875rem; } }
+@media (max-width: 960px) { .sec-plate--dial { margin-bottom: .5rem; } }
 @media (max-width: 600px) { .sp-panels { grid-template-columns: minmax(0, 1fr); row-gap: .875rem; } }
 
 /* ---------- Company hero on landscape phones (PG-R2-4) ---------- */
@@ -1938,7 +1947,6 @@ svg.tg * { fill: none; stroke: currentColor; stroke-width: var(--stroke); vector
     grid-template-columns: minmax(0, 1fr) var(--co-w); gap: 1.5rem; align-items: start;
   }
   .company-hero .display-1 { font-size: clamp(2.2rem, 10vh, 3rem); }
-  .company-hero .lede { margin-top: 1rem; font-size: 1rem; }
   .company-hero .hero-cta { margin-top: 1.25rem; }
   .company-sculpture { padding-top: var(--co-h); margin-top: 0; }
   .company-sculpture .figure-stage, .company-sculpture .frame { height: var(--co-h); aspect-ratio: auto; }

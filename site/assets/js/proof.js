@@ -228,9 +228,15 @@
   document.querySelectorAll('[data-proof-chart]').forEach((host, i) => buildChart(host, i + 1));
 })();
 
-/* The cost figure (home §05 Fig. 5.1 · Proof §03 Fig. 3.1) */
+/* The cost figure (home §05 · Proof §02). (hc5, HC5 item 6) One reveal of at most 600 ms, both rows at once: the solid
+   blocks first, in one sweep through both rows column by column (the Agentic row's survivors land with the Traditional
+   blocks above them), then the outlines (what is eliminated and what shrank away). Each block's delay is set here (0-160 ms
+   solid, 200-280 ms outlines) and proofchart.css gives it --dur-move (.32 s), so the last block is whole at ~600 ms after
+   site.js reveals the rows. Under reduced motion, in print and on a jump, proofchart.css / site.css drop the transition
+   (!important beats these inline delays): the final state at once. */
 (function () {
   'use strict';
+  const SOLID_MS = 160, OUTLINE_AT = 200, OUTLINE_MS = 80;
   const weight = el => parseFloat(el.style.getPropertyValue('--w'));
   const runsOf = bar => Array.from(bar.children).filter(e => e.tagName === 'I');
   document.querySelectorAll('[data-cost]').forEach(fig => {
@@ -276,6 +282,13 @@
           }
           grid.append(b);
         }
+      });
+      // the reveal's order: solid by column (the same block index is the same column in both rows), then the outlines
+      const all = Array.from(grid.children), outline = b => b.matches('.is-gone, .is-rest');
+      const last = Math.max(1, all.length - 1), lastOut = Math.max(1, all.filter(outline).length - 1);
+      let o = 0;
+      all.forEach((b, i) => {
+        b.style.transitionDelay = Math.round(outline(b) ? OUTLINE_AT + o++ * OUTLINE_MS / lastOut : i * SOLID_MS / last) + 'ms';
       });
       bar.append(grid);
       bar.classList.add('is-blocks');

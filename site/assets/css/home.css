@@ -104,8 +104,6 @@ body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3
   body[data-page="home"] #governance .chain-more::before { content: "+"; content: "+" / ""; font-size: .9rem; color: var(--accent); }
   body[data-page="home"] #governance .chain-more[aria-expanded="true"]::before { content: "\2212"; content: "\2212" / ""; }
   body[data-page="home"] #governance .chain-more:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
-  /* §02: the explorer's rows at a phone's pitch */
-  body[data-page="home"] #stack .arch-layer { min-height: 3.125rem; padding-block: .3125rem; }
   /* the chain: who and event, the detail under them */
   body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em auto minmax(0, 1fr) auto; grid-template-areas: "i who ev flag" "i what what what"; column-gap: .625rem; padding-bottom: 1.75rem; }
 }
@@ -159,13 +157,9 @@ body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(1.625re
 
 /* §01 the six classes: site.css's .lc-reg (hc2, one component for Home and Company) */
 
-/* §04: the head, its hedge and two figures beside the chart */
+/* §04: the head and its hedge beside the chart (hc5: the open pair, 3 and 5, cut: one hard fact on the screen) */
 body[data-page="home"] #proof .proof-copy .ch-title { max-width: 11ch; }
 body[data-page="home"] #proof .proof-hedge { margin-top: 1.375rem; max-width: 34ch; font-size: .875rem; line-height: 1.5; color: rgba(245, 242, 236, .66); }
-body[data-page="home"] #proof .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 clamp(1.5rem, 3vw, 3rem); margin-top: clamp(2.25rem, 4.4vw, 4rem); background: none; border: 0; }
-body[data-page="home"] #proof .stats > div { padding: 1.125rem 0 0; background: none; border-top: var(--hair) solid var(--line-strong); }
-body[data-page="home"] #proof .stats .v { font-variant-numeric: lining-nums tabular-nums; } /* hc1: size from site.css's .stats, as §05's rows */
-body[data-page="home"] #proof .stats .k { margin-top: .625rem; font: 400 .875rem/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .66); }
 body[data-page="home"] #proof .proof-fig .figure-cap { padding-left: 0; }
 body[data-page="home"] #proof .figure-cap .fc-key { font-size: .875rem; color: rgba(245, 242, 236, .6); }
 @media (min-width: 961px) { body[data-page="home"] #proof .proof-layout { align-items: end; } }
@@ -242,41 +236,41 @@ body[data-page="home"] #economics .cost-row:first-child { padding-top: 1.5rem; }
 /* the chapters after the overture are laid out near the viewport only; each stand-in is its measured content height for the
    width band (padding and the hairline border on top: hc1 measures without the border), so the page is as long at load as drawn. The footer is always drawn (#disclosures lands) */
 body[data-page="home"] main > .story ~ section { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
-body[data-page="home"] #lifecycles { --cis: 39.171875rem; } body[data-page="home"] #stack { --cis: 73.0625rem; } body[data-page="home"] #lc01 { --cis: 68.203125rem; }
-body[data-page="home"] #proof { --cis: 48.234375rem; } body[data-page="home"] #economics { --cis: 42.140625rem; } body[data-page="home"] #governance { --cis: 49.453125rem; }
+body[data-page="home"] #lifecycles { --cis: 39.171875rem; } body[data-page="home"] #stack { --cis: 28.828125rem; } body[data-page="home"] #lc01 { --cis: 68.203125rem; }
+body[data-page="home"] #proof { --cis: 40.375rem; } body[data-page="home"] #economics { --cis: 42.140625rem; } body[data-page="home"] #governance { --cis: 49.453125rem; }
 body[data-page="home"] #research { --cis: 35.53125rem; } body[data-page="home"] .cta-band { --cis: 6.453125rem; }
 @media (min-width: 600px) {
-  body[data-page="home"] #lifecycles { --cis: 39.3125rem; } body[data-page="home"] #stack { --cis: 86.953125rem; } body[data-page="home"] #lc01 { --cis: 56.546875rem; }
-  body[data-page="home"] #proof { --cis: 51.453125rem; } body[data-page="home"] #economics { --cis: 31.1875rem; } body[data-page="home"] #governance { --cis: 78.21875rem; }
+  body[data-page="home"] #lifecycles { --cis: 39.3125rem; } body[data-page="home"] #stack { --cis: 36.59375rem; } body[data-page="home"] #lc01 { --cis: 56.546875rem; }
+  body[data-page="home"] #proof { --cis: 44.8125rem; } body[data-page="home"] #economics { --cis: 31.1875rem; } body[data-page="home"] #governance { --cis: 78.21875rem; }
   body[data-page="home"] #research { --cis: 35.671875rem; } body[data-page="home"] .cta-band { --cis: 6.5625rem; }
 }
 /* 761-960: the 820 heights (768-834 within 1rem; hc2) */
 @media (min-width: 761px) and (max-width: 960px) {
-  body[data-page="home"] #lifecycles { --cis: 32.65234375rem; } body[data-page="home"] #stack { --cis: 91.640625rem; } body[data-page="home"] #lc01 { --cis: 54.25rem; }
-  body[data-page="home"] #proof { --cis: 53.515625rem; } body[data-page="home"] #economics { --cis: 32.921875rem; } body[data-page="home"] #governance { --cis: 57.046875rem; }
+  body[data-page="home"] #lifecycles { --cis: 32.65234375rem; } body[data-page="home"] #stack { --cis: 24.59375rem; } body[data-page="home"] #lc01 { --cis: 54.25rem; }
+  body[data-page="home"] #proof { --cis: 46.875rem; } body[data-page="home"] #economics { --cis: 32.921875rem; } body[data-page="home"] #governance { --cis: 57.046875rem; }
   body[data-page="home"] #research { --cis: 30.296875rem; } body[data-page="home"] .cta-band { --cis: 7.03125rem; }
 }
 @media (min-width: 961px) {
-  body[data-page="home"] #lifecycles { --cis: 42.2109375rem; } body[data-page="home"] #stack { --cis: 63rem; } body[data-page="home"] #lc01 { --cis: 66.375rem; }
-  body[data-page="home"] #proof { --cis: 33.3125rem; } body[data-page="home"] #economics { --cis: 25.875rem; } body[data-page="home"] #governance { --cis: 42.859375rem; }
+  body[data-page="home"] #lifecycles { --cis: 42.2109375rem; } body[data-page="home"] #stack { --cis: 30.625rem; } body[data-page="home"] #lc01 { --cis: 66.375rem; }
+  body[data-page="home"] #proof { --cis: 31.484375rem; } body[data-page="home"] #economics { --cis: 25.875rem; } body[data-page="home"] #governance { --cis: 42.859375rem; }
   body[data-page="home"] #research { --cis: 36.890625rem; } body[data-page="home"] .cta-band { --cis: 10.0625rem; }
 }
 /* small desktops: 961-1099 the 1024 heights, 1100-1359 the 1280 heights (the spreads start at 1100; re-measured hc2;
-   #lifecycles from 761 px re-measured hc4, after its titles took the --fs-heading step) */
+   #lifecycles from 761 px re-measured hc4, after its titles took the --fs-heading step; #stack and #proof at every band hc5) */
 @media (min-width: 961px) and (max-width: 1099.98px) {
-  body[data-page="home"] #lifecycles { --cis: 35.05859375rem; } body[data-page="home"] #stack { --cis: 59.5rem; } body[data-page="home"] #lc01 { --cis: 59.140625rem; }
+  body[data-page="home"] #lifecycles { --cis: 35.05859375rem; } body[data-page="home"] #stack { --cis: 28.21875rem; } body[data-page="home"] #lc01 { --cis: 59.140625rem; }
   body[data-page="home"] #proof { --cis: 29.03125rem; } body[data-page="home"] #economics { --cis: 33.015625rem; } body[data-page="home"] #governance { --cis: 41.953125rem; }
   body[data-page="home"] #research { --cis: 33.765625rem; } body[data-page="home"] .cta-band { --cis: 7.984375rem; }
 }
 @media (min-width: 1100px) and (max-width: 1359.98px) {
-  body[data-page="home"] #lifecycles { --cis: 39.26171875rem; } body[data-page="home"] #stack { --cis: 61.703125rem; } body[data-page="home"] #lc01 { --cis: 61.125rem; }
+  body[data-page="home"] #lifecycles { --cis: 39.26171875rem; } body[data-page="home"] #stack { --cis: 34.96875rem; } body[data-page="home"] #lc01 { --cis: 61.125rem; }
   body[data-page="home"] #proof { --cis: 31.046875rem; } body[data-page="home"] #economics { --cis: 25.171875rem; } body[data-page="home"] #governance { --cis: 42.515625rem; }
   body[data-page="home"] #research { --cis: 34.59375rem; } body[data-page="home"] .cta-band { --cis: 9.4375rem; }
 }
 /* from 1680 (rem above 1920, so 3840 is 1920 doubled): the 1920 heights (re-measured hc2) */
 @media (min-width: 1680px) {
-  body[data-page="home"] #lifecycles { --cis: 40.03515625rem; } body[data-page="home"] #stack { --cis: 63.484375rem; } body[data-page="home"] #lc01 { --cis: 68.859375rem; }
-  body[data-page="home"] #proof { --cis: 33.53125rem; } body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 43.046875rem; }
+  body[data-page="home"] #lifecycles { --cis: 40.03515625rem; } body[data-page="home"] #stack { --cis: 37.609375rem; } body[data-page="home"] #lc01 { --cis: 68.859375rem; }
+  body[data-page="home"] #proof { --cis: 32.21875rem; } body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 43.046875rem; }
   body[data-page="home"] #research { --cis: 39.609375rem; }
 }
 @media print { body[data-page="home"] main > .story ~ section { content-visibility: visible; } }
@@ -358,18 +352,53 @@ body[data-page="home"] .story-lab.floor .u { color: rgba(245, 242, 236, .9); }
 @media (max-width: 600px) {
   body[data-page="home"] .ph-dot { display: block; height: 0; overflow: hidden; }
 }
-@media (min-width: 961px) and (max-width: 1064px) { body[data-page="home"] #proof .stats .ph-dot { display: block; height: 0; overflow: hidden; } } /* the stat's column is 160-175 px: "Runs" over "lifecycle executions" */
 /* the hedge above the floor ("exact value / not published"): proofchart.css (integrate a3, for Home §04 and Proof) */
 
 /* ========== award a4 ========== */
 /* tablets keep v2's four figures under the buttons (owner, 2 Nov), or the phone's 01 line where they would squeeze the
    globe (story.js .story-figs-01): overture.css (integrate a4) */
-/* §02 at 1000-1099 px (the list under 340 px): the boundary's two side lines each wrap in two; tighter leading keeps all
-   four inside the 4.5rem row (they ran 6-7 px over both hairlines), the plane's line between them (a4 p2) */
-@container (max-width: 340px) { body[data-page="home"] #stack .arch.is-wide .arch-bound .sides { gap: .375rem; } body[data-page="home"] #stack .arch.is-wide .arch-bound .sides > span { line-height: 1.2; } }
 
 /* ========== hill climb hc3 ========== */
 /* the coda's one hedge is the rail's caption (story.js clones the paper's into the callout layer): in the dark under the ten
    tags, at the paper's place and step, so the rising paper turns it to ink. The tokens are the dark stage's */
 body[data-page="home"] .story-cap { position: absolute; left: 0; right: 0; top: 0; opacity: 0; pointer-events: none; will-change: opacity, transform; }
 body[data-page="home"] .story-cap .story-paper-cap { color: var(--fg-2); border-bottom-color: var(--line-strong); }
+
+/* ========== hill climb hc5 ========== */
+/* §02: Platform's hero plate, still, beside its head (the explorer runs on Platform §01). The drawing's rules are
+   platform.css's for .hero-plate--stack, static part only (Home does not load platform.css; animation, Replay: Platform's) */
+body[data-page="home"] #stack .st-row { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: var(--ch-gap); }
+body[data-page="home"] #stack .st-head .ch-link { margin-top: 1.5rem; }
+@media (min-width: 761px) { /* tablets too: the head beside the drawing */
+  body[data-page="home"] #stack .st-row { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2.2vw, 2rem); align-items: center; }
+  body[data-page="home"] #stack .st-head { grid-column: 1 / span 5; }
+  body[data-page="home"] #stack .hero-plate { grid-column: 6 / -1; max-width: none; }
+}
+@media (min-width: 1360px) { body[data-page="home"] #stack .st-head { grid-column: 1 / span 6; } body[data-page="home"] #stack .hero-plate { grid-column: 7 / -1; } }
+#stack .hero-plate--stack { --hp-ar: 1.25; container-type: inline-size; }
+#stack .hero-plate--stack :is(.hp-lab--n, .hp-lab--fl) { color: var(--fg-3); }
+#stack .hero-plate--stack .hp-lab--side { color: var(--fg-2); }
+#stack .hero-plate--stack .hp-g2 { fill: none; stroke: var(--accent); stroke-opacity: .3; stroke-width: var(--stroke); }
+#stack .hero-plate--stack .pm-up { fill: none; stroke: currentColor; stroke-opacity: .72; stroke-width: var(--stroke); stroke-dasharray: calc(2 * var(--dash-u)) calc(3 * var(--dash-u)); }
+#stack .hero-plate--stack .pm-down { fill: none; stroke: currentColor; stroke-opacity: .8; stroke-width: var(--stroke); }
+#stack .hero-plate--stack .pm-step { fill: currentColor; fill-opacity: .85; }
+#stack .hero-plate--stack :is(.pm-agent, .pm-cross, .pm-settle) { fill: var(--accent); }
+#stack .hero-plate--stack :is(.pm-ring, .pm-rring) { fill: var(--bg); stroke: var(--accent); stroke-width: var(--stroke-2); }
+#stack .hero-plate--stack .pm-rring { stroke: var(--reject); }
+#stack .hero-plate--stack .is-rej .pm-ring { opacity: 0; }
+#stack .hero-plate--stack :is(.pm-spur, .pm-x) { fill: none; stroke: var(--reject); stroke-width: var(--stroke-2); stroke-linecap: round; }
+#stack .hero-plate--stack > .hp-cap { flex-direction: row; flex-wrap: wrap; align-items: center; gap: .5rem 1.5rem; margin-top: 1.5rem; }
+#stack .hero-plate--stack .hp-key { margin-left: auto; display: flex; flex-wrap: wrap; gap: .25rem 1.125rem; }
+#stack .hero-plate--stack .hp-key > span { display: inline-flex; align-items: center; gap: .4375rem; }
+#stack .hero-plate--stack .hp-key i { width: .5625rem; height: .5625rem; flex: none; border: calc(1px * var(--stroke-2)) solid var(--accent); border-radius: 50%; }
+#stack .hero-plate--stack .hp-key i.k-rej { border-color: var(--reject); }
+#stack .hero-plate--stack .hp-key i.k-sq { width: .5rem; height: .5rem; border: 0; border-radius: .0625rem; background: var(--accent); }
+@media (max-width: 960px) { #stack .hero-plate--stack .hp-key { flex-basis: 100%; margin-left: 0; } #stack .hero-plate--stack .hp-cap > .fc-h { order: 2; } }
+#stack .hero-plate--stack .hp-art { --hp-k: 7.5rem; --hp-p: 1rem; margin-left: 1rem; }
+@media (max-width: 600px) { #stack .hero-plate--stack .hp-art { --hp-p: .5rem; margin-left: .5rem; } }
+@container (max-width: 23.75rem) { #stack .hero-plate--stack .hp-art { --hp-k: 6.64rem; } }
+@container (max-width: 15rem) { #stack .hero-plate--stack .hp-lab { font-size: calc(.8 * var(--mono-xs)); } #stack .hero-plate--stack .hp-art { --hp-k: 5.35rem; } }
+#stack .hero-plate--stack .hp-art > svg { width: min(calc(var(--hp-s, 1) * 100%), calc((100% - var(--hp-k)) / .668)); }
+#stack .hero-plate--stack .hp-labs { right: auto; width: min(calc(var(--hp-s, 1) * 100%), calc((100% - var(--hp-p) - var(--hp-k)) / .668 + var(--hp-p))); }
+@media (max-width: 380px) { #stack .hero-plate--stack { --hp-s: .97; } }
+@media (max-width: 350px) { #stack .hero-plate--stack { --hp-s: .89; } }

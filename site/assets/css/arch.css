@@ -252,7 +252,7 @@
 .dpl-col h3 { margin: 1.375rem 0 .75rem; font-weight: 400; }
 .dpl-col p { max-width: 46ch; font-size: var(--fs-small); color: var(--fg-2); }
 #mcp { padding-bottom: clamp(4rem, 7vw, 7rem); } /* the row ends the section: no tall empty band under it */
-@media (min-width: 601px) and (max-width: 1099px) {
+@media (min-width: 601px) and (max-width: 960px) { /* hc5: to 960 px; from 961 px Platform's §04 is the ruled row of three (platform.css) */
   .dpl { grid-template-columns: minmax(0, 1fr); }
   .dpl-col { display: grid; grid-template-columns: minmax(0, 21.25rem) minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: clamp(1.5rem, 4vw, 3rem); }
   .dpl-plate { grid-column: 1; grid-row: 1 / -1; align-self: start; margin: 0; } /* its box is the drawing's: the labels are placed in it */

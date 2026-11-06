@@ -274,7 +274,7 @@
     const y = lastY = window.scrollY;
     // the bar's surface: the ground of the section that meets its lower edge
     let dark = false, band = null;
-    const edge = y + navH + 1;
+    const edge = y + navH * 1.1; // (hc5) a tenth of the bar below it: a sliver hidden by the ruler no longer keeps an ink bar over paper
     for (const b of bands) if (edge >= b.top && edge < b.bottom) { dark = b.dark; band = b; break; }
     // the overture's exit: its rising paper
     let overPaper = false;

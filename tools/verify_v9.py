@@ -403,8 +403,9 @@ async def pages(b):
 
 @check
 async def home(b):
-    """the homepage systems as one page at 1440: beats, record-driven overture, nav, explorer, swarm, chain, proof (the
-    running ledger left Home on 1 Nov)"""
+    """the homepage systems as one page at 1440: beats, record-driven overture, nav, §02's still stack plate, swarm, chain,
+    proof (the running ledger left Home on 1 Nov; hc5: §02 draws Platform's plate, still, and the explorer's keys, boundary
+    and readout are checked on Platform §01, its one page now: platform_spec)"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     await ctx.add_init_script(EVENTS)
     pg = await ctx.new_page()
@@ -458,28 +459,18 @@ async def home(b):
     await pg.evaluate("document.querySelector('#proof').scrollIntoView({behavior: 'instant'})")
     lab = await until(pg, "(() => { const l = document.querySelector('.nav-ch-btn').getAttribute('aria-label') || ''; return l.includes('Proof') && document.querySelector('.nav').classList.contains('nav--dark') ? l : ''; })()", 4000)
     assert lab, ("chapter readout / dark bar over #proof", await pg.locator(".nav-ch-btn").get_attribute("aria-label"))
-    # architecture explorer (home 02): eight layer buttons, the boundary after 04; arrows, Enter, Escape, Home/End, hover readout
-    await pg.evaluate("document.querySelector('#stack .arch').scrollIntoView({block: 'center', behavior: 'instant'})")
-    assert await until(pg, "!!document.querySelector('#stack .arch.is-wide.is-ready')", 10000), "architecture explorer not ready at 1440"
-    assert await pg.locator("#stack .arch-layer").count() == 8
-    assert await pg.evaluate("[...document.querySelector('#stack .arch-list').children].filter(e => !e.classList.contains('arch-panel')).findIndex(e => e.classList.contains('arch-bound'))") == 4
-    await pg.locator("#arch0-b1").focus()
-    for _ in range(3): await pg.keyboard.press("ArrowDown")
-    assert await pg.evaluate("document.activeElement.id") == "arch0-b4"
-    await expect(pg.locator("#arch0-b4")).to_have_class(re.compile(r"\bis-hot\b"))
-    await pg.keyboard.press("Enter")
-    await expect(pg.locator("#arch0-b4")).to_have_attribute("aria-expanded", "true")
-    await expect(pg.locator(".arch-card #arch0-p4")).to_be_visible()
-    await pg.keyboard.press("Escape")
-    await expect(pg.locator("#arch0-b4")).to_have_attribute("aria-expanded", "false")
-    assert await pg.evaluate("document.activeElement.id") == "arch0-b4"
-    await pg.keyboard.press("End"); assert await pg.evaluate("document.activeElement.id") == "arch0-b8"
-    await pg.keyboard.press("Home"); assert await pg.evaluate("document.activeElement.id") == "arch0-b1"
-    await pg.locator("#arch0-b5").hover()
-    await expect(pg.locator("#stack .arch")).to_have_class(re.compile(r"\bhas-hot\b"))
-    await expect(pg.locator("#stack .arch-card .sum-nm")).to_have_text(re.compile(r"^Routing layer$", re.I))  # sentence case since v2x (VOICE 5.9)
-    assert await until(pg, "getComputedStyle(document.querySelector('#stack .arch-card')).opacity === '1'", 3000), "readout card not shown on hover"
-    await pg.mouse.move(5, 450)
+    # hc5 (home, HC5 item 1): Home §02 draws Platform's engraved stack plate, still: the drawing (its dots from
+    # stack-dots.svg), the eight layer numerals and four side labels, the link to the explorer on Platform §01; no explorer
+    # on Home and its engine (arch.js) is not fetched (the explorer's keys and readout: platform_spec; arch.css stays linked
+    # for now: check_static INSTRUMENT_PAGES says why)
+    await pg.evaluate("document.querySelector('#stack').scrollIntoView({block: 'center', behavior: 'instant'})")
+    await expect(pg.locator("#stack .hero-plate--stack svg")).to_be_visible()
+    dots = await until(pg, "performance.getEntriesByType('resource').some(e => /\\/stack-dots\\.svg(\\?|$)/.test(e.name) && e.responseStatus === 200)", 5000)
+    plate = await pg.evaluate("""(() => { const a = document.querySelector('#stack a.ch-link');
+        return { labs: document.querySelectorAll('#stack .hero-plate--stack .hp-lab').length, href: a ? a.getAttribute('href') : null,
+          arch: document.querySelectorAll('[data-arch], .arch').length,
+          fetched: performance.getEntriesByType('resource').map(e => e.name).filter(n => /\\/arch\\.js(\\?|$)/.test(n)) }; })()""")
+    assert dots and plate["labs"] == 12 and plate["href"] == "platform.html#architecture" and plate["arch"] == 0 and not plate["fetched"], ("home §02: the still plate (dots loaded, 12 labels), its link to the explorer, no explorer on Home, arch.js not fetched", dots, plate)
     # swarm lab: runs, announces settlements (at most 4 a second, in the agreed shape), follows by keyboard, halts and drains
     await pg.locator("[data-swarm-live]").scroll_into_view_if_needed()
     n0 = await pg.evaluate("window.__oxaEv.settled.length")
@@ -543,7 +534,7 @@ async def home(b):
     await expect(pg.locator('#proof [role=option][aria-selected="true"]')).to_have_count(0)
     assert not errs, errs
     print(f"home: 5 beats navigable, stats clear of the globe, motion pause, overture reads the record ({rc['total']} columns, {rc['premium']} premium), last beat clear of the bar, "
-          f"7 chapters in the nav list (no rail), explorer keys/hover, swarm {len(ev)} events in view (gaps >= {min(gaps):.0f} ms), follow by keyboard, halt drains, "
+          f"7 chapters in the nav list (no rail), §02's still plate (arch.js not fetched), swarm {len(ev)} events in view (gaps >= {min(gaps):.0f} ms), follow by keyboard, halt drains, "
           f"chain breaks (typed and one-tap) + restores, proof listbox")
     await ctx.close()
 
@@ -1479,19 +1470,16 @@ async def overture_net(b):
 
 @check
 async def phone(b):
-    """phone: the explorer is an accordion, a chapter lands under the 64 px bar, the menu sheet is a popover over an inert page"""
+    """phone: the explorer is an accordion (hc5: on Platform §01, its one page; Home §02 draws Platform's plate, still,
+    inside the 390 px page), a chapter lands under the 64 px bar, the menu sheet is a popover over an inert page"""
     # v2x r3: open_page, not 'loader detached': since home r3 the instruments are added as the curtain lifts, so at CI
     # speed arch.js had not built `#stack .arch` yet when the loader left (TypeError on null); open_page waits until
     # every script home.js lists has run
     errs = []
     ctx, pg = await open_page(b, "index.html", 390, 844, errs=errs)
     await pg.locator(".loader").wait_for(state="detached", timeout=15000)
-    assert await until(pg, "!!document.querySelector('#stack .arch')", 10000), "390: the explorer (#stack .arch) was not built"
-    await pg.evaluate("document.querySelector('#stack .arch').scrollIntoView({block: 'center', behavior: 'instant'})")
-    assert await until(pg, "!!document.querySelector('#stack .arch.is-narrow')", 10000), "explorer not narrow at 390"
-    await pg.locator("#arch0-b4").click()
-    await expect(pg.locator("#arch0-p4")).to_be_visible()
-    assert await pg.evaluate("document.querySelector('#arch0-p4').previousElementSibling === document.querySelectorAll('#stack h3.arch-h')[3]")
+    await pg.evaluate("document.querySelector('#stack').scrollIntoView({block: 'center', behavior: 'instant'})")
+    await expect(pg.locator("#stack .hero-plate--stack svg")).to_be_visible()  # hc5: Home §02's still plate
     assert await pg.evaluate("document.documentElement.scrollWidth") == 390
     await pg.locator(".nav-toggle").click()  # v2x cut (1 Nov): on phones the toggle opens the sheet; its first items are the chapters
     # a4 (system): the sheet names this page's chapters ("On this page", the list labelled by it) and numbers them, so
@@ -1522,9 +1510,20 @@ async def phone(b):
     foot = await pg.evaluate(FOOT_HIT)
     short = [x for x in foot if x["span"] < 32]
     assert foot and not short, ("390: footer links that answer over less than 32 px (text, box height, span)", short, len(foot))
+    await ctx.close()
+    # hc5 (integrate): the explorer's accordion at 390, on Platform §01 (it ran on Home §02 until HC5 item 1): layer 04's
+    # panel opens inline, right after its heading, and nothing overflows the phone
+    ctx, pg = await open_page(b, "platform.html", 390, 844, errs=errs)
+    assert await until(pg, "!!document.querySelector('#architecture .arch')", 10000), "390: Platform's explorer (#architecture .arch) was not built"
+    await pg.evaluate("document.querySelector('#architecture .arch').scrollIntoView({block: 'center', behavior: 'instant'})")
+    assert await until(pg, "!!document.querySelector('#architecture .arch.is-narrow')", 10000), "Platform's explorer not narrow at 390"
+    await pg.locator("#arch0-b4").click()
+    await expect(pg.locator("#arch0-p4")).to_be_visible()
+    assert await pg.evaluate("document.querySelector('#arch0-p4').previousElementSibling === document.querySelectorAll('#architecture h3.arch-h')[3]")
+    assert await pg.evaluate("document.documentElement.scrollWidth") == 390
     assert not errs, errs
     await ctx.close()
-    print(f"phone: explorer accordion opens inline, the sheet's chapters headed \"On this page\" and numbered ({', '.join(sheet['nums'])}), chapter 04 lands under the bar, menu sheet opens (page inert) and Escape closes it, also from a link inside it ({inside!r}: focus back on the toggle); "
+    print(f"phone: Home §02's plate drawn inside 390, Platform's explorer accordion opens inline, the sheet's chapters headed \"On this page\" and numbered ({', '.join(sheet['nums'])}), chapter 04 lands under the bar, menu sheet opens (page inert) and Escape closes it, also from a link inside it ({inside!r}: focus back on the toggle); "
           f"{len(foot)} footer links answer over >= 32 px (least {min(x['span'] for x in foot)})")
 
 
@@ -1540,21 +1539,23 @@ FOOT_HIT = r"""(async () => { const out = [];
 
 @check
 async def reduced_motion(b):
-    """reduced motion: the explorer is open and still; Home's swarm lab is a still study with no motion control (until
+    """reduced motion: the explorer is open and still (hc5: on Platform §01, its one page); Home's swarm lab is a still study with no motion control (until
     the 1 Nov cut: Home's ledger stream started paused; the stream left the site); Trust verifies at once"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
     pg = await ctx.new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.goto(f"{BASE}/index.html", wait_until="load")
     await pg.locator(".loader").wait_for(state="detached", timeout=15000)
-    await pg.evaluate("document.querySelector('#stack .arch').scrollIntoView({block: 'center', behavior: 'instant'})")
-    assert await until(pg, "!!document.querySelector('#stack .arch.is-ready')", 1500), "explorer not open at once under reduced motion"
-    await expect(pg.locator("#stack .arch-motion")).to_be_hidden()
     # v2x cut (1 Nov): Home's running instrument is the swarm lab (the agent log left the page); under reduced motion it is
     # drawn as a still study and offers no Pause motion
     await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
     await expect(pg.locator("[data-swarm-live] [data-sw-state]")).to_have_text("Static study")
     await expect(pg.locator("[data-swarm-live] [data-sw-motion]")).to_be_hidden()
+    # hc5 (integrate): the explorer runs on Platform §01 only (Home §02 draws its plate, still): open at once, no Pause
+    await pg.goto(f"{BASE}/platform.html", wait_until="load")
+    await pg.evaluate("document.querySelector('#architecture .arch').scrollIntoView({block: 'center', behavior: 'instant'})")
+    assert await until(pg, "!!document.querySelector('#architecture .arch.is-ready')", 1500), "Platform's explorer not open at once under reduced motion"
+    await expect(pg.locator("#architecture .arch-motion")).to_be_hidden()
     await pg.goto(f"{BASE}/trust.html", wait_until="load")
     await pg.locator("[data-lt-verify]").click()
     await expect(pg.locator("[data-ledger=replay] [data-lt-state]")).to_contain_text("Verified here · 8 of 8 links hold", timeout=1500)
@@ -1724,19 +1725,19 @@ async def no_js(b):
         assert sw <= 391, (name, sw)
     await pg.goto(f"{BASE}/index.html", wait_until="load")
     await pg.screenshot(path=str(OUT / "index-nojs-390.png"), full_page=False)
-    nj = await pg.evaluate("""(() => { const q = s => document.querySelectorAll(s).length, kids = [...document.querySelectorAll('#stack .layers > *')];
-      const bi = kids.findIndex(e => e.classList.contains('layer-boundary'));
+    nj = await pg.evaluate("""(() => { const q = s => document.querySelectorAll(s).length, sv = document.querySelector('#stack .hero-plate--stack svg');
       return { loader: getComputedStyle(document.querySelector('.loader')).display, proof: q('.proof-list li'), stream: q('[data-ledger-stream] .lt-rec'),
         chain: q('.chain-list li'), gates: q('[data-sw-gates] li'), bar: getComputedStyle(document.querySelector('.swarm-bar')).display,
-        layers: q('#stack .layers .layer'), before: bi < 0 ? -1 : kids.slice(0, bi).filter(e => e.classList.contains('layer')).length,
-        io: [...document.querySelectorAll('#stack .layers .layer')].every(l => { const h = l.querySelector('h3');
-          return !!h && h.textContent.trim().length > 0 && !h.querySelector('small') && h.getClientRects().length > 0; }) }; })()""")
+        plate: !!sv && sv.getClientRects().length > 0 && sv.getBoundingClientRect().width > 0,
+        labs: [...document.querySelectorAll('#stack .hero-plate--stack .hp-lab')].filter(l => l.getClientRects().length > 0).length }; })()""")
     # v2x cut (1 Nov): each layer of the stack shows its name (the In / Out pairs left the page; the job line is the
     # explorer's, with JavaScript); integrate hc1 (4 Nov): the name alone, no verb column (HC1 item 2: the name says it, as
     # on Platform), so a stray <small> verb fails; the session list is the <noscript> record now, drawn as scripts are off.
-    # Owner's-eye fix (1 Nov): Home's agent log left the page (stream 0; it started from four records); the chain stays
+    # Owner's-eye fix (1 Nov): Home's agent log left the page (stream 0; it started from four records); the chain stays.
+    # hc5 (integrate): Home §02 draws Platform's plate as static markup (drawn, its 12 labels shown); the eight layers with
+    # the boundary after 04, each name readable, are checked on Platform §01 below (the list is the explorer's, Platform's)
     assert nj["loader"] == "none" and nj["proof"] == 10 and nj["stream"] == 0 and nj["chain"] == 8 and nj["gates"] == 6 and nj["bar"] == "none", nj
-    assert nj["layers"] == 8 and nj["before"] == 4 and nj["io"], nj
+    assert nj["plate"] and nj["labs"] == 12, nj
     await pg.locator(".nav-toggle").click()
     assert await pg.evaluate("document.querySelector('#site-menu').matches(':popover-open')"), "menu sheet does not open without JavaScript"
     await pg.goto(f"{BASE}/evidence.html", wait_until="load")
@@ -1744,7 +1745,11 @@ async def no_js(b):
     await pg.goto(f"{BASE}/trust.html", wait_until="load")
     assert await pg.locator(".lt-rec").count() == 9
     await pg.goto(f"{BASE}/platform.html", wait_until="load")
-    assert await pg.locator("#architecture .layers .layer").count() == 8
+    pl = await pg.evaluate("""(() => { const kids = [...document.querySelectorAll('#architecture .layers > *')], bi = kids.findIndex(e => e.classList.contains('layer-boundary'));
+      return { layers: document.querySelectorAll('#architecture .layers .layer').length, before: bi < 0 ? -1 : kids.slice(0, bi).filter(e => e.classList.contains('layer')).length,
+        io: [...document.querySelectorAll('#architecture .layers .layer')].every(l => { const h = l.querySelector('h3');
+          return !!h && h.textContent.trim().length > 0 && !h.querySelector('small') && h.getClientRects().length > 0; }) }; })()""")
+    assert pl["layers"] == 8 and pl["before"] == 4 and pl["io"], ("platform.html@390 without JavaScript: the eight layers, the boundary after 04, each name shown", pl)
     # v2x r1 (qa-hostile S3): no dead controls without JavaScript: on Lifecycles the desk and its caption are not drawn
     # and its no-JS note is, at 390 here and at 768 below
     DESK_NOJS = "(() => { const d = s => { const e = document.querySelector(s); return e ? getComputedStyle(e).display : null; }; return { desk: d('.desk'), cap: d('.desk-cap'), note: d('.desk-nojs') }; })()"
@@ -1777,7 +1782,7 @@ async def no_js(b):
         if nojs[name] < 0.9 * withjs: low.append(f"{name}.html@390: {nojs[name]} visible links in main without JavaScript, {withjs} with it")
     await ctx.close()
     assert not low and posts == 10, f"no_js: {low}; research.html shows {posts} visible 'li.post a' without JavaScript (10 expected)"
-    print(f"fallbacks: readable without JS on every page (sessions list, chain records, Trust's ledger excerpt, six gates, eight layers with the boundary after 04, menu sheet as a popover, no loader, the desk's note instead of a dead desk at 390 and 768); "
+    print(f"fallbacks: readable without JS on every page (sessions list, chain records, Trust's ledger excerpt, six gates, Home's still stack plate, Platform's eight layers with the boundary after 04, menu sheet as a popover, no loader, the desk's note instead of a dead desk at 390 and 768); "
           f"links kept without JS on {len(LINK_PAGES)} pages, research.html lists its {posts} notes")
 
 
@@ -1809,7 +1814,9 @@ COUNT_ROWS = [  # page, viewport, the row's value cells, the record-derived cell
     # v2x cut (1 Nov): every stats row the site still has. Home's row lost ">10 bps" and "10/10" (the chart and the heading
     # say them; check_static compares those with #oxa-sessions) and keeps the CEO's 3 and 5; Proof's hero row and
     # Platform's swarm row left the pages. The principle is unchanged: no figure ever shows a value it does not end on.
-    ("index.html", (1440, 900), "#proof .stats .v", ["3", "5"]),
+    # hc5 (integrate): Home §04's 3 and 5 left the site (HC5 item 2); Home's figures are the first screen's four (owner,
+    # 2 Nov: exactly as v2 set them), read here in their place
+    ("index.html", (1440, 900), ".hero-stats b", ["5k–50k", "90%", "6", "01"]),
     ("company.html", (1440, 900), ".crew-stats b", ["4", "9", "100+"]),
 ]
 STATIC_TEXTS = """async (sel) => { const norm = s => s.replace(/\\s+/g, ' ').trim();
@@ -2630,7 +2637,10 @@ async def platform_spec(b):
     markup lists the eight layers, each with its job, and pointing at each layer shows its name and that job in the
     readout; at 900 Tab from Pause reaches layer 01, ArrowDown 02, Enter opens its panel (aria-expanded, the panel shown)
     and Escape closes it with focus kept; on short windows (844x390, 320x256) the eight layer buttons stay targets: each
-    at least 24 px tall, none overlapping another, none outside the instrument (WCAG 2.5.8, r4)"""
+    at least 24 px tall, none overlapping another, none outside the instrument (WCAG 2.5.8, r4). hc5 (integrate): the
+    keys Home's check held until Home §02 drew Platform's plate (HC5 item 1), here at 1440: the boundary after 04;
+    ArrowDown x3 lands on 04 (lit), Enter opens its panel in the readout card, Escape closes it with focus kept, End /
+    Home; pointing at a layer sets the instrument's has-hot"""
     ctx, pg = await open_page(b, "platform.html", 1440, 900)
     m = await pg.evaluate(SPEC)
     await pg.evaluate("document.querySelector('#architecture .arch').scrollIntoView({block: 'center', behavior: 'instant'})")
@@ -2641,6 +2651,23 @@ async def platform_spec(b):
         got = await until(pg, f"""(() => {{ const c = document.querySelector('#architecture .arch-card'), n = c && c.querySelector('.sum-nm'), j = c && c.querySelector('.sum-job'), norm = s => (s || '').replace(/\\s+/g, ' ').trim();
           return c && getComputedStyle(c).opacity === '1' && n && j && norm(j.textContent) === {json.dumps(job)} ? norm(n.textContent) : ''; }})()""", 3000)
         shown.append(got)
+    await pg.mouse.move(5, 450)
+    bound = await pg.evaluate("[...document.querySelector('#architecture .arch-list').children].filter(e => !e.classList.contains('arch-panel')).findIndex(e => e.classList.contains('arch-bound'))")
+    assert bound == 4, f"platform_spec platform.html@1440x900: the boundary stands after {bound} layers (want 4)"
+    await pg.locator("#arch0-b1").focus()
+    for _ in range(3): await pg.keyboard.press("ArrowDown")
+    assert await pg.evaluate("document.activeElement.id") == "arch0-b4"
+    await expect(pg.locator("#arch0-b4")).to_have_class(re.compile(r"\bis-hot\b"))
+    await pg.keyboard.press("Enter")
+    await expect(pg.locator("#arch0-b4")).to_have_attribute("aria-expanded", "true")
+    await expect(pg.locator("#architecture .arch-card #arch0-p4")).to_be_visible()
+    await pg.keyboard.press("Escape")
+    await expect(pg.locator("#arch0-b4")).to_have_attribute("aria-expanded", "false")
+    assert await pg.evaluate("document.activeElement.id") == "arch0-b4"
+    await pg.keyboard.press("End"); assert await pg.evaluate("document.activeElement.id") == "arch0-b8"
+    await pg.keyboard.press("Home"); assert await pg.evaluate("document.activeElement.id") == "arch0-b1"
+    await pg.locator("#arch0-b5").hover()
+    await expect(pg.locator("#architecture .arch")).to_have_class(re.compile(r"\bhas-hot\b"))
     await pg.mouse.move(5, 450)
     await ctx.close()
     assert len(m["layers"]) == 8 and all(j for _, j in m["layers"]) and shown == [n for n, _ in m["layers"]], f"platform_spec platform.html@1440x900: layers {[(n, j[:24]) for n, j in m['layers']]}; the readout named {shown} as each layer was pointed at (want each layer's name with its job line)"
@@ -2661,7 +2688,7 @@ async def platform_spec(b):
         await ctx.close()
         sizes.append(f"{w}x{h}: {t['n']} layer buttons, least {t['minH']:.1f} px tall, {t['overlap']} overlaps, {t['outside']} outside")
         assert t["n"] == 8 and t["minH"] >= 23.5 and not t["overlap"] and not t["outside"], f"platform_spec platform.html@{w}x{h}: {sizes[-1]} (want 8, >= 24 px, 0, 0); sizes {t['sizes']}"
-    print("platform_spec: 8 layers in the markup with their jobs; pointing at each shows its name and job; at 900 Tab/ArrowDown/Enter/Escape open and close layer 02's panel; "
+    print("platform_spec: 8 layers in the markup with their jobs; pointing at each shows its name and job; at 1440 the boundary after 04, ArrowDown/Enter/Escape/End/Home and has-hot; at 900 Tab/ArrowDown/Enter/Escape open and close layer 02's panel; "
           + "; ".join(sizes))
 
 

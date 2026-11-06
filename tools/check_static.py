@@ -451,6 +451,9 @@ GROUP_CSS_BUDGET = 12000   # gzip -9 bytes per group stylesheet
 # v2x r2 (system, perf): the five instrument regions left site.css for their own sheets, linked after site.css and before
 # the group's sheet only on the pages that draw them, so the other pages no longer wait for ~29 KB they never use.
 INSTRUMENT_CSS = {"overture": "overture.css", "swarm": "swarm.css", "ledger": "ledger.css", "arch": "arch.css", "proof": "proofchart.css"}
+# hc5 (integrate): Home §02 draws Platform's plate (still), not the explorer, and no longer starts arch.js; it still links
+# arch.css (scoped to the explorer: styles nothing on Home), because dropping that sheet cost Lighthouse's simulated mobile
+# FCP one round trip (96 -> 95 on 3 of 3 runs, the observed paint earlier): keep it until a change holds the score
 INSTRUMENT_PAGES = {"index.html": ["overture", "swarm", "ledger", "arch", "proof"], "platform.html": ["swarm", "arch"],
                     "evidence.html": ["proof"], "trust.html": ["ledger"]}
 INSTRUMENT_BUDGET = 8500   # gzip -9 bytes per instrument sheet (the largest, arch.css, is 7,558 at the split)
@@ -461,6 +464,8 @@ PAGE_JS_BUDGET = 8000      # gzip -9 bytes per page-only script (access.js, comp
 SHARED_JS = {"site.js", "loader.js", "story.js", "swarm.js", "ledger.js", "chain.js", "arch.js", "lane.js", "proof.js", "gap.js", "figure.js", "blog.js",
              "afterpaint.js"}  # v2x r3 (system): the after-paint starter, a shared module (Lifecycles now; any page may use it)
 PAGE_SCRIPTS_BUDGET = 151000  # gzip -9 bytes: the scripts any one page loads (index.html's budget, for every page)
+FIRST_WINDOW = 10 * 1460      # bytes: Lighthouse's simulated initial congestion window (hc5: Home's document must fit it)
+FIRST_WINDOW_STD = 220        # bytes: serve.py's status line and standard headers (Server, Date, Content-*, Vary, Last-Modified: 209 at hc5)
 
 
 def script_srcs(html):
@@ -477,7 +482,8 @@ def check_weight():
     """Transfer weight cannot grow unnoticed while the CSS split is deferred: gzip -9 of site.css <= 66,000 bytes and the
     sum of gzip -9 over the scripts index.html loads (<script src>) <= 151,000 bytes: 59,799 and 137,253 at 1a6b9fb,
     plus 10% (director's test list; _cross 'rejected': the split is deferred). A page's scripts are its <script src>
-    tags plus the ones a tag names in data-after-paint (home.js starts those after the first paint; v2x, 30 Oct)."""
+    tags plus the ones a tag names in data-after-paint (home.js starts those after the first paint; v2x, 30 Oct). hc5:
+    Home's first response (gzip-6 body + headers) fits Lighthouse's first TCP window, 14,600 B."""
     import gzip
     gz = lambda rel: len(gzip.compress((ROOT / rel).read_bytes(), 9))
     css = gz("assets/css/site.css")
@@ -519,6 +525,19 @@ def check_weight():
         if gone: fail(rel, "weight: scripts not found:", gone); continue
         total = sum(len(gzip.compress(f.read_bytes(), 9)) for f in files)
         if total > PAGE_SCRIPTS_BUDGET: fail(rel, f"weight: its {len(files)} scripts are {total:,} bytes gzipped; budget {PAGE_SCRIPTS_BUDGET:,} per page")
+    # hc5 (integrate, on home's proposal): Home's document fits the first TCP window Lighthouse's simulated mobile run
+    # models (10 segments of 1,460 B); past it the first paint pays one more round trip (home hc5: FCP 1.81 -> 1.96 s,
+    # performance 96 -> 95 on every run). The response as serve.py sends it: the body gzipped at level 6, the global
+    # headers of staticwebapp.config.json, and the status line and eight standard headers (209 B measured at hc5). Azure
+    # sends Brotli (smaller), so the rule is conservative.
+    try:
+        hdr = sum(len(k) + len(v) + 4 for k, v in json.loads((ROOT / "staticwebapp.config.json").read_text(encoding="utf-8")).get("globalHeaders", {}).items())
+    except (OSError, ValueError):
+        hdr = 0  # the config's own check reports it
+    body = len(gzip.compress((ROOT / "index.html").read_bytes(), 6))
+    if body + hdr + FIRST_WINDOW_STD > FIRST_WINDOW:
+        fail("index.html", f"weight: the first response is {body + hdr + FIRST_WINDOW_STD:,} B (gzip-6 body {body:,} + headers {hdr + FIRST_WINDOW_STD:,}); "
+             f"Lighthouse's first TCP window is {FIRST_WINDOW:,} B: past it Home's first paint pays a round trip (move weight out of the document)")
 
 
 def check_story_fallback():

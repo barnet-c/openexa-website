@@ -125,15 +125,15 @@
  },
  "company.html": {
   "date": "2026-11-06",
-  "sha": "e32bb66e73d89ec7"
+  "sha": "447ca64670a43374"
  },
  "evidence.html": {
   "date": "2026-11-06",
-  "sha": "b9fa7f10862f4dd4"
+  "sha": "c4dc0b2daef07489"
  },
  "index.html": {
   "date": "2026-11-06",
-  "sha": "26cf3c9960271564"
+  "sha": "8c36f2675686940c"
  },
  "lifecycles.html": {
   "date": "2026-11-06",
@@ -141,7 +141,7 @@
  },
  "platform.html": {
   "date": "2026-11-06",
-  "sha": "d4d6239f7df61d00"
+  "sha": "00745b57499db8bd"
  },
  "research.html": {
   "date": "2026-11-06",
@@ -189,6 +189,6 @@
  },
  "trust.html": {
   "date": "2026-11-06",
-  "sha": "d86f8f8516e8e13d"
+  "sha": "9c6b84ef1082fe31"
  }
 }

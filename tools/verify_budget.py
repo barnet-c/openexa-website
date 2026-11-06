@@ -29,7 +29,7 @@ The checks (the item each one guards in brackets):
   offscreen_work       at the footer of /, /lifecycles.html, /platform.html: no running animation with an off-screen target,
                        and 0 requestAnimationFrame callbacks in 3 s; round 2: landing on /#lifecycles, story.js runs 0 rAF in
                        3 s (1440 and 390@3); /evidence.html with the chart's band on screen and the chart off it: no running
-                       off-screen animation; the explorer (arch.js) runs 0 rAF after 8 s idle   [NV6, SW4, LG1, LC6; OV-R2-3b, PF-R2-3, AR-R2-4]
+                       off-screen animation; the explorer (arch.js, on /platform.html since hc5) runs 0 rAF after 8 s idle   [NV6, SW4, LG1, LC6; OV-R2-3b, PF-R2-3, AR-R2-4]
   desk_reduced_raf     reduced motion, the desk in view: gap.js runs 0 requestAnimationFrame callbacks in 3 s   [LC2b, LC6]
   headline_after_step* 400 ms after each overture index step (1440, 390): every headline word is up (translateY <= 4% of its height)   [OV4]
   desk_warm_time*      within 1.2 s of the desk scrolling into view: its clock reads >= 11:00 ET and its strip holds a record   [LC2b]
@@ -235,17 +235,18 @@ async def offscreen_work(b):
     await ctx.close()
     ok = ok and band and not anims
     out.append(f"evidence.html, chart seen then just above the view, its band on screen ({band}): {len(anims)} off-screen animations {sorted(set(anims))[:4]}")
-    # round 2 (AR-R2-4): the explorer stops after 8 s with no pointer or focus in it
-    ctx, pg = await V.open_page(b, "index.html", 1440, 900, init=RAF_COUNTER)
-    await pg.evaluate("document.querySelector('#stack .arch').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.mouse.move(2, 898)
-    await V.until(pg, "!!document.querySelector('#stack .arch.is-ready')", 10000)
+    # round 2 (AR-R2-4): the explorer stops after 8 s with no pointer or focus in it. hc5 (integrate): on Platform §01, its
+    # one page now (Home §02 draws Platform's plate, still, and no longer loads arch.js)
+    ctx, pg = await V.open_page(b, "platform.html", 1440, 900, init=RAF_COUNTER)
+    await pg.evaluate("document.querySelector('#architecture .arch').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.mouse.move(2, 898)
+    await V.until(pg, "!!document.querySelector('#architecture .arch.is-ready')", 10000)
     await pg.wait_for_timeout(8500)
     await pg.evaluate(RAF_ZERO); await pg.wait_for_timeout(3000)
     raf = await pg.evaluate("window.__raf")
     await ctx.close()
     arch = raf["by"].get("arch.js", 0)
     ok = ok and arch == 0
-    out.append(f"home's explorer after 8.5 s idle: arch.js {arch} rAF in 3 s")
+    out.append(f"Platform's explorer after 8.5 s idle: arch.js {arch} rAF in 3 s")
     return ok, "; ".join(out) + "; budget 0 everywhere"
 
 
