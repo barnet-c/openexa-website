@@ -35,7 +35,7 @@
 .beat .eyebrow { margin-bottom: 1.125rem; color: rgba(245, 242, 236, .62); }
 .beat h2 { max-width: 15ch; text-wrap: balance; }
 .beat h2 .nb { white-space: nowrap; } /* 'One autonomous' stays on one line */
-.beat .body-lg { margin-top: 1.375rem; max-width: 46ch; font-size: 1.04rem; line-height: 1.62; }
+.beat .body-lg { margin-top: 1.375rem; max-width: 46ch; } /* hc4: the lede step (--fs-body, .body-lg's), as the sub-line above it (was 1.04rem) */
 .beat .hero-cta { margin-top: 1.875rem; }
 .hero-stats { display: grid; grid-template-columns: 1fr 1fr .8fr 1.45fr; gap: 1.25rem; margin-top: 2.125rem; padding-top: 1.25rem; border-top: var(--hair) solid rgba(245, 242, 236, .14); max-width: min(52%, 40rem); }
 .hero-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: var(--fs-item); line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }

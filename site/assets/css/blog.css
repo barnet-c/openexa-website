@@ -131,12 +131,12 @@
 
 /* the collection's fifth post under the rail: its plate in the rail's first column, its title across the other three */
 .blog-page .blog-grid--wide { --rg: clamp(1rem, 2vw, 1.75rem); display: block; margin-top: clamp(2.5rem, 4.4vw, 4rem); padding-top: clamp(1.75rem, 3vw, 2.5rem); border: 0; border-top: var(--hair) solid var(--line-strong); }
-.blog-page .blog-grid--wide .blog-card { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: var(--rg); align-items: center; background: none; border: 0; overflow: visible; }
+.blog-page .blog-grid--wide .blog-card { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: var(--rg); align-items: end; background: none; border: 0; overflow: visible; } /* hc4: words at the plate's foot, as the markets lead's */
 .blog-page .blog-grid--wide .blog-card::after { content: none; }
 .blog-page .blog-grid--wide .blog-thumb { grid-column: 1; border: 0; } /* no rule under it, as under every plate */
-.blog-page .blog-grid--wide .blog-card-body { grid-column: 2 / -1; padding: 0; }
+.blog-page .blog-grid--wide .blog-card-body { grid-column: 2 / -1; padding: 0 0 .125rem; }
 .blog-page .blog-grid--wide h3 { margin: 0; max-width: 30ch; }
-.blog-page .blog-grid--wide .k { display: block; margin-bottom: .5rem; }
+.blog-page .blog-grid--wide .k { display: block; margin-bottom: .25rem; }
 
 /* ---------- the cards (the fifth AI post, the markets lead) ---------- */
 .blog-page .blog-card-body { padding: clamp(1.125rem, 1.9vw, 1.625rem) clamp(1.25rem, 2.2vw, 1.875rem) clamp(1.5rem, 2.6vw, 2.25rem); }
@@ -173,12 +173,11 @@
 /* Financial markets research: the lead, then the register beside the plate that follows it */
 .blog-page .blog-lead { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2.2vw, 2rem); border: 0; background: none; overflow: visible; }
 .blog-page .blog-lead .blog-thumb { grid-column: 1 / span 7; border: 0; }
-/* the lead's words are the register's row drawn to the plate's height: the year and the arrow on the rule, the title
-   on the plate's foot */
-.blog-page .blog-lead .blog-card-body { grid-column: 8 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); column-gap: 1rem; padding: 1.25rem 0 .125rem; border-top: var(--hair) solid var(--line-strong); }
-.blog-page .blog-lead .br-date { grid-area: 1 / 1; }
-.blog-page .blog-lead .br-min { grid-area: 1 / 2; }
-.blog-page .blog-lead h3 { grid-area: 2 / 1 / 3 / -1; align-self: end; max-width: 20ch; }
+/* hc4: the lead's words sit together at the plate's foot: the year over the title, the arrow after its last line */
+.blog-page .blog-lead .blog-card-body { grid-column: 8 / -1; display: grid; grid-template-columns: minmax(0, auto) auto; justify-content: start; align-content: end; align-items: last baseline; gap: .25rem 1rem; padding: 0 0 .125rem; }
+.blog-page .blog-lead .br-date { grid-area: 1 / 1 / 2 / -1; }
+.blog-page .blog-lead h3 { grid-area: 2 / 1; max-width: 20ch; }
+.blog-page .blog-lead .br-min { grid-area: 2 / 2; }
 .blog-lead:focus-visible .br-min { color: var(--accent); }
 .blog-page .blog-lead::after { right: auto; width: calc((100% - 11 * clamp(1rem, 2.2vw, 2rem)) / 12 * 7 + 6 * clamp(1rem, 2.2vw, 2rem)); } /* the green rule under the plate */
 @media (hover: hover) {
@@ -244,10 +243,7 @@
   .blog-register { width: 100%; }
   .blog-panel { display: none; }
   .blog-page .blog-lead { display: block; }
-  .blog-page .blog-lead .blog-card-body { grid-template-rows: auto auto; row-gap: .25rem; align-items: baseline; padding: 1rem 0 1.125rem; border-top: 0; }
-  .blog-page .blog-lead .br-date { grid-area: 1 / 1 / 2 / -1; }
-  .blog-page .blog-lead h3 { grid-area: 2 / 1; align-self: auto; }
-  .blog-page .blog-lead .br-min { grid-area: 2 / 2; }
+  .blog-page .blog-lead .blog-card-body { grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; padding: 1rem 0 1.125rem; } /* the list's first row */
   .br-cont { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; } /* the lead just said this year: read out, not shown twice */
   .blog-page .blog-lead::after { width: 100%; }
   .blog-mkt { margin-top: 0; }

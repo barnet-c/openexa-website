@@ -87,8 +87,8 @@
   --fs-body: clamp(1.0625rem, .98rem + .15vw, 1.125rem); /* 18 / 17 */
   --fs-small: clamp(.8125rem, .78rem + .12vw, .875rem);  /* 14 / 13 */
 
-  /* the serif scale (hc1), by role: H1 --fs-hero 89 on every page (hc2), H2 --fs-display 77, item (a figure, a card's
-     head) --fs-item 30 (Home's four figures), list --fs-heading 25.6, small --fs-body 18. Mono: --fs-label only */
+  /* the serif scale (hc1), by role: H1 --fs-hero 89 on every page (hc2), H2 --fs-display 77, numerals (Home's four
+     figures, instrument counts) --fs-item 30, titles --fs-heading 25.6 (hc4), small --fs-body 18. Mono: --fs-label only */
   --fs-hero: var(--h1-plate);
   --fs-item: clamp(1.5rem, 2.1vw, 2.05rem);
 
@@ -1270,25 +1270,25 @@ a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 1
 /* ---------- the instrument head (hc2): one order, one register on every instrument (all dark): title (paper),
    "Illustrative" (khaki), state (a still dot and a sentence-case word, green), key, the primary action (the site's paper
    button; pressed, an outline), Pause motion (an outline, last). Inter at the small step; mono only for data (the desk's
-   clock). .instr-* name the parts for a new instrument */
+   clock). .instr-* name the parts for a new instrument. hc4: the chain's restore (its broken state's one act) too, as Trust's */
 :is(.instr-head, .sw-head, .arch-head, .chain-head, .lt-head, .desk-head) { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
 :is(.instr-title, .sw-name, .arch-lab, .lt-title) { color: var(--fg); }
 :is(.instr-hedge, .sw-kicker, .arch-kicker, .desk-kicker) { color: var(--khaki); }
 :is(.instr-state, .sw-live, .chain-status, .lt-state, .desk-head .live) { display: inline-flex; align-items: center; gap: .5625rem; font: inherit; letter-spacing: 0; text-transform: none; color: var(--accent); }
 :is(.instr-state, .sw-live, .chain-status, .lt-state, .desk-head .live) > i { flex: none; width: .4375rem; height: .4375rem; border-radius: 50%; background: currentColor; }
 :is(.instr-key, .sw-key, .arch-legend) { color: rgba(245, 242, 236, .66); }
-:is(.instr-primary, .sw-follow, .chain-try, .desk-follow) {
+:is(.instr-primary, .sw-follow, .chain-try, .chain-restore, .desk-follow) {
   display: inline-flex; align-items: center; justify-content: center; gap: .625rem; min-height: 2.25rem; padding: 0 .875rem;
   border: var(--hair) solid var(--paper); border-radius: var(--r); background-color: var(--paper); color: var(--ink);
   background-image: linear-gradient(var(--signal), var(--signal)); background-repeat: no-repeat; background-size: 0 calc(2 * var(--hair)); background-position: 0 100%;
   font: 500 var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; white-space: nowrap;
   transition: background-color var(--dur-feedback) var(--ease-out), background-size var(--dur-move) var(--ease-out), color var(--dur-feedback) var(--ease-out), border-color var(--dur-feedback) var(--ease-out);
 }
-@media (hover: hover) { :is(.instr-primary, .sw-follow, .chain-try, .desk-follow):hover { background-color: color-mix(in srgb, var(--paper) 86%, var(--ink)); background-size: 100% calc(2 * var(--hair)); } }
+@media (hover: hover) { :is(.instr-primary, .sw-follow, .chain-try, .chain-restore, .desk-follow):hover { background-color: color-mix(in srgb, var(--paper) 86%, var(--ink)); background-size: 100% calc(2 * var(--hair)); } }
 :is(.instr-primary, .sw-follow, .desk-follow)[aria-pressed="true"] { border-color: var(--accent); background: transparent; color: var(--accent); }
-:is(.instr-primary, .sw-follow, .chain-try, .desk-follow):focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
-@media (forced-colors: active) { :is(.instr-primary, .sw-follow, .chain-try, .desk-follow) { border: calc(2 * var(--hair)) solid ButtonText; } }
-@media (pointer: coarse) { :is(.instr-primary, .sw-follow, .chain-try, .desk-follow) { min-height: 2.75rem; } }
+:is(.instr-primary, .sw-follow, .chain-try, .chain-restore, .desk-follow):focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
+@media (forced-colors: active) { :is(.instr-primary, .sw-follow, .chain-try, .chain-restore, .desk-follow) { border: calc(2 * var(--hair)) solid ButtonText; } }
+@media (pointer: coarse) { :is(.instr-primary, .sw-follow, .chain-try, .chain-restore, .desk-follow) { min-height: 2.75rem; } }
 /* Pause motion, one control: boxed in a head; frameless stages (overture, figures) unboxed */
 :is(.arch-motion, .sw-motion, .model-motion, .story-motion, .figure-motion) {
   display: inline-flex; align-items: center; justify-content: center; min-height: 2.25rem; padding: 0 .125rem;
@@ -1448,13 +1448,8 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 /* Lifecycles §02: the six gates as stations (hc3: 07 Reconcile's marks are drawn under 06 Settle) */
 .lane-v--steps > li { padding-bottom: 1.625rem; }
 .lane-v--steps h3 { padding-top: .125rem; font-family: var(--serif); font-size: var(--fs-heading); font-weight: 400; line-height: 1.2; letter-spacing: -0.01em; }
-.lane-v--steps h3 .lk-n { display: block; margin-bottom: .25rem; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: .12em; color: var(--fg-3); }
-.lane-v--steps li[data-g="4"] h3 .lk-n, .lane-v--steps li[data-g="6"] h3 .lk-n { color: var(--accent); }
+.lane-v--steps h3 .lk-n { display: block; margin-bottom: .25rem; font: 400 var(--fs-small)/1.4 var(--sans); font-variant-numeric: tabular-nums; letter-spacing: 0; color: var(--fg-3); } /* hc4 (platform's): the caption step, as Platform §03's "05 · Execute" (were 11 px mono, 04 and 06 green: a fifth size and a second colour) */
 .lane-v--steps > li[data-g="6"]::before { top: 2.75rem; background: currentColor; opacity: .32; }
-/* the 'How it works' card travels beside the stations until 06 Settle */
-@media (min-width: 1200px) and (min-height: 600px), (min-width: 961px) and (min-height: 680px) {
-  .lc-how > .card { position: sticky; top: calc(var(--nav-h) + 2rem); }
-}
 /* ---------- Fig. 3.1, the lane (home §03) ---------- */
 .lane { margin: 0; }
 
@@ -1745,7 +1740,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lc-reg .card .n--ring > span:last-child { font: 400 .875rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--khaki-ink); text-wrap: balance; } /* hc3: balanced, so "Live: ETF creation / & redemption" at 761-960 (.875rem kept: --fs-small is 13 on phones and moved Home's §04 landing by 8 px) */
 .lc-reg .card .n--ring > .badge { padding: 0; border: 0; } /* every status, live too, is the khaki ink above (integrate hc2: the green and fg-2 colours here never won) */
 .lc-reg .lc-code { flex: none; }
-.lc-reg .card .h4 { grid-column: 1 / -1; grid-row: 2; align-self: end; margin: 0; max-width: 13ch; font-size: var(--fs-item); line-height: 1.08; letter-spacing: -0.015em; color: var(--fg-2); text-wrap: balance; }
+.lc-reg .card .h4 { grid-column: 1 / -1; grid-row: 2; align-self: end; margin: 0; max-width: 13ch; font-size: var(--fs-heading); line-height: 1.15; letter-spacing: -0.01em; color: var(--fg-2); text-wrap: balance; } /* hc4: the title step, as Lifecycles' traits (was --fs-item) */
 .lc-reg .card:first-child .h4 { color: var(--fg); }
 @media (min-width: 761px) { .lc-reg .card .h4 { max-width: 17ch; } .lc-reg .lc-dot { display: block; height: 0; overflow: hidden; } } /* a dot-joined name breaks before its dot and drops it */
 @media (min-width: 1680px) { .lc-reg > .card { row-gap: 2rem; } }
@@ -1948,18 +1943,19 @@ svg.tg * { fill: none; stroke: currentColor; stroke-width: var(--stroke); vector
   .company-sculpture { padding-top: var(--co-h); margin-top: 0; }
   .company-sculpture .figure-stage, .company-sculpture .frame { height: var(--co-h); aspect-ratio: auto; }
 }
-/* registration marks: a hero plate's corners, one mark site-wide (`<span class="hp-reg" aria-hidden="true">` with four
-   `<i>` inside .hp-art). Hairlines that grow with the page */
+/* registration marks: a plate's corners, one mark site-wide (`<span class="hp-reg" aria-hidden="true">` with four
+   `<i>` inside .hp-art): the hero plates and, from hc4, Lifecycles' basket (.lc-mech; platform.css sets its inset). Hairlines
+   that grow with the page */
 /* a2: the frame registers on the column: its right marks on the content edge, the drawing one mark-length inside */
 .hero-plate .hp-art:has(> .hp-reg) { padding-right: 1rem; }
-.hero-plate .hp-reg { position: absolute; inset: -1.25rem 0 -.75rem -1rem; pointer-events: none; }
-.hero-plate .hp-reg i { --b: calc(1px * var(--stroke)); position: absolute; width: .875rem; height: .875rem; border: 0 solid var(--line-strong); }
-.hero-plate .hp-reg i:nth-child(1) { left: 0; top: 0; border-width: var(--b) 0 0 var(--b); }
-.hero-plate .hp-reg i:nth-child(2) { right: 0; top: 0; border-width: var(--b) var(--b) 0 0; }
-.hero-plate .hp-reg i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 var(--b) var(--b); }
-.hero-plate .hp-reg i:nth-child(4) { right: 0; bottom: 0; border-width: 0 var(--b) var(--b) 0; }
-@media (max-width: 600px) { .hero-plate .hp-art:has(> .hp-reg) { padding-right: .5rem; } .hero-plate .hp-reg { inset: -.75rem 0 -.75rem -.5rem; } .hero-plate .hp-reg i { width: .625rem; height: .625rem; } }
-@media print { .hero-plate .hp-reg { display: none; } }
+:is(.hero-plate, .lc-mech) .hp-reg { position: absolute; inset: -1.25rem 0 -.75rem -1rem; pointer-events: none; }
+:is(.hero-plate, .lc-mech) .hp-reg i { --b: calc(1px * var(--stroke)); position: absolute; width: .875rem; height: .875rem; border: 0 solid var(--line-strong); }
+:is(.hero-plate, .lc-mech) .hp-reg i:nth-child(1) { left: 0; top: 0; border-width: var(--b) 0 0 var(--b); }
+:is(.hero-plate, .lc-mech) .hp-reg i:nth-child(2) { right: 0; top: 0; border-width: var(--b) var(--b) 0 0; }
+:is(.hero-plate, .lc-mech) .hp-reg i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 var(--b) var(--b); }
+:is(.hero-plate, .lc-mech) .hp-reg i:nth-child(4) { right: 0; bottom: 0; border-width: 0 var(--b) var(--b) 0; }
+@media (max-width: 600px) { .hero-plate .hp-art:has(> .hp-reg) { padding-right: .5rem; } :is(.hero-plate, .lc-mech) .hp-reg { inset: -.75rem 0 -.75rem -.5rem; } :is(.hero-plate, .lc-mech) .hp-reg i { width: .625rem; height: .625rem; } }
+@media print { :is(.hero-plate, .lc-mech) .hp-reg { display: none; } }
 @keyframes hp-reg-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: no-preference) { .hero-plate .hp-reg { animation: hp-reg-in .6s var(--ease-out) .3s both; } }
 /* v2:pages:end */

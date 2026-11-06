@@ -525,7 +525,8 @@ async def home(b):
     await pg.locator("[data-chain-restore]").click()
     await expect(pg.locator(".chain-list .is-broken")).to_have_count(0)
     await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain intact")
-    # proof: the chart is a listbox of the ten sessions with one tab stop; arrows select, the inspector follows, Escape clears
+    # proof: the chart is a listbox of the ten sessions with one tab stop; arrows select (the selected option carries its
+    # record; hc4: proof.js draws no inspector any more), Escape clears
     # (the pointer leaves the page first: a resting pointer over a lane previews that session ahead of the keyboard's)
     await pg.mouse.move(5, 450)
     await expect(pg.locator("#proof .proof.is-built")).to_have_count(1)
@@ -534,12 +535,10 @@ async def home(b):
     assert await pg.locator('#proof [role=option][tabindex="0"]').count() == 1
     await opts.nth(0).focus(); await pg.keyboard.press("ArrowRight")
     await expect(opts.nth(1)).to_have_attribute("aria-selected", "true")
-    # Round 2 (PF-R2-3a): home no longer shows the chart's summary row (the stats row says it); where the inspector row is
-    # gone, the selected option itself carries the session's record
-    if await pg.locator("#proof .pf-read").count() and await pg.locator("#proof .pf-read").first.is_visible():
-        await expect(pg.locator("#proof .pf-read")).to_contain_text("Day 02")
-    else:
-        await expect(opts.nth(1)).to_contain_text("Day 02")
+    # Round 2 (PF-R2-3a): home no longer shows the chart's summary row (the stats row says it); the selected option itself
+    # carries the session's record (hc4: proof.js draws no inspector row on any page, so this is the only path)
+    assert await pg.locator(".pf-read").count() == 0
+    await expect(opts.nth(1)).to_contain_text("Day 02")
     await pg.keyboard.press("Escape")
     await expect(pg.locator('#proof [role=option][aria-selected="true"]')).to_have_count(0)
     assert not errs, errs
@@ -551,9 +550,10 @@ async def home(b):
 
 @check
 async def interior(b):
-    """Proof: pointing at a session lights it and the inspector reads its record; Trust: the replay verifies; Platform: the
-    explorer is ready. (v2x cut, 1 Nov: Table 1.1 left Proof for readers with JavaScript, it is the <noscript> record
-    now; the chart's lanes and inspector carry each session, so the hover is on the lane, not on a table row.)"""
+    """Proof: pointing at a session lights it (and only it) and the lane names its record; Trust: the replay verifies;
+    Platform: the explorer is ready. (v2x cut, 1 Nov: Table 1.1 left Proof for readers with JavaScript, it is the <noscript>
+    record now; the chart's lanes carry each session, so the hover is on the lane, not on a table row. hc4: the chart is
+    the hero and its inspector is gone, so the lane's own text is read.)"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     pg = await ctx.new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -562,7 +562,10 @@ async def interior(b):
     await pg.locator("#performance .pf-lane").nth(2).scroll_into_view_if_needed()
     await pg.locator("#performance .pf-lane").nth(2).hover()
     await expect(pg.locator("#performance .pf-lane").nth(2)).to_have_class(re.compile(r"\bis-on\b"))
-    await expect(pg.locator("#performance .pf-read")).to_contain_text("Day 03")
+    # hc4 (proof, HC4 item 1): the chart is Proof's hero and has no inspector; the lane in hand names its record (its
+    # accessible text) and is the one lit, the others dimmed
+    await expect(pg.locator("#performance .pf-lane").nth(2).locator(".sr-only")).to_contain_text("Day 03")
+    assert await pg.locator("#performance .pf-lane.is-on").count() == 1 and await pg.locator("#performance [data-proof-chart].has-on").count() == 1
     await pg.goto(f"{BASE}/trust.html", wait_until="load")
     await expect(pg.locator("[data-ledger=replay] .lt-rec")).to_have_count(9)
     await expect(pg.locator("[data-ledger=replay] [data-lt-state]")).to_contain_text("Chain intact")  # hc2: Home's words (was "Chain ✓ · 9 records verify")
@@ -573,7 +576,7 @@ async def interior(b):
     assert await until(pg, "!!document.querySelector('#architecture .arch.is-wide.is-ready')", 10000), "platform explorer not ready"
     assert await pg.locator("#architecture .arch-layer").count() == 8
     assert not errs, errs
-    print("proof: a session lights on hover and the inspector reads Day 03; trust: 9-record trace verifies 8 of 8 links; platform: explorer ready with 8 layers")
+    print("proof: a session lights on hover (one lane lit) and its lane names Day 03; trust: 9-record trace verifies 8 of 8 links; platform: explorer ready with 8 layers")
     await ctx.close()
 
 
@@ -2568,7 +2571,7 @@ async def pill_focus(b):
 async def tables_phone(b):
     """at 390, 360 and 320, every .table-scroll on /platform.html and /evidence.html has scrollWidth <= clientWidth + 1.
     v2x cut (1 Nov): Proof's only table is the session record for readers without JavaScript (<noscript>; with it the
-    chart and its inspector carry each session), so Proof is read with JavaScript off, where that table is drawn."""
+    chart carries each session), so Proof is read with JavaScript off, where that table is drawn."""
     bad = []
     for w, h in ((390, 844), (360, 780), (320, 640)):
         for name in ("platform", "evidence"):

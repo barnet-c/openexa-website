@@ -51,6 +51,9 @@ Changes from the source, deliberately:
   - 2026-11-03 (award a4, design jury): on wide screens company.css sets the advisors as two ruled columns that read
     down; the list carries its row count (--rows, half the advisors, rounded up) so the columns follow the roster.
     Words, order and markup otherwise unchanged.
+  - 2026-11-06 (hill climb hc4, design director: "the team rows read as two unrelated columns"): from 1200 px the team
+    takes the advisors' form, two ruled columns reading down, so the team list carries its row count too (--rows, half
+    the team, rounded up). Words, order and markup otherwise unchanged.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -237,7 +240,7 @@ SECTION = f'''    <!-- 03 THE TEAM -->
           </div>
         </div>
         <div class="crew-sub crew-sub--team" data-reveal><h3 class="crew-sub-h">The team</h3></div>
-        <ol class="crew crew--team" role="list" aria-label="The OpenEXA team">
+        <ol class="crew crew--team" role="list" aria-label="The OpenEXA team" style="--rows:{math.ceil(len(TEAM) / 2)}">
 {team_html}
         </ol>
         <div class="crew-sub" data-reveal><h3 class="crew-sub-h">Advisors</h3></div>

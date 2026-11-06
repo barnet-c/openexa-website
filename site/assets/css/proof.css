@@ -17,92 +17,51 @@
 
 /* ======================= Proof (evidence.html) ======================= */
 
-/* hero plate (a1-a4): the record on Fig. 1.1's gutter and lanes (Co3); ten open blocks on the floor (C-023, S-13);
-   under it Fig. 1.1's axis. Rows in label ems (--ax-l) */
-[data-page="proof"] :is(.page-hero, .hero-plate--records) { --ax-l: var(--mono-tick); --ax-h: calc(8.5 * var(--ax-l)); --m: 1.75rem; } /* the figure too: the share card (build_og) has no hero */
-[data-page="proof"] .pf-record { container-type: inline-size; min-width: 0; }
-[data-page="proof"] .pf-record > .hero-plate { max-width: none; }
-[data-page="proof"] .hero-plate--records { --G: clamp(4rem, 15cqi, 6.75rem); position: relative; } /* Fig. 1.1's gutter (proofchart.css) */
-/* a4: the frame --m above the blocks and below the ticks (--tkw: .pf-tk's width; --fb: its reach under the axis) */
-[data-page="proof"] .hero-plate--records { --lane: calc((100cqi - var(--G)) / 10); --tkw: max(.385 * var(--lane), min(.6 * var(--lane), .875rem)); --fb: calc(var(--m) - 2 * var(--ax-l) + .375 * var(--tkw)); }
-@container (max-width: 540px) { [data-page="proof"] .hero-plate--records { --G: clamp(5rem, 15cqi, 6.75rem); } }
-@container (max-width: 300px) { [data-page="proof"] .hero-plate--records { --G: 2.375rem; } } /* the chart's narrow gutter: lanes stay 24 px */
-[data-page="proof"] .hero-plate--records .hp-art { padding: 0; }
-[data-page="proof"] .hero-plate--records .hp-reg { inset: calc(7 * var(--lane) / 26 - var(--m)) 0 calc(-1 * var(--fb)); } /* blocks 7/26 lane down */
-[data-page="proof"] .hero-plate--records .hp-cap { margin: calc(var(--fb) + .5rem) 0 0; } /* flush with the marks, as on Platform */
-[data-page="proof"] .pf-top { position: relative; padding-left: var(--G); color: var(--fg); }
-[data-page="proof"] .pf-top > svg { display: block; width: 100%; height: auto; overflow: visible; }
-/* a4: the floor, its lit pass and the faint line beyond are HTML rules on one edge: the same device rows */
-[data-page="proof"] .pf-fl0 { position: absolute; left: 0; right: 0; bottom: calc(-.5 * var(--hair)); height: 0; border-top: var(--hair) solid currentColor; opacity: .72; }
-[data-page="proof"] .pf-pl { --W: 260; --H: 22; position: absolute; inset: 0 0 0 var(--G); color: var(--fg); pointer-events: none; }
-[data-page="proof"] .pf-pl > span { position: absolute; overflow: hidden; left: calc(var(--u) / var(--W) * 100%); top: calc(var(--v) / var(--H) * 100%); width: calc(var(--w) / var(--W) * 100%); height: calc(var(--h) / var(--H) * 100%); }
-[data-page="proof"] .pf-pl svg { position: absolute; display: block; left: calc(var(--u) / var(--w) * -100%); top: calc(var(--v) / var(--h) * -100%); width: calc(var(--W) / var(--w) * 100%); max-width: none; height: calc(var(--H) / var(--h) * 100%); overflow: visible; }
-@supports (width: 1cqw) { /* placed from the plate itself, so a box's rounding never scales up into the drawing */
-  [data-page="proof"] .pf-pl { container-type: size; }
-  [data-page="proof"] .pf-pl > span { left: calc(var(--u) / var(--W) * 100cqw); top: calc(var(--v) / var(--H) * 100cqh); width: calc(var(--w) / var(--W) * 100cqw); height: calc(var(--h) / var(--H) * 100cqh); }
-  [data-page="proof"] .pf-pl svg { left: calc(var(--u) / var(--W) * -100cqw); top: calc(var(--v) / var(--H) * -100cqh); width: 100cqw; height: 100cqh; }
+/* the hero (hc4, HC4 item 1): the headline and its evidence on one screen. The H1 across; under it the lede, its hedge
+   and the way to the documents (4fr) beside Fig. 1.1, the ten sessions (8fr), which proof.js draws in the dark register
+   Home §04 uses (proofchart.css keys it on .is-dark). The lede stands level with the chart's top, the link on its caption
+   row. Phones and tablets: one column, the link after the chart. (a1-a4's ten-box strip and §01 went with it.) */
+[data-page="proof"] .page-hero { --pf-gap: clamp(2rem, 6vw, 2.75rem); }
+[data-page="proof"] .page-hero h1 { max-width: none; }
+[data-page="proof"] .page-hero--plate { row-gap: 0; }
+[data-page="proof"] .page-hero--plate > .hero-copy { display: contents; }
+[data-page="proof"] :is(.page-hero--plate, .hero-copy) > * { grid-column: 1 / -1; min-width: 0; }
+[data-page="proof"] .pf-record { order: 1; margin: var(--pf-gap) 0 0; }
+[data-page="proof"] .pf-go { order: 2; margin-top: var(--pf-gap); }
+/* the first statement of the result carries its hedge, as on Home's hero (VOICE 5.5); the chart's caption ends on "See
+   the disclosures." (S-28), which reaches them (site.js opens the fold) */
+[data-page="proof"] .pf-lc-hedge { margin-top: 1rem; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); }
+[data-page="proof"] .pf-record figcaption a { color: inherit; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: .1875rem; transition: color var(--dur-feedback) var(--ease-out), text-decoration-color var(--dur-feedback) var(--ease-out); }
+@media (hover: hover) { [data-page="proof"] .pf-record figcaption a:hover { color: var(--fg); text-decoration-color: currentColor; } }
+[data-page="proof"] .pf-record figcaption a:focus-visible { color: var(--fg); text-decoration-color: currentColor; }
+/* without scripts the record is the table: the caption keeps the regime line, not the blocks' key */
+@media (scripting: none) { [data-page="proof"] .pf-record .pf-js { display: none; } }
+@media (min-width: 961px) {
+  [data-page="proof"] .page-hero { --pf-gap: clamp(2.25rem, 3.4vw, 3.25rem); }
+  [data-page="proof"] .page-hero--plate { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); grid-template-rows: auto auto auto minmax(0, 1fr); column-gap: clamp(2rem, 4vw, 4.5rem); }
+  [data-page="proof"] .hero-copy > h1 { grid-column: 1 / -1; grid-row: 1; }
+  [data-page="proof"] .hero-copy > .lede { grid-column: 1; grid-row: 2; margin-top: var(--pf-gap); }
+  [data-page="proof"] .hero-copy > .pf-lc-hedge { grid-column: 1; grid-row: 3; }
+  [data-page="proof"] .hero-copy > .pf-go { grid-column: 1; grid-row: 4; align-self: end; margin: 0; }
+  [data-page="proof"] .pf-record { grid-column: 2; grid-row: 2 / span 3; }
 }
-[data-page="proof"] .pf-tk > span, [data-page="proof"] .pf-lit > span { position: absolute; inset: 0; }
-[data-page="proof"] .pf-rec { --v: 6; --w: 28; --h: 16; transform-origin: 30.357% 100%; } /* a block and its link, clipped at the floor: never a device row under it */
-[data-page="proof"] .pf-pl > .pf-lit { left: 0; top: auto; bottom: calc(-3.5 * var(--hair)); width: 100%; height: calc(7 * var(--hair)); }
-[data-page="proof"] .pf-lit > span::before, [data-page="proof"] .pf-lit > span::after { content: ""; position: absolute; left: 0; right: 0; }
-[data-page="proof"] .pf-lit > span::before { z-index: 1; top: calc(3 * var(--hair)); height: 0; border-top: var(--hair) solid var(--accent); }
-[data-page="proof"] .pf-lit > span::after { top: calc(.5 * var(--hair)); height: calc(6 * var(--hair)); background: var(--accent); opacity: .14; } /* the glow */
-[data-page="proof"] .hero-plate--records .hp-rec { fill: none; stroke: currentColor; stroke-opacity: .86; stroke-width: var(--stroke); }
-[data-page="proof"] .hero-plate--records .pf-ln { stroke-opacity: .62; }
-[data-page="proof"] .hero-plate--records .pf-ln { shape-rendering: crispEdges; } /* level lines on whole device pixels (4K bar) */
-/* under the floor: the gutter + ten lanes, as Fig. 1.1 (FLOOR / DAY / CONFIRMED) */
-[data-page="proof"] .pf-ax { display: grid; grid-template-columns: var(--G) repeat(10, minmax(0, 1fr)); grid-template-rows: calc(2.6 * var(--ax-l)) calc(2 * var(--ax-l)) calc(2.8 * var(--ax-l)); box-sizing: border-box; height: var(--ax-h); padding: calc(.5 * var(--ax-l)) 0 calc(.6 * var(--ax-l)); align-items: center; font: 400 var(--fs-small)/1.2 var(--sans); color: var(--fg-3); } /* hc3: Fig. 1.1's caption register (words Inter; numerals mono) */
-[data-page="proof"] .pf-ax-l { grid-column: 1; justify-self: start; max-width: calc(var(--G) - .625rem); color: var(--fg-2); }
-[data-page="proof"] .pf-l-fl { grid-row: 1; align-self: start; }
-[data-page="proof"] :is(.pf-l-fl small, .pf-ax-n) { font: 400 var(--ax-l)/1.3 var(--mono); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
-[data-page="proof"] .pf-l-fl small { display: block; color: var(--fg); }
-[data-page="proof"] .pf-l-ok { grid-row: 3; color: var(--accent); }
-[data-page="proof"] .pf-ax-n { grid-row: 2; grid-column: var(--c); justify-self: center; }
-[data-page="proof"] .pf-ax .pf-tk { grid-row: 3; grid-column: var(--c); justify-self: center; position: relative; overflow: hidden; width: max(38.5%, min(60%, .875rem)); aspect-ratio: 4 / 3; } /* phones: no smaller than the block */
-[data-page="proof"] .pf-ax .pf-tk svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
-/* the narrowest phones (after the rules it overrides): "Broker confirmed" moves under its ticks, one line */
-@container (max-width: 300px) {
-  [data-page="proof"] .pf-ax { grid-template-rows: calc(2.6 * var(--ax-l)) calc(2 * var(--ax-l)) calc(1.8 * var(--ax-l)) calc(1.6 * var(--ax-l)); height: calc(9.1 * var(--ax-l)); }
-  [data-page="proof"] .pf-ax-l { max-width: none; white-space: nowrap; }
-  [data-page="proof"] .pf-l-ok { grid-row: 4; grid-column: 1 / -1; align-self: end; }
-  [data-page="proof"] .hero-plate--records { --fb: calc(var(--m) - .6 * var(--ax-l)); } /* the label row is the foot */
+@media (min-width: 601px) { [data-page="proof"] .page-hero .lede { max-width: 44ch; } }
+@media (max-width: 360px) { [data-page="proof"] .page-hero h1 { font-size: 2.6rem; } }
+/* phones: each hero block reserves its lines (web font or metric fallback), so the chart under them holds still */
+@media (max-width: 600px) {
+  [data-page="proof"] .page-hero h1 { min-height: 2lh; }
+  [data-page="proof"] .page-hero .lede { min-height: 2lh; }
 }
-@media (forced-colors: active) { [data-page="proof"] :is(.pf-pl, .pf-top) { color: CanvasText; } [data-page="proof"] .pf-lit > span::before { border-color: CanvasText; } [data-page="proof"] .pf-lit > span::after { display: none; } }
-@media print { [data-page="proof"] .pf-fl0 { border-color: #000 !important; } [data-page="proof"] .pf-lit > span::before { border-color: #1E7A5A !important; } }
-@media screen and (prefers-reduced-motion: no-preference) {
-  [data-page="proof"] .pf-rec { animation: pf-rec-land .45s var(--ease-out) calc(120ms + var(--i, 0) * 45ms) backwards; }
-  [data-page="proof"] .pf-lit, [data-page="proof"] .pf-lit > span { animation: pf-wipe .9s var(--ease-draw) .56s backwards; }
-  [data-page="proof"] .pf-tk, [data-page="proof"] .pf-tk > span { animation: pf-wipe .3s var(--ease-out) var(--t, 1s) backwards; }
-  [data-page="proof"] :is(.pf-lit, .pf-tk) > span { animation-name: pf-hold; } /* the window slides right, the mark stays put */
-  [data-page="proof"] .hero-plate--records .pf-l-ok { animation: pf-fade .5s var(--ease-out) 1.35s backwards; }
-}
-@keyframes pf-rec-land { from { opacity: 0; transform: translateY(-62.5%) scaleY(.6); } } /* 10 drawing units up */
+@media (max-width: 359.98px) { [data-page="proof"] .page-hero h1 { min-height: 3lh; } } /* "…confirmed it." (1 Nov): re-measured at 1 px, work/proof/cut/hero_edges.py */
+@media (max-width: 459.98px) { [data-page="proof"] .page-hero .lede { min-height: 3lh; } }
+@media (max-width: 451.98px) { [data-page="proof"] .pf-lc-hedge { min-height: 2lh; } }
+@media (max-width: 359.98px) { [data-page="proof"] .page-hero .lede { min-height: 4lh; } }
+@media (max-width: 344.98px) { [data-page="proof"] .page-hero h1 { min-height: 4lh; } }
 @keyframes pf-land { from { opacity: 0; transform: translateY(-83.333%) scaleY(.6); } } /* Trust's records */
 @keyframes pf-fade { from { opacity: 0; } }
-@keyframes pf-wipe { from { transform: translateX(-100%); } }
-@keyframes pf-hold { from { transform: translateX(100%); } }
 
-/* §01 Fig. 1.1: shared with Home §04 (proofchart.css) */
-
-/* Fig. 1.1 on the page's type steps (a1, W4/D1): proofchart.css now, for Home §04 too (integrate a1) */
-/* a2 (UX juror): Fig. 1.1's register reads the two totals at rest, all five cells for a session in hand */
-[data-page="proof"] .pf-cells.is-rest .pf-cell--s { visibility: hidden; }
-@container (max-width: 660px) { [data-page="proof"] .pf-cell--s { display: none; } }
-@supports not (width: 1cqi) { @media (max-width: 700px) { [data-page="proof"] .pf-cell--s { display: none; } } }
-@media print { [data-page="proof"] .pf-cell--s { display: none; } }
-
-/* §01: the hedge points at the disclosures, and reaches them (site.js opens the fold). */
-[data-page="proof"] .pf-hedge { color: var(--fg-2); }
-/* §01 (hc1): the regime line is the section's deck, in the display face at the item step (as the record's totals under
-   the chart), its hedge 1rem under it: the screen keeps four sizes (77, 26, 14, 11) */
-[data-page="proof"] .proof-copy > .body-lg { font: 400 var(--fs-heading)/1.15 var(--serif); letter-spacing: -.01em; }
-[data-page="proof"] .proof-copy > .pf-hedge { margin-top: 1rem; }
-.pf-hedge a { color: var(--fg-2); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: .1875rem; transition: color var(--dur-feedback) var(--ease-out), text-decoration-color var(--dur-feedback) var(--ease-out); }
-@media (hover: hover) { .pf-hedge a:hover { color: var(--fg); text-decoration-color: currentColor; } }
-.pf-hedge a:focus-visible { color: var(--fg); text-decoration-color: currentColor; }
-
-/* Table 1.1, folded: a value equal to the one above it is a ditto mark; the words stay for AT, copy and print */
+/* the no-JS record (Table 1.1 until hc4), folded: a value equal to the one above it is a ditto mark; the words stay for
+   AT, copy and print */
 .proof-table .pf-dt > * { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .proof-table .pf-dt::after { content: "\201D" / ""; display: inline-block; font: 400 1.7rem/.5 var(--serif); color: var(--fg-3); transform: translateY(.42em); }
 .proof-table td.num.pf-dt { padding-right: 2.5rem; }
@@ -111,7 +70,7 @@
 @media (min-width: 601px) { .proof-table td.pf-dt:nth-child(4) { padding-left: 5.0625rem; } .proof-table td.pf-dt:nth-child(5) { padding-left: 2.875rem; } }
 .proof-table tbody tr + tr td { padding-block: .6875rem; }
 .proof-table tbody tr:first-child td { padding-block: 1rem; }
-/* the row under the pointer spells itself out (proof.js lights it and its session in Fig. 1.1) */
+/* the row under the pointer spells itself out (the table is the hero's record without scripts, hc4) */
 @media (hover: hover) and (min-width: 601px) {
   .proof-table tbody tr:hover .pf-dt > * { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
   .proof-table tbody tr:hover .pf-dt::after { display: none; }
@@ -123,17 +82,7 @@
 .pf-legend { display: flex; gap: .625rem; align-items: baseline; max-width: 64ch; margin: .75rem 0 0; font: .82rem/1.5 var(--sans); color: var(--fg-3); }
 .pf-legend b { flex: none; font: 400 1.5rem/.6 var(--serif); color: var(--fg-2); transform: translateY(.3em); }
 
-/* the open / filled marks */
-.pf-lk { display: flex; align-items: center; gap: .75rem; margin: 0 0 1rem; font: 400 clamp(1.35rem, 1.8vw, 1.6rem)/1.2 var(--serif); letter-spacing: -.01em; color: var(--fg); }
-/* the chart's own marks: a filled block for what the record shows, an open block for what it does not */
-.pf-lk i { flex: none; width: .6875rem; height: .6875rem; background: var(--fg); }
-.pf-lk--not i { background: transparent; border: var(--hair) solid var(--fg-2); }
-.pf-list { border-top: var(--hair) solid var(--line-strong); }
-.pf-list > li { padding: .875rem 0 .9375rem; border-bottom: var(--hair) solid var(--line); font-size: 1rem; line-height: 1.5; color: var(--fg-2); text-wrap: pretty; }
-.pf-list b { font-weight: 600; color: var(--fg); }
-
-
-/* §02 the paper trail (a1): one fill on the same row of each sheet (C-028) */
+/* §01 the paper trail (a1): one fill on the same row of each sheet (C-028) */
 [data-page="proof"] .pf-trail .pf-doc { --F: calc(106 / 180); padding: 0; }
 [data-page="proof"] .pf-trail .pf-doc::after { content: none; }
 [data-page="proof"] .pf-trail .pf-doc::before { content: none; }
@@ -178,62 +127,12 @@
   [data-page="proof"] .pf-trail .pf-doc.will-reveal:not(.is-in)::before { transform: scaleY(0); }
 }
 
-/* §03: the stack's key (.pf-ck, proofchart.css) names the four blocks; the bar carries no names (hc1), so the first row
+/* §02: the stack's key (.pf-ck, proofchart.css) names the four blocks; the bar carries no names (hc1), so the first row
    needs no room above it ("Eliminated" keeps its own over the second) */
 [data-page="proof"] .cost-row:first-child { padding-top: 0; } /* hc2: the chapter head's gap (--ch-gap) above it, as Home's */
 @container cost (max-width: 860px) { [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: .875rem; } }
 
-/* the hero (a3, a4): the H1 across; the lede (01's 4fr) and the record (Fig. 1.1's 8fr) on one floor; under it the
-   hedge and the way to the documents, beside the axis. hc1: the floor is drawn inside the frame only (the faint line
-   that ran edge to edge cut the lede from its hedge) */
-@media (min-width: 961px) {
-  [data-page="proof"] .page-hero--dark { padding-top: calc(var(--nav-h) + clamp(2.75rem, 4.8vw, 4.5rem)); padding-bottom: clamp(2.75rem, 4.4vw, 4rem); overflow-x: clip; }
-  [data-page="proof"] .page-hero--plate { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: clamp(2rem, 4vw, 4.5rem); row-gap: 0; padding-bottom: 2rem; }
-  [data-page="proof"] .page-hero--plate > .hero-copy { display: contents; }
-  [data-page="proof"] .hero-copy > h1 { grid-column: 1 / -1; grid-row: 1; }
-  [data-page="proof"] .hero-copy > .lede { grid-column: 1; grid-row: 2; align-self: end; padding-bottom: .75rem; }
-  /* the foot keeps the axis's rows: the link on the broker's row */
-  [data-page="proof"] .hero-copy > .pf-foot { grid-column: 1; grid-row: 3; display: grid; grid-template-rows: minmax(calc(4.6 * var(--ax-l)), auto) calc(2.8 * var(--ax-l)); align-content: start; min-height: calc(var(--ax-h) + var(--m)); padding-top: calc(.5 * var(--ax-l)); }
-  [data-page="proof"] .pf-foot > .pf-lc-hedge { margin-top: -.125rem; } /* cap height = the floor label's */
-  [data-page="proof"] .pf-foot > .pf-go { margin-top: 0; align-self: center; justify-self: start; }
-  [data-page="proof"] .pf-record { grid-column: 2; grid-row: 2; align-self: end; display: flex; flex-direction: column; position: relative; margin-top: 2.5rem; }
-  [data-page="proof"] .pf-record > .hero-plate { margin-bottom: calc(-1 * var(--ax-h)); } /* the floor; the axis hangs */
-  [data-page="proof"] .hero-plate--records .hp-cap { position: absolute; left: 0; top: 100%; }
-}
-@media (min-width: 1921px) { [data-page="proof"] .pf-foot > .pf-lc-hedge { margin-top: -.0625rem; } } /* 2560, 3840 */
-@media (max-width: 960px) { [data-page="proof"] .pf-record { grid-column: 1 / -1; } }
-@media (max-width: 600px) { [data-page="proof"] :is(.page-hero, .hero-plate--records) { --m: 1.25rem; } [data-page="proof"] .pf-record { margin-top: .75rem; } } /* a4: the frame clear of the link */
-/* tablets: the record as a spread, the plate and its terms side by side; §01's heading beside its text */
-@media (min-width: 601px) and (max-width: 960px) {
-  [data-page="trust"] .page-hero--plate > .hero-plate--council { max-width: min(100%, calc(52svh * var(--hp-ar))); }
-  [data-page="proof"] .proof-copy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(1.5rem, 4vw, 2.5rem); align-items: start; }
-  [data-page="proof"] .proof-copy > h2 { grid-row: 1 / span 2; }
-  [data-page="proof"] .proof-copy > .body-lg { margin-top: 0; }
-}
-[data-page="proof"] .page-hero h1 { max-width: none; }
-/* hc2: the H1 is the site's one hero step (.display-1, director item 3); a4's full-column step is gone */
-@media (min-width: 601px) { [data-page="proof"] .page-hero .lede { max-width: 44ch; } }
-@media (max-width: 360px) { [data-page="proof"] .page-hero h1 { font-size: 2.6rem; } }
-/* phones: each hero block reserves its lines (web font or metric fallback), so the plate under it holds still */
 @media (max-width: 600px) {
-  [data-page="proof"] .page-hero h1 { min-height: 2lh; }
-  [data-page="proof"] .page-hero .lede { min-height: 2lh; }
-}
-@media (max-width: 359.98px) { [data-page="proof"] .page-hero h1 { min-height: 3lh; } } /* "…confirmed it." (1 Nov): re-measured at 1 px, work/proof/cut/hero_edges.py */
-@media (max-width: 459.98px) { [data-page="proof"] .page-hero .lede { min-height: 3lh; } }
-@media (max-width: 451.98px) { [data-page="proof"] .pf-lc-hedge { min-height: 2lh; } }
-@media (max-width: 359.98px) { [data-page="proof"] .page-hero .lede { min-height: 4lh; } }
-@media (max-width: 344.98px) { [data-page="proof"] .page-hero h1 { min-height: 4lh; } }
-/* §01 Fig. 1.1 (a4): the broker's ticks are drawn once, in the hero; the register counts them */
-[data-page="proof"] .pf, [data-page="proof"] .proof:not(.is-built)::before { --zo: 0px; }
-[data-page="proof"] .proof :is(.y-ok, .pf-o) { display: none; }
-/* the first statement of the result carries its hedge, as on Home's hero (VOICE 5.5) */
-[data-page="proof"] .pf-lc-hedge { margin-top: 1rem; font: 400 .875rem/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); }
-/* a4: the hero's next step (§02) */
-[data-page="proof"] .pf-go { margin-top: clamp(1.25rem, 2vw, 1.75rem); }
-
-@media (max-width: 600px) {
-  .pf-list > li { padding: .75rem 0 .8125rem; font-size: .97rem; }
   /* Table 1.1 on a phone: one record in full, then nine one-line rows: the day, the regime, and three ditto marks */
   [data-page="proof"] .proof-table > tbody > tr { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: .25rem .75rem; padding: .625rem 0 .5625rem; }
   [data-page="proof"] .proof-table > tbody > tr:first-child { padding: .875rem 0 1rem; row-gap: .625rem; }
@@ -260,6 +159,7 @@
 /* ======================= Trust (trust.html) ======================= */
 
 /* the hero: the plate writes the H1 once at first paint (CSS only, ~2.4 s, then still */
+@media (min-width: 601px) and (max-width: 960px) { [data-page="trust"] .page-hero--plate > .hero-plate--council { max-width: min(100%, calc(52svh * var(--hp-ar))); } }
 [data-page="trust"] .tr-go { margin-top: clamp(1.5rem, 2.6vw, 2.25rem); }
 @media (min-width: 601px) { [data-page="trust"] .page-hero .lede { max-width: 44ch; } } /* four even lines */
 /* phones: the lede reserves its lines, so the plate under it holds still when Inter lands late (as on Proof) */
@@ -314,8 +214,6 @@
 @media (scripting: none) { .tr-lt .lt-state, .tr-lt .lt-foot > span:first-child { display: none; } }
 .tr-lt [data-lt-say] { text-transform: none; letter-spacing: 0; }
 .tr-lt .lt-btn svg path { vector-effect: non-scaling-stroke; stroke-width: var(--icon-stroke); } /* a4: whole device px */
-.tr-lt .lt-btn--restore { border-color: rgba(217, 103, 93, .6); color: var(--fg); }
-@media (hover: hover) { .tr-lt .lt-btn--restore:hover { border-color: var(--reject); background: var(--reject); color: var(--ink); } }
 /* a2: the controls in the site's button voice */
 .tr-lt :is([data-lt-edit], [data-lt-verify], [data-lt-restore]) { background-image: linear-gradient(var(--signal), var(--signal)); background-repeat: no-repeat; background-size: 0 calc(2 * var(--hair)); background-position: 0 100%; transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), background-color var(--dur-feedback) var(--ease-out), background-size var(--dur-move) var(--ease); }
 .tr-lt [data-lt-edit], .tr-lt.is-edited [data-lt-verify], .tr-lt.is-broken:not(.is-edited) [data-lt-restore] { border-color: var(--paper); background-color: var(--paper); color: var(--ink); }
@@ -440,11 +338,12 @@
 @media (max-width: 600px) { .tr-cud .tr-cu-xs { display: none; } }
 /* hc2: the agent's one scoped line strokes into the account as the plate arrives (site.css [data-draw]); the rest holds */
 
-/* §04 the refusals: three lines, each led by a short reject-red rule, the stop the plates draw */
+/* §04 plain language: three lines, each led by a short graphite hairline (hc4, HC4 item 5: policy statements, not
+   rejected records; red stays for rejections) */
 .tr-no { row-gap: 1.75rem; }
 .tr-no-list { margin: 0; padding: 0; list-style: none; border-top: var(--hair) solid var(--line-strong); }
 .tr-no-list > li { display: flex; align-items: baseline; gap: .875rem; padding: 1.125rem 0 1.1875rem; border-bottom: var(--hair) solid var(--line); font: 500 var(--fs-body)/1.45 var(--sans); color: var(--fg); text-wrap: pretty; } /* the refusals at the size they had (running text, bold lead): set, not shouted */
-.tr-no-list > li > i { flex: none; width: .875rem; height: 0; border-top: .125rem solid var(--reject); transform: translateY(-.34em); }
+.tr-no-list > li > i { flex: none; width: .875rem; height: 0; border-top: var(--hair) solid var(--fg-3); transform: translateY(-.34em); }
 @media (max-width: 960px) { .tr-no > * { grid-column: 1 / -1; } }
 
 /* phones: the ledger in one column; the plates short rows */

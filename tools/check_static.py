@@ -23,7 +23,7 @@
   (csp_markup); the footer's columns, Sentiment desk link and verbatim disclosures in #disclosures on every page
   (footer); the skip link first and one main#main on every page, data-page as SYSTEM.md names it (landmarks); the
   shared head lines, theme-color by opening, canonical = og:url = the page's own address, robots and manifest (heads);
-  the CEO's fixed lines, no "$22 trillion", Proof ends at §03 and Trust at §04 (decisions).
+  the CEO's fixed lines, no "$22 trillion", Proof ends at its cost section (§03 at most) and Trust at §04 (decisions).
     python tools/check_static.py [--only=count_not_on_proof,regime_split,...]   (--only limits the round-1 guards)
 """
 import sys as _sys, os as _os
@@ -387,7 +387,8 @@ def check_blog_placeholder():
 
 def check_proof_plate():
     """The Proof page's hero plate draws the record: one [data-plate-rec] per session and one [data-plate-tick] per
-    broker-confirmed session in #oxa-sessions (PG3)."""
+    broker-confirmed session in #oxa-sessions (PG3). hc4: the hero's record is the no-JS table under the chart (its Session
+    cells carry data-plate-rec, its Verification cells data-plate-tick); the chart is drawn from the same record."""
     if "evidence.html" not in records: fail("evidence.html", "proof_plate: no #oxa-sessions record"); return
     c = counts_of(records["evidence.html"][0])
     s = records["evidence.html"][1]
@@ -882,8 +883,8 @@ def check_decisions():
     """The CEO's fixed lines and page-length decisions (CLAUDE.md content decisions; EVOLVE: 'The CEO's lines stay word for
     word'), which no check pinned: Home's h1 'Infrastructure for agentic lifecycles.', its sub-line, 'An AI agentic
     company', 'Not tasks. Lifecycles.' and 'Trillions' (Lifecycles says 'Trillions' too); Company's h1 'Intelligence, put to
-    work.' with 'put to work.' as its italic; never '$22 trillion' or '$22T' anywhere; Proof ends at its §03 and Trust at
-    its §04; no Investors page."""
+    work.' with 'put to work.' as its italic; never '$22 trillion' or '$22T' anywhere; Proof ends at its cost section (§03 at most)
+    and Trust at its §04; no Investors page."""
     vis = {rel: plain(visible((ROOT / rel).read_text(encoding="utf-8"))).replace("’", "'") for rel in ("index.html", "company.html", "lifecycles.html")}
     for line in ("Infrastructure for agentic lifecycles.", SUBLINE, "An AI agentic company", "Not tasks. Lifecycles.", "Trillions"):
         if line not in vis["index.html"]: fail("index.html", f"decisions: the CEO's line {line!r} is not on the page word for word")
@@ -896,7 +897,17 @@ def check_decisions():
     for rel in pages:
         t = visible((ROOT / rel).read_text(encoding="utf-8"))
         if re.search(r"\$\s?22\s?(?:T\b|tn\b|trillion)", t, re.I): fail(rel, "decisions: '$22 trillion' / '$22T' (the CEO's word is 'Trillions')")
-    for rel, last in (("evidence.html", 3), ("trust.html", 4)):
+    # hc4 (proof, HC4 director item 1): Proof's §01 moved into its hero, so its sections are 01 Verification and 02 Cost; the
+    # CEO's decision ("Proof ends at 03: no economics slider / TAM") is that nothing follows the cost index, so Proof's
+    # last numbered section is #economics (and no §03 or later comes after it); Trust still ends at its §04 (no Risk factors)
+    ev = (ROOT / "evidence.html").read_text(encoding="utf-8")
+    secs = re.findall(r'<section\b[^>]*>.*?</section>', ev.split('<main', 1)[-1].split('</main>', 1)[0], re.S)
+    numbered = [x for x in secs if re.search(r'<span class="idx">\d+</span>', x)]
+    if not numbered or not re.match(r'<section\b[^>]*\sid="economics"', numbered[-1]):
+        fail("evidence.html", "decisions: the page ends at its cost section (#economics; CEO: no economics slider / TAM after it); its last numbered section is", re.search(r'\sid="([^"]*)"', numbered[-1])[1] if numbered else None)
+    idx = [int(x) for x in re.findall(r'<span class="idx">(\d+)</span>', ev)]
+    if not idx or idx != list(range(1, len(idx) + 1)) or max(idx) > 3: fail("evidence.html", f"decisions: the sections run 01.. without a gap and never past §03 (CEO); they read {idx}")
+    for rel, last in (("trust.html", 4),):
         idx = [int(x) for x in re.findall(r'<span class="idx">(\d+)</span>', (ROOT / rel).read_text(encoding="utf-8"))]
         if not idx or max(idx) != last: fail(rel, f"decisions: the page ends at its §{last:02d} (CEO); its sections run to {max(idx) if idx else 'none'}")
     if any(p for p in pages if re.search(r"(^|/)investors?\.html$", p)): fail("decisions: an Investors page exists (no Investors page, CEO)")

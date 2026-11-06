@@ -73,8 +73,9 @@
 @media (max-width: 600px) { [data-page="company"] .timeline { grid-template-columns: 1fr; row-gap: 1.625rem; } [data-page="company"] .timeline .step { padding-top: 1.25rem; } [data-page="company"] .timeline .k { margin-bottom: .5rem; } [data-page="company"] .timeline h3 { max-width: none; } }
 
 /* ---------------------------------------------------------------- Company §02: the register */
-/* one row per person: portrait, name and kicker, the line, the bio behind "Bio" (opens in its row); advisors the same,
-   smaller; one portrait treatment (build_team.py), the green ring on hover and focus */
+/* one entry per person: portrait, name and kicker, the line, the bio behind "Bio" (opens in place); advisors the same,
+   smaller, without the line; from 1200 px both lists are two ruled columns (hc4, below); one portrait treatment
+   (build_team.py), the green ring on hover and focus */
 [data-page="company"] .team-head { margin-bottom: 0; }
 [data-page="company"] .crew-sub { display: block; border-top: 0; padding-top: 0; margin: clamp(3.5rem, 7vw, 6rem) 0 1.125rem; }
 [data-page="company"] .crew-sub--team { margin-top: clamp(3rem, 6vw, 5rem); }
@@ -133,14 +134,21 @@
   [data-page="company"] .crew > li:hover .ph { box-shadow: inset 0 0 0 var(--hair) var(--line), 0 0 0 .25rem var(--bg), 0 0 0 .3125rem var(--accent); }
   [data-page="company"] .crew > li:hover h3 { text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .375rem; text-decoration-color: var(--line-strong); }
 }
-@media screen and (min-width: 1025px) { /* portrait | name | line, bio and links on the sentence's column; name and line share a baseline */
-  [data-page="company"] .crew > li { --g: clamp(1rem, 2.2vw, 2rem); grid-template-columns: 6rem minmax(0, 1fr) calc((100% - 11 * var(--g)) / 12 * 5 + 4 * var(--g)); column-gap: var(--g); }
+/* hc4 (director item 6): a person reads as one unit at every width (the line sat ~450 px from its name at 1440, ~1,500
+   at 3840). 1025-1199: portrait | name block (20rem) | the line, starting right after the name; name and line share a
+   baseline. From 1200 the team takes the advisors' form (a4, design jury): two ruled columns on the grid's halves,
+   reading down (--rows from build_team.py, so the columns follow the roster), each person portrait | name and kicker over
+   the line, Bio and links; the team keeps its 6rem portrait and its line. The line's measure is 60ch of the small text
+   (the list's own font size, so ch counts its characters); the rules run the content width, as every register here */
+@media screen and (min-width: 1025px) {
+  [data-page="company"] .crew { font-size: var(--fs-small); }
+  [data-page="company"] .crew > li { grid-template-columns: 6rem 20rem minmax(0, 1fr); column-gap: clamp(1rem, 2.2vw, 2rem); }
+  [data-page="company"] .crew .what { max-width: 60ch; }
 }
-/* a4 (design jury): from 1200 px the advisors are two ruled columns on the grid's halves, reading down (--rows from
-   build_team.py); each row is portrait | name and kicker over Bio and links. Rows are shared, so the rules line up */
 @media screen and (min-width: 1200px) {
-  [data-page="company"] .crew--advisors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 5), auto); grid-auto-flow: column; column-gap: clamp(1rem, 2.2vw, 2rem); }
-  [data-page="company"] .crew--advisors > li { grid-template-columns: 4rem minmax(0, 1fr); grid-template-areas: "ph who" "ph what"; align-content: start; column-gap: 1.5rem; row-gap: .625rem; } /* an open bio grows the row: its neighbour keeps its lines at the top */
+  [data-page="company"] .crew { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 5), auto); grid-auto-flow: column; column-gap: clamp(1rem, 2.2vw, 2rem); }
+  [data-page="company"] .crew > li { grid-template-columns: 6rem minmax(0, 1fr); grid-template-areas: "ph who" "ph what"; align-content: start; column-gap: 1.75rem; row-gap: .75rem; } /* an open bio grows the row: its neighbour keeps its lines at the top */
+  [data-page="company"] .crew--advisors > li { grid-template-columns: 4rem minmax(0, 1fr); column-gap: 1.5rem; row-gap: .625rem; }
 }
 @media (max-width: 1024px) and (min-width: 961px) { [data-page="company"] .crew .ph { width: 5rem; height: 5rem; } [data-page="company"] .crew--advisors .ph { width: 4rem; height: 4rem; } [data-page="company"] .crew > li { grid-template-columns: 5rem minmax(0, 3fr) minmax(0, 5fr); } }
 /* tablets and phones: portrait | name, kicker, then the line, Bio and the links */

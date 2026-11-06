@@ -252,29 +252,30 @@ body[data-page="home"] #research { --cis: 35.53125rem; } body[data-page="home"] 
 }
 /* 761-960: the 820 heights (768-834 within 1rem; hc2) */
 @media (min-width: 761px) and (max-width: 960px) {
-  body[data-page="home"] #lifecycles { --cis: 32.921875rem; } body[data-page="home"] #stack { --cis: 91.640625rem; } body[data-page="home"] #lc01 { --cis: 54.25rem; }
+  body[data-page="home"] #lifecycles { --cis: 32.65234375rem; } body[data-page="home"] #stack { --cis: 91.640625rem; } body[data-page="home"] #lc01 { --cis: 54.25rem; }
   body[data-page="home"] #proof { --cis: 53.515625rem; } body[data-page="home"] #economics { --cis: 32.921875rem; } body[data-page="home"] #governance { --cis: 57.046875rem; }
   body[data-page="home"] #research { --cis: 30.296875rem; } body[data-page="home"] .cta-band { --cis: 7.03125rem; }
 }
 @media (min-width: 961px) {
-  body[data-page="home"] #lifecycles { --cis: 43.015625rem; } body[data-page="home"] #stack { --cis: 63rem; } body[data-page="home"] #lc01 { --cis: 66.375rem; }
+  body[data-page="home"] #lifecycles { --cis: 42.2109375rem; } body[data-page="home"] #stack { --cis: 63rem; } body[data-page="home"] #lc01 { --cis: 66.375rem; }
   body[data-page="home"] #proof { --cis: 33.3125rem; } body[data-page="home"] #economics { --cis: 25.875rem; } body[data-page="home"] #governance { --cis: 42.859375rem; }
   body[data-page="home"] #research { --cis: 36.890625rem; } body[data-page="home"] .cta-band { --cis: 10.0625rem; }
 }
-/* small desktops: 961-1099 the 1024 heights, 1100-1359 the 1280 heights (the spreads start at 1100; re-measured hc2) */
+/* small desktops: 961-1099 the 1024 heights, 1100-1359 the 1280 heights (the spreads start at 1100; re-measured hc2;
+   #lifecycles from 761 px re-measured hc4, after its titles took the --fs-heading step) */
 @media (min-width: 961px) and (max-width: 1099.98px) {
-  body[data-page="home"] #lifecycles { --cis: 35.328125rem; } body[data-page="home"] #stack { --cis: 59.5rem; } body[data-page="home"] #lc01 { --cis: 59.140625rem; }
+  body[data-page="home"] #lifecycles { --cis: 35.05859375rem; } body[data-page="home"] #stack { --cis: 59.5rem; } body[data-page="home"] #lc01 { --cis: 59.140625rem; }
   body[data-page="home"] #proof { --cis: 29.03125rem; } body[data-page="home"] #economics { --cis: 33.015625rem; } body[data-page="home"] #governance { --cis: 41.953125rem; }
   body[data-page="home"] #research { --cis: 33.765625rem; } body[data-page="home"] .cta-band { --cis: 7.984375rem; }
 }
 @media (min-width: 1100px) and (max-width: 1359.98px) {
-  body[data-page="home"] #lifecycles { --cis: 39.890625rem; } body[data-page="home"] #stack { --cis: 61.703125rem; } body[data-page="home"] #lc01 { --cis: 61.125rem; }
+  body[data-page="home"] #lifecycles { --cis: 39.26171875rem; } body[data-page="home"] #stack { --cis: 61.703125rem; } body[data-page="home"] #lc01 { --cis: 61.125rem; }
   body[data-page="home"] #proof { --cis: 31.046875rem; } body[data-page="home"] #economics { --cis: 25.171875rem; } body[data-page="home"] #governance { --cis: 42.515625rem; }
   body[data-page="home"] #research { --cis: 34.59375rem; } body[data-page="home"] .cta-band { --cis: 9.4375rem; }
 }
 /* from 1680 (rem above 1920, so 3840 is 1920 doubled): the 1920 heights (re-measured hc2) */
 @media (min-width: 1680px) {
-  body[data-page="home"] #lifecycles { --cis: 41.53125rem; } body[data-page="home"] #stack { --cis: 63.484375rem; } body[data-page="home"] #lc01 { --cis: 68.859375rem; }
+  body[data-page="home"] #lifecycles { --cis: 40.03515625rem; } body[data-page="home"] #stack { --cis: 63.484375rem; } body[data-page="home"] #lc01 { --cis: 68.859375rem; }
   body[data-page="home"] #proof { --cis: 33.53125rem; } body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 43.046875rem; }
   body[data-page="home"] #research { --cis: 39.609375rem; }
 }

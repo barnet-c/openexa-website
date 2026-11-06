@@ -217,29 +217,13 @@
 
 /* Platform §03: the swarm's four facts as one compact static row */
 .sw-legend .card { display: flex; flex-direction: column; padding-top: clamp(1.5rem, 2.4vw, 2rem); }
-.sw-legend .card > p:not(.sw-at) { margin-bottom: 1.375rem; }
-.sw-legend .card .n { gap: .75rem; } /* narrow cards: the code never splits at its hyphen; the role name wraps, flush right */
-.sw-legend .card .n > span:first-child { flex: none; }
-.sw-legend .card .n > span:last-child { text-align: right; }
 .sw-legend .card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: calc(2 * var(--hair)); background: var(--sw-tint, var(--line-strong)); }
 .sw-role--1 { --sw-tint: rgba(245, 242, 236, .72); }
 .sw-role--2 { --sw-tint: var(--signal-bright); }
 .sw-role--3 { --sw-tint: repeating-linear-gradient(90deg, var(--signal-bright) 0 .875rem, transparent .875rem 1.25rem); }
 .sw-role--4 { --sw-tint: linear-gradient(90deg, var(--signal-bright), rgba(245, 242, 236, .86)); }
 /* each card's legend line is its footer: on one hairline across the row (pushed to the card's foot) */
-.sw-legend .sw-at { display: flex; align-items: flex-start; gap: .625rem; margin-top: auto; padding-top: .875rem; border-top: var(--hair) solid var(--line); font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
-.sw-at b { display: block; margin-top: calc(3 * var(--hair)); font-weight: 500; color: var(--fg-2); }
-.sw-at b > span { white-space: nowrap; }
-.sw-at i { position: relative; flex: none; width: 1.625rem; height: .625rem; margin-top: calc(2 * var(--hair)); }
-.sw-at i::before, .sw-at i::after { content: ""; position: absolute; top: 50%; box-sizing: border-box; }
-.sw-role--1 .sw-at i::before { left: calc(2 * var(--hair)); width: .5rem; height: .5rem; margin-top: -.25rem; border-radius: 50%; background: radial-gradient(circle at 35% 35%, var(--paper), rgba(245, 242, 236, .45)); }
-.sw-role--1 .sw-at i::after { left: .875rem; width: .25rem; height: .25rem; margin-top: calc(-2 * var(--hair)); border-radius: 50%; background: rgba(245, 242, 236, .5); }
-.sw-role--2 .sw-at i::before { left: var(--hair); width: .625rem; height: .625rem; margin-top: -.3125rem; border: .09375rem solid var(--signal-bright); border-radius: 50%; }
-.sw-role--3 .sw-at i::before { left: 0; right: 0; height: var(--hair); background: rgba(245, 242, 236, .4); }
-.sw-role--3 .sw-at i::after { left: .5rem; width: .625rem; height: .625rem; margin-top: -.3125rem; border: .09375rem solid var(--signal-bright); border-radius: 50%; background: #0E1512; }
-.sw-role--4 .sw-at i::before { left: var(--hair); width: .5rem; height: .5rem; margin-top: -.25rem; border-radius: .09375rem; background: var(--signal-bright); }
-.sw-role--4 .sw-at i::after { left: .75rem; width: .875rem; height: .375rem; margin-top: calc(-3 * var(--hair)); border-radius: .0625rem; background: rgba(245, 242, 236, .92); }
-@media (min-width: 901px) and (max-width: 1099px) { .sw-legend .sw-at { min-height: calc(4.2em + 1.125rem); } } /* four narrow cards: A-04's gates may take two lines */
+/* the role's title (hc4: platform.css's #swarm .sw-legend .sw-at; the old right-hand cell's glyph, numeral and gate word went) */
 @media (max-width: 900px) { .sw-legend.card-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .sw-legend.card-grid--4 { grid-template-columns: 1fr; } }
 
@@ -254,8 +238,6 @@
 .sw-on[data-sw-role] .sw-gates li.is-role b, .sw-on[data-sw-role] .sw-gates li.is-role > span { color: var(--signal-bright); }
 .sw-at-b { display: flex; align-items: flex-start; gap: .625rem; width: 100%; margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; text-align: left; cursor: pointer; }
 .sw-at-b:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .375rem; }
-.sw-at-b[aria-pressed="true"] b, .sw-at-b:focus-visible b { color: var(--signal-bright); }
-@media (hover: hover) { .sw-role:hover .sw-at b { color: var(--paper); } .sw-role:hover .sw-at-b[aria-pressed="true"] b { color: var(--signal-bright); } }
 @media (pointer: coarse) { .sw-at-b { min-height: 2.75rem; } }
 @media (forced-colors: active) { .sw-at-b:focus-visible { outline-color: Highlight; } }
 @media (scripting: none) { .swarm-live :is(.sw-live, .sw-follow, .sw-key), .swarm-live .swarm-bar { display: none; } } /* no script: the static six-gate diagram, no dead controls */

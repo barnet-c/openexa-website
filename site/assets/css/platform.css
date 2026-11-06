@@ -2,14 +2,14 @@
 @media (scripting: none) { body[data-page="platform"] .js-only, body[data-page="lifecycles"] .js-only { display: none; } }
 
 /* hc1 (director item 7): a plate's annotations speak the caption register (Inter, sentence case, graphite, --fs-small;
-   .hp-lab is site.css's since integrate hc1); only its numbers stay mono (--fs-label). Mono caps stay with live data, in the instruments. The two SVG drawings
+   .hp-lab is site.css's since integrate hc1); only its numbers stay mono (--fs-label), except a gate's number beside its name (hc4). Mono caps stay with live data, in the instruments. The two SVG drawings
    (Platform §03, Lifecycles §04) scale with their 1200-unit viewBox: --pu is the caption step in their units at the
    container's widths (0.92 vw to 1313 px, 1208 px to 1440, then to 93 rem at 1920; within 0.3 px of --fs-small) */
 :is(.pipe-svg, .orbit-svg) { --pu: max(11.29px, 31.03px - 1.304vw, min(13.91px, 21.77px - .5458vw)); }
 .pipe-svg text.pp-l, .orbit-svg .orb-s { font-family: var(--sans); font-weight: 400; letter-spacing: 0; }
 .pipe-svg text.pp-l { font-size: var(--pu); }
 .pipe-svg text.pp-l:not(.tg) { fill: var(--fg-2); }
-.pipe-svg .pp-k { font-family: var(--mono); font-size: .786em; letter-spacing: .04em; fill: var(--fg-3); }
+.pipe-svg .pp-k { font-variant-numeric: tabular-nums; fill: var(--fg-3); } /* hc4: a gate's number speaks with its name, as the lane's */
 @media (min-width: 961px) { body[data-page="lifecycles"] .orbit-svg { font-size: var(--pu); } }
 /* tablets (601-960 px; site.css crops the drawing to its rails there): the gate names sit under it, each starting at
    its gate's block as on the wide plate (14.67 %, 43.17 %; the third ends at the right). They are the phone list's own
@@ -26,7 +26,6 @@
 }
 /* the same three gates on phones (the plate's list): the same register */
 .lane-v--pipe :is(.lk, .lk-who), .lane-v.lane-v--pipe > .lv-bound, .lane-v.lane-v--pipe > .lv-rec > span { font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; }
-.lane-v--pipe .lk-n { font: 400 var(--fs-label)/1.45 var(--mono); letter-spacing: .04em; }
 
 /* PLATFORM */
 
@@ -147,17 +146,6 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 
 @media print { body[data-page="platform"] .js-only, body[data-page="lifecycles"] .js-only { display: none !important; } body[data-page="lifecycles"] .desk-nojs { display: block !important; } }
 
-@media (max-width: 520px) {
-  #swarm .sw-legend > .card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: .75rem; align-items: baseline; padding: .9375rem 0 .75rem; }
-  #swarm .sw-legend .card .n { display: contents; }
-  #swarm .sw-legend .card .n > span:first-child { grid-column: 1; grid-row: 1; }
-  #swarm .sw-legend .card .n > span:last-child { grid-column: 3; grid-row: 1; }
-  #swarm .sw-legend .card h3 { grid-column: 2; grid-row: 1; margin: 0; }
-  #swarm .sw-legend .card > p:not(.sw-at) { grid-column: 1 / -1; margin: .375rem 0 .625rem; font-size: .94rem; line-height: 1.5; }
-  #swarm .sw-legend .sw-at { grid-column: 1 / -1; padding-top: .5rem; }
-  #swarm .sw-at b { display: inline; margin: 0 0 0 .5em; }
-}
-
 @media (min-width: 601px) { #modes td[data-th="Latency"] { white-space: nowrap; } }
 
 @media (max-width: 600px) { #mcp .dpl-plate { max-width: 17.5rem; } }
@@ -210,15 +198,24 @@ body[data-page="lifecycles"] .lcp .orb-next { opacity: .8; }
   #test .card h3 { margin-bottom: .375rem; }
 }
 
-.lc-mech { max-width: 25rem; margin: -.25rem 0 1.625rem; }
 @media (min-width: 961px) { #lc01 .lc-row > .lc-how { grid-column: 1 / span 5; } #lc01 .lc-row > :last-child { grid-column: 7 / -1; } }
+/* hc4: the basket is a plate like the heroes': open paper inside the registration marks (site.css's, the same lengths;
+   integrate hc4: site.css draws them for .lc-mech too, this file sets only their inset), "Schematic" under it. It was the
+   one drawing on the site in a filled, bordered card */
+#lc01 .lc-mech { max-width: 30rem; margin: 0; }
+#lc01 .lc-mech .hp-art { margin: 1.25rem 1rem .75rem; }
 .lc-mech .hp-lab small { margin-top: var(--hair); }
-@media (min-width: 961px) { #lc01 .lc-how .card { padding-bottom: clamp(1.625rem, 2.6vw, 2.25rem); } }
+#lc01 .lc-mech .hp-reg { inset: -1.25rem -1rem -.75rem; }
+@media (max-width: 600px) { #lc01 .lc-mech .hp-art { margin: .75rem .5rem; } #lc01 .lc-mech .hp-reg { inset: -.75rem -.5rem; } }
+/* the plate travels beside the stations until 06 Settle (site.css's rule for the card it was) */
+@media (min-width: 1200px) and (min-height: 600px), (min-width: 961px) and (min-height: 680px) {
+  #lc01 .lc-how > .lc-mech { position: sticky; top: calc(var(--nav-h) + 2rem); }
+}
 
 @media (min-width: 601px) and (max-width: 960px) {
   #lc01 .lc-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: clamp(1.5rem, 4vw, 2.5rem); }
   #lc01 .lc-row > * { grid-column: auto; }
-  #lc01 .lc-how > .card { position: sticky; top: calc(var(--nav-h) + 1.25rem); }
+  #lc01 .lc-how > .lc-mech { position: sticky; top: calc(var(--nav-h) + 1.25rem); }
 }
 
 .desk-head .model-motion { margin-left: auto; }
@@ -289,7 +286,7 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 @media (max-width: 374.98px) { body[data-page="platform"] .modes-head h2 .ph:has(> .ws-b) { display: inline; width: auto; } body[data-page="platform"] .modes-head h2 .ws-a { white-space: nowrap; } }
 @media (max-width: 329.98px) { body[data-page="platform"] .modes-head h2 { letter-spacing: -.032em; } }
 
-:is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(dd, .list-rule p, .layer p, .sw-role p) { text-wrap: pretty; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(dd, .list-rule p, .layer p) { text-wrap: pretty; }
 :is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(.stats .d, .lb-t small, .mkt-col h3, .checks li, .list-hair li) { text-wrap: balance; }
 body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
@@ -332,7 +329,7 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
   #test .card .lc-map svg { width: 1.625rem; }
 }
 
-@media (min-width: 601px) and (max-width: 960px) and (max-height: 719.98px) { #lc01 .lc-how > .card { position: static; } }
+@media (min-width: 601px) and (max-width: 960px) and (max-height: 719.98px) { #lc01 .lc-how > .lc-mech { position: static; } }
 
 #swarm .sw-legend { border: 0; }
 #swarm .sw-legend > .card { border-bottom: 0; background: none; }
@@ -397,7 +394,12 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 #swarm .sw-role .h4 { margin: 0; }
 #swarm .sw-role .sw-who { display: block; margin-top: .375rem; font: 400 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; color: var(--fg-3); }
 #swarm .sw-legend .card { padding-top: clamp(1.125rem, 1.8vw, 1.5rem); }
-#swarm .sw-legend .sw-at { margin-top: 1rem; }
+/* hc4: a role is its title and its agents, nothing at the right (the lab below names the gates). The title is the
+   .sw-at that swarm.js wraps in its role button: pointing at or pressing a role still lights its gate in the lab */
+#swarm .sw-legend .sw-at { display: block; min-height: 0; margin: 0; padding: 0; border: 0; font: 400 var(--fs-heading)/1.2 var(--serif); letter-spacing: -0.01em; text-transform: none; color: var(--fg); }
+#swarm .sw-legend .sw-at-b { display: block; }
+#swarm .sw-at-b[aria-pressed="true"] .sw-who, #swarm .sw-at-b:focus-visible .sw-who { color: var(--signal-bright); }
+@media (hover: hover) { #swarm .sw-role:hover .sw-who { color: var(--fg-2); } #swarm .sw-role:hover .sw-at-b[aria-pressed="true"] .sw-who { color: var(--signal-bright); } }
 
 @media (max-width: 520px) {
   #swarm .sw-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -405,8 +407,6 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
   #swarm .sw-legend > .card + .card { border-top: 0; }
   #swarm .sw-legend > .card:nth-child(n + 3) { border-top: var(--hair) solid var(--line); }
   #swarm .sw-legend > .card:nth-child(even) { padding-left: .75rem; padding-right: 0; }
-  #swarm .sw-legend .sw-at { margin-top: .75rem; padding-top: .5rem; }
-  #swarm .sw-at b { display: block; margin: .1875rem 0 0; }
 }
 
 #test .card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); border: 0; border-top: var(--hair) solid var(--line-strong); }
@@ -430,9 +430,6 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 }
 @media (max-width: 360px) { #test .card .lc-map svg { width: 2.5rem; margin-right: .5rem; } }
 
-#lc01 .lc-how .card { padding: clamp(1.375rem, 2.4vw, 2.125rem); }
-#lc01 .lc-mech { max-width: 27.5rem; margin: 0 auto; }
-@media (min-width: 961px) { #lc01 .lc-how .card { padding-bottom: clamp(1.375rem, 2.4vw, 2.125rem); } }
 #lc01 .lane-v--steps > li { min-height: 4rem; padding-bottom: .875rem; }
 
 @media (min-width: 601px) {
@@ -464,6 +461,8 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 #lc01 .lane-v--steps > li[data-g="6"]::before { opacity: .62; } /* hc3: the last station's spine is the record line */
 #lc01 .lane-v--steps > .lv-bound { font: 400 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
 #lc01 .lane-v--steps > .lv-bound span:first-child { color: var(--signal-ink, #186B4F); }
+/* hc4: the gate numbers sit at the caption step (Inter, tabular, --fg-3), as Platform §03's "05 · Execute": site.css's
+   .lane-v--steps rule since integrate hc4 */
 @media (min-width: 961px) { #lc01 .lane-v--steps { --s: 1.5; } }
 
 #desk .desk { border-color: var(--line-strong); }
@@ -477,9 +476,6 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
 #lc01 .lc-how > .ch-head { margin-bottom: clamp(1.75rem, 3.2vw, 3rem); }
 #lc01 .lc-how .ch-title { max-width: 12ch; }
-
-
-#swarm .sw-legend .sw-at, #swarm .sw-legend .sw-at :is(b, .sw-at-b) { font: 500 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; text-transform: none; }
 
 #architecture .arch-bound.has-line { justify-content: flex-start; font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; }
 #architecture .arch-bound .ab-line { position: relative; z-index: 1; flex: 1 1 auto; margin: 0; padding: .1875rem 0; background: var(--a-ground); color: var(--fg-2); text-wrap: balance; }
@@ -535,14 +531,9 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
   #swarm > .container > * { grid-column: 1 / -1; }
   #swarm > .container > .ch-head { grid-column: 1 / span 6; align-self: end; }
   #swarm .sw-legend { grid-column: 8 / -1; grid-template-columns: minmax(0, 1fr); align-self: end; margin-bottom: var(--ch-gap); border-bottom: var(--hair) solid var(--line); }
-  #swarm .sw-legend > .card.sw-role { display: flex; flex-flow: row nowrap; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .95rem 0 .9rem; border-right: 0; }
-  #swarm .sw-legend .sw-role .h4 { display: flex; align-items: baseline; gap: 1rem; }
-  #swarm .sw-legend .sw-role .h4 { min-width: 0; }
+  #swarm .sw-legend > .card.sw-role { display: block; padding: .95rem 0 .9rem; border-right: 0; }
+  #swarm .sw-legend .sw-role :is(.h4, .sw-at-b) { display: flex; align-items: baseline; gap: 1rem; }
   #swarm .sw-legend .sw-role .sw-who { display: inline; margin: 0; }
-
-  #swarm .sw-legend .sw-at { margin: 0; flex: none; align-self: baseline; padding-top: 0; border-top: 0; align-items: baseline; }
-  #swarm .sw-legend .sw-at-b { align-items: baseline; }
-  #swarm .sw-legend .sw-at b { display: inline; margin: 0; }
 
   #pipeline .ch-head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap, clamp(1rem, 2.2vw, 2rem)); align-items: end; }
   #pipeline .ch-head > .ch-title { grid-column: 1 / span 7; max-width: none; }
@@ -604,19 +595,7 @@ body[data-page="lifecycles"] main > .cta-band { --cis: 9.625rem; }
 }
 
 
-#swarm .sw-legend .sw-at i { width: 1.9em; height: .75em; margin-top: .3em; }
-#swarm .sw-legend .sw-at-b > i { align-self: center; margin-top: 0; }
-#swarm .sw-role--1 .sw-at i::before { left: .15em; width: .6em; height: .6em; margin-top: -.3em; }
-#swarm .sw-role--1 .sw-at i::after { left: 1.05em; width: .3em; height: .3em; margin-top: -.15em; }
-#swarm .sw-role--2 .sw-at i::before { left: .07em; width: .75em; height: .75em; margin-top: -.375em; border-width: calc(1px * var(--stroke-2)); }
-#swarm .sw-role--3 .sw-at i::before { height: calc(1px * var(--stroke)); }
-#swarm .sw-role--3 .sw-at i::after { left: .6em; width: .75em; height: .75em; margin-top: -.375em; border-width: calc(1px * var(--stroke-2)); }
-#swarm .sw-role--4 .sw-at i::before { left: .07em; width: .6em; height: .6em; margin-top: -.3em; }
-#swarm .sw-role--4 .sw-at i::after { left: .9em; width: 1.05em; height: .45em; margin-top: -.225em; }
-
-/* award a3 */
 /* the lab's name, its 320 px gate tracking and the ledger's halo: swarm.css (integrate a3) */
-#swarm .sw-at .sw-n { margin-right: .5em; font: 400 var(--fs-label)/1 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
 
 @media (min-width: 1280px) and (min-height: 720px) {
   #lc01 .lc-row { align-items: start; }

@@ -1,10 +1,12 @@
-/* OpenEXA — proof: the Lifecycle 01 performance report (home §04 · Proof §01), drawn from the one record
+/* OpenEXA — proof: the Lifecycle 01 performance report (home §04 · the Proof hero), drawn from the one record
    <script type="application/json" id="oxa-sessions"> { lifecycle, unit, floor, sessions: [{ day, regime, value, confirmation, status }] }.
-   [data-proof-chart] the chart (replaces its fallback; un-hides a [data-proof-fig]) · [data-proof-table] rows rebuilt from
-   the record · [data-proof="k"] a count (total above premium discount confirmed settled floor, or "regimes"), data-proof-as
-   "words"/"Words" spells it; written once, final. The static HTML says the same without JS. Nothing is invented: ">10" is
-   drawn as above the floor, value not published; a missing field reads "Not stated". Lanes: hover, focus or tap for a
-   session's record; arrows, Home/End, Enter, Esc. One entrance, then still; none under reduced motion. Plain DOM. */
+   [data-proof-chart] the chart (replaces its fallback; un-hides a [data-proof-fig]) · [data-proof="k"] a count (total above
+   premium discount confirmed settled floor, or "regimes"), data-proof-as "words"/"Words" spells it; written once, final.
+   The static HTML says the same without JS (Proof's no-JS record is a table in a <noscript>). Nothing is invented: ">10" is
+   drawn as above the floor, value not published; a missing field reads "Not stated". Lanes: hover, focus or tap to light a
+   session (each lane names its record to assistive tech); arrows, Home/End, Enter, Esc. One entrance, then still; none
+   under reduced motion. hc4: the inspector under the chart and the table builder went (Proof's chart moved into its hero,
+   where the lanes and the lede carry the record; the table has been <noscript> only since the 1 Nov cut). Plain DOM. */
 (function () {
   'use strict';
   const src = document.getElementById('oxa-sessions');
@@ -45,7 +47,6 @@
     total: sessions.length, above: count(s => s.above), premium: count(s => s.side > 0), discount: count(s => s.side < 0),
     confirmed: count(s => s.confirmed), settled: count(s => s.settled), floor
   };
-  const valueText = s => !s.value ? NOT : Number.isFinite(s.amount) ? s.value.replace(/\s+/g, '') + ' ' + unit : s.value;
   const valueSaid = s => !Number.isFinite(s.amount) ? (s.value ? s.value : 'value not stated')
     : (s.bound === '>' ? 'more than ' : s.bound ? 'at least ' : '') + s.amount + ' ' + unit;
   const regimeSaid = s => s.side > 0 ? 'premium regime, price above NAV' : s.side < 0 ? 'discount regime, price below NAV' : 'NAV regime not stated';
@@ -67,57 +68,10 @@
   const NS = 'http://www.w3.org/2000/svg';
   const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); Object.keys(attrs).forEach(k => e.setAttribute(k, attrs[k])); return e; };
   const mute = e => { e.setAttribute('aria-hidden', 'true'); return e; };
-  const charts = [], tables = [];
-  const hot = i => tables.forEach(t => t.hot(i));
-  const preview = i => charts.forEach(c => c.preview(i));
-  const sameValue = sessions.every(s => s.value === sessions[0].value);
-  const SUMMARY = [
-    ['All ' + C.total, lifecycle || 'sessions'],
-    [C.premium + ' and ' + C.discount, 'premium · discount'],
-    [sameValue ? valueText(sessions[0]) : 'Varies', C.above === C.total ? 'in every session' : C.above + ' of ' + C.total + ' above the floor'],
-    [C.confirmed + ' of ' + C.total, 'broker-confirmed'],
-    [C.settled + ' of ' + C.total, 'settled']
-  ];
-  const recordOf = (s, i) => [
-    [s.day, (i + 1) + ' of ' + C.total],
-    [s.regime, s.side > 0 ? 'price above NAV' : s.side < 0 ? 'price below NAV' : ''],
-    [valueText(s), s.above ? 'above the floor' : Number.isFinite(s.amount) ? 'not above the floor' : ''],
-    [s.confirmation, ''],
-    [s.status, '']
-  ];
   const summarySaid = cap(words(C.total)) + ' sessions' + (lifecycle ? ' of ' + lifecycle : '') + ': ' +
     (C.above === C.total ? 'all' : words(C.above) + ' of ' + words(C.total)) + ' above the ' + floor + ' ' + unit + ' floor, exact values above it not published. ' +
     cap(words(C.premium)) + ' in a premium regime, price above NAV; ' + words(C.discount) + ' in a discount regime, price below NAV. ' +
     cap(words(C.confirmed)) + ' of ' + words(C.total) + ' confirmed by the broker; ' + words(C.settled) + ' settled.';
-
-  /* ---------------- the evidence table: rows from the record, linked to the chart ---------------- */
-  function buildTable(table) {
-    let tb = table.tBodies[0];
-    if (!tb) { tb = h('tbody'); table.append(tb); }
-    // data-th: each cell names its column (phones restack the rows)
-    const head = table.tHead && table.tHead.rows[0] ? Array.from(table.tHead.rows[0].cells, c => c.textContent.trim()) : [];
-    const TH = ['Session', 'NAV regime', 'Captured', 'Verification', 'Status'].map((k, j) => head[j] || k);
-    // a value equal to the one above is a ditto mark (.pf-dt); its text stays in the cell
-    const rows = sessions.map((s, i) => {
-      const tr = h('tr'), up = sessions[i - 1];
-      const td = (cls, same, kid) => {
-        const c = h('td', [cls, same ? 'pf-dt' : ''].filter(Boolean).join(' ') || null);
-        c.dataset.th = TH[tr.cells.length];
-        c.append(same && typeof kid === 'string' ? h('span', null, kid) : kid); tr.append(c);
-      };
-      const mini = mute(h('i', 'pf-mini')); mini.dataset.side = String(s.side);
-      td('lab', false, s.day);
-      const reg = h('td'); reg.dataset.th = TH[1]; reg.append(mini, s.regime); tr.append(reg);
-      td('num', up && valueText(up) === valueText(s), valueText(s));
-      td(null, up && up.confirmation === s.confirmation, s.confirmation);
-      td(null, up && up.status === s.status && up.settled === s.settled, h('span', 'tag' + (s.settled ? ' on' : ''), s.status));
-      tr.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') preview(i); });
-      return tr;
-    });
-    tb.replaceChildren(...rows);
-    tb.addEventListener('pointerleave', () => preview(-1));
-    tables.push({ hot: i => rows.forEach((tr, j) => tr.classList.toggle('is-hot', j === i)) });
-  }
 
   /* ---------------- the chart ---------------- */
   const ENTRANCE_MS = 1400; // the CSS entrance ends by ~1.1 s; then its delayed transitions are dropped
@@ -191,20 +145,8 @@
     const body = h('div', 'pf-body');
     body.append(gut, plot, mute(h('i', 'pf-floor')), mute(h('i', 'pf-base')), mute(h('i', 'pf-nav')));
 
-    // the inspector: the summary, or the record of the session in hand.
-    const sec = host.closest('section');
-    const read = sec && sec.querySelector('.stats') ? null : mute(h('div', 'pf-read'));
-    const bracket = h('i', 'pf-bracket');
-    const cells = h('div', 'pf-cells');
-    // a2: at rest only the two totals; pf-cell--s cells speak for a session in hand
-    const out = ['Session', 'NAV regime', 'Captured', 'Verification', 'Status'].map((k, j) => {
-      const cell = h('div', j < 3 ? 'pf-cell pf-cell--s' : 'pf-cell'), v = h('span', 'pf-v'), note = h('span', 'pf-s');
-      cell.append(h('span', 'pf-k', k), v, note); cells.append(cell); return { v, note };
-    });
     const said = h('p', 'sr-only', summarySaid); said.id = id + '-sum';
-    pf.append(body);
-    if (read) { read.append(bracket, cells); pf.append(read); }
-    pf.append(said);
+    pf.append(body, said);
     host.append(pf);
 
     /* state: the session in hand (sel), the one under the pointer (pre), the lane that takes Tab (tab) */
@@ -218,20 +160,6 @@
       areas.forEach((a, j) => a.classList.toggle('is-on', j === i));
       host.classList.toggle('has-on', i >= 0);
       host.dataset.side = i >= 0 ? String(sessions[i].side) : '';
-      hot(i);
-      if (!read) return;
-      bracket.style.setProperty('--i', i >= 0 ? i : 0);
-      bracket.style.setProperty('--span', i >= 0 ? 1 : N);
-      cells.classList.toggle('is-rest', i < 0);
-      const vals = i >= 0 ? recordOf(sessions[i], i) : SUMMARY;
-      out.forEach((o, k) => {
-        const v = vals[k][0], note = vals[k][1] || ' ';
-        if (o.v.textContent === v && o.note.textContent === note) return;
-        o.v.textContent = v; o.note.textContent = note;
-        if (!reduce.matches && o.v.animate && host.classList.contains('is-in')) {
-          o.v.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.2,.7,.2,1)' });
-        }
-      });
     }
     function select(i) {
       sel = i;
@@ -264,7 +192,8 @@
     });
     render();
 
-    /* entrance once, when it is reached from above and a quarter of it is in view (not under reduced motion). */
+    /* entrance once, when it is reached from above and a quarter of it is in view, or when it is in the first screen of a
+       page opened at its top (Proof's hero, hc4); not under reduced motion. */
     let inView = false, seen = false;
     const away = () => host.classList.toggle('is-away', !inView);
     const whole = () => { // no entrance: the final state in one style change, with no transition on the way
@@ -277,8 +206,10 @@
       new IntersectionObserver(entries => entries.forEach(e => {
         inView = e.isIntersecting;
         if (inView && !seen) {
-          // reached from below (scrolling up, a reload mid-page) or already more than half in view
-          if (e.boundingClientRect.top < 0 || e.intersectionRatio > 0.5) { seen = true; whole(); }
+          // reached from below (scrolling up, a reload mid-page) or already more than half in view, except in the first
+          // screen of a page at its top, where the entrance is the page's opening
+          const first = window.scrollY < 2 && e.boundingClientRect.top >= 0 && e.boundingClientRect.top < window.innerHeight * 0.75;
+          if (!first && (e.boundingClientRect.top < 0 || e.intersectionRatio > 0.5)) { seen = true; whole(); }
           else if (e.intersectionRatio >= 0.24) {
             seen = true;
             host.classList.add('is-in');
@@ -292,10 +223,8 @@
       if ('IntersectionObserver' in window) new IntersectionObserver(entries => entries.forEach(e => { inView = e.isIntersecting; away(); })).observe(host);
     }
     if (reduce.addEventListener) reduce.addEventListener('change', () => { if (reduce.matches) host.classList.remove('is-armed'); host.classList.add('is-in'); });
-    charts.push({ preview: i => { pre = i; render(); } });
   }
 
-  document.querySelectorAll('table[data-proof-table]').forEach(buildTable);
   document.querySelectorAll('[data-proof-chart]').forEach((host, i) => buildChart(host, i + 1));
 })();
 
