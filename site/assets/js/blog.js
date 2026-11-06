@@ -25,8 +25,8 @@
     idx.addEventListener('focusin', e => lit(name(e.target.closest && e.target.closest('a'))));
     idx.addEventListener('focusout', e => { if (!idx.contains(e.relatedTarget)) lit(''); });
   }
-  // award a4 (a4-ux medium, a4-design polish): a long read's margin plate (.post-mp, from 1440 px) rests, its hedge with
-  // it, while one of the post's own figures is on screen, so "no data is plotted" is never read as a data chart's caption
+  // award a4 (a4-ux medium, a4-design polish): a long read's margin plate (.post-mp, from 1440 px) rests, its stamp with
+  // it, while one of the post's own figures is on screen, so "Illustrative" is never read as a data chart's caption
   // and two pictures never stand side by side. Loaded only on the long reads with figures; without JavaScript, as before
   const mp = document.querySelector('.post-mp-in');
   const figs = mp ? document.querySelectorAll('.blog-article figure') : [];

@@ -651,6 +651,14 @@ PLATES = {
         "Drawdown risk is relevant to all stocks and portfolios."),
 }
 
+# hill climb hc6 (SYSTEM.md "The hedge stamp (hc6: one rule)"): a plate that simulates data (a price path, a curve over
+# a rule, a scatter: a reader could take it for the paper's figure) says "Illustrative"; a conceptual drawing (the
+# stages, the loop, the flow, the shelf, the groups) and the economics rings say nothing
+CONCEPTUAL = {five_stages, agent, credit, shelf, cardinality}
+ILLUSTRATIVE = "Illustrative"
+def stamp(slug, col):
+    return "" if col == "economics" or slug not in PLATES or PLATES[slug][1] in CONCEPTUAL else ILLUSTRATIVE
+
 
 PATH = re.compile(r'^<path class="(\w+)" d="([^"]+)"/>$')
 DOT = re.compile(r'^<circle class="(pk|po|pq)" (cx="[^"]+" cy="[^"]+" r="[^"]+")/>$')

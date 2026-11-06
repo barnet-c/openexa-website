@@ -150,13 +150,11 @@
 .swarm-live.is-halted .halt { background: var(--paper); color: #0B110F; border-color: var(--paper); }
 /* Pause motion: site.css's one control (hc1); at the head's right end, after Follow a proposal, where the page puts it there */
 .sw-head > .sw-motion { flex: none; }
-/* on phones, in the head, the control is the glyph (as Trust's icon buttons), named by its text, at the name's line's end:
-   the name takes the line less the glyph's room, so without the glyph nothing else joins it */
-@media (max-width: 640px) {
-  .sw-head > .sw-title { order: -2; flex: 1 0 calc(100% - 4.125rem); }
-  .sw-head > .sw-motion { order: -1; width: 2.75rem; margin-left: auto; padding: 0; font-size: 0; }
-  .sw-head > .sw-motion::before { content: ""; width: .5rem; height: .75rem; box-sizing: border-box; border-inline: .1875rem solid currentColor; }
-  .swarm-live.is-paused .sw-head > .sw-motion::before { width: .625rem; border: 0; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+/* hc6, one Pause everywhere: on phones and small tablets it keeps its word, at the end of the name's line; the name takes
+   that line less the button's room (its "Illustrative" wraps under it where the line is short), so nothing else joins it */
+@media (max-width: 800px) {
+  .sw-head > .sw-title { order: -2; flex: 1 0 calc(100% - 9.125rem); flex-wrap: wrap; row-gap: calc(2 * var(--hair)); }
+  .sw-head > .sw-motion { order: -1; margin-left: auto; }
 }
 @media (max-width: 1100px) { .swarm-bar { grid-template-columns: 1fr; } .swarm-stats { border-right: 0; border-bottom: var(--hair) solid var(--line); } }
 @media (max-width: 1180px) { .swarm-live .sw-key { order: 5; flex-basis: 100%; margin: 0; } .swarm-live .sw-follow { margin-left: auto; } } /* hc1: from 1180 (980), room for Pause at the head's end */
@@ -230,9 +228,9 @@
   .swarm-live:not(.sw-on) .sw-stage { min-height: var(--sw-h); }
   .swarm-live:not(.sw-on) .sw-gates { position: absolute; left: 0; right: 0; top: 0; visibility: hidden; animation: sw-late 0s var(--ease-out) 6s forwards; animation-play-state: running !important; } /* one step: not paused off screen */
   @keyframes sw-late { to { visibility: visible; } }
-  /* Pause motion's place (hc1: it is in the head): on phones the glyph's box on the name's line; wider, it ends the row */
-  @media (prefers-reduced-motion: no-preference) and (max-width: 640px) {
-    .swarm-live:not(.sw-on) .sw-head::after { content: ""; order: -1; flex: none; width: 2.75rem; min-height: 2.25rem; margin-left: auto; }
+  /* Pause motion's place (hc1: it is in the head): on phones its box on the name's line; wider, it ends the row */
+  @media (prefers-reduced-motion: no-preference) and (max-width: 800px) {
+    .swarm-live:not(.sw-on) .sw-head::after { content: ""; order: -1; flex: none; width: 6.75rem; min-height: 2.25rem; margin-left: auto; }
     @media (pointer: coarse) { .swarm-live:not(.sw-on) .sw-head::after { min-height: 2.75rem; } }
   }
 }

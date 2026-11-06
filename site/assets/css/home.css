@@ -81,16 +81,7 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 230vh); height: calc(100svh + 230svh); }
 }
 
-/* the coda on portrait screens: display size, on the floor it names */
-@media (max-width: 639.98px), (max-aspect-ratio: 23/20) {
-  body[data-page="home"] .story-coda-t { font-size: clamp(2.3rem, 10.6vw, 3.6rem); line-height: 1; max-width: 12ch; }
-}
-
-/* (lab) wide screens: the coda stands on the line of ten records */
-@media (min-width: 640px) and (min-aspect-ratio: 23/20) and (min-height: 600.02px) {
-  html.story-ready:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story-coda { display: block; right: auto; width: min(46vw, 40rem); }
-  body[data-page="home"] .story-coda-t { font-size: clamp(3rem, 6.2vw, 5.58rem); line-height: .96; letter-spacing: -0.015em; }
-}
+/* (hc6) the overture's coda is gone: S4's headline closes it (story.js) */
 
 /* §06 (hc3, proof's request): the records carry Trust's ledger ids (#4f23 ...), five mono characters */
 body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em 4.8em 9.4em minmax(0, 1fr) auto; }
@@ -236,40 +227,40 @@ body[data-page="home"] #economics .cost-row:first-child { padding-top: 1.5rem; }
 /* the chapters after the overture are laid out near the viewport only; each stand-in is its measured content height for the
    width band (padding and the hairline border on top: hc1 measures without the border), so the page is as long at load as drawn. The footer is always drawn (#disclosures lands) */
 body[data-page="home"] main > .story ~ section { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
-body[data-page="home"] #lifecycles { --cis: 39.171875rem; } body[data-page="home"] #stack { --cis: 28.828125rem; } body[data-page="home"] #lc01 { --cis: 68.203125rem; }
-body[data-page="home"] #proof { --cis: 40.375rem; } body[data-page="home"] #economics { --cis: 42.140625rem; } body[data-page="home"] #governance { --cis: 49.453125rem; }
+body[data-page="home"] #lifecycles { --cis: 39.171875rem; } body[data-page="home"] #stack { --cis: 28.828125rem; } body[data-page="home"] #lc01 { --cis: 66.015625rem; }
+body[data-page="home"] #proof { --cis: 38.203125rem; } body[data-page="home"] #economics { --cis: 42.140625rem; } body[data-page="home"] #governance { --cis: 49.453125rem; }
 body[data-page="home"] #research { --cis: 35.53125rem; } body[data-page="home"] .cta-band { --cis: 6.453125rem; }
 @media (min-width: 600px) {
-  body[data-page="home"] #lifecycles { --cis: 39.3125rem; } body[data-page="home"] #stack { --cis: 36.59375rem; } body[data-page="home"] #lc01 { --cis: 56.546875rem; }
-  body[data-page="home"] #proof { --cis: 44.8125rem; } body[data-page="home"] #economics { --cis: 31.1875rem; } body[data-page="home"] #governance { --cis: 78.21875rem; }
+  body[data-page="home"] #lifecycles { --cis: 39.3125rem; } body[data-page="home"] #stack { --cis: 36.59375rem; } body[data-page="home"] #lc01 { --cis: 54.359375rem; }
+  body[data-page="home"] #proof { --cis: 42.578125rem; } body[data-page="home"] #economics { --cis: 31.1875rem; } body[data-page="home"] #governance { --cis: 78.21875rem; }
   body[data-page="home"] #research { --cis: 35.671875rem; } body[data-page="home"] .cta-band { --cis: 6.5625rem; }
 }
 /* 761-960: the 820 heights (768-834 within 1rem; hc2) */
 @media (min-width: 761px) and (max-width: 960px) {
-  body[data-page="home"] #lifecycles { --cis: 32.65234375rem; } body[data-page="home"] #stack { --cis: 24.59375rem; } body[data-page="home"] #lc01 { --cis: 54.25rem; }
-  body[data-page="home"] #proof { --cis: 46.875rem; } body[data-page="home"] #economics { --cis: 32.921875rem; } body[data-page="home"] #governance { --cis: 57.046875rem; }
+  body[data-page="home"] #lifecycles { --cis: 32.65234375rem; } body[data-page="home"] #stack { --cis: 24.59375rem; } body[data-page="home"] #lc01 { --cis: 52.0625rem; }
+  body[data-page="home"] #proof { --cis: 44.203125rem; } body[data-page="home"] #economics { --cis: 32.921875rem; } body[data-page="home"] #governance { --cis: 57.046875rem; }
   body[data-page="home"] #research { --cis: 30.296875rem; } body[data-page="home"] .cta-band { --cis: 7.03125rem; }
 }
 @media (min-width: 961px) {
-  body[data-page="home"] #lifecycles { --cis: 42.2109375rem; } body[data-page="home"] #stack { --cis: 30.625rem; } body[data-page="home"] #lc01 { --cis: 66.375rem; }
+  body[data-page="home"] #lifecycles { --cis: 42.2109375rem; } body[data-page="home"] #stack { --cis: 30.625rem; } body[data-page="home"] #lc01 { --cis: 64.1875rem; }
   body[data-page="home"] #proof { --cis: 31.484375rem; } body[data-page="home"] #economics { --cis: 25.875rem; } body[data-page="home"] #governance { --cis: 42.859375rem; }
   body[data-page="home"] #research { --cis: 36.890625rem; } body[data-page="home"] .cta-band { --cis: 10.0625rem; }
 }
 /* small desktops: 961-1099 the 1024 heights, 1100-1359 the 1280 heights (the spreads start at 1100; re-measured hc2;
    #lifecycles from 761 px re-measured hc4, after its titles took the --fs-heading step; #stack and #proof at every band hc5) */
 @media (min-width: 961px) and (max-width: 1099.98px) {
-  body[data-page="home"] #lifecycles { --cis: 35.05859375rem; } body[data-page="home"] #stack { --cis: 28.21875rem; } body[data-page="home"] #lc01 { --cis: 59.140625rem; }
+  body[data-page="home"] #lifecycles { --cis: 35.05859375rem; } body[data-page="home"] #stack { --cis: 28.21875rem; } body[data-page="home"] #lc01 { --cis: 56.953125rem; }
   body[data-page="home"] #proof { --cis: 29.03125rem; } body[data-page="home"] #economics { --cis: 33.015625rem; } body[data-page="home"] #governance { --cis: 41.953125rem; }
   body[data-page="home"] #research { --cis: 33.765625rem; } body[data-page="home"] .cta-band { --cis: 7.984375rem; }
 }
 @media (min-width: 1100px) and (max-width: 1359.98px) {
-  body[data-page="home"] #lifecycles { --cis: 39.26171875rem; } body[data-page="home"] #stack { --cis: 34.96875rem; } body[data-page="home"] #lc01 { --cis: 61.125rem; }
+  body[data-page="home"] #lifecycles { --cis: 39.26171875rem; } body[data-page="home"] #stack { --cis: 34.96875rem; } body[data-page="home"] #lc01 { --cis: 58.9375rem; }
   body[data-page="home"] #proof { --cis: 31.046875rem; } body[data-page="home"] #economics { --cis: 25.171875rem; } body[data-page="home"] #governance { --cis: 42.515625rem; }
   body[data-page="home"] #research { --cis: 34.59375rem; } body[data-page="home"] .cta-band { --cis: 9.4375rem; }
 }
 /* from 1680 (rem above 1920, so 3840 is 1920 doubled): the 1920 heights (re-measured hc2) */
 @media (min-width: 1680px) {
-  body[data-page="home"] #lifecycles { --cis: 40.03515625rem; } body[data-page="home"] #stack { --cis: 37.609375rem; } body[data-page="home"] #lc01 { --cis: 68.859375rem; }
+  body[data-page="home"] #lifecycles { --cis: 40.03515625rem; } body[data-page="home"] #stack { --cis: 37.609375rem; } body[data-page="home"] #lc01 { --cis: 66.671875rem; }
   body[data-page="home"] #proof { --cis: 32.21875rem; } body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 43.046875rem; }
   body[data-page="home"] #research { --cis: 39.609375rem; }
 }
@@ -298,8 +289,6 @@ body[data-page="home"] #economics .eco-key dd { margin: 0; }
 }
 /* §07: "All ten notes" over the third note */
 @media (min-width: 1100px) { body[data-page="home"] #research .rs-head > .ch-link { justify-self: start; margin-left: clamp(1.125rem, 2.2vw, 2rem); } }
-/* §03: the lab's hedge under its counters */
-body[data-page="home"] #lc01 .lab-cap { margin-top: .875rem; }
 /* §07: each note's still is its cell's mark (one scale for the three) */
 body[data-page="home"] #research .research-card { display: grid; grid-template-rows: auto auto 1fr; justify-content: stretch; row-gap: 0; }
 body[data-page="home"] #research .research-card .link-arrow { align-self: end; margin-top: 1.375rem; }
@@ -357,12 +346,6 @@ body[data-page="home"] .story-lab.floor .u { color: rgba(245, 242, 236, .9); }
 /* ========== award a4 ========== */
 /* tablets keep v2's four figures under the buttons (owner, 2 Nov), or the phone's 01 line where they would squeeze the
    globe (story.js .story-figs-01): overture.css (integrate a4) */
-
-/* ========== hill climb hc3 ========== */
-/* the coda's one hedge is the rail's caption (story.js clones the paper's into the callout layer): in the dark under the ten
-   tags, at the paper's place and step, so the rising paper turns it to ink. The tokens are the dark stage's */
-body[data-page="home"] .story-cap { position: absolute; left: 0; right: 0; top: 0; opacity: 0; pointer-events: none; will-change: opacity, transform; }
-body[data-page="home"] .story-cap .story-paper-cap { color: var(--fg-2); border-bottom-color: var(--line-strong); }
 
 /* ========== hill climb hc5 ========== */
 /* §02: Platform's hero plate, still, beside its head (the explorer runs on Platform §01). The drawing's rules are

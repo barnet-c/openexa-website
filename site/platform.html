@@ -103,13 +103,13 @@
         <div class="ch-head">
           <h2 class="display-2 ch-title" data-reveal>One job per layer.</h2>
         </div>
-        <!-- the architecture explorer (arch.js): point at a layer for its job; without JavaScript, the eight layers as a list -->
-        <div class="layers" data-arch data-arch-rest data-arch-label="The agentic stack" data-reveal style="--d:100ms">
+        <!-- the architecture explorer (arch.js): the stack and its index; a layer opens under its row (hc6); without JavaScript, the eight layers as a list -->
+        <div class="layers" data-arch data-arch-label="The agentic stack" data-reveal style="--d:100ms">
           <div class="layer" data-job="Watches the lifecycle’s live data and keeps re-estimating risk, price and regime."><div class="k">01</div><h3>Signal intelligence</h3><div></div></div>
           <div class="layer" data-job="The post-trained model every agent reasons on. It can propose anything and execute nothing on its own."><div class="k">02</div><h3>Model layer</h3><div></div></div>
           <div class="layer" data-job="Thousands of narrow agents, each built for one job: read a feed, score a gap, size an order, check a limit, match a fill."><div class="k">03</div><h3>Domain<span class="hy">-</span>specific agents</h3><div></div></div>
           <div class="layer" data-job="The gate every proposal passes. It arbitrates between agents and enforces policy and mandate limits."><div class="k">04</div><h3>Execution Council</h3><div></div></div>
-          <div class="layer-boundary" id="boundary"><div class="k">—</div><p class="lb-t">The boundary</p><p class="lb-line">The line is a typed schema, and nothing crosses it without a decision.</p><div class="lb-io"><p data-side="above"><b>Above</b> <strong>Agents decide.</strong></p><p data-side="below"><b>Below</b> <strong>Code executes.</strong></p></div></div>
+          <div class="layer-boundary" id="boundary"><div class="k">—</div><p class="lb-t">The boundary</p><p class="lb-line">A typed schema: nothing crosses it without a decision.</p></div>
           <div class="layer" data-job="Finds the cheapest, fastest, safest path for each approved action, on live conditions and past performance."><div class="k">05</div><h3>Routing layer</h3><div></div></div>
           <div class="layer" data-job="Runs the lifecycle as a deterministic state machine, with retries, idempotency and reconciliation."><div class="k">06</div><h3>Execution layer</h3><div></div></div>
           <div class="layer" data-job="Gives agents authenticated connectivity to the rails, through secure, customer-scoped MCP servers."><div class="k">07</div><h3>MCP server</h3><div></div></div>

@@ -55,13 +55,15 @@
 .nf-plate .nf-spur { stroke: var(--reject); stroke-width: var(--stroke); }
 .nf-plate .nf-fall { fill: var(--reject); }
 
-/* the stations' names, laid on the lane: equal columns over the row (x = (i - .5) / 6), equal rows beside the column */
+/* the stations' names, laid on the lane: equal columns over the row (x = (i - .5) / 6), equal rows beside the column.
+   hc6: names in the caption register (Inter, sentence case, the number in tabular figures at fg-3, as the lifecycle lanes);
+   mono stays for what the gate recorded: the address that fell and the log line */
 .nf-keys {
   display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0 0 .25rem; padding: 0; list-style: none; text-align: center;
-  font: 500 var(--fs-label)/1.45 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg); /* the one label: 12 px on phones (a3) */
+  font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; color: var(--fg);
 }
-.nf-keys b { font-weight: 500; color: var(--fg-3); margin-right: .3em; }
-.nf-keys small { display: block; font-size: inherit; font-weight: 400; letter-spacing: .1em; color: var(--fg-3); }
+.nf-keys b { font-weight: 400; font-variant-numeric: tabular-nums; color: var(--fg-3); margin-right: .375em; }
+.nf-keys small { display: block; font-size: inherit; color: var(--fg-3); }
 .nf-keys .is-ahead { color: var(--fg-3); }
 /* the address that was asked for, where it fell (written by notfound.js; "this address" without script) */
 .nf-out { font: 400 var(--fs-label)/1.35 var(--mono); letter-spacing: .06em; text-transform: none; color: var(--reject); white-space: nowrap; }

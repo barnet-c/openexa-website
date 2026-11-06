@@ -435,7 +435,9 @@ async def home(b):
     # ten." left the page; the derived count is now written as the coda ("Ten of ten above the floor.") and the first
     # screen's fact ("ten sessions above 10 bps"), so every derived number the page writes ([data-story-n] above / total /
     # floor / tally, in the case its data-story-as asks for) must equal the record, and the coda's above and total must be
-    # there at least once.
+    # there at least once. hc6 (home, HC6 item 1): the coda is gone (no [data-story-n] is left on Home; the derive code
+    # stays for any future one); the derived count is written as §04's heading ("Ten of ten above the floor."), whose
+    # above and total must equal the record, in the case it is set (Words / words).
     st = await pg.evaluate("""(() => ({ days: document.querySelectorAll('.story-labels .story-lab.day').length,
         prem: document.querySelectorAll('.story-labels .story-lab.day.is-prem').length, ink: document.querySelectorAll('.story-ink .story-lab').length,
         n: [...document.querySelectorAll('[data-story-n]')].map(e => [e.dataset.storyN, e.dataset.storyAs || '', e.textContent]) }))()""")
@@ -448,8 +450,9 @@ async def home(b):
         v = int(v) if float(v).is_integer() else v
         return words(v) if as_ == "words" else capw(words(v)) if as_ == "Words" else str(v)
     wrong = [(k, a, t, story_want(k, a)) for k, a, t in st["n"] if story_want(k, a) is not None and t != story_want(k, a)]
-    keys = {k for k, a, t in st["n"]}
-    assert st["days"] == rc["total"] and st["prem"] == rc["premium"] and st["ink"] == rc["total"] and {"above", "total"} <= keys and not wrong, (st, "record", rc, "differ", wrong)
+    assert st["days"] == rc["total"] and st["prem"] == rc["premium"] and st["ink"] == rc["total"] and not wrong, (st, "record", rc, "differ", wrong)
+    h = await pg.evaluate("[...document.querySelectorAll('#proof .ch-title [data-proof]')].map(e => [e.dataset.proof, e.textContent])")
+    assert h == [["above", capw(words(rc["above"]))], ["total", words(rc["total"])]], ("§04 heading's derived count", h, "record", rc)
     # the last beat has faded before the stage's exit could carry it under the bar
     await pg.evaluate("(() => { const s = document.querySelector('.story'); window.scrollTo({top: s.offsetTop + s.offsetHeight - innerHeight * 0.5, behavior: 'instant'}); })()")
     op = await until(pg, "(() => { const o = +getComputedStyle(document.querySelector('.beat-4')).opacity; return o < 0.05 ? String(o) : ''; })()", 4000)
@@ -2640,27 +2643,48 @@ async def platform_spec(b):
     at least 24 px tall, none overlapping another, none outside the instrument (WCAG 2.5.8, r4). hc5 (integrate): the
     keys Home's check held until Home §02 drew Platform's plate (HC5 item 1), here at 1440: the boundary after 04;
     ArrowDown x3 lands on 04 (lit), Enter opens its panel in the readout card, Escape closes it with focus kept, End /
-    Home; pointing at a layer sets the instrument's has-hot"""
+    Home; pointing at a layer sets the instrument's has-hot. hc6 (integrate, platform's request; HC6 item 5): the readout
+    is gone and a layer's job opens under its own row at every width, as on phones: at 1440 opening each layer shows its
+    panel (#arch0-pN, the next sibling of the Nth h3.arch-h in the list, aria-expanded true) whose text is the markup's
+    job line, under a row naming the markup's layer; pressing the open layer again closes it; the boundary (its line and
+    hairline) stands after 04 with its hairline level with the drawing's plane (within 2 px); pointing at each layer sets
+    has-hot and never changes the instrument's height; Enter opens 04's panel in the list"""
     ctx, pg = await open_page(b, "platform.html", 1440, 900)
     m = await pg.evaluate(SPEC)
     await pg.evaluate("document.querySelector('#architecture .arch').scrollIntoView({block: 'center', behavior: 'instant'})")
     assert await until(pg, "!!document.querySelector('#architecture .arch.is-wide.is-ready')", 10000), "platform explorer not ready at 1440"
+    await pg.wait_for_timeout(600)
+    arch_h = "Math.round(document.querySelector('#architecture .arch').getBoundingClientRect().height)"
+    h0 = await pg.evaluate(arch_h)
+    hov = []
+    for k in range(1, 9):
+        await pg.locator(f"#arch0-b{k}").hover(); await pg.wait_for_timeout(150)
+        hov.append(await pg.evaluate(f"[document.querySelector('#architecture .arch').classList.contains('has-hot'), {arch_h}]"))
+    await pg.mouse.move(5, 450)
+    assert all(hh and abs(hgt - h0) <= 1 for hh, hgt in hov), f"platform_spec platform.html@1440x900: pointing at each layer gives [has-hot, height] {hov} (want has-hot, height {h0} throughout)"
     shown = []
     for k, (name, job) in enumerate(m["layers"]):
-        await pg.locator(f"#arch0-b{k + 1}").hover()
-        got = await until(pg, f"""(() => {{ const c = document.querySelector('#architecture .arch-card'), n = c && c.querySelector('.sum-nm'), j = c && c.querySelector('.sum-job'), norm = s => (s || '').replace(/\\s+/g, ' ').trim();
-          return c && getComputedStyle(c).opacity === '1' && n && j && norm(j.textContent) === {json.dumps(job)} ? norm(n.textContent) : ''; }})()""", 3000)
+        await pg.locator(f"#arch0-b{k + 1}").click()
+        got = await until(pg, f"""(() => {{ const norm = s => (s || '').replace(/\\s+/g, ' ').trim(), p = document.querySelector('#arch0-p{k + 1}'), h = document.querySelectorAll('#architecture h3.arch-h')[{k}];
+          return p && h && !p.hidden && p.getClientRects().length > 0 && p.previousElementSibling === h && !!p.closest('.arch-list')
+            && document.querySelector('#arch0-b{k + 1}').getAttribute('aria-expanded') === 'true' && norm(p.textContent) === {json.dumps(job)} ? norm(h.querySelector('.nm').textContent) : ''; }})()""", 3000)
         shown.append(got)
-    await pg.mouse.move(5, 450)
-    bound = await pg.evaluate("[...document.querySelector('#architecture .arch-list').children].filter(e => !e.classList.contains('arch-panel')).findIndex(e => e.classList.contains('arch-bound'))")
-    assert bound == 4, f"platform_spec platform.html@1440x900: the boundary stands after {bound} layers (want 4)"
+    await pg.locator("#arch0-b8").click()
+    await expect(pg.locator("#arch0-b8")).to_have_attribute("aria-expanded", "false")
+    await expect(pg.locator("#arch0-p8")).to_be_hidden()
+    await pg.mouse.move(5, 450); await pg.wait_for_timeout(700)
+    bd = await pg.evaluate("""(() => { const list = document.querySelector('#architecture .arch-list'), r = document.querySelector('#architecture .arch-bound .ab-rule'), ps = [...document.querySelectorAll('#architecture .arch-svg .ab polygon')];
+      const rr = r && r.getBoundingClientRect(), pr = ps.length ? ps[ps.length - 1].getBoundingClientRect() : null, l = document.querySelector('#architecture .arch-bound .ab-line');
+      return { bound: [...list.children].filter(e => !e.classList.contains('arch-panel')).findIndex(e => e.classList.contains('arch-bound')), line: l ? l.textContent.replace(/\\s+/g, ' ').trim() : '',
+               off: rr && pr ? Math.round((rr.top + rr.height / 2 - (pr.top + pr.height / 2)) * 10) / 10 : null }; })()""")
+    assert bd["bound"] == 4 and bd["line"].startswith("The boundary") and bd["off"] is not None and abs(bd["off"]) <= 2, f"platform_spec platform.html@1440x900: the boundary {bd} (want after 4 layers, its line, its hairline within 2 px of the plane)"
     await pg.locator("#arch0-b1").focus()
     for _ in range(3): await pg.keyboard.press("ArrowDown")
     assert await pg.evaluate("document.activeElement.id") == "arch0-b4"
     await expect(pg.locator("#arch0-b4")).to_have_class(re.compile(r"\bis-hot\b"))
     await pg.keyboard.press("Enter")
     await expect(pg.locator("#arch0-b4")).to_have_attribute("aria-expanded", "true")
-    await expect(pg.locator("#architecture .arch-card #arch0-p4")).to_be_visible()
+    await expect(pg.locator("#architecture .arch-list #arch0-p4")).to_be_visible()
     await pg.keyboard.press("Escape")
     await expect(pg.locator("#arch0-b4")).to_have_attribute("aria-expanded", "false")
     assert await pg.evaluate("document.activeElement.id") == "arch0-b4"
@@ -2670,7 +2694,7 @@ async def platform_spec(b):
     await expect(pg.locator("#architecture .arch")).to_have_class(re.compile(r"\bhas-hot\b"))
     await pg.mouse.move(5, 450)
     await ctx.close()
-    assert len(m["layers"]) == 8 and all(j for _, j in m["layers"]) and shown == [n for n, _ in m["layers"]], f"platform_spec platform.html@1440x900: layers {[(n, j[:24]) for n, j in m['layers']]}; the readout named {shown} as each layer was pointed at (want each layer's name with its job line)"
+    assert len(m["layers"]) == 8 and all(j for _, j in m["layers"]) and shown == [n for n, _ in m["layers"]], f"platform_spec platform.html@1440x900: layers {[(n, j[:24]) for n, j in m['layers']]}; opening each layer showed its job under the row named {shown} (want each layer's name with its job line)"
     ctx, pg = await open_page(b, "platform.html", 900, 900)
     await pg.evaluate("document.querySelector('#architecture .arch-motion').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(1500)
     await pg.focus("#architecture .arch-motion")
@@ -2688,7 +2712,7 @@ async def platform_spec(b):
         await ctx.close()
         sizes.append(f"{w}x{h}: {t['n']} layer buttons, least {t['minH']:.1f} px tall, {t['overlap']} overlaps, {t['outside']} outside")
         assert t["n"] == 8 and t["minH"] >= 23.5 and not t["overlap"] and not t["outside"], f"platform_spec platform.html@{w}x{h}: {sizes[-1]} (want 8, >= 24 px, 0, 0); sizes {t['sizes']}"
-    print("platform_spec: 8 layers in the markup with their jobs; pointing at each shows its name and job; at 1440 the boundary after 04, ArrowDown/Enter/Escape/End/Home and has-hot; at 900 Tab/ArrowDown/Enter/Escape open and close layer 02's panel; "
+    print(f"platform_spec: 8 layers in the markup with their jobs; opening each shows its job under its own named row, pressing it again closes it; at 1440 pointing sets has-hot at a steady height, the boundary after 04 (hairline {bd['off']} px from the plane), ArrowDown/Enter/Escape/End/Home; at 900 Tab/ArrowDown/Enter/Escape open and close layer 02's panel; "
           + "; ".join(sizes))
 
 

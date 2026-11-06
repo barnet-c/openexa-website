@@ -51,9 +51,7 @@
 .story-num b i { height: 1em; }
 .story-num span { height: 1.4em; margin-top: .25rem; font: var(--mono-tick)/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .62); }
 .story-num span i { height: 1.4em; }
-/* portrait and short landscape screens: the proof's derived summary over the floor while the paper takes the copy's place */
-.story-coda { position: absolute; left: var(--story-in-l); right: var(--story-in-r); top: 0; display: none; opacity: 0; pointer-events: none; will-change: opacity, transform; }
-.story-coda-t { font: 400 clamp(1.9rem, 7.6vw, 3.1rem)/1.04 var(--serif); letter-spacing: -0.02em; color: var(--paper); text-wrap: balance; }
+/* (hc6) the coda over the floor is gone (S4's headline closes the overture): its rules went with it */
 /* the role-coded vocabulary, as a key */
 .story-lab i.lg-r, .story-lab i.lg-b { content: ""; display: inline-block; flex: none; width: .5625rem; height: .5625rem; box-sizing: border-box; }
 .story-lab i.lg-r { width: .4375rem; height: .4375rem; background: var(--reject-bright); border-radius: 50%; }
@@ -127,7 +125,8 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-idx button:focus-visible { outline: var(--hair) solid var(--signal-bright); outline-offset: .125rem; }
 .story-keys { position: absolute; width: var(--hair); height: var(--hair); margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .story-stage:focus-visible .story-keys { position: static; width: auto; height: auto; overflow: visible; clip-path: none; font: var(--mono-tick)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--signal-bright); }
-.story-motion { pointer-events: auto; } /* the instruments' one control (site.css, hc1), at the right end of the scene bar */
+.story-motion { position: relative; pointer-events: auto; } /* the instruments' one control (site.css, hc1), at the right end of the scene bar */
+@media (pointer: coarse) { .story-bar .story-motion { min-height: 2.25rem; } .story-bar .story-motion::after { content: ""; position: absolute; inset: -.25rem 0; } } /* hc6: outlined, it keeps the bar's 36 px box under the nav (46 px bar); a finger's 44 px target is the ::after */
 .story-labels.has-insp ~ .story-bar .story-motion { opacity: .35; } /* the inspector is up: the control steps back */
 .story.is-scrolled .hero-stats .live, .story.is-paused .hero-stats .live { animation-play-state: paused; } /* its loop (transform, opacity) stops once S0 has gone, and with Pause motion */
 /* the hand-off: the columns drain into their records on the floor line */
@@ -215,7 +214,7 @@ html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { ma
   .beat { position: relative; left: auto; right: auto; bottom: auto; opacity: 1; transform: none; pointer-events: auto; padding: clamp(3.5rem, 9vh, 6rem) 0; border-top: var(--hair) solid rgba(245, 242, 236, .12); }
   .beat-0 { border-top: 0; padding-top: calc(var(--nav-h) + clamp(6rem, 20vh, 13.75rem)); }
   .beat .beat-text { pointer-events: auto; }
-  .story-labels, .story-bar, .story-gl, .story-paper, .story-num, .story-coda { display: none; }
+  .story-labels, .story-bar, .story-gl, .story-paper, .story-num { display: none; }
   .beat-fig { display: block; width: 100%; max-width: 27.5rem; height: auto; margin-top: 2.125rem; }
 }
 .no-webgl .story, .story-tiny .story { height: auto; }
@@ -225,8 +224,8 @@ html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { ma
 .no-webgl .beat-0, .story-tiny .beat-0 { border-top: 0; padding-top: calc(var(--nav-h) + clamp(6rem, 20vh, 13.75rem)); }
 .no-webgl .beat .beat-text, .story-tiny .beat .beat-text { pointer-events: auto; }
 .no-webgl .beat [data-split] .wi { transform: none; }
-.no-webgl .story-labels, .no-webgl .story-bar, .no-webgl .story-gl, .no-webgl .story-paper, .no-webgl .story-num, .no-webgl .story-coda,
-.story-tiny .story-labels, .story-tiny .story-bar, .story-tiny .story-gl, .story-tiny .story-paper, .story-tiny .story-num, .story-tiny .story-coda { display: none; }
+.no-webgl .story-labels, .no-webgl .story-bar, .no-webgl .story-gl, .no-webgl .story-paper, .no-webgl .story-num,
+.story-tiny .story-labels, .story-tiny .story-bar, .story-tiny .story-gl, .story-tiny .story-paper, .story-tiny .story-num { display: none; }
 .no-webgl .beat-fig, .story-tiny .beat-fig { display: block; width: 100%; max-width: 27.5rem; height: auto; margin-top: 2.125rem; }
 .no-webgl .story-2d { height: 100vh; height: 100svh; }
 @media (min-aspect-ratio: 23/20) and (min-width: 640px) {
@@ -273,9 +272,6 @@ html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { ma
   .beat .body-lg { font-size: .8rem; line-height: 1.42; }
   .beat .hero-cta, .beat-0 .hero-cta { margin-top: .875rem; }
   .story-idx button .t { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .story-coda { right: auto; width: min(44%, 32.5rem); }
-  .story-coda-t { font-size: clamp(1.5rem, 7vh, 2.2rem); }
-  .story-ready:not(.no-webgl) .story-coda { display: block; }
 }
 @media (min-aspect-ratio: 23/20) and (max-width: 1100px) { .story-idx button .t { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .story-idx button.is-on .t { position: static; width: auto; height: auto; clip-path: none; } }
 
@@ -306,7 +302,6 @@ html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { ma
   .story-lab.day { padding: .125rem .0625rem; min-width: 1.375rem; }
   .story-static-mark { width: 56%; top: calc(var(--nav-h) + 1.875rem); right: 22%; }
   .story-num { display: none; } /* portrait: the index under the nav already marks the scene */
-  .story-ready:not(.no-webgl) .story-coda { display: block; }
   .no-webgl .beat-0 { padding-top: calc(var(--nav-h) + 66vw + 3rem); }
 }
 @media (scripting: none) and (max-width: 639.98px), (scripting: none) and (max-aspect-ratio: 23/20) { .beat-0 { padding-top: calc(var(--nav-h) + 66vw + 3rem); } }
@@ -325,13 +320,12 @@ html.story-tiny .story .beat-0 { padding-top: calc(var(--nav-h) + 1.75rem); }
 html.story-tiny .story .beat [data-split] .wi { transform: none; }
 html.story-tiny .story .beat-0 .hero-kicker { display: block; }
 html.story-tiny .story .beat-0 .hero-stats { display: grid; }
-html.story-tiny .story .story-coda { display: none; }
 @media (prefers-reduced-motion: reduce) { .hero-stats .live { animation: none; } .story-lab, .story-leader, .story-node, .story-insp.is-on, .story-idx button, .story-num i { transition: none; } }
 /* print: the overture prints as its static sequence, ink on white */
 @media print {
   .story-bar, .story-paper, .story-insp, .story-leaders { display: none !important; }
   .story, .story-stage { height: auto !important; min-height: 0 !important; background: none !important; }
-  .story-gl, .story-2d, .story-labels, .story-num, .story-coda, .story-static-mark, .beat-fig { display: none !important; }
+  .story-gl, .story-2d, .story-labels, .story-num, .story-static-mark, .beat-fig { display: none !important; }
   .story .beat { position: static !important; opacity: 1 !important; visibility: visible !important; transform: none !important; --eo: 1 !important; --w: 1 !important; --bo: 1 !important; }
   .story .beat .beat-text > *, .story .beat-0 .hero-stats { visibility: visible !important; }
   .story .beat .body-lg, .story .beat-0 .hero-sub { display: block !important; }

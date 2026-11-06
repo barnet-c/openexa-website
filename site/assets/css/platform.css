@@ -135,14 +135,6 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .hero-plate .hp-art:has(> .hp-reg) { margin-left: 1rem; }
 @media (max-width: 600px) { :is(body[data-page="platform"], body[data-page="lifecycles"]) .hero-plate .hp-art:has(> .hp-reg) { margin-left: .5rem; } }
 
-#architecture .layer-boundary .lb-io { display: flex; flex-wrap: wrap; align-items: baseline; gap: .625rem clamp(1.25rem, 2.6vw, 2.5rem); }
-#architecture .layer-boundary .lb-io p { margin: 0; }
-#architecture .layer-boundary .lb-io b { display: inline; margin: 0 .7em 0 0; }
-#architecture .layer-boundary .lb-io strong { font-weight: 500; }
-
-@media (min-width: 1100px) { #architecture .layer-boundary .lb-io { grid-column: 3 / -1; } }
-
-#architecture .lb-t small { font: .9rem/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
 
 @media print { body[data-page="platform"] .js-only, body[data-page="lifecycles"] .js-only { display: none !important; } body[data-page="lifecycles"] .desk-nojs { display: block !important; } }
 
@@ -177,17 +169,15 @@ body[data-page="lifecycles"] .lcp .orb-next { opacity: .8; }
 @keyframes lr-trace { 0% { opacity: 0; stroke-dashoffset: .16; } 12% { opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; stroke-dashoffset: -.84; } }
 @media print { .hero-plate--rings .lr-trace { display: none; } }
 
-.hero-plate--rings .hp-cap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .375rem 1.5rem; }
-/* hc2: one status key, the same under the hero and under Fig. 4.1, drawn in the site's status glyph (Home §01's grid,
-   the phone list): the class ring and its bead. No class codes: the key says Live, Next, Roadmap */
-:is(.lr-key, .orb-key) { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem; font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-2); }
-:is(.lr-key, .orb-key) > span { display: inline-flex; align-items: baseline; gap: .5rem; white-space: nowrap; }
-:is(.lr-key, .orb-key) .lc-ring { flex: none; align-self: center; width: 1.375em; height: 1.375em; } /* the key's baseline is its words', so a caption beside it lines up */
-:is(.lr-key, .orb-key) > span:first-child { color: var(--signal-ink); }
+/* hc2: the status key under Fig. 4.1, drawn in the site's status glyph (Home §01's grid, the phone list): the class ring
+   and its bead; the key says Live, Next, Roadmap. hc6 (HC6 item 8): the hero has no key (it draws one lifecycle's orbit) */
+.orb-key { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem; font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-2); }
+.orb-key > span { display: inline-flex; align-items: baseline; gap: .5rem; white-space: nowrap; }
+.orb-key .lc-ring { flex: none; align-self: center; width: 1.375em; height: 1.375em; } /* the key's baseline is its words', so a caption beside it lines up */
+.orb-key > span:first-child { color: var(--signal-ink); }
 
 @media (min-width: 601px) and (max-width: 960px) { body[data-page="lifecycles"] .hero-plate--rings { max-width: min(100%, 40rem); } }
 
-@media (max-width: 960px) { .hero-plate--rings .hp-cap { flex-direction: column; align-items: flex-start; justify-content: flex-start; text-align: left; } .hero-plate--rings .hp-cap > .fc-h { order: 2; } }
 
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .hero-act { margin-top: clamp(1.5rem, 2.6vw, 2.5rem); }
 
@@ -200,8 +190,8 @@ body[data-page="lifecycles"] .lcp .orb-next { opacity: .8; }
 
 @media (min-width: 961px) { #lc01 .lc-row > .lc-how { grid-column: 1 / span 5; } #lc01 .lc-row > :last-child { grid-column: 7 / -1; } }
 /* hc4: the basket is a plate like the heroes': open paper inside the registration marks (site.css's, the same lengths;
-   integrate hc4: site.css draws them for .lc-mech too, this file sets only their inset), "Schematic" under it. It was the
-   one drawing on the site in a filled, bordered card */
+   integrate hc4: site.css draws them for .lc-mech too, this file sets only their inset). It was the one drawing on the
+   site in a filled, bordered card. hc6: no stamp under it (a conceptual drawing; the one hedge-stamp rule) */
 #lc01 .lc-mech { max-width: 30rem; margin: 0; }
 #lc01 .lc-mech .hp-art { margin: 1.25rem 1rem .75rem; }
 .lc-mech .hp-lab small { margin-top: var(--hair); }
@@ -287,15 +277,9 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 @media (max-width: 329.98px) { body[data-page="platform"] .modes-head h2 { letter-spacing: -.032em; } }
 
 :is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(dd, .list-rule p, .layer p) { text-wrap: pretty; }
-:is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(.stats .d, .lb-t small, .mkt-col h3, .checks li, .list-hair li) { text-wrap: balance; }
+:is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(.stats .d, .mkt-col h3, .checks li, .list-hair li) { text-wrap: balance; }
 body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
-
-@media (min-width: 1100px) {
-
-  #architecture .layer-boundary .lb-io { grid-column: 5 / -1; }
-
-}
 
 #modes .modes-head { align-items: start; }
 #modes .ledger th:nth-child(3) { text-align: right; }
@@ -442,15 +426,23 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 #lc01 .lc-how > .ch-head { margin-bottom: clamp(1.75rem, 3.2vw, 3rem); }
 #lc01 .lc-how .ch-title { max-width: 12ch; }
 
-#architecture .arch-bound.has-line { justify-content: flex-start; font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; }
-#architecture .arch-bound .ab-line { position: relative; z-index: 1; flex: 1 1 auto; margin: 0; padding: .1875rem 0; background: var(--a-ground); color: var(--fg-2); text-wrap: balance; }
-#architecture .arch.is-narrow .arch-bound.has-line { padding-top: .875rem; padding-bottom: .875rem; }
+/* hc6 (HC6 item 5): the explorer is the stack and its index, one text system. No readout: the stack takes the room left
+   of the index (arch.js centres it there), and a layer's sentence opens under its row at every width (the two-column
+   body and the wide panels: arch.css since integrate hc6). The boundary is no row: a green hairline through the index, level with
+   the plane (wide, it reaches left to the plane's corner: --ab-reach), its label on it in the plane's green; the
+   grey rules of 04 and 05 give way to it. Wide, the label and an equal room under the line keep the plane midway between
+   04 and 05 (1fr / auto / 1fr), as the 4.5rem row did */
+#architecture .arch.is-wide .arch-panel { padding-bottom: 1.125rem; }
+#architecture .arch-bound { display: grid; grid-template-rows: auto auto; align-items: end; justify-content: stretch; gap: 0; min-height: 0; padding: 1rem .375rem 0 3.625rem; border-top: 0; }
+#architecture .arch.is-wide .arch-bound { grid-template-rows: 1fr auto 1fr; height: auto; min-height: 4.5rem; padding-top: 0; }
+#architecture .arch-bound .ab-line { grid-row: 1; margin: 0; padding: 0 0 .5rem; font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--accent); text-wrap: balance; }
+#architecture .arch-bound .ab-rule { grid-row: 2; display: block; height: var(--hair); margin: 0 -.375rem 0 -3.625rem; background: rgba(79, 203, 147, .5); }
+#architecture .arch.is-wide .arch-bound .ab-rule { margin-left: calc(-3.625rem - var(--ab-reach, 0px)); } /* to the plane's corner (arch.js) */
+#architecture .arch-bound + .arch-h > .arch-layer { border-top-color: transparent; }
 #architecture .arch-bound[id] { scroll-margin-top: 42vh; }
-#architecture .arch-ov b { display: none; }
-#architecture .arch-ov strong { margin-top: 0; }
+@media (max-width: 600px) { #architecture .arch-bound { padding-left: .75rem; } #architecture .arch-bound .ab-rule { margin-left: -.75rem; } } /* phones: the sentences' edge (arch.css's panels), as wide */
 
 #architecture .layer-boundary .lb-line { margin: .25rem 0 0; font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
-#architecture .layer-boundary .lb-line ~ .lb-io { display: none; }
 
 body[data-page="lifecycles"] .orbit-fig { position: relative; }
 

@@ -683,10 +683,10 @@
   }
 
   /* ---------------- type: the serif's hyphen ----------------
-     Instrument Serif's U+002D has wide side bearings ("Domain - Specific") and its file has no U+2010 (a U+2010 is drawn
-     by whatever serif the system has). In display text the hyphen stays U+002D, so find-in-page and copy match a typed
-     '-', inside a .hy span whose margins take the bearings in (site.css); a static U+2010 becomes U+002D again. No style is
-     read now: in the first frame a heading that is not in the serif gets its plain hyphen back. */
+     Instrument Serif's U+002D is drawn long ("Domain – Specific") and its file has no U+2010 (a U+2010 is drawn by whatever
+     serif the system has). In display text the hyphen stays U+002D, so find-in-page, copy and line breaks match a typed
+     '-', inside a .hy span that site.css draws shorter (hc6) in a tighter slot; a static U+2010 becomes U+002D again. No
+     style is read now: in the first frame a heading that is not in the serif gets its plain hyphen back. */
   const SERIF_TEXT = 'h1, h2, h3, .display-1, .display-2, .display-3, .manifesto, .footer .tag';
   const HY = /(\p{L})[-\u2010](?=\p{L})/u;
   function serifHyphens(root) {

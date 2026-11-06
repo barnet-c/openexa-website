@@ -39,8 +39,8 @@
 }
 @keyframes bp-redraw { from { stroke-dasharray: calc(1.02 * var(--bk)) calc(2.04 * var(--bk)); stroke-dashoffset: calc(1.02 * var(--bk)); } to { stroke-dasharray: calc(1.02 * var(--bk)) calc(2.04 * var(--bk)); stroke-dashoffset: 0; } }
 @keyframes bp-fade { from { opacity: 0; } }
-/* a hedge, said once beside its drawing (the post heroes' and the index's) */
-.pp-h { font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); }
+/* a plate's stamp, under its lower-left corner (hc6: "Illustrative" where it simulates data; SYSTEM.md's one rule) */
+.pp-h { margin: .875rem 0 0; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); }
 
 /* ---------- index: the hero, the title and the library (one leaf per post; blog_plates.library_svg) ---------- */
 .blog-page .blog-hero { padding-top: calc(var(--nav-h) + clamp(3rem, 6.5vw, 6.5rem)); padding-bottom: clamp(3rem, 6vw, 5.5rem); }
@@ -53,7 +53,6 @@
 .lib-art .lf-g { stroke: var(--accent); stroke-opacity: .95; }
 .lib-art .lf-face * { vector-effect: non-scaling-stroke; } /* hairlines stay hairlines on a foreshortened leaf (so no pathLength draw-ins here) */
 .lib-b { cursor: pointer; outline: 0; }
-.lib-plate figcaption { margin-top: clamp(1.25rem, 2.2vw, 2rem); font: 400 var(--fs-small)/1.5 var(--sans); } /* one baseline with the links */
 /* a3: the collections' links under the H1; the one pointed at or focused lights its bundle (blog.js data-lit) */
 .blog-idx { display: flex; flex-wrap: wrap; gap: .5rem 1.75rem; margin: 0 0 calc(-1 * var(--hair)); font: 400 var(--fs-small)/1.5 var(--sans); }
 .blog-idx a { display: inline-flex; align-items: center; gap: .45em; padding-top: .375rem; margin-top: -.375rem; color: var(--fg); border-bottom: var(--hair) solid var(--line-strong); transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out); }
@@ -90,7 +89,6 @@
 @media (max-width: 640px) {
   .blog-page .blog-hero { padding-bottom: 2.5rem; }
   .blog-idx { column-gap: clamp(.9rem, 5vw, 1.5rem); } /* the three names on one line at 320 */
-  .lib-plate figcaption { margin-top: 1rem; }
 }
 
 /* ---------- index: a collection's one head (site.css .ch-head): its name, then its author and years on one line under it ---------- */
@@ -302,7 +300,6 @@
 .post-plate .hp-reg i:nth-child(2) { right: 0; top: 0; border-width: var(--b) var(--b) 0 0; }
 .post-plate .hp-reg i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 var(--b) var(--b); }
 .post-plate .hp-reg i:nth-child(4) { right: 0; bottom: 0; border-width: 0 var(--b) var(--b) 0; }
-.post-plate .pp-h { margin-top: .875rem; }
 .hang { margin-left: -.4em; } /* a paragraph that opens on a quote mark hangs it in the margin (build_blog.hang) */
 @media (prefers-reduced-motion: no-preference) { /* engraved as the page opens: CSS from the first paint, still under reduced motion */
   .post-plate .bp-art [pathLength] { animation: bp-draw 1.5s var(--ease) .15s backwards; }

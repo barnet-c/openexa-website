@@ -83,19 +83,19 @@
 .pf-legend { display: flex; gap: .625rem; align-items: baseline; max-width: 64ch; margin: .75rem 0 0; font: .82rem/1.5 var(--sans); color: var(--fg-3); }
 .pf-legend b { flex: none; font: 400 1.5rem/.6 var(--serif); color: var(--fg-2); transform: translateY(.3em); }
 
-/* §01 the paper trail (a1): one fill on the same row of each sheet (C-028) */
-[data-page="proof"] .pf-trail .pf-doc { --F: calc(106 / 180); padding: 0; }
+/* §01 the paper trail (a1; hc6, HC6 item 7: stacks of hairline sheets, work/proof/hc6/docs.py): the session's row is the
+   same row on each sheet (C-028), and the green thread through it is the drawing's one colour. The drawing is 100 x 126
+   units (the pages stand upright), the row at 80; from 601 px it is --sw wide (7rem: 70% of a1's height at 1440), so the
+   thread crosses the air between the stacks */
+[data-page="proof"] .pf-trail .pf-doc { --F: calc(80 / 126); --sw: 7rem; padding: 0; }
 [data-page="proof"] .pf-trail .pf-doc::after { content: none; }
 [data-page="proof"] .pf-trail .pf-doc::before { content: none; }
 [data-page="proof"] .pf-sheet { position: relative; margin: 0 0 clamp(1.125rem, 1.8vw, 1.625rem); color: var(--fg); }
+[data-page="proof"] .pf-sheet > svg { width: var(--sw); }
 [data-page="proof"] .pf-tr { position: absolute; top: calc(var(--F) * 100%); left: var(--t0, 0%); right: var(--t1, 0%); height: 0; margin-top: calc(-.5px * var(--stroke-2)); border-top: calc(1px * var(--stroke-2)) solid var(--accent); transform-origin: 0 50%; }
-[data-page="proof"] .pf-trail .pf-doc:nth-child(1) { --t0: 10%; --t1: calc(-1 * var(--cg)); --tw: 300ms; --tt: 150ms; --tm: 80ms; }
-[data-page="proof"] .pf-trail .pf-doc:nth-child(2) { --t1: calc(-1 * var(--cg)); --tw: 350ms; --tt: 450ms; --tm: 480ms; }
-[data-page="proof"] .pf-trail .pf-doc:nth-child(3) { --t1: 93.75%; --tw: 50ms; --tt: 800ms; --tm: 820ms; }
-/* the hedge (hc5, HC5 item 9): where the sheets stand in a row, the row has a foot rule and "Schematic" sits under its left
-   end, as under Trust §02's plates (SYSTEM.md: a plate's hedge under its lower-left corner); phones: under the list */
-[data-page="proof"] .pf-trail-cap { margin-top: 1rem; }
-@media (min-width: 601px) { [data-page="proof"] .pf-trail { padding-bottom: 1.75rem; border-bottom: var(--hair) solid var(--line); } }
+[data-page="proof"] .pf-trail .pf-doc:nth-child(1) { --t0: calc(var(--sw) * .11); --t1: calc(-1 * var(--cg)); --tw: 300ms; --tt: 150ms; }
+[data-page="proof"] .pf-trail .pf-doc:nth-child(2) { --t1: calc(-1 * var(--cg)); --tw: 310ms; --tt: 450ms; }
+[data-page="proof"] .pf-trail .pf-doc:nth-child(3) { --t1: calc(100% - var(--sw) * .77); --tw: 70ms; --tt: 760ms; --tm: 770ms; }
 @media screen and (prefers-reduced-motion: no-preference) {
   [data-page="proof"] .pf-tr { transition: transform var(--tw) linear var(--tt); }
   [data-page="proof"] .pf-sheet .pf-mk { transition: opacity var(--dur-move) var(--ease-out) var(--tm); }
@@ -113,17 +113,17 @@
 }
 @media (max-width: 600px) {
   [data-page="proof"] .pf-trail { row-gap: 1.375rem; }
-  [data-page="proof"] .pf-trail .pf-doc { --sw: 8.5rem; display: grid; grid-template-columns: var(--sw) minmax(0, 1fr); column-gap: 1.125rem; align-items: start; padding-left: 1.125rem; }
+  [data-page="proof"] .pf-trail .pf-doc { --sw: 5rem; display: grid; grid-template-columns: var(--sw) minmax(0, 1fr); column-gap: 1.125rem; align-items: start; padding-left: 1.125rem; }
   [data-page="proof"] .pf-trail .pf-doc h3 { align-self: center; font-size: 1.35rem; }
   /* the link wraps here: its rule follows the words and the arrow stays with "record" */
   [data-page="proof"] .pf-doc h3 a { display: inline; border-bottom: 0; text-decoration: underline var(--hair) var(--line-strong); text-underline-offset: .22em; }
   [data-page="proof"] .pf-doc h3 .arr { display: inline-block; margin-left: .25em; vertical-align: .05em; }
   [data-page="proof"] .pf-sheet { margin: 0; }
   /* the spine: this sheet's row to the next's */
-  [data-page="proof"] .pf-trail .pf-doc:not(:last-child)::before { content: ""; position: absolute; left: 0; top: calc(var(--sw) * 180 / 320 * var(--F) - .5px * var(--stroke-2)); width: 0; height: calc(100% + 1.375rem); border-left: calc(1px * var(--stroke-2)) solid var(--accent); background: none; transform-origin: 50% 0; -webkit-mask-image: none; mask-image: none; }
-  [data-page="proof"] .pf-trail .pf-doc:nth-child(1) { --t0: -1.125rem; --t1: 93.75%; --tw: 100ms; --tt: 150ms; --tm: 80ms; --sp: 250ms; }
-  [data-page="proof"] .pf-trail .pf-doc:nth-child(2) { --t0: -1.125rem; --t1: 41.25%; --tw: 180ms; --tt: 450ms; --tm: 560ms; --sp: 630ms; }
-  [data-page="proof"] .pf-trail .pf-doc:nth-child(3) { --t0: -1.125rem; --t1: 93.75%; --tw: 100ms; --tt: 830ms; --tm: 900ms; }
+  [data-page="proof"] .pf-trail .pf-doc:not(:last-child)::before { content: ""; position: absolute; left: 0; top: calc(var(--sw) * 126 / 100 * var(--F) - .5px * var(--stroke-2)); width: 0; height: calc(100% + 1.375rem); border-left: calc(1px * var(--stroke-2)) solid var(--accent); background: none; transform-origin: 50% 0; -webkit-mask-image: none; mask-image: none; }
+  [data-page="proof"] .pf-trail .pf-doc:nth-child(1) { --t0: -1.125rem; --t1: calc(100% - var(--sw) * .77); --tw: 100ms; --tt: 150ms; --sp: 250ms; }
+  [data-page="proof"] .pf-trail .pf-doc:nth-child(2) { --t0: -1.125rem; --t1: calc(100% - var(--sw) * .77); --tw: 100ms; --tt: 450ms; --sp: 550ms; }
+  [data-page="proof"] .pf-trail .pf-doc:nth-child(3) { --t0: -1.125rem; --t1: calc(100% - var(--sw) * .77); --tw: 100ms; --tt: 750ms; --tm: 760ms; }
   [data-page="proof"] .pf-trail .pf-doc:nth-child(1) .pf-tr { transform-origin: 100% 50%; } /* the first leaves its row leftwards, for the spine */
 }
 @media screen and (max-width: 600px) and (prefers-reduced-motion: no-preference) {
@@ -301,7 +301,6 @@
 @media (hover: hover) {
   .tr-k > .tr-kp:hover { background: rgba(14, 21, 18, .025); }
 }
-.tr-k-cap { margin-top: 1rem; }
 /* hc2: the stop or the approval draws in as the plate arrives (site.css [data-draw]: the one .dm mark per plate; it
    replaces the fade of every accent and label); "Emergency halt" has no single accent and holds still */
 @media (min-width: 1200px) {
@@ -333,7 +332,6 @@
 .tr-cud .hp-lab--acc { color: var(--signal-ink); }
 .tr-cud .hp-lab--rej { color: var(--fg-2); }
 .tr-cud .hp-lab--r { max-width: calc(var(--x) * 1%); white-space: normal; text-wrap: balance; } /* a4: wraps, not off the plate */
-.tr-cu-plate .figure-cap { --fc-ind: calc(100% * 57 / 600); margin-top: 0; } /* hc5 (HC5 item 9): the hedge under the drawing's first mark (the agent's ring, x 57 of 600), on the drawing's own margin; phones: the content edge, as every caption (site.css) */
 @media (max-width: 960px) { .tr-cu > * { grid-column: 1 / -1; } }
 /* phones: a third of the drawing; its two words stay */
 @media (max-width: 600px) { .tr-cud .tr-cu-xs { display: none; } }

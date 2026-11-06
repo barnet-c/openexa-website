@@ -10,7 +10,7 @@ import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
 from meta import HOME, ORG, FEED_LINKS, ROBOTS, ld, crumbs, atom
-from blog_plates import PLATES, plate_svg, collection_svg, library_svg, rings_tall, phone_fit
+from blog_plates import PLATES, plate_svg, collection_svg, library_svg, rings_tall, phone_fit, stamp, ILLUSTRATIVE
 import html as H, io, json, os, re, shutil
 from datetime import datetime
 from pathlib import Path
@@ -602,10 +602,8 @@ for i, (s, part, short) in enumerate(SERIES):
             <h3>{esc(short)}</h3>
           </a></li>''')
 series_minutes = sum(SLUGS[s]["minutes"] for s, _, _ in SERIES)
-# a post hero's plate carries this hedge. The index says it once for all its plates, under the first one (cut, 1 Nov:
-# the markets grid's and the phone head plates' copies went with their caption lines). Hill climb hc1: one hedge, one
-# wording again (r5's rule): the posts take the index's form (award a1's, one word shorter), "no data is plotted" went
-PLATES_HEDGE = "Schematic · no data plotted"
+# hill climb hc6 (SYSTEM.md "The hedge stamp (hc6: one rule)"; was "Schematic · no data plotted" under every drawn plate
+# and the index's book): a plate's stamp is blog_plates.stamp(), "Illustrative" where it simulates data, else none
 in_series = {s for s, _, _ in SERIES}
 # cut (1 Nov): the series' two-line head, its paragraph, "Start with the introduction", the "Featured series" row and
 # the "Also in AI & agents" label went. The head is the series' name; the rail says the rest (four dated nodes, the
@@ -664,11 +662,14 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
         # tablets: the lead's plate heads the list, as the phone did since a1
         lead_p, rest_ = by_col[k][0], by_col[k][1:]  # not "lead": that name is the posts' lead() below
         panel = "".join(f'<div class="bpn{" is-on" if i == 0 else ""}">{plate_svg(p["slug"], p["col"])}</div>' for i, p in enumerate(rest_))
+        # hill climb hc6: the index's one stamp, under the figure that follows the list (as Research's index figure says
+        # it); the cards' plates, as every card's on the site, carry none. aria-hidden with its drawing (the margin plate's way)
+        assert any(stamp(p["slug"], p["col"]) for p in rest_)
         body = lead_card(lead_p) + f'''        <div class="blog-reg blog-mkt" data-blog-follow>
           <ol class="blog-register" role="list" data-reveal>
 {register(rest_, k, after=lead_p["dt"].year)}
           </ol>
-          <div class="blog-panel" aria-hidden="true"><div class="blog-panel-art">{panel}</div></div>
+          <div class="blog-panel" aria-hidden="true"><div class="blog-panel-art">{panel}</div><p class="pp-h">{ILLUSTRATIVE}</p></div>
         </div>
 '''
     # chapters for the nav readout come from the section's own attributes (site.js), as on Home since the cut: no
@@ -683,10 +684,9 @@ years = sorted(p["dt"].year for p in kept)
 # this page drew the wrong library. The leaf counts come from the collections, so a new post adds a leaf.
 assert sum(1 for p in by_col["ai"] if p["slug"] in in_series) == 4
 # cut (1 Nov): the plate's title ("The library") and its sentence went (the drawing shows it: three bundles, the
-# series in green; since award a3 the collections' names are links under the H1, HERO_INDEX). The page's one hedge for every plate on it stays, short
-# (award a1: "Schematic · no data plotted", was "Schematic · no plate plots data": same hedge, one word shorter, so the
-# specific H1 fits the index's 250 words)
-INDEX_HEDGE = PLATES_HEDGE
+# series in green; since award a3 the collections' names are links under the H1, HERO_INDEX). Hill climb hc6: its
+# hedge went too ("Schematic · no data plotted" under a drawing of the blog itself, the HC6 director's label noise): the
+# book is a conceptual drawing (SYSTEM.md's stamp rule); the page says "Illustrative" under the markets figure instead
 # award a1 (art director, a1-ux 15): "The blog." was the site's last template headline. The H1 says what the blog is,
 # with its count bound to the posts (C-139). One text box (verify_v9 reflow_400 reads phrase spans that wrap as crossing
 # boxes): the count keeps its noun and bind() its function words, so it breaks only by sense ("29 posts on AI / and
@@ -694,7 +694,6 @@ INDEX_HEDGE = PLATES_HEDGE
 INDEX_H1 = (f"{len(kept)} posts", "on AI and markets.")
 LIBRARY = f'''<figure class="lib-plate">
           <div class="lib-stage">{library_svg(tuple(len(by_col[k]) for k in ("markets", "ai", "economics")), sum(1 for p in by_col["ai"] if p["slug"] in in_series))}</div>
-          <figcaption><span class="pp-h">{INDEX_HEDGE}</span></figcaption>
         </figure>'''
 # award a3 (a3-ux 6: "a 29-post page whose hero offers no way in"; the plate's lettering looked like tabs and did nothing):
 # the collections' short names (SHORT, the bar's readout words) as links under the H1, in the page's order, the first
@@ -751,11 +750,18 @@ write(OUT / "index.html", page)
 # a research note's figure with each collection, e.g. a decaying curve over a grains-futures summary). The CMS's hero
 # image leaves the top of the article, except the two 2024 screenshots of the author's own work (KEEP_HERO), which stay
 # as the article's first figure. Figures keep their own captions (cut, 1 Nov: the added 'Fig. N' labels went).
+def host_html(h):
+    """hill climb hc6: the source line's host keeps its arrow (it stood alone on the next line on 11 posts from 1920 px and
+    on phones): the last two labels and the arrow never part; a longer host may break after its other dots (at 961 px
+    "timleungresearch.medium.com" and the arrow are wider than the column). The same characters"""
+    *head, a, b = h.split(".")
+    return "".join(esc(x) + ".<wbr>" for x in head) + f'<span class="nowrap">{esc(a)}.{esc(b)}{OUTB}</span>'
 def post_plate(p):
     """cut (1 Nov): the plate's title line and the quoted sentence under it went (the drawing is the post's idea; the
-    title says what the post is). A drawn plate keeps its hedge; the economics collection's mark (rings) has none to keep"""
-    econ = p["col"] == "economics" or p["slug"] not in PLATES
-    cap = "" if econ else f'\n          <figcaption class="pp-h">{PLATES_HEDGE}</figcaption>'
+    title says what the post is). hc6: a plate that simulates data says "Illustrative" (blog_plates.stamp); a conceptual
+    drawing and the economics collection's mark (rings) say nothing"""
+    st = stamp(p["slug"], p["col"])
+    cap = f'\n          <figcaption class="pp-h">{st}</figcaption>' if st else ""
     art = plate_svg(p["slug"], p["col"], turn(p), lettering=True)
     # hill climb hc2: on a phone the drawing fills its 5:2 frame (blog_plates.phone_fit, placed by blog.css at <= 640 px)
     return f'''<figure class="post-plate" id="plate">
@@ -771,13 +777,13 @@ def margin_plate(p):
     """award a3 (art director, medium: "at 1920 the body runs 31-64% with the right 36% empty for about nine screens"):
     on a long read (long_read), from 1440 px the reading grid has three parts, as a note's: the post's wayfinding
     (columns 1-3), the text (4-9) and, sticky beside it, the post's own plate (10-12) on the index's sheet (the same plate
-    as the hero's, the same hedge under it; the economics rings carry none, as in the hero). aria-hidden: the hero's plate
+    as the hero's, the same stamp under it, or none, as in the hero). aria-hidden: the hero's plate
     and hedge are the ones read out. It starts half a screen down the column and rises with the text until it sticks
     (blog.css), so one screen never shows the hero's drawing and this one together. A short post ends within about a
     screen: no plate, its a2 layout"""
     if not long_read(p): return ""
-    econ = p["col"] == "economics" or p["slug"] not in PLATES
-    cap = "" if econ else f'<p class="pp-h">{PLATES_HEDGE}</p>'
+    st = stamp(p["slug"], p["col"])
+    cap = f'<p class="pp-h">{st}</p>' if st else ""
     return f'''
           <div class="post-mp" aria-hidden="true"><div class="post-mp-in"><div class="post-mp-art">{plate_svg(p["slug"], p["col"], turn(p))}</div>{cap}</div></div>'''
 for p in order:
@@ -812,14 +818,14 @@ for p in order:
         crumb = f' · <a href="index.html#series">{SERIES_NAME}</a> · {esc(part)}'
         sp = SLUGS[SERIES[j - 1][0]] if j else None; sn = SLUGS[SERIES[j + 1][0]] if j + 1 < len(SERIES) else None
         pager = "".join([
-            pcard("prev", f"{sp['slug']}.html", f"← {part_name(j - 1)}", post_title(sp["title"])) if sp else pcard("prev", "index.html#series", "← The blog", f"{SERIES_NAME}."),
+            pcard("prev", f"{sp['slug']}.html", f"← {part_name(j - 1)}", post_title(sp["title"])) if sp else pcard("prev", "index.html#series", "← The blog", serif(f"{SERIES_NAME}.")),
             pcard("next", f"{sn['slug']}.html", f"{part_name(j + 1)} →", post_title(sn["title"])) if sn else pcard("next", f"{PFX}research.html", "Research →", "The thinking behind the swarm."),
         ])
         post_ld["isPartOf"] = [BLOG_LD, {"@type": "CreativeWorkSeries", "name": f"{SERIES_NAME} — OpenEXA Blog", "url": BASE + "#series"}]
         post_ld["position"] = j + 1
     # cut (1 Nov): "Originally published on openexa.com, <date>." (C-147: likely false for the pre-2023 posts) and the
     # separate "The original on <host>" link. A post that summarises work published elsewhere keeps saying so, with the link
-    original = (f'<p class="ps-src">A summary of work first published on <a href="{esc(p["source"])}" target="_blank" rel="noopener">{esc(src_host)}{OUTB}</a>.</p>'
+    original = (f'<p class="ps-src">A summary of work first published on <a href="{esc(p["source"])}" target="_blank" rel="noopener">{host_html(src_host)}</a>.</p>'
                 if p["source"] else "")
     # award a1 (art director, big; AWARD_BAR post 2): the reading column's left side carries the post's wayfinding, as a
     # note's "In this note" does, so posts and notes are one long-read template. The bodies have no section heads to

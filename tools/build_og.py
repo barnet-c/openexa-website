@@ -229,12 +229,15 @@ def still(rel):
 
 def still_hedge(rel):
     """The hedge the page sets beside the drawing ("Illustrative", "Illustrative · heights not to scale"): a card keeps it
-    under the still, as the plate cards keep "Schematic". '' where the page sets none (the blog's book and plates)."""
+    under the still, as the plate cards keep "Schematic". '' where the page sets none (the blog's book; hc6: a post whose
+    plate is a conceptual drawing). hc6 (integrate, blog's request; the one hedge-stamp rule): a post whose hero plate
+    simulates data says "Illustrative" in its hero figcaption (blog_plates.stamp), and its card says it too."""
     spec = still_spec(rel)
     if not spec: return ""
     s = (ROOT / rel).read_text(encoding="utf-8")
     m = (re.search(r'company-readout">.*?class="fc-h">([^<]*)<', s, re.S) if rel == "company.html"
-         else re.search(r'figcap-h">([^<]*)<', s) if spec[0] in ("rs-still", "fs-still") else None)
+         else re.search(r'figcap-h">([^<]*)<', s) if spec[0] in ("rs-still", "fs-still")
+         else re.search(r'<figcaption class="pp-h">([^<]*)<', s) if spec[0] == "bp-art" else None)
     return H.unescape(m.group(1)).strip() if m else ""
 
 # what each still shows, for og:image:alt (launch_meta_v9 for the top pages; build_research and build_blog for theirs)
@@ -274,7 +277,8 @@ body { position: relative; background: #0E1512; color: #F5F2EC; font-family: 'In
 .h { font-family: 'Instrument Serif', serif; font-weight: 400; line-height: 1; letter-spacing: -.012em; text-wrap: balance; }
 .h .g { color: #4FCB93; }
 .h em { font-style: italic; }
-.h .hy { margin-inline: -.045em; }
+.h .hy { position: relative; margin-inline: -.1em; -webkit-text-fill-color: transparent; } /* hc6: site.css's serif hyphen, drawn at .6 of its length */
+.h .hy::before { content: "-"; position: absolute; inset: 0 0 auto; line-height: normal; text-align: center; transform: scaleX(.6); -webkit-text-fill-color: currentColor; }
 .s { margin-top: 30px; width: 640px; font-size: 25px; line-height: 1.4; color: rgba(245,242,236,.78); text-wrap: pretty; }
 .foot { position: absolute; left: 72px; right: 72px; bottom: 48px; display: flex; justify-content: space-between; }
 .foot i { display: inline-block; width: 7px; height: 7px; border-radius: 50%%; background: #4FCB93; margin-right: 14px; vertical-align: 2px; }

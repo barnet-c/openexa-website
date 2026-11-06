@@ -281,11 +281,14 @@
 }
 @media (prefers-reduced-motion: reduce) { .kplate :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate .k-loop, .kplate .k-council > circle, [data-page="company"] .constants > div { transition: none; } }
 
-/* ---------------------------------------------------------------- Company §04: the six lifecycles */
-/* hc2 (director item 4, one drawing for the six): Home §01's register, site.css's .lc-reg, the same markup and words
-   (the a3 route of stages and ellipses is gone); the heading keeps the chapter head's gap, as on Home */
-[data-page="company"] #lifecycles .display-2 { margin-bottom: var(--ch-gap); }
-[data-page="company"] .class-note { margin: 1.25rem 0 0; font-size: var(--fs-small); color: var(--fg-3); }
+/* ---------------------------------------------------------------- Company §04: where the work is */
+/* hc6 (director item 10): the chapter is its head, the heading and one link to the six classes on Lifecycles (Home §01
+   draws the six; said once). The head is the whole chapter, so it ends on the section's own foot; the link sits on the
+   heading's last baseline in the third column from 1100 px (.ch-spread), under it before. */
+[data-page="company"] #lifecycles .ch-head { margin-bottom: 0; }
+[data-page="company"] #lifecycles .ch-link { justify-self: start; }
+@media (min-width: 1100px) { [data-page="company"] #lifecycles .ch-title .keep { display: block; } } /* two lines, as Home §07's head */
+@media (max-width: 1099px) { [data-page="company"] #lifecycles .ch-link { margin-top: 1.5rem; } }
 
 /* ---------------------------------------------------------------- Company: print */
 @media print {

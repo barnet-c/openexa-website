@@ -184,7 +184,11 @@ em, .ital { font-style: italic; }
 h1, h2, h3, h4, .display-1, .display-2, .display-3, .h4 { text-wrap: balance; }
 p, li, dd, figcaption, blockquote, .lede, .body-lg { text-wrap: pretty; }
 blockquote, .manifesto { hanging-punctuation: first; }
-.hy { margin-inline: -.045em; } /* the serif's U+002D with its bearings taken in (site.js wraps it in display text; r2) */
+/* hc6: the serif's hyphen reads as an en dash; the real '-' stays unpainted, a copy at .6 of its length shows (SYSTEM.md) */
+.hy { position: relative; margin-inline: -.1em; -webkit-text-fill-color: transparent; }
+.hy::before { content: "-"; content: "-" / ""; position: absolute; inset: 0 0 auto; line-height: normal; text-align: center; transform: scaleX(.6); -webkit-text-fill-color: currentColor; pointer-events: none; }
+.title-sub .hy { -webkit-text-fill-color: currentColor; } .title-sub .hy::before { content: none; }
+@media (forced-colors: active) { .hy { -webkit-text-fill-color: currentColor; } .hy::before { content: none; } }
 
 /* ---------- layout ---------- */
 .container { width: 100%; max-width: var(--max); margin: 0 auto; padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); } /* viewport-fit=cover: clear landscape notches */
@@ -448,10 +452,11 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 .fc-n { font: 500 var(--fs-label)/var(--fc-lh, 1.25rem) var(--mono); letter-spacing: .02em; text-transform: none; color: var(--fg); white-space: nowrap; display: none; }
 .fc-d { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .fc-t { min-width: 0; text-wrap: pretty; }
-.fc-h, .figcap-h { font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); text-align: right; text-wrap: pretty; }
+/* hc6: the hedge stamp's one slot is the caption's lower left; after a title, the line under it (SYSTEM.md) */
+.fc-h, .figcap-h { font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); text-wrap: pretty; }
+.fc-t + .fc-h { flex-basis: 100%; }
 .figure-cap--stack { flex-direction: column; align-items: flex-start; gap: calc(3 * var(--hair)); }
-.figure-cap--stack .fc-h { text-align: left; }
-@media (max-width: 960px) { .figure-cap { flex-direction: column; align-items: flex-start; gap: calc(3 * var(--hair)); } .figure-cap .fc-h { text-align: left; } }
+@media (max-width: 960px) { .figure-cap { flex-direction: column; align-items: flex-start; gap: calc(3 * var(--hair)); } }
 @media (max-width: 600px) { .figure-cap { padding-left: 0; margin-top: .875rem; } }
  .mt-2 { margin-top: 1.5rem } .mt-3 { margin-top: 2.5rem } .mt-4 { margin-top: 4rem }
 .mb-3 { margin-bottom: 2.5rem }
@@ -1274,12 +1279,12 @@ a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 1
 .footer ul li a:focus-visible { opacity: 1; } /* the footer's links rest at .85; a focused one is at full strength */
 
 /* ---------- the instrument head (hc2): one order, one register on every instrument (all dark): title (paper),
-   "Illustrative" (khaki), state (a still dot and a sentence-case word, green), key, the primary action (the site's paper
+   "Illustrative" (fg-3, hc6), state (a still dot and a sentence-case word, green), key, the primary action (the site's paper
    button; pressed, an outline), Pause motion (an outline, last). Inter at the small step; mono only for data (the desk's
    clock). .instr-* name the parts for a new instrument. hc4: the chain's restore (its broken state's one act) too, as Trust's */
 :is(.instr-head, .sw-head, .arch-head, .chain-head, .lt-head, .desk-head) { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
 :is(.instr-title, .sw-name, .arch-lab, .lt-title) { color: var(--fg); }
-:is(.instr-hedge, .sw-kicker, .arch-kicker, .desk-kicker) { color: var(--khaki); }
+:is(.instr-hedge, .sw-kicker, .arch-kicker, .desk-kicker) { color: var(--fg-3); } /* hc6: the hedge stamp's one colour (was khaki) */
 :is(.instr-state, .sw-live, .chain-status, .lt-state, .desk-head .live) { display: inline-flex; align-items: center; gap: .5625rem; font: inherit; letter-spacing: 0; text-transform: none; color: var(--accent); }
 :is(.instr-state, .sw-live, .chain-status, .lt-state, .desk-head .live) > i { flex: none; width: .4375rem; height: .4375rem; border-radius: 50%; background: currentColor; }
 :is(.instr-key, .sw-key, .arch-legend) { color: rgba(245, 242, 236, .66); }
@@ -1295,24 +1300,19 @@ a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 1
 :is(.instr-primary, .sw-follow, .chain-try, .chain-restore, .desk-follow):focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
 @media (forced-colors: active) { :is(.instr-primary, .sw-follow, .chain-try, .chain-restore, .desk-follow) { border: calc(2 * var(--hair)) solid ButtonText; } }
 @media (pointer: coarse) { :is(.instr-primary, .sw-follow, .chain-try, .chain-restore, .desk-follow) { min-height: 2.75rem; } }
-/* Pause motion, one control: boxed in a head; frameless stages (overture, figures) unboxed */
+/* Pause motion, one control (hc6): outlined, its word at every width; an instrument head's right end or a hero's lower right */
 :is(.arch-motion, .sw-motion, .model-motion, .story-motion, .figure-motion) {
-  display: inline-flex; align-items: center; justify-content: center; min-height: 2.25rem; padding: 0 .125rem;
-  border: var(--hair) solid transparent; border-radius: .125rem;
+  display: inline-flex; align-items: center; justify-content: center; min-height: 2.25rem; padding: 0 .6875rem;
+  border: var(--hair) solid rgba(245, 242, 236, .32); border-radius: .125rem;
   font: 400 var(--fs-small)/1 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .78); white-space: nowrap;
   transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), opacity var(--dur-feedback) var(--ease);
 }
-:is(.arch-motion, .sw-motion, .model-motion, .figure-motion.is-head) { padding: 0 .6875rem; border-color: var(--line-strong); }
 :is(.arch-motion, .sw-motion, .model-motion, .story-motion, .figure-motion)[hidden] { display: none; }
-@media (hover: hover) { :is(.arch-motion, .sw-motion, .model-motion, .story-motion, .figure-motion):hover { color: var(--signal-bright); } :is(.arch-motion, .sw-motion, .model-motion, .figure-motion.is-head):hover { border-color: var(--signal-bright); } }
+@media (hover: hover) { :is(.arch-motion, .sw-motion, .model-motion, .story-motion, .figure-motion):hover { color: var(--signal-bright); border-color: var(--signal-bright); } }
 @media (pointer: coarse) { :is(.arch-motion, .sw-motion, .model-motion, .story-motion, .figure-motion) { min-height: 2.75rem; } } /* a finger's target */
 .figure-motion:not(.is-head) { position: absolute; z-index: 3; }
 .figure-motion:focus-visible { color: var(--paper); outline-offset: .125rem; }
-.company-sculpture > .figure-motion { top: calc(2 * var(--hair)); right: 1.375rem; }
-:is(.research-hero, .article-hero) > .figure-motion { right: max(var(--gutter), env(safe-area-inset-right), calc((100% - var(--max)) / 2 + var(--gutter))); bottom: .625rem; }
-@media (max-width: 960px) {
-  :is(.research-hero, .article-hero) > .figure-motion { top: calc(var(--nav-h) + .25rem); bottom: auto; }
-}
+.company-sculpture > .figure-motion { right: 1.375rem; bottom: 0; }
 .skip { position: fixed; left: .75rem; top: .75rem; z-index: 1001; padding: .6875rem 1rem; border-radius: var(--r); background: var(--ink); color: var(--paper); font-size: var(--fs-small); font-weight: 500; box-shadow: 0 0 0 calc(2 * var(--hair)) var(--signal-bright); transform: translateY(calc(-100% - 1.5rem)); transition: transform var(--dur-move) var(--ease); }
 .skip:focus, .skip:focus-visible { left: .75rem; transform: none; outline: calc(2 * var(--hair)) solid transparent; outline-offset: .125rem; } /* transparent: forced colours paint it */
 

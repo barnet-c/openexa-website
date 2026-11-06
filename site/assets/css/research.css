@@ -80,7 +80,7 @@
   /* award a1 (a1-ux): the caption says what is drawn at every width, in the one caption grammar (S-47: what is drawn
      left, the hedge right, one baseline); it changes with the note, pointed at, focused or scrolled to */
   .research-page .rs-cap { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .25rem 1.5rem; } /* (0,2,0): after the stacked .figcap grid */
-  .rs-cap .figcap-h { margin-left: auto; }
+  .rs-cap .figcap-h { flex-basis: 100%; } /* integrate hc6 (system's HC6 item 2 request): the stamp's one slot, the line under the title at the left (was margin-left: auto, the far end) */
   .research-page .posts-list .post > a { grid-template-columns: 3.5rem minmax(0, 1fr) auto; gap: 1.25rem; }
   .research-page .post-main h3 { max-width: 30ch; }
 }
