@@ -9,6 +9,15 @@
 (function () {
   'use strict';
   const me = document.currentScript, root = document.documentElement;
+  // (hc14, integrate) the footer's legal fold before the first paint, as on the pages that load site.js at once: made
+  // after the paint, it took ~190 px out of the footer, so a page reloaded at its foot jumped (CLS .04-.06). site.js
+  // keeps the same code (and skips a fold that exists); without JavaScript the disclosures stay open
+  const disc = document.querySelector('.footer .disc');
+  if (disc && !disc.closest('details')) {
+    const d = document.createElement('details'), s = document.createElement('summary');
+    d.className = 'footer-legal'; s.textContent = 'Legal & disclosures';
+    disc.before(d); d.append(s, disc);
+  }
   const list = ((me && me.getAttribute('data-after-paint')) || '').split(/\s+/).filter(Boolean);
   if (!list.length) return;
   if (list.some(src => /story\.js$/.test(src))) root.classList.add('story-wait');

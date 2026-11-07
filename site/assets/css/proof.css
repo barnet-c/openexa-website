@@ -37,6 +37,13 @@
 [data-page="proof"] .pf-record figcaption a:focus-visible { color: var(--fg); text-decoration-color: currentColor; }
 /* without scripts the record is the table: the caption keeps the regime line, not the blocks' key */
 @media (scripting: none) { [data-page="proof"] .pf-record .pf-js { display: none; } }
+/* hc14: proof.js's readout sizer (.pf-cap-sz) added a line after first paint and the hero rose 10 px (CLS .006); the
+   same words (readSaid() of Day 01, the longest; the link) hold the cell from the start */
+@media (scripting: enabled) {
+  [data-page="proof"] .pf-record .figure-cap--stack { display: grid; grid-template-columns: minmax(0, 1fr); }
+  [data-page="proof"] .pf-record .figure-cap--stack > *, [data-page="proof"] .pf-record .figure-cap--stack::after { grid-area: 1 / 1; }
+  [data-page="proof"] .pf-record .figure-cap--stack::after { content: "Day 01: discount; more than 10 bps captured, above the 10 bps floor; broker confirmation; settled. See\00a0the\00a0disclosures."; visibility: hidden; pointer-events: none; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; text-wrap: pretty; }
+}
 @media (min-width: 961px) {
   [data-page="proof"] .page-hero { --pf-gap: clamp(2.25rem, 3.4vw, 3.25rem); }
   [data-page="proof"] .page-hero--plate { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); grid-template-rows: auto auto auto minmax(0, 1fr); column-gap: clamp(2rem, 4vw, 4.5rem); }
@@ -339,7 +346,8 @@
 
 /* §02 the control plane (hc13r, PROOF-1; cp_plate.py): one plate, the execution layer and its six stations, one <li>
    each (glyph, name). From 961 px the glyphs abut in one row, columns in proportion to their drawings (one scale), so the
-   layer and the record line run on across them. 960 px and below: down a vertical rule drawn here (record line, layer),
+   layer and the record line run on across them. hc14: six equal columns, each mark and its name centred on its
+   column; the rule and the signal drawn once, in two rails (.tr-rail: behind, in front): no seam. 960 px and below: down a vertical rule drawn here (record line, layer),
    each glyph's marks turned beside it. The red words read in graphite (AA on paper-2) */
 .tr-st { margin: 0; padding: 0; list-style: none; }
 .tr-sd { color: var(--fg); }
@@ -348,16 +356,18 @@
 .tr-sd .hp-lab--rej { color: var(--fg-2); }
 .tr-s h3 { margin: 0; }
 @media (min-width: 961px) {
-  .tr-st { display: grid; grid-template-columns: minmax(0, 170fr) minmax(0, 190fr) minmax(0, 170fr) minmax(0, 200fr) minmax(0, 110fr) minmax(0, 160fr); /* the stations' widths (cp_plate.py) */ }
+  .tr-cpl { position: relative; }
+  .tr-cpl > .tr-rail { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; }
+  .tr-st { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); /* one step per station (cp_plate.py S) */ }
   .tr-sd .tr-v { display: none; }
-  .tr-s h3 { max-width: 13ch; margin-top: clamp(.5rem, 1.2vw, 1.25rem); padding-right: clamp(.75rem, 1.4vw, 1.5rem); } /* two short lines: each name a block under its glyph */
+  .tr-s h3 { max-width: 13ch; margin: clamp(.5rem, 1.2vw, 1.25rem) auto 0; padding-inline: clamp(.375rem, .7vw, .75rem); text-align: center; } /* two short lines, centred under the station's mark */
 }
 @media (max-width: 960px) {
   /* the glyph column (140 units): the record line at 8, the layer at 60 */
   .tr-st { --gw: clamp(6.25rem, 17vw, 9.5rem); }
   .tr-s { display: grid; grid-template-columns: var(--gw) minmax(0, 1fr); column-gap: clamp(1rem, 4vw, 2.5rem); position: relative; }
   .tr-sd { align-self: stretch; }
-  .tr-sd .tr-h, .tr-sd .hp-labs { display: none; }
+  .tr-sd .tr-h, .tr-sd .hp-labs, .tr-rail { display: none; }
   .tr-s h3 { align-self: center; padding: .75rem 0; }
   .tr-s::before, .tr-sd::before { content: ""; position: absolute; top: calc(var(--gw) * var(--r0, 0) / 140); bottom: 0; width: var(--hair); }
   .tr-s:last-child::before, .tr-s:last-child .tr-sd::before { bottom: auto; height: calc(var(--gw) * (var(--vh) - var(--r1, 0)) / 140); }
@@ -378,7 +388,7 @@
 .tr-se { transform-origin: 50% 50%; }
 @media screen and (prefers-reduced-motion: no-preference) {
   .tr-cpl { --T: 1.8s; }
-  .tr-cpl.is-run .tr-pl { animation: tr-go calc((var(--f1) - var(--f0)) * var(--T)) linear calc(var(--f0) * var(--T)); }
+  .tr-cpl.is-run .tr-pl { animation: tr-go var(--T) linear; }
   .tr-cpl.is-run .tr-rj { animation: tr-drop .5s var(--ease-out) calc(var(--f) * var(--T) + 60ms); }
   .tr-cpl.is-run .tr-v .tr-rj { animation-name: tr-drop-v; }
   .tr-cpl.is-run .tr-rl { animation: tr-grow .3s var(--ease-out) calc(var(--f) * var(--T)); }

@@ -91,8 +91,12 @@ async def main():
         assert await pg.locator("#company-figure").get_attribute("data-figure-current") == "boundary"
         assert (await pg.locator("[data-plate-label]").inner_text()).startswith("Decide above"), await pg.locator("[data-plate-label]").inner_text()
         await pg.screenshot(path=shot(f"company-act.png"))
-        for sel, name in (("#story", "story"), ("#team", "team"), ("#constants", "constants"), ("#lifecycles", "lifecycles")):
-            await pg.evaluate(f"document.querySelector('{sel}').scrollIntoView()"); await pg.wait_for_timeout(1800)
+        # (hc14) the walk visits every chapter the page lists, whatever their number (§04 #lifecycles left with its heading;
+        # its line is §01's): the three chapters, in order
+        cids = await pg.evaluate("[...document.querySelectorAll('main section[data-chapter]')].map(s => s.id)")
+        assert cids == ["story", "team", "constants"], ("company chapters", cids)
+        for name in cids:
+            await pg.evaluate(f"document.getElementById('{name}').scrollIntoView()"); await pg.wait_for_timeout(1800)
             await pg.screenshot(path=shot(f"company-{name}.png"))
         assert await pg.locator(".timeline").evaluate("el => el.classList.contains('is-in')")
         # homepage research chapter

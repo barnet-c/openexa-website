@@ -1232,22 +1232,22 @@ body.is-loading { overflow: hidden; }
 .loader.is-done ~ .nav .container > * { animation: nav-arrive var(--dur-move) var(--ease-out) both; }
 @keyframes nav-arrive { from { opacity: 0; transform: translateY(-.625rem); } }
 
-/* ---------- the page turn (hc13r; SYSTEM.md 12): the leaving view recedes and goes under, the arriving sheet rises 3rem
-   with the jump's shadow (from above on "back", site.js); never two headlines; the bar and its ink slide; 540 ms; the
-   first band's animations wait for the landing */
+/* ---------- the page turn (hc13r; SYSTEM.md 12): the leaving view recedes and is gone by .16 s, the arriving sheet rises
+   3rem from .14 s, opaque by a quarter, with the jump's shadow (from above on "back", site.js); never two headlines (hc14);
+   the bar and its ink slide; 520 ms; the first band's animations wait for the landing */
 @view-transition { navigation: auto; types: page; }
 .nav { view-transition-name: site-nav; }
 .loader ~ .nav { view-transition-name: none; } /* the homepage loader covers the bar until it lifts */
 ::view-transition { pointer-events: none; } /* a click during a turn or a jump reaches the page, already there */
 ::view-transition-old(root), ::view-transition-new(root) { mix-blend-mode: normal; }
-::view-transition-old(root) { animation: vt-recede .24s var(--ease-out) both; }
-::view-transition-new(root) { animation: vt-rise .44s var(--ease-move) .1s both; box-shadow: 0 -1.75rem 3.5rem -1.75rem rgba(8, 12, 10, .5); }
+::view-transition-old(root) { animation: vt-recede .16s var(--ease-out) both; }
+::view-transition-new(root) { animation: vt-rise .38s var(--ease-move) .14s both; box-shadow: 0 -1.75rem 3.5rem -1.75rem rgba(8, 12, 10, .5); }
 html:active-view-transition-type(back)::view-transition-new(root) { animation-name: vt-rise-down; box-shadow: 0 1.75rem 3.5rem -1.75rem rgba(8, 12, 10, .5); }
 ::view-transition-group(site-nav) { animation-duration: .44s; animation-timing-function: var(--ease-move); }
 ::view-transition-group(nav-ink) { animation-duration: .5s; animation-timing-function: var(--ease-move); }
 @keyframes vt-recede { to { transform: scale(.985); opacity: 0; } }
-@keyframes vt-rise { from { transform: translateY(3rem); opacity: 0; } 40% { opacity: 1; } }
-@keyframes vt-rise-down { from { transform: translateY(-3rem); opacity: 0; } 40% { opacity: 1; } }
+@keyframes vt-rise { from { transform: translateY(3rem); opacity: 0; } 25% { opacity: 1; } }
+@keyframes vt-rise-down { from { transform: translateY(-3rem); opacity: 0; } 25% { opacity: 1; } }
 html:active-view-transition-type(page) main > :first-child, html:active-view-transition-type(page) main > :first-child *,
 html:active-view-transition-type(page) main > :first-child *::before, html:active-view-transition-type(page) main > :first-child *::after { animation-play-state: paused !important; }
 /* leaving the overture: its canvases sit out of the snapshot, so Home recedes as every page does (a1; site.js) */
@@ -1330,7 +1330,7 @@ a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 1
 @keyframes fig-rise { from { clip-path: inset(100% -.5em -.5em -.5em); transform: translateY(.375rem); } to { clip-path: inset(-.5em); transform: none; } }
 
 /* ---------- long jumps on the same page (site.js jumpTo) ---------- */
-/* both views move from the same instant (the page transition's .13 s delay on the incoming view would open a gap onto
+/* both views move from the same instant (the page turn's .14 s delay on the incoming view would open a gap onto
    the root's ink between them) */
 html[data-jump]::view-transition-old(root), html[data-jump]::view-transition-new(root) {
   mix-blend-mode: normal; animation-duration: .32s; animation-delay: 0s; animation-timing-function: var(--ease-out); animation-fill-mode: both;

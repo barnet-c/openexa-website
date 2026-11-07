@@ -165,6 +165,15 @@ body[data-page="lifecycles"] .lcp .orb-next { opacity: .8; }
 .hero-plate--rings .lr-rec.is-in ~ .lr-dot { opacity: 0; } /* the ring squares up: it is the record now */
 @media (prefers-reduced-motion: no-preference) { .hero-plate--rings .hp-s1 { animation: pl-fade .6s var(--ease-out) both; } }
 @media print { .hero-plate--rings .lr-dot { display: none; } .hero-plate--rings .lr-rec { opacity: 1 !important; } }
+/* hc14 (director 4.5): the five outer rings recede to the faint line, so LC-01 and its gates lead; 'Signal' and 'Record'
+   sit outside LC-01 at their hairline leaders' ends (Record hangs below-left of its 45-degree leader), each on its own
+   patch of paper: no stroke within 8 px of a word, and the run (on LC-01) never passes under one */
+body[data-page="lifecycles"] .hero-plate--rings :is(.lr-n, .lr-r) { opacity: .45; }
+.hero-plate--rings .lr-lab { --tx: calc(-100% - .5rem); background: var(--bg); box-shadow: 0 0 0 .5rem var(--bg); border-radius: .25rem; }
+.hero-plate--rings .lr-lab--rec { transform: translate(var(--tx), .5rem); }
+.hero-plate--rings .hp-labs { right: 1rem; } /* the labels' box is the drawing's (not the art's padding too): --x lands on its unit */
+@media (max-width: 600px) { .hero-plate--rings .hp-labs { right: .5rem; } }
+@media print { .hero-plate--rings .lr-lab { background: #fff; outline: .5rem solid #fff; print-color-adjust: exact; } }
 /* hc13r: on phones the hero holds the first screen (three sizes, not five); where the plate is narrow (phones; 961-1099)
    it is drawn --z times, a detail of itself, the outer rings running off its sides inside the registration marks */
 @media (max-width: 600px) {

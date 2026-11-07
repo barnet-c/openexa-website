@@ -1055,9 +1055,13 @@ async def company(b):
     assert hovered["f"] == rest["f"] == team[2]["filter"], (rest, hovered)
     assert hovered["r"] not in ("none", rest["r"]), ("no ring on hover", rest, hovered)
     # v2x cut (1 Nov): the chapters name themselves with data-chapter / data-n (the .sec-head rows left the pages; §01
-    # Mission left Company), four of them now
+    # Mission left Company). hc14 (company, the director's 4.3): the heading-only §04 "Where the work is" left; its line
+    # stands whole in §01 as the chapter's one line, right after the story's heading, so three chapters now and the
+    # page still says where the work goes next
     ch = await pg.evaluate("[...document.querySelectorAll('main section[data-chapter]')].map(s => s.dataset.n + ' ' + s.dataset.chapter)")
-    assert ch == ["01 The story so far", "02 The team", "03 How we build", "04 Where the work is"], ("company chapters", ch)
+    assert ch == ["01 The story so far", "02 The team", "03 How we build"], ("company chapters", ch)
+    line = await pg.evaluate("(() => { const p = document.querySelector('#story .story-h + p.ch-line'); return p ? p.textContent.replace(/\\s+/g, ' ').trim() : null; })()")
+    assert line == "Finance was the proving ground. It will not be the last.", ("company §01: the chapter's line after its heading", line)
     assert await pg.locator(".crew--team > li").count() == 4 and await pg.locator(".crew--advisors > li").count() == 9
     names_team = await pg.locator(".crew--team > li h3").all_inner_texts()
     names_adv = await pg.locator(".crew--advisors > li h3").all_inner_texts()
@@ -1081,7 +1085,7 @@ async def company(b):
     assert bio_name == "Bio of Dr. Tim Leung", ("the bio expander's name", bio_name)
     stats = await pg.locator(".crew-stats").inner_text()
     assert "PATENT" not in stats.upper() and "100+" in stats, stats
-    print("company: 4 team + 9 advisors (Subuddh Parekh with the advisors, 30 Oct), 13 portraits (v2x, srcset 160/320/560), one treatment at rest and on hover with the green ring, full descriptions expand ('Bio of <name>'), no patent count, chapters 01-04, no register codes")
+    print("company: 4 team + 9 advisors (Subuddh Parekh with the advisors, 30 Oct), 13 portraits (v2x, srcset 160/320/560), one treatment at rest and on hover with the green ring, full descriptions expand ('Bio of <name>'), no patent count, chapters 01-03 with §01's line, no register codes")
     assert await pg.locator('.crew a[href*="scholar.google.com/citations?user=P40aOHIAAAAJ"]').count() == 1
     # v2x tests pass (30 Oct): the CEO's hero, 'Intelligence, put to work.', with 'put to work.' in white italic (the
     # heading's own colour, never the signal green; CLAUDE.md)
@@ -1110,25 +1114,49 @@ DISC = """() => { const t = document.getElementById('disclosures'), d = t && t.c
   return { open: d ? d.open : null, top: t ? Math.round(t.getBoundingClientRect().top) : null, focus_in: !!t && (a === t || t.contains(a)), vh: innerHeight }; }"""
 
 
+# (hc14, integrate) at the first paint: does the footer's legal fold exist, and how tall is the footer; and every layout
+# shift (no recent input) with its sources, for a reload at a page's foot
+FOLD_AT_PAINT = """(() => { window.__fold = null; window.__shifts = [];
+  new PerformanceObserver(l => { if (!window.__fold && l.getEntriesByName('first-contentful-paint').length) { const f = document.querySelector('.footer');
+    window.__fold = { fold: !!document.querySelector('.footer details.footer-legal'), h: f ? Math.round(f.getBoundingClientRect().height) : null }; } }).observe({ type: 'paint', buffered: true });
+  new PerformanceObserver(l => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__shifts.push({ t: Math.round(e.startTime), v: e.value,
+    src: (e.sources || []).map(x => x.node ? (x.node.className || x.node.nodeName) + '' : null) }); }).observe({ type: 'layout-shift', buffered: true }); })();"""
+
+
 @check
 async def disclosures(b):
     """the legal text is on every page and reachable (v2x tests pass, 30 Oct; CLAUDE.md: the disclosures in every
     footer): with JavaScript each page folds #disclosures into a closed 'Legal & disclosures' <details> in its footer;
     Proof's 'See the disclosures.' (a link to #disclosures), clicked at 1440 and tapped on a 390 phone, and a direct load
-    of evidence.html#disclosures open the fold, bring the text into view and move focus into it (site.js; G-11)"""
+    of evidence.html#disclosures open the fold, bring the text into view and move focus into it (site.js; G-11).
+    (hc14, integrate) the fold is there at the first paint on every page, also where site.js starts after the paint
+    (afterpaint.js / home.js make it), so the footer never changes height after it (it took ~190 px out of the footer and
+    moved the foot of a page reloaded there); and Trust (an after-paint page) reloaded at its foot at 1440 does not move"""
     errs = []
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
+    await ctx.add_init_script(FOLD_AT_PAINT)
     pg = await ctx.new_page()
     pg.on("pageerror", lambda e: errs.append(str(e)))
-    folds = {}
+    folds, early = {}, {}
     for name in PAGES:
         await pg.goto(f"{BASE}/{name}.html", wait_until="load")
         await until(pg, "!!document.querySelector('.footer details.footer-legal #disclosures')", 15000)
         folds[name] = await pg.evaluate("""(() => { const d = document.querySelector('.footer details.footer-legal'), s = d && d.querySelector(':scope > summary');
           return d ? { closed: !d.open, summary: s ? s.textContent.trim() : null, text: (d.querySelector('#disclosures') || {}).textContent || '' } : null; })()""")
+        await until(pg, "!!window.__fold", 5000); await pg.wait_for_timeout(1500)
+        early[name] = await pg.evaluate("(() => { const f = document.querySelector('.footer'); return Object.assign({}, window.__fold, { rest: f ? Math.round(f.getBoundingClientRect().height) : null }); })()")
     bad = {k: v and {kk: vv for kk, vv in v.items() if kk != "text"} for k, v in folds.items()
            if not v or not v["closed"] or v["summary"] != "Legal & disclosures" or "Rule 506(c) of Regulation D" not in v["text"]}
     assert not bad, ("footer fold", bad)
+    late = {k: v for k, v in early.items() if not v.get("fold") or v.get("h") != v.get("rest")}
+    assert not late, ("the footer's fold must exist at the first paint and the footer keep its height after it (1440)", late)
+    # Trust reloaded at its foot (the browser restores the place; site.js comes after the paint there): nothing shifts
+    await pg.goto(f"{BASE}/trust.html", wait_until="load"); await pg.wait_for_timeout(2500)
+    await pg.evaluate("scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' })"); await pg.wait_for_timeout(1400)
+    await pg.mouse.move(3, 300)
+    await pg.reload(wait_until="load"); await pg.wait_for_timeout(3000)
+    foot = await pg.evaluate("({ y: scrollY, max: document.documentElement.scrollHeight - innerHeight, shifts: window.__shifts })")
+    assert foot["y"] >= foot["max"] - 2 and sum(x["v"] for x in foot["shifts"]) <= 0.001, ("trust.html@1440x900 reloaded at its foot: layout shifts", foot)
     await ctx.close()
     seen = {}
     for w, mode in ((1440, "click"), (390, "tap"), (1440, "direct"), (390, "direct")):
@@ -1155,7 +1183,7 @@ async def disclosures(b):
         assert r["open"] and r["focus_in"] and 0 <= r["top"] <= r["vh"] - 48, (f"{mode} at {w}: the fold must open, the text come to rest in view (its first lines) and focus move into it", r)
         await ctx.close()
     assert not errs, errs
-    print(f"disclosures: {len(folds)} pages fold the legal text into a closed 'Legal & disclosures'; Proof's link (click 1440, tap 390) and a direct "
+    print(f"disclosures: {len(folds)} pages fold the legal text into a closed 'Legal & disclosures', there at the first paint (the footer's height held); Trust reloaded at its foot moves nothing; Proof's link (click 1440, tap 390) and a direct "
           f"load open it, the text in view (top {', '.join(str(v['top']) for v in seen.values())}) and focus inside")
 
 

@@ -776,7 +776,7 @@
     run = Math.max(1, storyH - stageH);
   }
   const beatParts = () => beats.map(b => Array.from(b.querySelectorAll('.beat-text, .hero-stats')));
-  let partsOf = null;
+  let partsOf = null, ledeOf = null, ledeLR = null;
   function measureBeat(i) { // where a beat's copy sits, untransformed (offsets ignore the scroll-driven translate)
     const b = beats[i];
     if (!b || !b.offsetParent) return;
@@ -788,9 +788,21 @@
     });
     const h2 = b.querySelector('h2, h1');
     beatRects[i] = { l, r, t, ht: h2 ? b.offsetTop + h2.offsetTop : t, hb: h2 ? b.offsetTop + h2.offsetTop + h2.offsetHeight : t };
+    // (hc14) S4: the box of its lede and link, which the hand-off must not cross (lb 0: none shown, as on a short or tight frame)
+    if (i === 4) {
+      let lt = 1e9, lb = 0;
+      const els = (ledeOf || (ledeOf = Array.from(b.querySelectorAll('.body-lg, .beat-more')))).filter(el => el.offsetHeight > 1);
+      els.forEach(el => { const y = b.offsetTop + el.offsetTop; lt = Math.min(lt, y); lb = Math.max(lb, y + el.offsetHeight); });
+      if (ledeLR == null) { // the right end of its longest line (not the paragraph's box, which reaches into the chart's room); once per layout
+        ledeLR = -1e9;
+        els.forEach(el => { const rg = document.createRange(); rg.selectNodeContents(el); Array.from(rg.getClientRects()).forEach(q => { if (q.width > 0) ledeLR = Math.max(ledeLR, q.right); }); });
+      }
+      Object.assign(beatRects[i], { lt, lb, lr: ledeLR });
+    }
   }
   function measureBeats() { beats.forEach((b, i) => measureBeat(i)); }
   function measureLayout() {
+    ledeLR = null;
     navH = navPx() || 72;
     const bar = stage.querySelector('.story-bar');
     barH = bar ? bar.offsetHeight : 64;
@@ -1118,7 +1130,7 @@
   // XHOLD of the pinned exit; xeNow counts only what comes after it (xPost), so every wide window below starts there.
   // Portrait phones keep hc6's way out, no hold (the phone's scene works). (hc8, the director) a portrait screen 600 px wide
   // or wider (an upright tablet) takes the same hold: its headline settles beside the standing chart, not beside the ruler
-  const XHOLD = 0.4, xPost = () => stacked && W < 600 ? xNow : clamp((xNow - XHOLD) / (1 - XHOLD), 0, 1);
+  const XHOLD = 0.4, xPostOf = (x) => stacked && W < 600 ? x : clamp((x - XHOLD) / (1 - XHOLD), 0, 1), xPost = () => xPostOf(xNow);
   // (hc7) wide, after the hold: the headline rises with the camera (cam) to stand over the floor line while the columns
   // fold into their records (fold) and the row spreads across the column (spread); the paper comes with them (the fold is
   // its arrival). Before hc7, of the whole exit: cam 0-0.35, fold 0.02-0.22, spread 0.16-0.4, paper 0.4-0.8.
@@ -1456,7 +1468,7 @@
     // (hc12, the director) the hedge, as Proof and note 09 print it on their charts (and Home §03 did until hc13r): two lines over the floor's
     // tag at the line's left end, leaving with it (placeLabels stands it on the floor's tag; was a caption, hc10's words)
     lab.hedge = label(4, '<span>Above the floor</span> <span class="h">Exact value not published</span>', { cls: 'hedge', kind: 'tag', hedge: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
-    label(4, 'NAV', { cls: 'navtag', kind: 'tag', out: [0.05, 0.22], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR - l4(U_NAV), 0], side: 'w' }); // the regime ticks' baseline
+    lab.nav = label(4, 'NAV', { cls: 'navtag', kind: 'tag', out: [0.05, 0.22], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR - l4(U_NAV), 0], side: 'w' }); // the regime ticks' baseline
     // (hc13r, the rethink) the chart's key, as §03's chart captioned it before the band left Home: the regimes the NAV ticks
     // draw (from the record), and the columns' unit; from day 01's tag under the day numbers, leaving with the NAV's tag.
     // beat-4 carries the same words in its static HTML (check_static) for assistive tech; the plate prints them without WebGL
@@ -1762,6 +1774,8 @@
   let paperH = 0, relay0 = false, relayReady = false, shownBarOff = null;
   let fadeT = 0, copyX = 0, fading = false, kF = 1; // the exit's fade (a headline that cannot stand under the bar): in or out over 0.25 s, never resting between
   let leave4 = 1, barA = 1; // the leave too: the proof's copy and the bar
+  // (hc14, the director) and S4's lede with its link on the way out, before the hand-off reaches them: the headline stays
+  let ledeA = 1, shownBl = '', capRef = 0;
   // the index follows the scroll position itself: immediate
   function syncIndex() {
     const ci = clamp(Math.round(sTarget), 0, 4);
@@ -1812,6 +1826,38 @@
         const t4 = ov > 0 && (room0 <= 6 || ov >= room0 - 6 - Math.min(150, H * 0.2) / 2) ? 0 : 1;
         leave4 += clamp(t4 - leave4, -k, k); if (leave4 !== t4) fading = true;
         op *= leave4; if (!red) dy -= (1 - leave4) * 14;
+        // (hc14, the director) the lede and its link leave before the hand-off reaches them; the headline stays. Wide: as the
+        // stage starts to move (the headline rises over the floor line, so the line and its day axis come down through the
+        // copy); portrait: as the paper sets out for the headline's foot. On the scroll's own position (xTarget), so they go
+        // before the eased stage moves; on a threshold, in 0.25 s, lifted .75rem; back the same way. Reduced motion: at once.
+        // A short or tight frame shows no lede (lb 0). While the stage moves the lede is never brighter than its distance to
+        // the nearest part of the hand-off allows (0 at contact), so a fast flick cannot outrun the fade
+        let tL = 1, cap = 1;
+        if (br4.lb > 0 && seg === 3) {
+          const xT = red ? (xTarget > 0.5 ? 1 : 0) : xPostOf(xTarget), pad = 24 * remK, lt = br4.lt + dy, lb = br4.lb + dy;
+          if (!lean) tL = xe > 0 || xT > 0 ? 0 : 1; // (the hold keeps it: the standing proof is the overture's last frame, hc7)
+          else tL = Math.max(xe, xT) > X.paper[0] - 0.03 ? 0 : 1; // (portrait: the paper rises to the headline's foot, over the lede: it goes as the paper sets out)
+          if (xe > 0) {
+            let gap = paperH > 0.5 ? H - paperH - lb : 1e9; // the paper's edge, under the lede
+            if (!lean) { // wide: the chart (the ticks over its columns to the day tags under the rail, with the NAV's tag and the
+              // key while they show) and, while they show, the floor's tag and the hedge over it at the left of column 01
+              const s4 = layouts[4].s, ry = project(0, Y_FLOOR * s4, 0).y, c0 = project(COL_X(0) * s4, Y_FLOOR * s4, 0).x, rl = project((-COL_SPAN / 2 - 0.12) * s4, Y_FLOOR * s4, 0).x;
+              const tk = project(COL_X(0) * s4, (flY() + yK(Y_CTOP) + 0.1 - yK(Y_FL)) * s4, 0).y, dw = lab.days && lab.days[0] ? lab.days[0].w : 0;
+              const fl = project((COL_X(0) - COL_SPAN / NCOL * 0.5) * s4, flY() * s4, 0), flx = fl.x, fly = fl.y; // (project() reuses one object)
+              const left = Math.min(rl, c0 - dw / 2, xe < 0.22 && lab.nav ? project((COL_X(0) - COL_SPAN / NCOL * 0.5) * s4, Y_FLOOR * s4, 0).x - lab.nav.w - 8 : 1e9);
+              const bottom = ry + U_DAY * remK + dayH + (xe < 0.22 ? keyH + 8 * remK : 0);
+              const box = (l, t, b) => Math.max(l - br4.lr, t - lb, lt - b); // the distance from the lede to a box on its right, over or under it
+              gap = Math.min(gap, box(left, tk, bottom));
+              if (xe < 0.3) gap = Math.min(gap, box(Math.min(project(floorL * s4, flY() * s4, 0).x, flx - 8 - Math.max(floorW, hedgeW)), fly - floorH - 6 - hedgeGap() - hedgeH, fly + 2));
+            }
+            if (!capRef) capRef = Math.max(1, Math.min(pad, gap)); // (where the stage starts closer than 1.5rem, from there: no jump)
+            cap = clamp(gap / capRef, 0, 1);
+          } else capRef = 0;
+        }
+        ledeA += clamp(tL - ledeA, -k, k); if (ledeA !== tL) fading = true;
+        bo *= Math.min(ledeA, cap);
+        const bl = red ? '0' : (1 - ledeA).toFixed(3);
+        if (bl !== shownBl) b.style.setProperty('--bl', shownBl = bl);
       }
       if (bo < 0.08) bo = 0; // (the exit fades it too) no ghost paragraph
       const o = op.toFixed(3), tr = `translate3d(0, ${dy.toFixed(1)}px, 0)`, e = eo.toFixed(3), ww = w.toFixed(3), bb = bo.toFixed(3);

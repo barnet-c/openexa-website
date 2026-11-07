@@ -721,6 +721,7 @@
   window.addEventListener('hashchange', openLinkedDetails);
 
   /* ---------------- footer: legal detail remains available without JavaScript ---------------- */
+  // (pages that start site.js after the paint fold it earlier, in afterpaint.js / home.js: the same code)
   const disclosures = $('.footer .disc');
   if (disclosures && !disclosures.closest('details')) {
     const details = document.createElement('details');
