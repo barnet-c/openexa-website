@@ -324,8 +324,19 @@ def bind(t):
     t = INNER_END.sub("\u00a0", BIND.sub(lambda m: m.group(1) + "\u00a0", t))
     return KEEP_RE.sub(lambda m: m.group(1).replace(" ", "\u00a0"), t)
 def post_title(s):
-    """a post's title as a display line (index cards, the register, the series rail, the H1, the pager)"""
-    return tight_hy(esc(bind(smart(s))))
+    """a post's title as a display line (index cards, the register, the series rail, the H1, the pager).
+    hill climb hc7: a hyphenated word in a title no longer breaks at its hyphen ("frictions, and the long- / run labor
+    share" at 390 and 320; work/blog/hc7/hyprobe.py) where its bound run (the words bind() ties to it) is at most
+    COMPOUND_RUN characters. A longer run keeps the break, as before: kept whole, "in a Regime-Switching" (21) took the
+    H1 at 320 to four lines with "Portfolio" and "Market" alone. Typography only: the same characters"""
+    t = bind(smart(s))
+    t = TITLE_COMPOUND.sub(lambda m: "\ue000" + m.group(0) + "\ue001" if len(run_at(t, m)) <= COMPOUND_RUN else m.group(0), t)
+    return tight_hy(esc(t)).replace("\ue000", '<span class="nowrap">').replace("\ue001", "</span>")
+TITLE_COMPOUND = re.compile(r"[^\W\d_][\w’']*(?:-[^\W\d_][\w’']*)+")
+COMPOUND_RUN = 18  # hc7: "and the long-run" (16) is kept whole; "in a Regime-Switching" (21) is not (see post_title)
+def run_at(t, m):
+    """the unbreakable run (between plain spaces) holding match m of text t"""
+    return t[t.rfind(" ", 0, m.start()) + 1:(t.find(" ", m.end()) + 1 or len(t) + 1) - 1]
 # r5-copy (minor): JSON-LD now sets a title and an excerpt as the page does (’, the house dash), as r4 did for <title> and
 # the share text, with plain spaces (a no-break space is for line breaking, which structured data has none of). The feed
 # alone keeps the text as published (every subscriber's copy of an entry would change)
@@ -366,12 +377,16 @@ def quoted(h):
 def lead(h):
     """the post's lead (larger, with the notes' drop initial): its first paragraph, unless a heading or list comes
     first. Jury (blog): a label line is not a lead. A one-line bold subhead ('Regime-Switching Market') passes the lead
-    to the paragraph after it; a short first paragraph ('Book Title: ...') means the post has none."""
+    to the paragraph after it; a short first paragraph ('Book Title: ...') means the post has none.
+    hill climb hc7: a lead the author set wholly in bold (Part 3's 74 words, 13 bold lines on a phone) is set as every
+    other lead: the drop initial alone marks it (blog.css a1), so the one wrapper goes; the characters stay, in order"""
     blocks = list(re.finditer(r"<(p|h2|h3|ul|ol)\b([^>]*)>(.*?)</\1>", h, re.S))[:2]
     for i, m in enumerate(blocks):
         if m.group(1) != "p" or m.group(2): return h
         inner = m.group(3).strip()
         if len(re.sub(r"<[^>]+>", " ", inner).split()) >= 15:
+            whole = re.fullmatch(r"<(strong|b)>((?:(?!</?(?:strong|b)\b).)*)</\1>", inner, re.S)
+            if whole: return h[:m.start()] + '<p class="lead">' + whole.group(2) + "</p>" + h[m.end():]
             return h[:m.start()] + '<p class="lead">' + h[m.start() + 3:]
         if i or not re.fullmatch(r"<strong>[^<]*</strong>", inner): return h
     return h
@@ -750,10 +765,17 @@ write(OUT / "index.html", page)
 # a research note's figure with each collection, e.g. a decaying curve over a grains-futures summary). The CMS's hero
 # image leaves the top of the article, except the two 2024 screenshots of the author's own work (KEEP_HERO), which stay
 # as the article's first figure. Figures keep their own captions (cut, 1 Nov: the added 'Fig. N' labels went).
+HOST_WHOLE = 24  # hc7: the longest host (characters) kept whole on one line; see host_html
 def host_html(h):
     """hill climb hc6: the source line's host keeps its arrow (it stood alone on the next line on 11 posts from 1920 px and
     on phones): the last two labels and the arrow never part; a longer host may break after its other dots (at 961 px
-    "timleungresearch.medium.com" and the arrow are wider than the column). The same characters"""
+    "timleungresearch.medium.com" and the arrow are wider than the column). The same characters.
+    hc7: a host that fits the narrowest column whole never breaks: it was split after its first dot ("faculty." /
+    "washington.edu") on 46 page-widths, 3840 and 390 among them, where the whole host fit on the next line
+    (work/blog/hc7/hostprobe.py). Measured at 961 px (the column at its narrowest, 205 px): the 23-character
+    "corpgov.law.harvard.edu" is 176 px with its arrow, the 27-character "timleungresearch.medium.com" 215 px; so a host of
+    up to HOST_WHOLE characters is one unbreakable unit, a longer one keeps the hc6 breaks"""
+    if len(h) <= HOST_WHOLE: return f'<span class="nowrap">{esc(h)}{OUTB}</span>'
     *head, a, b = h.split(".")
     return "".join(esc(x) + ".<wbr>" for x in head) + f'<span class="nowrap">{esc(a)}.{esc(b)}{OUTB}</span>'
 def post_plate(p):

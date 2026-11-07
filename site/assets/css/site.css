@@ -251,7 +251,7 @@ main > .section { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
 }
 .btn .arr { width: .875rem; height: .875rem; transition: transform var(--dur-move) var(--ease); }
 @media (hover: hover) { .btn:hover .arr { transform: translateX(.25rem); } }
-.btn:active { transform: translateY(.0625rem); }
+.btn:active { transform: translateY(.0625rem) scale(.985); }
 .btn--ghost { --btn-bg: transparent; --btn-fg: var(--fg); --btn-line: var(--accent); border-color: var(--line-strong); }
 .is-dark .btn:not(.btn--ghost), .nav-sheet .btn { --btn-line: var(--signal); } /* a paper button on ink */
 @media (hover: hover) { .btn--ghost:hover { border-color: var(--fg); } }
@@ -1031,12 +1031,11 @@ html { scroll-padding-top: var(--nav-h); }
 .nav-progress i { position: relative; flex: 1 1 0; min-width: 0; background: var(--nav-line); transition: background-color var(--dur-draw) var(--ease); }
 /* a fine tick where each chapter begins: the bar reads as a scale of the page */
 .nav-progress i + i::before { content: ""; position: absolute; left: calc(-2 * var(--hair)); bottom: 0; width: var(--hair); height: .3125rem; background: currentColor; opacity: .28; transition: opacity var(--dur-move) var(--ease), background-color var(--dur-move) var(--ease); }
-/* hc5: the chapter being read is drawn in the bar's own ink at 60% (two hairlines), not green: a green segment under a
-   nav label read as "you are here" on the wrong page. Green stays on the readout's number */
+/* the chapter being read: not green (hc5) nor heavier (hc7): a green or 2 px segment read as a tab under an unrelated
+   nav link. Its fill is the read chapters' hairline; only its tick is stronger. Green stays on the readout's number */
 .nav-progress i.is-on::before { opacity: .6; }
 .nav-progress i.is-edge { background: color-mix(in srgb, var(--nav-line) 70%, transparent); }
 .nav-progress b { position: absolute; left: 0; right: 0; bottom: 0; height: var(--hair); background: var(--nav-fill); transform: scaleX(0); transform-origin: left; }
-.nav-progress i.is-on b { height: calc(2 * var(--hair)); background: color-mix(in srgb, currentColor 60%, transparent); }
 .nav:not(.nav--solid) .nav-progress i { background: rgba(245, 242, 236, .1); }
 /* hc5: over the pinned overture its own scene ruler counts: the page's scale waits as one faint hairline (one scale on the
    phone's first screen) */
@@ -1250,16 +1249,12 @@ html.vt-out .story-stage canvas { visibility: hidden; }
 
 /* ---------- controls: buttons, links, focus ---------- */
 :focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .1875rem; }
-:where(.btn) { transition: transform var(--dur-move) var(--ease), background-color var(--dur-move) var(--ease), color var(--dur-move) var(--ease), border-color var(--dur-move) var(--ease), box-shadow var(--dur-move) var(--ease); }
-:where(.btn) { transition: transform var(--dur-move) var(--ease), background-color var(--dur-move) var(--ease), background-size var(--dur-move) var(--ease), color var(--dur-move) var(--ease), border-color var(--dur-move) var(--ease), box-shadow var(--dur-move) var(--ease); }
 /* hover (v2x): a 2 px green rule draws along the lower edge and the fill lifts a step; the arrow leans on */
 @media (hover: hover) {
   :where(.btn):hover { background-color: color-mix(in srgb, var(--btn-bg) 84%, var(--btn-fg)); background-size: 100% calc(2 * var(--hair)); }
   :where(.btn--ghost):hover { background-color: color-mix(in srgb, var(--fg) 7%, transparent); border-color: var(--fg); }
-  :where(.btn):hover .arr { transform: translateX(.25rem); }
 }
-:where(.btn):active { transform: translateY(.0625rem) scale(.985); background-size: 100% calc(2 * var(--hair)); }
-:where(.btn) .arr { transition: transform var(--dur-move) var(--ease); }
+:where(.btn):active { background-size: 100% calc(2 * var(--hair)); } /* hc7: the press (scale) is .btn:active's, the transitions .btn's */
 :where(.btn):focus-visible .arr { transform: translateX(.25rem); }
 :where(.btn):focus-visible { outline-offset: .1875rem; background-size: 100% calc(2 * var(--hair)); }
 /* links inside running text: the focus is the highlighter the selection uses, inside the ring */
@@ -1847,16 +1842,16 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 }
 /* a1: the plate is as wide as its columns */
 @media (min-width: 1200px) { .hero-plate { max-width: 44rem; } }
-/* a1: a plate page's hero is its first screen (as Research's, Company's), centred under the bar. hc3: a paper hero is 7rem
-   short of it, so the next chapter's rule and the top of its heading show at the fold (rem: the same share at 4K); Proof's
-   dark hero keeps the screen (its next chapter opens on a band of empty paper) */
-@media (min-width: 961px) and (min-height: 700px) {
+/* a1: a plate page's hero is its first screen (as Research's, Company's), centred under the bar. A paper hero is 2.5rem
+   short (hc7; hc3's 7rem sliced the next heading): the fold shows its closing rule over a band of paper, the next heading
+   starts below it (rem: the same at 4K; from 560 px tall: laptop windows). Proof's dark hero keeps the screen */
+@media (min-width: 961px) and (min-height: 560px) {
   .page-hero:has(> .container > .page-hero--plate) {
     --hero-pad: clamp(2.5rem, 7vh, 6rem);
     display: flex; flex-direction: column; justify-content: center;
     min-height: 100vh; min-height: 100svh; padding-top: calc(var(--nav-h) + var(--hero-pad)); padding-bottom: var(--hero-pad);
   }
-  .page-hero:not(.page-hero--dark):has(> .container > .page-hero--plate) { min-height: calc(100vh - 7rem); min-height: calc(100svh - 7rem); }
+  .page-hero:not(.page-hero--dark):has(> .container > .page-hero--plate) { min-height: calc(100vh - 2.5rem); min-height: calc(100svh - 2.5rem); }
 }
 @media (max-width: 960px) {
   .page-hero--plate { row-gap: clamp(1.75rem, 6vw, 2.75rem); }

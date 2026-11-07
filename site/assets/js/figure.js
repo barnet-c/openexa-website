@@ -120,20 +120,21 @@
     // far above the floor a session went is not published, and the drawing no longer suggests it. The stack is centred
     // (build_research.py LABELS["sessions"] pins its labels to these points: B, F and U move together with them)
     sessions(N, rnd, g) {
-      // each column's NAV regime comes from the session record: data-regimes on the stage (p = premium, d = discount),
-      // written by build_research.py from #oxa-sessions. The literal is only the fallback (the research index's morph).
-      const rec = (document.querySelector('[data-figure][data-regimes]') || { dataset: {} }).dataset.regimes;
-      const P = []; const regime = /^[pd]{10}$/.test(rec || '') ? rec : 'ddppppdpdd'; const per = Math.floor(N * 0.082);
+      // hill climb hc7 (director item 8): Proof's and Home's encoding of the same ten sessions. Every column fills to the
+      // floor in green; the open unit above it is a khaki outline, quieter than the data, as Proof's grey "above, exact
+      // value not published" box (ivory made the unpublished part the brightest mark). The regime is Proof's step line,
+      // not this drawing's colour (green beside white read as two outcomes), so the figure no longer reads the regimes
+      const P = []; const per = Math.floor(N * 0.082);
       const B = -0.72, F = 0.48, U = (F - B) / 10, w = 0.07, o0 = F + 0.025, o1 = o0 + U; // ten units to the floor; one open unit above
       for (let c = 0; c < 10; c++) {
-        const x = -1.08 + c * 0.24, k = regime[c] === 'p' ? 2 : 0;
+        const x = -1.08 + c * 0.24;
         for (let i = 0; i < per; i++) {
-          if (rnd() < 0.86) { P.push([x + (rnd() - 0.5) * 2 * w, B + rnd() * (F - B), (rnd() - 0.5) * 0.1, k]); continue; }
+          if (rnd() < 0.86) { P.push([x + (rnd() - 0.5) * 2 * w, B + rnd() * (F - B), (rnd() - 0.5) * 0.1, 2]); continue; }
           // the open unit: its outline only (the perimeter, sides weighted by length)
           const e = rnd() * (4 * w + 2 * U); let px, py;
           if (e < 2 * w) { px = x - w + e; py = o0; } else if (e < 4 * w) { px = x - w + (e - 2 * w); py = o1; }
           else if (e < 4 * w + U) { px = x - w; py = o0 + (e - 4 * w); } else { px = x + w; py = o0 + (e - 4 * w - U); }
-          P.push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, k]);
+          P.push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, 1]);
         }
       }
       // award a2 (a2-pixel): the 10 bps floor is a rule over the points (.fl-line, build_research RULES), crisp at any

@@ -11,9 +11,6 @@
    is drawn (.figcap-t, written by research.js), because the labels do not fit there */
 .figcap-t { font-size: var(--fs-small); line-height: 1.4; color: var(--fg); }
 .figcap-t:empty { display: none; }
-/* a2 (a2-ux): a figure that colours its parts says so, before the hedge, in the hedge's face, size and colour */
-.figcap-k { font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-3); }
-.figcap-k:empty { display: none; }
 
 /* ---------- research index: hero ---------- */
 /* the H1 in two lines ("The thinking / behind the swarm.") on the plate step (--h1-plate); the phone rule caps it */
@@ -109,10 +106,6 @@
      the hedge are held at the longest of each at this width (research.js), so a caption swap moves nothing */
   .rs-cap .figcap-t { min-height: var(--rs-t-h, 0px); }
   .rs-cap .figcap-h { min-height: var(--rs-h-h, 0px); }
-  /* a2: a colour key only where the title's held slot has a free line (research.js .rs-k-fits): at that slot's foot */
-  .rs-cap .figcap-k { display: none; }
-  .rs-k-fits .rs-cap .figcap-t, .rs-k-fits .rs-cap .figcap-k:not(:empty) { grid-area: 1 / 1; }
-  .rs-k-fits .rs-cap .figcap-k:not(:empty) { display: block; align-self: end; line-height: 1.4; } /* the title's leading: its next line */
 }
 /* small phones and short screens (r1 mobile): the strip is the size of its words, not a quarter of the screen; what is
    drawn and the hedge stay whole */
@@ -439,6 +432,8 @@
 }
 .fl-t small { display: block; font-size: inherit; color: var(--fg-3); }
 .fl--n .fl-t, .fl-t .fl-v { font: 400 var(--fs-label)/1.35 var(--mono); letter-spacing: .04em; color: var(--fg-3); }
+/* hc7: on phones the label step (12 px) is a pixel under the words' (13): one size, so note 09's first screen holds four */
+@media (max-width: 599.98px) { .fl--n .fl-t, .fl-t .fl-v { font-size: var(--fs-small); } }
 /* a hedge label without room for two lines may stand as one: "Above the floor · how far is not published" (r3) */
 .fl.is-one .fl-t small { display: inline; text-transform: lowercase; }
 .fl.is-one .fl-t small::before { content: " · "; }

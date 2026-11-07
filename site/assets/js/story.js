@@ -55,6 +55,7 @@
   const stage = story.querySelector('.story-stage');
   const cv = story.querySelector('canvas.story-gl');
   const reducedMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const coarseMQ = window.matchMedia('(pointer: coarse)');
   // static beats; site.js runs the 2D swarm behind them
   const fallback = () => { root.classList.remove('story-ready', 'gl-ready'); root.classList.add('no-webgl'); story.setAttribute('data-settled', ''); document.dispatchEvent(new Event('story:no-webgl')); }; // (static: always at rest)
   if (!cv || !stage || !window.WebGLRenderingContext) { fallback(); return; }
@@ -128,6 +129,12 @@
   // the column's top: one open unit above the floor (the value above it is not published), as Fig. 4.1 draws it
   const Y_CTOP = Y_FL + (Y_FL - Y_FLOOR - 0.04) / (FLOOR > 0 && FLOOR < 30 ? Math.round(FLOOR) : 10);
   const COL_X = (c) => -COL_SPAN / 2 + COL_SPAN * (c + 0.5) / NCOL;
+  // (hc7, the director: S4 at the scale of S3's lane) wide screens draw the ten columns taller, as tall as the frame gives
+  // them up to K4_MAX (fitScenes sets colK; portrait keeps 1). Only the drawing's height: every column is still the floor
+  // plus one open unit, nothing else has a height
+  const K4_MAX = 2.6;
+  let colK = 1;
+  const yK = (y) => Y_FLOOR + (y - Y_FLOOR) * colK;
 
   /* ================= particles: identity, five scene targets, stagger keys ================= */
   const N_SURF = LITE ? 5400 : 10800, N_ORB = LITE ? 760 : 1500, N_SIG = LITE ? 520 : 960, N_DUST = LITE ? 520 : 1000;
@@ -315,7 +322,7 @@
       });
     }
     orbOrder.forEach((ii, j) => {
-      const u = j / N_ORB, x = -COL_SPAN / 2 - 0.16 + u * (COL_SPAN + 0.32);
+      const u = j / N_ORB, x = -COL_SPAN / 2 - 0.16 + u * (COL_SPAN / 2 + 0.16 + COL_X(NCOL - 1) + 0.08); // (hc7) to about the last tag's edge, as the drawn rail
       set(4, ii, x, Y_FLOOR + gauss() * 0.002, gauss() * 0.004, code(M.STATIC, K.DIM, 9));
       KEY[ii * 4 + 3] = u * 0.9;
     });
@@ -337,7 +344,7 @@
   uniform vec3 u_liftDir, u_light;
   uniform vec3 u_rU[12]; uniform vec3 u_rV[12]; uniform float u_rW[12];
   uniform float u_hov[24]; uniform float u_hovOn, u_hovScene, u_sceneA, u_sceneB, u_hovLift;
-  uniform float u_dc[24]; uniform float u_railA;
+  uniform float u_dc[24]; uniform float u_railA, u_colK;
   uniform vec4 u_occ;
   uniform vec2 u_band;
   varying vec3 v_col; varying float v_a, v_size, v_soft, v_halo;
@@ -416,11 +423,12 @@
     float hN = (s.y - ${Y_FLOOR.toFixed(3)}) / ${H_COL.toFixed(3)};
     al = 1.0 - step(${F_SOLID.toFixed(3)}, hN) * (1.0 - 0.62 * pow(1.0 - smoothstep(${F_SOLID.toFixed(3)}, 1.04, hN), 1.6));
     float dc = u_dc[int(clamp(grp, 0.0, 23.0) + 0.5)];
+    float yc = ${Y_FLOOR.toFixed(3)} + (s.y - ${Y_FLOOR.toFixed(3)}) * u_colK; // (hc7) wide: drawn taller, the same encoding
     if (dc > 0.0) {
       al *= 1.0 - smoothstep(0.6, 1.0, dc);
-      return vec3(s.x, mix(s.y, ${(Y_FLOOR + 0.02).toFixed(3)}, dc), s.z);
+      return vec3(s.x, mix(yc, ${(Y_FLOOR + 0.02).toFixed(3)}, dc), s.z);
     }
-    return s.xyz;
+    return vec3(s.x, yc, s.z);
   }
   vec3 kcol(float k) {
     if (k < 0.5) return vec3(0.94, 0.93, 0.90);
@@ -526,6 +534,7 @@
     al *= 1.0 - smoothstep(u_band.x, u_band.y, gl_Position.y / max(gl_Position.w, 1e-4));
     float persp = u_dist / max(0.2, -mv.z);
     float size = pr.x * (1.55 + 1.15 * a_rand.x) * mix(0.82, 1.18, persp - 0.5) * (1.0 + 0.3 * h) * mix(1.1, 0.8, fz) * (0.55 + 0.45 * ia) * limb * u_pr;
+    size *= 1.0 + 0.15 * (u_colK - 1.0) * step(9.5, mB) * tc; // (hc7) the taller columns' blocks keep their weight (their points stand further apart)
     v_soft = soft; v_halo = 0.0;
     if (u_halo > 0.5) {
       float hw = max(glow, h * 0.6);
@@ -675,7 +684,7 @@
         if (!gl.getProgramParameter(p.prog, gl.LINK_STATUS)) throw new Error('story shader: ' + (gl.getShaderInfoLog(p.v) || gl.getShaderInfoLog(p.f) || gl.getProgramInfoLog(p.prog)));
       });
       Object.assign(P, progs);
-      bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_gather', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ', 'u_dc', 'u_railA', 'u_band'], ['a_from', 'a_to', 'a_rand', 'a_key']);
+      bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_gather', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ', 'u_dc', 'u_railA', 'u_colK', 'u_band'], ['a_from', 'a_to', 'a_rand', 'a_key']);
       bindProgram(P.line, ['u_view', 'u_proj', 'u_res', 'u_pr', 'u_dist', 'u_fogR', 'u_occ'], ['a_corner', 'a_p0', 'a_p1', 'a_col', 'a_w']);
       bindProgram(P.act, ['u_view', 'u_proj', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt'], ['a_pos', 'a_col', 'a_shp']);
       const buf = (data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage || gl.STATIC_DRAW); return b; };
@@ -940,8 +949,12 @@
       if (i === 4) { // the columns, the floor's tag left of column 01, and the band of records
         // (award a2) wide: the row ends on the column's content edge, as it lands (it ran 12-64 px past it above 1440)
         if (!stacked && contR > x0) x1 = Math.min(x1, contR);
-        const xa = x0 + floorW + 14;
-        s = Math.max(0.05, Math.min((x1 - xa) / ((COL_SPAN + 0.24) * pxu), (y1 - y0 - band4()) / ((H_COL + 0.34) * pxu)));
+        const xa = x0 + floorW + 14, sw = (x1 - xa) / ((COL_SPAN + 0.24) * pxu);
+        // (hc7) wide: at the row's width the columns rise as tall as the frame allows over the records' band (the ticks and
+        // 12 px of air over them), up to K4_MAX; a frame with no such room keeps the plain fit (colK 1)
+        const free = y1 - y0 - band4() - 12 * remK, kw = stacked ? 0 : (free / Math.max(1e-4, sw * pxu) - 0.12) / (Y_CTOP - Y_FLOOR);
+        colK = kw > 1 ? Math.min(kw, K4_MAX) : 1;
+        s = Math.max(0.05, kw > 1 ? sw : Math.min(sw, (y1 - y0 - band4()) / ((H_COL + 0.34) * pxu)));
         if (!stacked) s = Math.min(s, (H * 0.74) / (EXT[4][1] * pxu));
         // the day tags: where the columns stand closer than a tag and its 3 px of air
         dayPitch = COL_SPAN / NCOL * s * pxu;
@@ -953,7 +966,11 @@
         });
         cx = (xa + x1) / 2;
         if (!stacked) { const tw = Math.max(15, ...(lab.days || []).map(l => l.w || 0)); cx = Math.max(cx, x1 - COL_X(NCOL - 1) * s * pxu - tw / 2); } // the last tag's edge on the column's
-        const fy = stacked ? y1 - band4() : Math.min(y1 - DAY_BAND * remK, (y0 + y1) / 2 + 0.6 * s * pxu);
+        let fy = stacked ? y1 - band4() : Math.min(y1 - DAY_BAND * remK, (y0 + y1) / 2 + 0.6 * s * pxu);
+        if (!stacked && colK > 1) { // (hc7) the tall group (ticks to tags) centred on the headline beside it, kept in the frame
+          const up = ((Y_CTOP - Y_FLOOR) * colK + 0.12) * s * pxu + 12 * remK, dn = DAY_BAND * remK, hc = br.hb > br.ht ? (br.ht + br.hb) / 2 : (y0 + y1) / 2;
+          fy = clamp(hc + (up - dn) / 2, y0 + up, y1 - dn);
+        }
         cy = fy - 0.6 * s * pxu;
         floorL = -COL_SPAN / 2 - 0.04 - (floorW + 10) / (s * pxu);
       } else {
@@ -1027,7 +1044,7 @@
   // where a scene's local point lands in the world, given the scene and the current fit
   let exitMove = 0, floorRest = 0; // (hc6) how far the exit has moved the floor line from where S4 rests (px), and that rest
   function camera() {
-    if (b4) { const k = seg === 3 ? (stacked ? sstep(0.3, 0.6, xeNow) : sstep(0.16, 0.4, xeNow)) : 0; layouts[4].s = b4.s * lerp(1, b4.z, k); layouts[4].cx = lerp(b4.cx, W / 2, k); } // (hc2, wide: the row spreads under the headline as it lands)
+    if (b4) { const k = seg === 3 ? (stacked ? sstep(0.3, 0.6, xeNow) : sstep(WX.spread[0], WX.spread[1], xeNow)) : 0; layouts[4].s = b4.s * lerp(1, b4.z, k); layouts[4].cx = lerp(b4.cx, W / 2, k); } // (hc2, wide: the row spreads under the headline as it lands)
     const a = layouts[seg], b = layouts[seg + 1];
     const L = { cx: lerp(a.cx, b.cx, mE), cy: lerp(a.cy, b.cy, mE) };
     scale = [a.s, b.s];
@@ -1043,7 +1060,7 @@
     if (seg === 3 && xNow > 0) { // the hand-off: while the columns drain into their records the floor line settles to where the paper meets it
       const f = project(0, Y_FLOOR * layouts[4].s, 0).y;
       floorRest = b4 ? L.cy + (f - L.cy) * b4.s / layouts[4].s : f; // (hc6) where it stood before the row's spread scaled S4 about its centre
-      const shift = (H * FLOOR_END() - f) * (stacked ? sstep(EXIT.tall.cam[0], EXIT.tall.cam[1], xeNow) : sstep(0, 0.35, xeNow));
+      const shift = (H * FLOOR_END() - f) * (stacked ? sstep(EXIT.tall.cam[0], EXIT.tall.cam[1], xeNow) : sstep(WX.cam[0], WX.cam[1], xeNow));
       frust(L.cy + shift);
       exitMove = f + shift - floorRest; // portrait: the headline under the records moves with them
     }
@@ -1069,13 +1086,19 @@
     return Math.min(1 - below / H, (navH + Math.max(22, (H - navH - above - below) * 0.46) + above) / H);
   };
   const capRoom = () => (U_DAY + 16) * remK + Math.max(14, ...(lab.days || []).map(l => l.h || 0)) + paperCapH + 12; // floor line to the caption's rule, and some air
-  // the way out, in shares of the exit.
-  // (hc2, wide) the proof moment holds as one frame before the paper comes: the columns fold by 0.22 and the row of ten
-  // spreads across the column (0.16-0.4) under the headline, which has risen to stand over it (0-0.35, the camera's
-  // window); the paper rises after (0.4-0.8). (hc6) wide `copy` is used only where the headline cannot stand under the bar
-  const EXIT = { wide: { copy: [0.1, 0.22], paper: [0.4, 0.8] }, tall: { cam: [0.3, 0.56], paper: [0.58, 0.86] } };
+  // the way out, in shares of the exit (xeNow).
+  // (hc7, the director: the overture's last frame is its proof) wide: the ten columns hold at full height for the first
+  // XHOLD of the pinned exit; xeNow counts only what comes after it (xPost), so every wide window below starts there.
+  // Portrait keeps hc6's way out, no hold (the phone's scene works).
+  const XHOLD = 0.4, xPost = () => stacked ? xNow : clamp((xNow - XHOLD) / (1 - XHOLD), 0, 1);
+  // (hc7) wide, after the hold: the headline rises with the camera (cam) to stand over the floor line while the columns
+  // fold into their records (fold) and the row spreads across the column (spread); the paper comes with them (the fold is
+  // its arrival). Before hc7, of the whole exit: cam 0-0.35, fold 0.02-0.22, spread 0.16-0.4, paper 0.4-0.8.
+  // (hc6) wide `copy` is used only where the headline cannot stand under the bar
+  const EXIT = { wide: { copy: [0.1, 0.22], paper: [0.26, 0.85] }, tall: { cam: [0.3, 0.56], paper: [0.58, 0.86] } };
+  const WX = { cam: [0, 0.5], fold: [0.05, 0.32], spread: [0.2, 0.48] };
   // (lab) the exit folds the ten columns down together with the floor line (the paper's edge); seals go into their records
-  const foldE = () => sstep(0.02, stacked ? 0.3 : 0.22, xeNow), flY = () => lerp(Y_FL, Y_FLOOR + 0.02, foldE());
+  const foldE = () => stacked ? sstep(0.02, 0.3, xeNow) : sstep(WX.fold[0], WX.fold[1], xeNow), flY = () => lerp(yK(Y_FL), Y_FLOOR + 0.02, foldE());
   const sealOf = (c) => clamp((xeNow - 0.03 - 0.12 * c / Math.max(1, NCOL - 1)) / 0.1, 0, 1);
   const dcArr = new Float32Array(24);
 
@@ -1161,7 +1184,7 @@
         const x = COL_X(c), ss = SESSIONS[c], dc = sealOf(c);
         put('r' + c, x, rY, 0, C.ivory, 0.95, 2, 15 * k4, 0.4 * Math.sin(PI * sstep(0.3, 1, dc)), 0); // a brief light as its seal goes in
         if (ss.above) put('s' + c, x, lerp(Y_FLOOR + l4(7), rY, sstep(0, 0.6, dc)), 0, C.green, 0.95 * (1 - sstep(0.4, 0.8, dc)), 1, 9 * k4, 0.6, 1);
-        if (ss.confirmed) put('t' + c, x, lerp(Y_CTOP + 0.1, tY, e), 0, C.green, 0.95, 3, 12 * k4, 0.5, 0);
+        if (ss.confirmed) put('t' + c, x, lerp(yK(Y_CTOP) + 0.1, tY, e), 0, C.green, 0.95, 3, 12 * k4, 0.5, 0);
       }
     }
     return out;
@@ -1275,13 +1298,14 @@
     } else {
       // the floor line (the paper's edge to be), the hash links between the records hanging from it
       const step = COL_SPAN / NCOL, rY = Y_FLOOR - l4(U_REC), yN = Y_FLOOR - l4(U_NAV), tk = l4(U_TICK), gap = l4(2), nav = 1 - sstep(0.06, 0.3, xeNow);
-      put('hz', [[-COL_SPAN / 2 - 0.12, Y_FLOOR, 0], [COL_SPAN / 2 + 0.12, Y_FLOOR, 0]], false, C.ivory, 0.3 * (1 - (stacked ? 0 : sstep(0.8, 0.94, xeNow))), 1, 0.9); // the foot: the records' rail, then (wide) the paper's own edge; (hc6) portrait: the rail stays, the paper meets the headline under it
-      const fy = flY(); put('fl', [[floorL, fy, 0], [COL_SPAN / 2 + 0.12, fy, 0]], false, C.ivory, 0.62 * (1 - sstep(0.8, 1, foldE())), 1, 0.9); // the 10 bps floor: it comes down with the columns
+      const xR = COL_X(NCOL - 1) + l4(12); // (hc7) the rail and the floor end on the last tag's edge, the content edge (they ran 33 px past it at 1440, 125 at 3840)
+      put('hz', [[-COL_SPAN / 2 - 0.12, Y_FLOOR, 0], [xR, Y_FLOOR, 0]], false, C.ivory, 0.3 * (1 - (stacked ? 0 : sstep(0.8, 0.94, xeNow))), 1, 0.9); // the foot: the records' rail, then (wide) the paper's own edge; (hc6) portrait: the rail stays, the paper meets the headline under it
+      const fy = flY(); put('fl', [[floorL, fy, 0], [xR, fy, 0]], false, C.ivory, 0.62 * (1 - sstep(0.8, 1, foldE())), 1, 0.9); // the 10 bps floor: it comes down with the columns
       const dash = l4(4), per = l4(9);
       SESSIONS.forEach((ss, c) => {
         const x = COL_X(c), k = (c + 0.1) / (NCOL + 0.55);
         if (c < NCOL - 1) put('hl' + c, [[x + l4(8.5), rY, 0], [x + step - l4(8.5), rY, 0]], false, C.ivory, 0.45, 1, k);
-        const nv = []; for (let u = x - step / 2; u < x + step / 2 - dash * 0.5; u += per) nv.push([u, yN, 0], [Math.min(u + dash, x + step / 2), yN, 0]);
+        const ne = Math.min(x + step / 2, xR), nv = []; for (let u = x - step / 2; u < ne - dash * 0.5; u += per) nv.push([u, yN, 0], [Math.min(u + dash, ne), yN, 0]); // (hc7) the NAV line ends with the rail
         put('nv' + c, nv, 'pairs', C.ivory, 0.3 * nav, 1, k);
         const d = ss.regime === 'premium' ? 1 : -1;
         put('rt' + c, [[x, yN + d * gap, 0], [x, yN + d * tk, 0]], false, C.ivory, 0.9 * nav, 1.6, k);
@@ -1443,6 +1467,9 @@
     const sm = seg + mRaw; // the structure's own position (reduced motion: it snaps with the scene)
     return Math.abs(sm - ci) < 0.02 ? ci : -1;
   }
+  // (hc7, the director: SC 2.5.8 on touch phones) under 600 px with a coarse pointer the eight layer callouts and the ten day
+  // tags are plain labels: never a tab stop (home.css: no pointer); a tap on the drawing (a plate, a column) still inspects
+  const plainLab = (l) => (l.scene === 2 || l.scene === 4) && W < 600 && coarseMQ.matches;
   // S4's callouts leave on the way out at the middle of their window, over 0.25 s (no resting place leaves one half-faded)
   const vis = (l) => {
     if (l.scene !== labelScene) return 0;
@@ -1479,10 +1506,10 @@
   }
   function placeLabels() {
     if (!labelHost) return;
-    const settledScene = labelScene >= 0 && xNow < 0.4 ? labelScene : -1;
+    const settledScene = labelScene >= 0 && (reducedMQ.matches ? xNow : xPost()) < 0.4 ? labelScene : -1;
     if (settledScene !== tabScene) { // only the shown scene's callouts are reachable (and announced)
       const was = tabScene; tabScene = settledScene; // only the scene that left and the one that arrived change
-      labels.forEach(l => { if (l.group == null || (l.scene !== was && l.scene !== tabScene)) return; const on = l.scene === tabScene; l.el.tabIndex = on ? 0 : -1; if (on) l.el.removeAttribute('aria-hidden'); else l.el.setAttribute('aria-hidden', 'true'); });
+      labels.forEach(l => { if (l.group == null || (l.scene !== was && l.scene !== tabScene)) return; const on = l.scene === tabScene && !plainLab(l); l.el.tabIndex = on ? 0 : -1; if (on) l.el.removeAttribute('aria-hidden'); else l.el.setAttribute('aria-hidden', 'true'); });
       if (document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('story-lab') && document.activeElement.tabIndex < 0) stage.focus({ preventScroll: true });
       if (hoverPtr && hoverPtr.scene !== tabScene) { hoverPtr = null; setHover(); } // a new scene starts uninspected
     }
@@ -1595,7 +1622,7 @@
   let listX = 0, listBottom = 0, inspTr = '';
   function hitTest(px, py) { // which ring, layer or session the pointer is over (the scene whose callouts show, settled)
     const cur = labelScene;
-    if (cur < 0 || xNow > 0.3) return null;
+    if (cur < 0 || (reducedMQ.matches ? xNow : xPost()) > 0.3) return null;
     const sc = layouts[cur].s;
     if (cur === 1) {
       let best = null, bd = 16;
@@ -1617,10 +1644,11 @@
       return null;
     }
     if (cur === 4) {
+      const hw = W < 600 ? 0.13 : 0.1, under = W < 600 ? (U_DAY + 14) * remK : 24; // (hc7) phones: the column and its tag's band, as wide as the tag (the tags take no pointer there)
       for (let c = 0; c < NCOL; c++) {
-        const a = project((COL_X(c) - 0.1) * sc, Y_FLOOR * sc, 0), ax = a.x, ay = a.y; // project() reuses one object: copy before the next call
-        const b = project((COL_X(c) + 0.1) * sc, (Y_FLOOR + H_COL + 0.15) * sc, 0);
-        if (px > ax && px < b.x && py < ay + 24 && py > b.y) return { scene: 4, idx: c };
+        const a = project((COL_X(c) - hw) * sc, Y_FLOOR * sc, 0), ax = a.x, ay = a.y; // project() reuses one object: copy before the next call
+        const b = project((COL_X(c) + hw) * sc, (Y_FLOOR + H_COL * colK + 0.15) * sc, 0);
+        if (px > ax && px < b.x && py < ay + under && py > b.y) return { scene: 4, idx: c };
       }
     }
     return null;
@@ -1685,7 +1713,7 @@
     const tN = now || performance.now(), k = red || lost ? 1 : Math.min(1, (tN - fadeT) / 250), mid = (w) => xe >= (w[0] + w[1]) / 2 ? 1 : 0;
     fadeT = tN; kF = k;
     const br4 = beatRects[4] || { ht: 0, hb: 0 };
-    const wideLift = lean ? 0 : (H * FLOOR_END() - HEAD_GAP() - br4.hb) * sstep(0, 0.35, xe); // wide: the headline rises to stand over the floor line, with the camera
+    const wideLift = lean ? 0 : (H * FLOOR_END() - HEAD_GAP() - br4.hb) * sstep(WX.cam[0], WX.cam[1], xe); // wide: the headline rises to stand over the floor line, with the camera
     const headFits = lean || br4.ht + wideLift >= navH + 14;
     const cw = headFits ? 0 : mid(X.copy);
     copyX += clamp(cw - copyX, -k, k);
@@ -1909,7 +1937,8 @@
     gl.uniform1fv(u.u_hov, hov); gl.uniform1f(u.u_hovOn, hoverOn); gl.uniform1f(u.u_hovScene, hoverScene);
     gl.uniform1f(u.u_sceneA, seg); gl.uniform1f(u.u_sceneB, seg + 1);
     dcArr.fill(seg === 3 ? foldE() : 0);
-    gl.uniform1fv(u.u_dc, dcArr); gl.uniform1f(u.u_railA, seg === 3 && !stacked ? 1 - sstep(0.16, 0.4, xeNow) : 1); // (hc6) wide: as the row spreads, the drawn hairline alone carries the rail (grain at 4K)
+    gl.uniform1fv(u.u_dc, dcArr); gl.uniform1f(u.u_railA, seg === 3 && !stacked ? 1 - sstep(WX.spread[0], WX.spread[1], xeNow) : 1); // (hc6) wide: as the row spreads, the drawn hairline alone carries the rail (grain at 4K)
+    gl.uniform1f(u.u_colK, colK);
     gl.uniform1f(u.u_hovLift, reducedMQ.matches ? 0 : 0.07 * scale[hoverScene === seg ? 0 : 1] * (hoverScene === 2 ? 1 : 0));
     const occ = seg === 0 ? (1 - sstep(0, 0.55, mRaw)) : 0;
     gl.uniform4f(u.u_occ, 0, 0, 0, occ * scale[0] * 0.995);
@@ -1974,7 +2003,7 @@
     // scroll with a little weight: the instrument follows, it does not snap (reduced motion: it does)
     if (red || !settledOnce) { sNow = sTarget; xNow = xTarget; settledOnce = true; }
     else { const k = 1 - Math.exp(-dtS * (performance.now() - lastGo.t < 1500 ? 10 : 6.5)); sNow += (sTarget - sNow) * k; xNow += (xTarget - xNow) * k; if (Math.abs(sTarget - sNow) < 0.0004) sNow = sTarget; if (Math.abs(xTarget - xNow) < 0.0004) xNow = xTarget; }
-    xeNow = red ? (xNow > 0.5 ? 1 : 0) : xNow;
+    xeNow = red ? (xNow > 0.5 ? 1 : 0) : xPost();
     morphState();
     stepCopy(now, dtS);
     camera();
@@ -2181,7 +2210,7 @@
   let lostTimer = 0;
   function uiNoGL() {
     if (!running || !wired || tiny) return;
-    sNow = sTarget; xNow = xTarget; xeNow = reducedMQ.matches ? (xNow > 0.5 ? 1 : 0) : xNow; copyS = sNow; copyMode = 'follow';
+    sNow = sTarget; xNow = xTarget; xeNow = reducedMQ.matches ? (xNow > 0.5 ? 1 : 0) : xPost(); copyS = sNow; copyMode = 'follow';
     morphState(); camera(); updateUI(performance.now());
   }
   function start() {

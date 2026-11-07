@@ -249,34 +249,17 @@
 .pf-ck dd { margin: .15em 0 0 1.28em; color: var(--fg-3); } /* in em: the swatch and the indent grow with the type at 4K */
 @media (max-width: 900px) { .pf-ck { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
-/* the three documents (Proof §02): records on one hash line (no hash text), hairline columns */
-.pf-docs { --cg: clamp(1.75rem, 3.6vw, 3.5rem); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--cg); }
-.pf-doc { position: relative; padding-top: 2.25rem; }
-.pf-doc::after { content: ""; position: absolute; left: 0; top: 0; width: .8125rem; height: .8125rem; border-radius: .0625rem; background: var(--fg); transition: transform var(--dur-move) var(--ease) calc(var(--d, 0ms) + 120ms); }
-.pf-doc::before { content: ""; position: absolute; left: .8125rem; top: .375rem; width: calc(100% + var(--cg) - .8125rem); height: var(--hair); background: var(--line-strong); transform-origin: 0 0; transition: transform var(--dur-draw) var(--ease) calc(var(--d, 0ms) + 260ms); }
-.pf-doc:last-child::before { width: 38%; background: repeating-linear-gradient(90deg, var(--line-strong) 0 calc(3 * var(--hair)), transparent calc(3 * var(--hair)) .4375rem); -webkit-mask-image: linear-gradient(90deg, #000 30%, transparent); mask-image: linear-gradient(90deg, #000 30%, transparent); }
-.pf-doc.will-reveal:not(.is-in)::before { transform: scaleX(0); }
-.pf-doc.will-reveal:not(.is-in)::after { transform: scale(0); }
-.pf-doc:is(.is-cut, .is-instant)::before, .pf-doc:is(.is-cut, .is-instant)::after { transition: none; }
-.pf-doc h3 { font-weight: 400; }
-.pf-doc p { color: var(--fg-2); font-size: var(--fs-small); }
-@media (max-width: 899px) {
-  .pf-docs { grid-template-columns: minmax(0, 1fr); row-gap: 2.75rem; }
-  .pf-doc { padding: 0 0 0 2.25rem; }
-  .pf-doc::after { top: var(--hair); }
-  .pf-doc::before { left: .375rem; top: .875rem; width: var(--hair); height: calc(100% + 1.9375rem); transform-origin: 0 0; }
-  .pf-doc:last-child::before { width: var(--hair); height: 4rem; background: repeating-linear-gradient(180deg, var(--line-strong) 0 calc(3 * var(--hair)), transparent calc(3 * var(--hair)) .4375rem); -webkit-mask-image: linear-gradient(180deg, #000 30%, transparent); mask-image: linear-gradient(180deg, #000 30%, transparent); }
-  .pf-doc.will-reveal:not(.is-in)::before { transform: scaleY(0); }
-}
+/* hc7 (proof's request, applied by integrate): the three documents' old drawing (.pf-docs, .pf-doc and its hash
+   line, Proof §02 until hc6) is gone; proof.css draws §01's trail whole */
 @media (prefers-reduced-motion: reduce) {
-  .cost-blk i, .pf-doc::before, .pf-doc::after { transition: none !important; opacity: 1 !important; transform: none !important; }
+  .cost-blk i { transition: none !important; opacity: 1 !important; transform: none !important; }
 }
 @media print {
-  .cost-bar > i, .cost-blk i, .pf-ck dt i, .pf-doc::after { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .cost-bar > i, .cost-blk i, .pf-ck dt i { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .cost-blk i { opacity: 1 !important; transform: none !important; }
 }
 @media (forced-colors: active) {
-  .cost-blk i:not(.is-rest, .is-gone), .pf-ck dt i, .pf-doc::after { forced-color-adjust: none; background: CanvasText; }
+  .cost-blk i:not(.is-rest, .is-gone), .pf-ck dt i { forced-color-adjust: none; background: CanvasText; }
   .cost-blk .is-part { forced-color-adjust: none; background: linear-gradient(90deg, CanvasText var(--f), Canvas 0); }
   .cost-blk .is-rest { box-shadow: none; border: var(--hair) solid CanvasText; }
 }

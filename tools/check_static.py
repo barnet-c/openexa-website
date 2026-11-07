@@ -233,8 +233,13 @@ def check_regime_split():
 
 
 def check_research09_regimes():
-    """Research 09's figure draws the sessions' regimes from the record, not from a second copy: build_research.py writes
-    data-regimes on its figure stage (PF5) and it equals #oxa-sessions; figure.js's fallback literal, if any, agrees."""
+    """Research 09's figure never keeps a second copy of the record's regimes (PF5; D15). hc7 (research, director item 8):
+    the figure draws the ten sessions as Home and Proof do (every column green to the floor, the regime Proof's step line,
+    not the drawing's colour), so its stage carries no data-regimes and figure.js no regime literal: the principle holds
+    by construction, and this guard keeps it so. A data-regimes on the stage must equal #oxa-sessions (a regime colour
+    back in the drawing comes with its check); a p/d literal of the record's length in figure.js fails outright (a copy of
+    the record the page cannot correct). Was (a2-hc6): data-regimes required and equal to the record, figure.js's
+    fallback literal equal to it."""
     if not RECORD: fail("research09_regimes: no #oxa-sessions record"); return
     want = counts_of(RECORD)["regimes"]
     notes = sorted(p for p in pages if re.match(r"research/09-", p))
@@ -244,13 +249,13 @@ def check_research09_regimes():
         stage = re.search(r'<[a-z]+\b[^>]*\sdata-figure="sessions"[^>]*>', s)
         if not stage: fail(rel, "research09_regimes: no data-figure=\"sessions\" stage"); continue
         attr = re.search(r'\sdata-regimes="([^"]*)"', stage[0])
-        if not attr: fail(rel, f"research09_regimes: the figure stage has no data-regimes (figure.js keeps its own copy of the record); the record says {want!r}"); continue
+        if not attr: continue  # hc7: the drawing reads no regime
         v = attr[1].strip()
         got = v.lower() if re.fullmatch(r"[pdPD]+", v) else "".join("p" if w.startswith("prem") else "d" if w.startswith("disc") else "?" for w in re.findall(r"[a-z]+", v.lower()))
         if got != want: fail(rel, f"research09_regimes: data-regimes={v!r} reads {got!r}; the record says {want!r}")
     js = (ROOT / "assets/js/figure.js").read_text(encoding="utf-8")
-    for lit in re.findall(r"['\"]([pd]{%d})['\"]" % len(want), js):
-        if lit != want: fail("assets/js/figure.js", f"research09_regimes: the fallback regime literal {lit!r} differs from the record {want!r}")
+    for lit in re.findall(r"['\"]([pdPD]{%d})['\"]" % len(want), js):
+        fail("assets/js/figure.js", f"research09_regimes: a regime literal {lit!r} is a second copy of the record (the figure reads the stage's data-regimes or draws no regime)")
 
 
 def css_style_rules(css, first_line=1):
@@ -542,7 +547,7 @@ def check_weight():
 
 def check_story_fallback():
     """story.js's fallback table (used only when #oxa-sessions cannot be read) is the record too: its regime literal
-    (/'([PD]{10})'.split/) equals the record's regimes in order (figure.js's literal is research09_regimes'; D15)."""
+    (/'([PD]{10})'.split/) equals the record's regimes in order (D15; figure.js may hold none: research09_regimes)."""
     if not RECORD: fail("story_fallback: no #oxa-sessions record"); return
     want = counts_of(RECORD)["regimes"].upper()
     js = (ROOT / "assets/js/story.js").read_text(encoding="utf-8")

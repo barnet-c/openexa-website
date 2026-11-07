@@ -28,9 +28,9 @@ body[data-page="home"] .story-lab.cap .fc-h { text-align: left; color: rgba(245,
 
 /* the stage's focus ring (a frame inset under the bar): overture.css (integrate a3) */
 
-/* SC 2.5.8: callouts under 24 px apart are not pointer targets */
-@media (max-width: 599.98px) { body[data-page="home"] .story-lab.layer { pointer-events: none; } }
-@media (max-width: 359.98px) { body[data-page="home"] .story-lab.day { pointer-events: none; } }
+/* SC 2.5.8: callouts under 24 px apart are not pointer targets (hc7: the day tags too, from 600 px down; a tap on a plate or
+   a column still inspects it, and story.js keeps both kinds out of the tab order on touch phones) */
+@media (max-width: 599.98px) { body[data-page="home"] .story-lab:is(.layer, .day) { pointer-events: none; } }
 
 /* phones, JS on (compact overture): the CEO’s head at the phone scale */
 @media (scripting: enabled) and (max-width: 599.98px) {

@@ -287,6 +287,9 @@
 .post-byline { display: flex; flex-wrap: wrap; gap: .5rem 1.625rem; margin: 1.75rem 0 0; font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-3); font-variant-numeric: tabular-nums; }
 .post-byline > * { position: relative; }
 .post-byline > * + *::before { content: ""; position: absolute; left: -.8125rem; top: 50%; width: var(--hair); height: 1.1em; margin-top: -.55em; background: currentColor; opacity: .45; }
+/* hc7: an item that wraps to a line's start (the read time on 17 posts at 320) leaves its rule outside the column, in
+   the gutter: clipped there, 13 px out; the author link's focus ring (5 px) and its taller target stay inside the clip */
+.post-byline { clip-path: inset(-1rem -1rem -1rem -.375rem); }
 .post-byline > a { color: var(--fg); }
 .post-byline > a::before { top: calc(50% + .1875rem); } /* the target's 6 px of top padding */
 @media (hover: hover) { .post-crumb a:hover, .post-byline a:hover { color: var(--fg); border-color: currentColor; } }

@@ -74,10 +74,10 @@ CAPTIONS = {
     "sessions": ("Ten sessions, one column each, in the order of the record.", "Illustrative · heights not to scale"),
     "mastercopy": ("One proven agent above, its copies below, on one control plane.", "Illustrative · roadmap"),
 }
-# award a2 (a2-ux, medium): a figure that colours its parts says what the colours mean. Note 09 draws each session in
-# its NAV regime's colour (figure.js 'sessions', from #oxa-sessions: Days 03-06 and 08 premium, the others discount;
-# Proof's table says the same per day): the key, in words, stands before the hedge, so green never reads as "better"
-KEYS = {"sessions": "Green: premium · white: discount"}
+# award a2 gave note 09 a colour key ("Green: premium · white: discount"): each session was drawn in its NAV regime's
+# colour. Hill climb hc7 (director item 8): Home and Proof draw the same ten sessions as ten green columns, the regime
+# a step line below them, and white columns read as failed sessions there. Note 09 now draws them as Proof does (every
+# column green to the floor, the open unit above it a khaki outline), so it needs no key: KEYS and its slot are gone
 # v2x lab (research moment): every figure is read as a plate. Its labels pin to points of the formation (figure.js, a
 # stage with data-plate projects data-at, the formation's own x,y,z, onto the screen each frame) and say what each part
 # is, in the words of its caption or its note: no new fact, no number the caption does not already state. Points are
@@ -332,15 +332,15 @@ def _forms(name, N, rnd, g):
     elif name == "sessions":
         per = math.floor(N * 0.082); B, F = -0.72, 0.48; U = (F - B) / 10; w = 0.07; o0 = F + 0.025; o1 = o0 + U
         for c in range(10):
-            x = -1.08 + c * 0.24; k = 2 if REGIMES[c] == "p" else 0
+            x = -1.08 + c * 0.24  # hc7: every column green to the floor, the open unit a khaki outline (figure.js)
             for i in range(per):
-                if rnd() < 0.86: push([x + (rnd() - 0.5) * 2 * w, B + rnd() * (F - B), (rnd() - 0.5) * 0.1, k]); continue
+                if rnd() < 0.86: push([x + (rnd() - 0.5) * 2 * w, B + rnd() * (F - B), (rnd() - 0.5) * 0.1, 2]); continue
                 e = rnd() * (4 * w + 2 * U)
                 if e < 2 * w: px, py = x - w + e, o0
                 elif e < 4 * w: px, py = x - w + (e - 2 * w), o1
                 elif e < 4 * w + U: px, py = x - w, o0 + (e - 4 * w)
                 else: px, py = x + w, o0 + (e - 4 * w - U)
-                push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, k])
+                push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, 1])
         # award a2: the floor is a rule (RULES), no longer a band of points
     elif name == "mastercopy":
         def sphere(cx, cy, cz, r, n, k):
@@ -394,7 +394,7 @@ def note_still(fig, every=7):
     paths, xm = {}, 0.0
     # award a4 (r4): the bright half is the nearer half of the drawing (its own median depth), as the margin plate's since
     # a3. A fixed 0.5 put every point of note 09's columns, the council's stream and the copies on the dim side (none of
-    # 09's 1,757 dots was "near"): the discount columns read mid-grey under the key's "white", which the still now carries
+    # 09's 1,757 dots was "near"): its columns read mid-grey, dimmer than the live drawing they stand in for
     med = sorted(d[2] for i, d in enumerate(dots, 1) if not i % every)[len(dots) // every // 2]
     for i, (sx, sy, depth, k) in enumerate(dots, 1):
         if i % every: continue
@@ -524,8 +524,7 @@ def margin_still(fig, slugs=(), every=5):
     gzip, past the first round trip (Lighthouse FCP +120 ms on every note); as a lazy <img> in a rail that phones never
     show, a phone never fetches it. Its dots scale with the plate (2 px at 1440, 5 at 3840 = 1920 doubled). A plate's
     rule (note 09's floor) is not in the file: research.css draws it over the image as a hairline (--hair), crisp at any
-    density. Returns the <img> (and the rule) for the note's markup. Its caption is the hero's (cap_html: the hedge, note
-    09's key).
+    density. Returns the <img> (and the rule) for the note's markup. Its caption is the hero's (cap_html: the hedge).
     award a4: each part a part of the note names (PARTS) is a second file, plate-<fig>-<n>.svg: the same dots of that
     part, at full strength, laid over the still and shown while the note's contents mark that part (research.js;
     research.css .np-part); its label stands beside it then. A keyed figure (KEYED: note 09) carries its key on the plate
@@ -593,7 +592,7 @@ def margin_still(fig, slugs=(), every=5):
         raise AssertionError(f"margin_still({fig!r}): a label does not fit its plate")
     X = lambda x: round(fx(x)); Y = lambda y: round(fy(y))
     # pass 3: nearer than the drawing's own median depth is the bright half (a fixed 0.5 left note 09's columns and the
-    # council all "far": grey beside the key's "white", and dimmer than the hero they repeat)
+    # council all "far": grey, and dimmer than the hero they repeat)
     med = sorted(d[2] for d in pick)[len(pick) // 2]
     num = lambda v: str(v) if v < 0 else f" {v}"
     # site.css's tokens: --paper, --khaki, --signal-bright, --reject-bright (the hero still's .fs-still .k0-.k3)
@@ -763,23 +762,18 @@ def cap_html(fig, cls="figcap", title=False, attrs=""):
     where the labels do not fit; research.js writes it from the row)"""
     t, h = CAPTIONS[fig]
     tt = '<span class="figcap-t"></span>' if title else ""
-    # award a2: the colour key (KEYS) before the hedge; the index plate's caption always has the slot (research.js fills it)
-    k = KEYS.get(fig, "")
-    kk = f'<span class="figcap-k">{H.escape(k, quote=False)}</span>' if k or title else ""
-    return f'<p class="{cls}"{attrs}>{tt}{kk}<span class="figcap-h">{H.escape(h, quote=False)}</span></p>'
+    return f'<p class="{cls}"{attrs}>{tt}<span class="figcap-h">{H.escape(h, quote=False)}</span></p>'
 
 # ---------------- templates from the live homepage ----------------
 index_html = read(os.path.join(ROOT, "index.html"))
 NAV = re.search(r'  <header class="nav">.*?</header>\n  <div class="nav-menu">.*?\n  </div>\n', index_html, re.S).group(0)
 FOOTER = re.search(r'  <footer class="footer">.*?</footer>\n', index_html, re.S).group(0)
 # the Lifecycle 01 sessions: ONE record (#oxa-sessions, on the home and Proof pages) that the chart and every session count
-# are drawn from. The 'sessions' figure (note 09) reads each column's NAV regime from it: data-regimes on its stage, one
-# letter per session (p = premium, d = discount), so the note carries no second copy of the record. Its ten columns are
-# drawn for ten sessions: a record with another count needs that figure and the note looked at, so the build stops.
+# are drawn from. The 'sessions' figure (note 09) draws ten columns for ten sessions: a record with another count needs
+# that figure and the note looked at, so the build stops. Hill climb hc7: the figure no longer colours a column by its
+# NAV regime (Proof's step line says that), so the note's stage carries no regimes (was data-regimes, since r1)
 SESSIONS = json.loads(re.search(r'<script type="application/json" id="oxa-sessions">(.*?)</script>', index_html, re.S).group(1))["sessions"]
-REGIMES = "".join({"prem": "p", "disc": "d"}.get(str(x.get("regime", "")).strip().lower()[:4], "?") for x in SESSIONS)
-assert len(REGIMES) == 10 and set(REGIMES) <= {"p", "d"}, f"#oxa-sessions: note 09's figure draws ten sessions, each premium or discount; the record gives {REGIMES!r}"
-def stage_data(fig): return f' data-regimes="{REGIMES}"' if fig == "sessions" else ""
+assert len(SESSIONS) == 10, f"#oxa-sessions: note 09's figure draws ten sessions; the record gives {len(SESSIONS)}"
 HEAD_LINKS = '''  <link rel="apple-touch-icon" href="{p}assets/img/apple-touch-icon.png">
   <link rel="manifest" href="{p}site.webmanifest">
   <link rel="icon" type="image/svg+xml" href="{p}assets/img/favicon.svg">
@@ -900,7 +894,7 @@ for i, post in enumerate(ordered):
 {nav}
   <main id="main">
     <section class="page-hero page-hero--dark is-dark grain article-hero" style="{still_geo(post['fig'])}">
-      <div class="figure-stage article-figure has-still" data-figure="{post['fig']}"{stage_data(post['fig'])} data-spin="0.10" data-plate data-rest="2.5" data-bbox aria-hidden="true">{note_still(post['fig'])}{still_keys(post['fig'])}<canvas></canvas>{labels_html(post['fig'])}</div>
+      <div class="figure-stage article-figure has-still" data-figure="{post['fig']}" data-spin="0.10" data-plate data-rest="2.5" data-bbox aria-hidden="true">{note_still(post['fig'])}{still_keys(post['fig'])}<canvas></canvas>{labels_html(post['fig'])}</div>
       <div class="container">
         <div class="article-hero-grid">
           <div>
@@ -957,7 +951,7 @@ rows = []
 # phone strip) and the hedge
 for post in ordered:
     t, h = CAPTIONS[post["fig"]]
-    cap = " ".join(f'data-cap-{k}="{H.escape(v, quote=True)}"' for k, v in (("t", t), ("k", KEYS.get(post["fig"], "")), ("h", h)) if v)
+    cap = " ".join(f'data-cap-{k}="{H.escape(v, quote=True)}"' for k, v in (("t", t), ("h", h)) if v)
     rows.append(f'''          <li class="post" data-figure-target="{post['fig']}" data-figure-stage="research-figure" {cap}>
             <a href="{post['file']}">
               <span class="post-n">{post['order']:02d}</span>

@@ -307,6 +307,9 @@
 [data-page="access"] .access-form { grid-column: 1 / span 6; min-width: 0; }
 [data-page="access"] .access-letter { grid-column: 8 / -1; align-self: stretch; min-width: 0; }
 @media (min-width: 961px) { [data-page="access"] .access-hero { padding-top: calc(var(--nav-h) + clamp(1.5rem, 3.4vh, 3rem)); } }
+/* hc7 (system's request, applied by integrate): the plate heroes' fold. The hero is the screen less 2.5rem, so the
+   fold shows a band of section 01's paper and its heading starts below it (it was sliced at 1920 and 3840) */
+@media (min-width: 961px) { [data-page="access"] .access-hero { min-height: calc(100vh - 2.5rem); min-height: calc(100svh - 2.5rem); } }
 @media (min-width: 601px) and (max-width: 960px) {
   [data-page="access"] .access-letter { grid-column: 7 / -1; padding-left: clamp(1rem, 2.2vw, 2rem); }
   [data-page="access"] .form .two { grid-template-columns: minmax(0, 1fr); }

@@ -140,8 +140,6 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 
 @media (min-width: 601px) { #modes td[data-th="Latency"] { white-space: nowrap; } }
 
-@media (max-width: 600px) { #mcp .dpl-plate { max-width: 17.5rem; } }
-
 /* LIFECYCLES */
 
 .desk .dl-rcpt { color: var(--fg); }
@@ -490,7 +488,11 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
   #modes .modes-body > .ledger-wrap { grid-column: 1 / span 6; grid-row: 2; }
   #modes .modes-body > .sec-plate--dial { grid-column: 8 / -1; grid-row: 1 / span 2; align-self: center; justify-self: stretch; width: 100%; max-width: 30rem; margin: 0 0 0 auto; }
   #modes .sec-plate--dial > .hp-art { max-width: none; }
-  #modes .sec-plate--dial > .hp-cap { --fc-ind: calc(24.5% - 4rem); } /* hc5 (system's request): under the drawing's first mark ("Fully automatic" ends at 24.5% and is 4rem wide) */
+  /* hc7 (director item 11): the stamp is the plate's lower-left corner: on the foot line of "Emergency halt", at the
+     drawing's left edge ("Fully automatic" ends at 24.5% and is 4rem wide). Under the plate (hc5) it hung below empty
+     paper, read as centred under the dial; narrower, the plate sits on the text column and its stamp under it */
+  #modes .sec-plate--dial { position: relative; }
+  #modes .sec-plate--dial > .hp-cap { position: absolute; left: calc(24.5% - 4rem); top: 91.7%; transform: translateY(-50%); margin: 0; padding: 0; }
 
   #test > .container { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap, clamp(1rem, 2.2vw, 2rem)); align-items: start; }
   #test > .container > .ch-head { grid-column: 1 / span 5; position: sticky; top: calc(var(--nav-h) + 2.5rem); margin-bottom: 0; }
