@@ -426,7 +426,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
   .footer .bottom { display: grid; grid-template-columns: var(--fc); column-gap: var(--fg-gap); }
   .footer .bottom > * { white-space: nowrap; }
 }
-@media (min-width: 601px) and (max-width: 960px) { .footer .bottom > *, .footer .clocks > span, .footer .disc p { grid-column: span 2; } .footer .bottom .clocks { display: contents; } .footer .bottom > :not(.clocks) { white-space: normal; } } /* two-column cells hold both lines; they wrap only under user text spacing (1.4.12) */
+@media (min-width: 601px) and (max-width: 960px) { .footer .bottom > *, .footer .disc p { grid-column: span 2; } .footer .bottom .clocks { grid-column: 3 / -1; justify-self: end; justify-content: flex-end; } .footer .bottom > :not(.clocks) { white-space: normal; } } /* hc9: the copyright left, both clocks right, as at 961 px; under ~770 px the two clocks stack, right-aligned (their times in one column); cells wrap only under user text spacing (1.4.12) */
 @media (min-width: 961px) { .footer .bottom .clocks { grid-column: 4; justify-self: end; flex-wrap: nowrap; } .footer .disc p + p { grid-column: 2 / -1; } }
 @media (max-width: 600px) { .footer .top { grid-template-columns: 1fr 1fr; gap: 1.75rem 1.25rem; } .footer .top > :first-child { grid-column: 1 / -1; } }
 @media (max-width: 359px) { .footer .top { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: .875rem; } .footer ul li { font-size: var(--fs-small); } } /* 320: every label on one line; still 33 px per tap, rows 33 apart */ /* phones: the brand, then the links two by two */

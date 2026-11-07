@@ -390,6 +390,18 @@ def lead(h):
             return h[:m.start()] + '<p class="lead">' + h[m.start() + 3:]
         if i or not re.fullmatch(r"<strong>[^<]*</strong>", inner): return h
     return h
+STANDFIRST_MAX = 30  # words: a deck, not a quoted passage
+def standfirst(h):
+    """hill climb hc9 (council, hierarchy): an article that opens on a short blockquote (only the Introduction: "In Search
+    of the Gen-AI Business Model. The Next Phase of …") opens on its standfirst (blog.css: set as a research note's
+    p.dek, the text's face, size and leading over a hairline), not on a second title. Each of its two sentences is a
+    line of its own (span.sf, balanced on its own), so it reads as a deck, not as a paragraph broken mid-phrase ("The
+    Next / Phase" at 1440 and up). The characters stay, in order"""
+    m = re.match(r"\s*<blockquote>(.*?)</blockquote>", h, re.S)
+    if not m or len(plain(m.group(1)).split()) > STANDFIRST_MAX: return h
+    parts = re.split(r"(?<=[.?!]) (?=[A-Z])", m.group(1))
+    if len(parts) != 2 or min(len(plain(s).split()) for s in parts) < 4: return h
+    return h[:m.start(1)] + " ".join(f'<span class="sf">{x}</span>' for x in parts) + h[m.end(1):]
 def said(p):
     """the post's own text, normalised for quoting: tags out, entities decoded, whitespace collapsed, no space before
     punctuation (the old CMS left 'Engineering , publishes')"""
@@ -876,7 +888,7 @@ for p in order:
         j = SERIES_POS[p["slug"]]
         if j: rel_links += f'  <link rel="prev" href="{BASE}{SERIES[j - 1][0]}.html">\n'
         if j + 1 < len(SERIES): rel_links += f'  <link rel="next" href="{BASE}{SERIES[j + 1][0]}.html">\n'
-    article = hero_img + lead(hang(quoted(marks_in_em(bare_marks(link_spaces(smart_html(p["body"])))))))
+    article = standfirst(hero_img + lead(hang(quoted(marks_in_em(bare_marks(link_spaces(smart_html(p["body"]))))))))
     # award a4 (a4-ux medium, a4-design polish): a long read with figures loads blog.js for one thing, the margin
     # plate's rest while a figure is on screen (blog.js; the other posts load no script of their own)
     post_js = ("site.js",) + (("blog.js",) if long_read(p) and "<figure" in article else ())

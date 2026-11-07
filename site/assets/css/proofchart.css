@@ -20,9 +20,6 @@
   --top: calc(var(--zg) + var(--zc));
   position: relative;
 }
-/* a narrow chart (every phone): the open block's note wraps to three lines, so its zone keeps room for them above the
-   floor's label (Home and Proof) */
-@container (max-width: 540px) { .pf, .proof:not(.is-built)::before { --zg: calc(var(--ng, 1) * (var(--b) + var(--g)) + 3.6rem); } } /* the unbuilt box too: the build moves nothing */
 @supports (width: 1cqi) {
   .pf, .proof:not(.is-built)::before {
     --gut: clamp(4rem, 15cqi, 6.75rem); --lane: calc((100cqi - var(--gut)) / var(--cols, 10));
@@ -38,7 +35,7 @@
 }
 .pf-body { position: relative; display: grid; grid-template-columns: var(--gut) minmax(0, 1fr); }
 /* hc3: recorded data, not live: the gutter's words speak the plates' caption register (Inter, sentence case); its numerals
-   and units (0, 5, 10 bps) stay mono. Line-height 1.2: "Above" and its two-line hedge fit the zone over the floor as before */
+   and units (0, 5, 10 bps) stay mono. Line-height 1.2: "Above the floor" and its hedge fit the zone over the floor, a line each */
 .pf-gut { position: relative; font: 400 var(--fs-small)/1.2 var(--sans); color: var(--fg-3); }
 .pf-y { position: absolute; left: 0; right: .625rem; }
 .pf-y b { font-weight: 400; }
@@ -46,8 +43,9 @@
 .pf-y .pf-n, .y-zero b, .y-floor small { font: 400 var(--fs-label)/1.3 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 .pf-y .pf-n { font-style: normal; color: var(--fg); margin-left: .5em; }
 .pf-y .pf-ls { display: none; } /* a long label's short form, for the narrowest charts */
-.y-above { top: -.25rem; right: .375rem; } /* the hedge's longest line, "not published", is 89.8 px at 14 px; it clears the floor by 9 px */
-.y-above b { color: var(--fg-2); } /* the two zones' names (Above, Floor) a step over the hedge */
+.y-above { top: -.25rem; } .pf-y.y-above { right: auto; white-space: nowrap; } /* hc9: two lines, the name over its hedge, each on one line; both run over the zone they name, past the gutter, clear of the open blocks under them (.pf-y.y-above: over the phones' .pf-y right inset below, so the box holds its text) */
+.y-above small { max-width: none; white-space: nowrap; } /* on the small itself: .pf-y small's text-wrap: balance would set it back to wrap */
+.y-above b { color: var(--fg-2); } /* the two zones' names (Above the floor, Floor) a step over the hedge */
 .y-floor { top: calc(var(--zg) + .4375rem); color: var(--fg-2); }
 .y-floor small { margin-top: .125rem; color: var(--fg); }
 .y-zero { top: var(--top); transform: translateY(calc(-100% - .125rem)); } /* hc3: on the base rule, with the blocks it counts (not crowding Premium under it) */
@@ -56,22 +54,20 @@
 .y-disc { top: calc(var(--top) + var(--zr) * .78); transform: translateY(-50%); }
 .y-day { top: calc(var(--top) + var(--zr) + var(--zd) / 2); transform: translateY(-50%); }
 .y-ok { top: calc(var(--top) + var(--zr) + var(--zd) + var(--zo) / 2); transform: translateY(-50%); }
-/* a gutter under 96 px cannot hold it at the small step: the hedge takes the label size there (hc3; Home at 961-1270) */
-@container (max-width: 40rem) { .y-above small { font-size: var(--fs-label); line-height: 1.25; } }
 @container (max-width: 540px) { .pf-y .pf-n { display: none; } .pf-y { right: .25rem; } }
 /* a2: phones set the label at 12 px (site.css), so the gutter holds "Confirmed" (71 px) with room before the first tick */
-@container (min-width: 301px) and (max-width: 540px) { .pf, .proof:not(.is-built)::before { --gut: clamp(5rem, 15cqi, 6.75rem); } .y-above small { letter-spacing: -0.01em; } } /* a3: at 12 px "not published" needs 77 px of a 76 px column */
+@container (min-width: 301px) and (max-width: 540px) { .pf, .proof:not(.is-built)::before { --gut: clamp(5rem, 15cqi, 6.75rem); } }
 /* phones under ~340 px: a narrower gutter keeps every lane (the tap target) at least 24 px wide */
 @container (max-width: 300px) {
   .pf, .proof:not(.is-built)::before { --gut: 2.375rem; }
   .pf-gut { font-size: var(--fs-label); }
   .pf-y { right: calc(2 * var(--hair)); }
-  .pf-y .pf-lw, .y-above small { display: none; }
+  .pf-y .pf-lw { display: none; }
   .pf-y .pf-ls { display: inline; }
   .y-floor small { letter-spacing: 0; white-space: nowrap; }
 }
 @supports not (width: 1cqi) {
-  @media (max-width: 340px) { .pf, .proof:not(.is-built)::before { --gut: 2.375rem; } .pf-gut { font-size: var(--fs-label); } .pf-y { right: calc(2 * var(--hair)); } .pf-y .pf-lw, .y-above small, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { letter-spacing: 0; white-space: nowrap; } }
+  @media (max-width: 340px) { .pf, .proof:not(.is-built)::before { --gut: 2.375rem; } .pf-gut { font-size: var(--fs-label); } .pf-y { right: calc(2 * var(--hair)); } .pf-y .pf-lw, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { letter-spacing: 0; white-space: nowrap; } }
 }
 /* 4K (Home; Proof's is in proof.css): above 1920 the chart's gutter, blocks and zones are in rem, the 1440 chart scaled
    (integrate a1; history: notes/system.md) */

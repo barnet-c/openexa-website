@@ -152,7 +152,7 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-compact .beat .eyebrow { margin-bottom: .5rem; }
 .story-compact .beat .body-lg, .story-compact .beat-0 .hero-sub { margin-top: .625rem; font-size: .86rem; line-height: 1.5; }
 .story-compact .beat .hero-cta, .story-short .beat .hero-cta { flex-wrap: wrap; gap: .625rem; margin-top: .875rem; } /* a4: a larger reader font wraps the second button, never cuts it */
-.story-compact .beat .hero-cta .btn, .story-short .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
+.story-compact .beat .hero-cta .btn, .story-short .beat .hero-cta .btn { padding: .78em 1.05em; font-size: var(--fs-small); } /* hc9: the site's one button size, with Pause motion's */
 /* a portrait phone is always compact: the same rules from the first paint */
 @media (scripting: enabled) and (max-width: 599.98px) {
   html:not(.no-webgl) .beat-0 .hero-stats { display: none; }
@@ -162,7 +162,7 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
   html:not(.no-webgl) .beat .eyebrow { margin-bottom: .5rem; }
   html:not(.no-webgl) .beat .body-lg, html:not(.no-webgl) .beat-0 .hero-sub { margin-top: .625rem; font-size: .86rem; line-height: 1.5; }
   html:not(.no-webgl) .beat .hero-cta { flex-wrap: wrap; gap: .625rem; margin-top: .875rem; }
-  html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
+  html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: var(--fs-small); }
 }
 /* a landscape phone is short from the first paint too */
 /* tall phones: the overture's type closer to the chapters that follow (body 15 px) */
@@ -189,7 +189,7 @@ html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { ma
 }
 @media (scripting: enabled) and (max-height: 599.98px) and (min-aspect-ratio: 23/20) {
   html:not(.no-webgl) .beat .hero-cta { flex-wrap: wrap; gap: .625rem; margin-top: .875rem; }
-  html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: .86rem; }
+  html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: var(--fs-small); }
 }
 /* 320-359 px (a4): less side padding keeps the two buttons on one row at the default size */
 @media (scripting: enabled) and (max-width: 359.98px) {

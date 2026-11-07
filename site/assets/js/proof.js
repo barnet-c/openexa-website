@@ -94,7 +94,7 @@
       if (short) b.append(h('span', 'pf-lw', k), h('span', 'pf-ls', short)); else b.textContent = k;
       e.append(b); if (note) e.append(h('small', null, note)); gut.append(e); return e;
     };
-    lab('y-above', 'Above', 'exact value not published');
+    lab('y-above', 'Above the floor', 'exact value not published'); // hc9: two lines, as the floor's and Note 09's
     lab('y-floor', 'Floor', floor + ' ' + unit + (per > 1 ? ' · 1 block = ' + per + ' bps' : ''));
     lab('y-zero', '0');
     lab('y-prem', 'Premium', null, 'Prem.').append(h('i', 'pf-n', String(C.premium)));

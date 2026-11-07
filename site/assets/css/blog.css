@@ -390,6 +390,14 @@
 /* a1: the author's blockquotes on the heading step (not 18 px beside 19) */
 .blog-post .blog-article blockquote { font-size: var(--fs-heading); line-height: 1.24; letter-spacing: -.01em; margin: 0 0 1.2em; padding-left: 1.25rem; text-wrap: balance; }
 .blog-post .blog-article blockquote + p.lead { margin-top: 0; }
+/* hc9: an opening blockquote is the post's standfirst, not a second title: set as a note's p.dek (research.css), the
+   text's size (not --fs-body: 18 px beside 19), graphite, over a hairline; the serif's hyphen fix undone */
+.blog-post .blog-article > blockquote:first-child { margin: 0 0 1.6em; padding: 0 0 1.4em; border-left: 0; border-bottom: var(--hair) solid var(--line); color: var(--fg-2); font-family: var(--sans); font-size: inherit; line-height: inherit; letter-spacing: inherit; }
+.blog-post .blog-article > blockquote:first-child .hy { margin-inline: 0; -webkit-text-fill-color: currentColor; }
+.blog-post .blog-article > blockquote:first-child .hy::before { content: none; }
+/* build_blog standfirst(): a line per sentence, each balanced; "Gen-AI's" atomic (balance broke before a nowrap run) */
+.blog-article .sf { display: block; }
+.blog-article .sf .nowrap { display: inline-block; }
 /* hc3: another writer's passage (build_blog.quoted): the body's face and size, upright, on a hairline rule */
 .blog-article > p.pq { padding-left: 1.25rem; border-left: var(--hair) solid var(--line-strong); }
 
