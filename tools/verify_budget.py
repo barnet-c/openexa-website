@@ -35,18 +35,20 @@ The checks (the item each one guards in brackets):
   desk_warm_time*      within 1.2 s of the desk scrolling into view: its clock reads >= 11:00 ET and its strip holds a record   [LC2b]
   inspect_time*        a click on a record of Trust's ledger selects it and the inspector names it within 800 ms (until
                        1 Nov: the swarm trace's record button and Home's ledger, which left the page)   [SW2, LG4; round 2 tightened from 1.5 s]
-  proof_entrance_time* home 4.1's chart, arrived at from above: its entrance transitions finish within 1.3 s of .is-in   [PF2]
+  proof_entrance_time* the proof chart's entrance (Proof's hero at load since hc13r; Home §03's, arrived at from above,
+                       until then): its entrance transitions finish within 1.3 s of .is-in   [PF2]
   swarm_pacing*        the swarm lab centred at 1440x900@2: frame interval median <= 18 ms, p95 <= 33 ms   [SW4]
   swarm_phone_fps*     the lab at 390x844@3, touch, 4x CPU, agents at the slider's maximum: >= 30 fps once the governor has
                        settled (up to 30 s; the cap it reached is printed)   [SW4]
   page_transition+     home at S0 to Company and to Proof, 5 runs each: every screencast frame's mean luminance under the bar
                        < 60 (no white flash between dark pages); Platform to Lifecycles, 5 runs: no frame draws both pages'
                        views at opacity >= .25 (two headlines legible)   [NV-R2-3]
-  home_landing+        v2x r3: Home opened mid-way. Reload and Back with §04 80 px under the top (1440; 390@2 touch): §04 lands
-                       within 2 px of 80 and the largest layout-shift window (no recent input; 1 s gap, 5 s cap) is < 0.05
-                       (0.037 at 1440 today, from §04's chart building on screen: tighten to 0.01 once its live height is
-                       reserved); /#proof, /#lc01, /#governance fresh, five loads each at both widths: the target's top at
-                       the bar's bottom (2 px) and that window < 0.1 in every load   [r3-motion M1, r3-perf moderate]
+  home_landing+        v2x r3: Home opened mid-way. Reload and Back with a chapter 80 px under the top (1440; 390@2 touch;
+                       §04 #proof until hc13r, §03 #economics since, the chapter after the lab whose cost index builds on
+                       screen): it lands within 2 px of 80 and the largest layout-shift window (no recent input; 1 s gap,
+                       5 s cap) is < 0.01; /#economics (/#proof until hc13r), /#lc01, /#governance fresh, five loads each
+                       at both widths: the target's top at the bar's bottom (2 px) and that window < 0.1 in every load
+                       [r3-motion M1, r3-perf moderate]
   loader_curtain+      v2x r3: 20 first visits to / at 390x844@2, touch, 4x CPU: every visit ends with the loader's exit (the
                        curtain until a1, the hand-off since: .is-done comes, and before the loader is removed; none ends at
                        .is-complete alone) and the beat (the exit's transition start + delay - the '100' pulse) is 85-110 ms
@@ -317,23 +319,31 @@ async def inspect_time(b):
     return ms is not None and ms <= 800, f"trust.html@1440x900: the fifth record was selected and named in the inspector {'%.0f ms' % ms if ms is not None else 'never (8 s)'} after the click; budget 800 ms (round 2; was 1.5 s)", ms if ms is not None else float("inf")
 
 
+# hc13r (home, HOME-1): the chart left Home §03 (arrived at from above there); it draws only as Proof's hero, whose entrance
+# is the page's opening at load. The watch starts from the document's start, once proof.js has built the ten lanes (before
+# the IntersectionObserver's first report can set .is-in), so the whole entrance is timed
+PT_HOOK = r"""(() => { const R = window.__pt = { inAt: 0, end: 0, ran: false, pre: null };
+  const go = host => { const f = () => { const now = performance.now(); if (!R.inAt && host.classList.contains('is-in')) R.inAt = now;
+      if (R.inAt) { const run = host.getAnimations({ subtree: true }).filter(a => a instanceof CSSTransition && a.playState === 'running').length;
+        if (run) R.ran = true; else if (R.ran && !R.end) R.end = now; }
+      if (!R.end && now - (R.inAt || now) < 6000) requestAnimationFrame(f); }; requestAnimationFrame(f); };
+  const mo = new MutationObserver(() => { const h = document.querySelector('#performance [data-proof-chart]');
+    if (h && h.querySelectorAll('.pf-lane').length >= 10) { mo.disconnect(); R.pre = h.classList.contains('is-in'); go(h); } });
+  mo.observe(document, { subtree: true, childList: true }); })();"""
+
+
 @check
 @timing
 async def proof_entrance_time(b):
-    ctx, pg = await V.open_page(b, "index.html", 1440, 900)
-    g = await pg.evaluate("(() => { const r = document.querySelector('#proof [data-proof-chart]').getBoundingClientRect(); return { top: r.top + scrollY, h: r.height }; })()")
-    await pg.evaluate(f"window.scrollTo({{top: {g['top'] - 900 - 60}, behavior: 'instant'}})"); await pg.wait_for_timeout(700)
-    await pg.evaluate("""(() => { const host = document.querySelector('#proof [data-proof-chart]'); const R = window.__pt = { inAt: 0, end: 0, ran: false };
-      const f = () => { const now = performance.now(); if (!R.inAt && host.classList.contains('is-in')) R.inAt = now;
-        if (R.inAt) { const run = host.getAnimations({ subtree: true }).filter(a => a instanceof CSSTransition && a.playState === 'running').length;
-          if (run) R.ran = true; else if (R.ran && !R.end) R.end = now; }
-        if (!R.end && now - (R.inAt || now) < 6000) requestAnimationFrame(f); }; requestAnimationFrame(f); })()""")
-    await pg.evaluate(f"window.scrollTo({{top: {g['top'] - 900 + g['h'] * 0.38:.0f}, behavior: 'instant'}})")
-    await V.until(pg, "window.__pt.end > 0", 8000)
+    ctx = await b.new_context(viewport={"width": 1440, "height": 900})
+    await ctx.add_init_script(PT_HOOK)
+    pg = await ctx.new_page()
+    await pg.goto(f"{V.BASE}/evidence.html", wait_until="load")
+    await V.until(pg, "window.__pt && window.__pt.end > 0", 8000)
     r = await pg.evaluate("window.__pt")
     await ctx.close()
-    ms = r["end"] - r["inAt"] if r["end"] and r["inAt"] else None
-    return ms is not None and ms <= 1300, f"index.html@1440x900, from above: the entrance's transitions ran {'%.0f ms' % ms if ms is not None else '(never finished / never ran)'} after .is-in; budget 1.3 s", ms if ms is not None else float("inf")
+    ms = r["end"] - r["inAt"] if r["end"] and r["inAt"] and r["pre"] is False else None
+    return ms is not None and ms <= 1300, f"evidence.html@1440x900, the hero at load: the entrance's transitions ran {'%.0f ms' % ms if ms is not None else '(never finished / never ran / revealed before: ' + str(r) + ')'} after .is-in; budget 1.3 s", ms if ms is not None else float("inf")
 
 
 @check
@@ -492,27 +502,29 @@ async def home_landing(b):
     """v2x r3 (home; r3-motion M1, r3-perf moderate): reload and Back land where the reader was, and a deep link lands at
     the bar, without the page jumping (home.js keeps the place; based on home's .shots/v2x/work/home-r3/clsnav.py).
     v2x r4 (system; r4-motion M1): §04's window tightened to 0.01 (the chart's live height is held now), and reload/Back
-    at #lc01+900 and #governance+600/+1200 at 1440 and 1280 (window < 0.05)."""
+    at #lc01+900 and #governance+600/+1200 at 1440 and 1280 (window < 0.05). hc13r (home, HOME-1): §04 #proof left Home;
+    the reload/Back place and the first deep link are §03 #economics, the same kind of chapter (a drawing that builds on
+    screen: proof.js's cost index), the chapter after the lab."""
     ok, out, worst = True, [], 0.0
     for w, h, touch in LAND_SIZES:
         for case in ("reload", "back"):
             ctx, pg = await land_ctx(b, w, h, touch)
             await pg.goto(f"{V.BASE}/index.html", wait_until="load"); await pg.wait_for_timeout(5000)
             # html scrolls smoothly: a scrollTo takes ~1.5 s to arrive, so the place is read 2.5 s after it
-            await pg.evaluate("(() => { const p = document.getElementById('proof'); scrollTo(0, p.getBoundingClientRect().top + scrollY - 80); })()")
+            await pg.evaluate("(() => { const p = document.getElementById('economics'); scrollTo(0, p.getBoundingClientRect().top + scrollY - 80); })()")
             await pg.wait_for_timeout(2500)
-            before = (await pg.evaluate(LAND_AT, "proof"))["top"]
+            before = (await pg.evaluate(LAND_AT, "economics"))["top"]
             if case == "reload": await pg.reload(wait_until="load")
             else:
                 await pg.goto(f"{V.BASE}/evidence.html", wait_until="load"); await pg.wait_for_timeout(1500)
                 await pg.go_back(wait_until="load")
             await pg.wait_for_timeout(6000)
-            at = await pg.evaluate(LAND_AT, "proof"); cls = shift_window(await pg.evaluate("window.__ls || []"))
+            at = await pg.evaluate(LAND_AT, "economics"); cls = shift_window(await pg.evaluate("window.__ls || []"))
             await ctx.close()
             worst = max(worst, cls)
             good = at["top"] is not None and abs(at["top"] - 80) <= 2 and cls < 0.01
             ok = ok and good
-            out.append(f"{case}@{w}: §04 at {at['top']} (was {before}), CLS {cls:.4f}" + ("" if good else " FAIL"))
+            out.append(f"{case}@{w}: §03 at {at['top']} (was {before}), CLS {cls:.4f}" + ("" if good else " FAIL"))
     # v2x r4 (system; r4-motion M1): deeper places, past the instruments that build on screen (the swarm lab, the chart,
     # the stream, the chain), whose live boxes the instrument sheets now hold before their engines run. The reader's
     # place is the chapter in the upper third of the screen (as home.js keeps it); after the reload or Back its top is
@@ -536,7 +548,7 @@ async def home_landing(b):
             ok = ok and good
             out.append(f"{case} #{sec}{off:+d}@{w}: #{pid} at {after} (was {before}), CLS {cls:.4f}" + ("" if good else " FAIL"))
     for w, h, touch in LAND_SIZES:
-        for tid in ("proof", "lc01", "governance"):
+        for tid in ("economics", "lc01", "governance"):
             tops, clss = [], []
             for _ in range(5):
                 ctx, pg = await land_ctx(b, w, h, touch)
@@ -548,7 +560,7 @@ async def home_landing(b):
             good = all(t is not None and abs(t) <= 2 for t in tops) and max(clss) < 0.1
             ok = ok and good
             out.append(f"#{tid}@{w}: target - bar {tops}, CLS max {max(clss):.3f}" + ("" if good else " FAIL"))
-    return ok, "; ".join(out) + ("; budget: reload/Back §04 within 2 px of 80 and CLS < 0.01; the deeper places within 2 px of where they"
+    return ok, "; ".join(out) + ("; budget: reload/Back §03 within 2 px of 80 and CLS < 0.01; the deeper places within 2 px of where they"
                                  " were and CLS < 0.05; deep links at the bar (2 px), CLS < 0.1"), worst
 
 

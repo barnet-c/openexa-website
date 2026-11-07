@@ -1,4 +1,5 @@
-/* OpenEXA: Platform's hero plate (page-only). The plate draws one decision at first paint in CSS (platform.css), once:
+/* OpenEXA: Platform's plates (page-only): the hero plate, and §05's dial (hc13r, below).
+   The hero plate draws one decision at first paint in CSS (platform.css), once:
    three proposals reach the Execution Council, one is refused, two cross the boundary and settle. "Replay" restarts
    those CSS animations; it stays hidden without JavaScript and under reduced motion, where the plate is a still.
    award a3 (4K): the lines that draw in (the boundary, the two rails, the refusal's spur) are non-scaling hairlines like
@@ -56,4 +57,52 @@
   sync();
   if (reduce.addEventListener) reduce.addEventListener('change', sync);
   btn.addEventListener('click', () => { fit(); if (!anims || !anims.length) anims = fig.getAnimations({ subtree: true }); anims.forEach((a) => { a.cancel(); a.play(); }); release(); });
+})();
+
+/* Platform §05 (hc13r PLAT-1): the dial is the control. Its four labels are one radio group (arrow keys, Home, End; the
+   site's focus ring): a mode swings the pointer to its detent (.32 s on --ease-move; at once under reduced motion), lights
+   that detent and marks the mode's row in the table (aria-current); "Emergency halt" drops the pointer onto the halt
+   shutter, the shorter way round, and any mode can be chosen again. The pointer starts where the drawing has it (Fully
+   automatic). Without JavaScript the dial is the still drawing and the table says the rest. */
+(function () {
+  'use strict';
+  const fig = document.querySelector('#modes .sec-plate--dial');
+  const labs = fig && fig.querySelector('.hp-labs');
+  const ptr = fig && fig.querySelector('.sp-ptr');
+  if (!labs || !ptr) return;
+  const opts = [...labs.querySelectorAll('.hp-lab[data-m]')].sort((a, b) => a.dataset.m - b.dataset.m);
+  const marks = [...fig.querySelectorAll('svg [data-m]')];
+  const rows = [...document.querySelectorAll('#modes .ledger > tbody > tr')];
+  if (opts.length !== 4) return;
+  const ANG = [0, 60, 120, 240]; // clockwise from the drawn pointer: Auto-with-approval, Manual, the halt shutter
+  let cur = 0;
+  function show(m) {
+    opts.forEach((o, i) => { o.setAttribute('aria-checked', String(i === m)); o.tabIndex = i === m ? 0 : -1; });
+    marks.forEach((p) => p.classList.toggle('is-on', +p.dataset.m === m));
+    rows.forEach((r, i) => { if (i === m) r.setAttribute('aria-current', 'true'); else r.removeAttribute('aria-current'); });
+  }
+  function pick(m) {
+    const t = ANG[m] + 360 * Math.round((cur - ANG[m]) / 360); // the shorter way round from where the pointer is
+    if (t !== cur) { cur = t; ptr.style.transform = `rotate(${t}deg)`; }
+    show(m);
+  }
+  labs.removeAttribute('aria-hidden');
+  labs.setAttribute('role', 'radiogroup');
+  labs.setAttribute('aria-label', 'Operating mode');
+  opts.forEach((o, i) => {
+    o.setAttribute('role', 'radio');
+    o.addEventListener('click', () => { pick(i); o.focus({ preventScroll: true }); });
+  });
+  labs.addEventListener('keydown', (e) => {
+    const i = opts.indexOf(e.target);
+    if (i < 0) return;
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pick(i); return; }
+    const n = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: opts.length - 1 }[e.key];
+    if (n === undefined) return;
+    e.preventDefault();
+    const k = (n + opts.length) % opts.length;
+    pick(k); opts[k].focus();
+  });
+  fig.classList.add('is-live');
+  show(0);
 })();

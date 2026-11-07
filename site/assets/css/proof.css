@@ -99,20 +99,18 @@
 [data-page="proof"] .pf-sheet { margin: 0; color: var(--fg); }
 [data-page="proof"] .pf-sheet > svg { width: var(--sw); }
 [data-page="proof"] .pf-th { fill: none; stroke: var(--accent); stroke-width: var(--stroke-2); transform-box: fill-box; transform-origin: 0 50%; }
-[data-page="proof"] .pf-sp { transform-origin: 50% 0; }
-[data-page="proof"] .pf-trail .pf-doc:nth-child(1) .pf-tk { transform-origin: 100% 50%; } /* the first leaves its row leftwards, for the spine */
-[data-page="proof"] .pf-trail .pf-doc:nth-child(1) { --tt: 150ms; --sp: 250ms; }
-[data-page="proof"] .pf-trail .pf-doc:nth-child(2) { --tt: 450ms; --sp: 550ms; }
-[data-page="proof"] .pf-trail .pf-doc:nth-child(3) { --tt: 750ms; --tm: 760ms; }
+/* hc13r (PROOF-2b, SYS-3): the thread is whole at rest. Well in view (proof.js, OXA.actOnce: .is-run), one signal
+   runs it, 600 ms ease-out from 150 ms (hc13 4.4); the node answers. From 961 px along the line; narrower, down the
+   spine, the first sheet's row (.8 x --sw) to the third's (2 x (1.26 + .22) + .8) */
+[data-page="proof"] .pf-trail { --x0: 0px; --x1: 0px; --y0: calc(var(--sw) * .8); --y1: calc(var(--sw) * 3.76); position: relative; }
+[data-page="proof"] .pf-trail::after { content: ""; position: absolute; z-index: 2; left: var(--x0); top: var(--y0); width: .4375rem; height: .4375rem; margin: -.21875rem 0 0 -.21875rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 .25rem rgba(30, 122, 90, .2); opacity: 0; pointer-events: none; }
+[data-page="proof"] .pf-mk { transform-box: fill-box; transform-origin: 50% 50%; }
+[data-page="proof"] .pf-trail .pf-doc:nth-child(3) { --tm: 560ms; }
 @media screen and (prefers-reduced-motion: no-preference) {
-  [data-page="proof"] .pf-tk { transition: transform 100ms linear var(--tt); }
-  [data-page="proof"] .pf-sp { transition: transform 200ms linear var(--sp); }
-  [data-page="proof"] .pf-sheet .pf-mk { transition: opacity var(--dur-move) var(--ease-out) var(--tm); }
-  [data-page="proof"] .pf-trail .pf-doc.will-reveal:not(.is-in) .pf-tk { transform: scaleX(0); }
-  [data-page="proof"] .pf-trail .pf-doc.will-reveal:not(.is-in) .pf-sp { transform: scaleY(0); }
-  [data-page="proof"] .pf-trail .pf-doc.will-reveal:not(.is-in) .pf-mk { opacity: 0; }
-  [data-page="proof"] .pf-trail .pf-doc:is(.is-cut, .is-instant) :is(.pf-th, .pf-mk) { transition: none; }
+  [data-page="proof"] .pf-trail.is-run::after { animation: pf-go 600ms var(--ease-out) 150ms; }
+  [data-page="proof"] .pf-trail.is-run .pf-mk { animation: tr-land .45s var(--ease-out) var(--tm); }
 }
+@keyframes pf-go { from { opacity: 1; left: var(--x0); top: var(--y0); } to { opacity: 1; left: var(--x1); top: var(--y1); } }
 /* the link wraps on a phone: its rule follows the words and the arrow stays with "record" */
 [data-page="proof"] .pf-doc h3 a { display: inline; text-decoration: underline var(--hair) var(--line-strong); text-underline-offset: .22em; transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
 [data-page="proof"] .pf-doc h3 .arr { display: inline-block; width: .55em; height: .55em; margin-left: .25em; vertical-align: .05em; }
@@ -132,26 +130,65 @@
 /* hc12 (HC12 item 1): from 961 px the trail is one row under the head, the three documents on the grid's thirds, each
    sheet over its name and the name's rule (Platform's deployment cells). The thread is one line through the session's
    row of all three (80 of the sheet's 126 units, 0.8 x --sw down), from the first sheet's left edge to the last one's
-   right (88 units), drawn by the trail (::before, over the sheets); the spine and ticks go. It runs once, 600 ms at one
-   speed, as the sheets land (450 ms in); the record's node lights as it passes. No JS, reduced motion, print: whole */
+   right (88 units), drawn by the trail (::before, over the sheets); the spine and ticks go. Whole at rest; the signal
+   runs along it (hc13r, above) */
 @media (min-width: 961px) {
   [data-page="proof"] .pf-ver > .pf-trail { grid-column: 1 / -1; }
-  [data-page="proof"] .pf-trail { --sw: clamp(13.65rem, 14vw, 16.5rem); --cg: clamp(1rem, 2.2vw, 2rem); position: relative; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--cg); row-gap: 0; }
+  [data-page="proof"] .pf-trail { --sw: clamp(13.65rem, 14vw, 16.5rem); --cg: clamp(1rem, 2.2vw, 2rem); grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--cg); row-gap: 0; }
   [data-page="proof"] .pf-trail .pf-doc { grid-template-columns: minmax(0, 1fr); padding: 0; }
   [data-page="proof"] .pf-trail .pf-doc h3 { margin: clamp(1.5rem, 2.2vw, 2.25rem) 0 0; }
   [data-page="proof"] .pf-th { display: none; }
-  [data-page="proof"] .pf-trail::before { content: ""; position: absolute; z-index: 1; left: 0; top: calc(var(--sw) * .8 - var(--stroke-2) * .5px); width: calc((200% + 2 * var(--cg)) / 3 + var(--sw) * .88); height: calc(var(--stroke-2) * 1px); background: var(--accent); transform-origin: 0 50%; pointer-events: none; forced-color-adjust: none; }
-  [data-page="proof"] .pf-trail .pf-doc:nth-child(3) { --tm: 930ms; }
+  [data-page="proof"] .pf-trail::before { content: ""; position: absolute; z-index: 1; left: 0; top: calc(var(--sw) * .8 - var(--stroke-2) * .5px); width: var(--x1); height: calc(var(--stroke-2) * 1px); background: var(--accent); pointer-events: none; forced-color-adjust: none; }
+  [data-page="proof"] .pf-trail { --x1: calc((200% + 2 * var(--cg)) / 3 + var(--sw) * .88); --y1: var(--y0); }
 }
-@media screen and (min-width: 961px) and (prefers-reduced-motion: no-preference) {
-  [data-page="proof"] .pf-trail:has(> .pf-doc.will-reveal:not(.is-in))::before { transform: scaleX(0); }
-  [data-page="proof"] .pf-trail:not(:has(> .is-cut)):has(> .pf-doc.is-in)::before { transition: transform 600ms linear 450ms; }
+/* hc13r (PROOF-2b): the thread's session, where it ends (proof.js: the hero chart's choice, else the record's last).
+   From 1200 px a card beside the last sheet on the thread's row; narrower, one line keyed by a stroke of the thread */
+[data-page="proof"] .pf-rec { margin: 0; font: 400 var(--fs-small)/1.45 var(--sans); color: var(--fg-2); }
+[data-page="proof"] .pf-rec > span:first-child { color: var(--fg); }
+[data-page="proof"] .pf-rec > span { white-space: nowrap; } /* a line breaks between fields, after the dot */
+[data-page="proof"] .pf-rec > span:not(:last-child)::after { content: " ·"; content: " ·" / ""; }
+[data-page="proof"] .pf-rec::before { content: ""; display: inline-block; width: 1.25rem; height: calc(var(--stroke-2) * 1px); margin-right: .625rem; vertical-align: .3em; background: var(--accent); forced-color-adjust: none; }
+@media (max-width: 960px) {
+  [data-page="proof"] .pf-trail .pf-doc:last-child .pf-rec { grid-column: 1 / -1; margin-top: clamp(1.25rem, 3vw, 1.75rem); }
+}
+@media (min-width: 961px) and (max-width: 1199px) { /* the line under the whole row, from the content edge */
+  [data-page="proof"] .pf-trail { margin-bottom: 2.75rem; }
+  [data-page="proof"] .pf-trail .pf-doc:last-child { position: static; }
+  [data-page="proof"] .pf-trail .pf-doc:last-child .pf-rec { position: absolute; left: 0; top: 100%; margin-top: 1.25rem; }
+}
+@media (min-width: 1200px) {
+  [data-page="proof"] .pf-trail .pf-doc:last-child .pf-rec { position: absolute; left: calc(var(--sw) + clamp(1rem, 1.6vw, 1.75rem)); top: calc(var(--sw) * .8); transform: translateY(-50%); }
+  [data-page="proof"] .pf-rec::before { content: none; }
+  [data-page="proof"] .pf-rec > span { display: block; }
+  [data-page="proof"] .pf-rec > span:not(:last-child)::after { content: none; }
 }
 
-/* §02: the stack's key (.pf-ck, proofchart.css) names the four blocks; the bar carries no names (hc1), so the first row
-   needs no room above it ("Eliminated" keeps its own over the second) */
+/* §02 without JS: Home's two bars over the key (.pf-ck, proofchart.css); the first row needs no room above it */
 [data-page="proof"] .cost-row:first-child { padding-top: 0; } /* hc2: the chapter head's gap (--ch-gap) above it, as Home's */
 @container cost (max-width: 860px) { [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: .875rem; } }
+/* hc13r (PROOF-2a): the index decomposed (proof.js, .is-dec). Each component a row of the key: name, definition, then
+   its traditional weight in blocks (one per point, two rows high), filled to what the agentic stack keeps, dashed where
+   eliminated, the word after it. The totals at the foot, over the hedge. Phones: the blocks under each name */
+[data-page="proof"] .cost.is-dec .pf-ck { --lw: clamp(15rem, 30%, 24rem); --cg: clamp(1.25rem, 3vw, 3rem); display: block; margin: 0; padding: 0; border-top: 0; font-size: var(--fs-small); }
+[data-page="proof"] .is-dec .pf-ck > div { position: relative; display: grid; grid-template-columns: var(--lw) minmax(0, 1fr); column-gap: var(--cg); align-items: center; padding: clamp(.875rem, 1.5vw, 1.375rem) 0; border-bottom: var(--hair) solid var(--line); }
+[data-page="proof"] .is-dec .pf-ck > div:first-child { padding-top: 0; }
+[data-page="proof"] .is-dec .pf-ck :is(dt, dd) { grid-column: 1; }
+[data-page="proof"] .is-dec .pf-ck dt { font-size: var(--fs-body); }
+[data-page="proof"] .is-dec .cost-db { --cols: 32; --rows: 2; --g: .1875rem; --bq: 1px; --bw: round(down, (100cqi - (var(--cols) - 1) * var(--g)) / var(--cols), var(--bq)); container-type: inline-size; position: absolute; left: calc(var(--lw) + var(--cg)); right: 0; top: 50%; display: flex; align-items: center; gap: .875rem; transform: translateY(-50%); }
+[data-page="proof"] .is-dec .pf-ck > div:first-child .cost-db { top: calc(50% - clamp(.875rem, 1.5vw, 1.375rem) / 2); }
+[data-page="proof"] .is-dec .cost-blk { flex: none; width: auto; }
+[data-page="proof"] .is-dec .cost-db em { font: 400 var(--fs-small)/1.3 var(--sans); color: var(--fg-2); white-space: nowrap; }
+[data-page="proof"] .is-dec .pf-ck .cost-blk i { transition: opacity var(--dur-move) linear, transform var(--dur-move) var(--ease); }
+[data-page="proof"] .is-dec .pf-ck.will-reveal:not(.is-in) .cost-blk i { opacity: 0; transform: scale(.35); }
+[data-page="proof"] .is-dec .cost-rows { display: flex; flex-wrap: wrap; gap: .5rem clamp(2rem, 4vw, 4rem); margin-top: clamp(1rem, 1.6vw, 1.5rem); }
+[data-page="proof"] .is-dec .cost-row { display: flex; align-items: baseline; gap: .75rem; padding: 0; }
+[data-page="proof"] .is-dec .cost-bar { display: none; }
+[data-page="proof"] .is-dec .cost-lab b { display: inline; }
+@media (min-resolution: 2dppx) { [data-page="proof"] .is-dec .cost-db { --bq: .5px; } } /* whole device px a block (a4) */
+@container cost (max-width: 560px) {
+  [data-page="proof"] .is-dec .pf-ck > div { display: block; }
+  [data-page="proof"] .is-dec .cost-db { --cols: 25; --g: .125rem; position: static; flex-direction: column; align-items: start; gap: .625rem; margin-top: .875rem; transform: none; }
+}
 
 @media (max-width: 600px) {
   /* Table 1.1 on a phone: one record in full, then nine one-line rows: the day, the regime, and three ditto marks */
@@ -300,43 +337,67 @@
   .tr-lt .lt-more:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
 }
 
-/* §02 the control plane: six engraved plates on one ruled sheet, each a drawing and its name */
-.tr-cp { row-gap: 2.5rem; }
-.tr-k { --kp: clamp(1.25rem, 2.2vw, 1.875rem); border-left: 0; border-top: var(--hair) solid var(--line-strong); }
-.tr-k > .tr-kp { display: flex; flex-direction: column; padding: clamp(1.375rem, 2.2vw, 1.875rem) var(--kp) clamp(1.5rem, 2.4vw, 2rem); background: transparent; border-radius: 0; transition: background .3s var(--ease-out); }
-/* the sheet's outer columns run flush to its edges, so every plate's drawing is the same width */
-.tr-k > .tr-kp:nth-child(2n) { border-right: 0; padding-right: 0; }
-.tr-k > .tr-kp:nth-child(2n + 1) { padding-left: 0; }
-.tr-kd { margin: .25rem 0 1.375rem; color: var(--fg); }
-.tr-kd .tr-k-o6 { fill-opacity: .5; }
-.tr-kd .tr-k-o3 { fill-opacity: .28; }
-/* the words meet AA on paper-2 (a11y r1 M2) */
-.tr-kd .hp-lab--acc { color: var(--signal-ink); }
-.tr-kd .hp-lab--rej { color: var(--fg-2); }
-.tr-kd .tr-k-full { display: none; } /* K-05: lines after VIEW / RECORD; from the edge on phones */
-.tr-kt h3 { margin: 0; }
-@media (hover: hover) {
-  .tr-k > .tr-kp:hover { background: rgba(14, 21, 18, .025); }
+/* §02 the control plane (hc13r, PROOF-1; cp_plate.py): one plate, the execution layer and its six stations, one <li>
+   each (glyph, name). From 961 px the glyphs abut in one row, columns in proportion to their drawings (one scale), so the
+   layer and the record line run on across them. 960 px and below: down a vertical rule drawn here (record line, layer),
+   each glyph's marks turned beside it. The red words read in graphite (AA on paper-2) */
+.tr-st { margin: 0; padding: 0; list-style: none; }
+.tr-sd { color: var(--fg); }
+.tr-sd > svg { display: block; width: 100%; height: auto; overflow: visible; }
+.tr-sd .hp-lab--acc { color: var(--signal-ink); }
+.tr-sd .hp-lab--rej { color: var(--fg-2); }
+.tr-s h3 { margin: 0; }
+@media (min-width: 961px) {
+  .tr-st { display: grid; grid-template-columns: minmax(0, 170fr) minmax(0, 190fr) minmax(0, 170fr) minmax(0, 200fr) minmax(0, 110fr) minmax(0, 160fr); /* the stations' widths (cp_plate.py) */ }
+  .tr-sd .tr-v { display: none; }
+  .tr-s h3 { max-width: 13ch; margin-top: clamp(.5rem, 1.2vw, 1.25rem); padding-right: clamp(.75rem, 1.4vw, 1.5rem); } /* two short lines: each name a block under its glyph */
 }
-/* hc2: the stop or the approval draws in as the plate arrives (site.css [data-draw]: the one .dm mark per plate; it
-   replaces the fade of every accent and label); "Emergency halt" has no single accent and holds still */
-@media (min-width: 1200px) {
-  .tr-cp-copy { position: sticky; top: calc(var(--nav-h) + 2rem); align-self: start; }
+@media (max-width: 960px) {
+  /* the glyph column (140 units): the record line at 8, the layer at 60 */
+  .tr-st { --gw: clamp(6.25rem, 17vw, 9.5rem); }
+  .tr-s { display: grid; grid-template-columns: var(--gw) minmax(0, 1fr); column-gap: clamp(1rem, 4vw, 2.5rem); position: relative; }
+  .tr-sd { align-self: stretch; }
+  .tr-sd .tr-h, .tr-sd .hp-labs { display: none; }
+  .tr-s h3 { align-self: center; padding: .75rem 0; }
+  .tr-s::before, .tr-sd::before { content: ""; position: absolute; top: calc(var(--gw) * var(--r0, 0) / 140); bottom: 0; width: var(--hair); }
+  .tr-s:last-child::before, .tr-s:last-child .tr-sd::before { bottom: auto; height: calc(var(--gw) * (var(--vh) - var(--r1, 0)) / 140); }
+  .tr-s::before { left: calc(var(--gw) * 8 / 140); background: var(--line-strong); } /* the record line */
+  .tr-sd::before { left: calc(var(--gw) * 60 / 140 - var(--stroke-2) * .5px); width: calc(var(--stroke-2) * 1px); background: var(--accent); forced-color-adjust: none; } /* the layer, green */
+  .tr-st { --y0: 0%; --y1: 100%; }
+  .tr-s:first-child { --y0: calc(var(--gw) * var(--r0, 0) / 140); }
+  .tr-s:last-child { --y1: calc(var(--gw) * (var(--vh) - var(--r1, 0)) / 140); }
 }
-/* small desktops: the heading takes the row, the six plates sit three by two under it */
-@media (min-width: 961px) and (max-width: 1199px) {
-  .tr-cp > .tr-cp-copy, .tr-cp > .tr-cp-plates { grid-column: 1 / -1; }
-  .tr-cp-copy { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 3rem; align-items: end; }
-  .tr-cp-copy .body-lg { margin-top: 0; }
-  /* three across: the middle plate pads both sides, so its column is wider by one padding (equal drawings) */
-  .tr-k { grid-template-columns: minmax(0, 1fr) calc((100% + 2 * var(--kp)) / 3) minmax(0, 1fr); }
-  .tr-k > .tr-kp:nth-child(n) { border-right: var(--hair) solid var(--line); padding-left: var(--kp); padding-right: var(--kp); }
-  .tr-k > .tr-kp:nth-child(3n) { border-right: 0; padding-right: 0; }
-  .tr-k > .tr-kp:nth-child(3n + 1) { padding-left: 0; }
+/* the one pass (hc13r, SYS-3): whole at rest. Well in view (trust.js, OXA.actOnce: .is-run), one signal runs the layer
+   at one speed (1.8 s) and each mark answers as it passes (--f: where on the path): the stopped drop into the record,
+   the over-cap stack and the Council's line light, the settled land. Then still */
+.tr-pl, .tr-sd::after { opacity: 0; pointer-events: none; }
+.tr-pg { fill: var(--accent); fill-opacity: .2; }
+.tr-st :is(.tr-rj, .tr-rl, .tr-se) { transform-box: fill-box; }
+.tr-h .tr-rl { transform-origin: 50% 0; }
+.tr-v .tr-rl { transform-origin: 100% 50%; }
+.tr-se { transform-origin: 50% 50%; }
+@media screen and (prefers-reduced-motion: no-preference) {
+  .tr-cpl { --T: 1.8s; }
+  .tr-cpl.is-run .tr-pl { animation: tr-go calc((var(--f1) - var(--f0)) * var(--T)) linear calc(var(--f0) * var(--T)); }
+  .tr-cpl.is-run .tr-rj { animation: tr-drop .5s var(--ease-out) calc(var(--f) * var(--T) + 60ms); }
+  .tr-cpl.is-run .tr-v .tr-rj { animation-name: tr-drop-v; }
+  .tr-cpl.is-run .tr-rl { animation: tr-grow .3s var(--ease-out) calc(var(--f) * var(--T)); }
+  .tr-cpl.is-run .tr-v .tr-rl { animation-name: tr-grow-v; }
+  .tr-cpl.is-run :is(.tr-oc, .tr-sg) { animation: tr-lit .45s var(--ease-out) calc(var(--f) * var(--T) - 120ms + var(--j, 0) * 45ms); }
+  .tr-cpl.is-run .tr-se { animation: tr-land .45s var(--ease-out) calc(var(--f) * var(--T) + var(--late, 0) * .22s); }
 }
-@media (min-width: 601px) and (max-width: 960px) {
-  .tr-cp-copy .body-lg { max-width: 60ch; }
+@media screen and (max-width: 960px) and (prefers-reduced-motion: no-preference) {
+  .tr-sd::after { content: ""; position: absolute; top: var(--y0); left: calc(var(--gw) * 60 / 140); width: .4375rem; height: .4375rem; margin: -.21875rem 0 0 -.21875rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 .25rem rgba(30, 122, 90, .2); }
+  .tr-cpl.is-run .tr-sd::after { animation: tr-go-v calc((var(--g1) - var(--g0)) * var(--T)) linear calc(var(--g0) * var(--T)); }
 }
+@keyframes tr-go { from { opacity: 1; transform: translateX(var(--a)); } to { opacity: 1; transform: translateX(var(--b)); } }
+@keyframes tr-go-v { from { opacity: 1; top: var(--y0); } to { opacity: 1; top: var(--y1); } }
+@keyframes tr-drop { from { opacity: .2; transform: translateY(-1.25rem); } }
+@keyframes tr-drop-v { from { opacity: .2; transform: translateX(1.25rem); } }
+@keyframes tr-grow { from { transform: scaleY(0); } }
+@keyframes tr-grow-v { from { transform: scaleX(0); } }
+@keyframes tr-lit { from { opacity: .15; } }
+@keyframes tr-land { from { opacity: .2; transform: scale(1.9); } }
 
 /* the closing band: "Bring your compliance team." on one line where it fits (20ch held it 5 px short) */
 [data-page="trust"] .cta-band h2 { max-width: 21ch; }
@@ -362,7 +423,7 @@
 .tr-no-list > li > i { flex: none; width: .875rem; height: 0; border-top: var(--hair) solid var(--fg-3); transform: translateY(-.34em); }
 @media (max-width: 960px) { .tr-no > * { grid-column: 1 / -1; } }
 
-/* phones: the ledger in one column; the plates short rows */
+/* phones: the ledger in one column */
 @media (max-width: 600px) {
   .tr-lt .lt-state > span { white-space: normal; }
   .tr-lt .lt-view { overflow: visible; -webkit-mask-image: none !important; mask-image: none !important; }
@@ -393,12 +454,6 @@
   .tr-lt .lt-btn--ico { width: auto; min-width: 0; padding: 0 .5rem; gap: .4375rem; }
   .tr-lt .lt-btn--ico > span { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
   .tr-lt .lt-btn--ico :is(.lt-x, .lt-xs) { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-
-  .tr-k > .tr-kp, .tr-k > .tr-kp:nth-child(n) { display: grid; grid-template-columns: 7.25rem minmax(0, 1fr); column-gap: 1.125rem; padding: 1.125rem 0 1.25rem; border-right: 0; }
-  .tr-kp { align-items: center; }
-  .tr-kd { margin: .125rem 0 0; }
-  .tr-kd .hp-labs, .tr-kd .tr-k-at { display: none; }
-  .tr-kd .tr-k-full { display: inline; }
 }
 /* the narrowest phones: three short lines a record (id beside event, detail, time). In em (a4): 25em = 400 px at 16 px */
 @media (max-width: 25em) {
@@ -408,7 +463,6 @@
   .tr-lt .lt-rec .lt-tag { bottom: .75rem; right: .375rem; }
   .tr-lt.is-changed .lt-rec .lt-tag { left: 6.875rem; right: auto; } /* the text column */
   .tr-lt .lt-now { left: calc(6.875rem + 8ch + .48em + .75rem); }
-  .tr-k > .tr-kp, .tr-k > .tr-kp:nth-child(n) { grid-template-columns: 5.75rem minmax(0, 1fr); column-gap: .875rem; }
 }
 /* a4: no room for a hash beside the time (320; 390 at a 20 px font): its own line */
 @media (max-width: 21.5em) {
@@ -424,7 +478,3 @@
 }
 @keyframes tr-form-v { 0% { transform: scaleY(.3); background: var(--accent); } 55% { transform: none; background: var(--accent); } 100% { background: var(--line-strong); } }
 @media (min-width: 601px) and (max-width: 1199px) { .tr-lt .lt-x { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
-
-@media print {
-  .tr-cp-copy { position: static; }
-}

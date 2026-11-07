@@ -81,14 +81,14 @@
   --icon-stroke: 1px; --icon-shift: .5px;
 
   /* type, four steps (1 Nov; the owner: "<= 4 type sizes on any screen") */
-  /* the H2 (a3): 76.8 px from 1422; 34 px on phones (to 544), ~0.82 of the H1. hc10: 48 px from 768 to 923, the overture's
-     upright heads, so tablets keep the ~1.2 H1:H2 step */
-  --fs-display: clamp(2.125rem, max(5.772vw - .33rem, min(6.25vw, 3rem)), 4.8rem);
+  /* the H2, one chapter step (hc13r): 60 px from 1400 (120 at 3840), 43.5 at 1024, 38.4 at 768-909 (the H1's plateau),
+     34 to 680 (phones as before); H1:H2 ~1.5 from 768 up. Every H2: chapters, the overture's scenes, the closes */
+  --fs-display: clamp(2.125rem, max(4.4vw - .1rem, min(5vw, 2.4rem)), 3.75rem);
   --fs-heading: clamp(1.35rem, 1.8vw, 1.6rem);          /* 25.6 / 21.6 */
   --fs-body: clamp(1.0625rem, .98rem + .15vw, 1.125rem); /* 18 / 17 */
   --fs-small: clamp(.8125rem, .78rem + .12vw, .875rem);  /* 14 / 13 */
 
-  /* the serif scale (hc1), by role: H1 --fs-hero 89 on every page (hc2), H2 --fs-display 77, numerals (Home's four
+  /* the serif scale (hc1), by role: H1 --fs-hero 89 on every page (hc2), H2 --fs-display 60 (hc13r), numerals (Home's four
      figures, instrument counts) --fs-item 30, titles --fs-heading 25.6 (hc4), small --fs-body 18. Mono: --fs-label only */
   --fs-hero: var(--h1-plate);
   --fs-item: clamp(1.5rem, 2.1vw, 2.05rem);
@@ -169,7 +169,7 @@ em, .ital { font-style: italic; }
 .serif em { font-family: var(--serif); }
 
 .display-1 { font-family: var(--serif); font-weight: 400; font-size: var(--fs-hero); line-height: .96; letter-spacing: -0.015em; } /* hc2: -0.025em let the condensed serif's letters touch at 89-118 px */
-.display-2 { font-family: var(--serif); font-weight: 400; font-size: var(--fs-display); line-height: 1.02; letter-spacing: -0.02em; }
+.display-2 { font-family: var(--serif); font-weight: 400; font-size: var(--fs-display); line-height: 1.04; letter-spacing: -0.015em; }
 .display-3 { font-family: var(--serif); font-weight: 400; font-size: var(--fs-heading); line-height: 1.1; letter-spacing: -0.015em; }
 .h4 { font-family: var(--serif); font-weight: 400; font-size: var(--fs-heading); line-height: 1.2; letter-spacing: -0.01em; }
 .lede { font-size: var(--fs-body); line-height: 1.5; color: var(--fg-2); max-width: 40ch; }
@@ -222,6 +222,7 @@ main > .section > .container > .mt-4:last-child { margin-top: clamp(1.75rem, 3vw
    last baseline from 1100 px */
 main > .section { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
 .ch-head { margin-bottom: var(--ch-gap); }
+.ch-title { max-width: 22ch; } /* hc13r: most heads on one line at the 60 px step */
 .ch-line { margin-top: 1.5rem; max-width: 36ch; font-size: var(--fs-body); line-height: 1.5; color: var(--fg-2); text-wrap: pretty; }
 @media (min-width: 1100px) {
   .ch-spread { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: last baseline; }
@@ -353,10 +354,6 @@ main > .section { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
 .manifesto .hl { color: var(--accent); font-style: italic; }
 .manifesto .dim { color: var(--fg-3); }
 
-/* ---------- believe / not ---------- */
-
- /* tablets keep both columns (v2x) */
-
 /* ---------- forms ---------- */
 .form { display: grid; gap: 1.375rem; }
 .form .f { display: grid; gap: .5rem; }
@@ -380,7 +377,7 @@ main > .section { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
 
 /* ---------- CTA band ---------- */
 .cta-band { padding-block: clamp(5rem, 12vw, 10rem); position: relative; overflow: hidden; }
-.cta-band h2 { max-width: 20ch; text-wrap: balance; }
+.cta-band h2 { max-width: 22ch; text-wrap: balance; } /* hc13r: the chapter heads' measure */
 .cta-band .row { display: flex; flex-wrap: wrap; gap: .875rem; margin-top: 2.5rem; }
 .cta-band .contact { margin-top: 3.5rem; display: grid; grid-template-columns: repeat(3, auto); gap: 2.5rem; font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .08em; color: var(--fg-2); }
 .cta-band .contact span { display: block; font-size: var(--fs-small); letter-spacing: 0; text-transform: none; color: var(--fg-3); margin-bottom: .5rem; font-family: var(--sans); }
@@ -477,7 +474,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 .desk { border: var(--hair) solid var(--line-strong); background: var(--ink-2); border-radius: var(--r); overflow: hidden; }
 .desk-head { display: flex; align-items: center; gap: 1.375rem; padding: .875rem 1.25rem; border-bottom: var(--hair) solid var(--line); }
 .desk.is-closed .live { color: var(--khaki); } .desk.is-closed .live i { background: var(--khaki); animation: none; box-shadow: none; }
-.desk-head .t { font: 400 var(--fs-label)/1.3 var(--mono); letter-spacing: .06em; color: var(--fg); font-variant-numeric: tabular-nums; }
+.desk-head .t { font: 400 var(--fs-small)/1.3 var(--mono); letter-spacing: 0; color: var(--fg); font-variant-numeric: tabular-nums; } /* hc13r: the clock at the head's step (data, mono) */
 .desk-body { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; }
 .desk-chart { position: relative; padding: 1.125rem .5rem .625rem .5rem; border-right: var(--hair) solid var(--line); }
 .desk-chart canvas { display: block; width: 100%; cursor: crosshair; }
@@ -751,7 +748,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 @media (hover: hover) { .blog-card:hover::after { transform: scaleX(1); } }
 .scholar-link { display: inline-flex; font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; text-transform: none; }
 .blog-post-hero { min-height: 0; padding-bottom: clamp(3.5rem, 7vw, 6rem); }
-.blog-title { max-width: 22ch; font-size: var(--h1-article); line-height: 1.06; margin-top: 1.125rem; }
+.blog-title { max-width: 22ch; font-size: var(--h1-article); line-height: 1.06; margin-top: 1.125rem; letter-spacing: -0.02em; } /* hc13r: as before .display-2's change */
 
 .blog-article > figure, .blog-article figure { margin: 0 0 1.6em; border: var(--hair) solid var(--line); background: var(--paper-2); }
 .blog-article figure img { display: block; width: 100%; height: auto; }
@@ -877,9 +874,10 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
   .hp-lab--side, .hp-lab--fl, .hp-reg, .hp-s1, .pl, .pl-br, .pl-draw, .pl-glow,
   .pm-agent, .pm-up, .pm-down, .pm-ring, .pm-rring, .pm-spur, .pm-x, .pm-cross, .pm-step, .pm-settle, .pm-floor,
   .tp-rec, .tp-prop, .tp-pass, .tp-set, .tp-rj, .tp-out, .tp-l-prop, .tp-l-set, .tp-l-rj, .lf-w, .lf-face, .bp-art [pathLength], .pc, .pb, .pd, .pk, .po, .pt, .pg, .pq,
-  .dr, .dm, .nf-rail, .nf-tok, .nf-s, .nf-keys li, .nf-rj, .nf-spur, .nf-fall, .nf-out, .dk-rec, .dl-rcpt, .lr-trace, .fl, .crew-bio, .v, .crew-stats b, .arch-sum, .is-tick dt),
+  .dr, .dm, .nf-rail, .nf-tok, .nf-s, .nf-keys li, .nf-rj, .nf-spur, .nf-fall, .nf-out, .dk-rec, .dl-rcpt, .lr-trace, .fl, .crew-bio, .v, .crew-stats b, .arch-sum, .is-tick dt,
+  .tr-pl, .tr-rj, .tr-rl, .tr-oc, .tr-sg, .tr-se, .pf-mk),
 .is-offscreen :is(.chain-seg, .layers, .is-tick)::before,
-.is-offscreen :is(.chain-seg, .lt-node, .pf-floor, .layer, .is-ping)::after { animation-play-state: paused !important; }
+.is-offscreen :is(.chain-seg, .lt-node, .pf-floor, .layer, .is-ping, .tr-sd, .pf-trail)::after { animation-play-state: paused !important; }
 
 /* ---------- rhythm & anchors: nothing scrolls or focuses under the fixed nav ---------- */
 /* a2: registered as a length, so scripts reading it with parseFloat get the bar's real height ("144px" at 3840) */
@@ -1234,19 +1232,26 @@ body.is-loading { overflow: hidden; }
 .loader.is-done ~ .nav .container > * { animation: nav-arrive var(--dur-move) var(--ease-out) both; }
 @keyframes nav-arrive { from { opacity: 0; transform: translateY(-.625rem); } }
 
-/* ---------- page transitions: the bar stays put, the page settles in beneath it ---------- */
-@view-transition { navigation: auto; }
+/* ---------- the page turn (hc13r; SYSTEM.md 12): the leaving view recedes and goes under, the arriving sheet rises 3rem
+   with the jump's shadow (from above on "back", site.js); never two headlines; the bar and its ink slide; 540 ms; the
+   first band's animations wait for the landing */
+@view-transition { navigation: auto; types: page; }
 .nav { view-transition-name: site-nav; }
 .loader ~ .nav { view-transition-name: none; } /* the homepage loader covers the bar until it lifts */
-/* out, then in: the outgoing page is gone */
-::view-transition-old(root) { animation: vt-leave .12s var(--ease-out) both; }
-::view-transition-new(root) { animation: vt-enter .44s var(--ease) .1s both; }
-::view-transition-group(site-nav) { animation-duration: .45s; }
-::view-transition-group(nav-ink) { animation-duration: .55s; animation-timing-function: var(--ease); }
-@keyframes vt-leave { to { opacity: 0; transform: translateY(-.5rem); } }
-/* leaving the overture: its canvases sit out of the snapshot, so Home fades as every page does (a1; site.js) */
+::view-transition { pointer-events: none; } /* a click during a turn or a jump reaches the page, already there */
+::view-transition-old(root), ::view-transition-new(root) { mix-blend-mode: normal; }
+::view-transition-old(root) { animation: vt-recede .24s var(--ease-out) both; }
+::view-transition-new(root) { animation: vt-rise .44s var(--ease-move) .1s both; box-shadow: 0 -1.75rem 3.5rem -1.75rem rgba(8, 12, 10, .5); }
+html:active-view-transition-type(back)::view-transition-new(root) { animation-name: vt-rise-down; box-shadow: 0 1.75rem 3.5rem -1.75rem rgba(8, 12, 10, .5); }
+::view-transition-group(site-nav) { animation-duration: .44s; animation-timing-function: var(--ease-move); }
+::view-transition-group(nav-ink) { animation-duration: .5s; animation-timing-function: var(--ease-move); }
+@keyframes vt-recede { to { transform: scale(.985); opacity: 0; } }
+@keyframes vt-rise { from { transform: translateY(3rem); opacity: 0; } 40% { opacity: 1; } }
+@keyframes vt-rise-down { from { transform: translateY(-3rem); opacity: 0; } 40% { opacity: 1; } }
+html:active-view-transition-type(page) main > :first-child, html:active-view-transition-type(page) main > :first-child *,
+html:active-view-transition-type(page) main > :first-child *::before, html:active-view-transition-type(page) main > :first-child *::after { animation-play-state: paused !important; }
+/* leaving the overture: its canvases sit out of the snapshot, so Home recedes as every page does (a1; site.js) */
 html.vt-out .story-stage canvas { visibility: hidden; }
-@keyframes vt-enter { from { opacity: 0; transform: translateY(.75rem); } }
 
 /* ---------- controls: buttons, links, focus ---------- */
 :focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .1875rem; }
@@ -1342,7 +1347,6 @@ html[data-jump="up"]::view-transition-new(root) { animation-name: jump-sheet-dow
 html[data-jump]::view-transition-group(site-nav) { animation: none; }
 html[data-jump]::view-transition-old(site-nav) { display: none; }
 html[data-jump]::view-transition-new(site-nav) { animation: none; }
-html[data-jump]::view-transition { pointer-events: none; } /* a click during the move reaches the page, already there */
 /* past the browser's capture limit (site.js cut()) a jump is a plain cut */
 .is-landing > * { animation: jump-land .16s var(--ease-out) both; }
 @keyframes jump-land { from { opacity: .7; } }
@@ -1497,16 +1501,6 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lane[data-hot="4"] .lane-h [data-g="4"], .lane[data-hot="5"] .lane-h [data-g="5"], .lane[data-hot="6"] .lane-h [data-g="6"] { opacity: 1; transform: translateY(-.375rem); }
 
 @media (min-width: 961px) {
-
-  /* the gate list is the plate's legend: each item stands under its gate */
-  /* eleven tracks in the plate's own units: each gate's item is centred under its gate */
-
-
-
-
-
-
-
   .lane .lk-who { display: block; margin-top: calc(3 * var(--hair)); font-weight: 400; color: var(--fg-3); letter-spacing: .1em; }
   .lane .lk-role { position: absolute; width: var(--hair); height: var(--hair); margin: calc(-1 * var(--hair)); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .lane .lk-btn { position: relative; border-radius: .125rem; transition: color var(--dur-feedback) var(--ease); }
@@ -1514,18 +1508,11 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .lane li.is-hot .lk-btn::before { transform: scaleX(1); }
   .lane li.is-hot .lk-nm { color: var(--accent); }
   .lane .lk-btn:focus-visible { outline: calc(2 * var(--hair)) solid var(--signal); outline-offset: .125rem; }
-  /* the role of the gate in hand, on one line under the legend */
-
-
-
   .lane .figure-cap { margin-top: .75rem; }
 }
 
 /* without script the legend says everything at once: three columns of described gates under the plate */
 @media (min-width: 961px) and (scripting: none) {
-
-
-
   .lane .lk { padding: 0; }
   .lane .lk-who { display: inline; margin-left: .6em; }
   .lane .lk-role { position: static; width: auto; height: auto; margin: .5rem 0 0; overflow: visible; clip-path: none; white-space: normal; font-size: var(--fs-small); line-height: 1.5; color: var(--fg-2); }
@@ -1699,7 +1686,6 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 @media (min-width: 601px) and (max-width: 960px) { .orbit-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 /* ---------- Platform §04, Fig. 4.1: the deterministic half of the lane ---------- */
-.lc-pipe { margin: 0 0 2.5rem; }
 @media (min-width: 961px) { .lc-pipe > .figure-cap { margin-top: 0; } } /* hc5: the plate's foot, on the drawing's own margin under its labels */
 .pipe-svg { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); } /* px, not rem: the drawing scales with its viewBox (integrate a3) */
 .lcp .cp { fill: none; stroke: currentColor; stroke-width: var(--stroke); stroke-dasharray: calc(3 * var(--dash-u)) calc(3 * var(--dash-u)); opacity: .7; }

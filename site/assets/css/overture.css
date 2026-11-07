@@ -314,6 +314,8 @@ html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { ma
   .story-lab.layer::after, .story-lab.day::after { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 1.5rem); height: max(100%, 1.5rem); transform: translate(-50%, -50%); } /* a 24 px hit area */
 }
 @media (min-width: 600px) and (max-aspect-ratio: 23/20) { .story-lab { font-size: clamp(.625rem, .5rem + .4vw, .8rem); } }
+/* hc13r SYS-1: upright tablets' scene heads take the chapter step (38.4 px at 768-909), so Home has one H2 size there too */
+@media (min-width: 600px) and (max-aspect-ratio: 23/20) { .beat h2 { font-size: var(--fs-display); } }
 @media (max-width: 400px) { .hero-stats { grid-template-columns: repeat(2, auto); justify-content: start; gap: .75rem 1.625rem; } .story-lab.day { padding: .125rem 0; min-width: 0; } }
 /* 400% zoom on a desktop */
 html.story-tiny .story .beat-0 { padding-top: calc(var(--nav-h) + 1.75rem); }

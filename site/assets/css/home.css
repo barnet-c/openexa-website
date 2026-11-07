@@ -56,10 +56,9 @@ html.story-short body[data-page="home"] .story .beat-4 .body-lg { display: block
 /* ---------- the chapters ---------- */
 /* (no ghost numerals: site.css no longer draws .section[data-n]::before, system cut 1 Nov) */
 
-/* §03: the hedge's link (its face, size and measure: the #proof rule in the cut block below; hc9 dropped this block's
-   base, every property of it overridden there) */
-body[data-page="home"] .proof-hedge a { color: var(--fg); text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .1875rem; text-decoration-color: var(--line-strong); transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
-@media (hover: hover) { body[data-page="home"] .proof-hedge a:hover { text-decoration-color: var(--accent); } }
+/* scene 4's lede (hc13r: §03's hedge came into the overture, beside its claim): its link to the disclosures, as §03's was */
+body[data-page="home"] .beat-4 .body-lg a { color: var(--fg); text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .1875rem; text-decoration-color: var(--line-strong); transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
+@media (hover: hover) { body[data-page="home"] .beat-4 .body-lg a:hover { text-decoration-color: var(--accent); } }
 
 /* display heads break between phrases only */
 body[data-page="home"] h2 .ph { white-space: nowrap; }
@@ -70,7 +69,7 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
 }
 /* from 900 px tall: the scenes at v2's portrait scale */
 @media (min-width: 600px) and (min-height: 900px) and (max-aspect-ratio: 23/20) {
-  html.story-compact body[data-page="home"] .story .beat h2 { font-size: clamp(1.85rem, 7.2vw, 3rem); }
+  html.story-compact body[data-page="home"] .story .beat h2 { font-size: var(--fs-display); } /* hc13r SYS-1: one H2 size (was 48 px) */
   html.story-compact body[data-page="home"] .story .beat .body-lg { margin-top: .75rem; font-size: clamp(.94rem, 2.3vw, 1.02rem); line-height: 1.55; }
   html.story-compact body[data-page="home"] .story .beat-0 .hero-sub { margin-top: .75rem; font-size: clamp(1rem, 2.6vw, 1.15rem); }
 }
@@ -135,7 +134,8 @@ body[data-page="home"] .figure-cap .fc-key { font: 400 var(--fs-small)/1.5 var(-
 /* ========== v2x cut: one head, at most one line, then the instrument ========== */
 /* four sizes a screen: the display head, the line (Inter, --fs-body), the hedge (Inter --fs-small), the instruments' mono;
    the serif steps are site.css's tokens (hc1) */
-body[data-page="home"] .ch-title { max-width: 15ch; text-wrap: balance; }
+body[data-page="home"] .ch-title { text-wrap: balance; } /* hc13r SYS-1: site.css's 22ch measure, most heads on one line */
+@media (max-width: 600px) { body[data-page="home"] .ch-title { max-width: 15ch; } } /* phones as before (SYS-1's check) */
 body[data-page="home"] .ch-title + :not(.ch-line), body[data-page="home"] .ch-title + .ch-line + * { margin-top: var(--ch-gap); }
 body[data-page="home"] .ch-note { margin-top: 1rem; font-size: var(--fs-small); line-height: 1.45; color: var(--fg-3); }
 body[data-page="home"] .ch-link { margin-top: clamp(2rem, 3.4vw, 3.25rem); }
@@ -170,18 +170,10 @@ body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(1.625re
   .lc-reg .card .h4 { align-self: end; max-width: none; font-size: var(--fs-body); line-height: 1.25; }
 }
 
-/* §03: the head and its hedge beside the chart (hc5: the open pair, 3 and 5, cut: one hard fact on the screen) */
-body[data-page="home"] #proof .proof-copy .ch-title { max-width: 11ch; }
-body[data-page="home"] #proof .proof-hedge { margin-top: 1.375rem; max-width: 34ch; font-size: var(--fs-small); line-height: 1.5; color: rgba(245, 242, 236, .66); }
-body[data-page="home"] #proof .proof-fig .figure-cap { padding-left: 0; }
-body[data-page="home"] #proof .figure-cap .fc-key { color: rgba(245, 242, 236, .6); }
-@media (min-width: 961px) { body[data-page="home"] #proof .proof-layout { align-items: end; } }
-
-/* §04: the head, then the stack of costs */
-body[data-page="home"] #economics .ch-title { max-width: 12ch; }
+/* §03: the head, then the stack of costs (hc13r: the head at the chapters' measure, one line from 1100 px) */
 body[data-page="home"] #economics .cost .figure-cap { margin-top: 1.125rem; }
 
-/* §05: the chain beside its head */
+/* §04: the chain beside its head */
 body[data-page="home"] #governance .chain-row .ch-head { margin: 0; }
 @media (min-width: 961px) { body[data-page="home"] #governance .chain-row .ch-head { position: sticky; top: calc(var(--nav-h) + 2rem); } }
 
@@ -222,12 +214,8 @@ body[data-page="home"] #research .research-card .link-arrow { font: 400 var(--fs
   html:not(.story-ready):not(.no-webgl) body[data-page="home"] .story .beat-0 { animation: home-static-beat0 1ms var(--story-net) forwards; }
 }
 @keyframes home-static-beat0 { to { position: relative; left: auto; right: auto; top: auto; bottom: auto; opacity: 1; transform: none; pointer-events: auto; padding-top: clamp(3.5rem, 9vh, 6rem); padding-bottom: clamp(3.5rem, 9vh, 6rem); } }
-/* without JavaScript the chart is its list of sessions: its key has nothing to key */
-@media (scripting: none) { body[data-page="home"] #proof .proof-fig .figure-cap { display: none; } }
 
 /* ========== award a1 ========== */
-/* §03: the head says what the chart adds */
-body[data-page="home"] #proof .proof-copy .ch-title { max-width: 12ch; }
 /* phones: the CEO's headline one step up, still two lines (44 px at 390); the CEO's sub-line and the scenes' lines at 16 px */
 @media (scripting: enabled) and (max-width: 599.98px) {
   html:not(.no-webgl) body[data-page="home"] .beat-0 .display-1 { font-size: clamp(2.1rem, 11.25vw, 3.4rem); }
@@ -252,47 +240,42 @@ body[data-page="home"] #economics .cost-row:first-child { padding-top: 1.5rem; }
 /* the chapters after the overture are laid out near the viewport only; each stand-in is its measured content height for the
    width band (padding and the hairline border on top: hc1 measures without the border), so the page is as long at load as drawn. The footer is always drawn (#disclosures lands) */
 body[data-page="home"] main > .story ~ section { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
-body[data-page="home"] #lifecycles { --cis: 38.59375rem; } body[data-page="home"] #lc01 { --cis: 64.421875rem; }
-body[data-page="home"] #proof { --cis: 36.296875rem; } body[data-page="home"] #economics { --cis: 41.953125rem; } body[data-page="home"] #governance { --cis: 44.171875rem; }
-body[data-page="home"] #research { --cis: 36.96875rem; } body[data-page="home"] .cta-band { --cis: 6.453125rem; }
-/* 600-760: the 700 heights; 761-960: the 820 heights (768-834 within 1rem; hc2). Both re-measured hc10 (integrate), after
-   system's tablet H2 step (--fs-display 48 px from 768 to 923); hc11: #governance under 961 px without §05's line, #lc01's
-   base after system's lab counters at --fs-item (its hc11 request); #governance at every band with Trust's link in its head */
+body[data-page="home"] #lifecycles { --cis: 38.6875rem; } body[data-page="home"] #lc01 { --cis: 64.5rem; }
+body[data-page="home"] #economics { --cis: 42.046875rem; } body[data-page="home"] #governance { --cis: 44.25rem; }
+body[data-page="home"] #research { --cis: 37.0625rem; } body[data-page="home"] .cta-band { --cis: 6.5rem; }
+/* 600-760: the 700 heights; 761-960: the 820 heights; 961-1099 the 1024 heights, 1100-1359 the 1280 heights, 1360-1679 the
+   1440 heights, from 1680 (rem above 1920, so 3840 is 1920 doubled) the 1920 heights. Re-measured hc13r (cis3.py) after
+   system's one chapter step (SYS-1: 60 px heads, 1.04 line-height), §03's band leaving Home and the heads' 22ch measure
+   from 601 px (earlier rounds: a2, hc1-hc11; the history is in notes/home.md) */
 @media (min-width: 600px) {
-  body[data-page="home"] #lifecycles { --cis: 40.015625rem; } body[data-page="home"] #lc01 { --cis: 55.390625rem; }
-  body[data-page="home"] #proof { --cis: 43.359375rem; } body[data-page="home"] #economics { --cis: 32.21875rem; } body[data-page="home"] #governance { --cis: 74.0625rem; }
-  body[data-page="home"] #research { --cis: 38.25rem; } body[data-page="home"] .cta-band { --cis: 7.125rem; }
+  body[data-page="home"] #lifecycles { --cis: 36.71875rem; } body[data-page="home"] #lc01 { --cis: 54.359375rem; }
+  body[data-page="home"] #economics { --cis: 28.921875rem; } body[data-page="home"] #governance { --cis: 70.765625rem; }
+  body[data-page="home"] #research { --cis: 34.953125rem; } body[data-page="home"] .cta-band { --cis: 6.609375rem; }
 }
 @media (min-width: 761px) and (max-width: 960px) {
-  body[data-page="home"] #lifecycles { --cis: 28.859375rem; } body[data-page="home"] #lc01 { --cis: 52.765625rem; }
-  body[data-page="home"] #proof { --cis: 44.703125rem; } body[data-page="home"] #economics { --cis: 33.640625rem; } body[data-page="home"] #governance { --cis: 52.5625rem; }
-  body[data-page="home"] #research { --cis: 31rem; } body[data-page="home"] .cta-band { --cis: 7.40625rem; }
+  body[data-page="home"] #lifecycles { --cis: 25.234375rem; } body[data-page="home"] #lc01 { --cis: 51.640625rem; }
+  body[data-page="home"] #economics { --cis: 30.015625rem; } body[data-page="home"] #governance { --cis: 48.9375rem; }
+  body[data-page="home"] #research { --cis: 27.390625rem; } body[data-page="home"] .cta-band { --cis: 6.84375rem; }
 }
 @media (min-width: 961px) {
-  body[data-page="home"] #lifecycles { --cis: 34.515625rem; } body[data-page="home"] #lc01 { --cis: 64.1875rem; }
-  body[data-page="home"] #proof { --cis: 31.484375rem; } body[data-page="home"] #economics { --cis: 25.875rem; } body[data-page="home"] #governance { --cis: 38.15625rem; }
-  body[data-page="home"] #research { --cis: 36.890625rem; } body[data-page="home"] .cta-band { --cis: 10.0625rem; }
+  body[data-page="home"] #lifecycles { --cis: 28.625rem; } body[data-page="home"] #lc01 { --cis: 62.203125rem; }
+  body[data-page="home"] #economics { --cis: 25.875rem; } body[data-page="home"] #governance { --cis: 38.15625rem; }
+  body[data-page="home"] #research { --cis: 32.90625rem; } body[data-page="home"] .cta-band { --cis: 9.0625rem; }
 }
-/* small desktops: 961-1099 the 1024 heights, 1100-1359 the 1280 heights (the spreads start at 1100; re-measured hc2;
-   #lifecycles from 761 px re-measured hc4, after its titles took the --fs-heading step, and hc8, its cells one block each;
-   #stack and #proof at every band hc5; every chapter under 1100 px hc9, the small register at --fs-small, and #proof's base
-   and 961-1099 values again with Fig. 1.1's two-line label, integrate hc9; and once more with the caption's readout, which
-   reserves its longest record's lines, integrate hc11) */
 @media (min-width: 961px) and (max-width: 1099.98px) {
-  body[data-page="home"] #lifecycles { --cis: 29.15625rem; } body[data-page="home"] #lc01 { --cis: 56.921875rem; }
-  body[data-page="home"] #proof { --cis: 28.90625rem; } body[data-page="home"] #economics { --cis: 33rem; } body[data-page="home"] #governance { --cis: 38.125rem; }
-  body[data-page="home"] #research { --cis: 33.734375rem; } body[data-page="home"] .cta-band { --cis: 7.984375rem; }
+  body[data-page="home"] #lifecycles { --cis: 25.109375rem; } body[data-page="home"] #lc01 { --cis: 55.71875rem; }
+  body[data-page="home"] #economics { --cis: 28.953125rem; } body[data-page="home"] #governance { --cis: 38.125rem; }
+  body[data-page="home"] #research { --cis: 29.6875rem; } body[data-page="home"] .cta-band { --cis: 7.375rem; }
 }
 @media (min-width: 1100px) and (max-width: 1359.98px) {
-  body[data-page="home"] #lifecycles { --cis: 32.265625rem; } body[data-page="home"] #lc01 { --cis: 58.9375rem; }
-  body[data-page="home"] #proof { --cis: 31.046875rem; } body[data-page="home"] #economics { --cis: 25.171875rem; } body[data-page="home"] #governance { --cis: 38.15625rem; }
-  body[data-page="home"] #research { --cis: 34.59375rem; } body[data-page="home"] .cta-band { --cis: 9.4375rem; }
+  body[data-page="home"] #lifecycles { --cis: 27.078125rem; } body[data-page="home"] #lc01 { --cis: 57.296875rem; }
+  body[data-page="home"] #economics { --cis: 25.171875rem; } body[data-page="home"] #governance { --cis: 38.15625rem; }
+  body[data-page="home"] #research { --cis: 31.1875rem; } body[data-page="home"] .cta-band { --cis: 8.625rem; }
 }
-/* from 1680 (rem above 1920, so 3840 is 1920 doubled): the 1920 heights (re-measured hc2) */
 @media (min-width: 1680px) {
-  body[data-page="home"] #lifecycles { --cis: 34.8125rem; } body[data-page="home"] #lc01 { --cis: 66.671875rem; }
-  body[data-page="home"] #proof { --cis: 32.21875rem; } body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 38.15625rem; }
-  body[data-page="home"] #research { --cis: 39.609375rem; }
+  body[data-page="home"] #lifecycles { --cis: 28.921875rem; } body[data-page="home"] #lc01 { --cis: 64.671875rem; }
+  body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 38.15625rem; }
+  body[data-page="home"] #research { --cis: 35.921875rem; }
 }
 @media print { body[data-page="home"] main > .story ~ section { content-visibility: visible; } }
 /* §02: the link sits one chapter step under the lab (swarm.css adds 40 px below it) */
@@ -401,3 +384,25 @@ body[data-page="home"] #governance :is(.chain-try, .chain-restore) svg path { ve
 /* §05: the link to Trust sits under the heading, in the head that rides beside the chain (it was a lone row under the
    chain): heading and way on, then the instrument, as §06's head carries "All ten notes" */
 body[data-page="home"] #governance .chain-row .ch-head > .ch-link { margin-top: 1.5rem; }
+
+/* ========== hill climb hc13r ========== */
+/* HOME-1: the overture lands on the proof. Scene 4 carries §03's parts (the band left the page): the count and its hedge as
+   the scene's lede (the lede step S2 and S3 use), the way to Proof under it, the chart's key under its day numbers
+   (story.js; the plate's own text without WebGL), the record and its no-JS list */
+body[data-page="home"] .beat-4 .beat-more { margin-top: clamp(1.125rem, 2.4vh, 1.625rem); opacity: var(--bo, 1); }
+body[data-page="home"] .beat-4.is-bo0 .beat-more { visibility: hidden; }
+/* where the lede gives way (a short screen), the way on goes with it (story.js takes the lede's link out of the tab order) */
+body[data-page="home"] .story .beat-4.is-tight .beat-more, html.story-short body[data-page="home"] .story .beat-4 .beat-more { display: none; }
+/* the chart's key: Inter at the hedge's step and in its two tones, from day 01's tag under the day numbers; two lines on
+   portrait screens */
+body[data-page="home"] .story-lab.key { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .6); }
+body[data-page="home"] .story-lab.key span:first-child { color: rgba(245, 242, 236, .74); }
+@media (max-width: 639.98px), (max-aspect-ratio: 23/20) { body[data-page="home"] .story-lab.key span { display: block; } }
+html.story-short body[data-page="home"] .story-lab.key { display: none; } /* short landscape: the key gives way with the lede (story.js) */
+/* without JavaScript: the ten sessions' list under the scene's copy (wide: in the copy's column, the plate beside it) */
+@media (scripting: none) {
+  body[data-page="home"] .beat-4 .proof-list { margin-top: 2.125rem; }
+}
+@media (scripting: none) and (min-aspect-ratio: 23/20) and (min-width: 640px) {
+  body[data-page="home"] .beat-4 .proof-list { max-width: min(44%, 35rem); }
+}

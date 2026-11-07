@@ -156,11 +156,17 @@
     /* state: the session in hand (sel), the one under the pointer (pre), the lane that takes Tab (tab); hc11: the caption's
        readout (below the entrance) */
     let sel = -1, pre = -1, tab = 0, shown = null, readout = null;
+    // hc13r (PROOF-2b): §01's thread is a session's row; the session chosen here is written where the thread ends
+    // (the record's last until one is chosen; it stays when the pointer leaves)
+    const tag = Array.from(document.querySelectorAll('[data-proof-rec] > span'));
+    const write = i => { const x = sessions[i]; if (tag.length === 4 && x) [x.day, x.regime, x.confirmation, x.status].forEach((t, k) => { if (tag[k].textContent !== t) tag[k].textContent = t; }); };
+    write(N - 1);
     function render() {
       const i = pre >= 0 ? pre : sel;
       if (i === shown) return;
       shown = i;
       if (readout) readout(i);
+      if (i >= 0) write(i);
       lanes.forEach((lane, j) => lane.classList.toggle('is-on', j === i));
       segs.forEach((p, j) => p.classList.toggle('is-on', j === i));
       areas.forEach((a, j) => a.classList.toggle('is-on', j === i));
@@ -260,6 +266,11 @@
   }
 
   document.querySelectorAll('[data-proof-chart]').forEach((host, i) => buildChart(host, i + 1));
+
+  /* hc13r (PROOF-2b, SYS-3): Proof §01's thread is whole at rest; when the trail is well in view (OXA.actOnce) one
+     signal runs along it, once (proof.css .is-run) */
+  const trail = document.querySelector('.pf-trail'), OXA = window.OXA = window.OXA || {}, run = () => trail.classList.add('is-run');
+  if (trail) { if (OXA.actOnce) OXA.actOnce(trail, run); else (OXA.q = OXA.q || []).push([trail, run]); }
 })();
 
 /* The cost figure (home §05 · Proof §02). (hc5, HC5 item 6) One reveal of at most 600 ms, both rows at once: the solid
@@ -299,6 +310,7 @@
       return out;
     });
     if (plans.some(p => !p)) return;
+    if (fig.dataset.costView === 'rows' && rows(fig, plans)) return;
     bars.forEach((bar, n) => {
       const grid = document.createElement('span');
       grid.className = 'cost-blk';
@@ -328,4 +340,40 @@
       bar.classList.add('is-blocks');
     });
   });
+
+  /* hc13r (PROOF-2a): Proof's index decomposed. The key's four rows (dt, dd: production's definitions) each take their
+     component's blocks from the same two bars: the traditional weight, filled to what the agentic row keeps; a component
+     the agentic row eliminates is dashed and says "Eliminated" (the bar's own word). The two bars give way to their
+     totals (Traditional 100 · Agentic <10), at the foot; the hedge stays under them. Without JS: the two bars and key. */
+  function rows(fig, plans) {
+    const keys = Array.from(fig.querySelectorAll('.pf-ck > div')), base = plans[0], rest = [];
+    const gone = fig.querySelector('.cost-gone em'), word = gone ? gone.textContent : '';
+    if (keys.length !== base.length || !word) return false;
+    plans[1].forEach(r => { if (!r.gone) { rest.push(r.solid); return; } let left = r.n; while (left > 0.01) { left -= base[rest.length].n; rest.push(0); } });
+    if (rest.length !== base.length) return false;
+    keys.forEach((row, k) => {
+      const dd = row.querySelector('dd'), db = document.createElement('span'), grid = document.createElement('span');
+      if (!dd) return;
+      db.className = 'cost-db'; grid.className = 'cost-blk'; grid.setAttribute('aria-hidden', 'true');
+      const n = Math.round(base[k].n), r = rest[k], solid = [], out = [];
+      for (let i = 0; i < n; i++) {
+        const b = document.createElement('i'), fill = r - i;
+        b.style.setProperty('--c', base[k].c);
+        if (fill >= 1) solid.push(b);
+        else if (fill > 0) { b.className = 'is-part'; b.style.setProperty('--f', Math.round(fill * 100) + '%'); solid.push(b); }
+        else { b.className = r > 0 ? 'is-rest' : 'is-gone'; out.push(b); }
+        grid.append(b);
+      }
+      // one reveal, <= 600 ms: row by row, its kept blocks, then what went
+      solid.forEach((b, i) => { b.style.transitionDelay = Math.round(k * 60 + i * 120 / Math.max(1, solid.length)) + 'ms'; });
+      out.forEach((b, i) => { b.style.transitionDelay = Math.round(240 + k * 40 + i * 120 / Math.max(1, out.length)) + 'ms'; });
+      db.append(grid);
+      if (!(r > 0)) { const em = document.createElement('em'); em.textContent = word; db.append(em); }
+      dd.append(db);
+    });
+    const key = keys[0].parentNode, two = fig.querySelector('.cost-rows');
+    if (two) fig.insertBefore(key, two);
+    fig.classList.add('is-dec');
+    return true;
+  }
 })();

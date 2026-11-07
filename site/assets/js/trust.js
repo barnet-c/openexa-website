@@ -333,3 +333,9 @@
   }
   if (ui.ctrl) ui.ctrl.hidden = false;
 })();
+
+/* hc13r (PROOF-1): §02's plate is whole at rest; when it is well in view (OXA.actOnce) one signal runs it, once */
+(function () {
+  const cp = document.querySelector('[data-cp]'), run = () => cp.classList.add('is-run'), OXA = window.OXA = window.OXA || {};
+  if (cp) { if (OXA.actOnce) OXA.actOnce(cp, run); else (OXA.q = OXA.q || []).push([cp, run]); }
+})();

@@ -748,11 +748,12 @@
   const U_REC = 6.5, U_NAV = 22, U_TICK = 10, U_DAY = 35, DAY_BAND = 70;
   const MIN_FRAME = [0, 120, 110, 120, DAY_BAND + 90]; // portrait: the least frame each structure reads in (S0's globe always keeps its lede)
   const frameTiny = [false, false, false, false, false]; // stacked on a short screen: a frame too small to read drops its callouts
-  const band4 = () => (frameTiny[4] ? 8 : DAY_BAND * remK); // S4's room under the floor: none for tags it leaves out
+  // (hc13r) and the chart's key under the day numbers (§03's caption came into the scene): the band grows to hold it
+  const band4 = () => (frameTiny[4] ? 8 : Math.max(DAY_BAND * remK, (U_DAY + 14) * remK + dayH + keyH)); // S4's room under the floor: none for tags it leaves out
   let dayPitch = 99, b4 = null;
   const layouts = Array.from({ length: 5 }, () => ({ cx: 0, cy: 0, s: 1, rect: [0, 0, 0, 0] }));
   const beatRects = [], capH = [0, 0, 0, 0, 0], labelMaxW = [0, 0, 0, 0, 0], roomOf = [0, 0, 0, 0, 0];
-  let storyTop = 0, run = 1, scrollY = 0, stageH = 1, storyH = 1, lastP = NaN, floorW = 0, floorH = 0, hedgeW = 0, hedgeH = 0, hedgeBeside = false, floorL = -COL_SPAN / 2 - 0.5;
+  let storyTop = 0, run = 1, scrollY = 0, stageH = 1, storyH = 1, lastP = NaN, floorW = 0, floorH = 0, hedgeW = 0, hedgeH = 0, hedgeBeside = false, floorL = -COL_SPAN / 2 - 0.5, dayH = 0, keyH = 0, keyOff = false;
   const hedgeGap = () => 6 * remK; // (hc12) the hedge's foot over the floor's tag (a line's air and a little more: two labels)
   const tagsUp = () => 6 + floorH + hedgeGap() + hedgeH + 6; // the floor line to the hedge's top, and some air: S4's frame keeps it
   // the stage shows below the nav's bar: past the pin the stage leaves with the page
@@ -809,6 +810,8 @@
       else if (l.kind === 'list' && !((stacked || short) && l.wide)) labelMaxW[l.scene] = Math.max(labelMaxW[l.scene], l.w);
       if (l.floor) { floorW = l.w; floorH = l.h; }
       if (l.hedge) { hedgeW = l.w; hedgeH = l.h; }
+      if (l.key) keyH = short || keyOff ? 0 : l.h; // (short landscape: the key gives way with the lede, home.css; keyOff: resize())
+      if (l.col === 0) dayH = l.h;
     };
     labels.forEach(l => {
       if (l.terse) { l.terse = false; l.el.classList.remove('is-terse'); }
@@ -867,6 +870,7 @@
     if (tight) measureLayout();
     if (liftBeats()) measureBeats();
     beats.forEach((b, i) => { const br = beatRects[i]; frameTiny[i] = !!(stacked && br && (MIN_FRAME[i] || !i) && br.t - 14 - (navH + barH + capH[i] + 8) < (i === 4 ? 40 + DAY_BAND : 40)); }); // (S4's tags hang a band under the floor)
+    shownIdx = -1; // (hc13r) the index's tab order again: a lede may have given way or come back
   }
   // (hc2) portrait (phones, upright tablets): scenes 1-4 lift their line off the stage's foot to one height, so each scene's
   // group (the structure and its callouts over its line) stands on the stage's optical centre and the structure sits on its
@@ -981,9 +985,9 @@
         });
         cx = (xa + x1) / 2;
         if (!stacked) { const tw = Math.max(15, ...(lab.days || []).map(l => l.w || 0)); cx = Math.max(cx, x1 - COL_X(NCOL - 1) * s * pxu - tw / 2); } // the last tag's edge on the column's
-        let fy = stacked ? y1 - band4() : Math.min(y1 - DAY_BAND * remK, Math.max((y0 + y1) / 2 + 0.6 * s * pxu, resv ? y0 + (Y_FL - Y_FLOOR) * s * pxu + tagsUp() : 0));
+        let fy = stacked ? y1 - band4() : Math.min(y1 - band4(), Math.max((y0 + y1) / 2 + 0.6 * s * pxu, resv ? y0 + (Y_FL - Y_FLOOR) * s * pxu + tagsUp() : 0));
         if (!stacked && colK > 1) { // (hc7) the tall group (ticks to tags) centred on the headline beside it, kept in the frame
-          const up = ((Y_CTOP - Y_FLOOR) * colK + 0.12) * s * pxu + 12 * remK, dn = DAY_BAND * remK, hc = br.hb > br.ht ? (br.ht + br.hb) / 2 : (y0 + y1) / 2;
+          const up = ((Y_CTOP - Y_FLOOR) * colK + 0.12) * s * pxu + 12 * remK, dn = band4(), hc = br.hb > br.ht ? (br.ht + br.hb) / 2 : (y0 + y1) / 2;
           fy = clamp(hc + (up - dn) / 2, y0 + Math.max(up, resv ? (Y_FL - Y_FLOOR) * colK * s * pxu + tagsUp() : 0), y1 - dn); // (hc12) the hedge's top in the frame too
         }
         cy = fy - 0.6 * s * pxu;
@@ -1124,7 +1128,7 @@
   // (lab) the exit folds the ten columns down together with the floor line (the paper's edge); seals go into their records
   const foldE = () => stacked ? sstep(0.02, 0.3, xeNow) : sstep(WX.fold[0], WX.fold[1], xeNow), flY = () => lerp(yK(Y_FL), Y_FLOOR + 0.02, foldE());
   const sealOf = (c) => clamp((xeNow - 0.03 - 0.12 * c / Math.max(1, NCOL - 1)) / 0.1, 0, 1);
-  // (hc8, the director: green means settled across the site, the lab's legend and §03's blocks) a session column turns
+  // (hc8, the director: green means settled across the site, the lab's legend and Proof's blocks) a session column turns
   // signal green as its broker tick lands on it, over CG_T s, so the scene ends on ten green columns under ten ticks and
   // the fold carries the green into the record line. Only a session above the floor and broker-confirmed (the one that
   // carries a tick); reduced motion, Pause motion and a jump show the final state at once
@@ -1431,8 +1435,9 @@
     // the plates' captions: a hedge only, beside what it hedges (the scenes that state nothing carry none)
     const cap = (i, h) => label(i, `<span class="fc-h">${h}</span>`, { cls: 'cap', kind: 'cap' });
     cap(3, 'Illustrative'); // (hc12: S4's hedge is a tag on its chart, below)
-    // S1: a column of callouts, one per ring, each anchored on the ring's front-right arc
-    lab.rings = LC.map((c, k) => label(1, `<span class="k">${c[0]}</span><span class="n">${c[1]}</span><span class="st st-${c[2].toLowerCase()}">${c[2]}</span><span class="dt">${c[3]}: ${c[4]}</span>`,
+    // S1: the live lifecycle's callout, anchored on its ring's front-right arc (hc13r, the rethink: LC-02 to LC-06 left the
+    // scene, whose rings still draw the six; §01's register names them once, right after the hand-off)
+    lab.rings = LC.slice(0, 1).map((c, k) => label(1, `<span class="k">${c[0]}</span><span class="n">${c[1]}</span><span class="st st-${c[2].toLowerCase()}">${c[2]}</span><span class="dt">${c[3]}: ${c[4]}</span>`,
       { cls: 'ring' + (k === 0 ? ' is-live' : ''), kind: 'list', group: k, leader: true, node: true, info: [`${c[0]} · ${c[3]}`, c[2], c[4]], anchorPx: (sc) => ringFlank(k, sc) }));
     // S2: the layers, top to bottom, and the boundary between 04 and 05
     lab.layers = LAYERS.map((l, p) => label(2, `<span class="k">${pad2(p + 1)}</span><span class="n">${l[0]}</span><span class="dt">${l[1]} · ${l[2]}</span>`,
@@ -1448,11 +1453,15 @@
       { cls: 'day' + (s.regime === 'premium' ? ' is-prem' : ''), kind: 'tag', group: c, side: 's', keep: true, col: c, dy: U_DAY - 6, info: [`Day ${s.day}`, capw(s.regime), `${s.above ? 'Above' : 'Not above'} the ${FLOOR_T} floor (${esc(valueT(s))}) · ${s.confirmed ? 'confirmed against the broker’s records' : 'confirmation not stated'}`], anchor: () => [COL_X(c), Y_FLOOR, 0] }));
     // the floor's tag sits on the line, left of column 01 (never across it)
     lab.floor = label(4, `<span>Floor</span> <span class="u">${FLOOR_T}</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
-    // (hc12, the director) the hedge, as Home §03, Proof and note 09 print it on their charts: two lines over the floor's
+    // (hc12, the director) the hedge, as Proof and note 09 print it on their charts (and Home §03 did until hc13r): two lines over the floor's
     // tag at the line's left end, leaving with it (placeLabels stands it on the floor's tag; was a caption, hc10's words)
     lab.hedge = label(4, '<span>Above the floor</span> <span class="h">Exact value not published</span>', { cls: 'hedge', kind: 'tag', hedge: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
     label(4, 'NAV', { cls: 'navtag', kind: 'tag', out: [0.05, 0.22], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR - l4(U_NAV), 0], side: 'w' }); // the regime ticks' baseline
-    // (no derived summary: S4's headline closes the overture and §03 carries the count, hc6)
+    // (hc13r, the rethink) the chart's key, as §03's chart captioned it before the band left Home: the regimes the NAV ticks
+    // draw (from the record), and the columns' unit; from day 01's tag under the day numbers, leaving with the NAV's tag.
+    // beat-4 carries the same words in its static HTML (check_static) for assistive tech; the plate prints them without WebGL
+    lab.key = label(4, `<span>${capw(words(N_PREM))} premium, ${words(N_DISC)} discount.</span> <span>One block per basis point.</span>`, { cls: 'key', kind: 'tag', key: true, out: [0.05, 0.22], anchor: () => [COL_X(0), Y_FLOOR, 0], side: 's' });
+    // (no derived summary: S4's lede carries the count, hc13r; hc6-hc12 it was §03's heading)
   }
   // the inspector: one quiet box that shows the hovered or focused ring, layer or session
   const insp = document.createElement('div');
@@ -1561,6 +1570,7 @@
     labels.forEach(l => {
       const a = vis(l);
       let on = a > 0.01 && !((stacked || short) && l.wide) && !(frameTiny[l.scene] && (l.kind !== 'cap' || !l.scene) && !l.hedge); // portrait and short screens leave out the secondary notes (never a hedge)
+      if (l.key && !keyH) on = false; // (hc13r) a short landscape frame leaves out the chart's key, as it does the lede
       if (on && l.col != null) on = colIn(l.col) > 0.5;
       let x = 0, y = 0, tr = '';
       if (on && l.kind === 'cap') {
@@ -1579,6 +1589,7 @@
           if (sd.includes('w')) x -= l.w + 8; else if (sd.includes('e')) x += 8; else x -= l.w / 2;
           if (sd.includes('n')) y -= l.h + 6; else if (sd.includes('s')) y += 6; else y -= l.h / 2;
           y += l.dy || 0;
+          if (l.key) { const d = lab.days && lab.days[0]; x = l.ax - (d ? d.w : 0) / 2; y = l.ay + U_DAY * remK + (d ? d.h : 0) + 8 * remK; } // (hc13r) day 01's left edge, under the day numbers
           if (l.hedge) { // (hc12) the hedge stands on the floor's tag, right edges together; where the screen's edge holds it, it
             // starts on the tag's left edge and reads from there, and if it then reaches column 01 it stands over the ticks; a
             // frame with no room over the floor's tag (a phone on its side) sets it beside the tag, on its row
@@ -1682,7 +1693,7 @@
     const sc = layouts[cur].s;
     if (cur === 1) {
       let best = null, bd = 16;
-      for (let k = 0; k < 6; k++) {
+      for (let k = 0; k < (lab.rings ? lab.rings.length : 0); k++) { // (hc13r) the rings with a callout: LC-01's
         let prev = null;
         for (let j = 0; j <= 48; j++) {
           const q = onLoop(RB[k], RINGS[k][0], j / 48 * TAU, 0), p = project(q[0] * sc, q[1] * sc, q[2] * sc), cur2 = [p.x, p.y];
@@ -1744,6 +1755,9 @@
   let shownInk = '';
   const shown = beats.map(() => ({ op: '', tr: '', on: null, eo: '', w: '', bo: '' }));
   const beatLinks = beats.map(b => Array.from(b.querySelectorAll('a[href], button')));
+  // (hc13r) scene 4's lede links to the disclosures: where a short screen sets the lede out of sight (kept for assistive
+  // tech, home.css), its link leaves the tab order with it, so focus never lands on a link nobody can see
+  const unseen = (el) => !tiny && !!el.closest('.beat .body-lg') && (short || el.closest('.beat').classList.contains('is-tight'));
   let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownFill = [], shownCapO = '';
   let paperH = 0, relay0 = false, relayReady = false, shownBarOff = null;
   let fadeT = 0, copyX = 0, fading = false, kF = 1; // the exit's fade (a headline that cannot stand under the bar): in or out over 0.25 s, never resting between
@@ -1754,7 +1768,7 @@
     if (shownIdx === ci) return;
     shownIdx = ci;
     idx.forEach((button, i) => { const a = ci === i; button.classList.toggle('is-on', a); if (a) button.setAttribute('aria-current', 'step'); else button.removeAttribute('aria-current'); });
-    beatLinks.forEach((list, i) => list.forEach(el => { if (i === ci) el.removeAttribute('tabindex'); else el.setAttribute('tabindex', '-1'); }));
+    beatLinks.forEach((list, i) => list.forEach(el => { if (i === ci && !unseen(el)) el.removeAttribute('tabindex'); else el.setAttribute('tabindex', '-1'); }));
     story.dataset.scene = String(ci);
   }
   function updateUI(now) {
@@ -1947,10 +1961,17 @@
       gl.viewport(0, 0, cv.width, cv.height);
       if (paperIn) paperIn.style.height = H + 'px'; // the paper's contents live in the stage's frame
       leaders.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      keyOff = false;
       setModes(); // the copy's mode first: the frames are fitted around the copy it leaves
     }
     measureScroll(); // the toolbar alone (stage unchanged): only the scroll geometry, the callouts keep their layout
-    if (sized) { fitScenes(); publishGlobe(); }
+    if (sized) {
+      fitScenes();
+      // (hc13r) the chart's key never squeezes the columns under their day tags (a short frame: 568 x 320): where its band
+      // would thin the tags, the key gives way and the scenes are fitted again, as without it
+      if (keyH && dayPitch < 18) { keyOff = true; setModes(); fitScenes(); }
+      publishGlobe();
+    }
     if (tinyBack) { placeTo(tinyBack); tinyBack = null; scrollY = window.scrollY; } // back from the static sequence, at the reader's scene
     else restore(keep);
     sceneScroll();

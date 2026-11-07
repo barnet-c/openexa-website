@@ -129,19 +129,19 @@
  },
  "evidence.html": {
   "date": "2026-11-07",
-  "sha": "16bef1bfbf80bb64"
+  "sha": "d7d474edaec5d5f0"
  },
  "index.html": {
   "date": "2026-11-07",
-  "sha": "13cd1c7191ba9567"
+  "sha": "9a850e029745d06b"
  },
  "lifecycles.html": {
-  "date": "2026-11-06",
-  "sha": "64800465efbc3cb4"
+  "date": "2026-11-07",
+  "sha": "ec5cec1f42dc46b1"
  },
  "platform.html": {
   "date": "2026-11-07",
-  "sha": "a95c0a4d5e6917ae"
+  "sha": "5a86d2164554fd0f"
  },
  "research.html": {
   "date": "2026-11-06",
@@ -188,7 +188,7 @@
   "sha": "152831dce66b3250"
  },
  "trust.html": {
-  "date": "2026-11-06",
-  "sha": "7a730a6a7c9bd364"
+  "date": "2026-11-07",
+  "sha": "ef6f9e78e24ac486"
  }
 }

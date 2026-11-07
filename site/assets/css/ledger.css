@@ -98,6 +98,9 @@
 .lt-insp [data-f="rec"], .lt-insp [data-f="ev"] { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lt-insp [data-f="d"], .lt-insp [data-f="src"] { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; height: 3.3em; }
 @media (max-width: 400px) { .lt-insp [data-f="d"], .lt-insp [data-f="src"] { -webkit-line-clamp: 4; height: 6.6em; } }
+/* hc13r (integrate, proof's request): on phones the inspector's values and checks take the UI step (SYS-1's instrument
+   rule), so Trust's screen between the replay and §02 counts four type sizes, not five (12 px mono was the fifth) */
+@media (max-width: 599.98px) { .lt-insp { --mono-s: var(--fs-small); --mono-tick: var(--fs-small); } }
 .lt-insp .lt-insp-ev { font-weight: 500; letter-spacing: .1em; color: var(--fg); }
 .lt-insp .lt-insp-ev.is-settled { color: var(--accent); }
 .lt-insp .lt-insp-ev.is-rejected { color: var(--reject); }

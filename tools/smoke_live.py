@@ -60,10 +60,10 @@ async def main():
 
         await pg.goto(f"{BASE}/", wait_until="load")
         await pg.wait_for_timeout(3000)
-        # the nav's readout lists every chapter of the page (7 until hc11, 6 since Home's §02 left; this may run against an
-        # older deploy, so count, don't pin)
+        # the nav's readout lists every chapter of the page (7 until hc11, 6 since Home's §02 left, 5 since hc13r when §03
+        # #proof left; this may run against an older deploy, so count, don't pin)
         nch = await pg.evaluate("document.querySelectorAll('main section[data-chapter]').length")
-        assert nch >= 6 and await pg.locator(".nav-ch-list a").count() == nch and await pg.locator(".chapters").count() == 0, nch
+        assert nch >= 5 and await pg.locator(".nav-ch-list a").count() == nch and await pg.locator(".chapters").count() == 0, nch
         await pg.locator("#research").scroll_into_view_if_needed()
         await pg.wait_for_timeout(1200)
         await pg.screenshot(path=str(OUT / "home-research.png"))

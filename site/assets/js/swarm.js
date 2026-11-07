@@ -1,4 +1,4 @@
-/* OpenEXA — the swarm lab (home §03, Platform §03): an illustrative model, 3D on a 2D canvas. Agents carry proposals
+/* OpenEXA — the swarm lab (Home §02, Platform §02): an illustrative model, 3D on a 2D canvas. Agents carry proposals
    through six gates; at 04 the Council's aperture approves or rejects against a risk limit you can tighten (rejections
    fall away); approved ones run five rails in lockstep, settle at 06 and are sealed into a hash-chained ledger line. Halt
    stops new proposals while open work drains; "Follow a proposal" traces one. Counters derive from the model's state
@@ -10,7 +10,9 @@
    hash, seq, followed}; a followed proposal's trace names that record and its button dispatches 'oxa:inspect' {record,
    seq, focus}. Without one (Home, Platform) the trace names the lab's own ledger line and links to Trust's. On screen the model runs; off screen it writes nothing and
    steps (4 Hz, nothing drawn) only while the page's ledger is near or a followed proposal is in flight. Pause motion and
-   hidden tabs freeze it; reduced motion: a still study. */
+   hidden tabs freeze it; reduced motion: a still study. A lab marked [data-sw-autofollow] (Home's, hc13r) follows one
+   proposal by itself, once, the first time it is well in view (site.js's OXA.actOnce), quietly, and rests in its follow
+   view when it ends. */
 (function () {
   'use strict';
   const root = document.querySelector('[data-swarm-live]');
@@ -151,7 +153,11 @@
 
   /* ---------------- following one proposal ---------------- */
   const follow = { active: false, show: false, i: -1, uid: 0, id: '', n: 0, px: new Float32Array(900 * 3), ps: new Uint8Array(900), pt: 0,
-    marks: [], verdict: '', endAt: 0, dim: 0, x: 0, y: 0, z: 0 };
+    marks: [], verdict: '', endAt: 0, dim: 0, x: 0, y: 0, z: 0, quiet: false, bare: false, unveil: false };
+  // (hc13r) Home's lab: a follow that ends rests in its follow view (the swarm dimmed, the path and its sealed record on the
+  // stage, "Follow another") until the visitor asks for more, so at rest Home shows one proposal gate by gate and Platform
+  // the aggregate
+  const AUTO = root.hasAttribute('data-sw-autofollow');
   const isFollowed = (i) => follow.active && follow.i === i && follow.uid === UID[i];
 
   /* ---------------- settled → ledger blocks; settled and rejected → the page's events ---------------- */
@@ -436,7 +442,7 @@
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     ctx.clearRect(0, 0, W, H);
     ctx.lineCap = 'butt'; ctx.lineJoin = 'bevel'; // round caps tessellate per segment: only the followed path gets them
-    follow.dim += ((follow.active || (follow.show && sim < follow.endAt + 1.2) ? 1 : 0) - follow.dim) * (reduced.matches ? 1 : 1 - Math.exp(-frameDt * 6));
+    follow.dim += ((follow.active || (follow.show && (AUTO || sim < follow.endAt + 1.2)) ? 1 : 0) - follow.dim) * (reduced.matches ? 1 : 1 - Math.exp(-frameDt * 6));
     placeLabels();
     drawFloor(); drawLedger(); drawFrames(); drawBoundary(); drawRails(); drawAperture(false); drawMotes(); drawTrails(); drawAgents(); drawAperture(true);
     drawFollow(); drawLeaders();
@@ -689,7 +695,7 @@
   }
   function drawFollow() {
     if (!follow.show || !follow.n) return;
-    const a = follow.active ? 1 : clamp(1 - (sim - follow.endAt - 2.2) / 1.4, 0, 1);
+    const a = follow.active || AUTO ? 1 : clamp(1 - (sim - follow.endAt - 2.2) / 1.4, 0, 1);
     if (a <= 0) { if (!follow.active) { follow.show = false; hideTag(); } return; }
     const colOf = (s) => (s === FLOW ? IV : s === REJECT ? RD : GR);
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -908,6 +914,7 @@
       if (outcome === 'settled') tagSet('settled · sealed', 'ok');
       say(`${id}: ${what}; the inspectable ledger is on the Trust page.`);
     }
+    if (follow.unveil) follow.unveil = follow.bare = false; // (hc13r) the lab's own act: its trace opens on the sealed record
     touch();
   }
   function tagText(i, g) {
@@ -916,7 +923,7 @@
       st[i] === REJECT ? 'bad' : g >= 6 ? 'ok' : '');
   }
   let sayText = null;
-  function say(t) { sayText = t; touch(); }
+  function say(t) { if (!follow.quiet) sayText = t; touch(); } // (hc13r) the lab's own act is quiet (its trace still syncs)
   // the ledger further down the page answers every announcement with 'oxa:recorded' {id, record, hash
   document.addEventListener('oxa:recorded', (e) => {
     const d = e.detail;
@@ -1064,8 +1071,9 @@
     }
     el.gates.forEach((li, g) => li.classList.toggle('is-hit', T.open && !!(T.hit & (1 << g))));
     if (!el.trace) return;
-    if (el.trace.hidden === T.open) { el.trace.hidden = !T.open; root.classList.toggle('is-tracing', T.open); }
-    if (!T.open) return;
+    const open = T.open && !follow.bare; // (hc13r) the lab's own follow on a stacked lab: the stage and the gates carry it
+    if (el.trace.hidden === open) { el.trace.hidden = !open; root.classList.toggle('is-tracing', open); }
+    if (!open) return;
     if (el.traceId && el.traceId.textContent !== T.head) el.traceId.textContent = T.head;
     if (el.traceState) {
       if (el.traceState.textContent !== T.state) el.traceState.textContent = T.state;
@@ -1094,7 +1102,7 @@
         a.setAttribute('aria-label', 'The ledger on the Trust page');
         const ar = document.createElement('i'); ar.setAttribute('aria-hidden', 'true'); ar.textContent = ' →';
         a.append(r.name, ar); li.children[1].replaceChildren(a);
-      }
+      } else if (!r.link && li.children[1].firstElementChild) li.children[1].textContent = r.name; // (integrate hc13r) a row kept from an earlier follow drops its link until this record is sealed
       const v = li.children[2];
       if (r.rec) { // the ledger's answer: a button that takes the reader to that record
         const btn = document.createElement('button');
@@ -1108,7 +1116,8 @@
   }
 
   /* ---------------- following ---------------- */
-  function startFollow(i) {
+  function startFollow(i, auto) {
+    follow.quiet = follow.bare = follow.unveil = false;
     if (i < 0) {
       clearTimeout(T.waitT);
       Object.assign(T, { open: true, id: '', head: 'Nothing in flight', state: halted ? 'Halted' : 'Waiting', cls: '', hit: 0, outcome: '', wait: false, waitT: 0 });
@@ -1117,7 +1126,11 @@
       return;
     }
     clearTimeout(T.waitT);
-    Object.assign(follow, { active: true, show: true, i, uid: UID[i], id: pid(UID[i]), n: 0, pt: -1, marks: [], verdict: '', endAt: 0, x: X[i], y: Y[i], z: Z[i], t1: t0Of(i) });
+    Object.assign(follow, { active: true, show: true, i, uid: UID[i], id: pid(UID[i]), n: 0, pt: -1, marks: [], verdict: '', endAt: 0, x: X[i], y: Y[i], z: Z[i], t1: t0Of(i),
+      quiet: !!auto, bare: !!auto, unveil: !!auto && !root.classList.contains('is-stacked') });
+    // (hc13r) the lab's own act: quiet, and its trace closed while the proposal crosses the stage (the overlaid trace sits
+    // on the lane's first gates); where the trace overlays the stage it opens once the record is sealed, the whole journey
+    // logged, as the act's rest; on a stacked lab it stays closed (it would push the page)
     Object.assign(T, { open: true, id: follow.id, head: `Proposal ${follow.id}`, state: 'In flight', cls: 'is-live', rows: journeyRows(), hit: 0, outcome: '', wait: false, waitT: 0 });
     // the gates it already passed, from its own record
     for (let g = 1; g <= gate[i]; g++) { const [v, kind] = VERDICT(i, g, 1 - strict); setRow('g' + g, GT[i * 7 + g] - t0Of(i), v, kind); T.hit |= 1 << (g - 1); }
@@ -1135,11 +1148,12 @@
       tagSet(`rejected at 04 · risk ${RISK[i].toFixed(2)}`, 'bad');
       setRow('floor', sim - follow.t1, 'fell away · not executed', 'bad');
       say(`${follow.id}: rejected at gate 04, never executed.`);
+      if (follow.unveil) follow.unveil = follow.bare = false;
     } else { const r = rowOf('led'); if (r && r.cls === 'pend') tagSet('settled · sealing…', 'ok'); }
     touch();
   }
   function clearFollow() { // the trace and the stage forget the followed proposal (nothing is announced)
-    follow.active = false; follow.show = false; follow.verdict = '';
+    follow.active = false; follow.show = false; follow.verdict = ''; follow.quiet = follow.bare = follow.unveil = false;
     clearTimeout(T.waitT); Object.assign(T, { open: false, id: '', rows: [], hit: 0, outcome: '', wait: false, waitT: 0 });
     hideTag(); touch();
   }
@@ -1149,16 +1163,16 @@
     if (reduced.matches) still();
   }
   // a fresh proposal about 0.4 s (at the follow's own pace) before gate 02
-  function pickFresh() {
+  function pickFresh(pass) { // (hc13r) pass: one the Council's limit passes today (the lab's own act crosses every gate)
     let best = -1, bs = -1e9;
     for (let i = 0; i < hi; i++) {
-      if (st[i] !== FLOW || gate[i] !== 1) continue;
+      if (st[i] !== FLOW || gate[i] !== 1 || (pass && RISK[i] >= 1 - strict - 0.05)) continue;
       const lead = (GX[1] - X[i]) / (2 * SPD[i]);
       if (lead < 0.12 || lead > 1.2) continue;
-      const s = -Math.abs(lead - 0.4) * 2.5 + Z[i] * 0.9 - Math.abs(Y[i]) * 0.9 + rnd() * 0.04;
+      const s = -Math.abs(lead - 0.4) * 2.5 + Z[i] * 0.9 + (pass ? Y[i] * 1.2 : -Math.abs(Y[i]) * 0.9) + rnd() * 0.04; // (hc13r) the act's: the stream's upper half, clear of the trace's corner
       if (s > bs) { bs = s; best = i; }
     }
-    if (best < 0) for (let i = 0; i < hi; i++) if ((st[i] === FLOW || st[i] === PROP || st[i] === RAIL) && (best < 0 || X[i] < X[best])) best = i;
+    if (best < 0 && !pass) for (let i = 0; i < hi; i++) if ((st[i] === FLOW || st[i] === PROP || st[i] === RAIL) && (best < 0 || X[i] < X[best])) best = i;
     return best;
   }
   const live = (i) => i >= 0 && (st[i] === FLOW || st[i] === PROP || st[i] === RAIL);
@@ -1291,6 +1305,15 @@
     });
   }
   if (el.follow) el.follow.addEventListener('click', () => { if (follow.active) stopFollow(); else startFollow(pickFresh()); });
+  // (hc13r HOME-2, hc13 item 4.1) Home's lab follows one proposal by itself, once, the first time it is well in view: the
+  // shared rule (site.js OXA.actOnce: never under reduced motion, never once the visitor has touched the lab, never on a
+  // hidden page), and never while the lab is paused, halted or already following. Quiet (say() stays silent for it).
+  if (AUTO) {
+    const OXA = window.OXA = window.OXA || {};
+    const busy = () => !booted || paused || halted || reduced.matches || follow.active || follow.show || T.open;
+    const act = [root, () => { if (busy()) return; const i = pickFresh(true); if (i >= 0) startFollow(i, true); }, { paused: busy }];
+    if (OXA.actOnce) OXA.actOnce(...act); else (OXA.q = OXA.q || []).push(act);
+  }
   if (el.close) el.close.addEventListener('click', () => { stopFollow(); if (el.follow) el.follow.focus(); });
   // Escape stops following from inside the lab, and also after a click or tap on an agent
   document.addEventListener('keydown', (e) => {
@@ -1375,7 +1398,7 @@
     SK = Math.max(1, (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16); W = CW / SK; H = CH / SK;
     const ndpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(3840 * 2160 / (CW * CH)));
     const rebuild = ndpr !== dpr || !SPR.bead; dpr = ndpr;
-    root.classList.toggle('is-stacked', W < 820); // the trace flows under the canvas instead of over it
+    root.classList.toggle('is-stacked', W < 1100); // the trace flows under the canvas instead of over it (hc13r, system's request: to a 1199 px window, where the overlaid trace at the UI step covered the Council)
     cv.width = Math.round(CW * dpr); cv.height = Math.round(CH * dpr);
     // a dense backing store (DPR 2+ or over 2 MP) starts without the estimation field's trails
     const qStart = dpr >= 2 || cv.width * cv.height > 2e6 ? 1 : 2;

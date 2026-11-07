@@ -100,9 +100,9 @@ async def main():
         await pg.evaluate("document.querySelector('#research').scrollIntoView()"); await pg.wait_for_timeout(1500)
         await pg.screenshot(path=shot(f"home-research.png"))
         # the chapters live in the nav's readout list now (the fixed right rail is gone); it lists every chapter of the page
-        # (7 until hc11, 6 since Home's §02 left)
+        # (7 until hc11, 6 since Home's §02 left, 5 since hc13r when §03 #proof left)
         nch = await pg.evaluate("document.querySelectorAll('main section[data-chapter]').length")
-        assert nch == 6 and await pg.locator(".nav-ch-list a").count() == nch and await pg.locator(".chapters").count() == 0, nch
+        assert nch == 5 and await pg.locator(".nav-ch-list a").count() == nch and await pg.locator(".chapters").count() == 0, nch
         # insights redirect
         await pg.goto(f"{BASE}/insights.html", wait_until="load"); await pg.wait_for_timeout(800)
         assert pg.url.endswith("/research.html"), pg.url

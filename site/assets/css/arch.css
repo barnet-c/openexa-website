@@ -118,10 +118,10 @@
   background-image: radial-gradient(circle, rgba(245, 242, 236, .42) .04375rem, transparent .075rem); background-size: 1rem 1rem; background-position: calc(var(--cx, 50%) - .5rem) 0;
   -webkit-mask-image: linear-gradient(to bottom, #000, rgba(0, 0, 0, .35) 5.625rem, transparent 15.625rem); mask-image: linear-gradient(to bottom, #000, rgba(0, 0, 0, .35) 5.625rem, transparent 15.625rem); }
 
-/* the layers, as buttons: each is the label of its plate */
+/* the layers, as buttons: each is the label of its plate; hc13r SYS-1: the step numerals at the UI step (--fs-small), as the lab's */
 .arch-h { margin: 0; font: inherit; }
 .arch-layer { position: relative; display: grid; grid-template-columns: 1.875rem minmax(0, 1fr) 1.125rem; align-items: center; column-gap: .75rem; width: 100%; min-height: 4rem; padding: .5rem .375rem .5rem 1rem; text-align: left; border-top: var(--hair) solid var(--line); color: var(--fg-2); transition: color var(--dur-feedback) var(--ease), background-color var(--dur-feedback) var(--ease); }
-.arch-layer .n { font-family: var(--mono); font-size: var(--mono-s, .6875rem); letter-spacing: .1em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color var(--dur-feedback) var(--ease-out); }
+.arch-layer .n { font-family: var(--mono); font-size: var(--fs-small); letter-spacing: 0; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color var(--dur-feedback) var(--ease-out); }
 .arch-layer .nm { font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.1; letter-spacing: -0.01em; }
 .arch-layer::after { content: "+"; content: "+" / ""; font-family: var(--mono); font-size: .95rem; line-height: 1; color: var(--fg-3); text-align: center; transition: color var(--dur-feedback) var(--ease-out), transform var(--dur-move) var(--ease); }
 .arch-layer[aria-expanded="true"]::after { content: "\2212"; content: "\2212" / ""; color: var(--accent); } /* decoration: aria-expanded carries the state */
@@ -213,7 +213,6 @@
 .dpl-col .n { display: flex; justify-content: space-between; gap: .75rem; padding-top: 1rem; border-top: var(--hair) solid var(--line-strong); font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .12em; color: var(--fg-3); }
 .dpl-col h3 { margin: 1.375rem 0 .75rem; font-weight: 400; }
 .dpl-col p { max-width: 46ch; font-size: var(--fs-small); color: var(--fg-2); }
-#mcp { padding-bottom: clamp(4rem, 7vw, 7rem); } /* the row ends the section: no tall empty band under it */
 @media (min-width: 601px) and (max-width: 960px) { /* hc5: to 960 px; from 961 px Platform's §04 is the ruled row of three (platform.css) */
   .dpl { grid-template-columns: minmax(0, 1fr); }
   .dpl-col { display: grid; grid-template-columns: minmax(0, 21.25rem) minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: clamp(1.5rem, 4vw, 3rem); }

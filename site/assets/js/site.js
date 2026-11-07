@@ -516,10 +516,71 @@
     t.focus({ preventScroll: true });
   }
 
-  /* ---------------- page transitions: leaving the overture fades like every other page ----------------
+  /* ---------------- the page turn (hc13r SYS-2; site.css draws it: @view-transition, type "page") ----------------
+     Back through history lays the arriving sheet down from above (the "back" type). OXA.landed() resolves once the sheet
+     is down, at once on a page that arrived without a turn (a load, a reload, reduced motion), so what acts by itself
+     starts after the turn. On Home this script runs after paint: a turn still running is read from activeViewTransition */
+  const OXA = window.OXA = window.OXA || {};
+  let landed = Promise.resolve();
+  const seen = new WeakSet();
+  function turned(vt) {
+    if (!vt) return;
+    // again at pagereveal: the types are set from @view-transition there (a turn read earlier, at parse, loses its own).
+    // Never once the sheets move (Home's late script): a turn changes direction only before its first frame
+    const a = window.navigation && navigation.activation;
+    const moving = () => document.getAnimations().some(x => x.effect && /^::view-transition/.test(x.effect.pseudoElement || '') && x.currentTime > 0);
+    if (a && a.navigationType === 'traverse' && a.from && a.entry && a.entry.index < a.from.index && !moving()) { try { vt.types.add('back'); } catch (err) { /* no types: the upward sheet */ } }
+    if (!seen.has(vt)) { seen.add(vt); landed = vt.finished.catch(() => {}).then(() => {}); }
+  }
+  window.addEventListener('pagereveal', e => turned(e.viewTransition));
+  if (document.activeViewTransition && !root.dataset.jump) turned(document.activeViewTransition);
+  OXA.landed = () => landed;
+
+  /* ---------------- OXA.actOnce (hc13r SYS-3): one rule for when an instrument acts by itself ----------------
+     start({ quiet: true }) runs once per page view, when el has been at least `visible` (.6 of it, or of the screen for a
+     taller one) in view for `delay` ms (700), after the page turn has landed. Never under reduced motion, never once the
+     visitor has touched it (keydown or a click inside el, or pointerdown on a control or with a mouse or pen: capture
+     phase; a swipe that scrolls over it does not count), never while opts.paused() is true (the wait restarts at its next
+     entry), never on a hidden page. Quiet: the instrument announces nothing; what a visitor starts is announced as before.
+     Returns a cancel function. An engine that runs before this script queues its call (SYSTEM.md):
+       const OXA = window.OXA = window.OXA || {};
+       if (OXA.actOnce) OXA.actOnce(el, start, opts); else (OXA.q = OXA.q || []).push([el, start, opts]); */
+  const CONTROL = 'a[href], button, input, select, textarea, label, summary, [role="button"], [role="slider"], [role="tab"], [tabindex]';
+  function actOnce(el, start, opts) {
+    if (!el || typeof start !== 'function' || !('IntersectionObserver' in window)) return () => {};
+    const o = Object.assign({ visible: 0.6, delay: 700, paused: null }, opts);
+    let done = false, timer = 0, inView = false;
+    const stop = () => { clearTimeout(timer); timer = 0; };
+    const off = () => {
+      if (done) return;
+      done = true; stop(); io.disconnect();
+      el.removeEventListener('pointerdown', press, true); el.removeEventListener('keydown', off, true); el.removeEventListener('click', off, true);
+      document.removeEventListener('visibilitychange', vis);
+    };
+    const press = e => { if (e.pointerType !== 'touch' || (e.target.closest && e.target.closest(CONTROL))) off(); };
+    const blocked = () => done || !inView || document.hidden || reducedMQ.matches || !!(o.paused && o.paused());
+    const fire = () => { timer = 0; if (!blocked()) landed.then(() => { if (!blocked()) { off(); start({ quiet: true }); } }); };
+    const vis = () => { if (document.hidden) stop(); else if (inView && !timer) timer = setTimeout(fire, o.delay); };
+    const io = new IntersectionObserver(entries => entries.forEach(e => {
+      const vh = e.rootBounds ? e.rootBounds.height : window.innerHeight;
+      const r = e.isIntersecting ? Math.max(e.intersectionRatio, e.intersectionRect.height / Math.max(1, Math.min(e.boundingClientRect.height, vh))) : 0;
+      inView = r >= o.visible - 0.001;
+      if (!inView) stop(); else if (!timer && !document.hidden) timer = setTimeout(fire, o.delay);
+    }), { threshold: Array.from({ length: 21 }, (v, k) => k / 20) });
+    el.addEventListener('pointerdown', press, true);
+    el.addEventListener('keydown', off, true);
+    el.addEventListener('click', off, true); // a tap anywhere inside (a swipe that scrolls makes no click)
+    document.addEventListener('visibilitychange', vis);
+    io.observe(el);
+    return off;
+  }
+  OXA.actOnce = actOnce;
+  (OXA.q || []).splice(0).forEach(a => actOnce(...a));
+
+  /* ---------------- page transitions: leaving the overture recedes like every other page ----------------
      (award a1) A WebGL canvas is not kept for the outgoing snapshot, so leaving the stage used to skip the transition (a
      hard cut). Now the stage's canvases are hidden for the snapshot (html.vt-out, site.css): the dark stage and its copy
-     fade out as any page does. Back from the bfcache, the class is gone before the page shows. */
+     recede as any page does. Back from the bfcache, the class is gone before the page shows. */
   const stageEl = $('.story-stage');
   if (stageEl) {
     window.addEventListener('pageswap', e => {

@@ -49,15 +49,17 @@
 /* ... and labels projected from the 3D gates with it (the descriptions stay for screen readers) */
 .sw-on .sw-gates { display: block; position: absolute; left: 0; top: 0; width: 100%; height: var(--sw-h); padding: 0; pointer-events: none; }
 /* hc2: the drawing's words in the plates' caption register (Inter, sentence case); the gate numbers and the policy stay mono (data) */
+/* hc13r SYS-1: the lab speaks at two sizes, the UI step (--fs-small: words in Inter, the gate numbers, the policy and the
+   sliders' values in mono) and the counters (--fs-item); no 11 px label inside the frame */
 .sw-on .sw-gates li { position: absolute; left: 0; top: 0; padding: 0; border: 0; white-space: nowrap; font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .8); transition: color var(--dur-move) var(--ease-out); will-change: transform; }
 .sw-on .sw-gates li::before { display: none; }
-.sw-on .sw-gates b { margin-right: .5em; font: 500 var(--fs-label)/1 var(--mono); letter-spacing: .04em; color: rgba(245, 242, 236, .5); transition: color var(--dur-move) var(--ease-out); }
+.sw-on .sw-gates b { margin-right: .5em; font: 400 var(--fs-small)/1 var(--mono); letter-spacing: 0; color: rgba(245, 242, 236, .5); transition: color var(--dur-move) var(--ease-out); }
 .sw-on .sw-gates li.is-council span, .sw-on .sw-gates li.is-council b, .sw-on .sw-gates li:last-child b { color: var(--accent); }
 .sw-on .sw-gates li.is-hit b { color: var(--accent); } .sw-on .sw-gates li.is-hit span { color: var(--paper); }
 .sw-on .sw-gates small { position: absolute; width: var(--hair); height: var(--hair); margin: calc(-1 * var(--hair)); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .swarm-live.is-halted .sw-gates li:first-child, .swarm-live.is-halted .sw-gates li:first-child b { color: var(--khaki); }
 /* the council's live state at 04: what it approves, what it rejects */
-.sw-on .sw-limit { display: block; margin-top: calc(2 * var(--hair)); font: 500 var(--fs-label)/1.45 var(--mono); letter-spacing: .04em; text-transform: none; color: rgba(245, 242, 236, .62); transition: color var(--dur-move) var(--ease-out); }
+.sw-on .sw-limit { display: block; margin-top: calc(2 * var(--hair)); font: 400 var(--fs-small)/1.45 var(--mono); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .62); transition: color var(--dur-move) var(--ease-out); }
 .sw-limit.is-all > span:nth-child(n+2) { display: none; }
 .sw-on .sw-gates li.is-tuned .sw-limit { color: var(--accent); transition-duration: var(--dur-feedback); }
 .sw-on.is-narrow .sw-limit:not(.is-all) > span:nth-child(-n+2) { display: none; }
@@ -72,29 +74,30 @@
 .sw-on .sw-ledger, .sw-on .sw-banner:not([hidden]), .sw-on .sw-agent:not([hidden]) { display: block; position: absolute; left: 0; top: 0; white-space: nowrap; pointer-events: none; font: 400 var(--fs-small)/1.35 var(--sans); will-change: transform; }
 .sw-on .sw-ledger { color: rgba(245, 242, 236, .72); text-shadow: 0 0 .1875rem var(--ink), 0 0 .375rem var(--ink); } /* a3: where the name is held inside a narrow stage, a plate's edge may cross it: the stage's ink parts round it */
 .sw-on .sw-banner:not([hidden]) { padding: .4375rem .6875rem; border: var(--hair) solid rgba(172, 166, 142, .45); background: rgba(11, 17, 15, .8); color: var(--khaki); }
-.sw-on .sw-agent:not([hidden]) { font: 500 var(--mono-tick)/1.35 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; padding: .375rem .625rem .4375rem; border: var(--hair) solid rgba(245, 242, 236, .34); background: rgba(11, 17, 15, .86); color: rgba(245, 242, 236, .8); }
-.sw-agent b { display: block; font-weight: 500; color: var(--accent); }
+.sw-on .sw-agent:not([hidden]) { font: 400 var(--fs-small)/1.35 var(--mono); letter-spacing: 0; text-transform: none; padding: .375rem .625rem .4375rem; border: var(--hair) solid rgba(245, 242, 236, .34); background: rgba(11, 17, 15, .86); color: rgba(245, 242, 236, .8); }
+.sw-agent b { display: block; font-weight: 400; color: var(--accent); }
 .sw-agent span { display: block; }
 .sw-agent.is-bad { border-color: rgba(217, 103, 93, .6); } .sw-agent.is-bad b { color: var(--reject-bright); }
 .sw-agent.is-ok { border-color: rgba(79, 203, 147, .6); }
 /* the hover tag (mouse only): names the agent under the pointer and says it can be followed */
-.sw-on .sw-hover:not([hidden]) { display: block; position: absolute; left: 0; top: 0; padding: .3125rem .5625rem .375rem; border-left: var(--hair) solid var(--accent); background: rgba(11, 17, 15, .82); white-space: nowrap; pointer-events: none; font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: rgba(245, 242, 236, .66); will-change: transform; }
-.sw-hover b { display: block; font-weight: 500; color: var(--paper); }
+.sw-on .sw-hover:not([hidden]) { display: block; position: absolute; left: 0; top: 0; padding: .3125rem .5625rem .375rem; border-left: var(--hair) solid var(--accent); background: rgba(11, 17, 15, .82); white-space: nowrap; pointer-events: none; font: 400 var(--fs-small)/1.4 var(--mono); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .66); will-change: transform; }
+.sw-hover b { display: block; font-weight: 400; color: var(--paper); }
 
-/* the trace of a followed proposal: over the stage's lower left; below the canvas on narrow screens. */
-.sw-on .sw-trace:not([hidden]) { display: block; position: absolute; left: 1rem; top: calc(var(--sw-h) - 1rem); transform: translateY(-100%); width: min(24.25rem, calc(100% - 2rem)); border: var(--hair) solid rgba(245, 242, 236, .2); background: rgba(11, 17, 15, .9); font-family: var(--mono); animation: sw-trace-in .35s var(--ease) both; }
-.sw-trace-head { display: flex; align-items: center; gap: .75rem; padding: .375rem .5rem .375rem .875rem; border-bottom: var(--hair) solid var(--line); font-size: var(--mono-tick); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--paper); }
+/* the trace of a followed proposal: over the stage's lower left; below the canvas on narrow screens. hc13r: the trace and
+   the tags at the UI step in sentence case (as the gates' "01 Signal"), so a follow adds no size to the lab's screen */
+.sw-on .sw-trace:not([hidden]) { display: block; position: absolute; left: 1rem; top: calc(var(--sw-h) - 1rem); transform: translateY(-100%); width: min(26.5rem, calc(100% - 2rem)); border: var(--hair) solid rgba(245, 242, 236, .2); background: rgba(11, 17, 15, .9); font-family: var(--mono); animation: sw-trace-in .35s var(--ease) both; }
+.sw-trace-head { display: flex; align-items: center; gap: .75rem; padding: .375rem .5rem .375rem .875rem; border-bottom: var(--hair) solid var(--line); font-size: var(--fs-small); letter-spacing: 0; text-transform: none; color: var(--paper); }
 .sw-trace-state { color: var(--fg-3); }
 .sw-trace-state.is-live { color: var(--accent); } .sw-trace-state.is-ok { color: var(--accent); } .sw-trace-state.is-bad { color: var(--reject-bright); }
-.sw-trace-close { margin-left: auto; min-height: 2.125rem; padding: .25rem .625rem; border: var(--hair) solid var(--line); border-radius: .125rem; color: var(--fg-2); font: inherit; letter-spacing: var(--track-label, .12em); text-transform: uppercase; }
+.sw-trace-close { margin-left: auto; min-height: 2.125rem; padding: .25rem .625rem; border: var(--hair) solid var(--line); border-radius: .125rem; color: var(--fg-2); font: inherit; letter-spacing: 0; text-transform: none; }
 @media (hover: hover) { .sw-trace-close:hover { border-color: var(--line-strong); color: var(--paper); } }
-.sw-log { margin: 0; padding: .1875rem .875rem .4375rem; list-style: none; font-size: var(--fs-label); line-height: 1.45; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
-.sw-log li { display: grid; grid-template-columns: 4.4em 8.4em minmax(0, 1fr); align-items: center; gap: .625rem; min-height: 2.1em; padding: .125rem 0; border-bottom: var(--hair) solid rgba(245, 242, 236, .08); color: var(--fg-2); }
+.sw-log { margin: 0; padding: .1875rem .875rem .4375rem; list-style: none; font-size: var(--fs-small); line-height: 1.4; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.sw-log li { display: grid; grid-template-columns: 4em 6.6em minmax(0, 1fr); align-items: center; gap: .5rem; min-height: 1.9em; padding: .125rem 0; border-bottom: var(--hair) solid rgba(245, 242, 236, .08); color: var(--fg-2); }
 .sw-log li:last-child { border-bottom: 0; }
 .sw-log li[data-k="led"] { min-height: 2.125rem; } /* the ledger row holds the record button's height from the start */
 .sw-log .sw-t { color: var(--fg-3); text-align: right; }
 .sw-log .sw-v { text-wrap: balance; } /* a two-line verdict breaks evenly, never leaving one word on its own line */
-.sw-log b { font-weight: 500; letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--paper); }
+.sw-log b { font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--paper); }
 /* a page without a ledger (Platform): the Ledger row's name leads to the inspectable ledger on the home page */
 .sw-led-a { color: inherit; text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .1875rem; text-decoration-color: color-mix(in srgb, currentColor 50%, transparent); }
 .sw-led-a i { font-style: normal; }
@@ -124,7 +127,7 @@
 .swarm-controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1.125rem; align-items: end; padding: .875rem 1.125rem .75rem; }
 /* a3 (UX juror): the slider names in Inter at the small step, sentence case; their values stay mono (data) */
 .swarm-controls label { display: grid; gap: .375rem; font: 400 var(--fs-small)/1.35 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
-.swarm-controls output { font: 500 var(--fs-label)/1 var(--mono); letter-spacing: .04em; color: var(--accent); }
+.swarm-controls output { font: 400 var(--fs-small)/1 var(--mono); letter-spacing: 0; color: var(--accent); }
 .swarm-controls output::before { content: "· "; color: var(--fg-2); } /* the separator is drawn, so the label's text is its name ('Agents in this model') plus the value */
 .swarm-controls input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 1.75rem; background: transparent; margin: 0; cursor: pointer; font-size: 1rem; }
 .swarm-controls input[type=range]::-webkit-slider-runnable-track { height: var(--hair); background: var(--line-strong); }
@@ -177,14 +180,14 @@
 /* set by the engine from the stage's own width: under 820px the trace flows under the canvas */
 .sw-on.is-stacked .sw-trace:not([hidden]) { position: relative; left: auto; top: auto; transform: none; width: auto; border: 0; border-top: var(--hair) solid var(--line); animation-name: sw-in; }
 /* in the flow the log keeps the height of a whole journey with its record button, so a rejection */
-.sw-on.is-stacked .sw-log { min-height: calc(6 * 2.1em + 2.125rem + .625rem); }
+.sw-on.is-stacked .sw-log { min-height: calc(6 * 1.9em + 2.125rem + .625rem); }
 .sw-on.is-narrow .sw-gates b { margin-right: .375em; }
 .sw-on.is-narrow .sw-ledger span { display: none; }
 .sw-on.is-narrow .sw-banner:not([hidden]) { max-width: calc(100% - 1rem); white-space: normal; } /* hc2: at 320 the halt line wraps inside the stage (it ran past its edge) */
 /* a3, 320 px: the top row (02, 04 with its policy, 06) needs 277 px of a 278 px stage: tighter tracking keeps 8 px between
    them (swarm.js measures after the class is set) */
 .sw-on.is-tight .sw-gates b { margin-right: .3em; letter-spacing: 0; }
-.sw-on.is-narrow .sw-log li { grid-template-columns: 4em 7.6em minmax(0, 1fr); gap: .5rem; } /* a verdict ('approved · risk 0.04 ≤ 0.88') holds one line at 390 */
+.sw-on.is-narrow .sw-log li { grid-template-columns: 4em 6.6em minmax(0, 1fr); gap: .5rem; } /* a verdict ('approved · risk 0.04 ≤ 0.88') holds one line at 390 */
 /* touch: every control in the lab is at least 44 px tall, the sliders' thumbs 22 px */
 @media (pointer: coarse) {
   .swarm-controls input[type=range] { height: 2.75rem; }
@@ -193,7 +196,7 @@
   .swarm-live .sw-follow, .sw-trace-close, .sw-motion, .sw-rec { min-height: 2.75rem; }
   .sw-rec { margin: 0; }
   .sw-log li[data-k="led"] { min-height: 3rem; }
-  .sw-on.is-stacked .sw-log { min-height: calc(6 * 2.1em + 3rem + .625rem); }
+  .sw-on.is-stacked .sw-log { min-height: calc(6 * 1.9em + 3rem + .625rem); }
 }
 /* phones held sideways: a shorter stage, the controls in two columns beside the counters (from 540 px: at 400% zoom,
    320 x 256, the lab keeps its phone layout and scrolls) */
