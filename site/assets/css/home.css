@@ -146,7 +146,29 @@ body[data-page="home"] main .figure-cap { padding-left: 0; }
 /* the first screen: the CEO's head and line, two buttons, then v2's four figures (overture.css) */
 body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(1.625rem, 3.2vh, 2.25rem); }
 
-/* §01 the six classes: site.css's .lc-reg (hc2, one component for Home and Company) */
+/* §01 the six classes' register (hc2; integrate hc8 moved it here from site.css, Home its one user, with hc8's cell, the
+   director's, folded in: one block per cell at every width, the ring, the serif name, the status 0.25rem under it; the
+   cells ~120 px at 1440, was ~183). Six cells, the live one first under a green rule; one column on a phone.
+   Markup: div.card-grid.card-grid--3.lc-reg > .card > .n.n--ring + h3.h4 */
+.lc-reg { grid-template-columns: repeat(3, minmax(0, 1fr)); border: 0; border-top: var(--hair) solid var(--line-strong); }
+.lc-reg > .card { display: grid; grid-template-columns: 1.75rem minmax(0, 1fr); grid-template-rows: auto auto; column-gap: .875rem; row-gap: .25rem; align-content: start; align-items: start; padding: 1.125rem clamp(1.125rem, 2.2vw, 2rem) 1.375rem; border: 0; border-bottom: var(--hair) solid var(--line); border-radius: 0; background: none; }
+.lc-reg > .card:nth-child(3n + 1) { padding-left: 0; }
+.lc-reg > .card:not(:nth-child(3n + 1)) { border-left: var(--hair) solid var(--line); }
+.lc-reg > .card:first-child { box-shadow: inset 0 calc(2 * var(--hair)) 0 var(--accent); }
+.lc-reg .card .n { display: contents; color: var(--fg-2); }
+.lc-reg .lc-code { flex: none; grid-column: 1; grid-row: 1 / span 2; align-self: start; margin-top: calc((1.15 * var(--fs-heading) - 1.75rem) / 2); }
+.lc-reg .card .h4 { grid-column: 2; grid-row: 1; align-self: start; margin: 0; max-width: 17ch; font-size: var(--fs-heading); line-height: 1.15; letter-spacing: -0.01em; color: var(--fg-2); text-wrap: balance; } /* hc4: the title step, as Lifecycles' traits */
+.lc-reg .card:first-child .h4 { color: var(--fg); }
+.lc-reg .card .n--ring > span:last-child { grid-column: 2; grid-row: 2; justify-self: start; font: 400 .875rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--khaki-ink); text-wrap: balance; } /* hc3: balanced, so "Live: ETF creation / & redemption" at 761-960 */
+.lc-reg .card .n--ring > .badge { padding: 0; border: 0; } /* every status, live too, in the khaki ink */
+@media (min-width: 761px) { .lc-reg .lc-dot { display: block; height: 0; overflow: hidden; } } /* a dot-joined name breaks before its dot and drops it */
+@media (max-width: 760px) {
+  .lc-reg { grid-template-columns: minmax(0, 1fr); }
+  .lc-reg > .card:nth-child(n) { grid-template-columns: 1.375rem minmax(0, 1fr); row-gap: calc(3 * var(--hair)); align-content: normal; align-items: center; padding: .875rem 0 .9375rem; border-left: 0; }
+  .lc-reg .lc-code { align-self: center; margin-top: 0; }
+  .lc-reg .lc-ring { width: 1.375rem; height: 1.375rem; }
+  .lc-reg .card .h4 { align-self: end; max-width: none; font-size: var(--fs-body); line-height: 1.25; }
+}
 
 /* §04: the head and its hedge beside the chart (hc5: the open pair, 3 and 5, cut: one hard fact on the screen) */
 body[data-page="home"] #proof .proof-copy .ch-title { max-width: 11ch; }
@@ -232,35 +254,36 @@ body[data-page="home"] #proof { --cis: 38.203125rem; } body[data-page="home"] #e
 body[data-page="home"] #research { --cis: 35.53125rem; } body[data-page="home"] .cta-band { --cis: 6.453125rem; }
 @media (min-width: 600px) {
   body[data-page="home"] #lifecycles { --cis: 39.3125rem; } body[data-page="home"] #stack { --cis: 36.59375rem; } body[data-page="home"] #lc01 { --cis: 54.359375rem; }
-  body[data-page="home"] #proof { --cis: 42.578125rem; } body[data-page="home"] #economics { --cis: 31.1875rem; } body[data-page="home"] #governance { --cis: 78.21875rem; }
+  body[data-page="home"] #proof { --cis: 42.578125rem; } body[data-page="home"] #economics { --cis: 31.1875rem; } body[data-page="home"] #governance { --cis: 76.625rem; }
   body[data-page="home"] #research { --cis: 35.671875rem; } body[data-page="home"] .cta-band { --cis: 6.5625rem; }
 }
 /* 761-960: the 820 heights (768-834 within 1rem; hc2) */
 @media (min-width: 761px) and (max-width: 960px) {
-  body[data-page="home"] #lifecycles { --cis: 32.65234375rem; } body[data-page="home"] #stack { --cis: 24.59375rem; } body[data-page="home"] #lc01 { --cis: 52.0625rem; }
-  body[data-page="home"] #proof { --cis: 44.203125rem; } body[data-page="home"] #economics { --cis: 32.921875rem; } body[data-page="home"] #governance { --cis: 57.046875rem; }
+  body[data-page="home"] #lifecycles { --cis: 28.28125rem; } body[data-page="home"] #stack { --cis: 24.59375rem; } body[data-page="home"] #lc01 { --cis: 52.0625rem; }
+  body[data-page="home"] #proof { --cis: 44.203125rem; } body[data-page="home"] #economics { --cis: 32.921875rem; } body[data-page="home"] #governance { --cis: 55.453125rem; }
   body[data-page="home"] #research { --cis: 30.296875rem; } body[data-page="home"] .cta-band { --cis: 7.03125rem; }
 }
 @media (min-width: 961px) {
-  body[data-page="home"] #lifecycles { --cis: 42.2109375rem; } body[data-page="home"] #stack { --cis: 30.625rem; } body[data-page="home"] #lc01 { --cis: 64.1875rem; }
+  body[data-page="home"] #lifecycles { --cis: 34.515625rem; } body[data-page="home"] #stack { --cis: 30.625rem; } body[data-page="home"] #lc01 { --cis: 64.1875rem; }
   body[data-page="home"] #proof { --cis: 31.484375rem; } body[data-page="home"] #economics { --cis: 25.875rem; } body[data-page="home"] #governance { --cis: 42.859375rem; }
   body[data-page="home"] #research { --cis: 36.890625rem; } body[data-page="home"] .cta-band { --cis: 10.0625rem; }
 }
 /* small desktops: 961-1099 the 1024 heights, 1100-1359 the 1280 heights (the spreads start at 1100; re-measured hc2;
-   #lifecycles from 761 px re-measured hc4, after its titles took the --fs-heading step; #stack and #proof at every band hc5) */
+   #lifecycles from 761 px re-measured hc4, after its titles took the --fs-heading step, and hc8, its cells one block each;
+   #stack and #proof at every band hc5) */
 @media (min-width: 961px) and (max-width: 1099.98px) {
-  body[data-page="home"] #lifecycles { --cis: 35.05859375rem; } body[data-page="home"] #stack { --cis: 28.21875rem; } body[data-page="home"] #lc01 { --cis: 56.953125rem; }
+  body[data-page="home"] #lifecycles { --cis: 29.234375rem; } body[data-page="home"] #stack { --cis: 28.21875rem; } body[data-page="home"] #lc01 { --cis: 56.953125rem; }
   body[data-page="home"] #proof { --cis: 29.03125rem; } body[data-page="home"] #economics { --cis: 33.015625rem; } body[data-page="home"] #governance { --cis: 41.953125rem; }
   body[data-page="home"] #research { --cis: 33.765625rem; } body[data-page="home"] .cta-band { --cis: 7.984375rem; }
 }
 @media (min-width: 1100px) and (max-width: 1359.98px) {
-  body[data-page="home"] #lifecycles { --cis: 39.26171875rem; } body[data-page="home"] #stack { --cis: 34.96875rem; } body[data-page="home"] #lc01 { --cis: 58.9375rem; }
+  body[data-page="home"] #lifecycles { --cis: 32.265625rem; } body[data-page="home"] #stack { --cis: 34.96875rem; } body[data-page="home"] #lc01 { --cis: 58.9375rem; }
   body[data-page="home"] #proof { --cis: 31.046875rem; } body[data-page="home"] #economics { --cis: 25.171875rem; } body[data-page="home"] #governance { --cis: 42.515625rem; }
   body[data-page="home"] #research { --cis: 34.59375rem; } body[data-page="home"] .cta-band { --cis: 9.4375rem; }
 }
 /* from 1680 (rem above 1920, so 3840 is 1920 doubled): the 1920 heights (re-measured hc2) */
 @media (min-width: 1680px) {
-  body[data-page="home"] #lifecycles { --cis: 40.03515625rem; } body[data-page="home"] #stack { --cis: 37.609375rem; } body[data-page="home"] #lc01 { --cis: 66.671875rem; }
+  body[data-page="home"] #lifecycles { --cis: 34.8125rem; } body[data-page="home"] #stack { --cis: 37.609375rem; } body[data-page="home"] #lc01 { --cis: 66.671875rem; }
   body[data-page="home"] #proof { --cis: 32.21875rem; } body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 43.046875rem; }
   body[data-page="home"] #research { --cis: 39.609375rem; }
 }

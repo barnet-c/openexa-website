@@ -117,10 +117,17 @@
 [data-page="proof"] .pf-doc h3 a { display: inline; text-decoration: underline var(--hair) var(--line-strong); text-underline-offset: .22em; transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
 [data-page="proof"] .pf-doc h3 .arr { display: inline-block; width: .55em; height: .55em; margin-left: .25em; vertical-align: .05em; }
 @media (hover: hover) { [data-page="proof"] .pf-doc h3 a:hover { text-decoration-color: currentColor; } }
-@media (min-width: 601px) { [data-page="proof"] .pf-trail { --sw: clamp(7rem, 11.6vw, 10.5rem); --lx: 1.5rem; } }
+/* hc8 (HC8 item 6): from 601 px each name stands on its sheet's base line, ruled on to the content edge, so the plate
+   spans its columns as every plate does and the rows read as a register (Trust §02 on phones, §04). The rule lies on
+   the front sheet's lower edge (half a hair down: the stroke is centred on the edge, a border inside the box) */
+@media (min-width: 601px) {
+  [data-page="proof"] .pf-trail { --sw: clamp(7rem, 11.6vw, 13.65rem); --lx: 1.5rem; }
+  [data-page="proof"] .pf-trail .pf-doc h3 { align-self: end; margin-bottom: calc(var(--hair) / -2); padding-bottom: clamp(1.25rem, 2.4vw, 2rem); border-bottom: var(--hair) solid var(--line-strong); }
+}
 /* two columns from 720 px (tablets get a real two-column layout): the head 1-6 (1-5 from 961), the trail 7-12; the
-   sheets grow with the window to 10.5rem (1.5 x hc6's 7rem at 1440: the head and the three sheets on one 1440 x 900
-   screen), and the head stays beside them while they pass, as on Trust's control plane */
+   sheets grow with the window (167 px at 1440; hc8: 1.3 x hc7's 10.5rem from 1920, 218 px there, 437 at 3840; the
+   three sheets one screen at 1440 x 900 to 3840 x 2160), and the head stays beside them while they pass, as on
+   Trust's control plane */
 @media (min-width: 720px) {
   [data-page="proof"] .pf-ver > .ch-head { grid-column: 1 / span 6; margin: 0; }
   [data-page="proof"] .pf-ver > .pf-trail { grid-column: 7 / -1; }

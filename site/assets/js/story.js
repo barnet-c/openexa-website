@@ -130,7 +130,7 @@
   const Y_CTOP = Y_FL + (Y_FL - Y_FLOOR - 0.04) / (FLOOR > 0 && FLOOR < 30 ? Math.round(FLOOR) : 10);
   const COL_X = (c) => -COL_SPAN / 2 + COL_SPAN * (c + 0.5) / NCOL;
   // (hc7, the director: S4 at the scale of S3's lane) wide screens draw the ten columns taller, as tall as the frame gives
-  // them up to K4_MAX (fitScenes sets colK; portrait keeps 1). Only the drawing's height: every column is still the floor
+  // them up to K4_MAX (fitScenes sets colK; portrait phones keep 1; hc8: upright tablets stretch too). Only the drawing's height: every column is still the floor
   // plus one open unit, nothing else has a height
   const K4_MAX = 2.6;
   let colK = 1;
@@ -344,7 +344,7 @@
   uniform vec3 u_liftDir, u_light;
   uniform vec3 u_rU[12]; uniform vec3 u_rV[12]; uniform float u_rW[12];
   uniform float u_hov[24]; uniform float u_hovOn, u_hovScene, u_sceneA, u_sceneB, u_hovLift;
-  uniform float u_dc[24]; uniform float u_railA, u_colK;
+  uniform float u_cg[24]; uniform float u_fold, u_railA, u_colK; // (hc8) u_cg: each session column's green (0..1); u_fold: the columns' fold (one for all ten, was u_dc[24])
   uniform vec4 u_occ;
   uniform vec2 u_band;
   varying vec3 v_col; varying float v_a, v_size, v_soft, v_halo;
@@ -357,7 +357,8 @@
     w *= pinch(y, ${GATE_GLSL[3]}, 0.06, 0.6) * pinch(y, ${GATE_GLSL[4]}, 0.05, 0.3) * pinch(y, ${GATE_GLSL[5]}, 0.05, 0.3);
     return w;
   }
-  vec3 resolve(vec4 s, out float kind, out float grp, out float al, out float mode) {
+  vec3 resolve(vec4 s, out float kind, out float grp, out float al, out float mode, out float cg) {
+    cg = 0.0;
     mode = floor(s.w / 1000.0 + 0.001);
     float rem = s.w - mode * 1000.0;
     kind = floor(rem / 100.0 + 0.001);
@@ -422,7 +423,8 @@
     // a session column: solid up to the floor, open above it; on the way out all ten fold onto the foot together
     float hN = (s.y - ${Y_FLOOR.toFixed(3)}) / ${H_COL.toFixed(3)};
     al = 1.0 - step(${F_SOLID.toFixed(3)}, hN) * (1.0 - 0.62 * pow(1.0 - smoothstep(${F_SOLID.toFixed(3)}, 1.04, hN), 1.6));
-    float dc = u_dc[int(clamp(grp, 0.0, 23.0) + 0.5)];
+    float dc = u_fold;
+    cg = u_cg[int(clamp(grp, 0.0, 23.0) + 0.5)]; // (hc8) settled: signal green as its broker tick lands
     float yc = ${Y_FLOOR.toFixed(3)} + (s.y - ${Y_FLOOR.toFixed(3)}) * u_colK; // (hc7) wide: drawn taller, the same encoding
     if (dc > 0.0) {
       al *= 1.0 - smoothstep(0.6, 1.0, dc);
@@ -457,9 +459,9 @@
   }
   float easeSpring(float t) { float s = t * t * (3.0 - 2.0 * t); float u = s - 1.0; return 1.0 + ${C3.toFixed(3)} * u * u * u + ${C1.toFixed(3)} * u * u; }
   void main() {
-    float kA, gA, aA, kB, gB, aB, mA, mB;
-    vec3 A = resolve(a_from, kA, gA, aA, mA) * u_sA;
-    vec3 B = resolve(a_to, kB, gB, aB, mB) * u_sB;
+    float kA, gA, aA, kB, gB, aB, mA, mB, cA, cB;
+    vec3 A = resolve(a_from, kA, gA, aA, mA, cA) * u_sA;
+    vec3 B = resolve(a_to, kB, gB, aB, mB, cB) * u_sB;
     float key = u_keyIdx < 0.5 ? a_key.x : (u_keyIdx < 1.5 ? a_key.y : (u_keyIdx < 2.5 ? a_key.z : a_key.w));
     float t = clamp((u_m - key * u_spread) / (1.0 - u_spread), 0.0, 1.0);
     float te = easeSpring(t), tc = clamp(te, 0.0, 1.0), arc = sin(PI * tc);
@@ -496,7 +498,7 @@
     }
     gl_Position = u_proj * mv;
     vec4 pr = kprop(k), prB = kprop(kB), prA = kprop(kA);
-    vec3 col = mix(kcol(kA), kcol(kB), tc);
+    vec3 col = mix(mix(kcol(kA), kcol(2.0), cA), mix(kcol(kB), kcol(2.0), cB), tc); // (hc8) a settled column in the signal green
     float al = mix(prA.y * aA, prB.y * aB, tc);
     float soft = mix(prA.z, prB.z, tc);
     float glow = mix(prA.w, prB.w, tc);
@@ -534,7 +536,7 @@
     al *= 1.0 - smoothstep(u_band.x, u_band.y, gl_Position.y / max(gl_Position.w, 1e-4));
     float persp = u_dist / max(0.2, -mv.z);
     float size = pr.x * (1.55 + 1.15 * a_rand.x) * mix(0.82, 1.18, persp - 0.5) * (1.0 + 0.3 * h) * mix(1.1, 0.8, fz) * (0.55 + 0.45 * ia) * limb * u_pr;
-    size *= 1.0 + 0.15 * (u_colK - 1.0) * step(9.5, mB) * tc; // (hc7) the taller columns' blocks keep their weight (their points stand further apart)
+    size *= 1.0 + ${LITE ? '0.3' : '0.15'} * (u_colK - 1.0) * step(9.5, mB) * tc; // (hc7) the taller columns' blocks keep their weight (their points stand further apart; hc8: a tablet's half-count columns, twice the gain)
     v_soft = soft; v_halo = 0.0;
     if (u_halo > 0.5) {
       float hw = max(glow, h * 0.6);
@@ -684,7 +686,7 @@
         if (!gl.getProgramParameter(p.prog, gl.LINK_STATUS)) throw new Error('story shader: ' + (gl.getShaderInfoLog(p.v) || gl.getShaderInfoLog(p.f) || gl.getProgramInfoLog(p.prog)));
       });
       Object.assign(P, progs);
-      bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_gather', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ', 'u_dc', 'u_railA', 'u_colK', 'u_band'], ['a_from', 'a_to', 'a_rand', 'a_key']);
+      bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_gather', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ', 'u_cg', 'u_fold', 'u_railA', 'u_colK', 'u_band'], ['a_from', 'a_to', 'a_rand', 'a_key']);
       bindProgram(P.line, ['u_view', 'u_proj', 'u_res', 'u_pr', 'u_dist', 'u_fogR', 'u_occ'], ['a_corner', 'a_p0', 'a_p1', 'a_col', 'a_w']);
       bindProgram(P.act, ['u_view', 'u_proj', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt'], ['a_pos', 'a_col', 'a_shp']);
       const buf = (data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage || gl.STATIC_DRAW); return b; };
@@ -929,7 +931,7 @@
     for (let i = 0; i < 5; i++) {
       const br = beatRects[i] && beatRects[i].r > 0 && beatRects[i].r < W ? beatRects[i] : { r: W * 0.46, t: H * 0.55 };
       const ext = (stacked && EXT_ST[i]) || EXT[i];
-      let x0, x1, y0, y1, s, cx, cy;
+      let x0, x1, y0, y1, s, cx, cy, yTop = 0;
       if (!stacked) { // right of this scene's copy, clear of the nav, the index and the callouts
         let room = Math.min(ROOM_W[i], W * 0.18);
         if (short && i >= 1 && i <= 3 && labelMaxW[i]) room = Math.max(room, labelMaxW[i] + 28); // short landscape: the callouts' measured column
@@ -942,7 +944,7 @@
       } else { // above this scene's copy, under the index and the scene's caption, never across the copy
         const room = roomOf[i] = Math.max([0, 0.13, 0.15, 0.1, 0][i] * W, labelMaxW[i] ? labelMaxW[i] + 28 : 0);
         x0 = gutter * 0.5; x1 = W - gutter * 0.5 - room;
-        y0 = navH + barH + capH[i] + 8;
+        y0 = yTop = navH + barH + capH[i] + 8;
         y1 = Math.min(Math.max(y0 + 120, Math.min(H * 0.8, br.t) - 14), br.t - 14);
         if (lifted && i) y0 = Math.max(y0, y1 - needOf(i) - LIFT_AIR); // (hc2) a lifted scene's structure stands on its line
       }
@@ -952,7 +954,9 @@
         const xa = x0 + floorW + 14, sw = (x1 - xa) / ((COL_SPAN + 0.24) * pxu);
         // (hc7) wide: at the row's width the columns rise as tall as the frame allows over the records' band (the ticks and
         // 12 px of air over them), up to K4_MAX; a frame with no such room keeps the plain fit (colK 1)
-        const free = y1 - y0 - band4() - 12 * remK, kw = stacked ? 0 : (free / Math.max(1e-4, sw * pxu) - 0.12) / (Y_CTOP - Y_FLOOR);
+        // (hc8) an upright tablet (portrait, 600 px wide or wider) too: its columns rise into the sky over their line (from
+        // under the scene's caption), which stood empty over a 125 px strip at 768 x 1024; portrait phones keep the plain fit
+        const free = (stacked ? y1 - yTop : y1 - y0) - band4() - 12 * remK, kw = stacked && W < 600 ? 0 : (free / Math.max(1e-4, sw * pxu) - 0.12) / (Y_CTOP - Y_FLOOR);
         colK = kw > 1 ? Math.min(kw, K4_MAX) : 1;
         s = Math.max(0.05, kw > 1 ? sw : Math.min(sw, (y1 - y0 - band4()) / ((H_COL + 0.34) * pxu)));
         if (!stacked) s = Math.min(s, (H * 0.74) / (EXT[4][1] * pxu));
@@ -1089,8 +1093,9 @@
   // the way out, in shares of the exit (xeNow).
   // (hc7, the director: the overture's last frame is its proof) wide: the ten columns hold at full height for the first
   // XHOLD of the pinned exit; xeNow counts only what comes after it (xPost), so every wide window below starts there.
-  // Portrait keeps hc6's way out, no hold (the phone's scene works).
-  const XHOLD = 0.4, xPost = () => stacked ? xNow : clamp((xNow - XHOLD) / (1 - XHOLD), 0, 1);
+  // Portrait phones keep hc6's way out, no hold (the phone's scene works). (hc8, the director) a portrait screen 600 px wide
+  // or wider (an upright tablet) takes the same hold: its headline settles beside the standing chart, not beside the ruler
+  const XHOLD = 0.4, xPost = () => stacked && W < 600 ? xNow : clamp((xNow - XHOLD) / (1 - XHOLD), 0, 1);
   // (hc7) wide, after the hold: the headline rises with the camera (cam) to stand over the floor line while the columns
   // fold into their records (fold) and the row spreads across the column (spread); the paper comes with them (the fold is
   // its arrival). Before hc7, of the whole exit: cam 0-0.35, fold 0.02-0.22, spread 0.16-0.4, paper 0.4-0.8.
@@ -1100,7 +1105,23 @@
   // (lab) the exit folds the ten columns down together with the floor line (the paper's edge); seals go into their records
   const foldE = () => stacked ? sstep(0.02, 0.3, xeNow) : sstep(WX.fold[0], WX.fold[1], xeNow), flY = () => lerp(yK(Y_FL), Y_FLOOR + 0.02, foldE());
   const sealOf = (c) => clamp((xeNow - 0.03 - 0.12 * c / Math.max(1, NCOL - 1)) / 0.1, 0, 1);
-  const dcArr = new Float32Array(24);
+  // (hc8, the director: green means settled across the site, the lab's legend and §04's blocks) a session column turns
+  // signal green as its broker tick lands on it, over CG_T s, so the scene ends on ten green columns under ten ticks and
+  // the fold carries the green into the record line. Only a session above the floor and broker-confirmed (the one that
+  // carries a tick); reduced motion, Pause motion and a jump show the final state at once
+  const CG_T = 0.3, cgLin = new Float32Array(24), cgArr = new Float32Array(24);
+  const cgTarget = (c) => seg === 3 && SESSIONS[c].above && SESSIONS[c].confirmed && colMorph(c) >= 0.78 ? 1 : 0; // (its tick past half drawn: buildActors' sstep(0.6, 0.95))
+  function stepGreen(dt, snap) { // true while a column is still turning
+    let busy = false;
+    for (let c = 0; c < NCOL && c < 24; c++) {
+      const t = cgTarget(c), v = cgLin[c];
+      cgLin[c] = snap ? t : t > v ? Math.min(t, v + dt / CG_T) : Math.max(t, v - dt / CG_T);
+      cgArr[c] = sstep(0, 1, cgLin[c]);
+      if (cgLin[c] !== t) busy = true;
+    }
+    return busy;
+  }
+  let greenBusy = false;
 
   /* ================= actors: proposals, decisions, settled squares, records, ticks ================= */
   const hash = (n) => { let x = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b); x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35); x ^= x >>> 16; return (x >>> 0) / 4294967296; };
@@ -1936,8 +1957,8 @@
     gl.uniform1f(u.u_shade, lerp(SHADE[seg], SHADE[seg + 1], mE));
     gl.uniform1fv(u.u_hov, hov); gl.uniform1f(u.u_hovOn, hoverOn); gl.uniform1f(u.u_hovScene, hoverScene);
     gl.uniform1f(u.u_sceneA, seg); gl.uniform1f(u.u_sceneB, seg + 1);
-    dcArr.fill(seg === 3 ? foldE() : 0);
-    gl.uniform1fv(u.u_dc, dcArr); gl.uniform1f(u.u_railA, seg === 3 && !stacked ? 1 - sstep(WX.spread[0], WX.spread[1], xeNow) : 1); // (hc6) wide: as the row spreads, the drawn hairline alone carries the rail (grain at 4K)
+    gl.uniform1f(u.u_fold, seg === 3 ? foldE() : 0); gl.uniform1fv(u.u_cg, cgArr);
+    gl.uniform1f(u.u_railA, seg === 3 && !stacked ? 1 - sstep(WX.spread[0], WX.spread[1], xeNow) : 1); // (hc6) wide: as the row spreads, the drawn hairline alone carries the rail (grain at 4K)
     gl.uniform1f(u.u_colK, colK);
     gl.uniform1f(u.u_hovLift, reducedMQ.matches ? 0 : 0.07 * scale[hoverScene === seg ? 0 : 1] * (hoverScene === 2 ? 1 : 0));
     const occ = seg === 0 ? (1 - sstep(0, 0.55, mRaw)) : 0;
@@ -2001,10 +2022,12 @@
     intro = red || introStart < 0 ? (introStart < 0 ? 0 : 1) : clamp((now - introStart) / 1100, 0, 1);
     if (red && introStart >= 0) intro = 1;
     // scroll with a little weight: the instrument follows, it does not snap (reduced motion: it does)
-    if (red || !settledOnce) { sNow = sTarget; xNow = xTarget; settledOnce = true; }
+    const jump = red || !settledOnce;
+    if (jump) { sNow = sTarget; xNow = xTarget; settledOnce = true; }
     else { const k = 1 - Math.exp(-dtS * (performance.now() - lastGo.t < 1500 ? 10 : 6.5)); sNow += (sTarget - sNow) * k; xNow += (xTarget - xNow) * k; if (Math.abs(sTarget - sNow) < 0.0004) sNow = sTarget; if (Math.abs(xTarget - xNow) < 0.0004) xNow = xTarget; }
     xeNow = red ? (xNow > 0.5 ? 1 : 0) : xPost();
     morphState();
+    greenBusy = stepGreen(dtS, jump || paused);
     stepCopy(now, dtS);
     camera();
     if (pointerDirty) {
@@ -2029,10 +2052,10 @@
     drawActors(false); if (!SOFT) drawActors(true);
     updateUI(now);
     // settled: the structure and the exit have arrived, the copy rests on one whole scene and its callouts are fully up.
-    const settled = Math.abs(sTarget - sNow) < 0.002 && Math.abs(xTarget - xNow) < 0.002 && copyResting() && labA >= 1 && intro >= 1;
+    const settled = Math.abs(sTarget - sNow) < 0.002 && Math.abs(xTarget - xNow) < 0.002 && copyResting() && labA >= 1 && intro >= 1 && !greenBusy;
     if (settled !== shownSettled) { shownSettled = settled; if (settled) story.setAttribute('data-settled', ''); else story.removeAttribute('data-settled'); }
     const changing = Math.abs(sTarget - sNow) > 0.0004 || Math.abs(xTarget - xNow) > 0.0004 || hov.some((v, i) => Math.abs(v - hovT[i]) > 0.002) || (intro < 1 && introStart >= 0) || introStart < 0
-      || copyMode === 'resolve' || copyMode === 'chase' || (labelScene >= 0 && labA < 1) || fading;
+      || copyMode === 'resolve' || copyMode === 'chase' || (labelScene >= 0 && labA < 1) || fading || greenBusy;
     if (changing) requestFrame();
     else if (moving) { if (SOFT) { clearTimeout(softTimer); softTimer = setTimeout(requestFrame, 45); } else requestFrame(); } // the resting motion
   }

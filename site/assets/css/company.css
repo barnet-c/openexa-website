@@ -27,6 +27,16 @@
 .company-readout { margin: .875rem 0 0; }
 [data-page="company"] .company-readout .fc-t { color: var(--fg); }
 [data-page="company"] .company-modes { margin-top: 1.125rem; }
+/* hc8: Pause motion on the caption row (the plate's foot), outside the brackets: right edge on theirs, centred on the
+   readout's two lines (--co-cap: title line, row gap, hedge line). The lines keep 8rem clear (no title wraps from 360 px);
+   under 360 a longer mode name wraps, so the readout keeps three lines' room and the modes never move on a tap */
+[data-page="company"] .company-plate { --co-cap: calc(1.5rem + 1.5 * var(--fs-small)); }
+@media (max-width: 960px) { [data-page="company"] .company-plate { --co-cap: calc(1.25rem + 3 * var(--hair) + 1.5 * var(--fs-small)); } }
+[data-page="company"] .company-sculpture { z-index: 1; } /* the control hangs below the frame, over the readout's box */
+[data-page="company"] .company-sculpture > .figure-motion { --b-h: 2.25rem; top: calc(100% + .875rem + (var(--co-cap) - var(--b-h)) / 2); right: 0; bottom: auto; } /* no transform: a half-pixel translate would blur its hairline */
+@media (pointer: coarse) { [data-page="company"] .company-sculpture > .figure-motion { --b-h: 2.75rem; } } /* site.css's finger height */
+[data-page="company"] .company-readout > * { max-width: calc(100% - 8rem); }
+@media (max-width: 359.98px) and (scripting: enabled) { [data-page="company"] .company-readout { min-height: calc(var(--co-cap) + var(--fc-lh)); justify-content: flex-start; } }
 .arr--down { transform: rotate(90deg); }
 @media (hover: hover) { .btn:hover .arr--down { transform: rotate(90deg) translateX(.1875rem); } }
 @media (min-width: 601px) and (max-width: 960px) { /* tablet: copy left, plate right (not a stretched phone) */

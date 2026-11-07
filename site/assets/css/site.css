@@ -1249,9 +1249,11 @@ html.vt-out .story-stage canvas { visibility: hidden; }
 
 /* ---------- controls: buttons, links, focus ---------- */
 :focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .1875rem; }
-/* hover (v2x): a 2 px green rule draws along the lower edge and the fill lifts a step; the arrow leans on */
+/* hover (v2x): a 2 px green rule draws along the lower edge and the arrow leans on; an ink fill lifts a step, a paper
+   fill on ink keeps its colour (hc8: dimmed, it read as disabled) */
 @media (hover: hover) {
   :where(.btn):hover { background-color: color-mix(in srgb, var(--btn-bg) 84%, var(--btn-fg)); background-size: 100% calc(2 * var(--hair)); }
+  :where(:is(.is-dark, .nav:not(.nav--solid), .nav--dark) .btn:not(.btn--ghost, [aria-current])):hover { background-color: var(--btn-bg); }
   :where(.btn--ghost):hover { background-color: color-mix(in srgb, var(--fg) 7%, transparent); border-color: var(--fg); }
 }
 :where(.btn):active { background-size: 100% calc(2 * var(--hair)); } /* hc7: the press (scale) is .btn:active's, the transitions .btn's */
@@ -1295,7 +1297,7 @@ a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 1
 :is(.instr-primary, .sw-follow, .chain-try, .chain-restore, .desk-follow):focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
 @media (forced-colors: active) { :is(.instr-primary, .sw-follow, .chain-try, .chain-restore, .desk-follow) { border: calc(2 * var(--hair)) solid ButtonText; } }
 @media (pointer: coarse) { :is(.instr-primary, .sw-follow, .chain-try, .chain-restore, .desk-follow) { min-height: 2.75rem; } }
-/* Pause motion, one control (hc6): outlined, its word at every width; an instrument head's right end or a hero's lower right */
+/* Pause motion, one control (hc6): outlined, its word at every width; an instrument head's right end or a plate's caption row (Company's hero, company.css) */
 :is(.arch-motion, .sw-motion, .model-motion, .story-motion, .figure-motion) {
   display: inline-flex; align-items: center; justify-content: center; min-height: 2.25rem; padding: 0 .6875rem;
   border: var(--hair) solid rgba(245, 242, 236, .32); border-radius: .125rem;
@@ -1307,7 +1309,6 @@ a.link-arrow:focus-visible, button.link-arrow:focus-visible { background-size: 1
 @media (pointer: coarse) { :is(.arch-motion, .sw-motion, .model-motion, .story-motion, .figure-motion) { min-height: 2.75rem; } } /* a finger's target */
 .figure-motion:not(.is-head) { position: absolute; z-index: 3; }
 .figure-motion:focus-visible { color: var(--paper); outline-offset: .125rem; }
-.company-sculpture > .figure-motion { right: 1.375rem; bottom: 0; }
 .skip { position: fixed; left: .75rem; top: .75rem; z-index: 1001; padding: .6875rem 1rem; border-radius: var(--r); background: var(--ink); color: var(--paper); font-size: var(--fs-small); font-weight: 500; box-shadow: 0 0 0 calc(2 * var(--hair)) var(--signal-bright); transform: translateY(calc(-100% - 1.5rem)); transition: transform var(--dur-move) var(--ease); }
 .skip:focus, .skip:focus-visible { left: .75rem; transform: none; outline: calc(2 * var(--hair)) solid transparent; outline-offset: .125rem; } /* transparent: forced colours paint it */
 
@@ -1730,31 +1731,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .card .n .lc-code { display: inline-flex; align-items: center; gap: .75rem; }
 .card .n--ring { align-items: center; }
 .card .n .lc-map { display: inline-flex; align-items: center; gap: .75rem; text-align: right; }
-/* the six lifecycles' register (hc2: Home §01's, now one component for any page that lists the six; home.css's scoped twin
-   until home deletes it): six cells, the live one first under a green rule; the ring, then the status in words; on a
-   phone, ring | name with the status under it. Markup: div.card-grid.card-grid--3.lc-reg > .card > .n.n--ring + h3.h4 */
-.lc-reg { grid-template-columns: repeat(3, minmax(0, 1fr)); border: 0; border-top: var(--hair) solid var(--line-strong); }
-.lc-reg > .card { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr; row-gap: clamp(1.875rem, 3.6vw, 3.5rem); align-items: start; padding: 1.125rem clamp(1.125rem, 2.2vw, 2rem) 1.625rem; border: 0; border-bottom: var(--hair) solid var(--line); border-radius: 0; background: none; }
-.lc-reg > .card:nth-child(3n + 1) { padding-left: 0; }
-.lc-reg > .card:not(:nth-child(3n + 1)) { border-left: var(--hair) solid var(--line); }
-.lc-reg > .card:first-child { box-shadow: inset 0 calc(2 * var(--hair)) 0 var(--accent); }
-.lc-reg .card .n { grid-column: 1 / -1; grid-row: 1; justify-content: flex-start; gap: .75rem; margin: 0; color: var(--fg-2); }
-.lc-reg .card .n--ring > span:last-child { font: 400 .875rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--khaki-ink); text-wrap: balance; } /* hc3: balanced, so "Live: ETF creation / & redemption" at 761-960 (.875rem kept: --fs-small is 13 on phones and moved Home's §04 landing by 8 px) */
-.lc-reg .card .n--ring > .badge { padding: 0; border: 0; } /* every status, live too, is the khaki ink above (integrate hc2: the green and fg-2 colours here never won) */
-.lc-reg .lc-code { flex: none; }
-.lc-reg .card .h4 { grid-column: 1 / -1; grid-row: 2; align-self: end; margin: 0; max-width: 13ch; font-size: var(--fs-heading); line-height: 1.15; letter-spacing: -0.01em; color: var(--fg-2); text-wrap: balance; } /* hc4: the title step, as Lifecycles' traits (was --fs-item) */
-.lc-reg .card:first-child .h4 { color: var(--fg); }
-@media (min-width: 761px) { .lc-reg .card .h4 { max-width: 17ch; } .lc-reg .lc-dot { display: block; height: 0; overflow: hidden; } } /* a dot-joined name breaks before its dot and drops it */
-@media (min-width: 1680px) { .lc-reg > .card { row-gap: 2rem; } }
-@media (max-width: 760px) {
-  .lc-reg { grid-template-columns: minmax(0, 1fr); }
-  .lc-reg > .card, .lc-reg > .card:nth-child(n) { grid-template-columns: 1.375rem minmax(0, 1fr); grid-template-rows: auto auto; column-gap: .875rem; row-gap: calc(3 * var(--hair)); padding: .875rem 0 .9375rem; border-left: 0; align-items: center; }
-  .lc-reg .card .n { display: contents; }
-  .lc-reg .lc-code { grid-column: 1; grid-row: 1 / span 2; align-self: center; }
-  .lc-reg .lc-ring { width: 1.375rem; height: 1.375rem; }
-  .lc-reg .card .h4 { grid-column: 2; grid-row: 1; align-self: end; max-width: none; font-size: var(--fs-body); line-height: 1.25; }
-  .lc-reg .card .n--ring > span:last-child { grid-column: 2; grid-row: 2; justify-self: start; }
-}
+/* the six lifecycles' register (.lc-reg): home.css since integrate hc8 (Home is its one user) */
 .lc-stack { flex: none; width: 3rem; height: 2.875rem; overflow: visible; }
 .lcp .st { fill: none; stroke: currentColor; stroke-width: var(--stroke); opacity: .38; }
 .lcp .st-on { fill: color-mix(in srgb, var(--accent) 18%, transparent); stroke: var(--accent); stroke-width: var(--stroke); }
