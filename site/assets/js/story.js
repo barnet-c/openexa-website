@@ -1412,7 +1412,7 @@
     // the plates' captions: a hedge only, beside what it hedges (the scenes that state nothing carry none)
     const cap = (i, h) => label(i, `<span class="fc-h">${h}</span>`, { cls: 'cap', kind: 'cap' });
     cap(3, 'Illustrative');
-    cap(4, 'Value above the floor not published');
+    cap(4, 'Above the floor: exact value not published'); // hc10: the chart's one wording (Home §04, Proof, note 09)
     // S1: a column of callouts, one per ring, each anchored on the ring's front-right arc
     lab.rings = LC.map((c, k) => label(1, `<span class="k">${c[0]}</span><span class="n">${c[1]}</span><span class="st st-${c[2].toLowerCase()}">${c[2]}</span><span class="dt">${c[3]}: ${c[4]}</span>`,
       { cls: 'ring' + (k === 0 ? ' is-live' : ''), kind: 'list', group: k, leader: true, node: true, info: [`${c[0]} · ${c[3]}`, c[2], c[4]], anchorPx: (sc) => ringFlank(k, sc) }));

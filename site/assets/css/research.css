@@ -434,7 +434,7 @@
 .fl--n .fl-t, .fl-t .fl-v { font: 400 var(--fs-label)/1.35 var(--mono); letter-spacing: .04em; color: var(--fg-3); }
 /* hc7: on phones the label step (12 px) is a pixel under the words' (13): one size, so note 09's first screen holds four */
 @media (max-width: 599.98px) { .fl--n .fl-t, .fl-t .fl-v { font-size: var(--fs-small); } }
-/* a hedge label without room for two lines may stand as one: "Above the floor · how far is not published" (r3) */
+/* a hedge label without room for two lines may stand as one: "Above the floor · exact value not published" (r3) */
 .fl.is-one .fl-t small { display: inline; text-transform: lowercase; }
 .fl.is-one .fl-t small::before { content: " · "; }
 .fl[data-side="r"] .fl-t { transform: translate(var(--lead, 1.1875rem), -.675em); } /* the first line on the rule */

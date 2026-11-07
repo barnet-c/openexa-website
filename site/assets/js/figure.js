@@ -504,7 +504,7 @@
       grp.items.forEach(it => { const on = !!it.ph && f >= it.ph[0] - 0.02 && f <= it.ph[it.ph.length - 1] + 0.08; if (on !== it.lit) { it.el.classList.toggle('is-lit', on); it.lit = on; } });
     }
     const mirror = d => d === 'l' ? 'r' : d === 'r' ? 'l' : (d[0] === 't' ? 'b' : 't') + d.slice(1);
-    /* r3 (a11y): a label that carries a hedge (data-keep: note 09 "how far is not published", note 10 "phase two, on the
+    /* r3 (a11y): a label that carries a hedge (data-keep: note 09 "exact value not published", note 10 "phase two, on the
        roadmap") is listed first, so the claim-side labels yield to it where words would cross. Where its own side and
        the other have no room (a phone's stage), it tries the sides its data-keep allows (all if empty), a rule 8 px
        shorter or up to 96 px longer, and its two lines set as one; the first slot inside the stage, clear of the drawing

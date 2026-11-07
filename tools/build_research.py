@@ -70,7 +70,7 @@ CAPTIONS = {
     "ledger": ("Eight blocks in a chain, each linked to the one before.", "Illustrative"),
     # note 09: the colours are the record's (data-regimes, from #oxa-sessions); the floor line is not a scale. Cut (1 Nov):
     # each column fills to the floor and shows ONE open unit above it (figure.js), never a scatter; the label "above the
-    # floor / how far is not published" stays beside it
+    # floor / exact value not published" stays beside it
     "sessions": ("Ten sessions, one column each, in the order of the record.", "Illustrative · heights not to scale"),
     "mastercopy": ("One proven agent above, its copies below, on one control plane.", "Illustrative · roadmap"),
 }
@@ -92,7 +92,7 @@ CAPTIONS = {
 # Path: the span of the formation's own path (FORMS' fifth value, 0..1) the label names; while the pulse walks the
 # path it lights each label it passes, so the plate reads itself out in the note's order. None: the part is not on
 # the path (it is named, never lit).
-# r3 (r3-a11y moderate): "keep" marks a label that carries a hedge (note 09 "how far is not published", note 10 "phase
+# r3 (r3-a11y moderate): "keep" marks a label that carries a hedge (note 09 "exact value not published", note 10 "phase
 # two, on the roadmap"). It is listed first, so where words would cross, the claim-side label yields to it; where its
 # own side has no room (a phone's stage), figure.js looks for another free slot round its point; and if there is none,
 # the plate shows no labels at all, so a drawing never names its parts without their hedge (data-keep). "keep=t,tl,tr"
@@ -142,7 +142,7 @@ LABELS = {
     # which since hc3 also set the word in Inter and the value in mono)
     # r3: each hedge label first ("keep", below). Cut (1 Nov): "Above the floor" points at the top of the one open unit
     # each column carries (figure.js sessions: the floor F = 0.48, the open unit up to 0.625)
-    "sessions": [("Above the floor", "How far is not published", (0, 0.65, 0), "t", "keep=t,tl,tr", None),
+    "sessions": [("Above the floor", "Exact value not published", (0, 0.65, 0), "t", "keep=t,tl,tr", None),
                  ("Floor", "10\u00a0bps", (-1.25, 0.48, 0.07), "l", "nsub", None)] + _cols(),
     "mastercopy": [("Copies", "Phase two, on the roadmap", (0.93, -0.18, -0.07), "tl", "keep", (0.74, 0.74)),
                    ("Master agent", None, (0.31, 0.62, 0), "r", "acc", (0.0, 0.06)),
@@ -418,7 +418,7 @@ def note_still(fig, every=7):
     return (f'<svg class="fs-still" viewBox="{-w} -200 {2 * w} 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'
             f'{body}</svg>')
 # award a4 (a4-pixel, polish): a figure whose labels are its key (note 09: the floor and its value, the 01-10 axis, and so,
-# by r3's rule, the hedge label "above the floor / how far is not published") keeps that key on its still, where figure.js
+# by r3's rule, the hedge label "above the floor / exact value not published") keeps that key on its still, where figure.js
 # cannot set the labels (no JavaScript, no WebGL), and on the margin plate. Same words, sides and flags as LABELS
 KEYED = {"sessions"}
 def _fl(lab, style, cls="", attrs="", plate=False):

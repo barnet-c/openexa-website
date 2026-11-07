@@ -533,13 +533,15 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
 }
 
 body[data-page="lifecycles"] main > :is(section.section, .cta-band) { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 40rem); }
-#test { --cis: 38.5rem; } #lc01 { --cis: 61.5rem; } #desk { --cis: 78rem; } #classes { --cis: 49rem; }
-body[data-page="lifecycles"] main > .cta-band { --cis: 9.625rem; }
+/* the chapters' drawn heights (hc10, after the tablet H2 step): 390, 700-960, 1280-3840; #desk grows with the width to 1440, #classes to 1920 */
+#test { --cis: 38rem; } #lc01 { --cis: 55.5rem; } #desk { --cis: 78.75rem; } #classes { --cis: 49rem; }
+body[data-page="lifecycles"] main > .cta-band { --cis: 8.625rem; }
 @media (min-width: 601px) {
-  #test { --cis: 35rem; } #lc01 { --cis: 46.75rem; } #desk { --cis: 65rem; } #classes { --cis: 54.25rem; }
+  #test { --cis: 36.25rem; } #lc01 { --cis: 42.375rem; } #desk { --cis: 69.5rem; } #classes { --cis: 54.75rem; }
+  body[data-page="lifecycles"] main > .cta-band { --cis: 10.25rem; }
 }
 @media (min-width: 961px) {
-  #test { --cis: 30rem; } #lc01 { --cis: 53.5rem; } #desk { --cis: 58rem; } #classes { --cis: 48.75rem; }
+  #test { --cis: 31rem; } #lc01 { --cis: 48.25rem; } #desk { --cis: clamp(59.5rem, 35.5rem + 35.3vw, 67.75rem); } #classes { --cis: clamp(39.5rem, 26.25rem + 25.4vw, 56.75rem); }
   body[data-page="lifecycles"] main > .cta-band { --cis: 15rem; }
 }
 @media print { body[data-page="lifecycles"] main > :is(section.section, .cta-band) { content-visibility: visible; } }

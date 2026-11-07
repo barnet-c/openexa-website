@@ -64,10 +64,10 @@
   .pf-y { right: calc(2 * var(--hair)); }
   .pf-y .pf-lw { display: none; }
   .pf-y .pf-ls { display: inline; }
-  .y-floor small { letter-spacing: 0; white-space: nowrap; }
+  .y-floor small { letter-spacing: 0; word-spacing: -.25em; white-space: nowrap; } /* hc10: "10 bps" ~6 px clear of the blocks */
 }
 @supports not (width: 1cqi) {
-  @media (max-width: 340px) { .pf, .proof:not(.is-built)::before { --gut: 2.375rem; } .pf-gut { font-size: var(--fs-label); } .pf-y { right: calc(2 * var(--hair)); } .pf-y .pf-lw, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { letter-spacing: 0; white-space: nowrap; } }
+  @media (max-width: 340px) { .pf, .proof:not(.is-built)::before { --gut: 2.375rem; } .pf-gut { font-size: var(--fs-label); } .pf-y { right: calc(2 * var(--hair)); } .pf-y .pf-lw, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { letter-spacing: 0; word-spacing: -.25em; white-space: nowrap; } }
 }
 /* 4K (Home; Proof's is in proof.css): above 1920 the chart's gutter, blocks and zones are in rem, the 1440 chart scaled
    (integrate a1; history: notes/system.md) */

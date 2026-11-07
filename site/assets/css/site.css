@@ -81,8 +81,9 @@
   --icon-stroke: 1px; --icon-shift: .5px;
 
   /* type, four steps (1 Nov; the owner: "<= 4 type sizes on any screen") */
-  /* the H2 (a3): 76.8 px from 1422; down to 34 px at 680 and under, so on phones a chapter's head is ~0.82 of the H1 */
-  --fs-display: clamp(2.125rem, calc(5.772vw - .33rem), 4.8rem);
+  /* the H2 (a3): 76.8 px from 1422; 34 px on phones (to 544), ~0.82 of the H1. hc10: 48 px from 768 to 923, the overture's
+     upright heads, so tablets keep the ~1.2 H1:H2 step */
+  --fs-display: clamp(2.125rem, max(5.772vw - .33rem, min(6.25vw, 3rem)), 4.8rem);
   --fs-heading: clamp(1.35rem, 1.8vw, 1.6rem);          /* 25.6 / 21.6 */
   --fs-body: clamp(1.0625rem, .98rem + .15vw, 1.125rem); /* 18 / 17 */
   --fs-small: clamp(.8125rem, .78rem + .12vw, .875rem);  /* 14 / 13 */

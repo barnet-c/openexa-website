@@ -255,16 +255,17 @@ body[data-page="home"] main > .story ~ section { content-visibility: auto; conta
 body[data-page="home"] #lifecycles { --cis: 38.59375rem; } body[data-page="home"] #stack { --cis: 28.640625rem; } body[data-page="home"] #lc01 { --cis: 64.328125rem; }
 body[data-page="home"] #proof { --cis: 35.078125rem; } body[data-page="home"] #economics { --cis: 41.953125rem; } body[data-page="home"] #governance { --cis: 49.359375rem; }
 body[data-page="home"] #research { --cis: 36.96875rem; } body[data-page="home"] .cta-band { --cis: 6.453125rem; }
+/* 600-760: the 700 heights; 761-960: the 820 heights (768-834 within 1rem; hc2). Both re-measured hc10 (integrate), after
+   system's tablet H2 step (--fs-display 48 px from 768 to 923) */
 @media (min-width: 600px) {
-  body[data-page="home"] #lifecycles { --cis: 38.921875rem; } body[data-page="home"] #stack { --cis: 36.46875rem; } body[data-page="home"] #lc01 { --cis: 54.296875rem; }
-  body[data-page="home"] #proof { --cis: 42.25rem; } body[data-page="home"] #economics { --cis: 31.125rem; } body[data-page="home"] #governance { --cis: 76.546875rem; }
-  body[data-page="home"] #research { --cis: 37.15625rem; } body[data-page="home"] .cta-band { --cis: 6.5625rem; }
+  body[data-page="home"] #lifecycles { --cis: 40.015625rem; } body[data-page="home"] #stack { --cis: 37.015625rem; } body[data-page="home"] #lc01 { --cis: 55.390625rem; }
+  body[data-page="home"] #proof { --cis: 43.359375rem; } body[data-page="home"] #economics { --cis: 32.21875rem; } body[data-page="home"] #governance { --cis: 77.65625rem; }
+  body[data-page="home"] #research { --cis: 38.25rem; } body[data-page="home"] .cta-band { --cis: 7.125rem; }
 }
-/* 761-960: the 820 heights (768-834 within 1rem; hc2) */
 @media (min-width: 761px) and (max-width: 960px) {
-  body[data-page="home"] #lifecycles { --cis: 28.109375rem; } body[data-page="home"] #stack { --cis: 24.546875rem; } body[data-page="home"] #lc01 { --cis: 52rem; }
-  body[data-page="home"] #proof { --cis: 43.9375rem; } body[data-page="home"] #economics { --cis: 32.875rem; } body[data-page="home"] #governance { --cis: 55.390625rem; }
-  body[data-page="home"] #research { --cis: 30.25rem; } body[data-page="home"] .cta-band { --cis: 7.03125rem; }
+  body[data-page="home"] #lifecycles { --cis: 28.859375rem; } body[data-page="home"] #stack { --cis: 24.546875rem; } body[data-page="home"] #lc01 { --cis: 52.765625rem; }
+  body[data-page="home"] #proof { --cis: 44.703125rem; } body[data-page="home"] #economics { --cis: 33.640625rem; } body[data-page="home"] #governance { --cis: 56.15625rem; }
+  body[data-page="home"] #research { --cis: 31rem; } body[data-page="home"] .cta-band { --cis: 7.40625rem; }
 }
 @media (min-width: 961px) {
   body[data-page="home"] #lifecycles { --cis: 34.515625rem; } body[data-page="home"] #stack { --cis: 30.625rem; } body[data-page="home"] #lc01 { --cis: 64.1875rem; }
