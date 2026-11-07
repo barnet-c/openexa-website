@@ -247,6 +247,12 @@
 
 /* hc7 (proof's request, applied by integrate): the three documents' old drawing (.pf-docs, .pf-doc and its hash
    line, Proof §02 until hc6) is gone; proof.css draws §01's trail whole */
+/* hc11 (HC11 item 2; proof's request, applied by integrate): the ten-session chart's caption reads the session in hand
+   (proof.js), on Home §03 and the Proof hero. The caption and a hidden copy of its longest record share one grid cell, so
+   the readout moves nothing */
+.figure-cap--stack.pf-cap { display: grid; grid-template-columns: minmax(0, 1fr); }
+.pf-cap > * { grid-area: 1 / 1; }
+.pf-cap-sz { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .cost-blk i { transition: none !important; opacity: 1 !important; transform: none !important; }
 }

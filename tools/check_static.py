@@ -458,7 +458,9 @@ GROUP_CSS_BUDGET = 12000   # gzip -9 bytes per group stylesheet
 INSTRUMENT_CSS = {"overture": "overture.css", "swarm": "swarm.css", "ledger": "ledger.css", "arch": "arch.css", "proof": "proofchart.css"}
 # hc5 (integrate): Home §02 draws Platform's plate (still), not the explorer, and no longer starts arch.js; it still links
 # arch.css (scoped to the explorer: styles nothing on Home), because dropping that sheet cost Lighthouse's simulated mobile
-# FCP one round trip (96 -> 95 on 3 of 3 runs, the observed paint earlier): keep it until a change holds the score
+# FCP one round trip (96 -> 95 on 3 of 3 runs, the observed paint earlier): keep it until a change holds the score.
+# hc11 (integrate): §02 left Home, so the sheet styles nothing there at all; dropped with this entry and measured again
+# (Home mobile, interleaved, 3 runs each on the same tree): FCP 1,814 -> 1,958 ms and 96 -> 95 on 3 of 3, so it stays
 INSTRUMENT_PAGES = {"index.html": ["overture", "swarm", "ledger", "arch", "proof"], "platform.html": ["swarm", "arch"],
                     "evidence.html": ["proof"], "trust.html": ["ledger"]}
 INSTRUMENT_BUDGET = 8500   # gzip -9 bytes per instrument sheet (the largest, arch.css, is 7,558 at the split)

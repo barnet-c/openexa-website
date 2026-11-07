@@ -1655,7 +1655,6 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .desk-chart { padding-top: .75rem; border-right: var(--hair) solid var(--line); }
   .desk-side { border-top: 0; }
   .desk-stats > div { padding: .625rem .75rem; }
-  .desk-stats b { font-size: 1.5rem; }
   .desk-stats span { margin-top: .375rem; }
   .desk-controls { gap: .375rem; padding: .5rem .875rem .25rem; }
 

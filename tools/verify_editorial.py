@@ -99,13 +99,15 @@ async def main():
         await pg.goto(f"{BASE}/index.html", wait_until="load"); await pg.wait_for_timeout(3000)
         await pg.evaluate("document.querySelector('#research').scrollIntoView()"); await pg.wait_for_timeout(1500)
         await pg.screenshot(path=shot(f"home-research.png"))
-        # the chapters live in the nav's readout list now (the fixed right rail is gone)
-        assert await pg.locator(".nav-ch-list a").count() == 7 and await pg.locator(".chapters").count() == 0
+        # the chapters live in the nav's readout list now (the fixed right rail is gone); it lists every chapter of the page
+        # (7 until hc11, 6 since Home's §02 left)
+        nch = await pg.evaluate("document.querySelectorAll('main section[data-chapter]').length")
+        assert nch == 6 and await pg.locator(".nav-ch-list a").count() == nch and await pg.locator(".chapters").count() == 0, nch
         # insights redirect
         await pg.goto(f"{BASE}/insights.html", wait_until="load"); await pg.wait_for_timeout(800)
         assert pg.url.endswith("/research.html"), pg.url
         assert not errs, errs
-        print("desktop: research index morphs on hover, 10 articles render with TOC + figure, company modes switch the formation and its caption, the timeline reveals, 7 chapters, insights redirects")
+        print(f"desktop: research index morphs on hover, 10 articles render with TOC + figure, company modes switch the formation and its caption, the timeline reveals, {nch} chapters, insights redirects")
         await ctx.close()
         # mobile
         ctx = await b.new_context(viewport={"width": 390, "height": 844})

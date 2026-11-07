@@ -4,9 +4,10 @@
    premium discount confirmed settled floor, or "regimes"), data-proof-as "words"/"Words" spells it; written once, final.
    The static HTML says the same without JS (Proof's no-JS record is a table in a <noscript>). Nothing is invented: ">10" is
    drawn as above the floor, value not published; a missing field reads "Not stated". Lanes: hover, focus or tap to light a
-   session (each lane names its record to assistive tech); arrows, Home/End, Enter, Esc. One entrance, then still; none
-   under reduced motion. hc4: the inspector under the chart and the table builder went (Proof's chart moved into its hero,
-   where the lanes and the lede carry the record; the table has been <noscript> only since the 1 Nov cut). Plain DOM. */
+   session (each lane names its record to assistive tech; hc11: the caption reads it out); arrows, Home/End, Enter, Esc.
+   One entrance, then still; none under reduced motion. hc4: the inspector under the chart and the table builder went
+   (Proof's chart moved into its hero, where the lanes and the lede carry the record; the table has been <noscript> only
+   since the 1 Nov cut). Plain DOM. */
 (function () {
   'use strict';
   const src = document.getElementById('oxa-sessions');
@@ -50,6 +51,9 @@
   const valueSaid = s => !Number.isFinite(s.amount) ? (s.value ? s.value : 'value not stated')
     : (s.bound === '>' ? 'more than ' : s.bound ? 'at least ' : '') + s.amount + ' ' + unit;
   const regimeSaid = s => s.side > 0 ? 'premium regime, price above NAV' : s.side < 0 ? 'discount regime, price below NAV' : 'NAV regime not stated';
+  // a session's record after its regime: what the lane says to assistive tech, and (hc11) the caption's readout
+  const restSaid = s => '; ' + valueSaid(s) + ' captured' + (s.above ? ', above the ' + floor + ' ' + unit + ' floor' : '') + '; ' + s.confirmation.toLowerCase() + '; ' + s.status.toLowerCase() + '.';
+  const readSaid = s => s.day + ': ' + (s.side > 0 ? 'premium' : s.side < 0 ? 'discount' : 'regime not stated') + restSaid(s);
 
   /* ---------------- derived counts in the copy ---------------- */
   const derived = (key, as) => {
@@ -94,7 +98,7 @@
       if (short) b.append(h('span', 'pf-lw', k), h('span', 'pf-ls', short)); else b.textContent = k;
       e.append(b); if (note) e.append(h('small', null, note)); gut.append(e); return e;
     };
-    lab('y-above', 'Above the floor', 'exact value not published'); // hc9: two lines, as the floor's and Note 09's
+    lab('y-above', 'Above the floor', 'Exact value not published'); // hc9: two lines, as the floor's and Note 09's (hc11: its case too)
     lab('y-floor', 'Floor', floor + ' ' + unit + (per > 1 ? ' · 1 block = ' + per + ' bps' : ''));
     lab('y-zero', '0');
     lab('y-prem', 'Premium', null, 'Prem.').append(h('i', 'pf-n', String(C.premium)));
@@ -136,7 +140,7 @@
       if (s.confirmed && s.settled) { const t = sv('svg', { viewBox: '0 0 12 12', focusable: 'false' }); t.append(sv('path', { d: 'M2.4 6.5 5 9 9.7 3.3', pathLength: '1' })); ok.append(t); }
       else ok.append(h('i', 'pf-o-no'));
       lane.append(g, c, r, mute(h('span', 'pf-d', s.num)), ok,
-        h('span', 'sr-only', s.day + ': ' + regimeSaid(s) + '; ' + valueSaid(s) + ' captured' + (s.above ? ', above the ' + floor + ' ' + unit + ' floor' : '') + '; ' + s.confirmation.toLowerCase() + '; ' + s.status.toLowerCase() + '.'));
+        h('span', 'sr-only', s.day + ': ' + regimeSaid(s) + restSaid(s)));
       return lane;
     });
     box.append(...lanes);
@@ -149,12 +153,14 @@
     pf.append(body, said);
     host.append(pf);
 
-    /* state: the session in hand (sel), the one under the pointer (pre), the lane that takes Tab (tab) */
-    let sel = -1, pre = -1, tab = 0, shown = null;
+    /* state: the session in hand (sel), the one under the pointer (pre), the lane that takes Tab (tab); hc11: the caption's
+       readout (below the entrance) */
+    let sel = -1, pre = -1, tab = 0, shown = null, readout = null;
     function render() {
       const i = pre >= 0 ? pre : sel;
       if (i === shown) return;
       shown = i;
+      if (readout) readout(i);
       lanes.forEach((lane, j) => lane.classList.toggle('is-on', j === i));
       segs.forEach((p, j) => p.classList.toggle('is-on', j === i));
       areas.forEach((a, j) => a.classList.toggle('is-on', j === i));
@@ -223,6 +229,34 @@
       if ('IntersectionObserver' in window) new IntersectionObserver(entries => entries.forEach(e => { inView = e.isIntersecting; away(); })).observe(host);
     }
     if (reduce.addEventListener) reduce.addEventListener('change', () => { if (reduce.matches) host.classList.remove('is-armed'); host.classList.add('is-in'); });
+
+    /* hc11: the session in hand, read in the caption. Its words before the link step aside (kept for assistive tech; the
+       readout is aria-hidden, the lanes already speak); the link stays. A hidden copy of the longest record shares the
+       caption's grid cell (.pf-cap), so nothing moves. Instant. No .pf-cap rule, no readout. Built after the entrance is
+       armed: the rule's test computes styles, and computed before is-armed the blocks would transition out, then in. */
+    const cap = host.closest('figure') && host.closest('figure').querySelector('.figure-cap--stack');
+    const capH = cap && cap.querySelector('.fc-h');
+    if (capH) {
+      cap.classList.add('pf-cap');
+      if (getComputedStyle(cap).display !== 'grid') cap.classList.remove('pf-cap');
+      else {
+        const link = capH.querySelector('a'), gap = link ? ' ' : '', reads = sessions.map(readSaid);
+        const own = h('span', 'pf-cap-d'), rd = mute(h('span', 'pf-cap-r'));
+        while (capH.firstChild && capH.firstChild !== link) own.append(capH.firstChild);
+        rd.hidden = true;
+        capH.prepend(own, rd);
+        const sz = mute(capH.cloneNode(false));
+        sz.classList.add('pf-cap-sz');
+        sz.append(reads.reduce((a, b) => (b.length > a.length ? b : a)) + gap);
+        if (link) sz.append(h('span', link.className, link.textContent));
+        cap.append(sz);
+        readout = i => {
+          if (i >= 0) rd.textContent = reads[i] + gap;
+          rd.hidden = i < 0;
+          own.classList.toggle('sr-only', i >= 0);
+        };
+      }
+    }
   }
 
   document.querySelectorAll('[data-proof-chart]').forEach((host, i) => buildChart(host, i + 1));

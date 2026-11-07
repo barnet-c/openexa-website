@@ -56,7 +56,7 @@ html.story-short body[data-page="home"] .story .beat-4 .body-lg { display: block
 /* ---------- the chapters ---------- */
 /* (no ghost numerals: site.css no longer draws .section[data-n]::before, system cut 1 Nov) */
 
-/* §04: the hedge's link (its face, size and measure: the #proof rule in the cut block below; hc9 dropped this block's
+/* §03: the hedge's link (its face, size and measure: the #proof rule in the cut block below; hc9 dropped this block's
    base, every property of it overridden there) */
 body[data-page="home"] .proof-hedge a { color: var(--fg); text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .1875rem; text-decoration-color: var(--line-strong); transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { body[data-page="home"] .proof-hedge a:hover { text-decoration-color: var(--accent); } }
@@ -83,7 +83,7 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
 
 /* (hc6) the overture's coda is gone: S4's headline closes it (story.js) */
 
-/* §06 (hc3, proof's request): the records carry Trust's ledger ids (#4f23 ...), five mono characters */
+/* §05 (hc3, proof's request): the records carry Trust's ledger ids (#4f23 ...), five mono characters */
 body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em 4.8em 9.4em minmax(0, 1fr) auto; }
 @media (max-width: 760px) { body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em minmax(0, 1fr) auto; } }
 
@@ -115,7 +115,7 @@ body[data-page="home"] main > .story + .section { padding-top: clamp(1.75rem, 3.
 }
 
 
-/* §06 the chain on phones: the records at the label step, as their hashes and Trust's chain (hc9: was .78rem, 12.48 px
+/* §05 the chain on phones: the records at the label step, as their hashes and Trust's chain (hc9: was .78rem, 12.48 px
    beside 12 px hashes); 16 px while editing */
 @media (max-width: 600px) {
   body[data-page="home"] #governance .chain-list [contenteditable] { font-size: inherit; }
@@ -170,22 +170,22 @@ body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(1.625re
   .lc-reg .card .h4 { align-self: end; max-width: none; font-size: var(--fs-body); line-height: 1.25; }
 }
 
-/* §04: the head and its hedge beside the chart (hc5: the open pair, 3 and 5, cut: one hard fact on the screen) */
+/* §03: the head and its hedge beside the chart (hc5: the open pair, 3 and 5, cut: one hard fact on the screen) */
 body[data-page="home"] #proof .proof-copy .ch-title { max-width: 11ch; }
 body[data-page="home"] #proof .proof-hedge { margin-top: 1.375rem; max-width: 34ch; font-size: var(--fs-small); line-height: 1.5; color: rgba(245, 242, 236, .66); }
 body[data-page="home"] #proof .proof-fig .figure-cap { padding-left: 0; }
 body[data-page="home"] #proof .figure-cap .fc-key { color: rgba(245, 242, 236, .6); }
 @media (min-width: 961px) { body[data-page="home"] #proof .proof-layout { align-items: end; } }
 
-/* §05: the head, then the stack of costs */
+/* §04: the head, then the stack of costs */
 body[data-page="home"] #economics .ch-title { max-width: 12ch; }
 body[data-page="home"] #economics .cost .figure-cap { margin-top: 1.125rem; }
 
-/* §06: the chain beside its head */
+/* §05: the chain beside its head */
 body[data-page="home"] #governance .chain-row .ch-head { margin: 0; }
 @media (min-width: 961px) { body[data-page="home"] #governance .chain-row .ch-head { position: sticky; top: calc(var(--nav-h) + 2rem); } }
 
-/* §07: three titles, nothing else */
+/* §06: three titles, nothing else */
 body[data-page="home"] #research .card-grid--3 { border-left: 0; }
 body[data-page="home"] #research .research-card:last-child { border-right: 0; }
 body[data-page="home"] #research .research-card { display: flex; flex-direction: column; justify-content: space-between; gap: 1.75rem; min-height: clamp(9.375rem, 13vw, 13.125rem); padding: 1.375rem clamp(1.125rem, 2.2vw, 2rem) 1.25rem; background: none; }
@@ -212,7 +212,7 @@ html.story-compact body[data-page="home"] .beat-0 .hero-kicker { font-size: .86r
 @media (scripting: enabled) and (max-width: 599.98px) { html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker { font-size: .86rem; } }
 @media (scripting: enabled) and (max-width: 599.98px) and (min-height: 800px) { html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker { font-size: .94rem; } }
 @media (min-width: 600px) and (min-height: 900px) and (max-aspect-ratio: 23/20) { html.story-compact body[data-page="home"] .story .beat-0 .hero-kicker { font-size: clamp(1rem, 2.6vw, 1.15rem); } }
-/* §07: the reading time is a note, not a data label */
+/* §06: the reading time is a note, not a data label */
 body[data-page="home"] #research .research-card .link-arrow { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; }
 
 /* wide screens: the opening copy centred on the globe's centre line between the nav and the index; the safety net (no
@@ -226,7 +226,7 @@ body[data-page="home"] #research .research-card .link-arrow { font: 400 var(--fs
 @media (scripting: none) { body[data-page="home"] #proof .proof-fig .figure-cap { display: none; } }
 
 /* ========== award a1 ========== */
-/* §04: the head says what the chart adds */
+/* §03: the head says what the chart adds */
 body[data-page="home"] #proof .proof-copy .ch-title { max-width: 12ch; }
 /* phones: the CEO's headline one step up, still two lines (44 px at 390); the CEO's sub-line and the scenes' lines at 16 px */
 @media (scripting: enabled) and (max-width: 599.98px) {
@@ -252,56 +252,58 @@ body[data-page="home"] #economics .cost-row:first-child { padding-top: 1.5rem; }
 /* the chapters after the overture are laid out near the viewport only; each stand-in is its measured content height for the
    width band (padding and the hairline border on top: hc1 measures without the border), so the page is as long at load as drawn. The footer is always drawn (#disclosures lands) */
 body[data-page="home"] main > .story ~ section { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
-body[data-page="home"] #lifecycles { --cis: 38.59375rem; } body[data-page="home"] #stack { --cis: 28.640625rem; } body[data-page="home"] #lc01 { --cis: 64.328125rem; }
-body[data-page="home"] #proof { --cis: 35.078125rem; } body[data-page="home"] #economics { --cis: 41.953125rem; } body[data-page="home"] #governance { --cis: 49.359375rem; }
+body[data-page="home"] #lifecycles { --cis: 38.59375rem; } body[data-page="home"] #lc01 { --cis: 64.421875rem; }
+body[data-page="home"] #proof { --cis: 36.296875rem; } body[data-page="home"] #economics { --cis: 41.953125rem; } body[data-page="home"] #governance { --cis: 44.171875rem; }
 body[data-page="home"] #research { --cis: 36.96875rem; } body[data-page="home"] .cta-band { --cis: 6.453125rem; }
 /* 600-760: the 700 heights; 761-960: the 820 heights (768-834 within 1rem; hc2). Both re-measured hc10 (integrate), after
-   system's tablet H2 step (--fs-display 48 px from 768 to 923) */
+   system's tablet H2 step (--fs-display 48 px from 768 to 923); hc11: #governance under 961 px without §05's line, #lc01's
+   base after system's lab counters at --fs-item (its hc11 request); #governance at every band with Trust's link in its head */
 @media (min-width: 600px) {
-  body[data-page="home"] #lifecycles { --cis: 40.015625rem; } body[data-page="home"] #stack { --cis: 37.015625rem; } body[data-page="home"] #lc01 { --cis: 55.390625rem; }
-  body[data-page="home"] #proof { --cis: 43.359375rem; } body[data-page="home"] #economics { --cis: 32.21875rem; } body[data-page="home"] #governance { --cis: 77.65625rem; }
+  body[data-page="home"] #lifecycles { --cis: 40.015625rem; } body[data-page="home"] #lc01 { --cis: 55.390625rem; }
+  body[data-page="home"] #proof { --cis: 43.359375rem; } body[data-page="home"] #economics { --cis: 32.21875rem; } body[data-page="home"] #governance { --cis: 74.0625rem; }
   body[data-page="home"] #research { --cis: 38.25rem; } body[data-page="home"] .cta-band { --cis: 7.125rem; }
 }
 @media (min-width: 761px) and (max-width: 960px) {
-  body[data-page="home"] #lifecycles { --cis: 28.859375rem; } body[data-page="home"] #stack { --cis: 24.546875rem; } body[data-page="home"] #lc01 { --cis: 52.765625rem; }
-  body[data-page="home"] #proof { --cis: 44.703125rem; } body[data-page="home"] #economics { --cis: 33.640625rem; } body[data-page="home"] #governance { --cis: 56.15625rem; }
+  body[data-page="home"] #lifecycles { --cis: 28.859375rem; } body[data-page="home"] #lc01 { --cis: 52.765625rem; }
+  body[data-page="home"] #proof { --cis: 44.703125rem; } body[data-page="home"] #economics { --cis: 33.640625rem; } body[data-page="home"] #governance { --cis: 52.5625rem; }
   body[data-page="home"] #research { --cis: 31rem; } body[data-page="home"] .cta-band { --cis: 7.40625rem; }
 }
 @media (min-width: 961px) {
-  body[data-page="home"] #lifecycles { --cis: 34.515625rem; } body[data-page="home"] #stack { --cis: 30.625rem; } body[data-page="home"] #lc01 { --cis: 64.1875rem; }
-  body[data-page="home"] #proof { --cis: 31.484375rem; } body[data-page="home"] #economics { --cis: 25.875rem; } body[data-page="home"] #governance { --cis: 42.859375rem; }
+  body[data-page="home"] #lifecycles { --cis: 34.515625rem; } body[data-page="home"] #lc01 { --cis: 64.1875rem; }
+  body[data-page="home"] #proof { --cis: 31.484375rem; } body[data-page="home"] #economics { --cis: 25.875rem; } body[data-page="home"] #governance { --cis: 38.15625rem; }
   body[data-page="home"] #research { --cis: 36.890625rem; } body[data-page="home"] .cta-band { --cis: 10.0625rem; }
 }
 /* small desktops: 961-1099 the 1024 heights, 1100-1359 the 1280 heights (the spreads start at 1100; re-measured hc2;
    #lifecycles from 761 px re-measured hc4, after its titles took the --fs-heading step, and hc8, its cells one block each;
    #stack and #proof at every band hc5; every chapter under 1100 px hc9, the small register at --fs-small, and #proof's base
-   and 961-1099 values again with Fig. 1.1's two-line label, integrate hc9) */
+   and 961-1099 values again with Fig. 1.1's two-line label, integrate hc9; and once more with the caption's readout, which
+   reserves its longest record's lines, integrate hc11) */
 @media (min-width: 961px) and (max-width: 1099.98px) {
-  body[data-page="home"] #lifecycles { --cis: 29.15625rem; } body[data-page="home"] #stack { --cis: 28.1875rem; } body[data-page="home"] #lc01 { --cis: 56.921875rem; }
-  body[data-page="home"] #proof { --cis: 27.625rem; } body[data-page="home"] #economics { --cis: 33rem; } body[data-page="home"] #governance { --cis: 41.921875rem; }
+  body[data-page="home"] #lifecycles { --cis: 29.15625rem; } body[data-page="home"] #lc01 { --cis: 56.921875rem; }
+  body[data-page="home"] #proof { --cis: 28.90625rem; } body[data-page="home"] #economics { --cis: 33rem; } body[data-page="home"] #governance { --cis: 38.125rem; }
   body[data-page="home"] #research { --cis: 33.734375rem; } body[data-page="home"] .cta-band { --cis: 7.984375rem; }
 }
 @media (min-width: 1100px) and (max-width: 1359.98px) {
-  body[data-page="home"] #lifecycles { --cis: 32.265625rem; } body[data-page="home"] #stack { --cis: 34.96875rem; } body[data-page="home"] #lc01 { --cis: 58.9375rem; }
-  body[data-page="home"] #proof { --cis: 31.046875rem; } body[data-page="home"] #economics { --cis: 25.171875rem; } body[data-page="home"] #governance { --cis: 42.515625rem; }
+  body[data-page="home"] #lifecycles { --cis: 32.265625rem; } body[data-page="home"] #lc01 { --cis: 58.9375rem; }
+  body[data-page="home"] #proof { --cis: 31.046875rem; } body[data-page="home"] #economics { --cis: 25.171875rem; } body[data-page="home"] #governance { --cis: 38.15625rem; }
   body[data-page="home"] #research { --cis: 34.59375rem; } body[data-page="home"] .cta-band { --cis: 9.4375rem; }
 }
 /* from 1680 (rem above 1920, so 3840 is 1920 doubled): the 1920 heights (re-measured hc2) */
 @media (min-width: 1680px) {
-  body[data-page="home"] #lifecycles { --cis: 34.8125rem; } body[data-page="home"] #stack { --cis: 37.609375rem; } body[data-page="home"] #lc01 { --cis: 66.671875rem; }
-  body[data-page="home"] #proof { --cis: 32.21875rem; } body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 43.046875rem; }
+  body[data-page="home"] #lifecycles { --cis: 34.8125rem; } body[data-page="home"] #lc01 { --cis: 66.671875rem; }
+  body[data-page="home"] #proof { --cis: 32.21875rem; } body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 38.15625rem; }
   body[data-page="home"] #research { --cis: 39.609375rem; }
 }
 @media print { body[data-page="home"] main > .story ~ section { content-visibility: visible; } }
-/* §03: the link sits one chapter step under the lab (swarm.css adds 40 px below it) */
+/* §02: the link sits one chapter step under the lab (swarm.css adds 40 px below it) */
 body[data-page="home"] #lc01 .swarm-live { margin-bottom: 0; }
 
 /* ========== award a2 ========== */
 /* the static globe keeps the shape its width and height attributes give it */
 body[data-page="home"] .story-static-mark { height: auto; }
-/* the chapter head and its spread are site.css's (hc2): a one-line lede under its heading; §05's key and §07's link hang right */
+/* the chapter head and its spread are site.css's (hc2): a one-line lede under its heading; §04's key and §06's link hang right */
 @media (min-width: 1100px) {
-  /* §05: the key as a register on hairlines */
+  /* §04: the key as a register on hairlines */
   body[data-page="home"] .eco-head { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2.2vw, 2rem); }
   body[data-page="home"] .eco-head > .ch-title { grid-column: 1 / span 6; }
   body[data-page="home"] .eco-head > .eco-key { grid-column: 7 / -1; }
@@ -315,9 +317,9 @@ body[data-page="home"] #economics .eco-key dd { margin: 0; }
   body[data-page="home"] #economics .eco-key > div { grid-template-columns: minmax(0, 1fr); row-gap: .1em; }
   body[data-page="home"] #economics .eco-key dd { margin-left: 1.28em; }
 }
-/* §07: "All ten notes" over the third note */
+/* §06: "All ten notes" over the third note */
 @media (min-width: 1100px) { body[data-page="home"] #research .rs-head > .ch-link { justify-self: start; margin-left: clamp(1.125rem, 2.2vw, 2rem); } }
-/* §07: each note's still is its cell's mark (one scale for the three) */
+/* §06: each note's still is its cell's mark (one scale for the three) */
 body[data-page="home"] #research .research-card { display: grid; grid-template-rows: auto auto 1fr; justify-content: stretch; row-gap: 0; }
 body[data-page="home"] #research .research-card .link-arrow { align-self: end; margin-top: 1.375rem; }
 /* (files in assets/img/home: the tokens' colours as attributes; strokes scale with the mark, so 4K keeps the weight) */
@@ -351,19 +353,19 @@ body[data-page="home"] #research .rc-mark { display: block; width: auto; height:
 html.no-webgl:not(.story-tiny) body[data-page="home"] .story .beat-0 { min-height: 100vh; min-height: 100svh; }
 
 /* ========== award a3 ========== */
-/* §03's lab name, its 320 px gate tracking and the ledger's ink halo: swarm.css (integrate a3, for Home and Platform) */
-/* §07: the stills as plates, not icons: one scale for the three, the widest half its cell (the grid is their container) */
+/* §02's lab name, its 320 px gate tracking and the ledger's ink halo: swarm.css (integrate a3, for Home and Platform) */
+/* §06: the stills as plates, not icons: one scale for the three, the widest half its cell (the grid is their container) */
 @media (min-width: 761px) {
   body[data-page="home"] #research .card-grid--3 { container-type: inline-size; }
   body[data-page="home"] #research .rc-mark { height: max(7.5rem, 13.9cqi); }
 }
 /* scene 4: the floor's unit a step brighter than its name (overture.css sets the face, size and tracking; hc3) */
 body[data-page="home"] .story-lab.floor .u { color: rgba(245, 242, 236, .9); }
-/* hc9: "Floor" over "10 bps" at every width, as §04's chart labels the same floor (phones and short frames already stacked
+/* hc9: "Floor" over "10 bps" at every width, as §03's chart labels the same floor (phones and short frames already stacked
    it, overture.css); never one line mixing Inter and mono */
 body[data-page="home"] .story-lab.floor { line-height: 1.3; }
 body[data-page="home"] .story-lab.floor span { display: block; }
-/* §07 on tablets (761-960): the three notes in one row, as on desktop; a still wider than its cell keeps its shape (the
+/* §06 on tablets (761-960): the three notes in one row, as on desktop; a still wider than its cell keeps its shape (the
    plate's preserveAspectRatio, xMinYMid: hc3 inlines the three so their green points redraw on hover and focus) */
 @media (min-width: 761px) and (max-width: 960px) {
   body[data-page="home"] #research .card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -373,47 +375,21 @@ body[data-page="home"] .story-lab.floor span { display: block; }
 @media (max-width: 600px) {
   body[data-page="home"] .ph-dot { display: block; height: 0; overflow: hidden; }
 }
-/* the hedge above the floor ("exact value / not published"): proofchart.css (integrate a3, for Home §04 and Proof) */
+/* the hedge above the floor ("exact value / not published"): proofchart.css (integrate a3, for Home §03 and Proof) */
 
 /* ========== award a4 ========== */
 /* tablets keep v2's four figures under the buttons (owner, 2 Nov), or the phone's 01 line where they would squeeze the
    globe (story.js .story-figs-01): overture.css (integrate a4) */
 
-/* ========== hill climb hc5 ========== */
-/* §02: Platform's hero plate, still, beside its head (the explorer runs on Platform §01). The drawing's rules are
-   platform.css's for .hero-plate--stack, static part only (Home does not load platform.css; animation, Replay: Platform's) */
-body[data-page="home"] #stack .st-row { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: var(--ch-gap); }
-body[data-page="home"] #stack .st-head .ch-link { margin-top: 1.5rem; }
-@media (min-width: 761px) { /* tablets too: the head beside the drawing */
-  body[data-page="home"] #stack .st-row { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2.2vw, 2rem); align-items: center; }
-  body[data-page="home"] #stack .st-head { grid-column: 1 / span 5; }
-  body[data-page="home"] #stack .hero-plate { grid-column: 6 / -1; max-width: none; }
-}
-@media (min-width: 1360px) { body[data-page="home"] #stack .st-head { grid-column: 1 / span 6; } body[data-page="home"] #stack .hero-plate { grid-column: 7 / -1; } }
-#stack .hero-plate--stack { --hp-ar: 1.25; container-type: inline-size; }
-#stack .hero-plate--stack :is(.hp-lab--n, .hp-lab--fl) { color: var(--fg-3); }
-#stack .hero-plate--stack .hp-lab--side { color: var(--fg-2); }
-#stack .hero-plate--stack .hp-g2 { fill: none; stroke: var(--accent); stroke-opacity: .3; stroke-width: var(--stroke); }
-#stack .hero-plate--stack .pm-up { fill: none; stroke: currentColor; stroke-opacity: .72; stroke-width: var(--stroke); stroke-dasharray: calc(2 * var(--dash-u)) calc(3 * var(--dash-u)); }
-#stack .hero-plate--stack .pm-down { fill: none; stroke: currentColor; stroke-opacity: .8; stroke-width: var(--stroke); }
-#stack .hero-plate--stack .pm-step { fill: currentColor; fill-opacity: .85; }
-#stack .hero-plate--stack :is(.pm-agent, .pm-cross, .pm-settle) { fill: var(--accent); }
-#stack .hero-plate--stack :is(.pm-ring, .pm-rring) { fill: var(--bg); stroke: var(--accent); stroke-width: var(--stroke-2); }
-#stack .hero-plate--stack .pm-rring { stroke: var(--reject); }
-#stack .hero-plate--stack .is-rej .pm-ring { opacity: 0; }
-#stack .hero-plate--stack :is(.pm-spur, .pm-x) { fill: none; stroke: var(--reject); stroke-width: var(--stroke-2); stroke-linecap: round; }
-#stack .hero-plate--stack > .hp-cap { flex-direction: row; flex-wrap: wrap; align-items: center; gap: .5rem 1.5rem; margin-top: 1.5rem; }
-#stack .hero-plate--stack .hp-key { margin-left: auto; display: flex; flex-wrap: wrap; gap: .25rem 1.125rem; }
-#stack .hero-plate--stack .hp-key > span { display: inline-flex; align-items: center; gap: .4375rem; }
-#stack .hero-plate--stack .hp-key i { width: .5625rem; height: .5625rem; flex: none; border: calc(1px * var(--stroke-2)) solid var(--accent); border-radius: 50%; }
-#stack .hero-plate--stack .hp-key i.k-rej { border-color: var(--reject); }
-#stack .hero-plate--stack .hp-key i.k-sq { width: .5rem; height: .5rem; border: 0; border-radius: .0625rem; background: var(--accent); }
-@media (max-width: 960px) { #stack .hero-plate--stack .hp-key { flex-basis: 100%; margin-left: 0; } #stack .hero-plate--stack .hp-cap > .fc-h { order: 2; } }
-#stack .hero-plate--stack .hp-art { --hp-k: 7.5rem; --hp-p: 1rem; margin-left: 1rem; }
-@media (max-width: 600px) { #stack .hero-plate--stack .hp-art { --hp-p: .5rem; margin-left: .5rem; } }
-@container (max-width: 23.75rem) { #stack .hero-plate--stack .hp-art { --hp-k: 6.64rem; } }
-@container (max-width: 15rem) { #stack .hero-plate--stack .hp-lab { font-size: calc(.8 * var(--mono-xs)); } #stack .hero-plate--stack .hp-art { --hp-k: 5.35rem; } }
-#stack .hero-plate--stack .hp-art > svg { width: min(calc(var(--hp-s, 1) * 100%), calc((100% - var(--hp-k)) / .668)); }
-#stack .hero-plate--stack .hp-labs { right: auto; width: min(calc(var(--hp-s, 1) * 100%), calc((100% - var(--hp-p) - var(--hp-k)) / .668 + var(--hp-p))); }
-@media (max-width: 380px) { #stack .hero-plate--stack { --hp-s: .97; } }
-@media (max-width: 350px) { #stack .hero-plate--stack { --hp-s: .89; } }
+
+/* ========== hill climb hc11 ========== */
+/* hc11: §02 "Take the stack apart." left Home (overture scene 2 tells the stack; Platform opens on its plate), and with it
+   hc5's still-plate rules and #stack's stand-ins; the chapters after it are one number lower */
+/* §05's two chain buttons carry Trust's glyphs (trust.html's replay: the pencil, the restore arrow), at Trust's size and
+   hairline: the same action looks the same on both pages */
+body[data-page="home"] #governance :is(.chain-try, .chain-restore) { gap: .5rem; }
+body[data-page="home"] #governance :is(.chain-try, .chain-restore) svg { flex: none; width: .8125rem; height: .8125rem; }
+body[data-page="home"] #governance :is(.chain-try, .chain-restore) svg path { vector-effect: non-scaling-stroke; stroke-width: var(--icon-stroke); }
+/* §05: the link to Trust sits under the heading, in the head that rides beside the chain (it was a lone row under the
+   chain): heading and way on, then the instrument, as §06's head carries "All ten notes" */
+body[data-page="home"] #governance .chain-row .ch-head > .ch-link { margin-top: 1.5rem; }

@@ -316,7 +316,8 @@
 [data-page="access"] .access-h1 { grid-column: 1 / -1; max-width: none; margin: 0 0 clamp(1.5rem, 3.4vh, 3rem); }
 [data-page="access"] .access-form { grid-column: 1 / span 6; min-width: 0; }
 [data-page="access"] .access-letter { grid-column: 8 / -1; align-self: stretch; min-width: 0; }
-@media (min-width: 961px) { [data-page="access"] .access-hero { padding-top: calc(var(--nav-h) + clamp(1.5rem, 3.4vh, 3rem)); } }
+/* hc11: the H1 63 px under the bar at 1440 x 900 */
+@media (min-width: 961px) { [data-page="access"] .access-hero { padding-top: calc(var(--nav-h) + clamp(2.5rem, 7vh, 5rem)); } }
 /* hc7 (system's request, applied by integrate): the plate heroes' fold. The hero is the screen less 2.5rem, so the
    fold shows a band of section 01's paper and its heading starts below it (it was sliced at 1920 and 3840) */
 @media (min-width: 961px) { [data-page="access"] .access-hero { min-height: calc(100vh - 2.5rem); min-height: calc(100svh - 2.5rem); } }
@@ -335,11 +336,9 @@
 [data-page="access"] .form .two { gap: clamp(.875rem, 2vh, 1.25rem) clamp(1rem, 2.2vw, 2rem); }
 [data-page="access"] .form :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { padding: .5rem 0; }
 [data-page="access"] .form textarea { min-height: 5.5rem; }
-/* a laptop shorter than 880 px: the button stays on the first screen */
-@media (min-width: 961px) and (max-height: 880px) {
-  [data-page="access"] .form, [data-page="access"] .form .two { row-gap: .75rem; }
-  [data-page="access"] .form textarea { min-height: 4.75rem; }
-}
+/* hc11: beside the letter the button stays on the first screen down to 864 px tall (gaps 14 px at 900, 20 from 1080) */
+@media (min-width: 961px) { [data-page="access"] .form { gap: clamp(.75rem, 3.333vh - 1rem, 1.25rem); } }
+@media (min-width: 961px) and (max-height: 880px) { [data-page="access"] .form textarea { min-height: 4.75rem; } }
 [data-page="access"] .form .f > label:not(.f-check) { font-family: var(--sans); font-size: var(--fs-small); line-height: 1.4; letter-spacing: 0; text-transform: none; color: var(--fg); transition: color var(--dur-feedback) var(--ease-out); }
 [data-page="access"] .form .f:focus-within > label:not(.f-check) { color: var(--signal-ink); }
 [data-page="access"] .form .f-q { color: var(--fg-3); }
@@ -448,6 +447,9 @@
   [data-page="access"] .access-letter .letter-head { flex: none; }
   [data-page="access"] .access-letter .letter-body { flex: 1 1 auto; min-height: 4.5lh; overflow-y: auto; }
 }
+/* hc11: beside the form the sheet's lower marks end on the button's line (a short screen: the screen less the bar, the
+   H1 band and the fold's margin; never shorter than its letter) */
+@media (min-width: 961px) { [data-page="access"] .access-letter .letter:not([hidden]) { min-height: min(38.25rem, 100svh - 20.25rem); } }
 @media (min-width: 601px) and (max-height: 760px) { [data-page="access"] .access-letter .sticky { --top: calc(var(--nav-h) + .75rem); } }
 /* a phone held sideways: the letter beside the H1 and the form */
 @media (min-width: 601px) and (max-width: 960px) and (max-height: 520px) {

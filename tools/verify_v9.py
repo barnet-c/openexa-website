@@ -403,9 +403,9 @@ async def pages(b):
 
 @check
 async def home(b):
-    """the homepage systems as one page at 1440: beats, record-driven overture, nav, §02's still stack plate, swarm, chain,
-    proof (the running ledger left Home on 1 Nov; hc5: §02 draws Platform's plate, still, and the explorer's keys, boundary
-    and readout are checked on Platform §01, its one page now: platform_spec)"""
+    """the homepage systems as one page at 1440: beats, record-driven overture, nav, swarm, chain, proof (the running ledger
+    left Home on 1 Nov; hc5: §02 drew Platform's plate, still; hc11: that chapter left Home, whose hero's "See the stack"
+    goes to Platform: the explorer's keys, boundary and readout are checked on Platform §01, its one page: platform_spec)"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     await ctx.add_init_script(EVENTS)
     pg = await ctx.new_page()
@@ -457,23 +457,22 @@ async def home(b):
     await pg.evaluate("(() => { const s = document.querySelector('.story'); window.scrollTo({top: s.offsetTop + s.offsetHeight - innerHeight * 0.5, behavior: 'instant'}); })()")
     op = await until(pg, "(() => { const o = +getComputedStyle(document.querySelector('.beat-4')).opacity; return o < 0.05 ? String(o) : ''; })()", 4000)
     assert op, ("beat 4 still visible past the stage's end", await pg.evaluate("getComputedStyle(document.querySelector('.beat-4')).opacity"))
-    # the nav: the chapter readout replaced the fixed rail; its list has the 7 chapters; the bar takes a dark band's tone
-    assert await pg.locator(".nav-ch-list a").count() == 7 and await pg.locator(".chapters").count() == 0
+    # the nav: the chapter readout replaced the fixed rail; its list names every chapter of the page (7 until hc11, 6 since
+    # §02 left: counted from the page and pinned at 6); the bar takes a dark band's tone
+    nch = await pg.evaluate("document.querySelectorAll('main section[data-chapter]').length")
+    assert nch == 6 and await pg.locator(".nav-ch-list a").count() == nch and await pg.locator(".chapters").count() == 0, ("the readout lists every chapter", nch)
     await pg.evaluate("document.querySelector('#proof').scrollIntoView({behavior: 'instant'})")
     lab = await until(pg, "(() => { const l = document.querySelector('.nav-ch-btn').getAttribute('aria-label') || ''; return l.includes('Proof') && document.querySelector('.nav').classList.contains('nav--dark') ? l : ''; })()", 4000)
     assert lab, ("chapter readout / dark bar over #proof", await pg.locator(".nav-ch-btn").get_attribute("aria-label"))
-    # hc5 (home, HC5 item 1): Home §02 draws Platform's engraved stack plate, still: the drawing (its dots from
-    # stack-dots.svg), the eight layer numerals and four side labels, the link to the explorer on Platform §01; no explorer
-    # on Home and its engine (arch.js) is not fetched (the explorer's keys and readout: platform_spec; arch.css stays linked
-    # for now: check_static INSTRUMENT_PAGES says why)
-    await pg.evaluate("document.querySelector('#stack').scrollIntoView({block: 'center', behavior: 'instant'})")
-    await expect(pg.locator("#stack .hero-plate--stack svg")).to_be_visible()
-    dots = await until(pg, "performance.getEntriesByType('resource').some(e => /\\/stack-dots\\.svg(\\?|$)/.test(e.name) && e.responseStatus === 200)", 5000)
-    plate = await pg.evaluate("""(() => { const a = document.querySelector('#stack a.ch-link');
-        return { labs: document.querySelectorAll('#stack .hero-plate--stack .hp-lab').length, href: a ? a.getAttribute('href') : null,
-          arch: document.querySelectorAll('[data-arch], .arch').length,
-          fetched: performance.getEntriesByType('resource').map(e => e.name).filter(n => /\\/arch\\.js(\\?|$)/.test(n)) }; })()""")
-    assert dots and plate["labs"] == 12 and plate["href"] == "platform.html#architecture" and plate["arch"] == 0 and not plate["fetched"], ("home §02: the still plate (dots loaded, 12 labels), its link to the explorer, no explorer on Home, arch.js not fetched", dots, plate)
+    # hc5 (home, HC5 item 1): Home §02 drew Platform's engraved stack plate, still, with no explorer on Home. hc11 (home,
+    # HC11 item 1): that chapter left Home; the principle stays: Home draws no explorer and does not fetch its engine
+    # (arch.js), and the stack is one click away: the hero's "See the stack" goes to Platform, whose hero is the plate and
+    # whose §01 is the explorer (its keys and readout: platform_spec)
+    plate = await pg.evaluate("""(() => ({ stack: !!document.querySelector('#stack'),
+        see: (document.querySelector('.beat-0 .hero-cta a.btn--ghost') || { getAttribute: () => null }).getAttribute('href'),
+        arch: document.querySelectorAll('[data-arch], .arch').length,
+        fetched: performance.getEntriesByType('resource').map(e => e.name).filter(n => /\\/arch\\.js(\\?|$)/.test(n)) }))()""")
+    assert not plate["stack"] and plate["see"] == "platform.html" and plate["arch"] == 0 and not plate["fetched"], ("home: no stack chapter, 'See the stack' goes to Platform, no explorer on Home, arch.js not fetched", plate)
     # swarm lab: runs, announces settlements (at most 4 a second, in the agreed shape), follows by keyboard, halts and drains
     await pg.locator("[data-swarm-live]").scroll_into_view_if_needed()
     n0 = await pg.evaluate("window.__oxaEv.settled.length")
@@ -527,18 +526,25 @@ async def home(b):
     opts = pg.locator("#proof [role=listbox] [role=option]")
     await expect(opts).to_have_count(10)
     assert await pg.locator('#proof [role=option][tabindex="0"]').count() == 1
+    # hc11 (proof, HC11 item 2): the caption reads the session in hand (aria-hidden; the option speaks) and moves nothing
+    cap0 = await pg.evaluate("document.querySelector('#proof .figure-cap--stack.pf-cap').getBoundingClientRect().height")
     await opts.nth(0).focus(); await pg.keyboard.press("ArrowRight")
     await expect(opts.nth(1)).to_have_attribute("aria-selected", "true")
+    await expect(pg.locator("#proof .pf-cap-r")).to_be_visible()
+    await expect(pg.locator("#proof .pf-cap-r")).to_contain_text("Day 02")
+    assert abs(await pg.evaluate("document.querySelector('#proof .figure-cap--stack.pf-cap').getBoundingClientRect().height") - cap0) < 0.5, "home §03: the caption's readout changed its height"
     # Round 2 (PF-R2-3a): home no longer shows the chart's summary row (the stats row says it); the selected option itself
     # carries the session's record (hc4: proof.js draws no inspector row on any page, so this is the only path)
     assert await pg.locator(".pf-read").count() == 0
     await expect(opts.nth(1)).to_contain_text("Day 02")
     await pg.keyboard.press("Escape")
     await expect(pg.locator('#proof [role=option][aria-selected="true"]')).to_have_count(0)
+    await expect(pg.locator("#proof .pf-cap-r")).to_be_hidden()
+    assert abs(await pg.evaluate("document.querySelector('#proof .figure-cap--stack.pf-cap').getBoundingClientRect().height") - cap0) < 0.5, "home §03: the caption did not return to its height"
     assert not errs, errs
     print(f"home: 5 beats navigable, stats clear of the globe, motion pause, overture reads the record ({rc['total']} columns, {rc['premium']} premium), last beat clear of the bar, "
-          f"7 chapters in the nav list (no rail), §02's still plate (arch.js not fetched), swarm {len(ev)} events in view (gaps >= {min(gaps):.0f} ms), follow by keyboard, halt drains, "
-          f"chain breaks (typed and one-tap) + restores, proof listbox")
+          f"{nch} chapters in the nav list (no rail), 'See the stack' to Platform (no explorer, arch.js not fetched), swarm {len(ev)} events in view (gaps >= {min(gaps):.0f} ms), follow by keyboard, halt drains, "
+          f"chain breaks (typed and one-tap) + restores, proof listbox (its caption reads the session, height held)")
     await ctx.close()
 
 
@@ -554,12 +560,22 @@ async def interior(b):
     await pg.goto(f"{BASE}/evidence.html", wait_until="load")
     await expect(pg.locator("#performance [role=option]")).to_have_count(10)
     await pg.locator("#performance .pf-lane").nth(2).scroll_into_view_if_needed()
+    await expect(pg.locator("#performance .figure-cap--stack.pf-cap")).to_have_count(1)
+    cap0 = await pg.evaluate("document.querySelector('#performance .figure-cap--stack.pf-cap').getBoundingClientRect().height")
     await pg.locator("#performance .pf-lane").nth(2).hover()
     await expect(pg.locator("#performance .pf-lane").nth(2)).to_have_class(re.compile(r"\bis-on\b"))
     # hc4 (proof, HC4 item 1): the chart is Proof's hero and has no inspector; the lane in hand names its record (its
     # accessible text) and is the one lit, the others dimmed
     await expect(pg.locator("#performance .pf-lane").nth(2).locator(".sr-only")).to_contain_text("Day 03")
     assert await pg.locator("#performance .pf-lane.is-on").count() == 1 and await pg.locator("#performance [data-proof-chart].has-on").count() == 1
+    # hc11 (proof, HC11 item 2): the caption reads the session in hand for sighted visitors (aria-hidden: the lane speaks),
+    # its own words step aside, "See the disclosures." stays, and the caption keeps its height (a hidden copy of the
+    # longest record holds it)
+    await expect(pg.locator("#performance .pf-cap-r")).to_contain_text("Day 03")
+    await expect(pg.locator("#performance .pf-cap-r")).to_be_visible()
+    await expect(pg.locator("#performance .pf-cap a")).to_be_visible()
+    assert await pg.locator("#performance .pf-cap-r").get_attribute("aria-hidden") == "true"
+    assert abs(await pg.evaluate("document.querySelector('#performance .figure-cap--stack.pf-cap').getBoundingClientRect().height") - cap0) < 0.5, "proof: the caption's readout changed its height"
     await pg.goto(f"{BASE}/trust.html", wait_until="load")
     await expect(pg.locator("[data-ledger=replay] .lt-rec")).to_have_count(9)
     await expect(pg.locator("[data-ledger=replay] [data-lt-state]")).to_contain_text("Chain intact")  # hc2: Home's words (was "Chain ✓ · 9 records verify")
@@ -570,7 +586,7 @@ async def interior(b):
     assert await until(pg, "!!document.querySelector('#architecture .arch.is-wide.is-ready')", 10000), "platform explorer not ready"
     assert await pg.locator("#architecture .arch-layer").count() == 8
     assert not errs, errs
-    print("proof: a session lights on hover (one lane lit) and its lane names Day 03; trust: 9-record trace verifies 8 of 8 links; platform: explorer ready with 8 layers")
+    print("proof: a session lights on hover (one lane lit), its lane names Day 03 and the caption reads it (height held); trust: 9-record trace verifies 8 of 8 links; platform: explorer ready with 8 layers")
     await ctx.close()
 
 
@@ -1473,16 +1489,18 @@ async def overture_net(b):
 
 @check
 async def phone(b):
-    """phone: the explorer is an accordion (hc5: on Platform §01, its one page; Home §02 draws Platform's plate, still,
-    inside the 390 px page), a chapter lands under the 64 px bar, the menu sheet is a popover over an inert page"""
+    """phone: the explorer is an accordion (hc5: on Platform §01, its one page), Home's lab (§02 since hc11, when the still
+    stack plate left Home) is drawn inside the 390 px page, a chapter lands under the 64 px bar, the menu sheet is a popover
+    over an inert page"""
     # v2x r3: open_page, not 'loader detached': since home r3 the instruments are added as the curtain lifts, so at CI
     # speed arch.js had not built `#stack .arch` yet when the loader left (TypeError on null); open_page waits until
     # every script home.js lists has run
     errs = []
     ctx, pg = await open_page(b, "index.html", 390, 844, errs=errs)
     await pg.locator(".loader").wait_for(state="detached", timeout=15000)
-    await pg.evaluate("document.querySelector('#stack').scrollIntoView({block: 'center', behavior: 'instant'})")
-    await expect(pg.locator("#stack .hero-plate--stack svg")).to_be_visible()  # hc5: Home §02's still plate
+    # hc11: Home's first chapter drawing after the overture's lifecycles is the swarm lab (#lc01; the still plate left)
+    await pg.evaluate("document.querySelector('#lc01').scrollIntoView({block: 'center', behavior: 'instant'})")
+    await expect(pg.locator("#lc01 [data-swarm-live]")).to_be_visible()
     assert await pg.evaluate("document.documentElement.scrollWidth") == 390
     await pg.locator(".nav-toggle").click()  # v2x cut (1 Nov): on phones the toggle opens the sheet; its first items are the chapters
     # a4 (system): the sheet names this page's chapters ("On this page", the list labelled by it) and numbers them, so
@@ -1492,9 +1510,9 @@ async def phone(b):
       const ns = [...l.querySelectorAll('a .n')].filter(n => n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden' && n.textContent.trim());
       return { head: h.textContent.trim(), by: l.getAttribute('aria-labelledby') === h.id, links: l.querySelectorAll('a').length, nums: ns.map(n => n.textContent.trim()) }; })()""")
     assert sheet["head"] == "On this page" and sheet["by"] and sheet["links"] >= 3 and len(sheet["nums"]) == sheet["links"], ("390: the sheet's chapter head and numbers", sheet)
-    await pg.locator("#site-menu .nav-ch-list a").nth(3).click()
+    await pg.locator("#site-menu .nav-ch-list a[href='#proof']").click()  # hc11: by its target (the 4th link was #proof until §02 left)
     land = await until(pg, "(() => { const t = document.querySelector('#proof').getBoundingClientRect().top, b = document.querySelector('.nav').getBoundingClientRect().bottom; return Math.abs(t - b) <= 2 ? [t, b] : null; })()", 6000)
-    assert land, ("chapter 04 did not land under the bar at 390", await pg.evaluate("[document.querySelector('#proof').getBoundingClientRect().top, document.querySelector('.nav').getBoundingClientRect().bottom]"))
+    assert land, ("the Proof chapter did not land under the bar at 390", await pg.evaluate("[document.querySelector('#proof').getBoundingClientRect().top, document.querySelector('.nav').getBoundingClientRect().bottom]"))
     await pg.locator(".nav-toggle").click()
     assert await until(pg, "document.querySelector('#site-menu').matches(':popover-open') && document.querySelector('main').inert", 3000), "menu sheet did not open"
     await pg.keyboard.press("Escape")
@@ -1526,7 +1544,7 @@ async def phone(b):
     assert await pg.evaluate("document.documentElement.scrollWidth") == 390
     assert not errs, errs
     await ctx.close()
-    print(f"phone: Home §02's plate drawn inside 390, Platform's explorer accordion opens inline, the sheet's chapters headed \"On this page\" and numbered ({', '.join(sheet['nums'])}), chapter 04 lands under the bar, menu sheet opens (page inert) and Escape closes it, also from a link inside it ({inside!r}: focus back on the toggle); "
+    print(f"phone: Home's lab drawn inside 390, Platform's explorer accordion opens inline, the sheet's chapters headed \"On this page\" and numbered ({', '.join(sheet['nums'])}), the Proof chapter lands under the bar, menu sheet opens (page inert) and Escape closes it, also from a link inside it ({inside!r}: focus back on the toggle); "
           f"{len(foot)} footer links answer over >= 32 px (least {min(x['span'] for x in foot)})")
 
 
@@ -1728,19 +1746,19 @@ async def no_js(b):
         assert sw <= 391, (name, sw)
     await pg.goto(f"{BASE}/index.html", wait_until="load")
     await pg.screenshot(path=str(OUT / "index-nojs-390.png"), full_page=False)
-    nj = await pg.evaluate("""(() => { const q = s => document.querySelectorAll(s).length, sv = document.querySelector('#stack .hero-plate--stack svg');
+    nj = await pg.evaluate("""(() => { const q = s => document.querySelectorAll(s).length;
       return { loader: getComputedStyle(document.querySelector('.loader')).display, proof: q('.proof-list li'), stream: q('[data-ledger-stream] .lt-rec'),
         chain: q('.chain-list li'), gates: q('[data-sw-gates] li'), bar: getComputedStyle(document.querySelector('.swarm-bar')).display,
-        plate: !!sv && sv.getClientRects().length > 0 && sv.getBoundingClientRect().width > 0,
-        labs: [...document.querySelectorAll('#stack .hero-plate--stack .hp-lab')].filter(l => l.getClientRects().length > 0).length }; })()""")
+        stack: q('#stack'), see: (document.querySelector('.beat-0 .hero-cta a.btn--ghost') || { getAttribute: () => null }).getAttribute('href') }; })()""")
     # v2x cut (1 Nov): each layer of the stack shows its name (the In / Out pairs left the page; the job line is the
     # explorer's, with JavaScript); integrate hc1 (4 Nov): the name alone, no verb column (HC1 item 2: the name says it, as
     # on Platform), so a stray <small> verb fails; the session list is the <noscript> record now, drawn as scripts are off.
     # Owner's-eye fix (1 Nov): Home's agent log left the page (stream 0; it started from four records); the chain stays.
-    # hc5 (integrate): Home §02 draws Platform's plate as static markup (drawn, its 12 labels shown); the eight layers with
-    # the boundary after 04, each name readable, are checked on Platform §01 below (the list is the explorer's, Platform's)
+    # hc5 (integrate): Home §02 drew Platform's plate as static markup; hc11: that chapter left Home, and its hero's "See the
+    # stack" reaches Platform without JS. The eight layers with the boundary after 04, each name readable, are checked on
+    # Platform §01 below (the list is the explorer's, Platform's)
     assert nj["loader"] == "none" and nj["proof"] == 10 and nj["stream"] == 0 and nj["chain"] == 8 and nj["gates"] == 6 and nj["bar"] == "none", nj
-    assert nj["plate"] and nj["labs"] == 12, nj
+    assert nj["stack"] == 0 and nj["see"] == "platform.html", nj
     await pg.locator(".nav-toggle").click()
     assert await pg.evaluate("document.querySelector('#site-menu').matches(':popover-open')"), "menu sheet does not open without JavaScript"
     await pg.goto(f"{BASE}/evidence.html", wait_until="load")
@@ -1785,7 +1803,7 @@ async def no_js(b):
         if nojs[name] < 0.9 * withjs: low.append(f"{name}.html@390: {nojs[name]} visible links in main without JavaScript, {withjs} with it")
     await ctx.close()
     assert not low and posts == 10, f"no_js: {low}; research.html shows {posts} visible 'li.post a' without JavaScript (10 expected)"
-    print(f"fallbacks: readable without JS on every page (sessions list, chain records, Trust's ledger excerpt, six gates, Home's still stack plate, Platform's eight layers with the boundary after 04, menu sheet as a popover, no loader, the desk's note instead of a dead desk at 390 and 768); "
+    print(f"fallbacks: readable without JS on every page (sessions list, chain records, Trust's ledger excerpt, six gates, Home's See the stack to Platform, Platform's eight layers with the boundary after 04, menu sheet as a popover, no loader, the desk's note instead of a dead desk at 390 and 768); "
           f"links kept without JS on {len(LINK_PAGES)} pages, research.html lists its {posts} notes")
 
 

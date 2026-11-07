@@ -4,7 +4,7 @@
    land on the static figures, shorter than the live ones). .story-wait / .story-failed mark story.js. */
 (function () {
   'use strict';
-  // §06 on phones: the chain shows records #4f23-#4f26; the control, an edit or 'Change a record' opens all eight
+  // §05 on phones: the chain shows records #4f23-#4f26; the control, an edit or 'Change a record' opens all eight
   const chain = document.querySelector('[data-chain]'), more = chain && chain.querySelector('[data-chain-more]');
   if (more) {
     const set = (open) => {
@@ -22,7 +22,7 @@
   'use strict';
   const me = document.currentScript, root = document.documentElement;
   // an engine whose instrument the page does not draw is not fetched (a safety net: Home's list dropped ledger.js and
-  // lane.js on 1 Nov, when its lane and running log left the page; hc5: §02 draws Platform's plate, the explorer is Platform's)
+  // lane.js on 1 Nov, when its lane and running log left the page; hc5-hc10: §02 drew Platform's plate still; hc11: that chapter left Home, the explorer is Platform's)
   const draws = { 'ledger.js': '[data-ledger]', 'lane.js': '[data-lane]', 'arch.js': '[data-arch]' };
   const list = ((me && me.getAttribute('data-after-paint')) || '').split(/\s+/).filter(src => {
     const k = src && draws[src.split('/').pop()];

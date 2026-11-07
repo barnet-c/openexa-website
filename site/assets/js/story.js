@@ -1105,7 +1105,7 @@
   // (lab) the exit folds the ten columns down together with the floor line (the paper's edge); seals go into their records
   const foldE = () => stacked ? sstep(0.02, 0.3, xeNow) : sstep(WX.fold[0], WX.fold[1], xeNow), flY = () => lerp(yK(Y_FL), Y_FLOOR + 0.02, foldE());
   const sealOf = (c) => clamp((xeNow - 0.03 - 0.12 * c / Math.max(1, NCOL - 1)) / 0.1, 0, 1);
-  // (hc8, the director: green means settled across the site, the lab's legend and §04's blocks) a session column turns
+  // (hc8, the director: green means settled across the site, the lab's legend and §03's blocks) a session column turns
   // signal green as its broker tick lands on it, over CG_T s, so the scene ends on ten green columns under ten ticks and
   // the fold carries the green into the record line. Only a session above the floor and broker-confirmed (the one that
   // carries a tick); reduced motion, Pause motion and a jump show the final state at once
@@ -1412,7 +1412,7 @@
     // the plates' captions: a hedge only, beside what it hedges (the scenes that state nothing carry none)
     const cap = (i, h) => label(i, `<span class="fc-h">${h}</span>`, { cls: 'cap', kind: 'cap' });
     cap(3, 'Illustrative');
-    cap(4, 'Above the floor: exact value not published'); // hc10: the chart's one wording (Home §04, Proof, note 09)
+    cap(4, 'Above the floor: exact value not published'); // hc10: the chart's one wording (Home §03, Proof, note 09)
     // S1: a column of callouts, one per ring, each anchored on the ring's front-right arc
     lab.rings = LC.map((c, k) => label(1, `<span class="k">${c[0]}</span><span class="n">${c[1]}</span><span class="st st-${c[2].toLowerCase()}">${c[2]}</span><span class="dt">${c[3]}: ${c[4]}</span>`,
       { cls: 'ring' + (k === 0 ? ' is-live' : ''), kind: 'list', group: k, leader: true, node: true, info: [`${c[0]} · ${c[3]}`, c[2], c[4]], anchorPx: (sc) => ringFlank(k, sc) }));
@@ -1431,7 +1431,7 @@
     // the floor's tag sits on the line, left of column 01 (never across it)
     label(4, `<span>Floor</span> <span class="u">${FLOOR_T}</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
     label(4, 'NAV', { cls: 'navtag', kind: 'tag', out: [0.05, 0.22], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR - l4(U_NAV), 0], side: 'w' }); // the regime ticks' baseline
-    // (no derived summary: S4's headline closes the overture and §04 carries the count, hc6)
+    // (no derived summary: S4's headline closes the overture and §03 carries the count, hc6)
   }
   // the inspector: one quiet box that shows the hovered or focused ring, layer or session
   const insp = document.createElement('div');
