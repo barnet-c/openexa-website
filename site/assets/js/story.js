@@ -752,7 +752,9 @@
   let dayPitch = 99, b4 = null;
   const layouts = Array.from({ length: 5 }, () => ({ cx: 0, cy: 0, s: 1, rect: [0, 0, 0, 0] }));
   const beatRects = [], capH = [0, 0, 0, 0, 0], labelMaxW = [0, 0, 0, 0, 0], roomOf = [0, 0, 0, 0, 0];
-  let storyTop = 0, run = 1, scrollY = 0, stageH = 1, storyH = 1, lastP = NaN, floorW = 0, floorL = -COL_SPAN / 2 - 0.5;
+  let storyTop = 0, run = 1, scrollY = 0, stageH = 1, storyH = 1, lastP = NaN, floorW = 0, floorH = 0, hedgeW = 0, hedgeH = 0, hedgeBeside = false, floorL = -COL_SPAN / 2 - 0.5;
+  const hedgeGap = () => 6 * remK; // (hc12) the hedge's foot over the floor's tag (a line's air and a little more: two labels)
+  const tagsUp = () => 6 + floorH + hedgeGap() + hedgeH + 6; // the floor line to the hedge's top, and some air: S4's frame keeps it
   // the stage shows below the nav's bar: past the pin the stage leaves with the page
   let belowBar = true;
   const pxuOf = (h) => (h / 2) / (CAM_D * Math.tan(FOV / 2)); // CSS px per world unit at the target's depth
@@ -805,7 +807,8 @@
       l.w = l.el.offsetWidth; l.h = l.el.offsetHeight; l.tr = '';
       if (l.kind === 'cap') capH[l.scene] = l.h;
       else if (l.kind === 'list' && !((stacked || short) && l.wide)) labelMaxW[l.scene] = Math.max(labelMaxW[l.scene], l.w);
-      if (l.floor) floorW = l.w;
+      if (l.floor) { floorW = l.w; floorH = l.h; }
+      if (l.hedge) { hedgeW = l.w; hedgeH = l.h; }
     };
     labels.forEach(l => {
       if (l.terse) { l.terse = false; l.el.classList.remove('is-terse'); }
@@ -813,6 +816,9 @@
       if (l.kind === 'cap') { const br = beatRects[l.scene]; l.el.style.maxWidth = !stacked && br && br.r > 0 ? Math.max(180, contR - (br.r + 28)) + 'px' : ''; }
       sizeLabel(l);
     });
+    // (hc12) an upright tablet: S4's hedge takes the band its caption took under the index (the frame's top), so the columns
+    // (which rise to the frame's top there) leave it room over the ticks (placeLabels). A phone's plain fit leaves that sky.
+    if (stacked && W >= 600 && hedgeH) capH[4] = hedgeH + 10;
     // short landscape: the callouts keep a measured column of their own right of the structure (OV-R2-4).
     if (!stacked && short) [1, 2].forEach(i => {
       const br = beatRects[i] && beatRects[i].r > 0 ? beatRects[i] : { r: W * 0.46 }, ext = EXT[i];
@@ -956,7 +962,12 @@
         // 12 px of air over them), up to K4_MAX; a frame with no such room keeps the plain fit (colK 1)
         // (hc8) an upright tablet (portrait, 600 px wide or wider) too: its columns rise into the sky over their line (from
         // under the scene's caption), which stood empty over a 125 px strip at 768 x 1024; portrait phones keep the plain fit
-        const free = (stacked ? y1 - yTop : y1 - y0) - band4() - 12 * remK, kw = stacked && W < 600 ? 0 : (free / Math.max(1e-4, sw * pxu) - 0.12) / (Y_CTOP - Y_FLOOR);
+        const free = (stacked ? y1 - yTop : y1 - y0) - band4() - 12 * remK;
+        let kw = stacked && W < 600 ? 0 : (free / Math.max(1e-4, sw * pxu) - 0.12) / (Y_CTOP - Y_FLOOR);
+        // (hc12) wide: the floor line stays low enough for its tag and the hedge over it (an upright tablet keeps the hedge's
+        // band, capH; a phone's plain fit leaves it sky; a short landscape frame sets the hedge beside the floor's tag instead)
+        const resv = !stacked && !short;
+        if (resv) kw = Math.min(kw, (y1 - y0 - band4() - tagsUp()) / Math.max(1e-4, sw * pxu) / (Y_FL - Y_FLOOR));
         colK = kw > 1 ? Math.min(kw, K4_MAX) : 1;
         s = Math.max(0.05, kw > 1 ? sw : Math.min(sw, (y1 - y0 - band4()) / ((H_COL + 0.34) * pxu)));
         if (!stacked) s = Math.min(s, (H * 0.74) / (EXT[4][1] * pxu));
@@ -970,13 +981,21 @@
         });
         cx = (xa + x1) / 2;
         if (!stacked) { const tw = Math.max(15, ...(lab.days || []).map(l => l.w || 0)); cx = Math.max(cx, x1 - COL_X(NCOL - 1) * s * pxu - tw / 2); } // the last tag's edge on the column's
-        let fy = stacked ? y1 - band4() : Math.min(y1 - DAY_BAND * remK, (y0 + y1) / 2 + 0.6 * s * pxu);
+        let fy = stacked ? y1 - band4() : Math.min(y1 - DAY_BAND * remK, Math.max((y0 + y1) / 2 + 0.6 * s * pxu, resv ? y0 + (Y_FL - Y_FLOOR) * s * pxu + tagsUp() : 0));
         if (!stacked && colK > 1) { // (hc7) the tall group (ticks to tags) centred on the headline beside it, kept in the frame
           const up = ((Y_CTOP - Y_FLOOR) * colK + 0.12) * s * pxu + 12 * remK, dn = DAY_BAND * remK, hc = br.hb > br.ht ? (br.ht + br.hb) / 2 : (y0 + y1) / 2;
-          fy = clamp(hc + (up - dn) / 2, y0 + up, y1 - dn);
+          fy = clamp(hc + (up - dn) / 2, y0 + Math.max(up, resv ? (Y_FL - Y_FLOOR) * colK * s * pxu + tagsUp() : 0), y1 - dn); // (hc12) the hedge's top in the frame too
         }
         cy = fy - 0.6 * s * pxu;
         floorL = -COL_SPAN / 2 - 0.04 - (floorW + 10) / (s * pxu);
+        { // (hc12) where the hedge stands at rest (placeLabels' rules): over the floor's tag, or over the ticks if the screen's
+          // edge holds it over column 01; with no room for that under the nav (and the index), beside the floor's tag, on its row
+          const ax = cx - COL_SPAN / 2 * s * pxu, fly = fy - (Y_FL - Y_FLOOR) * colK * s * pxu;
+          let top = fly - 6 - floorH - hedgeGap() - hedgeH;
+          if (ax - hedgeW - 8 < 6 + safeL) top = Math.min(top, fy - ((Y_CTOP - Y_FLOOR) * colK + 0.1) * s * pxu - 7 * remK - 6 - hedgeH);
+          hedgeBeside = top < navH + (stacked ? barH : 0) + 5.5 && ax - floorW - 8 - 12 - hedgeW >= 6 + safeL;
+          if (lab.hedge) lab.hedge.out = hedgeBeside ? [0.04, 0.2] : [0.2, 0.3]; // beside, it reaches toward the copy: it leaves before the headline rises (as the caption did)
+        }
       } else {
         s = Math.min((x1 - x0) / (ext[0] * pxu), (y1 - y0) / (ext[1] * pxu), (H * 0.74) / (ext[1] * pxu));
         cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
@@ -1411,8 +1430,7 @@
   if (labelHost) {
     // the plates' captions: a hedge only, beside what it hedges (the scenes that state nothing carry none)
     const cap = (i, h) => label(i, `<span class="fc-h">${h}</span>`, { cls: 'cap', kind: 'cap' });
-    cap(3, 'Illustrative');
-    cap(4, 'Above the floor: exact value not published'); // hc10: the chart's one wording (Home §03, Proof, note 09)
+    cap(3, 'Illustrative'); // (hc12: S4's hedge is a tag on its chart, below)
     // S1: a column of callouts, one per ring, each anchored on the ring's front-right arc
     lab.rings = LC.map((c, k) => label(1, `<span class="k">${c[0]}</span><span class="n">${c[1]}</span><span class="st st-${c[2].toLowerCase()}">${c[2]}</span><span class="dt">${c[3]}: ${c[4]}</span>`,
       { cls: 'ring' + (k === 0 ? ' is-live' : ''), kind: 'list', group: k, leader: true, node: true, info: [`${c[0]} · ${c[3]}`, c[2], c[4]], anchorPx: (sc) => ringFlank(k, sc) }));
@@ -1429,7 +1447,10 @@
     lab.days = SESSIONS.map((s, c) => label(4, `<span class="k">${s.day}</span><span class="dt">Day ${s.day} · ${s.regime} · ${esc(valueT(s))} · ${s.confirmed ? 'broker-confirmed' : 'confirmation not stated'}</span>`,
       { cls: 'day' + (s.regime === 'premium' ? ' is-prem' : ''), kind: 'tag', group: c, side: 's', keep: true, col: c, dy: U_DAY - 6, info: [`Day ${s.day}`, capw(s.regime), `${s.above ? 'Above' : 'Not above'} the ${FLOOR_T} floor (${esc(valueT(s))}) · ${s.confirmed ? 'confirmed against the broker’s records' : 'confirmation not stated'}`], anchor: () => [COL_X(c), Y_FLOOR, 0] }));
     // the floor's tag sits on the line, left of column 01 (never across it)
-    label(4, `<span>Floor</span> <span class="u">${FLOOR_T}</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
+    lab.floor = label(4, `<span>Floor</span> <span class="u">${FLOOR_T}</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
+    // (hc12, the director) the hedge, as Home §03, Proof and note 09 print it on their charts: two lines over the floor's
+    // tag at the line's left end, leaving with it (placeLabels stands it on the floor's tag; was a caption, hc10's words)
+    lab.hedge = label(4, '<span>Above the floor</span> <span class="h">Exact value not published</span>', { cls: 'hedge', kind: 'tag', hedge: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
     label(4, 'NAV', { cls: 'navtag', kind: 'tag', out: [0.05, 0.22], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR - l4(U_NAV), 0], side: 'w' }); // the regime ticks' baseline
     // (no derived summary: S4's headline closes the overture and §03 carries the count, hc6)
   }
@@ -1539,7 +1560,7 @@
     const listCol = [];
     labels.forEach(l => {
       const a = vis(l);
-      let on = a > 0.01 && !((stacked || short) && l.wide) && !(frameTiny[l.scene] && (l.kind !== 'cap' || !l.scene)); // portrait and short screens leave out the secondary notes
+      let on = a > 0.01 && !((stacked || short) && l.wide) && !(frameTiny[l.scene] && (l.kind !== 'cap' || !l.scene) && !l.hedge); // portrait and short screens leave out the secondary notes (never a hedge)
       if (on && l.col != null) on = colIn(l.col) > 0.5;
       let x = 0, y = 0, tr = '';
       if (on && l.kind === 'cap') {
@@ -1558,8 +1579,22 @@
           if (sd.includes('w')) x -= l.w + 8; else if (sd.includes('e')) x += 8; else x -= l.w / 2;
           if (sd.includes('n')) y -= l.h + 6; else if (sd.includes('s')) y += 6; else y -= l.h / 2;
           y += l.dy || 0;
+          if (l.hedge) { // (hc12) the hedge stands on the floor's tag, right edges together; where the screen's edge holds it, it
+            // starts on the tag's left edge and reads from there, and if it then reaches column 01 it stands over the ticks; a
+            // frame with no room over the floor's tag (a phone on its side) sets it beside the tag, on its row
+            y -= floorH + hedgeGap();
+            const fl = l.ax - floorW - 8; // the floor tag's left edge (l.ax: project() reuses one object)
+            const beside = hedgeBeside, flush = !beside && x < 6 + safeL; // (fitScenes decides it at rest: no jump on the way out)
+            if (flush !== !!l.flush) { l.flush = flush; l.el.classList.toggle('is-flush', flush); lab.floor.el.classList.toggle('is-flush', flush); } // (the floor's tag reads from the same edge)
+            if (beside) { x = fl - 12 - l.w; y = Math.max(l.ay - floorH - 6, stacked ? tagTop + capH[4] : navH + 6); } // (the floor tag's own y)
+            else if (flush) {
+              x = Math.max(6 + safeL, fl);
+              const t = project(COL_X(0) * sc, (flY() + yK(Y_CTOP) + 0.1 - yK(Y_FL)) * sc, 0); // column 01's tick, as high over the line as at rest
+              if (x + l.w > t.x - 10 * remK) y = Math.min(y, t.y - 7 * remK - 6 - l.h);
+            }
+          }
           x = clamp(x, 6 + safeL, W - l.w - 6 - safeR);
-          y = Math.max(y, stacked ? tagTop + capH[l.scene] : navH + 6); // never under the nav (portrait: nor the index or the caption)
+          y = Math.max(y, stacked ? tagTop + (l.hedge ? 0 : capH[l.scene]) : navH + 6); // never under the nav (portrait: nor the index or the caption; the hedge takes that band)
           if (l.sum && y + l.h > project(0, (Y_FLOOR + H_COL + 0.2) * layouts[4].s, 0).y - 4) on = false; // the summary only where it clears the columns' tops (it leaves early on the way out)
           l.y = y;
           tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;

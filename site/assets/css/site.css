@@ -1901,11 +1901,9 @@ svg.tg * { fill: none; stroke: currentColor; stroke-width: var(--stroke); vector
 .sp-read { fill: none; stroke: var(--khaki-deep); stroke-width: var(--stroke-2); }
 .modes-head { align-items: end; margin-bottom: clamp(2.25rem, 4.4vw, 4rem); }
 .modes-body { align-items: stretch; }
-/* the dial keeps to 300 px; its caption is the plate's foot, on the drawing's own margin under "Emergency halt" (hc5:
-   it was pushed down to the table's last row, under nothing) */
+/* the dial keeps to 300 px (its caption's spacing is platform.css's #modes rule since hc12, the dial's foot cropped) */
 .sec-plate--dial { display: flex; flex-direction: column; }
 .sec-plate--dial > .hp-art { width: 100%; max-width: 18.75rem; }
-.sec-plate--dial > .hp-cap { margin-top: 0; }
 .sec-plate--market { margin: clamp(.5rem, 1.4vw, 1.25rem) 0 clamp(1.875rem, 3.6vw, 3.25rem); }
 .sp-panels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 @media (max-width: 960px) { .sec-plate--dial { margin-bottom: .5rem; } }

@@ -422,6 +422,8 @@ async def home(b):
         await pg.locator(f'.story-idx [data-n="0{i}"]').click()
         await pg.wait_for_timeout(1400)
         await expect(pg.locator(f'.story-idx [data-n="0{i}"]')).to_have_attribute("aria-current", "step")
+        if i == 4:  # hc12: the ten columns above the floor stand with their hedge (HEDGE_S4)
+            assert await until(pg, HEDGE_S4, 3000), "scene 04 at 1440: no shown label says 'Exact value not published' inside the viewport"
         await pg.screenshot(path=str(OUT / f"story-b{i}.png"))
     # hero stats must not overlap the globe canvas region: check they sit under the copy (left half)
     box = await pg.locator(".beat-0 .hero-stats").bounding_box()
@@ -2051,6 +2053,15 @@ PHONE_LAB = "(() => { " + EFF + """
     cap3: c3 ? { t: c3.full, inside: c3.bx.l >= 0 && c3.bx.t >= 0 && c3.bx.r <= innerWidth && c3.bx.b <= innerHeight, bx: [c3.bx.l, c3.bx.t, c3.bx.r, c3.bx.b].map(Math.round) } : null };
 })()"""
 PHONES = [(390, 664), (375, 667), (360, 780), (320, 640), (844, 390), (320, 568), (667, 375), (740, 360), (568, 320)]  # round 2 adds 320x568, 667x375, 740x360; v2x r2 568x320 (an iPhone SE on its side)
+# hc12 (integrate, from home's hc12 entry): scene 4 draws the ten columns above the floor, so at its rest a shown
+# overture label carries their hedge in the ledger's words (C-022), inside the viewport. Keyed on the words, not on a
+# class: hc12 moved the hedge from the scene's caption to a tag on the chart, and a later design may move it again
+HEDGE_S4 = "(() => { " + EFF + """
+  const h = [...document.querySelectorAll('.story-labels .story-lab')].find(l => /Exact value not published/i.test(l.textContent)
+    && eff(l, document.documentElement) > 0.3 && l.getBoundingClientRect().width > 0);
+  if (!h) return ''; const r = h.getBoundingClientRect();
+  return r.left >= 0 && r.top >= 0 && r.right <= innerWidth + 0.5 && r.bottom <= innerHeight + 0.5 ? h.textContent.replace(/\\s+/g, ' ').trim() : '';
+})()"""
 INSP_BOX = r"""(tapped) => { const vis = el => { let o = 1; for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return 0; o *= +cs.opacity; } return o; };
   const bx = el => { const r = el.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; };
   const hit = (a, c) => Math.min(a[2], c[2]) - Math.max(a[0], c[0]) > 1 && Math.min(a[3], c[3]) - Math.max(a[1], c[1]) > 1;
@@ -2087,7 +2098,8 @@ async def overture_phones(b):
     the callouts hidden, under 2% of the stage's pixels inside each callout's box are brighter than luminance 120 (no
     structure under a callout); Plate 03's caption lies inside the viewport and says 'Illustrative' (its full text: v2x r3 sets
     the hedge after the mark and title, past the 44 characters the messages quote); at 320x640 adjacent
-    S4 day tags are at least 3 px apart; at 844x390 and 667x375, the inspector opened by tapping each S1 ring and S2
+    S4 day tags are at least 3 px apart; at scene 4's rest a shown label carries the columns' hedge "Exact value not
+    published" inside the viewport (hc12); at 844x390 and 667x375, the inspector opened by tapping each S1 ring and S2
     plate callout crosses none of .story-bar, .story-idx, .story-motion or another callout (OV1, OV10, D14; round 2:
     OV-R2-1, OV-R2-4, OV-R2-5; v2x r2: 568x320, where a plate caption crossed the headline, r2-a11y M)"""
     bad = []
@@ -2103,6 +2115,8 @@ async def overture_phones(b):
                 c = m["cap3"]
                 if not c: bad.append(f"index.html@{w}x{h} scene 03: no visible Plate 03 caption")
                 elif not c["inside"] or "Illustrative" not in c["t"]: bad.append(f"index.html@{w}x{h} scene 03: caption {c['t']!r} at {c['bx']} (inside: {c['inside']}; must lie in the viewport and say 'Illustrative')")
+            if i == 4 and not await until(pg, HEDGE_S4, 3000):
+                bad.append(f"index.html@{w}x{h} scene 04: no shown label says 'Exact value not published' inside the viewport (the ten columns above the floor without their hedge)")
             if i == 4 and (w, h) == (320, 640):
                 tight = [g for g in m["dayGaps"] if g < 3]
                 if tight: bad.append(f"index.html@320x640 scene 04: adjacent day tags closer than 3 px {len(tight)} times (gaps {m['dayGaps']})")

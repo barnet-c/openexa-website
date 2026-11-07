@@ -365,6 +365,14 @@ body[data-page="home"] .story-lab.floor .u { color: rgba(245, 242, 236, .9); }
    it, overture.css); never one line mixing Inter and mono */
 body[data-page="home"] .story-lab.floor { line-height: 1.3; }
 body[data-page="home"] .story-lab.floor span { display: block; }
+/* hc12 (the director): the hedge over the floor's tag, as §03, Proof and note 09 set it: "Above the floor" at the floor's
+   tone over "Exact value not published" a step under; right edges with the floor's tag, read from the left where the
+   screen's edge holds it (story.js: is-flush); away while the inspector shows, as the caption it replaces was */
+body[data-page="home"] .story-lab.hedge { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; text-align: right; color: rgba(245, 242, 236, .6); }
+body[data-page="home"] .story-lab.hedge span { display: block; }
+body[data-page="home"] .story-lab.hedge span:first-child { color: rgba(245, 242, 236, .74); }
+body[data-page="home"] .story-lab:is(.hedge, .floor).is-flush { text-align: left; } /* one left edge for the four lines, as Proof's gutter */
+body[data-page="home"] .story-labels.has-insp .story-lab.hedge { opacity: 0 !important; }
 /* §06 on tablets (761-960): the three notes in one row, as on desktop; a still wider than its cell keeps its shape (the
    plate's preserveAspectRatio, xMinYMid: hc3 inlines the three so their green points redraw on hover and focus) */
 @media (min-width: 761px) and (max-width: 960px) {

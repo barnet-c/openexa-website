@@ -281,6 +281,10 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
 #modes .modes-head { align-items: start; }
 #modes .ledger th:nth-child(3) { text-align: right; }
+/* hc12 (director item 5): the dial's art ends under "Emergency halt" (its empty foot cropped, viewBox 300x296), so its
+   stamp flows under it with the caption's own margin, at the plate's lower left as on every other plate (hc7 set it on
+   the halt label's line, where the two read as one label, "Schematic Emergency halt") */
+#modes .sec-plate--dial > .hp-cap { margin-top: 1rem; }
 
 #test .card-grid--3 { grid-template-columns: minmax(0, 1fr); border: 0; border-top: var(--hair) solid var(--line-strong); }
 #test .card-grid--3 > .card { display: grid; grid-template-columns: 3.5rem minmax(0, 15.5rem) minmax(0, 1fr) 13.5rem; column-gap: clamp(1.25rem, 2.6vw, 2.75rem); align-items: baseline; padding: 1.25rem 0 1.375rem; border: 0; border-bottom: var(--hair) solid var(--line); border-radius: 0; background: none; }
@@ -488,11 +492,10 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
   #modes .modes-body > .ledger-wrap { grid-column: 1 / span 6; grid-row: 2; }
   #modes .modes-body > .sec-plate--dial { grid-column: 8 / -1; grid-row: 1 / span 2; align-self: center; justify-self: stretch; width: 100%; max-width: 30rem; margin: 0 0 0 auto; }
   #modes .sec-plate--dial > .hp-art { max-width: none; }
-  /* hc7 (director item 11): the stamp is the plate's lower-left corner: on the foot line of "Emergency halt", at the
-     drawing's left edge ("Fully automatic" ends at 24.5% and is 4rem wide). Under the plate (hc5) it hung below empty
-     paper, read as centred under the dial; narrower, the plate sits on the text column and its stamp under it */
-  #modes .sec-plate--dial { position: relative; }
-  #modes .sec-plate--dial > .hp-cap { position: absolute; left: calc(24.5% - 4rem); top: 91.7%; transform: translateY(-50%); margin: 0; padding: 0; }
+  /* hc12: here the plate's box is wider than its ink, so the stamp starts where the drawing does (site.css's --fc-ind
+     rule): the left of "Fully automatic", which ends at 24.5% and is 4rem wide. At the box's edge it hung 53-105 px left
+     of every mark (hc7's probe A) */
+  #modes .sec-plate--dial > .hp-cap { --fc-ind: calc(24.5% - 4rem); }
 
   #test > .container { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap, clamp(1rem, 2.2vw, 2rem)); align-items: start; }
   #test > .container > .ch-head { grid-column: 1 / span 5; position: sticky; top: calc(var(--nav-h) + 2.5rem); margin-bottom: 0; }

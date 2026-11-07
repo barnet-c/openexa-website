@@ -138,7 +138,7 @@
 
 /* ---------- the cards (the fifth AI post, the markets lead) ---------- */
 .blog-page .blog-card-body { padding: clamp(1.125rem, 1.9vw, 1.625rem) clamp(1.25rem, 2.2vw, 1.875rem) clamp(1.5rem, 2.6vw, 2.25rem); }
-.blog-page .blog-card h3 { margin-top: 0; }
+.blog-page .blog-card:not(.series-card) h3 { margin-top: 0; } /* a series title keeps its air under the plate (above) */
 .blog-page .blog-card h3 .arr { width: .6em; height: .6em; margin-left: .15em; } /* a post hosted elsewhere */
 
 /* ---------- the research collections (a2): a register (year once per year, title, arrow) beside one plate. Markets:
