@@ -3186,7 +3186,13 @@ REFLOW_TEXT = """(() => {
     if (el.closest('.fl') && (el.closest('.fl.is-out') || !el.closest('.fig-labels.is-on'))) return;
     const r = vis(el); if (!r || r.bottom < 0 || r.top > innerHeight) return;
     if (r.right > vw + 0.5) over.push([String(el.className || el.tagName).slice(0, 30), Math.round(r.right), el.textContent.trim().slice(0, 40)]);
-    boxes.push([el, r]);
+    // hc21: an inline element is measured line by line at its em box (its font-size, centred on each fragment), not by its
+    // content area: a display serif's ascent + descent (1.3 em) reaches into the next line of the same heading although no
+    // glyph does; a tighter leading than the em, a box moved over another, still cross
+    const cs = getComputedStyle(el), fs = parseFloat(cs.fontSize);
+    if (cs.display === 'inline') [...el.getClientRects()].forEach(f => { const h = Math.min(f.height, fs), c = (f.top + f.bottom) / 2;
+      if (f.width > 0 && c + h / 2 >= 0 && c - h / 2 <= innerHeight) boxes.push([el, { left: f.left, right: f.right, top: c - h / 2, bottom: c + h / 2 }]); });
+    else boxes.push([el, r]);
   });
   const hits = [];
   for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
@@ -3231,6 +3237,9 @@ async def reflow_400(b):
     # seven hand-written pages. At 320x256 (DPR 4): no horizontal scroll; no visible first-screen text in main past the
     # right edge; no two first-screen text boxes cross (a figure label counts only while its layer is on and it is not
     # leaving); the lede is at least 260 px wide; the blog's hero is one column.
+    # hc21 (integrate): the research heroes lead with their titles on phones, so note 06's h1 is on this first screen: an
+    # inline span in it (`.nw`, "Post-Training") is now measured at its em box per line (REFLOW_TEXT), not its 1.3 em content
+    # area, which reached 4 px into the next line's box with no glyph crossing (TESTS.md section 43)
     for name in ("research", "research/06-post-training-on-a-rulebook", "research/09-lifecycle-01-ten-sessions", "blog/index", "blog/in-search-gen-ai-business-model"):
         ctx, pg = await open_page(b, f"{name}.html", 320, 256, dpr=4)
         await pg.wait_for_timeout(2600)  # the figure's labels come and go on their own clock
@@ -3843,11 +3852,14 @@ MARKET_STATE = r"""(() => { const f = document.querySelector('#marketplace .sec-
 MARKET_WATCH = r"""(() => { const f = document.querySelector('#marketplace .sec-plate--market'); window.__mk = null;
   const take = () => { const an = f.getAnimations({ subtree: true }).filter(a => a.animationName); const by = {};
     an.forEach(a => { by[a.animationName] = (by[a.animationName] || 0) + 1; });
-    window.__mk = { cls: f.className, n: an.length, by, pops: new Set(an.filter(a => a.animationName === 'pl-pop').map(a => a.effect.target)).size }; };
+    window.__mk = { cls: f.className, n: an.length, by, pops: new Set(an.filter(a => a.animationName === 'pl-pop').map(a => a.effect.target)).size,
+      end: Math.round(Math.max(0, ...an.map(a => a.effect.getComputedTiming().endTime))) }; };
   if (f.classList.contains('is-in')) { take(); return; }
   const mo = new MutationObserver(() => { if (f.classList.contains('is-in')) { mo.disconnect(); take(); } });
   mo.observe(f, { attributes: true, attributeFilter: ['class'] }); })()"""
 MARKET_NAMES = {"mk-wipe", "pl-in", "pl-fade", "pl-pop"}  # the streams wiped in, the layers closing, the fades, the records
+MARKET_WHOLE_MS = 1400  # hc21 (HC21 4.2): the plate is whole within ~1.4 s of its reveal (a still that only arrives comes sooner than the plates that act)
+MARKET_HALVES = r"""(() => [...document.querySelectorAll('#marketplace .sp-half svg')].map(s => s.getBoundingClientRect().height))()"""
 
 
 @check
@@ -3859,7 +3871,11 @@ async def market_draw_once(b):
     time of writing); within 4 s nothing in it runs, and the plate then equals, pixel for pixel (no more than 0.05% of its
     pixels off by more than 8 levels), the same plate under reduced motion; after leaving the screen and coming back
     nothing runs. It never animates under reduced motion, on a deep link to #marketplace (the first screen) or after a
-    jump to it (an in-page link: the reveal is .is-cut, nothing runs at the landing or 1.6 s after)."""
+    jump to it (an in-page link: the reveal is .is-cut, nothing runs at the landing or 1.6 s after).
+    hc21 (integrate, standing in for tests; the director's HC21 4.2 and platform's optional pin): the draw-in is whole within
+    MARKET_WHOLE_MS of the reveal, read from its animations' own timing (the latest delay + duration, so a slow CPU cannot
+    move it; .85 s at the time of writing, 2.15 s at hc20); and the plate's two halves are drawn in boxes of one height at
+    1440 x 900 and 3840 x 2160 (the record line runs on across the join with no step: 0.57 px at 3840 at hc20)."""
     import io
     from PIL import Image, ImageChops
     bad, notes = [], []
@@ -3898,6 +3914,8 @@ async def market_draw_once(b):
         if not MARKET_NAMES <= set(mk["by"]): bad.append(f"1440: the draw-in did not play: {mk['by']!r}, expected {sorted(MARKET_NAMES)} among them")
         recs = (await pg.evaluate(MARKET_STATE))["recs"]
         if not recs or mk["pops"] != recs: bad.append(f"1440: {mk['pops']} of the plate's {recs} records popped")
+        if not 0 < mk["end"] <= MARKET_WHOLE_MS: bad.append(f"1440: the draw-in is whole {mk['end']} ms after the reveal (at most {MARKET_WHOLE_MS})")
+        notes.append(f"whole {mk['end']} ms after the reveal")
         if not await until(pg, f"(() => document.querySelector('{MARKET}').getAnimations({{ subtree: true }}).every(a => a.playState !== 'running'))()", lim(4000), 100):
             bad.append(f"1440: still running 4 s after the reveal: {await pg.evaluate(MARKET_STATE)!r}")
         else:
@@ -3933,6 +3951,14 @@ async def market_draw_once(b):
         if st["running"]: bad.append(f"jump: the plate runs {st['by']!r} 1.6 s after the landing")
     await ctx.close()
     notes.append("reduced motion, deep link and jump: the still")
+    # 4. one record line across the join: the two halves' boxes have one height (the same viewBox height, the same snap)
+    for w, h in ((1440, 900), (3840, 2160)):
+        ctx, pg = await open_page(b, "platform.html", w, h, reduced=True)
+        await pg.evaluate(center, MARKET); await pg.wait_for_timeout(200)
+        hs = await pg.evaluate(MARKET_HALVES)
+        if len(hs) != 2 or abs(hs[0] - hs[1]) > 0.25: bad.append(f"{w}: the plate's halves are {hs} px tall (one height expected)")
+        else: notes.append(f"{w}: halves {hs[0]:.1f} / {hs[1]:.1f} px")
+        await ctx.close()
     assert not bad, "market_draw_once:\n  " + "\n  ".join(bad)
     print(f"market_draw_once: Platform §06 draws itself once as a visitor reaches it and rests as its still; never again, never under reduced motion, on a deep link or after a jump ({'; '.join(notes)})")
 

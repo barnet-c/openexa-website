@@ -126,6 +126,53 @@ async def main():
         assert not errs, errs
         print("mobile: no overflow on research, article, company")
         await ctx.close()
+        # hc21 (integrate, standing in for tests; research's optional pins, the director's HC21 4.1): on phones and upright
+        # tablets the research pages lead with their words, as every page does: the h1 starts within 160 px of the top (the
+        # page heroes' 142-172; it was 303-526), and a note's hedge, once figure.js hangs it under the drawing, stands below
+        # the meta line and inside the hero (the order: title, meta, drawing, hedge)
+        tops = []
+        for vw, vh in ((390, 844), (768, 1024)):
+            ctx = await b.new_context(viewport={"width": vw, "height": vh})
+            pg = await ctx.new_page(); errs = []
+            pg.on("pageerror", lambda e: errs.append(str(e)))
+            for name in ("research.html", links[0], links[8]):
+                await pg.goto(f"{BASE}/{name}", wait_until="load"); await pg.wait_for_timeout(1800)
+                top = await pg.evaluate("Math.round(document.querySelector('main h1').getBoundingClientRect().top + scrollY)")
+                assert top <= 160, (name, vw, "the h1 starts too far down", top)
+                tops.append(top)
+                if name == "research.html": continue
+                await pg.wait_for_function("!!document.querySelector('.article-hero .article-figcap.is-hung')", timeout=10000)
+                box = await pg.evaluate("(() => { const r = s => document.querySelector(s).getBoundingClientRect(); const m = r('.article-hero .article-meta'), c = r('.article-hero .article-figcap'), h = r('.article-hero'); return { meta: m.bottom, cap: c.top, foot: c.bottom, hero: h.bottom }; })()")
+                assert box["meta"] <= box["cap"] and box["foot"] <= box["hero"] + 1, (name, vw, "the hedge is not under the meta line, in the hero", box)
+            assert not errs, errs
+            await ctx.close()
+        print(f"research heroes at 390 and 768: the words first (h1 at {min(tops)}-{max(tops)} px), a note's hedge under its meta line")
+        # hc21 (integrate, standing in for tests; system's HC21 4.3): the notes and the posts end on one pager, drawn one way:
+        # both cells on one left edge, the same title measure, and the green top rule drawn on hover (at one speed) with the
+        # label lit; every value read on a note equals the post's
+        PAGER = r"""async (hover) => { const cs = (e, p) => getComputedStyle(e, p || null); const c = document.querySelector('.pager .pager-card.next');
+          const k = c.querySelector('.k'), h = c.querySelector('h3'), b = cs(c, '::before');
+          return { align: cs(c).textAlign, justify: cs(c).justifyItems, measure: cs(h).maxWidth, rule: b.content !== 'none' && b.content !== 'normal', origin: b.transformOrigin,
+                   rest: b.transform, ruleColor: b.backgroundColor, label: cs(k).color, draw: b.transitionDuration + ' ' + b.transitionTimingFunction, fade: cs(k).transitionDuration }; }"""
+        ctx = await b.new_context(viewport={"width": 1440, "height": 900})
+        pg = await ctx.new_page()
+        seen = {}
+        for name in (links[4], "blog/in-search-gen-ai-business-model.html"):
+            await pg.goto(f"{BASE}/{name}", wait_until="load"); await pg.wait_for_timeout(800)
+            await pg.evaluate("document.querySelector('.pager').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(500)
+            rest = await pg.evaluate(PAGER, False)
+            for _ in range(3):  # the pointer on the card once the page has stopped moving (a late layout can carry it off)
+                await pg.mouse.move(5, 5); await pg.locator(".pager .pager-card.next").hover(); await pg.wait_for_timeout(1200)
+                if await pg.evaluate("document.querySelector('.pager .pager-card.next').matches(':hover')"): break
+            hov = await pg.evaluate(PAGER, True)
+            assert rest["align"] in ("start", "left") and rest["justify"] in ("normal", "start", "stretch", "legacy"), (name, "Next is not set on the left edge", rest)
+            assert rest["rule"] and rest["rest"] != "none" and hov["rest"] == "none", (name, "the green rule does not draw on hover", rest, hov)
+            assert hov["label"] != rest["label"], (name, "the label does not light on hover", rest, hov)
+            seen[name] = (rest, hov)
+        a, c = seen.values()
+        assert a == c, ("the notes' and the posts' pagers differ", seen)
+        print(f"one pager on notes and posts: Next on the left edge, titles at {a[0]['measure']}, the rule draws on hover, the label lights")
+        await ctx.close()
         # award a4 (research): without JavaScript note 09's hero still carries its key: floor, 10 bps, 01 and 10 shown, the
         # minor numerals not. hc3 (research): the particle plates' words are in the caption register, sentence case
         # ("Floor" / "10 bps"), so the floor label is matched without regard to case

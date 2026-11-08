@@ -18,13 +18,14 @@
 @media (min-width: 961px) {
   .research-hero h1.display-1 { line-height: .97; max-width: 7.2em; } /* two lines at every width ("The thinking / behind the swarm."): at 4K one line ran into the drawing */
 }
-/* tablets and phones: the figure, which figure.js draws down to 77 % of the stage's height on phones and 83 % from
-   760 px, then the words */
+/* tablets and phones (hc21): the words first, where every page's start, then the figure in the room the hero keeps at its foot,
+   as a post (title, meta, drawing). The library is drawn in 16-77 % of its 66vw stage (19-82 % from 760 px): the stage
+   hangs below the foot by its empty band, so the drawing ends where a hero's words would */
 @media (max-width: 960px) {
-  .research-hero { padding-top: calc(var(--nav-h) + 51vw + 1.125rem); }
-  .research-hero .figure-stage { --figure-scale: 1.3; }
+  :is(.research-hero, .article-hero) { --stage-h: 66vw; --stage-b: 2.75rem; padding-top: calc(var(--nav-h) + clamp(3.5rem, 9vw, 7.5rem)); padding-bottom: calc(var(--stage-h) + 4rem); }
+  .research-hero { --stage-b: calc(3rem - 15vw); padding-bottom: calc(6rem + 40vw); }
 }
-@media (min-width: 760px) and (max-width: 960px) { .research-hero { padding-top: calc(var(--nav-h) + 54.7vw + 1.25rem); } }
+@media (min-width: 760px) and (max-width: 960px) { .research-hero { --stage-b: calc(3rem - 12vw); padding-bottom: calc(6rem + 42vw); } }
 @media (max-width: 600px) { .research-hero h1.display-1 { font-size: min(var(--h1-plate), clamp(2.6rem, 14vw, 3.4rem)); } }
 
 /* ---------- research index: the shelf (the list, and the plate that shows the pointed note's figure) ---------- */
@@ -263,16 +264,14 @@
 .article-hero .article-figcap { transition: opacity .6s var(--ease-out); }
 @media (scripting: enabled) { .article-hero .article-figcap:not(.is-hung) { opacity: 0; visibility: hidden; } }
 @media (max-width: 960px) {
-  /* the hedge stands under the drawing it hedges, before the title (cut, 1 Nov); since a1 under the drawing's left edge,
-     as on desktop (figure.js's --fig-l, from the container's edge) */
-  .article-hero .figcap.article-figcap { order: -1; margin: 0 0 clamp(1.25rem, 5vw, 2rem); text-align: right; }
-  .article-hero .figcap.article-figcap.is-hung { text-align: left; padding-left: max(0px, calc(var(--fig-l) - max(var(--gutter), env(safe-area-inset-left)))); }
+  /* the hedge under the drawing it hedges (cut, 1 Nov), since hc21 under the title and meta too; out of the flow, so
+     hanging it moves nothing: a line under the drawing's foot, from its left edge (figure.js --fig-l, --fig-b); unhung
+     (no JavaScript or WebGL), under the still's (still_geo --fs-y, as the stage scales it) */
+  .article-hero .figcap.article-figcap { position: absolute; top: calc(100% + 2.125rem + var(--stage-h) * (.5 + var(--fs-y, .4) * var(--hs, 1) / .84) + var(--fs-kb, 0rem)); left: max(var(--gutter), env(safe-area-inset-left)); right: max(var(--gutter), env(safe-area-inset-right)); margin: 0; text-align: right; }
+  .article-hero .figcap.article-figcap.is-hung { top: calc(var(--fig-b) + .875rem); text-align: left; padding-left: max(0px, calc(var(--fig-l) - max(var(--gutter), env(safe-area-inset-left)))); }
 }
-/* tablets: the figure above the title takes half the screen's width in height, not two thirds */
-@media (scripting: enabled) and (min-width: 601px) and (max-width: 960px) {
-  .article-hero { padding-top: calc(var(--nav-h) + 46vw); }
-  .article-hero .figure-stage { height: calc(var(--nav-h) + 50vw); }
-}
+/* tablets: the figure takes half the screen's width in height, not two thirds */
+@media (scripting: enabled) and (min-width: 601px) and (max-width: 960px) { .article-hero { --stage-h: 50vw; } }
 
 @media (scripting: enabled) and (min-width: 760px) and (max-height: 520px) and (min-aspect-ratio: 23/20) {
   .rs-stage { aspect-ratio: auto; height: 40svh; }
@@ -358,21 +357,10 @@
 .note-disc p { margin: 0; font-size: var(--fs-small); line-height: 1.6; color: var(--fg-2); }
 /* the end matter keeps the text's measure: its rules stop where the lines stop */
 .article-page .article > :is(.article-end, .note-run, .note-disc) { max-width: 39.2rem; }
-.article-page .pager-card h3 { max-width: 36ch; } /* both cards rag alike (v2: one balanced, one a single long line) */
 .article-page .pager-card h3 .t-head { display: block; }
 .note-disc a { border-bottom: var(--hair) solid var(--line-strong); transition: border-color .25s var(--ease); }
 @media (hover: hover) { .note-disc a:hover { border-color: var(--fg); } }
-/* the pager: v2's hover set the card to the colour it already had (nothing moved). Hover and focus now draw the site's
-   green rule along the card's top edge, from the side the card points to, and light its label */
-.article-page .pager-card { position: relative; }
-.article-page .pager-card::before { content: ""; position: absolute; left: calc(-1 * var(--hair)); right: 0; top: calc(-1 * var(--hair)); height: calc(2 * var(--hair)); background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .45s var(--ease-draw); } /* a1 (W3): a rule drawn */
-.article-page .pager-card.next::before { transform-origin: right; }
-.article-page .pager-card .k { transition: color .25s var(--ease); }
-.article-page .pager-card:focus-visible::before { transform: none; }
-.article-page .pager-card:focus-visible .k { color: var(--accent); }
 @media (hover: hover) {
-  .article-page .pager-card:hover::before { transform: none; }
-  .article-page .pager-card:hover .k { color: var(--accent); }
   .toc li a:hover::before { color: var(--accent); }
 }
 
@@ -399,11 +387,8 @@
   .research-hero .figure-stage[data-plate] { --figure-scale: .92; }
 }
 @media (max-width: 960px) {
-  :is(.research-hero, .article-hero) .figure-stage[data-plate] { top: var(--nav-h); height: 66vw; }
+  :is(.research-hero, .article-hero) .figure-stage { top: auto; bottom: var(--stage-b); height: var(--stage-h); } /* a plate or not */
   .research-hero .figure-stage[data-plate] { --figure-scale: 1.45; }
-}
-@media (scripting: enabled) and (min-width: 601px) and (max-width: 960px) {
-  .article-hero .figure-stage[data-plate] { height: 50vw; }
 }
 .fig-labels { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .2s var(--ease), visibility 0s linear .2s; }
 .fig-labels.is-on { opacity: 1; visibility: visible; transition: opacity .2s var(--ease); }
@@ -432,8 +417,11 @@
 }
 .fl-t small { display: block; font-size: inherit; color: var(--fg-3); }
 .fl--n .fl-t, .fl-t .fl-v { font: 400 var(--fs-label)/1.35 var(--mono); letter-spacing: .04em; color: var(--fg-3); }
-/* hc7: on phones the label step (12 px) is a pixel under the words' (13): one size, so note 09's first screen holds four */
+/* hc7: on phones the label step (12 px) is a pixel under the words' (13): one size, so note 09's first screen holds four;
+   hc21: a note's hero on upright tablets too (five at 768); not under 700 px (the ten numerals would not fit, and 10 would
+   wait) nor on the index's plate (its "Floor" would) */
 @media (max-width: 599.98px) { .fl--n .fl-t, .fl-t .fl-v { font-size: var(--fs-small); } }
+@media (min-width: 700px) and (max-width: 960px) { .article-hero :is(.fl--n .fl-t, .fl-v) { font-size: var(--fs-small); } }
 /* a hedge label without room for two lines may stand as one: "Above the floor · exact value not published" (r3) */
 .fl.is-one .fl-t small { display: inline; text-transform: lowercase; }
 .fl.is-one .fl-t small::before { content: " · "; }
@@ -474,7 +462,7 @@
   .research-hero, .article-hero { display: flex; align-items: stretch; min-height: 100vh; min-height: 100svh; }
   :is(.research-hero, .article-hero) > .container { display: grid; align-content: center; }
   .article-hero .figure-stage[data-plate] { height: calc(100vh - var(--nav-h) - 1.5rem); height: calc(100svh - var(--nav-h) - 1.5rem); }
-  .article-hero .figcap.article-figcap { position: absolute; top: 0; right: max(var(--gutter), env(safe-area-inset-right)); max-width: 44%; margin: 0; }
+  .article-hero .figcap.article-figcap { position: absolute; top: 0; left: auto; right: max(var(--gutter), env(safe-area-inset-right)); max-width: 44%; margin: 0; }
   .article-hero .figcap.article-figcap.is-hung { --hx: var(--fig-l); left: var(--hx); right: auto; top: calc(var(--fig-b) + .75rem); max-width: calc(100% - var(--hx) - max(var(--gutter), env(safe-area-inset-right))); padding-left: 0; text-align: left; }
 }
 /* the narrowest (568 x 320): the drawing is ~120 px wide, so its hedge starts at its column's edge, not the drawing's */
@@ -482,7 +470,7 @@
 
 /* ---------- reduced motion and print ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .rs-cap, .rs-shelf .rs-rail, .fig-labels, .fig-labels.is-on, .article-page .pager-card::before, .rs-still, .fs-still, .article-figcap, .np-plate, .np-part, .np-still, .np-rule, .np-stage .fl { transition: none; }
+  .rs-cap, .rs-shelf .rs-rail, .fig-labels, .fig-labels.is-on, .rs-still, .fs-still, .article-figcap, .np-plate, .np-part, .np-still, .np-rule, .np-stage .fl { transition: none; }
   .fig-labels.is-on .fl { animation: none; }
   .fl, .fl-t, .fl::after { transition: none; }
 }

@@ -306,7 +306,6 @@ main > .section { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
 
 /* ---------- cards & lists ---------- */
 .card { border: var(--hair) solid var(--line); border-radius: var(--r); padding: clamp(1.375rem, 2.4vw, 2.125rem); background: var(--bg); position: relative; }
-.card--tint { background: var(--bg-2); }
 .card .n { font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .08em; color: var(--fg-3); margin-bottom: 1.625rem; display: flex; justify-content: space-between; }
 .card h3 { margin-bottom: .75rem; font-weight: 400; }
 .card p { color: var(--fg-2); font-size: var(--fs-small); }
@@ -314,12 +313,10 @@ main > .section { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
 .card-grid { display: grid; border-top: var(--hair) solid var(--line); border-left: var(--hair) solid var(--line); }
 .card-grid > * { border: 0; border-right: var(--hair) solid var(--line); border-bottom: var(--hair) solid var(--line); }
 .card-grid > .card { border-radius: 0; }
-.card-grid--2 { grid-template-columns: repeat(2, 1fr); }
 .card-grid--3 { grid-template-columns: repeat(3, 1fr); }
-.card-grid--4 { grid-template-columns: repeat(4, 1fr); }
-@media (max-width: 960px) { .card-grid--3, .card-grid--4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 960px) { .card-grid--3 { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 601px) and (max-width: 960px) { .card-grid--3 > :last-child:nth-child(odd) { grid-column: 1 / -1; } } /* no lone card beside an empty cell */
-@media (max-width: 600px) { .card-grid--2, .card-grid--3, .card-grid--4 { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .card-grid--3 { grid-template-columns: 1fr; } }
 
 
 .checks li { position: relative; padding: .75rem 0 .75rem 2.25rem; border-bottom: var(--hair) solid var(--line); color: var(--fg-2); }
@@ -461,7 +458,6 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 @media (max-width: 960px) { .figure-cap { flex-direction: column; align-items: flex-start; gap: calc(3 * var(--hair)); } }
 @media (max-width: 600px) { .figure-cap { padding-left: 0; margin-top: .875rem; } }
  .mt-2 { margin-top: 1.5rem } .mt-3 { margin-top: 2.5rem } .mt-4 { margin-top: 4rem }
-.mb-3 { margin-bottom: 2.5rem }
 .sticky { position: sticky; top: calc(var(--nav-h) + 2rem); }
 @media (max-width: 960px) { .sticky { position: static; } }
 .nowrap { white-space: nowrap; }
@@ -618,14 +614,19 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
   .article { font-size: var(--fs-body); }
   .article > p.lead { font-size: var(--fs-body); }
 }
+/* the pager, the notes' and the posts' (hc21): both cells on one left edge; hover and focus draw the green rule from the
+   side the card points to and light the label */
 .pager { display: grid; grid-template-columns: 1fr 1fr; border-top: var(--hair) solid var(--line); border-left: var(--hair) solid var(--line); }
-.pager-card { background: var(--bg); border-right: var(--hair) solid var(--line); border-bottom: var(--hair) solid var(--line); padding: clamp(1.375rem, 2.6vw, 2.25rem); display: grid; gap: .625rem; align-content: start; transition: background var(--dur-move) var(--ease-out); }
-.pager-card.next { text-align: right; justify-items: end; }
-@media (hover: hover) { .pager-card:hover { background: var(--paper); } }
-.pager-card .k { font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; text-transform: none; color: var(--fg-3); }
-.pager-card h3 { font-family: var(--serif); font-weight: 400; font-size: var(--fs-heading); line-height: 1.2; letter-spacing: -0.01em; text-wrap: balance; }
-.pager-card p { color: var(--fg-3); font-size: var(--fs-small); max-width: 40ch; }
-@media (max-width: 700px) { .pager { grid-template-columns: 1fr; } .pager-card.next { text-align: left; justify-items: start; } }
+.pager-card { position: relative; background: var(--bg); border-right: var(--hair) solid var(--line); border-bottom: var(--hair) solid var(--line); padding: clamp(1.375rem, 2.6vw, 2.25rem); display: grid; gap: .625rem; align-content: start; }
+.pager-card::before { content: ""; position: absolute; left: calc(-1 * var(--hair)); right: 0; top: calc(-1 * var(--hair)); height: calc(2 * var(--hair)); background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform var(--dur-draw) var(--ease); }
+.pager-card.next::before { transform-origin: right; }
+.pager-card .k { font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; text-transform: none; color: var(--fg-3); transition: color var(--dur-feedback) var(--ease); }
+.pager-card h3 { max-width: 30ch; font-family: var(--serif); font-weight: 400; font-size: var(--fs-heading); line-height: 1.2; letter-spacing: -0.01em; text-wrap: balance; }
+.pager-card:focus-visible::before { transform: none; }
+.pager-card:focus-visible .k { color: var(--signal-ink); } /* 5.77:1 on the card's paper */
+@media (hover: hover) { .pager-card:hover::before { transform: none; } .pager-card:hover .k { color: var(--signal-ink); } }
+@media (max-width: 700px) { .pager { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .pager-card::before { transition: none; } }
 
 /* ---------- homepage research chapter ---------- */
 /* a column: the paragraph takes the free height, so every card's arrow sits on one line at the foot of its row (PG-R2-7). */
@@ -791,7 +792,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 :is(.blog-card, .series-card, .research-card):active h3 { text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .3125rem; }
 :is(.blog-card, .series-card, .research-card, .pager-card):active .link-arrow { color: var(--accent); }
 .blog-card:active { background: var(--paper); transition: none; }
-:is(.blog-card, .series-card):active::after, :is(.blog-post, .article-page) .pager-card:active::before { transform: none; transition-duration: var(--dur-feedback); }
+:is(.blog-card, .series-card):active::after, .pager .pager-card:active::before { transform: none; transition-duration: var(--dur-feedback); }
 .row-links { display: flex; flex-wrap: wrap; gap: .875rem 2rem; }
 
 @media (max-width: 1080px) { .series-rail { grid-template-columns: repeat(2, 1fr); } }
@@ -872,15 +873,15 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 /* ---------- off-screen: a band wholly out of view runs no CSS animation ----------
    The pause names what animates (not `*`), so the toggle restyles only those (a1). A new CSS animation in a band adds its
    class here (check_static offscreen_pause). */
-.is-offscreen, .is-offscreen :is(.live, .badge i, .chain-status i, .lt-seg, .lt-node, .lt-tag, .lt-rec, .lt-meta, .lt-ev, .lt-sub, .lt-t, .lt-latest,
+.is-offscreen, .is-offscreen :is(.live, .badge i, .chain-status i, .lt-seg, .lt-node, .lt-tag, .lt-rec, .lt-meta, .lt-ev, .lt-sub, .lt-t,
   .chain-node, .chain-flag, .layers, .story, .story-stage, .story-ui, .story-bar, .story-labels, .story-static-mark, .beat, .beat-0, .wi, .sw-gates,
   .sw-trace, .is-filled, .pf-floor, .pf-c i, .pf-lit, .pf-tk, .pf-lit > span, .pf-tk > span, .pf-rec, .pf-l-ok, .hp-lab, .hp-lab--n, .hp-lab--bd,
   .hp-lab--side, .hp-lab--fl, .hp-reg, .hp-s1, .pl, .pl-br, .pl-draw, .pl-glow,
   .pm-agent, .pm-up, .pm-down, .pm-ring, .pm-rring, .pm-spur, .pm-x, .pm-cross, .pm-step, .pm-settle, .pm-floor,
   .tp-rec, .tp-prop, .tp-pass, .tp-set, .tp-rj, .tp-out, .tp-l-prop, .tp-l-set, .tp-l-rj, .lf-w, .lf-face, .bp-art [pathLength], .pc, .pb, .pd, .pk, .po, .pt, .pg, .pq,
-  .dr, .dm, .nf-rail, .nf-tok, .nf-s, .nf-keys li, .nf-rj, .nf-spur, .nf-fall, .nf-out, .dk-rec, .dl-rcpt, .lr-trace, .fl, .crew-bio, .v, .crew-stats b, .arch-sum, .is-tick dt,
+  .dr, .dm, .nf-rail, .nf-tok, .nf-s, .nf-keys li, .nf-rj, .nf-spur, .nf-fall, .nf-out, .dk-rec, .dl-rcpt, .fl, .crew-bio, .v, .crew-stats b,
   .tr-pl, .tr-rj, .tr-rl, .tr-oc, .tr-sg, .tr-se, .pf-mk, .pp-ring, .pp-gt, .pp-lt, .pp-r, .hp-rec, .sp-plumb, .sp-read),
-.is-offscreen :is(.chain-seg, .layers, .is-tick)::before,
+.is-offscreen :is(.chain-seg, .layers)::before,
 .is-offscreen :is(.chain-seg, .lt-node, .pf-floor, .layer, .is-ping, .tr-sd, .pf-trail)::after { animation-play-state: paused !important; }
 
 /* ---------- rhythm & anchors: nothing scrolls or focuses under the fixed nav ---------- */
@@ -1402,7 +1403,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lcp { overflow: visible; color: var(--fg); --lc-ground: var(--paper); }
 .is-paper-2 .lcp { --lc-ground: var(--paper-2); }
 .lcp path, .lcp rect, .lcp circle, .lcp ellipse { vector-effect: non-scaling-stroke; }
-.lcp .ln, .lcp .ln2, .lcp .ln3, .lcp .tk, .lcp .tk2, .lcp .ax, .lcp .ldr, .lcp .rec, .lcp .recd { fill: none; stroke: currentColor; stroke-width: var(--stroke); }
+.lcp .ln, .lcp .ln2, .lcp .ln3, .lcp .tk, .lcp .tk2, .lcp .ax, .lcp .rec, .lcp .recd { fill: none; stroke: currentColor; stroke-width: var(--stroke); }
 .lcp .ln { opacity: .8; } .lcp .ln2 { opacity: .5; } .lcp .ln3 { opacity: .26; }
 .lcp .tk { stroke-dasharray: calc(1 * var(--dash-u)) calc(2.4 * var(--dash-u)); opacity: .55; }
 .lcp .tk2 { opacity: .42; }
@@ -1469,8 +1470,8 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .lane .lk-nm { color: var(--fg); }
 /* the plate's labels scale with it: user units sized so they print at >= 10 px from 961 px up */
 .lane-h { display: block; width: 100%; height: auto; font-size: clamp(10.6px, calc(20.4px - .68vw), 13.9px); } /* px, not rem: the drawing scales with its viewBox (integrate a3) */
-/* the council's aperture, the boundary plane and the approved path carry 1.4 px */
-.lane-h .ap-r, .lane-h .g:not(.gw), .lane-h .bd { stroke-width: var(--stroke-2); }
+/* the boundary plane and the approved path carry 1.4 px */
+.lane-h .g:not(.gw), .lane-h .bd { stroke-width: var(--stroke-2); }
 /* one draw-in at the reveal; nothing loops. At rest a drawn line has no dash (a2); while it draws, the dash is the drawing's
    scale (--dr-k, site.js), so a non-scaling line ends whole at any size; no JS, reduced motion: no dash */
 .lane .dr, .lane-v .dr, .lc-orbit .dr, .lc-pipe .dr { stroke-dasharray: none; }
@@ -1687,7 +1688,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   /* a smaller orbit: the rings only, cropped to their own square; the list carries the names */
   .orbit-fig { max-width: 27.5rem; margin: 0 auto; overflow: hidden; aspect-ratio: 1; }
   .orbit-svg { width: calc(1200 / 470 * 100%); max-width: none; margin: calc(-27 / 470 * 100%) 0 0 calc(-365 / 470 * 100%); } /* no text in the narrow orbit (hc2) */
-  .orbit-svg .orb-t, .orbit-svg .ldr2 { display: none; }
+  .orbit-svg .ldr2 { display: none; }
 }
 @media (min-width: 601px) and (max-width: 960px) { .orbit-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 

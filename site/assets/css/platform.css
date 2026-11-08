@@ -564,17 +564,20 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
 #marketplace .sp-panels { align-items: end; }
 /* the side labels stand on their lines (--y: the first stream's crest; the demand rail), half an em up */
 #marketplace .sp-half .hp-lab--khaki { transform: translate(0, calc(-100% - .625em)); }
-/* hc20: §06 draws itself once on the site's reveal, as §04's cells (notes/platform.md): the dotted streams wipe in, the
-   layers close on the boundary as the hero's, the boundary, the records left to right, the ticks. Nothing travels or
-   loops (a roadmap); no fill held: the still at rest, without JS, under reduced motion, after a jump, in print */
+/* hc21: the demand half is drawn in the supply's 600 x 300 box (one snap, no step at the join); stacked, it gives back
+   the 130 empty units (a % margin is of the width) */
+@media (max-width: 600px) { #marketplace .sp-half + .sp-half { margin-top: calc(-130% / 6); } }
+/* hc20-21: §06 draws itself once on the site's reveal, whole by .85 s as §04's cells (notes/platform.md): streams,
+   layers, boundary, records left to right, ticks. Nothing travels or loops; no fill held: the still at rest, without JS,
+   under reduced motion, after a jump, in print */
 #marketplace .hp-rec { transform-box: fill-box; transform-origin: center; }
 @media screen and (prefers-reduced-motion: no-preference) {
-  #marketplace .will-reveal.is-in:not(.is-cut) .pl-draw { animation: mk-wipe .7s var(--ease-draw) .1s backwards; }
-  #marketplace .will-reveal.is-in:not(.is-cut) .pl { animation: pl-in .8s var(--ease-out) calc(.2s + var(--i) * 95ms) backwards; }
-  #marketplace .will-reveal.is-in:not(.is-cut) .hp-lab--n { animation: pl-fade .6s var(--ease-out) calc(.3s + var(--i) * 95ms) backwards; }
-  #marketplace .will-reveal.is-in:not(.is-cut) .pl-glow { animation: pl-fade .7s var(--ease-out) .8s backwards; }
-  #marketplace .will-reveal.is-in:not(.is-cut) .hp-rec { animation: pl-pop .35s var(--ease-out) calc(1s + var(--r) * 30ms) backwards; }
-  #marketplace .will-reveal.is-in:not(.is-cut) :is(.sp-plumb, .sp-read) { animation: pl-fade .5s var(--ease-out) 1.65s backwards; }
+  #marketplace .will-reveal.is-in:not(.is-cut) .pl-draw { animation: mk-wipe .5s var(--ease-draw) 50ms backwards; }
+  #marketplace .will-reveal.is-in:not(.is-cut) .pl { animation: pl-in .45s var(--ease-out) calc(50ms + var(--i) * 45ms) backwards; }
+  #marketplace .will-reveal.is-in:not(.is-cut) .hp-lab--n { animation: pl-fade .45s var(--ease-out) calc(.1s + var(--i) * 45ms) backwards; }
+  #marketplace .will-reveal.is-in:not(.is-cut) .pl-glow { animation: pl-fade .35s var(--ease-out) .28s backwards; }
+  #marketplace .will-reveal.is-in:not(.is-cut) .hp-rec { animation: pl-pop .22s var(--ease-out) calc(.38s + var(--r) * 13ms) backwards; }
+  #marketplace .will-reveal.is-in:not(.is-cut) :is(.sp-plumb, .sp-read) { animation: pl-fade .3s var(--ease-out) .5s backwards; }
 }
 @keyframes mk-wipe { from { clip-path: inset(-6% 100% -6% -6%) fill-box; } to { clip-path: inset(-6%) fill-box; } }
 

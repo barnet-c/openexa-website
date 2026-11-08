@@ -418,21 +418,6 @@
 .blog-article .article-end p a { display: inline-flex; align-items: center; gap: .3em; color: var(--fg); border-bottom: var(--hair) solid var(--line-strong); }
 .blog-article .article-end p a .arr { width: .8125rem; height: .8125rem; }
 @media (hover: hover) { .blog-article .article-end p a:hover { border-color: currentColor; } }
-/* the pager: where it goes, then the title; two-line serif titles keep a straight left edge in both cells */
-.blog-post .pager-card.next { text-align: left; justify-items: start; }
-.blog-post .pager-card h3 { max-width: 30ch; }
-/* as on the notes: a green top rule from the side the card points to */
-.blog-post .pager-card { position: relative; }
-.blog-post .pager-card::before { content: ""; position: absolute; left: calc(-1 * var(--hair)); right: 0; top: calc(-1 * var(--hair)); height: calc(2 * var(--hair)); background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .45s var(--ease); }
-.blog-post .pager-card.next::before { transform-origin: right; }
-.blog-post .pager-card .k { transition: color .25s var(--ease); }
-.blog-post .pager-card:focus-visible::before { transform: none; }
-.blog-post .pager-card:focus-visible .k { color: var(--signal-ink); } /* the label in --signal-ink: 5.3:1 on paper-2 (--signal is 4.3) */
-@media (hover: hover) {
-  .blog-post .pager-card:hover::before { transform: none; }
-  .blog-post .pager-card:hover .k { color: var(--signal-ink); }
-}
-
 /* a3: a long read (.has-mp) has three parts from 1440: wayfinding, text, and its plate sticky beside it, which starts
    half a screen down so one screen never shows the hero's drawing twice. Short posts keep the a2 layout */
 .post-mp { display: none; }
@@ -461,6 +446,6 @@
   .lib-plate { max-width: 70%; break-inside: avoid; } .lib-plate * { animation: none !important; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bp-rings, .sr-date::before, .br-min .arr, .bpn, .bpn.is-on, .blog-post .pager-card::before, .post-mp-in { transition: none; }
+  .bp-rings, .sr-date::before, .br-min .arr, .bpn, .bpn.is-on, .post-mp-in { transition: none; }
   .series-rail.will-reveal > li::before { transform: none; }
 }

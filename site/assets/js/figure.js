@@ -380,6 +380,9 @@
     function publish() {
       if (!('bbox' in stage.dataset) || !stage.parentElement) return;
       const pts = built[current], host = stage.parentElement; if (!pts) return;
+      // hc21: once the labels are planned (a plan may set words under the drawing, and the caption goes under them): hung
+      // before, it moved down a line when they landed (phones: note 03, 05, 07; a layout shift)
+      if (groups[current] && !planned) return;
       const hung = Array.from(host.querySelectorAll('[data-hang]')).filter(el => el.offsetParent); if (!hung.length) return;
       const sc = scale * (narrow() ? 0.86 : 1) * fitOf(current);
       let x0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -494,8 +497,8 @@
       }
       grp.lines.forEach(ln => { for (let j = 0; j <= 64; j++) { const t = j / 64; if (project(ln.a[0] + (ln.b[0] - ln.a[0]) * t, ln.a[1] + (ln.b[1] - ln.a[1]) * t, ln.a[2] + (ln.b[2] - ln.a[2]) * t, 0, 1, sc) && scr[0] >= 0 && scr[1] >= 0 && scr[0] < W && scr[1] < H) { occ[Math.floor(scr[1] / CELL) * oc + Math.floor(scr[0] / CELL)]++; S++; } } });
       occN = S; place(0, sc, true);
-      // a plan that set a label below the drawing where its table did not (or lower) hangs the caption again, under it
-      if ('bbox' in stage.dataset && grp.items.some(it => !it.blocked && it.sd && it.sd[0] === 'b' && (it.side[0] !== 'b' || it.drop > 0))) publish();
+      // the caption hangs from the planned drawing (under any words the plan set below it)
+      publish();
     }
     function labelsOff() { if (grp) { grp.el.classList.remove('is-on'); grp.items.forEach(it => { if (it.lit) { it.el.classList.remove('is-lit'); it.lit = false; } }); } grpOn = false; }
     // the pulse names each part as it passes: a label whose part (data-ph, the span of the formation's own path it
