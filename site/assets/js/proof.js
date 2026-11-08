@@ -50,10 +50,11 @@
     confirmed: count(s => s.confirmed), settled: count(s => s.settled), floor
   };
   const valueSaid = s => !Number.isFinite(s.amount) ? (s.value ? s.value : 'value not stated')
-    : (s.bound === '>' ? 'more than ' : s.bound ? 'at least ' : '') + s.amount + ' ' + unit;
+    : (s.bound === '>' ? 'more than ' : s.bound ? 'at least ' : '') + s.amount + '\u00a0' + unit;
   const regimeSaid = s => s.side > 0 ? 'premium regime, price above NAV' : s.side < 0 ? 'discount regime, price below NAV' : 'NAV regime not stated';
-  // a session's record after its regime: what the lane says to assistive tech, and (hc11) the caption's readout
-  const restSaid = s => '; ' + valueSaid(s) + ' captured' + (s.above ? ', above the ' + floor + ' ' + unit + ' floor' : '') + '; ' + s.confirmation.toLowerCase() + '; ' + s.status.toLowerCase() + '.';
+  // a session's record after its regime: what the lane says to assistive tech, and (hc11) the caption's readout (hc18:
+  // no-break spaces keep "the 10 bps floor" whole, as proof.css's sizer does)
+  const restSaid = s => '; ' + valueSaid(s) + ' captured' + (s.above ? ', above the\u00a0' + floor + '\u00a0' + unit + ' floor' : '') + '; ' + s.confirmation.toLowerCase() + '; ' + s.status.toLowerCase() + '.';
   const readSaid = s => s.day + ': ' + (s.side > 0 ? 'premium' : s.side < 0 ? 'discount' : 'regime not stated') + restSaid(s);
 
   /* ---------------- derived counts in the copy ---------------- */

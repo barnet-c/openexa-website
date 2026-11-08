@@ -128,20 +128,20 @@
   "sha": "1dae018ec0a243c7"
  },
  "evidence.html": {
-  "date": "2026-11-07",
-  "sha": "6c8cc62edd916f11"
+  "date": "2026-11-08",
+  "sha": "e2def392eade4f03"
  },
  "index.html": {
-  "date": "2026-11-07",
-  "sha": "1889e13487c526d5"
+  "date": "2026-11-08",
+  "sha": "3d7c593bd5c171b6"
  },
  "lifecycles.html": {
-  "date": "2026-11-07",
-  "sha": "1888e0501f5955aa"
+  "date": "2026-11-08",
+  "sha": "da102475ae6d3945"
  },
  "platform.html": {
-  "date": "2026-11-07",
-  "sha": "f1988644aaf5c311"
+  "date": "2026-11-08",
+  "sha": "9908085eb74516e3"
  },
  "research.html": {
   "date": "2026-11-06",
@@ -188,7 +188,7 @@
   "sha": "152831dce66b3250"
  },
  "trust.html": {
-  "date": "2026-11-07",
-  "sha": "ccc9953813ca5c45"
+  "date": "2026-11-08",
+  "sha": "fe671bb33fb43c8b"
  }
 }

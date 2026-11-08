@@ -214,7 +214,7 @@
 .cost-bar > i { position: relative; flex: none; width: var(--w); height: calc(var(--rows) * var(--bw) + (var(--rows) - 1) * var(--g)); font-style: normal; background: var(--c); box-shadow: inset 0 0 0 var(--hair) rgba(14, 21, 18, .5); }
 .cost-bar:not(.is-blocks) > i { margin-right: calc(var(--s, var(--w)) - var(--w)); }
 .cost-bar:not(.is-blocks) > i + i { width: calc(var(--w) - .125rem); margin-left: calc(2 * var(--hair)); }
-.cost-bar > .cost-gone { background: none; box-shadow: none; border: var(--hair) dashed rgba(14, 21, 18, .34); }
+.cost-bar > .cost-gone { background: none; box-shadow: none; border: var(--hair) dashed rgba(14, 21, 18, .5); } /* hc18: 3.4:1 (was .34) */
 .cost-bar.is-blocks > i { position: absolute; top: 0; bottom: 0; left: var(--x); height: auto; background: none; box-shadow: none; border: 0; }
 .cost-gone em { position: absolute; left: 0; right: 0; bottom: 100%; padding-bottom: .75rem; font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; color: var(--fg-2); } /* hc1: an annotation, the caption register; the key (.pf-ck) names the blocks, the bar carries no names */
 .cost-gone em::before { content: ""; position: absolute; left: 0; right: 0; bottom: calc(3 * var(--hair)); height: .3125rem; border: var(--hair) solid var(--line-strong); border-bottom: 0; }
@@ -222,7 +222,7 @@
 .cost-blk i { background: var(--c); box-shadow: inset 0 0 0 var(--hair) rgba(14, 21, 18, .55); border-radius: .0625rem; }
 .cost-blk .is-part { background: linear-gradient(90deg, var(--c) var(--f), transparent 0); }
 .cost-blk .is-rest { background: none; box-shadow: inset 0 0 0 var(--hair) var(--c); }
-.cost-blk .is-gone { background: none; box-shadow: none; border: var(--hair) dashed rgba(14, 21, 18, .34); }
+.cost-blk .is-gone { background: none; box-shadow: none; border: var(--hair) dashed rgba(14, 21, 18, .5); }
 .cost-rows .cost-blk i { transition: opacity var(--dur-move) linear, transform var(--dur-move) var(--ease); } /* hc5: each block's delay is proof.js's (one reveal <= 600 ms) */
 .cost-rows.will-reveal:not(.is-in) .cost-blk i { opacity: 0; transform: scale(.35); }
 @container cost (max-width: 860px) {
@@ -261,8 +261,9 @@
   .cost-blk i { opacity: 1 !important; transform: none !important; }
 }
 @media (forced-colors: active) {
-  .cost-blk i:not(.is-rest, .is-gone), .pf-ck dt i { forced-color-adjust: none; background: CanvasText; }
-  .cost-blk .is-part { forced-color-adjust: none; background: linear-gradient(90deg, CanvasText var(--f), Canvas 0); }
+  .cost-blk i:not(.is-rest, .is-gone, .is-part), .pf-ck dt i { forced-color-adjust: none; background: CanvasText; }
+  .cost-blk .is-part { forced-color-adjust: none; background: linear-gradient(90deg, CanvasText var(--f), Canvas 0); box-shadow: inset 0 0 0 var(--hair) CanvasText; } /* hc18: was whole */
   .cost-blk .is-rest { box-shadow: none; border: var(--hair) solid CanvasText; }
+  .cost-bar:not(.is-blocks) > i:not(.cost-gone) { forced-color-adjust: none; background: CanvasText; } /* hc18: the no-JS runs */
 }
 /* v2:proof:end */

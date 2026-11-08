@@ -30,6 +30,8 @@
 .sw-on .sw-stage { padding-top: var(--sw-h); }
 .sw-stage canvas { display: none; }
 .sw-on .sw-stage canvas { display: block; position: absolute; left: 0; top: 0; width: 100%; height: var(--sw-h); touch-action: pan-y; }
+/* hc18: on a light forced Canvas the lab's pixels print inverted */
+@media (forced-colors: active) and (prefers-color-scheme: light) { .sw-stage canvas { filter: invert(1) hue-rotate(180deg); } }
 
 /* the six gates: a static diagram without JavaScript ... */
 .sw-gates { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0 .875rem; margin: 0; padding: 2.125rem 1.375rem 2rem; list-style: none; }

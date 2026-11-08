@@ -406,14 +406,14 @@ html.story-short body[data-page="home"] .story-lab.key { display: none; } /* sho
 /* the director 4.1: on the way out of the overture scene 4's lede and its link lift .75rem as they leave (story.js --bl,
    0 -> 1 with --bo 1 -> 0 over 0.25 s), before the hand-off's axis or paper reaches them; the headline stays */
 body[data-page="home"] .beat-4 :is(.body-lg, .beat-more) { translate: 0 calc(var(--bl, 0) * -.75rem); }
-/* §04: with scripting on, the chain holds its live height before chain.js runs, so the page under it never moves when the
-   instrument starts: the act's button keeps its place in the head and the foot its live line, both unseen (the head and
-   the foot wrap as they will; on phones the button takes a row, 28 px; the live line is Inter's, 4 px more than the
-   fallback's mono, two lines at 320). A reload or Back under the chain moved everything in view by those pixels
-   (verify_budget home_landing, once the folded chain put #governance+1200 at the page's foot). The fallback's 'Turn on
-   JavaScript' is not for a browser running it */
+/* §04: with scripting on, the chain holds its live height before chain.js runs (the act's button and the foot's live line
+   kept, unseen), so nothing under it moves when the instrument starts (verify_budget home_landing) */
 @media (scripting: enabled) {
   body[data-page="home"] #governance .chain:not(.chain-ready) :is(.chain-acts, .chain-try)[hidden] { display: inline-flex !important; visibility: hidden; }
   body[data-page="home"] #governance .chain:not(.chain-ready) .chain-foot.is-static > span:first-child { display: block; visibility: hidden; }
   body[data-page="home"] #governance .chain:not(.chain-ready) .chain-fallback { display: none; }
 }
+
+/* ========== hill climb hc18 ========== */
+/* forced colours on a light Canvas: the overture's canvases are not forced, so their light-on-ink pixels print inverted */
+@media (forced-colors: active) and (prefers-color-scheme: light) { .story-gl, .story-2d { filter: invert(1) hue-rotate(180deg); } }

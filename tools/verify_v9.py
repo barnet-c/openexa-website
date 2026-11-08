@@ -3667,6 +3667,48 @@ async def paper_opening(b):
     assert not bad, f"paper_opening: {len(bad)} problems ({n} steps):\n  " + "\n  ".join(bad[:16])
     print(f"paper_opening: §01 opens one --sec-open under the paper's caption at five sizes; {n} settled steps, never over the dark stage or the caption")
 
+
+# ---- hc18 (integrate; the director's HC18 4.2-4.4, done by platform, proof and home): under text-wrap: balance (site.css,
+# hc17) no lede, chapter line, beat sentence or hedge ends a line on an article, determiner or short preposition
+LINE_ENDS_WEAK = ["a", "an", "the", "of", "to", "for", "and", "on", "in", "at", "any", "by", "or", "its", "your", "with", "from", "as", "every", "each"]
+LINE_ENDS = r"""(weak) => { const W = new Set(weak), out = [];
+  document.querySelectorAll('main :is(.lede, .ch-line, .body-lg, .pf-lc-hedge)').forEach(p => {
+    const r0 = p.getBoundingClientRect(); if (r0.width < 2 || r0.height < 2) return;
+    const tw = document.createTreeWalker(p, NodeFilter.SHOW_TEXT); let n; const words = [];
+    while ((n = tw.nextNode())) { const re = /\S+/g; let m; while ((m = re.exec(n.textContent))) {
+      const rg = document.createRange(); rg.setStart(n, m.index); rg.setEnd(n, m.index + m[0].length);
+      const rr = rg.getClientRects()[0]; if (rr && rr.width > 0) words.push([m[0], rr.top]); } }
+    const lines = []; let cur = [], top = null;
+    for (const [t, y] of words) { if (top !== null && Math.abs(y - top) > 4) { lines.push(cur); cur = []; } top = y; cur.push(t); }
+    if (cur.length) lines.push(cur);
+    const bad = lines.slice(0, -1).map(l => l[l.length - 1]).filter(x => !/[.,;:!?’”)]$/.test(x) && W.has(x.toLowerCase()));
+    if (bad.length) out.push({ sec: (p.closest('section') || {}).id || '', bad, lines: lines.map(l => l.join(' ')) });
+  }); return out; }"""
+LINE_ENDS_PAGES = ["index.html", "platform.html", "lifecycles.html", "evidence.html", "trust.html", "research.html", "access.html", "blog/index.html"]
+
+
+@check
+async def lede_line_ends(b):
+    """hc18 (integrate, new coverage for the director's HC18 4.2-4.4): the balanced ledes (site.css's hc17 text-wrap:
+    balance on .lede, .ch-line, .body-lg) let Chromium end a line on "a", "the", "its" or "for" (six ledes on HEAD 1435ec9,
+    Home's scene 4 at 390 among them); the groups glued each weak word to its phrase (.nowrap spans, no-break spaces;
+    same words). On Home, Platform, Lifecycles, Proof, Trust, Research, Access and the Blog index, reduced motion, at
+    1920 x 1080, 1440 x 900, 768 x 1024, 390 x 844 and 320 x 568 (touch): no line but the last of a .lede, .ch-line,
+    .body-lg or .pf-lc-hedge in <main> ends on an article, determiner or short preposition (LINE_ENDS_WEAK, the
+    director's rag18 set + every / each; a word carrying punctuation closes its phrase and never counts: "in each,"). Company is not in the list yet: its §03 line (build_team.py) ends "led work at
+    / Google, ..." at 1920, 1440 and 768, an open item for company (notes/integrate.md, hc18)"""
+    bad, n = [], 0
+    for w, h, touch in ((1920, 1080, False), (1440, 900, False), (768, 1024, False), (390, 844, True), (320, 568, True)):
+        for path in LINE_ENDS_PAGES:
+            ctx, pg = await open_page(b, path, w, h, touch=touch, reduced=True)
+            await pg.wait_for_timeout(600)
+            for x in await pg.evaluate(LINE_ENDS, LINE_ENDS_WEAK):
+                bad.append(f"{path}@{w}x{h} #{x['sec']}: ends a line on {x['bad']}: " + " / ".join(x["lines"]))
+            n += 1
+            await ctx.close()
+    assert not bad, f"lede_line_ends: {len(bad)} lines ({n} page loads):\n  " + "\n  ".join(bad[:20])
+    print(f"lede_line_ends: no lede, chapter line, beat sentence or hedge ends a line on a weak word ({len(LINE_ENDS_PAGES)} pages x 5 sizes, {n} loads)")
+
 # ---- the desk on a phone: the walk happens in view; a restart keeps its morning; the strip counts every fill (LC-R2-2, LC-R2-6)
 DESK = r"""(() => { const q = s => document.querySelector(s), t = s => ((q(s) || {}).textContent || '').replace(/\s+/g, ' ').trim(), num = s => +(t(s).replace(/[^\d]/g, '') || 0);
   const more = q('[data-gap-log] .dk-more'), N = more ? +(((more.textContent.match(/([\d,]+)/) || [0, '0'])[1]).replace(/,/g, '')) : 0;

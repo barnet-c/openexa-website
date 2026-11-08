@@ -572,6 +572,65 @@ def check_cost_definitions():
         if missing: fail(rel, f"cost_definitions: production's cost definitions missing from the visible text: {missing}")
 
 
+def srgb_lum(rgb):
+    c = [v / 255 for v in rgb]
+    c = [v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in c]
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+
+def css_colour(v):
+    """'#rgb' / '#rrggbb' / 'rgb(a)(r, g, b[, a])' -> (r, g, b, a); None for anything else"""
+    m = re.fullmatch(r"#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})", v.strip())
+    if m:
+        h = m[1] if len(m[1]) == 6 else "".join(ch * 2 for ch in m[1])
+        return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), 1.0)
+    m = re.fullmatch(r"rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+%?)\s*)?\)", v.strip())
+    if m:
+        a = 1.0 if m[4] is None else (float(m[4][:-1]) / 100 if m[4].endswith("%") else float(m[4]))
+        return (float(m[1]), float(m[2]), float(m[3]), a)
+    return None
+
+
+def check_cost_gone_contrast():
+    """hc18 (integrate; the director's HC18 4.1, done by system): the cost index's eliminated blocks carry the section's
+    message ("two costs go to zero"; Proof §02's 82 dashed blocks, `.cost-blk .is-gone`, and the eliminated share of the
+    flat bar on Home §03 and Proof §02, `.cost-bar > .cost-gone`). Outside forced colours (there CanvasText draws them),
+    every rule in proofchart.css whose last compound names .is-gone or .cost-gone and sets a border colour must reach
+    3:1 against the figures' ground (--paper), composited (WCAG 1.4.11, meaningful graphics; hc17's .34 ink was 2.17:1);
+    each class must have such a rule (a stroke that goes away fails too). A var() colour resolves through site.css."""
+    site = (ROOT / "assets/css/site.css").read_text(encoding="utf-8")
+    tok = dict(re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", re.sub(r"/\*.*?\*/", "", site, flags=re.S)))
+    def resolve(v, depth=0):
+        m = re.fullmatch(r"var\((--[\w-]+)(?:,\s*(.+))?\)", v.strip())
+        if not m or depth > 4: return v.strip()
+        return resolve(tok.get(m[1], m[2] or ""), depth + 1)
+    paper = css_colour(resolve("var(--paper)"))
+    if not paper: fail("assets/css/site.css", "cost_gone_contrast: --paper is not a plain colour"); return
+    rel = "assets/css/proofchart.css"
+    css = (ROOT / rel).read_text(encoding="utf-8")
+    plain = re.sub(r"/\*.*?\*/", lambda m: re.sub(r"[^\n]", " ", m[0]), css, flags=re.S)
+    seen = {".is-gone": 0, ".cost-gone": 0}
+    for sel, ats, line in css_style_rules(css):
+        if any("forced-colors" in a or a.startswith("@media print") for a in ats): continue
+        lasts = [compounds(s)[-1] for s in split_top(sel, ",")[0] if compounds(s)]
+        names = [k for k in seen if any(re.search(re.escape(k) + r"(?![\w-])", c) for c in lasts)]
+        if not names: continue
+        start = sum(len(l) + 1 for l in plain.split("\n")[:line - 1])
+        body = plain[plain.index("{", plain.index(sel, start)) + 1:]
+        body = body[:body.index("}")]
+        for prop, val in re.findall(r"(?:^|;)\s*(border(?:-color)?)\s*:\s*([^;]+)", body):
+            cols = [c for c in (css_colour(resolve(x)) for x in re.findall(r"rgba?\([^)]*\)|#[0-9a-fA-F]{3,6}\b|var\([^)]*\)", val)) if c]
+            if not cols: continue
+            r, g, bl, a = cols[0]
+            mix = [a * x + (1 - a) * y for x, y in zip((r, g, bl), paper[:3])]
+            lo, hi = sorted((srgb_lum(mix), srgb_lum(paper[:3])))
+            ratio = (hi + 0.05) / (lo + 0.05)
+            for k in names: seen[k] += 1
+            if ratio < 3: fail(rel, f"cost_gone_contrast: l.{line} `{sel.strip()}` {prop} draws the eliminated blocks at {ratio:.2f}:1 on --paper (3:1 needed)")
+    for k, n in seen.items():
+        if not n: fail(rel, f"cost_gone_contrast: no rule outside forced colours gives `{k}` a border colour (the eliminated blocks' stroke)")
+
+
 def chapter_by_id(s, cid):
     """the markup of the chapter <section id=cid>, up to the next numbered chapter or the closing band (or '')."""
     m = re.search(r'<section\b[^>]*\sid="%s"[^>]*>' % re.escape(cid), s)
@@ -942,7 +1001,8 @@ def check_decisions():
 GUARDS = [check_count_not_on_proof, check_count_static_final, check_regime_split, check_research09_regimes, check_has_guard,
           check_has_regions, check_figure_labels, check_blog_placeholder, check_proof_plate, check_table_th,
           check_hover_guard, check_weight, check_story_fallback, check_cost_definitions, check_platform04, check_chrome_sync,
-          check_headers, check_csp_markup, check_footer, check_landmarks, check_heads, check_decisions, check_offscreen_pause]
+          check_headers, check_csp_markup, check_footer, check_landmarks, check_heads, check_decisions, check_offscreen_pause,
+          check_cost_gone_contrast]
 only = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--only=")), None)
 if "--only" in sys.argv[1:-1]: only = sys.argv[sys.argv.index("--only") + 1]
 for g in GUARDS:

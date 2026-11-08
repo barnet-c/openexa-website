@@ -75,7 +75,7 @@ jobs:
       matrix:
         include:
           - shard: pages
-            only: pages,no_js,no_webgl,faux_bold,tables_phone,reflow_400,print_home
+            only: pages,no_js,no_webgl,faux_bold,tables_phone,reflow_400,print_home,lede_line_ends
           - shard: home
             only: home,interior,resolution,phone,reduced_motion,loader,proof_entrance,overture_net
           - shard: overture

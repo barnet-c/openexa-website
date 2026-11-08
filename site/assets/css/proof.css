@@ -41,7 +41,7 @@
 @media (scripting: enabled) {
   [data-page="proof"] .pf-record .figure-cap--stack { display: grid; grid-template-columns: minmax(0, 1fr); }
   [data-page="proof"] .pf-record .figure-cap--stack > *, [data-page="proof"] .pf-record .figure-cap--stack::after { grid-area: 1 / 1; }
-  [data-page="proof"] .pf-record .figure-cap--stack::after { content: "Day 01: discount; more than 10 bps captured, above the 10 bps floor; broker confirmation; settled. See\00a0the\00a0disclosures."; visibility: hidden; pointer-events: none; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; text-wrap: pretty; }
+  [data-page="proof"] .pf-record .figure-cap--stack::after { content: "Day 01: discount; more than 10\0000a0bps captured, above the\0000a010\0000a0bps floor; broker confirmation; settled. See\00a0the\00a0disclosures."; visibility: hidden; pointer-events: none; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; text-wrap: pretty; }
 }
 @media (min-width: 961px) {
   [data-page="proof"] .page-hero { --pf-gap: clamp(2.25rem, 3.4vw, 3.25rem); }
