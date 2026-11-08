@@ -183,7 +183,11 @@ em, .ital { font-style: italic; }
 
 /* line breaking: headings balance their lines; running text avoids a lone last word */
 h1, h2, h3, h4, .display-1, .display-2, .display-3, .h4 { text-wrap: balance; }
-p, li, dd, figcaption, blockquote, .lede, .body-lg { text-wrap: pretty; }
+p, li, dd, figcaption, blockquote { text-wrap: pretty; }
+/* hc17: the line under a head balances as the head does; a .nowrap in it is an inline-block (around a nowrap span
+   Chromium's balance leaves a long last line: Home scene 4) */
+.lede, .ch-line, .body-lg { text-wrap: balance; }
+:is(.lede, .ch-line, .body-lg) .nowrap { display: inline-block; }
 blockquote, .manifesto { hanging-punctuation: first; }
 /* hc6: the serif's hyphen reads as an en dash; the real '-' stays unpainted, a copy at .6 of its length shows (SYSTEM.md) */
 .hy { position: relative; margin-inline: -.1em; -webkit-text-fill-color: transparent; }
@@ -223,7 +227,7 @@ main > .section > .container > .mt-4:last-child { margin-top: clamp(1.75rem, 3vw
 main > .section { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
 .ch-head { margin-bottom: var(--ch-gap); }
 .ch-title { max-width: 22ch; } /* hc13r: most heads on one line at the 60 px step */
-.ch-line { margin-top: 1.5rem; max-width: 36ch; font-size: var(--fs-body); line-height: 1.5; color: var(--fg-2); text-wrap: pretty; }
+.ch-line { margin-top: 1.5rem; max-width: 36ch; font-size: var(--fs-body); line-height: 1.5; color: var(--fg-2); }
 @media (min-width: 1100px) {
   .ch-spread { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: last baseline; }
   .ch-spread > :is(.ch-title, .ch-line) { grid-column: 1 / span 2; }

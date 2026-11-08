@@ -7,7 +7,7 @@
 .notfound { position: relative; min-height: 100svh; display: grid; align-items: center; padding: calc(var(--nav-h) + clamp(1.75rem, 6vh, 4rem)) 0 clamp(2.5rem, 7vh, 5rem); overflow: hidden; }
 .notfound .container { position: relative; z-index: 1; }
 .notfound .display-1 { max-width: 14ch; }
-.notfound .lede { max-width: 46ch; }
+.notfound .lede { max-width: 46ch; text-wrap: pretty; } /* hc17: two sentences, one a line where the first fits (balance would split it); "never existed." held whole */
 .notfound .row { display: flex; flex-wrap: wrap; gap: .875rem; }
 .nf-next { margin-top: clamp(1.375rem, 3vw, 1.875rem); }
 /* award a1: the other likely ways in (most lost visitors come from old research and blog addresses), as a ruled row

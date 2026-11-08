@@ -3614,6 +3614,59 @@ async def overture_rest(b):
     print(f"overture_rest: {n} stops mid-hand-over at 1440 (wheel) and 390 (touch) each settle on one complete headline; no '00'")
 
 
+
+# ---- hc17 (integrate; the director's 4.1, hc16 wide + hc17 stacked): §01 opens one chapter opening under the paper's caption
+PAPER_OPEN = """() => { const st = document.querySelector('.story'), sec = st && st.nextElementSibling;
+  const paper = document.querySelector('.story-paper'), cap = document.querySelector('.story-paper-cap'), h = sec && sec.querySelector('h2');
+  if (!paper || !cap || !h) return null;
+  let p = document.getElementById('__vopen');
+  if (!p) { p = document.createElement('i'); p.id = '__vopen'; p.setAttribute('aria-hidden', 'true'); const ps = p.style;
+    ps.position = 'absolute'; ps.left = ps.top = '0'; ps.width = '0'; ps.height = 'var(--sec-open)'; ps.visibility = 'hidden'; ps.pointerEvents = 'none'; document.body.appendChild(p); }
+  const pr = paper.getBoundingClientRect(), cr = cap.getBoundingClientRect(), shown = getComputedStyle(paper).visibility !== 'hidden' && pr.height > .5;
+  return { y: Math.round(scrollY), open: parseFloat(getComputedStyle(p).height) || 0, paper: shown ? Math.round(pr.top) : null,
+    cap: Math.round(cr.bottom), sec: Math.round(sec.getBoundingClientRect().top), h2: Math.round(h.getBoundingClientRect().top),
+    tail: Math.max(0, -parseFloat(getComputedStyle(sec).marginTop) || 0), end: Math.round(st.offsetTop + st.offsetHeight), H: innerHeight }; }"""
+
+
+@check
+async def paper_opening(b):
+    """hc17 (integrate, new coverage for the director's hc16 / hc17 item 4.1): the overture hands over to §01 as a chapter
+    opens. At 390 x 844 (touch), 768 x 1024, 1024 x 1366, 1440 x 900 and 3840 x 2160: at the release (story end - h, the
+    stage starts to move) §01's heading stands one --sec-open under the paper caption's rule (4 px), where the frame once
+    left 150-750 px of blank paper (stacked: 295 px at 390, 572 at 1024 x 1366); and on a wheel walk in 0.1 h steps from
+    scene 4's rest to half a screen past the release, each step settled, §01's top never shows above the paper's top (over
+    the dark stage) or over the caption"""
+    bad, n = [], 0
+    for w, h, touch in ((390, 844, True), (768, 1024, False), (1024, 1366, False), (1440, 900, False), (3840, 2160, False)):
+        tag = f"index.html@{w}x{h}"
+        ctx, pg = await open_page(b, "index.html", w, h, touch=touch)
+        await pg.wait_for_timeout(1500)
+        g = await pg.evaluate(PAPER_OPEN)
+        if not g: bad.append(f"{tag}: no .story-paper / .story-paper-cap / §01 h2"); await ctx.close(); continue
+        rel = g["end"] - h
+        await pg.evaluate(f"window.scrollTo({{top: {rel + 2}, behavior: 'instant'}})"); await pg.wait_for_timeout(1500)
+        at = await pg.evaluate(PAPER_OPEN)
+        gap = at["h2"] - at["cap"]
+        if at["paper"] is None: bad.append(f"{tag} at the release (y={at['y']}): the paper is not drawn")
+        elif abs(gap - at["open"]) > 4: bad.append(f"{tag} at the release (y={at['y']}): §01's heading {gap} px under the caption's rule, --sec-open is {at['open']:.1f} (tail {at['tail']})")
+        y0 = await pg.evaluate(STORY_Y, 3.95)
+        y1 = rel + round(0.45 * h)
+        await pg.evaluate(f"window.scrollTo({{top: {y0}, behavior: 'instant'}})"); await pg.wait_for_timeout(1200)
+        await pg.mouse.move(w // 2, h // 2)
+        cur, step, steps = await pg.evaluate("scrollY"), max(1, round(0.1 * h)), 0
+        for y in range(y0, y1 + step, step):
+            while cur < y - 3:
+                await pg.mouse.wheel(0, min(120, y - cur)); await pg.wait_for_timeout(30); cur = await pg.evaluate("scrollY")
+            await pg.wait_for_timeout(750)
+            s = await pg.evaluate(PAPER_OPEN); n += 1; steps += 1
+            if s["sec"] < h - 1:
+                if s["paper"] is None or s["sec"] < s["paper"] - 1: bad.append(f"{tag} y={s['y']}: §01's top at {s['sec']} over the dark stage (paper top {s['paper']})")
+                elif s["cap"] > 0 and s["sec"] < s["cap"] + 1: bad.append(f"{tag} y={s['y']}: §01's top at {s['sec']} covers the paper's caption (rule at {s['cap']})")
+        print(f"  {tag}: rule -> heading {gap} px (--sec-open {at['open']:.1f}, tail {at['tail']}); {steps} settled steps")
+        await ctx.close()
+    assert not bad, f"paper_opening: {len(bad)} problems ({n} steps):\n  " + "\n  ".join(bad[:16])
+    print(f"paper_opening: §01 opens one --sec-open under the paper's caption at five sizes; {n} settled steps, never over the dark stage or the caption")
+
 # ---- the desk on a phone: the walk happens in view; a restart keeps its morning; the strip counts every fill (LC-R2-2, LC-R2-6)
 DESK = r"""(() => { const q = s => document.querySelector(s), t = s => ((q(s) || {}).textContent || '').replace(/\s+/g, ' ').trim(), num = s => +(t(s).replace(/[^\d]/g, '') || 0);
   const more = q('[data-gap-log] .dk-more'), N = more ? +(((more.textContent.match(/([\d,]+)/) || [0, '0'])[1]).replace(/,/g, '')) : 0;

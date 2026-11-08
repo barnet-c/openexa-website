@@ -9,8 +9,7 @@
 :is([data-page="proof"], [data-page="trust"]) .nw { white-space: nowrap; }
 /* display heads break between phrases only: a line never ends on "and", "the" or "your" (r5 art; Home's .ph, r4) */
 :is([data-page="proof"], [data-page="trust"]) :is(h1, h2) .ph { white-space: nowrap; }
-/* ledes that close a page are short: set them as even lines */
-:is([data-page="proof"], [data-page="trust"]) .cta-band .lede { text-wrap: balance; }
+/* ledes balance from site.css (hc17) */
 /* running text: no lone last word; hyphenation by hand only */
 :where([data-page="proof"], [data-page="trust"]) main :where(p, li) { text-wrap: pretty; hyphens: manual; } /* lowest specificity: any rule that balances wins */
 /* captions: site.css's one register (.fc-t / .fc-n / .fc-d / .fc-h, r2) */
@@ -31,7 +30,7 @@
 [data-page="proof"] .pf-go { order: 2; margin-top: var(--pf-gap); }
 /* the first statement of the result carries its hedge, as on Home's hero (VOICE 5.5); the chart's caption ends on "See
    the disclosures." (S-28), which reaches them (site.js opens the fold) */
-[data-page="proof"] .pf-lc-hedge { margin-top: 1rem; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); }
+[data-page="proof"] .pf-lc-hedge { margin-top: 1rem; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); text-wrap: balance; }
 [data-page="proof"] .pf-record figcaption a { color: inherit; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: .1875rem; transition: color var(--dur-feedback) var(--ease-out), text-decoration-color var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { [data-page="proof"] .pf-record figcaption a:hover { color: var(--fg); text-decoration-color: currentColor; } }
 [data-page="proof"] .pf-record figcaption a:focus-visible { color: var(--fg); text-decoration-color: currentColor; }

@@ -902,7 +902,21 @@
     if (liftBeats()) measureBeats();
     beats.forEach((b, i) => { const br = beatRects[i]; frameTiny[i] = !!(stacked && br && (MIN_FRAME[i] || !i) && br.t - 14 - (navH + barH + capH[i] + 8) < (i === 4 ? 40 + DAY_BAND : 40)); }); // (S4's tags hang a band under the floor)
     shownIdx = -1; // (hc13r) the index's tab order again: a lede may have given way or come back
-    setTail(!stacked && !short && H > 600 ? H - (H * FLOOR_END() + capRoom() - 12) - tokenPx('--sec-open') : 0); // (hc16; capRoom's 12 px of air back: from the rule itself. home.css's wide query starts at 600.02 px tall)
+  }
+  // the paper's slack (setTail), once the scenes are fitted: the caption's rule as the exit leaves it, one --sec-open over §01's
+  // heading (less §01's own top padding: 0 wide, a phone keeps its own). Wide (hc16): the rule hangs capRoom() under the floor
+  // line (12 px of air given back; home.css's wide query starts at 600.02 px tall). (hc17, the director) stacked: the paper
+  // stops 32 px under the headline's foot (which rides the floor line from its rest, rest4, to FLOOR_END), the caption 20 px
+  // under its edge, kept on screen: the same arithmetic as updateUI's at the exit's end, so phones and upright tablets open
+  // §01 there too (390 x 844 left 255 px of blank paper; 1024 x 1366, 525). 0 for the static sequence and a short landscape
+  function tailNow() {
+    if (tiny || short || !paper || !(stacked || H > 600) || (W < 600 && W * 20 > H * 23)) return 0; // (a phone on its side keeps overture.css's run)
+    const open = tokenPx('--sec-open') - ((sec1 && parseFloat(getComputedStyle(sec1).paddingTop)) || 0);
+    if (!stacked) return H - (H * FLOOR_END() + capRoom() - 12) - open;
+    const br = beatRects[4];
+    if (!br || !(br.hb > 0)) return 0;
+    const top = br.hb + H * FLOOR_END(rest4) - rest4 + PAPER_GAP();
+    return H - (Math.round(Math.min(top + 20 * remK, H - paperCapH - 2)) + paperCapH) - open;
   }
   // (hc2) portrait (phones, upright tablets): scenes 1-4 lift their line off the stage's foot to one height, so each scene's
   // group (the structure and its callouts over its line) stands on the stage's optical centre and the structure sits on its
@@ -1018,6 +1032,7 @@
         cx = (xa + x1) / 2;
         if (!stacked) { const tw = Math.max(15, ...(lab.days || []).map(l => l.w || 0)); cx = Math.max(cx, x1 - COL_X(NCOL - 1) * s * pxu - tw / 2); } // the last tag's edge on the column's
         let fy = stacked ? y1 - band4() : Math.min(y1 - band4(), Math.max((y0 + y1) / 2 + 0.6 * s * pxu, resv ? y0 + (Y_FL - Y_FLOOR) * s * pxu + tagsUp() : 0));
+        if (stacked) rest4 = fy;
         if (!stacked && colK > 1) { // (hc7) the tall group (ticks to tags) centred on the headline beside it, kept in the frame
           const up = ((Y_CTOP - Y_FLOOR) * colK + 0.12) * s * pxu + 12 * remK, dn = band4(), hc = br.hb > br.ht ? (br.ht + br.hb) / 2 : (y0 + y1) / 2;
           fy = clamp(hc + (up - dn) / 2, y0 + Math.max(up, resv ? (Y_FL - Y_FLOOR) * colK * s * pxu + tagsUp() : 0), y1 - dn); // (hc12) the hedge's top in the frame too
@@ -1044,7 +1059,9 @@
       layouts[i] = { cx, cy, s, rect: [x0, y0, x1, y1] };
     }
     // (lab) landing, the record line opens out to the page's measure: the rule the paper chapters continue (1.0x: its depth)
+    const up0 = story.classList.contains('is-paper-up'); story.classList.add('is-paper-up'); // (hc17: the days as the row rests, at the caption's step)
     const L4 = layouts[4], ml = beatRects[4] ? beatRects[4].l : gutter, tw = Math.max(15, ...(lab.days || []).map(l => l.ink ? l.ink.querySelector('.k').offsetWidth : 0)); // (the outer tags meet the margins)
+    if (!up0) story.classList.remove('is-paper-up');
     b4 = { s: L4.s, cx: L4.cx, z: Math.max(1, (stacked ? 1.008 : 1.02) * (W - 2 * ml - tw) / (COL_SPAN * (NCOL - 1) / NCOL * L4.s * pxu)) };
   }
 
@@ -1101,7 +1118,7 @@
   const LIFT_DIR = [[0, 1, 0], [0, 1, 0], [0, 0, 1], [0, 1, 0.35]];
 
   // where a scene's local point lands in the world, given the scene and the current fit
-  let exitMove = 0, floorRest = 0; // (hc6) how far the exit has moved the floor line from where S4 rests (px), and that rest
+  let exitMove = 0, floorRest = 0, rest4 = 0; // (hc6) how far the exit has moved the floor line from where S4 rests (px), and that rest (rest4: the fit's, stacked)
   function camera() {
     if (b4) { const k = seg === 3 ? (stacked ? sstep(0.3, 0.6, xeNow) : sstep(WX.spread[0], WX.spread[1], xeNow)) : 0; layouts[4].s = b4.s * lerp(1, b4.z, k); layouts[4].cx = lerp(b4.cx, W / 2, k); } // (hc2, wide: the row spreads under the headline as it lands)
     const a = layouts[seg], b = layouts[seg + 1];
@@ -1134,10 +1151,10 @@
   const HEAD_GAP = () => 44 * Math.max(1, W / 1920); // the wide headline's foot to the floor line, clear of the ticks
   const PAPER_GAP = () => 32 * remK; // portrait: the headline's foot to the paper's edge
   const headH = () => { const br = beatRects[4]; return br ? Math.max(0, br.hb - br.ht) : 0; };
-  const FLOOR_END = () => {
+  const FLOOR_END = (fr = floorRest) => { // (fr: the floor line's rest; hc17's tail reads it from the fit, before any exit frame)
     if (stacked) {
       const br = beatRects[4], above = 22 * remK; // (the ticks over the records)
-      const below = (br ? Math.max(0, br.hb - floorRest) : band4() + 10 + headH()) + PAPER_GAP() + 20 * remK + paperCapH;
+      const below = (br ? Math.max(0, br.hb - fr) : band4() + 10 + headH()) + PAPER_GAP() + 20 * remK + paperCapH;
       return clamp((navH + Math.max(22, (H - navH - above - below) * 0.46) + above) / H, 0.25, 0.8);
     }
     const above = HEAD_GAP() + headH(), below = capRoom();
@@ -1773,7 +1790,7 @@
     lab.days.forEach(l => { const e = document.createElement('div'); e.className = l.el.className; e.innerHTML = l.el.innerHTML; ink.appendChild(e); l.ink = e; });
     paperIn.insertBefore(ink, paperIn.firstChild);
   }
-  let shownCap = '', shownLeaving = null, paperCapH = 0;
+  let shownCap = '', shownLeaving = null, shownUp = null, paperCapH = 0;
   // (hc6) the coda and the caption's dark copy (hc3) are gone: S4's headline closes the overture and the paper prints its
   // caption (the hedge) as it rises, as in v2
   const paperSum = story.querySelector('[data-story-sum]');
@@ -1828,8 +1845,17 @@
     // edge (wide); (hc6) portrait: to the foot of the headline, which stands under the records
     const paperTop = lean ? br4.hb + exitMove + PAPER_GAP() : project(0, Y_FLOOR * layouts[4].s, 0).y + 1;
     paperH = 0;
-    if (xe > 0 && seg === 3) paperH = Math.max(0, H - paperTop) * sstep(X.paper[0], X.paper[1], xe);
+    if (xe > 0 && seg === 3) {
+      paperH = Math.max(0, H - paperTop) * sstep(X.paper[0], X.paper[1], xe);
+      // (hc17) in the tail §01 rises over the paper: where a fast flick outruns the eased exit, the paper keeps ahead of §01's top
+      const s1 = storyTop + storyH - tail - scrollY;
+      if (tail && s1 < H) paperH = Math.max(paperH, Math.min(Math.max(0, H - paperTop), H - s1));
+    }
     if (paper) { const v = paperH.toFixed(1); if (v !== shownPaper) { shownPaper = v; paper.style.height = v + 'px'; paper.style.visibility = paperH > 0.5 ? 'visible' : 'hidden'; } }
+    // (hc17, the director) the paper up: its ten day numbers print at the caption's step (home.css), so the screen §01 shares
+    // with them keeps four sizes; set as the paper lands, after the fold, so scene 4's own tags never change on the way
+    const up = paperH > 0.5 && xe >= X.paper[1];
+    if (shownUp !== up) story.classList.toggle('is-paper-up', shownUp = up);
     if (!relay0 && (relayReady || sNow > 0.3)) { relay0 = true; beats[0].classList.add('is-relay'); } // S0's headline hands over to the relay after its entrance
     // the copy relay: every value is a function of the scroll position
     beats.forEach((b, i) => {
@@ -1982,7 +2008,7 @@
   }
   function invalidate() { // every cached write is made again by the next frame
     shown.forEach(s => { s.op = s.tr = s.eo = s.w = s.bo = ''; s.on = s.gone = null; });
-    shownIdx = labelScene = tabScene = -1; shownBarOff = shownLeaving = shownScrolled = shownHasInsp = null;
+    shownIdx = labelScene = tabScene = -1; shownBarOff = shownLeaving = shownScrolled = shownHasInsp = shownUp = null;
     shownBar = shownPaper = shownCap = shownCapO = shownInk = inspTr = '';
     labels.forEach(l => { l.tr = l.ov = l.d = l.nc = l.inkTr = ''; l.on = null; });
   }
@@ -2038,6 +2064,7 @@
       // (hc13r) the chart's key never squeezes the columns under their day tags (a short frame: 568 x 320): where its band
       // would thin the tags, the key gives way and the scenes are fitted again, as without it
       if (keyH && dayPitch < 18) { keyOff = true; setModes(); measureScroll(); fitScenes(); }
+      const t0 = tail; setTail(tailNow()); if (tail !== t0) measureScroll(); // (the story's height carries the tail)
       publishGlobe();
     }
     if (tinyBack) { placeTo(tinyBack); tinyBack = null; scrollY = window.scrollY; } // back from the static sequence, at the reader's scene

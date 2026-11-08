@@ -390,8 +390,6 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 .desk .desk-stats .dk-u { display: block; margin: calc(2 * var(--hair)) 0 0; }
 .desk .desk-stats .dk-sep { display: none; }
 
-
-:is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-title { text-wrap: balance; }
 /* hc13r (SYS-1): from 601 px the heads take site.css's chapter measure (22ch), so most set on one line at the 60 px step;
    phones keep the 16ch / 12ch measure they had */
 @media (max-width: 600px) { :is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-title { max-width: 16ch; } #lc01 .lc-how .ch-title { max-width: 12ch; } }
@@ -460,7 +458,6 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
 #desk .desk { border-color: var(--line-strong); }
 #desk .ch-link { margin-top: clamp(1.75rem, 3vw, 2.5rem); }
-#desk .ch-line { text-wrap: balance; } /* hc2: one short lede under its heading breaks evenly, never leaving "the ledger." alone */
 
 @media (min-width: 961px) {
   body[data-page="lifecycles"] .page-hero--plate { align-items: center; }
@@ -539,15 +536,13 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
   #test .card-grid--3 > .card:nth-child(even) { padding-left: clamp(1rem, 2vw, 1.75rem); border-left: var(--hair) solid var(--line); }
 }
 
-/* hc5: §06 is a spread from 961 px (heading 1-6, plate 7-12, its halves stacked); phones and tablets as before */
+/* hc17: §06 is set like §03 from 601 px: heading and line on top, the plate below at the container's width (as §03's
+   pipeline), its halves side by side meeting on one record line (the hc5 spread, heading 1-6 beside the halves
+   stacked, went: two drawings that never met) */
 #marketplace .sp-panels { align-items: end; } /* the halves meet on their record line (the demand half is the shorter) */
-@media (max-width: 600px) { #marketplace .sp-half .hp-lab--khaki { transform: translate(0, calc(-50% - .375rem)); } } /* phones: the two-line side labels clear the first stream and the rail (at 320 they touched) */
-@media (min-width: 961px) {
-  #marketplace > .container { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2.2vw, 2rem); align-items: start; }
-  #marketplace .ch-head { grid-column: 1 / span 6; margin-bottom: 0; }
-  #marketplace .sec-plate--market { grid-column: 7 / -1; margin: 0; }
-  #marketplace .sp-panels { grid-template-columns: minmax(0, 1fr); row-gap: .875rem; }
-}
+/* the side labels stand on their lines (--y: the first stream's crest, 40 units; the demand rail, 66), half an em up,
+   at every width: centred on a % they touched the stream and the rail at 601-768 (the phones' lift went with it) */
+#marketplace .sp-half .hp-lab--khaki { transform: translate(0, calc(-100% - .625em)); }
 
 /* hc13r (PLAT-4): §03 and §04 end on the chapter foot (.section's --sec-foot), not 100-126 px of air: arch.css's #mcp
    padding and site.css's .lc-pipe margin went at integrate hc13r, so no override is needed here */

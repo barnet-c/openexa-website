@@ -79,7 +79,7 @@ jobs:
           - shard: home
             only: home,interior,resolution,phone,reduced_motion,loader,proof_entrance,overture_net
           - shard: overture
-            only: overture_reentry,overture_relay,overture_numeral,overture_tap,overture_resize,overture_ctx_lost
+            only: overture_reentry,overture_relay,overture_numeral,overture_tap,overture_resize,overture_ctx_lost,paper_opening
           - shard: overture-phones
             only: overture_phones
           - shard: overture-rest

@@ -142,7 +142,7 @@ page404 = f'''<!DOCTYPE html>
             <h1 class="display-1">This page didn’t pass.</h1>
           </div>
           <div class="nf-next">
-            <p class="lede">The address is wrong, has moved, or never existed. Nothing&nbsp;was&nbsp;executed.</p>
+            <p class="lede">The address is wrong, has moved, or never&nbsp;existed. Nothing&nbsp;was&nbsp;executed.</p>
             <div class="row mt-3">
               <a class="btn" href="index.html">Back to the start <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
               <a class="btn btn--ghost" href="platform.html">The platform</a>

@@ -79,16 +79,16 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
 @media (scripting: enabled) and (min-width: 600px) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 343vh + var(--paper-slack, 0px)); height: calc(100svh + 343svh + var(--paper-slack, 0px)); }
 }
-/* (hc16) wide: §01 opens --sec-open under the paper's caption. story.js writes the slack on the story (pinned longer) and
-   on §01 (pulled up over the paper's empty foot by as much) */
+/* (hc16; hc17 stacked too) §01 opens --sec-open under the paper's caption. story.js writes the slack on the story (pinned
+   longer) and on §01 (pulled up over the paper's empty foot by as much) */
 @property --paper-slack { syntax: "<length>"; inherits: false; initial-value: 0px; }
-@media screen and (scripting: enabled) and (min-width: 600px) {
+@media screen and (scripting: enabled) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] main > .story + .section { margin-top: calc(-1 * var(--paper-slack, 0px)); background: var(--paper); }
 }
 /* (hc2) phones: the overture lands faster, 50svh of scroll a scene (overture.css: 70; one easy swipe a scene); the same
    scenes, the same hand-off, native scroll. story.js lifts scenes 1-4's line so each scene stands centred */
 @media (scripting: enabled) and (max-width: 599.98px) and (max-aspect-ratio: 23/20) {
-  html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 230vh); height: calc(100svh + 230svh); }
+  html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 230vh + var(--paper-slack, 0px)); height: calc(100svh + 230svh + var(--paper-slack, 0px)); }
 }
 
 /* §05 (hc3, proof's request): the records carry Trust's ledger ids (#4f23 ...), five mono characters */
@@ -150,10 +150,8 @@ body[data-page="home"] main .figure-cap { padding-left: 0; }
 /* the first screen: the CEO's head and line, two buttons, then v2's four figures (overture.css) */
 body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(1.625rem, 3.2vh, 2.25rem); }
 
-/* §01 the six classes' register (hc2; integrate hc8 moved it here from site.css, Home its one user, with hc8's cell, the
-   director's, folded in: one block per cell at every width, the ring, the serif name, the status 0.25rem under it; the
-   cells ~120 px at 1440, was ~183). Six cells, the live one first under a green rule; one column on a phone.
-   Markup: div.card-grid.card-grid--3.lc-reg > .card > .n.n--ring + h3.h4 */
+/* §01 the six classes' register: one block per cell (the ring, the serif name, the status under it), the live one first
+   under a green rule; one column on a phone. Markup: div.card-grid.card-grid--3.lc-reg > .card > .n.n--ring + h3.h4 */
 .lc-reg { grid-template-columns: repeat(3, minmax(0, 1fr)); border: 0; border-top: var(--hair) solid var(--line-strong); }
 .lc-reg > .card { display: grid; grid-template-columns: 1.75rem minmax(0, 1fr); grid-template-rows: auto auto; column-gap: .875rem; row-gap: .25rem; align-content: start; align-items: start; padding: 1.125rem clamp(1.125rem, 2.2vw, 2rem) 1.375rem; border: 0; border-bottom: var(--hair) solid var(--line); border-radius: 0; background: none; }
 .lc-reg > .card:nth-child(3n + 1) { padding-left: 0; }
@@ -247,10 +245,7 @@ body[data-page="home"] #lifecycles { --cis: 38.6875rem; } body[data-page="home"]
 body[data-page="home"] #economics { --cis: 42.046875rem; } body[data-page="home"] #governance { --cis: 44.25rem; }
 body[data-page="home"] #research { --cis: 37.0625rem; } body[data-page="home"] .cta-band { --cis: 6.5rem; }
 /* 600-760: the 700 heights; 761-960: the 820 heights; 961-1099 the 1024 heights, 1100-1359 the 1280 heights, 1360-1679 the
-   1440 heights, from 1680 (rem above 1920, so 3840 is 1920 doubled) the 1920 heights. Re-measured hc13r (cis3.py) after
-   system's one chapter step (SYS-1: 60 px heads, 1.04 line-height), §03's band leaving Home and the heads' 22ch measure
-   from 601 px (earlier rounds: a2, hc1-hc11; the history is in notes/home.md); hc14: #governance again, the chain folded
-   to four records at every width */
+   1440 heights, from 1680 (rem above 1920, so 3840 is 1920 doubled) the 1920 heights (measured: notes/home.md) */
 @media (min-width: 600px) {
   body[data-page="home"] #lifecycles { --cis: 36.71875rem; } body[data-page="home"] #lc01 { --cis: 54.359375rem; }
   body[data-page="home"] #economics { --cis: 28.921875rem; } body[data-page="home"] #governance { --cis: 46.609375rem; }
@@ -359,6 +354,11 @@ body[data-page="home"] .story-lab.hedge span { display: block; }
 body[data-page="home"] .story-lab.hedge span:first-child { color: rgba(245, 242, 236, .74); }
 body[data-page="home"] .story-lab:is(.hedge, .floor).is-flush { text-align: left; } /* one left edge for the four lines, as Proof's gutter */
 body[data-page="home"] .story-labels.has-insp .story-lab.hedge { opacity: 0 !important; }
+/* hc17: scene 4's mono at one step on upright tablets (the days were 12.1 px at 1024 by "10 bps" at 11). With the paper up
+   the days take the caption's step (four sizes where §01 joins them); the box keeps its line height: nothing moves */
+@media (min-width: 600px) and (max-aspect-ratio: 23/20) { body[data-page="home"] .story-lab.day { font-size: var(--fs-label); } }
+body[data-page="home"] .story.is-paper-up .story-lab.day { line-height: 1.25em; }
+body[data-page="home"] .story.is-paper-up .story-lab.day .k { font-size: var(--fs-small); }
 /* §06 on tablets (761-960): the three notes in one row, as on desktop; a still wider than its cell keeps its shape (the
    plate's preserveAspectRatio, xMinYMid: hc3 inlines the three so their green points redraw on hover and focus) */
 @media (min-width: 761px) and (max-width: 960px) {
