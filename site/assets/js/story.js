@@ -764,20 +764,34 @@
   let belowBar = true;
   const pxuOf = (h) => (h / 2) / (CAM_D * Math.tan(FOV / 2)); // CSS px per world unit at the target's depth
   // the bar's height in px (award a2: above 1920 --nav-h is '4.5rem', and parseFloat of the token read 4.5, so the stage
-  // fitted under a 4.5 px bar at 4K): a hidden probe of that height resolves it
-  let navProbe = null;
-  const navPx = () => {
-    if (!navProbe) { navProbe = document.createElement('i'); navProbe.setAttribute('aria-hidden', 'true'); const ps = navProbe.style; ps.position = 'absolute'; ps.left = ps.top = '0'; ps.width = '0'; ps.height = 'var(--nav-h)'; ps.visibility = 'hidden'; ps.pointerEvents = 'none'; stage.appendChild(navProbe); }
-    return parseFloat(getComputedStyle(navProbe).height) || 0;
+  // fitted under a 4.5 px bar at 4K): a hidden probe of that height resolves it (hc16: and --sec-open, a clamp())
+  const probes = {};
+  const tokenPx = (v) => {
+    let p = probes[v];
+    if (!p) { p = probes[v] = document.createElement('i'); p.setAttribute('aria-hidden', 'true'); const ps = p.style; ps.position = 'absolute'; ps.left = ps.top = '0'; ps.width = '0'; ps.height = `var(${v})`; ps.visibility = 'hidden'; ps.pointerEvents = 'none'; stage.appendChild(p); }
+    return parseFloat(getComputedStyle(p).height) || 0;
   };
+  const navPx = () => tokenPx('--nav-h');
   const l4 = (px) => px * remK / Math.max(1e-4, layouts[4].s * pxuOf(H)); // S4 local units for a length in CSS px (times remK)
-  // where the story sits and how long it pins: the stage is 100svh
+  // where the story sits and how long it pins: the stage is 100svh (hc16: the tail after the run is the paper's slack)
   function measureScroll() {
     scrollY = window.scrollY;
     storyTop = story.getBoundingClientRect().top + scrollY;
     stageH = stage.offsetHeight || window.innerHeight;
     storyH = story.offsetHeight;
-    run = Math.max(1, storyH - stageH);
+    run = Math.max(1, storyH - stageH - tail);
+  }
+  // (hc16, the director) wide: §01 opens one --sec-open under the paper's caption rule, as a chapter opens, not after
+  // whatever the frame leaves under it (1440: 282 px; 3840: 753). The stage stays pinned that much longer once the exit
+  // is done (home.css adds --paper-slack to the story's height) while §01, pulled up by as much, rises over the paper's
+  // empty foot: it shows only over a paper already up, and nothing from §01 down moves. 0 where no paper is drawn
+  const sec1 = story.nextElementSibling;
+  let tail = 0;
+  function setTail(px) {
+    px = Math.max(0, Math.round(px));
+    if (px === tail) return;
+    tail = px;
+    [story, sec1].forEach(el => { if (!el) return; if (px) el.style.setProperty('--paper-slack', px + 'px'); else el.style.removeProperty('--paper-slack'); });
   }
   const beatParts = () => beats.map(b => Array.from(b.querySelectorAll('.beat-text, .hero-stats')));
   let partsOf = null, ledeOf = null, ledeLR = null;
@@ -888,6 +902,7 @@
     if (liftBeats()) measureBeats();
     beats.forEach((b, i) => { const br = beatRects[i]; frameTiny[i] = !!(stacked && br && (MIN_FRAME[i] || !i) && br.t - 14 - (navH + barH + capH[i] + 8) < (i === 4 ? 40 + DAY_BAND : 40)); }); // (S4's tags hang a band under the floor)
     shownIdx = -1; // (hc13r) the index's tab order again: a lede may have given way or come back
+    setTail(!stacked && !short && H > 600 ? H - (H * FLOOR_END() + capRoom() - 12) - tokenPx('--sec-open') : 0); // (hc16; capRoom's 12 px of air back: from the rule itself. home.css's wide query starts at 600.02 px tall)
   }
   // (hc2) portrait (phones, upright tablets): scenes 1-4 lift their line off the stage's foot to one height, so each scene's
   // group (the structure and its callouts over its line) stands on the stage's optical centre and the structure sits on its
@@ -1071,7 +1086,7 @@
     lastP = (scrollY - storyTop) / run; // the reader's place in the pinned run (a resize puts them back here)
     const p = clamp(lastP, 0, 1), u = p * TOTAL_U;
     sTarget = Math.min(4, u); xTarget = clamp((u - 4) / EXIT_U, 0, 1);
-    belowBar = storyTop + storyH - scrollY > navH + 1;
+    belowBar = storyTop + storyH - tail - scrollY > navH + 1; // (hc16: §01 covers the stage's last `tail` px)
   }
   // the morph state for the current pair of scenes: a hold at each end, the stagger in between
   function morphState() {
@@ -1799,7 +1814,7 @@
     const ls = sceneOfLabels();
     if (ls !== labelScene) { labelScene = ls; labOnT = now || performance.now(); labA = 0; }
     if (labelScene >= 0) { labA = red ? 1 : clamp(((now || performance.now()) - labOnT) / LAB_IN, 0, 1); measureBeat(labelScene); } else labA = 0;
-    const ov = Math.max(0, scrollY - storyTop - run); // past the pin the stage leaves with the page
+    const ov = Math.max(0, scrollY - storyTop - run - tail); // past the pin the stage leaves with the page (hc16: after the paper's slack)
     const lean = stacked, X = stacked ? EXIT.tall : EXIT.wide;
     const tN = now || performance.now(), k = red || lost ? 1 : Math.min(1, (tN - fadeT) / 250), mid = (w) => xe >= (w[0] + w[1]) / 2 ? 1 : 0;
     fadeT = tN; kF = k;
@@ -1960,7 +1975,7 @@
   function placeTo(k) { // that place, in the layout as it is now
     const top0 = story.getBoundingClientRect().top + window.scrollY;
     let y;
-    if (k.below != null) y = top0 + story.offsetHeight + k.below;
+    if (k.below != null) y = top0 + story.offsetHeight - tail + k.below; // (from §01's top)
     else if (tiny) y = k.at ? beats[k.at].getBoundingClientRect().top + window.scrollY - navNow() : top0;
     else { measureScroll(); y = sceneTop(k.at); }
     window.scrollTo({ top: Math.max(0, Math.round(y)), behavior: 'instant' });
@@ -1975,7 +1990,7 @@
     tiny = on;
     if (on) {
       stopFrames(); clearTimeout(idleTimer);
-      root.classList.remove('story-compact', 'story-short', 'story-figs-01'); root.classList.add('story-tiny'); clearLift();
+      root.classList.remove('story-compact', 'story-short', 'story-figs-01'); root.classList.add('story-tiny'); clearLift(); setTail(0);
       beats.forEach(b => { b.style.opacity = b.style.transform = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-tight', 'is-snug', 'is-bo0'); });
       if (bar) bar.style.opacity = bar.style.visibility = '';
       if (paper) paper.style.height = paper.style.visibility = '';
@@ -2022,7 +2037,7 @@
       fitScenes();
       // (hc13r) the chart's key never squeezes the columns under their day tags (a short frame: 568 x 320): where its band
       // would thin the tags, the key gives way and the scenes are fitted again, as without it
-      if (keyH && dayPitch < 18) { keyOff = true; setModes(); fitScenes(); }
+      if (keyH && dayPitch < 18) { keyOff = true; setModes(); measureScroll(); fitScenes(); }
       publishGlobe();
     }
     if (tinyBack) { placeTo(tinyBack); tinyBack = null; scrollY = window.scrollY; } // back from the static sequence, at the reader's scene
@@ -2130,10 +2145,11 @@
     }
     intro = red || introStart < 0 ? (introStart < 0 ? 0 : 1) : clamp((now - introStart) / 1100, 0, 1);
     if (red && introStart >= 0) intro = 1;
-    // scroll with a little weight: the instrument follows, it does not snap (reduced motion: it does)
+    // scroll with a little weight: the instrument follows, it does not snap (reduced motion: it does). (hc16) Past the run
+    // (the paper's slack, where §01 rises over the stage) the exit catches up fast, so the paper is up before §01 meets it
     const jump = red || !settledOnce;
     if (jump) { sNow = sTarget; xNow = xTarget; settledOnce = true; }
-    else { const k = 1 - Math.exp(-dtS * (performance.now() - lastGo.t < 1500 ? 10 : 6.5)); sNow += (sTarget - sNow) * k; xNow += (xTarget - xNow) * k; if (Math.abs(sTarget - sNow) < 0.0004) sNow = sTarget; if (Math.abs(xTarget - xNow) < 0.0004) xNow = xTarget; }
+    else { const k = 1 - Math.exp(-dtS * (performance.now() - lastGo.t < 1500 ? 10 : 6.5)), kx = scrollY > storyTop + run ? 1 - Math.exp(-dtS * 24) : k; sNow += (sTarget - sNow) * k; xNow += (xTarget - xNow) * kx; if (Math.abs(sTarget - sNow) < 0.0004) sNow = sTarget; if (Math.abs(xTarget - xNow) < 0.0004) xNow = xTarget; }
     xeNow = red ? (xNow > 0.5 ? 1 : 0) : xPost();
     morphState();
     greenBusy = stepGreen(dtS, jump || paused);
@@ -2228,7 +2244,7 @@
     if (wired && lastP === lastP && !tiny) {
       measureScroll();
       if (scrollY > storyTop + 4 && scrollY < storyTop + run + 4) at = clamp(Math.round(sTarget), 0, 4);
-      else if (scrollY >= storyTop + run + 4) below = scrollY - (storyTop + storyH);
+      else if (scrollY >= storyTop + run + 4) below = scrollY - (storyTop + storyH - tail); // (from §01's top: the slack goes)
     }
     running = false; stopFrames(); clearTimeout(lostTimer); clearTimeout(idleTimer);
     beats.forEach(b => { b.style.opacity = b.style.transform = b.style.visibility = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-relay', 'is-tight', 'is-snug', 'is-bo0'); });
@@ -2240,6 +2256,7 @@
     if (motionButton) motionButton.hidden = true;
     insp.remove();
     stage.removeAttribute('tabindex'); stage.removeAttribute('aria-describedby');
+    setTail(0);
     fallback();
     // the static sequence is ~3 screens shorter: keep the reader on the scene
     if (at != null || below != null) {
@@ -2288,7 +2305,7 @@
       document.addEventListener('oxa:jump', () => {
         if (!running || lost || !ready || tiny) return;
         measureScroll(); sceneScroll(); syncIndex();
-        if (scrollY + window.innerHeight <= storyTop || scrollY >= storyTop + storyH) return;
+        if (scrollY + window.innerHeight <= storyTop || scrollY >= storyTop + storyH - tail) return;
         sNow = sTarget; xNow = xTarget; copyS = sNow; copyMode = 'follow'; settledOnce = true;
         stopFrames(); frame(performance.now(), true);
       });

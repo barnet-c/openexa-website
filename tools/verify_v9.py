@@ -1952,8 +1952,24 @@ HANDOFF = "async (n) => { " + FRAMES + """ await frames(n);
 async def nav_handoff(b):
     """at 1440, 768 and 390, from story end - innerHeight - 120 to story end + 60 in 20 px steps: the bar is never ink
     (.nav--dark) while the rising .story-paper is visible with its top at or above the bar's bottom (a one-frame lag that
-    clears within six frames is not counted)"""
+    clears within six frames is not counted). hc16 (system's request): and after a one-shot jump, at 1440 x 900 and
+    3840 x 2160: from story end - 2h (the paper hidden, 400 ms), one scrollTo to story end - h + k h / 6 (k = 2..6), read
+    30 frames later: never ink over the paper (20 px steps re-read the paper on every scroll and could not catch a single
+    stale read after a jump; the render frames did)"""
     bad, n = [], 0
+    for w, h in ((1440, 900), (3840, 2160)):
+        ctx, pg = await open_page(b, "index.html", w, h)
+        end = await story_end(pg)
+        seen = 0
+        for k in range(2, 7):
+            y = round(end - h + k * h / 6)
+            await pg.evaluate(f"window.scrollTo({{top: {end - 2 * h}, behavior: 'instant'}})"); await pg.wait_for_timeout(400)
+            await pg.evaluate(f"window.scrollTo({{top: {y}, behavior: 'instant'}})")
+            s = await pg.evaluate(HANDOFF, 30); n += 1
+            if s["vis"] and s["top"] <= s["nb"]: seen += 1
+            if s["dark"] and s["vis"] and s["top"] <= s["nb"]: bad.append(f"index.html@{w}x{h} jump to y={y}: nav--dark 30 frames after the jump with the paper's top at {s['top']} <= bar bottom {s['nb']}")
+        if not seen: bad.append(f"index.html@{w}x{h}: no jump landed with the paper at the bar (nothing was tested)")
+        await ctx.close()
     for w, h in ((1440, 900), (768, 1024), (390, 844)):
         ctx, pg = await open_page(b, "index.html", w, h)
         end = await story_end(pg)
@@ -1969,7 +1985,7 @@ async def nav_handoff(b):
         if not seen: bad.append(f"index.html@{w}x{h}: the paper never reached the bar in the hand-off window (nothing was tested)")
         await ctx.close()
     assert not bad, f"nav_handoff: {len(bad)} ink samples over the paper:\n  " + "\n  ".join(bad[:12])
-    print(f"nav_handoff: {n} samples at 1440, 768, 390; the bar is never ink over the rising paper")
+    print(f"nav_handoff: {n} samples (steps at 1440, 768, 390; one-shot jumps at 1440 and 3840); the bar is never ink over the rising paper")
 
 
 # ---- the ledger panel never moves the page (LG2)
@@ -3483,10 +3499,13 @@ async def overture_ctx_lost(b):
 # ---- the overture comes to rest on one complete headline wherever the reader stops (OV-R2-2)
 # story.js: four scenes plus the pinned exit, spread over the story's scroll run. hc15 (home, the director's 4.1): the exit
 # is 0.9 of a scene from 600 px (the standing chart holds longer: 4.9 scenes, home.css 343svh) and 0.6 under it (4.6:
-# overture.css 322svh, home.css 230svh on portrait phones), so the scene count follows the stage's width
+# overture.css 322svh, home.css 230svh on portrait phones), so the scene count follows the stage's width. hc16 (home, the
+# director's 4.1): on wide, non-short screens the story ends in a tail, the paper's slack, that the run leaves out
+# (story.js run = storyH - stageH - tail); §01 is pulled up by as much (its negative margin-top), read from there
 STORY_Y = """(s) => { const st = document.querySelector('.story'), stage = st.querySelector('.story-stage') || st.firstElementChild;
   const units = (stage ? stage.clientWidth : innerWidth) < 600 ? 4.6 : 4.9;
-  return Math.round(st.getBoundingClientRect().top + scrollY + Math.max(1, st.offsetHeight - (stage ? stage.offsetHeight : innerHeight)) * s / units); }"""
+  const tail = st.nextElementSibling ? Math.max(0, -parseFloat(getComputedStyle(st.nextElementSibling).marginTop) || 0) : 0;
+  return Math.round(st.getBoundingClientRect().top + scrollY + Math.max(1, st.offsetHeight - (stage ? stage.offsetHeight : innerHeight) - tail) * s / units); }"""
 REST_STATE = "(() => { " + EFF + r""" const st = document.querySelector('.story');
   return [...st.querySelectorAll('.beat')].map((b, i) => { const ws = [...b.querySelectorAll('h1 .wi, h2 .wi')];
     const up = ws.filter(w => { const t = getComputedStyle(w).transform; const ty = !t || t === 'none' ? 0 : new DOMMatrixReadOnly(t).m42; return ty <= 0.06 * (w.offsetHeight || 1); }).length;
@@ -3548,7 +3567,8 @@ async def overture_rest(b):
     every headline word risen (translateY <= 6%) and its .body-lg (S0: its lede) at >= .9, and no other beat's eyebrow
     above .1; from S0 to S1 .story-num never shows '00' (every frame) (OV-R2-2). v2x cut (1 Nov): scenes 3 and 4 have
     no paragraph any more (the headline is the scene's one line), so a beat without a .body-lg is complete when every
-    headline word has risen; a beat that has one still needs it at >= .9"""
+    headline word has risen; a beat that has one still needs it at >= .9. hc16: and the scene index lands scenes 1-4 where
+    STORY_Y puts them (2 px): the stops are where the check means them"""
     bad, n = [], 0
     for w, h, touch in ((1440, 900, False), (390, 844, True)):
         tag = f"index.html@{w}x{h}" + (" touch" if touch else " wheel")
@@ -3583,6 +3603,12 @@ async def overture_rest(b):
                 if len(whole) != 1 or eyes:
                     bad.append(f"{tag} S{i}->S{i + 1} stop at {int(f * 100)}% (s={s:.2f}, y={y}): complete beats {whole}, other eyebrows {eyes}; "
                                f"beats [words up/n, body, eyebrow] {[(x['up'], x['n'], x['body'], x['eye']) for x in st]}")
+        # hc16 (integrate): the check's model of the run is the page's own: the scene index lands each scene where STORY_Y
+        # puts it (2 px), so a change in the run's length (hc15's 4.9 scenes, hc16's paper slack) fails here, not by drift
+        for i in range(1, 5):
+            await pg.evaluate(f"document.querySelectorAll('.story-idx button')[{i}].click()"); await pg.wait_for_timeout(900)
+            yi, ys = await pg.evaluate(f"[Math.round(scrollY), ({STORY_Y})({i})]")
+            if abs(yi - ys) > 2: bad.append(f"{tag}: the scene index lands scene {i} at y={yi}, STORY_Y({i}) says {ys}: the check's run is not the page's")
         await ctx.close()
     assert not bad, f"overture_rest: {len(bad)} problems ({n} stops):\n  " + "\n  ".join(bad[:16])
     print(f"overture_rest: {n} stops mid-hand-over at 1440 (wheel) and 390 (touch) each settle on one complete headline; no '00'")

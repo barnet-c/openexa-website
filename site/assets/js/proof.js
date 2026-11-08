@@ -165,10 +165,10 @@
     const nodes = trail ? Array.from(trail.querySelectorAll('.pf-nd')) : [];
     const row = i => {
       if (!nodes[i]) return;
-      const y = 33 + 9 * i;
+      const y = 33 + 9 * i, u = y + 4.5; // hc16 (HC16 4.2): the thread underlines the row (proof.css --ul), never strikes it
       trail.style.setProperty('--pr', String(y / 100));
-      trail.querySelectorAll('.pf-tk').forEach(p => p.setAttribute('d', 'M-20 ' + y + 'H77'));
-      trail.querySelectorAll('.pf-sp').forEach(p => p.setAttribute('d', 'M-20 ' + y + 'V' + (y + 148)));
+      trail.querySelectorAll('.pf-tk').forEach(p => p.setAttribute('d', 'M-20 ' + u + 'H77'));
+      trail.querySelectorAll('.pf-sp').forEach(p => p.setAttribute('d', 'M-20 ' + u + 'V' + (u + 148)));
       nodes.forEach((n, j) => { n.classList.toggle('hp-rec', j !== i); n.classList.toggle('hp-gf', j === i); n.classList.toggle('pf-mk', j === i); });
     };
     const write = i => { const x = sessions[i]; if (tag.length === 4 && x) [x.day, x.regime, x.confirmation, x.status].forEach((t, k) => { if (tag[k].textContent !== t) tag[k].textContent = t; }); row(i); };

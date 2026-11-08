@@ -29,8 +29,6 @@ body[data-page="home"] .story-idx button i { background: rgba(245, 242, 236, .86
 body[data-page="home"] .story-lab.cap { display: flex; flex-wrap: wrap; column-gap: 1.5em; font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; text-wrap: balance; color: rgba(245, 242, 236, .78); }
 body[data-page="home"] .story-lab.cap .fc-h { text-align: left; color: rgba(245, 242, 236, .6); }
 
-/* the stage's focus ring (a frame inset under the bar): overture.css (integrate a3) */
-
 /* SC 2.5.8: callouts under 24 px apart are not pointer targets (hc7: the day tags too, from 600 px down; a tap on a plate or
    a column still inspects it, and story.js keeps both kinds out of the tab order on touch phones) */
 @media (max-width: 599.98px) { body[data-page="home"] .story-lab:is(.layer, .day) { pointer-events: none; } }
@@ -57,7 +55,6 @@ html.story-short body[data-page="home"] .story .beat-4 .body-lg { display: block
 }
 
 /* ---------- the chapters ---------- */
-/* (no ghost numerals: site.css no longer draws .section[data-n]::before, system cut 1 Nov) */
 
 /* scene 4's lede (hc13r: §03's hedge came into the overture, beside its claim): its link to the disclosures, as §03's was */
 body[data-page="home"] .beat-4 .body-lg a { color: var(--fg); text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .1875rem; text-decoration-color: var(--line-strong); transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
@@ -80,15 +77,19 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
 /* (hc15, the director) from 600 px the pinned exit opens on a longer standing chart: 4.9 scenes at overture.css's 70svh
    (story.js EXIT_U 0.9, XHOLD 0.6; was 322svh, 4.6). Under 600 px the exit stays 0.6 (322svh, or 230svh below) */
 @media (scripting: enabled) and (min-width: 600px) {
-  html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 343vh); height: calc(100svh + 343svh); }
+  html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 343vh + var(--paper-slack, 0px)); height: calc(100svh + 343svh + var(--paper-slack, 0px)); }
+}
+/* (hc16) wide: §01 opens --sec-open under the paper's caption. story.js writes the slack on the story (pinned longer) and
+   on §01 (pulled up over the paper's empty foot by as much) */
+@property --paper-slack { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@media screen and (scripting: enabled) and (min-width: 600px) {
+  html:not(.no-webgl):not(.story-tiny) body[data-page="home"] main > .story + .section { margin-top: calc(-1 * var(--paper-slack, 0px)); background: var(--paper); }
 }
 /* (hc2) phones: the overture lands faster, 50svh of scroll a scene (overture.css: 70; one easy swipe a scene); the same
    scenes, the same hand-off, native scroll. story.js lifts scenes 1-4's line so each scene stands centred */
 @media (scripting: enabled) and (max-width: 599.98px) and (max-aspect-ratio: 23/20) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 230vh); height: calc(100svh + 230svh); }
 }
-
-/* (hc6) the overture's coda is gone: S4's headline closes it (story.js) */
 
 /* §05 (hc3, proof's request): the records carry Trust's ledger ids (#4f23 ...), five mono characters */
 body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em 4.8em 9.4em minmax(0, 1fr) auto; }
@@ -110,9 +111,6 @@ body[data-page="home"] #governance .chain-more:focus-visible { outline: calc(2 *
 }
 
 /* ========== The reading layer (lab: home editorial) ========== */
-
-/* captions: the chart's key is the caption's second line */
-body[data-page="home"] .figure-cap .fc-key { color: var(--fg-2); text-wrap: balance; }
 
 /* chapters close instead of trail */
 body[data-page="home"] main > .story + .section { padding-top: clamp(1.75rem, 3.4vw, 3rem); }
@@ -136,9 +134,6 @@ body[data-page="home"] main > .story + .section { padding-top: clamp(1.75rem, 3.
   body[data-page="home"] #governance .chain-list [contenteditable]:focus { font-size: 1rem; }
 }
 @media (pointer: coarse) { body[data-page="home"] #governance .chain-list :is(.ev, .what) { box-sizing: border-box; min-height: 1.5rem; padding-block: .125rem; } } /* 24 px targets (SC 2.5.8) */
-
-/* the chart's key is a sentence */
-body[data-page="home"] .figure-cap .fc-key { font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: var(--fg-2); }
 
 /* ========== v2x cut: one head, at most one line, then the instrument ========== */
 /* four sizes a screen: the display head, the line (Inter, --fs-body), the hedge (Inter --fs-small), the instruments' mono;
@@ -233,7 +228,6 @@ body[data-page="home"] #research .research-card .link-arrow { font: 400 var(--fs
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-sub, html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker,
   html:not(.no-webgl) body[data-page="home"] .story .beat .body-lg { font-size: 1rem; line-height: 1.5; }
 }
-/* phones: no text under 12 px: the label tokens are 12 px on phones site-wide (site.css, a2); Fig. 1.1's are proofchart.css's (hc3) */
 /* narrow phones: the scene index's five rules a little shorter, so "Pause motion" keeps one line beside them */
 @media (max-width: 379.98px) {
   body[data-page="home"] .story-idx button { min-width: 2.25rem; padding-right: .625rem; }
@@ -346,7 +340,6 @@ body[data-page="home"] #research .rc-mark { display: block; width: auto; height:
 html.no-webgl:not(.story-tiny) body[data-page="home"] .story .beat-0 { min-height: 100vh; min-height: 100svh; }
 
 /* ========== award a3 ========== */
-/* §02's lab name, its 320 px gate tracking and the ledger's ink halo: swarm.css (integrate a3, for Home and Platform) */
 /* §06: the stills as plates, not icons: one scale for the three, the widest half its cell (the grid is their container) */
 @media (min-width: 761px) {
   body[data-page="home"] #research .card-grid--3 { container-type: inline-size; }
@@ -376,16 +369,8 @@ body[data-page="home"] .story-labels.has-insp .story-lab.hedge { opacity: 0 !imp
 @media (max-width: 600px) {
   body[data-page="home"] .ph-dot { display: block; height: 0; overflow: hidden; }
 }
-/* the hedge above the floor ("exact value / not published"): proofchart.css (integrate a3, for Home §03 and Proof) */
-
-/* ========== award a4 ========== */
-/* tablets keep v2's four figures under the buttons (owner, 2 Nov), or the phone's 01 line where they would squeeze the
-   globe (story.js .story-figs-01): overture.css (integrate a4) */
-
 
 /* ========== hill climb hc11 ========== */
-/* hc11: §02 "Take the stack apart." left Home (overture scene 2 tells the stack; Platform opens on its plate), and with it
-   hc5's still-plate rules and #stack's stand-ins; the chapters after it are one number lower */
 /* §05's two chain buttons carry Trust's glyphs (trust.html's replay: the pencil, the restore arrow), at Trust's size and
    hairline: the same action looks the same on both pages */
 body[data-page="home"] #governance :is(.chain-try, .chain-restore) { gap: .5rem; }

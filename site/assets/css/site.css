@@ -1060,7 +1060,7 @@ html.story-ready:not(.no-webgl) .nav:not(.nav--solid) .nav-progress i + i::befor
   position: fixed; inset: var(--nav-h) 0 0 0; width: auto; height: auto; max-width: none; max-height: none; margin: 0;
   padding: clamp(1.125rem, 4vh, 2.5rem) max(var(--gutter), env(safe-area-inset-right)) calc(1.5rem + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left));
   border: 0; border-radius: 0;
-  background: var(--ink); color: var(--paper); overflow: auto; overscroll-behavior: contain;
+  background: var(--ink); color: var(--paper); overflow: auto; overscroll-behavior: contain; color-scheme: dark; /* (hc16) its own scrollbar in ink */
   display: none; flex-direction: column; gap: 1.75rem; z-index: 99;
 }
 .nav-sheet::backdrop { background: transparent; }
@@ -1171,6 +1171,7 @@ html.story-ready:not(.no-webgl) .nav:not(.nav--solid) .nav-progress i + i::befor
 :root.is-paper-root { background: var(--paper); }
 /* the open sheet: site.js mirrors the popover's state as body.nav-open and .nav--menu */
 body.nav-open { overflow: hidden; }
+:root.sb-lock { scrollbar-gutter: stable; background: var(--ink); } /* (hc16) a classic scrollbar's gutter kept, inked like the sheet */
 
 /* ---------- the loader: an aperture of fine ticks that fills with the real elapsed time ---------- */
 .loader {

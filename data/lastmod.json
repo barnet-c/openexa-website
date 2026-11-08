@@ -129,11 +129,11 @@
  },
  "evidence.html": {
   "date": "2026-11-07",
-  "sha": "897f8899ccdf4536"
+  "sha": "6c8cc62edd916f11"
  },
  "index.html": {
   "date": "2026-11-07",
-  "sha": "b987e5a0abccd2c2"
+  "sha": "da60846879c49406"
  },
  "lifecycles.html": {
   "date": "2026-11-07",
@@ -189,6 +189,6 @@
  },
  "trust.html": {
   "date": "2026-11-07",
-  "sha": "cbc360294145063e"
+  "sha": "ccc9953813ca5c45"
  }
 }

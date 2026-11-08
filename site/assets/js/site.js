@@ -49,7 +49,6 @@
   const paper = story && $('.story-paper', story);
   // on Home this runs after story.js: an overture not started by now never will (site.css's net)
   if (story && !root.classList.contains('story-ready') && !root.classList.contains('no-webgl')) root.classList.add('story-failed');
-  let paperTop = null, paperWatch = 0;
   const toggle = $('.nav-toggle');
   const sheet = $('.nav-sheet');
   let navH = 72, vh = 0, maxScroll = 1, clearUntil = -1, bands = [], navRaf = 0, menuOpen = false, lastY = 0;
@@ -280,11 +279,8 @@
     let overPaper = false;
     if (band && band.el === story && paper) {
       const r = getComputedStyle(paper).visibility !== 'hidden' ? paper.getBoundingClientRect() : null;
-      overPaper = !!r && r.height > 0 && r.top <= navH + 1 && r.bottom > navH;
-      const top = r && r.height > 0 ? Math.round(r.top) : null;
-      if (top !== paperTop) { paperTop = top; paperWatch = 8; }
-      if (paperWatch > 0) { paperWatch--; queue(); }
-    } else { paperTop = null; paperWatch = 0; }
+      overPaper = !!r && r.height > 0 && r.top <= edge - y && r.bottom > edge - y; // (hc16) the band rule's edge: the paper decides once it reaches it
+    }
     if (overPaper) dark = false;
     // a dark-start page whose dark opening has scrolled away has a paper ground
     if (darkStart) { const opening = bands[0] && bands[0].dark ? bands[0] : null; root.classList.toggle('is-paper-root', !!opening && y >= opening.bottom); }
@@ -377,6 +373,8 @@
   function syncMenu(open) {
     if (open === menuOpen) return;
     menuOpen = open;
+    // (hc16) the lock takes a classic scrollbar away: where one takes width its gutter stays (site.css), so nothing moves under the pointer
+    root.classList.toggle('sb-lock', open && window.innerWidth > root.clientWidth);
     document.body.classList.toggle('nav-open', open);
     if (nav) nav.classList.toggle('nav--menu', open);
     if (toggle) toggle.setAttribute('aria-expanded', String(open));
@@ -602,6 +600,9 @@
     // invalidate the layout, so a later read forces a second one; here it shares the page's one first layout)
     measureSoon();
     window.addEventListener('scroll', queue, { passive: true });
+    // (hc16) story.js lays its rising paper out in its own frames (after a jump, several frames later on phones and tablets):
+    // each change it writes reaches the bar, which a read after the scroll alone missed (an ink bar over paper)
+    if (paper) new MutationObserver(queue).observe(paper, { attributes: true, attributeFilter: ['style'] });
     window.addEventListener('resize', measure);
     window.addEventListener('load', measureSoon);
     // (a4) the overture's and the loader's hand-offs change the bar's state, not the page's geometry: a change of height
