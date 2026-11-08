@@ -60,8 +60,8 @@
   "sha": "5a36e0bbc020ac47"
  },
  "blog/index.html": {
-  "date": "2026-11-06",
-  "sha": "78ea38d91f5807f4"
+  "date": "2026-11-07",
+  "sha": "e9293be963d77c29"
  },
  "blog/leveraged-etfs-price-dynamics-and-options-valuation.html": {
   "date": "2026-11-06",
@@ -125,11 +125,11 @@
  },
  "company.html": {
   "date": "2026-11-07",
-  "sha": "d7fe28c24af30802"
+  "sha": "e940667acb2fdc18"
  },
  "evidence.html": {
   "date": "2026-11-07",
-  "sha": "d7d474edaec5d5f0"
+  "sha": "897f8899ccdf4536"
  },
  "index.html": {
   "date": "2026-11-07",
@@ -141,7 +141,7 @@
  },
  "platform.html": {
   "date": "2026-11-07",
-  "sha": "c052fd959d53ebb4"
+  "sha": "3f9777218b741a82"
  },
  "research.html": {
   "date": "2026-11-06",
@@ -189,6 +189,6 @@
  },
  "trust.html": {
   "date": "2026-11-07",
-  "sha": "6a9b966e0246fafe"
+  "sha": "cbc360294145063e"
  }
 }

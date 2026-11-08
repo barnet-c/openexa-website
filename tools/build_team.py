@@ -57,6 +57,10 @@ Changes from the source, deliberately:
   - 2026-11-06 (hill climb hc5, one chapter-head pattern; system's request): the section's head is the site's chapter
     head (.ch-head.ch-spread: the heading, its line under it, the three figures as the spread's key), not a heading
     with its line top right; each firm in the line is kept whole (no-break spaces). Words unchanged.
+  - 2026-11-07 (hill climb hc15, design director 4.3: the page ended in 1,441 px of unbroken ink): "How we build" moved
+    between the story and the team, so the page alternates dark, paper-2, dark, paper, then the dark close, and reads
+    why, how, who, act. The team is chapter 03 (data-n), and the section this script writes ends at its own marker,
+    <!-- /THE TEAM -->, right after it (it ran to <!-- 04 FOUR CONSTANTS -->). Words, order and markup otherwise unchanged.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -229,7 +233,7 @@ def rows(people, line):
 team_html, r1 = rows(TEAM, True)
 adv_html, r2 = rows(ADVISORS, False)
 SECTION = f'''    <!-- 03 THE TEAM -->
-    <section class="section" id="team" data-chapter="The team" data-n="02">
+    <section class="section" id="team" data-chapter="The team" data-n="03">
       <div class="container">
         <div class="ch-head ch-spread team-head">
           <h2 class="display-2 ch-title" data-reveal data-split>Systems people and market people, under one roof.</h2>
@@ -250,11 +254,11 @@ SECTION = f'''    <!-- 03 THE TEAM -->
         </ol>
       </div>
     </section>
-
 '''
+END = "    <!-- /THE TEAM -->"  # hc15: the section's own end marker (the team is no longer followed by §04)
 page = ROOT / "company.html"
 s = page.read_text(encoding="utf-8")
-a, b = s.index("    <!-- 03 THE TEAM -->"), s.index("    <!-- 04 FOUR CONSTANTS -->")
+a, b = s.index("    <!-- 03 THE TEAM -->"), s.index(END)
 page.write_text(s[:a] + SECTION + s[b:], encoding="utf-8", newline="")
 for name, where, h in r1 + r2: print(f"{name:24} portrait from {where:12} subject {h}px")
 print(f"team {len(TEAM)} + advisors {len(ADVISORS)}; images {len(list(IMGDIR.glob('*-v2x.webp')))}")

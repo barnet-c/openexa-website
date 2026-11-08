@@ -6,6 +6,9 @@
   html.story-failed:not(.story-ready):not(.no-webgl) body[data-page="home"] .story-static-mark { animation-delay: 0s; } /* a failed download: at once */
 }
 @keyframes home-mark-net { to { opacity: 1; } } /* the plate at its own weight (its dots are drawn faint in the file) */
+/* (hc15) the loader's lock (site.css body.is-loading) hid a classic scrollbar: the page moved 7.5 px sideways at load.
+   home.js sets .sb-keep where a scrollbar takes width (integrate: a gutter kept for hidden ones stood as an empty strip) */
+html.sb-keep { scrollbar-gutter: stable; }
 
 
 /* the scene index: five rules, no text, on the baseline of "Pause motion" (.364 em of Inter under the bar's centre) */
@@ -74,6 +77,11 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
   html.story-compact body[data-page="home"] .story .beat-0 .hero-sub { margin-top: .75rem; font-size: clamp(1rem, 2.6vw, 1.15rem); }
 }
 
+/* (hc15, the director) from 600 px the pinned exit opens on a longer standing chart: 4.9 scenes at overture.css's 70svh
+   (story.js EXIT_U 0.9, XHOLD 0.6; was 322svh, 4.6). Under 600 px the exit stays 0.6 (322svh, or 230svh below) */
+@media (scripting: enabled) and (min-width: 600px) {
+  html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 343vh); height: calc(100svh + 343svh); }
+}
 /* (hc2) phones: the overture lands faster, 50svh of scroll a scene (overture.css: 70; one easy swipe a scene); the same
    scenes, the same hand-off, native scroll. story.js lifts scenes 1-4's line so each scene stands centred */
 @media (scripting: enabled) and (max-width: 599.98px) and (max-aspect-ratio: 23/20) {

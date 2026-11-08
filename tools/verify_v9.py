@@ -73,7 +73,7 @@ from rules import FORBIDDEN, PEOPLE, TEAM_NAMES, GONE  # the site's content rule
 LAYOUT = """() => {
   const vis = el => { const r = el.getBoundingClientRect(), s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !el.closest('.beat[aria-hidden="true"]') && !el.closest('details:not([open]) > :not(summary)') && !el.closest('.table-scroll') && !el.closest('.blog-chips'); };
   const over = [...document.querySelectorAll('main h1, main h2, main h3, main p, main a, main button, main canvas, main table')].filter(vis).filter(el => { const r = el.getBoundingClientRect(); return r.left < -2 || r.right > innerWidth + 2; }).map(el => el.tagName + '.' + el.className);
-  return { scrollWidth: document.documentElement.scrollWidth, overflow: over.slice(0, 6), text: document.body.innerText };
+  return { scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth, innerWidth, overflow: over.slice(0, 6), text: document.body.innerText };
 }"""
 
 # ---------------------------------------------------------------- shared helpers for the checks
@@ -364,7 +364,7 @@ def check(fn): CHECKS.append(fn); return fn
 
 @check
 async def pages(b):
-    """every page at 1440 and 390: 0 console errors, no horizontal overflow, no forbidden strings, the team only on Company"""
+    """every page at 1440 and 390: 0 console errors, no horizontal overflow and no empty gutter, no forbidden strings, the team only on Company"""
     report = {}
     for w, h in ((1440, 1000), (390, 844)):
         ctx = await b.new_context(viewport={"width": w, "height": h})
@@ -392,13 +392,18 @@ async def pages(b):
                 await pg.screenshot(path=str(OUT / f"{fname(name)}-full.png"), full_page=True)
             report[f"{name}@{w}"] = {"scrollWidth": m["scrollWidth"], "overflow": m["overflow"], "forbidden": bad, "errors": errs[:]}
             assert m["scrollWidth"] <= w + 1, (name, w, m["scrollWidth"])
+            # (integrate hc15) and the page fills the window: where no scrollbar takes width (this browser hides them, as
+            # phones and overlay scrollbars do) nothing may reserve an empty gutter (Home's gutter kept for every browser
+            # stood as a 15 px strip of paper beside every band: scrollWidth 1425 at 1440, 375 at 390)
+            if m["clientWidth"] >= m["innerWidth"]:
+                assert m["scrollWidth"] >= m["innerWidth"] - 1, (name, w, "an empty gutter: the layout is narrower than the window", m["scrollWidth"], m["innerWidth"])
             assert not m["overflow"], (name, w, m["overflow"])
             assert not bad, (name, w, bad)
             assert not errs, (name, w, errs)
             errs.clear()
         await ctx.close()
     (OUT / "report.json").write_text(json.dumps(report, indent=1), encoding="utf-8")
-    print("pages: 0 console errors, no horizontal overflow, no forbidden strings at 1440 and 390")
+    print("pages: 0 console errors, no horizontal overflow, no empty gutter, no forbidden strings at 1440 and 390")
 
 
 @check
@@ -1057,9 +1062,17 @@ async def company(b):
     # v2x cut (1 Nov): the chapters name themselves with data-chapter / data-n (the .sec-head rows left the pages; §01
     # Mission left Company). hc14 (company, the director's 4.3): the heading-only §04 "Where the work is" left; its line
     # stands whole in §01 as the chapter's one line, right after the story's heading, so three chapters now and the
-    # page still says where the work goes next
+    # page still says where the work goes next. hc15 (company, the director's 4.3): "How we build" (dark) moved between the
+    # story and the team, so the page alternates dark, paper-2, dark, paper and its close arrives from paper: why, how, who
     ch = await pg.evaluate("[...document.querySelectorAll('main section[data-chapter]')].map(s => s.dataset.n + ' ' + s.dataset.chapter)")
-    assert ch == ["01 The story so far", "02 The team", "03 How we build"], ("company chapters", ch)
+    assert ch == ["01 The story so far", "02 How we build", "03 The team"], ("company chapters", ch)
+    # hc15 (the same item): the grounds alternate, so no two dark bands touch and the close ("Put us to work.") arrives
+    # from paper, as on the other pages (read from the computed grounds, a transparent band showing the body's)
+    tones = await pg.evaluate("""(() => { const lum = (c) => { const m = c.match(/[0-9.]+/g); if (!m || (m.length > 3 && +m[3] === 0)) return null;
+      return (0.2126 * m[0] + 0.7152 * m[1] + 0.0722 * m[2]) / 255; };
+      const body = lum(getComputedStyle(document.body).backgroundColor);
+      return [...document.querySelectorAll('main > section')].map(s => { const l = lum(getComputedStyle(s).backgroundColor); return (l == null ? body : l) < 0.5 ? 'dark' : 'paper'; }); })()""")
+    assert len(tones) == 5 and tones[-1] == "dark" and tones[-2] == "paper" and not any(a == b == "dark" for a, b in zip(tones, tones[1:])), ("company grounds", tones)
     line = await pg.evaluate("(() => { const p = document.querySelector('#story .story-h + p.ch-line'); return p ? p.textContent.replace(/\\s+/g, ' ').trim() : null; })()")
     assert line == "Finance was the proving ground. It will not be the last.", ("company §01: the chapter's line after its heading", line)
     assert await pg.locator(".crew--team > li").count() == 4 and await pg.locator(".crew--advisors > li").count() == 9
@@ -3468,9 +3481,12 @@ async def overture_ctx_lost(b):
 
 
 # ---- the overture comes to rest on one complete headline wherever the reader stops (OV-R2-2)
-TOTAL_U = 4.6  # story.js: four scenes plus the 0.6 exit, spread over the story's scroll run
+# story.js: four scenes plus the pinned exit, spread over the story's scroll run. hc15 (home, the director's 4.1): the exit
+# is 0.9 of a scene from 600 px (the standing chart holds longer: 4.9 scenes, home.css 343svh) and 0.6 under it (4.6:
+# overture.css 322svh, home.css 230svh on portrait phones), so the scene count follows the stage's width
 STORY_Y = """(s) => { const st = document.querySelector('.story'), stage = st.querySelector('.story-stage') || st.firstElementChild;
-  return Math.round(st.getBoundingClientRect().top + scrollY + Math.max(1, st.offsetHeight - (stage ? stage.offsetHeight : innerHeight)) * s / %s); }""" % TOTAL_U
+  const units = (stage ? stage.clientWidth : innerWidth) < 600 ? 4.6 : 4.9;
+  return Math.round(st.getBoundingClientRect().top + scrollY + Math.max(1, st.offsetHeight - (stage ? stage.offsetHeight : innerHeight)) * s / units); }"""
 REST_STATE = "(() => { " + EFF + r""" const st = document.querySelector('.story');
   return [...st.querySelectorAll('.beat')].map((b, i) => { const ws = [...b.querySelectorAll('h1 .wi, h2 .wi')];
     const up = ws.filter(w => { const t = getComputedStyle(w).transform; const ty = !t || t === 'none' ? 0 : new DOMMatrixReadOnly(t).m42; return ty <= 0.06 * (w.offsetHeight || 1); }).length;

@@ -91,7 +91,11 @@
   const ease = (t) => { const s = t * t * (3 - 2 * t), u = s - 1; return 1 + C3 * u * u * u + C1 * u * u; };
   const stag = (m, key) => { const sp = SPREADS[seg] || 0.42; return clamp((m - key * sp) / (1 - sp), 0, 1); };
   // how far apart the structure's parts set off: the globe unwraps band by band (wide)
-  const HOLD = 0.1, SPREADS = [0.6, 0.46, 0.42, 0.5], EXIT_U = 0.6, TOTAL_U = 4 + EXIT_U;
+  const HOLD = 0.1, SPREADS = [0.6, 0.46, 0.42, 0.5];
+  // the pinned exit's length in scenes (hc15, the director): 0.9 where it opens on the standing chart (XHOLD: wide screens
+  // and upright tablets), 0.6 on a portrait phone (no hold). Set with `stacked` (setModes). The story's height follows at
+  // 70vh a scene: overture.css 322vh (4.6), home.css 343vh from 600 px (4.9) and 230vh on portrait phones (4.6 x 50)
+  let EXIT_U = window.innerWidth < 600 ? 0.6 : 0.9, TOTAL_U = 4 + EXIT_U;
 
   // orbits (S0) and lifecycle rings (S1) share their tilt azimuths so each orbit opens into its ring
   const ORBITS = [[1.24, 0.40, 0.35, 0.15], [1.31, -0.30, 1.40, -0.11], [1.38, 0.60, 2.20, 0.09], [1.46, -0.52, 3.05, -0.13], [1.54, 0.24, 4.10, 0.08], [1.62, -0.70, 5.20, -0.07]];
@@ -854,6 +858,7 @@
   // the copy's mode, measured: compact on portrait screens that would leave a scene under 40% of the stage
   function setModes() {
     stacked = stackedMQ.matches; CAM = stacked ? CAM_ST : CAM_W;
+    EXIT_U = stacked && W < 600 ? 0.6 : 0.9; TOTAL_U = 4 + EXIT_U; // (hc15: the portrait phone, as xPostOf, has no hold)
     clearLift(); // (measured at the stage's foot, then lifted again below)
     root.classList.remove('story-compact', 'story-short', 'story-figs-01');
     beats.forEach(b => b.classList.remove('is-tight', 'is-snug'));
@@ -1129,8 +1134,10 @@
   // (hc7, the director: the overture's last frame is its proof) wide: the ten columns hold at full height for the first
   // XHOLD of the pinned exit; xeNow counts only what comes after it (xPost), so every wide window below starts there.
   // Portrait phones keep hc6's way out, no hold (the phone's scene works). (hc8, the director) a portrait screen 600 px wide
-  // or wider (an upright tablet) takes the same hold: its headline settles beside the standing chart, not beside the ruler
-  const XHOLD = 0.4, xPostOf = (x) => stacked && W < 600 ? x : clamp((x - XHOLD) / (1 - XHOLD), 0, 1), xPost = () => xPostOf(xNow);
+  // or wider (an upright tablet) takes the same hold: its headline settles beside the standing chart, not beside the ruler.
+  // (hc15, the director) 0.4 of a 0.6 exit -> 0.6 of 0.9: the standing proof, the lede's hedge and its link to Proof, holds
+  // 0.54 scenes (was 0.24); what comes after it is 0.36 scenes as before, so the hand-off keeps its pace
+  const XHOLD = 0.6, xPostOf = (x) => stacked && W < 600 ? x : clamp((x - XHOLD) / (1 - XHOLD), 0, 1), xPost = () => xPostOf(xNow);
   // (hc7) wide, after the hold: the headline rises with the camera (cam) to stand over the floor line while the columns
   // fold into their records (fold) and the row spreads across the column (spread); the paper comes with them (the fold is
   // its arrival). Before hc7, of the whole exit: cam 0-0.35, fold 0.02-0.22, spread 0.16-0.4, paper 0.4-0.8.
@@ -1924,13 +1931,13 @@
   // a resize or a rotation keeps the reader's scene
   function readingPoint() {
     if (!(lastP >= 0)) return null;
-    if (lastP <= 1) return { p: lastP };
+    if (lastP <= 1) { const u = lastP * TOTAL_U; return { u: Math.min(4, u), x: clamp((u - 4) / EXIT_U, 0, 1) }; } // (hc15) in scenes and the exit's share: a resize across 600 px changes the exit's length
     const ov = (lastP - 1) * run / Math.max(1, stageH); // the stage leaving: how far, in stage heights
     return ov < 1 ? { ov } : null;
   }
   function restore(k) {
     if (!k) return;
-    const y = Math.round(storyTop + (k.p != null ? k.p * run : run + k.ov * stageH));
+    const y = Math.round(storyTop + (k.u != null ? (k.u + k.x * EXIT_U) / TOTAL_U * run : run + k.ov * stageH));
     if (Math.abs(y - window.scrollY) > 1) window.scrollTo({ top: y, behavior: 'instant' });
     scrollY = y;
   }

@@ -19,6 +19,7 @@
   if (!raw.length || !(floor > 0)) return;
 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const trail = document.querySelector('.pf-trail'); // Proof §01 (hc13r, hc15)
   const NUM = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty'.split(' ');
   const words = n => NUM[n] || String(n);
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -157,9 +158,20 @@
        readout (below the entrance) */
     let sel = -1, pre = -1, tab = 0, shown = null, readout = null;
     // hc13r (PROOF-2b): §01's thread is a session's row; the session chosen here is written where the thread ends
-    // (the record's last until one is chosen; it stays when the pointer leaves)
+    // (the record's last until one is chosen; it stays when the pointer leaves). hc15 (HC15 4.2): and the thread moves
+    // to that session's row of the three sheets (row k at 33 + 9k of 126 units: work/proof/hc15/docs15.py), with the
+    // record's green node; proof.css reads --pr for the line, the signal and the card
     const tag = Array.from(document.querySelectorAll('[data-proof-rec] > span'));
-    const write = i => { const x = sessions[i]; if (tag.length === 4 && x) [x.day, x.regime, x.confirmation, x.status].forEach((t, k) => { if (tag[k].textContent !== t) tag[k].textContent = t; }); };
+    const nodes = trail ? Array.from(trail.querySelectorAll('.pf-nd')) : [];
+    const row = i => {
+      if (!nodes[i]) return;
+      const y = 33 + 9 * i;
+      trail.style.setProperty('--pr', String(y / 100));
+      trail.querySelectorAll('.pf-tk').forEach(p => p.setAttribute('d', 'M-20 ' + y + 'H77'));
+      trail.querySelectorAll('.pf-sp').forEach(p => p.setAttribute('d', 'M-20 ' + y + 'V' + (y + 148)));
+      nodes.forEach((n, j) => { n.classList.toggle('hp-rec', j !== i); n.classList.toggle('hp-gf', j === i); n.classList.toggle('pf-mk', j === i); });
+    };
+    const write = i => { const x = sessions[i]; if (tag.length === 4 && x) [x.day, x.regime, x.confirmation, x.status].forEach((t, k) => { if (tag[k].textContent !== t) tag[k].textContent = t; }); row(i); };
     write(N - 1);
     function render() {
       const i = pre >= 0 ? pre : sel;
@@ -269,7 +281,7 @@
 
   /* hc13r (PROOF-2b, SYS-3): Proof §01's thread is whole at rest; when the trail is well in view (OXA.actOnce) one
      signal runs along it, once (proof.css .is-run) */
-  const trail = document.querySelector('.pf-trail'), OXA = window.OXA = window.OXA || {}, run = () => trail.classList.add('is-run');
+  const OXA = window.OXA = window.OXA || {}, run = () => trail.classList.add('is-run');
   if (trail) { if (OXA.actOnce) OXA.actOnce(trail, run); else (OXA.q = OXA.q || []).push([trail, run]); }
 })();
 

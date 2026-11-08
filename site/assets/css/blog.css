@@ -127,14 +127,14 @@
 .series-rail > li:nth-child(2) { --rd: 220ms; }
 .series-rail > li:nth-child(3) { --rd: 440ms; }
 
-/* the collection's fifth post under the rail: its plate in the rail's first column, its title across the other three */
-.blog-page .blog-grid--wide { --rg: clamp(1rem, 2vw, 1.75rem); display: block; margin-top: clamp(2.5rem, 4.4vw, 4rem); padding-top: clamp(1.75rem, 3vw, 2.5rem); border: 0; border-top: var(--hair) solid var(--line-strong); }
-.blog-page .blog-grid--wide .blog-card { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: var(--rg); align-items: end; background: none; border: 0; overflow: visible; } /* hc4: words at the plate's foot, as the markets lead's */
-.blog-page .blog-grid--wide .blog-card::after { content: none; }
-.blog-page .blog-grid--wide .blog-thumb { grid-column: 1; border: 0; } /* no rule under it, as under every plate */
-.blog-page .blog-grid--wide .blog-card-body { grid-column: 2 / -1; padding: 0 0 .125rem; }
+/* the collection's fifth post under the rail (hc15): one hairline row, as a register's: its words and arrow across the
+   rail's first columns, its plate in the last at the rail's plate size; the words at the plate's foot (hc4) */
+.blog-page .blog-grid--wide { --rg: clamp(1rem, 2vw, 1.75rem); display: block; margin-top: clamp(2.5rem, 4.4vw, 4rem); border: 0; border-top: var(--hair) solid var(--line-strong); }
+.blog-page .blog-grid--wide .blog-card { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: var(--rg); align-items: end; padding: 1.5rem 0; background: none; border: 0; border-bottom: var(--hair) solid var(--line); overflow: visible; }
+.blog-page .blog-grid--wide .blog-thumb { grid-area: 1 / -2 / 2 / -1; border: 0; } /* no rule under it, as under every plate */
+.blog-page .blog-grid--wide .blog-card-body { grid-area: 1 / 1 / 2 / -2; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: last baseline; column-gap: var(--rg); padding: 0 0 .125rem; }
 .blog-page .blog-grid--wide h3 { margin: 0; max-width: 30ch; }
-.blog-page .blog-grid--wide .k { display: block; margin-bottom: .25rem; }
+.blog-page .blog-grid--wide .k { grid-column: 1 / -1; display: block; margin-bottom: .25rem; }
 
 /* ---------- the cards (the fifth AI post, the markets lead) ---------- */
 .blog-page .blog-card-body { padding: clamp(1.125rem, 1.9vw, 1.625rem) clamp(1.25rem, 2.2vw, 1.875rem) clamp(1.5rem, 2.6vw, 2.25rem); }
@@ -149,19 +149,19 @@
 .blog-register > li.br-g { border-top: var(--hair) solid var(--line-strong); margin-top: calc(-1 * var(--hair)); }
 .blog-page .blog-row { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) auto; column-gap: clamp(1rem, 2vw, 1.75rem); align-items: baseline; padding: 1.5rem 0 1.625rem; background: none; border: 0; overflow: visible; }
 /* the register's mark hangs in the margin: nothing indents */
-.blog-page .blog-row::after { left: -1.125rem; right: auto; top: 0; bottom: calc(-1 * var(--hair)); width: calc(2 * var(--hair)); height: auto; transform: scaleY(0); transform-origin: top; }
+.blog-page .blog-row::after, .blog-page .blog-grid--wide .blog-card::after { left: -1.125rem; right: auto; top: 0; bottom: calc(-1 * var(--hair)); width: calc(2 * var(--hair)); height: auto; transform: scaleY(0); transform-origin: top; }
 .br-date { font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .blog-page .blog-row h3 { margin-top: 0; max-width: 28ch; }
 .br-min { display: inline-flex; align-items: center; color: var(--fg-3); }
 .br-min .arr { width: 1rem; height: 1rem; transition: transform var(--dur-move) var(--ease), color var(--dur-feedback) var(--ease-out); }
-.blog-register > li > .blog-row:focus-visible { background-color: transparent; outline-offset: .25rem; } /* a row, not a link in running text: the ring and the rule, no highlighter */
-.blog-row:focus-visible::after, .blog-register > li.is-current > .blog-row::after { transform: scaleY(1); }
-.blog-row:focus-visible .br-min { color: var(--accent); }
+.blog-register > li > .blog-row:focus-visible, .blog-grid--wide .blog-card:focus-visible { background-color: transparent; outline-offset: .25rem; } /* a row, not a link in running text: the ring and the rule, no highlighter */
+.blog-row:focus-visible::after, .blog-grid--wide .blog-card:focus-visible::after, .blog-register > li.is-current > .blog-row::after { transform: scaleY(1); }
+:is(.blog-row, .blog-grid--wide .blog-card):focus-visible .br-min { color: var(--accent); }
 @media (hover: hover) {
   .blog-page .blog-row:hover { background: none; }
-  .blog-row:hover::after { transform: scaleY(1); }
-  .blog-row:hover .br-min { color: var(--accent); }
-  .blog-row:hover .br-min .arr { transform: translateX(.3125rem); }
+  .blog-row:hover::after, .blog-grid--wide .blog-card:hover::after { transform: scaleY(1); }
+  :is(.blog-row, .blog-grid--wide .blog-card):hover .br-min { color: var(--accent); }
+  :is(.blog-row, .blog-grid--wide .blog-card):hover .br-min .arr { transform: translateX(.3125rem); }
 }
 /* the plate beside a register: the third paper, as every card's plate (a3, 4K inspector: the inner hairline frame made a
    double frame; registration marks are the hero plates' alone, AWARD_BAR L7) */
@@ -215,14 +215,13 @@
   .blog-page .series-rail > li:nth-child(2n)::before { width: 0; }
   .series-rail > li:nth-child(3) { --rd: 0ms; }
   .series-rail > li:nth-child(4) { --rd: 220ms; }
-  .blog-page .blog-grid--wide .blog-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .blog-page .blog-grid--wide .blog-card-body { grid-column: 2; }
+  .blog-page .blog-grid--wide .blog-card { grid-template-columns: repeat(2, minmax(0, 1fr)); } /* the rail's two columns: words, plate */
 }
 @media (max-width: 960px) { /* tablets: the register beside its plate as on a desk; a row's year sits over its title */
   .blog-page .blog-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: .25rem; padding: 1.125rem 0 1.25rem; }
   .blog-page .blog-row .br-date { grid-column: 1 / -1; }
   .br-date:empty { display: none; } /* a row under its year's head */
-  .blog-page .blog-row::after { left: -.75rem; }
+  .blog-page .blog-row::after, .blog-page .blog-grid--wide .blog-card::after { left: -.75rem; }
   .blog-panel, .blog-econ-plate { top: calc(var(--nav-h) + 2rem); }
 }
 
@@ -257,12 +256,13 @@
   .blog-page .series-card .blog-thumb { display: none; }
   .blog-page .series-card h3 { margin-top: 0; }
   .blog-page .blog-grid--wide { margin-top: .5rem; padding-top: .375rem; }
-  .blog-page .blog-grid--wide .blog-card { display: block; }
-  .blog-page .blog-grid--wide .blog-card-body { padding: .875rem 0 0; }
+  .blog-page .blog-grid--wide .blog-card { display: block; padding: 0; border-bottom: 0; } /* the label and the title, as before hc15 */
+  .blog-page .blog-grid--wide .blog-card-body { display: block; padding: .875rem 0 0; }
+  .blog-page .blog-grid--wide .br-min { display: none; }
   /* the register on a phone: year over title; the plate heads it as elsewhere */
   .blog-econ-plate { order: -1; align-self: auto; width: 100%; margin: -.5rem 0 1.25rem; }
   .blog-page .blog-row { padding: 1rem 0 1.125rem; }
-  .blog-page .blog-row::after { left: -.625rem; }
+  .blog-page .blog-row::after, .blog-page .blog-grid--wide .blog-card::after { left: -.625rem; }
 }
 /* phones held sideways (r1-mobile 8): the title beside the figure */
 @media (min-width: 540px) and (max-width: 960px) and (max-height: 520px) and (orientation: landscape) { /* not at 400% zoom (320x256): one column there, as in v2 (r2-a11y) */

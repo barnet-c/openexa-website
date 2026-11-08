@@ -92,9 +92,9 @@ async def main():
         assert (await pg.locator("[data-plate-label]").inner_text()).startswith("Decide above"), await pg.locator("[data-plate-label]").inner_text()
         await pg.screenshot(path=shot(f"company-act.png"))
         # (hc14) the walk visits every chapter the page lists, whatever their number (§04 #lifecycles left with its heading;
-        # its line is §01's): the three chapters, in order
+        # its line is §01's): the three chapters, in order. (hc15) "How we build" comes before the team (why, how, who)
         cids = await pg.evaluate("[...document.querySelectorAll('main section[data-chapter]')].map(s => s.id)")
-        assert cids == ["story", "team", "constants"], ("company chapters", cids)
+        assert cids == ["story", "constants", "team"], ("company chapters", cids)
         for name in cids:
             await pg.evaluate(f"document.getElementById('{name}').scrollIntoView()"); await pg.wait_for_timeout(1800)
             await pg.screenshot(path=shot(f"company-{name}.png"))

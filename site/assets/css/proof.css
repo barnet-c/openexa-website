@@ -90,14 +90,15 @@
 .pf-legend { display: flex; gap: .625rem; align-items: baseline; max-width: 64ch; margin: .75rem 0 0; font: .82rem/1.5 var(--sans); color: var(--fg-3); }
 .pf-legend b { flex: none; font: 400 1.5rem/.6 var(--serif); color: var(--fg-2); transform: translateY(.3em); }
 
-/* §01 the paper trail (a1; hc6, HC6 item 7: stacks of hairline sheets, work/proof/hc6/docs.py; hc7, HC7 item 3: the
-   phone's composition; hc12: a row from 961 px, below). Under 961 px the three documents stand one under another, each
-   beside its name; the green thread, the drawing's one colour, runs down their left edge (the spine, 20 units left of the sheets) and into each
-   sheet along the session's row, the same row on each (C-028), ending on the record's node. The drawing is 100 x 126
-   units (the pages stand upright), the row at 80; the thread is drawn in each sheet's SVG (.pf-th: the tick on its row,
-   the spine down to the next sheet's row, 126 + 22 units lower), so it lies on the row at any fractional top: the
-   spine's gap (.2) and the row gap (.22) are fractions of the sheet's width --sw. One pass when each sheet arrives
-   (150-850 ms), then still; no JS, reduced motion and print show it whole (the hidden state is screen and motion only) */
+/* §01 the paper trail (a1; hc6, HC6 item 7: stacks of hairline sheets; hc7, HC7 item 3: the phone's composition; hc12:
+   a row from 961 px, below; hc15, HC15 4.2: ten rows a sheet, one per session, work/proof/hc15/docs15.py). Under 961 px
+   the three documents stand one under another, each beside its name; the green thread, the drawing's one colour, runs
+   down their left edge (the spine, 20 units left of the sheets) and into each sheet along the session's row, the same
+   row on each (C-028), ending on the record's node. The drawing is 100 x 126 units, row k at 33 + 9k; --pr is the
+   session's row / 100 (Day 10's, 1.14, until proof.js writes the one chosen on the hero's chart). The thread is drawn in
+   each sheet's SVG (.pf-th: the tick on its row, the spine down to the next sheet's row, 126 + 22 units lower), so it
+   lies on the row at any fractional top: the spine's gap (.2) and the row gap (.22) are fractions of the sheet's width
+   --sw */
 [data-page="proof"] .pf-ver { row-gap: 0; }
 [data-page="proof"] .pf-ver > * { grid-column: 1 / -1; min-width: 0; }
 [data-page="proof"] .pf-trail { --sw: 5rem; --lx: 1.125rem; display: grid; grid-template-columns: minmax(0, 1fr); row-gap: calc(var(--sw) * .22); }
@@ -108,8 +109,8 @@
 [data-page="proof"] .pf-th { fill: none; stroke: var(--accent); stroke-width: var(--stroke-2); transform-box: fill-box; transform-origin: 0 50%; }
 /* hc13r (PROOF-2b, SYS-3): the thread is whole at rest. Well in view (proof.js, OXA.actOnce: .is-run), one signal
    runs it, 600 ms ease-out from 150 ms (hc13 4.4); the node answers. From 961 px along the line; narrower, down the
-   spine, the first sheet's row (.8 x --sw) to the third's (2 x (1.26 + .22) + .8) */
-[data-page="proof"] .pf-trail { --x0: 0px; --x1: 0px; --y0: calc(var(--sw) * .8); --y1: calc(var(--sw) * 3.76); position: relative; }
+   spine, the first sheet's row (--pr x --sw) to the third's (2 x (1.26 + .22) + --pr) */
+[data-page="proof"] .pf-trail { --pr: 1.14; --x0: 0px; --x1: 0px; --y0: calc(var(--sw) * var(--pr)); --y1: calc(var(--sw) * (2.96 + var(--pr))); position: relative; }
 [data-page="proof"] .pf-trail::after { content: ""; position: absolute; z-index: 2; left: var(--x0); top: var(--y0); width: .4375rem; height: .4375rem; margin: -.21875rem 0 0 -.21875rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 .25rem rgba(30, 122, 90, .2); opacity: 0; pointer-events: none; }
 [data-page="proof"] .pf-mk { transform-box: fill-box; transform-origin: 50% 50%; }
 [data-page="proof"] .pf-trail .pf-doc:nth-child(3) { --tm: 560ms; }
@@ -136,7 +137,7 @@
 }
 /* hc12 (HC12 item 1): from 961 px the trail is one row under the head, the three documents on the grid's thirds, each
    sheet over its name and the name's rule (Platform's deployment cells). The thread is one line through the session's
-   row of all three (80 of the sheet's 126 units, 0.8 x --sw down), from the first sheet's left edge to the last one's
+   row of all three (--pr x --sw down), from the first sheet's left edge to the last one's
    right (88 units), drawn by the trail (::before, over the sheets); the spine and ticks go. Whole at rest; the signal
    runs along it (hc13r, above) */
 @media (min-width: 961px) {
@@ -145,7 +146,7 @@
   [data-page="proof"] .pf-trail .pf-doc { grid-template-columns: minmax(0, 1fr); padding: 0; }
   [data-page="proof"] .pf-trail .pf-doc h3 { margin: clamp(1.5rem, 2.2vw, 2.25rem) 0 0; }
   [data-page="proof"] .pf-th { display: none; }
-  [data-page="proof"] .pf-trail::before { content: ""; position: absolute; z-index: 1; left: 0; top: calc(var(--sw) * .8 - var(--stroke-2) * .5px); width: var(--x1); height: calc(var(--stroke-2) * 1px); background: var(--accent); pointer-events: none; forced-color-adjust: none; }
+  [data-page="proof"] .pf-trail::before { content: ""; position: absolute; z-index: 1; left: 0; top: calc(var(--y0) - var(--stroke-2) * .5px); width: var(--x1); height: calc(var(--stroke-2) * 1px); background: var(--accent); pointer-events: none; forced-color-adjust: none; }
   [data-page="proof"] .pf-trail { --x1: calc((200% + 2 * var(--cg)) / 3 + var(--sw) * .88); --y1: var(--y0); }
 }
 /* hc13r (PROOF-2b): the thread's session, where it ends (proof.js: the hero chart's choice, else the record's last).
@@ -164,7 +165,7 @@
   [data-page="proof"] .pf-trail .pf-doc:last-child .pf-rec { position: absolute; left: 0; top: 100%; margin-top: 1.25rem; }
 }
 @media (min-width: 1200px) {
-  [data-page="proof"] .pf-trail .pf-doc:last-child .pf-rec { position: absolute; left: calc(var(--sw) + clamp(1rem, 1.6vw, 1.75rem)); top: calc(var(--sw) * .8); transform: translateY(-50%); }
+  [data-page="proof"] .pf-trail .pf-doc:last-child .pf-rec { position: absolute; left: calc(var(--sw) + clamp(1rem, 1.6vw, 1.75rem)); top: var(--y0); transform: translateY(-50%); }
   [data-page="proof"] .pf-rec::before { content: none; }
   [data-page="proof"] .pf-rec > span { display: block; }
   [data-page="proof"] .pf-rec > span:not(:last-child)::after { content: none; }

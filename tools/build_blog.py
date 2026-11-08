@@ -573,15 +573,18 @@ def iso(p): return p["dt"].strftime("%Y-%m-%d")
 # its date and read time; the excerpt stays the post's meta description and feed summary). A collection says its
 # author and years once, in its head
 day = lambda d: d.strftime("%b %-d") if os.name != "nt" else d.strftime("%b %#d")
-def card(p, lead=False, kicker=""):
+def card(p, lead=False, kicker="", row=False):
     """lead (award a1, art director + a1-ux 16): a collection's newest post leads its grid, two columns by two rows, its
     plate drawn larger; the rest stay compact. Same plate, same title: no new words. kicker: a line over the title (the
-    fifth AI post's "Also in AI & agents"); a post with a short name (SHORT_TITLE) shows it, as the rail's parts do"""
+    fifth AI post's "Also in AI & agents"); a post with a short name (SHORT_TITLE) shows it, as the rail's parts do.
+    row (hill climb hc15, the director's 4.6): the card is set as a register's row, so it ends on the registers' arrow"""
     ext = ' target="_blank" rel="noopener"' if p["stub"] else ""
     k = f'<span class="k">{esc(kicker)}</span>' if kicker else ""
     t = esc(SHORT_TITLE[p["slug"]]) if p["slug"] in SHORT_TITLE else post_title(p["title"])
+    arr = f'<span class="br-min">{OUTB if p["stub"] else ARROW}</span>' if row else ""
+    out = " " + OUTB if p["stub"] and not row else ""
     return f'''          <a class="blog-card{' blog-card--lead' if lead else ''}" href="{esc(href(p))}"{ext}>
-            {plate(p)}<div class="blog-card-body">{k}<h3>{t}{(" " + OUTB) if p["stub"] else ""}</h3></div>
+            {plate(p)}<div class="blog-card-body">{k}<h3>{t}{out}</h3>{arr}</div>
           </a>'''
 # award a1 (art director, a1-ux 21): the AI collection's fifth post sat under the series rail with no word saying what it
 # was. It is marked as S-42 signed it off ("Also in AI & agents"), and the index names it by the question its own title
@@ -675,9 +678,12 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
         </div>
 '''
     elif k == "ai":
+        # hill climb hc15 (director 4.6: a lone plate and title left three quarters of the row empty): above phones the
+        # fifth post is one hairline row, as a register's: its words and arrow across the rail's first columns, its plate
+        # in the last, at the rail's plate size (blog.css)
         rest = [p for p in by_col[k] if p["slug"] not in in_series]
         body = SERIES_BLOCK + f'''        <div class="blog-grid blog-grid--wide" data-reveal>
-{chr(10).join(card(p, kicker=ALSO_AI) for p in rest)}
+{chr(10).join(card(p, kicker=ALSO_AI, row=True) for p in rest)}
         </div>
 '''
     else:

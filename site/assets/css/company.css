@@ -54,7 +54,7 @@
   [data-page="company"] .company-hero .hero-cta { margin-top: 1.75rem; }
 }
 
-/* ---------------------------------------------------------------- Company §02: the chapter head (hc5) */
+/* ---------------------------------------------------------------- Company §03: the team's chapter head (hc5) */
 /* site.css's .ch-head: the heading, its line under it; from 1100 px the three figures are the spread's key, in the third
    column on the heading's last baseline (row 1; the line is row 2), each label on one line in the column (1100 px: 337) */
 @media (min-width: 1100px) {
@@ -96,7 +96,7 @@
 @media (max-width: 860px) { [data-page="company"] .timeline .step { padding-left: 0; } }
 @media (max-width: 600px) { [data-page="company"] .timeline { grid-template-columns: 1fr; row-gap: 1.625rem; } [data-page="company"] .timeline .step { padding-top: 1.25rem; } [data-page="company"] .timeline .k { margin-bottom: .5rem; } [data-page="company"] .timeline h3 { max-width: none; } }
 
-/* ---------------------------------------------------------------- Company §02: the register */
+/* ---------------------------------------------------------------- Company §03: the register */
 /* one entry per person: portrait, name and kicker, the line, the bio behind "Bio" (opens in place); advisors the same,
    smaller, without the line; from 1200 px both lists are two ruled columns (hc4, below); one portrait treatment
    (build_team.py), the green ring on hover and focus */
@@ -193,7 +193,9 @@
 }
 @media (prefers-reduced-motion: reduce) { [data-page="company"] .crew .ph, [data-page="company"] .crew .links .arr, [data-page="company"] .crew-more-l { transition: none; } }
 
-/* ---------------------------------------------------------------- Company §03: the constants plate */
+/* ---------------------------------------------------------------- Company §02: the constants plate */
+/* hc15 (director 4.3): "How we build" sits between the story and the team (dark, paper-2, dark, paper, the dark close),
+   so the team (paper) meets the close as every page's last chapter does; hc14's hairline between two dark bands went */
 /* one loop of gates that changes with each lifecycle, and the four constants that do not. Inline SVG: complete
    without JS, still under reduced motion; company.js walks a proposal through it and lights the constant being read. */
 #constants { overflow: clip; --kh: 2.75rem; }
@@ -295,11 +297,6 @@
   [data-page="company"] .constants > div:nth-child(n):last-child { border-bottom: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .kplate :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate .k-loop, .kplate .k-council > circle, [data-page="company"] .constants > div { transition: none; } }
-
-/* ---------------------------------------------------------------- Company: the close */
-/* hc14 (director 4.3): §04 left; "How we build" meets the dark close, so the two dark bands take the hairline every
-   two same-tone neighbours take (.section + .section) */
-[data-page="company"] #constants + .cta-band { border-top: var(--hair) solid var(--line); }
 
 /* ---------------------------------------------------------------- Company: print */
 @media print {

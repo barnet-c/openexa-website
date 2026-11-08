@@ -31,6 +31,10 @@
     d.className = 'footer-legal'; s.textContent = 'Legal & disclosures';
     disc.before(d); d.append(s, disc);
   }
+  // (hc15) the loader's lock (site.css body.is-loading: overflow hidden) takes a classic scrollbar away and gives it back
+  // as it lifts: where a scrollbar takes width, its gutter is kept from the first paint (home.css html.sb-keep), so the
+  // page never moves sideways. (integrate hc15) only there: overlay and hidden scrollbars take none and keep none
+  if (window.innerWidth > root.clientWidth) root.classList.add('sb-keep');
   // an engine whose instrument the page does not draw is not fetched (a safety net: Home's list dropped ledger.js and
   // lane.js on 1 Nov, when its lane and running log left the page; hc5-hc10: §02 drew Platform's plate still; hc11: that chapter left Home, the explorer is Platform's)
   const draws = { 'ledger.js': '[data-ledger]', 'lane.js': '[data-lane]', 'arch.js': '[data-arch]' };
