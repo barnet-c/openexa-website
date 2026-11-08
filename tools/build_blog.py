@@ -10,7 +10,7 @@ import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
 from meta import HOME, ORG, FEED_LINKS, ROBOTS, ld, crumbs, atom
-from blog_plates import PLATES, plate_svg, collection_svg, library_svg, rings_tall, phone_fit, stamp, ILLUSTRATIVE
+from blog_plates import PLATES, plate_svg, collection_svg, library_svg, rings_tall, phone_fit, stamp, ILLUSTRATIVE, genai_figure
 import html as H, io, json, os, re, shutil
 from datetime import datetime
 from pathlib import Path
@@ -147,6 +147,9 @@ def clean_body(p):
         name = src.rsplit("/", 1)[-1]
         alt = smart(alt or ALT.get(name, ""))   # award a3: the alt text's apostrophes and quotes as the page sets them
         shutil.copyfile(OLD / "img" / name, IMG / name) if (OLD / "img" / name).exists() else None
+        if duo(name):  # hc22: the picture in the palette (duo_file), under a new name; the old file stays beside it
+            stem = name.rsplit(".", 1)[0]
+            return f'<img class="duo" src="../assets/img/blog/{stem}{DUO}.webp"{body_srcset(name, DUO)} alt="{esc(alt)}"{size(name)}{body_cap(name)} loading="lazy" decoding="async">'
         return f'<img src="../assets/img/blog/{name}"{body_srcset(name)} alt="{esc(alt)}"{size(name)}{body_cap(name)} loading="lazy" decoding="async">'
     b = re.sub(r'<img[^>]*src="(/graphics/[^"]+)"[^>]*>', img, b)
     b = re.sub(r"<figure>\s*(<img[^>]+>)\s*</figure>", r"<figure>\1</figure>", b)
@@ -183,12 +186,14 @@ BODY_W = 800
 # the 1,800 px file instead of stretching the 800 px copy 1.5 times
 BODY_SIZES = "(min-width: 1921px) 31.4vw, (max-width: 660px) calc(100vw - 64px), (max-width: 960px) 552px, 603px"
 BODY_COPIES = set()
-def body_srcset(name):
+def body_srcset(name, sfx=""):
+    """sfx: hc22, the recoloured copy's suffix (DUO): its own 800 px copy and full file"""
     d = dims(name)
     if not d or d[0] <= BODY_W * 1.1: return ""
     BODY_COPIES.add(name)
     stem = name.rsplit(".", 1)[0]; src = "../assets/img/blog/"
-    return f' srcset="{src}{stem}-{BODY_W}w.webp {BODY_W}w, {src}{name} {d[0]}w" sizes="{BODY_SIZES}"'
+    full = f"{stem}{sfx}.webp" if sfx else name
+    return f' srcset="{src}{stem}{sfx}-{BODY_W}w.webp {BODY_W}w, {src}{full} {d[0]}w" sizes="{BODY_SIZES}"'
 def fig_cap(name):
     """the cap of body_cap() on its figure, for the caption (award a3)"""
     m = re.search(r"max-width:(\d+px)", body_cap(name) if name else "")
@@ -225,6 +230,55 @@ def thumb(name, sizes):
     if not ws: return f'<img src="{src}{name}" alt=""{size(name)} loading="lazy" decoding="async">'
     srcset = ", ".join([f"{src}{stem}-{t}w.webp {t}w" for t in ws] + [f"{src}{name} {d[0]}w"])
     return f'<img src="{src}{stem}-{ws[-1]}w.webp" srcset="{srcset}" sizes="{sizes}" alt=""{size(name)} loading="lazy" decoding="async">'
+# Hill climb hc22 (design director, item 4.3, colour; the owner's 8 Nov "full freedom", point 2): the pictures in the post
+# bodies were the site's last pixels outside its palette (purple-to-cyan diagrams, navy dashboards, matplotlib blue).
+# - The Gen-AI introduction's four figures are drawn in the site's chart grammar instead (DRAWN; blog_plates.genai_figure).
+# - Every other body picture is shown as a duotone in the palette (duo_file): its luminance from ink #0E1512 through
+#   build_team's portrait mid-tone to paper #F5F2EC, the page's own background mapped to an end (a dark dashboard's panel
+#   to ink, a light chart's page to paper; a mid-tone graphic keeps its whole range so dark words stay on it), set on the
+#   paper-2 mat as a print (blog.css: no multiply). Where a chart tells two series apart by hue alone, the hue goes to the
+#   palette first (DUO_HUES): the tearsheet's strategy (cyan) to the green, the heatmap's best month to green and worst to
+#   ink, so its legend still reads true.
+# - KEEP_COLOUR: two charts whose authors' captions name their colours ("SPY in green ... GLD in blue", "shaded in
+#   blue"): recoloured, the post's own words would describe what the picture no longer shows. They stay as published.
+# New names (<stem>-duo.webp and its 800 px copy); the old files stay in assets/img/blog beside them, so the owner can
+# have any picture back by taking its name out of duo() (or a figure out of DRAWN).
+DUO = "-duo"
+DRAWN = {"blog-095", "blog-096", "blog-097", "blog-098"}   # blog_plates.genai_figure draws them
+KEEP_COLOUR = {"blog-071", "blog-072"}
+DUO_INK, DUO_MID, DUO_PAPER = (14, 21, 18), (112, 112, 104), (245, 242, 236)   # build_team's portraits: ink, mid-tone, paper
+SIGNAL, SIGNAL_BRIGHT = (0x1E, 0x7A, 0x5A), (0x4F, 0xCB, 0x93)                 # site.css --signal, --signal-bright
+DUO_HUES = {k: ((170, 215, SIGNAL_BRIGHT),) for k in ("blog-080", "blog-081", "blog-083", "blog-084", "blog-087")}
+DUO_HUES["blog-086"] = ((60, 160, SIGNAL), (340, 15, DUO_INK))
+DUO_FILES = set()
+def duo(name):
+    """a body picture shown recoloured (everything but the drawn four and KEEP_COLOUR); records it for duo_file"""
+    if name[:8] in DRAWN or name[:8] in KEEP_COLOUR or name in PLACEHOLDER: return False
+    DUO_FILES.add(name); return True
+def duo_file(im, hues=()):
+    """the duotone (see above). Deterministic: the same pixels in, the same pixels out"""
+    import numpy as np
+    from PIL import Image
+    im = im.convert("RGBA"); im = Image.alpha_composite(Image.new("RGBA", im.size, (255, 255, 255, 255)), im).convert("RGB")
+    a = np.asarray(im).astype(np.float64) / 255
+    lum = a @ np.array([0.2126, 0.7152, 0.0722])
+    k = max(2, round(min(lum.shape) * .02))
+    edge = np.median(np.concatenate([lum[:k].ravel(), lum[-k:].ravel(), lum[:, :k].ravel(), lum[:, -k:].ravel()]))
+    if edge < .3: lo, hi, g = np.percentile(lum, 30), np.percentile(lum, 99.8), 1.0      # a dashboard: its panel is ink
+    elif edge > .7: lo, hi, g = np.percentile(lum, .3), np.percentile(lum, 60), 1.15     # a chart on a page: the page is paper
+    else: lo, hi, g = np.percentile(lum, .3), np.percentile(lum, 99.8), 1.25            # a mid-tone graphic: all of it
+    t = np.clip((lum - lo) / max(hi - lo, .05), 0, 1) ** g
+    ink, mid, paper = (np.array(c, np.float64) for c in (DUO_INK, DUO_MID, DUO_PAPER))
+    lowr = t[..., None] < .5
+    out = np.where(lowr, ink + (mid - ink) * (t[..., None] * 2), mid + (paper - mid) * (t[..., None] * 2 - 1))
+    if hues:
+        mx, mn = a.max(-1), a.min(-1); c = mx - mn; r, gr, b = a[..., 0], a[..., 1], a[..., 2]; dv = np.where(c == 0, 1, c)
+        h = np.where(mx == r, ((gr - b) / dv) % 6, np.where(mx == gr, (b - r) / dv + 2, (r - gr) / dv + 4)) * 60
+        for h0, h1, tgt in hues:
+            band = ((h >= h0) & (h <= h1)) if h0 <= h1 else ((h >= h0) | (h <= h1))
+            w = (np.clip((c - .12) / .18, 0, 1) * band)[..., None]
+            out = out * (1 - w) + np.array(tgt, np.float64) * w
+    return Image.fromarray(np.clip(out + .5, 0, 255).astype(np.uint8))
 # The plates (v2x, 30 Oct 2026; tools/blog_plates.py draws them). Every card and every post hero carries its post's own
 # engraved plate instead of a stock photo, the CMS's 3D art or a WebGL formation borrowed from Research (EVOLVE, Blog):
 # the plate draws what the post says in its own words, schematically. Market structure & economics keeps v2's mark
@@ -826,6 +880,14 @@ def margin_plate(p):
     cap = f'<p class="pp-h">{st}</p>' if st else ""
     return f'''
           <div class="post-mp" aria-hidden="true"><div class="post-mp-in"><div class="post-mp-art">{plate_svg(p["slug"], p["col"], turn(p))}</div>{cap}</div></div>'''
+DRAWN_FIG = re.compile(r'<figure(?: style="[^"]*")?><img src="\.\./assets/img/blog/(blog-09[5-8])[^"]*"[^>]*?\balt="([^"]*)"[^>]*>(<figcaption>.*?</figcaption>)?</figure>', re.S)
+def drawn(article):
+    """hc22: the Gen-AI introduction's four figures, drawn (blog_plates.genai_figure) in place of their pictures; each
+    keeps the post's own caption. data-draw: the figure's one green element draws as it arrives (site.js, site.css .dm)"""
+    def one(m):
+        inner = genai_figure(m.group(1), m.group(2))
+        return f'<figure class="bp-fig"{" data-draw" if " dm" in inner else ""}>{inner}{m.group(3) or ""}</figure>'
+    return DRAWN_FIG.sub(one, article)
 for p in order:
     if p["stub"]: continue
     if p["col"] != "economics":
@@ -843,8 +905,11 @@ for p in order:
     # cut (1 Nov): the side column went (its links repeated the crumb, the pager and the article end: "N posts in this
     # collection", "All 29 posts", "The original on <host>", "The papers on Google Scholar", and the series list, which
     # the crumb and the pager now carry)
-    hero_img = (f'<figure class="blog-hero-img"{fig_cap(p["hero_file"])}><img src="{PFX}assets/img/blog/{p["hero_file"]}"{body_srcset(p["hero_file"])} alt=""{size(p["hero_file"])}{body_cap(p["hero_file"])} decoding="async"></figure>\n            '
-                if p.get("hero_file") and p["slug"] in KEEP_HERO else "")
+    hero_img = ""
+    if p.get("hero_file") and p["slug"] in KEEP_HERO:  # hc22: in the palette, as the body's pictures are (duo)
+        hf = p["hero_file"]; hd = duo(hf)
+        hsrc, hcls = (hf.rsplit(".", 1)[0] + DUO + ".webp", ' class="duo"') if hd else (hf, "")
+        hero_img = (f'<figure class="blog-hero-img"{fig_cap(hf)}><img{hcls} src="{PFX}assets/img/blog/{hsrc}"{body_srcset(hf, DUO if hd else "")} alt=""{size(hf)}{body_cap(hf)} decoding="async"></figure>\n            ')
     # the pager: where it goes and the title (cut: the dates under the titles, and the end cards' second lines)
     pcard = lambda cls, url, k, h: f"<a class='pager-card {cls}' href='{url}'><span class='k'>{k}</span><h3>{h}</h3></a>"
     pager = "".join([
@@ -894,7 +959,7 @@ for p in order:
         j = SERIES_POS[p["slug"]]
         if j: rel_links += f'  <link rel="prev" href="{BASE}{SERIES[j - 1][0]}.html">\n'
         if j + 1 < len(SERIES): rel_links += f'  <link rel="next" href="{BASE}{SERIES[j + 1][0]}.html">\n'
-    article = standfirst(hero_img + lead(hang(quoted(marks_in_em(bare_marks(link_spaces(smart_html(p["body"]))))))))
+    article = drawn(standfirst(hero_img + lead(hang(quoted(marks_in_em(bare_marks(link_spaces(smart_html(p["body"])))))))))
     # award a4 (a4-ux medium, a4-design polish): a long read with figures loads blog.js for one thing, the margin
     # plate's rest while a figure is on screen (blog.js; the other posts load no script of their own)
     post_js = ("site.js",) + (("blog.js",) if long_read(p) and "<figure" in article else ())
@@ -1055,6 +1120,21 @@ for name in sorted(BODY_COPIES):  # the in-body figures' 800 px copies (body_src
     im = im.convert("RGBA" if "A" in im.mode or "transparency" in im.info else "RGB")
     im.resize((BODY_W, round(h * BODY_W / w)), Image.LANCZOS).save(out, "WEBP", quality=82, method=6)
     assert out.stat().st_size < (IMG / name).stat().st_size, (name, "the 800 px copy is not smaller")
+for name in sorted(DUO_FILES):  # hc22: the pictures in the palette (duo_file), at full size and as their 800 px copies
+    stem = name.rsplit(".", 1)[0]; full = IMG / f"{stem}{DUO}.webp"
+    im = duo_file(Image.open(IMG / name), DUO_HUES.get(name[:8], ()))
+    im.save(full, "WEBP", quality=84, method=6)
+    if name in BODY_COPIES:
+        w, h = im.size; out = IMG / f"{stem}{DUO}-{BODY_W}w.webp"
+        im.resize((BODY_W, round(h * BODY_W / w)), Image.LANCZOS).save(out, "WEBP", quality=82, method=6)
+        assert out.stat().st_size < full.stat().st_size, (name, "the recoloured 800 px copy is not smaller")
+assert len(DUO_FILES) == 25, (len(DUO_FILES), "recoloured: the 31 pictures in the posts (2 of them heroes), less the drawn 4 and KEEP_COLOUR's 2")
+for f in OUT.glob("*.html"):  # every picture a post shows exists; none of the drawn four is shown as a picture
+    t = read(f)
+    for ref in re.findall(r'(?:src="|srcset="|, )\.\./assets/img/blog/([^" ]+)', t):
+        assert (IMG / ref).exists(), (f.name, ref)
+    assert not re.search(r"img/blog/blog-09[5-8]", t), (f.name, "a drawn figure is shown as a picture")
+assert read(OUT / "in-search-gen-ai-business-model.html").count('<figure class="bp-fig"') == 4, "the introduction draws its four figures"
 
 # ---------------- report ----------------
 imgs = list(IMG.iterdir())

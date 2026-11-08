@@ -874,7 +874,7 @@
     stacked = stackedMQ.matches; CAM = stacked ? CAM_ST : CAM_W;
     EXIT_U = stacked && W < 600 ? 0.6 : 0.9; TOTAL_U = 4 + EXIT_U; // (hc15: the portrait phone, as xPostOf, has no hold)
     clearLift(); // (measured at the stage's foot, then lifted again below)
-    root.classList.remove('story-compact', 'story-short', 'story-figs-01');
+    root.classList.remove('story-compact', 'story-short');
     beats.forEach(b => b.classList.remove('is-tight', 'is-snug'));
     compact = stacked && (H < 780 || W < 600); short = !stacked && H < 600; // (a portrait phone is compact in CSS from the first paint)
     if (stacked && !compact) {
@@ -884,9 +884,8 @@
     }
     root.classList.toggle('story-compact', compact); root.classList.toggle('story-short', short);
     measureLayout();
-    // (award a4) a portrait tablet keeps v2's four figures under the buttons (owner, 2 Nov); where they would leave the globe
-    // under 36% of the stage, the row falls back to the phone's 01 line, never to nothing
-    if (compact && W >= 600 && beatRects[0] && beatRects[0].t - 14 - (navH + barH + capH[0] + 8) < 0.36 * H) { root.classList.add('story-figs-01'); measureLayout(); }
+    // (hc22) a portrait tablet always keeps the four figures in their row: in the stat grammar it is no taller than the
+    // phone's two tiers, so the 01-line fallback (award a4's .story-figs-01) has gone
     const lim = navH + (stacked ? barH : 0) + 6;
     let tight = false;
     // a short screen: the hero's definition gives way first, so the CEO's sub-line keeps its place where it can
@@ -2016,7 +2015,7 @@
     tiny = on;
     if (on) {
       stopFrames(); clearTimeout(idleTimer);
-      root.classList.remove('story-compact', 'story-short', 'story-figs-01'); root.classList.add('story-tiny'); clearLift(); setTail(0);
+      root.classList.remove('story-compact', 'story-short'); root.classList.add('story-tiny'); clearLift(); setTail(0);
       beats.forEach(b => { b.style.opacity = b.style.transform = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-tight', 'is-snug', 'is-bo0'); });
       if (bar) bar.style.opacity = bar.style.visibility = '';
       if (paper) paper.style.height = paper.style.visibility = '';
@@ -2275,7 +2274,7 @@
     }
     running = false; stopFrames(); clearTimeout(lostTimer); clearTimeout(idleTimer);
     beats.forEach(b => { b.style.opacity = b.style.transform = b.style.visibility = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-relay', 'is-tight', 'is-snug', 'is-bo0'); });
-    root.classList.remove('story-compact', 'story-short', 'story-tiny', 'story-figs-01');
+    root.classList.remove('story-compact', 'story-short', 'story-tiny');
     beatLinks.forEach(list => list.forEach(el => el.removeAttribute('tabindex')));
     labels.forEach(l => l.el.remove()); leaders.remove();
     if (bar) bar.style.opacity = bar.style.visibility = '';

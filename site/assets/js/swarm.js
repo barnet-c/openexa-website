@@ -12,7 +12,7 @@
    steps (4 Hz, nothing drawn) only while the page's ledger is near or a followed proposal is in flight. Pause motion and
    hidden tabs freeze it; reduced motion: a still study. A lab marked [data-sw-autofollow] (Home's, hc13r) follows one
    proposal by itself, once, the first time it is well in view (site.js's OXA.actOnce), quietly, and rests in its follow
-   view when it ends. */
+   view when it ends, its Follow control at rest (hc22); data-sw-act="on" / "rest" marks it. */
 (function () {
   'use strict';
   const root = document.querySelector('[data-swarm-live]');
@@ -1065,9 +1065,11 @@
     uiDirty = false;
     if (sayText !== null && el.say) { el.say.textContent = sayText; sayText = null; }
     if (el.follow) {
-      const pressed = follow.active ? 'true' : 'false', label = follow.active ? 'Stop following' : T.outcome ? 'Follow another' : 'Follow a proposal';
+      // (hc22) the lab's own act (quiet) leaves the control at rest; [data-sw-act] marks the act
+      const own = !follow.quiet, pressed = own && follow.active ? 'true' : 'false', label = own && follow.active ? 'Stop following' : own && T.outcome ? 'Follow another' : 'Follow a proposal';
       if (el.follow.getAttribute('aria-pressed') !== pressed) el.follow.setAttribute('aria-pressed', pressed);
       if (el.follow.textContent !== label) el.follow.textContent = label;
+      const act = own ? '' : follow.active ? 'on' : 'rest'; if ((root.dataset.swAct || '') !== act) { if (act) root.dataset.swAct = act; else delete root.dataset.swAct; }
     }
     el.gates.forEach((li, g) => li.classList.toggle('is-hit', T.open && !!(T.hit & (1 << g))));
     if (!el.trace) return;
@@ -1304,7 +1306,7 @@
       stats(); schedule();
     });
   }
-  if (el.follow) el.follow.addEventListener('click', () => { if (follow.active) stopFollow(); else startFollow(pickFresh()); });
+  if (el.follow) el.follow.addEventListener('click', () => { if (follow.active && !follow.quiet) stopFollow(); else startFollow(pickFresh()); }); // (hc22) during the act: the reader's follow
   // (hc13r HOME-2, hc13 item 4.1) Home's lab follows one proposal by itself, once, the first time it is well in view: the
   // shared rule (site.js OXA.actOnce: never under reduced motion, never once the visitor has touched the lab, never on a
   // hidden page), and never while the lab is paused, halted or already following. Quiet (say() stays silent for it).

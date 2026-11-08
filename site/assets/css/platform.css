@@ -584,14 +584,18 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
 /* hc13r (PLAT-4): §03 and §04 end on the chapter foot (.section's --sec-foot), not 100-126 px of air: arch.css's #mcp
    padding and site.css's .lc-pipe margin went at integrate hc13r, so no override is needed here */
 #mcp .dpl-plate { max-width: 25rem; }
-/* hc5: the ruled row of three from 961 px (arch.css's plate-beside-title rows end at 960 px since integrate hc5; until
-   then they ran to 1099 px and this block undid them at 961-1099) */
+/* §04's cells are one ruled register at every width: a row of three from 961 px (hc5), ruled rows below (hc22) */
+#mcp .dpl { gap: 0; border-top: var(--hair) solid var(--line-strong); border-bottom: var(--hair) solid var(--line); }
+#mcp .dpl-col h3 { margin-bottom: 0; }
 @media (min-width: 961px) {
-  #mcp .dpl { column-gap: 0; border-top: var(--hair) solid var(--line-strong); border-bottom: var(--hair) solid var(--line); }
   #mcp .dpl-col { padding: 1.75rem clamp(.75rem, 1.6vw, 1.5rem) 1.5rem; }
   #mcp .dpl-col + .dpl-col { border-left: var(--hair) solid var(--line); }
   #mcp .dpl-plate { margin: 0 auto 1.25rem; }
   #mcp .dpl-col h3 { margin: 0; }
+}
+@media (max-width: 960px) {
+  #mcp .dpl-col { padding: 1.5rem 0 1.375rem; }
+  #mcp .dpl-col + .dpl-col { border-top: var(--hair) solid var(--line); }
 }
 
 @media (max-width: 600px) {

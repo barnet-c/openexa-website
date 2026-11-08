@@ -852,3 +852,77 @@ def library_svg(counts=(16, 5, 8), lit=4):
     vh = round(low + pad)   # the album's foot: no band for lettering under it since a3 (the names are links under the H1)
     return (f'<svg class="lib-art" viewBox="0 0 {vw} {vh}" fill="none" focusable="false" aria-hidden="true">'
             + "".join(groups) + "</svg>")
+
+
+# ---------------------------------------------------------------- the Gen-AI introduction's body figures (hc22)
+# Hill climb hc22 (design director, item 4.3, colour; the owner's 8 Nov "full freedom", point 2, lifted S-55's "the
+# Gen-AI diagrams are left"): the introduction's four figures were the site's only off-palette pictures (a Statista bar
+# chart, an I/O Fund bar chart, two purple-to-cyan diagrams with ~7 px text). They are drawn here in the site's chart
+# grammar instead: ink bars, the one signal-green series (the latest year; the reported growth), hairline axes, numbers
+# in mono on the 14 px data step, words in Inter, on a paper sheet in the post's paper-2 mat (blog.css .bp-fig). Same
+# data, same labels and credits, read off the images (data/blog_alt.json names the same values); the charts' own titles
+# go (the post's captions say them), logos and licence marks go with the raster. The stage diagrams are real text
+# (lists): a reader can select, find and translate them. The old files stay in assets/img/blog (build_blog copies them).
+# Typos in the rasters are fixed ("Probablistic", "Algorothims", "Gaurdrails"); capitals become sentence case.
+# HTML, not SVG: the words keep their size at every width (a bar chart turns into rows on a phone, a road runs down
+# the page), and nothing scales below 13 px.
+
+def _bars(groups, vmax, two=False):
+    """groups: (label, [(value, green)]); a value's bar is value / vmax of the plot's bar height (blog.css --bh)"""
+    out = []
+    for label, vals in groups:
+        cells = "".join(
+            f'<span class="bpc-c{" is-g" if g else ""}" style="--v:{v / vmax:.4f}"><span class="bp-n">{t}</span>'
+            f'<span class="bpc-b{" dm" if g else ""}"></span></span>' for v, t, g in vals)
+        out.append(f'<span class="bpc-g"><span class="bpc-x{" bp-n" if not two else ""}">{label}</span>{cells}</span>')
+    return f'<span class="bpc-p">{"".join(out)}</span>'
+
+
+def _road(stages):
+    return "".join(f'<li><span class="bpr-i bp-n">{n}</span><span class="bpr-h">{h}</span><span class="bpr-d">{d}</span></li>'
+                   for n, h, d in stages)
+
+
+INVEST = (2013, (14.6, 19.0, 25.4, 33.8, 53.7, 79.6, 95.6, 146.7, 276.1, 189.6))   # blog-095, $ billion
+GROWTH = (("Microsoft", 11.5, 17.0), ("Alphabet", 11.8, 15.4), ("Meta", 17.3, 27.3), ("Amazon", 11.1, 12.5))  # blog-096, %
+STAGES = ((1, "Aggregative", "Formed of separate units gathered into a mass or whole."),
+          (2, "Probabilistic", "Events that have no certain outcome but have a probability."),
+          (3, "Deterministic", "All events and actions are ultimately predetermined."),
+          (4, "Restrictive", "Guardrail places restrictions on what the system can do."),
+          (5, "Automatic", "Works on its own with little or no direct human control."))
+GATES = (("01", "Data", "General purpose", 1), ("02", "LLM", "Probabilistic models", .83),
+         ("03", "Algorithms", "Deterministic system", .66), ("04", "Guardrails", "Constrained system", .49))
+GATE_OPEN = .31   # the fifth gate the raster left empty (a grey box, no label): drawn dashed, the plates' "not yet"
+
+
+def genai_figure(key, alt):
+    """the inner drawing of one of the introduction's figures (blog-095 ... blog-098), for build_blog to set in the
+    figure in place of its <img> (the figure's caption stays the post's own). alt: the image's alt text, kept as the
+    bar charts' accessible name (role="img"); the stage diagrams are read as their lists"""
+    if key == "blog-095":
+        y0, vals = INVEST
+        vmax = max(vals)
+        groups = [(str(y0 + i), [(v, f"{v:.1f}", i == len(vals) - 1)]) for i, v in enumerate(vals)]
+        return (f'<div class="bpc" role="img" aria-label="{alt}">'
+                '<span class="bp-t">Total global corporate investment in artificial intelligence* (in billion U.S. dollars)</span>'
+                + _bars(groups, vmax) +
+                '<span class="bp-f">* Mergers/acquisitions, minority stake investments, private investments, public offerings</span>'
+                '<span class="bp-f">Source: Statista · Stanford University</span></div>')
+    if key == "blog-096":
+        groups = [(name, [(a, f"{a:.1f}%", False), (b, f"{b:.1f}%", True)]) for name, a, b in GROWTH]
+        return (f'<div class="bpc bpc--2" role="img" aria-label="{alt}">'
+                '<span class="bp-t">Q1 revenue growth <span class="bp-k"><span class="bp-sw"></span>October estimate</span>'
+                '<span class="bp-k"><span class="bp-sw is-g"></span>Reported</span></span>'
+                + _bars(groups, 30, two=True) + '</div>')
+    if key == "blog-097":
+        return ('<div class="bpr">'
+                f'<div class="bpr-grp" style="--n:2"><span class="bpr-k">LLM</span><span class="bpr-road"></span>'
+                f'<ol class="bpr-s" role="list">{_road(STAGES[:2])}</ol></div>'
+                f'<div class="bpr-grp" style="--n:3"><span class="bpr-k">Domain</span><span class="bpr-road is-g dm"></span>'
+                f'<ol class="bpr-s" role="list">{_road(STAGES[2:])}</ol></div></div>')
+    if key == "blog-098":
+        items = "".join(f'<li style="--h:{h}"><span class="bpg-s"><span class="bp-n">{n}</span></span>'
+                        f'<span class="bpr-h">{t}</span><span class="bpr-d">{d}</span></li>' for n, t, d, h in GATES)
+        return (f'<div class="bpg-w"><ol class="bpg" role="list">{items}'
+                f'<li class="bpg-o" style="--h:{GATE_OPEN}" aria-hidden="true"><span class="bpg-s"></span></li></ol></div>')
+    raise KeyError(key)

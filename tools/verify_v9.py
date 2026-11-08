@@ -496,8 +496,9 @@ async def home(b):
     assert not plate["stack"] and plate["see"] == "platform.html" and plate["arch"] == 0 and not plate["fetched"], ("home: no stack chapter, 'See the stack' goes to Platform, no explorer on Home, arch.js not fetched", plate)
     # swarm lab: runs, announces settlements (at most 4 a second, in the agreed shape), follows by keyboard, halts and drains
     await pg.locator("[data-swarm-live]").scroll_into_view_if_needed()
-    # hc13r (home, HOME-2): the lab follows one proposal by itself, quietly (its live region stays empty), then rests
-    assert await until(pg, "document.querySelector('[data-sw-follow]').getAttribute('aria-pressed') === 'true'", 4000), "the lab did not follow a proposal by itself"
+    # hc13r (home, HOME-2): the lab follows one proposal by itself, quietly (its live region stays empty), then rests;
+    # hc22 (home, HC22 4.4): the act leaves the Follow control alone, so it is read from the lab root's data-sw-act
+    assert await until(pg, "document.querySelector('[data-swarm-live]').dataset.swAct === 'on'", 4000), "the lab did not follow a proposal by itself"
     assert await pg.evaluate("document.querySelector('[data-sw-say]').textContent === ''"), "the lab's own act announced itself"
     n0 = await pg.evaluate("window.__oxaEv.settled.length")
     await pg.wait_for_timeout(4500)
@@ -510,8 +511,9 @@ async def home(b):
     assert min(gaps) >= 245, ("oxa:settled closer than 250 ms", min(gaps))
     assert all(re.fullmatch(r"P-\d{5}", e["id"]) and 1 <= e["lane"] <= 5 and isinstance(e["ts"], (int, float)) for e in ev), ev[:3]
     await still_shot(pg, "[data-swarm-live]", OUT / "swarm.png", pause="[data-sw-motion]")  # round 2 (CI): never Locator.screenshot on the running lab
-    # hc13r (HOME-2): the act rests in its follow view: not pressed, "Follow another", the six gates hit, the trace shown (1440)
-    rest = await until(pg, "(() => { const f = document.querySelector('[data-sw-follow]'); return f.getAttribute('aria-pressed') === 'false' && f.textContent === 'Follow another' && document.querySelectorAll('[data-sw-gates] li.is-hit').length === 6 && !document.querySelector('[data-sw-callout]').hidden; })()", 15000, 200)
+    # hc13r (HOME-2): the act rests in its follow view: the six gates hit, the trace shown (1440); hc22 (HC22 4.4): the
+    # control was never pressed and still reads "Follow a proposal" (it answers a reader's own follow only)
+    rest = await until(pg, "(() => { const f = document.querySelector('[data-sw-follow]'); return document.querySelector('[data-swarm-live]').dataset.swAct === 'rest' && f.getAttribute('aria-pressed') === 'false' && f.textContent === 'Follow a proposal' && document.querySelectorAll('[data-sw-gates] li.is-hit').length === 6 && !document.querySelector('[data-sw-callout]').hidden; })()", 15000, 200)
     assert rest, ("the lab's act did not rest in its follow view", await pg.evaluate("[document.querySelector('[data-sw-follow]').textContent, document.querySelectorAll('[data-sw-gates] li.is-hit').length]"))
     await pg.locator("[data-sw-follow]").focus(); await pg.keyboard.press("Enter")
     await expect(pg.locator("[data-sw-follow]")).to_have_attribute("aria-pressed", "true")
@@ -2348,7 +2350,8 @@ BLOCK_WATCH = """(() => { const hit = window.__blk = []; const sel = ['#sw-trace
   new MutationObserver(look).observe(document.querySelector('[data-swarm-live]'), { subtree: true, childList: true, characterData: true }); look(); })()"""
 
 
-LAB_ACT_REST = "(() => { const f = document.querySelector('[data-sw-follow]'); return !!f && f.getAttribute('aria-pressed') === 'false' && f.textContent.trim() === 'Follow another'; })()"
+# hc22 (home, HC22 4.4): the act's rest is the lab root's data-sw-act="rest"; the control stays unpressed, "Follow a proposal"
+LAB_ACT_REST = "(() => { const f = document.querySelector('[data-sw-follow]'); return !!f && document.querySelector('[data-swarm-live]').dataset.swAct === 'rest' && f.getAttribute('aria-pressed') === 'false' && f.textContent.trim() === 'Follow a proposal'; })()"
 SW_LINK = "(() => { const a = document.querySelector('[data-sw-log] a.sw-led-a'); return a ? { href: a.getAttribute('href'), name: a.getAttribute('aria-label'), text: a.textContent.replace(/\\s+/g, ' ').trim() } : null; })()"
 
 
@@ -2361,8 +2364,9 @@ async def swarm_trace_to_ledger(b):
     homepage the trace, its stage tag and its live region never print 'block' or 'no ledger'. (Until then the row became
     a button naming the record, which Home's own ledger selected when it was clicked.) hc13r (home, HOME-2): Home's lab
     follows one proposal the Council passes by itself, once it is well in view, and rests in its follow view: that trace
-    ends on the same link without a click. A click on Follow while the act runs stops it (a toggle), so the reader's own
-    follow is "Follow another" at the act's rest; that trace too must end at the link, which is followed to Trust."""
+    ends on the same link without a click. hc22 (home, HC22 4.4): the act leaves the Follow control at rest ("Follow a
+    proposal", not pressed); the reader's own follow starts from it at the act's rest; that trace too must end at the
+    link, which is followed to Trust."""
     errs = []
     ctx, pg = await open_page(b, "index.html", 1440, 900, init=EVENTS, errs=errs)
     await pg.evaluate(BLOCK_WATCH)
@@ -2404,7 +2408,7 @@ async def swarm_trace_to_ledger(b):
             if not land:
                 where = await pg.evaluate("(() => { const s = document.getElementById('ledger'); return [location.href, s ? Math.round(s.getBoundingClientRect().top) : null, document.querySelectorAll('[data-ledger=replay] .lt-rec').length]; })()")
                 bad.append(f"after the link Trust's ledger is not in view with its nine records: {where}")
-            else: print(f"swarm_trace_to_ledger: the lab's own act rested on the ledger link after {t_act:.1f} s; the reader's follow ('Follow another') links to Trust's ledger after {time.monotonic() - t0:.1f} s; it lands in view (top {land[0]} px) with nine records")
+            else: print(f"swarm_trace_to_ledger: the lab's own act rested on the ledger link after {t_act:.1f} s; the reader's follow ('Follow a proposal') links to Trust's ledger after {time.monotonic() - t0:.1f} s; it lands in view (top {land[0]} px) with nine records")
     if bad and not got == "link": bad.append(lab_why(await pg.evaluate(LAB_STATE), errs))
     await ctx.close()
     assert not bad, "swarm_trace_to_ledger index.html@1440x900:\n  " + "\n  ".join(bad)
@@ -2920,9 +2924,12 @@ async def lab_hold(b):
 
 
 
-# hc13r (home, HOME-2): every change of the follow button's pressed state, from the document's start
-ACT_WATCH = r"""(() => { const W = window, R = W.__act = { pressed: 0, t: [] }; const go = () => { const f = document.querySelector('[data-sw-follow]'); if (!f) return false;
-    new MutationObserver(() => { if (f.getAttribute('aria-pressed') === 'true') { R.pressed++; R.t.push(Math.round(performance.now())); } }).observe(f, { attributes: true, attributeFilter: ['aria-pressed'] }); return true; };
+# hc13r (home, HOME-2): every start of the lab's own act, from the document's start. hc22 (home, HC22 4.4): the act is the
+# lab root's data-sw-act turning "on" (it was the follow button's pressed state); `ctl` counts every change of the Follow
+# control (its pressed state, its text) while data-sw-act is set: the act must leave the control alone
+ACT_WATCH = r"""(() => { const W = window, R = W.__act = { pressed: 0, t: [], ctl: 0 }; const go = () => { const r = document.querySelector('[data-swarm-live]'), f = document.querySelector('[data-sw-follow]'); if (!r || !f) return false;
+    new MutationObserver(() => { if (r.dataset.swAct === 'on') { R.pressed++; R.t.push(Math.round(performance.now())); } }).observe(r, { attributes: true, attributeFilter: ['data-sw-act'] });
+    new MutationObserver(() => { if (r.dataset.swAct) R.ctl++; }).observe(f, { attributes: true, attributeFilter: ['aria-pressed'], childList: true, characterData: true, subtree: true }); return true; };
   if (!go()) document.addEventListener('DOMContentLoaded', go, { once: true }); })();"""
 LAB_SEEN = r"""(() => { const r = document.querySelector('[data-swarm-live]').getBoundingClientRect(); const v = Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0));
   return Math.round(v / Math.max(1, Math.min(r.height, innerHeight)) * 1000) / 1000; })()"""
@@ -2933,7 +2940,8 @@ LAB_SIZE = "(() => [Math.round(document.querySelector('[data-swarm-live]').getBo
 async def lab_act(b):
     """hc13r (home, HOME-2, on system's SYS-3 OXA.actOnce; home's optional request 9): Home's lab acts by itself only as the
     rule allows. At 1440: once it is well in view it follows one proposal, quietly (its live region stays empty), across
-    the six gates, and rests in its follow view ("Follow another"); it never acts again (no second follow at rest, nor
+    the six gates, and rests in its follow view; hc22 (HC22 4.4): through the act and at its rest the Follow control never
+    changes (not pressed, "Follow a proposal"); it never acts again (no second follow at rest, nor
     after the lab leaves the screen and comes back). Under reduced motion it never acts (6 s in view). After a mouse press
     on one of its controls before it is 60% in view, it never acts. On a stacked lab (390 phone, 1024) the act leaves the
     lab's height and the page's unchanged (no layout shift without input)."""
@@ -2944,7 +2952,7 @@ async def lab_act(b):
     ctx, pg = await open_page(b, "index.html", 1440, 900, init=ACT_WATCH)
     await pg.mouse.move(5, 450)
     await pg.evaluate(center)
-    if not await until(pg, "document.querySelector('[data-sw-follow]').getAttribute('aria-pressed') === 'true'", lim(6000), 100):
+    if not await until(pg, "document.querySelector('[data-swarm-live]').dataset.swAct === 'on'", lim(6000), 100):
         bad.append("1440: the lab did not follow a proposal by itself within 6 s in view")
     else:
         if await pg.evaluate("document.querySelector('[data-sw-say]').textContent !== ''"): bad.append("1440: the act announced itself")
@@ -2952,6 +2960,7 @@ async def lab_act(b):
             bad.append(f"1440: the act did not rest in its follow view across six gates: {await pg.evaluate(TRACE_STATE)!r}")
         say = await pg.evaluate("document.querySelector('[data-sw-say]').textContent")
         if say: bad.append(f"1440: the act announced {say!r}")
+        if await pg.evaluate("window.__act.ctl"): bad.append("1440: the Follow control changed without input during the act")
         await pg.wait_for_timeout(4000)
         await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(1200)
         await pg.evaluate(center); await pg.wait_for_timeout(lim(4000))
@@ -2994,7 +3003,7 @@ async def lab_act(b):
         await pg.evaluate(center); await pg.wait_for_timeout(200)
         before = await pg.evaluate(LAB_SIZE)
         stacked = await pg.evaluate("document.querySelector('[data-swarm-live]').classList.contains('is-stacked')")
-        if not await until(pg, "document.querySelector('[data-sw-follow]').getAttribute('aria-pressed') === 'true'", lim(6000), 100):
+        if not await until(pg, "document.querySelector('[data-swarm-live]').dataset.swAct === 'on'", lim(6000), 100):
             bad.append(f"{w}: the lab did not follow a proposal by itself within 6 s in view")
         else:
             during = await pg.evaluate(LAB_SIZE)
@@ -3051,8 +3060,9 @@ async def platform_trace(b):
             bad.append(f"{tag}: the lab never ran"); await ctx.close(); continue
         await pg.evaluate(TEXT_WATCH, r"no ledger|\bblock\b" if path == "index.html" else r"no ledger")
         await pg.mouse.move(2, 2)
-        # hc13r (home, HOME-2): Home's lab follows one proposal by itself once it is well in view; a press on Follow during
-        # that act stops it (a toggle), so the reader's follow waits for the act's rest ("Follow another")
+        # hc13r (home, HOME-2): Home's lab follows one proposal by itself once it is well in view; the reader's follow waits
+        # for the act's rest (hc22, HC22 4.4: data-sw-act="rest", the control unpressed, "Follow a proposal"; a press during
+        # the act would start the reader's follow, no longer stop the act)
         if path == "index.html" and not await until(pg, LAB_ACT_REST, 40000, 250):
             bad.append(f"{tag}: the lab's own act never came to rest ({await pg.evaluate(TRACE_STATE)!r})"); await ctx.close(); continue
         for want in wants:
@@ -3315,8 +3325,8 @@ async def label_in_name(b):
         ctx, pg = await open_page(b, f"{name}.html", 1440, 900)
         cdp = await ctx.new_cdp_session(pg)
         if name == "index":  # the trace's ledger link exists once a followed proposal has settled; hc13r (HOME-2): the lab's
-            # own act follows one the Council passes, once the lab is well in view, and rests on it without a click (a
-            # click during the act would stop it); its rest also shows "Follow another", read here like every control
+            # own act follows one the Council passes, once the lab is well in view, and rests on it without a click; hc22
+            # (HC22 4.4): the act leaves the control at "Follow a proposal", read here like every control
             await pg.mouse.move(2, 2)
             await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
             await until(pg, "+((document.querySelector('[data-sw-inflight]') || {}).textContent || '0').replace(/\\D/g, '') > 0", 25000, 200)
@@ -4119,6 +4129,85 @@ async def jump_touch(b):
         summary.append(f"{name}: {len(shots)} frames, landed at {landed}")
     assert not bad, "jump_touch:\n  " + "\n  ".join(bad)
     print(f"jump_touch: {'; '.join(summary)}; every frame lit, no ink band, one readout")
+
+
+# ---- hc22 (integrate, standing in for tests): the type sizes on a first screen (EVOLVE "<= 4 type sizes on any screen",
+# the director's HC22 4.1) and the footer that ends the page (HC22 4.2)
+FIRST_SIZES = r"""(() => { const vh = innerHeight, vw = innerWidth, out = {};
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
+  while ((n = w.nextNode())) { const t = n.textContent.trim(); if (!t) continue; const el = n.parentElement; if (!el) continue;
+    const r = el.getBoundingClientRect(); if (r.width <= 1 || r.height <= 1) continue;
+    if (r.bottom - r.height / 2 < 0 || r.top + r.height / 2 > vh || r.right - r.width / 2 < 0 || r.left + r.width / 2 > vw) continue;
+    if (el.closest('.sr-only, .visually-hidden, .skip, .skip-link, .nav-logo, .brand, script, style, noscript, template')) continue;
+    let a = el, hid = false; while (a && a !== document.documentElement) { const c = getComputedStyle(a); if (+c.opacity < 0.05 || c.visibility === 'hidden' || c.display === 'none') { hid = true; break; } a = a.parentElement; }
+    if (hid) continue;
+    const k = (Math.round(parseFloat(getComputedStyle(el).fontSize) * 2) / 2).toFixed(1);
+    (out[k] = out[k] || []).push(t.slice(0, 28)); }
+  return out; })()"""
+FIRST_SIZES_AT = (("index.html", 1440, 900, 1, False), ("index.html", 3840, 2160, 1, False), ("index.html", 1920, 1080, 2, False),
+                  ("index.html", 1024, 768, 1, False), ("index.html", 768, 1024, 2, True), ("index.html", 390, 844, 3, True),
+                  ("index.html", 320, 568, 2, True))
+
+
+@check
+async def first_screen_sizes(b):
+    """hc22 (integrate, standing in for tests; EVOLVE.md "at most 4 type sizes on any screen"; the director's HC22 4.1, done
+    by home: the four figures in the site's stat grammar, a serif numeral over an Inter label at the small step, not 11 px
+    mono caps): Home's first screen, at rest after its opening (the loader gone, every engine started, 4.5 s), shows text in
+    at most four font sizes (the computed size of every visible text node whose box's centre is on the screen, to the half
+    pixel; the logo and screen-reader-only text aside) at 1440 x 900, 3840 x 2160, 1920 x 1080 @2, 1024 x 768, and with
+    touch at 768 x 1024, 390 x 844 and 320 x 568. At hc22's review it was five at 1440 and 3840 (89.3, 30.2, 17.8, 14, 11)."""
+    bad, notes = [], []
+    for path, w, h, dpr, touch in FIRST_SIZES_AT:
+        ctx, pg = await open_page(b, path, w, h, dpr=dpr, touch=touch)
+        if not touch: await pg.mouse.move(2, 2)
+        await pg.wait_for_timeout(4500)
+        sizes = await pg.evaluate(FIRST_SIZES)
+        keys = sorted(sizes, key=lambda k: -float(k))
+        if len(keys) > 4: bad.append(f"{path}@{w}x{h}: {len(keys)} type sizes on the first screen: " + "; ".join(f"{k} px {sizes[k][:3]}" for k in keys))
+        notes.append(f"{w}x{h} {' / '.join(k.rstrip('0').rstrip('.') for k in keys)}")
+        await ctx.close()
+    assert not bad, "first_screen_sizes:\n  " + "\n  ".join(bad)
+    print(f"first_screen_sizes: Home's first screen shows at most four type sizes ({'; '.join(notes)} px)")
+
+
+FOOT_END = r"""(() => { const f = document.querySelector('footer.footer'), bt = f && f.querySelector('.bottom'); if (!f || !bt) return null;
+  const R = e => e.getBoundingClientRect(), fb = R(f), bb = R(bt), cs = getComputedStyle(bt), fs = getComputedStyle(f), sy = scrollY;
+  const under = [...f.querySelectorAll('*')].filter(e => !bt.contains(e) && !e.contains(bt)).map(e => [e, R(e)])
+    .filter(([e, r]) => r.width > 0 && r.height > 0 && r.top >= bb.top - 0.5 && e.checkVisibility({ visibilityProperty: true }))  // a closed fold's content (the phones' Legal & disclosures) is not drawn
+    .map(([e, r]) => (e.className || e.tagName).toString().slice(0, 40) + ' @' + Math.round(r.top + sy));
+  const pseudo = ['::before', '::after'].filter(p => { const c = getComputedStyle(f, p); return c.content !== 'none' && c.content !== 'normal' && c.display !== 'none'; });
+  return { doc: document.documentElement.scrollHeight, footBottom: Math.round((fb.bottom + sy) * 10) / 10, botBottom: Math.round((bb.bottom + sy) * 10) / 10,
+    padBottom: parseFloat(cs.paddingBottom), padTop: parseFloat(fs.paddingTop), under, pseudo, wordmark: document.querySelectorAll('footer .wordmark, footer [data-word]').length }; })()"""
+
+
+@check
+async def footer_end(b):
+    """hc22 (integrate, standing in for tests; the director's HC22 4.2, done by system: "the footer ends the page"): on Home,
+    Proof, a research note and a blog post, at 1440 x 900, 3840 x 2160 and with touch at 390 x 844, scrolled to the foot:
+    the page ends on the footer's bottom row (the copyright and the clocks): nothing in the footer is drawn at or below
+    that row's top but the row itself (no ghost masthead or other decorative field, and no `[data-word]` wordmark element),
+    the footer's own box ends with that row and the document with the footer (within 1 px), and the paper under the row
+    is no more than the footer's top padding (within 1 px). Its links and disclosures are check_static's `footer` and
+    verify_v9's `disclosures`."""
+    bad, notes = [], []
+    for path in ("index.html", "evidence.html", "research/09-lifecycle-01-ten-sessions.html", "blog/in-search-gen-ai-business-model.html"):
+        for w, h, touch in ((1440, 900, False), (3840, 2160, False), (390, 844, True)):
+            tag = f"{path}@{w}"
+            ctx, pg = await open_page(b, path, w, h, touch=touch)
+            await pg.evaluate("window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'})"); await pg.wait_for_timeout(900)
+            r = await pg.evaluate(FOOT_END)
+            await ctx.close()
+            if not r: bad.append(f"{tag}: no footer with a bottom row"); continue
+            if r["wordmark"]: bad.append(f"{tag}: a wordmark element in the footer ({r['wordmark']})")
+            if r["under"]: bad.append(f"{tag}: drawn at or under the footer's bottom row: {r['under'][:4]}")
+            if r["pseudo"]: bad.append(f"{tag}: the footer draws {r['pseudo']}")
+            if abs(r["footBottom"] - r["botBottom"]) > 1: bad.append(f"{tag}: the footer ends {r['footBottom'] - r['botBottom']:.1f} px under its bottom row")
+            if abs(r["doc"] - r["footBottom"]) > 1: bad.append(f"{tag}: the page runs {r['doc'] - r['footBottom']:.1f} px past the footer")
+            if r["padBottom"] > r["padTop"] + 1: bad.append(f"{tag}: {r['padBottom']:.0f} px of paper under the bottom row, more than the footer's top padding {r['padTop']:.0f}")
+            if path == "index.html": notes.append(f"{w}: {r['padBottom']:.0f} px under the row (top {r['padTop']:.0f})")
+    assert not bad, "footer_end:\n  " + "\n  ".join(bad)
+    print(f"footer_end: on Home, Proof, a note and a post the page ends on the footer's bottom row, nothing drawn under it ({'; '.join(notes)})")
 
 
 # ---------------------------------------------------------------- runner

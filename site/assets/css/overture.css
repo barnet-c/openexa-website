@@ -39,7 +39,6 @@
 .beat .hero-cta { margin-top: 1.875rem; }
 .hero-stats { display: grid; grid-template-columns: 1fr 1fr .8fr 1.45fr; gap: 1.25rem; margin-top: 2.125rem; padding-top: 1.25rem; border-top: var(--hair) solid rgba(245, 242, 236, .14); max-width: min(52%, 40rem); }
 .hero-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: var(--fs-item); line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
-.hero-stats b em { font-style: normal; color: var(--signal-bright); }
 .hero-stats span { display: block; margin-top: .5625rem; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58); line-height: 1.4; }
 /* Lifecycle 01: a numeral like its neighbours, with the live dot */
 .hero-stats .live { display: inline-block; width: .375rem; height: .375rem; margin-left: .5625rem; border-radius: 50%; background: var(--signal-bright); vertical-align: .62em; animation: pulse 2s var(--ease-move) 3; } /* three beats, then still, as .badge i (WCAG 2.2.2; award a1: it was the one CSS animation on the site that never stopped) */
@@ -177,13 +176,6 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
   html:not(.no-webgl) .beat-0 .hero-stats > div:last-child .live { width: .3125rem; height: .3125rem; margin-left: .4375rem; vertical-align: .15em; }
   html:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { margin-top: 0; }
 }
-/* a4: a tablet whose four figures would leave the globe under 36% of the stage takes the same 01 line (story.js) */
-html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats { display: block; max-width: 100%; margin-top: 1rem; padding-top: .75rem; }
-html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:not(:last-child) { display: none; }
-html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child { display: flex; align-items: baseline; gap: .625rem; }
-html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child b { flex: none; font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: .12em; color: var(--paper); }
-html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child .live { width: .3125rem; height: .3125rem; margin-left: .4375rem; vertical-align: .15em; }
-html.story-figs-01:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { margin-top: 0; }
 @media (min-width: 600px) and (min-height: 740px) {
   html.story-compact:not(.no-webgl) .beat .body-lg { font-size: .94rem; }
   html.story-compact:not(.no-webgl) .beat h2 { font-size: clamp(1.7rem, 7vw, 2.2rem); }

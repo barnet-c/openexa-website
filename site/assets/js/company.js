@@ -2,7 +2,7 @@
    1. (cut, 1 Nov) The manifesto left the page with its section; its writer went with it (v2x r5 in git history).
    2. The hero plate's caption follows the mode (figure.js switches the formation; the caption is the mode's name, read
       out by screen readers: cut, 1 Nov, the mode paragraph went).
-   3. §03 (was §04), the constants plate (lab, 31 Oct): "The lifecycles vary. Four constants don't.", drawn. A proposal walks the
+   3. §02 (was §04), the constants plate (lab, 31 Oct; head since hc22: "Four constants hold in every lifecycle."), drawn. A proposal walks the
       loop of gates: above the boundary (agents decide), across it (constant 1), below it (code executes), and is
       written to the ledger when the counterparty confirms (4); one pass in four is rejected at the Council and written
       too. Every second pass the loop takes another shape (another lifecycle); the boundary, the agents scoped to their

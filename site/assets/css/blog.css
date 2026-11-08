@@ -404,10 +404,76 @@
 /* ---------- post: figures are exhibits on a mat, the chart's white taking the paper (multiply) ---------- */
 .blog-article > figure, .blog-article figure { margin: 2.1em 0 2.3em; padding: .75rem; background: var(--paper-2); border: 0; box-shadow: inset 0 0 0 var(--hair) var(--line); }
 .blog-article figure img { mix-blend-mode: multiply; margin-inline: auto; } /* a picture capped at its own pixels (build_blog body_cap) sits centred on its mat */
+.blog-article figure img.duo { mix-blend-mode: normal; } /* hc22: a picture in the palette (build_blog duo_file) is a print on its mat */
 .blog-article .blog-hero-img { margin-top: 0; }
 /* a3: a caption starts on its picture's edge (a capped picture's figure carries --cap) */
 .blog-article figcaption { padding: .75rem 0 .125rem; border-top: 0; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: var(--fg-3); text-wrap: pretty; }
 .blog-article figure[style] > figcaption { max-width: var(--cap); margin-inline: auto; }
+/* hc22: the Gen-AI introduction's four figures, drawn (blog_plates.genai_figure): a paper sheet on the mat; ink bars, the
+   one green series, a hairline baseline, numbers in mono and words in Inter at the caption step. Phones (640 px and
+   under): the bars run across in rows and the roads run down the page, so no word drops below 13 px */
+.bp-fig > div { padding: clamp(1rem, 3.2vw, 1.75rem); background: var(--paper); font: 400 var(--fs-small)/1.45 var(--sans); color: var(--fg-2); }
+.bp-t, .bp-f { display: block; text-wrap: balance; }
+.bp-t { margin-bottom: 1.5rem; }
+.bp-k { display: inline-flex; align-items: center; gap: .45em; margin-left: 1.25em; white-space: nowrap; }
+.bp-sw { width: .625rem; height: .625rem; background: var(--ink); }
+.bp-f { margin-top: .375rem; color: var(--fg-3); }
+.bpc-p + .bp-f { margin-top: 1.25rem; }
+.bp-n { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--fg); }
+.bpc { --rows: 13.5rem; }
+.bpc-p { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); height: calc(var(--rows) + 4rem); background: linear-gradient(var(--line-strong), var(--line-strong)) 0 calc(100% - 2.25rem) / 100% var(--hair) no-repeat; }
+.bpc-g { display: grid; grid-template: 1fr 2.25rem / 2rem; justify-content: center; align-items: end; column-gap: .375rem; }
+.bpc--2 .bpc-g { grid-template-columns: repeat(2, 2.75rem); }
+.bpc-x { grid-area: 2 / 1 / 3 / -1; justify-self: center; padding-top: .625rem; white-space: nowrap; }
+.bpc-c { grid-row: 1; display: flex; flex-direction: column; align-items: center; }
+.bpc-b { width: 100%; height: calc(var(--v) * var(--rows)); margin-top: .375rem; background: var(--ink); }
+.is-g > .bpc-b, .bp-sw.is-g { background: var(--signal); }
+@media (min-width: 641px) { .bpc-b.dm { --dm: bp-up; } }
+.bpr-road.dm { --dm: bp-down; }
+@keyframes bp-up { from { clip-path: inset(100% 0 0); } to { clip-path: inset(0); } }
+@keyframes bp-down { from { clip-path: inset(0 0 100%); } to { clip-path: inset(0); } }
+/* the roads: two hairlines and a dashed centre line; the five stages run down the page at every width (five columns of
+   ~90 px set "predetermined" into its neighbour), each group's name over its stations, the domain's road in green */
+.bpr, .bpg-w { --rd: .75rem; }
+.bpr-grp { position: relative; }
+.bpr-grp + .bpr-grp { margin-top: 1.5rem; }
+.bpr-k { display: flex; align-items: center; gap: .625rem; margin: 0 0 .75rem 2.75rem; color: var(--fg); }
+.bpr-k::after { content: ""; flex: 1; border-top: var(--hair) dotted var(--line-strong); }
+.bpr-road, .bpg-s::before { position: absolute; border: 0 solid var(--line-strong); color: var(--mist); }
+.bpr-road, .bpg-s::before { inset: 0 auto -1.5rem calc(.875rem - var(--rd) / 2); width: var(--rd); border-inline-width: var(--hair); background: repeating-linear-gradient(currentColor 0 .5rem, transparent 0 .875rem) 50% 0 / var(--hair) 100% no-repeat; }
+.bpr-grp:last-child .bpr-road { bottom: 0; }
+.bpr-road.is-g { color: var(--signal); }
+.bpr-s { display: grid; row-gap: 1.25rem; }
+.bpr-s li { display: grid; grid-template-columns: 1.75rem 1fr; column-gap: 1rem; }
+.bpr-i { position: relative; grid-row: span 2; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; background: var(--paper); box-shadow: inset 0 0 0 var(--hair) var(--ink); }
+.bpr-h { display: block; margin-top: .1875rem; color: var(--fg); font-weight: 500; }
+.bpr-d { display: block; margin-top: .125rem; color: var(--fg-3); }
+.bpg { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.bpg .bpr-h { margin-top: 1rem; }
+.bpg :is(.bpr-h, .bpr-d) { padding-right: .75rem; }
+.bpg-s { position: relative; display: block; height: 12rem; }
+@media (min-width: 641px) {
+  .bpg-s::before { content: ""; inset: calc(50% - var(--rd) / 2) 0 auto; width: auto; height: var(--rd); border-width: var(--hair) 0; background: repeating-linear-gradient(90deg, currentColor 0 .5rem, transparent 0 .875rem) 0 50% / 100% var(--hair) no-repeat; }
+}
+.bpg-s::after { content: ""; position: absolute; left: 0; width: 2.75rem; top: calc(50% - var(--h) * 50%); height: calc(var(--h) * 100%); box-shadow: inset 0 0 0 var(--hair) var(--ink); background: repeating-linear-gradient(90deg, var(--line-strong) 0 var(--hair), transparent 0 .5rem), var(--paper); }
+.bpg-o .bpg-s::after { box-shadow: none; outline: var(--hair) dashed var(--line-strong); outline-offset: calc(-1 * var(--hair)); background: var(--paper); }
+.bpg-s .bp-n { position: absolute; z-index: 1; left: 0; top: 50%; width: 2.75rem; translate: 0 -50%; background: var(--paper); text-align: center; }
+@media (max-width: 640px) {
+  .bpc-p { grid-auto-flow: row; height: auto; background: none; }
+  .bpc-g, .bpc--2 .bpc-g { grid-template: none / 3.25rem 1fr; align-items: center; }
+  .bpc--2 .bpc-g { grid-template-columns: 1fr; margin-top: .5rem; }
+  .bpc-x { grid-area: auto / 1; justify-self: start; padding: 0; }
+  .bpc-c { grid-area: auto / -2; flex-direction: row-reverse; justify-content: flex-end; gap: .5rem; padding: .1875rem 0; border-left: var(--hair) solid var(--line-strong); }
+  .bpc-b { width: calc(var(--v) * (100% - 4rem)); height: .75rem; margin: 0; }
+  .bpg { grid-template-columns: 1fr; }
+  .bpg li { display: grid; grid-template: 1fr 1fr / 7rem 1fr; column-gap: 1rem; }
+  .bpg-s { grid-row: span 2; height: auto; min-height: 4rem; }
+  .bpg-s::before { content: ""; inset: 0 auto 0 calc(50% - var(--rd) / 2); }
+  .bpg-s::after { top: calc(50% - .875rem); height: 1.75rem; left: calc(50% - var(--h) * 50%); width: calc(var(--h) * 100%); }
+  .bpg-s .bp-n { left: calc(50% - 1.375rem); }
+  .bpg .bpr-h { margin: 0; align-self: end; } .bpg .bpr-d { margin: 0; align-self: start; }
+}
+@media (forced-colors: active) { .bpc-b, .bp-sw { forced-color-adjust: none; background: CanvasText; } }
 /* a3: em/i in Instrument Serif italic (no Inter italic ships), at Inter's x-height, on the line's own leading */
 .blog-article :is(p, li, figcaption) :is(em, i) { font-family: var(--serif); font-style: italic; font-size: 1.08em; line-height: 1; letter-spacing: 0; }
 .blog-article :is(blockquote, h2, h3) :is(em, i) { font-family: var(--serif); font-style: italic; font-size: 1em; }
@@ -441,6 +507,7 @@
   .blog-register > li, .blog-row { break-inside: avoid; }
   .blog-article figure { box-shadow: none; border: var(--hair) solid rgba(14, 21, 18, .4); }
   .blog-article figure img { mix-blend-mode: normal; }
+  .bp-fig * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .post-plate { break-inside: avoid; max-width: 70%; color: #000; }
   .post-plate .bp-art * { animation: none !important; }
   .lib-plate { max-width: 70%; break-inside: avoid; } .lib-plate * { animation: none !important; }

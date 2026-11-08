@@ -414,11 +414,8 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 .footer .disc { margin-top: clamp(2.5rem, 6vw, 4.5rem); padding-top: 1.75rem; border-top: var(--hair) solid var(--line); color: var(--fg-3); font-size: var(--fs-small); line-height: 1.6; display: grid; grid-template-columns: var(--fc); gap: 1rem var(--fg-gap); }
 .footer .disc p { max-width: 34em; }
 .footer .disc strong { color: var(--fg-2); font-weight: 500; }
-.footer .bottom { margin-top: 1.375rem; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .5rem 1.5rem; font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; color: var(--fg-3); }
-/* the ghost masthead (a4): its ink spans the column (2.896em of ink, measured), with a rem floor */
-.footer > .container { container-type: inline-size; }
-.footer .wordmark { font-family: var(--serif); font-size: clamp(5rem, 100cqi / 2.9, 60rem); line-height: 1; letter-spacing: -0.04em; color: var(--fg); opacity: .06; margin: clamp(.5rem, 2vw, 1.75rem) 0 -0.3em -.035em; user-select: none; white-space: nowrap; }
-.footer .wordmark::before { content: attr(data-word); content: attr(data-word) / ""; } /* drawn, not text: a logotype, not copy for a contrast audit */
+/* hc22: the page ends on the copyright and the clocks, with the footer's top padding under them (the 6% ghost masthead went) */
+.footer .bottom { margin-top: 1.375rem; padding-bottom: clamp(2.75rem, 5.5vw, 5rem); display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .5rem 1.5rem; font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; color: var(--fg-3); }
 @media (max-width: 600px) { .footer .disc { grid-template-columns: 1fr; } }
 @media (min-width: 601px) and (max-width: 860px) { .footer { --fc: minmax(0, 1.3fr) repeat(3, minmax(0, 1fr)); --fg-gap: 1.5rem; } } /* tablets: one row */
 @media (min-width: 601px) {
@@ -427,8 +424,8 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 }
 @media (min-width: 601px) and (max-width: 960px) { .footer .bottom > *, .footer .disc p { grid-column: span 2; } .footer .bottom .clocks { grid-column: 3 / -1; justify-self: end; justify-content: flex-end; } .footer .bottom > :not(.clocks) { white-space: normal; } } /* hc9: the copyright left, both clocks right, as at 961 px; under ~770 px the two clocks stack, right-aligned (their times in one column); cells wrap only under user text spacing (1.4.12) */
 @media (min-width: 961px) { .footer .bottom .clocks { grid-column: 4; justify-self: end; flex-wrap: nowrap; } .footer .disc p + p { grid-column: 2 / -1; } }
-@media (max-width: 600px) { .footer .top { grid-template-columns: 1fr 1fr; gap: 1.75rem 1.25rem; } .footer .top > :first-child { grid-column: 1 / -1; } }
-@media (max-width: 359px) { .footer .top { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: .875rem; } .footer ul li { font-size: var(--fs-small); } } /* 320: every label on one line; still 33 px per tap, rows 33 apart */ /* phones: the brand, then the links two by two */
+@media (max-width: 600px) { .footer .top { grid-template-columns: 1fr 1fr; gap: 1.75rem 1.25rem; } .footer .top > :first-child { display: none; } } /* phones: the links two by two; the bar above already carries the mark (hc22) */
+@media (max-width: 359px) { .footer .top { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: .875rem; } .footer ul li { font-size: var(--fs-small); } } /* 320: every label on one line; still 33 px per tap, rows 33 apart */
 
 /* ========================================================================== Advanced layer — story stage, kinetic type, loader, cursor, transitions … */
 
@@ -833,7 +830,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
   @page { margin: 16mm 15mm; }
   html, body { background: #fff !important; color: #000 !important; }
   .loader, .nav, .nav-menu, .skip, .story-idx, .story-motion, .story-labels, .story-static-mark,
-  canvas, .figure-stage, .article-side, .pager, .cta-band, .footer .top, .footer .wordmark,
+  canvas, .figure-stage, .article-side, .pager, .cta-band, .footer .top,
   .swarm-live, .chain, .desk, .grain::after,
   .swarm-live + .figure-cap, .chain + .figure-cap, .desk-cap { display: none !important; } /* (an instrument that does not print takes its caption) */
   * { animation: none !important; transition: none !important; box-shadow: none !important; text-shadow: none !important; }
@@ -849,7 +846,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
   h1, h2, h3, h4 { break-after: avoid; } figure, table, img, .card, .card-grid, .layer, .stats > div { break-inside: avoid; }
   a { color: inherit !important; }
   .article a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; word-break: break-all; color: #444; }
-  .footer { padding-top: 6mm !important; border-top: var(--hair) solid #bbb; } .footer .disc { font-size: 8pt; }
+  .footer { padding-top: 6mm !important; border-top: var(--hair) solid #bbb; } .footer .disc { font-size: 8pt; } .footer .bottom { padding-bottom: 0; }
   .footer-legal > summary { display: none !important; }
   /* figures that grow on scroll print grown, in their own colours */
   .timeline::after { transform: scaleX(var(--p, .68)) !important; }

@@ -6,8 +6,7 @@
   html.story-failed:not(.story-ready):not(.no-webgl) body[data-page="home"] .story-static-mark { animation-delay: 0s; } /* a failed download: at once */
 }
 @keyframes home-mark-net { to { opacity: 1; } } /* the plate at its own weight (its dots are drawn faint in the file) */
-/* (hc15) the loader's lock (site.css body.is-loading) hid a classic scrollbar: the page moved 7.5 px sideways at load.
-   home.js sets .sb-keep where a scrollbar takes width (integrate: a gutter kept for hidden ones stood as an empty strip) */
+/* (hc15) the loader's lock hid a classic scrollbar (the page moved 7.5 px at load): home.js sets .sb-keep where it takes width */
 html.sb-keep { scrollbar-gutter: stable; }
 
 
@@ -74,8 +73,7 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
   html.story-compact body[data-page="home"] .story .beat-0 .hero-sub { margin-top: .75rem; font-size: clamp(1rem, 2.6vw, 1.15rem); }
 }
 
-/* (hc15, the director) from 600 px the pinned exit opens on a longer standing chart: 4.9 scenes at overture.css's 70svh
-   (story.js EXIT_U 0.9, XHOLD 0.6; was 322svh, 4.6). Under 600 px the exit stays 0.6 (322svh, or 230svh below) */
+/* (hc15) from 600 px the pinned exit holds the chart longer: 4.9 scenes (story.js EXIT_U 0.9, XHOLD 0.6) */
 @media (scripting: enabled) and (min-width: 600px) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 343vh + var(--paper-slack, 0px)); height: calc(100svh + 343svh + var(--paper-slack, 0px)); }
 }
@@ -95,9 +93,7 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
 body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em 4.8em 9.4em minmax(0, 1fr) auto; }
 @media (max-width: 760px) { body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em minmax(0, 1fr) auto; } }
 
-/* the chain folds to records #4f23-#4f26 at every width (home.js; hc14, the director: phones only until then, and at 1440
-   the eight records ran ~1.4 screens, at 3840 a ~1,100 px slab beside a two-line head); the control, an edit or 'Change a
-   record' opens all eight */
+/* the chain folds to records #4f23-#4f26 at every width (home.js, hc14); the control, an edit or 'Change a record' opens all eight */
 body[data-page="home"] #governance .chain.is-folded .chain-list > li:nth-child(n + 5) { display: none; }
 body[data-page="home"] #governance .chain-more { display: flex; align-items: center; gap: .625rem; width: calc(100% - 1.5rem); min-height: 2.75rem; margin: 0 .75rem .5rem; padding: 0 .75rem; border: var(--hair) dashed var(--line-strong); border-radius: .125rem; font: 500 var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; color: var(--fg); } /* the site's button voice (a3) */
 body[data-page="home"] #governance .chain-more::before { content: "+"; content: "+" / ""; font-size: .9rem; color: var(--accent); }
@@ -127,8 +123,7 @@ body[data-page="home"] main > .story + .section { padding-top: clamp(1.75rem, 3.
   body[data-page="home"] #governance .chain-list [contenteditable] { font-size: inherit; }
   body[data-page="home"] #governance .chain-list > li { row-gap: var(--hair); }
 }
-/* touch (hc3): the fields keep the record's size at rest, as on phones and desktops, and take 16 px only while edited (no
-   zoom on focus). Tablets rested at 16 px beside 11 px ids, and "RECONCILED" broke in its 103 px column at 761-960 */
+/* touch (hc3): the fields keep the record's size at rest and take 16 px only while edited (no zoom on focus) */
 @media (pointer: coarse) {
   body[data-page="home"] #governance .chain-list [contenteditable] { font-size: inherit; }
   body[data-page="home"] #governance .chain-list [contenteditable]:focus { font-size: 1rem; }
@@ -150,8 +145,7 @@ body[data-page="home"] main .figure-cap { padding-left: 0; }
 /* the first screen: the CEO's head and line, two buttons, then v2's four figures (overture.css) */
 body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(1.625rem, 3.2vh, 2.25rem); }
 
-/* §01 the six classes' register: one block per cell (the ring, the serif name, the status under it), the live one first
-   under a green rule; one column on a phone. Markup: div.card-grid.card-grid--3.lc-reg > .card > .n.n--ring + h3.h4 */
+/* §01 the six classes' register: ring, serif name, status; the live one first under a green rule; one column on a phone */
 .lc-reg { grid-template-columns: repeat(3, minmax(0, 1fr)); border: 0; border-top: var(--hair) solid var(--line-strong); }
 .lc-reg > .card { display: grid; grid-template-columns: 1.75rem minmax(0, 1fr); grid-template-rows: auto auto; column-gap: .875rem; row-gap: .25rem; align-content: start; align-items: start; padding: 1.125rem clamp(1.125rem, 2.2vw, 2rem) 1.375rem; border: 0; border-bottom: var(--hair) solid var(--line); border-radius: 0; background: none; }
 .lc-reg > .card:nth-child(3n + 1) { padding-left: 0; }
@@ -238,14 +232,13 @@ body[data-page="home"] #research .research-card .link-arrow { font: 400 var(--fs
 /* hc1: the key names the four costs once; the bar carries none (as Proof's Fig. 3.1) */
 body[data-page="home"] #economics .cost-row:first-child { padding-top: 1.5rem; }
 @container cost (max-width: 860px) { body[data-page="home"] #economics .cost-row:first-child { padding-top: 0; } body[data-page="home"] #economics .cost-row:first-child .cost-bar { margin-top: .875rem; } }
-/* the chapters after the overture are laid out near the viewport only; each stand-in is its measured content height for the
-   width band (padding and the hairline border on top: hc1 measures without the border), so the page is as long at load as drawn. The footer is always drawn (#disclosures lands) */
+/* the chapters after the overture are laid out near the viewport only; each stand-in is its measured height for the width
+   band (with padding and the top hairline), so the page is as long at load as drawn. The footer is always drawn */
 body[data-page="home"] main > .story ~ section { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
 body[data-page="home"] #lifecycles { --cis: 38.6875rem; } body[data-page="home"] #lc01 { --cis: 64.5rem; }
 body[data-page="home"] #economics { --cis: 42.046875rem; } body[data-page="home"] #governance { --cis: 44.25rem; }
 body[data-page="home"] #research { --cis: 37.0625rem; } body[data-page="home"] .cta-band { --cis: 6.5rem; }
-/* 600-760: the 700 heights; 761-960: the 820 heights; 961-1099 the 1024 heights, 1100-1359 the 1280 heights, 1360-1679 the
-   1440 heights, from 1680 (rem above 1920, so 3840 is 1920 doubled) the 1920 heights (measured: notes/home.md) */
+/* the heights at 700, 820, 1024, 1280, 1440 and 1920 (rem: 3840 is 1920 doubled), measured: notes/home.md */
 @media (min-width: 600px) {
   body[data-page="home"] #lifecycles { --cis: 36.71875rem; } body[data-page="home"] #lc01 { --cis: 54.359375rem; }
   body[data-page="home"] #economics { --cis: 28.921875rem; } body[data-page="home"] #governance { --cis: 46.609375rem; }
@@ -348,20 +341,16 @@ body[data-page="home"] .story-lab.floor .u { color: rgba(245, 242, 236, .9); }
    it, overture.css); never one line mixing Inter and mono */
 body[data-page="home"] .story-lab.floor { line-height: 1.3; }
 body[data-page="home"] .story-lab.floor span { display: block; }
-/* hc12 (the director): the hedge over the floor's tag, as §03, Proof and note 09 set it: "Above the floor" at the floor's
-   tone over "Exact value not published" a step under; right edges with the floor's tag, read from the left where the
-   screen's edge holds it (story.js: is-flush); away while the inspector shows, as the caption it replaces was */
+/* hc12: the hedge over the floor's tag, as Proof sets it; right edges with the tag (story.js: is-flush); away under the inspector */
 body[data-page="home"] .story-lab.hedge { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; text-align: right; color: rgba(245, 242, 236, .6); }
 body[data-page="home"] .story-lab.hedge span { display: block; }
 body[data-page="home"] .story-lab.hedge span:first-child { color: rgba(245, 242, 236, .74); }
 body[data-page="home"] .story-lab:is(.hedge, .floor).is-flush { text-align: left; } /* one left edge for the four lines, as Proof's gutter */
 body[data-page="home"] .story-labels.has-insp .story-lab.hedge { opacity: 0 !important; }
-/* hc17: with the paper up the days' numerals take the caption's step; the box keeps its line height: nothing moves.
-   (integrate hc20: upright tablets' days follow overture.css's data step, with "10 bps": hc17's one-step rule went) */
+/* hc17: with the paper up the days' numerals take the caption's step; the box keeps its line height: nothing moves */
 body[data-page="home"] .story.is-paper-up .story-lab.day { line-height: 1.25em; }
 body[data-page="home"] .story.is-paper-up .story-lab.day .k { font-size: var(--fs-small); }
-/* §06 on tablets (761-960): the three notes in one row, as on desktop; a still wider than its cell keeps its shape (the
-   plate's preserveAspectRatio, xMinYMid: hc3 inlines the three so their green points redraw on hover and focus) */
+/* §06 on tablets (761-960): the three notes in one row, as on desktop; each still keeps its shape (xMinYMid) */
 @media (min-width: 761px) and (max-width: 960px) {
   body[data-page="home"] #research .card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   body[data-page="home"] #research .card-grid--3 > :last-child:nth-child(odd) { grid-column: auto; }
@@ -382,9 +371,7 @@ body[data-page="home"] #governance :is(.chain-try, .chain-restore) svg path { ve
 body[data-page="home"] #governance .chain-row .ch-head > .ch-link { margin-top: 1.5rem; }
 
 /* ========== hill climb hc13r ========== */
-/* HOME-1: the overture lands on the proof. Scene 4 carries §03's parts (the band left the page): the count and its hedge as
-   the scene's lede (the lede step S2 and S3 use), the way to Proof under it, the chart's key under its day numbers
-   (story.js; the plate's own text without WebGL), the record and its no-JS list */
+/* HOME-1: scene 4 lands on the proof: the count and its hedge as its lede, the way to Proof under it, the chart's key */
 body[data-page="home"] .beat-4 .beat-more { margin-top: clamp(1.125rem, 2.4vh, 1.625rem); opacity: var(--bo, 1); }
 body[data-page="home"] .beat-4.is-bo0 .beat-more { visibility: hidden; }
 /* where the lede gives way (a short screen), the way on goes with it (story.js takes the lede's link out of the tab order) */
@@ -404,8 +391,7 @@ html.story-short body[data-page="home"] .story-lab.key { display: none; } /* sho
 }
 
 /* ========== hill climb hc14 ========== */
-/* the director 4.1: on the way out of the overture scene 4's lede and its link lift .75rem as they leave (story.js --bl,
-   0 -> 1 with --bo 1 -> 0 over 0.25 s), before the hand-off's axis or paper reaches them; the headline stays */
+/* hc14: leaving scene 4, its lede and link lift .75rem (story.js --bl) before the hand-off reaches them */
 body[data-page="home"] .beat-4 :is(.body-lg, .beat-more) { translate: 0 calc(var(--bl, 0) * -.75rem); }
 /* §04: with scripting on, the chain holds its live height before chain.js runs (the act's button and the foot's live line
    kept, unseen), so nothing under it moves when the instrument starts (verify_budget home_landing) */
@@ -418,3 +404,26 @@ body[data-page="home"] .beat-4 :is(.body-lg, .beat-more) { translate: 0 calc(var
 /* ========== hill climb hc18 ========== */
 /* forced colours on a light Canvas: the overture's canvases are not forced, so their light-on-ink pixels print inverted */
 @media (forced-colors: active) and (prefers-color-scheme: light) { .story-gl, .story-2d { filter: invert(1) hue-rotate(180deg); } }
+
+/* ========== hill climb hc22 ========== */
+/* the director 4.1: the four figures in the site's stat grammar (the lab's counters, Company's): a serif numeral over an
+   Inter label at the small step, no mono caps; the dash is ink (green is the live dot's) */
+body[data-page="home"] .hero-stats span { margin-top: .5rem; font: 400 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .72); }
+body[data-page="home"] .hero-stats > div:last-child span { text-wrap: balance; }
+body[data-page="home"] .hero-stats .live { position: relative; top: -.62em; vertical-align: baseline; } /* raised as before, the line box not */
+@media (min-width: 961px) and (min-aspect-ratio: 23/20) { body[data-page="home"] .hero-stats { grid-template-columns: auto auto auto minmax(11.5rem, 1fr); column-gap: 2rem; max-width: min(56%, 44rem); } } /* a short label keeps its line, the live one takes two */
+@media (min-width: 600px) and (max-aspect-ratio: 23/20) { body[data-page="home"] .hero-stats { grid-template-columns: 1fr 1fr .8fr 1.6fr; column-gap: 1.5rem; } }
+/* phones: all four in two tiers, the three figures, then Lifecycle 01 on its own line (tablets keep the row: story.js) */
+@media (max-width: 599.98px) {
+  body[data-page="home"] .hero-stats { grid-template-columns: repeat(3, 1fr); gap: .625rem 1rem; }
+  body[data-page="home"] .hero-stats > div:last-child { grid-column: 1 / -1; display: flex; align-items: baseline; gap: .625rem; }
+  body[data-page="home"] .hero-stats b { font-size: 1.45rem; }
+  body[data-page="home"] .hero-stats span { margin-top: .3125rem; }
+  body[data-page="home"] .hero-stats > div:last-child span { margin-top: 0; }
+}
+@media (scripting: enabled) and (max-width: 599.98px) and (min-height: 740px) {
+  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-stats { display: grid; margin-top: .75rem; }
+  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-stats > div:not(:last-child) { display: block; }
+  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-stats b { font: 400 1.45rem/1 var(--serif); letter-spacing: -0.02em; }
+  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-stats .live { width: .375rem; height: .375rem; margin-left: .5rem; vertical-align: baseline; }
+}
