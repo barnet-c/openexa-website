@@ -879,7 +879,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
   .pm-agent, .pm-up, .pm-down, .pm-ring, .pm-rring, .pm-spur, .pm-x, .pm-cross, .pm-step, .pm-settle, .pm-floor,
   .tp-rec, .tp-prop, .tp-pass, .tp-set, .tp-rj, .tp-out, .tp-l-prop, .tp-l-set, .tp-l-rj, .lf-w, .lf-face, .bp-art [pathLength], .pc, .pb, .pd, .pk, .po, .pt, .pg, .pq,
   .dr, .dm, .nf-rail, .nf-tok, .nf-s, .nf-keys li, .nf-rj, .nf-spur, .nf-fall, .nf-out, .dk-rec, .dl-rcpt, .lr-trace, .fl, .crew-bio, .v, .crew-stats b, .arch-sum, .is-tick dt,
-  .tr-pl, .tr-rj, .tr-rl, .tr-oc, .tr-sg, .tr-se, .pf-mk),
+  .tr-pl, .tr-rj, .tr-rl, .tr-oc, .tr-sg, .tr-se, .pf-mk, .pp-ring, .pp-gt, .pp-lt, .pp-r),
 .is-offscreen :is(.chain-seg, .layers, .is-tick)::before,
 .is-offscreen :is(.chain-seg, .lt-node, .pf-floor, .layer, .is-ping, .tr-sd, .pf-trail)::after { animation-play-state: paused !important; }
 
@@ -1541,7 +1541,7 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .desk-legend { font-size: var(--mono-tick); letter-spacing: .12em; }
 .desk-legend i.dk-nav { width: 1rem; height: var(--hair); background: repeating-linear-gradient(90deg, var(--khaki) 0 calc(3 * var(--hair)), transparent calc(3 * var(--hair)) .375rem); }
 .desk-legend .desk-axis { margin-left: auto; letter-spacing: 0; text-transform: none; font-size: var(--mono-xs); color: var(--fg-2); } /* the hedge at 11 px in the hedge tone (r3-a11y m2); untracked, it is no wider than the 10 px tracked line, so it keeps the legend's row at 1440 */
-.desk-chart canvas { height: clamp(16.25rem, 26vw, 22.5rem); }
+.desk-chart canvas { height: clamp(16.25rem, min(26vw, 100vh - 40rem), 22.5rem); } /* hc19: gives way in a short window */
 .desk-legend i.band { height: .4375rem; border: 0; border-top: var(--hair) solid var(--accent); background: linear-gradient(180deg, rgba(79, 203, 147, .3), rgba(79, 203, 147, 0)); }
 .desk-legend i.ring { width: .5625rem; height: .5625rem; border-radius: 50%; border: .09375rem solid var(--accent); background: none; }
 .desk-legend i.sq { width: .4375rem; height: .4375rem; border-radius: .0625rem; background: var(--accent); }
@@ -1588,23 +1588,24 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
 .desk-ledger { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 0 1.125rem; padding: .875rem 0 1rem 1.25rem; border-top: var(--hair) solid var(--line); }
 .dl-k { margin: 0 0 .1875rem; font: 500 var(--mono-tick)/1.5 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg); }
 .dl-k span { display: block; font-weight: 400; color: var(--fg-3); }
-.desk .desk-log { position: relative; display: flex; justify-content: flex-end; gap: 0; min-height: 3rem; margin: 0; padding: 0 1.25rem 0 0; overflow: hidden; font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: .12em; color: var(--fg-2); -webkit-mask-image: linear-gradient(90deg, transparent, #000 3.5rem); mask-image: linear-gradient(90deg, transparent, #000 3.5rem); }
-.desk .desk-log li { flex: none; display: block; width: 12em; padding: 0; border: 0; color: var(--fg-2); animation: none; } /* em: the record follows the 11 px label (a1) */
+.desk .desk-log { position: relative; display: flex; justify-content: flex-end; gap: 0; min-height: 3rem; margin: 0; padding: 0 1.25rem 0 0; overflow: hidden; font: 500 var(--fs-small)/1.4 var(--mono); letter-spacing: .04em; color: var(--fg-2); -webkit-mask-image: linear-gradient(90deg, transparent, #000 3.5rem); mask-image: linear-gradient(90deg, transparent, #000 3.5rem); }
+.desk .desk-log li { flex: none; display: block; width: 12em; padding: 0; border: 0; color: var(--fg-2); animation: none; } /* em: the record follows the strip's type (hc19: the data step, 14 px) */
+@media (max-width: 599.98px) { .desk .desk-log { font-size: var(--fs-label); } } /* phones: the 12 px step holds three records (13 px, two) */
 .desk .desk-log li:first-child { color: var(--fg-2); }
 .desk .desk-log li:last-child { width: 11em; }
 /* the records the strip cannot show are counted on a line of their own above it, clear of the fade */
 .desk .desk-log.has-more { padding-top: 1.375rem; -webkit-mask-image: linear-gradient(#000, #000), linear-gradient(90deg, transparent, #000 3.5rem); mask-image: linear-gradient(#000, #000), linear-gradient(90deg, transparent, #000 3.5rem); -webkit-mask-size: 100% 1.375rem, 100% 100%; mask-size: 100% 1.375rem, 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
 .desk .desk-log li.dk-more { position: absolute; left: 0; top: 0; width: auto; font-weight: 400; color: var(--fg-3); white-space: nowrap; }
-.dk-ev { display: block; white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: .08em; }
+.dk-ev { display: block; white-space: nowrap; font-variant-numeric: tabular-nums; }
 /* one ink for both sides (the regime is not a colour) */
-.dk-ev b { font-weight: 500; letter-spacing: .08em; color: var(--fg); }
+.dk-ev b { font-weight: 500; color: var(--fg); }
 .dk-side { display: inline-block; width: .4375rem; height: .375rem; margin: 0 .4375rem .0625rem 0; vertical-align: middle; background: var(--fg); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .dk-rec.is-r .dk-side { clip-path: polygon(0 0, 100% 0, 50% 100%); }
 @media (forced-colors: active) { .dk-side { forced-color-adjust: none; background: CanvasText; } }
 .dk-line { position: relative; display: block; height: 1rem; margin-top: .5rem; }
 .dk-blk { position: absolute; left: 0; top: calc(2 * var(--hair)); width: .75rem; height: .75rem; background: var(--paper); }
 .dk-link { position: absolute; left: .75rem; right: 0; top: .5rem; height: var(--hair); background: rgba(245, 242, 236, .32); }
-.dk-h { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); padding: 0 .3125rem; background: var(--desk-bg); font: var(--mono-tick)/1.2 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
+.dk-h { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); padding: 0 .3125rem; background: var(--desk-bg); font: 1em/1.2 var(--mono); color: var(--fg-3); }
 .dk-h:empty { display: none; }
 .desk .desk-log li:last-child .dk-link { right: 30%; background: repeating-linear-gradient(90deg, rgba(245, 242, 236, .32) 0 calc(3 * var(--hair)), transparent calc(3 * var(--hair)) .4375rem); }
 .dk-rec.is-new { animation: dk-in .45s var(--ease) 1 both; }

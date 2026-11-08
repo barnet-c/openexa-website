@@ -63,9 +63,9 @@
   [data-page="company"] .team-head > .crew-stats span { white-space: nowrap; }
 }
 [data-page="company"] .crew-stats > div:last-child { padding-right: 0; }
-/* the line names seven firms, each kept whole (no-break spaces in build_team.py): 40ch, not the head's 36, sets them in
-   three lines, "… Goldman Sachs, / Bank of America and JPMorgan Chase." */
-[data-page="company"] .team-head > .ch-line { max-width: 40ch; }
+/* the line names seven firms, each kept whole (no-break spaces in build_team.py): 42ch, not the head's 36, sets them in
+   three lines, "… at Google, / … Goldman Sachs, / Bank of America and JPMorgan Chase." (hc19: 40ch made four) */
+[data-page="company"] .team-head > .ch-line { max-width: 42ch; }
 :is([data-page="company"], [data-page="access"]) .keep { display: inline-block; }
 
 /* ---------------------------------------------------------------- Company §01: the story as a register */

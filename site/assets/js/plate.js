@@ -106,3 +106,14 @@
   fig.classList.add('is-live');
   show(0);
 })();
+
+/* Platform §03 (hc19, the director's 4.2): the pipeline acts once by the site's rule (site.js OXA.actOnce), as Trust §02 and
+   Proof §01: well in view, .is-run plays one pass in CSS (platform.css). Whole at rest without JavaScript, under reduced
+   motion and on phones (the drawing is the list there, never in view). */
+(function () {
+  'use strict';
+  const pipe = document.querySelector('#pipeline .pipe-fig'), OXA = window.OXA = window.OXA || {};
+  if (!pipe) return;
+  const run = () => pipe.classList.add('is-run');
+  if (OXA.actOnce) OXA.actOnce(pipe, run); else (OXA.q = OXA.q || []).push([pipe, run]);
+})();

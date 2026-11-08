@@ -61,6 +61,11 @@ Changes from the source, deliberately:
     between the story and the team, so the page alternates dark, paper-2, dark, paper, then the dark close, and reads
     why, how, who, act. The team is chapter 03 (data-n), and the section this script writes ends at its own marker,
     <!-- /THE TEAM -->, right after it (it ran to <!-- 04 FOUR CONSTANTS -->). Words, order and markup otherwise unchanged.
+  - 2026-11-08 (hill climb hc19, design director 4.6): the line under the head keeps "at Google" together (a no-break
+    space), so it never ends a line on "at" (it did at 1440 and 1920). The four card lines take the same care (tie():
+    a short word is tied to the word after it, so "90% of / Microsoft's" and "Director of /
+    Computational" no longer happen at any width, and a short last pair stays together, so no line ends on one word
+    alone). Words unchanged.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -108,6 +113,13 @@ def curly(s):  # typography: apostrophes as U+2019 (VOICE §7); no quotation mar
     return s.replace("'", "’")
 def whole(s):  # 2026-10-31 (lab company-editorial): a card line never breaks inside a hyphenated compound ("capital-|markets")
     return re.sub(r"\w+(?:-\w+)+", lambda m: f'<span class="nowrap">{m.group(0)}</span>', s)
+WEAK = r"(?:a|an|and|as|at|by|for|from|in|its|of|on|or|the|to|with|&amp;)"
+def tie(s):  # 2026-11-08 (hc19): a card line never ends a line on a short word ("90% of / Microsoft's"),
+    s = re.sub(rf"(?<![\w;])({WEAK}) (?=\S)", r"\1&nbsp;", s, flags=re.I)  # and never ends on one word alone
+    s = s.replace("Big Tech", "Big&nbsp;Tech")  # a name, never "Big / Tech"
+    head, _, last = s.rpartition(" ")
+    unit = (head.rpartition(" ")[2] + " " + last).replace("&nbsp;", " ").replace("&amp;", "&")
+    return f"{head}&nbsp;{last}" if head and len(unit) <= 24 else s  # 24: a longer tied unit leaves a short line above it on a phone
 # (slug, display name, source name, title, short line, v1 photo or None, extra links)
 TEAM = [
     ("ajit-dubey", "Ajit K Dubey", "Ajit K Dubey", "Founder · CEO", "Founder and CEO of OpenEXA. Big Tech and capital-markets veteran, building the foundational infrastructure for agentic lifecycles.", "ajit-dubey", []),
@@ -226,7 +238,7 @@ def rows(people, line):
     for i, (slug, name, src, title, short, v1, extra) in enumerate(people):
         where, h = portrait(slug, src, v1); report.append((name, where, h))
         l = links(src, extra, name)
-        card = f'<p>{whole(H.escape(curly(short), quote=False))}</p>' if line else ''
+        card = f'<p>{whole(tie(H.escape(curly(short), quote=False)))}</p>' if line else ''
         items.append(f'''          <li id="{slug}" data-reveal style="--d:{(i % 3) * 40}ms"><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{slug}-v2x.webp" srcset="{srcset(slug)}" sizes="{SIZES if line else SIZES_ADV}" alt="" width="560" height="560" loading="lazy" decoding="async"></div><div class="who"><h3>{H.escape(name)}</h3><div class="role">{H.escape(title)}</div></div><div class="what">{card}<details class="crew-more"><summary><span class="crew-more-l">Bio</span><span class="sr-only"> of {H.escape(name)}</span></summary><div class="crew-bio">{bio(src)}</div></details>{f'<div class="links">{l}</div>' if l else ''}</div></li>''')
     return "\n".join(items), report
 
@@ -237,7 +249,7 @@ SECTION = f'''    <!-- 03 THE TEAM -->
       <div class="container">
         <div class="ch-head ch-spread team-head">
           <h2 class="display-2 ch-title" data-reveal data-split>Systems people and market people, under one roof.</h2>
-          <p class="ch-line" data-reveal style="--d:80ms">Between them, they have built and led work at Google, Microsoft, Amazon, PayPal, Goldman&nbsp;Sachs, Bank&nbsp;of&nbsp;America and JPMorgan&nbsp;Chase.</p>
+          <p class="ch-line" data-reveal style="--d:80ms">Between them, they have built and led work at&nbsp;Google, Microsoft, Amazon, PayPal, Goldman&nbsp;Sachs, Bank&nbsp;of&nbsp;America and JPMorgan&nbsp;Chase.</p>
           <div class="crew-stats" data-reveal style="--d:140ms">
             <div><b>{len(TEAM)}</b><span>Team members</span></div>
             <div><b>{len(ADVISORS)}</b><span>Advisors</span></div>

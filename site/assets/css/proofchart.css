@@ -221,7 +221,7 @@
 .cost-blk { display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--rows), var(--bw)); grid-auto-columns: var(--bw); gap: var(--g); width: 100%; }
 .cost-blk i { background: var(--c); box-shadow: inset 0 0 0 var(--hair) rgba(14, 21, 18, .55); border-radius: .0625rem; }
 .cost-blk .is-part { background: linear-gradient(90deg, var(--c) var(--f), transparent 0); }
-.cost-blk .is-rest { background: none; box-shadow: inset 0 0 0 var(--hair) var(--c); }
+.cost-blk .is-rest { background: none; box-shadow: inset 0 0 0 var(--hair) color-mix(in srgb, var(--c) 70%, var(--ink)); } /* hc19: 3.9:1 */
 .cost-blk .is-gone { background: none; box-shadow: none; border: var(--hair) dashed rgba(14, 21, 18, .5); }
 .cost-rows .cost-blk i { transition: opacity var(--dur-move) linear, transform var(--dur-move) var(--ease); } /* hc5: each block's delay is proof.js's (one reveal <= 600 ms) */
 .cost-rows.will-reveal:not(.is-in) .cost-blk i { opacity: 0; transform: scale(.35); }
@@ -245,8 +245,6 @@
 .pf-ck dd { margin: .15em 0 0 1.28em; color: var(--fg-3); } /* in em: the swatch and the indent grow with the type at 4K */
 @media (max-width: 900px) { .pf-ck { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
-/* hc7 (proof's request, applied by integrate): the three documents' old drawing (.pf-docs, .pf-doc and its hash
-   line, Proof §02 until hc6) is gone; proof.css draws §01's trail whole */
 /* hc11 (HC11 item 2; proof's request, applied by integrate): the ten-session chart's caption reads the session in hand
    (proof.js), on Home §03 and the Proof hero. The caption and a hidden copy of its longest record share one grid cell, so
    the readout moves nothing */

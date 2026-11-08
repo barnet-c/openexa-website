@@ -22,6 +22,22 @@
 }
 /* the same three gates on phones (the plate's list): the same register */
 .lane-v--pipe :is(.lk, .lk-who), .lane-v.lane-v--pipe > .lv-bound, .lane-v.lane-v--pipe > .lv-rec > span { font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; }
+/* hc19: §03 acts once (plate.js, actOnce: .is-run): the ring leaves its place, rides into Settle, each gate lights as it
+   passes (--at: where --ease-move crosses it) and writes its record; whole at rest, no fill held (notes/platform.md, hc19) */
+#pipeline .pp-r { transform-box: fill-box; transform-origin: center; }
+#pipeline .ln3.pp-lt { --lt-w: var(--stroke); }
+@media screen and (prefers-reduced-motion: no-preference) {
+  #pipeline .pp-g1 { --at: .52s; } #pipeline .pp-g2 { --at: .88s; } #pipeline .pp-g3 { --at: 1.54s; } #pipeline .pp-ok { --at: 1.8s; }
+  #pipeline .is-run .pp-ring { animation: pp-ride 1.6s var(--ease-move) .2s, pp-show 2.4s linear; }
+  #pipeline .is-run .pp-gt { animation: pp-lit 1s var(--ease-out) calc(var(--at) - .15s); }
+  #pipeline .is-run .pp-lt { animation: pp-on 1s var(--ease-out) calc(var(--at) - .15s); }
+  #pipeline .is-run .pp-r { animation: pl-pop .35s var(--ease-out) calc(var(--at) + .08s) backwards, pp-clear .2s linear; }
+}
+@keyframes pp-ride { from { transform: translateX(-435px); } to { transform: translateX(374px); } }
+@keyframes pp-show { 8%, 72%, 82% { opacity: 0; } 15%, 60% { opacity: 1; } }
+@keyframes pp-lit { 20%, 55% { color: var(--accent); } }
+@keyframes pp-on { 20%, 55% { opacity: 1; stroke-width: var(--lt-w, var(--stroke-2)); } }
+@keyframes pp-clear { from { opacity: .86; transform: none; } to { opacity: 0; transform: none; } }
 
 /* PLATFORM */
 
@@ -36,6 +52,9 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
   body[data-page="platform"] .page-hero--plate > .hero-plate--stack { grid-column: 7 / -1; }
 }
 .hero-plate--stack .hp-lab--n, .hero-plate--stack .hp-lab--fl { color: var(--fg-3); }
+/* hc19: the layer numerals at the explorer's step (0,2,0: the 15rem container rule still wins); §06's from 961 px */
+.hero-plate--stack .hp-lab--n { font-size: var(--fs-small); letter-spacing: 0; }
+@media (min-width: 961px) { #marketplace .hp-lab--n { font-size: var(--fs-small); letter-spacing: 0; } }
 .hero-plate--stack .hp-lab--side { color: var(--fg-2); }
 
 .hero-plate--stack .hp-g2 { fill: none; stroke: var(--accent); stroke-opacity: .3; stroke-width: var(--stroke); }
@@ -138,7 +157,7 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 /* LIFECYCLES */
 
 .desk .dl-rcpt { color: var(--fg); }
-.desk .dl-hx { font: 500 .84em/1 var(--mono); letter-spacing: .04em; color: var(--accent); white-space: nowrap; }
+.desk .dl-hx { font: 500 1em/1 var(--mono); letter-spacing: .04em; color: var(--accent); white-space: nowrap; } /* hc19: the strip's step */
 .desk .dk-rec.is-followed .dk-h { color: var(--accent); }
 .desk .dk-rec.is-linked .dk-h { color: var(--fg); }
 @media (prefers-reduced-motion: no-preference) { .desk .dl-rcpt { animation: pl-fade .45s var(--ease) both; } }
@@ -387,6 +406,9 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
   body[data-page="platform"] #swarm .swarm-controls output::before { content: none; }
 }
 
+/* hc19 (HC19 4.3): §02's head on one line from 1280 px, so it shares a 1440 x 900 screen with the lab */
+@media (min-width: 1280px) { body[data-page="platform"] #swarm .ch-title { max-width: none; } }
+
 .desk .desk-stats .dk-u { display: block; margin: calc(2 * var(--hair)) 0 0; }
 .desk .desk-stats .dk-sep { display: none; }
 
@@ -566,7 +588,8 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
 }
 
 body[data-page="lifecycles"] main > :is(section.section, .cta-band) { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 40rem); }
-/* the chapters' drawn heights (hc13r, cis_lc.py, 320-3840): phones, <= 360, tablets, then from 961 px */
+/* the chapters' drawn heights (hc13r, cis_lc.py, 320-3840): phones, <= 360, tablets, then from 961 px (hc19: the desk's
+   chart gives way in short windows) */
 #test { --cis: 38.125rem; } #lc01 { --cis: 55rem; } #desk { --cis: 79rem; } #classes { --cis: 49rem; }
 body[data-page="lifecycles"] main > .cta-band { --cis: 8.75rem; }
 @media (max-width: 360px) { #classes { --cis: 66rem; } body[data-page="lifecycles"] main > .cta-band { --cis: 12rem; } }
@@ -575,7 +598,7 @@ body[data-page="lifecycles"] main > .cta-band { --cis: 8.75rem; }
   body[data-page="lifecycles"] main > .cta-band { --cis: 9.25rem; }
 }
 @media (min-width: 961px) {
-  #test { --cis: 27.75rem; } #lc01 { --cis: 49.75rem; } #desk { --cis: clamp(54.5rem, 41.25rem + 22.3vw, 61.75rem); } #classes { --cis: clamp(37.25rem, 25.25rem + 25.4vw, 55.75rem); }
+  #test { --cis: 27.75rem; } #lc01 { --cis: 49.75rem; } #desk { --cis: calc(clamp(54.5rem, 41.25rem + 22.3vw, 61.75rem) - .8 * (clamp(16.25rem, 26vw, 22.5rem) - clamp(16.25rem, min(26vw, 100vh - 40rem), 22.5rem))); } #classes { --cis: clamp(37.25rem, 25.25rem + 25.4vw, 55.75rem); }
   body[data-page="lifecycles"] main > .cta-band { --cis: clamp(9.75rem, 3.125rem + 10.9vw, 13rem); }
 }
 @media (min-width: 1100px) { #test { --cis: clamp(24.75rem, 12rem + 18.66vw, 31.5rem); } }

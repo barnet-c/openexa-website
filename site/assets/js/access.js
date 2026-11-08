@@ -38,6 +38,8 @@
   // the ask's last word keeps the one before it (no lone "traits." at 768). Display only: the draft keeps plain spaces
   const SUBJ = 'OpenEXA introduction\u00a0· ';
   const tail = s => s.replace(/ (\S+)$/, '\u00a0$1');
+  // hc19: nor on a short word (display only)
+  const tie = s => s.replace(/\b(a|an|and|at|for|in|of|on|or|the|to) /gi, '$1\u00a0');
 
   /* ---------------- forms (no backend: mailto handoff or configured endpoint) ---------------- */
   $$('form[data-access]').forEach(form => {
@@ -106,9 +108,9 @@
       };
       letterBody.textContent = '';
       t('Hello OpenEXA,\n\nI am '); slot('name', d.name, 'your name');
-      if (d.role) { t(', '); slot('role', d.role); } else slot('role', '', ', your role', true);
-      if (d.organization) { t(' at '); slot('organization', d.organization); } else slot('organization', '', ' at your organization', true);
-      t('. I\u00a0would like to '); slot('ask', tail(ASK[d.interest] || `talk about ${d.interest}.`)); // display only: "I" keeps "would" (the draft keeps its plain space)
+      if (d.role) { t(', '); slot('role', d.role); } else slot('role', '', ', your\u00a0role', true);
+      if (d.organization) { t(' at\u00a0'); slot('organization', d.organization); } else slot('organization', '', ' at\u00a0your\u00a0organization', true);
+      t('. I\u00a0would like to\u00a0'); slot('ask', tail(tie(ASK[d.interest] || `talk about ${d.interest}.`))); // display only: "I" keeps "would" (the draft keeps its plain space)
       t('\n\n'); slot('message', d.message, 'Your message, if you add one', true);
       t('\n\n');
       if (d.assets) { t('Assets we are considering: '); slot('assets', d.assets); t('.'); } else slot('assets', '', 'Assets we are considering: a\u00a0range', true);

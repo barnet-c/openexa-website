@@ -1,7 +1,7 @@
 {
  "access.html": {
-  "date": "2026-11-03",
-  "sha": "50c0e8f0df963c8d"
+  "date": "2026-11-08",
+  "sha": "61fc9933242366b2"
  },
  "blog/an-optimization-algorithm-for-sparse-mean-reverting-portfolio-selection.html": {
   "date": "2026-11-06",
@@ -124,8 +124,8 @@
   "sha": "bd7f6f99874a6fad"
  },
  "company.html": {
-  "date": "2026-11-07",
-  "sha": "1dae018ec0a243c7"
+  "date": "2026-11-08",
+  "sha": "320df9b805291691"
  },
  "evidence.html": {
   "date": "2026-11-08",
@@ -141,7 +141,7 @@
  },
  "platform.html": {
   "date": "2026-11-08",
-  "sha": "9908085eb74516e3"
+  "sha": "1e8f37de4c3c4ac2"
  },
  "research.html": {
   "date": "2026-11-06",

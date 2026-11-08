@@ -51,7 +51,6 @@
 .story-num b i { height: 1em; }
 .story-num span { height: 1.4em; margin-top: .25rem; font: var(--mono-tick)/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .62); }
 .story-num span i { height: 1.4em; }
-/* (hc6) the coda over the floor is gone (S4's headline closes the overture): its rules went with it */
 /* the role-coded vocabulary, as a key */
 .story-lab i.lg-r, .story-lab i.lg-b { content: ""; display: inline-block; flex: none; width: .5625rem; height: .5625rem; box-sizing: border-box; }
 .story-lab i.lg-r { width: .4375rem; height: .4375rem; background: var(--reject-bright); border-radius: 50%; }

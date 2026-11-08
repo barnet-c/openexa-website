@@ -25,8 +25,8 @@
 .sw-follow[aria-pressed="true"]::before { background: currentColor; border-radius: .0625rem; width: .5rem; height: .5rem; }
 .sw-trace-close:focus-visible, .swarm-live .halt:focus-visible, .sw-motion:focus-visible, .sw-rec:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
 
-/* the stage: the canvas fills a fixed band at the top (--sw-h) */
-.sw-stage { --sw-h: clamp(20.625rem, calc(32vw + 4.375rem), 35rem); position: relative; background: radial-gradient(110% 95% at 6% 0%, rgba(30, 122, 90, .17), rgba(30, 122, 90, 0) 56%), radial-gradient(70% 60% at 52% 46%, rgba(245, 242, 236, .025), rgba(245, 242, 236, 0) 70%), linear-gradient(180deg, #0E1512 0%, #0B110F 100%); }
+/* the stage: the canvas fills a fixed band at the top (--sw-h; hc19: less in a short window, never under the floor) */
+.sw-stage { --sw-h: clamp(20.625rem, min(32vw + 4.375rem, 100vh - 31rem), 35rem); position: relative; background: radial-gradient(110% 95% at 6% 0%, rgba(30, 122, 90, .17), rgba(30, 122, 90, 0) 56%), radial-gradient(70% 60% at 52% 46%, rgba(245, 242, 236, .025), rgba(245, 242, 236, 0) 70%), linear-gradient(180deg, #0E1512 0%, #0B110F 100%); }
 .sw-on .sw-stage { padding-top: var(--sw-h); }
 .sw-stage canvas { display: none; }
 .sw-on .sw-stage canvas { display: block; position: absolute; left: 0; top: 0; width: 100%; height: var(--sw-h); touch-action: pan-y; }
@@ -215,9 +215,6 @@
   .swarm-controls { grid-template-columns: 1fr 1fr; gap: .375rem 1rem; padding: .5rem .875rem; }
   .swarm-controls .sw-btns { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
 }
-
-/* hc5 (integrate, on platform's request): Platform §02's four role cards and the lab's roles view (data-sw-view="roles")
-   left the page (HC5 item 4); their rules went with them */
 
 @media (prefers-reduced-motion: reduce) {
   .sw-on .sw-trace:not([hidden]), .sw-log li.is-filled { animation: none; }

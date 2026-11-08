@@ -3684,7 +3684,7 @@ LINE_ENDS = r"""(weak) => { const W = new Set(weak), out = [];
     const bad = lines.slice(0, -1).map(l => l[l.length - 1]).filter(x => !/[.,;:!?’”)]$/.test(x) && W.has(x.toLowerCase()));
     if (bad.length) out.push({ sec: (p.closest('section') || {}).id || '', bad, lines: lines.map(l => l.join(' ')) });
   }); return out; }"""
-LINE_ENDS_PAGES = ["index.html", "platform.html", "lifecycles.html", "evidence.html", "trust.html", "research.html", "access.html", "blog/index.html"]
+LINE_ENDS_PAGES = ["index.html", "platform.html", "lifecycles.html", "evidence.html", "trust.html", "research.html", "company.html", "access.html", "blog/index.html", "404.html"]
 
 
 @check
@@ -3695,8 +3695,10 @@ async def lede_line_ends(b):
     same words). On Home, Platform, Lifecycles, Proof, Trust, Research, Access and the Blog index, reduced motion, at
     1920 x 1080, 1440 x 900, 768 x 1024, 390 x 844 and 320 x 568 (touch): no line but the last of a .lede, .ch-line,
     .body-lg or .pf-lc-hedge in <main> ends on an article, determiner or short preposition (LINE_ENDS_WEAK, the
-    director's rag18 set + every / each; a word carrying punctuation closes its phrase and never counts: "in each,"). Company is not in the list yet: its §03 line (build_team.py) ends "led work at
-    / Google, ..." at 1920, 1440 and 768, an open item for company (notes/integrate.md, hc18)"""
+    director's rag18 set + every / each; a word carrying punctuation closes its phrase and never counts: "in each,"). hc19
+    (integrate): Company joins the list, its §03 line (build_team.py) now "led work at&nbsp;Google, ..." (company hc19, the
+    director's HC19 4.6); it ended "led work at / Google, ..." at 1920, 1440 and 768 on hc18's tree; and the 404, whose lede
+    (launch_meta_v9.py, system hc19) now glues "or&nbsp;never&nbsp;existed" (it ended "has moved, or / never existed" at 390)"""
     bad, n = [], 0
     for w, h, touch in ((1920, 1080, False), (1440, 900, False), (768, 1024, False), (390, 844, True), (320, 568, True)):
         for path in LINE_ENDS_PAGES:
@@ -3708,6 +3710,125 @@ async def lede_line_ends(b):
             await ctx.close()
     assert not bad, f"lede_line_ends: {len(bad)} lines ({n} page loads):\n  " + "\n  ".join(bad[:20])
     print(f"lede_line_ends: no lede, chapter line, beat sentence or hedge ends a line on a weak word ({len(LINE_ENDS_PAGES)} pages x 5 sizes, {n} loads)")
+
+# ---- hc19 (integrate; real breakage found by verify_budget home_landing): Home's chapters after the overture are laid out
+# near the screen only (content-visibility: auto); each stand-in is the chapter's drawn content height, so the page is as
+# long at load as drawn, in short windows too
+STANDINS = r"""async () => { const out = [];
+  for (const s of document.querySelectorAll('main > *')) { const c = getComputedStyle(s); if (c.contentVisibility !== 'auto') continue;
+    const est = parseFloat(c.containIntrinsicHeight.split(' ').pop()); s.scrollIntoView({ behavior: 'instant' });
+    await new Promise(r => setTimeout(r, 400)); const d = getComputedStyle(s), h = s.getBoundingClientRect().height - parseFloat(d.paddingTop) - parseFloat(d.paddingBottom) - parseFloat(d.borderTopWidth) - parseFloat(d.borderBottomWidth);
+    out.push([s.id || s.classList[0], Math.round((est - h) * 10) / 10]); } return out; }"""
+
+
+@check
+async def home_standins(b):
+    """hc19 (integrate): system's hc19 let the lab's stage give way in a short window (swarm.css --sw-h: 100vh - 31rem),
+    and Home §02's stand-in (home.css #lc01 --cis, one value per width band) kept the tall stage: 127 px too tall at
+    1440 x 900, 150 at 1280 x 800, 68 at 1024 x 768, so a place read before §02 was drawn moved by that much once it was
+    (verify_budget home_landing: §03 at -47 for 80). The stand-in now gives way with the stage. At 1024 x 768,
+    1280 x 800, 1440 x 900, 1920 x 1080 and 3840 x 2160 (the band widths the stand-ins were measured at; laptop heights),
+    reduced motion: every content-visibility: auto chapter of Home is within 5 px of its drawn content height (padding and
+    border off) once drawn."""
+    bad, n, worst = [], 0, 0.0
+    for w, h in ((1024, 768), (1280, 800), (1440, 900), (1920, 1080), (3840, 2160)):
+        ctx, pg = await open_page(b, "index.html", w, h, reduced=True)
+        await pg.wait_for_timeout(600)
+        rows = await pg.evaluate(STANDINS)
+        n += len(rows)
+        for sid, d in rows:
+            worst = max(worst, abs(d))
+            if abs(d) > 5: bad.append(f"index.html@{w}x{h} #{sid}: stand-in {d:+.1f} px against the drawn chapter")
+        if not rows: bad.append(f"index.html@{w}x{h}: no content-visibility chapter found")
+        await ctx.close()
+    assert not bad, "home_standins:\n  " + "\n  ".join(bad)
+    print(f"home_standins: Home's {n} chapter stand-ins at 5 laptop windows within {worst:.1f} px of the drawn chapters (budget 5)")
+
+# ---- hc19 (integrate, standing in for tests; platform's optional request): Platform §03's pipeline acts once by the
+# site's rule (plate.js: OXA.actOnce -> .is-run; platform.css), then rests as the still it is without the pass
+PIPE = "#pipeline .pipe-fig"
+PIPE_STATE = r"""(() => { const f = document.querySelector('#pipeline .pipe-fig'); if (!f) return null; const r = f.getBoundingClientRect();
+  const an = f.getAnimations({ subtree: true }).filter(a => a.playState === 'running');
+  return { run: f.classList.contains('is-run'), running: an.length, names: [...new Set(an.map(a => a.animationName || a.transitionProperty || '?'))].sort(),
+    box: [Math.round(r.top), Math.round(r.height)], vh: innerHeight }; })()"""
+PIPE_NAMES = {"pp-ride", "pp-lit", "pp-on", "pl-pop"}  # the ring's ride, a gate lit, its lines on, a record written
+
+
+@check
+async def pipeline_once(b):
+    """hc19 (integrate, standing in for tests; platform's optional request; the director's HC19 4.2, done by platform):
+    Platform §03's pipeline drawing (`#pipeline .pipe-fig`) acts by the site's one rule (OXA.actOnce, site.js), as Trust
+    §02 and Proof §01. At 1440 x 900, scrolled to the middle of the screen, it gains .is-run within 4 s and plays its one
+    pass (the ring's ride, the gates lit, the records written: pp-ride, pp-lit, pp-on, pl-pop among its running
+    animations); within 4 s more nothing in it is running, and the drawing then equals, pixel for pixel (no more than 0.05%
+    of its pixels off by more than 8 levels), the same page with the pass cancelled (a keydown inside the figure before it
+    is in view, which must also keep .is-run away). It never plays twice: after leaving the screen and coming back, nothing
+    in it runs. Under reduced motion (1440 x 900, 5 s in view) and on a 390 x 844 phone (the drawing is the list there,
+    display: none) it never gains .is-run."""
+    import io
+    from PIL import Image, ImageChops
+    bad, notes = [], []
+    lim = lambda ms: int(ms * max(1.0, MODE["throttle"]))
+    center = "(s) => document.querySelector(s).scrollIntoView({block: 'center', behavior: 'instant'})"
+
+    async def still(pg):
+        box = await pg.evaluate(BOX, PIPE)
+        img = await pg.screenshot(clip={"x": box[0], "y": box[1], "width": box[2], "height": box[3]}, animations="disabled", timeout=60000)
+        return Image.open(io.BytesIO(img)).convert("RGB")
+
+    # 1. the pass, once, to its rest
+    ctx, pg = await open_page(b, "platform.html", 1440, 900)
+    await pg.mouse.move(5, 450)
+    await pg.evaluate(center, PIPE)
+    ran = None
+    if not await until(pg, f"document.querySelector('{PIPE}').classList.contains('is-run')", lim(4000), 50):
+        bad.append(f"1440: the pipeline did not act within 4 s in view: {await pg.evaluate(PIPE_STATE)!r}")
+    else:
+        st = await pg.evaluate(PIPE_STATE)
+        seen = set(st["names"])
+        for _ in range(12):  # the gates light and the records pop on their own delays: gather what runs over the first ~1.2 s
+            await pg.wait_for_timeout(100)
+            seen |= set((await pg.evaluate(PIPE_STATE))["names"])
+        if not PIPE_NAMES <= seen: bad.append(f"1440: the pass did not play: running {sorted(seen)}, expected {sorted(PIPE_NAMES)} among them")
+        if not await until(pg, "(() => document.querySelector('#pipeline .pipe-fig').getAnimations({ subtree: true }).every(a => a.playState !== 'running'))()", lim(4000), 100):
+            bad.append(f"1440: still running 4 s after the pass began: {await pg.evaluate(PIPE_STATE)!r}")
+        else:
+            await pg.wait_for_timeout(300)
+            ran = await still(pg)
+        await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(1200)
+        await pg.evaluate(center, PIPE); await pg.wait_for_timeout(lim(3000))
+        again = await pg.evaluate(PIPE_STATE)
+        if again["running"]: bad.append(f"1440: the pass played again after leaving the screen and coming back: {again!r}")
+        notes.append(f"1440 acted once ({', '.join(sorted(seen & PIPE_NAMES))})")
+    await ctx.close()
+    # 2. the pass cancelled (a keydown inside the figure before it is in view): never runs; the still it rests as
+    ctx, pg = await open_page(b, "platform.html", 1440, 900)
+    await pg.mouse.move(5, 450)
+    await pg.evaluate("(s) => document.querySelector(s).dispatchEvent(new KeyboardEvent('keydown', {bubbles: true}))", PIPE)
+    await pg.evaluate(center, PIPE); await pg.wait_for_timeout(lim(4500))
+    st = await pg.evaluate(PIPE_STATE)
+    if st["run"]: bad.append(f"1440: a keydown inside the figure before it was in view did not cancel the pass: {st!r}")
+    elif ran is not None:
+        await pg.wait_for_timeout(300)
+        rest = await still(pg)
+        if rest.size != ran.size: bad.append(f"1440: the drawing after the pass is {ran.size}, without it {rest.size}")
+        else:
+            d = ImageChops.difference(ran, rest).convert("L").point(lambda v: 255 if v > 8 else 0)
+            off, total = d.histogram()[255], rest.size[0] * rest.size[1]
+            if off > total * 0.0005: bad.append(f"1440: after its pass the drawing is not the still: {off} of {total} pixels off by more than 8 levels")
+            notes.append(f"rest = still ({off} of {total} px off)")
+    await ctx.close()
+    # 3. never under reduced motion; never on a phone (the drawing is not shown there)
+    for w, h, touch, reduced, tag in ((1440, 900, False, True, "reduced motion"), (390, 844, True, False, "390")):
+        ctx, pg = await open_page(b, "platform.html", w, h, touch=touch, reduced=reduced)
+        await pg.evaluate(center, "#pipeline"); await pg.evaluate(center, PIPE)
+        await pg.wait_for_timeout(lim(5000))
+        st = await pg.evaluate(PIPE_STATE)
+        if st["run"] or st["running"]: bad.append(f"{tag}: the pipeline acted: {st!r}")
+        notes.append(f"{tag} still (drawing {st['box'][1]} px tall)")
+        await ctx.close()
+    assert not bad, "pipeline_once:\n  " + "\n  ".join(bad)
+    print(f"pipeline_once: Platform §03 plays one pass when in view at 1440 and rests as its still; never twice, never after a keydown inside it, never under reduced motion or on a phone ({'; '.join(notes)})")
 
 # ---- the desk on a phone: the walk happens in view; a restart keeps its morning; the strip counts every fill (LC-R2-2, LC-R2-6)
 DESK = r"""(() => { const q = s => document.querySelector(s), t = s => ((q(s) || {}).textContent || '').replace(/\s+/g, ' ').trim(), num = s => +(t(s).replace(/[^\d]/g, '') || 0);

@@ -276,6 +276,8 @@ body[data-page="home"] #research { --cis: 37.0625rem; } body[data-page="home"] .
   body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 27rem; }
   body[data-page="home"] #research { --cis: 35.921875rem; }
 }
+/* hc19: in a short window the lab's stage gives way (swarm.css --sw-h); §02's stand-in with it */
+body[data-page="home"] #lc01 { contain-intrinsic-size: auto calc(var(--cis) - clamp(20.625rem, 32vw + 4.375rem, 35rem) + clamp(20.625rem, min(32vw + 4.375rem, 100vh - 31rem), 35rem)); }
 @media print { body[data-page="home"] main > .story ~ section { content-visibility: visible; } }
 /* §02: the link sits one chapter step under the lab (swarm.css adds 40 px below it) */
 body[data-page="home"] #lc01 .swarm-live { margin-bottom: 0; }
