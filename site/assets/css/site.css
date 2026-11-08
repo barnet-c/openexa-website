@@ -879,7 +879,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
   .pm-agent, .pm-up, .pm-down, .pm-ring, .pm-rring, .pm-spur, .pm-x, .pm-cross, .pm-step, .pm-settle, .pm-floor,
   .tp-rec, .tp-prop, .tp-pass, .tp-set, .tp-rj, .tp-out, .tp-l-prop, .tp-l-set, .tp-l-rj, .lf-w, .lf-face, .bp-art [pathLength], .pc, .pb, .pd, .pk, .po, .pt, .pg, .pq,
   .dr, .dm, .nf-rail, .nf-tok, .nf-s, .nf-keys li, .nf-rj, .nf-spur, .nf-fall, .nf-out, .dk-rec, .dl-rcpt, .lr-trace, .fl, .crew-bio, .v, .crew-stats b, .arch-sum, .is-tick dt,
-  .tr-pl, .tr-rj, .tr-rl, .tr-oc, .tr-sg, .tr-se, .pf-mk, .pp-ring, .pp-gt, .pp-lt, .pp-r),
+  .tr-pl, .tr-rj, .tr-rl, .tr-oc, .tr-sg, .tr-se, .pf-mk, .pp-ring, .pp-gt, .pp-lt, .pp-r, .hp-rec, .sp-plumb, .sp-read),
 .is-offscreen :is(.chain-seg, .layers, .is-tick)::before,
 .is-offscreen :is(.chain-seg, .lt-node, .pf-floor, .layer, .is-ping, .tr-sd, .pf-trail)::after { animation-play-state: paused !important; }
 

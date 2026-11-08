@@ -3057,7 +3057,9 @@ async def platform_trace(b):
             bad.append(f"{tag}: the lab's own act never came to rest ({await pg.evaluate(TRACE_STATE)!r})"); await ctx.close(); continue
         for want in wants:
             await pg.evaluate(SET_RANGE, ["[data-sw-strict]", 0 if want == "settled" else 60])
-            seen = await follow_once(pg, want, tries=1 if want == "settled" else 6)
+            # integrate hc20: up to 10 follows for a rejection (was 6): at the range's top (60%) about 6 in 10 are rejected
+            # (trace_probe.py: 10 of 16), so six settled in a row, ~0.4% by chance, failed one full run; ten, ~0.01%
+            seen = await follow_once(pg, want, tries=1 if want == "settled" else 10)
             log = re.sub(r"\s+", " ", await pg.evaluate("(document.querySelector('[data-sw-log]') || {}).textContent || ''"))
             if not seen[-1].lower().startswith(want): bad.append(f"{tag}: no {want} proposal to follow (outcomes {seen})")
             elif not re.search(r"seal|record|rejection|ledger", log, re.I): bad.append(f"{tag}: the {want} trace never reached its record step: {log[-140:]!r}")
@@ -3829,6 +3831,110 @@ async def pipeline_once(b):
         await ctx.close()
     assert not bad, "pipeline_once:\n  " + "\n  ".join(bad)
     print(f"pipeline_once: Platform §03 plays one pass when in view at 1440 and rests as its still; never twice, never after a keydown inside it, never under reduced motion or on a phone ({'; '.join(notes)})")
+
+# ---- hc20 (integrate, standing in for tests; platform's optional pin): Platform §06's plate draws itself once on the
+# site's reveal (platform.css, `#marketplace .will-reveal.is-in:not(.is-cut)`), then rests as its still; a roadmap never loops
+MARKET = "#marketplace .sec-plate--market"
+MARKET_STATE = r"""(() => { const f = document.querySelector('#marketplace .sec-plate--market'); if (!f) return null;
+  const an = f.getAnimations({ subtree: true }).filter(a => a.animationName && a.playState === 'running');
+  const by = {}; an.forEach(a => { by[a.animationName] = (by[a.animationName] || 0) + 1; });
+  return { cls: f.className, running: an.length, by, recs: f.querySelectorAll('.hp-rec').length }; })()"""
+# the moment the reveal lands: what the figure runs then (installed before the plate is reached)
+MARKET_WATCH = r"""(() => { const f = document.querySelector('#marketplace .sec-plate--market'); window.__mk = null;
+  const take = () => { const an = f.getAnimations({ subtree: true }).filter(a => a.animationName); const by = {};
+    an.forEach(a => { by[a.animationName] = (by[a.animationName] || 0) + 1; });
+    window.__mk = { cls: f.className, n: an.length, by, pops: new Set(an.filter(a => a.animationName === 'pl-pop').map(a => a.effect.target)).size }; };
+  if (f.classList.contains('is-in')) { take(); return; }
+  const mo = new MutationObserver(() => { if (f.classList.contains('is-in')) { mo.disconnect(); take(); } });
+  mo.observe(f, { attributes: true, attributeFilter: ['class'] }); })()"""
+MARKET_NAMES = {"mk-wipe", "pl-in", "pl-fade", "pl-pop"}  # the streams wiped in, the layers closing, the fades, the records
+
+
+@check
+async def market_draw_once(b):
+    """hc20 (integrate, standing in for tests; platform's optional pin; the director's HC20 4.4, done by platform):
+    Platform §06's plate (`#marketplace .sec-plate--market`, "Schematic · roadmap") draws itself once as it arrives, by the
+    site's reveal, and never runs again. At 1440 x 900, scrolled to in half-screen steps as a visitor does, the moment the
+    reveal lands it runs mk-wipe, pl-in, pl-fade and pl-pop (every one of its records pops; 40 animations in all at the
+    time of writing); within 4 s nothing in it runs, and the plate then equals, pixel for pixel (no more than 0.05% of its
+    pixels off by more than 8 levels), the same plate under reduced motion; after leaving the screen and coming back
+    nothing runs. It never animates under reduced motion, on a deep link to #marketplace (the first screen) or after a
+    jump to it (an in-page link: the reveal is .is-cut, nothing runs at the landing or 1.6 s after)."""
+    import io
+    from PIL import Image, ImageChops
+    bad, notes = [], []
+    lim = lambda ms: int(ms * max(1.0, MODE["throttle"]))
+    center = "(s) => document.querySelector(s).scrollIntoView({block: 'center', behavior: 'instant'})"
+
+    async def still(pg):
+        await pg.evaluate(center, MARKET); await pg.wait_for_timeout(400)
+        box = await pg.evaluate(BOX, MARKET)
+        img = await pg.screenshot(clip={"x": box[0], "y": box[1], "width": box[2], "height": box[3]}, animations="disabled", timeout=60000)
+        return Image.open(io.BytesIO(img)).convert("RGB")
+
+    async def visit(pg):  # half-screen steps down to the plate, as platform hc20's film.py: the reveal fires, not a jump
+        y = await pg.evaluate(f"document.querySelector('{MARKET}').getBoundingClientRect().top + scrollY - innerHeight * .25")
+        cur = 0
+        while cur < y:
+            cur = min(y, cur + 450)
+            await pg.evaluate(f"window.scrollTo({{top: {cur}, behavior: 'instant'}})"); await pg.wait_for_timeout(40)
+
+    # 1. the still: the plate under reduced motion (nothing runs there)
+    ctx, pg = await open_page(b, "platform.html", 1440, 900, reduced=True)
+    ref = await still(pg)
+    st = await pg.evaluate(MARKET_STATE)
+    if st["running"]: bad.append(f"reduced motion: the plate runs {st['by']!r}")
+    await ctx.close()
+    # 2. the draw-in, once, to its rest
+    ctx, pg = await open_page(b, "platform.html", 1440, 900)
+    await pg.mouse.move(5, 450)
+    await pg.evaluate(MARKET_WATCH)
+    await visit(pg)
+    if not await until(pg, "!!window.__mk", lim(4000), 50):
+        bad.append(f"1440: the plate was not revealed within 4 s of reaching it: {await pg.evaluate(MARKET_STATE)!r}")
+    else:
+        mk = await pg.evaluate("window.__mk")
+        if "is-cut" in mk["cls"]: bad.append(f"1440: scrolling to the plate cut its entrance: {mk!r}")
+        if not MARKET_NAMES <= set(mk["by"]): bad.append(f"1440: the draw-in did not play: {mk['by']!r}, expected {sorted(MARKET_NAMES)} among them")
+        recs = (await pg.evaluate(MARKET_STATE))["recs"]
+        if not recs or mk["pops"] != recs: bad.append(f"1440: {mk['pops']} of the plate's {recs} records popped")
+        if not await until(pg, f"(() => document.querySelector('{MARKET}').getAnimations({{ subtree: true }}).every(a => a.playState !== 'running'))()", lim(4000), 100):
+            bad.append(f"1440: still running 4 s after the reveal: {await pg.evaluate(MARKET_STATE)!r}")
+        else:
+            rest = await still(pg)
+            if rest.size != ref.size: bad.append(f"1440: the plate after its draw-in is {rest.size}, under reduced motion {ref.size}")
+            else:
+                d = ImageChops.difference(ref, rest).convert("L").point(lambda v: 255 if v > 8 else 0)
+                off, total = d.histogram()[255], ref.size[0] * ref.size[1]
+                if off > total * 0.0005: bad.append(f"1440: after its draw-in the plate is not the still: {off} of {total} pixels off by more than 8 levels")
+                notes.append(f"1440 drew once ({mk['n']} animations: {', '.join(f'{k} {v}' for k, v in sorted(mk['by'].items()))}; rest = still, {off} of {total} px off)")
+        await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(1200)
+        await pg.evaluate(center, MARKET); await pg.wait_for_timeout(lim(2500))
+        again = await pg.evaluate(MARKET_STATE)
+        if again["running"]: bad.append(f"1440: the plate ran again after leaving the screen and coming back: {again!r}")
+    await ctx.close()
+    # 3. a deep link (the plate in the first screen) and a jump (an in-page link, as the chapter menu's): the still at once
+    ctx, pg = await open_page(b, "platform.html#marketplace", 1440, 900)
+    await pg.wait_for_timeout(300)
+    st = await pg.evaluate(MARKET_STATE)
+    if st["running"]: bad.append(f"deep link: the plate runs {st['by']!r}")
+    await ctx.close()
+    ctx, pg = await open_page(b, "platform.html", 1440, 900)
+    await pg.mouse.move(5, 450)
+    await pg.evaluate(MARKET_WATCH)
+    await pg.evaluate("(() => { const a = document.createElement('a'); a.href = '#marketplace'; a.textContent = 'x'; document.body.appendChild(a); a.click(); a.remove(); })()")
+    if not await until(pg, "!!window.__mk", lim(3000), 50): bad.append(f"jump: the plate was not revealed by the jump: {await pg.evaluate(MARKET_STATE)!r}")
+    else:
+        mk = await pg.evaluate("window.__mk")
+        if "is-cut" not in mk["cls"]: bad.append(f"jump: the reveal was not cut: {mk!r}")
+        if mk["n"]: bad.append(f"jump: the plate ran {mk['by']!r} at the landing")
+        await pg.wait_for_timeout(1600)
+        st = await pg.evaluate(MARKET_STATE)
+        if st["running"]: bad.append(f"jump: the plate runs {st['by']!r} 1.6 s after the landing")
+    await ctx.close()
+    notes.append("reduced motion, deep link and jump: the still")
+    assert not bad, "market_draw_once:\n  " + "\n  ".join(bad)
+    print(f"market_draw_once: Platform §06 draws itself once as a visitor reaches it and rests as its still; never again, never under reduced motion, on a deep link or after a jump ({'; '.join(notes)})")
 
 # ---- the desk on a phone: the walk happens in view; a restart keeps its morning; the strip counts every fill (LC-R2-2, LC-R2-6)
 DESK = r"""(() => { const q = s => document.querySelector(s), t = s => ((q(s) || {}).textContent || '').replace(/\s+/g, ' ').trim(), num = s => +(t(s).replace(/[^\d]/g, '') || 0);

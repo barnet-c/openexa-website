@@ -408,6 +408,8 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
 /* hc19 (HC19 4.3): §02's head on one line from 1280 px, so it shares a 1440 x 900 screen with the lab */
 @media (min-width: 1280px) { body[data-page="platform"] #swarm .ch-title { max-width: none; } }
+/* hc20: a 1536 x 864 window holds the explorer and the desk with their heads: the head's gap at its smallest step */
+@media (min-width: 1200px) and (max-height: 880px) { :is(#architecture, #desk) { --ch-gap: 2.25rem; } }
 
 .desk .desk-stats .dk-u { display: block; margin: calc(2 * var(--hair)) 0 0; }
 .desk .desk-stats .dk-sep { display: none; }
@@ -558,13 +560,23 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
   #test .card-grid--3 > .card:nth-child(even) { padding-left: clamp(1rem, 2vw, 1.75rem); border-left: var(--hair) solid var(--line); }
 }
 
-/* hc17: §06 is set like §03 from 601 px: heading and line on top, the plate below at the container's width (as §03's
-   pipeline), its halves side by side meeting on one record line (the hc5 spread, heading 1-6 beside the halves
-   stacked, went: two drawings that never met) */
-#marketplace .sp-panels { align-items: end; } /* the halves meet on their record line (the demand half is the shorter) */
-/* the side labels stand on their lines (--y: the first stream's crest, 40 units; the demand rail, 66), half an em up,
-   at every width: centred on a % they touched the stream and the rail at 601-768 (the phones' lift went with it) */
+/* hc17: §06 is set like §03 from 601 px, the plate under its head, its halves meeting on one record line */
+#marketplace .sp-panels { align-items: end; }
+/* the side labels stand on their lines (--y: the first stream's crest; the demand rail), half an em up */
 #marketplace .sp-half .hp-lab--khaki { transform: translate(0, calc(-100% - .625em)); }
+/* hc20: §06 draws itself once on the site's reveal, as §04's cells (notes/platform.md): the dotted streams wipe in, the
+   layers close on the boundary as the hero's, the boundary, the records left to right, the ticks. Nothing travels or
+   loops (a roadmap); no fill held: the still at rest, without JS, under reduced motion, after a jump, in print */
+#marketplace .hp-rec { transform-box: fill-box; transform-origin: center; }
+@media screen and (prefers-reduced-motion: no-preference) {
+  #marketplace .will-reveal.is-in:not(.is-cut) .pl-draw { animation: mk-wipe .7s var(--ease-draw) .1s backwards; }
+  #marketplace .will-reveal.is-in:not(.is-cut) .pl { animation: pl-in .8s var(--ease-out) calc(.2s + var(--i) * 95ms) backwards; }
+  #marketplace .will-reveal.is-in:not(.is-cut) .hp-lab--n { animation: pl-fade .6s var(--ease-out) calc(.3s + var(--i) * 95ms) backwards; }
+  #marketplace .will-reveal.is-in:not(.is-cut) .pl-glow { animation: pl-fade .7s var(--ease-out) .8s backwards; }
+  #marketplace .will-reveal.is-in:not(.is-cut) .hp-rec { animation: pl-pop .35s var(--ease-out) calc(1s + var(--r) * 30ms) backwards; }
+  #marketplace .will-reveal.is-in:not(.is-cut) :is(.sp-plumb, .sp-read) { animation: pl-fade .5s var(--ease-out) 1.65s backwards; }
+}
+@keyframes mk-wipe { from { clip-path: inset(-6% 100% -6% -6%) fill-box; } to { clip-path: inset(-6%) fill-box; } }
 
 /* hc13r (PLAT-4): §03 and §04 end on the chapter foot (.section's --sec-foot), not 100-126 px of air: arch.css's #mcp
    padding and site.css's .lc-pipe margin went at integrate hc13r, so no override is needed here */

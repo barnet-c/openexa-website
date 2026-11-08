@@ -66,6 +66,10 @@ Changes from the source, deliberately:
     a short word is tied to the word after it, so "90% of / Microsoft's" and "Director of /
     Computational" no longer happen at any width, and a short last pair stays together, so no line ends on one word
     alone). Words unchanged.
+  - 2026-11-08 (hill climb hc20, design director 4.2: "the last stock idiom on a main page"): the head is "Systems people
+    and market people." ("under one roof" cut, 3 words); the line under it names the firms. company.css sets this one
+    head on one line wherever it fits, as Platform's "Every action passes three gates." (it is 25ch, the chapter
+    heads' measure is 22ch).
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -248,7 +252,7 @@ SECTION = f'''    <!-- 03 THE TEAM -->
     <section class="section" id="team" data-chapter="The team" data-n="03">
       <div class="container">
         <div class="ch-head ch-spread team-head">
-          <h2 class="display-2 ch-title" data-reveal data-split>Systems people and market people, under one roof.</h2>
+          <h2 class="display-2 ch-title" data-reveal data-split>Systems people and market people.</h2>
           <p class="ch-line" data-reveal style="--d:80ms">Between them, they have built and led work at&nbsp;Google, Microsoft, Amazon, PayPal, Goldman&nbsp;Sachs, Bank&nbsp;of&nbsp;America and JPMorgan&nbsp;Chase.</p>
           <div class="crew-stats" data-reveal style="--d:140ms">
             <div><b>{len(TEAM)}</b><span>Team members</span></div>

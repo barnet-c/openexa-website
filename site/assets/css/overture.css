@@ -100,6 +100,8 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 /* hc3: scene 4 is recorded data, as Fig. 1.1: its words (Floor, NAV) in the caption register, its value and the days mono */
 .story-lab:is(.floor, .navtag) { font: 400 var(--fs-small)/1.35 var(--sans); letter-spacing: 0; text-transform: none; }
 .story-lab.floor .u { font: 400 var(--fs-label)/1 var(--mono); letter-spacing: .02em; }
+/* hc20: from 600 x 500 (landscape and upright tablets), the floor's value and the days at the data step, as Proof's chart */
+@media (min-width: 600px) and (min-height: 500px) { .story-lab.floor .u, .story-lab.day { font-size: var(--fs-small); letter-spacing: 0; } }
 .story-lab.sum { text-align: right; line-height: 1.8; color: rgba(245, 242, 236, .62); }
 .story-lab.sum b { color: var(--paper); }
 .story-lab.sum .sep { display: block; }

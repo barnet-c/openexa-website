@@ -66,6 +66,8 @@
 /* the line names seven firms, each kept whole (no-break spaces in build_team.py): 42ch, not the head's 36, sets them in
    three lines, "… at Google, / … Goldman Sachs, / Bank of America and JPMorgan Chase." (hc19: 40ch made four) */
 [data-page="company"] .team-head > .ch-line { max-width: 42ch; }
+/* hc20: the head (25ch) on one line wherever it fits, as Platform's #swarm head; phones balance it in two */
+[data-page="company"] .team-head > .ch-title { max-width: none; }
 :is([data-page="company"], [data-page="access"]) .keep { display: inline-block; }
 
 /* ---------------------------------------------------------------- Company §01: the story as a register */

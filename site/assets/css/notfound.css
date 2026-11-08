@@ -69,6 +69,9 @@
 .nf-out { font: 400 var(--fs-label)/1.35 var(--mono); letter-spacing: .06em; text-transform: none; color: var(--reject); white-space: nowrap; }
 .nf-out--h { position: absolute; max-width: calc(37% - .75rem); transform: translate(.75rem, -.68em); white-space: normal; overflow-wrap: anywhere; } /* its first line on the fall; a long address wraps inside the grid */
 .nf-out--v { display: none; }
+/* hc20: where the plate runs across, what the gate recorded (the address, the log line) is data at the instruments' step
+   (14 / 13 px), as the lab's; phones keep the label step, where the address shares a row of the column with its gate */
+@media (min-width: 700px) { .notfound-log, .nf-out { font-size: var(--fs-small); letter-spacing: 0; } }
 
 /* phones and tablets: the lane runs down the page, the names beside it */
 @media (max-width: 699.98px) {

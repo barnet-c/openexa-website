@@ -1,9 +1,7 @@
 /* OpenEXA · the proof chart and the cost index (Home §04-05, Proof): own sheet since r2, linked where drawn. */
 /* v2:proof:start */
 /* ---------- proof — the ten-session report: home §04 and the Proof hero (assets/js/proof.js draws it from #oxa-sessions) ---------- */
-.proof-layout { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(2.5rem, 5vw, 6rem); align-items: start; }
 .proof-fig { min-width: 0; }
-@media (max-width: 960px) { .proof-layout { grid-template-columns: minmax(0, 1fr); } }
 
 /* without JavaScript: the same sessions as a plain list (home) — the evidence page has its table */
 .proof-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--hair); background: var(--line); border: var(--hair) solid var(--line); }
@@ -69,22 +67,6 @@
 @supports not (width: 1cqi) {
   @media (max-width: 340px) { .pf, .proof:not(.is-built)::before { --gut: 2.375rem; } .pf-gut { font-size: var(--fs-label); } .pf-y { right: calc(2 * var(--hair)); } .pf-y .pf-lw, .pf-y .pf-n { display: none; } .pf-y .pf-ls { display: inline; } .y-floor small { letter-spacing: 0; word-spacing: -.25em; white-space: nowrap; } }
 }
-/* 4K (Home; Proof's is in proof.css): above 1920 the chart's gutter, blocks and zones are in rem, the 1440 chart scaled
-   (integrate a1; history: notes/system.md) */
-@media (min-width: 1921px) {
-  @supports (width: 1cqi) {
-    body[data-page="home"] .pf, body[data-page="home"] .proof:not(.is-built)::before {
-      --gut: clamp(4rem, 15cqi, 6.75rem); --b: clamp(.5625rem, calc(var(--lane) * .34), 1.0625rem); --g: clamp(.125rem, calc(var(--b) * .2), .1875rem);
-      --zr: clamp(4.25rem, 12cqi, 5.5rem); --zd: 1.875rem; --zo: 1.625rem; --zg: calc(var(--ng, 1) * (var(--b) + var(--g)) + 2.25rem);
-    }
-  }
-  @supports (width: 1cqi) and (width: round(down, 10.5px, 1px)) { /* whole pixels: crisp, even blocks */
-    body[data-page="home"] .pf, body[data-page="home"] .proof:not(.is-built)::before {
-      --b: round(down, clamp(.5625rem, calc(var(--lane) * .34), 1.0625rem), 1px); --g: round(down, clamp(.125rem, calc(var(--b) * .2), .1875rem), 1px);
-    }
-  }
-}
-
 /* the floor (a lit hairline, from the gutter across every lane), the baseline and the NAV reference */
 .pf-floor, .pf-base, .pf-nav { position: absolute; right: 0; pointer-events: none; }
 .pf { --pf-glow: 0 0 0 0 transparent; }
@@ -132,6 +114,8 @@
 .pf-lane.is-on .pf-r i { background: var(--fg); transform: scale(1.3); }
 .pf-d { align-self: center; font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .06em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color var(--dur-feedback) var(--ease-out); }
 .pf-lane.is-on .pf-d { color: var(--fg); }
+/* hc20: the numerals at the data step, one size with the gutter's words (under 300 px: 12 px, above) */
+@container (min-width: 301px) { .pf-y .pf-n, .y-zero b, .y-floor small, .pf-d { font-size: var(--fs-small); letter-spacing: 0; } }
 .pf-o { align-self: center; display: grid; place-items: center; transition: opacity var(--dur-move) var(--ease); }
 .pf-o svg { width: .75rem; height: .75rem; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; } /* a3: 2 units of the 12-unit box, scaling (non-scaling truncates the draw-in above 1920: draw_rest) */
 .pf-o path { stroke-dasharray: 1; stroke-dashoffset: 0; }

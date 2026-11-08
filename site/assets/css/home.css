@@ -356,9 +356,8 @@ body[data-page="home"] .story-lab.hedge span { display: block; }
 body[data-page="home"] .story-lab.hedge span:first-child { color: rgba(245, 242, 236, .74); }
 body[data-page="home"] .story-lab:is(.hedge, .floor).is-flush { text-align: left; } /* one left edge for the four lines, as Proof's gutter */
 body[data-page="home"] .story-labels.has-insp .story-lab.hedge { opacity: 0 !important; }
-/* hc17: scene 4's mono at one step on upright tablets (the days were 12.1 px at 1024 by "10 bps" at 11). With the paper up
-   the days take the caption's step (four sizes where §01 joins them); the box keeps its line height: nothing moves */
-@media (min-width: 600px) and (max-aspect-ratio: 23/20) { body[data-page="home"] .story-lab.day { font-size: var(--fs-label); } }
+/* hc17: with the paper up the days' numerals take the caption's step; the box keeps its line height: nothing moves.
+   (integrate hc20: upright tablets' days follow overture.css's data step, with "10 bps": hc17's one-step rule went) */
 body[data-page="home"] .story.is-paper-up .story-lab.day { line-height: 1.25em; }
 body[data-page="home"] .story.is-paper-up .story-lab.day .k { font-size: var(--fs-small); }
 /* §06 on tablets (761-960): the three notes in one row, as on desktop; a still wider than its cell keeps its shape (the
