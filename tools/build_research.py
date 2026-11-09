@@ -74,6 +74,25 @@ CAPTIONS = {
     "sessions": ("Ten sessions, one column each, in the order of the record.", "Illustrative · heights not to scale"),
     "mastercopy": ("One proven agent above, its copies below, on one control plane.", "Illustrative · roadmap"),
 }
+# hill climb hc23 (director item 8): on a phone the plate is a 56 px running foot, a 44 px mark and one line: what is drawn,
+# a middle dot, the hedge (research.css). That line is a phrase of the caption, short enough to stand with its hedge on
+# one line at 390 px (two at 320, the hedge on the second): no new fact, so each word is the caption's (or its stem's)
+STRIP = {
+    "horizon": "Two runs of steps, one gated",
+    "weights": "One base model, rings of adapters",
+    "lifecycle": "One loop of gates, the last lit",
+    "swarm": "One large agent beside small ones",
+    "boundary": "Eight layers, one bright plane",
+    "rulebook": "A core, documents drifting in",
+    "council": "Proposals arrive, rejects leave",
+    "ledger": "Eight blocks in a chain",
+    "sessions": "Ten sessions",
+    "mastercopy": "One agent, its copies",
+}
+def _words(t): return re.findall(r"[a-z]+", t.lower())
+for _f, _s in STRIP.items():
+    _cw = _words(CAPTIONS[_f][0])
+    assert all(any(c.startswith(w[:6]) for c in _cw) for w in _words(_s)), f"STRIP[{_f}]: “{_s}” uses a word its caption does not"
 # award a2 gave note 09 a colour key ("Green: premium · white: discount"): each session was drawn in its NAV regime's
 # colour. Hill climb hc7 (director item 8): Home and Proof draw the same ten sessions as ten green columns, the regime
 # a step line below them, and white columns read as failed sessions there. Note 09 now draws them as Proof does (every
@@ -948,10 +967,10 @@ nav, foot = chrome("", "research")
 rows = []
 # cut (1 Nov): a row is the note's number, its title and its read time; the summaries under the titles are gone (the
 # plate beside the list shows each note's idea). The row carries the plate's words for that note: what is drawn (the
-# phone strip) and the hedge
+# phone strip) and the hedge; hc23: the strip's shorter line (STRIP)
 for post in ordered:
     t, h = CAPTIONS[post["fig"]]
-    cap = " ".join(f'data-cap-{k}="{H.escape(v, quote=True)}"' for k, v in (("t", t), ("h", h)) if v)
+    cap = " ".join(f'data-cap-{k}="{H.escape(v, quote=True)}"' for k, v in (("t", t), ("s", STRIP[post["fig"]]), ("h", h)) if v)
     rows.append(f'''          <li class="post" data-figure-target="{post['fig']}" data-figure-stage="research-figure" {cap}>
             <a href="{post['file']}">
               <span class="post-n">{post['order']:02d}</span>

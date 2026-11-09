@@ -21,10 +21,6 @@
 .layers .layer-boundary .k { color: color-mix(in srgb, var(--signal) 80%, var(--ink)); } /* small text on the tinted row: 5.6:1 (signal alone is 4.3:1) */
 .layers .lb-t { font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.15; letter-spacing: -0.015em; color: var(--signal-ink, #186B4F); } /* 5.29:1 on paper-2 (--signal: 4.32:1, and 22 px is not large text) */
 .layers .lb-t small { display: block; margin-top: .625rem; font-family: var(--mono); font-size: var(--mono-s, .6875rem); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
-.layers .lb-io { display: grid; gap: .75rem; }
-.layers .lb-io p { color: var(--fg-2); }
-.layers .lb-io b { display: block; font-family: var(--mono); font-weight: 500; font-size: var(--mono-s, .6875rem); letter-spacing: var(--track-eyebrow, .14em); text-transform: uppercase; color: color-mix(in srgb, var(--signal) 80%, var(--ink)); margin-bottom: .25rem; }
-.layers .lb-io strong { font-weight: 600; color: var(--fg); }
 /* the floor under 08: what the stack stands on, drawn as the ground of a technical drawing */
 .layers .layer-floor { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: 1.75rem; align-items: baseline; padding: 1.125rem clamp(1.375rem, 3vw, 2.5rem) 1.875rem; border-top: var(--hair) solid var(--line-strong); margin-top: calc(-1 * var(--hair));
   background: repeating-linear-gradient(-45deg, transparent 0 .3125rem, var(--line-strong) .3125rem .375rem) left bottom / 100% .6875rem no-repeat; }
@@ -64,7 +60,6 @@
   [data-arch-spec] > .layer > div > ul { grid-column: 1; grid-row: 2; align-self: start; margin-top: 0; }
   [data-arch-spec] > .layer > div > .io { grid-column: 3; grid-row: 1 / -1; align-self: start; margin: .25rem 0 0; padding: 0 0 0 clamp(1rem, 1.6vw, 1.5rem); border-top: 0; border-left: var(--hair) solid var(--line); gap: .875rem; }
   [data-arch-spec] > .layer > div > .io > div { grid-template-columns: 1fr; gap: .25rem; }
-  [data-arch-spec] > .layer-boundary .lb-io { grid-column: 3 / -1; grid-template-columns: subgrid; gap: var(--spec-gap); }
 }
 @media (max-width: 860px) {
   [data-arch-spec] > .layer, [data-arch-spec] > .layer-boundary { grid-template-columns: minmax(0, 1fr); gap: .625rem; }

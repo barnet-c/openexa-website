@@ -4210,6 +4210,153 @@ async def footer_end(b):
     print(f"footer_end: on Home, Proof, a note and a post the page ends on the footer's bottom row, nothing drawn under it ({'; '.join(notes)})")
 
 
+
+# ---- hc23 (integrate, standing in for tests): Inter's UI weight follows its ground (HC23 4.4), Lifecycles' line under the
+# gates never empties once it has spoken (HC23 4.6), the Research index's phone strip (HC23 4.8)
+UI_WEIGHT = r"""(() => { const out = [], sel = '.nav-links a, .btn, .link-arrow, .chain-more, .lt-more, .lt-btn, .instr-primary, .sw-follow, .desk-follow, .chain-try, .chain-restore, .chip b';
+  const lum = c => { const m = (c.match(/[\d.]+/g) || []).slice(0, 3).map(v => { v = +v / 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return m.length < 3 ? null : .2126 * m[0] + .7152 * m[1] + .0722 * m[2]; };
+  for (const el of document.querySelectorAll(sel)) {
+    const r = el.getBoundingClientRect(); if (r.width < 1 || r.height < 1 || r.bottom < 0 || r.top > innerHeight) continue;
+    if (!el.checkVisibility({ visibilityProperty: true })) continue;
+    const cs = getComputedStyle(el); if (!/Inter/.test(cs.fontFamily.split(',')[0])) continue;
+    if (!(el.textContent || '').trim()) continue;
+    const L = lum(cs.color); if (L === null || (L > .2 && L < .4)) continue;  // light text (paper) or dark text (ink); the accent between is neither
+    out.push({ k: (typeof el.className === 'string' && el.className.trim() ? '.' + el.className.trim().split(/\s+/)[0] : el.tagName.toLowerCase()) + ' "' + el.textContent.trim().slice(0, 22) + '"',
+      light: L >= .4, w: +cs.fontWeight }); }
+  return out; })()"""
+UI_WEIGHT_AT = (("index.html", 1440, 900, False), ("lifecycles.html", 1440, 900, False), ("trust.html", 1440, 900, False),
+                ("access.html", 1440, 900, False), ("index.html", 390, 844, True), ("trust.html", 390, 844, True))
+
+
+@check
+async def ui_weight(b):
+    """hc23 (integrate, standing in for tests; the director's HC23 4.4, done by system: light on dark blooms, so Inter UI
+    text is set lighter where it is light): on Home, Lifecycles, Trust and Access at 1440 x 900 and on Home and Trust with
+    touch at 390 x 844, walked a screen at a time from the top to the foot, every visible Inter control in the viewport (the
+    bar's links, buttons, arrow links, the instruments' primaries and Follow, the ledgers' buttons and the chains' paper
+    buttons, Home's and Trust's "Show all ... records", the chips' values) is 450 where its text is light (paper on ink, or
+    on a fill of ink) and 500 where it is dark (ink on paper, or on a fill of paper); text in the accent is neither and not
+    read. Before hc23 every one was 500 (the bar read semibold over the overture and regular on paper); its first run
+    caught Trust's "Change a record" (a paper fill on the replay's ink) at 450 beside Home's at 500 (ledger.css's
+    `.lt-btn` overrode the primary's weight). Print sets both to 500 (print_home)."""
+    bad, seen = [], {"light": set(), "dark": set()}
+    for path, w, h, touch in UI_WEIGHT_AT:
+        ctx, pg = await open_page(b, path, w, h, touch=touch)
+        if not touch: await pg.mouse.move(w - 2, h - 2)
+        total = await pg.evaluate("document.documentElement.scrollHeight")
+        y, steps = 0, 0
+        while y < total and steps < 40:
+            await pg.evaluate(f"window.scrollTo({{top: {y}, behavior: 'instant'}})"); await pg.wait_for_timeout(450)
+            for e in await pg.evaluate(UI_WEIGHT):
+                want = 450 if e["light"] else 500
+                seen["light" if e["light"] else "dark"].add(e["k"].split(' "')[0])
+                if e["w"] != want: bad.append(f"{path}@{w}: {e['k']} is {e['w']:g} in {'light text' if e['light'] else 'dark text'}, {want} expected")
+            y += int(h * 0.9); steps += 1
+            total = await pg.evaluate("document.documentElement.scrollHeight")
+        await ctx.close()
+    if not seen["light"] or not seen["dark"]: bad.append(f"too little seen to judge: light {sorted(seen['light'])}, dark {sorted(seen['dark'])}")
+    bad = list(dict.fromkeys(bad))
+    assert not bad, "ui_weight:\n  " + "\n  ".join(bad[:24])
+    print(f"ui_weight: Inter controls are 450 in light text ({', '.join(sorted(seen['light']))}) and 500 in dark ({', '.join(sorted(seen['dark']))})")
+
+
+SAY = r"""(() => { const d = document.querySelector('[data-gap]'), s = d && d.querySelector('[data-gap-say]'), l = d && d.querySelector('.desk-ledger'); if (!s || !l) return null;
+  const live = [...s.children].filter(k => !k.classList.contains('is-out'));
+  return { fol: d.classList.contains('is-following'), txt: live.map(k => k.textContent).join(' | ').trim(), n: s.children.length,
+    led: Math.round((l.getBoundingClientRect().top + scrollY) * 2) / 2, h: Math.round(s.getBoundingClientRect().height * 2) / 2 }; })()"""
+
+
+@check
+async def desk_say(b):
+    """hc23 (integrate, standing in for tests; the director's HC23 4.6, done by platform in gap.js): Lifecycles §03, the line
+    under the gates ([data-gap-say]) through the desk's own act, with touch at 390 x 844 and at 1440 x 900: the desk scrolled
+    in with its ledger in view and left alone, sampled every 80 ms for 30 s: the act is seen following (`.is-following`)
+    and the line speaks; once it has spoken it is never empty again (a new line crossfades over the last; when the followed
+    record leaves the strip the receipt stays, spent); and the slot keeps one height, so the ledger under it never moves.
+    Before hc23 the slot emptied between steps (an 80 px hole between the stepper and the ledger at 390)."""
+    bad, notes = [], []
+    for w, h, dpr, touch in ((390, 844, 3, True), (1440, 900, 1, False)):
+        ctx, pg = await open_page(b, "lifecycles.html", w, h, dpr=dpr, touch=touch)
+        await pg.evaluate("document.querySelector('#desk').scrollIntoView({block: 'start', behavior: 'instant'})"); await pg.wait_for_timeout(600)
+        await pg.evaluate("(() => { const l = document.querySelector('.desk-ledger').getBoundingClientRect(); if (l.bottom > innerHeight) scrollBy(0, l.bottom - innerHeight + 40); })()")
+        rows, t0 = [], time.monotonic()
+        while time.monotonic() - t0 < 30:
+            r = await pg.evaluate(SAY)
+            if r: rows.append(r)
+            await pg.wait_for_timeout(80)
+        await ctx.close()
+        tag = f"lifecycles.html@{w}x{h}"
+        if not rows: bad.append(f"{tag}: no [data-gap-say] in the desk"); continue
+        spoke = next((i for i, x in enumerate(rows) if x["txt"]), None)
+        if not any(x["fol"] for x in rows): bad.append(f"{tag}: the desk's own act was not seen following in 30 s")
+        if spoke is None: bad.append(f"{tag}: the line under the gates never spoke in 30 s"); continue
+        empty = [i for i, x in enumerate(rows) if i > spoke and not x["txt"]]
+        if empty: bad.append(f"{tag}: the line is empty in {len(empty)} of {len(rows) - spoke} samples after it first spoke (first at sample {empty[0]})")
+        leds, hs = sorted({x["led"] for x in rows[spoke:]}), sorted({x["h"] for x in rows[spoke:]})
+        if leds[-1] - leds[0] > 1: bad.append(f"{tag}: the ledger under the line moves as the line changes (its top at {leds[:6]} px)")
+        lines = len({x["txt"] for x in rows if x["txt"]})
+        notes.append(f"{w}: {lines} lines, slot {'/'.join(f'{v:g}' for v in hs)} px")
+    assert not bad, "desk_say:\n  " + "\n  ".join(bad)
+    print(f"desk_say: the line under the gates never empties once it has spoken, the ledger never moves ({'; '.join(notes)})")
+
+
+STRIP = r"""(() => { const rail = document.querySelector('.rs-rail'), plate = document.querySelector('.rs-plate'), cap = document.querySelector('.rs-cap');
+  if (!rail || !cap) return null; const t = cap.querySelector('.figcap-t'), hd = cap.querySelector('.figcap-h');
+  const cur = document.querySelector('.posts-list .post.is-current');
+  const lines = el => { const rg = document.createRange(); rg.selectNodeContents(el); const ys = []; for (const r of rg.getClientRects()) if (r.width > 1 && !ys.some(y => Math.abs(y - r.bottom) < 4)) ys.push(r.bottom); return ys.length; };
+  return { rail: Math.round(rail.getBoundingClientRect().height * 2) / 2, vh: innerHeight, lines: lines(cap), two: !!(plate && plate.classList.contains('is-two')),
+    t: t ? t.textContent : '', h: hd ? hd.textContent : '', s: cur ? cur.dataset.capS || '' : null, full: cur ? cur.dataset.capT || '' : null, noplate: !!document.querySelector('.no-plate') }; })()"""
+STRIP_ROWS = r"""[...document.querySelectorAll('.posts-list .post')].map(li => [li.dataset.capS || '', li.dataset.capT || '', (li.querySelector('a') || li).textContent.trim().replace(/\s+/g, ' ').slice(0, 30)])"""
+
+
+@check
+async def research_strip(b):
+    """hc23 (integrate, standing in for tests; the director's HC23 4.8, done by research): under 760 px the Research index
+    docks its plate as one 56 px running foot. With touch at 412 x 915, 390 x 844, 360 x 780 and 320 x 640, a row at the
+    reading line (rows 1, 5 and 10): `.rs-rail` is 56 px (+-1), the caption shows that row's short phrase (data-cap-s) and
+    its hedge, on one line from 390 px and on two under it, where every hedge takes the second line (`.rs-plate.is-two`, one
+    form while the list scrolls); every row carries a data-cap-s whose every word is a word of its own caption or that
+    word's stem (data-cap-t; the first six letters, as build_research.py's STRIP assert: the phrase is the caption's,
+    nothing new); from 760 px (1024 x 768) the plate shows the full caption. Before hc23 the strip was 120-154 px (14% of
+    a 390 x 844 screen) with the caption on two or three lines."""
+    bad, notes = [], []
+    word = lambda s: re.findall(r"[\w’'-]+", s.lower())
+    ctx, pg = await open_page(b, "research.html", 390, 844, touch=True)
+    rows = await pg.evaluate(STRIP_ROWS)
+    await ctx.close()
+    if len(rows) < 10: bad.append(f"research.html: {len(rows)} rows in the list (10 expected)")
+    for s, t, name in rows:
+        if not s: bad.append(f"research.html: the row {name!r} has no data-cap-s"); continue
+        extra = [x for x in word(s) if not any(c.startswith(x[:6]) for c in word(t))]
+        if extra: bad.append(f"research.html: the row {name!r}'s phone phrase {s!r} has words not in its caption {t!r}: {extra}")
+    for w, h, dpr in ((412, 915, 2.625), (390, 844, 3), (360, 780, 3), (320, 640, 2)):
+        ctx, pg = await open_page(b, "research.html", w, h, dpr=dpr, touch=True)
+        await pg.wait_for_timeout(800)
+        r = None
+        for n in (1, 5, 10):
+            await pg.evaluate(f"(() => {{ const li = document.querySelectorAll('.posts-list .post')[{n - 1}]; window.scrollTo(0, li.getBoundingClientRect().top + scrollY - innerHeight * 0.4 + 30); }})()")
+            await pg.wait_for_timeout(1400)
+            r = await pg.evaluate(STRIP); tag = f"research.html@{w}x{h} row {n}"
+            if not r: bad.append(f"{tag}: no .rs-rail / .rs-cap"); continue
+            if r["noplate"]: bad.append(f"{tag}: no plate (WebGL off?)"); continue
+            if abs(r["rail"] - 56) > 1: bad.append(f"{tag}: the strip is {r['rail']:g} px tall (56 expected; {r['rail'] / r['vh'] * 100:.1f}% of the screen)")
+            want = 2 if w < 390 else 1
+            if r["lines"] != want: bad.append(f"{tag}: the caption runs on {r['lines']} line(s), {want} expected ({r['t']!r} · {r['h']!r})")
+            if (w < 390) != r["two"]: bad.append(f"{tag}: .rs-plate.is-two is {r['two']} at {w} px")
+            if r["s"] is not None and r["t"] != r["s"]: bad.append(f"{tag}: the caption reads {r['t']!r}, the row's phrase is {r['s']!r}")
+            if not r["h"]: bad.append(f"{tag}: the caption has no hedge")
+        if r: notes.append(f"{w}: {r['rail']:g} px, {r['lines']} line(s)")
+        await ctx.close()
+    ctx, pg = await open_page(b, "research.html", 1024, 768)
+    await pg.evaluate("document.querySelectorAll('.posts-list .post')[2].scrollIntoView({block: 'center', behavior: 'instant'})")
+    await pg.wait_for_timeout(1400)
+    r = await pg.evaluate(STRIP)
+    await ctx.close()
+    if r and r["full"] is not None and r["t"] != r["full"]: bad.append(f"research.html@1024x768: the caption reads {r['t']!r}, the full caption {r['full']!r} expected from 760 px")
+    assert not bad, "research_strip:\n  " + "\n  ".join(bad)
+    print(f"research_strip: the phone strip is one 56 px running foot with the row's own phrase and hedge ({'; '.join(notes)}); the full caption from 760 px")
+
+
 # ---------------------------------------------------------------- runner
 def parse_args(argv):
     base, only, listing, i = None, None, False, 0

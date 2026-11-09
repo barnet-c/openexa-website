@@ -39,14 +39,14 @@
 .rs-shelf > #series .posts-list { border-top-color: var(--line-strong); }
 /* r5 (r5-art moderate): display heads break between phrases (build_research PH), as Home's do. A phrase is one unit
    that wraps inside itself only where its column is narrower than it, so no zoom or text size scrolls sideways */
-:is(.research-page, .article-page) :is(h1, h2, h3) .ph { display: inline-block; } /* the ten titles too (PHRASES) */
+:is(.research-page, .article-page) :is(h1, h2, h3) .ph { display: inline-block; baseline-source: first; } /* the ten titles too (PHRASES); hc23: a phrase wrapping inside itself (row 04 at 320) keeps the numeral on its first line */
 .rs-rail { display: none; }
 .rs-plate { margin: 0; }
 .rs-stage { position: relative; overflow: hidden; border-radius: var(--r); }
 .rs-stage .figure-stage { pointer-events: auto; }
 .rs-stage .figure-stage canvas { touch-action: pan-y; }
 .rs-cap { transition: opacity .14s var(--ease); }
-.rs-cap.is-swapping { opacity: 0; }
+.rs-cap.is-swapping { opacity: 0; transition-duration: .1s; } /* hc23: out before the words change (140 ms) */
 /* the row whose figure is on the plate: v2's mark, held. It hangs in the margin, clear of the numeral, and nothing
    indents (hover included), so the numerals and titles keep one edge while the plate follows the pointer */
 .research-page .posts-list .post > a::before { left: calc(-1 * clamp(.6875rem, 1.3vw, 1.125rem)); }
@@ -88,32 +88,28 @@
   .research-page :is(.post-main h3, .post-n) { font-size: 1.45rem; } /* a3: the numeral at the title's size (21.6 beside 23.2) */
   .rs-stage { aspect-ratio: 1; }
 }
-/* phones: the plate is a strip pinned to the foot of the screen while the list is read; it settles after the last note */
+/* phones: the plate is a strip pinned to the foot of the screen while the list is read; it settles after the last note.
+   hc23: a 56 px running foot, the drawing a 44 px mark in the numerals' column, its caption on the titles' edge */
 @media (scripting: enabled) and (max-width: 759.98px) {
   .rs-rail {
     display: block; position: sticky; bottom: 0; z-index: 4; background: var(--ink); color: var(--paper);
     --fg: var(--paper); --fg-2: rgba(245, 242, 236, .78); --fg-3: rgba(245, 242, 236, .56); --line: rgba(245, 242, 236, .14); --accent: var(--signal-bright);
     box-shadow: 0 calc(-1 * var(--hair)) 0 var(--line); padding-bottom: env(safe-area-inset-bottom);
   }
-  .rs-plate { display: grid; grid-template-columns: minmax(0, 1fr) 40%; align-items: stretch; gap: .875rem; min-height: clamp(6.75rem, 31vw, 8.75rem); }
-  .rs-stage { grid-column: 2; grid-row: 1; border-radius: 0; --figure-scale: 1.5; }
-  .rs-caption { grid-column: 1; grid-row: 1; align-self: center; padding-block: .75rem; }
+  .rs-plate { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr); align-items: center; column-gap: 1rem; min-height: 3.5rem; }
+  .rs-stage { width: 2.75rem; height: 2.75rem; border-radius: 0; }
+  .rs-stage .figure-stage { --figure-scale: 1.4; --figure-wmin: .45; } /* finer points (figure.js): not a blot */
+  .rs-caption { padding-block: .5rem; overflow: hidden; }
   .rs-shelf .rs-rail { transform: translateY(101%); transition: transform .5s var(--ease-move); } /* a1 (W3): it travels */
   .rs-shelf.is-reading .rs-rail { transform: none; }
   .rs-rail .fig-labels .fl { display: none; } /* the words; a plate's rule (note 09's floor) is the drawing and stays */
-  .rs-cap { gap: .3125rem; }
-  .rs-cap .figcap-t { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  /* r2 (r2-motion): the strip keeps one height whatever the note's caption, and each line its place: the title and
-     the hedge are held at the longest of each at this width (research.js), so a caption swap moves nothing */
-  .rs-cap .figcap-t { min-height: var(--rs-t-h, 0px); }
-  .rs-cap .figcap-h { min-height: var(--rs-h-h, 0px); }
-}
-/* small phones and short screens (r1 mobile): the strip is the size of its words, not a quarter of the screen; what is
-   drawn and the hedge stay whole */
-@media (scripting: enabled) and (max-width: 360px), (scripting: enabled) and (max-width: 759.98px) and (max-height: 700px) {
-  .rs-plate { min-height: 5.75rem; gap: .75rem; grid-template-columns: minmax(0, 1fr) 34%; }
-  .rs-caption { padding-block: .5625rem; }
-  .rs-cap { gap: .25rem; }
+  /* what is drawn (the row's short phrase), a middle dot, the hedge (whole); a hedge that takes a second line leaves its
+     dot in the clipped margin. Held at the longest caption's height (research.js): a swap moves nothing */
+  .research-page .rs-cap { display: flex; flex-wrap: wrap; align-items: baseline; align-content: center; gap: 0; font-size: var(--fs-small); margin-left: -.875em; min-height: var(--rs-c-h, 0px); }
+  .rs-cap > * { margin-left: .875em; line-height: 1.4; }
+  .rs-cap .figcap-h { position: relative; white-space: nowrap; }
+  .rs-cap .figcap-t:not(:empty) + .figcap-h::before { content: "·"; position: absolute; right: 100%; width: .875em; text-align: center; }
+  .rs-plate.is-two .rs-cap .figcap-t { flex-basis: 100%; } /* hc23 (research.js): one wraps, all wrap */
 }
 /* a short window (a phone held sideways, a desktop zoomed to 400 %): the strip is not pinned, so the list is never read
    through a slot; it stands under the list, as it does after the last note (qa-hostile, WCAG 1.4.10) */
@@ -122,9 +118,9 @@
   .rs-shelf .rs-rail { transform: none; transition: none; }
 }
 /* r4 (r4-a11y m2, WCAG 2.4.12): a row reached with the keyboard is scrolled clear of the pinned strip, not behind it.
-   --rs-strip-h is the strip's own height (research.js; 154 px at 390x844, its safe-area padding included) */
+   --rs-strip-h is the strip's own height (research.js; 56 px, its safe-area padding included) */
 @media (scripting: enabled) and (max-width: 759.98px) and (min-height: 560px) {
-  .research-page .posts-list .post > a { scroll-margin-bottom: calc(var(--rs-strip-h, 9.75rem) + 1rem); }
+  .research-page .posts-list .post > a { scroll-margin-bottom: calc(var(--rs-strip-h, 3.5rem) + 1rem); }
 }
 /* phones, with or without JavaScript: the read time and the arrow sit in the margin under the numeral, so each row is
    a line shorter (a contents page's marginal figure, not a fifth line under the dek) */

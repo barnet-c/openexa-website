@@ -22,8 +22,8 @@
 }
 /* the same three gates on phones (the plate's list): the same register */
 .lane-v--pipe :is(.lk, .lk-who), .lane-v.lane-v--pipe > .lv-bound, .lane-v.lane-v--pipe > .lv-rec > span { font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; }
-/* hc19: §03 acts once (plate.js, actOnce: .is-run): the ring leaves its place, rides into Settle, each gate lights as it
-   passes (--at: where --ease-move crosses it) and writes its record; whole at rest, no fill held (notes/platform.md, hc19) */
+/* hc19: §03 acts once (plate.js actOnce, .is-run): the ring rides into Settle, lighting each gate (--at); whole at rest
+   (notes/platform.md) */
 #pipeline .pp-r { transform-box: fill-box; transform-origin: center; }
 #pipeline .ln3.pp-lt { --lt-w: var(--stroke); }
 @media screen and (prefers-reduced-motion: no-preference) {
@@ -157,10 +157,19 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 /* LIFECYCLES */
 
 .desk .dl-rcpt { color: var(--fg); }
+/* hc23: one cell, a new line fading in as the last fades out (gap.js put); a spent receipt in the line's colour */
+.desk .dl-say { display: grid; }
+.desk .dl-say > * { grid-area: 1 / 1; }
+.desk .dl-say > .is-out { opacity: 0; }
+.desk .is-spent, .desk .is-spent .dl-hx { color: var(--fg-2); }
 .desk .dl-hx { font: 500 1em/1 var(--mono); letter-spacing: .04em; color: var(--accent); white-space: nowrap; } /* hc19: the strip's step */
 .desk .dk-rec.is-followed .dk-h { color: var(--accent); }
 .desk .dk-rec.is-linked .dk-h { color: var(--fg); }
-@media (prefers-reduced-motion: no-preference) { .desk .dl-rcpt { animation: pl-fade .45s var(--ease) both; } }
+@media (prefers-reduced-motion: no-preference) {
+  .desk :is(.dl-say > *, .dl-hx) { transition: opacity .3s var(--ease), color .6s var(--ease-out); }
+  .desk .dl-say > .is-out { transition-duration: .2s; }
+  @starting-style { .desk .dl-say > * { opacity: 0; } }
+}
 
 @media (max-width: 600px) { .desk .dl-say { min-height: calc(4.5em + .625rem); } }
 
@@ -173,8 +182,8 @@ body[data-page="lifecycles"] .lcp .orb-next { opacity: .8; }
 @media (min-width: 961px) { body[data-page="lifecycles"] .lcp .orb-road { stroke-width: calc(2 * var(--stroke)); } }
 .hero-plate--rings .lr-ax { fill: none; stroke: currentColor; stroke-opacity: .32; stroke-width: var(--stroke); }
 .hero-plate--rings .orb-swarm .mote { opacity: .62; }
-/* hc13r (PLAT-2): the hero draws its headline: LC-01's live bead is gate 01 (Signal), five ticks are gates 02-06, a
-   record square ends the lap; once (gap.js, actOnce) a proposal ring runs it, lights each gate, squares up on Record */
+/* hc13r (PLAT-2): the hero draws its headline: bead = gate 01, ticks = 02-06, a record square ends the lap; once (gap.js
+   actOnce) a ring runs it */
 .hero-plate--rings .lr-g { fill: none; stroke: currentColor; stroke-opacity: .75; stroke-width: var(--stroke); stroke-linecap: round; transform-box: fill-box; transform-origin: center; transition: stroke .6s var(--ease), stroke-opacity .6s var(--ease), transform .6s var(--ease); }
 .hero-plate--rings .lr-g.is-lit { stroke: var(--accent); stroke-opacity: 1; stroke-width: var(--stroke-2); transform: scale(1.6); transition: transform .18s var(--ease-out); }
 .hero-plate--rings .lr-rec { fill: var(--accent); transform-box: fill-box; transform-origin: center; transition: opacity .4s var(--ease-out), transform .4s var(--ease-out); }
@@ -184,9 +193,8 @@ body[data-page="lifecycles"] .lcp .orb-next { opacity: .8; }
 .hero-plate--rings .lr-rec.is-in ~ .lr-dot { opacity: 0; } /* the ring squares up: it is the record now */
 @media (prefers-reduced-motion: no-preference) { .hero-plate--rings .hp-s1 { animation: pl-fade .6s var(--ease-out) both; } }
 @media print { .hero-plate--rings .lr-dot { display: none; } .hero-plate--rings .lr-rec { opacity: 1 !important; } }
-/* hc14 (director 4.5): the five outer rings recede to the faint line, so LC-01 and its gates lead; 'Signal' and 'Record'
-   sit outside LC-01 at their hairline leaders' ends (Record hangs below-left of its 45-degree leader), each on its own
-   patch of paper: no stroke within 8 px of a word, and the run (on LC-01) never passes under one */
+/* hc14: the outer rings recede so LC-01 leads; 'Signal' and 'Record' sit at their leaders' ends, outside LC-01, each on
+   its own patch of paper (no stroke within 8 px of a word; notes/platform.md) */
 body[data-page="lifecycles"] .hero-plate--rings :is(.lr-n, .lr-r) { opacity: .45; }
 .hero-plate--rings .lr-lab { --tx: calc(-100% - .5rem); background: var(--bg); box-shadow: 0 0 0 .5rem var(--bg); border-radius: .25rem; }
 .hero-plate--rings .lr-lab--rec { transform: translate(var(--tx), .5rem); }
@@ -274,7 +282,7 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 
 .desk .desk-stats > div { padding: 1.5rem .75rem 1.25rem; }
 .desk .desk-stats span { letter-spacing: .07em; }
-.desk .desk-controls { flex: 1 0 auto; align-content: center; gap: 1.625rem; padding: 1.5rem 1.125rem; }
+.desk .desk-controls { flex: 1 0 auto; align-content: center; gap: 1.625rem; padding: 1.5rem 1.125rem; border-bottom: 0; } /* hc23: the lane's rule (or the desk's edge) closes it: no doubled hairline */
 @media (min-width: 1200px) { .desk .desk-body { grid-template-columns: minmax(0, 1fr) 22.5rem; } }
 @media (min-width: 961px) {
   .desk .desk-controls { grid-template-rows: 1fr 1fr; align-content: stretch; gap: 0; padding: 0; }
@@ -288,7 +296,6 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 @media (min-width: 601px) and (max-width: 960px) and (min-height: 521px) {
   .desk .desk-side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .desk .desk-stats { border-bottom: 0; border-right: var(--hair) solid var(--line); }
-  .desk .desk-controls { border-bottom: 0; }
 }
 @media (max-width: 600px) {
   .desk .desk-lane { grid-template-columns: minmax(0, 1fr); grid-template-areas: "btn" "gates" "say"; row-gap: 1.125rem; padding: 1rem .75rem .375rem; }
@@ -313,8 +320,7 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 @media (max-width: 374.98px) { body[data-page="platform"] .modes-head h2 .ph:has(> .ws-b) { display: inline; width: auto; } body[data-page="platform"] .modes-head h2 .ws-a { white-space: nowrap; } }
 @media (max-width: 329.98px) { body[data-page="platform"] .modes-head h2 { letter-spacing: -.032em; } }
 
-:is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(dd, .list-rule p, .layer p) { text-wrap: pretty; }
-:is(body[data-page="platform"], body[data-page="lifecycles"]) main :is(.stats .d, .mkt-col h3, .checks li, .list-hair li) { text-wrap: balance; }
+body[data-page="platform"] main .layer p { text-wrap: pretty; }
 body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
 
@@ -567,9 +573,8 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
 /* hc21: the demand half is drawn in the supply's 600 x 300 box (one snap, no step at the join); stacked, it gives back
    the 130 empty units (a % margin is of the width) */
 @media (max-width: 600px) { #marketplace .sp-half + .sp-half { margin-top: calc(-130% / 6); } }
-/* hc20-21: §06 draws itself once on the site's reveal, whole by .85 s as §04's cells (notes/platform.md): streams,
-   layers, boundary, records left to right, ticks. Nothing travels or loops; no fill held: the still at rest, without JS,
-   under reduced motion, after a jump, in print */
+/* hc20-21: §06 draws itself once on reveal, whole by .85 s; nothing travels or loops; the still at rest, without JS,
+   under reduced motion, after a jump, in print (notes/platform.md) */
 #marketplace .hp-rec { transform-box: fill-box; transform-origin: center; }
 @media screen and (prefers-reduced-motion: no-preference) {
   #marketplace .will-reveal.is-in:not(.is-cut) .pl-draw { animation: mk-wipe .5s var(--ease-draw) 50ms backwards; }
@@ -602,7 +607,7 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
   body[data-page="lifecycles"] .desk { grid-template-areas: "head" "controls" "chart" "stats" "lane" "ledger"; }
   body[data-page="lifecycles"] .desk-side { display: contents; }
   body[data-page="lifecycles"] .desk-controls { grid-area: controls; padding: .875rem .875rem .75rem; border-bottom: var(--hair) solid var(--line); }
-  body[data-page="lifecycles"] .desk-stats { grid-area: stats; border-top: var(--hair) solid var(--line); }
+  body[data-page="lifecycles"] .desk-stats { grid-area: stats; border-top: var(--hair) solid var(--line); border-bottom: 0; }
   body[data-page="lifecycles"] .desk:not(.is-following) .dl-say:empty { min-height: 0; margin-top: 0; padding-top: 0; border-top-color: transparent; }
 }
 
@@ -648,10 +653,10 @@ body[data-page="lifecycles"] .desk { scroll-margin-top: clamp(.75rem, 1.6vw, 1.5
 body[data-page="lifecycles"] .desk :is(.desk-legend, .desk-legend .desk-axis, .desk-stats span, .desk-controls label, .dl-k, .dl-gates li, .dl-say b) { font-family: var(--sans); font-size: var(--fs-small); font-weight: 400; line-height: 1.35; letter-spacing: 0; text-transform: none; }
 body[data-page="lifecycles"] .desk .desk-kicker > span { white-space: nowrap; }
 body[data-page="lifecycles"] .desk :is(.desk-controls output, .dl-gates li b) { font: 400 var(--fs-small)/1.35 var(--mono); letter-spacing: 0; } /* hc13r: an instrument speaks at two sizes (SYSTEM.md 12): the lane's numerals and the sliders' values at the UI step */
-body[data-page="lifecycles"] .desk .dl-k { font-weight: 500; color: var(--fg); }
+body[data-page="lifecycles"] .desk .dl-k { font-weight: var(--w-ui); color: var(--fg); } /* hc23: Inter labels on ink at the ink weight (site.css) */
 body[data-page="lifecycles"] .desk .dl-k span { font-weight: 400; }
 body[data-page="lifecycles"] .desk .dl-say { font-size: var(--fs-small); }
-body[data-page="lifecycles"] .desk .dl-say b { font-weight: 500; }
+body[data-page="lifecycles"] .desk .dl-say b { font-weight: var(--w-ui); }
 @media (max-width: 420px) { body[data-page="lifecycles"] .desk .dl-gates li:nth-child(even) b { margin-bottom: calc(1.35 * var(--fs-small)); } }
 @media (min-width: 700px) and (max-width: 900px) { body[data-page="lifecycles"] .desk-head > .desk-kicker { order: 0; flex-basis: auto; } }
 @media (min-width: 641px) and (max-width: 699.98px) { body[data-page="lifecycles"] .desk { --dh: 5.25rem; } }

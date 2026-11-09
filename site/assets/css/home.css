@@ -95,7 +95,7 @@ body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3
 
 /* the chain folds to records #4f23-#4f26 at every width (home.js, hc14); the control, an edit or 'Change a record' opens all eight */
 body[data-page="home"] #governance .chain.is-folded .chain-list > li:nth-child(n + 5) { display: none; }
-body[data-page="home"] #governance .chain-more { display: flex; align-items: center; gap: .625rem; width: calc(100% - 1.5rem); min-height: 2.75rem; margin: 0 .75rem .5rem; padding: 0 .75rem; border: var(--hair) dashed var(--line-strong); border-radius: .125rem; font: 500 var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; color: var(--fg); } /* the site's button voice (a3) */
+body[data-page="home"] #governance .chain-more { display: flex; align-items: center; gap: .625rem; width: calc(100% - 1.5rem); min-height: 2.75rem; margin: 0 .75rem .5rem; padding: 0 .75rem; border: var(--hair) dashed var(--line-strong); border-radius: .125rem; font: var(--w-ui) var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; color: var(--fg); } /* the site's button voice (a3) */
 body[data-page="home"] #governance .chain-more::before { content: "+"; content: "+" / ""; font-size: .9rem; color: var(--accent); }
 body[data-page="home"] #governance .chain-more[aria-expanded="true"]::before { content: "\2212"; content: "\2212" / ""; }
 body[data-page="home"] #governance .chain-more:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
@@ -157,13 +157,13 @@ body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(1.625re
 .lc-reg .card:first-child .h4 { color: var(--fg); }
 .lc-reg .card .n--ring > span:last-child { grid-column: 2; grid-row: 2; justify-self: start; font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--khaki-ink); text-wrap: balance; } /* hc3: balanced, so "Live: ETF creation / & redemption" at 761-960 */
 .lc-reg .card .n--ring > .badge { padding: 0; border: 0; } /* every status, live too, in the khaki ink */
-@media (min-width: 761px) { .lc-reg .lc-dot { display: block; height: 0; overflow: hidden; } } /* a dot-joined name breaks before its dot and drops it */
+@media (min-width: 761px), (max-width: 359.98px) { .lc-reg .lc-dot { display: block; height: 0; overflow: hidden; } } /* a dot-joined name breaks before its dot and drops it (hc23: the narrowest phones too, at the title step) */
 @media (max-width: 760px) {
   .lc-reg { grid-template-columns: minmax(0, 1fr); }
   .lc-reg > .card:nth-child(n) { grid-template-columns: 1.375rem minmax(0, 1fr); row-gap: calc(3 * var(--hair)); align-content: normal; align-items: center; padding: .875rem 0 .9375rem; border-left: 0; }
   .lc-reg .lc-code { align-self: center; margin-top: 0; }
   .lc-reg .lc-ring { width: 1.375rem; height: 1.375rem; }
-  .lc-reg .card .h4 { align-self: end; max-width: none; font-size: var(--fs-body); line-height: 1.25; }
+  .lc-reg .card .h4 { align-self: end; max-width: none; } /* hc23: the title step on phones too (was the body's 17 px) */
 }
 
 /* §03: the head, then the stack of costs (hc13r: the head at the chapters' measure, one line from 1100 px) */
@@ -235,12 +235,12 @@ body[data-page="home"] #economics .cost-row:first-child { padding-top: 1.5rem; }
 /* the chapters after the overture are laid out near the viewport only; each stand-in is its measured height for the width
    band (with padding and the top hairline), so the page is as long at load as drawn. The footer is always drawn */
 body[data-page="home"] main > .story ~ section { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
-body[data-page="home"] #lifecycles { --cis: 38.6875rem; } body[data-page="home"] #lc01 { --cis: 64.5rem; }
+body[data-page="home"] #lifecycles { --cis: 40.0234375rem; } body[data-page="home"] #lc01 { --cis: 62.8125rem; }
 body[data-page="home"] #economics { --cis: 42.046875rem; } body[data-page="home"] #governance { --cis: 44.25rem; }
 body[data-page="home"] #research { --cis: 37.0625rem; } body[data-page="home"] .cta-band { --cis: 6.5rem; }
 /* the heights at 700, 820, 1024, 1280, 1440 and 1920 (rem: 3840 is 1920 doubled), measured: notes/home.md */
 @media (min-width: 600px) {
-  body[data-page="home"] #lifecycles { --cis: 36.71875rem; } body[data-page="home"] #lc01 { --cis: 54.359375rem; }
+  body[data-page="home"] #lifecycles { --cis: 38.05859375rem; } body[data-page="home"] #lc01 { --cis: 54.359375rem; }
   body[data-page="home"] #economics { --cis: 28.921875rem; } body[data-page="home"] #governance { --cis: 46.609375rem; }
   body[data-page="home"] #research { --cis: 34.953125rem; } body[data-page="home"] .cta-band { --cis: 6.609375rem; }
 }
@@ -409,10 +409,22 @@ body[data-page="home"] .beat-4 :is(.body-lg, .beat-more) { translate: 0 calc(var
 /* the director 4.1: the four figures in the site's stat grammar (the lab's counters, Company's): a serif numeral over an
    Inter label at the small step, no mono caps; the dash is ink (green is the live dot's) */
 body[data-page="home"] .hero-stats span { margin-top: .5rem; font: 400 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .72); }
-body[data-page="home"] .hero-stats > div:last-child span { text-wrap: balance; }
-body[data-page="home"] .hero-stats .live { position: relative; top: -.62em; vertical-align: baseline; } /* raised as before, the line box not */
-@media (min-width: 961px) and (min-aspect-ratio: 23/20) { body[data-page="home"] .hero-stats { grid-template-columns: auto auto auto minmax(11.5rem, 1fr); column-gap: 2rem; max-width: min(56%, 44rem); } } /* a short label keeps its line, the live one takes two */
-@media (min-width: 600px) and (max-aspect-ratio: 23/20) { body[data-page="home"] .hero-stats { grid-template-columns: 1fr 1fr .8fr 1.6fr; column-gap: 1.5rem; } }
+body[data-page="home"] .hero-stats > div:last-child > span { text-wrap: balance; }
+/* hc23 (director 3): the live dot leads its label as status ("● Lifecycle live"), the numeral stands clean; where the row
+   has room the detail is the label's own second line (its separator goes), on a phone's one line it stays */
+body[data-page="home"] .hero-stats span span { display: inline; margin: 0; }
+body[data-page="home"] .hero-stats .live { margin: 0 .5em 0 0; vertical-align: .08em; }
+body[data-page="home"] .hero-stats .hs-sep { display: none; }
+body[data-page="home"] .hero-stats .hs-l2 { display: block; }
+@media (min-width: 961px) and (min-aspect-ratio: 23/20) { body[data-page="home"] .hero-stats { grid-template-columns: auto auto auto 1fr; column-gap: 1.25rem; width: fit-content; max-width: min(60%, 45rem); } body[data-page="home"] .hero-stats .hs-l2 { white-space: nowrap; } } /* a short label keeps its line, the live one its two; the row ends short of the globe's horizon (1440 x 900: at 798 px, under 56%) */
+@media (min-width: 600px) and (max-aspect-ratio: 23/20) { body[data-page="home"] .hero-stats { grid-template-columns: auto auto auto 1fr; column-gap: 1.5rem; } body[data-page="home"] .hero-stats .hs-l2 { white-space: nowrap; } }
+/* a narrow landscape window (600-960): no room for the detail's line beside three columns, so the phone's two tiers */
+@media (min-width: 600px) and (max-width: 960.98px) and (min-aspect-ratio: 23/20) {
+  body[data-page="home"] .hero-stats { grid-template-columns: repeat(3, auto); justify-content: start; gap: .875rem 1.75rem; }
+  body[data-page="home"] .hero-stats > div:last-child { grid-column: 1 / -1; display: flex; align-items: baseline; gap: .625rem; }
+  body[data-page="home"] .hero-stats > div:last-child > span { margin-top: 0; }
+  body[data-page="home"] .hero-stats :is(.hs-sep, .hs-l2) { display: inline; }
+}
 /* phones: all four in two tiers, the three figures, then Lifecycle 01 on its own line (tablets keep the row: story.js) */
 @media (max-width: 599.98px) {
   body[data-page="home"] .hero-stats { grid-template-columns: repeat(3, 1fr); gap: .625rem 1rem; }
@@ -420,10 +432,12 @@ body[data-page="home"] .hero-stats .live { position: relative; top: -.62em; vert
   body[data-page="home"] .hero-stats b { font-size: 1.45rem; }
   body[data-page="home"] .hero-stats span { margin-top: .3125rem; }
   body[data-page="home"] .hero-stats > div:last-child span { margin-top: 0; }
+  body[data-page="home"] .hero-stats :is(.hs-sep, .hs-l2) { display: inline; }
 }
+@media (max-width: 389.98px) { body[data-page="home"] .hero-stats .hs-sep { display: none; } body[data-page="home"] .hero-stats .hs-l2 { display: block; } } /* no room for one line: the deliberate two */
 @media (scripting: enabled) and (max-width: 599.98px) and (min-height: 740px) {
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-stats { display: grid; margin-top: .75rem; }
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-stats > div:not(:last-child) { display: block; }
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-stats b { font: 400 1.45rem/1 var(--serif); letter-spacing: -0.02em; }
-  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-stats .live { width: .375rem; height: .375rem; margin-left: .5rem; vertical-align: baseline; }
+  html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-stats .live { width: .375rem; height: .375rem; margin: 0 .5em 0 0; vertical-align: .08em; }
 }

@@ -91,7 +91,6 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-lab.cap { white-space: normal; max-width: calc(100% - 2 * var(--gutter)); line-height: 1.5; letter-spacing: .12em; color: rgba(245, 242, 236, .6); } /* AA on the ground */
 .story-lab.cap b { color: rgba(245, 242, 236, .8); font-weight: 400; margin-right: .7em; }
 .story-lab.day { display: grid; justify-items: center; gap: calc(2 * var(--hair)); padding: .1875rem .25rem; min-width: 1.625rem; line-height: 1.25; }
-.story-lab.day .rg { color: rgba(245, 242, 236, .7); } /* D and P read alike: regime is a label, not a rank */
 .story-lab.day.is-hot .k { color: var(--paper); }
 .story-lab.day.is-thin:not(:focus-visible), .story-ink .story-lab.is-thin { opacity: 0 !important; } /* columns too close for every tag: 01, 03 … 09 print */
 .story-lab.floor { color: rgba(245, 242, 236, .74); text-align: right; }
@@ -106,7 +105,7 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-lab.sum .sep { display: block; }
 .story-insp { position: absolute; left: 0; top: 0; z-index: 2; max-width: 16.25rem; padding: .5625rem .75rem .625rem; border-left: var(--hair) solid var(--signal-bright); background: rgba(11, 17, 15, .96); font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .8); opacity: 0; pointer-events: none; white-space: normal; }
 .story-insp.is-on { opacity: 1; transition: opacity var(--dur-feedback) var(--ease); } /* it comes up softly and goes at once */
-.story-insp b { display: block; margin-bottom: calc(3 * var(--hair)); color: var(--paper); font-weight: 500; }
+.story-insp b { display: block; margin-bottom: calc(3 * var(--hair)); color: var(--paper); font-weight: var(--w-ui); }
 .story-insp em { font-style: normal; color: var(--signal-bright); }
 /* while the inspector is up, the caption and the summary give way to it (classes only: no :has()) */
 .story-labels.has-insp .story-lab.cap, .story-labels.has-insp .story-lab.sum { opacity: 0 !important; }
@@ -136,7 +135,6 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-ink { position: absolute; inset: 0; }
 .story-ink .story-lab { opacity: 1; transition: none; pointer-events: none; }
 .story-ink .story-lab .k { color: var(--ink); }
-.story-ink .story-lab .rg { color: rgba(14, 21, 18, .62); }
 .story-ink-rec { position: absolute; left: 0; top: 0; width: .9375rem; height: .4375rem; border-radius: .0625rem; background: var(--ink); }
 .story-ink-rec::after { content: ""; position: absolute; right: calc(2 * var(--hair)); top: calc(2 * var(--hair)); width: calc(3 * var(--hair)); height: calc(3 * var(--hair)); background: var(--paper); opacity: .55; } /* its hash slot */
 .story-ink-link { position: absolute; left: 0; top: 0; height: var(--hair); background: rgba(14, 21, 18, .34); }

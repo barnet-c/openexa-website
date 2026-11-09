@@ -75,7 +75,7 @@ jobs:
       matrix:
         include:
           - shard: pages
-            only: pages,no_js,no_webgl,faux_bold,tables_phone,reflow_400,print_home,lede_line_ends,home_standins
+            only: pages,no_js,no_webgl,faux_bold,tables_phone,reflow_400,print_home,lede_line_ends,home_standins,ui_weight
           - shard: home
             only: home,interior,resolution,phone,reduced_motion,loader,proof_entrance,overture_net
           - shard: overture
@@ -91,9 +91,9 @@ jobs:
           - shard: nav
             only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures,deep_links,tab_walk,pill_focus,nav_h_px,readout_end,footer_end
           - shard: plates
-            only: draw_rest,crisp_4k,zoom_wide,market_draw_once,first_screen_sizes
+            only: draw_rest,crisp_4k,zoom_wide,market_draw_once,first_screen_sizes,research_strip
           - shard: desk-pages
-            only: desk,desk_warm_start,desk_phone_follow,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab,trust_tamper
+            only: desk,desk_warm_start,desk_phone_follow,desk_say,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab,trust_tamper
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

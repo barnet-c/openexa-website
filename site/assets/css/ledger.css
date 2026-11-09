@@ -18,7 +18,8 @@
 .lt.is-paused .lt-state, .lt.is-inspecting .lt-state { color: var(--fg-2); }
 .lt.is-inspecting .lt-state i { background: transparent; box-shadow: inset 0 0 0 var(--hair) currentColor; }
 .lt-ctrl { grid-area: ctrl; display: inline-flex; gap: .5rem; }
-.lt-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.25rem; padding: 0 .8125rem; border: var(--hair) solid var(--line-strong); border-radius: var(--r); font: 500 var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; color: var(--fg); white-space: nowrap; transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), background var(--dur-feedback) var(--ease-out); }
+.lt-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.25rem; padding: 0 .8125rem; border: var(--hair) solid var(--line-strong); border-radius: var(--r); font: var(--w-ui) var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; color: var(--fg); white-space: nowrap; transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), background var(--dur-feedback) var(--ease-out); }
+.lt-btn.instr-primary:not([aria-pressed]) { font-weight: var(--w-ui-x); } /* hc23: a paper fill */
 @media (hover: hover) { .lt-btn:hover { border-color: var(--accent); color: var(--accent); } } /* a tap never leaves a hover look behind; the chain's acts (change, restore) are site.css's paper button */
 .lt-btn:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
 .lt-btn svg { flex: none; width: .8125rem; height: .8125rem; }

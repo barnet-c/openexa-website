@@ -318,7 +318,7 @@
        never below .75 or above 1.1: a small stage's points no longer run together (390@3: neon bars). Linear in the
        drawing's size overshot (measured, award-a1 p1: 3840 twice as heavy as 1440); the eye reads weight sub-linearly.
        The halo is a little lighter at 2.5x DPR and up. The words beside the points take the same u (rules, dots, gaps) */
-    let ref = 432, u = 1;
+    let ref = 432, u = 1, wmin = 0.75;
     const SWAY = 0.2, FLOW_S = 1.5; // radians either side of face-on; seconds per pass of the pulse
     const groups = {}; let grp = null, grpOn = false;
     stage.querySelectorAll('.fig-labels').forEach(el => { groups[el.dataset.for] = { el, items: Array.from(el.querySelectorAll('.fl')).map(l => ({ el: l, at: l.dataset.at.split(',').map(Number), side: l.dataset.side || 'r', ph: l.dataset.ph ? l.dataset.ph.split(',').map(Number) : null, to: l.dataset.to ? l.dataset.to.split(',').map(Number) : null, keep: l.hasAttribute('data-keep'), sides: (l.dataset.keep || '').split(' ').filter(Boolean), lead: 19, w: 0, h: 0, w1: 0, h1: 0, drop: 0, one: false, dropSet: 0, oneSet: false, x: NaN, y: NaN, dx: 0, out: false, lit: false })), lines: Array.from(el.querySelectorAll('.fl-line')).map(l => ({ el: l, a: l.dataset.at.split(',').map(Number), b: l.dataset.line.split(',').map(Number), k: '' })) }; });
@@ -338,9 +338,10 @@
     const cssScale = () => {
       const cs = getComputedStyle(stage), v = parseFloat(cs.getPropertyValue('--figure-scale')), rf = parseFloat(cs.getPropertyValue('--figure-ref'));
       scale = v > 0 ? v : baseScale; ref = rf > 0 ? rf : 432;
+      const wm = parseFloat(cs.getPropertyValue('--figure-wmin')); wmin = wm > 0 ? wm : 0.75; // hc23: a 44 px mark (research's phone strip) may draw finer points
       u = (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16;
     };
-    const weight = sc => u * Math.min(1.1, Math.max(0.75, Math.sqrt(H * sc / (u * ref)) * Math.pow(15000 / N, 0.25)));
+    const weight = sc => u * Math.min(1.1, Math.max(wmin, Math.sqrt(H * sc / (u * ref)) * Math.pow(15000 / N, 0.25)));
     const restView = new Float32Array(16); lookAt(restView, [0, 0.35, 4.4]); // the pose a plate rests in (no tilt)
     // the factor (<= 1) that brings the formation's points and the words beside them inside the safe box, at rest
     function widthFit(name) {

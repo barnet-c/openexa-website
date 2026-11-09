@@ -338,7 +338,7 @@
 .tr-lt .lt-more { display: none; }
 @media (scripting: enabled) and (max-width: 600px) {
   .tr-lt:not(.is-open) .lt-track > li:nth-child(n + 5) { display: none; }
-  .tr-lt .lt-more { display: flex; align-items: center; gap: .625rem; width: calc(100% - 1.5rem); min-height: 2.75rem; margin: 0 .75rem .75rem; padding: 0 .75rem; border: var(--hair) dashed var(--line-strong); border-radius: .125rem; background: none; font: 500 var(--fs-small)/1 var(--sans); color: var(--fg); cursor: pointer; }
+  .tr-lt .lt-more { display: flex; align-items: center; gap: .625rem; width: calc(100% - 1.5rem); min-height: 2.75rem; margin: 0 .75rem .75rem; padding: 0 .75rem; border: var(--hair) dashed var(--line-strong); border-radius: .125rem; background: none; font: var(--w-ui) var(--fs-small)/1 var(--sans); color: var(--fg); cursor: pointer; }
   .tr-lt .lt-more::before { content: "+"; content: "+" / ""; font-size: .9rem; color: var(--accent); }
   .tr-lt .lt-more[aria-expanded="true"]::before { content: "\2212"; content: "\2212" / ""; }
   .tr-lt .lt-more:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }

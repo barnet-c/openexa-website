@@ -16,7 +16,7 @@
 .nf-more { margin-top: 1.625rem; }
 .nf-more ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: var(--hair) solid var(--line); }
 .nf-more li + li { border-left: var(--hair) solid var(--line); }
-.nf-more a { position: relative; display: flex; align-items: center; min-height: 2.75rem; padding: 0 .875rem; font: 500 var(--fs-small)/1.3 var(--sans); color: var(--fg-2); transition: color var(--dur-feedback) var(--ease-out); }
+.nf-more a { position: relative; display: flex; align-items: center; min-height: 2.75rem; padding: 0 .875rem; font: var(--w-ui) var(--fs-small)/1.3 var(--sans); color: var(--fg-2); transition: color var(--dur-feedback) var(--ease-out); }
 .nf-more li:first-child a { padding-left: 0; }
 .nf-more a::after { content: ""; position: absolute; left: .875rem; right: .875rem; bottom: .6875rem; height: var(--hair); background: repeating-linear-gradient(90deg, currentColor 0 calc(3 * var(--hair)), transparent calc(3 * var(--hair)) .375rem); transform: scaleX(0); transform-origin: left; transition: transform var(--dur-move) var(--ease-out); }
 .nf-more li:first-child a::after { left: 0; }

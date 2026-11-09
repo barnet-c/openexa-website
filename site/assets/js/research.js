@@ -1,8 +1,8 @@
 /* OpenEXA: the research pages (research.html and the ten notes; group "research", v2x).
    Index: one plate beside the list (#research-figure, a figure.js stage) shows the figure of the note pointed at or
    focused, and while the list scrolls (pointer elsewhere, or a touch screen), of the note at the reading line. Its
-   caption comes from the row (data-cap-t, what is drawn, shown on phones only; data-cap-h, the hedge; written by
-   tools/build_research.py) and changes with it (cut, 1 Nov: the caption paragraphs and "Fig. NN" are gone). The row whose figure is
+   caption comes from the row (data-cap-t, what is drawn; data-cap-s, its shorter phrase for a phone's one line;
+   data-cap-h, the hedge; written by tools/build_research.py) and changes with it (cut, 1 Nov: the caption paragraphs and "Fig. NN" are gone). The row whose figure is
    on the plate is marked (.is-current). Without JavaScript the plate is not drawn (research.css) and the list is v2's.
    Notes: "In this note" marks the part being read (.is-on, aria-current), which v2 had styled but no longer set; from
    1440 px the margin plate lights the part of the drawing that part names (award a4).
@@ -20,9 +20,14 @@
     const cap = $('.rs-cap', plate);
     const part = k => $('.figcap-' + k, cap);
     let current = null, swap = 0;
-    const write = li => ['t', 'h'].forEach(k => {
-      const el = part(k); if (el) el.textContent = li.dataset['cap' + k.toUpperCase()] || '';
-    });
+    // hc23: on a phone the plate is a running foot, what is drawn and its hedge on one line (research.css), so what is
+    // drawn is the row's shorter phrase of its caption (data-cap-s, build_research STRIP)
+    const strip = window.matchMedia('(max-width: 759.98px)');
+    let short = false; // the caption on the plate is the phone's phrase (put back to the full one at 760 px and up)
+    const write = li => { short = strip.matches; ['t', 'h'].forEach(k => {
+      const d = li.dataset, el = part(k);
+      if (el) el.textContent = (k === 't' && short && d.capS) || d['cap' + k.toUpperCase()] || '';
+    }); };
     function choose(li) {
       if (!li || li === current || plate.closest('.no-plate')) return; // no plate (no WebGL): no row is marked
       if (current) current.classList.remove('is-current');
@@ -79,22 +84,23 @@
 
     /* r2 (r2-motion): on phones the strip is in the page's flow (it settles under the list), and the notes' captions
        differ in length (Fig. 09's three-part hedge), so a swap moved the page below it, and the lines inside the strip.
-       The caption's title and hedge are each held at the height of the longest at this width (--rs-t-h, --rs-h-h;
-       research.css), so the strip, and every line in it, keeps its place: each caption is written, measured and the
-       current one put back in one task, so nothing is painted in between. Again when the width changes and once the
-       fonts are in */
-    const box = $('.rs-caption', plate), strip = window.matchMedia('(max-width: 759.98px)');
-    const slots = [['t', '--rs-t-h'], ['h', '--rs-h-h']];
+       The caption is held at the height of the longest at this width (--rs-c-h; research.css; hc23: one run, one slot),
+       so the strip keeps its place: each caption is written, measured and the current one put back in one task, so
+       nothing is painted in between. Again when the width changes and once the fonts are in */
+    const box = $('.rs-caption', plate);
     let measuredW = -1;
     const reserve = () => {
       if (!box || !cap) return;
-      if (!strip.matches || plate.closest('.no-plate')) { slots.forEach(([, v]) => plate.style.removeProperty(v)); measuredW = -1; return; }
+      if (!strip.matches || plate.closest('.no-plate')) { plate.style.removeProperty('--rs-c-h'); plate.classList.remove('is-two'); if (short) write(current); measuredW = -1; return; }
       const w = box.clientWidth; if (w === measuredW) return; measuredW = w;
-      slots.forEach(([, v]) => plate.style.setProperty(v, '0px'));
-      const max = { t: 0, h: 0 };
-      rows.forEach(li => { write(li); slots.forEach(([k]) => { const el = part(k); if (el) max[k] = Math.max(max[k], el.offsetHeight); }); });
+      plate.style.setProperty('--rs-c-h', '0px'); plate.classList.remove('is-two');
+      let max = 0, min = Infinity;
+      rows.forEach(li => { write(li); const h = cap.offsetHeight; max = Math.max(max, h); min = Math.min(min, h); });
+      // hc23: where one caption needs a second line (320-389 px), every hedge takes the second line, so the strip keeps
+      // one form while the list scrolls (not a stacked pair for one note and a dotted line for the next)
+      if (max > min * 1.4) plate.classList.add('is-two');
       write(current);
-      slots.forEach(([k, v]) => plate.style.setProperty(v, `${Math.ceil(max[k])}px`));
+      plate.style.setProperty('--rs-c-h', `${Math.ceil(max)}px`);
     };
     // r4 (r4-a11y m2): the strip's height, so a row focused from the keyboard scrolls clear of it (research.css
     // scroll-margin-bottom). Read after the slots are held; the strip's height also follows the screen's height

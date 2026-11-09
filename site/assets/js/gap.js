@@ -337,13 +337,29 @@
     if (k) { el.lane.dataset.on = k; el.lane.style.setProperty('--k', k); } else delete el.lane.dataset.on;
     el.lane.querySelectorAll('li').forEach(li => { const g = +li.dataset.g; li.classList.toggle('is-past', !!k && g < k); li.classList.toggle('is-on', g === k); });
   }
-  function say(text, gate) {
+  // hc23: once it has spoken the line is never empty: each new line crossfades over the last one in the line's one cell
+  // (platform.css), so nothing below moves; the old one leaves the accessibility tree at once. The first line opens with
+  // its room, and the same words come back without a fade
+  function put(line) {
     if (!el.say) return;
     rcptLi = null;
-    el.say.replaceChildren();
-    if (gate) { const b = document.createElement('b'); b.textContent = `${pad2(gate)} ${GATES[gate - 1]}`; el.say.append(b, ' '); }
-    el.say.append(text);
+    const cur = el.say.querySelector(':scope > :not(.is-out)'), same = !!cur && cur.textContent === line.textContent;
+    for (const c of [...el.say.children]) {
+      if (same || reduced.matches || c.classList.contains('is-out')) { c.remove(); continue; }
+      c.classList.add('is-out'); c.setAttribute('aria-hidden', 'true'); c.style.transition = ''; // (a first line had none)
+      setTimeout(() => c.remove(), 250);
+    }
+    if (same || !cur) line.style.transition = 'none';
+    el.say.append(line);
   }
+  function say(text, gate) {
+    const line = document.createElement('span');
+    if (gate) { const b = document.createElement('b'); b.textContent = `${pad2(gate)} ${GATES[gate - 1]}`; line.append(b, ' '); }
+    line.append(text);
+    put(line);
+  }
+  // Esc is named only where there is a keyboard to press it (a phone stops with the button itself)
+  const WAIT = 'Following the next action the model produces.' + (window.matchMedia('(any-pointer: fine)').matches ? ' Esc stops.' : '');
   function setFollowButton(on) {
     if (!el.follow) return;
     el.follow.setAttribute('aria-pressed', String(on)); // a toggle keeps its label; the pressed state says it is on
@@ -371,11 +387,11 @@
     voice(!quiet); follow.quiet = !!quiet;
     follow.state = 'waiting'; follow.act = null; follow.k = 0; follow.wt = 0; follow.waitT = 0;
     setFollowButton(true); setLane(0);
-    if (quiet) { rcptLi = null; if (el.say) el.say.replaceChildren(); } else say('Following the next action the model produces. Esc stops.');
     if (paused) togglePause();
-    // a proposal already on the chart (a ring not yet settled) is the next action: walk it at once
+    // a proposal already on the chart (a ring not yet settled) is the next action: walk it at once; otherwise the line
+    // says what runs (hc23: the desk's own act too, unannounced, so the line under the gates is never an empty hole)
     const open = !S.done && S.acts.find(a => !a.filled && !a.held);
-    if (open) { open.held = true; follow.act = open; follow.state = 'walking'; follow.wt = 0; walk(1); }
+    if (open) { open.held = true; follow.act = open; follow.state = 'walking'; follow.wt = 0; walk(1); } else say(WAIT);
     stats();
     // measured once the head reads 'Following an action' (on some widths the longer state wraps the head onto a new row)
     if (!quiet) walkIntoView();
@@ -406,10 +422,12 @@
   // the walk ends on the record itself (v2x lab): after the Settle line, the action as the ledger holds it, its SHA-256
   // and the record it is chained to (the same line's room: nothing below moves); both hashes are the ones the strip
   // prints, and both light on the strip
+  // hc23: when that record leaves the strip (or the session restarts) the line stays, back in the line's own colour
   function clearReceipt() {
     if (!rcptLi) return;
     rcptLi = null;
-    if (el.say && el.say.querySelector('.dl-rcpt')) el.say.replaceChildren();
+    const done = el.say && el.say.querySelector(':scope > .dl-rcpt:not(.is-out)');
+    if (done) done.classList.add('is-spent');
     root.querySelectorAll('.dk-rec.is-linked').forEach(li => li.classList.remove('is-linked'));
     if (follow.state === 'idle') setLane(0);
   }
@@ -424,7 +442,7 @@
       line.append(b, ` A ${r.kind === 'CREATE' ? 'create' : 'redeem'} at ${r.clock} ET`);
       if (r.hash && r.prev) line.append(', hashed ', hx(r.hash), ' and chained to the record before it, ', hx(r.prev), r.prev === GENESIS ? ', the start of the chain.' : '.');
       else line.append(', recorded in this session’s ledger.');
-      el.say.replaceChildren(line);
+      put(line);
       rcptLi = r.li;
       // the lane keeps the route it walked, every gate passed, for as long as the line names a record on the strip
       setLane(0);
@@ -454,7 +472,7 @@
     el.follow.addEventListener('click', () => {
       voice(true);
       // a press during the desk's own act takes that walk over (and speaks it), rather than stopping what it came to see
-      if (follow.state !== 'idle' && follow.quiet) { follow.quiet = false; if (follow.act && follow.k) say(lineFor(follow.k, follow.act), follow.k); else say('Following the next action the model produces. Esc stops.'); return; }
+      if (follow.state !== 'idle' && follow.quiet) { follow.quiet = false; if (follow.act && follow.k) say(lineFor(follow.k, follow.act), follow.k); else say(WAIT); return; }
       if (follow.state === 'idle') startFollow(); else stopFollow('Stopped following.');
     });
   }

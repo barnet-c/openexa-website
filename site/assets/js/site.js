@@ -1,7 +1,7 @@
 /* OpenEXA — shared behaviour
    nav (chapter readout, progress, menu sheet) · footer · clocks · loader hand-off · kinetic type · reveals
    · 2D swarm fallback. Page-only behaviour lives beside its page: access.js (the request form), company.js (the
-   manifesto); the instruments have their own engines. */
+   Company page); the instruments have their own engines. */
 (function () {
   'use strict';
 
@@ -750,7 +750,7 @@
      serif the system has). In display text the hyphen stays U+002D, so find-in-page, copy and line breaks match a typed
      '-', inside a .hy span that site.css draws shorter (hc6) in a tighter slot; a static U+2010 becomes U+002D again. No
      style is read now: in the first frame a heading that is not in the serif gets its plain hyphen back. */
-  const SERIF_TEXT = 'h1, h2, h3, .display-1, .display-2, .display-3, .manifesto, .footer .tag';
+  const SERIF_TEXT = 'h1, h2, h3, .display-1, .display-2, .display-3, .footer .tag';
   const HY = /(\p{L})[-\u2010](?=\p{L})/u;
   function serifHyphens(root) {
     const hosts = [];

@@ -6,7 +6,7 @@
 /* without JavaScript: the same sessions as a plain list (home) — the evidence page has its table */
 .proof-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--hair); background: var(--line); border: var(--hair) solid var(--line); }
 .proof-list li { display: grid; gap: .375rem; padding: .875rem .75rem .75rem; background: var(--bg); font-size: var(--fs-small); line-height: 1.3; font-variant-numeric: tabular-nums; color: var(--fg-3); } /* hc3: recorded, not live: the caption register */
-.proof-list b { font-weight: 500; color: var(--fg); }
+.proof-list b { font-weight: var(--w-ui); color: var(--fg); }
 @media (max-width: 520px) { .proof-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* the chart: a gutter of direct labels + one lane per session */
