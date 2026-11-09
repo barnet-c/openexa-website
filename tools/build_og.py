@@ -57,7 +57,8 @@ def headline(s):
     h = re.sub(r'<span class="hy">([^<]*)</span>', lambda m: "\x06" + m.group(1) + "\x07", re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S).group(1))
     h = re.sub(r'<span class="nowrap">(.*?)</span>', lambda m: m.group(1).replace(" ", "\x05"), h, flags=re.S)  # the page's own unbreakable phrases
     h = re.sub(r'<span class="thin">(.*?)</span>', lambda m: "\x01" + m.group(1) + "\x02", h, flags=re.S)
-    h = re.sub(r"<em>(.*?)</em>", lambda m: "\x03" + m.group(1) + "\x04", h, flags=re.S)
+    # integrate hc24: an <em> with a class (Proof's H1 since hc24, `<em class="ln">`) is the page's italic too
+    h = re.sub(r"<em\b[^>]*>(.*?)</em>", lambda m: "\x03" + m.group(1) + "\x04", h, flags=re.S)
     h = H.escape(text(h), quote=False)
     return (h.replace("\x01", '<span class="g">').replace("\x02", "</span>").replace("\x03", "<em>").replace("\x04", "</em>").replace("\x05", "\u00a0")
             .replace("\x06", '<span class="hy">').replace("\x07", "</span>"))

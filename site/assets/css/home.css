@@ -83,8 +83,7 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
 @media screen and (scripting: enabled) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] main > .story + .section { margin-top: calc(-1 * var(--paper-slack, 0px)); background: var(--paper); }
 }
-/* (hc2) phones: the overture lands faster, 50svh of scroll a scene (overture.css: 70; one easy swipe a scene); the same
-   scenes, the same hand-off, native scroll. story.js lifts scenes 1-4's line so each scene stands centred */
+/* (hc2) phones: 50svh of scroll a scene (overture.css: 70), native scroll; story.js centres scenes 1-4 */
 @media (scripting: enabled) and (max-width: 599.98px) and (max-aspect-ratio: 23/20) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 230vh + var(--paper-slack, 0px)); height: calc(100svh + 230svh + var(--paper-slack, 0px)); }
 }
@@ -110,8 +109,7 @@ body[data-page="home"] #governance .chain-more:focus-visible { outline: calc(2 *
 
 /* chapters close instead of trail */
 body[data-page="home"] main > .story + .section { padding-top: clamp(1.75rem, 3.4vw, 3rem); }
-/* wide screens: the paper the overture leaves is this chapter's top margin (a4: from .story-wait, the first frame; set at
-   story-ready it moved every chapter 48 px, a reload's 0.033 shift) */
+/* wide screens: the paper the overture leaves is this chapter's top margin, from the first frame (a4) */
 @media (min-width: 640px) and (min-aspect-ratio: 23/20) and (min-height: 600.02px) {
   html:is(.story-ready, .story-wait):not(.no-webgl):not(.story-tiny):not(.story-failed) body[data-page="home"] main > .story + .section { padding-top: 0; }
 }
@@ -232,46 +230,48 @@ body[data-page="home"] #research .research-card .link-arrow { font: 400 var(--fs
 /* hc1: the key names the four costs once; the bar carries none (as Proof's Fig. 3.1) */
 body[data-page="home"] #economics .cost-row:first-child { padding-top: 1.5rem; }
 @container cost (max-width: 860px) { body[data-page="home"] #economics .cost-row:first-child { padding-top: 0; } body[data-page="home"] #economics .cost-row:first-child .cost-bar { margin-top: .875rem; } }
-/* the chapters after the overture are laid out near the viewport only; each stand-in is its measured height for the width
-   band (with padding and the top hairline), so the page is as long at load as drawn. The footer is always drawn */
-body[data-page="home"] main > .story ~ section { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
-body[data-page="home"] #lifecycles { --cis: 40.0234375rem; } body[data-page="home"] #lc01 { --cis: 62.8125rem; }
+/* the chapters are laid out near the viewport only; each stand-in is its drawn height for the width band (with padding
+   and the top hairline). The close (hc24) and the footer are always drawn */
+body[data-page="home"] main > .story ~ section:not(.cta-band) { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
+body[data-page="home"] #lifecycles { --cis: 40.0234375rem; } body[data-page="home"] #lc01 { --cis: 64.50625rem; }
 body[data-page="home"] #economics { --cis: 42.046875rem; } body[data-page="home"] #governance { --cis: 44.25rem; }
-body[data-page="home"] #research { --cis: 37.0625rem; } body[data-page="home"] .cta-band { --cis: 6.5rem; }
+body[data-page="home"] #research { --cis: 37.0625rem; }
 /* the heights at 700, 820, 1024, 1280, 1440 and 1920 (rem: 3840 is 1920 doubled), measured: notes/home.md */
 @media (min-width: 600px) {
   body[data-page="home"] #lifecycles { --cis: 38.05859375rem; } body[data-page="home"] #lc01 { --cis: 54.359375rem; }
   body[data-page="home"] #economics { --cis: 28.921875rem; } body[data-page="home"] #governance { --cis: 46.609375rem; }
-  body[data-page="home"] #research { --cis: 34.953125rem; } body[data-page="home"] .cta-band { --cis: 6.609375rem; }
+  body[data-page="home"] #research { --cis: 34.953125rem; }
 }
 @media (min-width: 761px) and (max-width: 960px) {
   body[data-page="home"] #lifecycles { --cis: 25.234375rem; } body[data-page="home"] #lc01 { --cis: 51.640625rem; }
   body[data-page="home"] #economics { --cis: 30.015625rem; } body[data-page="home"] #governance { --cis: 36.1875rem; }
-  body[data-page="home"] #research { --cis: 27.390625rem; } body[data-page="home"] .cta-band { --cis: 6.84375rem; }
+  body[data-page="home"] #research { --cis: 27.390625rem; }
 }
+@media (min-width: 761px) and (max-width: 800px) { body[data-page="home"] #lc01 { --cis: 54.84375rem; } body[data-page="home"] #economics { --cis: 29.703125rem; } } /* hc24: the lab's head stacks (swarm.css); measured at 768 x 1024 */
 @media (min-width: 961px) {
   body[data-page="home"] #lifecycles { --cis: 28.625rem; } body[data-page="home"] #lc01 { --cis: 62.203125rem; }
   body[data-page="home"] #economics { --cis: 25.875rem; } body[data-page="home"] #governance { --cis: 27rem; }
-  body[data-page="home"] #research { --cis: 32.90625rem; } body[data-page="home"] .cta-band { --cis: 9.0625rem; }
+  body[data-page="home"] #research { --cis: 32.90625rem; }
 }
 @media (min-width: 961px) and (max-width: 1099.98px) {
   body[data-page="home"] #lifecycles { --cis: 25.109375rem; } body[data-page="home"] #lc01 { --cis: 55.71875rem; }
   body[data-page="home"] #economics { --cis: 28.953125rem; } body[data-page="home"] #governance { --cis: 26.96875rem; }
-  body[data-page="home"] #research { --cis: 29.6875rem; } body[data-page="home"] .cta-band { --cis: 7.375rem; }
+  body[data-page="home"] #research { --cis: 29.6875rem; }
 }
 @media (min-width: 1100px) and (max-width: 1359.98px) {
   body[data-page="home"] #lifecycles { --cis: 27.078125rem; } body[data-page="home"] #lc01 { --cis: 57.296875rem; }
   body[data-page="home"] #economics { --cis: 25.171875rem; } body[data-page="home"] #governance { --cis: 27rem; }
-  body[data-page="home"] #research { --cis: 31.1875rem; } body[data-page="home"] .cta-band { --cis: 8.625rem; }
+  body[data-page="home"] #research { --cis: 31.1875rem; }
 }
 @media (min-width: 1680px) {
   body[data-page="home"] #lifecycles { --cis: 28.921875rem; } body[data-page="home"] #lc01 { --cis: 64.671875rem; }
   body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 27rem; }
   body[data-page="home"] #research { --cis: 35.921875rem; }
 }
-/* hc19: in a short window the lab's stage gives way (swarm.css --sw-h); §02's stand-in with it */
-body[data-page="home"] #lc01 { contain-intrinsic-size: auto calc(var(--cis) - clamp(20.625rem, 32vw + 4.375rem, 35rem) + clamp(20.625rem, min(32vw + 4.375rem, 100vh - 31rem), 35rem)); }
-@media print { body[data-page="home"] main > .story ~ section { content-visibility: visible; } }
+/* hc19: §02's stand-in follows the lab's stage (swarm.css --sw-h); hc24: measured with motion (the Pause row, <= 800 px) */
+body[data-page="home"] #lc01 { contain-intrinsic-size: auto calc(var(--cis) - var(--lab-rm, 0rem) - clamp(20.625rem, 32vw + 4.375rem, 35rem) + clamp(20.625rem, min(32vw + 4.375rem, 100vh - 31rem), 35rem)); }
+@media (prefers-reduced-motion: reduce) and (max-width: 800px) { body[data-page="home"] #lc01 { --lab-rm: 1.69375rem; } }
+@media print { body[data-page="home"] main > .story ~ section:not(.cta-band) { content-visibility: visible; } }
 /* §02: the link sits one chapter step under the lab (swarm.css adds 40 px below it) */
 body[data-page="home"] #lc01 .swarm-live { margin-bottom: 0; }
 
@@ -350,6 +350,8 @@ body[data-page="home"] .story-labels.has-insp .story-lab.hedge { opacity: 0 !imp
 /* hc17: with the paper up the days' numerals take the caption's step; the box keeps its line height: nothing moves */
 body[data-page="home"] .story.is-paper-up .story-lab.day { line-height: 1.25em; }
 body[data-page="home"] .story.is-paper-up .story-lab.day .k { font-size: var(--fs-small); }
+/* hc24: the broker ticks, printed on the paper with the records (story.js): the scene's tick, in --signal as Proof's */
+body[data-page="home"] .story-ink-chk { position: absolute; left: 0; top: 0; width: .75rem; height: .75rem; overflow: visible; fill: none; stroke: var(--signal); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 /* §06 on tablets (761-960): the three notes in one row, as on desktop; each still keeps its shape (xMinYMid) */
 @media (min-width: 761px) and (max-width: 960px) {
   body[data-page="home"] #research .card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -361,13 +363,11 @@ body[data-page="home"] .story.is-paper-up .story-lab.day .k { font-size: var(--f
 }
 
 /* ========== hill climb hc11 ========== */
-/* §05's two chain buttons carry Trust's glyphs (trust.html's replay: the pencil, the restore arrow), at Trust's size and
-   hairline: the same action looks the same on both pages */
+/* §05's chain buttons carry Trust's glyphs at Trust's size: the same action looks the same on both pages */
 body[data-page="home"] #governance :is(.chain-try, .chain-restore) { gap: .5rem; }
 body[data-page="home"] #governance :is(.chain-try, .chain-restore) svg { flex: none; width: .8125rem; height: .8125rem; }
 body[data-page="home"] #governance :is(.chain-try, .chain-restore) svg path { vector-effect: non-scaling-stroke; stroke-width: var(--icon-stroke); }
-/* §05: the link to Trust sits under the heading, in the head that rides beside the chain (it was a lone row under the
-   chain): heading and way on, then the instrument, as §06's head carries "All ten notes" */
+/* §05: the link to Trust sits under the heading, in the head beside the chain */
 body[data-page="home"] #governance .chain-row .ch-head > .ch-link { margin-top: 1.5rem; }
 
 /* ========== hill climb hc13r ========== */
@@ -406,12 +406,10 @@ body[data-page="home"] .beat-4 :is(.body-lg, .beat-more) { translate: 0 calc(var
 @media (forced-colors: active) and (prefers-color-scheme: light) { .story-gl, .story-2d { filter: invert(1) hue-rotate(180deg); } }
 
 /* ========== hill climb hc22 ========== */
-/* the director 4.1: the four figures in the site's stat grammar (the lab's counters, Company's): a serif numeral over an
-   Inter label at the small step, no mono caps; the dash is ink (green is the live dot's) */
+/* hc22: the four figures in the site's stat grammar: a serif numeral over an Inter label at the small step */
 body[data-page="home"] .hero-stats span { margin-top: .5rem; font: 400 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .72); }
 body[data-page="home"] .hero-stats > div:last-child > span { text-wrap: balance; }
-/* hc23 (director 3): the live dot leads its label as status ("● Lifecycle live"), the numeral stands clean; where the row
-   has room the detail is the label's own second line (its separator goes), on a phone's one line it stays */
+/* hc23: the live dot leads its label; where the row has room the detail is the label's second line */
 body[data-page="home"] .hero-stats span span { display: inline; margin: 0; }
 body[data-page="home"] .hero-stats .live { margin: 0 .5em 0 0; vertical-align: .08em; }
 body[data-page="home"] .hero-stats .hs-sep { display: none; }

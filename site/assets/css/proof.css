@@ -409,9 +409,7 @@
 @keyframes tr-lit { from { opacity: .15; } }
 @keyframes tr-land { from { opacity: .2; transform: scale(1.9); } }
 
-/* the closing band: "Bring your compliance team." on one line where it fits (20ch held it 5 px short) */
-[data-page="trust"] .cta-band h2 { max-width: 21ch; }
-/* (a3) the 320 px size steps went: at the phone H2 (34 px) both closing lines fit by themselves */
+/* the closing band: site.css's (hc24: the H1 step, 22ch); no page rule (21ch went: the same lines at 320-3840) */
 
 /* §03 custody: the account drawn (one scoped port in, nothing out) beside its one line */
 .tr-cu { row-gap: 2rem; align-items: center; }

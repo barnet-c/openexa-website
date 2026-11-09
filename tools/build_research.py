@@ -1077,7 +1077,6 @@ index_page = f'''<!DOCTYPE html>
     </section>
 
     <section class="cta-band is-dark grain">
-      <i class="mark globe" aria-hidden="true"></i>
       <div class="container">
         <h2 class="display-2" data-reveal data-split>Three of these ideas run in your browser.</h2>
         <div class="row" data-reveal style="--d:120ms">

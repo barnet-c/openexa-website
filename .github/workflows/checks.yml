@@ -79,7 +79,7 @@ jobs:
           - shard: home
             only: home,interior,resolution,phone,reduced_motion,loader,proof_entrance,overture_net
           - shard: overture
-            only: overture_reentry,overture_relay,overture_numeral,overture_tap,overture_resize,overture_ctx_lost,paper_opening
+            only: overture_reentry,overture_relay,overture_numeral,overture_tap,overture_resize,overture_ctx_lost,paper_opening,paper_row
           - shard: overture-phones
             only: overture_phones
           - shard: overture-rest
@@ -89,11 +89,11 @@ jobs:
           - shard: ledger
             only: ledger_height,ledger_wheel,ledger_time,counters,nav_handoff,chain_keys,chain_contrast
           - shard: nav
-            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures,deep_links,tab_walk,pill_focus,nav_h_px,readout_end,footer_end
+            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures,deep_links,tab_walk,pill_focus,nav_h_px,readout_end,footer_end,close_step
           - shard: plates
             only: draw_rest,crisp_4k,zoom_wide,market_draw_once,first_screen_sizes,research_strip
           - shard: desk-pages
-            only: desk,desk_warm_start,desk_phone_follow,desk_say,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab,trust_tamper
+            only: desk,desk_warm_start,desk_phone_follow,desk_say,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab,trust_tamper,desk_order
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

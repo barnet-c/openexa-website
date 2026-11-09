@@ -4357,6 +4357,138 @@ async def research_strip(b):
     print(f"research_strip: the phone strip is one 56 px running foot with the row's own phrase and hedge ({'; '.join(notes)}); the full caption from 760 px")
 
 
+# ---- hc24 (integrate, standing in for tests): the close on the H1 step, its globe on Home only (HC24 4.1, 4.2: system);
+# the overture's record row lands whole on paper (HC24 8: home); Lifecycles' desk in source order (HC24 4.7: platform)
+CLOSE_PAGES = ["index.html", "platform.html", "lifecycles.html", "evidence.html", "trust.html", "research.html", "company.html", "blog/index.html"]
+CLOSE = r"""(() => { const band = document.querySelector('main .cta-band'), h = band && band.querySelector('h2'); if (!h) return null;
+  let p = document.getElementById('__vhero');
+  if (!p) { p = document.createElement('i'); p.id = '__vhero'; p.setAttribute('aria-hidden', 'true'); const ps = p.style;
+    ps.position = 'absolute'; ps.left = ps.top = '0'; ps.fontSize = 'var(--fs-hero)'; ps.visibility = 'hidden'; ps.pointerEvents = 'none'; document.body.appendChild(p); }
+  const c = h.closest('.container') || band, cs = getComputedStyle(c), cr = c.getBoundingClientRect();
+  const l = cr.left + parseFloat(cs.paddingLeft), r = cr.right - parseFloat(cs.paddingRight);
+  const rg = document.createRange(); rg.selectNodeContents(h);
+  const over = [...rg.getClientRects()].filter(x => x.width > 1).reduce((m, x) => Math.max(m, l - x.left, x.right - r), -1e9);
+  const heads = [...document.querySelectorAll('main h2')].filter(x => !band.contains(x) && !x.closest('.story') && x.getBoundingClientRect().width > 0 && x.checkVisibility({ visibilityProperty: true }))
+    .map(x => parseFloat(getComputedStyle(x).fontSize));
+  const g = band.querySelector('.globe'), bar = document.querySelector('.nav');
+  return { fs: parseFloat(getComputedStyle(h).fontSize), hero: parseFloat(getComputedStyle(p).fontSize), over, head: Math.max(0, ...heads),
+    globe: g ? getComputedStyle(g).display !== 'none' && g.getBoundingClientRect().width > 0 : false,
+    top: h.getBoundingClientRect().top, bar: bar ? bar.getBoundingClientRect().bottom : 0 }; })()"""
+
+
+@check
+async def close_step(b):
+    """hc24 (integrate, standing in for tests; the director's HC24 4.1 and 4.2, done by system): every page ends on its
+    close set at the H1 step, the page's last word, and only Home's close keeps the cropped globe. On the eight pages with
+    a close, at 3840 x 2160, 1440 x 900, 1024 x 768, 768 x 1024 and with touch at 390 x 844 and 320 x 640: the close's
+    head (`.cta-band h2`) is the system's H1 step (`--fs-hero`, 0.5 px) from 396 px up, and under it no larger than that
+    and no smaller than 36 px (10.5vw keeps its phrases in the column); it is never smaller than any chapter head on its
+    page; no line of it passes its column (1 px); Home's band draws its globe and no other band has one (check_static
+    close_globe pins the markup); and at 1440 x 900 and 3840 x 2160 with the page at its end the head stands clear of the
+    bar. Before hc24 the close was the chapter heads' 60 px step (at 1440) beside the same globe on all eight pages."""
+    bad, notes = [], []
+    for w, h, dpr, touch in ((3840, 2160, 1, False), (1440, 900, 1, False), (1024, 768, 1, False), (768, 1024, 2, False), (390, 844, 3, True), (320, 640, 2, True)):
+        for path in CLOSE_PAGES:
+            tag = f"{path}@{w}x{h}"
+            ctx, pg = await open_page(b, path, w, h, dpr=dpr, touch=touch)
+            await pg.evaluate("(() => { const c = document.querySelector('main .cta-band'); if (c) c.scrollIntoView({block: 'center', behavior: 'instant'}); })()")
+            await pg.wait_for_timeout(400)
+            r = await pg.evaluate(CLOSE)
+            if not r: bad.append(f"{tag}: no close (.cta-band h2)"); await ctx.close(); continue
+            if w >= 396 and abs(r["fs"] - r["hero"]) > 0.5: bad.append(f"{tag}: the close's head is {r['fs']:.1f} px, the H1 step (--fs-hero) {r['hero']:.1f}")
+            if w < 396 and not (36 - 0.5 <= r["fs"] <= r["hero"] + 0.5): bad.append(f"{tag}: the close's head is {r['fs']:.1f} px, not between 36 and the H1 step {r['hero']:.1f}")
+            if r["fs"] < r["head"] - 0.5: bad.append(f"{tag}: the close's head ({r['fs']:.1f} px) is smaller than a chapter head ({r['head']:.1f})")
+            if r["over"] > 1: bad.append(f"{tag}: a line of the close's head passes its column by {r['over']:.1f} px")
+            if r["globe"] != (path == "index.html"): bad.append(f"{tag}: the close {'draws' if r['globe'] else 'lacks'} the globe (Home's alone)")
+            if (w, h) in ((1440, 900), (3840, 2160)):
+                await pg.evaluate("window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'})"); await pg.wait_for_timeout(700)
+                e = await pg.evaluate(CLOSE)
+                if e and e["top"] < e["bar"] - 0.5: bad.append(f"{tag}: at the page's end the close's head is {e['bar'] - e['top']:.1f} px under the bar")
+            if path == "evidence.html": notes.append(f"{w}: {r['fs']:.1f} px (chapters {r['head']:.1f})")
+            await ctx.close()
+    assert not bad, "close_step:\n  " + "\n  ".join(bad[:24])
+    print(f"close_step: eight closes on the H1 step, inside their columns, the globe on Home's alone (Proof {'; '.join(notes)})")
+
+
+PAPER_ROW = r"""(() => { const paper = document.querySelector('.story-paper'), h = document.querySelector('.beat-4 h2'); if (!paper || !h) return null;
+  const pr = paper.getBoundingClientRect(), shown = getComputedStyle(paper).visibility !== 'hidden' && pr.height > .5;
+  const R = el => { const r = el.getBoundingClientRect(); return [r.top, r.bottom]; };
+  let conf = null; try { const j = JSON.parse(document.getElementById('oxa-sessions').textContent);
+    conf = j.sessions.filter(s => /confirm/i.test(s.confirmation || '') && !/pending|awaiting|unconfirm|^not\b/i.test((s.confirmation || '').trim())).length; } catch (e) {}
+  return { edge: shown ? pr.top : null, recs: [...document.querySelectorAll('.story-ink-rec')].map(R), chks: [...document.querySelectorAll('.story-ink-chk')].map(R),
+    head: R(h), conf, rem: parseFloat(getComputedStyle(document.documentElement).fontSize), H: innerHeight, end: Math.round(document.querySelector('.story').offsetTop + document.querySelector('.story').offsetHeight) }; })()"""
+
+
+@check
+async def paper_row(b):
+    """hc24 (integrate, standing in for tests; the director's HC24 8, done by home in story.js and home.css): the overture's
+    last frame lands the record row whole on paper. At the release (the story's end - h: the exit done, the stage about to
+    move), wide (1440 x 900, 1920 x 1080, 3840 x 2160, 1024 x 768, and 1280 x 600, a short one): the paper's edge stands at
+    least 2.5rem (1.25rem under 600 px tall) over the printed broker ticks, which are one per confirmed session in
+    `#oxa-sessions`; no ink record and no tick crosses the edge; S4's headline ends over it (on ink). Portrait (390 x 844
+    with touch, 768 x 1024): unchanged by hc24, the row on ink over the headline and the paper under the headline's foot,
+    so nothing crosses the edge there either. Before hc24 the paper stopped at the floor line: the ten ticks hung on ink
+    over the seam and the records sat exactly on it (the director's home04-top.png)."""
+    bad, notes = [], []
+    for w, h, touch, wide in ((1440, 900, False, True), (1920, 1080, False, True), (3840, 2160, False, True), (1024, 768, False, True),
+                              (1280, 600, False, True), (390, 844, True, False), (768, 1024, False, False)):
+        tag = f"index.html@{w}x{h}"
+        ctx, pg = await open_page(b, "index.html", w, h, touch=touch)
+        await pg.wait_for_timeout(1500)
+        g = await pg.evaluate(PAPER_ROW)
+        if not g: bad.append(f"{tag}: no .story-paper / S4 headline"); await ctx.close(); continue
+        await pg.evaluate(f"window.scrollTo({{top: {g['end'] - h + 2}, behavior: 'instant'}})"); await pg.wait_for_timeout(1800)
+        r = await pg.evaluate(PAPER_ROW)
+        await ctx.close()
+        e = r["edge"]
+        if e is None: bad.append(f"{tag} at the release: the paper is not drawn"); continue
+        cross = [k for k, rows in (("record", r["recs"]), ("tick", r["chks"])) for t, bt in rows if t < e - 0.5 < bt - 1]
+        if cross: bad.append(f"{tag}: {len(cross)} mark(s) cross the paper's edge at {e:.1f} ({sorted(set(cross))})")
+        if r["head"][1] > e + 0.5: bad.append(f"{tag}: S4's headline ends at {r['head'][1]:.1f}, under the paper's edge {e:.1f}")
+        if wide:
+            if r["conf"] is not None and len(r["chks"]) != r["conf"]: bad.append(f"{tag}: {len(r['chks'])} printed ticks for {r['conf']} confirmed sessions")
+            if not r["chks"]: bad.append(f"{tag}: no printed ticks on the paper"); continue
+            gap, want = min(t for t, _ in r["chks"]) - e, (1.25 if h < 600 else 2.5) * r["rem"]
+            if gap < want - 0.5: bad.append(f"{tag}: the paper's edge is {gap:.1f} px over the ticks ({want:.0f} at least)")
+            if any(t < e for t, _ in r["recs"]): bad.append(f"{tag}: an ink record stands over the paper's edge")
+            notes.append(f"{w}x{h} {gap:.0f} px")
+    assert not bad, "paper_row:\n  " + "\n  ".join(bad)
+    print(f"paper_row: the record row lands whole on paper with its ticks, the edge over them ({'; '.join(notes)}); portrait unchanged")
+
+
+DESK_ORDER = r"""(() => { const d = document.querySelector('#desk .desk') || document.querySelector('.desk'); if (!d) return null;
+  const R = s => { const e = d.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return { t: r.top, b: r.bottom, l: r.left, r: r.right }; };
+  return { chart: R('.desk-chart'), side: R('.desk-side'), lane: R('.desk-lane'), ledger: R('.desk-ledger') }; })()"""
+
+
+@check
+async def desk_order(b):
+    """hc24 (integrate, standing in for tests; the director's HC24 4.7, done by platform): Lifecycles' desk reads in source
+    order where it stacks, so the controls follow the picture they move and the focus order is the screen's: with touch at
+    390 x 844 and 320 x 640, and at 768 x 1024 and 960 x 1000, the chart, then the counters and sliders (`.desk-side`),
+    then the lane, then the ledger, each wholly under the one before (1 px); at 1440 x 900 and with a phone held sideways
+    (844 x 390, touch) the side column stands beside the chart. Before hc24 the sliders came before the chart on phones
+    and after the ledger on tablets."""
+    bad = []
+    for w, h, dpr, touch, stacked in ((390, 844, 3, True, True), (320, 640, 2, True, True), (768, 1024, 2, False, True), (960, 1000, 1, False, True),
+                                      (1440, 900, 1, False, False), (844, 390, 3, True, False)):
+        tag = f"lifecycles.html@{w}x{h}"
+        ctx, pg = await open_page(b, "lifecycles.html", w, h, dpr=dpr, touch=touch)
+        await pg.evaluate("document.querySelector('#desk').scrollIntoView({block: 'start', behavior: 'instant'})"); await pg.wait_for_timeout(500)
+        r = await pg.evaluate(DESK_ORDER)
+        await ctx.close()
+        if not r or not all(r.values()): bad.append(f"{tag}: the desk's chart, side, lane or ledger is missing ({r})"); continue
+        if stacked:
+            seq = ["chart", "side", "lane", "ledger"]
+            for a, z in zip(seq, seq[1:]):
+                if r[z]["t"] < r[a]["b"] - 1: bad.append(f"{tag}: the {z} ({r[z]['t']:.0f}) is not under the {a} (ends {r[a]['b']:.0f})")
+        else:
+            c, s = r["chart"], r["side"]
+            if not (s["l"] >= c["r"] - 1 and s["t"] < c["b"] and c["t"] < s["b"]): bad.append(f"{tag}: the side column is not beside the chart (chart {c}, side {s})")
+    assert not bad, "desk_order:\n  " + "\n  ".join(bad)
+    print("desk_order: the desk stacks chart, counters and sliders, lane, ledger on phones and tablets; the side beside the chart at 1440 and on a phone held sideways")
+
+
 # ---------------------------------------------------------------- runner
 def parse_args(argv):
     base, only, listing, i = None, None, False, 0

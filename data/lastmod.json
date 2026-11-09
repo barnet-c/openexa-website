@@ -61,7 +61,7 @@
  },
  "blog/index.html": {
   "date": "2026-11-08",
-  "sha": "391cdb8193654e74"
+  "sha": "5e20573a0e0ffa50"
  },
  "blog/leveraged-etfs-price-dynamics-and-options-valuation.html": {
   "date": "2026-11-08",
@@ -125,27 +125,27 @@
  },
  "company.html": {
   "date": "2026-11-08",
-  "sha": "efc771bc53a66805"
+  "sha": "cef29e7735b8a740"
  },
  "evidence.html": {
   "date": "2026-11-08",
-  "sha": "a6cf88ee4f284c18"
+  "sha": "0fb94a5ff9d8e696"
  },
  "index.html": {
   "date": "2026-11-08",
-  "sha": "041e88b11fceebb8"
+  "sha": "f26a9d98e285eeca"
  },
  "lifecycles.html": {
   "date": "2026-11-08",
-  "sha": "a18a5d0a8bb28226"
+  "sha": "8e49e42bd87ca46d"
  },
  "platform.html": {
   "date": "2026-11-08",
-  "sha": "f1d5eda18ddab776"
+  "sha": "3b57d020380bd8ae"
  },
  "research.html": {
   "date": "2026-11-08",
-  "sha": "e1d89acab78207c0"
+  "sha": "5d4ccdba27e9e42a"
  },
  "research/01-compounding-error.html": {
   "date": "2026-11-08",
@@ -189,6 +189,6 @@
  },
  "trust.html": {
   "date": "2026-11-08",
-  "sha": "975d3b876c9bff95"
+  "sha": "94d5962071d8e479"
  }
 }

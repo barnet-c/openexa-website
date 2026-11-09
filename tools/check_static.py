@@ -845,11 +845,18 @@ HEAD_INDEXED = ['<link rel="alternate" type="application/atom+xml" title="OpenEX
 
 ITALIC_PRELOAD = ['<link rel="preload" href="assets/fonts/instrument-serif-400i-latin.woff2" as="font" type="font/woff2" crossorigin>']
 def own_preloads(rel, s):
-    """the faces a page preloads beside the shared two: Home and Company the italic serif (a3: their first screen sets it);
+    """the faces a page preloads beside the shared two: Home and Company the italic serif (a3: their first screen sets it),
+    and since hc24 Proof, whose H1's second beat is in em ("The broker confirmed it.", the LCP text on phones; Proof
+    measured CLS 0 with it, a swap without), and Platform whenever its H1 sets em/i (hc24's "Eight layers, one boundary."
+    in italic cost Platform's mobile Lighthouse a point under the award pass, 94 for 95, with or without the preload: the
+    integrator set it roman again, so platform.html preloads nothing of its own today);
     award budgets (blog): a post whose article sets text in em/i (blog.css a3: Instrument Serif italic), found in the CSS
     during layout and so at the end of the render chain, +300 ms on mobile FCP and LCP. Both ways: no post preloads it
     without using it."""
     if rel in ("index.html", "company.html"): return ITALIC_PRELOAD
+    if rel in ("evidence.html", "platform.html"):  # both ways: only while the H1 sets text in em/i
+        h = re.search(r"<h1\b[^>]*>(.*?)</h1>", s, re.S)
+        return ITALIC_PRELOAD if h and re.search(r"<(em|i)\b[^>]*>(?:\s|<[^>]*>)*[^\s<]", h.group(1)) else []
     if rel.startswith("blog/") and rel != "blog/index.html":
         a = re.search(r'<article class="[^"]*\bblog-article\b[^"]*">(.*?)</article>', s, re.S)
         if a and re.search(r"<(em|i)\b[^>]*>(?:\s|<[^>]*>)*[^\s<]", a.group(1)): return ITALIC_PRELOAD
@@ -862,7 +869,8 @@ def check_heads():
     it. robots.txt points at the sitemap; the manifest parses, its colours are ink and its icons exist; favicon.ico exists."""
     head_lines = lambda s: [l.strip() for l in s.split("</head>", 1)[0].split("\n")]
     # award a3 (system): the italic serif is preloaded only where it sets the first screen (Home's eyebrow, Company's H1;
-    # Lighthouse found it late on the critical path there, median of 3: Home 95 -> 96, Company 95 -> 97); award budgets:
+    # Lighthouse found it late on the critical path there, median of 3: Home 95 -> 96, Company 95 -> 97; hc24: Proof's H1
+    # too, its second beat in em, and Platform's while its H1 sets one); award budgets:
     # and on a post whose article sets it (own_preloads); every other page preloads the two shared faces only
     want_pre = [l for l in head_lines((ROOT / "index.html").read_text(encoding="utf-8")) if l.startswith('<link rel="preload"') and l not in ITALIC_PRELOAD]
     for l in want_pre:
@@ -998,11 +1006,30 @@ def check_decisions():
     if any(p for p in pages if re.search(r"(^|/)investors?\.html$", p)): fail("decisions: an Investors page exists (no Investors page, CEO)")
 
 
+def check_close_globe():
+    """HC24 4.2 (the director): the cropped fine-bead globe ends Home's close only, where it answers the hero's globe; every
+    other close is type on ink. Integrate hc24 took the mark out of the seven other closes' markup and site.css's
+    `body:not([data-page="home"]) .cta-band .globe { display: none }` went with it, so this pins the principle: Home's close
+    has exactly one `<i class="mark globe" aria-hidden="true">`, no other page has one anywhere, and every close keeps one
+    head (an h2)."""
+    for rel in pages:
+        s = (ROOT / rel).read_text(encoding="utf-8")
+        marks = len(re.findall(r'<i\b[^>]*\bclass="mark globe"', s))
+        bands = re.findall(r'<section class="cta-band\b[^"]*">(.*?)</section>', s, re.S)
+        if rel == "index.html":
+            if len(bands) != 1 or marks != 1 or not re.search(r'<i class="mark globe" aria-hidden="true"></i>', bands[0]):
+                fail(rel, f"close_globe: Home's close keeps its one aria-hidden globe ({len(bands)} close(s), {marks} globe mark(s))")
+        elif marks:
+            fail(rel, f"close_globe: {marks} globe mark(s); the globe ends Home's close only (HC24 4.2)")
+        for b in bands:
+            if len(re.findall(r"<h2\b", b)) != 1: fail(rel, "close_globe: a close without exactly one head (h2)")
+
+
 GUARDS = [check_count_not_on_proof, check_count_static_final, check_regime_split, check_research09_regimes, check_has_guard,
           check_has_regions, check_figure_labels, check_blog_placeholder, check_proof_plate, check_table_th,
           check_hover_guard, check_weight, check_story_fallback, check_cost_definitions, check_platform04, check_chrome_sync,
           check_headers, check_csp_markup, check_footer, check_landmarks, check_heads, check_decisions, check_offscreen_pause,
-          check_cost_gone_contrast]
+          check_cost_gone_contrast, check_close_globe]
 only = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--only=")), None)
 if "--only" in sys.argv[1:-1]: only = sys.argv[sys.argv.index("--only") + 1]
 for g in GUARDS:

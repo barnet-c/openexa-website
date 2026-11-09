@@ -749,7 +749,7 @@
   const ZONE = ['right', 'right', 'right', 'right', 'right']; // one horizon: every scene sits in the same band right of its copy
   // under the S4 floor, in CSS px: the records hang from it (hc3: times remK, the root size's growth above 1920, as the
   // tags and the ink records grow: 3840 draws 1920's chart doubled; it drew 1440's offsets under sprites 2.4x as large)
-  const U_REC = 6.5, U_NAV = 22, U_TICK = 10, U_DAY = 35, DAY_BAND = 70;
+  const U_REC = 6.5, U_NAV = 22, U_TICK = 10, U_DAY = 35, DAY_BAND = 70, U_CHK = 9; // (U_CHK: a tick over the floor)
   const MIN_FRAME = [0, 120, 110, 120, DAY_BAND + 90]; // portrait: the least frame each structure reads in (S0's globe always keeps its lede)
   const frameTiny = [false, false, false, false, false]; // stacked on a short screen: a frame too small to read drops its callouts
   // (hc13r) and the chart's key under the day numbers (§03's caption came into the scene): the band grows to hold it
@@ -1147,7 +1147,9 @@
   // the group centred in the frame under the bar, a touch high; short landscape: the headline whole under the bar.
   // Portrait: the records, their tags and the headline under them, then the paper, which rises to the headline's foot
   // (the headline cannot cross the records to stand over them); the group centred the same way
-  const HEAD_GAP = () => 44 * Math.max(1, W / 1920); // the wide headline's foot to the floor line, clear of the ticks
+  const HEAD_GAP = () => 44 * Math.max(1, W / 1920); // the wide headline's foot to the paper's edge
+  // (hc24) wide: the paper's edge stops 3rem (short: 1.5rem) over the ticks, so the row lands on paper whole
+  const SEAM = () => stacked ? 0 : (U_CHK + 6 + (short ? 24 : 48)) * remK;
   const PAPER_GAP = () => 32 * remK; // portrait: the headline's foot to the paper's edge
   const headH = () => { const br = beatRects[4]; return br ? Math.max(0, br.hb - br.ht) : 0; };
   const FLOOR_END = (fr = floorRest) => { // (fr: the floor line's rest; hc17's tail reads it from the fit, before any exit frame)
@@ -1156,7 +1158,7 @@
       const below = (br ? Math.max(0, br.hb - fr) : band4() + 10 + headH()) + PAPER_GAP() + 20 * remK + paperCapH;
       return clamp((navH + Math.max(22, (H - navH - above - below) * 0.46) + above) / H, 0.25, 0.8);
     }
-    const above = HEAD_GAP() + headH(), below = capRoom();
+    const above = HEAD_GAP() + SEAM() + headH(), below = capRoom();
     if (short) return Math.max((navH + 22 + above) / H, Math.min(0.76, 1 - below / H));
     return Math.min(1 - below / H, (navH + Math.max(22, (H - navH - above - below) * 0.46) + above) / H);
   };
@@ -1273,7 +1275,7 @@
       }
     } else { // S4: one status for every session above the floor
       // its record hangs from the floor line, hash-linked to the one before.
-      const rY = Y_FLOOR - l4(U_REC), tY = Y_FLOOR + l4(9), e = foldE(), k4 = remK / ptK; // (hc3) S4's marks at the DOM's scale: an ink record covers its record exactly
+      const rY = Y_FLOOR - l4(U_REC), tY = Y_FLOOR + l4(U_CHK), e = foldE(), k4 = remK / ptK; // (hc3) S4's marks at the DOM's scale: an ink record covers its record exactly
       for (let c = 0; c < NCOL; c++) {
         const x = COL_X(c), ss = SESSIONS[c], dc = sealOf(c);
         put('r' + c, x, rY, 0, C.ivory, 0.95, 2, 15 * k4, 0.4 * Math.sin(PI * sstep(0.3, 1, dc)), 0); // a brief light as its seal goes in
@@ -1794,13 +1796,19 @@
   // caption (the hedge) as it rises, as in v2
   const paperSum = story.querySelector('[data-story-sum]');
   if (paperSum) paperSum.textContent = `${FLOOR} ${UNIT} floor · ${N_PREM} premium · ${N_DISC} discount · ${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed`;
-  // the records, printed: as the paper reaches the floor line
-  const inkRecs = [];
+  // the records, printed as the paper reaches them; (hc24) and their broker ticks (confirmed sessions only, as drawn)
+  const inkRecs = [], inkChks = [];
   let inkLink = null;
   if (paperIn && lab.days) {
     const ink = paperIn.querySelector('.story-ink');
     inkLink = document.createElement('i'); inkLink.className = 'story-ink-link'; ink.appendChild(inkLink);
     SESSIONS.forEach(() => { const e = document.createElement('i'); e.className = 'story-ink-rec'; ink.appendChild(e); inkRecs.push(e); });
+    SESSIONS.forEach((ss) => {
+      if (!ss.confirmed) { inkChks.push(null); return; }
+      const t = document.createElementNS(SVGNS, 'svg'), pth = document.createElementNS(SVGNS, 'path');
+      t.setAttribute('class', 'story-ink-chk'); t.setAttribute('viewBox', '-6 -6 12 12'); t.setAttribute('aria-hidden', 'true'); t.setAttribute('focusable', 'false');
+      pth.setAttribute('d', 'M-4.08 .24-1.2 3.12 4.32-2.88'); t.appendChild(pth); ink.appendChild(t); inkChks.push(t);
+    });
   }
   let shownInk = '';
   const shown = beats.map(() => ({ op: '', tr: '', on: null, eo: '', w: '', bo: '' }));
@@ -1835,14 +1843,14 @@
     const tN = now || performance.now(), k = red || lost ? 1 : Math.min(1, (tN - fadeT) / 250), mid = (w) => xe >= (w[0] + w[1]) / 2 ? 1 : 0;
     fadeT = tN; kF = k;
     const br4 = beatRects[4] || { ht: 0, hb: 0 };
-    const wideLift = lean ? 0 : (H * FLOOR_END() - HEAD_GAP() - br4.hb) * sstep(WX.cam[0], WX.cam[1], xe); // wide: the headline rises to stand over the floor line, with the camera
+    const wideLift = lean ? 0 : (H * FLOOR_END() - HEAD_GAP() - SEAM() - br4.hb) * sstep(WX.cam[0], WX.cam[1], xe); // wide: the headline rises over the paper's edge to be, with the camera
     const headFits = lean || br4.ht + wideLift >= navH + 14;
     const cw = headFits ? 0 : mid(X.copy);
     copyX += clamp(cw - copyX, -k, k);
     fading = copyX !== cw;
-    // the hand-off: once the columns have drained, the paper rises from the bottom edge to the floor line, which becomes its
-    // edge (wide); (hc6) portrait: to the foot of the headline, which stands under the records
-    const paperTop = lean ? br4.hb + exitMove + PAPER_GAP() : project(0, Y_FLOOR * layouts[4].s, 0).y + 1;
+    // the hand-off: once the columns have drained, the paper rises from the bottom edge to SEAM() over the floor line (wide,
+    // hc24), on a whole device pixel; (hc6) portrait: to the foot of the headline, which stands under the records
+    const paperTop = lean ? br4.hb + exitMove + PAPER_GAP() : Math.round((project(0, Y_FLOOR * layouts[4].s, 0).y - SEAM()) * dpr) / dpr;
     paperH = 0;
     if (xe > 0 && seg === 3) {
       paperH = Math.max(0, H - paperTop) * sstep(X.paper[0], X.paper[1], xe);
@@ -1948,12 +1956,15 @@
       if (inkRecs.length) {
         const s4 = layouts[4].s, ry = project(0, (Y_FLOOR - l4(U_REC)) * s4, 0).y;
         const xs = SESSIONS.map((ss, c) => project(COL_X(c) * s4, (Y_FLOOR - l4(U_REC)) * s4, 0).x);
-        const key = xs.map(v => v.toFixed(1)).join() + ry.toFixed(1);
+        const tk = lerp(yK(Y_CTOP) + 0.1, Y_FLOOR + l4(U_CHK), foldE()) * s4, ty = project(0, tk, 0).y; // (hc24) the ticks, as drawn
+        const key = xs.map(v => v.toFixed(1)).join() + ry.toFixed(1) + ty.toFixed(1);
         if (key !== shownInk) {
           shownInk = key;
           const hw = inkRecs[0].offsetWidth / 2, hh = inkRecs[0].offsetHeight / 2; // (hc3) its own half size: rem grows above 1920 (it was 7.5 / 3.5 px, 7 px off at 3840)
           inkRecs.forEach((e, c) => { e.style.transform = `translate(${(xs[c] - hw).toFixed(1)}px, ${(ry - hh).toFixed(1)}px)`; });
           if (inkLink) { inkLink.style.transform = `translate(${xs[0].toFixed(1)}px, ${ry.toFixed(1)}px)`; inkLink.style.width = (xs[xs.length - 1] - xs[0]).toFixed(1) + 'px'; }
+          const th = 6 * remK; // (.75rem, its half)
+          inkChks.forEach((e, c) => { if (e) e.style.transform = `translate(${(project(COL_X(c) * s4, tk, 0).x - th).toFixed(1)}px, ${(ty - th).toFixed(1)}px)`; });
         }
       }
       // the caption in ink, exactly over its dark copy: printed as the paper's edge passes it

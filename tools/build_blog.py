@@ -813,7 +813,6 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".
 {chr(10).join(sections)}
 
     <section class="cta-band is-dark grain">
-      <i class="mark globe" aria-hidden="true"></i>
       <div class="container">
         <h2 class="display-2" data-reveal data-split>The thinking behind the swarm.</h2>
         <div class="row" data-reveal style="--d:120ms">
