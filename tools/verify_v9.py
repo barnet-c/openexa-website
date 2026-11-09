@@ -4489,6 +4489,228 @@ async def desk_order(b):
     print("desk_order: the desk stacks chart, counters and sliders, lane, ledger on phones and tablets; the side beside the chart at 1440 and on a phone held sideways")
 
 
+
+# ---- hc25 (integrate, standing in for tests): the lab's emergency halt at one width (HC25 5), the two scroll scenes
+# (HC25 1, 2), the phone footer's Access row (HC25 8), the chapters' links under their heads and §04's one baseline (HC25 6, 7)
+HALT_BAR = r"""(() => { const bar = document.querySelector('.swarm-bar'), b = document.querySelector('[data-sw-halt]'); if (!bar || !b) return null;
+  const B = bar.getBoundingClientRect(), R = e => { const r = e.getBoundingClientRect(); return [r.left - B.left, r.top - B.top, r.width, r.height]; };
+  const labs = [...bar.querySelectorAll('.swarm-controls label')].map(l => { const s = l.querySelector('span'), o = s && s.querySelector('output'), t = s && s.firstChild;
+    if (!o || !t || t.nodeType !== 3) return null;
+    const rg = document.createRange(); rg.selectNodeContents(t); const rs = [...rg.getClientRects()].filter(r => r.width > .5), last = rs[rs.length - 1], orr = o.getBoundingClientRect();
+    const tops = [...o.getClientRects()].filter(r => r.width > .5).map(r => r.top).sort((x, y) => x - y);  // one rect per fragment ('· ' is its own): count lines
+    return { name: t.textContent.trim(), boxes: tops.filter((v, i) => !i || v - tops[i - 1] > 2).length, under: !!last && orr.top >= last.bottom - 1,
+             sep: getComputedStyle(o, '::before').content, input: R(l.querySelector('input')) }; });
+  return { label: b.textContent.trim(), btn: R(b), labs }; })()"""
+
+
+@check
+async def halt_toggle(b):
+    """hc25 (integrate, standing in for tests; the director's HC25 5, done by home and platform, the width in swarm.css):
+    the lab's stop button names the product's emergency halt, as Platform §05's table and Trust's rail do, and toggling it
+    moves nothing. On Home and Platform at 1440 x 900, 1280 x 800, 1101 x 800, 1024 x 768 and with touch at 390 x 844 and
+    320 x 640: the button reads "Emergency halt"; pressed, it reads "Resume" and, pressed again, "Emergency halt"; its box
+    and both sliders' boxes are the same in all three states (0.5 px). Each slider's value is one box (never split from its
+    separator over two lines), and where it sits under its name it carries no "·" (no separator at a line's end). Before
+    hc25 the button read "Halt", "Emergency halt" was 34 px wider than "Resume" (every toggle moved the sliders 17 px), and
+    from 1101 to 1359 px "Agents in this model · 1.8k" broke after its "·"."""
+    bad, notes = [], []
+    for path in ("index.html", "platform.html"):
+        for w, h, dpr, touch in ((1440, 900, 1, False), (1280, 800, 1, False), (1101, 800, 1, False), (1024, 768, 1, False), (390, 844, 3, True), (320, 640, 2, True)):
+            tag = f"{path}@{w}x{h}"
+            ctx, pg = await open_page(b, path, w, h, dpr=dpr, touch=touch, reduced=True)
+            await pg.evaluate("document.querySelector('.swarm-bar').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(500)
+            states = [await pg.evaluate(HALT_BAR)]
+            for _ in range(2):
+                if not states[-1]: break
+                await pg.evaluate("document.querySelector('[data-sw-halt]').click()"); await pg.wait_for_timeout(350)
+                states.append(await pg.evaluate(HALT_BAR))
+            await ctx.close()
+            if not all(states): bad.append(f"{tag}: no lab bar or halt button"); continue
+            got = [s["label"] for s in states]
+            if got != ["Emergency halt", "Resume", "Emergency halt"]: bad.append(f"{tag}: the button reads {got}, not Emergency halt / Resume / Emergency halt")
+            a = states[0]
+            for i, s in enumerate(states[1:], 1):
+                d = max(abs(x - y) for x, y in zip(a["btn"], s["btn"]))
+                if d > 0.5: bad.append(f"{tag}: toggle {i} moves or resizes the button by {d:.1f} px ({a['btn']} -> {s['btn']})")
+                for la, ls in zip(a["labs"], s["labs"]):
+                    if la and ls:
+                        d = max(abs(x - y) for x, y in zip(la["input"], ls["input"]))
+                        if d > 0.5: bad.append(f"{tag}: toggle {i} moves the slider '{la['name']}' by {d:.1f} px")
+            for l in a["labs"]:
+                if not l: bad.append(f"{tag}: a slider without its name and value"); continue
+                if l["boxes"] != 1: bad.append(f"{tag}: '{l['name']}''s value (with its separator) is split over {l['boxes']} lines")
+                if l["under"] and l["sep"] not in ("none", "normal"): bad.append(f"{tag}: '{l['name']}''s value sits under its name and still draws {l['sep']}")
+            if w in (1440, 1101) and path == "index.html": notes.append(f"{w}: {a['btn'][2]:.0f} px, values {'under' if a['labs'][0]['under'] else 'beside'} their names")
+    assert not bad, "halt_toggle:\n  " + "\n  ".join(bad[:24])
+    print(f"halt_toggle: Emergency halt / Resume at one width on Home and Platform, nothing moves on a toggle, no '·' at a line's end ({'; '.join(notes)})")
+
+
+STACK_SCENE = r"""(() => { const f = document.querySelector('[data-plate="stack"]'); if (!f) return null; const g = f.querySelector('.hp-s1');
+  const C = e => { const r = e.getBoundingClientRect(); return (r.top + r.bottom) / 2; };
+  const pl = [...f.querySelectorAll('.pl')].map(x => x.querySelector('.hp-h')), n = [...f.querySelectorAll('.hp-lab--n')];
+  return { p: g ? +getComputedStyle(g).getPropertyValue('--st-p') : null, dy: n.map((e, i) => pl[i] ? Math.abs(C(e) - C(pl[i])) : 99),
+           anims: f.getAnimations({subtree: true}).length, scroll: f.getAnimations({subtree: true}).filter(a => a.timeline && a.timeline !== document.timeline).length,
+           lay: pl.length, y: scrollY, H: innerHeight }; })()"""
+COST_SCENE = r"""(() => { const fig = document.querySelector('#economics figure.cost'); if (!fig) return null;
+  const rows = [...fig.querySelectorAll('.pf-ck > div')];
+  return { top: fig.getBoundingClientRect().top + scrollY, H: innerHeight, dec: !!fig.querySelector('.is-dec, .pf-ck') && !!document.querySelector('[data-page="proof"] .is-dec'),
+    rows: rows.map(d => { const r = d.getBoundingClientRect(), g = [...d.querySelectorAll('.cost-blk .is-gone, .cost-blk .is-rest')];
+      const op = g.map(i => { const s = getComputedStyle(i, '::before'); return s.content === 'none' ? 0 : +s.opacity; });
+      return { t: r.top, h: r.height, prog: (innerHeight - r.top) / (innerHeight + r.height), cp: +getComputedStyle(d).getPropertyValue('--cp'), out: g.length, max: op.length ? Math.max(...op) : 0, min: op.length ? Math.min(...op) : 0,
+               anims: d.getAnimations().length }; }) }; })()"""
+
+
+@check
+async def scroll_scenes(b):
+    """hc25 (integrate, standing in for tests; the director's HC25 1 and 2, done by platform and proof, under EVOLVE's
+    "Owner, 8 Nov" motion conditions): the two scroll-linked scenes follow the page's own scroll and reduced motion turns
+    them off completely. Platform's hero (1440 x 900, and with touch at 390 x 844): with motion its stack is exactly still
+    at the top (--st-p 0), parted at 30% of a screen down (--st-p 1) with every layer numeral still on its layer (1.5 px),
+    and still again back at the top; under reduced motion the plate runs no animation and stays at 0. Proof §02 (1440 x 900,
+    and with touch at 390 x 844): with motion each row of the decomposed index arrives filled (--cp 0, every block the
+    agentic stack drops drawn at full) while it enters the screen, and ends on the still picture (--cp 1, those blocks
+    empty to outlines) once it has risen past the middle; under reduced motion each row is the still picture at once (--cp 1,
+    nothing filled, no animation). Native scrolling drives both (window.scrollTo); check_static offscreen_pause pins their
+    off-screen pause."""
+    bad, notes = [], []
+    for w, h, dpr, touch in ((1440, 900, 1, False), (390, 844, 3, True)):
+        for reduced in (False, True):
+            tag = f"platform.html@{w}x{h}{' reduced' if reduced else ''}"
+            ctx, pg = await open_page(b, "platform.html", w, h, dpr=dpr, touch=touch, reduced=reduced)
+            await pg.wait_for_timeout(600)
+            r0 = await pg.evaluate(STACK_SCENE)
+            if not r0 or r0["p"] is None: bad.append(f"{tag}: no stack plate scene (.hp-s1)"); await ctx.close(); continue
+            await pg.evaluate(f"window.scrollTo({{top: Math.ceil(innerHeight * .3) + 2, behavior: 'instant'}})"); await pg.wait_for_timeout(500)
+            r1 = await pg.evaluate(STACK_SCENE)
+            await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(500)
+            r2 = await pg.evaluate(STACK_SCENE)
+            await ctx.close()
+            if reduced:
+                if r0["anims"] or r1["anims"]: bad.append(f"{tag}: the plate runs {max(r0['anims'], r1['anims'])} animation(s) under reduced motion")
+                if abs(r1["p"]) > 0.001: bad.append(f"{tag}: --st-p is {r1['p']:.3f} after scrolling under reduced motion (0)")
+                continue
+            if abs(r0["p"]) > 0.01: bad.append(f"{tag}: at the top --st-p is {r0['p']:.3f} (0: the plate as drawn)")
+            if r1["p"] < 0.99: bad.append(f"{tag}: 30% of a screen down --st-p is {r1['p']:.3f} (1)")
+            if abs(r2["p"]) > 0.01: bad.append(f"{tag}: back at the top --st-p is {r2['p']:.3f} (0)")
+            if not r1["scroll"]: bad.append(f"{tag}: no animation on a scroll timeline in the plate")
+            off = [i + 1 for i, d in enumerate(r1["dy"]) if d > 1.5]
+            if r1["lay"] != 8 or off: bad.append(f"{tag}: parted, layer numeral(s) {off} off their layers ({[round(d, 1) for d in r1['dy']]}; {r1['lay']} layers)")
+            notes.append(f"stack {w}: {r0['p']:.2f} -> {r1['p']:.2f} -> {r2['p']:.2f}, numerals <= {max(r1['dy']):.1f} px")
+    for w, h, dpr, touch in ((1440, 900, 1, False), (390, 844, 3, True)):
+        for reduced in (False, True):
+            tag = f"evidence.html@{w}x{h}{' reduced' if reduced else ''}"
+            ctx, pg = await open_page(b, "evidence.html", w, h, dpr=dpr, touch=touch, reduced=reduced)
+            await pg.evaluate("document.querySelector('#economics').scrollIntoView({block: 'start', behavior: 'instant'})"); await pg.wait_for_timeout(1200)
+            g = await pg.evaluate(COST_SCENE)
+            if not g or not g["rows"]: bad.append(f"{tag}: no decomposed cost index (#economics .pf-ck > div)"); await ctx.close(); continue
+            # entering: the first row's top 2 px above the screen's foot; past the middle: the last row's top at 30% of the screen
+            first = g["rows"][0]["t"] + (await pg.evaluate("scrollY"))
+            last = g["rows"][-1]["t"] + (await pg.evaluate("scrollY"))
+            await pg.evaluate(f"window.scrollTo({{top: {first} - innerHeight + 2, behavior: 'instant'}})"); await pg.wait_for_timeout(600)
+            a = await pg.evaluate(COST_SCENE)
+            await pg.evaluate(f"window.scrollTo({{top: {last} - innerHeight * .3, behavior: 'instant'}})"); await pg.wait_for_timeout(600)
+            z = await pg.evaluate(COST_SCENE)
+            await ctx.close()
+            if not any(r["out"] for r in z["rows"]): bad.append(f"{tag}: no emptied blocks in the index"); continue
+            if reduced:
+                for k, s in (("entering", a), ("past the middle", z)):
+                    if any(abs(r["cp"] - 1) > 0.001 or r["max"] > 0.001 or r["anims"] for r in s["rows"]): bad.append(f"{tag} {k}: under reduced motion a row is not the still picture ({[(round(r['cp'], 2), round(r['max'], 2), r['anims']) for r in s['rows']]})")
+                continue
+            # a row's own view timeline runs from cover 10% to cover 40%: entering (<= 9%) it is filled, risen (>= 41%) it is still
+            for i, r in enumerate(a["rows"]):
+                if r["prog"] > 0.09: continue
+                if r["cp"] > 0.02 or (r["out"] and r["min"] < 0.98): bad.append(f"{tag}: row {i + 1} entering is not filled (--cp {r['cp']:.2f}, blocks {r['min']:.2f}-{r['max']:.2f})")
+            if a["rows"][0]["prog"] > 0.09: bad.append(f"{tag}: the first row did not stand at the screen's foot (cover {a['rows'][0]['prog']:.2f})")
+            for i, r in enumerate(z["rows"]):
+                if r["prog"] < 0.41: bad.append(f"{tag}: row {i + 1} did not rise past its range (cover {r['prog']:.2f})"); continue
+                if r["cp"] < 0.98 or r["max"] > 0.02: bad.append(f"{tag}: row {i + 1} past the middle is not the still picture (--cp {r['cp']:.2f}, a block at {r['max']:.2f})")
+            notes.append(f"cost {w}: {a['rows'][0]['cp']:.2f} -> {min(r['cp'] for r in z['rows']):.2f}")
+    assert not bad, "scroll_scenes:\n  " + "\n  ".join(bad[:24])
+    print(f"scroll_scenes: Platform's stack parts on the page's scroll and Proof's index empties as it rises; reduced motion keeps both still ({'; '.join(notes)})")
+
+
+FOOT_LINKS = r"""(() => { const top = document.querySelector('.footer .top'); if (!top) return null; const groups = [...top.children].slice(1);
+  return groups.map(g => ({ head: (g.querySelector('h2') || {}).textContent, links: [...g.querySelectorAll('li a')].map(a => { const r = a.getBoundingClientRect(); return { t: a.textContent.trim(), x: r.left, y: r.top, b: r.bottom }; }) })); })()"""
+
+
+@check
+async def footer_phone(b):
+    """hc25 (integrate, standing in for tests; the director's HC25 8, adapted by system): on phones the footer's links fill
+    both columns, no empty column. With touch at 390 x 844, 360 x 780 and 320 x 640, on Home and the blog index: Product and
+    Company stand side by side; Access spans both columns under them, "Request access" and "For managers" down the first
+    column (Product's left edge) and "Bring a lifecycle" at the top of the second (Company's left edge, level with "Request
+    access"). At 768 x 1024 the three groups stand in their own columns, each group's links stacked (unchanged). Links,
+    order, row height and disclosures: check_static footer, verify_v9 phone, footer_end and disclosures."""
+    bad, notes = [], []
+    for path in ("index.html", "blog/index.html"):
+        for w, h, dpr, touch in ((390, 844, 3, True), (360, 780, 3, True), (320, 640, 2, True), (768, 1024, 2, False)):
+            tag = f"{path}@{w}x{h}"
+            ctx, pg = await open_page(b, path, w, h, dpr=dpr, touch=touch)
+            await pg.evaluate("window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'})"); await pg.wait_for_timeout(600)
+            g = await pg.evaluate(FOOT_LINKS)
+            await ctx.close()
+            if not g or len(g) != 3 or [x["head"] for x in g] != ["Product", "Company", "Access"]: bad.append(f"{tag}: the footer's groups are not Product, Company, Access ({g and [x['head'] for x in g]})"); continue
+            prod, comp, acc = (x["links"] for x in g)
+            if len(acc) != 3: bad.append(f"{tag}: Access has {len(acc)} links"); continue
+            if w <= 600:
+                if not abs(prod[0]["y"] - comp[0]["y"]) <= 1 or comp[0]["x"] <= prod[0]["x"] + 1: bad.append(f"{tag}: Product and Company are not side by side")
+                if abs(acc[0]["x"] - prod[0]["x"]) > 1 or abs(acc[1]["x"] - prod[0]["x"]) > 1: bad.append(f"{tag}: Request access / For managers are not in the first column ({acc[0]['x']:.0f}, {acc[1]['x']:.0f} vs {prod[0]['x']:.0f})")
+                if acc[1]["y"] < acc[0]["b"] - 1: bad.append(f"{tag}: For managers is not under Request access")
+                if abs(acc[2]["x"] - comp[0]["x"]) > 1 or abs(acc[2]["y"] - acc[0]["y"]) > 1: bad.append(f"{tag}: Bring a lifecycle is not at the top of the second column ({acc[2]['x']:.0f},{acc[2]['y']:.0f} vs {comp[0]['x']:.0f},{acc[0]['y']:.0f})")
+                if acc[0]["y"] < max(l["b"] for l in prod + comp) - 1: bad.append(f"{tag}: Access does not stand under Product and Company")
+                if path == "index.html" and w == 390: notes.append(f"390: Access at x {acc[0]['x']:.0f} / {acc[2]['x']:.0f}")
+            else:
+                if len({round(l["x"]) for l in acc}) != 1 or any(z["y"] < a["b"] - 1 for a, z in zip(acc, acc[1:])): bad.append(f"{tag}: Access's links are not one stacked column")
+                if acc[0]["x"] <= comp[0]["x"] + 1 and abs(acc[0]["y"] - comp[0]["y"]) > 1: bad.append(f"{tag}: Access is not its own column")
+    assert not bad, "footer_phone:\n  " + "\n  ".join(bad[:24])
+    print(f"footer_phone: on phones Access spans both columns under Product and Company, no empty column; tablets unchanged ({'; '.join(notes)})")
+
+
+CH_LINKS = r"""(() => { const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  return [...document.querySelectorAll('#governance .ch-head, #research .ch-head')].map(h => { const t = h.querySelector('.ch-title'), a = h.querySelector('.ch-link'); if (!t || !a) return null;
+    const tr = t.getBoundingClientRect(), ar = a.getBoundingClientRect(); return { id: h.closest('section').id, gap: ar.top - tr.bottom, dx: ar.left - tr.left, rem }; }); })()"""
+DPL_ART = r"""(() => { const cols = [...document.querySelectorAll('#mcp .dpl-col')]; return cols.map(c => { const s = c.querySelector('.dpl-plate svg'), g = s && s.querySelector(':scope > g'), h = c.querySelector('h3');
+  if (!g) return null; const sb = s.getBoundingClientRect(), k = sb.height / 112, gb = g.getBBox(), m = g.transform.baseVal.consolidate(), ty = m ? m.matrix.f : 0;
+  return { base: (gb.y + gb.height + ty), h3: h ? h.getBoundingClientRect().top : null, k }; }); })()"""
+
+
+@check
+async def section_links(b):
+    """hc25 (integrate, standing in for tests; the director's HC25 6 and 7, done by home and platform): a chapter's action
+    sits under its head and a row of drawings stands on one line. Home §04 and §05 at 3840 x 2160, 1440 x 900, 1024 x 768,
+    768 x 1024 and with touch at 390 x 844 and 320 x 640: the link ("The governance model", "All ten notes") starts at its
+    head's left edge (1 px) and 1.5rem under it (2 px), never on the head's baseline. Platform §04 at 3840 x 2160, 1440 x 900
+    and 1024 x 768 (three columns): the three drawings' art ends on one baseline (0.5 of the drawing's 112 units) and the
+    three titles start on one line (1 px). Before hc25 §05's link sat on its head's baseline at the row's right (x 953 at
+    1440) and §04's three drawings ended at three different heights."""
+    bad, notes = [], []
+    for w, h, dpr, touch in ((3840, 2160, 1, False), (1440, 900, 1, False), (1024, 768, 1, False), (768, 1024, 2, False), (390, 844, 3, True), (320, 640, 2, True)):
+        tag = f"index.html@{w}x{h}"
+        ctx, pg = await open_page(b, "index.html", w, h, dpr=dpr, touch=touch, reduced=True)
+        await pg.evaluate("document.querySelector('#research').scrollIntoView({block: 'start', behavior: 'instant'})"); await pg.wait_for_timeout(500)
+        r = await pg.evaluate(CH_LINKS)
+        await ctx.close()
+        if not r or len(r) != 2 or not all(r): bad.append(f"{tag}: §04 / §05 without a head and its link ({r})"); continue
+        for x in r:
+            if abs(x["dx"]) > 1: bad.append(f"{tag} #{x['id']}: the link starts {x['dx']:.1f} px from its head's left edge")
+            if abs(x["gap"] - 1.5 * x["rem"]) > 2: bad.append(f"{tag} #{x['id']}: the link is {x['gap']:.1f} px under its head (1.5rem = {1.5 * x['rem']:.0f})")
+        if w == 1440: notes.append("Home 1440: " + ", ".join("#%s %.0f px under" % (x["id"], x["gap"]) for x in r))
+    for w, h in ((3840, 2160), (1440, 900), (1024, 768)):
+        tag = f"platform.html@{w}x{h}"
+        ctx, pg = await open_page(b, "platform.html", w, h, reduced=True)
+        await pg.evaluate("document.querySelector('#mcp').scrollIntoView({block: 'start', behavior: 'instant'})"); await pg.wait_for_timeout(500)
+        r = await pg.evaluate(DPL_ART)
+        await ctx.close()
+        if not r or len(r) != 3 or not all(r): bad.append(f"{tag}: §04 without three drawings ({r})"); continue
+        bases = [x["base"] for x in r]
+        if max(bases) - min(bases) > 0.5: bad.append(f"{tag}: the three drawings end at {[round(v, 1) for v in bases]} of 112 (one baseline)")
+        tops = [x["h3"] for x in r]
+        if None in tops or max(tops) - min(tops) > 1: bad.append(f"{tag}: the three titles start at {tops}")
+        if w == 1440: notes.append(f"Platform §04 baseline {[round(v, 1) for v in bases]}")
+    assert not bad, "section_links:\n  " + "\n  ".join(bad[:24])
+    print(f"section_links: Home's chapter links under their heads; Platform §04's drawings on one baseline ({'; '.join(notes)})")
+
+
 # ---------------------------------------------------------------- runner
 def parse_args(argv):
     base, only, listing, i = None, None, False, 0

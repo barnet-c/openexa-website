@@ -369,12 +369,17 @@
       if (!dd) return;
       db.className = 'cost-db'; grid.className = 'cost-blk'; grid.setAttribute('aria-hidden', 'true');
       const n = Math.round(base[k].n), r = rest[k], solid = [], out = [];
+      let first = -1;
       for (let i = 0; i < n; i++) {
         const b = document.createElement('i'), fill = r - i;
         b.style.setProperty('--c', base[k].c);
         if (fill >= 1) solid.push(b);
         else if (fill > 0) { b.className = 'is-part'; b.style.setProperty('--f', Math.round(fill * 100) + '%'); solid.push(b); }
         else { b.className = r > 0 ? 'is-rest' : 'is-gone'; out.push(b); }
+        if (fill < 1 && first < 0) first = i;
+        // hc25 (HC25 item 2): the block's place in its row's emptying under scroll (proof.css --t, 0 first): the bar's end
+        // first, back to what the agentic stack keeps
+        if (fill < 1) b.style.setProperty('--t', (n - 1 > first ? (n - 1 - i) / (n - 1 - first) : 0).toFixed(3));
         grid.append(b);
       }
       // one reveal, <= 600 ms: row by row, its kept blocks, then what went

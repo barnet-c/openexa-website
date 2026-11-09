@@ -421,8 +421,10 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
 }
 @media (min-width: 601px) and (max-width: 960px) { .footer .bottom > *, .footer .disc p { grid-column: span 2; } .footer .bottom .clocks { grid-column: 3 / -1; justify-self: end; justify-content: flex-end; } .footer .bottom > :not(.clocks) { white-space: normal; } } /* hc9: the copyright left, both clocks right, as at 961 px; under ~770 px the two clocks stack, right-aligned (their times in one column); cells wrap only under user text spacing (1.4.12) */
 @media (min-width: 961px) { .footer .bottom .clocks { grid-column: 4; justify-self: end; flex-wrap: nowrap; } .footer .disc p + p { grid-column: 2 / -1; } }
-@media (max-width: 600px) { .footer .top { grid-template-columns: 1fr 1fr; gap: 1.75rem 1.25rem; } .footer .top > :first-child { display: none; } } /* phones: the links two by two; the bar above already carries the mark (hc22) */
-@media (max-width: 359px) { .footer .top { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: .875rem; } .footer ul li { font-size: var(--fs-small); } } /* 320: every label on one line; still 33 px per tap, rows 33 apart */
+@media (max-width: 600px) { .footer .top { grid-template-columns: 1fr 1fr; gap: 1.75rem 1.25rem; } .footer .top > :first-child { display: none; }
+  .footer .top > :last-child, .footer .top > :last-child > ul { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; }
+  .footer .top > :last-child > ul { grid-template-rows: auto auto; grid-auto-flow: column; } } /* phones: the links two by two; the bar above already carries the mark (hc22). hc25: Access spans both columns and its three links fill them, down then across (one row shorter, one empty cell, not a column) */
+@media (max-width: 359px) { .footer .top { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: .875rem; } .footer ul li { font-size: var(--fs-small); } } /* 320: every label on one line; 44 px rows, as at 390 */
 
 /* ========================================================================== Advanced layer — story stage, kinetic type, loader, cursor, transitions … */
 
@@ -864,7 +866,7 @@ main > .is-dark:last-child { position: relative; margin-bottom: calc(-1 * var(--
   .pm-agent, .pm-up, .pm-down, .pm-ring, .pm-rring, .pm-spur, .pm-x, .pm-cross, .pm-step, .pm-settle, .pm-floor,
   .tp-rec, .tp-prop, .tp-pass, .tp-set, .tp-rj, .tp-out, .tp-l-prop, .tp-l-set, .tp-l-rj, .lf-w, .lf-face, .bp-art [pathLength], .pc, .pb, .pd, .pk, .po, .pt, .pg, .pq,
   .dr, .dm, .nf-rail, .nf-tok, .nf-s, .nf-keys li, .nf-rj, .nf-spur, .nf-fall, .nf-out, .dk-rec, .dl-rcpt, .fl, .crew-bio, .v, .crew-stats b,
-  .tr-pl, .tr-rj, .tr-rl, .tr-oc, .tr-sg, .tr-se, .pf-mk, .pp-ring, .pp-gt, .pp-lt, .pp-r, .hp-rec, .sp-plumb, .sp-read),
+  .pf-ck > div, .tr-pl, .tr-rj, .tr-rl, .tr-oc, .tr-sg, .tr-se, .pf-mk, .pp-ring, .pp-gt, .pp-lt, .pp-r, .hp-rec, .sp-plumb, .sp-read),
 .is-offscreen :is(.chain-seg, .layers)::before,
 .is-offscreen :is(.chain-seg, .lt-node, .pf-floor, .layer, .is-ping, .tr-sd, .pf-trail)::after { animation-play-state: paused !important; }
 
@@ -1606,9 +1608,9 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   .desk-head { padding-left: 1rem; }
   .desk-kicker { order: -1; flex-basis: 100%; } /* the panel names itself illustrative on its own first line at every width */
 }
-/* phones and tablets: the lane and the ledger strip come straight after the chart */
+/* phones and tablets: the desk reads in source order, its focus order on screen (hc24 7: chart, counters + sliders, lane, ledger) */
 @media (max-width: 960px) {
-  .desk { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "chart" "lane" "ledger" "side"; }
+  .desk { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "chart" "side" "lane" "ledger"; }
   .desk-head { grid-area: head; }
   .desk-body { display: contents; }
   .desk-chart { grid-area: chart; border-right: 0; border-bottom: 0; }

@@ -1,7 +1,7 @@
 /* OpenEXA — the swarm lab (Home §02, Platform §02): an illustrative model, 3D on a 2D canvas. Agents carry proposals
    through six gates; at 04 the Council's aperture approves or rejects against a risk limit you can tighten (rejections
-   fall away); approved ones run five rails in lockstep, settle at 06 and are sealed into a hash-chained ledger line. Halt
-   stops new proposals while open work drains; "Follow a proposal" traces one. Counters derive from the model's state
+   fall away); approved ones run five rails in lockstep, settle at 06 and are sealed into a hash-chained ledger line. The
+   emergency halt stops new proposals while open work drains; "Follow a proposal" traces one. Counters derive from the model's state
    ('Settled / s': an exponentially weighted rate, tau 1.6 s of model time).
    Events, batched (at most four flushes a second):
      'oxa:settled'  {id, lane, ts, gate: 'settle', count, followed}   proposals settled since the previous flush
@@ -1293,8 +1293,9 @@
     });
   }
   if (el.halt) {
-    el.halt.removeAttribute('aria-pressed'); // the label itself toggles
-    el.halt.addEventListener('click', () => { halted = !halted; el.halt.textContent = halted ? 'Resume' : 'Halt'; stats(); if (reduced.matches) still(); else measureSoon(); });
+    el.halt.removeAttribute('aria-pressed'); // the label itself toggles: the page's own ("Emergency halt", hc25) and "Resume"
+    const haltLabel = el.halt.textContent;
+    el.halt.addEventListener('click', () => { halted = !halted; el.halt.textContent = halted ? 'Resume' : haltLabel; stats(); if (reduced.matches) still(); else measureSoon(); });
   }
   // Pause motion (WCAG 2.2.2): model time, drawing and the off-screen pulse all stop; the counters hold
   if (el.motion) {

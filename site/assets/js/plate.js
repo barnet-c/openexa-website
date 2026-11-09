@@ -31,8 +31,11 @@
       return [v, (want - c) / d / k];
     });
     rules.forEach((p, i) => { const [v, u] = at[i]; if (Math.abs(u) > 1e-4) p.style.translate = v ? `${u.toFixed(4)}px 0` : `0 ${u.toFixed(4)}px`; });
-    if (!anims && typeof fig.getAnimations === 'function') { anims = fig.getAnimations({ subtree: true }); release(); }
+    if (!anims && typeof fig.getAnimations === 'function') { anims = played(); release(); }
   }
+  // the plate's played animations; hc25's scroll scene (platform.css: the stack comes apart on scroll) runs on the page's
+  // scroll timeline, so it is never let go or replayed
+  const played = () => fig.getAnimations({ subtree: true }).filter((a) => a.timeline === document.timeline);
   const later = () => { if (!queued) queued = requestAnimationFrame(fit); };
   later();
   // each element's animations let go once all of that element's own have finished (each ends on the plate's own style):
@@ -56,7 +59,7 @@
   const sync = () => { btn.hidden = reduce.matches; };
   sync();
   if (reduce.addEventListener) reduce.addEventListener('change', sync);
-  btn.addEventListener('click', () => { fit(); if (!anims || !anims.length) anims = fig.getAnimations({ subtree: true }); anims.forEach((a) => { a.cancel(); a.play(); }); release(); });
+  btn.addEventListener('click', () => { fit(); if (!anims || !anims.length) anims = played(); anims.forEach((a) => { a.cancel(); a.play(); }); release(); });
 })();
 
 /* Platform §05 (hc13r PLAT-1): the dial is the control. Its four labels are one radio group (arrow keys, Home, End; the

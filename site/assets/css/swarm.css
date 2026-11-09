@@ -150,10 +150,13 @@
 .sw-btns { display: flex; flex-direction: column; flex-wrap: wrap; align-items: stretch; gap: .25rem; align-self: end; } /* wraps: at 400% zoom (320 x 256) Pause takes its own row inside the lab */
 /* a3: Halt and Pause motion are the site's buttons (Inter, sentence case). hc20: Halt is neutral (red means rejected); its
    hover is the ghost button's, its halted state ("Resume") the paper button */
-.swarm-controls .halt { display: inline-flex; align-items: center; justify-content: center; font: var(--w-ui) var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; min-width: 7.6em; min-height: 2.75rem; padding: .625rem 1.125rem; border: var(--hair) solid rgba(245, 242, 236, .42); color: var(--fg); border-radius: var(--r); transition: background var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), border-color var(--dur-feedback) var(--ease-out); }
+.swarm-controls .halt { display: inline-flex; align-items: center; justify-content: center; font: var(--w-ui) var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; min-width: 10.25em; min-height: 2.75rem; padding: .625rem 1.125rem; border: var(--hair) solid rgba(245, 242, 236, .42); color: var(--fg); border-radius: var(--r); transition: background var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), border-color var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { .swarm-controls .halt:hover { background: color-mix(in srgb, var(--fg) 7%, transparent); border-color: var(--fg); } }
 .swarm-live.is-halted .halt { background: var(--paper); color: #0B110F; border-color: var(--paper); font-weight: var(--w-ui-x); }
 @media (hover: hover) { .swarm-live.is-halted .halt:hover { background: color-mix(in srgb, var(--paper) 86%, var(--ink)); } }
+/* hc25: "Emergency halt" and "Resume" at one width (10.25em, so a toggle moves nothing); beside the counters at 1101-1359 px the
+   sliders are too short for name and value on one line: the value goes under its name, never "·" at a line's end */
+@media (min-width: 1100.5px) and (max-width: 1359.98px) { .swarm-controls output { display: block; margin-top: calc(2 * var(--hair)); } .swarm-controls output::before { content: none; } }
 /* Pause motion: site.css's one control (hc1); at the head's right end, after Follow a proposal, where the page puts it there */
 .sw-head > .sw-motion { flex: none; }
 /* hc6, one Pause everywhere: on phones and small tablets it keeps its word, at the end of the name's line; the name takes

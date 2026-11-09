@@ -354,7 +354,7 @@
 /* the end matter keeps the text's measure: its rules stop where the lines stop */
 .article-page .article > :is(.article-end, .note-run, .note-disc) { max-width: 39.2rem; }
 .article-page .pager-card h3 .t-head { display: block; }
-.note-disc a { border-bottom: var(--hair) solid var(--line-strong); transition: border-color .25s var(--ease); }
+.note-disc a { border-bottom: var(--hair) solid var(--line-strong); transition: border-color .25s var(--ease); white-space: nowrap; }
 @media (hover: hover) { .note-disc a:hover { border-color: var(--fg); } }
 @media (hover: hover) {
   .toc li a:hover::before { color: var(--accent); }
