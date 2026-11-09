@@ -67,7 +67,7 @@
     const pre = `arch${id}`;
     const spec = root.hasAttribute('data-arch-spec'); // Platform: the list stays, as the spec under the instrument
     const scn = !spec && root.closest('.stack-scene'), stage = scn && scn.firstElementChild;
-    const hp = scn && scn.querySelector('.hero-plate--stack'), hsvg = hp && hp.querySelector('.hp-art > svg');
+    const hp = scn && scn.querySelector('.hero-plate--stack'), hsvg = hp && hp.querySelector('.hp-art > svg'), sect = scn && root.closest('section');
     let pin = false, sp = 1, sA = 0, sZ = 1, sm = 0;
     /* ---------------- 1 · read the list (also what readers without JavaScript get) ---------------- */
     const items = [];
@@ -461,19 +461,28 @@
     }
 
     const EY = [30, 62, 94, 126, 192, 224, 256, 288], sstep = (x) => x * x * (3 - 2 * x);
-    const rowOn = (r) => (pin ? clamp((sp - 0.7 - r * 0.022) / 0.1, 0, 1) : 1);
+    // (hc27) the ink's edge rises from the stage's foot at .45, holds .04 level with the boundary plane, then rises on (.2
+    // of moving time, each leg eased); each row draws in as the edge reaches it, the head rises once the edge is past it,
+    // and the camera turns once the edge has cleared the stack. platform.css reads --st-bw (the plane's height in the
+    // section, from its foot), --st-h0 (the head's start) and each row's --r0, written here once per layout
+    const IA = 0.45, IM = 0.2, IP = 0.04, RD = 0.04, CT = 0.2;
+    let bw = 0.46, ct0 = 0.66, R0 = null;
+    const iss = (s) => 0.5 - Math.sin(Math.asin(clamp(1 - 2 * s, -1, 1)) / 3); // smoothstep's inverse
+    const inkAt = (w) => (w <= bw ? IA + IM * bw * iss(w / bw) : IA + IM * bw + IP + IM * (1 - bw) * iss((w - bw) / (1 - bw)));
+    const rowOn = (r) => (pin ? clamp((sp - (R0 ? R0[r] : 0.5 + r * 0.012)) / RD, 0, 1) : 1);
+    const smOf = (p) => (pin ? 1 - sstep(clamp((p - ct0) / CT, 0, 1)) : 0);
     function sceneRead() {
       pin = !!(stage && getComputedStyle(stage).position === 'sticky');
       if (pin) { const r = scn.getBoundingClientRect(); sA = r.top + window.scrollY; sZ = sA + scn.offsetHeight - document.documentElement.clientHeight; }
-      sp = sceneP(); sm = pin ? 1 - sstep(clamp((sp - 0.7) / 0.2, 0, 1)) : 0;
+      sp = sceneP(); sm = smOf(sp);
     }
     function sceneP() { return pin ? clamp((window.scrollY - sA) / Math.max(1, sZ - sA), 0, 1) : 1; }
-    const ST = ['--st-s', '--st-x', '--st-y', '--st-au', '--st-gu', '--st-ad', '--st-gd', '--st-upx'];
+    const ST = ['--st-s', '--st-x', '--st-y', '--st-au', '--st-gu', '--st-ad', '--st-gd', '--st-upx'], ST2 = ['--st-bw', '--st-h0'];
     function scenePlace() {
       sceneRead();
       let e = hp, ox = 0, oy = 0;
       while (e && e !== stage) { ox += e.offsetLeft; oy += e.offsetTop; e = e.offsetParent; }
-      if (!pin || !wide || !hsvg || N !== 8 || e !== stage) { ST.forEach((k) => scn.style.removeProperty(k)); return; }
+      if (!pin || !wide || !hsvg || N !== 8 || e !== stage) { ST.concat(ST2).forEach((k) => scn.style.removeProperty(k)); R0 = null; return; }
       if (exStart < 0) { exStart = performance.now(); ex = 1; started = true; }
       const s0 = parseFloat(getComputedStyle(hp).scale) || 1, st = stage.getBoundingClientRect(), fr0 = hp.getBoundingClientRect(), sr = hsvg.getBoundingClientRect(), fa = fig.getBoundingClientRect();
       const u = sr.width / s0 / 420;
@@ -483,6 +492,15 @@
       const au = (dy[3] - dy[0]) / 3, ad = (dy[7] - dy[4]) / 3;
       const v = [S, X - st.left - ox - S * ((sr.left - fr0.left) / s0 + 149 * u), Y - st.top - oy - S * ((sr.top - fr0.top) / s0 + 159 * u), au, dy[3] + au, ad, dy[4] - ad, u];
       ST.forEach((k, i) => scn.style.setProperty(k, f3(v[i])));
+      const sc = sect.getBoundingClientRect(), Hs = Math.max(1, sc.height), wAt = (y) => clamp(1 - (y - sc.top) / Hs, 0, 1);
+      const mid = (el) => { const r = el.getBoundingClientRect(); return (r.top + r.bottom) / 2; }, chH = sect.querySelector('.ch-head');
+      const dp = window.devicePixelRatio || 1; bw = clamp(wAt(Math.round((Y - 0.5) * dp) / dp), 0.2, 0.8); R0 = []; // the edge's hairline on the device row under the plane's line
+      heads.forEach((hd, i) => { const r = i < bIndex ? i : i + 1; R0[r] = inkAt(wAt(mid(hd))); hd.style.setProperty('--r0', f3(R0[r])); });
+      R0[bIndex] = IA + IM * bw; bRow.style.setProperty('--r0', f3(R0[bIndex])); // the boundary draws while the edge holds on it
+      head.style.setProperty('--r0', f3(inkAt(wAt(mid(head)))));
+      scn.style.setProperty('--st-bw', bw.toFixed(5)); scn.style.setProperty('--st-h0', f3(chH ? inkAt(wAt(chH.getBoundingClientRect().bottom)) : 0.62));
+      ct0 = Math.max(0.6, inkAt(wAt(fa.top + baseT[0] - halfW * Math.sin(F0) - 4)) + 0.01); // the stack's top, in the explorer's own camera
+      const m = smOf(sp); if (m !== sm) { sm = m; geoDirty = true; }
     }
 
     /* ---------------- 5 · state ---------------- */
@@ -537,6 +555,9 @@
       glideTo = performance.now() + 450; // the rows under it move: the plates follow (re-measured next frame, and on the list's resize)
       remeasure();
       kick();
+      // (hc27) pinned, the stage grows under a still page (platform.css: no scroll anchoring in the scene), so the row
+      // stays under the pointer; only a panel that ends below the window brings itself into view
+      if (pin && wide && open >= 0) requestAnimationFrame(() => { const o = open >= 0 ? panels[open].getBoundingClientRect().bottom - window.innerHeight + 12 : 0; if (o > 0) window.scrollBy({ top: o, behavior: 'smooth' }); });
     }
     // spec mode: a layer leads to its entry in the spec below; the entry takes focus and lights up
     let litT = 0;
@@ -993,7 +1014,7 @@
         if (q === sp) return;
         const was = sp > 0.44;
         sp = q;
-        const m = 1 - sstep(clamp((sp - 0.7) / 0.2, 0, 1));
+        const m = smOf(sp);
         if (m !== sm) { sm = m; geoDirty = true; }
         if (sp > 0.44) { if (!was) lastActive = performance.now(); moved = true; kick(); } else if (was) kick();
       }, { passive: true });

@@ -142,14 +142,17 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 @keyframes st-p { from { --st-p: 0; } to { --st-p: 1; } }
 
 @media screen and (prefers-reduced-motion: no-preference) and (scripting: enabled) and (min-width: 1000px) and (min-height: 700px) { @supports (animation-timeline: view()) {
-  .stack-scene { --scene-travel: 148svh; --scene-tone-at: .61; height: auto;
-    --s1: clamp(0, (var(--scene-p) - .15) / .24, 1); --e1: calc(var(--s1) * var(--s1));
-    --s2: clamp(0, (var(--scene-p) - .15) / .3, 1); --e2: calc(var(--s2) * var(--s2) * (3 - 2 * var(--s2)));
-    --s3: clamp(0, (var(--scene-p) - .45) / .17, 1); --w: calc(var(--s3) * var(--s3) * (3 - 2 * var(--s3)));
-    --s4: clamp(0, (var(--scene-p) - .58) / .12, 1); --hr: calc(1 - (1 - var(--s4)) * (1 - var(--s4)) * (1 - var(--s4))); }
+  .stack-scene { --scene-travel: 124svh; --scene-tone-at: .667; height: auto; overflow-anchor: none;
+    --s1: clamp(0, (var(--scene-p) - .08) / .31, 1); --e1: calc(var(--s1) * var(--s1));
+    --s2: clamp(0, (var(--scene-p) - .08) / .37, 1); --e2: calc(var(--s2) * var(--s2) * (3 - 2 * var(--s2)));
+    --u1: clamp(0, (var(--scene-p) - .45) / (.2 * var(--st-bw, .46)), 1); --u2: clamp(0, (var(--scene-p) - .49 - .2 * var(--st-bw, .46)) / (.2 - .2 * var(--st-bw, .46)), 1);
+    --w: calc(var(--st-bw, .46) * var(--u1) * var(--u1) * (3 - 2 * var(--u1)) + (1 - var(--st-bw, .46)) * var(--u2) * var(--u2) * (3 - 2 * var(--u2)));
+    --s4: clamp(0, (var(--scene-p) - var(--st-h0, .62)) / .1, 1); --hr: calc(1 - (1 - var(--s4)) * (1 - var(--s4)) * (1 - var(--s4))); }
   .stack-scene > .scene-stage { height: auto; min-height: 100svh; }
   .stack-scene::after { content: ""; display: block; height: var(--scene-travel); }
-  .stack-scene :is(.arch-fig, .arch-panel, .hp-d, .orb-swarm) { --scene-p: 1; --s1: 1; --e1: 1; --s2: 1; --e2: 1; --s3: 1; --w: 1; --s4: 1; --hr: 1; }
+  .stack-scene :is(.arch-fig, .arch-panel, .hp-d, .orb-swarm) { --scene-p: 1; --s1: 1; --e1: 1; --s2: 1; --e2: 1; --u1: 1; --u2: 1; --w: 1; --s4: 1; --hr: 1; }
+  .stack-scene .hero-plate--stack :is(.hp-lab--side, .hp-lab--bd, .hp-lab--fl) { --lo: clamp(0, (var(--scene-p) - .47 + var(--y) * .0006) / .04, 1); animation-fill-mode: backwards; clip-path: inset(-.3em calc(var(--lo) * 100%) -.3em -.3em); }
+  .stack-scene .hero-plate--stack .hp-cap { --lo: clamp(0, (var(--scene-p) - .4) / .04, 1); clip-path: inset(-.5em calc(var(--lo) * (100% + .5em) - .5em) -.5em -.5em); }
   .stack-scene .page-hero { position: absolute; inset: 0 0 auto; z-index: 0; border-bottom-color: color-mix(in srgb, var(--line) calc((1 - var(--e1)) * 100%), transparent); }
   .stack-scene .page-hero .hero-copy { translate: 0 calc(var(--e1) * -100svh); }
   .stack-scene .hero-plate--stack { transform-origin: 0 0; translate: calc(var(--st-x, 0) * var(--e2) * 1px) calc(var(--st-y, 0) * var(--e2) * 1px); scale: calc(1 + (var(--st-s, 1) - 1) * var(--e2)); }
@@ -172,6 +175,7 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
   .stack-scene #architecture { --bg: var(--ink); --bg-2: var(--ink-2); --fg: var(--paper); --fg-2: rgba(245, 242, 236, .78); --fg-3: rgba(245, 242, 236, .56); --line: rgba(245, 242, 236, .14); --line-strong: rgba(245, 242, 236, .32); --accent: var(--signal-bright); --ch-gap: clamp(.75rem, 2.4svh, 1.75rem);
     position: relative; z-index: 1; box-sizing: border-box; min-height: 100svh; padding: calc(var(--nav-h) + clamp(1.25rem, 4.6svh, 3rem)) 0 clamp(1rem, 3svh, 2rem); color: var(--fg); background: radial-gradient(60% 55% at 32% 56%, rgba(79, 203, 147, .05), transparent 70%), var(--ink);
     clip-path: inset(calc((1 - var(--w)) * 100%) 0 0); }
+  .stack-scene #architecture::before { content: ""; position: absolute; z-index: 3; inset: calc((1 - var(--w)) * 100%) 0 auto; height: 1px; background: var(--signal-bright); box-shadow: 0 0 .875rem rgba(79, 203, 147, .3); opacity: clamp(0, (1 - var(--w)) * 40, 1); pointer-events: none; }
   .stack-scene #architecture .ch-head { overflow: clip; overflow-clip-margin: .35em; }
   .stack-scene #architecture .ch-title { translate: 0 calc((1 - var(--hr)) * 118%); }
   .stack-scene #architecture .arch { min-height: 0; border-color: transparent; border-radius: 0; background: none; overflow: visible; }
@@ -179,8 +183,10 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
   .stack-scene #architecture .arch-lab { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .stack-scene #architecture .arch-kicker { margin-left: auto; }
   .stack-scene #architecture .arch-legend { margin-left: 0; }
-  .stack-scene #architecture :is(.arch-head, .arch-h, .arch-bound) { --ra: clamp(0, (var(--scene-p) - .7 - var(--ri, 0) * .022) / .1, 1); clip-path: inset(-.25rem calc((1 - var(--ra)) * 100%) -.25rem -.25rem); }
+  .stack-scene #architecture :is(.arch-head, .arch-h, .arch-bound) { --ra: clamp(0, (var(--scene-p) - var(--r0, calc(.5 + var(--ri, 0) * .012))) / .04, 1); clip-path: inset(-.25rem calc((1 - var(--ra)) * 100%) -.25rem -.25rem); }
   .stack-scene #architecture .arch-head { clip-path: inset(0 0 0 calc((1 - var(--ra)) * 100%)); }
+  .stack-scene #architecture .arch-bound { clip-path: inset(-.25rem calc((1 - var(--ra)) * 100%) -.25rem calc(-4rem - var(--ab-reach, 0px))); }
+  .stack-scene #architecture .arch-bound .ab-rule { transform-origin: 0 50%; scale: var(--ra) 1; }
   .stack-scene #architecture .arch.is-wide .arch-layer { height: clamp(2.5rem, calc((100svh - 19rem) / 10.4), 5rem); min-height: 0; }
   .stack-scene #architecture .arch.is-wide .arch-bound { min-height: clamp(3.5rem, 7svh, 5.5rem); }
 } }

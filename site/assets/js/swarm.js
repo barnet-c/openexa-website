@@ -11,6 +11,8 @@
   const COPY = root.getAttribute('data-sw-preset') === 'copy';
   const gateList = COPY ? root.querySelector('[data-sw-gates]') : null;
   if (gateList) { gateList.style.transition = 'opacity .32s cubic-bezier(.2, .7, .2, 1)'; gateList.style.opacity = '0'; }
+  const boundTag = COPY ? root.querySelector('[data-sw-bound]') : null;
+  if (boundTag) { boundTag.style.transition = gateList ? gateList.style.transition : ''; boundTag.style.opacity = '0'; }
 
   const el = {
     n: $('[data-sw-n]'), nOut: $('[data-sw-n-out]'), strict: $('[data-sw-strict]'), strictOut: $('[data-sw-strict-out]'),
@@ -316,9 +318,27 @@
     if (p > was && p - was < 0.2) { const a = masterX(was), b = masterX(p); for (let g = 0; g < 6; g++) if (a < GX[g] && b >= GX[g]) { GF[g] = 1; if (g === 3) pulse = 1; } if (a < LX - 0.002 && b >= LX - 0.002) openPulse = 1; }
     actCam(); hc.fill(0);
   }
+  const FAN = [-1, 1];
+  function drawRest(k, r0) {
+    proj(OX, 0, 0); const x0 = P_X, y0 = P_Y; proj(LX, 0, 0);
+    ctx.lineWidth = 1.5; ctx.strokeStyle = `rgba(${GR},${(0.5 * k).toFixed(3)})`; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(P_X, P_Y); ctx.stroke();
+    const wx = OX + 0.42;
+    for (const sl of FAN) {
+      ctx.beginPath(); ctx.moveTo(x0, y0);
+      for (let s = 1; s <= 12; s++) { const t = s * 0.07, u = 1 - t; proj(u * u * OX + 2 * u * t * wx + t * t * (wx + 0.3), 2 * u * t * sl * 0.36 + t * t * sl * RY, 2 * u * t * sl * 0.1 + t * t * sl * 0.12); ctx.lineTo(P_X, P_Y); }
+      const g = ctx.createLinearGradient(x0, y0, P_X, P_Y); g.addColorStop(0, `rgba(${GR},${(0.55 * k).toFixed(3)})`); g.addColorStop(1, `rgba(${GR},0)`);
+      ctx.strokeStyle = g; ctx.stroke();
+    }
+    ctx.lineWidth = 1;
+    ctx.globalCompositeOperation = 'lighter'; blit('halo', x0, y0, r0 * 8, 0.45 * k);
+    ctx.globalCompositeOperation = 'source-over'; blit('ring', x0, y0, r0 * 2.2, k);
+  }
   function drawMaster() {
-    const p = act.p, fade = 1 - smooth(ACT_A + 0.05, ACT_A + 0.3, p), r0 = clamp(0.0036 * cam.k0, 0.8, 2.1) * 2.3;
-    const em = p > ACT_A ? Math.sin(Math.PI * clamp((p - ACT_A) / (1 - ACT_A), 0, 1)) : 0;
+    const p = actP(), fade = 1 - smooth(ACT_A + 0.05, ACT_A + 0.3, p), r0 = clamp(0.0036 * cam.k0, 0.8, 2.1) * 2.3;
+    const em = p > ACT_A && p < 1 ? Math.sin(Math.PI * clamp((p - ACT_A) / (1 - ACT_A), 0, 1)) : 0;
+    const rest = reduced.matches ? 0 : smooth(ACT_A + 0.3, 1, p) * (1 - follow.dim);
+    if (rest > 0.01) drawRest(rest, r0);
+    if (p >= 1) { ctx.globalAlpha = 1; return; }
     ctx.globalCompositeOperation = 'lighter';
     if (em > 0.01) { proj(OX, 0, 0); blit('halo', P_X, P_Y, r0 * 8, 0.55 * em); }
     if (fade > 0.01) {
@@ -474,7 +494,7 @@
     ctx.lineCap = 'butt'; ctx.lineJoin = 'bevel';
     follow.dim += ((follow.active || (follow.show && (AUTO || sim < follow.endAt + 1.2)) ? 1 : 0) - follow.dim) * (reduced.matches ? 1 : 1 - Math.exp(-frameDt * 6));
     placeLabels();
-    drawFloor(); drawLedger(); drawFrames(); drawBoundary(); drawRails(); drawAperture(false); drawMotes(); drawTrails(); drawAgents(); if (actP() < 1) drawMaster(); drawAperture(true);
+    drawFloor(); drawLedger(); drawFrames(); drawBoundary(); drawRails(); drawAperture(false); drawMotes(); drawTrails(); drawAgents(); if (COPY) drawMaster(); drawAperture(true);
     drawFollow(); drawLeaders();
     ctx.globalAlpha = 1;
   }
@@ -1068,7 +1088,7 @@
       const act = own ? '' : follow.active ? 'on' : 'rest'; if ((root.dataset.swAct || '') !== act) { if (act) root.dataset.swAct = act; else delete root.dataset.swAct; }
     }
     el.gates.forEach((li, g) => li.classList.toggle('is-hit', T.open && !!(T.hit & (1 << g))));
-    if (gateList) { const v = follow.active || T.open ? '' : '0'; if (gateList.style.opacity !== v) gateList.style.opacity = v; }
+    if (gateList || boundTag) { const v = follow.active || T.open ? '' : '0'; for (const e of [gateList, boundTag]) if (e && e.style.opacity !== v) e.style.opacity = v; }
     if (!el.trace) return;
     const open = T.open && !follow.bare;
     if (el.trace.hidden === open) { el.trace.hidden = !open; root.classList.toggle('is-tracing', open); }

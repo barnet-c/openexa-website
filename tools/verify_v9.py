@@ -4893,6 +4893,10 @@ STACK_PIN = "(() => { " + CLIP_SIDE + r""" const s = document.querySelector('.st
     h1: [h1.top, h1.bottom], archTop: side(q('#architecture'), 0), dark: q('.nav').classList.contains('nav--dark'),
     rowR: [...document.querySelectorAll('#architecture .arch-h')].map(e => side(e, 1)), boundR: side(q('#architecture .arch-bound'), 1), headL: side(q('#architecture .arch-head'), 3),
     frame: cs ? [cs.borderTopWidth, cs.borderTopColor, cs.borderTopLeftRadius] : ['?', '?', '?'], heroB: q('.stack-scene .page-hero').getBoundingClientRect().bottom, archT: q('#architecture').getBoundingClientRect().top,
+    bw: parseFloat(getComputedStyle(s).getPropertyValue('--st-bw')), tone: parseFloat(getComputedStyle(s).getPropertyValue('--scene-tone-at')),
+    edge: (() => { const e = q('#architecture'), r = e.getBoundingClientRect(), v = side(e, 0); return typeof v !== 'string' ? null : v.endsWith('%') ? r.top + parseFloat(v) / 100 * r.height : v.endsWith('px') ? r.top + parseFloat(v) : null; })(),
+    rule: q('#architecture .ab-rule') ? C(q('#architecture .ab-rule')) : null, hair: +getComputedStyle(q('#architecture'), '::before').opacity,
+    h2t: q('#architecture .ch-title') ? getComputedStyle(q('#architecture .ch-title')).translate : null,
     act: document.activeElement ? [document.activeElement.className || document.activeElement.tagName, !!document.activeElement.closest('.page-hero'), !!document.activeElement.closest('#architecture')] : null,
     W: innerWidth, H: innerHeight }; })()"""
 STAGE_FADED = r"""((sel) => { const s = document.querySelector(sel); if (!s) return null;
@@ -4921,10 +4925,17 @@ async def stack_scene(b):
     At 1440 x 900 with motion, once arch.js has measured (--st-s): the stage is stuck at the top for the whole travel and
     --scene-p runs 0 -> 1 with it; at .45 the eight plate layers stand on the eight explorer rows (centres within 1.5 px),
     04 -> 05 at least 120 px apart (the boundary between), the plate inside the screen and the H1 column gone above the
-    bar; at .2 the H1 is on screen and §01 clipped whole; the bar is paper at .5 and ink at .65 (the tone sentinel at .61);
-    at .9 rows 01-04 have arrived and 08 not yet; at 1 every row, the boundary and the head have arrived and the explorer
-    has no card frame (no border, no radius). No HTML text fades (opacity under 1) at .2, .5 or .9, and at .3 and .9 the
-    screen shows at most four type sizes. "Take the stack apart", the address #architecture and Tab into the explorer's
+    bar; at .2 the H1 is on screen and §01 clipped whole; the bar is paper at .5 and ink at .7 (the tone sentinel at .667,
+    where the ink reaches the bar's foot). hc27 (integrate, standing in for tests; platform's request, the director's HC27
+    4.1): the ink's edge holds level with the boundary plane and the explorer is written behind it, bottom up. At the
+    hold (--scene-p .45 + .2 x --st-bw + .02, --st-bw read from the scene) #architecture's clip edge is within 1 px of
+    the boundary row's rule (.ab-rule's centre), rows 05-08 have arrived and rows 01-04 not yet, and the edge's hairline
+    (#architecture::before) shows (opacity 1); at .75 every row, the boundary and the head have arrived and the H2 stands
+    at rest (translate 0); at 1 the hairline is gone (opacity 0), every row, the boundary and the head have arrived and
+    the explorer has no card frame (no border, no radius). (hc26r's "at .9 rows 01-04 arrived, 08 not yet" asserted the
+    old top-down order, and its "the bar is ink at .65" the old sentinel .61.) No HTML text fades (opacity under 1) at
+    .2, .5, the hold or .9, and at .3, the hold and .9 the screen shows at most four type sizes. "Take the stack apart",
+    the address #architecture and Tab into the explorer's
     Pause land on the travel's end (--scene-p 1); Shift+Tab from there back into the hero returns to its start (0). Under
     reduced motion and at 999 px wide nothing pins: the hero and §01 are two blocks in order, --scene-p 1."""
     bad, notes = [], []
@@ -4933,10 +4944,13 @@ async def stack_scene(b):
     s0 = await pg.evaluate(STACK_PIN)
     if not s0: await ctx.close(); assert False, "stack_scene: no .stack-scene on platform.html"
     a, z = s0["a"], s0["z"]
+    bw = s0.get("bw")
+    if not isinstance(bw, (int, float)) or bw != bw or not (0.2 <= bw <= 0.8): bad.append(f"platform.html@1440: --st-bw {bw!r} (the boundary plane's height in the section, .2-.8)"); bw = 0.46
+    hold = round(0.45 + 0.2 * bw + 0.02, 4)
     seen = []
-    for f in (0, .2, .3, .45, .5, .65, .9, 1):
+    for f in (0, .2, .3, .45, .5, hold, .7, .75, .9, 1):
         await pg.evaluate(f"window.scrollTo({{top: {round(a + f * (z - a))}, behavior: 'instant'}})"); await pg.wait_for_timeout(450)
-        r = await pg.evaluate(STACK_PIN); tag = f"platform.html@1440 at {f} of the travel"
+        r = await pg.evaluate(STACK_PIN); tag = f"platform.html@1440 at {f} of the travel{' (the hold)' if f == hold else ''}"
         seen.append(round(r["p"], 2))
         if r["pos"] != "sticky" or abs(r["stTop"]) > 1: bad.append(f"{tag}: the stage is {r['pos']} at {r['stTop']:.0f} px (stuck at the top)")
         if abs(r["p"] - f) > 0.02: bad.append(f"{tag}: --scene-p {r['p']:.3f}")
@@ -4951,20 +4965,27 @@ async def stack_scene(b):
         if f == .2:
             if not (r["h1"][1] > r["navB"] and r["h1"][0] < r["H"]): bad.append(f"{tag}: the H1 {[round(x) for x in r['h1']]} is off the screen")
             if (pct(r["archTop"]) or 0) < 99.5: bad.append(f"{tag}: §01 is not clipped whole (clip-path top {r['archTop']})")
-        if f == .5 and r["dark"]: bad.append(f"{tag}: the bar is ink before the tone sentinel")
-        if f == .65 and not r["dark"]: bad.append(f"{tag}: the bar is still paper after the tone sentinel")
-        if f == .9:
-            if any(num(x) is None or num(x) > 0.5 for x in r["rowR"][:4]): bad.append(f"{tag}: rows 01-04 not all arrived ({r['rowR'][:4]})")
-            if len(r["rowR"]) < 8 or (num(r["rowR"][7]) or 0) <= 0.5: bad.append(f"{tag}: row 08 already arrived ({r['rowR'][7:8]})")
+        if f == .5 and r["dark"]: bad.append(f"{tag}: the bar is ink before the tone sentinel ({r['tone']})")
+        if f == .7 and not r["dark"]: bad.append(f"{tag}: the bar is still paper after the tone sentinel ({r['tone']})")
+        if f == hold:
+            if r["edge"] is None or r["rule"] is None or abs(r["edge"] - r["rule"]) > 1: bad.append(f"{tag}: the ink's edge at {r['edge']}, the boundary's rule at {r['rule']} (level within 1 px)")
+            if len(r["rowR"]) < 8 or any(num(x) is None or num(x) > 0.5 for x in r["rowR"][4:8]): bad.append(f"{tag}: rows 05-08 not all arrived ({r['rowR'][4:8]})")
+            if any((num(x) if num(x) is not None else 100) <= 0.5 for x in r["rowR"][:4]): bad.append(f"{tag}: rows 01-04 arrived before the edge reached them ({r['rowR'][:4]})")
+            if r["hair"] < 0.99: bad.append(f"{tag}: the edge's hairline at opacity {r['hair']:.2f} (1)")
+            if r["edge"] is not None and r["rule"] is not None: notes.append(f"hold {hold}: edge {r['edge'] - r['rule']:+.2f} px from the rule")
+        if f == .75:
+            if any(num(x) is None or num(x) > 0.5 for x in r["rowR"] + [r["boundR"], r["headL"]]): bad.append(f"{tag}: not every row, the boundary and the head arrived ({r['rowR']}, {r['boundR']}, {r['headL']})")
+            if r["h2t"] not in ("none", None) and any(abs(float(v.rstrip("px%") or 0)) > 0.5 for v in r["h2t"].split()): bad.append(f"{tag}: the H2 still rising (translate {r['h2t']})")
         if f == 1:
+            if r["hair"] > 0.01: bad.append(f"{tag}: the edge's hairline still shows (opacity {r['hair']:.2f})")
             if any(num(x) is None or num(x) > 0.5 for x in r["rowR"] + [r["boundR"], r["headL"]]): bad.append(f"{tag}: not every row, the boundary and the head arrived ({r['rowR']}, {r['boundR']}, {r['headL']})")
             bw, bc, br = r["frame"]
             if bw == "?": bad.append(f"{tag}: no explorer (#architecture .arch)")
             elif not (float(bw.rstrip("px") or 0) == 0 or bc.replace(" ", "") in ("transparent", "rgba(0,0,0,0)")) or float(br.rstrip("px") or 0) > 0: bad.append(f"{tag}: the explorer is framed (border {bw} {bc}, radius {br})")
-        if f in (.2, .5, .9):
+        if f in (.2, .5, hold, .9):
             fd = await pg.evaluate(STAGE_FADED, ".stack-scene > .scene-stage")
             if fd: bad.append(f"{tag}: text faded on scroll ({fd[:3]}): text arrives by translate or clip")
-        if f in (.3, .9):
+        if f in (.3, hold, .9):
             sz = await pg.evaluate(TYPE_SIZES)
             if len(sz) > 4: bad.append(f"{tag}: {len(sz)} type sizes on the screen ({ {k: v[:2] for k, v in sz.items()} })")
             notes.append(f"{f}: sizes {sorted(float(k) for k in sz)}")
@@ -5158,7 +5179,10 @@ async def lab_copy(b):
     as much at 1 (the field drawn; on a phone the camera's ring fills that half early, so no census there); the
     lab's "Illustrative" is visible at every p; scrolling through the act, no frame over 33 ms (x the throttle). With
     reduced motion, and after Pause motion or Emergency halt, data-sw-copy reads "1.00" at once. Home's lab never carries
-    data-sw-copy."""
+    data-sw-copy. hc27 (integrate, standing in for home and tests; the director's HC27 2: Platform's lab rests in its own
+    pose): at 1440 x 900 with the act done (p 1) Platform's lab names no gate and no boundary (the gate list and the
+    "Boundary" tag at opacity 0) until "Follow a proposal" is pressed (both back at 1); Home's lab names them at rest.
+    The resting drawing itself (the master's track, its origin, the fan) is judged on renders, not here."""
     bad, notes = [], []
     lim = 33.4 * max(1.0, MODE["throttle"])
     for w, h, touch in ((1440, 900, False), (390, 844, True)):
@@ -5211,12 +5235,31 @@ async def lab_copy(b):
     await pg.evaluate("document.querySelector('[data-sw-stage]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(1500)
     v = await pg.evaluate("document.querySelector('[data-swarm-live]').dataset.swCopy")
     if v is not None: bad.append(f"index.html@1440: Home's lab carries data-sw-copy {v!r} (Platform's act alone)")
+    tags = "(() => { const r = document.querySelector('[data-swarm-live]'), o = s => { const e = r && r.querySelector(s); return e ? +getComputedStyle(e).opacity : null; }; return [o('[data-sw-gates]'), o('[data-sw-bound]')]; })()"
+    t_home = await pg.evaluate(tags)
+    if t_home != [1, 1]: bad.append(f"index.html@1440: Home's lab hides its gate list or Boundary tag at rest (opacity {t_home})")
+    await ctx.close()
+    ctx, pg = await open_page(b, "platform.html", 1440, 900)
+    g = await pg.evaluate(LAB_COPY); ctr = g["top"] + g["h"] / 2
+    for f in (1.6, 1.2, 1.0):
+        await pg.evaluate(f"window.scrollTo({{top: {round(ctr - f * 900)}, behavior: 'instant'}})"); await pg.wait_for_timeout(500)
+    await until(pg, "!!document.querySelector('[data-swarm-live].sw-on')", 10000)
+    for _ in range(2):
+        await pg.evaluate(f"window.scrollTo({{top: {round(ctr - 0.4 * 900)}, behavior: 'instant'}})"); await pg.wait_for_timeout(700)
+        q = await pg.evaluate(LAB_COPY); ctr = q["top"] + q["h"] / 2
+    await pg.wait_for_timeout(800)
+    rest = await pg.evaluate(tags); cp = await pg.evaluate("document.querySelector('[data-swarm-live]').dataset.swCopy")
+    if cp != "1.00" or rest != [0, 0]: bad.append(f"platform.html@1440 at rest (data-sw-copy {cp!r}): the gate list / Boundary tag at opacity {rest} (0 until a proposal is followed)")
+    await pg.evaluate("document.querySelector('[data-sw-follow]').click()"); await pg.wait_for_timeout(900)
+    fol = await pg.evaluate(tags)
+    if fol != [1, 1]: bad.append(f"platform.html@1440 following a proposal: the gate list / Boundary tag at opacity {fol} (1)")
+    notes.append(f"Platform at rest names {rest}, following {fol}; Home {t_home}")
     await ctx.close()
     assert not bad, "lab_copy:\n  " + "\n  ".join(bad[:24])
     print(f"lab_copy: Platform §02's act follows the lab across the screen, 0 -> 1, the field drawn by its end; at once 1 under reduced motion, Pause and halt; never on Home ({'; '.join(notes)})")
 
 
-HANDOFF = r"""(() => { const H = innerHeight, nav = document.querySelector('.nav'), navB = nav ? nav.getBoundingClientRect().bottom : 0;
+HANDOFF_INK = r"""(() => { const H = innerHeight, nav = document.querySelector('.nav'), navB = nav ? nav.getBoundingClientRect().bottom : 0;
   const paper = document.querySelector('.story-paper'), pr = paper.getBoundingClientRect(), paperTop = pr.height > .5 && getComputedStyle(paper).visibility !== 'hidden' ? pr.top : H;
   const anc = el => { for (let e = el; e; e = e.parentElement) { const cs = getComputedStyle(e); if (+cs.opacity < .05 || cs.visibility === 'hidden') return false; } return true; };
   let low = navB;
@@ -5231,13 +5274,14 @@ HANDOFF = r"""(() => { const H = innerHeight, nav = document.querySelector('.nav
 async def overture_handoff(b):
     """hc26r (integrate, standing in for tests; home's request, RETHINK-hc26 HOME-3): the overture hands over to the paper
     with no empty ink. At 390 x 844 (touch) and 768 x 1024, walking down in tenth-of-a-screen steps from the exit's start
-    (STORY_Y(4)) to one screen past the release, each step settled: once the paper has taken the record row
-    (.story.is-paper-up), the band between the bar's foot and the paper's edge never holds more than 48 px of ink without
-    content (beat text, the day labels, the ink records); and S4 leaves by being clipped at the bar, never faded: while
-    any of it shows above the paper its opacity is 1. The paper's rise before it has taken the row (story.js EXIT.tall
-    paper .58-.86, after the ink row has gone at .42) is measured and reported, not judged: 330 px of empty ink at rest at
-    2.2 screens on a 390 phone at hc26r, an open issue filed to home (CHANGE_REQUESTS.md, integrate hc26r); judge the
-    whole walk once home closes it."""
+    (STORY_Y(4)) to one screen past the release, each step settled: wherever the paper shows, the band between the bar's
+    foot and the paper's edge never holds more than 48 px of ink without content (beat text, the day labels, the ink
+    records), through the paper's rise as well as once it has taken the record row (.story.is-paper-up); and S4 leaves by
+    being clipped at the bar, never faded: while any of it shows above the paper its opacity is 1. hc27 (integrate,
+    standing in for tests; home's request): the rise is judged too, now that home closed it (story.js EXIT.tall: the paper
+    rises under "The full proof file" as the exit starts and follows the lifting copy; hc26r's walk judged only the
+    paper-up steps and reported the rise, 330 px of empty ink at 2.2 screens on a 390 phone then). The probe is
+    HANDOFF_INK (it shadowed nav_handoff's HANDOFF until hc27)."""
     bad, notes = [], []
     for w, h, touch in ((390, 844, True), (768, 1024, False)):
         tag = f"index.html@{w}x{h}"
@@ -5251,14 +5295,14 @@ async def overture_handoff(b):
             while cur < y:
                 cur = min(y, cur + h // 4); await pg.evaluate(f"window.scrollTo(0, {cur})"); await pg.wait_for_timeout(100)
             await pg.wait_for_timeout(900)
-            r = await pg.evaluate(HANDOFF); n += 1
-            if r["gap"] is not None and not r["up"]: rise = max(rise, r["gap"])
-            elif r["gap"] is not None:
-                worst = max(worst, r["gap"])
-                if r["gap"] > 48: bad.append(f"{tag} at {r['y']:.0f} ({(r['y'] - y0) / h:.1f} screens into the exit): {r['gap']:.1f} px of ink without content over the paper")
+            r = await pg.evaluate(HANDOFF_INK); n += 1
+            if r["gap"] is not None:
+                if r["up"]: worst = max(worst, r["gap"])
+                else: rise = max(rise, r["gap"])
+                if r["gap"] > 48: bad.append(f"{tag} at {r['y']:.0f} ({(r['y'] - y0) / h:.1f} screens into the exit{'' if r['up'] else ', the paper rising'}): {r['gap']:.1f} px of ink without content over the paper")
             if r["b4"] and r["b4"]["shown"] and r["b4"]["op"] < 0.99: bad.append(f"{tag} at {r['y']:.0f}: S4 shows at opacity {r['b4']['op']:.2f} (clipped, never faded)")
             y = round(y + h * 0.1)
-        notes.append(f"{w}: {n} steps, ink without content <= {worst:.1f} px with the paper up (while it rises: {rise:.1f} px, reported)")
+        notes.append(f"{w}: {n} steps, ink without content <= {worst:.1f} px with the paper up, <= {rise:.1f} px while it rises")
         await ctx.close()
     assert not bad, "overture_handoff:\n  " + "\n  ".join(bad[:24])
     print(f"overture_handoff: the paper takes over with no empty ink band and S4 clipped, never faded ({'; '.join(notes)})")
@@ -5302,8 +5346,9 @@ async def footer_phone(b):
 
 
 CH_LINKS = r"""(() => { const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-  return [...document.querySelectorAll('#governance .ch-head, #research .ch-head')].map(h => { const t = h.querySelector('.ch-title'), a = h.querySelector('.ch-link'); if (!t || !a) return null;
-    const tr = t.getBoundingClientRect(), ar = a.getBoundingClientRect(); return { id: h.closest('section').id, gap: ar.top - tr.bottom, dx: ar.left - tr.left, rem }; }); })()"""
+  return [...document.querySelectorAll('#lc01 .ch-head, #governance .ch-head, #research .ch-head')].map(h => { const t = h.querySelector('.ch-title'), a = h.querySelector('.ch-link'); if (!t || !a) return null;
+    const u = a.previousElementSibling && a.previousElementSibling.matches('.ch-title, .ch-line') ? a.previousElementSibling : t;
+    const tr = t.getBoundingClientRect(), ur = u.getBoundingClientRect(), ar = a.getBoundingClientRect(); return { id: h.closest('section').id, under: u.classList.contains('ch-line') ? 'line' : 'head', gap: ar.top - ur.bottom, dx: ar.left - tr.left, rem }; }); })()"""
 DPL_ART = r"""(() => { const cols = [...document.querySelectorAll('#mcp .dpl-col')]; return cols.map(c => { const s = c.querySelector('.dpl-plate svg'), g = s && s.querySelector(':scope > g'), h = c.querySelector('h3');
   if (!g) return null; const sb = s.getBoundingClientRect(), k = sb.height / 112, gb = g.getBBox(), m = g.transform.baseVal.consolidate(), ty = m ? m.matrix.f : 0;
   return { base: (gb.y + gb.height + ty), h3: h ? h.getBoundingClientRect().top : null, k }; }); })()"""
@@ -5312,9 +5357,11 @@ DPL_ART = r"""(() => { const cols = [...document.querySelectorAll('#mcp .dpl-col
 @check
 async def section_links(b):
     """hc25 (integrate, standing in for tests; the director's HC25 6 and 7, done by home and platform): a chapter's action
-    sits under its head and a row of drawings stands on one line. Home §04 and §05 at 3840 x 2160, 1440 x 900, 1024 x 768,
-    768 x 1024 and with touch at 390 x 844 and 320 x 640: the link ("The governance model", "All ten notes") starts at its
-    head's left edge (1 px) and 1.5rem under it (2 px), never on the head's baseline. Platform §04 at 3840 x 2160, 1440 x 900
+    sits under its head and a row of drawings stands on one line. Home §02, §04 and §05 at 3840 x 2160, 1440 x 900, 1024 x
+    768, 768 x 1024 and with touch at 390 x 844 and 320 x 640: the link ("Lifecycle 01 in depth", "The governance model",
+    "All ten notes") starts at its head's left edge (1 px) and 1.5rem (2 px) under what it follows (the title, or §02's
+    line "Tighten the Council and it rejects more.": hc27, home's request, the director's HC27 7 moved §02's link from
+    under the lab to under its lede), never on the head's baseline. Platform §04 at 3840 x 2160, 1440 x 900
     and 1024 x 768 (three columns): the three drawings' art ends on one baseline (0.5 of the drawing's 112 units) and the
     three titles start on one line (1 px). Before hc25 §05's link sat on its head's baseline at the row's right (x 953 at
     1440) and §04's three drawings ended at three different heights."""
@@ -5325,11 +5372,12 @@ async def section_links(b):
         await pg.evaluate("document.querySelector('#research').scrollIntoView({block: 'start', behavior: 'instant'})"); await pg.wait_for_timeout(500)
         r = await pg.evaluate(CH_LINKS)
         await ctx.close()
-        if not r or len(r) != 2 or not all(r): bad.append(f"{tag}: §04 / §05 without a head and its link ({r})"); continue
+        if not r or len(r) != 3 or not all(r): bad.append(f"{tag}: §02 / §04 / §05 without a head and its link ({r})"); continue
+        if r[0]["under"] != "line": bad.append(f"{tag} #lc01: the link follows the {r[0]['under']}, not the line under the title")
         for x in r:
             if abs(x["dx"]) > 1: bad.append(f"{tag} #{x['id']}: the link starts {x['dx']:.1f} px from its head's left edge")
-            if abs(x["gap"] - 1.5 * x["rem"]) > 2: bad.append(f"{tag} #{x['id']}: the link is {x['gap']:.1f} px under its head (1.5rem = {1.5 * x['rem']:.0f})")
-        if w == 1440: notes.append("Home 1440: " + ", ".join("#%s %.0f px under" % (x["id"], x["gap"]) for x in r))
+            if abs(x["gap"] - 1.5 * x["rem"]) > 2: bad.append(f"{tag} #{x['id']}: the link is {x['gap']:.1f} px under its {x['under']} (1.5rem = {1.5 * x['rem']:.0f})")
+        if w == 1440: notes.append("Home 1440: " + ", ".join("#%s %.0f px under its %s" % (x["id"], x["gap"], x["under"]) for x in r))
     for w, h in ((3840, 2160), (1440, 900), (1024, 768)):
         tag = f"platform.html@{w}x{h}"
         ctx, pg = await open_page(b, "platform.html", w, h, reduced=True)
@@ -5343,7 +5391,7 @@ async def section_links(b):
         if None in tops or max(tops) - min(tops) > 1: bad.append(f"{tag}: the three titles start at {tops}")
         if w == 1440: notes.append(f"Platform §04 baseline {[round(v, 1) for v in bases]}")
     assert not bad, "section_links:\n  " + "\n  ".join(bad[:24])
-    print(f"section_links: Home's chapter links under their heads; Platform §04's drawings on one baseline ({'; '.join(notes)})")
+    print(f"section_links: Home's chapter links under their heads (§02's under its line); Platform §04's drawings on one baseline ({'; '.join(notes)})")
 
 
 # ---------------------------------------------------------------- runner

@@ -484,9 +484,11 @@
     return true;
   }
   if (pins.length) {
+    let ptrAt = -1e9;
+    ['pointerdown', 'pointerup'].forEach(n => document.addEventListener(n, () => { ptrAt = performance.now(); }, { capture: true, passive: true }));
     document.addEventListener('focusin', e => {
       const t = e.target, s = t && t.closest && t.closest('[data-scene-end]') && pinOf(t);
-      if (!s || performance.now() - sceneJumpAt < 1500) return;
+      if (!s || performance.now() - sceneJumpAt < 1500 || performance.now() - ptrAt < 600) return;
       requestAnimationFrame(() => {
         if (!t.closest('[data-scene-end]').contains(document.activeElement)) return;
         const z = sceneSpan(s)[1];

@@ -829,7 +829,7 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".
 
     <section class="cta-band is-dark grain">
       <div class="container">
-        <h2 class="display-2" data-reveal data-split>The thinking behind the swarm.</h2>
+        <h2 class="display-2" data-reveal data-split>Ten notes behind&nbsp;the&nbsp;swarm.</h2>
         <div class="row" data-reveal style="--d:120ms">
           <a class="btn" href="{PFX}research.html">Read the research {ARROW}</a>
         </div>
@@ -842,6 +842,8 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".
 </body>
 </html>
 '''
+# hc27 (director item 5): the close no longer repeats Research's H1; it names what the link holds, so it must stay true
+assert len(list((ROOT / "research").glob("[0-9][0-9]-*.html"))) == 10, "the index's close says Ten notes"
 # hc26r (SYS-2): every card's drawing travels (.vt-src inside its link), and every markets row names its own drawing
 assert page.count(' vt-src"') == page.count('class="blog-thumb blog-plate"') > 0 and all(f'id="{PANEL_ID(i)}"' in page for i in range(page.count(' data-vt-src="'))), "the index's travelling drawings"
 if OUT.exists(): shutil.rmtree(OUT)

@@ -936,10 +936,13 @@
         cx = (xa + x1) / 2;
         if (!stacked) { const tw = Math.max(15, ...(lab.days || []).map(l => l.w || 0)); cx = Math.max(cx, x1 - COL_X(NCOL - 1) * s * pxu - tw / 2); }
         let fy = stacked ? y1 - band4() : Math.min(y1 - band4(), Math.max((y0 + y1) / 2 + 0.6 * s * pxu, resv ? y0 + (Y_FL - Y_FLOOR) * s * pxu + tagsUp() : 0));
-        if (stacked) rest4 = fy;
+        const up = ((Y_CTOP - Y_FLOOR) * colK + 0.12) * s * pxu + 12 * remK, dn = band4(), tagUp = (Y_FL - Y_FLOOR) * colK * s * pxu + tagsUp();
         if (!stacked && colK > 1) {
-          const up = ((Y_CTOP - Y_FLOOR) * colK + 0.12) * s * pxu + 12 * remK, dn = band4(), hc = br.hb > br.ht ? (br.ht + br.hb) / 2 : (y0 + y1) / 2;
-          fy = clamp(hc + (up - dn) / 2, y0 + Math.max(up, resv ? (Y_FL - Y_FLOOR) * colK * s * pxu + tagsUp() : 0), y1 - dn);
+          const top = Math.max(up, resv ? tagUp : 0);
+          fy = clamp(y0 + (y1 - y0) * 0.44 + (top - dn) / 2, y0 + top, y1 - dn);
+        } else if (stacked && W < 600 && !frameTiny[4]) {
+          const top = Math.max(up, tagUp, cx - COL_SPAN / 2 * s * pxu - hedgeW - 8 < 6 + safeL ? ((Y_CTOP - Y_FLOOR) * colK + 0.1) * s * pxu + 7 * remK + 12 + hedgeH : 0);
+          fy = Math.min(y1 - dn, Math.max(yTop + top, (yTop + y1 + top - dn) / 2));
         }
         cy = fy - 0.6 * s * pxu;
         floorL = -COL_SPAN / 2 - 0.04 - (floorW + 10) / (s * pxu);
@@ -1015,7 +1018,7 @@
   const SWIRL = [0.85, 0.7, 0.25, 0.0], LIFT = [0.18, 0.22, 0.3, 0.32], SHADE = [1, 0.3, 0.25, 0.15, 0.2];
   const LIFT_DIR = [[0, 1, 0], [0, 1, 0], [0, 0, 1], [0, 1, 0.35]];
 
-  let exitMove = 0, floorRest = 0, rest4 = 0;
+  let exitMove = 0, floorRest = 0;
   function camera() {
     if (b4) { const k = seg === 3 ? (stacked ? sstep(0.3, 0.6, xeNow) : sstep(WX.spread[0], WX.spread[1], xeNow)) : 0; layouts[4].s = b4.s * lerp(1, b4.z, k); layouts[4].cx = lerp(b4.cx, W / 2, k); }
     const a = layouts[seg], b = layouts[seg + 1];
@@ -1058,7 +1061,7 @@
   };
   const capRoom = () => (U_DAY + 16) * remK + Math.max(14, ...(lab.days || []).map(l => l.h || 0)) + paperCapH + 12;
   const XHOLD = 0.6, xPostOf = (x) => stacked && W < 600 ? x : clamp((x - XHOLD) / (1 - XHOLD), 0, 1), xPost = () => xPostOf(xNow);
-  const EXIT = { wide: { copy: [0.1, 0.22], paper: [0.26, 0.85] }, tall: { cam: [0.3, 0.56], paper: [0.58, 0.86] } };
+  const EXIT = { wide: { copy: [0.1, 0.22], paper: [0.12, 0.5] }, tall: { cam: [0.3, 0.56], paper: [0.1, 0.3], row: [0.26, 0.42], ink: [0.42, 0.52] } };
   const WX = { cam: [0, 0.5], fold: [0.05, 0.32], spread: [0.2, 0.48] };
   const foldE = () => stacked ? sstep(0.02, 0.3, xeNow) : sstep(WX.fold[0], WX.fold[1], xeNow), flY = () => lerp(yK(Y_FL), Y_FLOOR + 0.02, foldE());
   const sealOf = (c) => clamp((xeNow - 0.03 - 0.12 * c / Math.max(1, NCOL - 1)) / 0.1, 0, 1);
@@ -1644,7 +1647,7 @@
   let paperH = 0, relay0 = false, relayReady = false, shownBarOff = null;
   let fadeT = 0, copyX = 0, fading = false, kF = 1;
   let leave4 = 1, barA = 1;
-  let ledeA = 1, shownBl = '', capRef = 0, inkDayY = -1, shownGA = '', shownClip = '';
+  let ledeA = 1, shownBl = '', capRef = 0, inkDayY = -1, shownGA = '', shownClip = '', shownInkA = '';
   function syncIndex() {
     const ci = clamp(Math.round(sTarget), 0, 4);
     if (shownIdx === ci) return;
@@ -1673,7 +1676,7 @@
     const paperTop = lean ? tallFoot(br4) + tMove + PAPER_GAP() : Math.round((project(0, Y_FLOOR * layouts[4].s, 0).y - SEAM()) * dpr) / dpr;
     const row = lean ? paperRow(paperTop) : null;
     inkDayY = row ? row.day : -1;
-    const gA = lean && seg === 3 && xe > 0 ? (1 - sstep(0.26, 0.42, xe)).toFixed(3) : '';
+    const gA = lean && seg === 3 && xe > 0 ? (1 - sstep(X.row[0], X.row[1], xe)).toFixed(3) : '';
     if (gA !== shownGA) { shownGA = gA; cv.style.opacity = gA === '1.000' ? '' : gA; if (labelHost) labelHost.style.opacity = gA === '1.000' ? '' : gA; }
     paperH = 0;
     if (xe > 0 && seg === 3) {
@@ -1682,7 +1685,9 @@
       if (tail && s1 < H) paperH = Math.max(paperH, Math.min(Math.max(0, H - paperTop), H - s1));
     }
     if (paper) { const v = paperH.toFixed(1); if (v !== shownPaper) { shownPaper = v; paper.style.height = v + 'px'; paper.style.visibility = paperH > 0.5 ? 'visible' : 'hidden'; } }
-    const up = paperH > 0.5 && xe >= X.paper[1];
+    const up = paperH > 0.5 && xe >= (lean ? X.row[1] : X.paper[1]);
+    const inkA = lean && paperH > 0.5 ? sstep(X.ink[0], X.ink[1], xe).toFixed(3) : '';
+    if (paperIn && inkA !== shownInkA) paperIn.style.opacity = shownInkA = inkA;
     if (shownUp !== up) story.classList.toggle('is-paper-up', shownUp = up);
     if (!relay0 && (relayReady || sNow > 0.3)) { relay0 = true; beats[0].classList.add('is-relay'); }
     beats.forEach((b, i) => {
@@ -1829,7 +1834,7 @@
     clearTall();
     labels.forEach(l => { l.tr = l.ov = l.d = l.nc = l.inkTr = ''; l.on = null; });
   }
-  function clearTall() { shownGA = shownClip = ''; cv.style.opacity = ''; if (labelHost) labelHost.style.opacity = ''; if (beats[4]) beats[4].style.clipPath = ''; }
+  function clearTall() { shownGA = shownClip = shownInkA = ''; cv.style.opacity = ''; if (labelHost) labelHost.style.opacity = ''; if (paperIn) paperIn.style.opacity = ''; if (beats[4]) beats[4].style.clipPath = ''; }
   function setTiny(on) {
     tiny = on;
     if (on) {
