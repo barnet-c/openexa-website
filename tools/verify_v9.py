@@ -48,7 +48,7 @@ BASE = "http://127.0.0.1:8125"  # the URL argument replaces it
 SWIFTSHADER_ARGS = ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--disable-accelerated-2d-canvas"]
 GPU_ARGS = ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"]  # the real GPU (Windows; local comparison only)
 MODE = {"gl": "swiftshader", "throttle": 1.0, "cores": None, "check_timeout": 600.0}
-LIMITS = {"overture_phones": 1200, "overture_rest": 1200}  # checks that run long on CI by design (s); the rest use the default
+LIMITS = {"overture_phones": 1200, "overture_rest": 1200, "page_type_sizes": 1200}  # checks that run long on CI by design (s); the rest use the default
 OUT = Path(str(SHOTS / 'v9'))
 OUT.mkdir(exist_ok=True)
 PAGES = ["index", "platform", "lifecycles", "evidence", "trust", "company", "research",
@@ -4210,6 +4210,93 @@ async def first_screen_sizes(b):
         await ctx.close()
     assert not bad, "first_screen_sizes:\n  " + "\n  ".join(bad)
     print(f"first_screen_sizes: Home's first screen shows at most four type sizes ({'; '.join(notes)} px)")
+
+
+# ---- hc28 (integrate, standing in for tests; platform's request, the director's HC28 4.1 "extend first_screen_sizes to every
+# main page"): the council's own probe (hc/hc28-director/type_sizes2.js): text in <main> under the bar that a reader sees
+# (not hidden, faded out, clipped away by an inset clip-path, visually hidden or in an SVG), its size times any scaled ancestor
+SCREEN_SIZES = r"""(() => { const out = {}, vw = innerWidth, vh = innerHeight, nav = document.querySelector('.nav'), bar = nav ? nav.getBoundingClientRect().bottom : 0;
+  const vis = el => { for (let e = el; e && e !== document.body; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) return false;
+      const cp = cs.clipPath; if (cp && cp.startsWith('inset(')) { const r = e.getBoundingClientRect(), v = cp.slice(6, -1).split(/\s+/), t = parseFloat(v[0]), ri = parseFloat(v[1] === undefined ? v[0] : v[1]);
+        if (/%/.test(v[0]) ? t >= 99.5 : t >= r.height - 1) return false; if (/%/.test(v[1] || '') && ri >= 99.5) return false; } } return true; };
+  const srOnly = el => { for (let e = el; e && e !== document.body; e = e.parentElement) { const c = getComputedStyle(e); if ((c.clip && c.clip !== 'auto') || (c.position === 'absolute' && parseFloat(c.width) <= 1.5 && c.overflow === 'hidden')) return true; } return false; };
+  const w = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT); let n;
+  while ((n = w.nextNode())) { if (!n.textContent.trim()) continue; const el = n.parentElement, r = el.getBoundingClientRect();
+    if (el.closest('svg, .sr-only, .visually-hidden, noscript') || r.bottom < bar || r.top > vh || r.right < 0 || r.left > vw || r.width < 1 || !vis(el) || srOnly(el)) continue;
+    let k = parseFloat(getComputedStyle(el).fontSize); for (let e = el; e; e = e.parentElement) { const sc = getComputedStyle(e).scale; if (sc && sc !== 'none') k *= parseFloat(sc); }
+    k = (Math.round(k * 2) / 2).toFixed(1); (out[k] = out[k] || []).push(n.textContent.trim().slice(0, 18)); }
+  return out; })()"""
+MAIN_PAGES = ("index.html", "platform.html", "lifecycles.html", "evidence.html", "trust.html", "research.html", "company.html",
+              "access.html", "blog/index.html")
+LC_STAGE = r"""(() => { const h = document.querySelector('.page-hero'), s1 = document.querySelector('#test .ch-head'),
+    labs = [...document.querySelectorAll('.hero-plate--rings .hp-labs .hp-lab')], fs = el => +parseFloat(getComputedStyle(el).fontSize).toFixed(2);
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  return { vh: innerHeight, rem, heroTop: h.getBoundingClientRect().top + scrollY, heroB: h.getBoundingClientRect().bottom + scrollY, s1: s1 ? s1.getBoundingClientRect().top + scrollY : null,
+    labs: labs.map(l => [l.textContent.trim().slice(0, 12), fs(l), ...[...l.querySelectorAll('*')].map(fs)]) }; })()"""
+EDGE_LINE = r"""(() => { const a = document.querySelector('.stack-scene #architecture'); if (!a) return null;
+  const c = a.querySelector('.container'), cs = getComputedStyle(c), cr = c.getBoundingClientRect(), ar = a.getBoundingClientRect(), b = getComputedStyle(a, '::before');
+  const t = document.createElement('i'); t.style.cssText = 'position:absolute;width:var(--hair);height:0'; a.appendChild(t); const hair = t.getBoundingClientRect().width; t.remove();
+  return { content: b.content, l: parseFloat(b.left), r: parseFloat(b.right), h: parseFloat(b.height),
+    cl: cr.left + parseFloat(cs.paddingLeft) - ar.left, cr: ar.right - (cr.right - parseFloat(cs.paddingRight)), hair }; })()"""
+
+
+@check
+async def page_type_sizes(b):
+    """hc28 (integrate, standing in for tests; platform's request under the director's HC28 4.1; EVOLVE.md "at most 4 type
+    sizes on any screen"): every main page, not Home alone. (1) The first screen of Home, Platform, Lifecycles, Proof, Trust,
+    Research, Company, Access and the Blog index, at rest (the loader gone, the scripts run, 3 s; Home 4.5 s), shows text in
+    <main> in at most four sizes at 1440 x 900 and, with touch, at 390 x 844 (the council's probe: SCREEN_SIZES). (2) Every
+    half screen of Platform (its pinned scene included) and Lifecycles, top to foot, at 1440 x 900 and 390 x 844: at most four.
+    (3) Facts the platform group pinned: the Lifecycles hero is a whole stage again (its foot 2.5rem above the first screen's
+    foot, +-2 px, at 1440 x 900 and 390 x 844; at 390 x 844 §01's head starts below the fold), and its ring carries one label
+    register (every gate numeral and label at one size: "01"-"06" at the label step, not 11 px mono under 14 px labels);
+    Platform's ink edge line (`#architecture::before`, pinned at 1440 x 900) runs the content's width (the container's
+    content box, +-1 px each side) at two hairlines. At hc28's review Lifecycles' first screen showed six sizes at 1440 and
+    390 and three half screens five; the bar's own readout (the chapter numerals) is chrome, outside <main>, as in the
+    council's probe."""
+    bad, notes = [], []
+    srt = lambda s: sorted(s, key=lambda k: -float(k))
+    for w, h, touch in ((1440, 900, False), (390, 844, True)):
+        firsts = []
+        for path in MAIN_PAGES:
+            ctx, pg = await open_page(b, path, w, h, touch=touch)
+            if not touch: await pg.mouse.move(2, 2)
+            await pg.wait_for_timeout(4500 if path == "index.html" else 3000)
+            sz = await pg.evaluate(SCREEN_SIZES)
+            if len(sz) > 4: bad.append(f"{path}@{w}x{h}: {len(sz)} type sizes on the first screen: " + "; ".join(f"{k} px {sz[k][:3]}" for k in srt(sz)))
+            firsts.append(f"{path.split('.')[0].split('/')[0]} {len(sz)}")
+            if path == "lifecycles.html":
+                st = await pg.evaluate(LC_STAGE)
+                want = st["vh"] - 2.5 * st["rem"]
+                if abs(st["heroB"] - want) > 2: bad.append(f"{path}@{w}x{h}: the hero ends at {st['heroB']:.1f}, not on its stage ({want:.1f}: the first screen less 2.5rem)")
+                if touch and (st["s1"] is None or st["s1"] < st["vh"]): bad.append(f"{path}@{w}x{h}: §01's head starts at {st['s1']} (inside the first screen of {st['vh']})")
+                sizes = {x for lab in st["labs"] for x in lab[1:]}
+                if not st["labs"] or len(sizes) != 1: bad.append(f"{path}@{w}x{h}: the ring's gate numerals and labels in {len(sizes)} sizes, not one register: {st['labs']}")
+                else: notes.append(f"Lifecycles {w}: hero foot {st['heroB']:.0f}, ring labels {sizes.pop()} px")
+            if path == "platform.html" and not touch:
+                e = await pg.evaluate(EDGE_LINE)
+                if not e or e["content"] in ("none", "normal"): bad.append(f"{path}@{w}x{h}: no ink edge line (#architecture::before) in the pinned scene ({e})")
+                else:
+                    if abs(e["l"] - e["cl"]) > 1 or abs(e["r"] - e["cr"]) > 1: bad.append(f"{path}@{w}x{h}: the ink edge line is inset {e['l']:.1f} / {e['r']:.1f}, not the content's {e['cl']:.1f} / {e['cr']:.1f}")
+                    if abs(e["h"] - 2 * e["hair"]) > 0.05: bad.append(f"{path}@{w}x{h}: the ink edge line is {e['h']} px, not two hairlines ({2 * e['hair']})")
+                    notes.append(f"Platform's edge line {e['l']:.0f} / {e['r']:.0f} in, {e['h']:g} px")
+            await ctx.close()
+        notes.append(f"first screens {w}: " + ", ".join(firsts))
+        for path in ("platform.html", "lifecycles.html"):
+            ctx, pg = await open_page(b, path, w, h, touch=touch)
+            if not touch: await pg.mouse.move(2, 2)
+            await pg.wait_for_timeout(2000)
+            H = await pg.evaluate("document.documentElement.scrollHeight")
+            y, n, worst = 0, 0, 0
+            while y < H - h // 4:
+                await pg.evaluate(f"window.scrollTo({{top: {y}, behavior: 'instant'}})"); await pg.wait_for_timeout(700)
+                sz = await pg.evaluate(SCREEN_SIZES); n += 1; worst = max(worst, len(sz))
+                if len(sz) > 4: bad.append(f"{path}@{w}x{h} at {y / h:.1f} screens: {len(sz)} type sizes: " + "; ".join(f"{k} px {sz[k][:3]}" for k in srt(sz)))
+                y += h // 2
+            notes.append(f"{path.split('.')[0]} {w}: {n} half screens, at most {worst}")
+            await ctx.close()
+    assert not bad, "page_type_sizes:\n  " + "\n  ".join(bad[:24])
+    print(f"page_type_sizes: every main page's first screen and every half screen of Platform and Lifecycles show at most four type sizes ({'; '.join(notes)})")
 
 
 FOOT_END = r"""(() => { const f = document.querySelector('footer.footer'), bt = f && f.querySelector('.bottom'); if (!f || !bt) return null;

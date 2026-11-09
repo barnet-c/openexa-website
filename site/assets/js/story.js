@@ -1207,7 +1207,6 @@
     const put = (id, pts, closed, col, a, w, key, dy, dash) => out.set(id, { pts, closed, col, a, w: w || 1, key: key == null ? 0.5 : key, dy: dy || 0, dash: dash || 0 });
     if (sc === 0) {
       ORBITS.forEach((o, k) => { const pts = geo('o0' + k, () => Array.from({ length: LOOP_N }, (_, j) => onLoop(OB[k], o[0], j / LOOP_N * TAU, 0))); put('o' + k, pts, true, k === 0 ? C.green : k === KH_ORB ? C.khaki : C.ivory, k === 0 ? 0.34 : k === KH_ORB ? 0.55 : 0.16, 1 / dpr, 0.12 + 0.5 * k / 6); if (k === KH_ORB) put('kg', pts, true, C.khaki, 0.07, 6, 0.12 + 0.5 * k / 6); });
-      put('hz', [[-1.35, -1.3, 0], [1.35, -1.3, 0]], false, C.ivory, stacked ? 0 : 0.07, 1, 0.9);
       const k = clamp(scale[0] / CAM_D, 0, 0.9), rl = Math.sqrt(1 - k * k), e = [eye[0] - target[0], eye[1] - target[1], eye[2] - target[2]], el = Math.hypot(e[0], e[1], e[2]) || 1;
       const Rv = [view[0], view[4], view[8]], Uv = [view[1], view[5], view[9]], c = [e[0] / el * k, e[1] / el * k, e[2] / el * k];
       const limb = limbPts;

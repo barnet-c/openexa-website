@@ -127,6 +127,17 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-motion { position: relative; pointer-events: auto; } /* the instruments' one control (site.css, hc1), at the right end of the scene bar */
 @media (pointer: coarse) { .story-bar .story-motion { min-height: 2.25rem; } .story-bar .story-motion::after { content: ""; position: absolute; inset: -.25rem 0; } } /* hc6: outlined, it keeps the bar's 36 px box under the nav (46 px bar); a finger's 44 px target is the ::after */
 .story-labels.has-insp ~ .story-bar .story-motion { opacity: .35; } /* the inspector is up: the control steps back */
+/* hc28: where the bar sits under the menu button, Pause motion is a glyph at the tick row's end (pause; play once paused), in the menu button's box, flush right with it; its words stay its name */
+@media (max-width: 639.98px), (max-aspect-ratio: 23/20) and (max-width: 960px) {
+  .story-bar .story-motion { justify-content: flex-start; width: 2.75rem; height: 2.75rem; min-height: 0; margin-right: -.6875rem; padding: 0 0 0 2.75rem; border: 0; border-radius: 0; overflow: hidden; color: rgba(245, 242, 236, .56); }
+  .story-bar .story-motion::before, .story-bar .story-motion::after { content: ""; position: absolute; inset: auto; top: 1rem; right: .6875rem; width: .5rem; height: .625rem; background: currentColor; clip-path: polygon(12.5% 0, 37.5% 0, 37.5% 100%, 12.5% 100%); }
+  .story-bar .story-motion::after { clip-path: polygon(75% 0, 100% 0, 100% 100%, 75% 100%); }
+  .story.is-paused .story-bar .story-motion::before { clip-path: polygon(0 0, 50% 25%, 50% 75%, 0 100%); }
+  .story.is-paused .story-bar .story-motion::after { clip-path: polygon(50% 25%, 100% 50%, 100% 50%, 50% 75%); }
+  @media (hover: hover) { .story-bar .story-motion:hover { color: var(--paper); } }
+  @media (prefers-reduced-motion: no-preference) { .story-bar .story-motion::before, .story-bar .story-motion::after { transition: clip-path var(--dur-move) var(--ease-out); } }
+  @media (forced-colors: active) { .story-bar .story-motion::before, .story-bar .story-motion::after { forced-color-adjust: none; background: ButtonText; } }
+}
 .story.is-scrolled .hero-stats .live, .story.is-paused .hero-stats .live { animation-play-state: paused; } /* its loop (transform, opacity) stops once S0 has gone, and with Pause motion */
 /* the hand-off: the columns drain into their records on the floor line */
 .story-paper { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; height: 0; overflow: hidden; visibility: hidden; background: var(--paper); color: var(--ink); pointer-events: none; }

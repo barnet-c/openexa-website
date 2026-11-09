@@ -91,7 +91,7 @@ jobs:
           - shard: nav
             only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures,deep_links,tab_walk,pill_focus,nav_h_px,readout_end,footer_end,close_step,footer_phone
           - shard: plates
-            only: draw_rest,crisp_4k,zoom_wide,market_draw_once,first_screen_sizes,research_strip,section_links
+            only: draw_rest,crisp_4k,zoom_wide,market_draw_once,first_screen_sizes,page_type_sizes,research_strip,section_links
           - shard: scenes
             only: scenes,vt_fig,scroll_scenes,stack_scene,plate_scenes,lc_hero_once
           - shard: desk-pages

@@ -925,9 +925,9 @@ html.story-ready:not(.no-webgl) .nav:not(.nav--solid) .nav-progress i + i::befor
 .nav-toggle span { position: relative; display: block; width: 1.375rem; height: .5625rem; }
 .nav-toggle span::before, .nav-toggle span::after { content: ""; position: absolute; left: 0; right: 0; height: .09375rem; background: currentColor; transition: transform var(--dur-draw) var(--ease); }
 .nav-toggle span::before { top: 0; }
-.nav-toggle span::after { bottom: 0; }
-.nav--menu .nav-toggle span::before { transform: translateY(.234375rem) rotate(45deg); }
-.nav--menu .nav-toggle span::after { transform: translateY(-.234375rem) rotate(-45deg); }
+.nav-toggle span::after { top: .4375rem; }
+.nav--menu .nav-toggle span::before { transform: translateY(.21875rem) rotate(45deg); }
+.nav--menu .nav-toggle span::after { transform: translateY(-.21875rem) rotate(-45deg); }
 @media (forced-colors: active) {
   .nav-toggle span::before, .nav-toggle span::after { forced-color-adjust: none; background: ButtonText; }
   .mark:not(.globe) { forced-color-adjust: none; background: CanvasText; }
@@ -1217,8 +1217,8 @@ html[data-jump] .nav-ch-panel { transition: none !important; }
   :root:has(.nav-sheet:popover-open) { overflow: hidden; }
   :root:has(.nav-sheet:popover-open) .nav { background: var(--ink); color: var(--paper); border-bottom-color: rgba(245, 242, 236, .08); --accent: var(--signal-bright); }
   :root:has(.nav-sheet:popover-open) .nav .brand .mark { color: var(--paper); }
-  :root:has(.nav-sheet:popover-open) .nav-toggle span::before { transform: translateY(.234375rem) rotate(45deg); }
-  :root:has(.nav-sheet:popover-open) .nav-toggle span::after { transform: translateY(-.234375rem) rotate(-45deg); }
+  :root:has(.nav-sheet:popover-open) .nav-toggle span::before { transform: translateY(.21875rem) rotate(45deg); }
+  :root:has(.nav-sheet:popover-open) .nav-toggle span::after { transform: translateY(-.21875rem) rotate(-45deg); }
 }
 
 @media print { .nav-ch, .nav-progress, .nav-sheet, .figure-motion, .footer .clocks { display: none !important; } :where(.stats, .crew-stats) * { animation: none !important; } .footer .bottom { font-size: 8pt; } }
