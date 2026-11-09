@@ -36,7 +36,7 @@ def card_alt(s, name=""):
     return (h1 + " " if h1 else "") + (pic if pic.endswith(".") else pic + ".")
 # award a2: the cards of Research and Company carry their page's own still (build_og.py); Home and Access keep the globe
 STILL_PIC = {"research.html": "Beside it, the page’s library figure: the notes as an open book of stippled leaves",
-             "company.html": "Beside it, the page’s figure, the swarm as one body: a dotted sphere inside its rings",
+             "company.html": "Beside it, the page’s figure: one large agent beside a lattice of small ones",  # hc26r (COMP-1)
              # hc4: Proof's hero is Fig. 1.1 (a chart, no plate); its card keeps the record strip (build_og OWN_PLATES)
              "evidence.html": "Beside it, ten sessions on one record line: one block per session, one tick per broker confirmation"}
 

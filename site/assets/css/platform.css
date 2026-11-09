@@ -1,14 +1,13 @@
 /* OpenEXA · Platform and Lifecycles: page rules after site.css, scoped to these pages (tokens only; budget 12,000 B gzip). */
 @media (scripting: none) { body[data-page="platform"] .js-only, body[data-page="lifecycles"] .js-only { display: none; } }
 
-/* hc1: plate annotations in the caption register; --pu: the caption step in the 1200-unit drawings' units */
 :is(.pipe-svg, .orbit-svg) { --pu: max(11.29px, 31.03px - 1.304vw, min(13.96px, 21.82px - .5458vw)); }
 .pipe-svg text.pp-l, .orbit-svg .orb-s { font-family: var(--sans); font-weight: 400; letter-spacing: 0; }
 .pipe-svg text.pp-l { font-size: var(--pu); }
 .pipe-svg text.pp-l:not(.tg) { fill: var(--fg-2); }
-.pipe-svg .pp-k { font-variant-numeric: tabular-nums; fill: var(--fg-3); } /* hc4: a gate's number speaks with its name, as the lane's */
+.pipe-svg .pp-k { font-variant-numeric: tabular-nums; fill: var(--fg-3); }
 @media (min-width: 961px) { body[data-page="lifecycles"] .orbit-svg { font-size: var(--pu); } }
-/* tablets: the three gate names in one row under the cropped drawing, each at its gate's block (hc2) */
+
 @media (min-width: 601px) and (max-width: 960px) {
   body[data-page="platform"] .lane-v--pipe { display: grid; grid-template-columns: 14.67% 28.5% minmax(0, 1fr) auto; margin: .625rem 0 1rem; }
   body[data-page="platform"] .lane-v--pipe > .lv-x, body[data-page="platform"] .lane-v--pipe .lv-g { display: none; }
@@ -19,9 +18,9 @@
   body[data-page="platform"] .lane-v--pipe > .pv-3 { grid-column: 4; padding-right: 0; text-align: right; }
   body[data-page="platform"] .lane-v--pipe .lk { padding: 0; }
 }
-/* the same three gates on phones (the plate's list): the same register */
+
 .lane-v--pipe :is(.lk, .lk-who), .lane-v.lane-v--pipe > .lv-bound, .lane-v.lane-v--pipe > .lv-rec > span { font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; }
-/* hc19: §03 acts once (plate.js actOnce, .is-run): the ring rides into Settle, lighting each gate */
+
 #pipeline .pp-r { transform-box: fill-box; transform-origin: center; }
 #pipeline .ln3.pp-lt { --lt-w: var(--stroke); }
 @media screen and (prefers-reduced-motion: no-preference) {
@@ -37,8 +36,6 @@
 @keyframes pp-on { 20%, 55% { opacity: 1; stroke-width: var(--lt-w, var(--stroke-2)); } }
 @keyframes pp-clear { from { opacity: .86; transform: none; } to { opacity: 0; transform: none; } }
 
-/* PLATFORM */
-
 body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 @media (min-width: 961px) {
   body[data-page="platform"] .page-hero--plate > .hero-copy { grid-column: 1 / span 5; }
@@ -50,7 +47,7 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
   body[data-page="platform"] .page-hero--plate > .hero-plate--stack { grid-column: 7 / -1; }
 }
 .hero-plate--stack .hp-lab--n, .hero-plate--stack .hp-lab--fl { color: var(--fg-3); }
-/* hc19: the layer numerals at the explorer's step (0,2,0: the 15rem container rule still wins); §06's from 961 px */
+
 .hero-plate--stack .hp-lab--n { font-size: var(--fs-small); letter-spacing: 0; }
 @media (min-width: 961px) { #marketplace .hp-lab--n { font-size: var(--fs-small); letter-spacing: 0; } }
 .hero-plate--stack .hp-lab--side { color: var(--fg-2); }
@@ -66,7 +63,6 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 .hero-plate--stack .is-rej .pm-ring { opacity: 0; }
 .hero-plate--stack .pm-spur, .hero-plate--stack .pm-x { fill: none; stroke: var(--reject); stroke-width: var(--stroke-2); stroke-linecap: round; }
 
-/* hc2: the caption reads hedge, key, then Replay at the right; one row from 601 px */
 .hero-plate--stack .hp-cap { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: .5rem 1.5rem; }
 .hero-plate--stack .hp-key { margin-left: auto; display: flex; flex-wrap: wrap; gap: .25rem 1.125rem; }
 .hero-plate--stack .hp-key > span { display: inline-flex; align-items: center; gap: .4375rem; }
@@ -79,7 +75,8 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 @media (pointer: coarse) { .hero-plate--stack .hp-replay { margin: -.5rem; padding: .5rem; } .hero-plate--stack .hp-replay:focus-visible { outline-offset: -.375rem; } }
 @media (prefers-reduced-motion: no-preference) {
   .hero-plate--stack .pl { animation: pl-in .8s var(--ease-out) both; animation-delay: calc(120ms + var(--i) * 95ms); }
-  .hero-plate--stack :is(.pl-br, .pm-floor, .hp-lab--side, .hp-lab--fl) { animation: pl-fade .6s var(--ease-out) .5s both; }
+  .hero-plate--stack :is(.pl-br, .pm-floor) { animation: pl-fade .6s var(--ease-out) .5s both; }
+  .hero-plate--stack :is(.hp-lab--side, .hp-lab--fl) { animation: pl-wipe .6s var(--ease-out) .5s both; }
 
   .hero-plate--stack :is(.pl-draw, .pm-down, .pm-spur) { vector-effect: none; stroke-dasharray: 1 1; }
   .hero-plate--stack .pl-draw { stroke-width: 1.1; animation: pl-draw .75s var(--ease-draw) .55s both; }
@@ -87,8 +84,9 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
   .hero-plate--stack .pm-spur { stroke-width: 1.1; }
   .hero-plate--stack.is-k :is(.pl-draw, .pm-down, .pm-spur) { vector-effect: non-scaling-stroke; stroke-dasharray: none; stroke-width: var(--stroke-2); }
   .hero-plate--stack.is-k .pm-down { stroke-width: var(--stroke); }
-  .hero-plate--stack .pl-glow, .hero-plate--stack .hp-lab--bd { animation: pl-fade .7s var(--ease-out) .95s both; }
-  .hero-plate--stack .hp-lab--n { animation: pl-fade .6s var(--ease-out) both; animation-delay: calc(220ms + var(--i) * 95ms); }
+  .hero-plate--stack .pl-glow { animation: pl-fade .7s var(--ease-out) .95s both; }
+  .hero-plate--stack .hp-lab--bd { animation: pl-wipe .7s var(--ease-out) .95s both; }
+  .hero-plate--stack .hp-lab--n { animation: pl-wipe .6s var(--ease-out) both; animation-delay: calc(220ms + var(--i) * 95ms); }
 
   .hero-plate--stack .pm-rail { --t: calc(1.15s + var(--o) * 220ms); }
   .hero-plate--stack :is(.pm-agent, .pm-cross, .pm-step, .pm-settle, .pm-rring) { transform-box: fill-box; transform-origin: center; }
@@ -110,13 +108,14 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 }
 @keyframes pl-in { from { opacity: 0; transform: translateY(var(--dy, -.75rem)); } }
 @keyframes pl-fade { from { opacity: 0; } }
+@keyframes pl-wipe { from { clip-path: inset(-.3em 100% -.3em -.3em); } to { clip-path: inset(-.3em); } }
 @keyframes pl-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes pl-drawk { from { stroke-dasharray: var(--dr-k) calc(2 * var(--dr-k)); stroke-dashoffset: var(--dr-k); } to { stroke-dasharray: var(--dr-k) calc(2 * var(--dr-k)); stroke-dashoffset: 0; } }
 @keyframes pl-pop { from { opacity: 0; transform: scale(.35); } }
 @keyframes pm-fall { from { opacity: 0; transform: translateY(-2rem); } 25% { opacity: 1; } to { opacity: 1; transform: none; } }
 @keyframes pm-out { from { opacity: 1; } to { opacity: 0; } }
 @media print { .hero-plate--stack * { animation: none !important; } .hero-plate--stack .hp-replay { display: none; } }
-/* hc25: the first 30vh of scroll parts the layers about the boundary (--st-p), marks and labels with them; still at the top */
+
 @property --st-p { syntax: '<number>'; inherits: true; initial-value: 0; }
 @media (prefers-reduced-motion: no-preference) { @supports (animation-timeline: scroll()) {
   .hero-plate--stack .hp-art { --st-u: 6; --st-g: 10; --st-k: calc(min(var(--hp-s, 1) * (100cqw - 2 * var(--hp-p)), (100cqw - 2 * var(--hp-p) - var(--hp-k)) / .668) / 420); }
@@ -142,16 +141,57 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 } }
 @keyframes st-p { from { --st-p: 0; } to { --st-p: 1; } }
 
-/* phones and short windows, as Lifecycles' hero: the key right under the plate, then "Schematic ... Replay" */
+@media screen and (prefers-reduced-motion: no-preference) and (scripting: enabled) and (min-width: 1000px) and (min-height: 700px) { @supports (animation-timeline: view()) {
+  .stack-scene { --scene-travel: 148svh; --scene-tone-at: .61; height: auto;
+    --s1: clamp(0, (var(--scene-p) - .15) / .24, 1); --e1: calc(var(--s1) * var(--s1));
+    --s2: clamp(0, (var(--scene-p) - .15) / .3, 1); --e2: calc(var(--s2) * var(--s2) * (3 - 2 * var(--s2)));
+    --s3: clamp(0, (var(--scene-p) - .45) / .17, 1); --w: calc(var(--s3) * var(--s3) * (3 - 2 * var(--s3)));
+    --s4: clamp(0, (var(--scene-p) - .58) / .12, 1); --hr: calc(1 - (1 - var(--s4)) * (1 - var(--s4)) * (1 - var(--s4))); }
+  .stack-scene > .scene-stage { height: auto; min-height: 100svh; }
+  .stack-scene::after { content: ""; display: block; height: var(--scene-travel); }
+  .stack-scene :is(.arch-fig, .arch-panel, .hp-d, .orb-swarm) { --scene-p: 1; --s1: 1; --e1: 1; --s2: 1; --e2: 1; --s3: 1; --w: 1; --s4: 1; --hr: 1; }
+  .stack-scene .page-hero { position: absolute; inset: 0 0 auto; z-index: 0; border-bottom-color: color-mix(in srgb, var(--line) calc((1 - var(--e1)) * 100%), transparent); }
+  .stack-scene .page-hero .hero-copy { translate: 0 calc(var(--e1) * -100svh); }
+  .stack-scene .hero-plate--stack { transform-origin: 0 0; translate: calc(var(--st-x, 0) * var(--e2) * 1px) calc(var(--st-y, 0) * var(--e2) * 1px); scale: calc(1 + (var(--st-s, 1) - 1) * var(--e2)); }
+  .stack-scene .hero-plate--stack :is(.hp-cap, .hp-lab) { transform-origin: 0 0; scale: calc(1 / (1 + (var(--st-s, 1) - 1) * var(--e2))); }
+  .stack-scene .hero-plate--stack .hp-s1 { animation: none; }
+  .stack-scene .hero-plate--stack :is(.pl, .hp-lab--n):nth-child(-n+4), .stack-scene .hero-plate--stack :is(.pm-agent, .pm-ring, .pm-rring, .pm-spur, .pm-x, .hp-lab--side) { --dyk: calc(var(--k) * var(--st-au, 0) + var(--st-gu, 0)); }
+  .stack-scene .hero-plate--stack :is(.pl, .hp-lab--n):nth-child(n+5), .stack-scene .hero-plate--stack :is(.pm-step, .pm-floor, .pm-settle, .hp-lab--fl) { --dyk: calc(var(--k) * var(--st-ad, 0) + var(--st-gd, 0)); }
+  .stack-scene .hero-plate--stack .hp-lab--bd ~ .hp-lab--side { --dyk: calc(var(--k) * var(--st-ad, 0) + var(--st-gd, 0)); }
+  .stack-scene .hero-plate--stack :is(.pl, .pl-glow, .pl-draw, .pm-floor, .pm-agent, .pm-ring, .pm-rring, .pm-spur, .pm-x, .pm-cross, .pm-step, .pm-settle) { translate: 0 calc(var(--dyk, 0) * var(--e2) * 1px); }
+  .stack-scene .hero-plate--stack .pm-up { transform: translateY(calc((var(--st-gu, 0) - 2 * var(--st-au, 0)) * var(--e2) * 1px)) scaleY(calc(1 + var(--st-au, 0) * var(--e2) / 32)); }
+  .stack-scene .hero-plate--stack .pm-up2 { transform: translateY(calc((var(--st-gu, 0) - var(--st-au, 0)) * var(--e2) * 1px)) scaleY(calc(1 + (var(--st-au, 0) - var(--st-gu, 0)) * var(--e2) / 33)); }
+  .stack-scene .hero-plate--stack .pm-down { transform: scaleY(calc(1 + (4 * var(--st-ad, 0) + var(--st-gd, 0)) * var(--e2) / 161)); }
+  .stack-scene .hero-plate--stack .pl-br path { transform: translateY(calc((var(--st-gu, 0) - 4 * var(--st-au, 0)) * var(--e2) * 1px)) scaleY(calc(1 + 3 * var(--st-au, 0) * var(--e2) / 130)); }
+  .stack-scene .hero-plate--stack .pl-br path + path { transform: translateY(calc((var(--st-gd, 0) + var(--st-ad, 0)) * var(--e2) * 1px)) scaleY(calc(1 + 3 * var(--st-ad, 0) * var(--e2) / 130)); }
+  .stack-scene .hero-plate--stack .hp-lab { top: calc(var(--y) * 1%); translate: 0 calc(var(--dyk, 0) * var(--st-upx, 1) * var(--e2) * 1px); }
+  .stack-scene .hero-plate--stack .pl-glow { stroke-opacity: calc(.3 + .3 * var(--e2)); }
+  .stack-scene .hero-plate--stack .hp-reg i:nth-child(-n+2) { translate: 0 calc((var(--st-gu, 0) - 4 * var(--st-au, 0)) * var(--st-upx, 1) * var(--e2) * 1px); }
+  .stack-scene .hero-plate--stack :is(.hp-reg i:nth-child(n+3), .hp-cap) { translate: 0 calc((4 * var(--st-ad, 0) + var(--st-gd, 0)) * var(--st-upx, 1) * var(--e2) * 1px); }
+  .stack-scene .hero-plate--stack .hp-cap { width: calc(100% * (1 + (var(--st-s, 1) - 1) * var(--e2))); }
+  .stack-scene #architecture { --bg: var(--ink); --bg-2: var(--ink-2); --fg: var(--paper); --fg-2: rgba(245, 242, 236, .78); --fg-3: rgba(245, 242, 236, .56); --line: rgba(245, 242, 236, .14); --line-strong: rgba(245, 242, 236, .32); --accent: var(--signal-bright); --ch-gap: clamp(.75rem, 2.4svh, 1.75rem);
+    position: relative; z-index: 1; box-sizing: border-box; min-height: 100svh; padding: calc(var(--nav-h) + clamp(1.25rem, 4.6svh, 3rem)) 0 clamp(1rem, 3svh, 2rem); color: var(--fg); background: radial-gradient(60% 55% at 32% 56%, rgba(79, 203, 147, .05), transparent 70%), var(--ink);
+    clip-path: inset(calc((1 - var(--w)) * 100%) 0 0); }
+  .stack-scene #architecture .ch-head { overflow: clip; overflow-clip-margin: .35em; }
+  .stack-scene #architecture .ch-title { translate: 0 calc((1 - var(--hr)) * 118%); }
+  .stack-scene #architecture .arch { min-height: 0; border-color: transparent; border-radius: 0; background: none; overflow: visible; }
+  .stack-scene #architecture .arch-head { position: absolute; inset: 0 0 auto; z-index: 2; justify-content: flex-end; min-height: 0; height: 3.625rem; padding: 0 clamp(1rem, 1.9vw, 1.625rem) 0 0; border: 0; }
+  .stack-scene #architecture .arch-lab { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .stack-scene #architecture .arch-kicker { margin-left: auto; }
+  .stack-scene #architecture .arch-legend { margin-left: 0; }
+  .stack-scene #architecture :is(.arch-head, .arch-h, .arch-bound) { --ra: clamp(0, (var(--scene-p) - .7 - var(--ri, 0) * .022) / .1, 1); clip-path: inset(-.25rem calc((1 - var(--ra)) * 100%) -.25rem -.25rem); }
+  .stack-scene #architecture .arch-head { clip-path: inset(0 0 0 calc((1 - var(--ra)) * 100%)); }
+  .stack-scene #architecture .arch.is-wide .arch-layer { height: clamp(2.5rem, calc((100svh - 19rem) / 10.4), 5rem); min-height: 0; }
+  .stack-scene #architecture .arch.is-wide .arch-bound { min-height: clamp(3.5rem, 7svh, 5.5rem); }
+} }
+
 @media (max-width: 600px), (max-width: 960px) and (max-height: 520px) { .hero-plate--stack .hp-key { flex-basis: 100%; margin-left: 0; } .hero-plate--stack .hp-cap > .fc-h { order: 2; } .hero-plate--stack .hp-replay { order: 3; margin-left: auto; } }
 
-/* hc24 (HC24 6): tablets, the heroes' plates span the column unless the screen is too short; Platform's h1 on two lines */
 @media (min-width: 601px) and (max-width: 960px) {
   :is(body[data-page="platform"] .hero-plate--stack, body[data-page="lifecycles"] .hero-plate--rings) { max-width: min(100%, max(35rem, calc(var(--hp-ar) * (100svh - 29rem) + 1rem))); }
   body[data-page="platform"] .page-hero--plate .display-1 { max-width: none; }
 }
 
-/* a4: under a larger browser font the drawing gives way to its labels (--hp-k: the widest label's room) */
 .hero-plate--stack { container-type: inline-size; }
 .hero-plate--stack .hp-art { --hp-k: 7.5rem; --hp-p: 1rem; }
 @media (max-width: 600px) { .hero-plate--stack .hp-art { --hp-p: .5rem; } }
@@ -174,20 +214,17 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .hero-plate .hp-art:has(> .hp-reg) { margin-left: 1rem; }
 @media (max-width: 600px) { :is(body[data-page="platform"], body[data-page="lifecycles"]) .hero-plate .hp-art:has(> .hp-reg) { margin-left: .5rem; } }
 
-
 @media print { body[data-page="platform"] .js-only, body[data-page="lifecycles"] .js-only { display: none !important; } body[data-page="lifecycles"] .desk-nojs { display: block !important; } }
 
 @media (min-width: 601px) { #modes td[data-th="Latency"] { white-space: nowrap; } }
 
-/* LIFECYCLES */
-
 .desk .dl-rcpt { color: var(--fg); }
-/* hc23: one cell, a new line fading in as the last fades out (gap.js put); a spent receipt in the line's colour */
+
 .desk .dl-say { display: grid; }
 .desk .dl-say > * { grid-area: 1 / 1; }
 .desk .dl-say > .is-out { opacity: 0; }
 .desk .is-spent, .desk .is-spent .dl-hx { color: var(--fg-2); }
-.desk .dl-hx { font: 500 1em/1 var(--mono); letter-spacing: .04em; color: var(--accent); white-space: nowrap; } /* hc19: the strip's step */
+.desk .dl-hx { font: 500 1em/1 var(--mono); letter-spacing: .04em; color: var(--accent); white-space: nowrap; }
 .desk .dk-rec.is-followed .dk-h { color: var(--accent); }
 .desk .dk-rec.is-linked .dk-h { color: var(--fg); }
 @media (prefers-reduced-motion: no-preference) {
@@ -199,50 +236,33 @@ body[data-page="platform"] .hero-plate--stack { --hp-ar: 1.25; }
 @media (max-width: 600px) { .desk .dl-say { min-height: calc(4.5em + .625rem); } }
 
 @media (min-width: 961px) {
-  body[data-page="lifecycles"] .page-hero--plate > .hero-copy { grid-column: 1 / span 6; }
-  body[data-page="lifecycles"] .page-hero--plate > .hero-plate--rings { grid-column: 7 / -1; justify-self: stretch; max-width: none; }
+  body[data-page="lifecycles"] .page-hero--plate > .hero-copy { grid-column: 1 / span 5; }
+  body[data-page="lifecycles"] .page-hero--plate > .hero-plate--rings { grid-column: 6 / -1; justify-self: stretch; max-width: none; }
 }
+@media (min-width: 961px) and (min-height: 560px) { body[data-page="lifecycles"] .page-hero:has(> .container > .page-hero--plate) { min-height: 0; padding-bottom: clamp(2rem, 4.5vh, 3.5rem); } }
 .hero-plate--rings .lr-1 { stroke-width: var(--stroke-2); }
-body[data-page="lifecycles"] .lcp .orb-next { opacity: .8; }
-@media (min-width: 961px) { body[data-page="lifecycles"] .lcp .orb-road { stroke-width: calc(2 * var(--stroke)); } }
 .hero-plate--rings .lr-ax { fill: none; stroke: currentColor; stroke-opacity: .32; stroke-width: var(--stroke); }
 .hero-plate--rings .orb-swarm .mote { opacity: .62; }
-/* hc13r (PLAT-2): the hero draws its headline (bead = gate 01, ticks = 02-06, a record square); gap.js runs it once */
-.hero-plate--rings .lr-g { fill: none; stroke: currentColor; stroke-opacity: .75; stroke-width: var(--stroke); stroke-linecap: round; transform-box: fill-box; transform-origin: center; transition: stroke .6s var(--ease), stroke-opacity .6s var(--ease), transform .6s var(--ease); }
-.hero-plate--rings .lr-g.is-lit { stroke: var(--accent); stroke-opacity: 1; stroke-width: var(--stroke-2); transform: scale(1.6); transition: transform .18s var(--ease-out); }
-.hero-plate--rings .lr-rec { fill: var(--accent); transform-box: fill-box; transform-origin: center; transition: opacity .4s var(--ease-out), transform .4s var(--ease-out); }
+.hero-plate--rings .lc-pane { fill: var(--bg); fill-opacity: .8; stroke: currentColor; stroke-opacity: .55; stroke-width: var(--stroke); stroke-linejoin: round; transition: stroke .6s var(--ease), fill .6s var(--ease), stroke-opacity .6s var(--ease), fill-opacity .6s var(--ease); }
+.hero-plate--rings .lc-lead { fill: none; stroke: currentColor; stroke-opacity: .45; stroke-width: var(--stroke); }
+.hero-plate--rings .is-lit .lc-pane { stroke: var(--accent); stroke-opacity: 1; fill: var(--accent); fill-opacity: .12; transition-duration: .15s; }
+.hero-plate--rings .lc-chain { fill: none; stroke: currentColor; stroke-opacity: .6; stroke-width: var(--stroke); }
+.hero-plate--rings .lc-notch { fill: none; stroke: var(--accent); stroke-width: var(--stroke-2); stroke-linecap: round; }
+.hero-plate--rings .lc-blk { fill: currentColor; fill-opacity: .82; }
+.hero-plate--rings .lc-new { fill: var(--accent); fill-opacity: 1; transform-box: fill-box; transform-origin: center; transition: opacity .35s var(--ease-out), transform .35s var(--ease-out); }
 .hero-plate--rings .lr-dot { fill: var(--bg); stroke: var(--accent); stroke-width: var(--stroke-2); opacity: 0; }
 .hero-plate--rings.is-run .lr-dot { opacity: 1; }
-.hero-plate--rings.is-run .lr-rec:not(.is-in) { opacity: 0; transform: scale(.35); }
-.hero-plate--rings .lr-rec.is-in ~ .lr-dot { opacity: 0; } /* the ring squares up: it is the record now */
+.hero-plate--rings .lc-sig .lc-n { margin-right: .375em; font: 400 var(--fs-label)/1 var(--mono); letter-spacing: .04em; color: var(--fg-3); }
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) { .hero-plate--rings:not(.is-done) .lc-new { opacity: 0; transform: scale(.35); } }
 @media (prefers-reduced-motion: no-preference) { .hero-plate--rings .hp-s1 { animation: pl-fade .6s var(--ease-out) both; } }
-@media print { .hero-plate--rings .lr-dot { display: none; } .hero-plate--rings .lr-rec { opacity: 1 !important; } }
-/* hc14: the outer rings recede so LC-01 leads; 'Signal' and 'Record' each on a patch of paper */
-body[data-page="lifecycles"] .hero-plate--rings :is(.lr-n, .lr-r) { opacity: .45; }
-.hero-plate--rings .lr-lab { --tx: calc(-100% - .5rem); background: var(--bg); box-shadow: 0 0 0 .5rem var(--bg); border-radius: .25rem; }
-.hero-plate--rings .lr-lab--rec { transform: translate(var(--tx), .5rem); }
-.hero-plate--rings .hp-labs { right: 1rem; } /* the labels' box is the drawing's (not the art's padding too): --x lands on its unit */
+html:active-view-transition-type(page) .hero-plate--rings .hp-s1 { animation: none; }
+@media print { .hero-plate--rings .lr-dot { display: none; } .hero-plate--rings .lc-new { opacity: 1 !important; transform: none !important; } }
+.hero-plate--rings .hp-labs { right: 1rem; }
 @media (max-width: 600px) { .hero-plate--rings .hp-labs { right: .5rem; } }
-@media print { .hero-plate--rings .lr-lab { background: #fff; outline: .5rem solid #fff; print-color-adjust: exact; } }
-/* hc13r: on phones the hero holds the first screen; where the plate is narrow it is drawn --z times, a detail of itself */
-@media (max-width: 600px) {
-  body[data-page="lifecycles"] .page-hero { display: flex; flex-direction: column; min-height: 100svh; }
-  body[data-page="lifecycles"] .page-hero > .container { flex: 1; display: flex; flex-direction: column; }
-  body[data-page="lifecycles"] .page-hero--plate { flex: 1; grid-template-rows: auto 1fr; }
-  body[data-page="lifecycles"] .page-hero--plate > .hero-plate { align-self: center; }
-  body[data-page="lifecycles"] .hero-plate--rings { --z: 1.4; }
-}
-@media (min-width: 961px) and (max-width: 1099.98px) { body[data-page="lifecycles"] .hero-plate--rings { --z: 1.2; } }
-@media (max-width: 600px), (min-width: 961px) and (max-width: 1099.98px) {
-  body[data-page="lifecycles"] .hero-plate--rings { overflow-x: clip; } /* the drawing's box runs past the plate: no sideways scroll */
-  body[data-page="lifecycles"] .hero-plate--rings .hp-art > svg { width: calc(var(--z) * 100%); max-width: none; margin-left: calc((1 - var(--z)) * 50%); clip-path: inset(-1rem calc((1 - 1 / var(--z)) * 50%)); }
-  body[data-page="lifecycles"] .hero-plate--rings .lr-lab { left: calc((50 + (var(--x) - 50) * var(--z)) * 1%); }
-}
 
-/* hc2: Fig. 4.1's key in the ring-and-bead glyph (Live, Next, Roadmap); hc6: the hero has none */
 .orb-key { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem; font: 400 var(--fs-small)/1.5 var(--sans); color: var(--fg-2); }
 .orb-key > span { display: inline-flex; align-items: baseline; gap: .5rem; white-space: nowrap; }
-.orb-key .lc-ring { flex: none; align-self: center; width: 1.375em; height: 1.375em; } /* the key's baseline is its words', so a caption beside it lines up */
+.orb-key .lc-ring { flex: none; align-self: center; width: 1.375em; height: 1.375em; }
 .orb-key > span:first-child { color: var(--signal-ink); }
 
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .hero-act { margin-top: clamp(1.5rem, 2.6vw, 2.5rem); }
@@ -255,13 +275,13 @@ body[data-page="lifecycles"] .hero-plate--rings :is(.lr-n, .lr-r) { opacity: .45
 }
 
 @media (min-width: 961px) { #lc01 .lc-row > .lc-how { grid-column: 1 / span 5; } #lc01 .lc-row > :last-child { grid-column: 7 / -1; } }
-/* hc4: the basket is a plate like the heroes' */
+
 #lc01 .lc-mech { max-width: 30rem; margin: 0; }
 #lc01 .lc-mech .hp-art { margin: 1.25rem 1rem .75rem; }
 .lc-mech .hp-lab small { margin-top: var(--hair); }
 #lc01 .lc-mech .hp-reg { inset: -1.25rem -1rem -.75rem; }
 @media (max-width: 600px) { #lc01 .lc-mech .hp-art { margin: .75rem .5rem; } #lc01 .lc-mech .hp-reg { inset: -.75rem -.5rem; } }
-/* the plate travels beside the stations until 06 Settle (site.css's rule for the card it was) */
+
 @media (min-width: 1200px) and (min-height: 600px), (min-width: 961px) and (min-height: 680px) {
   #lc01 .lc-how > .lc-mech { position: sticky; top: calc(var(--nav-h) + 2rem); }
 }
@@ -282,7 +302,6 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
   body[data-page="lifecycles"] .desk-head ~ * :is(a, button, input, [tabindex]) { scroll-margin-top: calc(var(--dh) + .75rem); }
 }
 
-
 @media (max-height: 520.98px) and (min-width: 540px) {
   body[data-page="lifecycles"] .desk { --dh: 3.0625rem; }
   body[data-page="lifecycles"] .desk-head { display: flex; flex-wrap: nowrap; column-gap: .875rem; min-height: 0; padding-block: .125rem; }
@@ -294,14 +313,14 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 .desk .desk-lane > .desk-follow { grid-area: btn; }
 .desk .dl-gates { grid-area: gates; }
 .desk .dl-say { grid-area: say; }
-/* the desk's primary is site.css's one button (hc2, the instrument head): its place only */
+
 .desk .desk-follow { position: relative; margin: 0; min-height: 2.875rem; padding: .6875rem 1.25rem .6875rem 1rem; gap: .75rem; }
 
 .desk .dl-say:empty::before { content: none; }
 
 .desk .desk-stats > div { padding: 1.5rem .75rem 1.25rem; }
 .desk .desk-stats span { letter-spacing: .07em; }
-.desk .desk-controls { flex: 1 0 auto; align-content: center; gap: 1.625rem; padding: 1.5rem 1.125rem; border-bottom: 0; } /* hc23: the lane's rule (or the desk's edge) closes it: no doubled hairline */
+.desk .desk-controls { flex: 1 0 auto; align-content: center; gap: 1.625rem; padding: 1.5rem 1.125rem; border-bottom: 0; }
 @media (min-width: 1200px) { .desk .desk-body { grid-template-columns: minmax(0, 1fr) 22.5rem; } }
 @media (min-width: 961px) {
   .desk .desk-controls { grid-template-rows: 1fr 1fr; align-content: stretch; gap: 0; padding: 0; }
@@ -342,12 +361,11 @@ body[data-page="lifecycles"] .desk-head { z-index: 3; background: var(--desk-bg)
 body[data-page="platform"] main .layer p { text-wrap: pretty; }
 body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
-
 #modes .modes-head { align-items: start; }
 #modes .ledger th:nth-child(3) { text-align: right; }
-/* hc12: the dial's stamp flows under the cropped art with the caption's own margin */
+
 #modes .sec-plate--dial > .hp-cap { margin-top: 1rem; }
-/* hc24: tablets, the dial beside the head, the table under both */
+
 @media (min-width: 601px) and (max-width: 960px) {
   #modes > .container { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap, clamp(1rem, 2.2vw, 2rem)); row-gap: var(--ch-gap); }
   #modes .modes-body { display: contents; }
@@ -356,7 +374,7 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
   #modes .modes-body > .ledger-wrap { grid-column: 1 / -1; grid-row: 2; }
   #modes .sec-plate--dial > .hp-cap { --fc-ind: calc(24.5% - 4rem); }
 }
-/* hc13r (PLAT-1): the dial is the control (plate.js) */
+
 #modes .is-live .hp-lab[role="radio"] { pointer-events: auto; cursor: pointer; text-decoration: underline dashed; text-decoration-color: var(--line-strong); text-decoration-thickness: var(--hair); text-underline-offset: .1875rem; transition: color var(--dur-feedback) var(--ease), text-decoration-color var(--dur-feedback) var(--ease); }
 #modes .is-live .hp-lab[role="radio"]::before { content: ""; position: absolute; inset: -.5rem -.5rem; }
 #modes .is-live .hp-lab[aria-checked="true"] { color: var(--signal-ink); text-decoration-style: solid; text-decoration-color: currentColor; cursor: default; }
@@ -413,7 +431,7 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
   #modes .sec-plate--dial .hp-art { max-width: min(16.875rem, calc(100% - 1.5rem)); margin-left: 1rem; }
   #modes .table-scroll > .ledger > tbody > tr { row-gap: .25rem; padding: .75rem 0; }
   #modes .table-scroll > .ledger > tbody > tr > td:first-child { padding-bottom: .125rem; }
-  #modes .ledger > tbody > tr + tr td[data-th]::before { display: none; } /* hc13 4.2: the column labels once, on the first row */
+  #modes .ledger > tbody > tr + tr td[data-th]::before { display: none; }
   #modes .ledger > tbody > tr { transition: border-color var(--dur-feedback) var(--ease), box-shadow var(--dur-feedback) var(--ease); }
   #modes .ledger > tbody > tr[aria-current] { border-bottom-color: var(--accent); box-shadow: inset 0 calc(-1 * var(--hair)) 0 var(--accent); }
   #modes .ledger > tbody > tr[aria-current]:last-child { box-shadow: inset 0 calc(-2 * var(--hair)) 0 var(--accent); }
@@ -433,22 +451,20 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
   body[data-page="lifecycles"] .orbit-fig { max-width: 17.5rem; }
 }
 
-/* phones: the two sliders side by side, each value under its name (the halt's width and the 1101-1359 px rule: swarm.css, hc25) */
 @media (max-width: 420px) {
   body[data-page="platform"] #swarm .swarm-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 1rem; }
   body[data-page="platform"] #swarm .swarm-controls output { display: block; margin-top: calc(2 * var(--hair)); }
   body[data-page="platform"] #swarm .swarm-controls output::before { content: none; }
 }
 
-/* hc19 (HC19 4.3): §02's head on one line from 1280 px, so it shares a 1440 x 900 screen with the lab */
 @media (min-width: 1280px) { body[data-page="platform"] #swarm .ch-title { max-width: none; } }
-/* hc20: a 1536 x 864 window holds the explorer and the desk with their heads */
+
+#architecture { --ch-gap: clamp(2.25rem, 4.4vw, 4.25rem); }
 @media (min-width: 1200px) and (max-height: 880px) { :is(#architecture, #desk) { --ch-gap: 2.25rem; } }
 
 .desk .desk-stats .dk-u { display: block; margin: calc(2 * var(--hair)) 0 0; }
 .desk .desk-stats .dk-sep { display: none; }
 
-/* hc13r (SYS-1): from 601 px the heads take site.css's 22ch measure; phones 16ch / 12ch */
 @media (max-width: 600px) { :is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-title { max-width: 16ch; } #lc01 .lc-how .ch-title { max-width: 12ch; } }
 
 :is(body[data-page="platform"], body[data-page="lifecycles"]) .ch-link { margin-top: clamp(1.75rem, 3vw, 2.75rem); }
@@ -504,10 +520,10 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
   #lc01 .lane-v--steps > .lv-bound::before { top: calc(-1.375rem * var(--s)); bottom: calc(-1.375rem * var(--s)); width: calc(1px * var(--stroke)); background: var(--accent); }
   #lc01 .lane-v--steps > .lv-bound::after { height: calc(1px * var(--stroke)); box-shadow: none; }
 }
-#lc01 .lane-v--steps > li[data-g="6"]::before { opacity: .62; } /* hc3: the last station's spine is the record line */
+#lc01 .lane-v--steps > li[data-g="6"]::before { opacity: .62; }
 #lc01 .lane-v--steps > .lv-bound { font: 400 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
 #lc01 .lane-v--steps > .lv-bound span:first-child { color: var(--signal-ink, #186B4F); }
-/* hc4: the gate numbers at the caption step (site.css's .lane-v--steps) */
+
 @media (min-width: 961px) { #lc01 .lane-v--steps { --s: 1.5; } }
 
 #desk .desk { border-color: var(--line-strong); }
@@ -520,16 +536,15 @@ body[data-page="platform"] #mcp .dpl-col p { text-wrap: balance; }
 
 #lc01 .lc-how > .ch-head { margin-bottom: clamp(1.75rem, 3.2vw, 3rem); }
 
-/* hc6: the explorer is the stack and its index; the boundary a green hairline level with the plane */
 #architecture .arch.is-wide .arch-panel { padding-bottom: 1.125rem; }
 #architecture .arch-bound { display: grid; grid-template-rows: auto auto; align-items: end; justify-content: stretch; gap: 0; min-height: 0; padding: 1rem .375rem 0 3.625rem; border-top: 0; }
 #architecture .arch.is-wide .arch-bound { grid-template-rows: 1fr auto 1fr; height: auto; min-height: 4.5rem; padding-top: 0; }
 #architecture .arch-bound .ab-line { grid-row: 1; margin: 0; padding: 0 0 .5rem; font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--accent); text-wrap: balance; }
 #architecture .arch-bound .ab-rule { grid-row: 2; display: block; height: var(--hair); margin: 0 -.375rem 0 -3.625rem; background: rgba(79, 203, 147, .5); }
-#architecture .arch.is-wide .arch-bound .ab-rule { margin-left: calc(-3.625rem - var(--ab-reach, 0px)); } /* to the plane's corner (arch.js) */
+#architecture .arch.is-wide .arch-bound .ab-rule { margin-left: calc(-3.625rem - var(--ab-reach, 0px)); }
 #architecture .arch-bound + .arch-h > .arch-layer { border-top-color: transparent; }
 #architecture .arch-bound[id] { scroll-margin-top: 42vh; }
-@media (max-width: 600px) { #architecture .arch-bound { padding-left: .75rem; } #architecture .arch-bound .ab-rule { margin-left: -.75rem; } } /* phones: the sentences' edge (arch.css's panels), as wide */
+@media (max-width: 600px) { #architecture .arch-bound { padding-left: .75rem; } #architecture .arch-bound .ab-rule { margin-left: -.75rem; } }
 
 #architecture .layer-boundary .lb-line { margin: .25rem 0 0; font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
 
@@ -579,7 +594,7 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
   #modes .modes-body > .ledger-wrap { grid-column: 1 / span 6; grid-row: 2; }
   #modes .modes-body > .sec-plate--dial { grid-column: 8 / -1; grid-row: 1 / span 2; align-self: center; justify-self: stretch; width: 100%; max-width: 30rem; margin: 0 0 0 auto; }
   #modes .sec-plate--dial > .hp-art { max-width: none; }
-  /* hc12: the stamp starts where the drawing does (the left of "Fully automatic") */
+
   #modes .sec-plate--dial > .hp-cap { --fc-ind: calc(24.5% - 4rem); }
 
   #test > .container { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--col-gap, clamp(1rem, 2.2vw, 2rem)); align-items: start; }
@@ -589,13 +604,17 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
   #test .card-grid--3 > .card:nth-child(even) { padding-left: clamp(1rem, 2vw, 1.75rem); border-left: var(--hair) solid var(--line); }
 }
 
-/* hc17: §06 is set like §03 from 601 px, the plate under its head, its halves meeting on one record line */
 #marketplace .sp-panels { align-items: end; }
-/* the side labels stand on their lines (--y: the first stream's crest; the demand rail), half an em up */
+
 #marketplace .sp-half .hp-lab--khaki { transform: translate(0, calc(-100% - .625em)); }
-/* hc21: the demand half in the supply's 600 x 300 box; stacked, it gives back the 130 empty units */
+
 @media (max-width: 600px) { #marketplace .sp-half + .sp-half { margin-top: calc(-130% / 6); } }
-/* hc20-21: §06 draws itself once on reveal, whole by .85 s; the still at rest, without JS, reduced, in print */
+@media (min-width: 601px) and (max-width: 960px) and (min-height: 600px) {
+  #marketplace .sp-panels { grid-template-columns: minmax(0, 1fr); row-gap: .875rem; }
+  #marketplace .sp-half + .sp-half { margin-top: calc(-130% / 6); }
+  #marketplace .hp-lab--n { font-size: var(--fs-small); letter-spacing: 0; }
+}
+
 #marketplace .hp-rec { transform-box: fill-box; transform-origin: center; }
 @media screen and (prefers-reduced-motion: no-preference) {
   #marketplace .will-reveal.is-in:not(.is-cut) .pl-draw { animation: mk-wipe .5s var(--ease-draw) 50ms backwards; }
@@ -607,11 +626,10 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
 }
 @keyframes mk-wipe { from { clip-path: inset(-6% 100% -6% -6%) fill-box; } to { clip-path: inset(-6%) fill-box; } }
 
-/* hc13r (PLAT-4): §03 and §04 end on the chapter foot (no override needed) */
 #mcp .dpl-plate { max-width: 25rem; }
-/* hc25: the three drawings on one baseline (y 88), each label 5 units off its art */
+
 #mcp .hp-lab { transform: translate(var(--tx, 0%), var(--ty, 0%)); }
-/* §04's cells are one ruled register at every width: a row of three from 961 px (hc5), ruled rows below (hc22) */
+
 #mcp .dpl { gap: 0; border-top: var(--hair) solid var(--line-strong); border-bottom: var(--hair) solid var(--line); }
 #mcp .dpl-col h3 { margin-bottom: 0; }
 @media (min-width: 961px) {
@@ -631,7 +649,7 @@ body[data-page="lifecycles"] .orb-cap { justify-content: flex-start; column-gap:
 }
 
 body[data-page="lifecycles"] main > section.section { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 40rem); }
-/* the chapters' drawn heights (hc13r, cis_lc.py): phones, <= 360, tablets, from 961 px */
+
 #test { --cis: 38.125rem; } #lc01 { --cis: 55rem; } #desk { --cis: 79rem; } #classes { --cis: 49rem; }
 @media (max-width: 360px) { #classes { --cis: 66rem; } }
 @media (min-width: 601px) {
@@ -644,7 +662,6 @@ body[data-page="lifecycles"] main > section.section { content-visibility: auto; 
 @media (min-width: 1280px) { #lc01 { --cis: 48.25rem; } }
 @media print { body[data-page="lifecycles"] main > section.section { content-visibility: visible; } }
 
-
 @media (max-width: 420px) {
   body[data-page="lifecycles"] .desk .dk-ev .dk-dot { display: none; }
   body[data-page="lifecycles"] .desk .dk-ev b { margin-right: .55em; }
@@ -656,8 +673,6 @@ body[data-page="lifecycles"] main > section.section { content-visibility: auto; 
   body[data-page="lifecycles"] .desk .dk-ev b { letter-spacing: .03em; margin-right: .5em; }
 }
 
-
-
 @media (min-width: 1280px) and (min-height: 720px) {
   #lc01 .lc-row { align-items: start; }
   #lc01 .lc-row > .lc-how { position: sticky; top: calc(var(--nav-h) + clamp(1.5rem, 4vh, 3rem)); }
@@ -666,8 +681,8 @@ body[data-page="lifecycles"] main > section.section { content-visibility: auto; 
 body[data-page="lifecycles"] .desk { scroll-margin-top: clamp(.75rem, 1.6vw, 1.5rem); }
 body[data-page="lifecycles"] .desk :is(.desk-legend, .desk-legend .desk-axis, .desk-stats span, .desk-controls label, .dl-k, .dl-gates li, .dl-say b) { font-family: var(--sans); font-size: var(--fs-small); font-weight: 400; line-height: 1.35; letter-spacing: 0; text-transform: none; }
 body[data-page="lifecycles"] .desk .desk-kicker > span { white-space: nowrap; }
-body[data-page="lifecycles"] .desk :is(.desk-controls output, .dl-gates li b) { font: 400 var(--fs-small)/1.35 var(--mono); letter-spacing: 0; } /* hc13r: an instrument speaks at two sizes (SYSTEM.md 12) */
-body[data-page="lifecycles"] .desk .dl-k { font-weight: var(--w-ui); color: var(--fg); } /* hc23: Inter labels on ink at the ink weight (site.css) */
+body[data-page="lifecycles"] .desk :is(.desk-controls output, .dl-gates li b) { font: 400 var(--fs-small)/1.35 var(--mono); letter-spacing: 0; }
+body[data-page="lifecycles"] .desk .dl-k { font-weight: var(--w-ui); color: var(--fg); }
 body[data-page="lifecycles"] .desk .dl-k span { font-weight: 400; }
 body[data-page="lifecycles"] .desk .dl-say { font-size: var(--fs-small); }
 body[data-page="lifecycles"] .desk .dl-say b { font-weight: var(--w-ui); }

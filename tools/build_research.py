@@ -893,6 +893,9 @@ for i, post in enumerate(ordered):
     # the reading order 01-10 (isPartOf is already the CreativeWorkSeries, with its position)
     rel_links = "".join(f'  <link rel="{r}" href="{HOME}{q["file"]}">\n' for r, q in (("prev", prev), ("next", nxt)) if q)
     long_title = len(re.sub(r" A Research Note on .+$", "", title)) > 52
+    # hc26r (RES-1, SYS-2 "the drawing travels"): the hero's figure is the page's one data-vt-dest (site.css names it
+    # `fig`), so the drawing a link carries (the index's plate, Home §05's marks) becomes it over the page turn. Its still
+    # is whole at the first paint, so it lands drawn. The pager carries no drawing, so it has no source (notes/research.md)
     first = "<a class='pager-card' href='../research.html'><span class='k'>← Research</span><h3>All ten notes</h3></a>"
     last = "<a class='pager-card next' href='../access.html'><span class='k'>Next →</span><h3>Bring us a lifecycle.</h3></a>"
     page = f'''<!DOCTYPE html>
@@ -913,7 +916,7 @@ for i, post in enumerate(ordered):
 {nav}
   <main id="main">
     <section class="page-hero page-hero--dark is-dark grain article-hero" style="{still_geo(post['fig'])}">
-      <div class="figure-stage article-figure has-still" data-figure="{post['fig']}" data-spin="0.10" data-plate data-rest="2.5" data-bbox aria-hidden="true">{note_still(post['fig'])}{still_keys(post['fig'])}<canvas></canvas>{labels_html(post['fig'])}</div>
+      <div class="figure-stage article-figure has-still" data-figure="{post['fig']}" data-spin="0.10" data-plate data-rest="2.5" data-bbox data-vt-dest aria-hidden="true">{note_still(post['fig'])}{still_keys(post['fig'])}<canvas></canvas>{labels_html(post['fig'])}</div>
       <div class="container">
         <div class="article-hero-grid">
           <div>
@@ -967,12 +970,14 @@ nav, foot = chrome("", "research")
 rows = []
 # cut (1 Nov): a row is the note's number, its title and its read time; the summaries under the titles are gone (the
 # plate beside the list shows each note's idea). The row carries the plate's words for that note: what is drawn (the
-# phone strip) and the hedge; hc23: the strip's shorter line (STRIP)
+# phone strip) and the hedge; hc23: the strip's shorter line (STRIP). hc26r (RES-1): each row's link names the plate
+# (data-vt-src, the figure-stage's id) as the drawing that travels into the note's hero; research.js keeps it off a row
+# whose figure the plate has not turned to yet
 for post in ordered:
     t, h = CAPTIONS[post["fig"]]
     cap = " ".join(f'data-cap-{k}="{H.escape(v, quote=True)}"' for k, v in (("t", t), ("s", STRIP[post["fig"]]), ("h", h)) if v)
     rows.append(f'''          <li class="post" data-figure-target="{post['fig']}" data-figure-stage="research-figure" {cap}>
-            <a href="{post['file']}">
+            <a href="{post['file']}" data-vt-src="research-figure">
               <span class="post-n">{post['order']:02d}</span>
               <div class="post-main">
                 <h3>{title_html(post['title'])}</h3>

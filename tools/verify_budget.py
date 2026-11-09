@@ -193,7 +193,9 @@ async def cls_latency(b):
     return total < 0.1, f"index.html@390x844, latency 700 ms: CLS {total:.4f} over {len(ls)} shifts (largest {[(e['t'], round(e['v'], 4), e['src']) for e in big]}); budget < 0.1"
 
 
-OFFSCREEN = """(() => { const out = []; for (const a of document.getAnimations()) { if (a.playState !== 'running') continue;
+# hc26r (system): an animation on a scroll or view timeline (the scene primitive, Proof's drain) only moves with the scroll:
+# off screen it does no work, so it is not counted (check_static offscreen_pause skips it the same way)
+OFFSCREEN = """(() => { const out = []; for (const a of document.getAnimations()) { if (a.playState !== 'running' || (a.timeline && !(a.timeline instanceof DocumentTimeline))) continue;
     const t = a.effect && a.effect.target; if (!t || !t.getBoundingClientRect) continue; const r = t.getBoundingClientRect();
     if (r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth)
       out.push((a.animationName || a.transitionProperty || a.constructor.name) + ' on ' + t.tagName.toLowerCase() + '.' + String(t.className && t.className.baseVal !== undefined ? t.className.baseVal : t.className).trim().split(/\\s+/).slice(0, 2).join('.') + (a.effect.pseudoElement || '')); }

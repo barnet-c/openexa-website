@@ -83,10 +83,16 @@ async def main():
         await pg.goto(f"{BASE}/company.html", wait_until="load"); await pg.wait_for_timeout(2500)
         assert await pg.locator("#company-figure").evaluate("el => el.classList.contains('figure-ready')")
         await pg.screenshot(path=shot(f"company-hero.png"))
-        await pg.locator('.company-modes button[data-figure-target="swarm"]').click(); await pg.wait_for_timeout(1500)
+        # hc26r (COMP-1; integrate, standing in for tests): the hero opens on Specialize ("swarm"), so the walk asserts the
+        # opening state and then presses the other two modes, Coordinate and Act: each switches the formation and its caption
         assert await pg.locator("#company-figure").get_attribute("data-figure-current") == "swarm"
+        assert await pg.locator('.company-modes button[data-figure-target="swarm"]').get_attribute("aria-pressed") == "true"
         assert (await pg.locator("[data-plate-label]").inner_text()).startswith("Narrow agents"), await pg.locator("[data-plate-label]").inner_text()
         await pg.screenshot(path=shot(f"company-specialize.png"))
+        await pg.locator('.company-modes button[data-figure-target="company"]').click(); await pg.wait_for_timeout(1500)
+        assert await pg.locator("#company-figure").get_attribute("data-figure-current") == "company"
+        assert (await pg.locator("[data-plate-label]").inner_text()).startswith("The swarm as one body"), await pg.locator("[data-plate-label]").inner_text()
+        await pg.screenshot(path=shot(f"company-coordinate.png"))
         await pg.locator('.company-modes button[data-figure-target="boundary"]').click(); await pg.wait_for_timeout(1500)
         assert await pg.locator("#company-figure").get_attribute("data-figure-current") == "boundary"
         assert (await pg.locator("[data-plate-label]").inner_text()).startswith("Decide above"), await pg.locator("[data-plate-label]").inner_text()

@@ -29,7 +29,10 @@ async def main():
         await pg.wait_for_timeout(2500)
         assert await pg.evaluate("document.querySelector('#company-figure').classList.contains('figure-ready')"), "company figure not ready"
         await pg.screenshot(path=str(OUT / "company-hero.png"))
-        for name in ("swarm", "boundary"):  # Specialize, Act (Coordinate = "company" is the default)
+        # hc26r (COMP-1): Specialize ("swarm") is the default now; the opening state, then Coordinate and Act
+        await expect(pg.locator('button[data-figure-target="swarm"]')).to_have_attribute("aria-pressed", "true")
+        assert await pg.evaluate("document.querySelector('#company-figure').dataset.figureCurrent") == "swarm"
+        for name in ("company", "boundary"):  # Coordinate, Act
             await pg.locator(f'button[data-figure-target="{name}"]').click()
             await pg.wait_for_timeout(1500)
             await expect(pg.locator(f'button[data-figure-target="{name}"]')).to_have_attribute("aria-pressed", "true")

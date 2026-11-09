@@ -1,11 +1,6 @@
-/* OpenEXA: Home's start-up (home group). The page paints first; data-after-paint's scripts follow in order: loader, story
-   and site at the first paint (5 s net), the instruments as the curtain goes (2.5 s net), all at once on a page opened
-   mid-way. A reload or Back lands the reader in the chapter they left in the first frame (the browser's restore would
-   land on the static figures, shorter than the live ones). .story-wait / .story-failed mark story.js. */
+/* OpenEXA: Home's start-up (home group): paint first, then data-after-paint's scripts in order. */
 (function () {
   'use strict';
-  // §04 at every width (hc14; phones only until then): the chain shows records #4f23-#4f26; the control, an edit or
-  // 'Change a record' opens all eight
   const chain = document.querySelector('[data-chain]'), more = chain && chain.querySelector('[data-chain-more]');
   if (more) {
     const set = (open) => {
@@ -22,21 +17,74 @@
 (function () {
   'use strict';
   const me = document.currentScript, root = document.documentElement;
-  // (hc14, integrate) the footer's legal fold before the first paint, as afterpaint.js does and as on the pages that load
-  // site.js at once: made after the paint, it took ~190 px out of the footer, so a page reloaded at its foot jumped (CLS
-  // .04-.06). site.js keeps the same code (and skips a fold that exists); without JavaScript the disclosures stay open
   const disc = document.querySelector('.footer .disc');
   if (disc && !disc.closest('details')) {
     const d = document.createElement('details'), s = document.createElement('summary');
     d.className = 'footer-legal'; s.textContent = 'Legal & disclosures';
     disc.before(d); d.append(s, disc);
   }
-  // (hc15) the loader's lock (site.css body.is-loading: overflow hidden) takes a classic scrollbar away and gives it back
-  // as it lifts: where a scrollbar takes width, its gutter is kept from the first paint (home.css html.sb-keep), so the
-  // page never moves sideways. (integrate hc15) only there: overlay and hidden scrollbars take none and keep none
+  const OXA = window.OXA = window.OXA || {};
+  if (!OXA.tapThrough) {
+    OXA.tapThrough = true;
+    let tap = null;
+    document.addEventListener('pointerdown', e => {
+      const vt = document.activeViewTransition;
+      tap = null;
+      if (!vt || e.target !== root || e.button !== 0) return;
+      tap = { x: e.clientX, y: e.clientY };
+      try { vt.skipTransition(); } catch (err) { }
+    }, true);
+    document.addEventListener('click', e => {
+      if (!tap || e.target !== root) return;
+      const { x, y } = tap;
+      tap = null;
+      requestAnimationFrame(() => {
+        const el = document.elementFromPoint(x, y), t = el && el.closest('a[href], button, summary, label, input, select, textarea, [role="button"], [tabindex]');
+        if (!t || t === root) return;
+        if (t.matches('input, select, textarea, [tabindex]:not(a, button, summary, label, [role="button"])')) t.focus(); else t.click();
+      });
+    }, true);
+  }
+  if (!OXA.figs) {
+    const figs = OXA.figs = [], all = s => Array.from(document.querySelectorAll(s));
+    const figSet = (el, v) => { el.style.setProperty('view-transition-name', v); figs.push(el); };
+    const figClear = () => figs.splice(0).forEach(el => el.style.removeProperty('view-transition-name'));
+    const docOf = u => { try { const x = new URL(u, location.href); return x.origin + x.pathname.replace(/(\/index)?(\.html)?\/*$/, ''); } catch (err) { return ''; } };
+    const inView = el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth; };
+    const srcOf = a => a && (a.matches('.vt-src') ? a : a.querySelector('.vt-src') || (a.dataset.vtSrc ? document.getElementById(a.dataset.vtSrc) : null));
+    const pair = v => { try { if (v === undefined) return JSON.parse(sessionStorage.getItem('oxa-vt') || 'null'); sessionStorage.setItem('oxa-vt', JSON.stringify(v)); } catch (err) { } return null; };
+    let lastLink = null;
+    document.addEventListener('click', e => { lastLink = (e.target.closest && e.target.closest('a[href]')) || null; }, true);
+    addEventListener('pageswap', e => {
+      figClear();
+      const a = e.activation;
+      if (!e.viewTransition || !a || !a.entry) return;
+      const to = docOf(a.entry.url), me = docOf(location.href), back = a.navigationType === 'traverse', p = pair();
+      const home = back && p && p.to === me && p.from === to;
+      all('[data-vt-dest]').forEach(d => { if (!home || !inView(d)) figSet(d, 'none'); });
+      if (back) return;
+      const src = lastLink && docOf(lastLink.href) === to ? srcOf(lastLink) : null;
+      if (!src || !inView(src)) return;
+      figSet(src, 'fig');
+      pair({ from: me, to });
+    });
+    addEventListener('pagereveal', e => {
+      figClear();
+      const a = window.navigation && navigation.activation;
+      if (!e.viewTransition || !a) return;
+      all('[data-vt-dest]').forEach(d => { if (!inView(d)) figSet(d, 'none'); });
+      e.viewTransition.ready.then(() => { if (document.getAnimations().some(x => x.effect && x.effect.pseudoElement === '::view-transition-old(fig)')) all('[data-vt-dest]').forEach(d => d.getAnimations({ subtree: true }).forEach(x => x.cancel())); }, () => { });
+      if (a.navigationType !== 'traverse' || !a.from) return;
+      const from = docOf(a.from.url), p = pair();
+      if (!p || p.from !== docOf(location.href) || p.to !== from) return;
+      const src = all('a[href]').filter(l => docOf(l.href) === from).map(srcOf).find(x => x && inView(x));
+      if (!src) return;
+      all('[data-vt-dest]').forEach(d => figSet(d, 'none'));
+      figSet(src, 'fig');
+    });
+    addEventListener('pageshow', e => { if (e.persisted) figClear(); });
+  }
   if (window.innerWidth > root.clientWidth) root.classList.add('sb-keep');
-  // an engine whose instrument the page does not draw is not fetched (a safety net: Home's list dropped ledger.js and
-  // lane.js on 1 Nov, when its lane and running log left the page; hc5-hc10: §02 drew Platform's plate still; hc11: that chapter left Home, the explorer is Platform's)
   const draws = { 'ledger.js': '[data-ledger]', 'lane.js': '[data-lane]', 'arch.js': '[data-arch]' };
   const list = ((me && me.getAttribute('data-after-paint')) || '').split(/\s+/).filter(src => {
     const k = src && draws[src.split('/').pop()];
@@ -45,10 +93,6 @@
   if (!list.length) return;
   if (list.some(src => /story\.js$/.test(src))) root.classList.add('story-wait');
   const FIRST = /(?:^|\/)(?:loader|story|site)\.js$/;
-  // (award a2) the instruments at the curtain run one per frame, in the list's order: fetched at once (preload), each a
-  // frame after the one before it has run (together they made one 100+ ms frame in the hand-off on a 4x-throttled phone).
-  // The first batch (loader, story, site) still runs at once: the loader's hand-off, and so the headline, waits for the
-  // overture's first frame and the window's load, and spacing that batch put both ~75 ms later in Lighthouse.
   const queue = [];
   let pumping = false;
   const script = (src) => {
@@ -66,7 +110,7 @@
     s.addEventListener('load', on); s.addEventListener('error', on);
     document.body.appendChild(s);
   };
-  const add = (srcs, done) => { // at once, in order
+  const add = (srcs, done) => {
     let last = null;
     srcs.forEach(src => document.body.appendChild(last = script(src)));
     if (done && last) { last.addEventListener('load', done); last.addEventListener('error', done); }
@@ -79,23 +123,20 @@
   const back = /^(reload|back)/.test(nav.type);
   let started = false, later = back || location.hash.length > 1, at = null, moved = 0;
   const secs = () => [...document.querySelectorAll('main > section[id]')];
-  // while the instruments grow, the chapters above the place are no scroll anchors: the place holds
   const hold = (on) => { for (const c of secs()) { if (c.id === at[0]) break; c.style.overflowAnchor = on ? 'none' : ''; } };
   const land = () => { const e = document.getElementById(at[0]); if (e && !moved) scrollTo({ top: e.getBoundingClientRect().top + scrollY + at[1], behavior: 'instant' }); };
   try {
     at = back && JSON.parse(sessionStorage.getItem(K));
-    // the place, read as scrolling settles (by pagehide the page has already reacted to being hidden)
     let place = null, pt = 0;
     addEventListener('scroll', () => { clearTimeout(pt); pt = setTimeout(() => { const e = secs().filter(c => c.getBoundingClientRect().top < innerHeight / 3).pop(); place = e ? [e.id, -Math.round(e.getBoundingClientRect().top)] : null; }, 300); }, { passive: true });
     addEventListener('pagehide', () => {
       sessionStorage.setItem(K, JSON.stringify(place));
-      if (place) H.scrollRestoration = 'manual'; // (in the overture the browser's is right)
+      if (place) H.scrollRestoration = 'manual';
     });
     addEventListener('pageshow', e => { if (e.persisted) H.scrollRestoration = 'auto'; });
-  } catch (e) { /* no storage */ }
+  } catch (e) { }
   if (at) { ['wheel', 'touchstart', 'keydown'].forEach(t => addEventListener(t, () => { moved = 1; }, { once: true, passive: true })); hold(1); requestAnimationFrame(land); }
   const rest = () => { if (later) return; later = true; spread(list.filter(src => !FIRST.test(src))); };
-  // '100' sets the curtain going (.is-done; its beat is a CSS delay the compositor runs): the instruments start then
   const lifted = () => {
     const l = document.querySelector('.loader'), up = () => !l.isConnected || l.classList.contains('is-done');
     if (!l || up()) return rest();

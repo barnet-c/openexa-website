@@ -1,94 +1,75 @@
-/* OpenEXA: Company and Access, loaded after site.css on company.html and access.html only. Tokens only (no new colours
-   or faces); every rule scoped to these pages; :hover inside @media (hover: hover); a still state under reduced motion;
-   print reads on white. Budget: gzip -9 <= 12,000 bytes (check_static). History: .shots/v2x/notes/company.md. */
+/* OpenEXA: Company and Access (company.html, access.html), loaded after site.css. Tokens only; every rule scoped to these pages. Budget: gzip -9 <= 12,000 bytes (check_static). Rationale and history: .shots/v2x/notes/company.md. */
 
-/* ---------------------------------------------------------------- Company: the hero (v2x) */
-/* the plate is drawn twice: a still SVG engraving (first paint, no JS, no WebGL), then the WebGL swarm over it */
 @media (min-width: 961px) {
   [data-page="company"] .company-hero .container { grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr); }
   [data-page="company"] .company-sculpture { aspect-ratio: 1.25; }
 }
 [data-page="company"] .company-sculpture .figure-stage.no-figure::after { display: none; }
-/* the kicker in Home's voice (site.css .hero-kicker), at Home's size; the rule stays on the first line */
 [data-page="company"] .company-kicker { --b: calc(1px * var(--stroke)); font-size: var(--fs-body); margin-bottom: 0; align-items: baseline; gap: 1rem; }
 [data-page="company"] .company-kicker::before { flex: none; align-self: flex-start; width: 2.25rem; height: var(--b); margin-top: calc(.5lh - var(--b) / 2); }
-[data-page="company"] .company-kicker .nowrap { margin-left: .14em; } /* the dot clears the italic y's tail */
+[data-page="company"] .company-kicker .nowrap { margin-left: .14em; }
 @media (max-width: 960px) and (max-height: 520px) and (min-width: 600px) { [data-page="company"] .company-hero .company-kicker + h1 { margin-top: .75rem; } }
 [data-page="access"] .eyebrow { align-items: baseline; }
-.plate-still { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 1s var(--ease); }
+[data-page="company"] :is(.company-sculpture, .plate-still) { --figure-scale: 1.08; }
+.plate-still { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; fill: none; stroke-linecap: round; scale: calc(var(--figure-scale, 1) / .84); transition: opacity 1s var(--ease); }
+.plate-still path { vector-effect: non-scaling-stroke; stroke: var(--paper); stroke-width: .1875rem; stroke-opacity: .7; }
+@media (max-width: 759.98px) { .plate-still { scale: calc(var(--figure-scale, 1) / .84 * .86); } .plate-still path { stroke-width: .125rem; } }
+.plate-still .far { stroke-opacity: .4; }
+.plate-still .k1 { stroke: var(--khaki); }
+.plate-still .k2 { stroke: var(--signal-bright); stroke-opacity: .9; }
+.plate-still .k2.far { stroke-opacity: .6; }
 .figure-stage.figure-ready ~ .plate-still { opacity: 0; }
-.plate-still pattern circle { fill: rgba(245, 242, 236, .62); }
-.plate-still .ps-rim { fill: none; stroke: rgba(245, 242, 236, .22); stroke-width: 1; }
-.plate-still .ps-o { fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 0 6.5; }
-.plate-still .ps-o--paper { stroke: rgba(245, 242, 236, .55); }
-.plate-still .ps-o--khaki { stroke: var(--khaki); opacity: .7; }
-.plate-still .ps-o--green { stroke: var(--signal-bright); stroke-width: 2.6; }
-/* the readout is site.css's .figure-cap, set closer */
+.figure-stage.no-figure ~ .plate-still { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .plate-still { transition: none; } }
 .company-readout { margin: .875rem 0 0; }
 [data-page="company"] .company-readout .fc-t { color: var(--fg); }
 [data-page="company"] .company-modes { margin-top: 1.125rem; }
-/* hc8: Pause motion on the caption row (the plate's foot): right edge on the plate's, centred on the
-   readout's two lines (--co-cap: title line, row gap, hedge line). The lines keep 8rem clear (no title wraps from 360 px);
-   under 360 a longer mode name wraps, so the readout keeps three lines' room and the modes never move on a tap */
 [data-page="company"] .company-plate { --co-cap: calc(1.5rem + 1.5 * var(--fs-small)); }
 @media (max-width: 960px) { [data-page="company"] .company-plate { --co-cap: calc(1.25rem + 3 * var(--hair) + 1.5 * var(--fs-small)); } }
-[data-page="company"] .company-sculpture { z-index: 1; } /* the control hangs below the plate, over the readout's box */
-[data-page="company"] .company-sculpture > .figure-motion { --b-h: 2.25rem; top: calc(100% + .875rem + (var(--co-cap) - var(--b-h)) / 2); right: 0; bottom: auto; } /* no transform: a half-pixel translate would blur its hairline */
-@media (pointer: coarse) { [data-page="company"] .company-sculpture > .figure-motion { --b-h: 2.75rem; } } /* site.css's finger height */
+[data-page="company"] .company-sculpture { z-index: 1; }
+[data-page="company"] .company-sculpture > .figure-motion { --b-h: 2.25rem; top: calc(100% + .875rem + (var(--co-cap) - var(--b-h)) / 2); right: 0; bottom: auto; }
+@media (pointer: coarse) { [data-page="company"] .company-sculpture > .figure-motion { --b-h: 2.75rem; } }
 [data-page="company"] .company-readout > * { max-width: calc(100% - 8rem); }
 @media (max-width: 359.98px) and (scripting: enabled) { [data-page="company"] .company-readout { min-height: calc(var(--co-cap) + var(--fc-lh)); justify-content: flex-start; } }
 .arr--down { transform: rotate(90deg); }
-@media (hover: hover) { .btn:hover .arr--down { transform: rotate(90deg) translateX(.1875rem); } }
-@media (min-width: 601px) and (max-width: 960px) { /* tablet: copy left, plate right (not a stretched phone) */
+@media (hover: hover) { .link-arrow:hover .arr--down { transform: rotate(90deg) translateX(.1875rem); } }
+[data-page="company"] .co-go { margin: clamp(1.5rem, 2.6vw, 2.25rem) 0 0; }
+@media (min-width: 601px) and (max-width: 960px) {
   [data-page="company"] .company-hero { padding-top: calc(var(--nav-h) + 3rem); padding-bottom: 3.5rem; }
   [data-page="company"] .company-hero .container { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 1.75rem; }
   [data-page="company"] .company-sculpture { margin-top: 0; }
 }
-/* hc14: on a portrait tablet the hero is the first screen, as at every other width and on every other page at 768 (the
-   story's head no longer shares it with the H1: four type sizes a screen) */
 @media (min-width: 601px) and (max-width: 960px) and (orientation: portrait) { [data-page="company"] .company-hero { min-height: 100svh; display: flex; align-items: center; } }
-@media (max-width: 960px) { [data-page="company"] .company-hero .hero-cta { gap: .625rem; } [data-page="company"] .company-hero .hero-cta .btn { padding-left: 1.1em; padding-right: 1.1em; } }
 @media (max-width: 600px) {
   [data-page="company"] .company-hero { padding-bottom: 2.75rem; }
   [data-page="company"] .company-plate { margin-top: .5rem; }
-  [data-page="company"] .company-hero .hero-cta { margin-top: 1.75rem; }
 }
 
-/* ---------------------------------------------------------------- Company §03: the team's chapter head (hc5) */
-/* site.css's .ch-head: the heading, its line under it; from 1100 px the three figures are the spread's key, in the third
-   column on the heading's last baseline (row 1; the line is row 2), each label on one line in the column (1100 px: 337) */
 @media (min-width: 1100px) {
   [data-page="company"] .team-head > .crew-stats { grid-row: 1; }
   [data-page="company"] .team-head > .crew-stats > div { padding-inline: clamp(.875rem, 2vw - .5rem, 1.75rem); }
   [data-page="company"] .team-head > .crew-stats span { white-space: nowrap; }
 }
 [data-page="company"] .crew-stats > div:last-child { padding-right: 0; }
-/* the line names seven firms, each kept whole (no-break spaces in build_team.py): 42ch, not the head's 36, sets them in
-   three lines, "… at Google, / … Goldman Sachs, / Bank of America and JPMorgan Chase." (hc19: 40ch made four) */
 [data-page="company"] .team-head > .ch-line { max-width: 42ch; }
-/* hc20: the head (25ch) on one line wherever it fits, as Platform's #swarm head; phones balance it in two */
 [data-page="company"] .team-head > .ch-title { max-width: none; }
 :is([data-page="company"], [data-page="access"]) .keep { display: inline-block; }
 
-/* ---------------------------------------------------------------- Company §01: the story as a register */
-/* four entries under rules in the site's status code: done (ink), now (green), next (dashed khaki); no progress line */
 [data-page="company"] .story-h { max-width: 15ch; margin: 0; text-wrap: balance; }
-/* hc14: the chapter's one line (VOICE 3, from the old §04), two beats, the second kept whole */
 [data-page="company"] .story-line { margin-bottom: clamp(2.75rem, 6vw, 5.5rem); }
 [data-page="company"] .timeline { list-style: none; margin: 0; padding: 0; gap: 0 clamp(1.125rem, 2.4vw, 2rem); }
 [data-page="company"] .timeline::before, [data-page="company"] .timeline::after { display: none; }
-[data-page="company"] .timeline { --w: calc(1px * var(--stroke)); } /* line and nodes on the stroke token */
+[data-page="company"] .timeline { --w: calc(1px * var(--stroke)); }
 [data-page="company"] .timeline .step { padding: 1.75rem 0 0; border-top: var(--w) solid var(--fg); }
 [data-page="company"] .timeline .step::before { top: calc(-.34375rem - var(--w) / 2); width: .6875rem; height: .6875rem; background: var(--bg); border: var(--w) solid var(--fg); box-shadow: none; transition: none; }
 [data-page="company"] .timeline .step.now { border-top: calc(2 * var(--w)) solid var(--accent); }
-@media (min-width: 601px) { [data-page="company"] .timeline .step.now { padding-top: calc(1.75rem - var(--w)); } } /* the steps beside it share its baseline */
+@media (min-width: 601px) { [data-page="company"] .timeline .step.now { padding-top: calc(1.75rem - var(--w)); } }
 [data-page="company"] .timeline .step.now::before { top: calc(-.375rem - var(--w)); width: .75rem; height: .75rem; background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 .25rem var(--bg); }
 [data-page="company"] .timeline .step.is-next { border-top: var(--w) dashed var(--khaki-deep); }
 [data-page="company"] .timeline .step.is-next::before { border: var(--w) dashed var(--khaki-deep); }
 [data-page="company"] .timeline .k { margin-bottom: .875rem; }
 [data-page="company"] .timeline .now .k { color: var(--signal-ink); }
 [data-page="company"] .timeline h3 { max-width: 16ch; text-wrap: balance; }
-/* "Next" opens note 10: the link hairline inks on hover and focus, the arrow rides the last word */
 [data-page="company"] .story-link { text-decoration: underline max(var(--hair), .0625rem) var(--line-strong); text-underline-offset: .2em; transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
 [data-page="company"] .story-link .arr { display: inline-block; width: .6em; height: .6em; margin-left: .25em; vertical-align: .04em; transition: transform var(--dur-move) var(--ease-out); }
 [data-page="company"] .story-link:focus-visible { text-decoration-color: currentColor; }
@@ -98,10 +79,6 @@
 @media (max-width: 860px) { [data-page="company"] .timeline .step { padding-left: 0; } }
 @media (max-width: 600px) { [data-page="company"] .timeline { grid-template-columns: 1fr; row-gap: 1.625rem; } [data-page="company"] .timeline .step { padding-top: 1.25rem; } [data-page="company"] .timeline .k { margin-bottom: .5rem; } [data-page="company"] .timeline h3 { max-width: none; } }
 
-/* ---------------------------------------------------------------- Company §03: the register */
-/* one entry per person: portrait, name and kicker, the line, the bio behind "Bio" (opens in place); advisors the same,
-   smaller, without the line; from 1200 px both lists are two ruled columns (hc4, below); one portrait treatment
-   (build_team.py), the green ring on hover and focus */
 [data-page="company"] .team-head { margin-bottom: 0; }
 [data-page="company"] .crew-sub { display: block; border-top: 0; padding-top: 0; margin: clamp(3.5rem, 7vw, 6rem) 0 1.125rem; }
 [data-page="company"] .crew-sub--team { margin-top: clamp(3rem, 6vw, 5rem); }
@@ -112,25 +89,21 @@
 [data-page="company"] .crew--advisors > li { padding: 1.25rem 0; }
 [data-page="company"] .crew--advisors .ph { width: 4rem; height: 4rem; }
 [data-page="company"] .crew .ph img { filter: none; transform: none; transition: none; will-change: auto; }
-[data-page="company"] .crew .ph::before { opacity: .3; transition: none; } /* the dot field quieter */
+[data-page="company"] .crew .ph::before { opacity: .3; transition: none; }
 [data-page="company"] .crew .ph.grain::after { opacity: .14; }
 [data-page="company"] .crew > li:focus-within .ph img { filter: none; transform: none; }
 [data-page="company"] .crew > li:focus-within .ph::before { transform: none; opacity: .3; }
-/* a green ring outside the portrait, a paper gap between */
 [data-page="company"] .crew .ph { transition: box-shadow .35s var(--ease); }
 [data-page="company"] .crew .ph .ring { display: none; }
 [data-page="company"] .crew > li:focus-within .ph { box-shadow: inset 0 0 0 var(--hair) var(--line), 0 0 0 .25rem var(--bg), 0 0 0 .3125rem var(--accent); }
 [data-page="company"] .crew .who { grid-area: who; min-width: 0; }
 [data-page="company"] .crew h3 { margin: 0; font-size: var(--fs-heading); line-height: 1.1; text-wrap: balance; }
-/* a title, not data: Inter */
 [data-page="company"] .crew .role { margin-top: .375rem; font-family: var(--sans); font-size: var(--fs-small); line-height: 1.45; letter-spacing: 0; text-transform: none; color: var(--fg-2); }
-/* an open bio takes the full width; the pressed control does not move */
 [data-page="company"] .crew .what { grid-area: what; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 1.5rem; }
 [data-page="company"] .crew .what > p { flex: 0 0 100%; max-width: none; margin: 0 0 .375rem; font-size: var(--fs-small); line-height: 1.6; color: var(--fg-2); text-wrap: pretty; }
 [data-page="company"] .crew .links { margin: 0; padding-top: 0; gap: .25rem 1.25rem; font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; }
 [data-page="company"] .crew .links a { min-height: 2rem; text-underline-offset: .3125rem; }
 [data-page="company"] .crew .links .ext { text-decoration: none; display: inline-block; }
-/* the drawn arrow, clear of the underline */
 [data-page="company"] .crew .links .arr { width: 1em; height: 1em; margin-left: .43em; transition: transform var(--dur-move) var(--ease-out); }
 @media (hover: hover) { [data-page="company"] .crew .links a:hover .arr { transform: translateX(.3em); } }
 [data-page="company"] .crew-more { margin: 0; min-width: 0; }
@@ -143,7 +116,6 @@
 [data-page="company"] .crew-more[open] summary::after { transform: rotate(45deg); }
 [data-page="company"] .crew-bio { padding: .625rem 0 .875rem; }
 [data-page="company"] .crew-bio p { font-size: var(--fs-small); max-width: 64ch; text-wrap: pretty; }
-/* the three figures: serif, tabular; labels in Inter on one line */
 [data-page="company"] .crew-stats { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 0; margin-top: 2rem; padding-top: 0; border-top: var(--hair) solid var(--line-strong); }
 [data-page="company"] .crew-stats > div { padding: 1.125rem 1.75rem 0; border-left: var(--hair) solid var(--line); }
 [data-page="company"] .crew-stats > div:first-child { padding-left: 0; border-left: 0; }
@@ -160,12 +132,6 @@
   [data-page="company"] .crew > li:hover .ph { box-shadow: inset 0 0 0 var(--hair) var(--line), 0 0 0 .25rem var(--bg), 0 0 0 .3125rem var(--accent); }
   [data-page="company"] .crew > li:hover h3 { text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .375rem; text-decoration-color: var(--line-strong); }
 }
-/* hc4 (director item 6): a person reads as one unit at every width (the line sat ~450 px from its name at 1440, ~1,500
-   at 3840). 1025-1199: portrait | name block (20rem) | the line, starting right after the name; name and line share a
-   baseline. From 1200 the team takes the advisors' form (a4, design jury): two ruled columns on the grid's halves,
-   reading down (--rows from build_team.py, so the columns follow the roster), each person portrait | name and kicker over
-   the line, Bio and links; the team keeps its 6rem portrait and its line. The line's measure is 60ch of the small text
-   (the list's own font size, so ch counts its characters); the rules run the content width, as every register here */
 @media screen and (min-width: 1025px) {
   [data-page="company"] .crew { font-size: var(--fs-small); }
   [data-page="company"] .crew > li { grid-template-columns: 6rem 20rem minmax(0, 1fr); column-gap: clamp(1rem, 2.2vw, 2rem); }
@@ -173,11 +139,10 @@
 }
 @media screen and (min-width: 1200px) {
   [data-page="company"] .crew { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 5), auto); grid-auto-flow: column; column-gap: clamp(1rem, 2.2vw, 2rem); }
-  [data-page="company"] .crew > li { grid-template-columns: 6rem minmax(0, 1fr); grid-template-areas: "ph who" "ph what"; align-content: start; column-gap: 1.75rem; row-gap: .75rem; } /* an open bio grows the row: its neighbour keeps its lines at the top */
+  [data-page="company"] .crew > li { grid-template-columns: 6rem minmax(0, 1fr); grid-template-areas: "ph who" "ph what"; align-content: start; column-gap: 1.75rem; row-gap: .75rem; }
   [data-page="company"] .crew--advisors > li { grid-template-columns: 4rem minmax(0, 1fr); column-gap: 1.5rem; row-gap: .625rem; }
 }
 @media (max-width: 1024px) and (min-width: 961px) { [data-page="company"] .crew .ph { width: 5rem; height: 5rem; } [data-page="company"] .crew--advisors .ph { width: 4rem; height: 4rem; } [data-page="company"] .crew > li { grid-template-columns: 5rem minmax(0, 3fr) minmax(0, 5fr); } }
-/* tablets and phones: portrait | name, kicker, then the line, Bio and the links */
 @media (max-width: 960px) {
   [data-page="company"] .crew > li { grid-template-columns: 5rem minmax(0, 1fr); grid-template-areas: "ph who" "ph what"; row-gap: .75rem; }
   [data-page="company"] .crew .ph { width: 5rem; height: 5rem; }
@@ -195,25 +160,15 @@
 }
 @media (prefers-reduced-motion: reduce) { [data-page="company"] .crew .ph, [data-page="company"] .crew .links .arr, [data-page="company"] .crew-more-l { transition: none; } }
 
-/* ---------------------------------------------------------------- Company §02: the constants plate */
-/* hc15 (director 4.3): "How we build" sits between the story and the team (dark, paper-2, dark, paper, the dark close),
-   so the team (paper) meets the close as every page's last chapter does; hc14's hairline between two dark bands went */
-/* one loop of gates that changes with each lifecycle, and the four constants that do not. Inline SVG: complete
-   without JS, still under reduced motion; company.js walks a proposal through it and lights the constant being read. */
 #constants { overflow: clip; --kh: 2.75rem; }
-@media (pointer: coarse) { #constants { --kh: 3.25rem; } } /* the head holds a finger's 44 px control with room above its rule */
+@media (pointer: coarse) { #constants { --kh: 3.25rem; } }
 .kplate { position: relative; margin: 0; }
-/* hc1: the plate's head (system's instrument frame): what is happening on the left, in the label register (the one live
-   line on the plate), Pause motion boxed at the right end. Its height (--kh) is the old empty strip's, and the column
-   beside it is lifted by the same --kh, so the hairline under it still meets the first constant's rule from 961 px */
 .kplate-head { display: flex; align-items: center; gap: 1rem; height: var(--kh); margin-bottom: 1.125rem; border-bottom: var(--hair) solid var(--line); }
 .kplate-head > .figure-motion { margin-left: auto; flex: none; }
-.kplate-head > .instr-hedge { flex: none; } /* hc2: the hedge first, as on every instrument head (site.css); the line under the frame went */
-.kplate .k-state { margin: 0; min-width: 0; font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); text-wrap: balance; } /* hc2: the instrument head's register (site.css) */
+.kplate-head > .instr-hedge { flex: none; }
+.kplate .k-state { margin: 0; min-width: 0; font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); text-wrap: balance; }
 .kplate-art { position: relative; }
 .kplate-svg { display: block; width: 100%; height: auto; overflow: visible; }
-/* a4 (pixel): the plate's lines on the stroke tokens, whole device pixels at every size (non-scaling, as .hp-art);
-   dashes in --dash-u, so their texture keeps with the page */
 .kplate-svg * { vector-effect: non-scaling-stroke; }
 .kplate .k-loop { fill: none; stroke: var(--fg-3); stroke-width: var(--stroke); }
 .kplate .k-loop--up { stroke-dasharray: calc(3 * var(--dash-u)) calc(4 * var(--dash-u)); }
@@ -234,37 +189,29 @@
 .kplate .k-tok.is-ok { fill: var(--accent); }
 .kplate .k-tok.is-rej { fill: var(--reject); }
 .kplate .k-spur { fill: none; stroke: var(--reject); stroke-width: var(--stroke); stroke-dasharray: calc(2 * var(--dash-u)) calc(3 * var(--dash-u)); }
-/* a4 (pixel): the labels are HTML over the drawing, placed in the
-   plate's units (--x/--y in % of 640 x 470); a block above a line hangs from its bottom (--ty), so no size of the plate
-   brings a label onto its line. The Council's follows the Council (company.js). hc2 (director item 2): the caption register
-   (Inter at the small step, sentence case, paper .72), the lab's drawing words' register, no longer mono capitals */
 .kl-labs { position: absolute; inset: 0; pointer-events: none; }
 .kplate .kl { position: absolute; left: calc(var(--x) * 1%); top: calc(var(--y) * 1%); transform: translate(var(--tx, 0%), var(--ty, -50%)); font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; white-space: nowrap; color: rgba(245, 242, 236, .72); }
 .kplate .kl > span { display: block; }
 .kplate .kl--up { --ty: -100%; }
 .kplate .kl--dn { --ty: 0%; }
 .kplate .kl--in { --tx: -50%; }
-/* a moment of the walk */
 .kplate .is-hit { stroke: var(--accent); }
 .kplate .k-gate--up.is-hit > circle { stroke: var(--accent); }
 .kplate .k-gate--dn.is-hit { fill: var(--accent); stroke: var(--accent); }
 .kplate .k-gate.is-no > circle { stroke: var(--reject); }
 .kplate .k-lead.is-hit { stroke: var(--accent); }
-/* the constant being read: the rest of the plate steps back */
 .kplate-svg :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate .k-loop, .kplate .k-council > circle, .kplate .kl { transition: opacity .35s var(--ease), fill .35s var(--ease), color .35s var(--ease); }
 .kplate[data-on] .kplate-svg :where(.k-c1, .k-c2, .k-c3, .k-c4) > * { opacity: .3; }
 .kplate[data-on] .kl:is(.k-c1, .k-c3, .k-c4) { opacity: .6; }
 .kplate[data-on] .k-loop, .kplate[data-on] .k-council > circle { opacity: .55; }
 .kplate[data-on="c1"] :is(.kplate-svg .k-c1 > *, .kl.k-c1), .kplate[data-on="c2"] .kplate-svg .k-c2 > *, .kplate[data-on="c3"] :is(.kplate-svg .k-c3 > *, .kl.k-c3), .kplate[data-on="c4"] :is(.kplate-svg .k-c4 > *, .kl.k-c4) { opacity: 1; }
 .kplate[data-on="c2"] .k-agent { fill: var(--accent); }
-/* the lit word (fill too: verify_v9 company reads it) */
 .kplate[data-on="c1"] .k-c1 .kl--word, .kplate[data-on="c3"] .k-c3 .kl--box, .kplate[data-on="c4"] .k-c4 .kl--word { color: var(--accent); fill: var(--accent); }
 [data-page="company"] .constants > div::after { display: none; }
 @media (min-width: 961px) {
   [data-page="company"] .k-grid { align-items: start; margin-top: clamp(2rem, 4vw, 3.5rem); }
   [data-page="company"] .k-side { grid-column: 6 / -1; position: sticky; top: calc(var(--nav-h) + 2.5rem); padding: 0 0 0 clamp(1rem, 2vw, 2rem); margin-top: calc(.0625rem - var(--kh)); }
   [data-page="company"] .k-text { grid-column: 1 / span 5; }
-  /* one column of constants; the one being read carries a green rule */
   [data-page="company"] .constants { display: block; border: 0; }
   [data-page="company"] .constants > div { background: none; border: 0; border-top: var(--hair) solid var(--line); padding: 1.5rem 0 2.25rem; transition: border-color .35s var(--ease); }
   [data-page="company"] .constants > div.is-on { border-top-color: var(--accent); }
@@ -274,19 +221,15 @@
   [data-page="company"] .k-text { display: contents; }
   [data-page="company"] .k-side { order: 3; margin-top: clamp(2rem, 5vw, 3rem); }
   [data-page="company"] .k-text > .constants { order: 4; margin-top: clamp(1.25rem, 3vw, 2rem); }
-  [data-page="company"] .k-text > .mt-4 { order: 5; margin-top: clamp(1.5rem, 4vw, 2.5rem); } /* a3: no dark hole above or below the four */
-  /* tablet: quadrants; phone: four blocks */
+  [data-page="company"] .k-text > .mt-4 { order: 5; margin-top: clamp(1.5rem, 4vw, 2.5rem); }
   [data-page="company"] .constants { border: 0; }
   [data-page="company"] .constants > div { background: none; border: 0; padding: clamp(1.625rem, 3vw, 2.75rem) clamp(1.375rem, 3vw, 2.75rem) clamp(1.875rem, 3.4vw, 3rem) 0; }
   [data-page="company"] .constants > div:nth-child(even) { padding-left: clamp(1.375rem, 3vw, 2.75rem); padding-right: 0; }
   [data-page="company"] .constants > div:nth-child(odd) { border-right: var(--hair) solid var(--line); }
   [data-page="company"] .constants > div:nth-child(-n+2) { border-bottom: var(--hair) solid var(--line); }
 }
-@media (max-width: 600px) { /* phones: the plate keeps its four labels; the Council's and the running line give way */
+@media (max-width: 600px) {
   .kplate .kl--council, .kplate .k-state { display: none; }
-  /* (top/left here: the inline --x/--y would win) at 12 px the labels are wider than the room left of the loop: the two
-     layer labels name the loop's halves from inside it, on the boundary; the box is too small for its word, so the
-     word goes under it, and the ledger's under its strip */
   .kplate .kl.k-c1 { --tx: -50%; left: 63.28%; }
   .kplate .kl--up.k-c1 { top: 39.6%; }
   .kplate .kl--dn { top: 43.6%; }
@@ -300,7 +243,6 @@
 }
 @media (prefers-reduced-motion: reduce) { .kplate :where(.k-c1, .k-c2, .k-c3, .k-c4) > *, .kplate .k-loop, .kplate .k-council > circle, [data-page="company"] .constants > div { transition: none; } }
 
-/* ---------------------------------------------------------------- Company: print */
 @media print {
   .plate-still, .company-readout, .company-modes { display: none !important; }
   [data-page="company"] .crew > li { break-inside: avoid; }
@@ -308,18 +250,12 @@
   [data-page="company"] .crew > li { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); grid-template-areas: "who what"; grid-template-rows: auto; align-items: first baseline; }
 }
 
-/* ================================================================ Access */
-/* one band: the H1, then the form beside the letter this page writes as the visitor types (access.js); at 1440 x 900
-   the whole form and its button are on the first screen. The letter is the page's plate (paper-2, corner marks). */
 [data-page="access"] .access-hero { border-bottom: 0; padding-bottom: var(--sec-foot); }
 [data-page="access"] .access-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2.2vw, 2rem); align-items: start; }
 [data-page="access"] .access-h1 { grid-column: 1 / -1; max-width: none; margin: 0 0 clamp(1.5rem, 3.4vh, 3rem); }
 [data-page="access"] .access-form { grid-column: 1 / span 6; min-width: 0; }
 [data-page="access"] .access-letter { grid-column: 8 / -1; align-self: stretch; min-width: 0; }
-/* hc11: the H1 63 px under the bar at 1440 x 900 */
 @media (min-width: 961px) { [data-page="access"] .access-hero { padding-top: calc(var(--nav-h) + clamp(2.5rem, 7vh, 5rem)); } }
-/* hc7 (system's request, applied by integrate): the plate heroes' fold. The hero is the screen less 2.5rem, so the
-   fold shows a band of section 01's paper and its heading starts below it (it was sliced at 1920 and 3840) */
 @media (min-width: 961px) { [data-page="access"] .access-hero { min-height: calc(100vh - 2.5rem); min-height: calc(100svh - 2.5rem); } }
 @media (min-width: 601px) and (max-width: 960px) {
   [data-page="access"] .access-letter { grid-column: 7 / -1; padding-left: clamp(1rem, 2.2vw, 2rem); }
@@ -330,20 +266,17 @@
   [data-page="access"] .access-form { grid-column: 1 / -1; }
   [data-page="access"] .access-letter { display: none; }
 }
-/* a label, its field, a short gap; the field being written takes the green rule and its label turns green */
 [data-page="access"] .form { gap: clamp(.875rem, 2vh, 1.25rem); }
 [data-page="access"] .form .f { gap: .375rem; }
 [data-page="access"] .form .two { gap: clamp(.875rem, 2vh, 1.25rem) clamp(1rem, 2.2vw, 2rem); }
 [data-page="access"] .form :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { padding: .5rem 0; }
 [data-page="access"] .form textarea { min-height: 5.5rem; }
-/* hc11: beside the letter the button stays on the first screen down to 864 px tall (gaps 14 px at 900, 20 from 1080) */
 @media (min-width: 961px) { [data-page="access"] .form { gap: clamp(.75rem, 3.333vh - 1rem, 1.25rem); } }
 @media (min-width: 961px) and (max-height: 880px) { [data-page="access"] .form textarea { min-height: 4.75rem; } }
 [data-page="access"] .form .f > label:not(.f-check) { font-family: var(--sans); font-size: var(--fs-small); line-height: 1.4; letter-spacing: 0; text-transform: none; color: var(--fg); transition: color var(--dur-feedback) var(--ease-out); }
 [data-page="access"] .form .f:focus-within > label:not(.f-check) { color: var(--signal-ink); }
 [data-page="access"] .form .f-q { color: var(--fg-3); }
 [data-page="access"] .f-check span { text-wrap: pretty; }
-/* four choices, two by two: a drawn ring, a green dot when chosen, its rule drawn in signal; the whole cell chooses */
 [data-page="access"] .seg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 [data-page="access"] .seg .opt { position: relative; background: var(--bg); transition: background-color var(--dur-feedback) var(--ease-out); scroll-margin-top: calc(var(--nav-h) + 1.5rem); }
 [data-page="access"] .seg .opt::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: .125rem; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; transition: transform var(--dur-move) var(--ease-out); pointer-events: none; }
@@ -363,55 +296,42 @@
   [data-page="access"] .form input:hover, [data-page="access"] .form select:hover, [data-page="access"] .form textarea:hover { border-color: var(--fg); }
   [data-page="access"] .form .f-check:hover input:not(:checked) { border-color: var(--fg); background-color: rgba(14, 21, 18, .04); }
 }
-/* focus: the rule twice as thick in green; in forced colours the outline becomes a ring */
 [data-page="access"] .form input:focus-visible, [data-page="access"] .form select:focus-visible, [data-page="access"] .form textarea:focus-visible { border-color: var(--accent); box-shadow: 0 var(--hair) 0 0 var(--accent); outline: calc(2 * var(--hair)) solid transparent; outline-offset: .1875rem; }
 [data-page="access"] .form textarea::placeholder { color: var(--fg-3); }
-/* a refused field: its rule and line in reject red; focused, it takes the site's ring on top (2.4.13) */
 [data-page="access"] .form [aria-invalid="true"], [data-page="access"] .form [aria-invalid="true"]:focus-visible { border-color: var(--reject); }
 [data-page="access"] .form [aria-invalid="true"]:focus-visible { box-shadow: 0 var(--hair) 0 0 var(--reject); outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .1875rem; }
-/* autofill stays on paper, in ink; focus and refusal marks restated over it */
 @media (forced-colors: none) {
   [data-page="access"] .form :is(input, textarea, select):is(:autofill, :-webkit-autofill) { -webkit-text-fill-color: var(--fg); caret-color: var(--fg); box-shadow: inset 0 0 0 100vmax var(--bg); transition: border-color .25s, background-color 9999s 0s; }
   [data-page="access"] .form :is(input, textarea, select):is(:autofill, :-webkit-autofill):focus-visible { box-shadow: 0 var(--hair) 0 0 var(--accent), inset 0 0 0 100vmax var(--bg); }
   [data-page="access"] .form [aria-invalid="true"]:is(:autofill, :-webkit-autofill):focus-visible { box-shadow: 0 var(--hair) 0 0 var(--reject), inset 0 0 0 100vmax var(--bg); }
 }
 [data-page="access"] .f-err { margin: -.125rem 0 0; font-size: var(--fs-small); line-height: 1.45; color: var(--reject); text-wrap: balance; }
-/* access.js checks the form: "· required" in red, the letter's blank underlined in red */
 [data-page="access"] .form .f > :is(input, select, textarea) { scroll-margin-top: 2.5rem; }
 [data-page="access"] .form .f.is-refused .f-q { color: var(--reject); }
-[data-page="access"] .form .f.is-refused:focus-within > label:not(.f-check) { color: var(--fg); } /* a4: refused, the label does not turn green */
+[data-page="access"] .form .f.is-refused:focus-within > label:not(.f-check) { color: var(--fg); }
 [data-page="access"] .f-err:empty { display: none; }
-/* the select: no native chrome, the site's chevron */
 [data-page="access"] .form select { -webkit-appearance: none; appearance: none; padding-right: 1.875rem; cursor: pointer; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230E1512' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E") right .125rem center / 1rem 1rem no-repeat; }
-/* the attestation: a drawn box, a paper tick on ink when ticked */
 [data-page="access"] .f-check { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .75rem; align-items: start; font-family: var(--sans); font-size: var(--fs-small); line-height: 1.55; letter-spacing: 0; text-transform: none; color: var(--fg-2); cursor: pointer; }
 [data-page="access"] .form .f-check input { -webkit-appearance: none; appearance: none; width: 1.25rem; height: 1.25rem; margin: .0625rem 0 0; padding: 0; border: var(--hair) solid rgba(14, 21, 18, .55); border-radius: var(--r); background: transparent center / .875rem .875rem no-repeat; cursor: pointer; transition: background-color var(--dur-feedback) var(--ease-out), border-color var(--dur-feedback) var(--ease-out); }
 [data-page="access"] .form .f-check input:checked { background-color: var(--fg); border-color: var(--fg); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23F5F2EC' stroke-width='1.8'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E"); }
 [data-page="access"] .form .f-check input:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .1875rem; box-shadow: none; }
-/* the button and, beside it, what it does (two lines; under it where the column is narrow) */
 [data-page="access"] .form-go { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.5rem; }
 [data-page="access"] .form-note { flex: 1 1 15rem; margin: 0; max-width: 40ch; font-size: var(--fs-small); line-height: 1.5; color: var(--fg-3); text-wrap: wrap; }
-/* the result: the letter the page wrote, as the visitor's mail app will show it */
 [data-page="access"] .form-ok { padding: clamp(1.375rem, 3vw, 2.125rem); scroll-margin-top: 1rem; }
-/* the letter: a sheet of paper-2 stock, the hero plate's corner marks just outside its corners */
 .letter { position: relative; margin: 1.5rem 0 0; border: var(--hair) solid var(--line); background: var(--bg-2); }
 .letter[hidden] { display: none; }
 [data-page="access"] .access-letter .letter { margin-top: 0; }
 [data-page="access"] .access-letter .eyebrow { display: flex; margin: 0 0 1rem; }
-.letter .plate-marks { position: absolute; inset: calc(-.5rem - var(--hair)); pointer-events: none; } /* .5rem outside the sheet's edge */
+.letter .plate-marks { position: absolute; inset: calc(-.5rem - var(--hair)); pointer-events: none; }
 .letter .plate-marks i { --b: calc(1px * var(--stroke)); position: absolute; width: .875rem; height: .875rem; border: 0 solid var(--fg-3); }
 .letter .plate-marks i:nth-child(1) { left: 0; top: 0; border-width: var(--b) 0 0 var(--b); }
 .letter .plate-marks i:nth-child(2) { right: 0; top: 0; border-width: var(--b) var(--b) 0 0; }
 .letter .plate-marks i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 var(--b) var(--b); }
 .letter .plate-marks i:nth-child(4) { right: 0; bottom: 0; border-width: 0 var(--b) var(--b) 0; }
-@media (min-width: 601px) { [data-page="access"] .access-letter { padding-right: .5rem; } } /* the marks end on the column edge */
+@media (min-width: 601px) { [data-page="access"] .access-letter { padding-right: .5rem; } }
 .letter-head { display: grid; gap: .375rem; padding: .875rem 1.75rem; border-bottom: var(--hair) solid var(--line); font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; color: var(--fg-2); }
 .letter-head > span { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: .75rem; }
 .letter-head b { font-weight: 400; color: var(--fg-3); }
-/* a4 (design jury): the press shows on the letter. Final (a valid press), an ink hairline draws round the sheet from its
-   top-left corner both ways and closes at the bottom right, one --ease-draw pass, as the To / Subject register takes the
-   same solid rule; it says "written" in the marks' ink. A transition on --lp (access.js adds .is-closed once the letter is
-   on screen, so a phone's letter, hidden until placed, draws too); edit: open at once. Reduced motion: closed at once */
 @property --lp { syntax: "<number>"; inherits: true; initial-value: 0; }
 .letter::after { content: ""; position: absolute; inset: calc(-1 * var(--hair)); pointer-events: none; opacity: 0; --a: calc(min(1, 2 * var(--lp)) * 100%); --b: calc(max(0, 2 * var(--lp) - 1) * 100%);
   background: linear-gradient(var(--fg-3), var(--fg-3)) left top / var(--a) var(--hair) no-repeat, linear-gradient(var(--fg-3), var(--fg-3)) left top / var(--hair) var(--a) no-repeat,
@@ -422,36 +342,29 @@
 .letter.is-closed::after, .letter.is-closed .letter-head::after { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .letter.is-closed { transition: none; } }
 .letter-head [data-letter-subject] { text-wrap: balance; }
-/* running lines in Inter; salutation and signature in the serif */
 .letter-body { padding: 1.375rem 1.75rem 1.75rem; white-space: pre-wrap; text-wrap: pretty; overflow-wrap: anywhere; font-family: var(--sans); font-size: var(--fs-body); line-height: 1.6; color: var(--fg); }
 .letter-body::first-line { font-family: var(--serif); font-size: var(--fs-heading); letter-spacing: -0.01em; }
 .letter .is-sign { font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.2; letter-spacing: -0.01em; }
-/* blanks: solid to fill, dashed if optional; the part being typed is highlighted */
 .letter .slot { border-radius: .125rem; -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: background-color var(--dur-feedback) var(--ease-out), box-shadow var(--dur-feedback) var(--ease-out); }
 .letter .slot:not(.is-filled) { color: var(--fg-3); text-decoration: underline max(var(--hair), .0625rem) var(--line-strong); text-underline-offset: .24em; }
 .letter .slot.is-opt { text-decoration-style: dashed; }
-.letter .slot.is-missing { color: var(--reject); text-decoration: underline max(var(--hair), .0625rem) var(--reject); text-underline-offset: .24em; } /* a4: a refused blank in red, with its field's line */
+.letter .slot.is-missing { color: var(--reject); text-decoration: underline max(var(--hair), .0625rem) var(--reject); text-underline-offset: .24em; }
 .letter .slot.is-here, .letter [data-letter-subject].is-here { background: rgba(30, 122, 90, .16); box-shadow: 0 0 0 calc(2 * var(--hair)) rgba(30, 122, 90, .16); }
 .letter [data-letter-subject] { border-radius: .125rem; transition: background-color var(--dur-feedback) var(--ease-out), box-shadow var(--dur-feedback) var(--ease-out); }
-/* the margin tick beside the line being written */
 .letter-tick { position: absolute; left: .75rem; top: calc(var(--tick-y, .0625rem) - .0625rem); width: .125rem; height: var(--tick-h, 1.5rem); background: var(--accent); transform-origin: 50% 0; opacity: 0; pointer-events: none; }
 .letter.has-tick .letter-tick { opacity: 1; transition: top var(--dur-feedback) var(--ease-out), height var(--dur-feedback) var(--ease-out); }
-.letter-tick.is-no { background: var(--reject); } /* a4: beside a refused blank */
+.letter-tick.is-no { background: var(--reject); }
 .letter-note { margin: .75rem 0 0; max-width: 46ch; font-size: var(--fs-small); line-height: 1.5; color: var(--fg-3); }
 .letter-note.is-long { color: var(--fg); }
 .letter-note:empty { display: none; }
-/* beside the form the sheet never outgrows the screen: its body scrolls, access.js keeps the typed part in view */
 @media (min-width: 601px) {
   [data-page="access"] .access-letter .sticky { --top: calc(var(--nav-h) + 1.75rem); position: sticky; top: var(--top); display: flex; flex-direction: column; max-height: calc(100svh - var(--top) - 1rem); }
   [data-page="access"] .access-letter .letter:not([hidden]) { display: flex; flex-direction: column; min-height: min(37.5rem, 100svh - var(--top) - 4.5rem); }
   [data-page="access"] .access-letter .letter-head { flex: none; }
   [data-page="access"] .access-letter .letter-body { flex: 1 1 auto; min-height: 4.5lh; overflow-y: auto; }
 }
-/* hc11: beside the form the sheet's lower marks end on the button's line (a short screen: the screen less the bar, the
-   H1 band and the fold's margin; never shorter than its letter) */
 @media (min-width: 961px) { [data-page="access"] .access-letter .letter:not([hidden]) { min-height: min(38.25rem, 100svh - 20.25rem); } }
 @media (min-width: 601px) and (max-height: 760px) { [data-page="access"] .access-letter .sticky { --top: calc(var(--nav-h) + .75rem); } }
-/* a phone held sideways: the letter beside the H1 and the form */
 @media (min-width: 601px) and (max-width: 960px) and (max-height: 520px) {
   [data-page="access"] .access-h1 { grid-column: 1 / span 6; }
   [data-page="access"] .access-letter { grid-row: 1 / span 2; }
@@ -462,14 +375,10 @@
   .letter-head > span { grid-template-columns: 4rem minmax(0, 1fr); }
   .letter-body { padding: 1rem 1rem 1.25rem; }
   .letter-tick { left: .375rem; }
-  /* a4 (UX jury): a phone's draft state is its title, the letter, then the buttons; while the letter is taller than the
-     screen the buttons stay at its foot, on paper over a rule */
-  [data-page="access"] .form-ok:has(> .letter) { padding: 0; border: 0; } /* the letter is the frame (no box in a box) */
+  [data-page="access"] .form-ok:has(> .letter) { padding: 0; border: 0; }
   [data-page="access"] .form-ok .letter { margin: 1.5rem .5rem 0; }
   [data-page="access"] .form-ok .row { position: sticky; bottom: 0; z-index: 2; margin: 1.25rem 0 0; padding: .875rem 0 calc(.875rem + env(safe-area-inset-bottom)); background: var(--bg); border-top: var(--hair) solid var(--line); }
 }
-/* three steps on one hairline (on phones it runs down the left); a4: a chapter head (the H2 step) over the register of
-   Company's story (node, rule, the step in the serif heading step) */
 [data-page="access"] .access-next-h { max-width: none; margin: 0 0 clamp(2rem, 4vw, 3.25rem); text-wrap: balance; }
 [data-page="access"] .access-steps { --w: calc(1px * var(--stroke)); list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.625rem clamp(1.125rem, 2.4vw, 2rem); border-top: var(--w) solid var(--fg); }
 [data-page="access"] .access-steps li { position: relative; padding-top: 1.75rem; }
@@ -479,11 +388,10 @@
 @media (max-width: 600px) {
   [data-page="access"] .access-steps { grid-template-columns: minmax(0, 1fr); row-gap: 1.5rem; padding-left: 1.5rem; border-top: 0; border-left: var(--w) solid var(--fg); }
   [data-page="access"] .access-steps li { padding-top: 0; }
-  [data-page="access"] .access-steps li::before { left: calc(-1.5rem - .34375rem - var(--w) / 2); top: calc(var(--fs-heading) * .55 - .34375rem); } /* centred on the first line of the serif step (line-height 1.1) */
+  [data-page="access"] .access-steps li::before { left: calc(-1.5rem - .34375rem - var(--w) / 2); top: calc(var(--fs-heading) * .55 - .34375rem); }
 }
 @media (min-width: 421px) and (max-width: 600px) { [data-page="access"] .form > .two + .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 420px) { [data-page="access"] .seg { grid-template-columns: minmax(0, 1fr); } }
-/* forced colours: the chosen path and the ticked box stay visible */
 @media (forced-colors: active) {
   [data-page="access"] .seg .opt:has(input:checked) { outline: calc(2 * var(--hair)) solid Highlight; outline-offset: -.125rem; }
   [data-page="access"] .seg input:checked + span .seg-k { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }

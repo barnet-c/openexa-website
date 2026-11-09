@@ -1,23 +1,13 @@
 /* OpenEXA: Proof and Trust (evidence.html, trust.html), after site.css. Tokens only; scoped; :hover in (hover: hover);
    still under reduced motion; print on white. gzip -9 <= 12,000 B (check_static). Why: .shots/v2x/notes/proof.md */
 
-/* ======================= both pages: the reading layer ======================= */
-/* display lines break by sense: one sentence to a line where it fits, each sentence balanced on its own */
 :is([data-page="proof"], [data-page="trust"]) :is(h1, h2) .ln { display: block; text-wrap: balance; }
-:is([data-page="proof"], [data-page="trust"]) h1 .ln + .ln { text-wrap: pretty; } /* the long line first, the short one last */
-/* a compound word never breaks at its hyphen ("market-dependent") */
+:is([data-page="proof"], [data-page="trust"]) h1 .ln + .ln { text-wrap: pretty; }
 :is([data-page="proof"], [data-page="trust"]) .nw { white-space: nowrap; }
-/* display heads break between phrases only: a line never ends on "and", "the" or "your" (r5 art; Home's .ph, r4) */
 :is([data-page="proof"], [data-page="trust"]) :is(h1, h2) .ph { white-space: nowrap; }
-/* ledes balance from site.css (hc17) */
-/* running text: no lone last word; hyphenation by hand only */
-:where([data-page="proof"], [data-page="trust"]) main :where(p, li) { text-wrap: pretty; hyphens: manual; } /* lowest specificity: any rule that balances wins */
-/* captions: site.css's one register (.fc-t / .fc-n / .fc-d / .fc-h, r2) */
+:where([data-page="proof"], [data-page="trust"]) main :where(p, li) { text-wrap: pretty; hyphens: manual; }
 
-/* ======================= Proof (evidence.html) ======================= */
 
-/* the hero (hc4): the H1 across; under it the lede, hedge and link (4fr) beside Fig. 1.1 (8fr, proof.js, dark register).
-   Phones and tablets: one column, the link after the chart */
 [data-page="proof"] .page-hero { --pf-gap: clamp(2rem, 6vw, 2.75rem); }
 [data-page="proof"] .page-hero h1 { max-width: none; }
 [data-page="proof"] .page-hero--plate { row-gap: 0; }
@@ -25,16 +15,11 @@
 [data-page="proof"] :is(.page-hero--plate, .hero-copy) > * { grid-column: 1 / -1; min-width: 0; }
 [data-page="proof"] .pf-record { order: 1; margin: var(--pf-gap) 0 0; }
 [data-page="proof"] .pf-go { order: 2; margin-top: var(--pf-gap); }
-/* the first statement of the result carries its hedge, as on Home's hero (VOICE 5.5); the chart's caption ends on "See
-   the disclosures." (S-28), which reaches them (site.js opens the fold) */
 [data-page="proof"] .pf-lc-hedge { margin-top: 1rem; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .72); text-wrap: balance; }
 [data-page="proof"] .pf-record figcaption a { color: inherit; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: .1875rem; transition: color var(--dur-feedback) var(--ease-out), text-decoration-color var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { [data-page="proof"] .pf-record figcaption a:hover { color: var(--fg); text-decoration-color: currentColor; } }
 [data-page="proof"] .pf-record figcaption a:focus-visible { color: var(--fg); text-decoration-color: currentColor; }
-/* without scripts the record is the table: the caption keeps the regime line, not the blocks' key */
 @media (scripting: none) { [data-page="proof"] .pf-record .pf-js { display: none; } }
-/* hc14: proof.js's readout sizer (.pf-cap-sz) added a line after first paint and the hero rose 10 px (CLS .006); the
-   same words (readSaid() of Day 01, the longest; the link) hold the cell from the start */
 @media (scripting: enabled) {
   [data-page="proof"] .pf-record .figure-cap--stack { display: grid; grid-template-columns: minmax(0, 1fr); }
   [data-page="proof"] .pf-record .figure-cap--stack > *, [data-page="proof"] .pf-record .figure-cap--stack::after { grid-area: 1 / 1; }
@@ -51,30 +36,25 @@
 }
 @media (min-width: 601px) { [data-page="proof"] .page-hero .lede { max-width: 44ch; } }
 @media (max-width: 360px) { [data-page="proof"] .page-hero h1 { font-size: 2.6rem; } }
-/* phones: each hero block reserves its lines (web font or metric fallback), so the chart under them holds still */
 @media (max-width: 600px) {
   [data-page="proof"] .page-hero h1 { min-height: 2lh; }
   [data-page="proof"] .page-hero .lede { min-height: 2lh; }
 }
-@media (max-width: 359.98px) { [data-page="proof"] .page-hero h1 { min-height: 3lh; } } /* "…confirmed it." (1 Nov): re-measured at 1 px, work/proof/cut/hero_edges.py */
+@media (max-width: 359.98px) { [data-page="proof"] .page-hero h1 { min-height: 3lh; } }
 @media (max-width: 459.98px) { [data-page="proof"] .page-hero .lede { min-height: 3lh; } }
 @media (max-width: 451.98px) { [data-page="proof"] .pf-lc-hedge { min-height: 2lh; } }
 @media (max-width: 359.98px) { [data-page="proof"] .page-hero .lede { min-height: 4lh; } }
 @media (max-width: 344.98px) { [data-page="proof"] .page-hero h1 { min-height: 4lh; } }
-@keyframes pf-land { from { opacity: 0; transform: translateY(-83.333%) scaleY(.6); } } /* Trust's records */
+@keyframes pf-land { from { opacity: 0; transform: translateY(-83.333%) scaleY(.6); } }
 @keyframes pf-fade { from { opacity: 0; } }
 
-/* the no-JS record (Table 1.1 until hc4), folded: a value equal to the one above it is a ditto mark; the words stay for
-   AT, copy and print */
 .proof-table .pf-dt > * { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .proof-table .pf-dt::after { content: "\201D" / ""; display: inline-block; font: 400 1.7rem/.5 var(--serif); color: var(--fg-3); transform: translateY(.42em); }
 .proof-table td.num.pf-dt { padding-right: 2.5rem; }
 .proof-table td.pf-dt:not(.num) { padding-left: 1.125rem; }
-/* each mark sits under the middle of the value it repeats (Day 01's 'Broker confirmation' and 'Settled') */
 @media (min-width: 601px) { .proof-table td.pf-dt:nth-child(4) { padding-left: 5.0625rem; } .proof-table td.pf-dt:nth-child(5) { padding-left: 2.875rem; } }
 .proof-table tbody tr + tr td { padding-block: .6875rem; }
 .proof-table tbody tr:first-child td { padding-block: 1rem; }
-/* the row under the pointer spells itself out (the table is the hero's record without scripts, hc4) */
 @media (hover: hover) and (min-width: 601px) {
   .proof-table tbody tr:hover .pf-dt > * { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
   .proof-table tbody tr:hover .pf-dt::after { display: none; }
@@ -86,10 +66,6 @@
 .pf-legend { display: flex; gap: .625rem; align-items: baseline; max-width: 64ch; margin: .75rem 0 0; font: .82rem/1.5 var(--sans); color: var(--fg-3); }
 .pf-legend b { flex: none; font: 400 1.5rem/.6 var(--serif); color: var(--fg-2); transform: translateY(.3em); }
 
-/* §01 the paper trail (hc15: ten rows a sheet). Under 961 px the sheets stand in a column; the green thread runs down
-   the spine and under the session's row on each (C-028). 100 x 126 units, row k at 33 + 9k; --pr = the row / 100 (Day
-   10's 1.14 until proof.js writes the chosen one); hc16: the thread underlines the row (--ul x --sw under it). Drawn in
-   each sheet's SVG (.pf-th), so it keeps to the row; the gaps (.2, .22) are fractions of --sw */
 [data-page="proof"] .pf-ver { row-gap: 0; }
 [data-page="proof"] .pf-ver > * { grid-column: 1 / -1; min-width: 0; }
 [data-page="proof"] .pf-trail { --sw: 5rem; --lx: 1.125rem; display: grid; grid-template-columns: minmax(0, 1fr); row-gap: calc(var(--sw) * .22); }
@@ -98,32 +74,20 @@
 [data-page="proof"] .pf-sheet { margin: 0; color: var(--fg); }
 [data-page="proof"] .pf-sheet > svg { width: var(--sw); }
 [data-page="proof"] .pf-th { fill: none; stroke: var(--accent); stroke-width: var(--stroke-2); transform-box: fill-box; transform-origin: 0 50%; }
-/* hc13r: the thread is whole at rest; well in view (proof.js .is-run) one signal runs it once and the node answers */
 [data-page="proof"] .pf-trail { --pr: 1.14; --ul: .045; --x0: 0px; --x1: 0px; --y0: calc(var(--sw) * (var(--pr) + var(--ul))); --y1: calc(var(--sw) * (2.96 + var(--pr) + var(--ul))); position: relative; }
 [data-page="proof"] .pf-trail::after { content: ""; position: absolute; z-index: 2; left: var(--x0); top: var(--y0); width: .4375rem; height: .4375rem; margin: -.21875rem 0 0 -.21875rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 .25rem rgba(30, 122, 90, .2); opacity: 0; pointer-events: none; }
 [data-page="proof"] .pf-mk { transform-box: fill-box; transform-origin: 50% 50%; }
-[data-page="proof"] .pf-trail .pf-doc:nth-child(3) { --tm: 560ms; }
-@media screen and (prefers-reduced-motion: no-preference) {
-  [data-page="proof"] .pf-trail.is-run::after { animation: pf-go 600ms var(--ease-out) 150ms; }
-  [data-page="proof"] .pf-trail.is-run .pf-mk { animation: tr-land .45s var(--ease-out) var(--tm); }
-}
-@keyframes pf-go { from { opacity: 1; left: var(--x0); top: var(--y0); } to { opacity: 1; left: var(--x1); top: var(--y1); } }
-/* the link wraps on a phone: its rule follows the words and the arrow stays with "record" */
 [data-page="proof"] .pf-doc h3 a { display: inline; text-decoration: underline var(--hair) var(--line-strong); text-underline-offset: .22em; transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
 [data-page="proof"] .pf-doc h3 .arr { display: inline-block; width: .55em; height: .55em; margin-left: .25em; vertical-align: .05em; }
 @media (hover: hover) { [data-page="proof"] .pf-doc h3 a:hover { text-decoration-color: currentColor; } }
-/* hc8: from 601 px each name stands on its sheet's base line, ruled to the content edge (half a hair down: on the edge) */
 @media (min-width: 601px) {
   [data-page="proof"] .pf-trail { --sw: clamp(7rem, 11.6vw, 13.65rem); --lx: 1.5rem; }
   [data-page="proof"] .pf-trail .pf-doc h3 { align-self: end; margin-bottom: calc(var(--hair) / -2); padding-bottom: clamp(1.25rem, 2.4vw, 2rem); border-bottom: var(--hair) solid var(--line-strong); }
 }
-/* tablets (720-960 px) get a real two-column layout: the head 1-6, the trail 7-12, the sheets growing with the window */
 @media (min-width: 720px) and (max-width: 960px) {
   [data-page="proof"] .pf-ver > .ch-head { grid-column: 1 / span 6; margin: 0; }
   [data-page="proof"] .pf-ver > .pf-trail { grid-column: 7 / -1; }
 }
-/* hc12: from 961 px the three sheets on the grid's thirds, each over its name and rule; the thread is one line (::before)
-   through the session's row of all three, to the last sheet's right (88 units); the spine and ticks go */
 @media (min-width: 961px) {
   [data-page="proof"] .pf-ver > .pf-trail { grid-column: 1 / -1; }
   [data-page="proof"] .pf-trail { --sw: clamp(13.65rem, 14vw, 16.5rem); --cg: clamp(1rem, 2.2vw, 2rem); grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--cg); row-gap: 0; }
@@ -133,18 +97,15 @@
   [data-page="proof"] .pf-trail::before { content: ""; position: absolute; z-index: 1; left: 0; top: calc(var(--y0) - var(--stroke-2) * .5px); width: var(--x1); height: calc(var(--stroke-2) * 1px); background: var(--accent); pointer-events: none; forced-color-adjust: none; }
   [data-page="proof"] .pf-trail { --ul: .03; --x1: calc((200% + 2 * var(--cg)) / 3 + var(--sw) * .88); --y1: var(--y0); }
 }
-/* hc13r (PROOF-2b): the thread's session, where it ends (proof.js: the hero chart's choice, else the record's last).
-   From 1280 px beside the last sheet, the thread running on into its first line (hc25; under 1280 it would cross the
-   content edge); narrower, one line keyed by a stroke of the thread */
 [data-page="proof"] .pf-rec { margin: 0; font: 400 var(--fs-small)/1.45 var(--sans); color: var(--fg-2); }
 [data-page="proof"] .pf-rec > span:first-child { color: var(--fg); }
-[data-page="proof"] .pf-rec > span { white-space: nowrap; } /* a line breaks between fields, after the dot */
+[data-page="proof"] .pf-rec > span { white-space: nowrap; }
 [data-page="proof"] .pf-rec > span:not(:last-child)::after { content: " ·"; content: " ·" / ""; }
 [data-page="proof"] .pf-rec::before { content: ""; display: inline-block; width: 1.25rem; height: calc(var(--stroke-2) * 1px); margin-right: .625rem; vertical-align: .3em; background: var(--accent); forced-color-adjust: none; }
 @media (max-width: 960px) {
   [data-page="proof"] .pf-trail .pf-doc:last-child .pf-rec { grid-column: 1 / -1; margin-top: clamp(1.25rem, 3vw, 1.75rem); }
 }
-@media (min-width: 961px) and (max-width: 1279px) { /* the line under the whole row, from the content edge */
+@media (min-width: 961px) and (max-width: 1279px) {
   [data-page="proof"] .pf-trail { margin-bottom: 2.75rem; }
   [data-page="proof"] .pf-trail .pf-doc:last-child { position: static; }
   [data-page="proof"] .pf-trail .pf-doc:last-child .pf-rec { position: absolute; left: 0; top: 100%; margin-top: 1.25rem; }
@@ -156,13 +117,27 @@
   [data-page="proof"] .pf-rec > span { display: block; }
   [data-page="proof"] .pf-rec > span:not(:last-child)::after { content: none; }
 }
+@media screen and (prefers-reduced-motion: no-preference) and (forced-colors: none) { @supports (animation-timeline: view()) {
+  [data-page="proof"] .pf-trail { --scene-range: cover 33vh cover 70vh; --tt: min(1, var(--scene-p) / .9); }
+  [data-page="proof"] .pf-trail::after { opacity: clamp(0, (.97 - var(--scene-p)) * 14, 1); left: calc(var(--x0) + (var(--x1) - var(--x0)) * var(--tt)); top: calc(var(--y0) + (var(--y1) - var(--y0)) * var(--tt)); }
+  [data-page="proof"] .pf-ok { clip-path: inset(-2px calc(100% - 100% * clamp(0, var(--scene-p) * 11.1 - var(--k), 1)) -2px -2px); }
+  [data-page="proof"] .pf-mk { --q: clamp(0, (var(--scene-p) - .85) * 14, 1); fill: color-mix(in srgb, var(--accent) calc(var(--q) * 100%), currentColor); fill-opacity: calc(.82 + .18 * var(--q)); transform: scale(calc(1 + 2.4 * var(--q) * (1 - var(--q)))); }
+  [data-page="proof"] .pf-th { transform: scaleX(var(--q)); }
+  [data-page="proof"] .pf-sp { transform-origin: 50% 0; transform: scaleY(var(--q)); }
+  [data-page="proof"] .pf-doc:nth-child(1) .pf-tk { --q: clamp(0, var(--scene-p) * 10, 1); }
+  [data-page="proof"] .pf-doc:nth-child(1) .pf-sp { --q: clamp(0, var(--scene-p) / .45, 1); }
+  [data-page="proof"] .pf-doc:nth-child(2) .pf-tk { --q: clamp(0, (var(--scene-p) - .45) * 10, 1); }
+  [data-page="proof"] .pf-doc:nth-child(2) .pf-sp { --q: clamp(0, (var(--scene-p) - .45) / .45, 1); }
+  [data-page="proof"] .pf-doc:nth-child(3) .pf-tk { --q: clamp(0, (var(--scene-p) - .9) * 10, 1); }
+} }
+@media screen and (min-width: 961px) and (prefers-reduced-motion: no-preference) and (forced-colors: none) { @supports (animation-timeline: view()) {
+  [data-page="proof"] .pf-trail { --scene-range: cover 28vh cover 58vh; }
+  [data-page="proof"] .pf-trail::before { transform-origin: 0 50%; transform: scaleX(var(--tt)); }
+  [data-page="proof"] .pf-mk { --q: clamp(0, (var(--scene-p) - .7) * 10, 1); }
+} }
 
-/* §02 without JS: Home's two bars over the key (.pf-ck, proofchart.css); the first row needs no room above it */
-[data-page="proof"] .cost-row:first-child { padding-top: 0; } /* hc2: the chapter head's gap (--ch-gap) above it, as Home's */
+[data-page="proof"] .cost-row:first-child { padding-top: 0; }
 @container cost (max-width: 860px) { [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: .875rem; } }
-/* hc13r (PROOF-2a): the index decomposed (proof.js, .is-dec). Each component a row of the key: name, definition, then
-   its traditional weight in blocks (one per point, two rows high), filled to what the agentic stack keeps, dashed where
-   eliminated, the word after it. The totals at the foot, over the hedge. Phones: the blocks under each name */
 [data-page="proof"] .cost.is-dec .pf-ck { --lw: clamp(15rem, 30%, 24rem); --cg: clamp(1.25rem, 3vw, 3rem); display: block; margin: 0; padding: 0; border-top: 0; font-size: var(--fs-small); }
 [data-page="proof"] .is-dec .pf-ck > div { position: relative; display: grid; grid-template-columns: var(--lw) minmax(0, 1fr); column-gap: var(--cg); align-items: center; padding: clamp(.875rem, 1.5vw, 1.375rem) 0; border-bottom: var(--hair) solid var(--line); }
 [data-page="proof"] .is-dec .pf-ck > div:first-child { padding-top: 0; }
@@ -178,33 +153,26 @@
 [data-page="proof"] .is-dec .cost-row { display: flex; align-items: baseline; gap: .75rem; padding: 0; }
 [data-page="proof"] .is-dec .cost-bar { display: none; }
 [data-page="proof"] .is-dec .cost-lab b { display: inline; }
-@media (min-resolution: 2dppx) { [data-page="proof"] .is-dec .cost-db { --bq: .5px; } } /* whole device px a block (a4) */
+@media (min-resolution: 2dppx) { [data-page="proof"] .is-dec .cost-db { --bq: .5px; } }
 @container cost (max-width: 560px) {
   [data-page="proof"] .is-dec .pf-ck > div { display: block; }
   [data-page="proof"] .is-dec .cost-db { --cols: 25; --g: .125rem; position: static; flex-direction: column; align-items: start; gap: .625rem; margin-top: .875rem; transform: none; }
 }
-/* hc25 (HC25 item 2): the head happens under the reader's scroll. Each row arrives with its section at its traditional
-   weight, filled (no reveal of its own); as it rises to mid-screen (its own view timeline, --cp 0 -> 1) the blocks the
-   agentic stack drops empty to their outlines, the bar's end first (proof.js --t): two to zero, two to their share.
-   Reduced motion, forced colours, print, no scroll timelines: the final state and the reveal, as before */
-@property --cp { syntax: "<number>"; inherits: true; initial-value: 1; }
-@keyframes pf-cp { from { --cp: 0; } }
+[data-page="proof"] .pf-ck > div { --scene-range: cover 10% cover 40%; }
 @media screen and (prefers-reduced-motion: no-preference) and (forced-colors: none) { @supports (animation-timeline: view()) {
-  [data-page="proof"] .is-dec .pf-ck > div { animation: pf-cp linear both; animation-timeline: view(); animation-range: cover 10% cover 40%; }
   [data-page="proof"] .is-dec .pf-ck.will-reveal:not(.is-in) .cost-blk i { opacity: 1; transform: none; }
   [data-page="proof"] .is-dec .cost-blk :is(.is-gone, .is-rest, .is-part) { position: relative; }
-  [data-page="proof"] .is-dec .cost-blk :is(.is-gone, .is-rest, .is-part)::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--c); box-shadow: inset 0 0 0 var(--hair) rgba(14, 21, 18, .55); opacity: clamp(0, (var(--t) * .875 + .125 - var(--cp)) * 8, 1); }
+  [data-page="proof"] .is-dec .cost-blk :is(.is-gone, .is-rest, .is-part)::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--c); box-shadow: inset 0 0 0 var(--hair) rgba(14, 21, 18, .55); opacity: clamp(0, (var(--t) * .875 + .125 - var(--scene-p)) * 8, 1); }
   [data-page="proof"] .is-dec .cost-blk .is-gone::before { inset: calc(-1 * var(--hair)); }
 } }
 
 @media (max-width: 600px) {
-  /* Table 1.1 on a phone: one record in full, then nine one-line rows: the day, the regime, and three ditto marks */
   [data-page="proof"] .proof-table > tbody > tr { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: .25rem .75rem; padding: .625rem 0 .5625rem; }
   [data-page="proof"] .proof-table > tbody > tr:first-child { padding: .875rem 0 1rem; row-gap: .625rem; }
   [data-page="proof"] .proof-table > tbody > tr + tr { grid-template-columns: 4.6em minmax(0, 1fr) repeat(3, 1.5em); align-items: center; column-gap: .5rem; padding: .5rem 0; }
   [data-page="proof"] .proof-table > tbody > tr > td:first-child { grid-column: 1; padding: 0; }
   [data-page="proof"] .proof-table > tbody > tr:first-child > td:nth-child(2) { grid-column: 2 / -1; }
-  [data-page="proof"] .proof-table > tbody > tr:first-child > td:first-child { align-self: end; padding-bottom: 1rem; } /* "Day 01" on the text line of its regime (whose cell keeps the first row's 16 px) */
+  [data-page="proof"] .proof-table > tbody > tr:first-child > td:first-child { align-self: end; padding-bottom: 1rem; }
   [data-page="proof"] .proof-table > tbody > tr + tr > td:nth-child(2) { grid-column: auto; }
   [data-page="proof"] .proof-table > tbody > tr > td:nth-child(n + 3) { font-size: .88rem; }
   [data-page="proof"] .proof-table > tbody > tr + tr td[data-th]::before { display: none; }
@@ -217,19 +185,16 @@
 }
 @media print {
   .proof-table .pf-dt > * { position: static; width: auto; height: auto; clip-path: none; }
-  .proof-table td.pf-dt, .proof-table td.pf-dt:nth-child(n) { padding-inline: .875rem; } /* the words under Day 01's, not at the ditto offsets */
+  .proof-table td.pf-dt, .proof-table td.pf-dt:nth-child(n) { padding-inline: .875rem; }
   .proof-table .pf-dt::after, .pf-legend { display: none; }
 }
 
-/* ======================= Trust (trust.html) ======================= */
 
-/* the hero: the plate writes the H1 once at first paint (CSS only, ~2.4 s, then still */
 @media (min-width: 601px) and (max-width: 960px) { [data-page="trust"] .page-hero--plate > .hero-plate--council { max-width: min(100%, calc(52svh * var(--hp-ar))); } }
 [data-page="trust"] .tr-go { margin-top: clamp(1.5rem, 2.6vw, 2.25rem); }
-@media (min-width: 601px) { [data-page="trust"] .page-hero .lede { max-width: 44ch; } } /* two lines: the policy clause whole */
-/* phones: the lede reserves its lines, so the plate under it holds still when Inter lands late (as on Proof) */
+@media (min-width: 601px) { [data-page="trust"] .page-hero .lede { max-width: 44ch; } }
 @media (max-width: 600px) { [data-page="trust"] .page-hero .lede { min-height: 2lh; } }
-@media (max-width: 335.98px) { [data-page="trust"] .page-hero .lede { min-height: 3lh; } } /* hc16: the 9-word lede takes 3 only at 320 */
+@media (max-width: 335.98px) { [data-page="trust"] .page-hero .lede { min-height: 3lh; } }
 @media screen and (prefers-reduced-motion: no-preference) {
   [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) :is(.tp-rec, .tp-set, .tp-rj, .tp-prop) { transform-box: fill-box; transform-origin: 50% 100%; }
   [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .hp-s1 { animation: pf-fade .6s var(--ease-out) 0s backwards; }
@@ -245,13 +210,10 @@
   [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-l-rj { animation: pf-fade .4s var(--ease-out) 1.80s backwards; }
 }
 @keyframes tp-drop { from { opacity: 0; transform: translateY(-1.375rem); } }
-/* a2: the plate on columns 7-12, as tall as the copy */
 [data-page="trust"] .hero-plate--council .hp-art { margin-inline: 1rem; padding: 0; }
 [data-page="trust"] .hero-plate--council .hp-reg { inset: -.75rem -1rem; }
-[data-page="trust"] .hero-plate--council .hp-cap { margin: 1.25rem 0 0; } /* flush with the marks (a3) */
-/* labels hang from the record line */
+[data-page="trust"] .hero-plate--council .hp-cap { margin: 1.25rem 0 0; }
 [data-page="trust"] .hero-plate--council .tp-l-low { transform: translate(var(--tx, 0%), 0); }
-/* a3: a dot-joined pair stays on one line; where it cannot (under 381 px), it breaks before the dot and drops it */
 @media (max-width: 380px) { [data-page="trust"] .tp-dot { display: block; height: 0; overflow: hidden; } }
 @media (max-width: 600px) {
   [data-page="trust"] .hero-plate--council .hp-art { margin-inline: .5rem; }
@@ -263,20 +225,13 @@
   [data-page="trust"] .page-hero--plate > .hero-plate--council { grid-column: 7 / -1; justify-self: stretch; max-width: none; margin-top: 0; align-self: center; }
 }
 
-/* §01 the ledger, first. Its head is the chapter head (site.css .ch-head, hc5): the line under the heading, the
-   instrument one chapter gap under the line, as on every page */
-/* the head in every instrument's order (hc2): title and "Illustrative", the state, the actions, on one row; where the
-   longest state ("Chain broken at #4f1b · every later link fails") and the widest actions (Restore) would not fit beside
-   each other, the state takes the row under the title (in em: a larger default font takes it sooner) */
 .tr-lt .lt-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: .125rem 1.375rem; }
 .tr-lt .lt-head { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "title state ctrl"; row-gap: .5rem; column-gap: 1.375rem; padding-top: .75rem; padding-bottom: .75rem; }
 .tr-lt .lt-state { justify-self: start; }
 @media (max-width: 79.99em) { .tr-lt .lt-head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title ctrl" "state state"; } }
-/* without scripts nothing is hashed: no state, and the foot says only how to try it */
 @media (scripting: none) { .tr-lt .lt-state, .tr-lt .lt-foot > span:first-child { display: none; } }
 .tr-lt [data-lt-say] { text-transform: none; letter-spacing: 0; }
-.tr-lt .lt-btn svg path { vector-effect: non-scaling-stroke; stroke-width: var(--icon-stroke); } /* a4: whole device px */
-/* a2: the controls in the site's button voice */
+.tr-lt .lt-btn svg path { vector-effect: non-scaling-stroke; stroke-width: var(--icon-stroke); }
 .tr-lt :is([data-lt-edit], [data-lt-verify], [data-lt-restore]) { background-image: linear-gradient(var(--signal), var(--signal)); background-repeat: no-repeat; background-size: 0 calc(2 * var(--hair)); background-position: 0 100%; transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), background-color var(--dur-feedback) var(--ease-out), background-size var(--dur-move) var(--ease); }
 .tr-lt [data-lt-edit], .tr-lt.is-edited [data-lt-verify], .tr-lt.is-broken:not(.is-edited) [data-lt-restore] { border-color: var(--paper); background-color: var(--paper); color: var(--ink); }
 @media (hover: hover) {
@@ -285,19 +240,15 @@
 @media (forced-colors: active) { .tr-lt [data-lt-edit], .tr-lt.is-edited [data-lt-verify], .tr-lt.is-broken:not(.is-edited) [data-lt-restore] { border: calc(2 * var(--hair)) solid ButtonText; } }
 .tr-lt.is-edited .lt-state { color: var(--khaki); }
 .tr-lt.is-edited .lt-state i { background: transparent; box-shadow: inset 0 0 0 var(--hair) currentColor; }
-/* edited, not yet verified: open and dashed ("not yet") */
-.tr-lt .lt-rec.is-edited .lt-lc { margin-block: calc(-1 * var(--hair)); padding: 0 .3125rem; border: var(--hair) dashed var(--khaki); border-radius: .0625rem; color: var(--khaki); } /* the box adds no height: the line stays level */
+.tr-lt .lt-rec.is-edited .lt-lc { margin-block: calc(-1 * var(--hair)); padding: 0 .3125rem; border: var(--hair) dashed var(--khaki); border-radius: .0625rem; color: var(--khaki); }
 .tr-lt .lt-rec.is-broken .lt-lc { border-color: rgba(217, 103, 93, .6); }
 .tr-lt .lt-rec.is-edited .lt-node { background: transparent; box-shadow: none; outline: .09375rem dashed var(--khaki); outline-offset: -.09375rem; }
-/* broken: red from the edited record on, as the walk reaches each */
 .tr-lt { transition: border-color .5s var(--ease-out); }
 .tr-lt.is-broken { border-color: rgba(217, 103, 93, .55); }
 .tr-lt.is-broken .lt-state { color: var(--reject); }
 .tr-lt .lt-rec.is-broken .lt-node { background: transparent; outline: 0; box-shadow: inset 0 0 0 .09375rem var(--reject), 0 0 .875rem rgba(217, 103, 93, .45); }
 .tr-lt .lt-rec.is-broken .lt-seg { background: var(--reject); }
-/* sealed vs now: the hash the record was sealed with is struck; under it, in red, the hash it produces now */
-/* each column keeps room for both hashes and the wait */
-@media (min-width: 601px) { .tr-lt .lt-rec { padding-bottom: 1.875rem; } .tr-lt .lt-sub { -webkit-line-clamp: 4; } } /* a4: room for 1.4.12 text spacing */
+@media (min-width: 601px) { .tr-lt .lt-rec { padding-bottom: 1.875rem; } .tr-lt .lt-sub { -webkit-line-clamp: 4; } }
 .tr-lt .lt-rec.is-broken .lt-tag { color: var(--fg-3); text-decoration: line-through var(--reject) var(--hair); }
 .tr-lt .lt-now { display: none; position: absolute; left: calc(50% + .375rem); top: 1.5625rem; transform: translateX(-50%); padding: 0 .375rem; font: var(--mono-xs)/1.2 var(--mono); letter-spacing: .06em; color: var(--reject); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tr-lt .lt-rec.is-edited .lt-now { display: block; color: var(--khaki); }
@@ -313,18 +264,14 @@
   .tr-lt .lt-rec.is-broken .lt-node { animation: tr-break .5s var(--ease-out) backwards; }
 }
 @keyframes tr-break { 0% { transform: scale(1.6); box-shadow: inset 0 0 0 .375rem var(--reject), 0 0 1.375rem rgba(217, 103, 93, .8); } }
-/* the selected record's event and detail can be typed over */
 .tr-lt .lt-insp dd > [data-f="ev"] { display: block; }
 .tr-lt .lt-insp [contenteditable] { outline: calc(2 * var(--hair)) solid transparent; outline-offset: .125rem; cursor: text; border-radius: .0625rem; box-shadow: inset 0 calc(-1 * var(--hair)) 0 var(--line-strong); transition: box-shadow var(--dur-feedback) var(--ease-out), background var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { .tr-lt .lt-insp [contenteditable]:hover { box-shadow: inset 0 calc(-1 * var(--hair)) 0 var(--fg-2); } }
 .tr-lt .lt-insp [contenteditable]:focus { box-shadow: inset 0 calc(-1 * var(--hair)) 0 var(--accent); background: rgba(245, 242, 236, .07); }
-/* while a field is typed in, the next step under it */
 .tr-lt .tr-enter { margin: 0; font: 400 .8125rem/1.45 var(--sans); letter-spacing: 0; color: var(--fg-2); }
 .tr-lt .tr-tap { display: none; }
 @media (hover: none) and (pointer: coarse) { .tr-lt .tr-key { display: none; } .tr-lt .tr-tap { display: inline; } }
-/* the excerpt's hedge as words, as on Home's stream */
 .tr-lt .lt-foot > span:first-child { font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; line-height: 1.45; text-transform: none; color: rgba(245, 242, 236, .72); }
-/* no JS: hint and controls hidden; the foot says why */
 .tr-lt .tr-nojs { flex-basis: 100%; font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; line-height: 1.45; color: rgba(245, 242, 236, .72); }
 @media (scripting: enabled) { .tr-lt .tr-nojs { display: none; } }
 @media (min-width: 961px) {
@@ -332,9 +279,7 @@
   .tr-lt .lt-insp.is-typing > .tr-enter { grid-column: 1; grid-row: 3; }
 }
 
-/* one mono size (a1) */
 .tr-lt .lt-ev { font-size: var(--fs-label); }
-/* hc3: phones with scripts: the column folds to four records from the first paint (trust.js opens it) */
 .tr-lt .lt-more { display: none; }
 @media (scripting: enabled) and (max-width: 600px) {
   .tr-lt:not(.is-open) .lt-track > li:nth-child(n + 5) { display: none; }
@@ -344,8 +289,6 @@
   .tr-lt .lt-more:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
 }
 
-/* §02 the control plane (hc13r; hc14): one plate, six stations, one <li> each (glyph, name). From 961 px six equal
-   columns on one rule, drawn once in two rails (.tr-rail). 960 px and below: down a vertical rule. Red words in graphite */
 .tr-st { margin: 0; padding: 0; list-style: none; }
 .tr-sd { color: var(--fg); }
 .tr-sd > svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -355,12 +298,11 @@
 @media (min-width: 961px) {
   .tr-cpl { position: relative; }
   .tr-cpl > .tr-rail { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; }
-  .tr-st { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); /* one step per station (cp_plate.py S) */ }
+  .tr-st { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .tr-sd .tr-v { display: none; }
-  .tr-s h3 { max-width: 13ch; margin: clamp(.5rem, 1.2vw, 1.25rem) auto 0; padding-inline: clamp(.375rem, .7vw, .75rem); text-align: center; } /* two short lines, centred under the station's mark */
+  .tr-s h3 { max-width: 13ch; margin-top: clamp(.5rem, 1.2vw, 1.25rem); }
 }
 @media (max-width: 960px) {
-  /* the glyph column (140 units): the record line at 8, the layer at 60 */
   .tr-st { --gw: clamp(6.25rem, 17vw, 9.5rem); }
   .tr-s { display: grid; grid-template-columns: var(--gw) minmax(0, 1fr); column-gap: clamp(1rem, 4vw, 2.5rem); position: relative; }
   .tr-sd { align-self: stretch; }
@@ -368,84 +310,75 @@
   .tr-s h3 { align-self: center; padding: .75rem 0; }
   .tr-s::before, .tr-sd::before { content: ""; position: absolute; top: calc(var(--gw) * var(--r0, 0) / 140); bottom: 0; width: var(--hair); }
   .tr-s:last-child::before, .tr-s:last-child .tr-sd::before { bottom: auto; height: calc(var(--gw) * (var(--vh) - var(--r1, 0)) / 140); }
-  .tr-s::before { left: calc(var(--gw) * 8 / 140); background: var(--line-strong); } /* the record line */
-  .tr-sd::before { left: calc(var(--gw) * 60 / 140 - var(--stroke-2) * .5px); width: calc(var(--stroke-2) * 1px); background: var(--accent); forced-color-adjust: none; } /* the layer, green */
+  .tr-s::before { left: calc(var(--gw) * 8 / 140); background: var(--line-strong); }
+  .tr-sd::before { left: calc(var(--gw) * 60 / 140 - var(--stroke-2) * .5px); width: calc(var(--stroke-2) * 1px); background: var(--accent); forced-color-adjust: none; }
   .tr-st { --y0: 0%; --y1: 100%; }
   .tr-s:first-child { --y0: calc(var(--gw) * var(--r0, 0) / 140); }
   .tr-s:last-child { --y1: calc(var(--gw) * (var(--vh) - var(--r1, 0)) / 140); }
 }
-/* the one pass (hc13r, SYS-3): whole at rest. Well in view (trust.js, OXA.actOnce: .is-run), one signal runs the layer
-   at one speed (1.8 s) and each mark answers as it passes (--f: where on the path): the stopped drop into the record,
-   the over-cap stack and the Council's line light, the settled land. Then still */
 .tr-pl, .tr-sd::after { opacity: 0; pointer-events: none; }
 .tr-pg { fill: var(--accent); fill-opacity: .2; }
-.tr-st :is(.tr-rj, .tr-rl, .tr-se) { transform-box: fill-box; }
-.tr-h .tr-rl { transform-origin: 50% 0; }
-.tr-v .tr-rl { transform-origin: 100% 50%; }
-.tr-se { transform-origin: 50% 50%; }
-@media screen and (prefers-reduced-motion: no-preference) {
-  .tr-cpl { --T: 1.8s; }
-  .tr-cpl.is-run .tr-pl { animation: tr-go var(--T) linear; }
-  .tr-cpl.is-run .tr-rj { animation: tr-drop .5s var(--ease-out) calc(var(--f) * var(--T) + 60ms); }
-  .tr-cpl.is-run .tr-v .tr-rj { animation-name: tr-drop-v; }
-  .tr-cpl.is-run .tr-rl { animation: tr-grow .3s var(--ease-out) calc(var(--f) * var(--T)); }
-  .tr-cpl.is-run .tr-v .tr-rl { animation-name: tr-grow-v; }
-  .tr-cpl.is-run :is(.tr-oc, .tr-sg) { animation: tr-lit .45s var(--ease-out) calc(var(--f) * var(--T) - 120ms + var(--j, 0) * 45ms); }
-  .tr-cpl.is-run .tr-se { animation: tr-land .45s var(--ease-out) calc(var(--f) * var(--T) + var(--late, 0) * .22s); }
-}
-@media screen and (max-width: 960px) and (prefers-reduced-motion: no-preference) {
-  .tr-sd::after { content: ""; position: absolute; top: var(--y0); left: calc(var(--gw) * 60 / 140); width: .4375rem; height: .4375rem; margin: -.21875rem 0 0 -.21875rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 .25rem rgba(30, 122, 90, .2); }
-  .tr-cpl.is-run .tr-sd::after { animation: tr-go-v calc((var(--g1) - var(--g0)) * var(--T)) linear calc(var(--g0) * var(--T)); }
-}
-@keyframes tr-go { from { opacity: 1; transform: translateX(var(--a)); } to { opacity: 1; transform: translateX(var(--b)); } }
-@keyframes tr-go-v { from { opacity: 1; top: var(--y0); } to { opacity: 1; top: var(--y1); } }
-@keyframes tr-drop { from { opacity: .2; transform: translateY(-1.25rem); } }
-@keyframes tr-drop-v { from { opacity: .2; transform: translateX(1.25rem); } }
-@keyframes tr-grow { from { transform: scaleY(0); } }
-@keyframes tr-grow-v { from { transform: scaleX(0); } }
-@keyframes tr-lit { from { opacity: .15; } }
-@keyframes tr-land { from { opacity: .2; transform: scale(1.9); } }
+.tr-wc { stroke-linecap: square; }
+@media screen and (prefers-reduced-motion: no-preference) and (forced-colors: none) { @supports (animation-timeline: view()) {
+  .tr-cpl { --scene-range: cover 22vh cover 50vh; --s: calc(var(--scene-p) * 1.1); }
+  .tr-cpl [style*="--q0"] { --q: clamp(0, (var(--s) - var(--q0)) * var(--qk), 1); }
+  .tr-cpl :is(.tr-lay, .tr-cap, .tr-rj, .tr-rl, .tr-wc, .tr-se, .tr-wr) { transform-box: fill-box; }
+  .tr-lay { transform-origin: 0 50%; transform: scaleX(min(1, var(--s))); }
+  .tr-pl { opacity: clamp(0, (1.02 - var(--s)) * 50, 1); transform: translateX(calc(var(--a) + (var(--b) - var(--a)) * min(1, var(--s)))); }
+  .tr-h :is(.tr-rl, .tr-wc) { transform-origin: 50% 0; transform: scaleY(var(--q)); }
+  .tr-v :is(.tr-rl, .tr-wc) { transform-origin: 100% 50%; transform: scaleX(var(--q)); }
+  .tr-h .tr-cap { transform-origin: 0 50%; transform: scaleX(var(--q)); }
+  .tr-v .tr-cap { transform-origin: 50% 0; transform: scaleY(var(--q)); }
+  .tr-cpl :is(.tr-rj, .tr-oc) { fill: color-mix(in srgb, currentColor calc(82% - 82% * var(--q)), var(--bg)); stroke-opacity: var(--q); }
+  .tr-h .tr-rj { transform: translateY(calc(58px * (var(--q) - 1))); }
+  .tr-v .tr-rj { transform: translateX(calc(58px * (1 - var(--q)))); }
+  .tr-cpl :is(.tr-sg, .tr-sc, .tr-sl) { stroke: color-mix(in srgb, var(--accent) calc(var(--q) * 100%), currentColor); stroke-opacity: calc(.45 + .55 * var(--q)); stroke-width: calc(var(--stroke) + (var(--stroke-2) - var(--stroke)) * var(--q)); }
+  .tr-cpl .tr-sl { stroke-opacity: calc(.45 + .25 * var(--q)); stroke-width: var(--stroke); stroke-dasharray: calc(3 * var(--dash-u)) calc(4 * var(--dash-u) * (1 - var(--q))); }
+  .tr-sd .hp-lab--acc { color: color-mix(in srgb, var(--signal-ink) calc(var(--q) * 100%), var(--fg-2)); }
+  .tr-se { transform-origin: 50% 50%; opacity: var(--q); transform: scale(calc(1.9 - .9 * var(--q))); }
+  .tr-cpl .tr-wr { opacity: var(--q); }
+  .tr-h .tr-wr { transform: translateY(calc(6px * (var(--q) - 1))); }
+  .tr-v .tr-wr { transform: translateX(calc(6px * (1 - var(--q)))); }
+} }
+@media screen and (max-width: 960px) and (prefers-reduced-motion: no-preference) and (forced-colors: none) { @supports (animation-timeline: view()) {
+  .tr-cpl { --scene-range: cover 25vh cover 84vh; }
+  .tr-s { --r: clamp(0, (min(1, var(--s)) - var(--g0)) / (var(--g1) - var(--g0)), 1); }
+  .tr-sd::before { background: linear-gradient(var(--accent), var(--accent)) 0 0 / 100% calc(var(--r) * 100%) no-repeat, linear-gradient(var(--line-strong), var(--line-strong)) 50% 0 / var(--hair) 100% no-repeat; }
+  .tr-sd::after { content: ""; position: absolute; top: calc(var(--y0) + (var(--y1) - var(--y0)) * var(--r)); left: calc(var(--gw) * 60 / 140); width: .4375rem; height: .4375rem; margin: -.21875rem 0 0 -.21875rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 .25rem rgba(30, 122, 90, .2); opacity: clamp(0, min((var(--s) - var(--g0)) * 400 + 1, (var(--g1) - var(--s)) * 400), 1); }
+} }
 
-/* the closing band: site.css's (hc24: the H1 step, 22ch); no page rule (21ch went: the same lines at 320-3840) */
 
-/* §03 custody: the account drawn (one scoped port in, nothing out) beside its one line */
 .tr-cu { row-gap: 2rem; align-items: center; }
 .tr-cu-plate { margin: 0; }
 .tr-cud { color: var(--fg); }
 .tr-cud .hp-lab--acc { color: var(--signal-ink); }
 .tr-cud .hp-lab--rej { color: var(--fg-2); }
-.tr-cud .hp-lab--r { max-width: calc(var(--x) * 1%); white-space: normal; text-wrap: balance; } /* a4: wraps, not off the plate */
+.tr-cud .hp-lab--r { max-width: calc(var(--x) * 1%); white-space: normal; text-wrap: balance; }
 @media (max-width: 960px) { .tr-cu > * { grid-column: 1 / -1; } }
-/* phones: a third of the drawing; its two words stay */
 @media (max-width: 600px) { .tr-cud .tr-cu-xs { display: none; } }
-/* hc2: the agent's one scoped line strokes into the account as the plate arrives (site.css [data-draw]); the rest holds */
 
-/* §04 plain language: three lines, each led by a short graphite hairline (hc4, HC4 item 5: policy statements, not
-   rejected records; red stays for rejections) */
 .tr-no { row-gap: 1.75rem; }
 .tr-no-list { margin: 0; padding: 0; list-style: none; border-top: var(--hair) solid var(--line-strong); }
-.tr-no-list > li { display: flex; align-items: baseline; gap: .875rem; padding: 1.125rem 0 1.1875rem; border-bottom: var(--hair) solid var(--line); font: 500 var(--fs-body)/1.45 var(--sans); color: var(--fg); text-wrap: pretty; } /* the refusals at the size they had (running text, bold lead): set, not shouted */
+.tr-no-list > li { display: flex; align-items: baseline; gap: .875rem; padding: 1.125rem 0 1.1875rem; border-bottom: var(--hair) solid var(--line); font: 500 var(--fs-body)/1.45 var(--sans); color: var(--fg); text-wrap: pretty; }
 .tr-no-list > li > i { flex: none; width: .875rem; height: 0; border-top: var(--hair) solid var(--fg-3); transform: translateY(-.34em); }
 @media (max-width: 960px) { .tr-no > * { grid-column: 1 / -1; } }
 
-/* phones: the ledger in one column */
 @media (max-width: 600px) {
   .tr-lt .lt-state > span { white-space: normal; }
   .tr-lt .lt-view { overflow: visible; -webkit-mask-image: none !important; mask-image: none !important; }
-  .tr-lt .lt-track { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; width: auto; min-width: 0; padding: .25rem .75rem .75rem .625rem; } /* start: a replay holds the column's height (trust.js) and the rows must not stretch into it */
+  .tr-lt .lt-track { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; width: auto; min-width: 0; padding: .25rem .75rem .75rem .625rem; }
   .tr-lt .lt-rec { contain: layout style; width: auto; margin-left: 0; padding: .6875rem .5rem .75rem 2.125rem; display: grid; grid-template-columns: 4.6875rem minmax(0, 1fr) auto; grid-template-areas: "meta ev t" "meta sub ."; column-gap: .625rem; row-gap: .25rem; align-items: baseline; }
   .tr-lt .lt-rec::after { inset: .125rem 0; }
   .tr-lt .lt-meta { grid-area: meta; flex-direction: column; gap: calc(2 * var(--hair)); }
   .tr-lt .lt-ev { grid-area: ev; margin-top: 0; }
   .tr-lt .lt-t { grid-area: t; margin-top: 0; }
-  .tr-lt .lt-sub { grid-area: sub; display: block; margin-top: 0; min-height: 0; overflow: visible; } /* a4: in full (a clamp cut "op-02") */
+  .tr-lt .lt-sub { grid-area: sub; display: block; margin-top: 0; min-height: 0; overflow: visible; }
   .tr-lt .lt-line { position: absolute; inset: 0; height: auto; margin: 0; pointer-events: none; }
   .tr-lt .lt-node { left: .625rem; top: .9375rem; }
   .tr-lt .lt-seg { left: .96875rem; right: auto; top: 1.8125rem; bottom: -.9375rem; width: var(--hair); height: auto; transform-origin: 50% 0; }
   .tr-lt .lt-rec.is-head .lt-seg { display: none; }
   .tr-lt .lt-rec .lt-tag { left: auto; right: .5rem; top: auto; bottom: .8125rem; transform: none; padding: 0; background: none; }
   .tr-lt .lt-now { left: auto; right: .5rem; top: auto; bottom: .8125rem; transform: none; padding: 0; }
-  /* a4: once a record is changed, each takes a hash line under its text (struck seal, then now): Verify moves nothing */
   .tr-lt.is-changed .lt-rec { padding-bottom: calc(1.125rem + 1.2 * var(--mono-tick)); }
   .tr-lt.is-changed .lt-rec .lt-tag { left: 7.4375rem; right: auto; top: auto; bottom: .75rem; }
   .tr-lt .lt-now { left: calc(7.4375rem + 8ch + .48em + .75rem); right: auto; bottom: .75rem; }
@@ -453,29 +386,25 @@
   .tr-lt .lt-rec.is-linking .lt-seg { animation-name: tr-form-v; }
   .tr-lt .lt-leader { display: none; }
   .tr-lt .lt-rec:focus-visible::before { inset: .125rem 0; }
-  /* the record's controls say what they do on a phone too (a pencil alone did not say "Change a record") */
   .tr-lt .lt-head { grid-template-columns: minmax(0, 1fr); grid-template-areas: "title" "ctrl" "state" "hint"; row-gap: .625rem; }
   .tr-lt .lt-ctrl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
   .tr-lt .lt-btn--ico { width: auto; min-width: 0; padding: 0 .5rem; gap: .4375rem; }
   .tr-lt .lt-btn--ico > span { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
   .tr-lt .lt-btn--ico :is(.lt-x, .lt-xs) { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
-/* the narrowest phones: three short lines a record (id beside event, detail, time). In em (a4): 25em = 400 px at 16 px */
 @media (max-width: 25em) {
   .tr-lt .lt-rec { grid-template-columns: 4.125rem minmax(0, 1fr); grid-template-areas: "meta ev" "meta sub" "meta t"; row-gap: calc(3 * var(--hair)); padding-right: .375rem; }
   .tr-lt .lt-ev { letter-spacing: .07em; }
   .tr-lt .lt-t { margin-top: calc(2 * var(--hair)); }
   .tr-lt .lt-rec .lt-tag { bottom: .75rem; right: .375rem; }
-  .tr-lt.is-changed .lt-rec .lt-tag { left: 6.875rem; right: auto; } /* the text column */
+  .tr-lt.is-changed .lt-rec .lt-tag { left: 6.875rem; right: auto; }
   .tr-lt .lt-now { left: calc(6.875rem + 8ch + .48em + .75rem); }
 }
-/* a4: no room for a hash beside the time (320; 390 at a 20 px font): its own line */
 @media (max-width: 21.5em) {
   .tr-lt .lt-rec { padding-bottom: calc(1.125rem + 1.2 * var(--mono-tick)); }
   .tr-lt .lt-rec .lt-tag { left: 6.875rem; right: auto; top: auto; bottom: .75rem; }
 }
-@media (max-width: 22em) { .tr-lt .lt-check[data-f="next"] { --lt-chk: 4.8em; -webkit-line-clamp: 3; } } /* a4: at rest the hash's verdict has the 3 lines its longest needs below 352 px ("...this excerpt" was cut at 320) */
-/* too narrow for both hashes (24 px font): the new one under */
+@media (max-width: 22em) { .tr-lt .lt-check[data-f="next"] { --lt-chk: 4.8em; -webkit-line-clamp: 3; } }
 @media (max-width: 18em) {
   .tr-lt.is-changed .lt-rec { padding-bottom: calc(1.5rem + 2.4 * var(--mono-tick)); }
   .tr-lt.is-changed .lt-rec .lt-tag { bottom: calc(1.125rem + 1.2 * var(--mono-tick)); }

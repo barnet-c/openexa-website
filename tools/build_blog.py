@@ -292,10 +292,20 @@ def plate(p, cls="blog-thumb"):
     post). aria-hidden: the card's h3 names the post.
     Hill climb hc3 (director, item 10): the plate is the site's [data-draw] plate (site.js, site.css .dm): its one green
     line draws as the card arrives, and again, once, 400 ms, when the card is pointed at or focused, as every card's plate
-    does on the site (it was blog.css's own 1.1 s redraw on hover, and no draw on arrival)"""
+    does on the site (it was blog.css's own 1.1 s redraw on hover, and no draw on arrival).
+    Hill climb hc26r (BLOG-1; SYSTEM.md 13, SYS-2): the drawing itself (the svg, not its paper box) is the card's .vt-src,
+    so it travels with the page turn into the post's hero drawing (post_plate's data-vt-dest)"""
     s, n = CARD_ACCENT.subn(r'<\1 class="pg dm dm--line"', plate_svg(p["slug"], p["col"], turn(p)))
     assert n == 1, f"{p['slug']}: a card's plate has one green line to draw ({n})"
+    s = vt_src(s)
     return f'<div class="{cls} blog-plate" data-draw aria-hidden="true">{s}</div>'
+SVG_CLASS = re.compile(r'<svg class="bp-art[^"]*"')  # build_og.still() reads a post's first <svg class="bp-art...: the class leads
+def vt_src(s, ident=""):
+    """hc26r (SYS-2): mark a plate's svg as a travelling drawing: .vt-src inside a card's link, or an id that a register's
+    row names (data-vt-src) where the drawing stands beside the list (the markets panel)"""
+    m = SVG_CLASS.match(s)
+    assert m, s[:40]
+    return (s[:m.end()] + f' id="{ident}"' if ident else s[:m.end() - 1] + ' vt-src"') + s[m.end():]
 SERIF_HY = re.compile(r"(?<=[^\W\d_])-(?=[^\W\d_])")
 # v2x lab (blog-editorial, 31 Oct): typography on the page, never words (VOICE §7; r1-art M8, r1-copy 31). The old CMS
 # kept typewriter marks: straight quotes and apostrophes, a spaced hyphen for a dash, three dots. What the page shows
@@ -646,23 +656,27 @@ def card(p, lead=False, kicker="", row=False):
 SHORT_TITLE = {"why-banks-exist-unveiling-the-vital-role-of-credit-in-the-financial-system": "Why Banks Exist?"}
 assert all(v in SLUGS[k]["title"] for k, v in SHORT_TITLE.items()), "a short title must be the post's own words"
 ALSO_AI = "Also in AI & agents"
-def register(posts, col, after=None):
+PANEL_ID = lambda i: f"bpn-{i + 1}"
+def register(posts, col, after=None, panel=False):
     """posts as the lines of a register (both research collections since award a2): the year, the title, the arrow.
     award a2 (a2-ux 8: "give every card its year"; the index has a 250-word budget): the year is said once, at the head of
     its rows, as an archive sets it (Financial markets research: 3 years for 15 rows, not 15; Market structure &
     economics: 6 for 8), and a new year opens on a darker rule. The rows under it keep their date for machines (an
     empty <time datetime>) and are described by it (aria-describedby), so a list of links still says each post's year.
     after: the year said just above the list (the markets lead's): on a phone the lead is the list's first row, so a first
-    year equal to it is not shown twice there (.br-cont: still read out)"""
+    year equal to it is not shown twice there (.br-cont: still read out)
+    panel (hc26r, SYS-2): the list stands beside a plate that shows the row's own drawing (the markets panel): each row
+    names its drawing there (data-vt-src, PANEL_ID), so the drawing travels into the post's hero with the page turn"""
     out, last = [], None
     for i, p in enumerate(posts):
         y = p["dt"].year; first = y != last; last = y
         yid = f"y-{col}-{y}"
         ext = ' target="_blank" rel="noopener"' if p["stub"] else ""
+        vt = f' data-vt-src="{PANEL_ID(i)}"' if panel and not p["stub"] else ""
         cont = ' br-cont' if not i and y == after else ''
         when = (f'<time class="br-date{cont}" id="{yid}" datetime="{iso(p)}">{y}</time>' if first
                 else f'<time class="br-date" datetime="{iso(p)}"></time>')
-        out.append(f'''          <li{' class="br-g"' if first and i else ''}><a class="blog-card blog-row" href="{esc(href(p))}"{ext}{'' if first else f' aria-describedby="{yid}"'}>
+        out.append(f'''          <li{' class="br-g"' if first and i else ''}><a class="blog-card blog-row" href="{esc(href(p))}"{ext}{'' if first else f' aria-describedby="{yid}"'}{vt}>
             {when}
             <h3>{post_title(p["title"])}</h3>
             <span class="br-min">{OUTB if p["stub"] else ARROW}</span>
@@ -748,13 +762,14 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
         # on the index, drawn larger than its card was; without JavaScript the plate shows the first row's. Phones and
         # tablets: the lead's plate heads the list, as the phone did since a1
         lead_p, rest_ = by_col[k][0], by_col[k][1:]  # not "lead": that name is the posts' lead() below
-        panel = "".join(f'<div class="bpn{" is-on" if i == 0 else ""}">{plate_svg(p["slug"], p["col"])}</div>' for i, p in enumerate(rest_))
+        # hc26r (SYS-2): each drawing carries the id its row names (register(panel=True)), so the one shown travels
+        panel = "".join(f'<div class="bpn{" is-on" if i == 0 else ""}">{vt_src(plate_svg(p["slug"], p["col"]), PANEL_ID(i))}</div>' for i, p in enumerate(rest_))
         # hill climb hc6: the index's one stamp, under the figure that follows the list (as Research's index figure says
         # it); the cards' plates, as every card's on the site, carry none. aria-hidden with its drawing (the margin plate's way)
         assert any(stamp(p["slug"], p["col"]) for p in rest_)
         body = lead_card(lead_p) + f'''        <div class="blog-reg blog-mkt" data-blog-follow>
           <ol class="blog-register" role="list" data-reveal>
-{register(rest_, k, after=lead_p["dt"].year)}
+{register(rest_, k, after=lead_p["dt"].year, panel=True)}
           </ol>
           <div class="blog-panel" aria-hidden="true"><div class="blog-panel-art">{panel}</div><p class="pp-h">{ILLUSTRATIVE}</p></div>
         </div>
@@ -827,6 +842,8 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".
 </body>
 </html>
 '''
+# hc26r (SYS-2): every card's drawing travels (.vt-src inside its link), and every markets row names its own drawing
+assert page.count(' vt-src"') == page.count('class="blog-thumb blog-plate"') > 0 and all(f'id="{PANEL_ID(i)}"' in page for i in range(page.count(' data-vt-src="'))), "the index's travelling drawings"
 if OUT.exists(): shutil.rmtree(OUT)
 if (ROOT / "research" / "blog").exists(): shutil.rmtree(ROOT / "research" / "blog")  # the blog lived here until 2026-09-30
 write(OUT / "index.html", page)
@@ -856,9 +873,14 @@ def post_plate(p):
     st = stamp(p["slug"], p["col"])
     cap = f'\n          <figcaption class="pp-h">{st}</figcaption>' if st else ""
     art = plate_svg(p["slug"], p["col"], turn(p), lettering=True)
+    # hill climb hc26r (BLOG-1; SYSTEM.md 13, SYS-2): the drawing is the page's one data-vt-dest, so a card's drawing (or
+    # the markets panel's) lands on it with the page turn; its registration marks arrive with the page
+    m = SVG_CLASS.match(art)
+    assert m, art[:40]
+    dest = art[:m.end()] + " data-vt-dest" + art[m.end():]
     # hill climb hc2: on a phone the drawing fills its 5:2 frame (blog_plates.phone_fit, placed by blog.css at <= 640 px)
     return f'''<figure class="post-plate" id="plate">
-          <div class="post-plate-art" style="{phone_fit(art)}" aria-hidden="true">{art}{REG}</div>{cap}
+          <div class="post-plate-art" style="{phone_fit(art)}" aria-hidden="true">{dest}{REG}</div>{cap}
         </figure>'''
 # award a3 (4K inspector, polish; AWARD_BAR L7): the post's hero plate was the site's one box-framed hero plate. It takes
 # the hero plates' registration marks (site.css .hp-reg, the same four corners; blog.css places them on the old box)
@@ -1001,6 +1023,7 @@ for p in order:
 </body>
 </html>
 '''
+    assert page.count(" data-vt-dest") == 1, (p["slug"], "one landing for a travelling drawing per post (SYS-2)")
     write(OUT / f'{p["slug"]}.html', page)
 atom(OUT / "feed.xml", "OpenEXA Blog", "AI agents in finance, financial markets research and market structure.", BASE,
      [{"url": BASE + p["slug"] + ".html", "title": p["title"], "published": p["dt"].strftime("%Y-%m-%d"), "updated": p["dt"].strftime("%Y-%m-%d"),

@@ -279,11 +279,6 @@
   }
 
   document.querySelectorAll('[data-proof-chart]').forEach((host, i) => buildChart(host, i + 1));
-
-  /* hc13r (PROOF-2b, SYS-3): Proof §01's thread is whole at rest; when the trail is well in view (OXA.actOnce) one
-     signal runs along it, once (proof.css .is-run) */
-  const OXA = window.OXA = window.OXA || {}, run = () => trail.classList.add('is-run');
-  if (trail) { if (OXA.actOnce) OXA.actOnce(trail, run); else (OXA.q = OXA.q || []).push([trail, run]); }
 })();
 
 /* The cost figure (home §05 · Proof §02). (hc5, HC5 item 6) One reveal of at most 600 ms, both rows at once: the solid

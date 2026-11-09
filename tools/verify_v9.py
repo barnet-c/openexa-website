@@ -471,10 +471,21 @@ async def home(b):
         hedge: !!l && /proof-of-concept/.test(l.textContent) && !!l.querySelector('a[href="#disclosures"]'), split: /Five premium, five discount\\./.test(b.textContent),
         proof: !!b.querySelector('a[href="evidence.html"]') }; })()""")
     assert p4 == {"rec": True, "charts": 0, "hedge": True, "split": True, "proof": True}, ("scene 4 carries the record, its hedge, the split and the way to Proof; no chart on Home", p4)
-    # the last beat has faded before the stage's exit could carry it under the bar
+    # the last beat is never carried under the bar by the stage's exit: it has faded, or (hc26r, home's HOME-3: it leaves by
+    # being clipped at the bar's edge, never faded) what still shows of it starts at the bar's foot (integrate hc26r)
     await pg.evaluate("(() => { const s = document.querySelector('.story'); window.scrollTo({top: s.offsetTop + s.offsetHeight - innerHeight * 0.5, behavior: 'instant'}); })()")
-    op = await until(pg, "(() => { const o = +getComputedStyle(document.querySelector('.beat-4')).opacity; return o < 0.05 ? String(o) : ''; })()", 4000)
-    assert op, ("beat 4 still visible past the stage's end", await pg.evaluate("getComputedStyle(document.querySelector('.beat-4')).opacity"))
+    B4 = r"""(() => { const b = document.querySelector('.beat-4'), o = +getComputedStyle(b).opacity, r = b.getBoundingClientRect(), nb = document.querySelector('.nav').getBoundingClientRect().bottom;
+      const k = +((getComputedStyle(b).clipPath.match(/inset\(\s*(-?[\d.]+)px/) || [0, 0])[1]), top = r.top + k;
+      return { o, top: Math.round(top * 10) / 10, bottom: Math.round(r.bottom), nb: Math.round(nb * 10) / 10, ok: o < 0.05 || r.bottom <= nb + 0.5 || top >= nb - 1 }; })()"""
+    op = await until(pg, f"({B4}).ok ? 'ok' : ''", 4000)
+    assert op, ("beat 4 drawn under the bar past the stage's end (faded, or clipped at the bar's foot)", await pg.evaluate(B4))
+    under = []
+    for f in (1.0, .9, .8, .7, .6, .5, .4, .3):  # through the stage's exit, where the beat crosses the bar
+        await pg.evaluate(f"(() => {{ const s = document.querySelector('.story'); window.scrollTo({{top: s.offsetTop + s.offsetHeight - innerHeight * {f}, behavior: 'instant'}}); }})()")
+        await pg.wait_for_timeout(450)
+        q = await pg.evaluate(B4)
+        if not q["ok"]: under.append((f, q))
+    assert not under, ("beat 4 drawn under the bar during the stage's exit (faded, or clipped at the bar's foot)", under[:3])
     # the nav: the chapter readout replaced the fixed rail; its list names every chapter of the page (7 until hc11, 6 since
     # §02 left, 5 since hc13r when §03 #proof left: counted from the page and pinned at 5); the readout names the chapter
     # under the bar, and the bar takes a dark band's tone (hc13r: Home has no dark chapter now; its dark band is the close)
@@ -2794,28 +2805,33 @@ async def platform_spec(b):
     panel (#arch0-pN, the next sibling of the Nth h3.arch-h in the list, aria-expanded true) whose text is the markup's
     job line, under a row naming the markup's layer; pressing the open layer again closes it; the boundary (its line and
     hairline) stands after 04 with its hairline level with the drawing's plane (within 2 px); pointing at each layer sets
-    has-hot and never changes the instrument's height; Enter opens 04's panel in the list"""
+    has-hot and never changes the instrument's height; Enter opens 04's panel in the list.
+    hc26r (integrate, standing in for tests; platform's request, PLAT-1): at 1440 x 900 the explorer is the end of a pinned
+    scene, so the check reaches it as a visitor does, by the address (#architecture lands on the travel's end, the
+    explorer whole), and points and clicks with the mouse at each layer's centre (Playwright's own scroll-into-view would
+    move the page back into the scene, where the rows are still arriving); everything after that is as before"""
     ctx, pg = await open_page(b, "platform.html", 1440, 900)
     m = await pg.evaluate(SPEC)
-    await pg.evaluate("document.querySelector('#architecture .arch').scrollIntoView({block: 'center', behavior: 'instant'})")
+    await pg.evaluate("location.hash = '#architecture'"); await pg.wait_for_timeout(1500)
     assert await until(pg, "!!document.querySelector('#architecture .arch.is-wide.is-ready')", 10000), "platform explorer not ready at 1440"
     await pg.wait_for_timeout(600)
     arch_h = "Math.round(document.querySelector('#architecture .arch').getBoundingClientRect().height)"
+    mid = lambda sel: pg.evaluate("(s) => { const r = document.querySelector(s).getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }", sel)
     h0 = await pg.evaluate(arch_h)
     hov = []
     for k in range(1, 9):
-        await pg.locator(f"#arch0-b{k}").hover(); await pg.wait_for_timeout(150)
+        x, y = await mid(f"#arch0-b{k}"); await pg.mouse.move(x, y); await pg.wait_for_timeout(150)
         hov.append(await pg.evaluate(f"[document.querySelector('#architecture .arch').classList.contains('has-hot'), {arch_h}]"))
     await pg.mouse.move(5, 450)
     assert all(hh and abs(hgt - h0) <= 1 for hh, hgt in hov), f"platform_spec platform.html@1440x900: pointing at each layer gives [has-hot, height] {hov} (want has-hot, height {h0} throughout)"
     shown = []
     for k, (name, job) in enumerate(m["layers"]):
-        await pg.locator(f"#arch0-b{k + 1}").click()
+        x, y = await mid(f"#arch0-b{k + 1}"); await pg.mouse.click(x, y)
         got = await until(pg, f"""(() => {{ const norm = s => (s || '').replace(/\\s+/g, ' ').trim(), p = document.querySelector('#arch0-p{k + 1}'), h = document.querySelectorAll('#architecture h3.arch-h')[{k}];
           return p && h && !p.hidden && p.getClientRects().length > 0 && p.previousElementSibling === h && !!p.closest('.arch-list')
             && document.querySelector('#arch0-b{k + 1}').getAttribute('aria-expanded') === 'true' && norm(p.textContent) === {json.dumps(job)} ? norm(h.querySelector('.nm').textContent) : ''; }})()""", 3000)
         shown.append(got)
-    await pg.locator("#arch0-b8").click()
+    x, y = await mid("#arch0-b8"); await pg.mouse.click(x, y)
     await expect(pg.locator("#arch0-b8")).to_have_attribute("aria-expanded", "false")
     await expect(pg.locator("#arch0-p8")).to_be_hidden()
     await pg.mouse.move(5, 450); await pg.wait_for_timeout(700)
@@ -2836,7 +2852,7 @@ async def platform_spec(b):
     assert await pg.evaluate("document.activeElement.id") == "arch0-b4"
     await pg.keyboard.press("End"); assert await pg.evaluate("document.activeElement.id") == "arch0-b8"
     await pg.keyboard.press("Home"); assert await pg.evaluate("document.activeElement.id") == "arch0-b1"
-    await pg.locator("#arch0-b5").hover()
+    x, y = await mid("#arch0-b5"); await pg.mouse.move(x, y)
     await expect(pg.locator("#architecture .arch")).to_have_class(re.compile(r"\bhas-hot\b"))
     await pg.mouse.move(5, 450)
     await ctx.close()
@@ -3446,7 +3462,7 @@ async def grid_slabs(pg, sel, where, hold=False):
 @check
 async def grid_slab(b):
     """no grey slab: on /blog/ at 1440 (incomplete last rows) and on Trust's control plane (#control; §02 until v2x) at t=0 of its reveal (animations held at
-    their start), no area of rgba(14,21,18,.14) over the paper wider than a rule (a 3x3 block; images excluded) shows in
+    their start; since hc26r the plate has no reveal, its scene is its entrance, so this is the plate as it stands), no area of rgba(14,21,18,.14) over the paper wider than a rule (a 3x3 block; images excluded) shows in
     a card grid (PG-R2-2: the rules are drawn on the cells, not as the container's background between them). hc13r
     (proof, PROOF-1): Trust's six boxed K-plates became one control-plane plate, an <ol> of six stations
     (#control .tr-st), read the same way in their place"""
@@ -3779,7 +3795,7 @@ PIPE_NAMES = {"pp-ride", "pp-lit", "pp-on", "pl-pop"}  # the ring's ride, a gate
 async def pipeline_once(b):
     """hc19 (integrate, standing in for tests; platform's optional request; the director's HC19 4.2, done by platform):
     Platform §03's pipeline drawing (`#pipeline .pipe-fig`) acts by the site's one rule (OXA.actOnce, site.js), as Trust
-    §02 and Proof §01. At 1440 x 900, scrolled to the middle of the screen, it gains .is-run within 4 s and plays its one
+    §02 and Proof §01 did until hc26r (they are scroll scenes now: plate_scenes). At 1440 x 900, scrolled to the middle of the screen, it gains .is-run within 4 s and plays its one
     pass (the ring's ride, the gates lit, the records written: pp-ride, pp-lit, pp-on, pl-pop among its running
     animations); within 4 s more nothing in it is running, and the drawing then equals, pixel for pixel (no more than 0.05%
     of its pixels off by more than 8 levels), the same page with the pass cancelled (a keydown inside the figure before it
@@ -3872,6 +3888,17 @@ MARKET_WHOLE_MS = 1400  # hc21 (HC21 4.2): the plate is whole within ~1.4 s of i
 MARKET_HALVES = r"""(() => [...document.querySelectorAll('#marketplace .sp-half svg')].map(s => s.getBoundingClientRect().height))()"""
 
 
+def near_off(a, b, lv=8):
+    """pixels of a that are more than lv levels (any channel) from every pixel of b within one pixel (a 3 x 3
+    neighbourhood): the same drawing at another sub-pixel offset passes, a changed drawing does not"""
+    from PIL import ImageChops, ImageFilter
+    lo, hi = b.filter(ImageFilter.MinFilter(3)), b.filter(ImageFilter.MaxFilter(3))
+    under = ImageChops.subtract(lo, a)   # how far a is under b's darkest neighbour (0 when not under)
+    over = ImageChops.subtract(a, hi)    # how far a is over b's lightest neighbour
+    d = ImageChops.lighter(under, over).convert("L").point(lambda v: 255 if v > lv else 0)
+    return d.histogram()[255]
+
+
 @check
 async def market_draw_once(b):
     """hc20 (integrate, standing in for tests; platform's optional pin; the director's HC20 4.4, done by platform):
@@ -3885,7 +3912,12 @@ async def market_draw_once(b):
     hc21 (integrate, standing in for tests; the director's HC21 4.2 and platform's optional pin): the draw-in is whole within
     MARKET_WHOLE_MS of the reveal, read from its animations' own timing (the latest delay + duration, so a slow CPU cannot
     move it; .85 s at the time of writing, 2.15 s at hc20); and the plate's two halves are drawn in boxes of one height at
-    1440 x 900 and 3840 x 2160 (the record line runs on across the join with no step: 0.57 px at 3840 at hc20)."""
+    1440 x 900 and 3840 x 2160 (the record line runs on across the join with no step: 0.57 px at 3840 at hc20).
+    hc26r (integrate, standing in for tests; platform's request, PLAT-1): reduced motion now unpins Platform's hero scene,
+    so §06 sits at another sub-pixel offset there (0.9% of the plate's pixels differ by anti-aliasing alone). The draw-in's
+    rest is compared, pixel for pixel as before, with the still on the same layout: the motion page reached by a jump (the
+    reveal cut, nothing runs); and that still with the reduced-motion plate, a pixel matching when it is within 8 levels
+    of any pixel of the other within one device pixel (the same drawing, shifted by less than a pixel)."""
     import io
     from PIL import Image, ImageChops
     bad, notes = [], []
@@ -3912,6 +3944,7 @@ async def market_draw_once(b):
     if st["running"]: bad.append(f"reduced motion: the plate runs {st['by']!r}")
     await ctx.close()
     # 2. the draw-in, once, to its rest
+    rest = None
     ctx, pg = await open_page(b, "platform.html", 1440, 900)
     await pg.mouse.move(5, 450)
     await pg.evaluate(MARKET_WATCH)
@@ -3930,12 +3963,7 @@ async def market_draw_once(b):
             bad.append(f"1440: still running 4 s after the reveal: {await pg.evaluate(MARKET_STATE)!r}")
         else:
             rest = await still(pg)
-            if rest.size != ref.size: bad.append(f"1440: the plate after its draw-in is {rest.size}, under reduced motion {ref.size}")
-            else:
-                d = ImageChops.difference(ref, rest).convert("L").point(lambda v: 255 if v > 8 else 0)
-                off, total = d.histogram()[255], ref.size[0] * ref.size[1]
-                if off > total * 0.0005: bad.append(f"1440: after its draw-in the plate is not the still: {off} of {total} pixels off by more than 8 levels")
-                notes.append(f"1440 drew once ({mk['n']} animations: {', '.join(f'{k} {v}' for k, v in sorted(mk['by'].items()))}; rest = still, {off} of {total} px off)")
+            notes.append(f"1440 drew once ({mk['n']} animations: {', '.join(f'{k} {v}' for k, v in sorted(mk['by'].items()))})")
         await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(1200)
         await pg.evaluate(center, MARKET); await pg.wait_for_timeout(lim(2500))
         again = await pg.evaluate(MARKET_STATE)
@@ -3959,6 +3987,19 @@ async def market_draw_once(b):
         await pg.wait_for_timeout(1600)
         st = await pg.evaluate(MARKET_STATE)
         if st["running"]: bad.append(f"jump: the plate runs {st['by']!r} 1.6 s after the landing")
+        cut = await still(pg)
+        if rest is not None:
+            if rest.size != cut.size: bad.append(f"1440: the plate after its draw-in is {rest.size}, after a jump {cut.size}")
+            else:
+                d = ImageChops.difference(cut, rest).convert("L").point(lambda v: 255 if v > 8 else 0)
+                off, total = d.histogram()[255], cut.size[0] * cut.size[1]
+                if off > total * 0.0005: bad.append(f"1440: after its draw-in the plate is not the still: {off} of {total} pixels off by more than 8 levels")
+                notes.append(f"rest = still, {off} of {total} px off")
+        if cut.size != ref.size: bad.append(f"1440: the still after a jump is {cut.size}, under reduced motion {ref.size}")
+        else:
+            off, total = near_off(cut, ref), cut.size[0] * cut.size[1]
+            if off > total * 0.0005: bad.append(f"1440: the still after a jump is not the reduced-motion plate: {off} of {total} pixels off by more than 8 levels within a pixel")
+            notes.append(f"still = reduced-motion still within a pixel, {off} px off")
     await ctx.close()
     notes.append("reduced motion, deep link and jump: the still")
     # 4. one record line across the join: the two halves' boxes have one height (the same viewBox height, the same snap)
@@ -4416,7 +4457,11 @@ PAPER_ROW = r"""(() => { const paper = document.querySelector('.story-paper'), h
   let conf = null; try { const j = JSON.parse(document.getElementById('oxa-sessions').textContent);
     conf = j.sessions.filter(s => /confirm/i.test(s.confirmation || '') && !/pending|awaiting|unconfirm|^not\b/i.test((s.confirmation || '').trim())).length; } catch (e) {}
   return { edge: shown ? pr.top : null, recs: [...document.querySelectorAll('.story-ink-rec')].map(R), chks: [...document.querySelectorAll('.story-ink-chk')].map(R),
-    head: R(h), conf, rem: parseFloat(getComputedStyle(document.documentElement).fontSize), H: innerHeight, end: Math.round(document.querySelector('.story').offsetTop + document.querySelector('.story').offsetHeight) }; })()"""
+    head: R(h), conf, more: (m => m && m.getClientRects().length ? R(m) : null)(document.querySelector('.beat-4 .beat-more')),
+    cap: (c => c && c.getClientRects().length ? R(c) : null)(document.querySelector('.story-paper-cap')),
+    days: [...document.querySelectorAll('.story-ink .story-lab, .story-labels .story-lab.day')].filter(e => { for (let x = e; x; x = x.parentElement) { const cs = getComputedStyle(x); if (+cs.opacity < .05 || cs.visibility === 'hidden') return false; } return true; })
+      .map(R).filter(([t, bt]) => bt - t > 0 && t < innerHeight && bt > 0),
+    rem: parseFloat(getComputedStyle(document.documentElement).fontSize), H: innerHeight, end: Math.round(document.querySelector('.story').offsetTop + document.querySelector('.story').offsetHeight) }; })()"""
 
 
 @check
@@ -4428,7 +4473,12 @@ async def paper_row(b):
     `#oxa-sessions`; no ink record and no tick crosses the edge; S4's headline ends over it (on ink). Portrait (390 x 844
     with touch, 768 x 1024): unchanged by hc24, the row on ink over the headline and the paper under the headline's foot,
     so nothing crosses the edge there either. Before hc24 the paper stopped at the floor line: the ten ticks hung on ink
-    over the seam and the records sat exactly on it (the director's home04-top.png)."""
+    over the seam and the records sat exactly on it (the director's home04-top.png).
+    hc26r (integrate, standing in for tests; home's request, HOME-3): the portrait exit lands the row on paper too, so the
+    portrait half takes the wide principle: at the release (390 x 844 with touch, 768 x 1024) the printed ticks are on
+    the paper, one per confirmed session; the paper's edge stands at least 1.25rem over them; no record or tick crosses
+    it; S4's headline and its last line ("The full proof file", .beat-4 .beat-more) end over the edge; and the paper's
+    caption (.story-paper-cap) starts within 24 px under the lowest day number on the paper."""
     bad, notes = [], []
     for w, h, touch, wide in ((1440, 900, False, True), (1920, 1080, False, True), (3840, 2160, False, True), (1024, 768, False, True),
                               (1280, 600, False, True), (390, 844, True, False), (768, 1024, False, False)):
@@ -4452,8 +4502,20 @@ async def paper_row(b):
             if gap < want - 0.5: bad.append(f"{tag}: the paper's edge is {gap:.1f} px over the ticks ({want:.0f} at least)")
             if any(t < e for t, _ in r["recs"]): bad.append(f"{tag}: an ink record stands over the paper's edge")
             notes.append(f"{w}x{h} {gap:.0f} px")
+        else:
+            if r["conf"] is not None and len(r["chks"]) != r["conf"]: bad.append(f"{tag}: {len(r['chks'])} printed ticks for {r['conf']} confirmed sessions")
+            if not r["chks"]: bad.append(f"{tag}: no printed ticks"); continue
+            gap = min(t for t, _ in r["chks"]) - e
+            if gap < 1.25 * r["rem"] - 0.5: bad.append(f"{tag}: the paper's edge is {gap:.1f} px over the ticks ({1.25 * r['rem']:.0f} at least: the ticks on paper)")
+            if not r["more"]: bad.append(f"{tag}: S4's last line (.beat-4 .beat-more) is not shown at the release")
+            elif r["more"][1] > e + 0.5: bad.append(f"{tag}: S4's last line ends at {r['more'][1]:.1f}, under the paper's edge {e:.1f}")
+            if r["cap"] and r["days"]:
+                low = max(bt for _, bt in r["days"])
+                if not (low - 0.5 <= r["cap"][0] <= low + 24): bad.append(f"{tag}: the paper's caption starts at {r['cap'][0]:.1f}, the lowest day number ends at {low:.1f} (within 24 px under it)")
+                notes.append(f"{w}x{h} {gap:.0f} px, caption {r['cap'][0] - low:.0f} px under the days")
+            else: bad.append(f"{tag}: no paper caption ({bool(r['cap'])}) or no day numbers ({len(r['days'])}) at the release")
     assert not bad, "paper_row:\n  " + "\n  ".join(bad)
-    print(f"paper_row: the record row lands whole on paper with its ticks, the edge over them ({'; '.join(notes)}); portrait unchanged")
+    print(f"paper_row: the record row lands whole on paper with its ticks, the edge over them, at every size ({'; '.join(notes)})")
 
 
 DESK_ORDER = r"""(() => { const d = document.querySelector('#desk .desk') || document.querySelector('.desk'); if (!d) return null;
@@ -4556,7 +4618,7 @@ COST_SCENE = r"""(() => { const fig = document.querySelector('#economics figure.
   return { top: fig.getBoundingClientRect().top + scrollY, H: innerHeight, dec: !!fig.querySelector('.is-dec, .pf-ck') && !!document.querySelector('[data-page="proof"] .is-dec'),
     rows: rows.map(d => { const r = d.getBoundingClientRect(), g = [...d.querySelectorAll('.cost-blk .is-gone, .cost-blk .is-rest')];
       const op = g.map(i => { const s = getComputedStyle(i, '::before'); return s.content === 'none' ? 0 : +s.opacity; });
-      return { t: r.top, h: r.height, prog: (innerHeight - r.top) / (innerHeight + r.height), cp: +getComputedStyle(d).getPropertyValue('--cp'), out: g.length, max: op.length ? Math.max(...op) : 0, min: op.length ? Math.min(...op) : 0,
+      return { t: r.top, h: r.height, prog: (innerHeight - r.top) / (innerHeight + r.height), cp: +getComputedStyle(d).getPropertyValue('--scene-p'), out: g.length, max: op.length ? Math.max(...op) : 0, min: op.length ? Math.min(...op) : 0,
                anims: d.getAnimations().length }; }) }; })()"""
 
 
@@ -4571,10 +4633,15 @@ async def scroll_scenes(b):
     agentic stack drops drawn at full) while it enters the screen, and ends on the still picture (--cp 1, those blocks
     empty to outlines) once it has risen past the middle; under reduced motion each row is the still picture at once (--cp 1,
     nothing filled, no animation). Native scrolling drives both (window.scrollTo); check_static offscreen_pause pins their
-    off-screen pause."""
+    off-screen pause.
+    hc26r (integrate, standing in for tests; platform's and proof's requests): Platform's hero is the first act of a
+    pinned scene on windows of 1000 x 700 and up (stack_scene checks it there), so its hc25 parting is checked where it
+    still runs on the page's own scroll: 960 x 900 and 390 x 844 (touch), with reduced motion also at 1440 x 900. Proof
+    §02's rows are bare data-scene on the scene primitive (SYS-1): their progress is --scene-p (it was --cp), same range
+    (cover 10% cover 40%), same pictures."""
     bad, notes = [], []
-    for w, h, dpr, touch in ((1440, 900, 1, False), (390, 844, 3, True)):
-        for reduced in (False, True):
+    for w, h, dpr, touch, rms in ((960, 900, 1, False, (False, True)), (1440, 900, 1, False, (True,)), (390, 844, 3, True, (False, True))):
+        for reduced in rms:
             tag = f"platform.html@{w}x{h}{' reduced' if reduced else ''}"
             ctx, pg = await open_page(b, "platform.html", w, h, dpr=dpr, touch=touch, reduced=reduced)
             await pg.wait_for_timeout(600)
@@ -4619,14 +4686,582 @@ async def scroll_scenes(b):
             # a row's own view timeline runs from cover 10% to cover 40%: entering (<= 9%) it is filled, risen (>= 41%) it is still
             for i, r in enumerate(a["rows"]):
                 if r["prog"] > 0.09: continue
-                if r["cp"] > 0.02 or (r["out"] and r["min"] < 0.98): bad.append(f"{tag}: row {i + 1} entering is not filled (--cp {r['cp']:.2f}, blocks {r['min']:.2f}-{r['max']:.2f})")
+                if r["cp"] > 0.02 or (r["out"] and r["min"] < 0.98): bad.append(f"{tag}: row {i + 1} entering is not filled (--scene-p {r['cp']:.2f}, blocks {r['min']:.2f}-{r['max']:.2f})")
             if a["rows"][0]["prog"] > 0.09: bad.append(f"{tag}: the first row did not stand at the screen's foot (cover {a['rows'][0]['prog']:.2f})")
             for i, r in enumerate(z["rows"]):
                 if r["prog"] < 0.41: bad.append(f"{tag}: row {i + 1} did not rise past its range (cover {r['prog']:.2f})"); continue
-                if r["cp"] < 0.98 or r["max"] > 0.02: bad.append(f"{tag}: row {i + 1} past the middle is not the still picture (--cp {r['cp']:.2f}, a block at {r['max']:.2f})")
+                if r["cp"] < 0.98 or r["max"] > 0.02: bad.append(f"{tag}: row {i + 1} past the middle is not the still picture (--scene-p {r['cp']:.2f}, a block at {r['max']:.2f})")
             notes.append(f"cost {w}: {a['rows'][0]['cp']:.2f} -> {min(r['cp'] for r in z['rows']):.2f}")
     assert not bad, "scroll_scenes:\n  " + "\n  ".join(bad[:24])
     print(f"scroll_scenes: Platform's stack parts on the page's scroll and Proof's index empties as it rises; reduced motion keeps both still ({'; '.join(notes)})")
+
+
+# ---- hc26r (system): SYS-1, one scroll-scene primitive (site.css v2:scenes, site.js); SYS-2, the drawing travels
+# (site.css's page turn, site.js / afterpaint.js at pageswap and pagereveal). SYSTEM.md 13.
+# A pinned test scene, put into Proof's <main> after its hero before site.js runs (readystatechange 'interactive' comes
+# before the deferred scripts): a stage, an end with an id and a control, a dark tone sentinel at half the travel
+SCENE_FIX = r"""(() => { document.addEventListener('readystatechange', () => {
+  if (document.readyState !== 'interactive' || document.getElementById('scn-fix')) return;
+  const main = document.querySelector('main'); if (!main || !main.firstElementChild) return;
+  const lead = document.createElement('p'); lead.className = 'container';
+  lead.innerHTML = '<a id="scn-link" href="#scn-end">To the scene end</a> <button type="button" id="scn-before">Before</button>';
+  const w = document.createElement('div'); w.id = 'scn-fix'; w.setAttribute('data-scene', 'pin');
+  w.innerHTML = '<div class="scene-stage"><div class="container"><p>Scene start</p><section id="scn-end" data-scene-end><h2>Scene end</h2><button type="button" id="scn-btn">A control</button></section></div></div><span data-scene-tone="dark"></span>';
+  main.firstElementChild.after(lead, w); }); })()"""
+SCENE_STATE = r"""(() => { const s = document.getElementById('scn-fix'); if (!s) return null; const st = s.firstElementChild, a = s.getBoundingClientRect().top + scrollY;
+  return { y: scrollY, a, z: Math.ceil(a + s.offsetHeight - document.documentElement.clientHeight), pos: getComputedStyle(st).position,
+    p: +getComputedStyle(s).getPropertyValue('--scene-p'), anims: s.getAnimations().length, dark: document.querySelector('.nav').classList.contains('nav--dark'),
+    active: document.activeElement && document.activeElement.id, endTop: document.getElementById('scn-end').getBoundingClientRect().top,
+    sp: parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0 }; })()"""
+# every scene on a page ([data-scene] bare or "view", and "pin"; story.js's numbered data-scene on Home's overture is not one): its --scene-p, animations, box, and whether any HTML text inside is faded (opacity < 1
+# from the text's element up to the scene: text arrives by translate or clip, only drawings change opacity)
+REAL_SCENES = r"""(() => [...document.querySelectorAll('[data-scene=""], [data-scene="view"], [data-scene="pin"]')].map((s, i) => { const r = s.getBoundingClientRect();
+  const faded = [...s.querySelectorAll('*')].filter(el => !el.closest('svg') && [...el.childNodes].some(n => n.nodeType === 3 && n.data.trim()) && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden')
+    .filter(el => { let o = 1; for (let e = el; e && e !== s.parentElement; e = e.parentElement) o *= +getComputedStyle(e).opacity; return o < .999; }).map(el => el.textContent.trim().slice(0, 30));
+  const st = s.dataset.scene === 'pin' && s.firstElementChild;
+  return { i, pin: s.dataset.scene === 'pin', top: r.top + scrollY, h: r.height, p: +getComputedStyle(s).getPropertyValue('--scene-p'), anims: s.getAnimations().length,
+    pinned: !!st && getComputedStyle(st).position === 'sticky', faded }; }))()"""
+FRAMES_ON = "(() => { window.__fr = []; let t0 = performance.now(); const f = t => { window.__fr.push(t - t0); t0 = t; if (window.__fr.length < 3000) requestAnimationFrame(f); }; requestAnimationFrame(f); })()"
+
+
+def long_frames(fr, lim):
+    """frames that break the 33 ms rule: any frame longer than three vsyncs (50 ms x the throttle), or more than one in a
+    hundred at two (one stray missed vsync in a run passes: measured once in 121 frames after 77 checks, never alone)"""
+    return any(x > lim * 1.5 for x in fr) or sum(1 for x in fr if x > lim) > max(1, len(fr) // 100)
+
+
+async def scene_frames(pg, y0, y1):
+    """wheel from y0 to y1 (60 px a notch, a notch a frame); the frame intervals after the first two"""
+    await pg.evaluate(f"window.scrollTo({{top: {y0}, behavior: 'instant'}})"); await pg.wait_for_timeout(300)
+    await pg.mouse.move(720, 450)
+    await pg.evaluate(FRAMES_ON)
+    for _ in range(max(1, int((y1 - y0) / 60))): await pg.mouse.wheel(0, 60); await pg.wait_for_timeout(16)
+    await pg.wait_for_timeout(300)
+    return (await pg.evaluate("window.__fr"))[2:]
+
+
+@check
+async def scenes(b):
+    """hc26r (system; SYS-1, under EVOLVE's "Owner, 8 Nov" motion conditions): one scroll-scene primitive. A pinned test
+    scene put into Proof (1440 x 900): its stage sticks for the whole travel, --scene-p is 0 at the travel's start, .5 half
+    way and 1 at its end; the bar turns ink at the dark tone sentinel (half the travel) and not before; no frame over 33 ms
+    (x the CPU throttle) while the wheel scrolls through; a link to the end's id, the address with that id and Tab into
+    the end's control all land at the end (--scene-p 1). Under reduced motion and at 900 px wide nothing pins, --scene-p
+    is 1 with no animation and the id lands as any anchor (under the bar). Then every real [data-scene] on the site's
+    pages (1440 x 900): before its range --scene-p is 0, after it 1 (a pinned one: at its travel's start and end); no HTML
+    text inside it is faded at any step; under reduced motion 1 with no animation; and no frame over the limit through a
+    pinned one."""
+    bad, notes = [], []
+    lim = 33.4 * max(1.0, MODE["throttle"])
+    ctx, pg = await open_page(b, "evidence.html", 1440, 900, init=SCENE_FIX)
+    s = await pg.evaluate(SCENE_STATE)
+    if not s: bad.append("evidence.html@1440: the test scene was not put in")
+    else:
+        a, z = s["a"], s["z"]
+        rows = []
+        for f, want, dark in ((0, 0, False), (.25, .25, False), (.5, .5, None), (.75, .75, True), (1, 1, True)):
+            await pg.evaluate(f"window.scrollTo({{top: {a + f * (z - a)}, behavior: 'instant'}})"); await pg.wait_for_timeout(300)
+            r = await pg.evaluate(SCENE_STATE); rows.append(round(r["p"], 3))
+            if r["pos"] != "sticky": bad.append(f"evidence.html@1440 test scene at {f}: the stage is {r['pos']} (sticky)")
+            if abs(r["p"] - want) > 0.02: bad.append(f"evidence.html@1440 test scene at {f} of the travel: --scene-p {r['p']:.3f} ({want})")
+            if dark is not None and r["dark"] != dark: bad.append(f"evidence.html@1440 test scene at {f}: the bar is {'ink' if r['dark'] else 'paper'} ({'ink' if dark else 'paper'}: the sentinel is at .5)")
+        fr = await scene_frames(pg, max(0, a - 450), z + 450)
+        over = [round(x, 1) for x in fr if x > lim]
+        if long_frames(fr, lim): bad.append(f"evidence.html@1440 test scene: {len(over)} of {len(fr)} frames over {lim:.0f} ms while scrolling through ({over[:6]})")
+        notes.append(f"test scene --scene-p {rows}, frames <= {max(fr) if fr else 0:.1f} ms")
+        await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(400)
+        await pg.click("#scn-link"); await pg.wait_for_timeout(1500)
+        r = await pg.evaluate(SCENE_STATE)
+        if abs(r["y"] - z) > 2 or r["p"] < 0.99: bad.append(f"evidence.html@1440: the link to #scn-end landed at {r['y']:.0f} (--scene-p {r['p']:.2f}); the end is {z}")
+        await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(400)
+        await pg.focus("#scn-before"); await pg.keyboard.press("Tab"); await pg.wait_for_timeout(1200)
+        r = await pg.evaluate(SCENE_STATE)
+        if r["active"] != "scn-btn" or not (z - 2 <= r["y"] <= z + 225) or r["p"] < 0.99: bad.append(f"evidence.html@1440: Tab into the scene's end: focus on {r['active']!r}, at {r['y']:.0f} (--scene-p {r['p']:.2f}); the end is {z}")
+    await ctx.close()
+    ctx, pg = await open_page(b, "evidence.html#scn-end", 1440, 900, init=SCENE_FIX); await pg.wait_for_timeout(1800)
+    r = await pg.evaluate(SCENE_STATE)
+    if r and (abs(r["y"] - r["z"]) > 2 or r["p"] < 0.99): bad.append(f"evidence.html#scn-end@1440: the address landed at {r['y']:.0f} (--scene-p {r['p']:.2f}); the end is {r['z']}")
+    await ctx.close()
+    for tag, w, h, reduced in (("reduced motion", 1440, 900, True), ("900 px wide", 900, 900, False)):
+        ctx, pg = await open_page(b, "evidence.html", w, h, reduced=reduced, init=SCENE_FIX)
+        r = await pg.evaluate(SCENE_STATE)
+        if r["pos"] == "sticky" or abs(r["p"] - 1) > 0.001 or r["anims"]: bad.append(f"evidence.html@{w} {tag}: the test scene pins ({r['pos']}) or is not at its end (--scene-p {r['p']:.2f}, {r['anims']} animation(s))")
+        await pg.click("#scn-link"); await pg.wait_for_timeout(1500)
+        r = await pg.evaluate(SCENE_STATE)
+        if abs(r["endTop"] - r["sp"]) > 2: bad.append(f"evidence.html@{w} {tag}: #scn-end landed {r['endTop']:.0f} px from the top (under the bar: {r['sp']:.0f})")
+        await ctx.close()
+    # every real scene
+    seen = 0
+    for name in PAGES:
+        for reduced in (False, True):
+            ctx, pg = await open_page(b, f"{name}.html", 1440, 900, reduced=reduced)
+            sc = await pg.evaluate(REAL_SCENES)
+            if not sc: await ctx.close(); break
+            for k, s0 in enumerate(sc):
+                tag = f"{name}.html@1440 scene {k + 1}{' (pinned)' if s0['pin'] else ''}{' reduced' if reduced else ''}"
+                if reduced:
+                    if abs(s0["p"] - 1) > 0.001 or s0["anims"] or s0["pinned"]: bad.append(f"{tag}: --scene-p {s0['p']:.2f}, {s0['anims']} animation(s), pinned {s0['pinned']} (1, none, no)")
+                    continue
+                seen += 1
+                vh = 900
+                if s0["pin"]:
+                    steps = [(s0["top"], 0), (s0["top"] + (s0["h"] - vh) * .5, None), (s0["top"] + s0["h"] - vh, 1)]
+                else:
+                    steps = [(max(0, s0["top"] - 2 * vh), 0), (s0["top"] - vh * .5, None), (s0["top"] + s0["h"] + vh, 1)]
+                for y, want in steps:
+                    await pg.evaluate(f"window.scrollTo({{top: {y}, behavior: 'instant'}})"); await pg.wait_for_timeout(350)
+                    r = (await pg.evaluate(REAL_SCENES))[k]
+                    if r["faded"]: bad.append(f"{tag} at {y:.0f}: text faded on scroll ({r['faded'][:3]}): text arrives by translate or clip")
+                    if want is not None and y > 0 and abs(r["p"] - want) > 0.01: bad.append(f"{tag} at {y:.0f}: --scene-p {r['p']:.3f} ({want})")
+                if s0["pin"]:
+                    fr = await scene_frames(pg, s0["top"] - 300, s0["top"] + s0["h"])
+                    over = [round(x, 1) for x in fr if x > lim]
+                    if long_frames(fr, lim): bad.append(f"{tag}: {len(over)} of {len(fr)} frames over {lim:.0f} ms through the scene ({over[:6]})")
+            await ctx.close()
+    assert not bad, "scenes:\n  " + "\n  ".join(bad[:24])
+    print(f"scenes: the primitive pins, runs 0 -> 1 over its travel, turns the bar at its sentinel, lands links, the address and Tab at its end; static under reduced motion and narrow; {seen} real scene(s) checked ({'; '.join(notes)})")
+
+
+VT_FIG = r"""(() => { addEventListener('pagereveal', e => {
+  const R = window.__vtfig = { vt: !!e.viewTransition, names: [], dest: null, end: 0 };
+  const d = document.querySelector('[data-vt-dest]');
+  const f = () => { const an = document.getAnimations().filter(a => a.effect && /::view-transition/.test(a.effect.pseudoElement || ''));
+    an.forEach(a => { if (!R.names.includes(a.effect.pseudoElement)) R.names.push(a.effect.pseudoElement); R.end = Math.max(R.end, a.effect.getComputedTiming().endTime || 0); });
+    if (d && R.dest === null && an.length) R.dest = getComputedStyle(d).viewTransitionName;
+    if (an.length || (R.k = (R.k || 0) + 1) < 3) requestAnimationFrame(f); };
+  requestAnimationFrame(f); }); })()"""
+
+
+@check
+async def vt_fig(b):
+    """hc26r (system; SYS-2): the drawing travels with the page turn. At 1440 x 900 a click on Home §05's first note card
+    (its mark carries .vt-src, home's marker) turns to note 01, whose hero (data-vt-dest, research's marker) carries the
+    view-transition name `fig`: the turn has both halves of `fig` (a morph, not the plain rise), every part of it ends by
+    550 ms, and one name per side (a duplicate would skip the turn: no animation at all). A click on the bar's Proof link
+    during the turn is not lost (the turn ends at once and the click lands: site.js / afterpaint.js). Under reduced
+    motion there is no turn."""
+    bad, notes = [], []
+    for reduced in (False, True):
+        ctx, pg = await open_page(b, "index.html", 1440, 900, reduced=reduced, init=VT_FIG)
+        src = await pg.evaluate("(() => { const a = document.querySelector('a.research-card[href*=\"01-compounding\"]'); return a ? { src: !!a.querySelector('.vt-src') || a.matches('.vt-src') } : null; })()")
+        if not src: bad.append("index.html: no §05 card for note 01"); await ctx.close(); continue
+        if not src["src"] and not reduced: bad.append("index.html §05 card 01: no .vt-src on its mark (home's marker, SYS-2)")
+        await pg.evaluate("document.querySelector('a.research-card[href*=\"01-compounding\"]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(1200)
+        await pg.click("a.research-card[href*='01-compounding']"); await pg.wait_for_url("**/01-compounding-error*")
+        await until(pg, "!!window.__vtfig", 5000, 10)
+        await pg.wait_for_timeout(900)
+        r = await pg.evaluate("window.__vtfig")
+        has_dest = await pg.evaluate("!!document.querySelector('[data-vt-dest]')")
+        if reduced:
+            if r and (r["vt"] or r["names"]): bad.append(f"research/01 reduced motion: a page turn ran ({r['names'][:4]})")
+            await ctx.close(); continue
+        if not has_dest: bad.append("research/01-compounding-error.html: no [data-vt-dest] on its hero (research's marker, SYS-2)")
+        if not r or not r["vt"] or not r["names"]: bad.append(f"research/01 at 1440: no page turn ran ({r}): a duplicate view-transition name skips it")
+        else:
+            if r["dest"] != "fig": bad.append(f"research/01 at 1440: the hero's view-transition name during the turn is {r['dest']!r} ('fig')")
+            if not {"::view-transition-old(fig)", "::view-transition-new(fig)"} <= set(r["names"]): bad.append(f"research/01 at 1440: the turn has no morph of 'fig' ({[n for n in r['names'] if 'fig' in n]})")
+            if r["end"] > 551: bad.append(f"research/01 at 1440: the turn runs to {r['end']:.0f} ms (550)")
+            notes.append(f"morph {sorted(n.split('(')[0].split('-')[-1] for n in r['names'] if 'fig' in n)}, ends {r['end']:.0f} ms")
+        # a click during a turn: back to Home, the card again, the bar's Proof link at once
+        await pg.go_back(); await pg.wait_for_timeout(1500)
+        await pg.evaluate("document.querySelector('a.research-card[href*=\"01-compounding\"]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(800)
+        await pg.evaluate("window.__vtfig = null")
+        await pg.click("a.research-card[href*='01-compounding']"); await pg.wait_for_url("**/01-compounding-error*")
+        await until(pg, "!!window.__vtfig", 5000, 5)
+        await pg.wait_for_timeout(60)
+        box = await pg.evaluate("(() => { const a = [...document.querySelectorAll('.nav-links a')].find(x => /evidence/.test(x.href)); if (!a) return null; const r = a.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2, !!document.activeViewTransition]; })()")
+        if box:
+            await pg.mouse.click(box[0], box[1])
+            try: await pg.wait_for_url("**/evidence*", timeout=4000); notes.append(f"a click {'during' if box[2] else 'after'} the turn landed")
+            except Exception: bad.append(f"research/01 at 1440: a click on the bar's Proof link {'during' if box[2] else 'after'} the turn was lost")
+        await ctx.close()
+    assert not bad, "vt_fig:\n  " + "\n  ".join(bad[:24])
+    print(f"vt_fig: Home §05's first card turns into note 01's hero ({'; '.join(notes)}); no turn under reduced motion")
+
+
+# ---- hc26r (integrate, standing in for tests): the rethink's scenes, checked to their principles (RETHINK-hc26 PLAT-1,
+# PLAT-2, PROOF-1, PROOF-2, HOME-3, HOME-4; the groups' requests in CHANGE_REQUESTS.md, 9 Nov)
+CLIP_SIDE = r"""const side = (e, k) => { if (!e) return null; const c = getComputedStyle(e).clipPath; const m = c && c.match(/inset\((.*?)(?:\s+round\b.*)?\)$/); if (!m) return c === 'none' ? '0px' : c;
+    const v = m[1].trim().split(/\s+(?![^(]*\))/); const q = v.length === 1 ? [v[0], v[0], v[0], v[0]] : v.length === 2 ? [v[0], v[1], v[0], v[1]] : v.length === 3 ? [v[0], v[1], v[2], v[1]] : v; return q[k]; };"""
+STACK_PIN = "(() => { " + CLIP_SIDE + r""" const s = document.querySelector('.stack-scene'); if (!s) return null; const st = s.firstElementChild;
+  const a = s.getBoundingClientRect().top + scrollY, z = Math.ceil(a + s.offsetHeight - document.documentElement.clientHeight);
+  const C = e => { const r = e.getBoundingClientRect(); return (r.top + r.bottom) / 2; }, q = x => document.querySelector(x);
+  const svg = q('.hero-plate--stack .hp-art > svg').getBoundingClientRect(), h1 = q('.stack-scene h1').getBoundingClientRect(), cs = q('#architecture .arch') ? getComputedStyle(q('#architecture .arch')) : null;
+  return { a, z, y: scrollY, p: +getComputedStyle(s).getPropertyValue('--scene-p'), pos: getComputedStyle(st).position, stTop: st.getBoundingClientRect().top,
+    lay: [...document.querySelectorAll('.hero-plate--stack .pl')].map(C), rows: [...document.querySelectorAll('#architecture .arch-layer')].map(C),
+    svg: [svg.left, svg.top, svg.right, svg.bottom], copyB: q('.stack-scene .hero-copy').getBoundingClientRect().bottom, navB: q('.nav').getBoundingClientRect().bottom,
+    h1: [h1.top, h1.bottom], archTop: side(q('#architecture'), 0), dark: q('.nav').classList.contains('nav--dark'),
+    rowR: [...document.querySelectorAll('#architecture .arch-h')].map(e => side(e, 1)), boundR: side(q('#architecture .arch-bound'), 1), headL: side(q('#architecture .arch-head'), 3),
+    frame: cs ? [cs.borderTopWidth, cs.borderTopColor, cs.borderTopLeftRadius] : ['?', '?', '?'], heroB: q('.stack-scene .page-hero').getBoundingClientRect().bottom, archT: q('#architecture').getBoundingClientRect().top,
+    act: document.activeElement ? [document.activeElement.className || document.activeElement.tagName, !!document.activeElement.closest('.page-hero'), !!document.activeElement.closest('#architecture')] : null,
+    W: innerWidth, H: innerHeight }; })()"""
+STAGE_FADED = r"""((sel) => { const s = document.querySelector(sel); if (!s) return null;
+  return [...s.querySelectorAll('*')].filter(el => !el.closest('svg') && [...el.childNodes].some(n => n.nodeType === 3 && n.data.trim()) && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden')
+    .filter(el => { let o = 1; for (let e = el; e && e !== s.parentElement; e = e.parentElement) o *= +getComputedStyle(e).opacity; return o < .999; }).map(el => el.textContent.trim().slice(0, 30)); })"""
+# the type sizes a reader sees on the screen: text in <main>, on screen under the bar, not hidden, faded out or clipped away;
+# a scaled ancestor scales its size (platform hc26r sizes.py)
+TYPE_SIZES = r"""(() => { const out = {}, vw = innerWidth, vh = innerHeight, bar = document.querySelector('.nav').getBoundingClientRect().bottom;
+  const vis = el => { for (let e = el; e && e !== document.body; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) return false;
+      const cp = cs.clipPath; if (cp && cp.startsWith('inset(')) { const r = e.getBoundingClientRect(), v = cp.slice(6, -1).split(/\s+/), t = parseFloat(v[0]), ri = parseFloat(v[1] === undefined ? v[0] : v[1]);
+        if (/%/.test(v[0]) ? t >= 99.5 : t >= r.height - 1) return false; if (/%/.test(v[1] || '') && ri >= 99.5) return false; } } return true; };
+  const w = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT); let n;
+  while ((n = w.nextNode())) { if (!n.textContent.trim()) continue; const el = n.parentElement, r = el.getBoundingClientRect();
+    if (el.closest('svg') || r.bottom < bar || r.top > vh || r.right < 0 || r.left > vw || r.width < 1 || !vis(el)) continue;
+    let k = parseFloat(getComputedStyle(el).fontSize); for (let e = el; e; e = e.parentElement) { const sc = getComputedStyle(e).scale; if (sc && sc !== 'none') k *= parseFloat(sc); }
+    k = Math.round(k * 2) / 2; (out[k] = out[k] || []).push(n.textContent.trim().slice(0, 18)); }
+  return out; })()"""
+pct = lambda v: (float(v[:-1]) if isinstance(v, str) and v.endswith("%") else None)
+num = lambda v: (float(v.rstrip("%px")) if isinstance(v, str) and v.rstrip("%px").lstrip("-").replace(".", "", 1).isdigit() else None)
+
+
+@check
+async def stack_scene(b):
+    """hc26r (integrate, standing in for tests; platform's request, RETHINK-hc26 PLAT-1, under EVOLVE's "Owner, 8 Nov"
+    motion conditions): Platform's "take the stack apart" is one pinned scene in which the hero plate becomes the explorer.
+    At 1440 x 900 with motion, once arch.js has measured (--st-s): the stage is stuck at the top for the whole travel and
+    --scene-p runs 0 -> 1 with it; at .45 the eight plate layers stand on the eight explorer rows (centres within 1.5 px),
+    04 -> 05 at least 120 px apart (the boundary between), the plate inside the screen and the H1 column gone above the
+    bar; at .2 the H1 is on screen and §01 clipped whole; the bar is paper at .5 and ink at .65 (the tone sentinel at .61);
+    at .9 rows 01-04 have arrived and 08 not yet; at 1 every row, the boundary and the head have arrived and the explorer
+    has no card frame (no border, no radius). No HTML text fades (opacity under 1) at .2, .5 or .9, and at .3 and .9 the
+    screen shows at most four type sizes. "Take the stack apart", the address #architecture and Tab into the explorer's
+    Pause land on the travel's end (--scene-p 1); Shift+Tab from there back into the hero returns to its start (0). Under
+    reduced motion and at 999 px wide nothing pins: the hero and §01 are two blocks in order, --scene-p 1."""
+    bad, notes = [], []
+    ctx, pg = await open_page(b, "platform.html", 1440, 900)
+    if not await until(pg, "!!document.querySelector('.stack-scene[style*=\"--st-s\"]')", 8000): bad.append("platform.html@1440: arch.js never measured the scene (no --st-s)")
+    s0 = await pg.evaluate(STACK_PIN)
+    if not s0: await ctx.close(); assert False, "stack_scene: no .stack-scene on platform.html"
+    a, z = s0["a"], s0["z"]
+    seen = []
+    for f in (0, .2, .3, .45, .5, .65, .9, 1):
+        await pg.evaluate(f"window.scrollTo({{top: {round(a + f * (z - a))}, behavior: 'instant'}})"); await pg.wait_for_timeout(450)
+        r = await pg.evaluate(STACK_PIN); tag = f"platform.html@1440 at {f} of the travel"
+        seen.append(round(r["p"], 2))
+        if r["pos"] != "sticky" or abs(r["stTop"]) > 1: bad.append(f"{tag}: the stage is {r['pos']} at {r['stTop']:.0f} px (stuck at the top)")
+        if abs(r["p"] - f) > 0.02: bad.append(f"{tag}: --scene-p {r['p']:.3f}")
+        if f == .45:
+            off = [i + 1 for i, (l, w) in enumerate(zip(r["lay"], r["rows"])) if abs(l - w) > 1.5]
+            if len(r["lay"]) != 8 or len(r["rows"]) != 8 or off: bad.append(f"{tag}: layers {[round(l) for l in r['lay']]} on rows {[round(w) for w in r['rows']]} (off: {off})")
+            elif r["rows"][4] - r["rows"][3] < 119.5: bad.append(f"{tag}: 04 -> 05 only {r['rows'][4] - r['rows'][3]:.1f} px apart (120 at least: the boundary)")
+            v = r["svg"]
+            if v[0] < -0.5 or v[1] < -0.5 or v[2] > r["W"] + 0.5 or v[3] > r["H"] + 0.5: bad.append(f"{tag}: the plate {[round(x) for x in v]} leaves the screen")
+            if r["copyB"] >= r["navB"]: bad.append(f"{tag}: the H1 column ends at {r['copyB']:.0f}, under the bar's foot {r['navB']:.0f}")
+            if len(r["rows"]) == 8: notes.append(f".45: layers on rows within {max(abs(l - w) for l, w in zip(r['lay'], r['rows'])):.1f} px, 04 -> 05 {r['rows'][4] - r['rows'][3]:.0f} px")
+        if f == .2:
+            if not (r["h1"][1] > r["navB"] and r["h1"][0] < r["H"]): bad.append(f"{tag}: the H1 {[round(x) for x in r['h1']]} is off the screen")
+            if (pct(r["archTop"]) or 0) < 99.5: bad.append(f"{tag}: §01 is not clipped whole (clip-path top {r['archTop']})")
+        if f == .5 and r["dark"]: bad.append(f"{tag}: the bar is ink before the tone sentinel")
+        if f == .65 and not r["dark"]: bad.append(f"{tag}: the bar is still paper after the tone sentinel")
+        if f == .9:
+            if any(num(x) is None or num(x) > 0.5 for x in r["rowR"][:4]): bad.append(f"{tag}: rows 01-04 not all arrived ({r['rowR'][:4]})")
+            if len(r["rowR"]) < 8 or (num(r["rowR"][7]) or 0) <= 0.5: bad.append(f"{tag}: row 08 already arrived ({r['rowR'][7:8]})")
+        if f == 1:
+            if any(num(x) is None or num(x) > 0.5 for x in r["rowR"] + [r["boundR"], r["headL"]]): bad.append(f"{tag}: not every row, the boundary and the head arrived ({r['rowR']}, {r['boundR']}, {r['headL']})")
+            bw, bc, br = r["frame"]
+            if bw == "?": bad.append(f"{tag}: no explorer (#architecture .arch)")
+            elif not (float(bw.rstrip("px") or 0) == 0 or bc.replace(" ", "") in ("transparent", "rgba(0,0,0,0)")) or float(br.rstrip("px") or 0) > 0: bad.append(f"{tag}: the explorer is framed (border {bw} {bc}, radius {br})")
+        if f in (.2, .5, .9):
+            fd = await pg.evaluate(STAGE_FADED, ".stack-scene > .scene-stage")
+            if fd: bad.append(f"{tag}: text faded on scroll ({fd[:3]}): text arrives by translate or clip")
+        if f in (.3, .9):
+            sz = await pg.evaluate(TYPE_SIZES)
+            if len(sz) > 4: bad.append(f"{tag}: {len(sz)} type sizes on the screen ({ {k: v[:2] for k, v in sz.items()} })")
+            notes.append(f"{f}: sizes {sorted(float(k) for k in sz)}")
+    notes.insert(0, f"--scene-p {seen}")
+    # the ways in: the hero's link, Tab into the explorer, Shift+Tab back
+    await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(600)
+    await pg.click(".stack-scene .page-hero a[href='#architecture']", timeout=15000); await pg.wait_for_timeout(1600)
+    r = await pg.evaluate(STACK_PIN)
+    if r["p"] < 0.99 or abs(r["y"] - r["z"]) > 2: bad.append(f"platform.html@1440: 'Take the stack apart' landed at {r['y']:.0f} (--scene-p {r['p']:.2f}); the end is {r['z']}")
+    await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(600)
+    await pg.focus(".stack-scene .page-hero a[href='#architecture']")
+    for _ in range(14):
+        await pg.keyboard.press("Tab"); await pg.wait_for_timeout(150)
+        if await pg.evaluate("!!document.activeElement && document.activeElement.matches('#architecture .arch-motion')"): break
+    await pg.wait_for_timeout(1000)
+    r = await pg.evaluate(STACK_PIN)
+    if not (r["act"] and r["act"][2]) or r["p"] < 0.99: bad.append(f"platform.html@1440: Tab into the explorer: focus on {r['act']}, --scene-p {r['p']:.2f} (the end)")
+    await pg.keyboard.press("Shift+Tab"); await pg.wait_for_timeout(1200)
+    r = await pg.evaluate(STACK_PIN)
+    if not (r["act"] and r["act"][1]) or r["p"] > 0.01: bad.append(f"platform.html@1440: Shift+Tab back into the hero: focus on {r['act']}, --scene-p {r['p']:.2f} (the start)")
+    await ctx.close()
+    ctx, pg = await open_page(b, "platform.html#architecture", 1440, 900); await pg.wait_for_timeout(1800)
+    r = await pg.evaluate(STACK_PIN)
+    if r["p"] < 0.99 or abs(r["y"] - r["z"]) > 2: bad.append(f"platform.html#architecture@1440: the address landed at {r['y']:.0f} (--scene-p {r['p']:.2f}); the end is {r['z']}")
+    await ctx.close()
+    for tag, w, h, reduced in (("reduced motion", 1440, 900, True), ("999 px wide", 999, 900, False)):
+        ctx, pg = await open_page(b, "platform.html", w, h, reduced=reduced)
+        r = await pg.evaluate(STACK_PIN)
+        await ctx.close()
+        if r["pos"] == "sticky" or abs(r["p"] - 1) > 0.001: bad.append(f"platform.html@{w}x{h} {tag}: the stage pins ({r['pos']}) or --scene-p is {r['p']:.2f} (1)")
+        if r["heroB"] > r["archT"] + 1: bad.append(f"platform.html@{w}x{h} {tag}: the hero ends at {r['heroB']:.0f}, under §01's top {r['archT']:.0f} (two blocks in order)")
+    assert not bad, "stack_scene:\n  " + "\n  ".join(bad[:24])
+    print(f"stack_scene: Platform's hero becomes the explorer over one pinned travel; links, the address and Tab land at its end, Shift+Tab at its start; nothing pins under reduced motion or narrow ({'; '.join(notes)})")
+
+
+TRUST_SCENE = r"""(() => { const s = document.querySelector('#control .tr-cpl'); if (!s) return null; const r = s.getBoundingClientRect();
+  const pl = s.querySelector('.tr-pl'), rj = s.querySelector('.tr-h .tr-rj'), M = e => { const t = e && getComputedStyle(e).transform; return !t || t === 'none' ? [1, 0, 0, 1, 0, 0] : (m => [m.a, m.b, m.c, m.d, m.e, m.f])(new DOMMatrixReadOnly(t)); };
+  return { top: r.top + scrollY, h: r.height, p: +getComputedStyle(s).getPropertyValue('--scene-p'), anims: s.getAnimations({ subtree: true }).length,
+    pl: pl ? { x: M(pl)[4], a: parseFloat(getComputedStyle(pl).getPropertyValue('--a')), shown: getComputedStyle(pl).display !== 'none' && !!pl.getClientRects().length } : null,
+    rj: rj && rj.getClientRects().length ? M(rj) : null, dots: [...s.querySelectorAll('.tr-sd')].filter(e => e.getClientRects().length).map(e => +getComputedStyle(e, '::after').opacity) }; })()"""
+TRAIL_SCENE = "(() => { " + CLIP_SIDE + r""" const s = document.querySelector('#verification .pf-trail'); if (!s) return null; const r = s.getBoundingClientRect();
+  return { top: r.top + scrollY, h: r.height, p: +getComputedStyle(s).getPropertyValue('--scene-p'), anims: s.getAnimations({ subtree: true }).length,
+    oks: [...s.querySelectorAll('.pf-ok')].map(e => side(e, 1)), first: side(s.querySelector('.pf-ok[style*="--k:0"]'), 1) }; })()"""
+
+
+@check
+async def plate_scenes(b):
+    """hc26r (integrate, standing in for tests; proof's request, RETHINK-hc26 PROOF-1 and PROOF-2, under EVOLVE's "Owner, 8
+    Nov" motion conditions): Trust §02's control plane (#control .tr-cpl) and Proof §01's paper trail (#verification
+    .pf-trail) play as the reader scrolls them in (bare data-scene on the primitive; they were played once by
+    OXA.actOnce). At 1440 x 900 and 390 x 844 (touch, DPR 2): before its range (--scene-p 0) Trust's proposal stands at the
+    layer's start (.tr-pl translated to its --a) and the off-list block sits on the layer (a transform), or on a phone the
+    first station's mark is lit and the others not; Proof's first confirmation is clipped away (right inset 100%). Past
+    its range (--scene-p 1), the scene top at 15% of the screen, each drawing equals, pixel for pixel, the same scroll
+    under reduced motion (no more than 0.05% of its pixels off by more than 8 levels), and all ten confirmations are
+    whole. Under reduced motion neither drawing runs an animation and both read --scene-p 1."""
+    import io
+    from PIL import Image, ImageChops
+    bad, notes = [], []
+    for w, h, dpr, touch in ((1440, 900, 1, False), (390, 844, 2, True)):
+        shots = {}
+        for reduced in (False, True):
+            for path, probe, sel in (("trust.html", TRUST_SCENE, "#control .tr-cpl"), ("evidence.html", TRAIL_SCENE, "#verification .pf-trail")):
+                tag = f"{path}@{w}x{h}{' reduced' if reduced else ''}"
+                ctx, pg = await open_page(b, path, w, h, dpr=dpr, touch=touch, reduced=reduced)
+                g = await pg.evaluate(probe)
+                if not g: bad.append(f"{tag}: no {sel}"); await ctx.close(); continue
+                if not reduced:
+                    await pg.evaluate(f"window.scrollTo({{top: {max(0, round(g['top'] - h - 40))}, behavior: 'instant'}})"); await pg.wait_for_timeout(400)
+                    r = await pg.evaluate(probe)
+                    if g["top"] - h - 40 <= 0: notes.append(f"{tag}: on the first screen, no 'before'")
+                    elif r["p"] > 0.001: bad.append(f"{tag}: before its range --scene-p is {r['p']:.3f} (0)")
+                    if g["top"] - h - 40 <= 0: pass
+                    elif path == "trust.html":
+                        if w >= 1000:
+                            if not r["pl"] or abs(r["pl"]["x"] - r["pl"]["a"]) > 0.5: bad.append(f"{tag}: before its range the proposal is not at the layer's start ({r['pl']})")
+                            if not r["rj"] or r["rj"] == [1, 0, 0, 1, 0, 0]: bad.append(f"{tag}: before its range the off-list block is not on the layer ({r['rj']})")
+                        elif not r["dots"] or r["dots"][0] < 0.99 or any(x > 0.01 for x in r["dots"][1:]): bad.append(f"{tag}: before its range the stations' marks read {r['dots']} (the first lit, the others not)")
+                    elif (pct(r["first"]) or 0) < 99.5: bad.append(f"{tag}: before its range the first confirmation is not clipped away ({r['first']})")
+                await pg.evaluate(f"window.scrollTo({{top: {round(g['top'] - h * .15)}, behavior: 'instant'}})"); await pg.wait_for_timeout(1200)
+                r = await pg.evaluate(probe)
+                if abs(r["p"] - 1) > 0.001: bad.append(f"{tag}: past its range --scene-p is {r['p']:.3f} (1)")
+                if reduced and r["anims"]: bad.append(f"{tag}: {r['anims']} animation(s) run under reduced motion")
+                if path == "evidence.html" and (len(r["oks"]) != 10 or any(num(x) is None or num(x) > 0.5 for x in r["oks"])): bad.append(f"{tag}: past its range not all ten confirmations are whole ({r['oks']})")
+                box = await pg.evaluate("(s) => { const r = document.querySelector(s).getBoundingClientRect(); return [Math.max(0, r.left), Math.max(0, r.top), Math.min(r.right, innerWidth) - Math.max(0, r.left), Math.min(r.bottom, innerHeight) - Math.max(0, r.top)]; }", sel)
+                img = await pg.screenshot(clip={"x": box[0], "y": box[1], "width": box[2], "height": box[3]}, animations="disabled", timeout=60000)
+                shots[(path, reduced)] = Image.open(io.BytesIO(img)).convert("RGB")
+                await ctx.close()
+        for path in ("trust.html", "evidence.html"):
+            a, z = shots.get((path, False)), shots.get((path, True))
+            if not a or not z: continue
+            if a.size != z.size: bad.append(f"{path}@{w}x{h}: the scene's end is {a.size}, under reduced motion {z.size}"); continue
+            d = ImageChops.difference(a, z).convert("L").point(lambda v: 255 if v > 8 else 0)
+            off, total = d.histogram()[255], a.size[0] * a.size[1]
+            if off > total * 0.0005: bad.append(f"{path}@{w}x{h}: the scene's end is not the still: {off} of {total} pixels off by more than 8 levels")
+            notes.append(f"{path.split('.')[0]} {w}: {off} of {total} px off")
+    assert not bad, "plate_scenes:\n  " + "\n  ".join(bad[:24])
+    print(f"plate_scenes: Trust's control plane and Proof's paper trail start at their first frame and end on their stills ({'; '.join(notes)})")
+
+
+LC_WATCH = r"""(() => { const R = window.__lc = { lit: [], run: null, done: null };
+  new MutationObserver(ms => { for (const m of ms) { const t = m.target; if (!t.classList) continue;
+    if (t.classList.contains('lc-gate') && t.classList.contains('is-lit') && !R.lit.includes(t.dataset.g)) R.lit.push(t.dataset.g);
+    if (t.classList.contains('hero-plate--rings')) { if (t.classList.contains('is-run') && R.run === null) R.run = performance.now(); if (t.classList.contains('is-done') && R.done === null) R.done = performance.now(); } } })
+    .observe(document, { subtree: true, attributes: true, attributeFilter: ['class'] }); })()"""
+LC_STATE = r"""(() => { const f = document.querySelector('.hero-plate--rings'), n = f && f.querySelector('.lc-new'); if (!f || !n) return null;
+  const nav = performance.getEntriesByType('navigation')[0];
+  return { R: window.__lc || null, load: nav ? nav.loadEventEnd : 0, now: performance.now(), cls: f.className.baseVal !== undefined ? f.className.baseVal : f.className,
+    op: +getComputedStyle(n).opacity, lit: f.querySelectorAll('.is-lit').length, anims: f.getAnimations({ subtree: true }).filter(a => a.playState === 'running').length }; })()"""
+
+
+@check
+async def lc_hero_once(b):
+    """hc26r (integrate, standing in for tests; platform's optional request, RETHINK-hc26 PLAT-2): Lifecycles' hero ring
+    runs its one proposal once, quietly (OXA.actOnce). At 1440 x 900 with motion it gains .is-run within 4 s of load, its
+    six gates light 01 -> 06 in order, it ends .is-done with the green block (.lc-new) whole (opacity 1) and, 1.2 s later,
+    no gate still lit. Under reduced motion and without JavaScript the block is there at once and nothing runs; a click on
+    the drawing before the run (the visitor's own hand) keeps it from running, and the fallback shows the block within
+    3.5 s."""
+    bad, notes = [], []
+    lim = lambda ms: int(ms * max(1.0, MODE["throttle"]))
+    ctx, pg = await open_page(b, "lifecycles.html", 1440, 900, init=LC_WATCH)
+    if not await until(pg, "!!(window.__lc && window.__lc.done !== null)", lim(8000), 50): bad.append(f"1440: never .is-done ({await pg.evaluate(LC_STATE)})")
+    else:
+        s = await pg.evaluate(LC_STATE); R = s["R"]
+        if R["run"] is None: bad.append("1440: the ring never ran (.is-run)")
+        elif R["run"] - s["load"] > lim(4000): bad.append(f"1440: the run began {R['run'] - s['load']:.0f} ms after load (4 s at most)")
+        if R["lit"] != ["1", "2", "3", "4", "5", "6"]: bad.append(f"1440: the gates lit in the order {R['lit']} (01 -> 06)")
+        await pg.wait_for_timeout(500)
+        s = await pg.evaluate(LC_STATE)
+        if s["op"] < 0.99: bad.append(f"1440: at .is-done the green block is at opacity {s['op']}")
+        await pg.wait_for_timeout(1200)
+        s2 = await pg.evaluate(LC_STATE)
+        if s2["lit"]: bad.append(f"1440: {s2['lit']} gate(s) still lit 1.2 s after the run")
+        if R["run"] is not None: notes.append(f"ran {R['run'] - s['load']:.0f} ms after load, gates {''.join(R['lit'])}, done {R['done'] - R['run']:.0f} ms later")
+    await ctx.close()
+    for tag, kw in (("reduced motion", {"reduced": True}), ("no JavaScript", {"js": False})):
+        ctx, pg = await open_page(b, "lifecycles.html", 1440, 900, init=LC_WATCH if "js" not in kw else None, **kw)
+        await pg.wait_for_timeout(300)
+        op = await pg.evaluate("+getComputedStyle(document.querySelector('.hero-plate--rings .lc-new')).opacity")
+        if op < 0.99: bad.append(f"1440 {tag}: the green block is at opacity {op} (shown at once)")
+        if "js" not in kw:
+            await pg.wait_for_timeout(3000)
+            s = await pg.evaluate(LC_STATE)
+            if s["R"]["run"] is not None or s["R"]["lit"] or s["anims"]: bad.append(f"1440 {tag}: something ran ({s['R']}, {s['anims']} animation(s))")
+        await ctx.close()
+    ctx, pg = await open_page(b, "lifecycles.html", 1440, 900, init=LC_WATCH, loaded=False)
+    await until(pg, HOME_ENGINES, lim(15000), 20)
+    box = await pg.evaluate("(() => { const r = document.querySelector('.hero-plate--rings').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+    early = await pg.evaluate("window.__lc.run === null")
+    await pg.mouse.click(box[0], box[1])
+    t0 = time.monotonic()
+    got = await until(pg, "!!(window.__lc && window.__lc.done !== null)", lim(4000), 50)
+    s = await pg.evaluate(LC_STATE)
+    if not early: notes.append("the click came after the run began (not judged)")
+    else:
+        if s["R"]["run"] is not None: bad.append(f"1440: a click before the run did not keep it from running ({s['R']})")
+        if not got or s["R"]["done"] - s["load"] > lim(3500) + 500: bad.append(f"1440: after a click before the run the block came {(s['R']['done'] or 0) - s['load']:.0f} ms after load (the 3 s fallback)")
+        notes.append(f"a click before the run: block by the fallback {(s['R']['done'] or 0) - s['load']:.0f} ms after load")
+    await ctx.close()
+    assert not bad, "lc_hero_once:\n  " + "\n  ".join(bad)
+    print(f"lc_hero_once: Lifecycles' ring runs once, 01 -> 06, and rests with its block; still under reduced motion and without JS ({'; '.join(notes)})")
+
+
+LAB_COPY = r"""(() => { const l = document.querySelector('[data-swarm-live]'), st = l && l.querySelector('[data-sw-stage]'), cv = l && l.querySelector('[data-sw-stage] canvas, canvas'); if (!st) return null;
+  const r = st.getBoundingClientRect(); let lit = null;
+  if (cv && cv.width) { try { const g = cv.getContext('2d'), W = cv.width, H = cv.height, x1 = Math.floor(W * .5), d = g.getImageData(0, 0, x1, H).data; lit = 0;
+      for (let i = 0; i < d.length; i += 4) if (d[i] * .2126 + d[i + 1] * .7152 + d[i + 2] * .0722 > 70) lit++; } catch (e) { lit = -1; } }
+  const il = [...l.querySelectorAll('*')].filter(e => [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.includes('Illustrative')));
+  const ilOk = il.some(e => { const b = e.getBoundingClientRect(); if (!b.width || b.bottom < 0 || b.top > innerHeight) return false; for (let x = e; x; x = x.parentElement) { const cs = getComputedStyle(x); if (+cs.opacity < .99 || cs.visibility === 'hidden') return false; } return true; });
+  return { c: (r.top + r.bottom) / 2, top: r.top + scrollY, h: r.height, H: innerHeight, copy: l.dataset.swCopy === undefined ? null : l.dataset.swCopy, lit, ilOk, il: il.length }; })()"""
+
+
+async def scroll_frames(pg, y0, y1, steps=40):
+    """scrollTo from y0 to y1 in steps (a touch window ignores a wheel at the mouse's spot); the frame intervals after the first two"""
+    await pg.evaluate(f"window.scrollTo({{top: {y0}, behavior: 'instant'}})"); await pg.wait_for_timeout(300)
+    await pg.evaluate(FRAMES_ON)
+    for k in range(1, steps + 1):
+        await pg.evaluate(f"window.scrollTo({{top: {round(y0 + (y1 - y0) * k / steps)}, behavior: 'instant'}})"); await pg.wait_for_timeout(50)
+    await pg.wait_for_timeout(600)
+    return (await pg.evaluate("window.__fr"))[2:]
+
+
+@check
+async def lab_copy(b):
+    """hc26r (integrate, standing in for tests; home's request, RETHINK-hc26 HOME-4, under EVOLVE's "Owner, 8 Nov" motion
+    conditions): Platform §02 plays its own act of the swarm lab, the master agent copied out across the field, as the
+    lab crosses the screen. On platform.html at 1440 x 900 and 390 x 844 (touch), the stage's centre placed at (0.85 -
+    0.45 p) of the screen: the lab reads data-sw-copy = p (two decimals) for p 0, .1, .5 and 1; at 1440 the field's half
+    of the canvas (left of the Council's ring) holds next to nothing lit at .1 (the master alone) and at least four times
+    as much at 1 (the field drawn; on a phone the camera's ring fills that half early, so no census there); the
+    lab's "Illustrative" is visible at every p; scrolling through the act, no frame over 33 ms (x the throttle). With
+    reduced motion, and after Pause motion or Emergency halt, data-sw-copy reads "1.00" at once. Home's lab never carries
+    data-sw-copy."""
+    bad, notes = [], []
+    lim = 33.4 * max(1.0, MODE["throttle"])
+    for w, h, touch in ((1440, 900, False), (390, 844, True)):
+        tag = f"platform.html@{w}x{h}"
+        ctx, pg = await open_page(b, "platform.html", w, h, dpr=2 if touch else 1, touch=touch)
+        g = await pg.evaluate(LAB_COPY)
+        if not g: bad.append(f"{tag}: no swarm lab"); await ctx.close(); continue
+        ctr = g["top"] + g["h"] / 2
+        for f in (1.6, 1.2, 1.0):  # come down to it from above, so it boots before its act
+            await pg.evaluate(f"window.scrollTo({{top: {round(ctr - f * h)}, behavior: 'instant'}})"); await pg.wait_for_timeout(500)
+        await until(pg, "!!document.querySelector('[data-swarm-live].sw-on')", 10000)
+        lits = {}
+        ctr = (await pg.evaluate(LAB_COPY))["top"] + g["h"] / 2
+        for p in (0, .1, .5, 1):
+            for _ in range(2):  # twice: the page above the lab may still settle by a few pixels
+                await pg.evaluate(f"window.scrollTo({{top: {round(ctr - (0.85 - 0.45 * p) * h)}, behavior: 'instant'}})"); await pg.wait_for_timeout(450)
+                q = await pg.evaluate(LAB_COPY); ctr = q["top"] + q["h"] / 2
+            r = await pg.evaluate(LAB_COPY)
+            want = 0.0 if p == 0 else p
+            if r["copy"] is None or abs(float(r["copy"]) - want) > 0.021: bad.append(f"{tag} at p {p}: data-sw-copy {r['copy']!r} ({want:.2f}; the stage's centre at {r['c'] / h:.3f} of the screen)")
+            if not r["ilOk"]: bad.append(f"{tag} at p {p}: the lab's 'Illustrative' is not visible ({r['il']} found)")
+            lits[p] = r["lit"]
+        if touch: pass  # on a phone the Council's ring fills the field's half early in the act: the census is the wide lab's
+        elif lits.get(.1) is None or lits.get(1) is None or lits[1] < 0: bad.append(f"{tag}: the canvas could not be read ({lits})")
+        elif lits[1] < max(200, 4 * lits[.1]): bad.append(f"{tag}: the field's half of the canvas holds {lits[.1]} lit pixels at .1 and {lits[1]} at 1 (the field drawn by the end: 4x at least)")
+        if not touch: notes.append(f"{w}: lit {lits.get(.1)} -> {lits.get(1)}")
+        fr = await scroll_frames(pg, round(ctr - 0.95 * h), round(ctr - 0.3 * h))
+        over = [round(x, 1) for x in fr if x > lim]
+        if long_frames(fr, lim): bad.append(f"{tag}: {len(over)} of {len(fr)} frames over {lim:.0f} ms through the act ({over[:6]})")
+        notes.append(f"frames <= {max(fr) if fr else 0:.1f} ms")
+        if not touch:
+            for ctl in ("[data-sw-motion]", "[data-sw-halt]"):
+                await pg.close(); pg = await ctx.new_page(); await pg.goto(f"{BASE}/platform.html", wait_until="load"); await until(pg, HOME_ENGINES, 15000)
+                await pg.evaluate(f"window.scrollTo({{top: {round(ctr - 1.0 * h)}, behavior: 'instant'}})"); await pg.wait_for_timeout(500)
+                await pg.evaluate(f"window.scrollTo({{top: {round(ctr - 0.8 * h)}, behavior: 'instant'}})")
+                await until(pg, "!!document.querySelector('[data-swarm-live].sw-on')", 10000); await pg.wait_for_timeout(500)
+                before = await pg.evaluate("document.querySelector('[data-swarm-live]').dataset.swCopy")
+                if await pg.evaluate(f"!!document.querySelector('{ctl}') && !document.querySelector('{ctl}').hidden"):
+                    await pg.evaluate(f"document.querySelector('{ctl}').click()"); await pg.wait_for_timeout(150)
+                    after = await pg.evaluate("document.querySelector('[data-swarm-live]').dataset.swCopy")
+                    if after != "1.00": bad.append(f"{tag}: after {ctl} data-sw-copy reads {after!r} (was {before!r}; 1.00 at once)")
+                else: bad.append(f"{tag}: no {ctl} to press")
+        await ctx.close()
+    ctx, pg = await open_page(b, "platform.html", 1440, 900, reduced=True)
+    await pg.evaluate("document.querySelector('[data-sw-stage]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(1200)
+    v = await pg.evaluate("document.querySelector('[data-swarm-live]').dataset.swCopy")
+    if v != "1.00": bad.append(f"platform.html@1440 reduced motion: data-sw-copy {v!r} (1.00)")
+    await ctx.close()
+    ctx, pg = await open_page(b, "index.html", 1440, 900)
+    await pg.evaluate("document.querySelector('[data-sw-stage]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(1500)
+    v = await pg.evaluate("document.querySelector('[data-swarm-live]').dataset.swCopy")
+    if v is not None: bad.append(f"index.html@1440: Home's lab carries data-sw-copy {v!r} (Platform's act alone)")
+    await ctx.close()
+    assert not bad, "lab_copy:\n  " + "\n  ".join(bad[:24])
+    print(f"lab_copy: Platform §02's act follows the lab across the screen, 0 -> 1, the field drawn by its end; at once 1 under reduced motion, Pause and halt; never on Home ({'; '.join(notes)})")
+
+
+HANDOFF = r"""(() => { const H = innerHeight, nav = document.querySelector('.nav'), navB = nav ? nav.getBoundingClientRect().bottom : 0;
+  const paper = document.querySelector('.story-paper'), pr = paper.getBoundingClientRect(), paperTop = pr.height > .5 && getComputedStyle(paper).visibility !== 'hidden' ? pr.top : H;
+  const anc = el => { for (let e = el; e; e = e.parentElement) { const cs = getComputedStyle(e); if (+cs.opacity < .05 || cs.visibility === 'hidden') return false; } return true; };
+  let low = navB;
+  document.querySelectorAll('.story .beat h2, .story .beat p, .story .beat a, .story-labels .story-lab, .story-ink > *').forEach(el => {
+    const r = el.getBoundingClientRect(); if (r.height < 1 || r.bottom <= navB || r.top >= paperTop || !anc(el)) return; low = Math.max(low, Math.min(r.bottom, paperTop)); });
+  const b4 = document.querySelector('.beat-4'), st = document.querySelector('.story'); let op = 1; for (let e = b4; e && e !== st; e = e.parentElement) op *= +getComputedStyle(e).opacity;
+  const br = b4 ? b4.getBoundingClientRect() : null;
+  return { y: scrollY, paperTop, up: st.classList.contains('is-paper-up'), gap: paperTop < H ? paperTop - low : null, b4: br ? { shown: br.bottom > navB && br.top < paperTop, op } : null }; })()"""
+
+
+@check
+async def overture_handoff(b):
+    """hc26r (integrate, standing in for tests; home's request, RETHINK-hc26 HOME-3): the overture hands over to the paper
+    with no empty ink. At 390 x 844 (touch) and 768 x 1024, walking down in tenth-of-a-screen steps from the exit's start
+    (STORY_Y(4)) to one screen past the release, each step settled: once the paper has taken the record row
+    (.story.is-paper-up), the band between the bar's foot and the paper's edge never holds more than 48 px of ink without
+    content (beat text, the day labels, the ink records); and S4 leaves by being clipped at the bar, never faded: while
+    any of it shows above the paper its opacity is 1. The paper's rise before it has taken the row (story.js EXIT.tall
+    paper .58-.86, after the ink row has gone at .42) is measured and reported, not judged: 330 px of empty ink at rest at
+    2.2 screens on a 390 phone at hc26r, an open issue filed to home (CHANGE_REQUESTS.md, integrate hc26r); judge the
+    whole walk once home closes it."""
+    bad, notes = [], []
+    for w, h, touch in ((390, 844, True), (768, 1024, False)):
+        tag = f"index.html@{w}x{h}"
+        ctx, pg = await open_page(b, "index.html", w, h, dpr=2 if touch else 1, touch=touch)
+        await pg.wait_for_timeout(1500)
+        y0 = await pg.evaluate(STORY_Y, 4.0)
+        end = await pg.evaluate("Math.round(document.querySelector('.story').offsetTop + document.querySelector('.story').offsetHeight)")
+        cur, worst, n, rise = 0, 0.0, 0, 0.0
+        y = y0
+        while y <= end + 1:
+            while cur < y:
+                cur = min(y, cur + h // 4); await pg.evaluate(f"window.scrollTo(0, {cur})"); await pg.wait_for_timeout(100)
+            await pg.wait_for_timeout(900)
+            r = await pg.evaluate(HANDOFF); n += 1
+            if r["gap"] is not None and not r["up"]: rise = max(rise, r["gap"])
+            elif r["gap"] is not None:
+                worst = max(worst, r["gap"])
+                if r["gap"] > 48: bad.append(f"{tag} at {r['y']:.0f} ({(r['y'] - y0) / h:.1f} screens into the exit): {r['gap']:.1f} px of ink without content over the paper")
+            if r["b4"] and r["b4"]["shown"] and r["b4"]["op"] < 0.99: bad.append(f"{tag} at {r['y']:.0f}: S4 shows at opacity {r['b4']['op']:.2f} (clipped, never faded)")
+            y = round(y + h * 0.1)
+        notes.append(f"{w}: {n} steps, ink without content <= {worst:.1f} px with the paper up (while it rises: {rise:.1f} px, reported)")
+        await ctx.close()
+    assert not bad, "overture_handoff:\n  " + "\n  ".join(bad[:24])
+    print(f"overture_handoff: the paper takes over with no empty ink band and S4 clipped, never faded ({'; '.join(notes)})")
 
 
 FOOT_LINKS = r"""(() => { const top = document.querySelector('.footer .top'); if (!top) return null; const groups = [...top.children].slice(1);

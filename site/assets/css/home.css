@@ -1,192 +1,162 @@
 /* OpenEXA · Home: page rules after site.css, scoped to index.html (tokens only; budget 12,000 B gzip). */
 
-/* the overture's first paint: with JS the static globe waits unseen for the engines (4 s safety net) */
 @media (scripting: enabled) {
   html:not(.story-ready):not(.no-webgl) body[data-page="home"] .story-static-mark { opacity: 0; animation: home-mark-net 1ms 4s forwards; }
-  html.story-failed:not(.story-ready):not(.no-webgl) body[data-page="home"] .story-static-mark { animation-delay: 0s; } /* a failed download: at once */
+  html.story-failed:not(.story-ready):not(.no-webgl) body[data-page="home"] .story-static-mark { animation-delay: 0s; }
 }
-@keyframes home-mark-net { to { opacity: 1; } } /* the plate at its own weight (its dots are drawn faint in the file) */
-/* (hc15) the loader's lock hid a classic scrollbar (the page moved 7.5 px at load): home.js sets .sb-keep where it takes width */
+@keyframes home-mark-net { to { opacity: 1; } }
 html.sb-keep { scrollbar-gutter: stable; }
 
 
-/* the scene index: five rules, no text, on the baseline of "Pause motion" (.364 em of Inter under the bar's centre) */
 body[data-page="home"] .story-idx ol { align-items: center; }
 body[data-page="home"] .story-idx button { min-width: 2.875rem; padding-right: .75rem; }
 body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: .75rem; bottom: auto; top: calc(50% + .364 * var(--fs-small)); height: calc(var(--stroke) * 1px); }
 body[data-page="home"] .story-idx button::before { background: rgba(245, 242, 236, .3); }
 body[data-page="home"] .story-idx button i { background: rgba(245, 242, 236, .86); }
 
-/* a phone held sideways: the five rules, as upright */
 @media (max-width: 759.98px) and (min-aspect-ratio: 23/20) {
   body[data-page="home"] .story-idx ol { gap: 0; }
   body[data-page="home"] .story-idx button { min-width: 2.125rem; padding-right: .625rem; }
   body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: .625rem; }
 }
 
-/* the plates' captions: a hedge only, at the callouts' step (hc2: one size fewer on scenes 4 and 5) */
 body[data-page="home"] .story-lab.cap { display: flex; flex-wrap: wrap; column-gap: 1.5em; font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; text-wrap: balance; color: rgba(245, 242, 236, .78); }
 body[data-page="home"] .story-lab.cap .fc-h { text-align: left; color: rgba(245, 242, 236, .6); }
 
-/* SC 2.5.8: phones' callouts and day tags are not pointer targets (a tap on the plate still inspects; hc7) */
 @media (max-width: 599.98px) { body[data-page="home"] .story-lab:is(.layer, .day) { pointer-events: none; } }
 
-/* phones, JS on (compact overture): the CEO’s head at the phone scale */
 @media (scripting: enabled) and (max-width: 599.98px) {
   html:not(.no-webgl) body[data-page="home"] .beat-0 .display-1 { font-size: clamp(2.1rem, 9.4vw, 3.4rem); }
 }
-/* compact screens: the CEO's sub-line stays the second voice */
 @media (min-width: 600px) { html.story-compact body[data-page="home"] .beat-0 .hero-sub { font-size: 1rem; } }
 @media (scripting: enabled) and (max-width: 599.98px) and (min-height: 800px) {
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-sub { font-size: .94rem; }
 }
-/* a short screen (story.js): lines give way visually, never leave the reading order */
 body[data-page="home"] .beat-0.is-tight .hero-sub, body[data-page="home"] .story .beat.is-tight .body-lg,
 html.story-short body[data-page="home"] .story .beat-4 .body-lg { display: block; position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-/* short landscape: as v2, the CEO's lines and the buttons only */
 @media (max-height: 600px) and (min-aspect-ratio: 23/20) {
   html body[data-page="home"] .story .story-ui .beat-0 .display-1 { font-size: clamp(1.9rem, 10vh, 3.4rem); }
 }
-/* a phone under 640 px held sideways: the scenes' heads at the short scale */
 @media (max-width: 639.98px) and (max-height: 600px) and (min-aspect-ratio: 23/20) {
   html body[data-page="home"] .story .story-ui .beat h2 { font-size: clamp(1.3rem, 7vh, 1.7rem); max-width: none; }
 }
 
-/* ---------- the chapters ---------- */
 
-/* scene 4's lede (hc13r: §03's hedge came into the overture, beside its claim): its link to the disclosures, as §03's was */
 body[data-page="home"] .beat-4 .body-lg a { color: var(--fg); text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .1875rem; text-decoration-color: var(--line-strong); transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { body[data-page="home"] .beat-4 .body-lg a:hover { text-decoration-color: var(--accent); } }
 
-/* display heads break between phrases only */
 body[data-page="home"] h2 .ph { white-space: nowrap; }
 
-/* portrait tablets: the CEO's headline at v2's size on two lines */
 @media (min-width: 600px) and (max-aspect-ratio: 23/20) {
   html.story-compact body[data-page="home"] .beat-0 .display-1 { font-size: clamp(2.3rem, 9.6vw, 4.2rem); }
 }
-/* from 900 px tall: the scenes at v2's portrait scale */
 @media (min-width: 600px) and (min-height: 900px) and (max-aspect-ratio: 23/20) {
-  html.story-compact body[data-page="home"] .story .beat h2 { font-size: var(--fs-display); } /* hc13r SYS-1: one H2 size (was 48 px) */
+  html.story-compact body[data-page="home"] .story .beat h2 { font-size: var(--fs-display); }
   html.story-compact body[data-page="home"] .story .beat .body-lg { margin-top: .75rem; font-size: clamp(.94rem, 2.3vw, 1.02rem); line-height: 1.55; }
   html.story-compact body[data-page="home"] .story .beat-0 .hero-sub { margin-top: .75rem; font-size: clamp(1rem, 2.6vw, 1.15rem); }
 }
 
-/* (hc15) from 600 px the pinned exit holds the chart longer: 4.9 scenes (story.js EXIT_U 0.9, XHOLD 0.6) */
 @media (scripting: enabled) and (min-width: 600px) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 343vh + var(--paper-slack, 0px)); height: calc(100svh + 343svh + var(--paper-slack, 0px)); }
 }
-/* §01 opens --sec-open under the paper's caption; story.js writes the slack (hc16, hc17) */
 @property --paper-slack { syntax: "<length>"; inherits: false; initial-value: 0px; }
 @media screen and (scripting: enabled) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] main > .story + .section { margin-top: calc(-1 * var(--paper-slack, 0px)); background: var(--paper); }
 }
-/* (hc2) phones: 50svh of scroll a scene (overture.css: 70), native scroll; story.js centres scenes 1-4 */
 @media (scripting: enabled) and (max-width: 599.98px) and (max-aspect-ratio: 23/20) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 230vh + var(--paper-slack, 0px)); height: calc(100svh + 230svh + var(--paper-slack, 0px)); }
 }
 
-/* §05 (hc3, proof's request): the records carry Trust's ledger ids (#4f23 ...), five mono characters */
 body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em 4.8em 9.4em minmax(0, 1fr) auto; }
 @media (max-width: 760px) { body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em minmax(0, 1fr) auto; } }
 
-/* the chain folds to records #4f23-#4f26 at every width (home.js, hc14); the control, an edit or 'Change a record' opens all eight */
 body[data-page="home"] #governance .chain.is-folded .chain-list > li:nth-child(n + 5) { display: none; }
-body[data-page="home"] #governance .chain-more { display: flex; align-items: center; gap: .625rem; width: calc(100% - 1.5rem); min-height: 2.75rem; margin: 0 .75rem .5rem; padding: 0 .75rem; border: var(--hair) dashed var(--line-strong); border-radius: .125rem; font: var(--w-ui) var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; color: var(--fg); } /* the site's button voice (a3) */
+body[data-page="home"] #governance .chain-more { display: flex; align-items: center; gap: .625rem; width: calc(100% - 1.5rem); min-height: 2.75rem; margin: 0 .75rem .5rem; padding: 0 .75rem; border: var(--hair) dashed var(--line-strong); border-radius: .125rem; font: var(--w-ui) var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; color: var(--fg); }
 body[data-page="home"] #governance .chain-more::before { content: "+"; content: "+" / ""; font-size: .9rem; color: var(--accent); }
 body[data-page="home"] #governance .chain-more[aria-expanded="true"]::before { content: "\2212"; content: "\2212" / ""; }
 body[data-page="home"] #governance .chain-more:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
 
-/* ---------- phones: shorter, nothing dropped but repeats ---------- */
 @media (max-width: 600px) {
-  /* the chain: who and event, the detail under them */
   body[data-page="home"] #governance .chain-list > li { grid-template-columns: 3.3em auto minmax(0, 1fr) auto; grid-template-areas: "i who ev flag" "i what what what"; column-gap: .625rem; padding-bottom: 1.75rem; }
 }
 
-/* ========== The reading layer (lab: home editorial) ========== */
 
-/* chapters close instead of trail */
 body[data-page="home"] main > .story + .section { padding-top: clamp(1.75rem, 3.4vw, 3rem); }
-/* wide screens: the paper the overture leaves is this chapter's top margin, from the first frame (a4) */
 @media (min-width: 640px) and (min-aspect-ratio: 23/20) and (min-height: 600.02px) {
   html:is(.story-ready, .story-wait):not(.no-webgl):not(.story-tiny):not(.story-failed) body[data-page="home"] main > .story + .section { padding-top: 0; }
 }
 
 
-/* §05 the chain on phones: the records at the label step, as their hashes and Trust's chain (hc9: was .78rem, 12.48 px
-   beside 12 px hashes); 16 px while editing */
 @media (max-width: 600px) {
   body[data-page="home"] #governance .chain-list [contenteditable] { font-size: inherit; }
   body[data-page="home"] #governance .chain-list > li { row-gap: var(--hair); }
 }
-/* touch (hc3): the fields keep the record's size at rest and take 16 px only while edited (no zoom on focus) */
 @media (pointer: coarse) {
   body[data-page="home"] #governance .chain-list [contenteditable] { font-size: inherit; }
   body[data-page="home"] #governance .chain-list [contenteditable]:focus { font-size: 1rem; }
 }
-@media (pointer: coarse) { body[data-page="home"] #governance .chain-list :is(.ev, .what) { box-sizing: border-box; min-height: 1.5rem; padding-block: .125rem; } } /* 24 px targets (SC 2.5.8) */
+@media (pointer: coarse) { body[data-page="home"] #governance .chain-list :is(.ev, .what) { box-sizing: border-box; min-height: 1.5rem; padding-block: .125rem; } }
 
-/* ========== v2x cut: one head, at most one line, then the instrument ========== */
-/* four sizes a screen: the head, the line, the hedge, the instruments' mono (hc1) */
-body[data-page="home"] .ch-title { text-wrap: balance; } /* hc13r SYS-1: site.css's 22ch measure, most heads on one line */
-@media (max-width: 600px) { body[data-page="home"] .ch-title { max-width: 15ch; } } /* phones as before (SYS-1's check) */
+body[data-page="home"] .ch-title { text-wrap: balance; }
+@media (max-width: 600px) { body[data-page="home"] .ch-title { max-width: 15ch; } }
 body[data-page="home"] .ch-title + :not(.ch-line), body[data-page="home"] .ch-title + .ch-line + * { margin-top: var(--ch-gap); }
 body[data-page="home"] .ch-note { margin-top: 1rem; font-size: var(--fs-small); line-height: 1.45; color: var(--fg-3); }
 body[data-page="home"] .ch-link { margin-top: clamp(2rem, 3.4vw, 3.25rem); }
 body[data-page="home"] .is-dark .ch-note { color: rgba(245, 242, 236, .6); }
-/* captions here carry no figure number: no hanging indent */
 body[data-page="home"] main .figure-cap { padding-left: 0; }
 
-/* the first screen: the CEO's head and line, two buttons, then v2's four figures (overture.css) */
 body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(1.625rem, 3.2vh, 2.25rem); }
 
-/* §01 the six classes' register: ring, serif name, status; the live one first under a green rule; one column on a phone */
-.lc-reg { grid-template-columns: repeat(3, minmax(0, 1fr)); border: 0; border-top: var(--hair) solid var(--line-strong); }
-.lc-reg > .card { display: grid; grid-template-columns: 1.75rem minmax(0, 1fr); grid-template-rows: auto auto; column-gap: .875rem; row-gap: .25rem; align-content: start; align-items: start; padding: 1.125rem clamp(1.125rem, 2.2vw, 2rem) 1.375rem; border: 0; border-bottom: var(--hair) solid var(--line); border-radius: 0; background: none; }
-.lc-reg > .card:nth-child(3n + 1) { padding-left: 0; }
-.lc-reg > .card:not(:nth-child(3n + 1)) { border-left: var(--hair) solid var(--line); }
-.lc-reg > .card:first-child { box-shadow: inset 0 calc(2 * var(--hair)) 0 var(--accent); }
-.lc-reg .card .n { display: contents; color: var(--fg-2); }
-.lc-reg .lc-code { flex: none; grid-column: 1; grid-row: 1 / span 2; align-self: start; margin-top: calc((1.15 * var(--fs-heading) - 1.75rem) / 2); }
-.lc-reg .card .h4 { grid-column: 2; grid-row: 1; align-self: start; margin: 0; max-width: 17ch; font-size: var(--fs-heading); line-height: 1.15; letter-spacing: -0.01em; color: var(--fg-2); text-wrap: balance; } /* hc4: the title step, as Lifecycles' traits */
-.lc-reg .card:first-child .h4 { color: var(--fg); }
-.lc-reg .card .n--ring > span:last-child { grid-column: 2; grid-row: 2; justify-self: start; font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--khaki-ink); text-wrap: balance; } /* hc3: balanced, so "Live: ETF creation / & redemption" at 761-960 */
-.lc-reg .card .n--ring > .badge { padding: 0; border: 0; } /* every status, live too, in the khaki ink */
-@media (min-width: 761px), (max-width: 359.98px) { .lc-reg .lc-dot { display: block; height: 0; overflow: hidden; } } /* a dot-joined name breaks before its dot and drops it (hc23: the narrowest phones too, at the title step) */
+@media (hover: hover) and (pointer: fine) { body[data-page="home"] .story-stage.is-grab { cursor: grab; } body[data-page="home"] .story-stage.is-grabbing { cursor: grabbing; user-select: none; } }
+
+.lc-live { --lc-pw: clamp(9rem, 14vw, 12.5rem); position: relative; display: grid; grid-template-columns: var(--lc-pw) minmax(0, 1fr); grid-template-rows: 1fr auto auto auto 1fr; column-gap: clamp(1.75rem, 3.6vw, 3.75rem); padding: clamp(1.5rem, 2.6vw, 2.5rem) 0; border-top: calc(2 * var(--hair)) solid var(--accent); border-bottom: var(--hair) solid var(--line); }
+.lc-plate { grid-column: 1; grid-row: 1 / -1; align-self: center; display: block; width: 100%; height: auto; }
+.lc-plate .lc-r1 { stroke-width: var(--stroke-2); }
+.lc-plate .lc-g { fill: none; stroke: currentColor; stroke-opacity: .75; stroke-width: var(--stroke); stroke-linecap: round; }
+.lc-plate .lc-mo { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; vector-effect: none; opacity: .55; }
+.lc-plate .lc-mo2 { opacity: .36; } .lc-plate .lc-mo3 { opacity: .2; }
+.lc-plate .lc-rec { fill: var(--accent); }
+.lc-live .h4 { grid-column: 2; grid-row: 2; margin: 0; max-width: 24ch; line-height: 1.15; color: var(--fg); }
+.lc-live .h4 a { text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: var(--hair); text-underline-offset: .2em; transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
+.lc-live .h4 .arr { display: inline-block; width: .5em; height: .5em; margin-left: .3em; vertical-align: .08em; transition: transform var(--dur-move) var(--ease); }
+@media (hover: hover) { .lc-live .h4 a:hover { text-decoration-color: currentColor; } .lc-live .h4 a:hover .arr { transform: translateX(.2em); } }
+.lc-live-st { grid-column: 2; grid-row: 3; margin-top: .375rem; font-size: var(--fs-small); line-height: 1.3; color: var(--khaki-ink); }
+.lc-live-line { grid-column: 2; grid-row: 4; margin-top: 1rem; max-width: 36ch; font-size: var(--fs-body); line-height: 1.5; color: var(--fg-2); }
+.lc-reg { display: grid; grid-template-columns: minmax(0, 1fr); margin: 0; padding: 0; list-style: none; }
+.lc-reg > li { display: grid; grid-template-columns: 1.75rem minmax(0, 1fr) auto; column-gap: .875rem; align-items: baseline; padding: .875rem 0 .9375rem; border-bottom: var(--hair) solid var(--line); }
+.lc-reg .lc-ring { align-self: center; }
+.lc-reg .h4 { margin: 0; line-height: 1.15; color: var(--fg-2); }
+.lc-reg li > span { font-size: var(--fs-small); line-height: 1.3; color: var(--khaki-ink); white-space: nowrap; }
+@media (min-width: 761px) { .lc-live .h4 a::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: calc(var(--lc-pw) + 1rem); } }
+@media (min-width: 961px) { .lc-reg { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(2.5rem, 5vw, 5rem); } }
 @media (max-width: 760px) {
-  .lc-reg { grid-template-columns: minmax(0, 1fr); }
-  .lc-reg > .card:nth-child(n) { grid-template-columns: 1.375rem minmax(0, 1fr); row-gap: calc(3 * var(--hair)); align-content: normal; align-items: center; padding: .875rem 0 .9375rem; border-left: 0; }
-  .lc-reg .lc-code { align-self: center; margin-top: 0; }
+  .lc-live { --lc-pw: 7.5rem; grid-template-rows: 1fr auto auto 1fr auto; column-gap: 1.125rem; padding: 1.375rem 0 1.25rem; }
+  .lc-plate { grid-row: 1 / 5; }
+  .lc-live-line { grid-column: 1 / -1; grid-row: 5; margin-top: 1.125rem; }
+  .lc-reg > li { grid-template-columns: 1.375rem minmax(0, 1fr) auto; column-gap: .75rem; padding: .75rem 0 .8125rem; }
   .lc-reg .lc-ring { width: 1.375rem; height: 1.375rem; }
-  .lc-reg .card .h4 { align-self: end; max-width: none; } /* hc23: the title step on phones too (was the body's 17 px) */
 }
 
-/* §03: the head, then the stack of costs (hc13r: the head at the chapters' measure, one line from 1100 px) */
 body[data-page="home"] #economics .cost .figure-cap { margin-top: 1.125rem; }
 
-/* §04: the chain beside its head */
 body[data-page="home"] #governance .chain-row .ch-head { margin: 0; }
 @media (min-width: 961px) { body[data-page="home"] #governance .chain-row .ch-head { position: sticky; top: calc(var(--nav-h) + 2rem); } }
 
-/* §06: three titles, nothing else */
 body[data-page="home"] #research .card-grid--3 { border-left: 0; }
 body[data-page="home"] #research .research-card:last-child { border-right: 0; }
 body[data-page="home"] #research .research-card { display: flex; flex-direction: column; justify-content: space-between; gap: 1.75rem; min-height: clamp(9.375rem, 13vw, 13.125rem); padding: 1.375rem clamp(1.125rem, 2.2vw, 2rem) 1.25rem; background: none; }
 body[data-page="home"] #research .research-card:first-child { padding-left: 0; }
-body[data-page="home"] #research .research-card h3 { margin: 0; max-width: 20ch; font-size: var(--fs-heading); line-height: 1.15; text-wrap: balance; } /* the title step at every width (hc9: phones were 1.2rem, a size of their own) */
+body[data-page="home"] #research .research-card h3 { margin: 0; max-width: 20ch; font-size: var(--fs-heading); line-height: 1.15; text-wrap: balance; }
 body[data-page="home"] #research .research-card h3 .t-head { display: block; }
 @media (max-width: 760px) {
   body[data-page="home"] #research .card-grid--3 { grid-template-columns: minmax(0, 1fr); }
   body[data-page="home"] #research .research-card, body[data-page="home"] #research .research-card:first-child { min-height: 0; gap: .75rem; padding: 1.125rem 0; border-right: 0; }
 }
 
-/* the close */
 body[data-page="home"] .cta-band .row { margin-top: clamp(1.75rem, 3vw, 2.5rem); }
 
-/* one small register: hedges, notes, captions and links at --fs-small (hc9) */
 body[data-page="home"] .ch-link { font-size: var(--fs-small); }
 body[data-page="home"] main .figure-cap, body[data-page="home"] main .figure-cap .fc-h { font-size: var(--fs-small); }
-/* the kicker at the sub-line's size: it follows every size the overture's modes give the sub-line */
 body[data-page="home"] .beat-0 .hero-kicker { font-size: var(--fs-body); }
 @media (max-width: 639.98px), (max-aspect-ratio: 23/20) { body[data-page="home"] .beat-0 .hero-kicker { font-size: clamp(.98rem, 2.6vw, 1.15rem); } }
 html.story-compact body[data-page="home"] .beat-0 .hero-kicker { font-size: .86rem; }
@@ -194,18 +164,14 @@ html.story-compact body[data-page="home"] .beat-0 .hero-kicker { font-size: .86r
 @media (scripting: enabled) and (max-width: 599.98px) { html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker { font-size: .86rem; } }
 @media (scripting: enabled) and (max-width: 599.98px) and (min-height: 800px) { html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker { font-size: .94rem; } }
 @media (min-width: 600px) and (min-height: 900px) and (max-aspect-ratio: 23/20) { html.story-compact body[data-page="home"] .story .beat-0 .hero-kicker { font-size: clamp(1rem, 2.6vw, 1.15rem); } }
-/* §06: the reading time is a note, not a data label */
 body[data-page="home"] #research .research-card .link-arrow { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; }
 
-/* wide screens: the opening copy centred on the globe's centre line */
 @media (scripting: enabled) and (min-width: 1600px) and (min-height: 820px) and (min-aspect-ratio: 23/20) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story .beat-0 { top: var(--nav-h); bottom: var(--story-bar-h); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
   html:not(.story-ready):not(.no-webgl) body[data-page="home"] .story .beat-0 { animation: home-static-beat0 1ms var(--story-net) forwards; }
 }
 @keyframes home-static-beat0 { to { position: relative; left: auto; right: auto; top: auto; bottom: auto; opacity: 1; transform: none; pointer-events: auto; padding-top: clamp(3.5rem, 9vh, 6rem); padding-bottom: clamp(3.5rem, 9vh, 6rem); } }
 
-/* ========== award a1 ========== */
-/* phones: the CEO's headline one step up, still two lines (44 px at 390); the CEO's sub-line and the scenes' lines at 16 px */
 @media (scripting: enabled) and (max-width: 599.98px) {
   html:not(.no-webgl) body[data-page="home"] .beat-0 .display-1 { font-size: clamp(2.1rem, 11.25vw, 3.4rem); }
 }
@@ -213,67 +179,57 @@ body[data-page="home"] #research .research-card .link-arrow { font: 400 var(--fs
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-sub, html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker,
   html:not(.no-webgl) body[data-page="home"] .story .beat .body-lg { font-size: 1rem; line-height: 1.5; }
 }
-/* narrow phones: the scene index's five rules a little shorter, so "Pause motion" keeps one line beside them */
 @media (max-width: 379.98px) {
   body[data-page="home"] .story-idx button { min-width: 2.25rem; padding-right: .625rem; }
   body[data-page="home"] .story-idx button::before, body[data-page="home"] .story-idx button i { right: .625rem; }
   body[data-page="home"] .story-motion { white-space: nowrap; }
 }
-/* under 340 px the five rules at 32 px, so "Pause motion" ends on the gutter (hc9) */
 @media (max-width: 339.98px) { body[data-page="home"] .story-idx button { min-width: 2rem; } }
-/* hc1: the key names the four costs once; the bar carries none (as Proof's Fig. 3.1) */
 body[data-page="home"] #economics .cost-row:first-child { padding-top: 1.5rem; }
 @container cost (max-width: 860px) { body[data-page="home"] #economics .cost-row:first-child { padding-top: 0; } body[data-page="home"] #economics .cost-row:first-child .cost-bar { margin-top: .875rem; } }
-/* the chapters are laid out near the screen only; each stand-in is the drawn height for its width band (hc25) */
 body[data-page="home"] main > .story ~ section:not(.cta-band) { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
-body[data-page="home"] #lifecycles { --cis: 40.0234375rem; } body[data-page="home"] #lc01 { --cis: 64.50625rem; }
+body[data-page="home"] #lifecycles { --cis: 34.796875rem; } body[data-page="home"] #lc01 { --cis: 64.50625rem; }
 body[data-page="home"] #economics { --cis: 42.046875rem; } body[data-page="home"] #governance { --cis: 44.25rem; }
 body[data-page="home"] #research { --cis: 36.3125rem; }
-/* the heights at 700, 820, 1024, 1280, 1440 and 1920 (rem: 3840 is 1920 doubled), measured: notes/home.md */
 @media (min-width: 600px) {
-  body[data-page="home"] #lifecycles { --cis: 38.05859375rem; } body[data-page="home"] #lc01 { --cis: 52.365625rem; }
+  body[data-page="home"] #lifecycles { --cis: 31.8956rem; } body[data-page="home"] #lc01 { --cis: 52.365625rem; }
   body[data-page="home"] #economics { --cis: 28.921875rem; } body[data-page="home"] #governance { --cis: 42.90625rem; }
   body[data-page="home"] #research { --cis: 34.1975rem; }
 }
 @media (min-width: 761px) and (max-width: 960px) {
-  body[data-page="home"] #lifecycles { --cis: 25.234375rem; } body[data-page="home"] #lc01 { --cis: 50.140625rem; }
+  body[data-page="home"] #lifecycles { --cis: 33.8831rem; } body[data-page="home"] #lc01 { --cis: 50.140625rem; }
   body[data-page="home"] #economics { --cis: 30.015625rem; } body[data-page="home"] #governance { --cis: 34.03rem; }
   body[data-page="home"] #research { --cis: 26.6266rem; }
 }
-@media (min-width: 761px) and (max-width: 800px) { body[data-page="home"] #lc01 { --cis: 52.8375rem; } body[data-page="home"] #economics { --cis: 29.703125rem; } } /* hc24: the lab's head stacks (swarm.css); measured at 768 x 1024 */
+@media (min-width: 761px) and (max-width: 800px) { body[data-page="home"] #lc01 { --cis: 52.8375rem; } body[data-page="home"] #economics { --cis: 29.703125rem; } }
 @media (min-width: 961px) {
-  body[data-page="home"] #lifecycles { --cis: 28.625rem; } body[data-page="home"] #lc01 { --cis: 62.203125rem; }
+  body[data-page="home"] #lifecycles { --cis: 32.3869rem; } body[data-page="home"] #lc01 { --cis: 62.203125rem; }
   body[data-page="home"] #economics { --cis: 25.875rem; } body[data-page="home"] #governance { --cis: 27rem; }
   body[data-page="home"] #research { --cis: 34.1444rem; }
 }
 @media (min-width: 961px) and (max-width: 1099.98px) {
-  body[data-page="home"] #lifecycles { --cis: 25.109375rem; } body[data-page="home"] #lc01 { --cis: 55.71875rem; }
+  body[data-page="home"] #lifecycles { --cis: 27.9231rem; } body[data-page="home"] #lc01 { --cis: 55.71875rem; }
   body[data-page="home"] #economics { --cis: 28.953125rem; } body[data-page="home"] #governance { --cis: 26.96875rem; }
   body[data-page="home"] #research { --cis: 28.38rem; }
 }
 @media (min-width: 1100px) and (max-width: 1359.98px) {
-  body[data-page="home"] #lifecycles { --cis: 27.078125rem; } body[data-page="home"] #lc01 { --cis: 57.746875rem; }
+  body[data-page="home"] #lifecycles { --cis: 30.3831rem; } body[data-page="home"] #lc01 { --cis: 57.746875rem; }
   body[data-page="home"] #economics { --cis: 25.171875rem; } body[data-page="home"] #governance { --cis: 27rem; }
   body[data-page="home"] #research { --cis: 32.55rem; }
 }
 @media (min-width: 1680px) {
-  body[data-page="home"] #lifecycles { --cis: 28.921875rem; } body[data-page="home"] #lc01 { --cis: 64.671875rem; }
+  body[data-page="home"] #lifecycles { --cis: 32.9969rem; } body[data-page="home"] #lc01 { --cis: 64.671875rem; }
   body[data-page="home"] #economics { --cis: 27.40625rem; } body[data-page="home"] #governance { --cis: 27rem; }
   body[data-page="home"] #research { --cis: 36.8675rem; }
 }
-/* hc19: §02's stand-in follows the lab's stage (swarm.css --sw-h); hc24: measured with motion (the Pause row, <= 800 px) */
 body[data-page="home"] #lc01 { contain-intrinsic-size: auto calc(var(--cis) - var(--lab-rm, 0rem) - clamp(20.625rem, 32vw + 4.375rem, 35rem) + clamp(20.625rem, min(32vw + 4.375rem, 100vh - 31rem), 35rem)); }
 @media (prefers-reduced-motion: reduce) and (max-width: 800px) { body[data-page="home"] #lc01 { --lab-rm: 1.165rem; } }
 @media (prefers-reduced-motion: reduce) and (max-width: 599.98px) { body[data-page="home"] #lc01 { --lab-rm: 1.69375rem; } }
 @media print { body[data-page="home"] main > .story ~ section:not(.cta-band) { content-visibility: visible; } }
-/* §02: the link sits one chapter step under the lab (swarm.css adds 40 px below it) */
 body[data-page="home"] #lc01 .swarm-live { margin-bottom: 0; }
 
-/* ========== award a2 ========== */
-/* the static globe keeps the shape its width and height attributes give it */
 body[data-page="home"] .story-static-mark { height: auto; }
 @media (min-width: 1100px) {
-  /* §04: the key as a register on hairlines */
   body[data-page="home"] .eco-head { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: clamp(1rem, 2.2vw, 2rem); }
   body[data-page="home"] .eco-head > .ch-title { grid-column: 1 / span 6; }
   body[data-page="home"] .eco-head > .eco-key { grid-column: 7 / -1; }
@@ -287,25 +243,20 @@ body[data-page="home"] #economics .eco-key dd { margin: 0; }
   body[data-page="home"] #economics .eco-key > div { grid-template-columns: minmax(0, 1fr); row-gap: .1em; }
   body[data-page="home"] #economics .eco-key dd { margin-left: 1.28em; }
 }
-/* §06: each note's still is its cell's mark (one scale for the three) */
 body[data-page="home"] #research .research-card { display: grid; grid-template-rows: auto auto 1fr; justify-content: stretch; row-gap: 0; }
 body[data-page="home"] #research .research-card .link-arrow { align-self: end; margin-top: 1.375rem; }
-/* (files in assets/img/home: the tokens' colours as attributes; strokes scale with the mark, so 4K keeps the weight) */
 body[data-page="home"] #research .rc-mark { display: block; width: auto; height: clamp(7.5rem, 9.4vw, 8.5rem); max-width: 100%; margin: .25rem 0 clamp(1.25rem, 2.2vw, 1.75rem); opacity: .88; transition: opacity var(--dur-feedback) var(--ease-out); }
 @media (hover: hover) { body[data-page="home"] #research .research-card:hover .rc-mark { opacity: 1; } }
-/* phones: the mark beside the title, small */
 @media (max-width: 760px) {
   body[data-page="home"] #research .research-card, body[data-page="home"] #research .research-card:first-child { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 1.125rem; }
   body[data-page="home"] #research .rc-mark { grid-column: 2; grid-row: 1 / span 2; align-self: center; height: 5.5rem; margin: 0; }
   body[data-page="home"] #research .research-card h3 { grid-column: 1; grid-row: 1; }
   body[data-page="home"] #research .research-card .link-arrow { grid-column: 1; grid-row: 2; margin-top: .625rem; }
 }
-/* no JavaScript: the first screen is the first scene alone, each scene as tall as its plate, the static globe at weight */
 @media (scripting: none) {
   body[data-page="home"] .story .beat-0 { min-height: 100vh; min-height: 100svh; }
   body[data-page="home"] .story-static-mark { opacity: 1; }
 }
-/* portrait (phones, upright tablets): the globe above the copy, centred, as the live overture stacks it; the copy under it */
 @media (scripting: none) and (max-width: 639.98px), (scripting: none) and (max-aspect-ratio: 23/20) {
   body[data-page="home"] .story-static-mark { top: calc(var(--nav-h) + 1.5rem); right: 50%; width: min(60vw, 17.5rem); transform: translateX(50%); }
   body[data-page="home"] .story .beat-0 { padding-top: calc(var(--nav-h) + 4rem + min(60vw, 17.5rem)); }
@@ -315,64 +266,45 @@ body[data-page="home"] #research .rc-mark { display: block; width: auto; height:
   body[data-page="home"] .story .beat:not(.beat-0) { min-height: calc(min(46vw, 35rem) * .7 + 2 * clamp(3.5rem, 9vh, 6rem)); display: flex; flex-direction: column; justify-content: center; }
 }
 @media (scripting: none) and (min-width: 1921px) and (min-aspect-ratio: 23/20) {
-  /* 1920's first screen, enlarged: the globe's right edge on the column's */
   body[data-page="home"] .story-static-mark { right: calc((100% - var(--max)) / 2 + var(--gutter)); }
 }
 html.no-webgl:not(.story-tiny) body[data-page="home"] .story .beat-0 { min-height: 100vh; min-height: 100svh; }
 
-/* ========== award a3 ========== */
-/* §06: the stills as plates, not icons: one scale for the three, the widest half its cell (the grid is their container) */
 @media (min-width: 761px) {
   body[data-page="home"] #research .card-grid--3 { container-type: inline-size; }
   body[data-page="home"] #research .rc-mark { height: max(7.5rem, 13.9cqi); }
 }
-/* scene 4: the floor's unit a step brighter than its name (overture.css sets the face, size and tracking; hc3) */
 body[data-page="home"] .story-lab.floor .u { color: rgba(245, 242, 236, .9); }
-/* hc9: "Floor" over "10 bps" at every width */
 body[data-page="home"] .story-lab.floor { line-height: 1.3; }
 body[data-page="home"] .story-lab.floor span { display: block; }
-/* hc12: the hedge over the floor's tag, as Proof sets it; right edges with the tag (story.js: is-flush); away under the inspector */
 body[data-page="home"] .story-lab.hedge { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; text-align: right; color: rgba(245, 242, 236, .6); }
 body[data-page="home"] .story-lab.hedge span { display: block; }
 body[data-page="home"] .story-lab.hedge span:first-child { color: rgba(245, 242, 236, .74); }
-body[data-page="home"] .story-lab:is(.hedge, .floor).is-flush { text-align: left; } /* one left edge for the four lines, as Proof's gutter */
+body[data-page="home"] .story-lab:is(.hedge, .floor).is-flush { text-align: left; }
 body[data-page="home"] .story-labels.has-insp .story-lab.hedge { opacity: 0 !important; }
-/* hc17: with the paper up the days' numerals take the caption's step; the box keeps its line height: nothing moves */
 body[data-page="home"] .story.is-paper-up .story-lab.day { line-height: 1.25em; }
 body[data-page="home"] .story.is-paper-up .story-lab.day .k { font-size: var(--fs-small); }
-/* hc24: the broker ticks, printed on the paper with the records (story.js): the scene's tick, in --signal as Proof's */
 body[data-page="home"] .story-ink-chk { position: absolute; left: 0; top: 0; width: .75rem; height: .75rem; overflow: visible; fill: none; stroke: var(--signal); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-/* §06 on tablets (761-960): the three notes in one row, as on desktop; each still keeps its shape (xMinYMid) */
 @media (min-width: 761px) and (max-width: 960px) {
   body[data-page="home"] #research .card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   body[data-page="home"] #research .card-grid--3 > :last-child:nth-child(odd) { grid-column: auto; }
 }
-/* a3 p5: a dot-joined label never ends a line on its dot: it breaks before the dot and drops it (Trust's .tp-dot) */
 @media (max-width: 600px) {
   body[data-page="home"] .ph-dot { display: block; height: 0; overflow: hidden; }
 }
 
-/* ========== hill climb hc11 ========== */
-/* §05's chain buttons carry Trust's glyphs at Trust's size: the same action looks the same on both pages */
 body[data-page="home"] #governance :is(.chain-try, .chain-restore) { gap: .5rem; }
 body[data-page="home"] #governance :is(.chain-try, .chain-restore) svg { flex: none; width: .8125rem; height: .8125rem; }
 body[data-page="home"] #governance :is(.chain-try, .chain-restore) svg path { vector-effect: non-scaling-stroke; stroke-width: var(--icon-stroke); }
-/* a chapter's link sits 1.5rem under its heading, as a line would (§04 beside the chain; hc25: §05 too) */
 body[data-page="home"] .ch-head > .ch-title + .ch-link { margin-top: 1.5rem; }
 
-/* ========== hill climb hc13r ========== */
-/* HOME-1: scene 4 lands on the proof: the count and its hedge as its lede, the way to Proof under it, the chart's key */
 body[data-page="home"] .beat-4 .beat-more { margin-top: clamp(1.125rem, 2.4vh, 1.625rem); opacity: var(--bo, 1); }
 body[data-page="home"] .beat-4.is-bo0 .beat-more { visibility: hidden; }
-/* where the lede gives way (a short screen), the way on goes with it (story.js takes the lede's link out of the tab order) */
 body[data-page="home"] .story .beat-4.is-tight .beat-more, html.story-short body[data-page="home"] .story .beat-4 .beat-more { display: none; }
-/* the chart's key: Inter at the hedge's step and in its two tones, from day 01's tag under the day numbers; two lines on
-   portrait screens */
 body[data-page="home"] .story-lab.key { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .6); }
 body[data-page="home"] .story-lab.key span:first-child { color: rgba(245, 242, 236, .74); }
 @media (max-width: 639.98px), (max-aspect-ratio: 23/20) { body[data-page="home"] .story-lab.key span { display: block; } }
-html.story-short body[data-page="home"] .story-lab.key { display: none; } /* short landscape: the key gives way with the lede (story.js) */
-/* without JavaScript: the ten sessions' list under the scene's copy (wide: in the copy's column, the plate beside it) */
+html.story-short body[data-page="home"] .story-lab.key { display: none; }
 @media (scripting: none) {
   body[data-page="home"] .beat-4 .proof-list { margin-top: 2.125rem; }
 }
@@ -380,39 +312,29 @@ html.story-short body[data-page="home"] .story-lab.key { display: none; } /* sho
   body[data-page="home"] .beat-4 .proof-list { max-width: min(44%, 35rem); }
 }
 
-/* ========== hill climb hc14 ========== */
-/* hc14: leaving scene 4, its lede and link lift .75rem (story.js --bl) before the hand-off reaches them */
 body[data-page="home"] .beat-4 :is(.body-lg, .beat-more) { translate: 0 calc(var(--bl, 0) * -.75rem); }
-/* §04 holds its live height before chain.js runs (verify_budget home_landing) */
 @media (scripting: enabled) {
   body[data-page="home"] #governance .chain:not(.chain-ready) :is(.chain-acts, .chain-try)[hidden] { display: inline-flex !important; visibility: hidden; }
   body[data-page="home"] #governance .chain:not(.chain-ready) .chain-foot.is-static > span:first-child { display: block; visibility: hidden; }
   body[data-page="home"] #governance .chain:not(.chain-ready) .chain-fallback { display: none; }
 }
 
-/* ========== hill climb hc18 ========== */
-/* forced colours on a light Canvas: the overture's canvases are not forced, so their light-on-ink pixels print inverted */
 @media (forced-colors: active) and (prefers-color-scheme: light) { .story-gl, .story-2d { filter: invert(1) hue-rotate(180deg); } }
 
-/* ========== hill climb hc22 ========== */
-/* hc22: the four figures in the site's stat grammar: a serif numeral over an Inter label at the small step */
 body[data-page="home"] .hero-stats span { margin-top: .5rem; font: 400 var(--fs-small)/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .72); }
 body[data-page="home"] .hero-stats > div:last-child > span { text-wrap: balance; }
-/* hc23: the live dot leads its label; where the row has room the detail is the label's second line */
 body[data-page="home"] .hero-stats span span { display: inline; margin: 0; }
 body[data-page="home"] .hero-stats .live { margin: 0 .5em 0 0; vertical-align: .08em; }
 body[data-page="home"] .hero-stats .hs-sep { display: none; }
 body[data-page="home"] .hero-stats .hs-l2 { display: block; }
-@media (min-width: 961px) and (min-aspect-ratio: 23/20) { body[data-page="home"] .hero-stats { grid-template-columns: auto auto auto 1fr; column-gap: 1.25rem; width: fit-content; max-width: min(60%, 45rem); } body[data-page="home"] .hero-stats .hs-l2 { white-space: nowrap; } } /* a short label keeps its line, the live one its two; the row ends short of the globe's horizon (1440 x 900: at 798 px, under 56%) */
+@media (min-width: 961px) and (min-aspect-ratio: 23/20) { body[data-page="home"] .hero-stats { grid-template-columns: auto auto auto 1fr; column-gap: 1.25rem; width: fit-content; max-width: min(60%, 45rem); } body[data-page="home"] .hero-stats .hs-l2 { white-space: nowrap; } }
 @media (min-width: 600px) and (max-aspect-ratio: 23/20) { body[data-page="home"] .hero-stats { grid-template-columns: auto auto auto 1fr; column-gap: 1.5rem; } body[data-page="home"] .hero-stats .hs-l2 { white-space: nowrap; } }
-/* a narrow landscape window (600-960): no room for the detail's line beside three columns, so the phone's two tiers */
 @media (min-width: 600px) and (max-width: 960.98px) and (min-aspect-ratio: 23/20) {
   body[data-page="home"] .hero-stats { grid-template-columns: repeat(3, auto); justify-content: start; gap: .875rem 1.75rem; }
   body[data-page="home"] .hero-stats > div:last-child { grid-column: 1 / -1; display: flex; align-items: baseline; gap: .625rem; }
   body[data-page="home"] .hero-stats > div:last-child > span { margin-top: 0; }
   body[data-page="home"] .hero-stats :is(.hs-sep, .hs-l2) { display: inline; }
 }
-/* phones: all four in two tiers, the three figures, then Lifecycle 01 on its own line (tablets keep the row: story.js) */
 @media (max-width: 599.98px) {
   body[data-page="home"] .hero-stats { grid-template-columns: repeat(3, 1fr); gap: .625rem 1rem; }
   body[data-page="home"] .hero-stats > div:last-child { grid-column: 1 / -1; display: flex; align-items: baseline; gap: .625rem; }
@@ -421,7 +343,7 @@ body[data-page="home"] .hero-stats .hs-l2 { display: block; }
   body[data-page="home"] .hero-stats > div:last-child span { margin-top: 0; }
   body[data-page="home"] .hero-stats :is(.hs-sep, .hs-l2) { display: inline; }
 }
-@media (max-width: 389.98px) { body[data-page="home"] .hero-stats .hs-sep { display: none; } body[data-page="home"] .hero-stats .hs-l2 { display: block; } } /* no room for one line: the deliberate two */
+@media (max-width: 389.98px) { body[data-page="home"] .hero-stats .hs-sep { display: none; } body[data-page="home"] .hero-stats .hs-l2 { display: block; } }
 @media (scripting: enabled) and (max-width: 599.98px) and (min-height: 740px) {
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-stats { display: grid; margin-top: .75rem; }
   html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-stats > div:not(:last-child) { display: block; }

@@ -243,7 +243,7 @@ def still_hedge(rel):
 
 # what each still shows, for og:image:alt (launch_meta_v9 for the top pages; build_research and build_blog for theirs)
 STILL_ALT = {"research.html": "the page’s library figure, the notes drawn as stippled leaves",
-             "company.html": "the page’s figure, a dotted sphere in its rings",
+             "company.html": "the page’s figure, one large agent beside a lattice of small ones",  # hc26r (COMP-1): the hero opens on Specialize
              "blog/index.html": "the page’s open book, one leaf for each collection"}
 
 def pages():

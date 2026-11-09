@@ -955,6 +955,10 @@ def check_offscreen_pause():
             if pre.startswith("@") or re.match(r"^(from|to|[\d.]+%)\b", pre): continue
             am = re.search(r"(?<![-\w])animation(?:-name)?\s*:\s*([^;]+)", m[2])
             if not am or am[1].strip().startswith("none"): continue
+            # hc26r (system; platform's hc25 ask): an animation the same block puts on a scroll or view timeline (every
+            # entry: none is 'auto') only moves with the scroll, so pausing it off screen saves nothing (the scene primitive)
+            tl = re.search(r"animation-timeline\s*:\s*([^;]+)", m[2])
+            if tl and all(v.strip() and v.strip() != "auto" for v in split_top(tl[1], ",")[0]): continue
             for sel in split_top(pre, ",")[0]:
                 if any(k in sel for k in OFFSCREEN_CHROME): continue
                 for cs, last in lasts(sel):
@@ -1025,11 +1029,30 @@ def check_close_globe():
             if len(re.findall(r"<h2\b", b)) != 1: fail(rel, "close_globe: a close without exactly one head (h2)")
 
 
+def check_scenes():
+    """hc26r (system; SYS-1, SYS-2, SYSTEM.md 13): the markup the scene primitive and the travelling drawing rely on.
+    A pinned scene (`data-scene="pin"`) opens on its `.scene-stage` (its first element child: the sticky stage); a tone
+    sentinel says dark or paper; a page has at most one `data-vt-dest` (site.css names it `fig`: two would make every
+    page turn to that page fail, duplicate view-transition names abort a transition), and it and every `.vt-src` sit
+    inside <main>."""
+    for rel in pages:
+        s = (ROOT / rel).read_text(encoding="utf-8")
+        for m in re.finditer(r'<(\w+)\b[^>]*\sdata-scene="pin"[^>]*>\s*(?:<!--.*?-->\s*)*<(\w+)\b([^>]*)>', s, re.S):
+            if not re.search(r'\sclass="[^"]*\bscene-stage\b', m[3]): fail(rel, f"scenes: a pinned scene's first child is <{m[2]}> without class scene-stage")
+        for v in re.findall(r'\sdata-scene-tone="([^"]*)"', s):
+            if v not in ("dark", "paper"): fail(rel, f"scenes: data-scene-tone={v!r} (dark or paper)")
+        dests = re.findall(r"<[a-z][\w-]*\b[^>]*\sdata-vt-dest\b", s)
+        if len(dests) > 1: fail(rel, f"scenes: {len(dests)} data-vt-dest elements; one per page (a duplicate 'fig' aborts the page turn)")
+        main = re.search(r"<main\b.*?</main>", s, re.S)
+        outside = s.replace(main[0], "") if main else s
+        if re.search(r"\sdata-vt-dest\b|\sclass=\"[^\"]*\bvt-src\b", outside): fail(rel, "scenes: a data-vt-dest or .vt-src outside <main>")
+
+
 GUARDS = [check_count_not_on_proof, check_count_static_final, check_regime_split, check_research09_regimes, check_has_guard,
           check_has_regions, check_figure_labels, check_blog_placeholder, check_proof_plate, check_table_th,
           check_hover_guard, check_weight, check_story_fallback, check_cost_definitions, check_platform04, check_chrome_sync,
           check_headers, check_csp_markup, check_footer, check_landmarks, check_heads, check_decisions, check_offscreen_pause,
-          check_cost_gone_contrast, check_close_globe]
+          check_cost_gone_contrast, check_close_globe, check_scenes]
 only = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--only=")), None)
 if "--only" in sys.argv[1:-1]: only = sys.argv[sys.argv.index("--only") + 1]
 for g in GUARDS:

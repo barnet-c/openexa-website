@@ -66,6 +66,9 @@
   function explorer(root, id) {
     const pre = `arch${id}`;
     const spec = root.hasAttribute('data-arch-spec'); // Platform: the list stays, as the spec under the instrument
+    const scn = !spec && root.closest('.stack-scene'), stage = scn && scn.firstElementChild;
+    const hp = scn && scn.querySelector('.hero-plate--stack'), hsvg = hp && hp.querySelector('.hp-art > svg');
+    let pin = false, sp = 1, sA = 0, sZ = 1, sm = 0;
     /* ---------------- 1 · read the list (also what readers without JavaScript get) ---------------- */
     const items = [];
     let bIndex = -1, bEl = null, fEl = null;
@@ -142,9 +145,11 @@
         list.appendChild(p);
       }
       btns.push(b); panels.push(p); heads.push(hd);
+      hd.style.setProperty('--ri', i < bIndex ? i : i + 1);
       if (i === bIndex - 1) {
         // (hc6) the boundary in the index: its label, then the hairline the plane sits level with (wide)
         bRow = H('div', 'arch-bound', list);
+        bRow.style.setProperty('--ri', bIndex);
         if (bLine) { bRow.classList.add('has-line'); const l = H('p', 'ab-line', bRow); H('span', 'sr-only', l, bTitle + ': '); l.append(bLine); }
         else H('span', 'chip', bRow, bTitle);
         bRule = H('span', 'ab-rule', bRow); bRule.setAttribute('aria-hidden', 'true');
@@ -342,24 +347,27 @@
     const view = { T: 45 * DEG, F: 19 * DEG, tT: 45 * DEG, tF: 19 * DEG };
     let geoDirty = true;
     const proj = (u, v, h) => {
-      const c = Math.cos(view.T), s = Math.sin(view.T), sp = Math.sin(view.F), cp = Math.cos(view.F);
-      return [Sc * (u * c - v * s), -Sc * ((u * s + v * c) * sp + h * cp)];
+      const c = Math.cos(view.T), s = Math.sin(view.T), sf = Math.sin(view.F), cp = Math.cos(view.F);
+      const x = Sc * (u * c - v * s), y = -Sc * ((u * s + v * c) * sf + h * cp);
+      if (!sm) return [x, y];
+      const k = halfW / 115;
+      return [x + sm * (k * (69 * u - 46 * v) - x), y + sm * (-k * 8.5 * (u + v) - Sc * h * cp - y)];
     };
     const pts = (arr) => arr.map((q) => f1(q[0]) + ',' + f1(q[1])).join(' ');
     const dn = (q, t) => [q[0], q[1] + t];
     function shape() {
-      const c = Math.cos(view.T), s = Math.sin(view.T), sp = Math.sin(view.F);
-      const m = `matrix(${f3(Sc * c)} ${f3(-Sc * s * sp)} ${f3(-Sc * s)} ${f3(-Sc * c * sp)} 0 0)`;
-      const A = proj(-1, 1, 0), B = proj(1, 1, 0), C = proj(1, -1, 0), D = proj(-1, -1, 0);
+      const c = Math.cos(view.T), s = Math.sin(view.T), sf = Math.sin(view.F), ek = halfW / 115, mx = (o, e) => o + sm * (e - o);
+      const m = `matrix(${f3(mx(Sc * c, 69 * ek))} ${f3(mx(-Sc * s * sf, -8.5 * ek))} ${f3(mx(-Sc * s, -46 * ek))} ${f3(mx(-Sc * c * sf, -8.5 * ek))} 0 0)`;
+      const A = proj(-1, 1, 0), B = proj(1, 1, 0), C = proj(1, -1, 0), D = proj(-1, -1, 0), th = thick * (1 - sm);
       plates.forEach((p) => {
         setA(p.top, 'points', pts([A, B, C, D])); setA(p.glow, 'points', pts([A, B, C, D]));
-        setA(p.sideL, 'points', pts([A, D, dn(D, thick), dn(A, thick)]));
-        setA(p.sideR, 'points', pts([D, C, dn(C, thick), dn(D, thick)]));
-        setA(p.edgeB, 'points', pts([dn(A, thick), dn(D, thick), dn(C, thick)]));
+        setA(p.sideL, 'points', pts([A, D, dn(D, th), dn(A, th)]));
+        setA(p.sideR, 'points', pts([D, C, dn(C, th), dn(D, th)]));
+        setA(p.edgeB, 'points', pts([dn(A, th), dn(D, th), dn(C, th)]));
         setA(p.far, 'points', pts([A, B, C]));
         setA(p.rim, 'points', pts([A, D, C]));
         setA(p.key, 'x1', f1(A[0])); setA(p.key, 'y1', f1(A[1])); setA(p.key, 'x2', f1(B[0])); setA(p.key, 'y2', f1(B[1]));
-        setA(p.hit, 'points', pts([A, B, C, dn(C, thick), dn(D, thick), dn(A, thick)]));
+        setA(p.hit, 'points', pts([A, B, C, dn(C, th), dn(D, th), dn(A, th)]));
         setA(p.pat, 'transform', m);
       });
       const k = 1.16, bp = pts([proj(-k, k, 0), proj(k, k, 0), proj(k, -k, 0), proj(-k, -k, 0)]);
@@ -380,6 +388,7 @@
         padL = parseFloat(getComputedStyle(bodyEl).paddingLeft) || 0;
         listL = lr.left - fr.left; listR = lr.right - fr.left;
         cx = (padL + listL) / 2; halfW = clamp((listL - padL) / 2 - 56 * k, 96 * k, 178 * k);
+        if (scn) { sceneRead(); if (pin) halfW = Math.max(96 * k, Math.min((listL - padL) / 2 - 56 * k, (btns[1].getBoundingClientRect().top - btns[0].getBoundingClientRect().top) * 230 / 74)); }
         F0 = 19 * DEG; thick = 7 * k;
         reserve(halfW * Math.sin(F0) + thick + 25 * k); // may grow the instrument, so the rest is measured after it
         fr = fig.getBoundingClientRect();
@@ -430,6 +439,7 @@
       Sc = halfW / Math.SQRT2;
       view.tF = F0; if (!pointerOn) view.F = F0;
       setA(svg, 'viewBox', `0 0 ${f1(W)} ${f1(Hh)}`);
+      if (scn) scenePlace();
       field.style.setProperty('--seam', f1(byT) + 'px'); field.style.setProperty('--cx', f1(cx) + 'px');
       // the boundary's line is as heavy as the index's hairline (site.css --stroke: 1, 1.5 or 2 px), on whole device rows;
       // wide, the index's hairline itself reaches left to the plane's corner (--ab-reach), so the two are one line
@@ -450,12 +460,39 @@
       return (fLines = 2);
     }
 
+    const EY = [30, 62, 94, 126, 192, 224, 256, 288], sstep = (x) => x * x * (3 - 2 * x);
+    const rowOn = (r) => (pin ? clamp((sp - 0.7 - r * 0.022) / 0.1, 0, 1) : 1);
+    function sceneRead() {
+      pin = !!(stage && getComputedStyle(stage).position === 'sticky');
+      if (pin) { const r = scn.getBoundingClientRect(); sA = r.top + window.scrollY; sZ = sA + scn.offsetHeight - document.documentElement.clientHeight; }
+      sp = sceneP(); sm = pin ? 1 - sstep(clamp((sp - 0.7) / 0.2, 0, 1)) : 0;
+    }
+    function sceneP() { return pin ? clamp((window.scrollY - sA) / Math.max(1, sZ - sA), 0, 1) : 1; }
+    const ST = ['--st-s', '--st-x', '--st-y', '--st-au', '--st-gu', '--st-ad', '--st-gd', '--st-upx'];
+    function scenePlace() {
+      sceneRead();
+      let e = hp, ox = 0, oy = 0;
+      while (e && e !== stage) { ox += e.offsetLeft; oy += e.offsetTop; e = e.offsetParent; }
+      if (!pin || !wide || !hsvg || N !== 8 || e !== stage) { ST.forEach((k) => scn.style.removeProperty(k)); return; }
+      if (exStart < 0) { exStart = performance.now(); ex = 1; started = true; }
+      const s0 = parseFloat(getComputedStyle(hp).scale) || 1, st = stage.getBoundingClientRect(), fr0 = hp.getBoundingClientRect(), sr = hsvg.getBoundingClientRect(), fa = fig.getBoundingClientRect();
+      const u = sr.width / s0 / 420;
+      if (!(u > 0)) return;
+      const S = (2 * halfW) / (230 * u), X = fa.left + cx, Y = fa.top + byT, su = S * u;
+      const dy = EY.map((y, i) => (fa.top + baseT[i] - Y) / su - (y - 159));
+      const au = (dy[3] - dy[0]) / 3, ad = (dy[7] - dy[4]) / 3;
+      const v = [S, X - st.left - ox - S * ((sr.left - fr0.left) / s0 + 149 * u), Y - st.top - oy - S * ((sr.top - fr0.top) / s0 + 159 * u), au, dy[3] + au, ad, dy[4] - ad, u];
+      ST.forEach((k, i) => scn.style.setProperty(k, f3(v[i])));
+    }
+
     /* ---------------- 5 · state ---------------- */
     let hover = -1, focus = -1, open = -1, hot = -2, kbd = false, hoverTimer = 0, pointerOn = false;
     let reduced = reduceMQ.matches, paused = false, visible = false, started = false, exStart = -1, ex = 0, t = 0;
     // (award a1, a1-dev) the first measure waits until the instrument is within a screen of the window: an arrival (and its
     // view transition) lays out no explorer it cannot see, and a chapter skipped by content-visibility stays skipped
     let near = false;
+    let moved = false;
+    const shown = () => visible && (!pin || sp > 0.44);
     let beadsDirty = true, pointerIn = false, focusIn = false, lastActive = performance.now(), wasBusy = true; // for the idle stop
     let restAcc = 1, lastF = 0; // frames owed at the rest rate: 20 a second with nobody at the instrument, 30 with someone
     let prerolled = false; // the flow, run ahead once when the stack opens
@@ -822,7 +859,7 @@
       const x0 = wide ? padL : 14, x1 = W - 14, bl = clamp((ex - 0.1) / 0.35, 0, 1), ly = f2(snapTo(by));
       setA(bound.lineL, 'x1', f1(x0)); setA(bound.lineL, 'x2', f1(cx + BL[0] - 8)); setA(bound.lineL, 'y1', ly); setA(bound.lineL, 'y2', ly);
       setA(bound.lineR, 'x1', f1(cx + BR[0] + 8)); setA(bound.lineR, 'x2', f1(x1)); setA(bound.lineR, 'y1', ly); setA(bound.lineR, 'y2', ly);
-      setA(bound.lineL, 'stroke-opacity', f3(0.5 * bl)); setA(bound.lineR, 'stroke-opacity', wide ? '0' : f3(0.5 * bl));
+      setA(bound.lineL, 'stroke-opacity', f3(0.5 * bl * rowOn(bIndex))); setA(bound.lineR, 'stroke-opacity', wide ? '0' : f3(0.5 * bl));
       if (!wide) {
         // the boundary says it once, on its row under the drawing (hc1, both pages): beside the plane, the plane alone
         plates.forEach((p, i) => setA(p.num, 'opacity', f3(clamp((exOf(i) - 0.8) / 0.2, 0, 1))));
@@ -866,7 +903,7 @@
         const L = leads[i];
         if (!wide) { setA(L.line, 'display', 'none'); setA(L.a, 'display', 'none'); setA(L.b, 'display', 'none'); return; }
         setA(L.line, 'display', 'inline'); setA(L.a, 'display', 'inline'); setA(L.b, 'display', 'inline');
-        const y = plateY(i), xa = cx + C[0] + 9 * RK, ya = y + C[1], xb = listL - 4 * RK, yb = rowC[i], h = p.heat.x, on = clamp((exOf(i) - 0.82) / 0.18, 0, 1);
+        const y = plateY(i), xa = cx + C[0] + 9 * RK, ya = y + C[1], xb = listL - 4 * RK, yb = rowC[i], h = p.heat.x, on = clamp((exOf(i) - 0.82) / 0.18, 0, 1) * rowOn(i < bIndex ? i : i + 1);
         setA(L.line, 'x1', f1(xa)); setA(L.line, 'y1', f1(ya)); setA(L.line, 'x2', f1(xb)); setA(L.line, 'y2', f1(yb));
         setA(L.line, 'stroke-opacity', f3((0.15 + 0.55 * h) * (1 - 0.4 * p.fade.x) * on));
         setA(L.a, 'cx', f1(xa)); setA(L.a, 'cy', f1(ya)); setA(L.a, 'fill-opacity', f3((0.35 + 0.6 * h) * on));
@@ -880,7 +917,7 @@
       raf = 0;
       // at rest (no plate pointed at, nothing settling) it is drawn at 20 Hz, or 30 with someone at it
       const df = lastF ? now - lastF : 0; lastF = now;
-      if (hot < 0 && !wasBusy) {
+      if (hot < 0 && !wasBusy && !moved) {
         restAcc = Math.min(1, restAcc + df * (pointerIn || focusIn ? 0.031 : 0.021));
         if (restAcc < 1) { raf = requestAnimationFrame(frame); return; }
         restAcc -= 1;
@@ -899,11 +936,11 @@
       }
       const busy = animate(dt, false);
       wasBusy = busy;
-      render();
-      if ((ambient || busy) && visible && !document.hidden) raf = requestAnimationFrame(frame);
+      render(); moved = false;
+      if ((ambient || busy) && shown() && !document.hidden) raf = requestAnimationFrame(frame);
     }
     function kick(force) {
-      if (reduced || !visible || document.hidden) { // no loop: settle to the final state and draw once
+      if (reduced || !shown() || document.hidden) { // no loop: settle to the final state and draw once
         if (raf) { cancelAnimationFrame(raf); raf = 0; }
         if (reduced && exStart >= 0) ex = 1;
         animate(0, true); render();
@@ -932,12 +969,12 @@
     // (award a2, a2-dev) document.fonts.ready is read only once the explorer is near: reading it while the script is
     // evaluated forced the page's first style and layout inside arch.js (~270 ms at 4x CPU on a phone)
     const nearIO = new IntersectionObserver((entries) => {
-      if (near || !entries.some((e) => e.isIntersecting)) return;
+      if (near || !entries.some((e) => e.isIntersecting && (e.target === inst || getComputedStyle(stage).position === 'sticky'))) return;
       near = true; nearIO.disconnect();
       remeasure();
       if (document.fonts && document.fonts.status !== 'loaded') document.fonts.ready.then(remeasure);
     }, { rootMargin: '100% 0px' });
-    nearIO.observe(inst);
+    nearIO.observe(inst); if (scn) nearIO.observe(scn);
     new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (e.isIntersecting && !visible) lastActive = performance.now(); // back in view: awake again
@@ -949,6 +986,20 @@
       kick();
     }, { threshold: [0, 0.05, 0.1, 0.2, 0.3, 0.5] }).observe(inst);
     document.addEventListener('visibilitychange', () => kick());
+    if (scn) {
+      window.addEventListener('scroll', () => {
+        if (!pin) return;
+        const q = sceneP();
+        if (q === sp) return;
+        const was = sp > 0.44;
+        sp = q;
+        const m = 1 - sstep(clamp((sp - 0.7) / 0.2, 0, 1));
+        if (m !== sm) { sm = m; geoDirty = true; }
+        if (sp > 0.44) { if (!was) lastActive = performance.now(); moved = true; kick(); } else if (was) kick();
+      }, { passive: true });
+      const hero = scn.querySelector('.page-hero');
+      if (hero) hero.addEventListener('focusin', () => requestAnimationFrame(() => requestAnimationFrame(() => { if (pin && hero.contains(document.activeElement) && sceneP() > 0.12) window.scrollTo({ top: sA, behavior: 'instant' }); })));
+    }
     // printing: every layer's detail, inline, in order
     if (!spec) {
       window.addEventListener('beforeprint', () => { panels.forEach((p) => { p.hidden = false; }); if (wide) { wide = false; inst.classList.remove('is-wide'); inst.classList.add('is-narrow'); placePanels(); } });

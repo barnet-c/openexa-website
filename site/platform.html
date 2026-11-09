@@ -71,6 +71,8 @@
 
   <main id="main">
 
+    <div class="stack-scene" data-scene="pin">
+    <div class="scene-stage">
     <section class="page-hero">
       <div class="container">
         <div class="grid page-hero--plate">
@@ -98,7 +100,7 @@
     </section>
 
     <!-- 01 ARCHITECTURE -->
-    <section class="section section--open" id="architecture" data-chapter="Architecture" data-n="01">
+    <section class="section section--open" id="architecture" data-chapter="Architecture" data-n="01" data-scene-end data-scene-at=".45">
       <div class="container">
         <div class="ch-head">
           <h2 class="display-2 ch-title" data-reveal>Open any layer of the stack.</h2>
@@ -117,6 +119,9 @@
         </div>
       </div>
     </section>
+    </div>
+    <span data-scene-tone="dark" aria-hidden="true"></span>
+    </div>
 
     <!-- 02 SWARM -->
     <section class="section section--open is-dark grain" id="swarm" data-chapter="The swarm" data-chapter-short="Swarm" data-n="02">
@@ -125,7 +130,7 @@
           <h2 class="display-2 ch-title" data-reveal><span class="ph">Thousands</span> <span class="ph">of narrow agents</span> <span class="ph">beat one wide one.</span></h2>
           <p class="ch-line" data-reveal style="--d:80ms">One master agent is proven <span class="nowrap">in production,</span> then copied <span class="nowrap">per asset,</span> venue or customer, all reporting to the same Council.</p>
         </div>
-        <div class="swarm-live is-dark" data-swarm-live data-reveal role="group" aria-label="Swarm lab: an illustrative model of the swarm" aria-describedby="sw-cap">
+        <div class="swarm-live is-dark" data-swarm-live data-sw-preset="copy" data-reveal role="group" aria-label="Swarm lab: an illustrative model of the swarm" aria-describedby="sw-cap">
           <div class="sw-head">
             <span class="sw-title"><span class="sw-name">The swarm lab</span> <span class="sw-kicker">Illustrative</span></span>
             <span class="sw-live"><i></i><span data-sw-state>Running</span></span>

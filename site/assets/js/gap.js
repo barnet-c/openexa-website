@@ -623,33 +623,55 @@
   });
 })();
 
-/* The hero draws its headline (hc13r PLAT-2; SYSTEM.md 12, act once): the first time the plate is well in view, a proposal
-   ring leaves Signal (the live bead, gate 01), runs LC-01's ring once clockwise, lights each of gates 02-06 as it passes
-   and squares up on Record (2.4 s); then the gates fade back and the plate is the still drawing. Never under reduced
-   motion (actOnce); nothing is announced (the plate is a drawing, aria-hidden). */
+/* The hero (hc26r PLAT-2): once, quiet (OXA.actOnce), a proposal runs the ring from Signal through gates 01-06, each lit
+   as it passes, and writes the green block at Record (1.4 s, --ease-move). Still without JavaScript, under reduced motion
+   and in print; if it never runs, the block is shown after 3 s. */
 (function () {
   'use strict';
   const fig = document.querySelector('.hero-plate--rings');
-  const dot = fig && fig.querySelector('.lr-dot'), rec = fig && fig.querySelector('.lr-rec');
-  if (!dot || !rec) return;
-  const gates = [...fig.querySelectorAll('.lr-g')];
-  const CX = 260, CY = 150, RX = 94.9, RY = 55, T0 = 165, LAP = 330, MS = 2400; // the plate's units (hero.py)
-  const ease = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(2 - 2 * p, 3) / 2);
+  const dot = fig && fig.querySelector('.lr-dot'), blk = fig && fig.querySelector('.lc-new');
+  if (!dot || !blk) return;
+  const gates = [...fig.querySelectorAll('.lc-gate')];
+  const CX = 260, CY = 174, RX = 239, RY = 100, T0 = 180, LAP = 330, LAPMS = 1150, DROPMS = 250;
+  const bx = +blk.getAttribute('x') + 4.5, by = +blk.getAttribute('y') + 4.5;
+  const bez = (x1, y1, x2, y2) => (t) => {
+    let s = t;
+    for (let i = 0; i < 8; i++) {
+      const u = 1 - s, x = 3 * u * u * s * x1 + 3 * u * s * s * x2 + s * s * s - t, d = 3 * u * u * x1 + 6 * u * s * (x2 - x1) + 3 * s * s * (1 - x2);
+      if (Math.abs(x) < 1e-5 || !d) break;
+      s = Math.min(1, Math.max(0, s - x / d));
+    }
+    const u = 1 - s;
+    return 3 * u * u * s * y1 + 3 * u * s * s * y2 + s * s * s;
+  };
+  const ease = bez(0.62, 0, 0.2, 1);
+  const done = () => fig.classList.add('is-done');
+  const fallback = setTimeout(done, 3000);
+  const at = (x, y) => { dot.setAttribute('cx', x.toFixed(2)); dot.setAttribute('cy', y.toFixed(2)); };
   function run() {
+    clearTimeout(fallback);
     let t0 = 0;
+    const nx = CX + RX * Math.cos((T0 + LAP) * Math.PI / 180), ny = CY + RY * Math.sin((T0 + LAP) * Math.PI / 180);
+    fig.classList.remove('is-done');
+    gates.forEach((g) => g.classList.remove('is-lit'));
     fig.classList.add('is-run');
     const step = (now) => {
       if (!t0) t0 = now;
-      const p = Math.min(1, (now - t0) / MS), e = ease(p), a = (T0 + LAP * e) * Math.PI / 180;
-      dot.setAttribute('cx', (CX + RX * Math.cos(a)).toFixed(2));
-      dot.setAttribute('cy', (CY + RY * Math.sin(a)).toFixed(2));
-      gates.forEach((g) => { if (!g.classList.contains('is-lit') && e >= (g.dataset.g - 1) / 6) g.classList.add('is-lit'); });
-      if (p < 1) { requestAnimationFrame(step); return; }
-      rec.classList.add('is-in');
-      setTimeout(() => {
-        gates.forEach((g) => g.classList.remove('is-lit'));
-        fig.classList.remove('is-run'); rec.classList.remove('is-in');
-      }, 900);
+      const ms = now - t0;
+      if (ms < LAPMS) {
+        const e = ease(ms / LAPMS), a = T0 + LAP * e;
+        at(CX + RX * Math.cos(a * Math.PI / 180), CY + RY * Math.sin(a * Math.PI / 180));
+        gates.forEach((g) => { if (a >= T0 + 60 * (g.dataset.g - 1) - 4) g.classList.add('is-lit'); });
+      } else {
+        const q = ease(Math.min(1, (ms - LAPMS) / DROPMS));
+        at(nx + (bx - nx) * q, ny + (by - ny) * q);
+        if (q >= 1) {
+          done(); fig.classList.remove('is-run');
+          setTimeout(() => gates.forEach((g) => g.classList.remove('is-lit')), 700);
+          return;
+        }
+      }
+      requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
   }
