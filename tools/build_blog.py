@@ -641,7 +641,8 @@ def card(p, lead=False, kicker="", row=False):
     """lead (award a1, art director + a1-ux 16): a collection's newest post leads its grid, two columns by two rows, its
     plate drawn larger; the rest stay compact. Same plate, same title: no new words. kicker: a line over the title (the
     fifth AI post's "Also in AI & agents"); a post with a short name (SHORT_TITLE) shows it, as the rail's parts do.
-    row (hill climb hc15, the director's 4.6): the card is set as a register's row, so it ends on the registers' arrow"""
+    row (hill climb hc15, the director's 4.6): the card carries the registers' arrow, shown where it is set as a row
+    (tablets since hc29; the rail's fifth tile from 1081 px has none, as the parts have none)"""
     ext = ' target="_blank" rel="noopener"' if p["stub"] else ""
     k = f'<span class="k">{esc(kicker)}</span>' if kicker else ""
     t = esc(SHORT_TITLE[p["slug"]]) if p["slug"] in SHORT_TITLE else post_title(p["title"])
@@ -746,12 +747,15 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
         </div>
 '''
     elif k == "ai":
-        # hill climb hc15 (director 4.6: a lone plate and title left three quarters of the row empty): above phones the
-        # fifth post is one hairline row, as a register's: its words and arrow across the rail's first columns, its plate
-        # in the last, at the rail's plate size (blog.css)
+        # hill climb hc29 (director 11, layout: hc15's hairline row left "one title stranded bottom-left, an arrow in
+        # mid-field and a thumbnail far right"). The rail and the fifth post share one row (.blog-ai): from 1081 px the
+        # post is the rail's fifth tile (its label where the parts carry their dates, no node, off the series' line);
+        # on tablets a compact row under the rail, its plate left at the tile size, its words and arrow beside it at the
+        # plate's foot (the markets lead's form); phones as before (blog.css)
         rest = [p for p in by_col[k] if p["slug"] not in in_series]
-        body = SERIES_BLOCK + f'''        <div class="blog-grid blog-grid--wide" data-reveal>
+        body = '        <div class="blog-ai">\n' + SERIES_BLOCK + f'''        <div class="blog-grid blog-grid--wide" data-reveal>
 {chr(10).join(card(p, kicker=ALSO_AI, row=True) for p in rest)}
+        </div>
         </div>
 '''
     else:

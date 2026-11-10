@@ -9,7 +9,7 @@
 .layers .layer:last-child { border-bottom: 0; }
 @media (hover: hover) { .layers .layer:hover { background: var(--bg-2); } } /* no stuck hover after a tap */
 .layers .layer .k, .layers .layer-boundary .k, .layers .layer-floor .k { font-family: var(--mono); font-size: var(--mono-m, .75rem); letter-spacing: .1em; color: var(--fg-3); padding-top: .375rem; }
-.layers .layer h3 { font-family: var(--serif); font-weight: 400; font-size: var(--fs-heading); line-height: 1.15; letter-spacing: -0.015em; }
+.layers .layer h3 { font-family: var(--serif); font-weight: 400; font-size: var(--fs-heading); line-height: 1.15; letter-spacing: var(--track-heading); }
 .layers .layer p { color: var(--fg-2); }
 .layers .layer ul { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: .5rem; }
 .layers .layer ul li { font-family: var(--mono); font-size: var(--mono-s, .6875rem); letter-spacing: .08em; padding: .375rem .625rem; border: var(--hair) solid var(--line); border-radius: .125rem; color: var(--fg-2); }
@@ -19,7 +19,7 @@
 .layers .io dd { margin: 0; font-size: var(--fs-small); line-height: 1.45; color: var(--fg); }
 .layers .layer-boundary { display: grid; grid-template-columns: 5rem 1.1fr 1.6fr; gap: 1.75rem; padding: 1.5rem clamp(1.375rem, 3vw, 2.5rem); border-top: var(--hair) solid var(--signal); border-bottom: var(--hair) solid var(--signal); margin-top: calc(-1 * var(--hair)); background: color-mix(in srgb, var(--signal) 7%, var(--bg)); }
 .layers .layer-boundary .k { color: color-mix(in srgb, var(--signal) 80%, var(--ink)); } /* small text on the tinted row: 5.6:1 (signal alone is 4.3:1) */
-.layers .lb-t { font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.15; letter-spacing: -0.015em; color: var(--signal-ink, #186B4F); } /* 5.29:1 on paper-2 (--signal: 4.32:1, and 22 px is not large text) */
+.layers .lb-t { font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.15; letter-spacing: var(--track-heading); color: var(--signal-ink, #186B4F); } /* 5.29:1 on paper-2 (--signal: 4.32:1, and 22 px is not large text) */
 .layers .lb-t small { display: block; margin-top: .625rem; font-family: var(--mono); font-size: var(--mono-s, .6875rem); letter-spacing: var(--track-label, .12em); text-transform: uppercase; color: var(--fg-3); }
 /* the floor under 08: what the stack stands on, drawn as the ground of a technical drawing */
 .layers .layer-floor { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: 1.75rem; align-items: baseline; padding: 1.125rem clamp(1.375rem, 3vw, 2.5rem) 1.875rem; border-top: var(--hair) solid var(--line-strong); margin-top: calc(-1 * var(--hair));
@@ -117,7 +117,7 @@
 .arch-h { margin: 0; font: inherit; }
 .arch-layer { position: relative; display: grid; grid-template-columns: 1.875rem minmax(0, 1fr) 1.125rem; align-items: center; column-gap: .75rem; width: 100%; min-height: 4rem; padding: .5rem .375rem .5rem 1rem; text-align: left; border-top: var(--hair) solid var(--line); color: var(--fg-2); transition: color var(--dur-feedback) var(--ease), background-color var(--dur-feedback) var(--ease); }
 .arch-layer .n { font-family: var(--mono); font-size: var(--fs-small); letter-spacing: 0; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color var(--dur-feedback) var(--ease-out); }
-.arch-layer .nm { font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.1; letter-spacing: -0.01em; }
+.arch-layer .nm { font-family: var(--serif); font-size: var(--fs-heading); line-height: 1.1; letter-spacing: var(--track-heading); }
 .arch-layer::after { content: "+"; content: "+" / ""; font-family: var(--mono); font-size: .95rem; line-height: 1; color: var(--fg-3); text-align: center; transition: color var(--dur-feedback) var(--ease-out), transform var(--dur-move) var(--ease); }
 .arch-layer[aria-expanded="true"]::after { content: "\2212"; content: "\2212" / ""; color: var(--accent); } /* decoration: aria-expanded carries the state */
 .arch--spec .arch-layer::after { content: "\2193"; content: "\2193" / ""; } /* spec: it leads down to the layer's entry */

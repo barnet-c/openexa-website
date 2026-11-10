@@ -242,7 +242,7 @@ def still_hedge(rel):
     return H.unescape(m.group(1)).strip() if m else ""
 
 # what each still shows, for og:image:alt (launch_meta_v9 for the top pages; build_research and build_blog for theirs)
-STILL_ALT = {"research.html": "the page’s library figure, the notes drawn as stippled leaves",
+STILL_ALT = {"research.html": "the page’s open book: ten engraved leaves, one for each note",  # hc29 (research, HC29 12): the engraved book
              "company.html": "the page’s figure, one large agent beside a lattice of small ones",  # hc26r (COMP-1): the hero opens on Specialize
              "blog/index.html": "the page’s open book, one leaf for each collection"}
 

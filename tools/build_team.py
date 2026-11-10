@@ -70,6 +70,13 @@ Changes from the source, deliberately:
     and market people." ("under one roof" cut, 3 words); the line under it names the firms. company.css sets this one
     head on one line wherever it fits, as Platform's "Every action passes three gates." (it is 25ch, the chapter
     heads' measure is 22ch).
+  - 2026-11-09 (hill climb hc29, design director: "one grade for all 13 portraits"; the owner's 8 Nov freedom allows one
+    consistent treatment): each portrait is set on the face, not the silhouette (hand-measured eye line, centre line and
+    face height per source, FACE): the eyes 40 % down the circle, the face 30 % of it (the head about 62 %), centred;
+    the cheeks' mid-tone pulled toward L* 55 (35 % of each face's own difference kept), blacks and whites held at
+    L* 14 / 93. Mike Lockhart's snapshot keeps his eyes at 50 % (the photo ends under his shoulders). New file names
+    (<slug>-g2-v2x.webp and its 160 / 320 twins); the -v2x files stay for pages cached before the change and can go a
+    day after the live site switches. No one is swapped or retouched; words and markup otherwise unchanged.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -150,17 +157,30 @@ ADVISORS = [
 ]
 
 # ---------------- portraits: one treatment for all thirteen ----------------
-# The sources are cut-outs from different cameras, crops and exposures. Each is set the same way: the head (measured
-# on the cut-out's alpha, the median row width of the band 6-20% down the subject, so neither a hat brim nor the
-# shoulders) is scaled to HEAD_W of the frame and its top placed at HEAD_TOP; the body always reaches the bottom edge;
-# a side where the photo itself was cut through the head stays outside the frame. Tones are stretched on the subject
-# (2nd-98.5th percentile), the midtone brought to one level, then printed ink (#0E1512) on paper (#F5F2EC).
-# TUNE corrects what a measurement cannot know: Mike's only photo is a small holiday snapshot (zoomed past the child
-# beside him; half the stretch, softened, since its noise is not detail); Subuddh's hat is not his head; John's photo
-# is cut behind his head.
-SIZE, HEAD_W, HEAD_TOP = 560, 0.40, 0.11  # r1 (31 Oct): 0.34 / 0.14 left faces small in 64-96 px circles
+# The sources are cut-outs from different cameras, crops and exposures. hc29 (9 Nov 2026, the design director: "one grade
+# for all 13 portraits"): each is set on its face, not on its silhouette. FACE holds three hand measurements per source
+# (in the chosen source file's pixels): the face's centre line, its eye line and its height (eyes to chin, or what that
+# height would be where the head is tipped or turned: Mike looks down, John is in profile, Subuddh's selfie widens his
+# eyes). The face is scaled to FACE_H of the frame (so the head, crown to chin, is about 62 %) with the eyes EYE_Y down
+# and the centre line in the middle; a side where the photo itself was cut through the head stays outside the frame; the
+# body always reaches the bottom edge (the scale grows just enough where it would not). Tones: the subject stretched
+# (1st-99.5th percentile), its cheeks' mid-tone pulled toward L* LT (PULL keeps that share of each face's own difference,
+# so no complexion is flattened into another's), black and white held at L* LB and LW (no crushed blacks), then printed
+# ink (#0E1512) on paper (#F5F2EC). Never retouched: one curve, one crop and one sharpening per photo.
+# TUNE: Mike's only photo is a small holiday snapshot zoomed in, cut just under his shoulders (his eyes sit at .50 so the
+# body still reaches the edge without a larger face; half the stretch, softened, since its noise is not detail).
+SIZE, EYE_Y, FACE_H = 560, 0.40, 0.30
+LT, PULL, LB, LW = 55, 0.35, 14, 93
 INK, PAPER, MID = (14, 21, 18), (245, 242, 236), (112, 112, 104)
-TUNE = {"Mike Lockhart": dict(k=1.0, soft=True), "Subuddh Parekh": dict(k=0.66, top=0.035), "John Shuster": dict(k=1.15)}
+FACE = {  # source pixels (centre x, eye y, face height), measured on each person's chosen source (hc29)
+    "Ajit K Dubey": (245, 177, 124), "Tim Leung, Ph.D.": (158, 150, 114.5), "Mike Lockhart": (223, 240.5, 120),
+    "Shalabh Choudhri": (523, 375, 326), "Kumar Mehta": (134, 103.7, 92.8), "Sreeram Kannan": (99, 102, 76.3),
+    "Philip Bond, Ph.D.": (152.4, 77.2, 47), "John Shuster": (143.5, 133.7, 77.5), "Victor Gamolsky": (200, 112.8, 96.6),
+    "Abhishek Sinha": (97, 69.8, 57.8), "Dr. Julius E. Ekeroma, Ph.D.": (595, 331, 246), "Dipit Nanawati": (541, 431, 298),
+    "Subuddh Parekh": (475, 681, 266),
+}
+TUNE = {"Mike Lockhart": dict(eye=0.50, soft=True)}
+STEM = "{}-g2-v2x"  # hc29: new names for the new grade (team images are cached for a day)
 SMALL = (160, 320)
 # company.css: the team's portraits are 96 / 80 / 64 px, the advisors' 64 / 56 / 48 px; above 1920 px the page grows
 # with the window (site.css: root 100vw / 120), so 6rem is 5vw and 4rem 3.34vw there (award a2: rem inside sizes is
@@ -171,46 +191,46 @@ SIZES_ADV = "(max-width: 600px) 48px, (max-width: 960px) 56px, (min-width: 1921p
 def subject(path):
     im = Image.open(path).convert("RGBA"); box = im.getchannel("A").point(lambda v: 255 if v > 12 else 0).getbbox()
     return im, box
-def head_span(sub):
-    a = sub.getchannel("A").point(lambda v: 255 if v > 96 else 0); w, h = a.size; px = a.load(); rows = []
-    for y in range(int(h * 0.06), int(h * 0.20) + 1):
-        xs = [x for x in range(0, w, 2) if px[x, y]]
-        if xs: rows.append((xs[0], xs[-1]))
-    rows.sort(key=lambda r: r[1] - r[0])
-    return rows[len(rows) // 2]
 def cut_sides(im, box):
     a = im.getchannel("A"); W, _ = im.size; x0, y0, x1, y1 = box; px = a.load(); upper = range(y0, y0 + (y1 - y0) // 2)
     return (x0 == 0 and sum(1 for y in upper if px[0, y] > 128) > 8, x1 == W and sum(1 for y in upper if px[W - 1, y] > 128) > 8)
+def _lstar(c):
+    c = [v / 255 for v in c]; c = [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4 for v in c]
+    y = .2126 * c[0] + .7152 * c[1] + .0722 * c[2]
+    return 116 * y ** (1 / 3) - 16 if y > 216 / 24389 else y * 24389 / 27
+_RAMP = ImageOps.colorize(Image.frombytes("L", (256, 1), bytes(range(256))), INK, PAPER, mid=MID)
+LSTAR = [_lstar(_RAMP.getpixel((g, 0))) for g in range(256)]  # the L* each grey prints at
+def grey_for(L): return min(range(256), key=lambda g: abs(LSTAR[g] - L))
 def portrait(slug, src_name, v1_name):
     cands = [SRC / Path(old[src_name]["img"]).name]
     if v1_name: cands.append(V1 / f"{v1_name}.png")
     best = max(cands, key=lambda c: subject(c)[1][3] - subject(c)[1][1])  # the tallest subject = most real pixels
-    im, box = subject(best); sub = im.crop(box); cut_l, cut_r = cut_sides(im, box); t = TUNE.get(src_name, {})
-    w, h = sub.size; l, r = head_span(sub); top = t.get("top", HEAD_TOP)
-    s = max(SIZE * HEAD_W * t.get("k", 1) / max(1, r - l), SIZE * (1 - top) / h)
-    sub = sub.resize((max(1, round(w * s)), max(1, round(h * s))), Image.LANCZOS)
-    x = SIZE / 2 - (l + r) / 2 * s
-    if cut_l: x = min(x, 0)
-    if cut_r: x = max(x, SIZE - sub.size[0])
-    x, y = round(x), round(SIZE * top)
-    sub = sub.crop((max(0, -x), max(0, -y), sub.size[0], sub.size[1]))
-    canvas = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0)); canvas.alpha_composite(sub, (max(0, x), max(0, y)))
+    im, box = subject(best); cut_l, cut_r = cut_sides(im, box); t = TUNE.get(src_name, {}); cx, ey, fh = FACE[src_name]
+    eye = SIZE * t.get("eye", EYE_Y); s = max(SIZE * FACE_H / fh, (SIZE - eye) / (box[3] - ey))
+    x, y = SIZE / 2 - cx * s, eye - ey * s
+    if cut_l: x = min(x, -box[0] * s)
+    if cut_r: x = max(x, SIZE - box[2] * s)
+    big = im.resize((max(1, round(im.width * s)), max(1, round(im.height * s))), Image.LANCZOS); x, y = round(x), round(y)
+    big = big.crop((max(0, -x), max(0, -y), big.width, big.height))
+    canvas = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0)); canvas.alpha_composite(big, (max(0, x), max(0, y)))
     alpha = canvas.getchannel("A"); g = canvas.convert("RGB").convert("L")
-    on = lambda img: sorted(v for v, al in zip(img.tobytes(), alpha.tobytes()) if al > 160)
-    vals = on(g); lo, hi = vals[int(len(vals) * .02)], vals[int(len(vals) * .985)]
+    on = sorted(v for v, al in zip(g.tobytes(), alpha.tobytes()) if al > 160); lo, hi = on[int(len(on) * .01)], on[int(len(on) * .995)]
     q = .55 if t.get("soft") else 1.0
     g = g.point(lambda v: max(0, min(255, round(v + q * ((v - lo) * 255 / max(1, hi - lo) - v)))))
-    med = on(g)[len(vals) // 2]
-    gamma = math.log(0.52) / math.log(max(.05, min(.95, med / 255)))
-    if t.get("soft"): gamma = 1 + (gamma - 1) * .5
-    g = g.point(lambda v: round(255 * (v / 255) ** gamma))
+    ec = fh * s; cheeks = (round(SIZE / 2 - .45 * ec), round(eye + .15 * ec), round(SIZE / 2 + .45 * ec), round(eye + .75 * ec))
+    cv = sorted(v for v, al in zip(g.crop(cheeks).tobytes(), alpha.crop(cheeks).tobytes()) if al > 160)
+    gb, gw = grey_for(LB), grey_for(LW); fm = max(8, min(247, cv[len(cv) // 2]))
+    own = LSTAR[round(gb + (gw - gb) * fm / 255)]  # the cheeks as the stretch alone would print them
+    gt = (grey_for(LT + PULL * (own - LT)) - gb) / max(1, gw - gb) * 255
+    gamma = math.log(max(4, min(251, gt)) / 255) / math.log(fm / 255)
+    g = g.point(lambda v: round(gb + (gw - gb) * (v / 255) ** gamma))
     duo = ImageOps.colorize(g, INK, PAPER, mid=MID)
     duo = duo.filter(ImageFilter.GaussianBlur(.6) if t.get("soft") else ImageFilter.UnsharpMask(radius=1.1, percent=55, threshold=2))
-    out = Image.merge("RGBA", (*duo.split(), alpha))
-    out.save(IMGDIR / f"{slug}-v2x.webp", "WEBP", quality=88, method=6)
+    out = Image.merge("RGBA", (*duo.split(), alpha)); stem = STEM.format(slug)
+    out.save(IMGDIR / f"{stem}.webp", "WEBP", quality=88, method=6)
     for w in SMALL:  # r1: the sizes a 64-96 px circle needs at 1-3x (the srcset in rows())
-        out.resize((w, w), Image.LANCZOS).save(IMGDIR / f"{slug}-v2x-{w}.webp", "WEBP", quality=86, method=6)
-    return best.parent.name, h
+        out.resize((w, w), Image.LANCZOS).save(IMGDIR / f"{stem}-{w}.webp", "WEBP", quality=86, method=6)
+    return best.parent.name, fh * s / SIZE
 IMGDIR.mkdir(parents=True, exist_ok=True)  # never wiped: a renamed portrait's old file stays until a day after its publish
 
 # ---------------- markup ----------------
@@ -235,7 +255,7 @@ def links(src_name, extra, name):
                    + (f'<span class="sr-only"> — {H.escape(name)}</span>' if t in GENERIC else '') + (ARR_IN if inside else ARR_OUT) + '</a>')
     return "".join(out)
 def srcset(slug):
-    return ", ".join([f"assets/img/team/{slug}-v2x-{w}.webp {w}w" for w in SMALL] + [f"assets/img/team/{slug}-v2x.webp {SIZE}w"])
+    return ", ".join([f"assets/img/team/{STEM.format(slug)}-{w}.webp {w}w" for w in SMALL] + [f"assets/img/team/{STEM.format(slug)}.webp {SIZE}w"])
 def rows(people, line):
     """line: the card line is drawn (the team); an advisor's row is name, kicker, bio and links (cut, 1 Nov)"""
     items, report = [], []
@@ -243,7 +263,7 @@ def rows(people, line):
         where, h = portrait(slug, src, v1); report.append((name, where, h))
         l = links(src, extra, name)
         card = f'<p>{whole(tie(H.escape(curly(short), quote=False)))}</p>' if line else ''
-        items.append(f'''          <li id="{slug}" data-reveal style="--d:{(i % 3) * 40}ms"><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{slug}-v2x.webp" srcset="{srcset(slug)}" sizes="{SIZES if line else SIZES_ADV}" alt="" width="560" height="560" loading="lazy" decoding="async"></div><div class="who"><h3>{H.escape(name)}</h3><div class="role">{H.escape(title)}</div></div><div class="what">{card}<details class="crew-more"><summary><span class="crew-more-l">Bio</span><span class="sr-only"> of {H.escape(name)}</span></summary><div class="crew-bio">{bio(src)}</div></details>{f'<div class="links">{l}</div>' if l else ''}</div></li>''')
+        items.append(f'''          <li id="{slug}" data-reveal style="--d:{(i % 3) * 40}ms"><div class="ph grain"><i class="ring" aria-hidden="true"></i><img src="assets/img/team/{STEM.format(slug)}.webp" srcset="{srcset(slug)}" sizes="{SIZES if line else SIZES_ADV}" alt="" width="560" height="560" loading="lazy" decoding="async"></div><div class="who"><h3>{H.escape(name)}</h3><div class="role">{H.escape(title)}</div></div><div class="what">{card}<details class="crew-more"><summary><span class="crew-more-l">Bio</span><span class="sr-only"> of {H.escape(name)}</span></summary><div class="crew-bio">{bio(src)}</div></details>{f'<div class="links">{l}</div>' if l else ''}</div></li>''')
     return "\n".join(items), report
 
 team_html, r1 = rows(TEAM, True)
@@ -276,5 +296,5 @@ page = ROOT / "company.html"
 s = page.read_text(encoding="utf-8")
 a, b = s.index("    <!-- 03 THE TEAM -->"), s.index(END)
 page.write_text(s[:a] + SECTION + s[b:], encoding="utf-8", newline="")
-for name, where, h in r1 + r2: print(f"{name:24} portrait from {where:12} subject {h}px")
-print(f"team {len(TEAM)} + advisors {len(ADVISORS)}; images {len(list(IMGDIR.glob('*-v2x.webp')))}")
+for name, where, h in r1 + r2: print(f"{name:24} portrait from {where:12} face {h:.0%} of the frame")
+print(f"team {len(TEAM)} + advisors {len(ADVISORS)}; images {len(list(IMGDIR.glob(STEM.format('*') + '.webp')))}")

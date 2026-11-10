@@ -295,7 +295,9 @@
   document.querySelectorAll('[data-cost]').forEach(fig => {
     const bars = Array.from(fig.querySelectorAll('.cost-bar'));
     const base = bars.length ? runsOf(bars[0]).map(weight) : [];
-    if (!base.length || base.some(v => !(v > 0)) || Math.abs(base.reduce((a, b) => a + b, 0) - 100) > 0.01) return;
+    // hc29 (integrate): proofchart.css lays an unbuilt rows figure out as its rows; where they cannot be built, the bars stay
+    const flat = () => fig.removeAttribute('data-cost-view');
+    if (!base.length || base.some(v => !(v > 0)) || Math.abs(base.reduce((a, b) => a + b, 0) - 100) > 0.01) return flat();
     const plans = bars.map((bar, n) => {
       const out = [];
       let slot = 0, x = 0;
@@ -317,8 +319,9 @@
       }
       return out;
     });
-    if (plans.some(p => !p)) return;
+    if (plans.some(p => !p)) return flat();
     if (fig.dataset.costView === 'rows' && rows(fig, plans)) return;
+    flat();
     bars.forEach((bar, n) => {
       const grid = document.createElement('span');
       grid.className = 'cost-blk';

@@ -448,6 +448,10 @@ async def home(b):
     # there at least once. hc6 (home, HC6 item 1): the coda is gone (no [data-story-n] is left on Home; the derive code
     # stays for any future one); the derived count is written as §04's heading ("Ten of ten above the floor."), whose
     # above and total must equal the record, in the case it is set (Words / words).
+    # hc29 (integrate, standing in for tests; home's request, the HC29 director's item 1): the ink copy of each day tag on
+    # the paper (.story-ink) went with the paper's record row (§01 itself is the paper now), so there is no ink copy to
+    # count (any ink copy the overture draws again must still be one per session); the day tags (one per session), the
+    # premium count and the derived copy stay checked against the record
     st = await pg.evaluate("""(() => ({ days: document.querySelectorAll('.story-labels .story-lab.day').length,
         prem: document.querySelectorAll('.story-labels .story-lab.day.is-prem').length, ink: document.querySelectorAll('.story-ink .story-lab').length,
         n: [...document.querySelectorAll('[data-story-n]')].map(e => [e.dataset.storyN, e.dataset.storyAs || '', e.textContent]) }))()""")
@@ -460,7 +464,7 @@ async def home(b):
         v = int(v) if float(v).is_integer() else v
         return words(v) if as_ == "words" else capw(words(v)) if as_ == "Words" else str(v)
     wrong = [(k, a, t, story_want(k, a)) for k, a, t in st["n"] if story_want(k, a) is not None and t != story_want(k, a)]
-    assert st["days"] == rc["total"] and st["prem"] == rc["premium"] and st["ink"] == rc["total"] and not wrong, (st, "record", rc, "differ", wrong)
+    assert st["days"] == rc["total"] and st["prem"] == rc["premium"] and st["ink"] in (0, rc["total"]) and not wrong, (st, "record", rc, "differ", wrong)
     # hc13r (home, HOME-1): §03's heading left with its band; the derived count is scene 4's lede, which must equal the record
     h = await pg.evaluate("[...document.querySelectorAll('.beat-4 .body-lg [data-proof]')].map(e => [e.dataset.proof, e.textContent])")
     assert h == [["above", capw(words(rc["above"]))], ["total", words(rc["total"])]], ("scene 4's lede: the derived count", h, "record", rc)
@@ -3653,15 +3657,21 @@ async def overture_rest(b):
 
 
 # ---- hc17 (integrate; the director's 4.1, hc16 wide + hc17 stacked): §01 opens one chapter opening under the paper's caption
+# hc29 (integrate, standing in for tests; home's request, the HC29 director's item 1): the strip (.story-paper-cap) is gone
+# and §01 itself is the paper; `cap` reads the strip's rule if a page still has one (else null), `hit` says whether the
+# point 2 px under §01's top, mid-width, is §01's (it covers the stage it has passed over)
 PAPER_OPEN = """() => { const st = document.querySelector('.story'), sec = st && st.nextElementSibling;
   const paper = document.querySelector('.story-paper'), cap = document.querySelector('.story-paper-cap'), h = sec && sec.querySelector('h2');
-  if (!paper || !cap || !h) return null;
+  if (!paper || !h) return null;
   let p = document.getElementById('__vopen');
   if (!p) { p = document.createElement('i'); p.id = '__vopen'; p.setAttribute('aria-hidden', 'true'); const ps = p.style;
     ps.position = 'absolute'; ps.left = ps.top = '0'; ps.width = '0'; ps.height = 'var(--sec-open)'; ps.visibility = 'hidden'; ps.pointerEvents = 'none'; document.body.appendChild(p); }
-  const pr = paper.getBoundingClientRect(), cr = cap.getBoundingClientRect(), shown = getComputedStyle(paper).visibility !== 'hidden' && pr.height > .5;
+  const pr = paper.getBoundingClientRect(), shown = getComputedStyle(paper).visibility !== 'hidden' && pr.height > .5;
+  const sr = sec.getBoundingClientRect(), nav = document.querySelector('.nav'), navB = nav ? nav.getBoundingClientRect().bottom : 0;
+  const at = sr.top + 2 < innerHeight ? document.elementFromPoint(innerWidth / 2, Math.max(0, sr.top) + 2) : null;
   return { y: Math.round(scrollY), open: parseFloat(getComputedStyle(p).height) || 0, paper: shown ? Math.round(pr.top) : null,
-    cap: Math.round(cr.bottom), sec: Math.round(sec.getBoundingClientRect().top), h2: Math.round(h.getBoundingClientRect().top),
+    cap: cap ? Math.round(cap.getBoundingClientRect().bottom) : null, sec: Math.round(sr.top), h2: Math.round(h.getBoundingClientRect().top),
+    navB: Math.round(navB), hit: at ? sec.contains(at) : null,
     tail: Math.max(0, -parseFloat(getComputedStyle(sec).marginTop) || 0), end: Math.round(st.offsetTop + st.offsetHeight), H: innerHeight }; }"""
 
 
@@ -3672,20 +3682,28 @@ async def paper_opening(b):
     stage starts to move) §01's heading stands one --sec-open under the paper caption's rule (4 px), where the frame once
     left 150-750 px of blank paper (stacked: 295 px at 390, 572 at 1024 x 1366); and on a wheel walk in 0.1 h steps from
     scene 4's rest to half a screen past the release, each step settled, §01's top never shows above the paper's top (over
-    the dark stage) or over the caption"""
+    the dark stage) or over the caption
+    hc29 (integrate, standing in for tests; home's request, the HC29 director's item 1: "the paper wipes the chart",
+    the ten-tick strip deleted): §01 itself is the paper now (lifted over the pinned stage, one screen of slack; the
+    empty `.story-paper` tracks its top), so the same chapter opening reads: at the release (story end - h) §01's top
+    is at the viewport's top (2 px) and its heading one --sec-open under it (4 px); on the walk, wherever §01's top
+    shows between the bar's foot and the screen's foot, the paper is drawn with its top on §01's top (1 px: never §01
+    over the dark stage) and §01 covers what it has passed over (the point 2 px under its top, mid-width, is §01's).
+    The caption clause stays for a page that draws the strip again."""
     bad, n = [], 0
     for w, h, touch in ((390, 844, True), (768, 1024, False), (1024, 1366, False), (1440, 900, False), (3840, 2160, False)):
         tag = f"index.html@{w}x{h}"
         ctx, pg = await open_page(b, "index.html", w, h, touch=touch)
         await pg.wait_for_timeout(1500)
         g = await pg.evaluate(PAPER_OPEN)
-        if not g: bad.append(f"{tag}: no .story-paper / .story-paper-cap / §01 h2"); await ctx.close(); continue
+        if not g: bad.append(f"{tag}: no .story-paper / §01 h2"); await ctx.close(); continue
         rel = g["end"] - h
-        await pg.evaluate(f"window.scrollTo({{top: {rel + 2}, behavior: 'instant'}})"); await pg.wait_for_timeout(1500)
+        await pg.evaluate(f"window.scrollTo({{top: {rel}, behavior: 'instant'}})"); await pg.wait_for_timeout(1500)
         at = await pg.evaluate(PAPER_OPEN)
-        gap = at["h2"] - at["cap"]
+        gap = at["h2"] - (at["cap"] if at["cap"] is not None else at["sec"])
         if at["paper"] is None: bad.append(f"{tag} at the release (y={at['y']}): the paper is not drawn")
-        elif abs(gap - at["open"]) > 4: bad.append(f"{tag} at the release (y={at['y']}): §01's heading {gap} px under the caption's rule, --sec-open is {at['open']:.1f} (tail {at['tail']})")
+        elif at["cap"] is None and abs(at["sec"]) > 2: bad.append(f"{tag} at the release (y={at['y']}): §01's top at {at['sec']} (the viewport's top, 2 px)")
+        if abs(gap - at["open"]) > 4: bad.append(f"{tag} at the release (y={at['y']}): §01's heading {gap} px under {'the caption' if at['cap'] is not None else '§01'}'s top, --sec-open is {at['open']:.1f} (tail {at['tail']})")
         y0 = await pg.evaluate(STORY_Y, 3.95)
         y1 = rel + round(0.45 * h)
         await pg.evaluate(f"window.scrollTo({{top: {y0}, behavior: 'instant'}})"); await pg.wait_for_timeout(1200)
@@ -3696,13 +3714,17 @@ async def paper_opening(b):
                 await pg.mouse.wheel(0, min(120, y - cur)); await pg.wait_for_timeout(30); cur = await pg.evaluate("scrollY")
             await pg.wait_for_timeout(750)
             s = await pg.evaluate(PAPER_OPEN); n += 1; steps += 1
-            if s["sec"] < h - 1:
-                if s["paper"] is None or s["sec"] < s["paper"] - 1: bad.append(f"{tag} y={s['y']}: §01's top at {s['sec']} over the dark stage (paper top {s['paper']})")
-                elif s["cap"] > 0 and s["sec"] < s["cap"] + 1: bad.append(f"{tag} y={s['y']}: §01's top at {s['sec']} covers the paper's caption (rule at {s['cap']})")
-        print(f"  {tag}: rule -> heading {gap} px (--sec-open {at['open']:.1f}, tail {at['tail']}); {steps} settled steps")
+            if s["cap"] is not None:
+                if s["sec"] < h - 1:
+                    if s["paper"] is None or s["sec"] < s["paper"] - 1: bad.append(f"{tag} y={s['y']}: §01's top at {s['sec']} over the dark stage (paper top {s['paper']})")
+                    elif s["cap"] > 0 and s["sec"] < s["cap"] + 1: bad.append(f"{tag} y={s['y']}: §01's top at {s['sec']} covers the paper's caption (rule at {s['cap']})")
+            elif s["navB"] < s["sec"] < h - 1:
+                if s["paper"] is None or abs(s["sec"] - s["paper"]) > 1: bad.append(f"{tag} y={s['y']}: §01's top at {s['sec']}, the paper's top at {s['paper']} (§01 is the paper: 1 px)")
+                if s["hit"] is False: bad.append(f"{tag} y={s['y']}: the point under §01's top ({s['sec']}) is not §01's: the stage shows over it")
+        print(f"  {tag}: {'rule' if at['cap'] is not None else '§01 top'} -> heading {gap} px (--sec-open {at['open']:.1f}, tail {at['tail']}, top {at['sec']}); {steps} settled steps")
         await ctx.close()
     assert not bad, f"paper_opening: {len(bad)} problems ({n} steps):\n  " + "\n  ".join(bad[:16])
-    print(f"paper_opening: §01 opens one --sec-open under the paper's caption at five sizes; {n} settled steps, never over the dark stage or the caption")
+    print(f"paper_opening: §01 is the paper and opens one --sec-open under its top at the release at five sizes; {n} settled steps, its top on the paper's, never over the dark stage")
 
 
 # ---- hc18 (integrate; the director's HC18 4.2-4.4, done by platform, proof and home): under text-wrap: balance (site.css,
@@ -4498,10 +4520,32 @@ CLOSE = r"""(() => { const band = document.querySelector('main .cta-band'), h = 
   const over = [...rg.getClientRects()].filter(x => x.width > 1).reduce((m, x) => Math.max(m, l - x.left, x.right - r), -1e9);
   const heads = [...document.querySelectorAll('main h2')].filter(x => !band.contains(x) && !x.closest('.story') && x.getBoundingClientRect().width > 0 && x.checkVisibility({ visibilityProperty: true }))
     .map(x => parseFloat(getComputedStyle(x).fontSize));
-  const g = band.querySelector('.globe'), bar = document.querySelector('.nav');
+  const bar = document.querySelector('.nav'), gb = getComputedStyle(band, '::before'), bs = getComputedStyle(band), br = band.getBoundingClientRect();
+  const els = [...band.querySelectorAll('.globe')].filter(g => getComputedStyle(g).display !== 'none' && g.getBoundingClientRect().width > 0).length;
+  const bx = { l: parseFloat(gb.left), t: parseFloat(gb.top), w: parseFloat(gb.width), h: parseFloat(gb.height) };
   return { fs: parseFloat(getComputedStyle(h).fontSize), hero: parseFloat(getComputedStyle(p).fontSize), over, head: Math.max(0, ...heads),
-    globe: g ? getComputedStyle(g).display !== 'none' && g.getBoundingClientRect().width > 0 : false,
+    els, img: (gb.backgroundImage.match(/url\([^)]*\)/g) || []).map(u => u.replace(/^url\(["']?|["']?\)$/g, '').split('/').pop()), op: +gb.opacity,
+    content: gb.content, z: gb.zIndex, bx, bw: br.width, bh: br.height, ov: bs.overflowX + ' ' + bs.overflowY, iso: bs.isolation,
+    inn: !!band.querySelector('[data-reveal].is-in'),
     top: h.getBoundingClientRect().top, bar: bar ? bar.getBoundingClientRect().bottom : 0 }; })()"""
+CLOSE_GLOBE_OK = "(() => { const b = document.querySelector('main .cta-band'); return !!b && !!b.querySelector('[data-reveal].is-in') && +getComputedStyle(b, '::before').opacity > .99; })()"
+
+
+def close_globe_issues(tag, r, w):
+    """hc29 (integrate, standing in for tests; system's request, the HC29 director's item 5): the globe behind every close,
+    drawn by the band's own ::before (site.css), not by an element in the page"""
+    bad, bx = [], r["bx"]
+    if r["els"]: bad.append(f"{tag}: {r['els']} .globe element(s) shown in the close (the band's ::before draws the globe)")
+    if r["img"] != ["globe-fine.svg"] or r["content"] in ("none", "normal"): bad.append(f"{tag}: the close's ::before draws {r['img']} (content {r['content']}), not the fine globe alone")
+    if r["op"] < 0.99: bad.append(f"{tag}: the revealed close's globe at opacity {r['op']:.2f} (1)")
+    if r["z"] != "-1" or r["iso"] != "isolate": bad.append(f"{tag}: the globe is not behind the copy (z-index {r['z']}, band isolation {r['iso']})")
+    if "visible" in r["ov"]: bad.append(f"{tag}: the band does not clip its globe (overflow {r['ov']})")
+    if not all(v == v for v in bx.values()): bad.append(f"{tag}: the globe's box is not resolved ({bx})"); return bad
+    vis_w = max(0.0, min(r["bw"], bx["l"] + bx["w"]) - max(0.0, bx["l"])); vis_h = max(0.0, min(r["bh"], bx["t"] + bx["h"]) - max(0.0, bx["t"]))
+    if bx["l"] < r["bw"] / 2 - 1: bad.append(f"{tag}: the globe starts at {bx['l']:.0f} px, left of the band's middle ({r['bw'] / 2:.0f}): it composes the right half")
+    if vis_w < 0.75 * bx["w"] or vis_h < 0.5 * bx["h"]: bad.append(f"{tag}: {vis_w:.0f} x {vis_h:.0f} px of the {bx['w']:.0f} px globe inside the band (3/4 of its width, half its height)")
+    if w >= 1440 and bx["w"] < r["bw"] / 3 - 0.5: bad.append(f"{tag}: the globe is {bx['w']:.0f} px wide, under a third of the band ({r['bw']:.0f})")
+    return bad
 
 
 @check
@@ -4513,96 +4557,118 @@ async def close_step(b):
     and no smaller than 36 px (10.5vw keeps its phrases in the column); it is never smaller than any chapter head on its
     page; no line of it passes its column (1 px); Home's band draws its globe and no other band has one (check_static
     close_globe pins the markup); and at 1440 x 900 and 3840 x 2160 with the page at its end the head stands clear of the
-    bar. Before hc24 the close was the chapter heads' 60 px step (at 1440) beside the same globe on all eight pages."""
+    bar. Before hc24 the close was the chapter heads' 60 px step (at 1440) beside the same globe on all eight pages.
+    hc29 (integrate, standing in for tests; system's request, the HC29 director's item 5: "give all seven closes one
+    composition", the globe behind every close, reversing HC24 4.2): the globe clause now reads, on all eight pages at the
+    six sizes: no `.globe` element in the band is shown; the band's own ::before draws `globe-fine.svg` and nothing else,
+    behind the copy (z-index -1 in an isolated band that clips it), at opacity 1 once the close has revealed (its
+    `[data-reveal]` .is-in), standing in the band's right half (its left edge at or right of the middle), at least 3/4 of
+    its width and half its height inside the band, and from 1440 up at least a third of the band's width (it composes the
+    right half at 4K: 1,440 px of 3,840); before the close reveals, with JavaScript, it asks for no image (the globe waits
+    for the close: no request in the first paint's graph); without JavaScript it is drawn at once (1440, Home and
+    Research). Everything else is unchanged."""
     bad, notes = [], []
     for w, h, dpr, touch in ((3840, 2160, 1, False), (1440, 900, 1, False), (1024, 768, 1, False), (768, 1024, 2, False), (390, 844, 3, True), (320, 640, 2, True)):
         for path in CLOSE_PAGES:
             tag = f"{path}@{w}x{h}"
             ctx, pg = await open_page(b, path, w, h, dpr=dpr, touch=touch)
+            r0 = await pg.evaluate(CLOSE)
+            if r0 and not r0["inn"] and r0["img"]: bad.append(f"{tag}: before the close reveals its ::before already asks for {r0['img']} (the globe waits for the close)")
             await pg.evaluate("(() => { const c = document.querySelector('main .cta-band'); if (c) c.scrollIntoView({block: 'center', behavior: 'instant'}); })()")
             await pg.wait_for_timeout(400)
+            await until(pg, CLOSE_GLOBE_OK, 3000)
             r = await pg.evaluate(CLOSE)
             if not r: bad.append(f"{tag}: no close (.cta-band h2)"); await ctx.close(); continue
             if w >= 396 and abs(r["fs"] - r["hero"]) > 0.5: bad.append(f"{tag}: the close's head is {r['fs']:.1f} px, the H1 step (--fs-hero) {r['hero']:.1f}")
             if w < 396 and not (36 - 0.5 <= r["fs"] <= r["hero"] + 0.5): bad.append(f"{tag}: the close's head is {r['fs']:.1f} px, not between 36 and the H1 step {r['hero']:.1f}")
             if r["fs"] < r["head"] - 0.5: bad.append(f"{tag}: the close's head ({r['fs']:.1f} px) is smaller than a chapter head ({r['head']:.1f})")
             if r["over"] > 1: bad.append(f"{tag}: a line of the close's head passes its column by {r['over']:.1f} px")
-            if r["globe"] != (path == "index.html"): bad.append(f"{tag}: the close {'draws' if r['globe'] else 'lacks'} the globe (Home's alone)")
+            bad += close_globe_issues(tag, r, w)
             if (w, h) in ((1440, 900), (3840, 2160)):
                 await pg.evaluate("window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'})"); await pg.wait_for_timeout(700)
                 e = await pg.evaluate(CLOSE)
                 if e and e["top"] < e["bar"] - 0.5: bad.append(f"{tag}: at the page's end the close's head is {e['bar'] - e['top']:.1f} px under the bar")
-            if path == "evidence.html": notes.append(f"{w}: {r['fs']:.1f} px (chapters {r['head']:.1f})")
+            if path == "evidence.html": notes.append(f"{w}: {r['fs']:.1f} px (chapters {r['head']:.1f}), globe {r['bx']['w']:.0f} px from {r['bx']['l']:.0f}")
             await ctx.close()
+    for path in ("index.html", "research.html"):
+        ctx, pg = await open_page(b, path, 1440, 900, js=False)
+        await pg.evaluate("(() => { const c = document.querySelector('main .cta-band'); if (c) c.scrollIntoView({block: 'center', behavior: 'instant'}); })()")
+        await pg.wait_for_timeout(300)
+        r = await pg.evaluate(CLOSE)
+        await ctx.close()
+        if not r: bad.append(f"{path}@1440x900 no JS: no close"); continue
+        if r["img"] != ["globe-fine.svg"] or r["op"] < 0.99: bad.append(f"{path}@1440x900 no JS: the close's globe is {r['img']} at opacity {r['op']:.2f} (drawn at once)")
+        if r["els"]: bad.append(f"{path}@1440x900 no JS: {r['els']} .globe element(s) shown in the close")
     assert not bad, "close_step:\n  " + "\n  ".join(bad[:24])
-    print(f"close_step: eight closes on the H1 step, inside their columns, the globe on Home's alone (Proof {'; '.join(notes)})")
+    print(f"close_step: eight closes on the H1 step, inside their columns, each with the fine globe behind it from the band's ::before, none before it reveals, at once without JS (Proof {'; '.join(notes)})")
 
 
-PAPER_ROW = r"""(() => { const paper = document.querySelector('.story-paper'), h = document.querySelector('.beat-4 h2'); if (!paper || !h) return null;
+# hc29 (integrate, standing in for tests; home's request, the HC29 director's item 1): the record row on paper left with
+# the strip (§01 itself is the paper now); the probe reads S4's parts: the headline, the lede, its last line, the shown
+# labels (each with its effective opacity, ancestors included) and the stage's canvas, against the paper's edge
+PAPER_ROW = r"""(() => { const paper = document.querySelector('.story-paper'), st = document.querySelector('.story'), b4 = document.querySelector('.beat-4');
+  if (!paper || !st || !b4) return null;
   const pr = paper.getBoundingClientRect(), shown = getComputedStyle(paper).visibility !== 'hidden' && pr.height > .5;
-  const R = el => { const r = el.getBoundingClientRect(); return [r.top, r.bottom]; };
-  let conf = null; try { const j = JSON.parse(document.getElementById('oxa-sessions').textContent);
-    conf = j.sessions.filter(s => /confirm/i.test(s.confirmation || '') && !/pending|awaiting|unconfirm|^not\b/i.test((s.confirmation || '').trim())).length; } catch (e) {}
-  return { edge: shown ? pr.top : null, recs: [...document.querySelectorAll('.story-ink-rec')].map(R), chks: [...document.querySelectorAll('.story-ink-chk')].map(R),
-    head: R(h), conf, more: (m => m && m.getClientRects().length ? R(m) : null)(document.querySelector('.beat-4 .beat-more')),
-    cap: (c => c && c.getClientRects().length ? R(c) : null)(document.querySelector('.story-paper-cap')),
-    days: [...document.querySelectorAll('.story-ink .story-lab, .story-labels .story-lab.day')].filter(e => { for (let x = e; x; x = x.parentElement) { const cs = getComputedStyle(x); if (+cs.opacity < .05 || cs.visibility === 'hidden') return false; } return true; })
-      .map(R).filter(([t, bt]) => bt - t > 0 && t < innerHeight && bt > 0),
-    rem: parseFloat(getComputedStyle(document.documentElement).fontSize), H: innerHeight, end: Math.round(document.querySelector('.story').offsetTop + document.querySelector('.story').offsetHeight) }; })()"""
+  const eff = el => { let o = 1; for (let x = el; x; x = x.parentElement) { const cs = getComputedStyle(x); if (cs.visibility === 'hidden' || cs.display === 'none') return 0; o *= +cs.opacity; } return o; };
+  const R = (el, k) => { if (!el || !el.getClientRects().length) return null; const r = el.getBoundingClientRect(); return { k, t: r.top, b: r.bottom, o: eff(el) }; };
+  const parts = [R(b4.querySelector('h2'), 'headline'), R(b4.querySelector('.body-lg'), 'lede'), R(b4.querySelector('.beat-more'), 'last line')]
+    .concat([...document.querySelectorAll('.story-labels .story-lab')].map((l, i) => R(l, 'label ' + (l.className.replace(/\bstory-lab\b|\bis-\w+/g, '').trim() || 'x') + ' #' + i)))
+    .concat([R(st.querySelector('canvas'), 'canvas')]).filter(Boolean);
+  const nav = document.querySelector('.nav');
+  return { edge: shown ? pr.top : null, parts, cov: st.classList.contains('is-covered'),
+    beats: [...st.querySelectorAll('.beat')].map(x => getComputedStyle(x).visibility === 'hidden' || eff(x) < .01),
+    navB: nav ? nav.getBoundingClientRect().bottom : 0, H: innerHeight, end: Math.round(st.offsetTop + st.offsetHeight) }; })()"""
 
 
 @check
 async def paper_row(b):
     """hc24 (integrate, standing in for tests; the director's HC24 8, done by home in story.js and home.css): the overture's
-    last frame lands the record row whole on paper. At the release (the story's end - h: the exit done, the stage about to
-    move), wide (1440 x 900, 1920 x 1080, 3840 x 2160, 1024 x 768, and 1280 x 600, a short one): the paper's edge stands at
-    least 2.5rem (1.25rem under 600 px tall) over the printed broker ticks, which are one per confirmed session in
-    `#oxa-sessions`; no ink record and no tick crosses the edge; S4's headline ends over it (on ink). Portrait (390 x 844
-    with touch, 768 x 1024): unchanged by hc24, the row on ink over the headline and the paper under the headline's foot,
-    so nothing crosses the edge there either. Before hc24 the paper stopped at the floor line: the ten ticks hung on ink
-    over the seam and the records sat exactly on it (the director's home04-top.png).
-    hc26r (integrate, standing in for tests; home's request, HOME-3): the portrait exit lands the row on paper too, so the
-    portrait half takes the wide principle: at the release (390 x 844 with touch, 768 x 1024) the printed ticks are on
-    the paper, one per confirmed session; the paper's edge stands at least 1.25rem over them; no record or tick crosses
-    it; S4's headline and its last line ("The full proof file", .beat-4 .beat-more) end over the edge; and the paper's
-    caption (.story-paper-cap) starts within 24 px under the lowest day number on the paper."""
+    last frame landed the record row whole on paper (the paper's edge over the printed ticks, no record across it); hc26r
+    took that to the portrait exit. hc29 (integrate, standing in for tests; home's request, the HC29 director's item 1:
+    "the paper wipes the chart; nothing fades first", the ten-tick strip and the ink row deleted): §01 itself is the
+    paper, and the principle is now the wipe. At 1440 x 900, 1920 x 1080, 3840 x 2160, 1024 x 768, 1280 x 600 (a short
+    one), 768 x 1024 and with touch at 390 x 844, walking down in tenth-of-a-screen steps from S4's rest (STORY_Y(4)) to
+    the release (story end - h), each step settled: S4's parts shown at rest (the headline, the lede, "The full proof
+    file", every label at opacity 1 then, and the stage's canvas) are still at opacity 1 (effective, ancestors included)
+    at every step wherever any of them stands above the paper's edge (or the paper is not up yet): nothing of S4 fades
+    before the edge reaches it; the paper rises at least half a screen during the walk; and at the release the story is
+    .is-covered and every beat hidden (visibility hidden or opacity 0: nothing of S4 rides under the bar or takes focus
+    behind the paper)."""
     bad, notes = [], []
-    for w, h, touch, wide in ((1440, 900, False, True), (1920, 1080, False, True), (3840, 2160, False, True), (1024, 768, False, True),
-                              (1280, 600, False, True), (390, 844, True, False), (768, 1024, False, False)):
+    for w, h, touch in ((1440, 900, False), (1920, 1080, False), (3840, 2160, False), (1024, 768, False),
+                        (1280, 600, False), (390, 844, True), (768, 1024, False)):
         tag = f"index.html@{w}x{h}"
-        ctx, pg = await open_page(b, "index.html", w, h, touch=touch)
+        ctx, pg = await open_page(b, "index.html", w, h, dpr=2 if touch else 1, touch=touch)
         await pg.wait_for_timeout(1500)
-        g = await pg.evaluate(PAPER_ROW)
-        if not g: bad.append(f"{tag}: no .story-paper / S4 headline"); await ctx.close(); continue
-        await pg.evaluate(f"window.scrollTo({{top: {g['end'] - h + 2}, behavior: 'instant'}})"); await pg.wait_for_timeout(1800)
-        r = await pg.evaluate(PAPER_ROW)
+        y0 = await pg.evaluate(STORY_Y, 4.0)
+        cur, y, steps, rest, rel, rose = 0, y0, 0, None, None, 0.0
+        while True:
+            while cur < y:
+                cur = min(y, cur + h // 4); await pg.evaluate(f"window.scrollTo(0, {cur})"); await pg.wait_for_timeout(80)
+            await pg.wait_for_timeout(800)
+            r = await pg.evaluate(PAPER_ROW); steps += 1
+            if not r: bad.append(f"{tag}: no .story-paper / .story / .beat-4"); break
+            if rel is None: rel = r["end"] - h
+            if rest is None:
+                rest = {x["k"] for x in r["parts"] if x["o"] > 0.99}
+                if not {"headline", "lede", "last line", "canvas"} <= rest: bad.append(f"{tag}: at S4's rest not every part is at opacity 1 ({sorted(k for k in ('headline', 'lede', 'last line', 'canvas') if k not in rest)})")
+            e = r["edge"]
+            if e is not None: rose = max(rose, h - e)
+            if y < rel:
+                for x in r["parts"]:
+                    if x["k"] not in rest or x["b"] <= r["navB"] or x["t"] >= h: continue
+                    if (e is None or x["t"] < e - 0.5) and x["o"] < 0.99:
+                        bad.append(f"{tag} at {cur} ({(cur - y0) / h:.1f} screens into the exit, edge {'none' if e is None else round(e)}): {x['k']} at opacity {x['o']:.2f} above the paper's edge (it fades before the edge reaches it)")
+            else:
+                if not r["cov"]: bad.append(f"{tag} at the release ({cur}): the story is not .is-covered")
+                if not all(r["beats"]): bad.append(f"{tag} at the release ({cur}): {r['beats'].count(False)} beat(s) still shown behind the paper")
+                break
+            y = min(rel, round(y + h * 0.1))
+        if rose < 0.5 * h: bad.append(f"{tag}: the paper rose {rose:.0f} px on the walk (half a screen at least)")
+        notes.append(f"{w}x{h} {steps} steps, {len(rest or ())} parts held")
         await ctx.close()
-        e = r["edge"]
-        if e is None: bad.append(f"{tag} at the release: the paper is not drawn"); continue
-        cross = [k for k, rows in (("record", r["recs"]), ("tick", r["chks"])) for t, bt in rows if t < e - 0.5 < bt - 1]
-        if cross: bad.append(f"{tag}: {len(cross)} mark(s) cross the paper's edge at {e:.1f} ({sorted(set(cross))})")
-        if r["head"][1] > e + 0.5: bad.append(f"{tag}: S4's headline ends at {r['head'][1]:.1f}, under the paper's edge {e:.1f}")
-        if wide:
-            if r["conf"] is not None and len(r["chks"]) != r["conf"]: bad.append(f"{tag}: {len(r['chks'])} printed ticks for {r['conf']} confirmed sessions")
-            if not r["chks"]: bad.append(f"{tag}: no printed ticks on the paper"); continue
-            gap, want = min(t for t, _ in r["chks"]) - e, (1.25 if h < 600 else 2.5) * r["rem"]
-            if gap < want - 0.5: bad.append(f"{tag}: the paper's edge is {gap:.1f} px over the ticks ({want:.0f} at least)")
-            if any(t < e for t, _ in r["recs"]): bad.append(f"{tag}: an ink record stands over the paper's edge")
-            notes.append(f"{w}x{h} {gap:.0f} px")
-        else:
-            if r["conf"] is not None and len(r["chks"]) != r["conf"]: bad.append(f"{tag}: {len(r['chks'])} printed ticks for {r['conf']} confirmed sessions")
-            if not r["chks"]: bad.append(f"{tag}: no printed ticks"); continue
-            gap = min(t for t, _ in r["chks"]) - e
-            if gap < 1.25 * r["rem"] - 0.5: bad.append(f"{tag}: the paper's edge is {gap:.1f} px over the ticks ({1.25 * r['rem']:.0f} at least: the ticks on paper)")
-            if not r["more"]: bad.append(f"{tag}: S4's last line (.beat-4 .beat-more) is not shown at the release")
-            elif r["more"][1] > e + 0.5: bad.append(f"{tag}: S4's last line ends at {r['more'][1]:.1f}, under the paper's edge {e:.1f}")
-            if r["cap"] and r["days"]:
-                low = max(bt for _, bt in r["days"])
-                if not (low - 0.5 <= r["cap"][0] <= low + 24): bad.append(f"{tag}: the paper's caption starts at {r['cap'][0]:.1f}, the lowest day number ends at {low:.1f} (within 24 px under it)")
-                notes.append(f"{w}x{h} {gap:.0f} px, caption {r['cap'][0] - low:.0f} px under the days")
-            else: bad.append(f"{tag}: no paper caption ({bool(r['cap'])}) or no day numbers ({len(r['days'])}) at the release")
-    assert not bad, "paper_row:\n  " + "\n  ".join(bad)
-    print(f"paper_row: the record row lands whole on paper with its ticks, the edge over them, at every size ({'; '.join(notes)})")
+    assert not bad, "paper_row:\n  " + "\n  ".join(bad[:24])
+    print(f"paper_row: the paper (§01) wipes S4 whole, nothing of it faded before the edge, the beats hidden once covered ({'; '.join(notes)})")
 
 
 DESK_ORDER = r"""(() => { const d = document.querySelector('#desk .desk') || document.querySelector('.desk'); if (!d) return null;
@@ -4702,7 +4768,7 @@ STACK_SCENE = r"""(() => { const f = document.querySelector('[data-plate="stack"
            lay: pl.length, y: scrollY, H: innerHeight }; })()"""
 COST_SCENE = r"""(() => { const fig = document.querySelector('#economics figure.cost'); if (!fig) return null;
   const rows = [...fig.querySelectorAll('.pf-ck > div')];
-  return { top: fig.getBoundingClientRect().top + scrollY, H: innerHeight, dec: !!fig.querySelector('.is-dec, .pf-ck') && !!document.querySelector('[data-page="proof"] .is-dec'),
+  return { top: fig.getBoundingClientRect().top + scrollY, H: innerHeight, dec: fig.classList.contains('is-dec') && !!fig.querySelector('.pf-ck'),
     rows: rows.map(d => { const r = d.getBoundingClientRect(), g = [...d.querySelectorAll('.cost-blk .is-gone, .cost-blk .is-rest')];
       const op = g.map(i => { const s = getComputedStyle(i, '::before'); return s.content === 'none' ? 0 : +s.opacity; });
       return { t: r.top, h: r.height, prog: (innerHeight - r.top) / (innerHeight + r.height), cp: +getComputedStyle(d).getPropertyValue('--scene-p'), out: g.length, max: op.length ? Math.max(...op) : 0, min: op.length ? Math.min(...op) : 0,
@@ -4725,7 +4791,11 @@ async def scroll_scenes(b):
     pinned scene on windows of 1000 x 700 and up (stack_scene checks it there), so its hc25 parting is checked where it
     still runs on the page's own scroll: 960 x 900 and 390 x 844 (touch), with reduced motion also at 1440 x 900. Proof
     §02's rows are bare data-scene on the scene primitive (SYS-1): their progress is --scene-p (it was --cp), same range
-    (cover 10% cover 40%), same pictures."""
+    (cover 10% cover 40%), same pictures.
+    hc29 (integrate, standing in for tests; home's request, the HC29 director's item 3: "one dataset, one picture"): Home
+    §03 is now the same rows component (`figure.cost[data-cost-view="rows"]`, proof.js rows(), the same data-scene rows
+    and range), so the Proof half runs on Home's #economics too, with the same pictures and the same reduced-motion still;
+    on both pages the figure must be in its rows view (.is-dec with its key rows)."""
     bad, notes = [], []
     for w, h, dpr, touch, rms in ((960, 900, 1, False, (False, True)), (1440, 900, 1, False, (True,)), (390, 844, 3, True, (False, True))):
         for reduced in rms:
@@ -4750,13 +4820,14 @@ async def scroll_scenes(b):
             off = [i + 1 for i, d in enumerate(r1["dy"]) if d > 1.5]
             if r1["lay"] != 8 or off: bad.append(f"{tag}: parted, layer numeral(s) {off} off their layers ({[round(d, 1) for d in r1['dy']]}; {r1['lay']} layers)")
             notes.append(f"stack {w}: {r0['p']:.2f} -> {r1['p']:.2f} -> {r2['p']:.2f}, numerals <= {max(r1['dy']):.1f} px")
-    for w, h, dpr, touch in ((1440, 900, 1, False), (390, 844, 3, True)):
+    for path, w, h, dpr, touch in (("evidence.html", 1440, 900, 1, False), ("evidence.html", 390, 844, 3, True), ("index.html", 1440, 900, 1, False), ("index.html", 390, 844, 3, True)):
         for reduced in (False, True):
-            tag = f"evidence.html@{w}x{h}{' reduced' if reduced else ''}"
-            ctx, pg = await open_page(b, "evidence.html", w, h, dpr=dpr, touch=touch, reduced=reduced)
+            tag = f"{path}@{w}x{h}{' reduced' if reduced else ''}"
+            ctx, pg = await open_page(b, path, w, h, dpr=dpr, touch=touch, reduced=reduced)
             await pg.evaluate("document.querySelector('#economics').scrollIntoView({block: 'start', behavior: 'instant'})"); await pg.wait_for_timeout(1200)
             g = await pg.evaluate(COST_SCENE)
             if not g or not g["rows"]: bad.append(f"{tag}: no decomposed cost index (#economics .pf-ck > div)"); await ctx.close(); continue
+            if not g["dec"]: bad.append(f"{tag}: the cost figure is not in its rows view (figure.cost.is-dec with .pf-ck)")
             # entering: the first row's top 2 px above the screen's foot; past the middle: the last row's top at 30% of the screen
             first = g["rows"][0]["t"] + (await pg.evaluate("scrollY"))
             last = g["rows"][-1]["t"] + (await pg.evaluate("scrollY"))
@@ -4778,9 +4849,9 @@ async def scroll_scenes(b):
             for i, r in enumerate(z["rows"]):
                 if r["prog"] < 0.41: bad.append(f"{tag}: row {i + 1} did not rise past its range (cover {r['prog']:.2f})"); continue
                 if r["cp"] < 0.98 or r["max"] > 0.02: bad.append(f"{tag}: row {i + 1} past the middle is not the still picture (--scene-p {r['cp']:.2f}, a block at {r['max']:.2f})")
-            notes.append(f"cost {w}: {a['rows'][0]['cp']:.2f} -> {min(r['cp'] for r in z['rows']):.2f}")
+            notes.append(f"cost {path.split('.')[0]} {w}: {a['rows'][0]['cp']:.2f} -> {min(r['cp'] for r in z['rows']):.2f}")
     assert not bad, "scroll_scenes:\n  " + "\n  ".join(bad[:24])
-    print(f"scroll_scenes: Platform's stack parts on the page's scroll and Proof's index empties as it rises; reduced motion keeps both still ({'; '.join(notes)})")
+    print(f"scroll_scenes: Platform's stack parts on the page's scroll and the cost index (Proof §02, Home §03) empties as it rises; reduced motion keeps them still ({'; '.join(notes)})")
 
 
 # ---- hc26r (system): SYS-1, one scroll-scene primitive (site.css v2:scenes, site.js); SYS-2, the drawing travels
@@ -5346,15 +5417,26 @@ async def lab_copy(b):
     print(f"lab_copy: Platform §02's act follows the lab across the screen, 0 -> 1, the field drawn by its end; at once 1 under reduced motion, Pause and halt; never on Home ({'; '.join(notes)})")
 
 
+# hc29 (integrate, standing in for tests; home's request): the chart is drawn in WebGL, so the band it fills counts as
+# content: from the hedge label's top to the key label's bottom (the shown labels' span if either is missing); `runs`
+# is the longest empty run of ink between the bar's foot and the screen's foot (read at S4's rest, before the paper)
 HANDOFF_INK = r"""(() => { const H = innerHeight, nav = document.querySelector('.nav'), navB = nav ? nav.getBoundingClientRect().bottom : 0;
   const paper = document.querySelector('.story-paper'), pr = paper.getBoundingClientRect(), paperTop = pr.height > .5 && getComputedStyle(paper).visibility !== 'hidden' ? pr.top : H;
   const anc = el => { for (let e = el; e; e = e.parentElement) { const cs = getComputedStyle(e); if (+cs.opacity < .05 || cs.visibility === 'hidden') return false; } return true; };
-  let low = navB;
+  const boxes = [];
   document.querySelectorAll('.story .beat h2, .story .beat p, .story .beat a, .story-labels .story-lab, .story-ink > *').forEach(el => {
-    const r = el.getBoundingClientRect(); if (r.height < 1 || r.bottom <= navB || r.top >= paperTop || !anc(el)) return; low = Math.max(low, Math.min(r.bottom, paperTop)); });
+    const r = el.getBoundingClientRect(); if (r.height < 1 || !anc(el)) return; boxes.push([r.top, r.bottom]); });
+  const labs = [...document.querySelectorAll('.story-labels .story-lab')].filter(l => l.getBoundingClientRect().height >= 1 && anc(l));
+  const hd = labs.find(l => l.classList.contains('hedge')), ky = labs.find(l => l.classList.contains('key'));
+  if (hd && ky) boxes.push([hd.getBoundingClientRect().top, ky.getBoundingClientRect().bottom]);
+  else if (labs.length) boxes.push([Math.min(...labs.map(l => l.getBoundingClientRect().top)), Math.max(...labs.map(l => l.getBoundingClientRect().bottom))]);
+  let low = navB;
+  boxes.forEach(([t, bt]) => { if (bt <= navB || t >= paperTop) return; low = Math.max(low, Math.min(bt, paperTop)); });
+  let runs = 0, at = navB; boxes.filter(([t, bt]) => bt > navB && t < H).sort((a, c) => a[0] - c[0]).forEach(([t, bt]) => { runs = Math.max(runs, t - at); at = Math.max(at, bt); });
+  runs = Math.max(runs, H - at);
   const b4 = document.querySelector('.beat-4'), st = document.querySelector('.story'); let op = 1; for (let e = b4; e && e !== st; e = e.parentElement) op *= +getComputedStyle(e).opacity;
   const br = b4 ? b4.getBoundingClientRect() : null;
-  return { y: scrollY, paperTop, up: st.classList.contains('is-paper-up'), gap: paperTop < H ? paperTop - low : null, b4: br ? { shown: br.bottom > navB && br.top < paperTop, op } : null }; })()"""
+  return { y: scrollY, paperTop, up: st.classList.contains('is-paper-up'), gap: paperTop < H ? paperTop - low : null, runs, b4: br ? { shown: br.bottom > navB && br.top < paperTop, op } : null }; })()"""
 
 
 @check
@@ -5368,7 +5450,14 @@ async def overture_handoff(b):
     standing in for tests; home's request): the rise is judged too, now that home closed it (story.js EXIT.tall: the paper
     rises under "The full proof file" as the exit starts and follows the lifting copy; hc26r's walk judged only the
     paper-up steps and reported the rise, 330 px of empty ink at 2.2 screens on a 390 phone then). The probe is
-    HANDOFF_INK (it shadowed nav_handoff's HANDOFF until hc27)."""
+    HANDOFF_INK (it shadowed nav_handoff's HANDOFF until hc27).
+    hc29 (integrate, standing in for tests; home's request, the HC29 director's item 1): S4 now holds whole while §01
+    (the paper) rises over it at scroll speed, so the paper opens no band of its own; what lies between the content and
+    the rising edge is S4's own layout (on a 390 phone the bar's foot to the hedge, the key line to the headline). The
+    chart (WebGL) counts as content, from the hedge label's top to the key label's bottom; and the empty run above the
+    paper may be as long as S4's longest empty run at rest (read before the paper shows) but no longer, nor longer than
+    48 px where S4 has no such run: content that faded or lifted early would open a longer one. S4's "clipped, never
+    faded" clause is unchanged."""
     bad, notes = [], []
     for w, h, touch in ((390, 844, True), (768, 1024, False)):
         tag = f"index.html@{w}x{h}"
@@ -5376,20 +5465,21 @@ async def overture_handoff(b):
         await pg.wait_for_timeout(1500)
         y0 = await pg.evaluate(STORY_Y, 4.0)
         end = await pg.evaluate("Math.round(document.querySelector('.story').offsetTop + document.querySelector('.story').offsetHeight)")
-        cur, worst, n, rise = 0, 0.0, 0, 0.0
+        cur, worst, n, rise, allow = 0, 0.0, 0, 0.0, None
         y = y0
         while y <= end + 1:
             while cur < y:
                 cur = min(y, cur + h // 4); await pg.evaluate(f"window.scrollTo(0, {cur})"); await pg.wait_for_timeout(100)
             await pg.wait_for_timeout(900)
             r = await pg.evaluate(HANDOFF_INK); n += 1
+            if allow is None: allow = max(48.0, r["runs"] + 2)  # S4 at rest, the paper not up yet
             if r["gap"] is not None:
                 if r["up"]: worst = max(worst, r["gap"])
                 else: rise = max(rise, r["gap"])
-                if r["gap"] > 48: bad.append(f"{tag} at {r['y']:.0f} ({(r['y'] - y0) / h:.1f} screens into the exit{'' if r['up'] else ', the paper rising'}): {r['gap']:.1f} px of ink without content over the paper")
+                if r["gap"] > allow: bad.append(f"{tag} at {r['y']:.0f} ({(r['y'] - y0) / h:.1f} screens into the exit{'' if r['up'] else ', the paper rising'}): {r['gap']:.1f} px of ink without content over the paper (S4's own longest run at rest {allow - 2:.1f})")
             if r["b4"] and r["b4"]["shown"] and r["b4"]["op"] < 0.99: bad.append(f"{tag} at {r['y']:.0f}: S4 shows at opacity {r['b4']['op']:.2f} (clipped, never faded)")
             y = round(y + h * 0.1)
-        notes.append(f"{w}: {n} steps, ink without content <= {worst:.1f} px with the paper up, <= {rise:.1f} px while it rises")
+        notes.append(f"{w}: {n} steps, ink without content <= {worst:.1f} px with the paper up, <= {rise:.1f} px while it rises (S4's own run at rest {allow - 2:.1f})")
         await ctx.close()
     assert not bad, "overture_handoff:\n  " + "\n  ".join(bad[:24])
     print(f"overture_handoff: the paper takes over with no empty ink band and S4 clipped, never faded ({'; '.join(notes)})")

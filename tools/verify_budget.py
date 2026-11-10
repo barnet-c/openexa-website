@@ -590,7 +590,7 @@ CURTAIN = r"""(() => { const E = window.__ev = {}, A = window.__an = {}; const m
 @frames
 async def loader_curtain(b):
     """v2x r3 (home, system; r3-perf moderate, r3-motion minor): on a slow phone the loader still ends with its curtain:
-    the count reaches 100 (.is-complete), then the curtain lifts (.is-done), before the loader is removed.
+    the ring completes (.is-complete), then the curtain lifts (.is-done), before the loader is removed.
     v2x r4 (system; r4-perf moderate): loader.js now adds .is-done in the same task as .is-complete and site.css holds the
     curtain with a 90 ms transition delay that the compositor runs, so the class times are equal by design and measured
     nothing. The beat is read as the visitor sees it: the curtain's transform transition starts (startTime + its delay)
@@ -599,7 +599,10 @@ async def loader_curtain(b):
     task after '100' leaves it at 90; v2 under the same task 183-200).
     award a1 (system, AWARD_BAR L4): the curtain is gone; at '100' the ground (.loader::before) fades by an opacity
     transition delayed by the beat while the dial travels to the overture's globe. Same principle, read on that
-    transition (system's .shots/v2x/work/system-a1/beat_handoff.py: 20/20 hand off, beat 90 ms in all 20)."""
+    transition (system's .shots/v2x/work/system-a1/beat_handoff.py: 20/20 hand off, beat 90 ms in all 20).
+    hc29 (system, the HC29 director's item 8; integrate): the 00 -> 100 count is gone; the ring draws itself in CSS and
+    loader.js completes it 310 ms after the first paint (.is-complete and .is-done together, the pulse and the 90 ms
+    beat as before), so '100' above reads 'the ring completes'; the principle and the reading are unchanged."""
     runs = []
     for _ in range(20):
         ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)

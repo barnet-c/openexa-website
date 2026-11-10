@@ -87,10 +87,11 @@
     requestAnimationFrame(() => target.scrollIntoView({ block: 'start', behavior: 'instant' }));
   }
 
-  let live = [], segs = [], current = -2, shownK = -3, chOpen = false;
+  let live = [], fillP = -1, current = -2, shownK = -3, chOpen = false;
   const ui = {};
   if (nav) {
     ui.progress = document.createElement('div'); ui.progress.className = 'nav-progress'; ui.progress.setAttribute('aria-hidden', 'true');
+    ui.fill = ui.progress.appendChild(document.createElement('b'));
     nav.appendChild(ui.progress);
   }
   if (nav && chapters.length) {
@@ -186,7 +187,6 @@
     const old = ui.line, neu = lineFor(k);
     ui.line = neu;
     ui.btn.classList.toggle('is-intro', k < 0);
-    ui.progress.classList.toggle('is-ch', k >= 0);
     ui.roll.appendChild(neu);
     if (first || !old || reducedMQ.matches || !neu.animate || document.hidden || jumping || root.dataset.jump) return;
     old.style.cssText = 'position:absolute;left:0;top:4px;width:max-content';
@@ -197,17 +197,6 @@
     old.animate([{ transform: 'none', opacity: 1 }, { transform: `translateY(${-dir * 120}%)`, opacity: 0 }], { ...timing, duration: 420, fill: 'forwards' })
       .finished.then(() => old.remove(), () => old.remove());
     neu.animate([{ transform: `translateY(${dir * 120}%)`, opacity: 0 }, { transform: 'none', opacity: 1 }], timing);
-  }
-
-  function buildSegments() {
-    ui.progress.textContent = '';
-    const parts = live.length ? ['edge', ...live, 'edge'] : ['page'];
-    segs = parts.map(part => {
-      const i = document.createElement('i'), b = document.createElement('b');
-      if (part === 'edge') i.className = 'is-edge';
-      i.appendChild(b); ui.progress.appendChild(i);
-      return { i, b, part, s: 0, e: 0, p: -1 };
-    });
   }
 
   function measure() {
@@ -229,10 +218,8 @@
         .map(t => ({ el: s, top: t.getBoundingClientRect().top + y, dark: t.dataset.sceneTone === 'dark' })).sort((p, q) => p.top - q.top);
       m.forEach((t, i) => { t.bottom = i + 1 < m.length ? m[i + 1].top : end; tones.push(t); });
     });
-    const before = live.map(c => c.k).join();
     live = chapters.filter(c => c.el.getClientRects().length > 0);
     chapters.forEach(c => { c.li.hidden = !live.includes(c); });
-    if (before !== live.map(c => c.k).join() || !segs.length) buildSegments();
     const probe = navH + (vh - navH) * 0.3;
     live.forEach(c => {
       const s = pinOf(c.el), r = (s || c.el).getBoundingClientRect();
@@ -245,19 +232,7 @@
       c.s = Math.min(maxScroll, Math.max(0, c.top - probe));
       c.e = Math.min(maxScroll, Math.max(c.s, end - probe));
     });
-    if (live.length) {
-      const first = live[0], last = live[live.length - 1];
-      segs.forEach((g, j) => {
-        if (g.part === 'edge') { g.s = j === 0 ? 0 : last.e; g.e = j === 0 ? first.s : maxScroll; }
-        else { g.s = g.part.s; g.e = g.part.e; }
-      });
-    } else if (segs.length) { segs[0].s = 0; segs[0].e = maxScroll; }
-    segs.forEach(g => {
-      const len = g.e - g.s;
-      g.i.style.flexGrow = Math.max(0, len).toFixed(1);
-      g.i.style.display = len < 2 ? 'none' : '';
-      g.p = -1;
-    });
+    fillP = -1;
     fitModes();
     update();
   }
@@ -285,14 +260,8 @@
       const want = ink ? '#0E1512' : '#F5F2EC';
       if (themeMeta.content !== want) themeMeta.content = want;
     }
-    let on = -1;
-    segs.forEach((g, j) => {
-      const len = g.e - g.s;
-      const p = len > 0 ? clamp01((y - g.s) / len) : (y >= g.e ? 1 : 0);
-      if (Math.abs(p - g.p) > 0.001) { g.p = p; g.b.style.transform = `scaleX(${p.toFixed(4)})`; }
-      if (y >= g.s && (y < g.e || j === segs.length - 1)) on = j;
-    });
-    segs.forEach((g, j) => g.i.classList.toggle('is-on', j === on && g.p > 0 && live.length > 0 && g.part !== 'edge'));
+    const p = clamp01(y / maxScroll);
+    if (Math.abs(p - fillP) > 0.001) { fillP = p; ui.fill.style.transform = `scaleX(${p.toFixed(4)})`; }
     if (!live.length) return;
     let k = -1;
     for (const c of live) if (y >= c.s) k = c.k;

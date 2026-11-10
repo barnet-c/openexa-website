@@ -185,8 +185,8 @@
 .cost { container: cost / inline-size; }
 .cost-rows { display: grid; gap: 1.625rem; }
 .cost-row { display: grid; grid-template-columns: 12.5rem minmax(0, 1fr) 4rem; column-gap: 1.25rem; align-items: end; padding-top: 2.125rem; }
-.cost-lab b { display: block; font: 400 var(--fs-heading)/1.1 var(--serif); letter-spacing: -.01em; }
-.cost-val { font: 400 var(--fs-heading)/1 var(--serif); letter-spacing: -.02em; text-align: right; }
+.cost-lab b { display: block; font: 400 var(--fs-heading)/1.1 var(--serif); letter-spacing: var(--track-figure); }
+.cost-val { font: 400 var(--fs-heading)/1 var(--serif); letter-spacing: var(--track-figure); text-align: right; }
 .cost-val.is-acc { color: var(--signal-ink, #186B4F); }
 .cost-bar { --cols: 50; --rows: 2; --g: .1875rem; --bw: calc((100cqi - (var(--cols) - 1) * var(--g)) / var(--cols));
   position: relative; display: flex; container-type: inline-size; }
@@ -247,5 +247,57 @@
   .cost-blk .is-part { forced-color-adjust: none; background: linear-gradient(90deg, CanvasText var(--f), Canvas 0); box-shadow: inset 0 0 0 var(--hair) CanvasText; } /* hc18: was whole */
   .cost-blk .is-rest { box-shadow: none; border: var(--hair) solid CanvasText; }
   .cost-bar:not(.is-blocks) > i:not(.cost-gone) { forced-color-adjust: none; background: CanvasText; } /* hc18: the no-JS runs */
+}
+/* the rows view (hc29, integrate): Proof §02 and Home §03 draw the decomposed index with one component (proof.js rows(),
+   figure.cost[data-cost-view="rows"] -> .is-dec), styled here once. Every block ink on both pages (one dataset, one picture:
+   each row is named, so the ramp and the key's swatches say nothing there; the no-JS bars keep both, as their legend) */
+.cost.is-dec .pf-ck { --lw: clamp(15rem, 30%, 24rem); --cg: clamp(1.25rem, 3vw, 3rem); display: block; margin: 0; padding: 0; border-top: 0; font-size: var(--fs-small); }
+.cost.is-dec .pf-ck > div { position: relative; display: grid; grid-template-columns: var(--lw) minmax(0, 1fr); column-gap: var(--cg); align-items: center; padding: clamp(.875rem, 1.5vw, 1.375rem) 0; border-bottom: var(--hair) solid var(--line); }
+.cost.is-dec .pf-ck > div:first-child { padding-top: 0; }
+.cost.is-dec .pf-ck :is(dt, dd) { grid-column: 1; }
+.cost.is-dec .pf-ck dt { font-size: var(--fs-body); }
+.cost.is-dec .cost-db { --cols: 32; --rows: 2; --g: .1875rem; --bq: 1px; --bw: round(down, (100cqi - (var(--cols) - 1) * var(--g)) / var(--cols), var(--bq)); container-type: inline-size; position: absolute; left: calc(var(--lw) + var(--cg)); right: 0; top: 50%; display: flex; align-items: center; gap: .875rem; transform: translateY(-50%); }
+.cost.is-dec .pf-ck > div:first-child .cost-db { top: calc(50% - clamp(.875rem, 1.5vw, 1.375rem) / 2); }
+.cost.is-dec .cost-blk { flex: none; width: auto; }
+.cost.is-dec .cost-db em { font: 400 var(--fs-small)/1.3 var(--sans); color: var(--fg-2); white-space: nowrap; }
+.cost.is-dec .pf-ck .cost-blk i { transition: opacity var(--dur-move) linear, transform var(--dur-move) var(--ease); }
+.cost.is-dec .pf-ck.will-reveal:not(.is-in) .cost-blk i { opacity: 0; transform: scale(.35); }
+.cost.is-dec .cost-rows { display: flex; flex-wrap: wrap; gap: .5rem clamp(2rem, 4vw, 4rem); margin-top: clamp(1rem, 1.6vw, 1.5rem); }
+.cost.is-dec .cost-row { display: flex; align-items: baseline; gap: .75rem; padding: 0; }
+.cost.is-dec .cost-bar { display: none; }
+.cost.is-dec .cost-lab b { display: inline; }
+.cost.is-dec .cost-blk i { --c: var(--ink) !important; }
+.cost.is-dec .pf-ck dt i { display: none; }
+.cost.is-dec .pf-ck dd { margin-left: 0; }
+@media (min-resolution: 2dppx) { .cost.is-dec .cost-db { --bq: .5px; } }
+@container cost (max-width: 560px) {
+  .cost.is-dec .pf-ck > div { display: block; }
+  .cost.is-dec .cost-db { --cols: 25; --g: .125rem; position: static; flex-direction: column; align-items: start; gap: .625rem; margin-top: .875rem; transform: none; }
+}
+.cost .pf-ck > div { --scene-range: cover 10% cover 40%; }
+@media screen and (prefers-reduced-motion: no-preference) and (forced-colors: none) { @supports (animation-timeline: view()) {
+  .cost.is-dec .pf-ck.will-reveal:not(.is-in) .cost-blk i { opacity: 1; transform: none; }
+  .cost.is-dec .cost-blk :is(.is-gone, .is-rest, .is-part) { position: relative; }
+  .cost.is-dec .cost-blk :is(.is-gone, .is-rest, .is-part)::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--c); box-shadow: inset 0 0 0 var(--hair) rgba(14, 21, 18, .55); opacity: clamp(0, (var(--t) * .875 + .125 - var(--scene-p)) * 8, 1); }
+  .cost.is-dec .cost-blk .is-gone::before { inset: calc(-1 * var(--hair)); }
+} }
+/* hc29 (integrate): proof.js builds the rows after the first paint. Until then the figure already stands in their layout
+   (the key's rows first, the two bars as their totals), so the build moves nothing for a reader who lands on the figure
+   or below it (reload, Back, a deep link: verify_budget home_landing). Geometry only, restated from the rules above;
+   without JavaScript the two bars and the key, as before; proof.js drops data-cost-view if it cannot build the rows */
+@media (scripting: enabled) {
+  .cost[data-cost-view="rows"]:not(.is-dec) { display: flex; flex-direction: column; }
+  .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck { --lw: clamp(15rem, 30%, 24rem); --cg: clamp(1.25rem, 3vw, 3rem); order: -1; display: block; margin: 0; padding: 0; border-top: 0; font-size: var(--fs-small); }
+  .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck > div { position: relative; display: grid; grid-template-columns: var(--lw) minmax(0, 1fr); column-gap: var(--cg); align-items: center; padding: clamp(.875rem, 1.5vw, 1.375rem) 0; border-bottom: var(--hair) solid var(--line); }
+  .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck > div:first-child { padding-top: 0; }
+  .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck :is(dt, dd) { grid-column: 1; }
+  .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck dt { font-size: var(--fs-body); }
+  .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck dt i { display: none; }
+  .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck dd { margin-left: 0; }
+  .cost[data-cost-view="rows"]:not(.is-dec) .cost-rows { display: flex; flex-wrap: wrap; gap: .5rem clamp(2rem, 4vw, 4rem); margin-top: clamp(1rem, 1.6vw, 1.5rem); }
+  .cost[data-cost-view="rows"]:not(.is-dec) .cost-row { display: flex; align-items: baseline; gap: .75rem; padding: 0; }
+  .cost[data-cost-view="rows"]:not(.is-dec) .cost-bar { display: none; }
+  .cost[data-cost-view="rows"]:not(.is-dec) .cost-lab b { display: inline; }
+  @container cost (max-width: 560px) { .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck > div { display: block; } }
 }
 /* v2:proof:end */

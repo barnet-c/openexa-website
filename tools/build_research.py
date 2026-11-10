@@ -161,21 +161,24 @@ LABELS = {
     # which since hc3 also set the word in Inter and the value in mono)
     # r3: each hedge label first ("keep", below). Cut (1 Nov): "Above the floor" points at the top of the one open unit
     # each column carries (figure.js sessions: the floor F = 0.48, the open unit up to 0.625)
-    "sessions": [("Above the floor", "Exact value not published", (0, 0.65, 0), "t", "keep=t,tl,tr", None),
-                 ("Floor", "10\u00a0bps", (-1.25, 0.48, 0.07), "l", "nsub", None)] + _cols(),
+    "sessions": [("Above the floor", "Exact value not published", (0, 0.615, 0), "t", "keep=t,tl,tr", None),   # hc29: the open block's top is 0.588
+                 ("Floor", "10\u00a0bps", (-1.25, 0.48, 0.07), "l", "nsub", None),
+                 # hc29 (the director's HC29 item 2, for research): the columns stand on a 0 baseline, as on Proof's Fig. 1.1
+                 # (its "0" in mono at the rule's left end), and no longer hang from the floor
+                 ("0", None, (-1.25, -0.72, 0.07), "l", "n", None)] + _cols(),
     "mastercopy": [("Copies", "Phase two, on the roadmap", (0.93, -0.18, -0.07), "tl", "keep", (0.74, 0.74)),
                    ("Master agent", None, (0.31, 0.62, 0), "r", "acc", (0.0, 0.06)),
                    ("One control plane", None, (-1.3, -0.77, 0), "br", "", (0.9, 0.9))],
-    # the index's two shelves, in the words of its two section heads ("Research notes", "The series")
-    "library": [("01–02 Research notes", None, (-0.873, 0.47, 0.095), "t", "acc", (0.0, 0.16)),
-                ("03–10 The series", None, (0.873, 0.47, 0.095), "t", "", (0.19, 0.9))],
 }
 # award a2 (a2-pixel, medium): a plate's rules, drawn as lines over its points in the labels' space (figure.js .fl-line:
 # both ends projected each frame, so the line sways with the drawing and rests level, on whole pixels). Note 09's 10 bps
 # floor was 1,200 khaki points, a 6-8 px soft band at 1:1, while Proof draws the same floor as a crisp rule; it is now
 # one hairline (--stroke), from end to end of where those points lay. It is part of the drawing, not a label: it shows
 # whenever the plate's words could not (a phone's strip, a hedge with no room)
-RULES = {"sessions": [((-1.25, 0.48, 0.07), (1.25, 0.48, 0.07))]}
+RULES = {"sessions": [((-1.25, 0.48, 0.07), (1.25, 0.48, 0.07)), ((-1.25, -0.72, 0.07), (1.25, -0.72, 0.07))]}
+# hc29: which of a figure's rules is its 0 baseline (the axis: drawn quieter than the floor, the data's own line, and never lit)
+BASE = {"sessions": {1}}
+def _base(fig, i): return " is-0" if i in BASE.get(fig, ()) else ""
 def _keep(flags): return next((f for f in flags.split() if f.split("=")[0] == "keep"), None)
 def _small(sub, fl):
     """a label's second line: a gloss (minorsub: dropped on a small stage) or a value (nsub: mono, as .hp-lab--n)"""
@@ -184,7 +187,7 @@ def _small(sub, fl):
     return f"<small{c}>{H.escape(sub, quote=False)}</small>"
 assert all(not _keep(l[4]) for ls in LABELS.values() for l in ls[1:]), "a hedge label (keep) is listed first"
 def labels_html(fig):
-    out = [f'<span class="fl-line" data-at="{a[0]:g},{a[1]:g},{a[2]:g}" data-line="{b[0]:g},{b[1]:g},{b[2]:g}"></span>' for a, b in RULES.get(fig, [])]
+    out = [f'<span class="fl-line{_base(fig, i)}" data-at="{a[0]:g},{a[1]:g},{a[2]:g}" data-line="{b[0]:g},{b[1]:g},{b[2]:g}"></span>' for i, (a, b) in enumerate(RULES.get(fig, []))]
     for i, (text, sub, (x, y, z), side, flags, path, *to) in enumerate(LABELS[fig]):
         k = _keep(flags)
         cls = "".join(f" fl--{f}" for f in flags.split() if not f.endswith("sub") and f != k)
@@ -194,45 +197,89 @@ def labels_html(fig):
         reach = f' data-to="{to[0][0]:g},{to[0][1]:g},{to[0][2]:g}"' if to else ""
         out.append(f'<span class="fl{cls}" data-at="{x:g},{y:g},{z:g}"{reach} data-side="{side}"{ph}{keep} style="--i:{i}"><span class="fl-t">{H.escape(text, quote=False)}{small}</span></span>')
     return f'<template data-labels><div class="fig-labels" data-for="{fig}">{"".join(out)}</div></template>'
-def library_still():
-    """r2 (r2-art minor): the index hero's figure as a still, in the page's HTML. v2 and r1 painted nothing there until
-    WebGL drew (and nothing at all without JavaScript or WebGL), the only inner first screen without a drawing. This is
-    the same formation as figure.js's 'library' (ten leaves fanned round one spine, the two research notes lit), seen by
-    the same camera in the pose the plate's first frame takes (face-on, eye 0, 0.35, 4.4; fov 0.62; scale .92, the
-    desktop --figure-scale), engraved as ruled leaves instead of points: each leaf its outline and seven rules. Units: the
-    stage's height is 200, centred, so with xMidYMid meet the still lies where the points land (research.css scales it as
-    the stage's --figure-scale scales the points). When the WebGL figure is drawn (.figure-ready) the still fades out under
-    it; without JavaScript or WebGL it stays, with its caption. Geometry from figure.js FORMS.library and lookAt(): a
-    change there needs this looked at."""
-    f, eye, S0 = 1 / math.tan(0.31), (0.0, 0.35, 4.4), 0.92
-    n = math.hypot(*eye); zx, zy, zz = (e / n for e in eye)
-    xx, xz = zz, -zx; n = math.hypot(xx, xz) or 1; xx, xz = xx / n, xz / n
-    yx, yy, yz = zy * xz, zz * xx - zx * xz, -zy * xx
-    def p(x, y, z):
-        x, y, z = x * S0, y * S0, z * S0
-        v0 = xx * x + xz * z - (xx * eye[0] + xz * eye[2])
-        v1 = yx * x + yy * y + yz * z - (yx * eye[0] + yy * eye[1] + yz * eye[2])
-        v2 = zx * x + zy * y + zz * z - (zx * eye[0] + zy * eye[1] + zz * eye[2])
-        return 100 * f * v0 / -v2, -100 * f * v1 / -v2, v2
-    def pt(a, u, v): return p(math.sin(a) * u, v * 0.46, math.cos(a) * u - 0.35)
-    leaves, xm = [], 0.0
-    for l in range(10):
-        a = (l / 9 - 0.5) * 2.2
-        rim = [pt(a, u, v) for u, v in ((0.12, -1), (0.98, -1), (0.98, 1), (0.12, 1))]
-        xm = max(xm, *(abs(q[0]) for q in rim))
-        rules = [(pt(a, 0.12, v), pt(a, 0.98, v)) for v in (-1 + 2 * k / 8 for k in range(1, 8))]
-        mz = pt(a, 0.55, 0)[2]
-        depth = min(1, max(0, (mz + 5.6) / 2.6))  # figure.js: brighter nearer the eye
-        leaves.append((mz, l, rim, rules, round(0.42 + 0.7 * depth, 2)))
-    q = lambda c: f"{c[0]:.1f} {c[1]:.1f}"
+# hc29 (the director's HC29 item 12, visuals and consistency: "two books in two techniques on sibling pages, the particle
+# one the softer"): the index hero's book is engraved as the blog index's library is (blog_plates.library_svg): every leaf
+# one affine image of a unit square under an orthographic camera, an ink fill that hides what lies behind it, a hairline
+# rim on --stroke (non-scaling: 1 px at 1440, 2 at 3840, as crisp at DPR 1 as at 2), the lit leaves in the signal green,
+# hatching on the faces at .2. Not the blog's object: the blog's album lies open with its leaves turning; this book stands
+# open, ten leaves round one upright spine, one leaf per note, opened between the two research notes (01-02, the green
+# leaves, on the left) and the series (03-10, fanned to the right): the index's own gap between 02 and 03. The open spread
+# shows a page of type (the notes' measure, drop cap and paragraphs, drawn as rules; no words). No data: the leaves are
+# the notes. It replaces r2's ruled still under figure.js's 'library' points (WebGL, soft at DPR 1), so the hero starts no
+# WebGL and is the same drawing without JavaScript, without WebGL and under reduced motion. Its two keys are v2's leaders,
+# in the words of the index's two section heads, pinned to the head of leaf 01's and leaf 10's fore-edges.
+BOOK_YAW, BOOK_PITCH = math.radians(-38), math.radians(24)   # the camera: from the reader's left, a little above
+BOOK_H, BOOK_S = 1.25, 200                                    # a page's height : its width (spine to fore-edge); the width in units
+BOOK_ANGLES = (-82, -72) + tuple(5 + 75 * k / 7 for k in range(8))   # each leaf from the line of sight, degrees, 01 .. 10
+BOOK_SHUT = BOOK_ANGLES[-1]   # on arrival the series' leaves fan out from the last one, shut on it (research.css rs-fall)
+BOOK_KEYS = (("01–02 Research notes", 0, "acc", "tl"), ("03–10 The series", 9, "", "t"))   # (words, leaf, flag, side) at the
+# head of the leaf's fore-edge; 01-02 stands up and to the left of its point, clear of the green leaf's head rising to
+# the spine. On a phone there is no room left of the book: 01-02 hangs from the foot of the same edge (data-foot)
+def _bk(a):
+    """leaf a (radians) as a matrix (a, b, c, d) in units, (s, t) = (spine -> fore-edge, foot -> head) to the screen, y down;
+    and its depth (larger is nearer the eye) at the leaf's centre"""
+    ya, pa = BOOK_YAW, BOOK_PITCH
+    R = (math.cos(ya), 0.0, -math.sin(ya))
+    U = (-math.sin(ya) * math.sin(pa), math.cos(pa), -math.cos(ya) * math.sin(pa))
+    D = (math.sin(ya) * math.cos(pa), math.sin(pa), math.cos(ya) * math.cos(pa))
+    dot = lambda p, q: p[0] * q[0] + p[1] * q[1] + p[2] * q[2]
+    u, v = (math.sin(a), 0.0, math.cos(a)), (0.0, BOOK_H, 0.0)
+    return (dot(u, R) * BOOK_S, -dot(u, U) * BOOK_S, dot(v, R) * BOOK_S, -dot(v, U) * BOOK_S), dot(u, D) / 2 + dot(v, D) / 2
+def _bk_page(recto):
+    """a page of type in the leaf's own square, as rules: the measure between the gutter (s .14) and the fore-edge (s .9),
+    read from the gutter on a recto and from the fore-edge on a verso. The recto opens a note: two title rules, then a
+    three-line drop cap (four engraved strokes) and two paragraphs; the verso is text from head to foot"""
+    g, f, lead, cap = 0.14, 0.9, 0.047, 0.115
+    def rule(t, a, b):   # a, b: along the measure from its start, 0-1
+        x = (lambda k: g + (f - g) * k) if recto else (lambda k: f - (f - g) * k)
+        return f"M{x(a):.3f} {t:.3f}H{x(b):.3f}"
     out = []
-    for mz, l, rim, rules, op in sorted(leaves):  # far first
-        lit = l < 2
-        out.append(f'<path class="{"ls-g" if lit else "ls-r"}" stroke-opacity="{op:g}" d="M{q(rim[0])}L{q(rim[1])}L{q(rim[2])}L{q(rim[3])}Z"/>'
-                   f'<path class="{"ls-g ls-gl" if lit else "ls-l"}" stroke-opacity="{round(op * 0.75, 2):g}" d="{"".join(f"M{q(a)}L{q(b)}" for a, b in rules)}"/>')
-    w = math.ceil(xm + 6)
-    return (f'<svg class="rs-still" viewBox="{-w} -100 {2 * w} 200" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'
-            f'{"".join(out)}</svg>')
+    if recto:
+        out += [rule(0.875, 0, 0.62), rule(0.875 - lead, 0, 0.36)]
+        top = 0.875 - 3.4 * lead
+        out += [f"M{g + cap * k / 3:.3f} {top + 0.012:.3f}V{top - 2 * lead - 0.006:.3f}" for k in range(4)]
+        ends = (1, 1, 1, 1, 0.97, 1, 0.58, None, 1, 1, 0.98, 1, 1, 0.44)
+    else:
+        top = 0.875
+        ends = (1, 0.99, 1, 1, 0.71, None, 1, 1, 1, 0.98, 1, 1, 1, 1, 1, 0.6)
+    ind = 0
+    for i, e in enumerate(ends):
+        if e is None: ind = 0.06; continue      # a paragraph's end: the next line is indented
+        a = (cap + 0.035) / (f - g) if recto and i < 3 else ind
+        out.append(rule(top - i * lead, a, e)); ind = 0
+    return '<path class="pc" d="' + "".join(out) + '"/>'
+def library_svg():
+    """the index hero's book (the note above): (svg, the keys' html, the box's aspect ratio). Units: a page's width is
+    BOOK_S; the viewBox is the book's own box, so the keys are placed in % of it and
+    research.css's .rs-bk keeps its shape (--bk-r, on the hero: the phone's hero keeps the book's height at its foot)"""
+    leaves = [(_bk(math.radians(deg))[1], l, _bk(math.radians(deg))[0]) for l, deg in enumerate(BOOK_ANGLES)]
+    ms = [m for _, _, m in leaves]
+    corners = [(m[0] * s + m[2] * t, m[1] * s + m[3] * t) for m in ms for s in (0, 1) for t in (0, 1)]
+    pad = 3
+    x0, x1 = min(c[0] for c in corners) - pad, max(c[0] for c in corners) + pad
+    y0, y1 = min(c[1] for c in corners) - pad, max(c[1] for c in corners) + pad
+    vw, vh = round(x1 - x0), round(y1 - y0)
+    ox, oy = -x0, -y0   # the spine's foot in the viewBox
+    mx = lambda m: f"matrix({m[0]:.2f},{m[1]:.2f},{m[2]:.2f},{m[3]:.2f},{ox:.1f},{oy:.1f})"
+    out = []
+    for depth, l, m in sorted(leaves):   # far first: each leaf's fill hides what lies behind it
+        face = _bk_page(True) if l == 2 else _bk_page(False) if l == 1 else ""
+        style = ""
+        if l > 1:   # the series fans out from the shut leaf 10, as pages let fall: 03 first, the furthest, then 04 .. 09
+            style = f' style="--k:{mx(_bk(math.radians(BOOK_SHUT))[0])};--i:{l - 2}"'
+        out.append(f'<g class="lf-w{" bk-s" if l > 1 else ""}" transform="{mx(m)}"{style}>'   # lf-w: the blog library's leaf (and site.css's off-screen pause)
+                   f'<path class="lf{" lf-g" if l < 2 else ""}" d="M0 0H1V1H0Z"/>{face}</g>')
+    svg = (f'<svg class="rs-still" viewBox="0 0 {vw} {vh}" fill="none" focusable="false" aria-hidden="true">'
+           + "".join(out) + "</svg>")
+    keys = []
+    for i, (words, l, flag, side) in enumerate(BOOK_KEYS):
+        m = _bk(math.radians(BOOK_ANGLES[l]))[0]
+        x, y = m[0] + m[2] + ox, m[1] + m[3] + oy   # (s, t) = (1, 1): the head of the fore-edge
+        pct = lambda v, n: f"{100 * v / n:.2f}%"
+        foot = f' data-foot style="--x:{pct(x, vw)};--y:{pct(y, vh)};--fx:{pct(m[0] + ox, vw)};--fy:{pct(m[1] + oy, vh)};--i:{i}"' if side == "tl" else f' style="--x:{pct(x, vw)};--y:{pct(y, vh)};--i:{i}"'
+        keys.append(f'<span class="fl{" fl--" + flag if flag else ""}" data-side="{side}"{foot}>'
+                    f'<span class="fl-t">{H.escape(words, quote=False)}</span></span>')
+    return svg, f'<div class="rs-keys">{"".join(keys)}</div>', f"{vw / vh:.4f}"
 # award a1 (a1-dev, polish): every note's hero carries its formation as a still in the page, as the index's library has
 # since r2: without JavaScript or WebGL the hero's right half was empty, and with them the drawing arrived only after
 # figure.js started. FORMS below is figure.js's FORMS ported line for line, with its random generator (the same LCG, the
@@ -349,16 +396,17 @@ def _forms(name, N, rnd, g):
                 for i in range(_n(N * 0.03)):
                     s = rnd(); push([px + (cx - px) * s + g() * 0.004, py + (cy - py) * s + g() * 0.004, pz + (cz - pz) * s + g() * 0.004, 2])
     elif name == "sessions":
-        per = math.floor(N * 0.082); B, F = -0.72, 0.48; U = (F - B) / 10; w = 0.07; o0 = F + 0.025; o1 = o0 + U
+        per = math.floor(N * 0.082); B, F = -0.72, 0.48; U = (F - B) / 10; w = 0.048; H = 0.8 * U; o0 = F + 0.1 * U; o1 = o0 + H
+        def cell(r): r *= 10; k = math.floor(r); return B + (k + 0.1 + 0.8 * (r - k)) * U   # hc29: one block per basis point (figure.js)
         for c in range(10):
             x = -1.08 + c * 0.24  # hc7: every column green to the floor, the open unit a khaki outline (figure.js)
             for i in range(per):
-                if rnd() < 0.86: push([x + (rnd() - 0.5) * 2 * w, B + rnd() * (F - B), (rnd() - 0.5) * 0.1, 2]); continue
-                e = rnd() * (4 * w + 2 * U)
+                if rnd() < 0.86: push([x + (rnd() - 0.5) * 2 * w, cell(rnd()), (rnd() - 0.5) * 0.1, 2]); continue
+                e = rnd() * (4 * w + 2 * H)
                 if e < 2 * w: px, py = x - w + e, o0
                 elif e < 4 * w: px, py = x - w + (e - 2 * w), o1
-                elif e < 4 * w + U: px, py = x - w, o0 + (e - 4 * w)
-                else: px, py = x + w, o0 + (e - 4 * w - U)
+                elif e < 4 * w + H: px, py = x - w, o0 + (e - 4 * w)
+                else: px, py = x + w, o0 + (e - 4 * w - H)
                 push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, 1])
         # award a2: the floor is a rule (RULES), no longer a band of points
     elif name == "mastercopy":
@@ -433,7 +481,7 @@ def note_still(fig, every=7):
     xm = max([xm] + [abs(q[0]) for ln in rules for q in ln])
     w = math.ceil(xm + 12)
     body = "".join(f'<path class="k{k}{" far" if not near else ""}" d="{rel(d)}"/>' for (k, near), d in sorted(paths.items()))
-    body += f'<path class="rule" d="{"".join(f"M{a[0]:.1f} {a[1]:.1f}L{b[0]:.1f} {b[1]:.1f}" for a, b in rules)}"/>' if rules else ""
+    body += "".join(f'<path class="rule{_base(fig, i)}" d="M{a[0]:.1f} {a[1]:.1f}L{b[0]:.1f} {b[1]:.1f}"/>' for i, (a, b) in enumerate(rules))
     return (f'<svg class="fs-still" viewBox="{-w} -200 {2 * w} 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'
             f'{body}</svg>')
 # award a4 (a4-pixel, polish): a figure whose labels are its key (note 09: the floor and its value, the 01-10 axis, and so,
@@ -638,7 +686,7 @@ def margin_still(fig, slugs=(), every=5):
         svg(f"plate-{fig}-{n}.svg", sel, lambda k, near: "1" if near or k == 2 else ".8")  # the part at full strength
         out.append(f'<img class="np-part" data-parts="{ss}" src="../assets/img/research/plate-{fig}-{n}.svg" width="300" height="{hb}" alt="" loading="lazy" decoding="async">')
     rp = f' data-parts="{" ".join(lit["rule"])}"' if "rule" in lit else ""
-    out += [f'<i class="np-rule"{rp} style="--y:{fy(a[1]) / hb * 100:.2f}%;--x0:{fx(a[0]) / 3:.2f}%;--x1:{fx(b[0]) / 3:.2f}%"></i>' for a, b in rules]
+    out += [f'<i class="np-rule{_base(fig, i)}"{"" if _base(fig, i) else rp} style="--y:{fy(a[1]) / hb * 100:.2f}%;--x0:{fx(a[0]) / 3:.2f}%;--x1:{fx(b[0]) / 3:.2f}%"></i>' for i, (a, b) in enumerate(rules)]
     for l, perm, sss, sd, ax, ay in placed:
         out.append(_fl((l[0], l[1], l[2], sd, l[4]), f"--x:{fx(ax) / 3:.2f}%;--y:{fy(ay) / hb * 100:.2f}%", " np-key" if perm else "",
                        f' data-parts="{" ".join(sss)}"' if sss else "", plate=True))
@@ -827,7 +875,7 @@ def chrome(prefix, current):
 # globe, and the index's card its library still; the index's alt is launch_meta_v9.py's STILL_PIC, word for word, so the
 # head this build writes is the head the chain leaves
 CARD_ALT = " Beside it, the note’s figure, drawn as a still."
-INDEX_CARD_ALT = " Beside it, the page’s library figure: the notes as an open book of stippled leaves."
+INDEX_CARD_ALT = " Beside it, the page’s open book: ten engraved leaves, one for each note."  # hc29 (HC29 12): the engraved book, its card re-rendered
 def og(prefix, url, title, desc, h1=None, pic=CARD_ALT, links=""):
     alt = (h1 or title).rstrip(); alt = (alt if alt[-1] in ".!?" else alt + ".") + pic  # a title without its own stop gets one
     return f'''  <meta name="description" content="{H.escape(desc, quote=True)}">
@@ -1000,6 +1048,7 @@ assert len(desc) <= 160, len(desc)
 # notes' rows above (title, read time, arrow), then the two links. A list of three links, not three cards
 def years(c): return str(c["years"][0]) if c["years"][0] == c["years"][1] else f'{c["years"][0]}–{c["years"][1]}'
 collections = "\n".join(f'              <li><a href="blog/index.html#{c["key"]}"><h3>{H.escape(c["label"])}</h3><span class="rs-coll-m"><span>{c["count"]}{NB}posts · {years(c)}</span>{ARROW}</span></a></li>' for c in BLOG['collections'])
+BOOK = library_svg()
 index_page = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1018,8 +1067,8 @@ index_page = f'''<!DOCTYPE html>
 
 {nav}
   <main id="main">
-    <section class="page-hero page-hero--dark is-dark grain research-hero">
-      <div class="figure-stage research-figure has-still" id="research-library" data-figure="library" data-spin="0.08" data-plate data-rest="2.5" aria-hidden="true">{library_still()}<canvas></canvas>{labels_html("library")}</div>
+    <section class="page-hero page-hero--dark is-dark grain research-hero" style="--bk-r:{BOOK[2]}">
+      <div class="figure-stage research-figure" id="research-library" aria-hidden="true"><div class="rs-bk">{BOOK[0]}{BOOK[1]}</div></div>
       <div class="container">
         <div class="grid">
           <div class="col-7">

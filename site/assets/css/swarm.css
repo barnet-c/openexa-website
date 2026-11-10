@@ -124,7 +124,7 @@
 .swarm-bar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-top: var(--hair) solid var(--line); }
 .swarm-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-right: var(--hair) solid var(--line); }
 .swarm-stats > div { padding: 1.125rem 1.125rem 1rem; border-right: var(--hair) solid var(--line); } .swarm-stats > div:last-child { border-right: 0; }
-.swarm-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: var(--fs-item); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; } /* hc11: at every width, as the desk's (no phone or sideways size) */
+.swarm-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: var(--fs-item); line-height: 1; letter-spacing: var(--track-figure); font-variant-numeric: tabular-nums; } /* hc11: at every width, as the desk's (no phone or sideways size) */
 .swarm-stats span { display: block; margin-top: .5rem; font: 400 var(--fs-small)/1.35 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); white-space: nowrap; } /* a3: the counters' names in the desk's voice (Inter, sentence case, as the sliders' names); the counts stay serif figures */
 .swarm-controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1.125rem; align-items: end; padding: .875rem 1.125rem .75rem; }
 /* a3 (UX juror): the slider names in Inter at the small step, sentence case; their values stay mono (data) */

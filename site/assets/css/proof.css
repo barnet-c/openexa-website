@@ -81,7 +81,7 @@
 [data-page="proof"] .pf-doc h3 .arr { display: inline-block; width: .55em; height: .55em; margin-left: .25em; vertical-align: .05em; }
 @media (hover: hover) { [data-page="proof"] .pf-doc h3 a:hover { text-decoration-color: currentColor; } }
 @media (min-width: 601px) {
-  [data-page="proof"] .pf-trail { --sw: clamp(7rem, 11.6vw, 13.65rem); --lx: 1.5rem; }
+  [data-page="proof"] .pf-trail { --sw: clamp(7rem, 11.6vw, 13.65rem); }
   [data-page="proof"] .pf-trail .pf-doc h3 { align-self: end; margin-bottom: calc(var(--hair) / -2); padding-bottom: clamp(1.25rem, 2.4vw, 2rem); border-bottom: var(--hair) solid var(--line-strong); }
 }
 @media (min-width: 720px) and (max-width: 960px) {
@@ -138,33 +138,6 @@
 
 [data-page="proof"] .cost-row:first-child { padding-top: 0; }
 @container cost (max-width: 860px) { [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: .875rem; } }
-[data-page="proof"] .cost.is-dec .pf-ck { --lw: clamp(15rem, 30%, 24rem); --cg: clamp(1.25rem, 3vw, 3rem); display: block; margin: 0; padding: 0; border-top: 0; font-size: var(--fs-small); }
-[data-page="proof"] .is-dec .pf-ck > div { position: relative; display: grid; grid-template-columns: var(--lw) minmax(0, 1fr); column-gap: var(--cg); align-items: center; padding: clamp(.875rem, 1.5vw, 1.375rem) 0; border-bottom: var(--hair) solid var(--line); }
-[data-page="proof"] .is-dec .pf-ck > div:first-child { padding-top: 0; }
-[data-page="proof"] .is-dec .pf-ck :is(dt, dd) { grid-column: 1; }
-[data-page="proof"] .is-dec .pf-ck dt { font-size: var(--fs-body); }
-[data-page="proof"] .is-dec .cost-db { --cols: 32; --rows: 2; --g: .1875rem; --bq: 1px; --bw: round(down, (100cqi - (var(--cols) - 1) * var(--g)) / var(--cols), var(--bq)); container-type: inline-size; position: absolute; left: calc(var(--lw) + var(--cg)); right: 0; top: 50%; display: flex; align-items: center; gap: .875rem; transform: translateY(-50%); }
-[data-page="proof"] .is-dec .pf-ck > div:first-child .cost-db { top: calc(50% - clamp(.875rem, 1.5vw, 1.375rem) / 2); }
-[data-page="proof"] .is-dec .cost-blk { flex: none; width: auto; }
-[data-page="proof"] .is-dec .cost-db em { font: 400 var(--fs-small)/1.3 var(--sans); color: var(--fg-2); white-space: nowrap; }
-[data-page="proof"] .is-dec .pf-ck .cost-blk i { transition: opacity var(--dur-move) linear, transform var(--dur-move) var(--ease); }
-[data-page="proof"] .is-dec .pf-ck.will-reveal:not(.is-in) .cost-blk i { opacity: 0; transform: scale(.35); }
-[data-page="proof"] .is-dec .cost-rows { display: flex; flex-wrap: wrap; gap: .5rem clamp(2rem, 4vw, 4rem); margin-top: clamp(1rem, 1.6vw, 1.5rem); }
-[data-page="proof"] .is-dec .cost-row { display: flex; align-items: baseline; gap: .75rem; padding: 0; }
-[data-page="proof"] .is-dec .cost-bar { display: none; }
-[data-page="proof"] .is-dec .cost-lab b { display: inline; }
-@media (min-resolution: 2dppx) { [data-page="proof"] .is-dec .cost-db { --bq: .5px; } }
-@container cost (max-width: 560px) {
-  [data-page="proof"] .is-dec .pf-ck > div { display: block; }
-  [data-page="proof"] .is-dec .cost-db { --cols: 25; --g: .125rem; position: static; flex-direction: column; align-items: start; gap: .625rem; margin-top: .875rem; transform: none; }
-}
-[data-page="proof"] .pf-ck > div { --scene-range: cover 10% cover 40%; }
-@media screen and (prefers-reduced-motion: no-preference) and (forced-colors: none) { @supports (animation-timeline: view()) {
-  [data-page="proof"] .is-dec .pf-ck.will-reveal:not(.is-in) .cost-blk i { opacity: 1; transform: none; }
-  [data-page="proof"] .is-dec .cost-blk :is(.is-gone, .is-rest, .is-part) { position: relative; }
-  [data-page="proof"] .is-dec .cost-blk :is(.is-gone, .is-rest, .is-part)::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--c); box-shadow: inset 0 0 0 var(--hair) rgba(14, 21, 18, .55); opacity: clamp(0, (var(--t) * .875 + .125 - var(--scene-p)) * 8, 1); }
-  [data-page="proof"] .is-dec .cost-blk .is-gone::before { inset: calc(-1 * var(--hair)); }
-} }
 
 @media (max-width: 600px) {
   [data-page="proof"] .proof-table > tbody > tr { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: .25rem .75rem; padding: .625rem 0 .5625rem; }

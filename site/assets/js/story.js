@@ -108,6 +108,7 @@
   const F_SOLID = 0.62, Y_FL = Y_FLOOR + F_SOLID * H_COL;
   const Y_CTOP = Y_FL + (Y_FL - Y_FLOOR - 0.04) / (FLOOR > 0 && FLOOR < 30 ? Math.round(FLOOR) : 10);
   const COL_X = (c) => -COL_SPAN / 2 + COL_SPAN * (c + 0.5) / NCOL;
+  const NB = FLOOR > 0 && FLOOR < 30 ? Math.round(FLOOR) : 10, BP = (Y_FL - Y_FLOOR) / NB;
   const K4_MAX = 2.6;
   let colK = 1;
   const yK = (y) => Y_FLOOR + (y - Y_FLOOR) * colK;
@@ -272,7 +273,7 @@
     const s3y = (q) => { const c = F[3][q * 4 + 3], mode = Math.floor(c / 1000); return mode === M.FLOW || mode === M.FLOWREJ ? Y_TOP - F[3][q * 4 + 1] * (Y_TOP - Y_BOT) : F[3][q * 4 + 1]; };
     const byY = Array.from({ length: N_SURF }, (_, q) => q).sort((a, b) => s3y(b) - s3y(a));
     yield;
-    const perC = Math.floor(N_SURF / NCOL), nx = 5, nz = 3, sN = nx * nz, oN = 2 * nz, yS = Y_FL - Y_FLOOR - 0.04, NB = FLOOR > 0 && FLOOR < 30 ? Math.round(FLOOR) : 10;
+    const perC = Math.floor(N_SURF / NCOL), nx = 5, nz = 3, sN = nx * nz, oN = 2 * nz, yS = Y_FL - Y_FLOOR - 0.04;
     const UO = yS / NB;
     for (let c = 0; c < NCOL; c++) {
       const list = byY.slice(c * perC, c === NCOL - 1 ? N_SURF : (c + 1) * perC);
@@ -280,7 +281,7 @@
       const above = SESSIONS[c].above;
       list.sort((a, b) => R(a, 2) - R(b, 2)).forEach((q, j) => {
         const o = j >= cut, k = o ? j - cut : j, w = o ? 2 : nx, a = o ? (k % 2) * (nx - 1) : k % nx, b = Math.floor(k / w) % nz;
-        const g = (Math.floor(k / sN) + 0.5) * pit * NB / yS, f = o ? yS + UO * 0.14 + 0.72 * Math.min(UO, (Math.floor(k / oN) + 0.5) * pit) : (Math.floor(g) + 0.14 + 0.72 * (g % 1)) * yS / NB;
+        const g = (Math.floor(k / sN) + 0.5) * pit * NB / yS, f = o ? yS + UO * 0.14 + 0.72 * Math.min(UO, (Math.floor(k / oN) + 0.5) * pit) : (Math.floor(g) + 0.06 + 0.72 * (g % 1)) * BP - 0.04;
         set(4, q, x0 + (a - (nx - 1) / 2) * 0.024, Y_FLOOR + 0.04 + f, (b - (nz - 1) / 2) * 0.024, code(M.COLUMN, !above ? K.DIM : !o && R(q, 1) < 0.34 ? K.BRIGHT : K.IVORY, c));
         KEY[q * 4 + 3] = (c + 0.55 * (R(q, 3) * 7.31 % 1)) / (NCOL + 0.55);
       });
@@ -461,7 +462,7 @@
     gl_Position = u_proj * mv;
     vec4 pr = kprop(k), prB = kprop(kB), prA = kprop(kA);
     vec3 col = mix(mix(kcol(kA), kcol(2.0), cA), mix(kcol(kB), kcol(2.0), cB), tc); // (hc8) a settled column in the signal green
-    float al = mix(prA.y * aA, prB.y * aB, tc);
+    float al = mix(prA.y * aA, prB.y * aB, tc) * (1.0 - cB * tc);
     float soft = mix(prA.z, prB.z, tc);
     float glow = mix(prA.w, prB.w, tc);
     // light: a green key from the upper left, an ivory rim, depth fog
@@ -568,16 +569,18 @@
   const VS_ACT = `
   precision highp float;
   attribute vec3 a_pos; attribute vec4 a_col; attribute vec4 a_shp;
-  uniform mat4 u_view, u_proj; uniform float u_pr, u_dist, u_fogR, u_halo, u_maxpt;
+  uniform mat4 u_view, u_proj; uniform float u_pr, u_dist, u_fogR, u_halo, u_maxpt; uniform vec2 u_res;
   varying vec4 v_col; varying vec4 v_shp; varying float v_size;
   void main() {
     vec4 mv = u_view * vec4(a_pos, 1.0);
     gl_Position = u_proj * mv;
+    float blk = step(4.5, a_shp.x);
+    if (blk > 0.5) { vec2 px = floor((gl_Position.xy / gl_Position.w * 0.5 + 0.5) * u_res + 0.5); gl_Position.xy = (px / u_res * 2.0 - 1.0) * gl_Position.w; }
     float persp = u_dist / max(0.2, -mv.z);
-    float sz = a_shp.y * u_pr * mix(1.0, persp, 0.5);
+    float sz = a_shp.y * u_pr * mix(mix(1.0, persp, 0.5), 1.0, blk);
     float fz = clamp((-mv.z - u_dist + u_fogR) / (2.0 * u_fogR), 0.0, 1.0);
-    float al = a_col.a * mix(1.05, 0.45, fz);
-    float size = sz + 2.0;
+    float al = a_col.a * mix(mix(1.05, 0.45, fz), 1.0, blk);
+    float size = sz * mix(1.0, max(1.0, a_shp.w), blk) + 2.0;
     if (u_halo > 0.5) {
       if (a_shp.z < 0.01 || al < 0.01) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 1.0; v_col = vec4(0.0); v_shp = vec4(0.0); v_size = 1.0; return; }
       size = sz * 3.4; al *= 0.16 * a_shp.z;
@@ -588,6 +591,7 @@
   }`;
   const FS_ACT = `
   precision mediump float;
+  uniform float u_sw;
   varying vec4 v_col; varying vec4 v_shp; varying float v_size;
   float box(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
   float seg(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }
@@ -611,7 +615,12 @@
       float d = min(seg(q, vec2(-0.34, 0.02) * s, vec2(-0.1, 0.26) * s), seg(q, vec2(-0.1, 0.26) * s, vec2(0.36, -0.24) * s));
       a = clamp(max(1.0, s * 0.09) - d + 0.5, 0.0, 1.0);
     }
-    else { float d = length(q) / (s * 0.5); a = exp(-d * d * 3.0) * (1.0 - smoothstep(0.85, 1.0, d)); }
+    else if (shape < 4.5) { float d = length(q) / (s * 0.5); a = exp(-d * d * 3.0) * (1.0 - smoothstep(0.85, 1.0, d)); }
+    else { // a basis-point block (5) or the open block above the floor (6), as on Proof
+      float d = box(q, vec2(s * 0.5, s * 0.5 * aux), min(1.5, s * 0.08));
+      a = clamp(0.5 - d, 0.0, 1.0);
+      if (shape > 5.5) a *= clamp(d + u_sw + 0.5, 0.0, 1.0);
+    }
     a *= v_col.a;
     gl_FragColor = vec4(v_col.rgb * a, a);
   }`;
@@ -619,7 +628,7 @@
   let gl = null, lost = false, ext = null, ready = false;
   const P = {};
   const BUF = {};
-  let N_LINE_MAX = 6000, N_ACT_MAX = 160;
+  let N_LINE_MAX = 6000, N_ACT_MAX = 200;
   const lineData = new Float32Array(N_LINE_MAX * 11), actData = new Float32Array(N_ACT_MAX * 11);
   const guard = (fn) => { try { fn(); } catch (e) { if (gl && !gl.isContextLost()) fail(e); } };
   let setupGen = 0;
@@ -647,7 +656,7 @@
       Object.assign(P, progs);
       bindProgram(P.bulk, ['u_view', 'u_proj', 'u_time', 'u_m', 'u_spread', 'u_swirl', 'u_lift', 'u_keyIdx', 'u_sA', 'u_sB', 'u_spin', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_intro', 'u_shade', 'u_gather', 'u_liftDir', 'u_light', 'u_rU', 'u_rV', 'u_rW', 'u_hov', 'u_hovOn', 'u_hovScene', 'u_sceneA', 'u_sceneB', 'u_hovLift', 'u_occ', 'u_cg', 'u_fold', 'u_railA', 'u_colK', 'u_band'], ['a_from', 'a_to', 'a_rand', 'a_key']);
       bindProgram(P.line, ['u_view', 'u_proj', 'u_res', 'u_pr', 'u_dist', 'u_fogR', 'u_occ'], ['a_corner', 'a_p0', 'a_p1', 'a_col', 'a_w']);
-      bindProgram(P.act, ['u_view', 'u_proj', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt'], ['a_pos', 'a_col', 'a_shp']);
+      bindProgram(P.act, ['u_view', 'u_proj', 'u_pr', 'u_dist', 'u_fogR', 'u_halo', 'u_maxpt', 'u_res', 'u_sw'], ['a_pos', 'a_col', 'a_shp']);
       const buf = (data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage || gl.STATIC_DRAW); return b; };
       BUF.scene = F.map(f => buf(f));
       BUF.rand = buf(RAND); BUF.key = buf(KEY);
@@ -690,7 +699,7 @@
     PO.x = (cx / cw * 0.5 + 0.5) * W; PO.y = (0.5 - cy / cw * 0.5) * H; PO.w = cw; return PO;
   }
 
-  let W = 1, H = 1, dpr = 1, ptK = 1, remK = 1, ratio = 0, stacked = false, compact = false, short = false, tiny = false, navH = 72, barH = 64, gutter = 24, contR, safeL = 0, safeR = 0, safeProbe = null;
+  let W = 1, H = 1, dpr = 1, ptK = 1, remK = 1, ratio = 0, stacked = false, compact = false, short = false, tiny = false, navH = 72, barH = 64, barTop = 0, gutter = 24, contR, safeL = 0, safeR = 0, safeProbe = null;
   const EXT = [[2.9, 2.5], [3.3, 2.2], [2.75, 2.75], [2.55, 2.5], [3.8, 2.0]];
   const EXT_ST = [[2.45, 2.12], [3.3, 2.7], null, null, null];
   const CENTER = [[0, 0, 0], [0, 0.04, 0], [0, -0.02, 0], [0.12, 0.08, 0], [0, Y_FLOOR + 0.6, 0]];
@@ -709,7 +718,7 @@
   let storyTop = 0, run = 1, scrollY = 0, stageH = 1, storyH = 1, lastP = NaN, floorW = 0, floorH = 0, hedgeW = 0, hedgeH = 0, hedgeBeside = false, floorL = -COL_SPAN / 2 - 0.5, dayH = 0, keyH = 0, keyOff = false;
   const hedgeGap = () => 6 * remK;
   const tagsUp = () => 6 + floorH + hedgeGap() + hedgeH + 6;
-  let belowBar = true;
+  let belowBar = true, shownCov = false;
   const pxuOf = (h) => (h / 2) / (CAM_D * Math.tan(FOV / 2));
   const probes = {};
   const tokenPx = (v) => {
@@ -763,7 +772,7 @@
     ledeLR = null;
     navH = navPx() || 72;
     const bar = stage.querySelector('.story-bar');
-    barH = bar ? bar.offsetHeight : 64;
+    barH = bar ? bar.offsetHeight : 64; barTop = bar ? bar.offsetTop : H - barH;
     const cont = stage.querySelector('.story-ui .container');
     const ccs = cont && getComputedStyle(cont);
     gutter = (ccs && parseFloat(ccs.paddingLeft)) || 24;
@@ -801,7 +810,6 @@
       const avail = beatRects[1].t - 18 - (navH + barH + capH[1] + 22), hMax = Math.max(...lab.rings.map(l => l.h));
       if (lab.rings.length * (hMax + 2) > avail) { labelMaxW[1] = 0; labels.forEach(l => { if (l.scene !== 1 || l.kind !== 'list') return; if (l.group != null) { l.row = true; l.el.classList.add('is-row'); } sizeLabel(l); }); }
     }
-    paperCapH = paperCap ? paperCap.offsetHeight : 0;
   }
   function setModes() {
     stacked = stackedMQ.matches; CAM = stacked ? CAM_ST : CAM_W;
@@ -831,14 +839,7 @@
     beats.forEach((b, i) => { const br = beatRects[i]; frameTiny[i] = !!(stacked && br && (MIN_FRAME[i] || !i) && br.t - 14 - (navH + barH + capH[i] + 8) < (i === 4 ? 40 + DAY_BAND : 40)); });
     shownIdx = -1;
   }
-  function tailNow() {
-    if (tiny || short || !paper || !(stacked || H > 600) || (W < 600 && W * 20 > H * 23)) return 0;
-    const open = tokenPx('--sec-open') - ((sec1 && parseFloat(getComputedStyle(sec1).paddingTop)) || 0);
-    if (!stacked) return H - (H * FLOOR_END() + capRoom() - 12) - open;
-    const br = beatRects[4];
-    if (!br || !(br.hb > 0)) return 0;
-    return H - (paperRow(tallFoot(br) - br.t + tallTop() + PAPER_GAP()).cap + paperCapH) - open;
-  }
+  function tailNow() { return tiny || !sec1 ? 0 : H; }
   const LIFT_AIR = 18, LIFT_K = 0.42;
   let lifted = false;
   function clearLift() { if (!lifted) return; lifted = false; beats.forEach(b => { b.style.top = b.style.bottom = ''; }); }
@@ -929,9 +930,9 @@
         if (!stacked) s = Math.min(s, (H * 0.74) / (EXT[4][1] * pxu));
         dayPitch = COL_SPAN / NCOL * s * pxu;
         if (lab.days) lab.days.forEach((l, c) => {
-          const th = dayPitch < 18 && c % 2 === 1; l.el.classList.toggle('is-thin', th); if (l.ink) l.ink.classList.toggle('is-thin', th);
+          l.el.classList.toggle('is-thin', dayPitch < 18 && c % 2 === 1);
           const mw = W < 600 ? clamp(Math.floor(dayPitch - 3), 14, 24) + 'px' : '';
-          if (l.el.style.minWidth !== mw) { l.el.style.minWidth = mw; if (l.ink) l.ink.style.minWidth = mw; l.w = l.el.offsetWidth; }
+          if (l.el.style.minWidth !== mw) { l.el.style.minWidth = mw; l.w = l.el.offsetWidth; }
         });
         cx = (xa + x1) / 2;
         if (!stacked) { const tw = Math.max(15, ...(lab.days || []).map(l => l.w || 0)); cx = Math.max(cx, x1 - COL_X(NCOL - 1) * s * pxu - tw / 2); }
@@ -964,9 +965,7 @@
       if (!i && frameTiny[0]) cy = -H;
       layouts[i] = { cx, cy, s, rect: [x0, y0, x1, y1] };
     }
-    const up0 = story.classList.contains('is-paper-up'); story.classList.add('is-paper-up');
-    const L4 = layouts[4], ml = beatRects[4] ? beatRects[4].l : gutter, tw = Math.max(15, ...(lab.days || []).map(l => l.ink ? l.ink.querySelector('.k').offsetWidth : 0));
-    if (!up0) story.classList.remove('is-paper-up');
+    const L4 = layouts[4], ml = beatRects[4] ? beatRects[4].l : gutter, tw = 15;
     b4 = { s: L4.s, cx: L4.cx, z: Math.max(1, (stacked ? 1.008 : 1.02) * (W - 2 * ml - tw) / (COL_SPAN * (NCOL - 1) / NCOL * L4.s * pxu)) };
   }
 
@@ -1006,6 +1005,8 @@
     const p = clamp(lastP, 0, 1), u = p * TOTAL_U;
     sTarget = Math.min(4, u); xTarget = clamp((u - 4) / EXIT_U, 0, 1);
     belowBar = storyTop + storyH - tail - scrollY > navH + 1;
+    const cov = !belowBar && tail > 0;
+    if (cov !== shownCov) story.classList.toggle('is-covered', shownCov = cov);
   }
   function morphState() {
     let s = sNow;
@@ -1153,12 +1154,20 @@
         });
       }
     } else {
-      const rY = Y_FLOOR - l4(U_REC), tY = Y_FLOOR + l4(U_CHK), e = foldE(), k4 = remK / ptK;
+      const rY = Y_FLOOR - l4(U_REC), k4 = remK / ptK, s4 = layouts[4].s, P = BP * colK, bh = 0.84 * P;
+      const dev = (v) => Math.max(2, 2 * Math.round(v * dpr / 2)), dimH = hoverScene === 4 ? hoverOn : 0;
+      const hPx = Math.abs(project(0, Y_FLOOR * s4, 0).y - project(0, (Y_FLOOR + bh) * s4, 0).y);
+      const bwW = clamp(bh, 0.075, 0.12), wPx = Math.abs(project((COL_X(0) + bwW / 2) * s4, Y_FLOOR * s4, 0).x - project((COL_X(0) - bwW / 2) * s4, Y_FLOOR * s4, 0).x);
+      const wD = dev(wPx), hD = dev(hPx), bs = wD / (dpr * ptK), ba = hD / wD;
+      const up = (x, y) => { const a = project(x * s4, y * s4, 0).x, b = project((x + 0.01) * s4, y * s4, 0).x, t = project(x * s4, Y_FLOOR * s4, 0).x; return x + (t - a) * 0.01 / (b - a || 1); };
       for (let c = 0; c < NCOL; c++) {
-        const x = COL_X(c), ss = SESSIONS[c], dc = sealOf(c);
-        put('r' + c, x, rY, 0, C.ivory, 0.95, 2, 15 * k4, 0.4 * Math.sin(PI * sstep(0.3, 1, dc)), 0);
-        if (ss.above) put('s' + c, x, lerp(Y_FLOOR + l4(7), rY, sstep(0, 0.6, dc)), 0, C.green, 0.95 * (1 - sstep(0.4, 0.8, dc)), 1, 9 * k4, 0.6, 1);
-        if (ss.confirmed) put('t' + c, x, lerp(yK(Y_CTOP) + 0.1, tY, e), 0, C.green, 0.95, 3, 12 * k4, 0.5, 0);
+        const x = COL_X(c), ss = SESSIONS[c];
+        put('r' + c, x, rY, 0, C.ivory, 0.95, 2, 15 * k4, 0, 0);
+        if (ss.confirmed) { const y = yK(Y_CTOP) + 0.1; put('t' + c, up(x, y), y, 0, C.green, 0.95, 3, 12 * k4, 0.5, 0); }
+        const g = cgArr[c] * (1 + 0.3 * hovFor(4, c)) * (1 - 0.45 * dimH * (1 - hovFor(4, c)));
+        if (!ss.above || g < 0.004) continue;
+        for (let j = 0; j < NB; j++) { const y = Y_FLOOR + (j + 0.42) * P; put('b' + (c * NB + j), up(x, y), y, 0, C.green, g * (0.62 + 0.38 * j / Math.max(1, NB - 1)), 5, bs, 0, ba); }
+        const yu = Y_FLOOR + (NB + 0.58) * P; put('u' + c, up(x, yu), yu, 0, C.green, g * 0.66, 6, bs, 0, ba);
       }
     }
     return out;
@@ -1264,8 +1273,8 @@
     } else {
       const step = COL_SPAN / NCOL, rY = Y_FLOOR - l4(U_REC), yN = Y_FLOOR - l4(U_NAV), tk = l4(U_TICK), gap = l4(2), nav = 1 - sstep(0.06, 0.3, xeNow);
       const xR = COL_X(NCOL - 1) + l4(12);
-      put('hz', [[-COL_SPAN / 2 - 0.12, Y_FLOOR, 0], [xR, Y_FLOOR, 0]], false, C.ivory, 0.3 * (1 - (stacked ? 0 : sstep(0.8, 0.94, xeNow))), 1, 0.9);
-      const fy = flY(); put('fl', [[floorL, fy, 0], [xR, fy, 0]], false, C.ivory, 0.62 * (1 - sstep(0.8, 1, foldE())), 1, 0.9);
+      put('hz', [[COL_X(0) - step / 2, Y_FLOOR, 0], [xR, Y_FLOOR, 0]], false, C.ivory, 0.42, 1, 0.9);
+      const fy = flY(); put('fl', [[floorL, fy, 0], [xR, fy, 0]], false, C.green, 0.85 * (1 - sstep(0.8, 1, foldE())), 1, 0.9);
       const dash = l4(4), per = l4(9);
       SESSIONS.forEach((ss, c) => {
         const x = COL_X(c), k = (c + 0.1) / (NCOL + 0.55);
@@ -1364,6 +1373,7 @@
       { cls: 'day' + (s.regime === 'premium' ? ' is-prem' : ''), kind: 'tag', group: c, side: 's', keep: true, col: c, dy: U_DAY - 6, info: [`Day ${s.day}`, capw(s.regime), `${s.above ? 'Above' : 'Not above'} the ${FLOOR_T} floor (${esc(valueT(s))}) · ${s.confirmed ? 'confirmed against the broker’s records' : 'confirmation not stated'}`], anchor: () => [COL_X(c), Y_FLOOR, 0] }));
     lab.floor = label(4, `<span>Floor</span> <span class="u">${FLOOR_T}</span>`, { cls: 'floor', kind: 'tag', floor: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
     lab.hedge = label(4, '<span>Above the floor</span> <span class="h">Exact value not published</span>', { cls: 'hedge', kind: 'tag', hedge: true, out: [0.2, 0.3], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, flY(), 0], side: 'nw' });
+    lab.zero = label(4, '<span class="u">0</span>', { cls: 'floor zero', kind: 'tag', anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR, 0], side: 'nw' });
     lab.nav = label(4, 'NAV', { cls: 'navtag', kind: 'tag', out: [0.05, 0.22], anchor: () => [COL_X(0) - COL_SPAN / NCOL * 0.5, Y_FLOOR - l4(U_NAV), 0], side: 'w' });
     lab.key = label(4, `<span>${capw(words(N_PREM))} premium, ${words(N_DISC)} discount.</span> <span>One block per basis point.</span>`, { cls: 'key', kind: 'tag', key: true, out: [0.05, 0.22], anchor: () => [COL_X(0), Y_FLOOR, 0], side: 's' });
   }
@@ -1458,7 +1468,6 @@
       if (hoverPtr && hoverPtr.scene !== tabScene) { hoverPtr = null; setHover(); }
     }
     const tagTop = navH + barH + 6;
-    const paperTop = H - paperH;
     const listCol = [];
     labels.forEach(l => {
       const a = vis(l);
@@ -1500,8 +1509,6 @@
           if (l.sum && y + l.h > project(0, (Y_FLOOR + H_COL + 0.2) * layouts[4].s, 0).y - 4) on = false;
           l.y = y;
           tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
-          if (l.ink) { const ti = inkDayY >= 0 ? `translate(${x.toFixed(1)}px, ${inkDayY.toFixed(1)}px)` : tr; if (ti !== l.inkTr) l.ink.style.transform = l.inkTr = ti; }
-          if (l.ink && inkDayY < 0 && paperH > 0.5 && y > paperTop - 2) on = false;
         }
       }
       l.a = on ? a : 0;
@@ -1615,38 +1622,15 @@
   idx.forEach((button, i) => button.addEventListener('click', () => goTo(i, true)));
   const bar = story.querySelector('.story-bar');
   const paper = story.querySelector('.story-paper');
-  const paperIn = paper && paper.querySelector('.story-paper-in'), paperCap = paperIn && paperIn.querySelector('.container');
-  if (paperIn && lab.days) {
-    const ink = document.createElement('div');
-    ink.className = 'story-ink';
-    lab.days.forEach(l => { const e = document.createElement('div'); e.className = l.el.className; e.innerHTML = l.el.innerHTML; ink.appendChild(e); l.ink = e; });
-    paperIn.insertBefore(ink, paperIn.firstChild);
-  }
-  let shownCap = '', shownLeaving = null, shownUp = null, paperCapH = 0;
-  const paperSum = story.querySelector('[data-story-sum]');
-  if (paperSum) paperSum.textContent = `${FLOOR} ${UNIT} floor · ${N_PREM} premium · ${N_DISC} discount · ${N_CONF === NCOL ? 'every session' : N_CONF + ' of ' + NCOL} broker-confirmed`;
-  const inkRecs = [], inkChks = [];
-  let inkLink = null;
-  if (paperIn && lab.days) {
-    const ink = paperIn.querySelector('.story-ink');
-    inkLink = document.createElement('i'); inkLink.className = 'story-ink-link'; ink.appendChild(inkLink);
-    SESSIONS.forEach(() => { const e = document.createElement('i'); e.className = 'story-ink-rec'; ink.appendChild(e); inkRecs.push(e); });
-    SESSIONS.forEach((ss) => {
-      if (!ss.confirmed) { inkChks.push(null); return; }
-      const t = document.createElementNS(SVGNS, 'svg'), pth = document.createElementNS(SVGNS, 'path');
-      t.setAttribute('class', 'story-ink-chk'); t.setAttribute('viewBox', '-6 -6 12 12'); t.setAttribute('aria-hidden', 'true'); t.setAttribute('focusable', 'false');
-      pth.setAttribute('d', 'M-4.08 .24-1.2 3.12 4.32-2.88'); t.appendChild(pth); ink.appendChild(t); inkChks.push(t);
-    });
-  }
-  let shownInk = '';
+  let shownLeaving = null, paperCapH = 0;
   const shown = beats.map(() => ({ op: '', tr: '', on: null, eo: '', w: '', bo: '' }));
   const beatLinks = beats.map(b => Array.from(b.querySelectorAll('a[href], button')));
   const unseen = (el) => !tiny && !!el.closest('.beat .body-lg') && (short || el.closest('.beat').classList.contains('is-tight'));
-  let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownFill = [], shownCapO = '';
+  let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownFill = [];
   let paperH = 0, relay0 = false, relayReady = false, shownBarOff = null;
   let fadeT = 0, copyX = 0, fading = false, kF = 1;
   let leave4 = 1, barA = 1;
-  let ledeA = 1, shownBl = '', capRef = 0, inkDayY = -1, shownGA = '', shownClip = '', shownInkA = '';
+  let shownBl = '', shownClip = '';
   function syncIndex() {
     const ci = clamp(Math.round(sTarget), 0, 4);
     if (shownIdx === ci) return;
@@ -1672,22 +1656,9 @@
     copyX += clamp(cw - copyX, -k, k);
     fading = copyX !== cw;
     const tMove = lean && xe > 0 ? tallMove() : 0;
-    const paperTop = lean ? tallFoot(br4) + tMove + PAPER_GAP() : Math.round((project(0, Y_FLOOR * layouts[4].s, 0).y - SEAM()) * dpr) / dpr;
-    const row = lean ? paperRow(paperTop) : null;
-    inkDayY = row ? row.day : -1;
-    const gA = lean && seg === 3 && xe > 0 ? (1 - sstep(X.row[0], X.row[1], xe)).toFixed(3) : '';
-    if (gA !== shownGA) { shownGA = gA; cv.style.opacity = gA === '1.000' ? '' : gA; if (labelHost) labelHost.style.opacity = gA === '1.000' ? '' : gA; }
-    paperH = 0;
-    if (xe > 0 && seg === 3) {
-      paperH = Math.max(0, H - paperTop) * sstep(X.paper[0], X.paper[1], xe);
-      const s1 = storyTop + storyH - tail - scrollY;
-      if (tail && s1 < H) paperH = Math.max(paperH, Math.min(Math.max(0, H - paperTop), H - s1));
-    }
+    const s1 = storyTop + storyH - tail - scrollY;
+    paperH = tail ? clamp(H - s1, 0, H) : 0;
     if (paper) { const v = paperH.toFixed(1); if (v !== shownPaper) { shownPaper = v; paper.style.height = v + 'px'; paper.style.visibility = paperH > 0.5 ? 'visible' : 'hidden'; } }
-    const up = paperH > 0.5 && xe >= (lean ? X.row[1] : X.paper[1]);
-    const inkA = lean && paperH > 0.5 ? sstep(X.ink[0], X.ink[1], xe).toFixed(3) : '';
-    if (paperIn && inkA !== shownInkA) paperIn.style.opacity = shownInkA = inkA;
-    if (shownUp !== up) story.classList.toggle('is-paper-up', shownUp = up);
     if (!relay0 && (relayReady || sNow > 0.3)) { relay0 = true; beats[0].classList.add('is-relay'); }
     beats.forEach((b, i) => {
       const d = Math.abs(cs - i), s = shown[i];
@@ -1707,31 +1678,7 @@
         if (cl !== shownClip) b.style.clipPath = shownClip = cl;
         leave4 += clamp(t4 - leave4, -k, k); if (leave4 !== t4) fading = true;
         op *= leave4; if (!red) dy -= (1 - leave4) * 14;
-        let tL = 1, cap = 1;
-        if (br4.lb > 0 && seg === 3) {
-          const xT = red ? (xTarget > 0.5 ? 1 : 0) : xPostOf(xTarget), pad = 24 * remK, lt = br4.lt + dy, lb = br4.lb + dy;
-          if (!lean) tL = xe > 0 || xT > 0 ? 0 : 1;
-          else tL = 1;
-          if (xe > 0) {
-            let gap = paperH > 0.5 ? H - paperH - lb : 1e9;
-            if (!lean) {
-              const s4 = layouts[4].s, ry = project(0, Y_FLOOR * s4, 0).y, c0 = project(COL_X(0) * s4, Y_FLOOR * s4, 0).x, rl = project((-COL_SPAN / 2 - 0.12) * s4, Y_FLOOR * s4, 0).x;
-              const tk = project(COL_X(0) * s4, (flY() + yK(Y_CTOP) + 0.1 - yK(Y_FL)) * s4, 0).y, dw = lab.days && lab.days[0] ? lab.days[0].w : 0;
-              const fl = project((COL_X(0) - COL_SPAN / NCOL * 0.5) * s4, flY() * s4, 0), flx = fl.x, fly = fl.y;
-              const left = Math.min(rl, c0 - dw / 2, xe < 0.22 && lab.nav ? project((COL_X(0) - COL_SPAN / NCOL * 0.5) * s4, Y_FLOOR * s4, 0).x - lab.nav.w - 8 : 1e9);
-              const bottom = ry + U_DAY * remK + dayH + (xe < 0.22 ? keyH + 8 * remK : 0);
-              const box = (l, t, b) => Math.max(l - br4.lr, t - lb, lt - b);
-              gap = Math.min(gap, box(left, tk, bottom));
-              if (xe < 0.3) gap = Math.min(gap, box(Math.min(project(floorL * s4, flY() * s4, 0).x, flx - 8 - Math.max(floorW, hedgeW)), fly - floorH - 6 - hedgeGap() - hedgeH, fly + 2));
-            }
-            if (!capRef) capRef = Math.max(1, Math.min(pad, gap));
-            cap = clamp(gap / capRef, 0, 1);
-          } else capRef = 0;
-        }
-        ledeA += clamp(tL - ledeA, -k, k); if (ledeA !== tL) fading = true;
-        bo *= Math.min(ledeA, cap);
-        const bl = red ? '0' : (1 - ledeA).toFixed(3);
-        if (bl !== shownBl) b.style.setProperty('--bl', shownBl = bl);
+        if (shownBl !== '0') b.style.setProperty('--bl', shownBl = '0');
       }
       if (bo < 0.08) bo = 0;
       const o = op.toFixed(3), tr = `translate3d(0, ${dy.toFixed(1)}px, 0)`, e = eo.toFixed(3), ww = w.toFixed(3), bb = bo.toFixed(3);
@@ -1749,44 +1696,13 @@
     syncIndex();
     idx.forEach((button, i) => { const f = clamp(sNow - i + 0.5, 0, 1).toFixed(2); if (shownFill[i] !== f) button.style.setProperty('--fill', shownFill[i] = f); });
     if (shownScrolled !== sNow > 0.3) story.classList.toggle('is-scrolled', shownScrolled = sNow > 0.3);
-    const barT = xe >= 0.19 ? 0 : 1;
-    barA += clamp(barT - barA, -k, k); if (barA !== barT) fading = true;
+    barA = tail && s1 <= barTop ? 0 : 1;
     const bo = barA.toFixed(3);
     if (bar && bo !== shownBar) { bar.style.opacity = shownBar = bo; bar.style.visibility = bo < 0.01 ? 'hidden' : ''; }
     const barOff = +bo < 0.01;
     if (barOff !== shownBarOff) { shownBarOff = barOff; idx.concat(motionButton || []).forEach(el => { if (barOff) el.setAttribute('tabindex', '-1'); else el.removeAttribute('tabindex'); }); }
     if (shownLeaving !== xe > 0.05) story.classList.toggle('is-leaving', shownLeaving = xe > 0.05);
     placeLabels();
-    let capY = -1;
-    if (paperCap && xe > 0) {
-      let yb = 0;
-      if (lean) yb = row.cap - 16 * remK;
-      else if (lab.days) lab.days.forEach(l => { if (l.inkTr && l.h) yb = Math.max(yb, l.y + l.h); });
-      if (!yb) yb = H * FLOOR_END() + (U_DAY + 16) * remK;
-      capY = Math.round(Math.min(yb + 16 * remK, H - paperCapH - 2));
-    }
-    if (paperH > 0.5) {
-      if (inkRecs.length) {
-        const s4 = layouts[4].s, ry = project(0, (Y_FLOOR - l4(U_REC)) * s4, 0).y;
-        const xs = SESSIONS.map((ss, c) => project(COL_X(c) * s4, (Y_FLOOR - l4(U_REC)) * s4, 0).x);
-        const tk = lerp(yK(Y_CTOP) + 0.1, Y_FLOOR + l4(U_CHK), foldE()) * s4, ty = project(0, tk, 0).y;
-        const ryI = row ? row.rec : ry, tyI = row ? row.tk : ty;
-        const key = xs.map(v => v.toFixed(1)).join() + ryI.toFixed(1) + tyI.toFixed(1);
-        if (key !== shownInk) {
-          shownInk = key;
-          const hw = inkRecs[0].offsetWidth / 2, hh = inkRecs[0].offsetHeight / 2;
-          inkRecs.forEach((e, c) => { e.style.transform = `translate(${(xs[c] - hw).toFixed(1)}px, ${(ryI - hh).toFixed(1)}px)`; });
-          if (inkLink) { inkLink.style.transform = `translate(${xs[0].toFixed(1)}px, ${ryI.toFixed(1)}px)`; inkLink.style.width = (xs[xs.length - 1] - xs[0]).toFixed(1) + 'px'; }
-          const th = 6 * remK;
-          inkChks.forEach((e, c) => { if (e) e.style.transform = `translate(${(project(COL_X(c) * s4, tk, 0).x - th).toFixed(1)}px, ${(tyI - th).toFixed(1)}px)`; });
-        }
-      }
-      if (paperCap && capY >= 0) {
-        const cap = `translate3d(0, ${capY}px, 0)`;
-        if (cap !== shownCap) paperCap.style.transform = shownCap = cap;
-        if (shownCapO !== '1') paperCap.style.opacity = shownCapO = '1';
-      }
-    }
   }
 
   let running = true, visible = true, paused = false, frameId = 0, t0 = performance.now(), simTime = 14.3, settledOnce = false, pointerDirty = false, ptr = null, firstFrame = -1;
@@ -1828,12 +1744,12 @@
   }
   function invalidate() {
     shown.forEach(s => { s.op = s.tr = s.eo = s.w = s.bo = ''; s.on = s.gone = null; });
-    shownIdx = labelScene = tabScene = -1; shownBarOff = shownLeaving = shownScrolled = shownHasInsp = shownUp = null;
-    shownBar = shownPaper = shownCap = shownCapO = shownInk = inspTr = '';
+    shownIdx = labelScene = tabScene = -1; shownBarOff = shownLeaving = shownScrolled = shownHasInsp = null;
+    shownBar = shownPaper = inspTr = '';
     clearTall();
-    labels.forEach(l => { l.tr = l.ov = l.d = l.nc = l.inkTr = ''; l.on = null; });
+    labels.forEach(l => { l.tr = l.ov = l.d = l.nc = ''; l.on = null; });
   }
-  function clearTall() { shownGA = shownClip = shownInkA = ''; cv.style.opacity = ''; if (labelHost) labelHost.style.opacity = ''; if (paperIn) paperIn.style.opacity = ''; if (beats[4]) beats[4].style.clipPath = ''; }
+  function clearTall() { shownClip = ''; cv.style.opacity = ''; if (labelHost) labelHost.style.opacity = ''; if (beats[4]) beats[4].style.clipPath = ''; }
   function setTiny(on) {
     tiny = on;
     if (on) {
@@ -1875,7 +1791,6 @@
       if (lab.days) lab.days.forEach(l => { l.dy = U_DAY * remK - 6; });
       cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr);
       gl.viewport(0, 0, cv.width, cv.height);
-      if (paperIn) paperIn.style.height = H + 'px';
       leaders.setAttribute('viewBox', `0 0 ${W} ${H}`);
       keyOff = false;
       setModes();
@@ -1922,7 +1837,7 @@
     gl.uniform1fv(u.u_hov, hov); gl.uniform1f(u.u_hovOn, hoverOn); gl.uniform1f(u.u_hovScene, hoverScene);
     gl.uniform1f(u.u_sceneA, seg); gl.uniform1f(u.u_sceneB, seg + 1);
     gl.uniform1f(u.u_fold, seg === 3 ? foldE() : 0); gl.uniform1fv(u.u_cg, cgArr);
-    gl.uniform1f(u.u_railA, seg === 3 && !stacked ? 1 - sstep(WX.spread[0], WX.spread[1], xeNow) : 1);
+    gl.uniform1f(u.u_railA, seg === 3 ? 1 - cgArr.reduce((t, v, c) => t + (c < NCOL ? v : 0), 0) / NCOL : 1);
     gl.uniform1f(u.u_colK, colK);
     gl.uniform1f(u.u_hovLift, reducedMQ.matches ? 0 : 0.07 * scale[hoverScene === seg ? 0 : 1] * (hoverScene === 2 ? 1 : 0));
     const occ = seg === 0 ? (1 - sstep(0, 0.55, mRaw)) : 0;
@@ -1953,7 +1868,7 @@
     const pr = P.act, u = pr.u;
     gl.useProgram(pr.prog);
     gl.uniformMatrix4fv(u.u_view, false, view); gl.uniformMatrix4fv(u.u_proj, false, proj);
-    gl.uniform1f(u.u_pr, dpr * ptK); gl.uniform1f(u.u_dist, CAM_D); gl.uniform1f(u.u_fogR, 1.7 * Math.max(scale[0], scale[1])); gl.uniform1f(u.u_maxpt, maxPt); gl.uniform1f(u.u_halo, halo ? 1 : 0);
+    gl.uniform1f(u.u_pr, dpr * ptK); gl.uniform1f(u.u_dist, CAM_D); gl.uniform1f(u.u_fogR, 1.7 * Math.max(scale[0], scale[1])); gl.uniform1f(u.u_maxpt, maxPt); gl.uniform1f(u.u_halo, halo ? 1 : 0); gl.uniform2f(u.u_res, cv.width, cv.height); gl.uniform1f(u.u_sw, Math.max(1, Math.round(dpr * remK)));
     gl.bindBuffer(gl.ARRAY_BUFFER, BUF.act);
     if (!halo) gl.bufferSubData(gl.ARRAY_BUFFER, 0, actData.subarray(0, nAct * 11));
     const st = 44;
@@ -1991,7 +1906,7 @@
     const jump = red || !settledOnce;
     if (jump) { sNow = sTarget; xNow = xTarget; settledOnce = true; }
     else { const k = 1 - Math.exp(-dtS * (performance.now() - lastGo.t < 1500 ? 10 : 6.5)), kx = scrollY > storyTop + run ? 1 - Math.exp(-dtS * 24) : k; sNow += (sTarget - sNow) * k; xNow += (xTarget - xNow) * kx; if (Math.abs(sTarget - sNow) < 0.0004) sNow = sTarget; if (Math.abs(xTarget - xNow) < 0.0004) xNow = xTarget; }
-    xeNow = red ? (xNow > 0.5 ? 1 : 0) : xPost();
+    xeNow = 0;
     morphState();
     greenBusy = stepGreen(dtS, jump || paused);
     stepCopy(now, dtS);
@@ -2219,7 +2134,7 @@
   let lostTimer = 0;
   function uiNoGL() {
     if (!running || !wired || tiny) return;
-    sNow = sTarget; xNow = xTarget; xeNow = reducedMQ.matches ? (xNow > 0.5 ? 1 : 0) : xPost(); copyS = sNow; copyMode = 'follow';
+    sNow = sTarget; xNow = xTarget; xeNow = 0; copyS = sNow; copyMode = 'follow';
     morphState(); camera(); updateUI(performance.now());
   }
   function start() {

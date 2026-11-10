@@ -38,7 +38,7 @@
 .beat .body-lg { margin-top: 1.375rem; max-width: 46ch; } /* hc4: the lede step (--fs-body, .body-lg's), as the sub-line above it (was 1.04rem) */
 .beat .hero-cta { margin-top: 1.875rem; }
 .hero-stats { display: grid; grid-template-columns: 1fr 1fr .8fr 1.45fr; gap: 1.25rem; margin-top: 2.125rem; padding-top: 1.25rem; border-top: var(--hair) solid rgba(245, 242, 236, .14); max-width: min(52%, 40rem); }
-.hero-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: var(--fs-item); line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
+.hero-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: var(--fs-item); line-height: 1; letter-spacing: var(--track-figure); white-space: nowrap; }
 .hero-stats span { display: block; margin-top: .5625rem; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58); line-height: 1.4; }
 /* Lifecycle 01: a numeral like its neighbours, with the live dot */
 .hero-stats .live { display: inline-block; width: .375rem; height: .375rem; margin-left: .5625rem; border-radius: 50%; background: var(--signal-bright); vertical-align: .62em; animation: pulse 2s var(--ease-move) 3; } /* three beats, then still, as .badge i (WCAG 2.2.2; award a1: it was the one CSS animation on the site that never stopped) */
@@ -92,7 +92,7 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
 .story-lab.cap b { color: rgba(245, 242, 236, .8); font-weight: 400; margin-right: .7em; }
 .story-lab.day { display: grid; justify-items: center; gap: calc(2 * var(--hair)); padding: .1875rem .25rem; min-width: 1.625rem; line-height: 1.25; }
 .story-lab.day.is-hot .k { color: var(--paper); }
-.story-lab.day.is-thin:not(:focus-visible), .story-ink .story-lab.is-thin { opacity: 0 !important; } /* columns too close for every tag: 01, 03 … 09 print */
+.story-lab.day.is-thin:not(:focus-visible) { opacity: 0 !important; } /* columns too close for every tag: 01, 03 … 09 print */
 .story-lab.floor { color: rgba(245, 242, 236, .74); text-align: right; }
 .story-lab.navtag { color: rgba(245, 242, 236, .5); }
 /* hc3: scene 4 is recorded data, as Fig. 1.1: its words (Floor, NAV) in the caption register, its value and the days mono */
@@ -139,19 +139,9 @@ button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright)
   @media (forced-colors: active) { .story-bar .story-motion::before, .story-bar .story-motion::after { forced-color-adjust: none; background: ButtonText; } }
 }
 .story.is-scrolled .hero-stats .live, .story.is-paused .hero-stats .live { animation-play-state: paused; } /* its loop (transform, opacity) stops once S0 has gone, and with Pause motion */
-/* the hand-off: the columns drain into their records on the floor line */
+/* the hand-off (hc29): §01 is the paper and rises over the stage; .story-paper, empty and unseen on Home, tracks its top (site.js, story.js) */
 .story-paper { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; height: 0; overflow: hidden; visibility: hidden; background: var(--paper); color: var(--ink); pointer-events: none; }
-.story-paper-in { position: absolute; left: 0; right: 0; bottom: 0; height: 100vh; height: 100svh; } /* the stage's frame: the paper uncovers what is here, it does not carry it */
-.story-paper-in > .container { position: absolute; left: 0; right: 0; top: 0; }
-.story-ink { position: absolute; inset: 0; }
-.story-ink .story-lab { opacity: 1; transition: none; pointer-events: none; }
-.story-ink .story-lab .k { color: var(--ink); }
-.story-ink-rec { position: absolute; left: 0; top: 0; width: .9375rem; height: .4375rem; border-radius: .0625rem; background: var(--ink); }
-.story-ink-rec::after { content: ""; position: absolute; right: calc(2 * var(--hair)); top: calc(2 * var(--hair)); width: calc(3 * var(--hair)); height: calc(3 * var(--hair)); background: var(--paper); opacity: .55; } /* its hash slot */
-.story-ink-link { position: absolute; left: 0; top: 0; height: var(--hair); background: rgba(14, 21, 18, .34); }
-.story.is-leaving .story-lab { pointer-events: none; }
 .story-next-target:focus { outline: none; } /* the chapter the keys stepped into from the last scene: focus moves there, no ring on the section */
-.story-paper-cap { display: flex; justify-content: space-between; gap: .375rem 1.5rem; flex-wrap: wrap; padding-bottom: .875rem; border-bottom: var(--hair) solid var(--rule-strong); font: var(--fs-small)/1.5 var(--sans); letter-spacing: 0; color: var(--slate); } /* a caption, not data: the small step in Inter (1 Nov) */
 
 /* the layout modes story.js measures. */
 @media (max-width: 599.98px) { .story-compact .beat-0 .hero-stats { display: none; } } /* a4: portrait tablets keep v2's four figures (owner, 2 Nov) */

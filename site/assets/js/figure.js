@@ -125,15 +125,18 @@
       // value not published" box (ivory made the unpublished part the brightest mark). The regime is Proof's step line,
       // not this drawing's colour (green beside white read as two outcomes), so the figure no longer reads the regimes
       const P = []; const per = Math.floor(N * 0.082);
-      const B = -0.72, F = 0.48, U = (F - B) / 10, w = 0.07, o0 = F + 0.025, o1 = o0 + U; // ten units to the floor; one open unit above
+      // hc29 (director): Proof's geometry, one block per basis point: ten square blocks to the floor (a fifth of each unit
+      // left as the gap), the open unit the eleventh block's outline (build_research _forms: the same, line for line)
+      const B = -0.72, F = 0.48, U = (F - B) / 10, w = 0.048, H = 0.8 * U, o0 = F + 0.1 * U, o1 = o0 + H;
+      const cell = r => { r *= 10; const k = Math.floor(r); return B + (k + 0.1 + 0.8 * (r - k)) * U; };
       for (let c = 0; c < 10; c++) {
         const x = -1.08 + c * 0.24;
         for (let i = 0; i < per; i++) {
-          if (rnd() < 0.86) { P.push([x + (rnd() - 0.5) * 2 * w, B + rnd() * (F - B), (rnd() - 0.5) * 0.1, 2]); continue; }
+          if (rnd() < 0.86) { P.push([x + (rnd() - 0.5) * 2 * w, cell(rnd()), (rnd() - 0.5) * 0.1, 2]); continue; }
           // the open unit: its outline only (the perimeter, sides weighted by length)
-          const e = rnd() * (4 * w + 2 * U); let px, py;
+          const e = rnd() * (4 * w + 2 * H); let px, py;
           if (e < 2 * w) { px = x - w + e; py = o0; } else if (e < 4 * w) { px = x - w + (e - 2 * w); py = o1; }
-          else if (e < 4 * w + U) { px = x - w; py = o0 + (e - 4 * w); } else { px = x + w; py = o0 + (e - 4 * w - U); }
+          else if (e < 4 * w + H) { px = x - w; py = o0 + (e - 4 * w); } else { px = x + w; py = o0 + (e - 4 * w - H); }
           P.push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, 1]);
         }
       }
@@ -150,14 +153,6 @@
       for (let c = 0; c < 5; c++) { const a = (c / 4 - 0.5) * 2.4; const cx = Math.sin(a) * 1.0, cy = -0.35, cz = Math.cos(a) * 0.35 - 0.2; sphere(cx, cy, cz, 0.17, Math.floor(N * 0.07), c === 0 ? 0 : 1, 0.74); for (let i = 0; i < N * 0.035; i++) { const s = rnd(); P.push([cx * s + g() * 0.006, 0.6 + (cy - 0.6) * s + g() * 0.006, cz * s + g() * 0.006, 7, 0.1 + s * 0.6]); } }
       for (let i = 0; i < N * 0.1; i++) P.push([(rnd() * 2 - 1) * 1.3, -0.75 + g() * 0.004, (rnd() * 2 - 1) * 0.5, 1, 0.9]);
       while (P.length < N) P.push([(rnd() * 2 - 1) * 1.4, (rnd() * 2 - 1) * 0.9, -0.9 - rnd() * 0.6, 7]);
-      return P;
-    },
-    // Index · the library: ten leaves fanned round one spine like the pages of an open book, the two research notes lit
-    // (v2x: v2 set the leaves edge to edge on one arc, which read as a single slab)
-    library(N, rnd, g) {
-      const P = []; const per = Math.floor(N * 0.088);
-      for (let l = 0; l < 10; l++) { const a = (l / 9 - 0.5) * 2.2; const ux = Math.sin(a), uz = Math.cos(a); for (let i = 0; i < per; i++) { const rim = rnd() < 0.3; let u = 0.12 + rnd() * 0.86, v = rnd() * 2 - 1; if (rim) { if (rnd() < 0.5) v = rnd() < 0.5 ? -1 : 1; else u = rnd() < 0.5 ? 0.12 : 0.98; } P.push([ux * u + g() * 0.003, v * 0.46 + g() * 0.003, uz * u - 0.35 + g() * 0.003, l < 2 ? 2 : (rim ? 0 : 1), (l + u * 0.7) / 10.7]); } }
-      while (P.length < N) P.push([(rnd() * 2 - 1) * 1.4, (rnd() * 2 - 1) * 0.9, -1.2 - rnd() * 0.6, 7]);
       return P;
     },
     // Company · the swarm as one body: a sphere of agents with three orbits of work around it

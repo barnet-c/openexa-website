@@ -1011,22 +1011,42 @@ def check_decisions():
 
 
 def check_close_globe():
-    """HC24 4.2 (the director): the cropped fine-bead globe ends Home's close only, where it answers the hero's globe; every
-    other close is type on ink. Integrate hc24 took the mark out of the seven other closes' markup and site.css's
-    `body:not([data-page="home"]) .cta-band .globe { display: none }` went with it, so this pins the principle: Home's close
-    has exactly one `<i class="mark globe" aria-hidden="true">`, no other page has one anywhere, and every close keeps one
-    head (an h2)."""
+    """HC24 4.2 (the director): the cropped fine-bead globe ended Home's close only; integrate hc24 pinned that markup.
+    hc29 (integrate, standing in for tests; system's request, the HC29 director's item 5: "give all seven closes one
+    composition"): the globe is behind every close now, drawn by the band itself, so the principle reads: site.css draws
+    it with `.cta-band::before` (the fine globe, `globe-fine.svg`, set once the close reveals: a `.cta-band:has(...)`
+    rule, and at once without JavaScript: a `@media (scripting: none)` rule), behind the copy (`z-index: -1` in an
+    `isolation: isolate` band that clips it, `overflow: hidden`); no page carries a globe element (`class="mark globe"`,
+    or any `.globe` in a close) any more, which would draw a second one; every close keeps exactly one head (an h2); and
+    the eight pages with a close (Home, Platform, Lifecycles, Proof, Trust, Research, Company, the blog index) each have
+    exactly one."""
+    css = re.sub(r"/\*.*?\*/", " ", (ROOT / "assets/css/site.css").read_text(encoding="utf-8"), flags=re.S)
+    rules = [(m[1].strip(), m[2]) for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", css)]
+    band = [b for sel, b in rules if re.fullmatch(r"\.cta-band", sel)]
+    before = [b for sel, b in rules if re.fullmatch(r"\.cta-band::before", sel)]
+    shown = [b for sel, b in rules if re.fullmatch(r"\.cta-band:has\(\[data-reveal\]\.is-in\)::before", sel)]
+    nojs = re.search(r"@media\s*\(scripting:\s*none\)\s*\{\s*\.cta-band::before\s*\{([^{}]*)\}", css)
+    if not band or not re.search(r"overflow:\s*hidden", band[0]) or not re.search(r"isolation:\s*isolate", band[0]):
+        fail("assets/css/site.css", "close_globe: `.cta-band` must clip its globe and isolate it (overflow: hidden; isolation: isolate)")
+    if not before or not re.search(r'content:\s*""', before[0]) or not re.search(r"z-index:\s*-1\b", before[0]) or re.search(r"url\(", before[0]):
+        fail("assets/css/site.css", "close_globe: `.cta-band::before` draws the globe behind the copy (content, z-index: -1) and asks for no image before the close reveals")
+    for what, body in (("once the close reveals (`.cta-band:has([data-reveal].is-in)::before`)", shown[0] if shown else ""),
+                       ("without JavaScript (`@media (scripting: none) { .cta-band::before }`)", nojs[1] if nojs else "")):
+        if not re.search(r'background-image:\s*url\("?\.\./img/globe-fine\.svg"?\)', body): fail("assets/css/site.css", f"close_globe: the close draws the fine globe {what}")
+    closes = []
     for rel in pages:
         s = (ROOT / rel).read_text(encoding="utf-8")
         marks = len(re.findall(r'<i\b[^>]*\bclass="mark globe"', s))
+        if marks: fail(rel, f"close_globe: {marks} globe element(s); the band's ::before draws the globe (hc29)")
         bands = re.findall(r'<section class="cta-band\b[^"]*">(.*?)</section>', s, re.S)
-        if rel == "index.html":
-            if len(bands) != 1 or marks != 1 or not re.search(r'<i class="mark globe" aria-hidden="true"></i>', bands[0]):
-                fail(rel, f"close_globe: Home's close keeps its one aria-hidden globe ({len(bands)} close(s), {marks} globe mark(s))")
-        elif marks:
-            fail(rel, f"close_globe: {marks} globe mark(s); the globe ends Home's close only (HC24 4.2)")
+        if bands: closes.append(rel)
+        if len(bands) > 1: fail(rel, f"close_globe: {len(bands)} closes on one page")
         for b in bands:
             if len(re.findall(r"<h2\b", b)) != 1: fail(rel, "close_globe: a close without exactly one head (h2)")
+            if re.search(r'\bclass="[^"]*\bglobe\b', b): fail(rel, "close_globe: a .globe element in the close (the band draws it)")
+    want = {"index.html", "platform.html", "lifecycles.html", "evidence.html", "trust.html", "research.html", "company.html", "blog/index.html"}
+    missing = sorted(want - set(closes))
+    if missing: fail("close_globe: no close on " + ", ".join(missing))
 
 
 def check_scenes():

@@ -61,7 +61,7 @@
  },
  "blog/index.html": {
   "date": "2026-11-09",
-  "sha": "8bf58106c0d39329"
+  "sha": "710d14da012fe82d"
  },
  "blog/leveraged-etfs-price-dynamics-and-options-valuation.html": {
   "date": "2026-11-09",
@@ -125,7 +125,7 @@
  },
  "company.html": {
   "date": "2026-11-09",
-  "sha": "729e598d2f0978a4"
+  "sha": "97f7bd382a004c74"
  },
  "evidence.html": {
   "date": "2026-11-09",
@@ -133,7 +133,7 @@
  },
  "index.html": {
   "date": "2026-11-09",
-  "sha": "c29922c85044ff5e"
+  "sha": "ec79d2ca4d5bec2e"
  },
  "lifecycles.html": {
   "date": "2026-11-09",
@@ -145,7 +145,7 @@
  },
  "research.html": {
   "date": "2026-11-09",
-  "sha": "66c1194fd11ea537"
+  "sha": "8afb43875107d563"
  },
  "research/01-compounding-error.html": {
   "date": "2026-11-09",
@@ -181,7 +181,7 @@
  },
  "research/09-lifecycle-01-ten-sessions.html": {
   "date": "2026-11-09",
-  "sha": "7f26bb19edeb004c"
+  "sha": "43f24fb97e24915b"
  },
  "research/10-master-and-copy.html": {
   "date": "2026-11-09",
@@ -189,6 +189,6 @@
  },
  "trust.html": {
   "date": "2026-11-09",
-  "sha": "b4ef17fdae7faa23"
+  "sha": "e12363872758d9a7"
  }
 }
