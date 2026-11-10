@@ -3021,8 +3021,10 @@ async def lab_act(b):
     for w, h, touch in ((390, 844, True), (1024, 768, False)):
         ctx, pg = await open_page(b, "index.html", w, h, touch=touch, init=ACT_WATCH)
         await pg.evaluate(center); await pg.wait_for_timeout(200)
+        # The engine names the lab stacked in its first resize(), once it has started. Under CI's software GL that can be
+        # later than 200 ms (run 42785737245 read 1024 too early), so wait for it, then measure.
+        stacked = await until(pg, "document.querySelector('[data-swarm-live]').classList.contains('is-stacked')", lim(6000), 100)
         before = await pg.evaluate(LAB_SIZE)
-        stacked = await pg.evaluate("document.querySelector('[data-swarm-live]').classList.contains('is-stacked')")
         if not await until(pg, "document.querySelector('[data-swarm-live]').dataset.swAct === 'on'", lim(6000), 100):
             bad.append(f"{w}: the lab did not follow a proposal by itself within 6 s in view")
         else:
@@ -5435,6 +5437,12 @@ async def lab_copy(b):
     if cp != "1.00" or rest != [0, 0]: bad.append(f"platform.html@1440 at rest (data-sw-copy {cp!r}): the gate list / Boundary tag at opacity {rest} (0 until a proposal is followed)")
     await pg.evaluate("document.querySelector('[data-sw-follow]').click()"); await pg.wait_for_timeout(900)
     fol = await pg.evaluate(tags)
+    # The tags fade in over the follow's first frames. Where frames are slow (CI's software GL, run 42785737245) 900 ms
+    # is mid-fade (0.81), so give the fade time to end before judging where it ended.
+    waited = 900
+    while fol != [1, 1] and waited < 6000 * max(1.0, MODE["throttle"]):
+        await pg.wait_for_timeout(150); waited += 150
+        fol = await pg.evaluate(tags)
     if fol != [1, 1]: bad.append(f"platform.html@1440 following a proposal: the gate list / Boundary tag at opacity {fol} (1)")
     notes.append(f"Platform at rest names {rest}, following {fol}; Home {t_home}")
     await ctx.close()
