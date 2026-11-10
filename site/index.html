@@ -30,6 +30,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="preload" href="assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/instrument-serif-400i-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/css/site.css">
   <link rel="stylesheet" href="assets/css/overture.css">
   <link rel="stylesheet" href="assets/css/swarm.css">
@@ -40,7 +41,7 @@
   <script type="application/ld+json" id="ld-page">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://www.openexa.com/#organization","name":"OpenEXA","url":"https://www.openexa.com/","logo":{"@type":"ImageObject","url":"https://www.openexa.com/assets/img/icon-512.png","width":512,"height":512},"legalName":"OpenEXA Inc.","image":"https://www.openexa.com/assets/img/og/index.jpg","description":"OpenEXA is an AI agentic company. It builds the end-to-end infrastructure on which swarms of domain-specific AI agents run high-value lifecycles end to end. Lifecycle 01 is live on real capital.","address":{"@type":"PostalAddress","addressLocality":"Seattle","addressRegion":"WA","addressCountry":"US"}},{"@type":"WebSite","@id":"https://www.openexa.com/#website","name":"OpenEXA","url":"https://www.openexa.com/","inLanguage":"en","publisher":{"@id":"https://www.openexa.com/#organization"}},{"@type":"WebPage","@id":"https://www.openexa.com/#webpage","url":"https://www.openexa.com/","name":"OpenEXA — Infrastructure for agentic lifecycles","description":"OpenEXA, an AI agentic company, builds the infrastructure on which swarms of AI agents run high-value lifecycles. Lifecycle 01 is live on real capital.","isPartOf":{"@id":"https://www.openexa.com/#website"},"primaryImageOfPage":"https://www.openexa.com/assets/img/og/index.jpg","inLanguage":"en","about":{"@id":"https://www.openexa.com/#organization"}}]}</script>
 </head>
 <body data-page="home" data-nav="dark-start">
-  <div class="loader" aria-hidden="true"><div class="loader-inner"><div class="loader-dial"><i class="loader-ring"></i><i class="mark"></i></div><div class="loader-count">00</div></div></div>
+  <div class="loader" aria-hidden="true"><div class="loader-dial"><i class="loader-ring"></i><i class="mark"></i></div></div>
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="nav">
@@ -80,7 +81,7 @@
       <div class="story-stage grain" role="group" aria-label="Five scenes">
         <canvas class="story-gl" aria-hidden="true"></canvas>
         <canvas class="story-2d" data-swarm aria-hidden="true" hidden></canvas>
-        <img class="story-static-mark" src="assets/img/globe-fine.svg" alt="" aria-hidden="true">
+        <img class="story-static-mark" src="assets/img/globe-fine.svg" width="240" height="240" alt="" aria-hidden="true">
         <div class="story-ui">
           <div class="container">
 
@@ -91,14 +92,14 @@
                 <p class="lede hero-sub">OpenEXA builds the end-to-end infrastructure on which swarms of domain-specific AI agents run the world’s <span class="nowrap">high-value</span> lifecycles.</p>
                 <div class="hero-cta">
                   <a class="btn" href="access.html">Request access <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
-                  <a class="btn btn--ghost" href="#stack">See the stack</a>
+                  <a class="btn btn--ghost" href="platform.html">See the stack</a>
                 </div>
               </div>
               <div class="hero-stats" role="group" aria-label="Key figures">
-                <div><b>5k<em>–</em>50k</b><span>agents per lifecycle</span></div>
-                <div><b>90%</b><span>cost &amp; risk eliminated</span></div>
-                <div><b>6</b><span>lifecycle classes</span></div>
-                <div><b>01<i class="live" aria-hidden="true"></i></b><span>Lifecycle live · ETF create &amp; redeem on real capital</span></div>
+                <div><b>5k–50k</b><span>Agents per lifecycle</span></div>
+                <div><b>90%</b><span>Cost &amp; risk eliminated</span></div>
+                <div><b>6</b><span>Lifecycle classes</span></div>
+                <div><b>01</b><span><i class="live" aria-hidden="true"></i>Lifecycle live<span class="hs-sep"> · </span><span class="hs-l2">ETF create&nbsp;&amp; redeem on real capital</span></span></div>
               </div>
             </div>
 
@@ -107,33 +108,52 @@
                 <h2 class="display-2" data-split>Not tasks. <em>Lifecycles.</em></h2>
                 <p class="body-lg">A lifecycle runs from signal to record.</p>
               </div>
-              <svg class="beat-fig" viewBox="0 0 420 240" aria-hidden="true" focusable="false"><g fill="none"><ellipse cx="190" cy="120" rx="36" ry="16" stroke="#4FCB93" stroke-opacity="1" stroke-width="2"/><ellipse cx="190" cy="120" rx="66" ry="30" stroke="#F5F2EC" stroke-opacity=".6" stroke-width="1" stroke-dasharray="7 4" transform="rotate(-7 190 120)"/><ellipse cx="190" cy="120" rx="96" ry="43" stroke="#F5F2EC" stroke-opacity=".55" stroke-width="1" stroke-dasharray="7 4" transform="rotate(9 190 120)"/><ellipse cx="190" cy="120" rx="126" ry="56" stroke="#ACA68E" stroke-opacity=".5" stroke-width="1" stroke-dasharray="1.5 6" transform="rotate(-10 190 120)"/><ellipse cx="190" cy="120" rx="156" ry="69" stroke="#ACA68E" stroke-opacity=".45" stroke-width="1" stroke-dasharray="1.5 6" transform="rotate(6 190 120)"/><ellipse cx="190" cy="120" rx="186" ry="82" stroke="#ACA68E" stroke-opacity=".4" stroke-width="1" stroke-dasharray="1.5 7" transform="rotate(-12 190 120)"/><path d="M184 120h12M190 114v12" stroke="#F5F2EC" stroke-opacity=".5"/><path d="M217 130L252 222h8" stroke="#4FCB93" stroke-opacity=".75"/><circle cx="217" cy="130" r="2" fill="#4FCB93" stroke="none"/></g><g font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing="1.3" fill="#F5F2EC" fill-opacity=".72"><text x="264" y="225" fill="#4FCB93" fill-opacity="1">LC-01 · LIVE</text><text x="318" y="70">LC-06</text><text x="196" y="22">NEXT · ROADMAP</text></g></svg>
+              <svg class="beat-fig" viewBox="0 0 420 240" aria-hidden="true" focusable="false"><g fill="none"><ellipse cx="190" cy="120" rx="36" ry="16" stroke="#4FCB93" stroke-opacity="1" stroke-width="2"/><ellipse cx="190" cy="120" rx="66" ry="30" stroke="#F5F2EC" stroke-opacity=".6" stroke-width="1" stroke-dasharray="7 4" transform="rotate(-7 190 120)"/><ellipse cx="190" cy="120" rx="96" ry="43" stroke="#F5F2EC" stroke-opacity=".55" stroke-width="1" stroke-dasharray="7 4" transform="rotate(9 190 120)"/><ellipse cx="190" cy="120" rx="126" ry="56" stroke="#ACA68E" stroke-opacity=".5" stroke-width="1" stroke-dasharray="1.5 6" transform="rotate(-10 190 120)"/><ellipse cx="190" cy="120" rx="156" ry="69" stroke="#ACA68E" stroke-opacity=".45" stroke-width="1" stroke-dasharray="1.5 6" transform="rotate(6 190 120)"/><ellipse cx="190" cy="120" rx="186" ry="82" stroke="#ACA68E" stroke-opacity=".4" stroke-width="1" stroke-dasharray="1.5 7" transform="rotate(-12 190 120)"/><path d="M184 120h12M190 114v12" stroke="#F5F2EC" stroke-opacity=".5"/><path d="M217 130L252 222h8" stroke="#4FCB93" stroke-opacity=".75"/><circle cx="217" cy="130" r="2" fill="#4FCB93" stroke="none"/></g><g font-family="Inter, 'Inter fallback', 'Segoe UI', Arial, sans-serif" font-size="10.5" fill="#F5F2EC" fill-opacity=".72" stroke="#0B110F" stroke-width="3" stroke-linejoin="round" paint-order="stroke"><text x="264" y="225" fill="#4FCB93" fill-opacity="1"><tspan font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing=".5">LC-01</tspan> Live</text></g></svg>
             </div>
 
             <div class="beat beat-2">
               <div class="beat-text">
-                <h2 class="display-2" data-split>Eight layers. <span class="nb">One autonomous stack.</span></h2>
+                <h2 class="display-2" data-split>Eight layers make <span class="nb">one autonomous stack.</span></h2>
                 <p class="body-lg">The top four layers decide; the bottom four only execute.</p>
               </div>
-              <svg class="beat-fig" viewBox="0 0 420 270" aria-hidden="true" focusable="false"><g fill="none" stroke="#F5F2EC" stroke-opacity=".45"><path d="M80 44 L240 12 L340 44 L180 76 Z" stroke-dasharray="2 4"/><path d="M80 69 L240 37 L340 69 L180 101 Z" stroke-dasharray="2 4"/><path d="M80 94 L240 62 L340 94 L180 126 Z" stroke-dasharray="2 4"/><path d="M80 119 L240 87 L340 119 L180 151 Z" stroke-dasharray="2 4"/><path d="M80 144 L240 112 L340 144 L180 176 Z"/><path d="M80 169 L240 137 L340 169 L180 201 Z"/><path d="M80 194 L240 162 L340 194 L180 226 Z"/><path d="M80 219 L240 187 L340 219 L180 251 Z"/></g><path d="M66 131 L240 96 L354 131 L180 166 Z" fill="none" stroke="#4FCB93" stroke-width="1.5"/><g font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing="1.3" fill="#F5F2EC" fill-opacity=".7"><text x="350" y="60">ESTIMATE</text><text x="362" y="134" fill="#4FCB93" fill-opacity="1">BOUNDARY</text><text x="331" y="214">DETERMINISTIC</text></g></svg>
+              <svg class="beat-fig" viewBox="0 0 420 270" aria-hidden="true" focusable="false"><g fill="none" stroke="#F5F2EC" stroke-opacity=".45"><path d="M80 44 L240 12 L340 44 L180 76 Z" stroke-dasharray="2 4"/><path d="M80 69 L240 37 L340 69 L180 101 Z" stroke-dasharray="2 4"/><path d="M80 94 L240 62 L340 94 L180 126 Z" stroke-dasharray="2 4"/><path d="M80 119 L240 87 L340 119 L180 151 Z" stroke-dasharray="2 4"/><path d="M80 144 L240 112 L340 144 L180 176 Z"/><path d="M80 169 L240 137 L340 169 L180 201 Z"/><path d="M80 194 L240 162 L340 194 L180 226 Z"/><path d="M80 219 L240 187 L340 219 L180 251 Z"/></g><path d="M66 131 L240 96 L354 131 L180 166 Z" fill="none" stroke="#4FCB93" stroke-width="1.5"/><g font-family="Inter, 'Inter fallback', 'Segoe UI', Arial, sans-serif" font-size="10.5" fill="#F5F2EC" fill-opacity=".72" stroke="#0B110F" stroke-width="3" stroke-linejoin="round" paint-order="stroke"><text x="350" y="60">Estimate</text><text x="362" y="134" fill="#4FCB93" fill-opacity="1">Boundary</text><text x="331" y="214">Deterministic</text></g></svg>
             </div>
 
             <div class="beat beat-3">
               <div class="beat-text">
-                <h2 class="display-2" data-split><span class="nb">5,000–50,000 agents.</span> <span class="nb">One job each.</span></h2>
-                <p class="body-lg">Agents propose; the Execution Council approves or rejects every proposal before code executes.</p>
+                <h2 class="display-2" data-split><span class="nb">5,000–50,000 agents</span> <span class="nb">each do one job.</span></h2>
+                <p class="body-lg">Agents propose; <span class="nowrap">the Execution Council</span> approves or rejects <span class="nowrap">every proposal</span> before code executes.</p>
               </div>
-              <svg class="beat-fig" viewBox="0 0 420 270" aria-hidden="true" focusable="false"><path d="M120 10V226" stroke="#F5F2EC" stroke-opacity=".35"/><g stroke="#F5F2EC" stroke-opacity=".55"><path d="M78 34h84"/><path d="M78 70h84"/><path d="M78 106h84"/><path d="M78 142h84"/><path d="M78 178h84"/><path d="M78 214h84"/></g><ellipse cx="120" cy="142" rx="36" ry="9" fill="none" stroke="#4FCB93" stroke-width="1.5"/><path d="M128 146 C 170 150 196 176 214 214" fill="none" stroke="#D9675D" stroke-dasharray="2 4"/><circle cx="120" cy="88" r="5" fill="none" stroke="#4FCB93" stroke-width="1.5"/><rect x="115" y="191" width="10" height="10" rx="1" fill="#4FCB93"/><path d="M96 245.5H410" stroke="#F5F2EC" stroke-opacity=".35"/><rect x="104" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="134" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="164" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="194" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="224" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="254" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="284" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="314" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="344" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="374" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><g font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing="1.3" fill="#F5F2EC" fill-opacity=".7"><text x="176" y="37">01 SIGNAL</text><text x="176" y="73">02 PREDICT</text><text x="176" y="109">03 DECIDE</text><text x="176" y="145" fill="#4FCB93" fill-opacity="1">04 APPROVE · COUNCIL</text><text x="176" y="181">05 EXECUTE</text><text x="176" y="217">06 SETTLE</text></g></svg>
+              <svg class="beat-fig" viewBox="0 0 420 270" aria-hidden="true" focusable="false"><path d="M120 10V226" stroke="#F5F2EC" stroke-opacity=".35"/><g stroke="#F5F2EC" stroke-opacity=".55"><path d="M78 34h84"/><path d="M78 70h84"/><path d="M78 106h84"/><path d="M78 142h84"/><path d="M78 178h84"/><path d="M78 214h84"/></g><ellipse cx="120" cy="142" rx="36" ry="9" fill="none" stroke="#4FCB93" stroke-width="1.5"/><path d="M128 146 C 170 150 196 176 214 214" fill="none" stroke="#D9675D" stroke-dasharray="2 4"/><circle cx="120" cy="88" r="5" fill="none" stroke="#4FCB93" stroke-width="1.5"/><rect x="115" y="191" width="10" height="10" rx="1" fill="#4FCB93"/><path d="M96 245.5H410" stroke="#F5F2EC" stroke-opacity=".35"/><rect x="104" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="134" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="164" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="194" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="224" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="254" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="284" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="314" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="344" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><rect x="374" y="242" width="16" height="7" rx="1" fill="#F5F2EC" fill-opacity=".85"/><g font-family="Inter, 'Inter fallback', 'Segoe UI', Arial, sans-serif" font-size="10.5" fill="#F5F2EC" fill-opacity=".72" stroke="#0B110F" stroke-width="3" stroke-linejoin="round" paint-order="stroke"><text x="176" y="37"><tspan font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing=".5">01</tspan> Signal</text><text x="176" y="73"><tspan font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing=".5">02</tspan> Predict</text><text x="176" y="109"><tspan font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing=".5">03</tspan> Decide</text><text x="176" y="145" fill="#4FCB93" fill-opacity="1"><tspan font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing=".5">04</tspan> Approve · Council</text><text x="176" y="181"><tspan font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing=".5">05</tspan> Execute</text><text x="176" y="217"><tspan font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing=".5">06</tspan> Settle</text></g></svg>
             </div>
 
             <div class="beat beat-4">
               <div class="beat-text">
-                <h2 class="display-2" data-split><span class="nb">ETF creation</span> <span class="nb">and redemption.</span> <span class="nb">Live.</span></h2>
+                <h2 class="display-2" data-split><span class="nb">ETF creation</span> <span class="nb">and redemption.</span></h2>
+                <p class="body-lg"><span data-proof="above" data-proof-as="Words">Ten</span> of <span data-proof="total" data-proof-as="words">ten</span> sessions <span class="nowrap">above the floor,</span> <span class="nowrap">broker-confirmed,</span> <span class="nowrap">from a limited</span> <span class="nowrap">proof-of-concept</span> period <span class="nowrap">on live capital;</span> <a class="nowrap" href="#disclosures">not a forecast</a>.</p>
+                <p class="sr-only"><span data-proof="regimes">Five premium, five discount.</span> One block per basis point.</p>
+                <a class="link-arrow beat-more" href="evidence.html">The full proof file <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
               </div>
-              <svg class="beat-fig" viewBox="0 0 420 240" aria-hidden="true" focusable="false"><path d="M76 158V108M110 158V108M144 158V108M178 158V108M212 158V108M246 158V108M280 158V108M314 158V108M348 158V108M382 158V108" stroke="#F5F2EC" stroke-opacity=".34" stroke-width="12" stroke-dasharray="3.8 1.2"/><g fill="none" stroke="#F5F2EC" stroke-opacity=".62"><rect x="70.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="104.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="138.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="172.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="206.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="240.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="274.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="308.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="342.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="376.5" y="102.5" width="11" height="3.5" rx=".5"/></g><path d="M10 107.5H412" stroke="#F5F2EC" stroke-opacity=".7"/><path d="M71 88l3 3l6-6M105 88l3 3l6-6M139 88l3 3l6-6M173 88l3 3l6-6M207 88l3 3l6-6M241 88l3 3l6-6M275 88l3 3l6-6M309 88l3 3l6-6M343 88l3 3l6-6M377 88l3 3l6-6" fill="none" stroke="#4FCB93" stroke-width="1.5"/><g fill="#4FCB93"><rect x="72" y="160" width="8" height="8" rx="1"/><rect x="106" y="160" width="8" height="8" rx="1"/><rect x="140" y="160" width="8" height="8" rx="1"/><rect x="174" y="160" width="8" height="8" rx="1"/><rect x="208" y="160" width="8" height="8" rx="1"/><rect x="242" y="160" width="8" height="8" rx="1"/><rect x="276" y="160" width="8" height="8" rx="1"/><rect x="310" y="160" width="8" height="8" rx="1"/><rect x="344" y="160" width="8" height="8" rx="1"/><rect x="378" y="160" width="8" height="8" rx="1"/></g><path d="M60 170.5H412" stroke="#F5F2EC" stroke-opacity=".32"/><path d="M82 176.5h22M116 176.5h22M150 176.5h22M184 176.5h22M218 176.5h22M252 176.5h22M286 176.5h22M320 176.5h22M354 176.5h22" stroke="#F5F2EC" stroke-opacity=".4"/><g fill="#F5F2EC" fill-opacity=".85"><rect x="70" y="173" width="12" height="6" rx="1"/><rect x="104" y="173" width="12" height="6" rx="1"/><rect x="138" y="173" width="12" height="6" rx="1"/><rect x="172" y="173" width="12" height="6" rx="1"/><rect x="206" y="173" width="12" height="6" rx="1"/><rect x="240" y="173" width="12" height="6" rx="1"/><rect x="274" y="173" width="12" height="6" rx="1"/><rect x="308" y="173" width="12" height="6" rx="1"/><rect x="342" y="173" width="12" height="6" rx="1"/><rect x="376" y="173" width="12" height="6" rx="1"/></g><path d="M60 192.5H392" stroke="#F5F2EC" stroke-opacity=".45" stroke-dasharray="3 4"/><path d="M76.5 194V201M110.5 194V201M144.5 191V184M178.5 191V184M212.5 191V184M246.5 191V184M280.5 194V201M314.5 191V184M348.5 194V201M382.5 194V201" stroke="#F5F2EC" stroke-opacity=".85" stroke-width="1.5"/><g font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing="1.3" fill="#F5F2EC" fill-opacity=".7"><text x="10" y="91">10 BPS</text><text x="10" y="102">FLOOR</text><text x="22" y="196">NAV</text><text x="70" y="218">01</text><text x="104" y="218">02</text><text x="138" y="218">03</text><text x="172" y="218">04</text><text x="206" y="218">05</text><text x="240" y="218">06</text><text x="274" y="218">07</text><text x="308" y="218">08</text><text x="342" y="218">09</text><text x="376" y="218">10</text></g></svg>
+              <!-- The one record of the ten sessions (hc13r: it came into the overture's last scene with §03's parts). story.js
+                   draws scene 4 from it and proof.js derives every session count on this page; Proof carries the same record.
+                   Edit the sessions here, then the static text, the plate and the list below to match. -->
+              <script type="application/json" id="oxa-sessions">
+{"lifecycle": "Lifecycle 01", "unit": "bps", "floor": 10, "sessions": [
+  {"day": "Day 01", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 02", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 03", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 04", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 05", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 06", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 07", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 08", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 09", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
+  {"day": "Day 10", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"}
+]}
+            </script>
+              <svg class="beat-fig" viewBox="0 0 420 250" aria-hidden="true" focusable="false"><path d="M76 158V108M110 158V108M144 158V108M178 158V108M212 158V108M246 158V108M280 158V108M314 158V108M348 158V108M382 158V108" stroke="#4FCB93" stroke-opacity=".62" stroke-width="12" stroke-dasharray="3.8 1.2"/><g fill="none" stroke="#4FCB93" stroke-opacity=".7"><rect x="70.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="104.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="138.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="172.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="206.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="240.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="274.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="308.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="342.5" y="102.5" width="11" height="3.5" rx=".5"/><rect x="376.5" y="102.5" width="11" height="3.5" rx=".5"/></g><path d="M10 107.5H412" stroke="#4FCB93" stroke-opacity=".85"/><path d="M71 88l3 3l6-6M105 88l3 3l6-6M139 88l3 3l6-6M173 88l3 3l6-6M207 88l3 3l6-6M241 88l3 3l6-6M275 88l3 3l6-6M309 88l3 3l6-6M343 88l3 3l6-6M377 88l3 3l6-6" fill="none" stroke="#4FCB93" stroke-width="1.5"/><path d="M59 158.5H412" stroke="#F5F2EC" stroke-opacity=".42"/><path d="M82 176.5h22M116 176.5h22M150 176.5h22M184 176.5h22M218 176.5h22M252 176.5h22M286 176.5h22M320 176.5h22M354 176.5h22" stroke="#F5F2EC" stroke-opacity=".4"/><g fill="#F5F2EC" fill-opacity=".85"><rect x="70" y="173" width="12" height="6" rx="1"/><rect x="104" y="173" width="12" height="6" rx="1"/><rect x="138" y="173" width="12" height="6" rx="1"/><rect x="172" y="173" width="12" height="6" rx="1"/><rect x="206" y="173" width="12" height="6" rx="1"/><rect x="240" y="173" width="12" height="6" rx="1"/><rect x="274" y="173" width="12" height="6" rx="1"/><rect x="308" y="173" width="12" height="6" rx="1"/><rect x="342" y="173" width="12" height="6" rx="1"/><rect x="376" y="173" width="12" height="6" rx="1"/></g><path d="M60 192.5H392" stroke="#F5F2EC" stroke-opacity=".45" stroke-dasharray="3 4"/><path d="M76.5 194V201M110.5 194V201M144.5 191V184M178.5 191V184M212.5 191V184M246.5 191V184M280.5 194V201M314.5 191V184M348.5 194V201M382.5 194V201" stroke="#F5F2EC" stroke-opacity=".85" stroke-width="1.5"/><g font-family="Inter, 'Inter fallback', 'Segoe UI', Arial, sans-serif" font-size="10.5" fill="#F5F2EC" fill-opacity=".72" stroke="#0B110F" stroke-width="3" stroke-linejoin="round" paint-order="stroke"><text x="10" y="59">Above the floor</text><text x="10" y="72" fill-opacity=".6">Exact value not published</text><text x="10" y="91">Floor</text><text x="10" y="102" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing=".5">10 bps</text><text x="22" y="196">NAV</text><text x="70" y="241">Five premium, five discount. One block per basis point.</text></g><g font-family="IBM Plex Mono, Consolas, monospace" font-size="9" letter-spacing=".5" fill="#F5F2EC" fill-opacity=".7"><text x="45" y="156">0</text><text x="70" y="218">01</text><text x="104" y="218">02</text><text x="138" y="218">03</text><text x="172" y="218">04</text><text x="206" y="218">05</text><text x="240" y="218">06</text><text x="274" y="218">07</text><text x="308" y="218">08</text><text x="342" y="218">09</text><text x="376" y="218">10</text></g></svg>
+              <noscript><ol class="proof-list"><li><b>Day 01</b><span>&gt;10 bps</span><span>Discount</span></li><li><b>Day 02</b><span>&gt;10 bps</span><span>Discount</span></li><li><b>Day 03</b><span>&gt;10 bps</span><span>Premium</span></li><li><b>Day 04</b><span>&gt;10 bps</span><span>Premium</span></li><li><b>Day 05</b><span>&gt;10 bps</span><span>Premium</span></li><li><b>Day 06</b><span>&gt;10 bps</span><span>Premium</span></li><li><b>Day 07</b><span>&gt;10 bps</span><span>Discount</span></li><li><b>Day 08</b><span>&gt;10 bps</span><span>Premium</span></li><li><b>Day 09</b><span>&gt;10 bps</span><span>Discount</span></li><li><b>Day 10</b><span>&gt;10 bps</span><span>Discount</span></li></ol></noscript>
             </div>
-
-            <div class="story-coda" aria-hidden="true"><p class="story-coda-t"><span data-story-n="above" data-story-as="Words">Ten</span> of <span data-story-n="total" data-story-as="words">ten</span> <span class="nowrap">above the floor.</span></p><p class="story-coda-s">Broker-confirmed · limited <span class="nowrap">proof-of-concept</span> period · <span class="nowrap">not a forecast</span></p></div>
           </div>
         </div>
         <div class="story-labels"></div>
@@ -152,7 +172,7 @@
             <button class="story-motion" type="button" data-story-motion hidden>Pause motion</button>
           </div>
         </div>
-        <div class="story-paper" aria-hidden="true"><div class="story-paper-in"><div class="container"><p class="story-paper-cap"><span>Broker-confirmed</span><span>Limited proof-of-concept period · <span class="nowrap">not a forecast</span></span></p></div></div></div>
+        <div class="story-paper" aria-hidden="true"></div>
         <p class="sr-only" aria-live="polite" data-story-live></p>
       </div>
     </section>
@@ -160,54 +180,41 @@
     <!-- ============ 01 LIFECYCLES ============ -->
     <section class="section" id="lifecycles" data-chapter="The work" data-n="01">
       <div class="container">
-        <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">Six lifecycles.</span> <span class="ph">One is live.</span></h2>
-        <p class="ch-line" data-reveal style="--d:60ms">Trillions sit in 17,000 ETFs.</p>
-        <div class="card-grid card-grid--3 lc-reg" data-reveal style="--d:80ms">
-          <div class="card"><div class="n n--ring"><span class="lc-code"><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-live" cx="14" cy="14" r="11"/><circle class="orb-bead is-live" cx="22.4" cy="6.9" r="3.4"/></svg></span><span class="badge">Live: ETF creation &amp; redemption</span></div><h3 class="h4">Financial markets &amp; insurance</h3></div>
-          <div class="card"><div class="n n--ring"><span class="lc-code"><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-next" cx="14" cy="14" r="11"/></svg></span><span class="st-next">Next</span></div><h3 class="h4">International trade · letters of credit</h3></div>
-          <div class="card"><div class="n n--ring"><span class="lc-code"><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-next" cx="14" cy="14" r="11"/></svg></span><span class="st-next">Next</span></div><h3 class="h4">Asset securitization · MBS / ABS</h3></div>
-          <div class="card"><div class="n n--ring"><span class="lc-code"><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-road" cx="14" cy="14" r="11"/></svg></span><span class="st-road">Roadmap</span></div><h3 class="h4">Wholesale energy settlement</h3></div>
-          <div class="card"><div class="n n--ring"><span class="lc-code"><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-road" cx="14" cy="14" r="11"/></svg></span><span class="st-road">Roadmap</span></div><h3 class="h4">Semiconductor manufacturing</h3></div>
-          <div class="card"><div class="n n--ring"><span class="lc-code"><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-road" cx="14" cy="14" r="11"/></svg></span><span class="st-road">Roadmap</span></div><h3 class="h4">Pharmaceutical &amp; aerospace</h3></div>
+        <div class="ch-head">
+          <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">Six lifecycles.</span> <em class="ph">One is live.</em></h2>
         </div>
+        <div class="lc-live" data-reveal style="--d:60ms">
+          <svg id="lc-live-ring" class="lcp lc-plate" viewBox="0 0 200 112.3" aria-hidden="true" focusable="false"><path class="lc-mo lc-mo3" d="M102.3 38.8h0M100.4 41.3h0M93.3 40.4h0M106.4 41.8h0M96 43.7h0M104.3 45.1h0M90.5 44.3h0M111.1 43.4h0M98.4 47.5h0M109.2 47.3h0M91.3 48.3h0M103.1 50.5h0M86 47.5h0M113.6 48.4h0M94.8 52h0M108.6 52.5h0M87.2 51.7h0M100.1 55.1h0M113.5 53.5h0M90.9 55.7h0M106 57.2h0M84.2 54.5h0M116.8 53.9h0M96.3 59h0M111.6 58.4h0M87.4 58.7h0M102.5 61.4h0M115.7 58.9h0M92.5 62.2h0M108.4 62.9h0M85 61.1h0M98.6 64.9h0M113 63.5h0M89.6 64.9h0M104.6 66.7h0M95.2 67.9h0M109.4 67.7h0M88 67.2h0M100.9 69.9h0M93 70.2h0M105.4 71h0M98.1 72.2h0"/><path class="lc-mo lc-mo2" d="M97.1 38.1h0M103.7 37.9h0M97.9 37.6h0M108.7 39.9h0M91 40h0M103.2 38.1h0M93.3 39.1h0M109.5 40.3h0M87.3 43.4h0M113.7 44h0M88.5 42h0M113.7 44.2h0M84.8 45.7h0M116.2 48.8h0M83.3 50h0M116.6 48.8h0M82.3 52.2h0M117.9 53.8h0M82.5 56.8h0M117.6 58.9h0M82.4 58.9h0M117 58.8h0M84.2 63.3h0M115.6 63.7h0M115.7 63.8h0M85.2 65.5h0M112.2 68.1h0M88.6 69.3h0M112.3 68.4h0M107.5 71.6h0M93.2 72h0M101.6 73.2h0M92.8 71.3h0M106.1 72h0M98.1 73.2h0"/><path class="lc-mo" d="M99.4 39.2h0M107.2 40.8h0M94.2 41.1h0M102.7 41.8h0M88.8 44.1h0M111.2 44.5h0M97 43.7h0M84.6 47.9h0M106.6 45.3h0M91.1 46.5h0M114.5 48.9h0M100.7 46.9h0M86.1 50.1h0M110.2 49.4h0M94.4 49.4h0M116.5 53.7h0M83.1 54.4h0M104.5 50.7h0M89 52.8h0M112.9 54.1h0M98.3 52.9h0M85.4 56.9h0M107.7 55.1h0M92.8 56h0M114.1 59.1h0M84.1 61.2h0M101.9 57.1h0M88.9 59.8h0M109.6 60.1h0M96.7 60h0M113.3 64.2h0M87.4 64h0M104.4 62h0M93.2 63.6h0M109.2 65.3h0M88.7 68h0M99.8 64.9h0M109.7 69.1h0M92.6 67.7h0M104.3 67.7h0M97.8 69h0M103.6 71h0M97.8 71.7h0"/><path class="orb-live lc-r1 dr" pathLength="1" d="M8.1 66.9A91.9 38.5 0 0 1 191.9 66.9A91.9 38.5 0 0 1 8.1 66.9"/><path class="lc-pane dr" pathLength="1" style="--dd:80ms" d="M0.6 66.9L15.6 66.9L15.6 42.3L0.6 42.3Z"/><path class="lc-pane dr" pathLength="1" style="--dd:196ms" d="M58.3 36.7L49.8 30.5L49.8 5.9L58.3 12.1Z"/><path class="lc-pane dr" pathLength="1" style="--dd:313ms" d="M141.7 36.7L150.2 30.5L150.2 5.9L141.7 12.1Z"/><path class="lc-pane dr" pathLength="1" style="--dd:430ms" d="M184.4 66.9L199.4 66.9L199.4 42.3L184.4 42.3Z"/><path class="lc-pane dr" pathLength="1" style="--dd:546ms" d="M141.7 97.2L150.2 103.3L150.2 78.7L141.7 72.5Z"/><path class="lc-pane dr" pathLength="1" style="--dd:663ms" d="M58.3 97.2L49.8 103.3L49.8 78.7L58.3 72.5Z"/><circle class="orb-halo dr" pathLength="1" style="--dd:60ms" cx="8.1" cy="66.9" r="8"/><circle class="orb-bead is-live" cx="8.1" cy="66.9" r="4.2"/><rect class="lc-rec" x="17.2" y="83" width="6.4" height="6.4" rx=".6"/></svg>
+          <h3 class="h4"><a href="lifecycles.html" data-vt-src="lc-live-ring">Financial markets <span class="nowrap">&amp; insurance<svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a></h3>
+          <p class="lc-live-st">Live: ETF creation &amp; redemption</p>
+          <p class="lc-live-line">Trillions sit in 17,000 ETFs.</p>
+        </div>
+        <ul class="lc-reg" role="list" data-reveal style="--d:120ms">
+          <li><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-next" cx="14" cy="14" r="11"/><circle class="orb-bead is-next" cx="22.4" cy="6.9" r="3"/></svg><h3 class="h4">International trade<span class="lc-dot">&nbsp;· </span>letters of credit</h3><span class="st-next">Next</span></li>
+          <li><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-next" cx="14" cy="14" r="11"/><circle class="orb-bead is-next" cx="22.4" cy="6.9" r="3"/></svg><h3 class="h4">Asset securitization<span class="lc-dot">&nbsp;· </span>MBS / ABS</h3><span class="st-next">Next</span></li>
+          <li><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-road" cx="14" cy="14" r="11"/><circle class="orb-bead is-road" cx="22.4" cy="6.9" r="3"/></svg><h3 class="h4">Wholesale energy settlement</h3><span class="st-road">Roadmap</span></li>
+          <li><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-road" cx="14" cy="14" r="11"/><circle class="orb-bead is-road" cx="22.4" cy="6.9" r="3"/></svg><h3 class="h4">Semiconductor manufacturing</h3><span class="st-road">Roadmap</span></li>
+          <li><svg class="lc-ring lcp" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false"><circle class="orb-road" cx="14" cy="14" r="11"/><circle class="orb-bead is-road" cx="22.4" cy="6.9" r="3"/></svg><h3 class="h4">Pharmaceutical &amp; aerospace</h3><span class="st-road">Roadmap</span></li>
+        </ul>
         <p class="ch-note" data-reveal>Beyond Lifecycle 01: roadmap intent</p>
       </div>
     </section>
 
-    <!-- ============ 02 THE STACK ============ -->
-    <section class="section is-paper-2" id="stack" data-chapter="The stack" data-n="02">
-      <div class="container">
-        <h2 class="display-2 ch-title" data-reveal data-split>Take the stack apart.</h2>
-        <!-- the architecture explorer (arch.js): without JavaScript this is the readable list -->
-        <div class="layers" data-arch data-arch-label="The agentic stack" data-reveal style="--d:120ms">
-          <div class="layer" data-job="Watches the lifecycle’s live data and keeps re-estimating risk, price and regime."><div class="k">01</div><h3>Signal intelligence<small>Perceive</small></h3><div></div></div>
-          <div class="layer" data-job="The post-trained model every agent reasons on. It can propose anything and execute nothing on its own."><div class="k">02</div><h3>Model layer<small>Reason</small></h3><div></div></div>
-          <div class="layer" data-job="Thousands of narrow agents, each built for one job: read a feed, score a gap, size an order, check a limit, match a fill."><div class="k">03</div><h3>Domain<span class="hy">-</span>specific agents<small>Act</small></h3><div></div></div>
-          <div class="layer" data-job="The gate every proposal passes. It arbitrates between agents and enforces policy and mandate limits."><div class="k">04</div><h3>Execution Council<small>Govern</small></h3><div></div></div>
-          <div class="layer-boundary"><div class="k">—</div><p class="lb-t">The boundary</p><div class="lb-io"><p data-side="above"><b>Above</b> <strong>Intelligence decides.</strong></p><p data-side="below"><b>Below</b> <strong>Execution is deterministic.</strong></p></div></div>
-          <div class="layer" data-job="Scores a route for each approved action on live conditions and past performance."><div class="k">05</div><h3>Routing layer<small>Optimize</small></h3><div></div></div>
-          <div class="layer" data-job="Runs the lifecycle as a deterministic state machine, with retries, idempotency and reconciliation."><div class="k">06</div><h3>Execution layer<small>Orchestrate</small></h3><div></div></div>
-          <div class="layer" data-job="Gives agents authenticated connectivity to the rails, through secure, customer-scoped MCP servers."><div class="k">07</div><h3>MCP server<small>Connect</small></h3><div></div></div>
-          <div class="layer" data-job="Grants every agent, tool and counterparty exactly the permissions its workflow needs, and nothing more."><div class="k">08</div><h3>Authentication layer<small>Permit</small></h3><div></div></div>
-          <div class="layer-floor"><div class="k">—</div><p>Brokers · Clearing · OTC · Venues · Counterparties</p></div>
-        </div>
-        <a class="link-arrow ch-link" href="platform.html" data-reveal>The platform <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
-      </div>
-    </section>
-
-    <!-- ============ 03 LIFECYCLE 01 ============ -->
-    <section class="section" id="lc01" data-chapter="Lifecycle 01" data-n="03">
+    <!-- ============ 02 THE LAB (Lifecycle 01, gate by gate) ============ -->
+    <section class="section is-paper-2" id="lc01" data-chapter="The lab" data-n="02">
       <div class="container">
         <div class="ch-head">
-          <h2 class="display-2 ch-title" data-reveal data-split>Lifecycle 01, <span class="ph">gate by gate.</span></h2>
-          <p class="ch-line" data-reveal style="--d:80ms">Tighten the Council and watch what it rejects.</p>
+          <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">Follow one proposal</span> <span class="ph">through every gate.</span></h2>
+          <p class="ch-line" data-reveal style="--d:80ms">Tighten the Council and it rejects more.</p>
+          <a class="link-arrow ch-link" href="lifecycles.html#lc01" data-reveal style="--d:100ms">Lifecycle 01 in depth <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
         </div>
-        <div class="swarm-live is-dark" data-swarm-live data-reveal style="--d:120ms" role="group" aria-label="Swarm lab: an illustrative model of the swarm">
+        <div class="swarm-live is-dark" data-swarm-live data-sw-autofollow data-reveal style="--d:120ms" role="group" aria-label="Swarm lab: an illustrative model of the swarm">
           <div class="sw-head">
+            <span class="sw-title"><span class="sw-name">The swarm lab</span> <span class="sw-kicker">Illustrative</span></span>
             <span class="sw-live"><i></i><span data-sw-state>Running</span></span>
-            <span class="sw-kicker">Illustrative</span>
             <ul class="sw-key" role="list" aria-label="Key"><li class="k-p">Proposal</li><li class="k-s">Settled</li><li class="k-r">Rejected</li><li class="k-b">Record</li></ul>
             <button class="sw-follow" type="button" data-sw-follow aria-pressed="false" aria-controls="sw-trace">Follow a proposal</button>
+            <button class="sw-motion" type="button" data-sw-motion hidden>Pause motion</button>
           </div>
           <div class="sw-stage" data-sw-stage>
             <canvas aria-hidden="true"></canvas>
@@ -240,69 +247,30 @@
             <div class="swarm-controls">
               <label><span>Agents in this model <output data-sw-n-out aria-live="off">1.8k</output></span><input type="range" min="0" max="100" step="1" value="52" data-sw-n aria-label="Agents in this model"></label>
               <label><span>Council strictness <output data-sw-strict-out aria-live="off">12%</output></span><input type="range" min="0" max="60" step="1" value="12" data-sw-strict aria-label="Council strictness"></label>
-              <div class="sw-btns"><button class="halt" type="button" data-sw-halt>Halt</button><button class="sw-motion" type="button" data-sw-motion hidden>Pause motion</button></div>
+              <div class="sw-btns"><button class="halt" type="button" data-sw-halt>Emergency halt</button></div>
             </div>
           </div>
         </div>
-        <a class="link-arrow ch-link" href="lifecycles.html#lc01" data-reveal>Lifecycle 01 in depth <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
       </div>
     </section>
 
-    <!-- ============ 04 PROOF ============ -->
-    <section class="section is-dark grain" id="proof" data-chapter="Proof" data-n="04">
+    <!-- ============ 03 ECONOMICS ============ -->
+    <section class="section" id="economics" data-chapter="Why agents" data-n="03">
       <div class="container">
-        <div class="proof-layout">
-          <div class="proof-copy">
-            <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">How far above</span> <span class="ph">the floor,</span> <span class="ph">we do not publish.</span></h2>
-            <p class="proof-hedge" data-reveal style="--d:120ms">Broker-confirmed, from a limited <span class="nowrap">proof-of-concept</span> period on live capital; <a class="nowrap" href="#disclosures">not a forecast</a>.</p>
-            <div class="stats" data-reveal style="--d:160ms">
-              <div><div class="v">3</div><div class="k">Beta customers</div></div>
-              <div><div class="v">5</div><div class="k">Runs · lifecycle executions</div></div>
-            </div>
-          </div>
-          <figure class="proof-fig">
-            <!-- The one record of the ten sessions. assets/js/proof.js draws the chart from it and derives every session count on
-                 this page; the overture can read it too. Edit the sessions here, then the static text below to match. -->
-            <script type="application/json" id="oxa-sessions">
-{"lifecycle": "Lifecycle 01", "unit": "bps", "floor": 10, "sessions": [
-  {"day": "Day 01", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
-  {"day": "Day 02", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
-  {"day": "Day 03", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
-  {"day": "Day 04", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
-  {"day": "Day 05", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
-  {"day": "Day 06", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
-  {"day": "Day 07", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
-  {"day": "Day 08", "regime": "Premium", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
-  {"day": "Day 09", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
-  {"day": "Day 10", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"}
-]}
-            </script>
-            <div class="proof" data-proof-chart>
-              <noscript><ol class="proof-list"><li><b>Day 01</b><span>&gt;10 bps</span><span>Discount</span></li><li><b>Day 02</b><span>&gt;10 bps</span><span>Discount</span></li><li><b>Day 03</b><span>&gt;10 bps</span><span>Premium</span></li><li><b>Day 04</b><span>&gt;10 bps</span><span>Premium</span></li><li><b>Day 05</b><span>&gt;10 bps</span><span>Premium</span></li><li><b>Day 06</b><span>&gt;10 bps</span><span>Premium</span></li><li><b>Day 07</b><span>&gt;10 bps</span><span>Discount</span></li><li><b>Day 08</b><span>&gt;10 bps</span><span>Premium</span></li><li><b>Day 09</b><span>&gt;10 bps</span><span>Discount</span></li><li><b>Day 10</b><span>&gt;10 bps</span><span>Discount</span></li></ol></noscript>
-            </div>
-            <figcaption class="figure-cap figure-cap--stack"><span class="fc-h fc-key"><span data-proof="regimes">Five premium, five discount.</span> One block per basis point</span></figcaption>
-          </figure>
+        <div class="ch-head">
+          <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">Where the 90%</span> <span class="ph">comes from.</span></h2>
         </div>
-        <a class="link-arrow ch-link" href="evidence.html" data-reveal>The full proof file <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
-      </div>
-    </section>
-
-    <!-- ============ 05 ECONOMICS ============ -->
-    <section class="section is-paper-2" id="economics" data-chapter="Why agents" data-n="05">
-      <div class="container">
-        <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">90% of</span> <span class="ph">cost and risk,</span> <span class="ph">eliminated.</span></h2>
-        <!-- the indexed stack, as on the Proof page (evidence §03): the same markup, weights and key (production's four
-             definitions; check_static cost_definitions). proof.js draws each bar as 100 index blocks from the --w weights (one
-             block per point, traditional = 100); without it the runs stay flat -->
-        <figure class="cost" data-cost>
+        <!-- Proof §02's figure, the same markup, weights and key (production's four definitions; check_static cost_definitions):
+             proof.js draws each component's row from the two bars; without JS the two bars and the key -->
+        <figure class="cost" data-cost data-cost-view="rows">
           <div class="cost-rows" data-reveal style="--d:120ms">
             <div class="cost-row">
               <div class="cost-lab"><b>Traditional</b></div>
               <div class="cost-bar">
-                <i style="--w:45%;--c:var(--ink)"><span>Cost of carry</span></i>
-                <i style="--w:37%;--c:var(--slate)"><span>Counterparty risk</span></i>
-                <i style="--w:10%;--c:var(--khaki-deep)"><span>Technology</span></i>
-                <i style="--w:8%;--c:var(--khaki)"><span>Management</span></i>
+                <i style="--w:45%;--c:var(--ink)"></i>
+                <i style="--w:37%;--c:var(--slate)"></i>
+                <i style="--w:10%;--c:var(--khaki-deep)"></i>
+                <i style="--w:8%;--c:var(--khaki)"></i>
               </div>
               <div class="cost-val">100</div>
             </div>
@@ -317,71 +285,72 @@
             </div>
           </div>
           <dl class="pf-ck" data-reveal style="--d:160ms">
-            <div><dt><i style="--c:var(--ink)"></i>Cost of carry</dt><dd>Interest on working capital</dd></div>
-            <div><dt><i style="--c:var(--slate)"></i>Counterparty risk</dt><dd>Settlement &amp; credit exposure</dd></div>
-            <div><dt><i style="--c:var(--khaki-deep)"></i>Technology</dt><dd>Infrastructure, routing, reconciliation</dd></div>
-            <div><dt><i style="--c:var(--khaki)"></i>Management</dt><dd>Research, oversight, operations</dd></div>
+            <div data-scene><dt><i style="--c:var(--ink)"></i>Cost of carry</dt><dd>Interest on working capital</dd></div>
+            <div data-scene><dt><i style="--c:var(--slate)"></i>Counterparty risk</dt><dd>Settlement &amp; credit exposure</dd></div>
+            <div data-scene><dt><i style="--c:var(--khaki-deep)"></i>Technology</dt><dd>Infrastructure, routing, reconciliation</dd></div>
+            <div data-scene><dt><i style="--c:var(--khaki)"></i>Management</dt><dd>Research, oversight, operations</dd></div>
           </dl>
-          <figcaption class="figure-cap" data-reveal><span class="fc-h">Illustrative weights · <span class="nowrap">traditional = 100</span> · <span class="nowrap">OpenEXA operating model</span></span></figcaption>
+          <figcaption class="figure-cap" data-reveal><span class="fc-h">Illustrative weights · <span class="nowrap">traditional = 100</span><span class="ph-dot"> · </span><span class="nowrap">OpenEXA operating model</span></span></figcaption>
         </figure>
       </div>
     </section>
 
-    <!-- ============ 06 GOVERNANCE ============ -->
-    <section class="section" id="governance" data-chapter="Trust &amp; governance" data-n="06" data-chapter-short="Governance">
+    <!-- ============ 04 GOVERNANCE ============ -->
+    <section class="section is-paper-2" id="governance" data-chapter="Trust &amp; governance" data-n="04" data-chapter-short="Governance">
       <div class="container">
         <!-- the chain: real SHA-256, editable, breaks visibly (chain.js) -->
         <div class="grid chain-row">
           <div class="col-4 ch-head">
-            <h2 class="display-2 ch-title" data-reveal data-split>Try to change <span class="ph">the past.</span></h2>
-            <p class="ch-line" data-reveal style="--d:60ms">Edit any record and watch every one after it stop verifying.</p>
+            <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">Try to change</span> <span class="ph">the past.</span></h2>
+            <a class="link-arrow ch-link" href="trust.html" data-reveal style="--d:60ms">The governance model <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
           </div>
           <div class="col-8">
             <div class="chain is-dark" data-chain data-reveal style="--d:80ms">
               <div class="chain-head">
+                <span class="instr-hedge">Illustrative</span>
                 <span class="chain-status" data-chain-status><i></i>Eight records · one chain</span>
                 <span class="sr-only" role="status" data-chain-say></span>
                 <span class="chain-acts" hidden>
-                  <button type="button" class="chain-try" data-chain-try hidden>Alter record 03</button>
-                  <button type="button" class="chain-restore" data-chain-restore hidden>Restore the original records</button>
+                  <button type="button" class="chain-try" data-chain-try hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true" focusable="false"><path d="M2.5 13.5l.7-3.1 7.7-7.7 2.4 2.4-7.7 7.7z"/><path d="M9.6 4l2.4 2.4"/></svg>Change a record</button>
+                  <button type="button" class="chain-restore" data-chain-restore hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true" focusable="false"><path d="M2.8 8.6A5.2 5.2 0 1 0 4.3 4.3"/><path d="M3.6 1.6v3.2h3.2"/></svg>Restore the original records</button>
                 </span>
               </div>
               <p class="chain-genesis"><i aria-hidden="true"></i>Genesis · previous hash 00000000</p>
               <ol class="chain-list" id="home-chain" role="list" data-chain-list>
-                <li><span class="i">01</span><span class="who">A-0412</span><b class="ev">PROPOSED</b><span class="what">lifecycle L-01 · next step</span></li>
-                <li><span class="i">02</span><span class="who">A-0412</span><b class="ev">VALIDATED</b><span class="what">schema ok · inputs complete</span></li>
-                <li><span class="i">03</span><span class="who">COUNCIL</span><b class="ev">APPROVED</b><span class="what">policy v7 · scoped action</span></li>
-                <li><span class="i">04</span><span class="who">A-0412</span><b class="ev">SUBMITTED</b><span class="what">registry tool · key 9f3c</span></li>
-                <li><span class="i">05</span><span class="who">A-0412</span><b class="ev">RECEIVED</b><span class="what">source receipt attached</span></li>
-                <li><span class="i">06</span><span class="who">A-0412</span><b class="ev">EXECUTED</b><span class="what">action complete · result stored</span></li>
-                <li><span class="i">07</span><span class="who">A-0891</span><b class="ev">RECONCILED</b><span class="what">source receipt ↔ internal record</span></li>
-                <li><span class="i">08</span><span class="who">A-0412</span><b class="ev">SETTLED</b><span class="what">confirmed · appended · chained</span></li>
+                <li><span class="i">#4f23</span><span class="who">s-0412</span><b class="ev">PROPOSED</b><span class="what">Lifecycle&nbsp;01 · next&nbsp;step</span></li>
+                <li><span class="i">#4f24</span><span class="who">s-0412</span><b class="ev">VALIDATED</b><span class="what">schema ok · inputs&nbsp;complete</span></li>
+                <li><span class="i">#4f25</span><span class="who">council</span><b class="ev">APPROVED</b><span class="what">policy v7 · scoped action</span></li>
+                <li><span class="i">#4f26</span><span class="who">s-0412</span><b class="ev">SUBMITTED</b><span class="what">registry tool · key 9f3c</span></li>
+                <li><span class="i">#4f27</span><span class="who">s-0412</span><b class="ev">RECEIVED</b><span class="what">source receipt attached</span></li>
+                <li><span class="i">#4f28</span><span class="who">s-0412</span><b class="ev">EXECUTED</b><span class="what">action complete · result stored</span></li>
+                <li><span class="i">#4f29</span><span class="who">r-0031</span><b class="ev">RECONCILED</b><span class="what">source receipt ↔ internal record</span></li>
+                <li><span class="i">#4f2a</span><span class="who">s-0412</span><b class="ev">SETTLED</b><span class="what">confirmed · appended · chained</span></li>
               </ol>
               <button class="chain-more" type="button" data-chain-more aria-controls="home-chain" aria-expanded="false" hidden></button>
-              <div class="chain-foot is-static"><span>Illustrative records · real SHA-256</span><span class="chain-fallback" data-chain-fallback>Turn on JavaScript to try it.</span></div>
+              <div class="chain-foot is-static"><span>Real SHA-256, computed in your browser</span><span class="chain-fallback" data-chain-fallback>Turn on JavaScript to try it.</span></div>
             </div>
           </div>
         </div>
-        <a class="link-arrow ch-link" href="trust.html" data-reveal>The governance model <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
       </div>
     </section>
 
-    <!-- ============ 07 RESEARCH ============ -->
-    <section class="section is-paper-2" id="research" data-chapter="Research" data-n="07">
+    <!-- ============ 05 RESEARCH ============ -->
+    <section class="section" id="research" data-chapter="Research" data-n="05">
       <div class="container">
-        <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">The thinking</span> <span class="ph">behind the swarm.</span></h2>
-        <div class="card-grid card-grid--3" data-reveal style="--d:120ms">
-          <a class="card research-card" href="research/01-compounding-error.html"><h3 class="h4">Compounding Error and&nbsp;the&nbsp;Case for&nbsp;Decomposition.</h3><span class="link-arrow" aria-hidden="true"><svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
-          <a class="card research-card" href="research/02-post-training-and-audit.html"><h3 class="h4">Specializing a&nbsp;Model to&nbsp;a&nbsp;Rulebook and&nbsp;Proving What&nbsp;It&nbsp;Did.</h3><span class="link-arrow" aria-hidden="true"><svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
-          <a class="card research-card" href="research/03-not-tasks-lifecycles.html"><h3 class="h4"><span class="t-head">Not Tasks. Lifecycles.</span> Why&nbsp;We&nbsp;Stopped Building Assistants</h3><span class="link-arrow" aria-hidden="true"><svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
+        <div class="ch-head">
+          <h2 class="display-2 ch-title" data-reveal data-split><span class="ph">Three notes</span> <span class="ph">to start with.</span></h2>
+          <a class="link-arrow ch-link" href="research.html" data-reveal style="--d:60ms">All ten notes <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
         </div>
-        <a class="link-arrow ch-link" href="research.html" data-reveal>All ten notes <svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+        <div class="card-grid card-grid--3" data-reveal style="--d:120ms">
+          <a class="card research-card" href="research/01-compounding-error.html"><svg class="rc-mark vt-src" viewBox="-149 -116 299 250" width="299" height="250" preserveAspectRatio="xMinYMid meet" aria-hidden="true" focusable="false" data-draw><g fill="none" stroke-width="5" stroke-linecap="round"><path stroke="#0E1512" stroke-opacity=".4" d="M-135 -69h0m3 2h0m0 1h0m1 2h0m0 1h0m12 14h0m-3-4h0m-1-3h0m0 2h0m-1-2h0m-1-3h0m-2 0h0m0-1h0m-1 0h0m11 13h0m1 1h0m0-1h0m1 1h0m1 3h0m1-1h0m1 1h0m1 3h0m0-1h0m2 1h0m1 2h0m0-1h0m2 2h0m13 11h0m-2 1h0m-1-3h0m-1-1h0m-1 0h0m-2-3h0m0 2h0m0-1h0m-3-3h0m-2-1h0m0 1h0m15 11h0m1 3h0m1-1h0m1 2h0m2 2h0m1 0h0m1 0h0m1 4h0m1-1h0m1-1h0m3 2h0m13 12h0m-1-2h0m-5-4h0m-1 2h0m-1-2h0m-3-3h0m-1 0h0m-3-2h0m-2 0h0m19 13h0m3-1h0m1 2h0m1 2h0m1 0h0m2 0h0m0 2h0m0-1h0m1 1h0m2 0h0m1 1h0m1 1h0m0 2h0m0-1h0m5 1h0m27 13h0m-5-1h0m0 1h0m-1-2h0m0 2h0m-4-4h0m-2 0h0m0 1h0m-4-2h0m-1 0h0m-3-3h0m0-1h0m-2 0h0m-5-2h0m23 14h0m2-1h0m1 1h0m1 1h0m1 1h0m1-1h0m0 1h0m2 1h0m1-1h0m3 3h0m1-1h0m3 1h0m0 1h0m1 0h0m1 1h0m0-1h0m1 1h0m3 2h0m0-1h0m4 0h0m37 13h0m-7-1h0m-2-1h0m0 1h0m-1-3h0m0 1h0m-4-1h0m-2-2h0m-2 1h0m0-1h0m-1 1h0m-4-2h0m-1 0h0m-1-1h0m-3 0h0m-1-2h0m0 2h0m0-1h0m-1-2h0m0 3h0m-1-1h0m-1 0h0m-1 0h0m-3-1h0m28 11h0m9 0h0m0 1h0m3-1h0m1 1h0m1 1h0m1 2h0m0-3h0m1 1h0m1 0h0m0-1h0m1 2h0m0-1h0m1 2h0m1 0h0m1 2h0m5-1h0m3 3h0m1-1h0m0-3h0m2 2h0m2-2h0m0 3h0m1 0h0m1 0h0m2 0h0m1 0h0m0 3h0m1-1h0m1-1h0m1-2h0m0 4h0m4 0h0m0-3h0m0 2h0m1 0h0m0 1h0m1-1h0m1 1h0m3 1h0m2 0h0m3-1h0m3-1h0m1 2h0m5 0h0m31 8h0m-2-3h0m0 3h0m-1-1h0m0-1h0m-3 1h0m-1 0h0m-2-1h0m-1-1h0m-7-1h0m0 1h0m-2-3h0m0 1h0m-1 1h0m-1 0h0m-2 0h0m-1-1h0m-1 1h0m-3-1h0m-2 0h0m0 1h0m-1-2h0m-1-1h0m-1 0h0m-2 2h0m-2-1h0m0-1h0m-5 1h0m-1-1h0"/><path stroke="#857F66" stroke-opacity=".4" d="M-84 7h0m84-6h0m56 5h0m56-4h0m-140 17h0m-28-5h0m0-1h0m-56 7h0m0-4h0m0 8h0m112 6h0m0 2h0m28 2h0m28-4h0m28 1h0m28 3h0m0-3h0m28-2h0m-1 11h0m-55-2h0m0 1h0m-28 6h0m-56-4h0m-28 4h0m0 2h0m-28-8h0m-56 1h0m-28 5h0m0 9h0m28 4h0m0-1h0m56-2h0m0-5h0m140 8h0m28-3h0m27-6h0m0 14h0m-111 8h0m-111-7h0m-1 0h0m-27 5h0m-1-5h0m-27-3h0m55 19h0m28 3h0m84-11h0m27 3h0m56 5h0m28 0h0m-222 6h0"/><path stroke="#857F66" stroke-opacity=".78" d="M-85 -64h0m226 2h0m-28 13h0m-56-11h0m-28 4h0m-29 3h0m-28-6h0m0 3h0m-57 2h0m-56 1h0m0 2h0m0 6h0m85-3h0m28 4h0m28 2h0m0 2h0m57 0h0m28 0h0m0-1h0m56 5h0m-56 4h0m-57 0h0m-28 6h0m-141-7h0m113 15h0m84-2h0m85 2h0m-28 8h0m-1-2h0m-56 5h0m0-1h0m-28-4h0m0 10h0m-56-7h0m-28 3h0m0-4h0m-28 9h0m-56-7h0m168 12h0m57-3h0"/><path class="dm" stroke="#186B4F" stroke-opacity=".9" d="M-138 -62h0m3-1h0m0 1h0m1 0h0m0-1h0m1 0h0m2 1h0m0-1h0m1 1h0m0-1h0m2 0h0m2 1h0m1-1h0m1 1h0m1 0h0m1 0h0m1 0h0m1 0h0m2 1h0m0-1h0m1-1h0m1 0h0m1 1h0m1-1h0m0 1h0m30-1h0m1 1h0m0-1h0m1 1h0m1 0h0m1 0h0m4-1h0m1 0h0m1 1h0m1-1h0m0 1h0m3-1h0m2-1h0m0 1h0m1 0h0m0 1h0m1-1h0m2 1h0m0 1h0m1-2h0m1-1h0m1 2h0m1-1h0m1 1h0m1-1h0m1 0h0m1 1h0m28-1h0m2 0h0m0 1h0m2 0h0m2 0h0m4-1h0m0 1h0m1 0h0m0-1h0m2 1h0m2 0h0m0-1h0m2 0h0m4 1h0m1 1h0m2-2h0m0 1h0m3 0h0m32 0h0m1-1h0m2 1h0m1-1h0m1-1h0m0 2h0m0-1h0m1 0h0m0 1h0m1-1h0m1 0h0m2 0h0m1 1h0m0-1h0m1 1h0m1 0h0m3 0h0m0-1h0m2 1h0m38 0h0m0-1h0m1 1h0m5 0h0m1-1h0m3 1h0m2-1h0m1 1h0m1-2h0m1 2h0m0-1h0m0 2h0m2-2h0m1-1h0m1 1h0m0 1h0m1-1h0m2 1h0m0-1h0m2 1h0m0-1h0m1 1h0m0-2h0m1 2h0m29 6h0m-3-1h0m-1 1h0m-2-1h0m-1-1h0m0 2h0m-1 1h0m-2-1h0m-2 0h0m-1-2h0m0 1h0m-1 1h0m-1 0h0m0-1h0m-1 0h0m0 1h0m-1 0h0m-2 1h0m-2-1h0m-1 0h0m-2-1h0m-1 1h0m-1 0h0m0-1h0m-1 1h0m-1-1h0m-30 1h0m0-1h0m-1 0h0m-2 1h0m-1 0h0m-1 0h0m-1-1h0m-1 1h0m-2-1h0m-1 0h0m-1 0h0m0 2h0m-1-1h0m-1-1h0m-1 0h0m-1 0h0m0 1h0m-6 0h0m0-1h0m-1 2h0m-1-1h0m-1-1h0m0 1h0m-1-1h0m-1 1h0m-1-1h0m-31 0h0m0 1h0m-1-1h0m-3 0h0m-1 0h0m-1 1h0m0 1h0m-1-1h0m-3-1h0m-1 0h0m-1 1h0m-1 0h0m-1 0h0m0-1h0m-4 1h0m-1 1h0m-2-1h0m-1 0h0m0-1h0m-33 0h0m-1 1h0m-2 0h0m-2 0h0m-1 0h0m-4 1h0m-1-1h0m-2 0h0m-1 1h0m0-1h0m0-1h0m-2 2h0m-5-1h0m-4 1h0m-1-1h0m-1-1h0m-29 0h0m0 1h0m-1 0h0m-1 0h0m-1 0h0m-1 0h0m-1 0h0m-3 0h0m-2-2h0m-1 1h0m0 1h0m-5-1h0m-3 1h0m-1 0h0m-1 0h0m-3 0h0m-3 0h0m-1 1h0"/></g></svg><h3 class="h4">Compounding Error and&nbsp;the&nbsp;Case for&nbsp;Decomposition</h3><span class="link-arrow" aria-hidden="true"><svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
+          <a class="card research-card" href="research/02-post-training-and-audit.html"><svg class="rc-mark vt-src" viewBox="-92 -116 186 250" width="186" height="250" preserveAspectRatio="xMinYMid meet" aria-hidden="true" focusable="false" data-draw><g fill="none" stroke-width="5" stroke-linecap="round"><path stroke="#0E1512" stroke-opacity=".4" d="M0 -75h0m-1 2h0m-10-4h0m-5 1h0m-18 10h0m8 0h0m7-3h0m2 3h0m4-6h0m8 7h0m1-1h0m2 4h0m4-6h0m4 3h0m1-4h0m3 7h0m4 1h0m0-7h0m13 2h0m0 2h0m0 2h0m1-7h0m5 5h0m12 13h0m-6 1h0m-10 0h0m-15-1h0m-1 2h0m-2-9h0m-4 6h0m-2-6h0m-2 3h0m-7 0h0m-4-5h0m-1 6h0m-1-2h0m-2-1h0m-4 0h0m-1 3h0m-1 3h0m-3-5h0m-10 4h0m-1-6h0m0 8h0m-4-1h0m-8-1h0m2 4h0m3 8h0m11 3h0m7 0h0m3 0h0m2-4h0m1-5h0m7 3h0m7 1h0m6 1h0m3 1h0m4 1h0m0-7h0m3 9h0m6 0h0m1-1h0m10-9h0m5 9h0m2-5h0m6-4h0m2 9h0m5 7h0m0-3h0m-5 6h0m-3-1h0m-2-3h0m-1 2h0m-5-1h0m-1 0h0m-5 3h0m-2 3h0m-9-8h0m-12 8h0m-3-7h0m-3-4h0m-6 10h0m-18-4h0m-2 4h0m-1-1h0m-2 1h0m-3-3h0m-1-2h0m-2-1h0m-2 0h0m-4 2h0m-2-5h0m-1 10h0m-3-5h0m-3-5h0m1 19h0m0-1h0m2-7h0m1 0h0m2 5h0m1-2h0m18 3h0m12-6h0m0 9h0m1 2h0m2 0h0m2-9h0m4 8h0m8-2h0m1-3h0m4-3h0m1 3h0m6 0h0m14 2h0m1 4h0m4 0h0m5-3h0m2-2h0m8 4h0m-1 6h0m-2-2h0m-4 2h0m-6-1h0m-1 4h0m-2 4h0m0-2h0m-1-8h0m-4 2h0m-12 7h0m-2 1h0m-3-6h0m-5-3h0m-4 4h0m-5-6h0m-3 0h0m-8 9h0m-17 1h0m-1-5h0m-5 2h0m-2-5h0m-6 8h0m-6-3h0m-3-7h0m21 19h0m1 4h0m2-2h0m3-8h0m3 3h0m0 3h0m1 3h0m1-9h0m2 7h0m0-6h0m10 7h0m2 2h0m6-9h0m6 7h0m4-1h0m0-3h0m0-3h0m1-2h0m2 8h0m4-5h0m6 4h0m3 2h0m4-1h0m0-3h0m1-5h0m2 1h0m5 6h0m0-4h0m-4 10h0m-10 4h0m-10-5h0m-6 6h0m-3 1h0m-4-7h0m-2 4h0m-1-1h0m-1 1h0m-5 3h0m-2 2h0m-8 0h0m0-7h0m-2 3h0m-3-2h0m-4 5h0m0-1h0m-3 0h0m23 7h0m17 0h0"/><path stroke="#857F66" stroke-opacity=".4" d="M-66 -82h0m-5 6h0m0 1h0m-6 12h0m0 2h0m3-9h0m148 18h0m-6-3h0m-1 0h0m-6-2h0m-6-1h0m-8-1h0m-3 1h0m-2 0h0m-17-1h0m-31 5h0m-6 1h0m-9 2h0m-2 1h0m-2 0h0m-2 0h0m-51-9h0m-1 4h0m-1 17h0m27-1h0m5-2h0m1-1h0m7-2h0m4-2h0m2 0h0m0-1h0m1 0h0m2-1h0m115 4h0m0 1h0m1 0h0m0 2h0m1 3h0m0-1h0m-152 7h0m-4 3h0m-1 2h0m-8-5h0m0 1h0m-3 16h0m4-7h0m0 2h0m1-2h0m2 6h0m5 11h0m-14-2h0m17 8h0m1 0h0m6 10h0m139-3h0m-4 9h0m-1 0h0m-3 5h0m-118 1h0m-2-1h0m-6-6h0m9 8h0m1 0h0m2 2h0m1 1h0m6 3h0m2 2h0m100-5h0m-45 19h0m-3 0h0m-10 0h0m-4 0h0m-1 0h0m-1-1h0m-20-5h0m-1 0h0m-8-4h0"/><path class="dm" stroke="#186B4F" stroke-opacity=".55" d="M-5 -109h0m6 0h0m7-1h0m1 0h0m24 5h0m-3-1h0m-2-1h0m-3-1h0m-35 0h0m-8 2h0m-12 4h0m-5 3h0m-14 10h0m7-5h0m96 0h0m3 2h0m1 1h0m5 5h0m1 1h0m-121 4h0m-1 1h0m-13 19h0m104-2h0m7 2h0m35-10h0m-63 12h0m-86 6h0m-1 3h0m42 13h0m26-1h0m44-1h0m-24 8h0m-54 2h0m-2 2h0m-37-4h0m0 5h0m0 4h0m31 1h0m3 1h0m76-3h0m3 8h0m16-4h0m2 10h0m-57 3h0m-31 3h0m-12-8h0m-31 2h0m4 15h0m2 3h0m82 0h0m-1 6h0m-1-1h0m-8-1h0m-66 10h0m2 4h0m1 0h0m81 17h0m0 2h0m-1-1h0m-2-1h0m-28 3h0m0-3h0m0 2h0m-1-1h0m0 2h0m-30-1h0m-4-3h0m-4-4h0m18 13h0m6 2h0m1 1h0m2 1h0m4 1h0m3 1h0m4-6h0m1 0h0m0 2h0m0-5h0m0 2h0m7 4h0m2 1h0m1-1h0m4 0h0m3 0h0m5 0h0m8-2h0m0 2h0m0-7h0m0 6h0m1-1h0m0-3h0m3 8h0m-3 10h0m-1-6h0m0 2h0m0 3h0m-2-5h0m-3 1h0m-1-1h0m-3 0h0m-2 1h0m0-3h0m-5 0h0m-1 0h0m-2 0h0m-5 2h0m-4 0h0m-1 0h0m-1 6h0m0-6h0m0 9h0m0-7h0m0 2h0m0 15h0m0 2h0m0-10h0m4 1h0m3 0h0m1 0h0m2 7h0m0-7h0m1 7h0m3-1h0m0 1h0m0-7h0m4 7h0m3-7h0m5 0h0m1 7h0m3 1h0m0-1h0m0 2h0m0 4h0m0 1h0m-12 4h0m-1 1h0m-3-1h0m-8 0h0m-2 0h0m-1 0h0m-3-8h0m0 9h0m0-5h0m0-3h0m0 15h0m0 2h0m0-1h0m0 2h0m5-4h0m2 0h0m7 0h0m1 0h0m2 0h0m4 0h0m4 0h0m2 1h0m2-1h0m1 1h0m0 2h0m0 4h0m0 4h0m0 9h0m0-11h0m-1 3h0m-2 7h0m-1-1h0m0-6h0m-2 0h0m-1 7h0m0-7h0m-3 7h0m-1 0h0m-1-7h0m-1 7h0m-4 0h0m-1 0h0m-1-7h0m-4 0h0m-1 0h0m-5 6h0m-1-8h0m0 9h0m0 7h0m0 2h0m0-7h0m0 4h0m0 4h0m13 1h0m4 0h0m1 0h0m1 0h0m9 0h0m1 0h0m1-5h0m0-3h0m0 2h0m0 4h0"/><path stroke="#0E1512" stroke-opacity=".78" d="M5 -73h0m-31 8h0m1-4h0m1 4h0m10 2h0m1-4h0m3 0h0m2 1h0m2 0h0m0-6h0m7 1h0m7 5h0m24-1h0m11 14h0m-5 4h0m-6-6h0m-7-3h0m-3 1h0m-10 1h0m-2-3h0m0 6h0m-3 4h0m-4-7h0m-4-4h0m-4 8h0m0-3h0m-2 4h0m-11-5h0m-24 15h0m21 2h0m2-3h0m3-5h0m4-1h0m2 8h0m4-7h0m14 1h0m1 8h0m9 1h0m3-2h0m1 2h0m8-9h0m8-1h0m2 3h0m7 7h0m4 4h0m-11 6h0m-7-7h0m-6 1h0m-1 8h0m-6-9h0m-7 4h0m-2 2h0m-7-7h0m-11 6h0m-7 0h0m-1 1h0m-3 1h0m-22-9h0m3 15h0m22-3h0m10 7h0m17-7h0m3 10h0m29-2h0m-6 10h0m-20-1h0m-35-3h0m-20 1h0m-5-2h0m9 15h0m5 1h0m0 4h0m1-8h0m3 7h0m1 3h0m9-2h0m1 2h0m15-6h0m1-3h0m1 3h0m8-1h0m0-4h0m20 8h0m-9 8h0m-5-1h0m-13-1h0m-2 1h0m-7-2h0m-4 8h0m0-1h0"/><path stroke="#857F66" stroke-opacity=".78" d="M23 -102h0m-20-5h0m-12-1h0m-21 2h0m-1 0h0m-7 3h0m-14 7h0m1 0h0m89 1h0m1 0h0m3 2h0m6 4h0m1 1h0m4 3h0m10 9h0m5 6h0m7 12h0m7 17h0m3 12h0m-3 3h0m-12 11h0m4-3h0m4-4h0m7 4h0m0-5h0m0 6h0m0 3h0m0 2h0m0 3h0m-1 2h0m-26-1h0m-2 1h0m-4 2h0m-1 1h0m-132 6h0m2 2h0m0-1h0m1 0h0m1 2h0m3 1h0m3 3h0m6 2h0m65 0h0m17-3h0m6-2h0m4 0h0m2-1h0m-41 8h0m-14 1h0m-19 0h0"/><path class="dm" stroke="#186B4F" stroke-opacity=".9" d="M2 -77h0m76 12h0m0 2h0m5 13h0m-89 10h0m90-7h0m0 1h0m1 3h0m1 14h0m0-7h0m0 11h0m0-3h0m-130 11h0m67 0h0m59 16h0m-68-4h0m-1 13h0m64 3h0m-67 13h0m49 11h0m6-6h0m2-3h0m-19 18h0m-1 1h0m-2 1h0m-8 5h0"/></g></svg><h3 class="h4">Specializing a&nbsp;Model to&nbsp;a&nbsp;Rulebook and&nbsp;Proving What&nbsp;It&nbsp;Did</h3><span class="link-arrow" aria-hidden="true"><svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
+          <a class="card research-card" href="research/03-not-tasks-lifecycles.html"><svg class="rc-mark vt-src" viewBox="-141 -131 282 250" width="282" height="250" preserveAspectRatio="xMinYMid meet" aria-hidden="true" focusable="false" data-draw><g fill="none" stroke-width="5" stroke-linecap="round"><path stroke="#0E1512" stroke-opacity=".4" d="M133 -7h0m-1 0h0m0-1h0m-2-1h0m-1 4h0m-260-1h0m0-2h0m-1 2h0m0-1h0m-1-1h0m0 2h0m0 4h0m0 3h0m1-1h0m2 2h0m0 2h0m2 1h0m250 6h0m3-2h0m0-2h0m6-3h0m1-3h0m-11 12h0m-4 2h0m-4 3h0m0-1h0m-2 3h0m-3 0h0m-2 2h0m0-1h0m-2 1h0m-3 1h0m-202 0h0m-2-3h0m-1-6h0m0 9h0m0-3h0m0 2h0m0-5h0m-1 5h0m0-5h0m0 4h0m0 2h0m-1-2h0m0 2h0m0-7h0m0 3h0m-1 3h0m0-5h0m0 1h0m0 2h0m-1-3h0m0 2h0m0-1h0m0 2h0m0 2h0m-1-2h0m0-1h0m0 2h0m-1-2h0m0-1h0m0-3h0m0 2h0m-1 1h0m0 1h0m-1 0h0m-3-1h0m-1-2h0m-1 2h0m-1-6h0m-2 2h0m0-1h0m12 11h0m1 2h0m1-2h0m6 0h0m2 1h0m3-1h0m12 4h0m3 2h0m2 0h0m0 1h0m1 1h0m1 0h0m0-1h0m2-1h0m0 1h0m2 1h0m1 1h0m10 0h0m4 2h0m2 0h0m1-1h0m0 1h0m2 0h0m46 0h0m5 0h0m1 0h0m53 0h0m4-1h0m1 0h0m2 1h0m2-1h0m1 1h0m3-2h0m1 1h0m2-2h0m1 1h0m8-1h0m1-2h0m3-1h0m2 0h0m2 0h0m2-2h0m5-3h0m-36 12h0m-3 0h0m-1 0h0m-3 0h0m-1 0h0m-9 2h0m-3-1h0m0 1h0m-6 0h0m-8 0h0m-3 1h0m-1-1h0m-2 1h0m-8 1h0m-1-2h0m-1-1h0m-1 3h0m0-1h0m-1 1h0m-4-3h0m0 2h0m-1-2h0m0 2h0m0 2h0m0-1h0m-1-1h0m0 4h0m0 2h0m-1-6h0m0-3h0m0 2h0m0 2h0m-1 2h0m0-5h0m0 4h0m0-5h0m0 4h0m-1-3h0m0 2h0m0-1h0m0 2h0m-1-2h0m0 1h0m-1 0h0m0 1h0m-1-3h0m-4 2h0m-7 0h0m-2 0h0m-5 0h0m-3-2h0m-10 1h0m-7-2h0m-12 0h0"/><path class="dm" stroke="#186B4F" stroke-opacity=".55" d="M133 -1h0m-264-7h0m-1 7h0m256 12h0m6-10h0m1 1h0m-13 13h0m-9 8h0m-1-5h0m-1 3h0m0-1h0m0 3h0m0-1h0m-1-2h0m0 2h0m0-1h0m-1 0h0m0-1h0m0-3h0m0 6h0m0-1h0m0-6h0m0 3h0m-1 4h0m0-1h0m0-2h0m-1 2h0m-1-3h0m0 4h0m-1 0h0m0-1h0m-1 1h0m-212-3h0m-9-8h0m24 13h0m8 3h0m142 6h0m2 1h0m3 0h0m19-4h0m4-1h0m18-3h0m5 0h0m2-1h0m1-2h0m1 2h0m0-2h0m-96 15h0m-38-1h0m-20-2h0"/><path stroke="#0E1512" stroke-opacity=".78" d="M41 -49h0m-2-1h0m-3 0h0m-1 0h0m-2-1h0m-1 2h0m-11-2h0m-3-1h0m-2 1h0m-1-1h0m-5 1h0m-2-5h0m-1 4h0m0 2h0m0-3h0m0 4h0m-1-4h0m0 2h0m0 1h0m0-5h0m-1 5h0m-1-1h0m0 2h0m-1-2h0m0-5h0m0 4h0m-1-1h0m0 2h0m0-3h0m-1 5h0m0-7h0m0 4h0m0-5h0m0 4h0m-1 3h0m0 1h0m-1-1h0m0-5h0m0 2h0m0 2h0m0-1h0m-2 0h0m-3 0h0m-9 0h0m-3 1h0m-2 1h0m-1-1h0m-8 1h0m-6-2h0m-2 1h0m-3 1h0m-2 0h0m-57 12h0m4 0h0m4-3h0m1 2h0m1 2h0m11-7h0m4 1h0m9-4h0m3 0h0m2 0h0m0-1h0m9 0h0m53 1h0m1-1h0m1 2h0m0 1h0m1-3h0m2 2h0m39 0h0m12-2h0m3 0h0m1 0h0m2 1h0m5 2h0m7 1h0m1 2h0m2-1h0m5 3h0m1-2h0m2 0h0m2 3h0m2 0h0m3 0h0m3 2h0m30 10h0m-1 0h0m0 2h0m-1-1h0m-1 1h0m0-3h0m0 2h0m-1 0h0m-1 0h0m-1 0h0m-6-3h0m-1 2h0m-1-1h0m-3-2h0m-2-2h0m-1-2h0m-4-2h0m-2 1h0m-201 0h0m-1 2h0m-6 0h0m-9 6h0m0-1h0m-1 1h0m-1 2h0m0-1h0m-1 0h0m0-1h0m-1 0h0m0 2h0m-1 0h0m0-1h0m-1-2h0m0 2h0m-1-2h0m-1 2h0m-1-1h0m0 2h0m-6 11h0m1-1h0m1-4h0m0 2h0m0 4h0m0-5h0m2 1h0m1-7h0m1 1h0m0 4h0m1-3h0m0 4h0m0-5h0m0 2h0m2-1h0m0-1h0m1 1h0m0-1h0m1-1h0m1 1h0m0-1h0m0 4h0m2 0h0m234-4h0m1 3h0m2-3h0m0 2h0m0-1h0m0 2h0m1 0h0m0-1h0m0 2h0m1-4h0m0 2h0m0-1h0m0 4h0m1-5h0m0 2h0m1-2h0m0 2h0m0-1h0m0 2h0m1-2h0m0 2h0m0-3h0m1 1h0m0 2h0m0 2h0m0-5h0m2 6h0m0-3h0m0 4h0m0-7h0m5 12h0m0 2h0m-263 1h0m-2 0h0m-1-2h0m0 2h0"/><path class="dm" stroke="#186B4F" stroke-opacity=".9" d="M-31 -51h0m-4 1h0m-62 11h0m4 0h0m13-2h0m7-4h0m23-3h0m4 1h0m100 0h0m2-1h0m55 17h0m-221-2h0m0-1h0m-5 4h0m-15 13h0m255-5h0m-257 11h0"/></g></svg><h3 class="h4"><span class="t-head">Not Tasks. Lifecycles.</span> Why&nbsp;We&nbsp;Stopped Building Assistants</h3><span class="link-arrow" aria-hidden="true"><svg class="arr" aria-hidden="true" focusable="false" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span></a>
+        </div>
       </div>
     </section>
 
     <!-- ============ CTA ============ -->
     <section class="cta-band is-dark grain">
-      <i class="mark globe" aria-hidden="true"></i>
       <div class="container">
         <h2 class="display-2" data-reveal data-split>Bring us a lifecycle.</h2>
         <div class="row" data-reveal style="--d:120ms">
@@ -410,10 +379,9 @@
       <div class="bottom">
         <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
       </div>
-      <div class="wordmark" aria-hidden="true" data-word="OpenEXA"></div>
     </div>
   </footer>
 
-  <script src="assets/js/home.js" defer data-after-paint="assets/js/loader.js assets/js/story.js assets/js/swarm.js assets/js/chain.js assets/js/arch.js assets/js/proof.js assets/js/site.js"></script>
+  <script src="assets/js/home.js" defer data-after-paint="assets/js/loader.js assets/js/story.js assets/js/swarm.js assets/js/chain.js assets/js/proof.js assets/js/site.js"></script>
 </body>
 </html>

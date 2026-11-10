@@ -49,10 +49,12 @@ jobs:
           python tools/build_team.py
           python tools/launch_meta_v9.py
           git diff --stat
-          git diff --exit-code -- '*.html' '*.xml' '*.json' '*.txt' '*.webmanifest' || {
+          git diff --exit-code -- '*.html' '*.xml' '*.json' '*.txt' '*.webmanifest' '*.svg' || {
             echo "::error::A generated file differs from what its generator writes: edit the generator or its data, rerun it, commit both."; exit 1; }
       - run: python tools/linkcheck_tree.py
       - run: python tools/check_static.py
+      - name: The deploy copy builds clean (minified CSS keeps its structure, scripts parse, every asset reference is versioned)
+        run: python tools/build_deploy.py --check
       - name: No placeholder or unfinished copy on any page (V2X-D2)
         run: python tools/check_placeholders.py
       - name: Routes, redirects and security headers as Azure serves them (tools/serve.py)
@@ -73,23 +75,27 @@ jobs:
       matrix:
         include:
           - shard: pages
-            only: pages,no_js,no_webgl,faux_bold,tables_phone,reflow_400,print_home
+            only: pages,no_js,no_webgl,faux_bold,tables_phone,reflow_400,print_home,lede_line_ends,home_standins,ui_weight
           - shard: home
             only: home,interior,resolution,phone,reduced_motion,loader,proof_entrance,overture_net
           - shard: overture
-            only: overture_reentry,overture_relay,overture_numeral,overture_tap,overture_resize,overture_ctx_lost
+            only: overture_reentry,overture_relay,overture_numeral,overture_tap,overture_resize,overture_ctx_lost,paper_opening,paper_row,overture_handoff
           - shard: overture-phones
             only: overture_phones
           - shard: overture-rest
             only: overture_rest
           - shard: swarm
-            only: swarm_rate,swarm_trace_to_ledger,platform_trace,platform_lab
+            only: swarm_rate,swarm_trace_to_ledger,platform_trace,platform_lab,lab_hold,lab_act,pipeline_once,halt_toggle,lab_copy
           - shard: ledger
             only: ledger_height,ledger_wheel,ledger_time,counters,nav_handoff,chain_keys,chain_contrast
           - shard: nav
-            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures,deep_links,tab_walk,pill_focus
+            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures,deep_links,tab_walk,pill_focus,nav_h_px,readout_end,footer_end,close_step,footer_phone
+          - shard: plates
+            only: draw_rest,crisp_4k,zoom_wide,market_draw_once,first_screen_sizes,page_type_sizes,research_strip,section_links
+          - shard: scenes
+            only: scenes,vt_fig,scroll_scenes,stack_scene,plate_scenes,lc_hero_once
           - shard: desk-pages
-            only: desk,desk_warm_start,desk_phone_follow,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab,trust_tamper
+            only: desk,desk_warm_start,desk_phone_follow,desk_say,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab,trust_tamper,desk_order
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

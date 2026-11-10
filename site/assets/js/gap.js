@@ -209,7 +209,7 @@
   }
 
   /* ---------------- drawing ---------------- */
-  let W = 0, H = 0, dpr = 1, hover = null;
+  let W = 0, H = 0, CW = 0, CH = 0, dpr = 1, K = 1, hover = null;
   const RANGE = 30; // ±bps shown
   const PADL = 14, PADT = 18, PADB = 30;
   let PADR = 92;
@@ -217,9 +217,12 @@
   const yOf = (g) => PADT + (0.5 - g / (2 * RANGE)) * (H - PADT - PADB);
   function resize() {
     dpr = Math.min(3, window.devicePixelRatio || 1);
-    const r = cv.getBoundingClientRect(); W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height));
+    // above 1920 the page grows with the window (root = 100vw / 120): the chart is the 1920 chart, scaled (a2, 4K)
+    K = Math.max(1, (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16);
+    const r = cv.getBoundingClientRect(); CW = Math.max(1, Math.floor(r.width)); CH = Math.max(1, Math.floor(r.height));
+    W = CW / K; H = CH / K;
     PADR = W < 600 ? 74 : 92;
-    cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cv.width = Math.floor(CW * dpr); cv.height = Math.floor(CH * dpr); ctx.setTransform(dpr * K, 0, 0, dpr * K, 0, 0);
     draw();
     // a narrower strip shows fewer records: the rest join the count, once the size has settled (a passing resize, such
     // as a page capture's, never drops records)
@@ -248,7 +251,7 @@
   function draw() {
     const now = performance.now();
     ctx.clearRect(0, 0, W, H);
-    ctx.font = '500 10px "IBM Plex Mono", monospace'; ctx.textBaseline = 'middle';
+    ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textBaseline = 'middle';
     // the labels on the right: the threshold's two keep a label's height clear of NAV's, and a grid value that would
     // print under either of them is left out (its hairline stays)
     const yT = yOf(thr), yB = yOf(-thr), x0 = PADL, x1 = W - PADR, LH = 13, yN = yOf(0);
@@ -304,7 +307,7 @@
         ctx.strokeStyle = `rgba(${IVORY}, .25)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, PADT); ctx.lineTo(x, H - PADB); ctx.stroke();
         ctx.fillStyle = `rgba(${IVORY}, 1)`; ctx.beginPath(); ctx.arc(x, y, 3, 0, 6.283); ctx.fill();
         const label = `${clock(st)} · ${sg > 0 ? '+' : '−'}${Math.abs(sg).toFixed(1)} bps ${Math.abs(sg) > thr ? (sg > 0 ? '· create' : '· redeem') : '· hold'}`;
-        ctx.font = '500 10px "IBM Plex Mono", monospace'; const tw = ctx.measureText(label).width + 16;
+        ctx.font = '500 11px "IBM Plex Mono", monospace'; const tw = ctx.measureText(label).width + 16;
         const bx = Math.min(W - PADR - tw, Math.max(PADL, x - tw / 2)), by = PADT - 4;
         ctx.fillStyle = 'rgba(14, 21, 18, .92)'; ctx.fillRect(bx, by, tw, 20); ctx.strokeStyle = `rgba(${IVORY}, .2)`; ctx.strokeRect(bx + .5, by + .5, tw - 1, 19);
         ctx.fillStyle = `rgba(${IVORY}, .95)`; ctx.textAlign = 'left'; ctx.fillText(label, bx + 8, by + 10);
@@ -313,7 +316,7 @@
   }
 
   /* ---------------- follow the next action: one proposal, walked down the six gates ---------------- */
-  const follow = { state: 'idle', act: null, k: 0, wt: 0, waitT: 0, timers: [] };
+  const follow = { state: 'idle', act: null, k: 0, wt: 0, waitT: 0, timers: [], quiet: false };
   const STEP_MS = 1000;
   const GATES = ['Signal', 'Predict', 'Decide', 'Approve', 'Execute', 'Settle'];
   function lineFor(k, a) {
@@ -334,13 +337,29 @@
     if (k) { el.lane.dataset.on = k; el.lane.style.setProperty('--k', k); } else delete el.lane.dataset.on;
     el.lane.querySelectorAll('li').forEach(li => { const g = +li.dataset.g; li.classList.toggle('is-past', !!k && g < k); li.classList.toggle('is-on', g === k); });
   }
-  function say(text, gate) {
+  // hc23: once it has spoken the line is never empty: each new line crossfades over the last one in the line's one cell
+  // (platform.css), so nothing below moves; the old one leaves the accessibility tree at once. The first line opens with
+  // its room, and the same words come back without a fade
+  function put(line) {
     if (!el.say) return;
     rcptLi = null;
-    el.say.replaceChildren();
-    if (gate) { const b = document.createElement('b'); b.textContent = `${pad2(gate)} ${GATES[gate - 1]}`; el.say.append(b, ' '); }
-    el.say.append(text);
+    const cur = el.say.querySelector(':scope > :not(.is-out)'), same = !!cur && cur.textContent === line.textContent;
+    for (const c of [...el.say.children]) {
+      if (same || reduced.matches || c.classList.contains('is-out')) { c.remove(); continue; }
+      c.classList.add('is-out'); c.setAttribute('aria-hidden', 'true'); c.style.transition = ''; // (a first line had none)
+      setTimeout(() => c.remove(), 250);
+    }
+    if (same || !cur) line.style.transition = 'none';
+    el.say.append(line);
   }
+  function say(text, gate) {
+    const line = document.createElement('span');
+    if (gate) { const b = document.createElement('b'); b.textContent = `${pad2(gate)} ${GATES[gate - 1]}`; line.append(b, ' '); }
+    line.append(text);
+    put(line);
+  }
+  // Esc is named only where there is a keyboard to press it (a phone stops with the button itself)
+  const WAIT = 'Following the next action the model produces.' + (window.matchMedia('(any-pointer: fine)').matches ? ' Esc stops.' : '');
   function setFollowButton(on) {
     if (!el.follow) return;
     el.follow.setAttribute('aria-pressed', String(on)); // a toggle keeps its label; the pressed state says it is on
@@ -361,24 +380,27 @@
     else if (bottom > hi) dy = bottom - hi;
     if (Math.abs(dy) > 1) window.scrollBy({ top: dy, behavior: reduced.matches ? 'instant' : 'smooth' });
   }
-  function startFollow() {
+  // quiet (hc13r, the desk's one act by itself): no announcement and no scroll; what a visitor starts speaks as before
+  const voice = (on) => { if (el.say) el.say.setAttribute('aria-live', on ? 'polite' : 'off'); };
+  function startFollow(quiet) {
     if (reduced.matches) { stillFollow(); return; }
+    voice(!quiet); follow.quiet = !!quiet;
     follow.state = 'waiting'; follow.act = null; follow.k = 0; follow.wt = 0; follow.waitT = 0;
     setFollowButton(true); setLane(0);
-    say('Following the next action the model produces. Esc stops.');
     if (paused) togglePause();
-    // a proposal already on the chart (a ring not yet settled) is the next action: walk it at once
+    // a proposal already on the chart (a ring not yet settled) is the next action: walk it at once; otherwise the line
+    // says what runs (hc23: the desk's own act too, unannounced, so the line under the gates is never an empty hole)
     const open = !S.done && S.acts.find(a => !a.filled && !a.held);
-    if (open) { open.held = true; follow.act = open; follow.state = 'walking'; follow.wt = 0; walk(1); }
+    if (open) { open.held = true; follow.act = open; follow.state = 'walking'; follow.wt = 0; walk(1); } else say(WAIT);
     stats();
     // measured once the head reads 'Following an action' (on some widths the longer state wraps the head onto a new row)
-    walkIntoView();
+    if (!quiet) walkIntoView();
     requestFrame(); // otherwise the model runs fast to the next one; a closed session hands over at the next frame
   }
   function stopFollow(msg) {
     follow.timers.forEach(clearTimeout); follow.timers = [];
     if (follow.act && !follow.act.filled) { follow.act.held = false; follow.act.followed = false; }
-    follow.state = 'idle'; follow.act = null; follow.k = 0;
+    follow.state = 'idle'; follow.act = null; follow.k = 0; follow.quiet = false;
     setFollowButton(false); setLane(0);
     if (msg) say(msg);
     stats(); draw(); requestFrame();
@@ -391,7 +413,7 @@
     a.held = false; a.followed = true;
     fill(a);
     if (a.rec && a.rec.li) a.rec.li.classList.add('is-followed');
-    follow.state = 'idle'; follow.act = null;
+    follow.state = 'idle'; follow.act = null; follow.quiet = false;
     setFollowButton(false);
     follow.timers.push(setTimeout(() => { if (follow.state === 'idle' && !rcptLi) setLane(0); }, 1600));
     receipt(a, 1200);
@@ -400,10 +422,12 @@
   // the walk ends on the record itself (v2x lab): after the Settle line, the action as the ledger holds it, its SHA-256
   // and the record it is chained to (the same line's room: nothing below moves); both hashes are the ones the strip
   // prints, and both light on the strip
+  // hc23: when that record leaves the strip (or the session restarts) the line stays, back in the line's own colour
   function clearReceipt() {
     if (!rcptLi) return;
     rcptLi = null;
-    if (el.say && el.say.querySelector('.dl-rcpt')) el.say.replaceChildren();
+    const done = el.say && el.say.querySelector(':scope > .dl-rcpt:not(.is-out)');
+    if (done) done.classList.add('is-spent');
     root.querySelectorAll('.dk-rec.is-linked').forEach(li => li.classList.remove('is-linked'));
     if (follow.state === 'idle') setLane(0);
   }
@@ -418,7 +442,7 @@
       line.append(b, ` A ${r.kind === 'CREATE' ? 'create' : 'redeem'} at ${r.clock} ET`);
       if (r.hash && r.prev) line.append(', hashed ', hx(r.hash), ' and chained to the record before it, ', hx(r.prev), r.prev === GENESIS ? ', the start of the chain.' : '.');
       else line.append(', recorded in this session’s ledger.');
-      el.say.replaceChildren(line);
+      put(line);
       rcptLi = r.li;
       // the lane keeps the route it walked, every gate passed, for as long as the line names a record on the strip
       setLane(0);
@@ -445,9 +469,33 @@
   }
   if (el.follow) {
     el.follow.hidden = false;
-    el.follow.addEventListener('click', () => { if (follow.state === 'idle') startFollow(); else stopFollow('Stopped following.'); });
+    el.follow.addEventListener('click', () => {
+      voice(true);
+      // a press during the desk's own act takes that walk over (and speaks it), rather than stopping what it came to see
+      if (follow.state !== 'idle' && follow.quiet) { follow.quiet = false; if (follow.act && follow.k) say(lineFor(follow.k, follow.act), follow.k); else say(WAIT); return; }
+      if (follow.state === 'idle') startFollow(); else stopFollow('Stopped following.');
+    });
   }
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && follow.state !== 'idle') stopFollow('Stopped following.'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && follow.state !== 'idle') { voice(true); stopFollow('Stopped following.'); } });
+  // award a3 (a3-dev): the hero's "Run one simulated session" (a[data-gap-go]) lands on the instrument, not on its
+  // chapter's head: the desk under the bar with Follow in view, and focus on Follow, so the act is the next key press (as
+  // Trust's jump). site.js makes the jump (a cut when it is long) and lands #desk; this moves the landing in the same
+  // frame (oxa:jump), or after the browser's own short jump (hashchange). The chapter menu's #desk keeps the head.
+  let goAt = 0;
+  document.addEventListener('click', (e) => {
+    if (!e.button && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.target.closest && e.target.closest('a[data-gap-go]')) goAt = performance.now();
+  }, true);
+  const arrive = () => {
+    if (!goAt || performance.now() - goAt > 2500 || !el.follow || el.follow.hidden) return;
+    goAt = 0;
+    quietAct(); // the visitor came to run it: the desk does not act first
+    root.scrollIntoView({ block: 'start', behavior: 'instant' });
+    const over = el.follow.getBoundingClientRect().bottom - (window.innerHeight - 16);
+    if (over > 0) window.scrollBy({ top: over, behavior: 'instant' });
+    el.follow.focus({ preventScroll: true });
+  };
+  document.addEventListener('oxa:jump', arrive);
+  window.addEventListener('hashchange', () => setTimeout(arrive, 0));
 
   /* ---------------- loop ---------------- */
   let visible = false, last = performance.now(), uiTick = 0, frameId = 0, fresh = false;
@@ -501,7 +549,7 @@
     draw(); stats();
   }
   motion.addEventListener('click', togglePause);
-  cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); hover = e.clientX - r.left; if (reduced.matches || paused) draw(); }, { passive: true });
+  cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); hover = (e.clientX - r.left) / K; if (reduced.matches || paused) draw(); }, { passive: true });
   cv.addEventListener('pointerleave', () => { hover = null; if (reduced.matches || paused) draw(); });
 
   // The desk sits screens below the fold: it sizes, runs its morning and draws only when it comes within one and a half
@@ -516,7 +564,7 @@
     if (reduced.matches) still(); else { warm(); draw(); stats(); }
     if ('ResizeObserver' in window) new ResizeObserver(([e]) => {
       const r = e.contentRect;
-      if (Math.floor(r.width) !== W || Math.floor(r.height) !== H) resize();
+      if (Math.floor(r.width) !== CW || Math.floor(r.height) !== CH) resize();
     }).observe(cv);
     else window.addEventListener('resize', resize);
     // a move to a display with another pixel ratio changes no CSS size: watch the ratio itself, re-arming each time
@@ -531,6 +579,26 @@
       if (visible) { start(); requestFrame(); } else stopFrames();
     }, { threshold: 0.05 }).observe(root);
   } else { visible = true; start(); }
+  /* hc13r (PLAT-3; SYSTEM.md 12, act once): the first time the desk is well in view it follows one action by itself,
+     quietly (no announcement, no scroll): the session runs on to the next proposal, the gates light from Signal to
+     Settle and the record is written into the strip. Then it is still and the button is the visitor's. Never under
+     reduced motion, never once the visitor has touched the desk or come to it with "Run one simulated session", never
+     while it is paused or already following. */
+  // A desk taller than the screen (phones) waits for its foot, the ledger strip, so the walk down the lane above it and
+  // the record it writes are both on screen; a touch anywhere on the desk still cancels it, as actOnce does for its own el
+  const OXA = window.OXA = window.OXA || {};
+  const deskH = root.getBoundingClientRect().height; // (0 if not laid out yet: then a phone's width decides)
+  const foot = (deskH ? deskH > window.innerHeight * 0.9 : window.matchMedia('(max-width: 600px)').matches) && root.querySelector('.desk-ledger');
+  const actArgs = [foot || root, () => { if (follow.state === 'idle' && !paused && started) startFollow(true); },
+    { paused: () => paused || follow.state !== 'idle' || !started }];
+  let quietAct = () => {};
+  if (OXA.actOnce) quietAct = OXA.actOnce(...actArgs) || quietAct;
+  else (OXA.q = OXA.q || []).push(actArgs);
+  if (foot) {
+    const touch = (e) => { if (e.type !== 'pointerdown' || e.pointerType !== 'touch' || (e.target.closest && e.target.closest('a[href], button, input, label, [tabindex]'))) quietAct(); };
+    ['pointerdown', 'keydown', 'click'].forEach((t) => root.addEventListener(t, touch, true));
+  }
+
   reduced.addEventListener('change', () => {
     stopFrames();
     if (follow.state !== 'idle') stopFollow();
@@ -540,6 +608,77 @@
     draw(); stats();
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopFrames(); else requestFrame(); });
+})();
+
+/* The hero rings (award a3, 4K): once their one draw is over, the plate's animations let go (each ends on the plate's
+   own style), so the browser paints the plate straight onto the page again: while an animation holds its end state the
+   plate sits on a layer at a fractional offset, and every hairline spreads over three device rows. */
+(function () {
+  'use strict';
+  const fig = document.querySelector('.hero-plate--rings');
+  if (!fig || typeof fig.getAnimations !== 'function') return;
+  requestAnimationFrame(() => {
+    const all = fig.getAnimations({ subtree: true });
+    if (all.length) Promise.all(all.map((a) => a.finished)).then(() => all.forEach((a) => a.cancel()), () => {});
+  });
+})();
+
+/* The hero (hc26r PLAT-2): once, quiet (OXA.actOnce), a proposal runs the ring from Signal through gates 01-06, each lit
+   as it passes, and writes the green block at Record (1.4 s, --ease-move). Still without JavaScript, under reduced motion
+   and in print; if it never runs, the block is shown after 3 s. */
+(function () {
+  'use strict';
+  const fig = document.querySelector('.hero-plate--rings');
+  const dot = fig && fig.querySelector('.lr-dot'), blk = fig && fig.querySelector('.lc-new');
+  if (!dot || !blk) return;
+  // in gate order, not the drawing's order (3, 2, 4, 1, 5, 6): a slow frame that passes two gates lights them 01 -> 06
+  const gates = [...fig.querySelectorAll('.lc-gate')].sort((a, b) => a.dataset.g - b.dataset.g);
+  const CX = 260, CY = 174, RX = 239, RY = 100, T0 = 180, LAP = 330, LAPMS = 1150, DROPMS = 250;
+  const bx = +blk.getAttribute('x') + 4.5, by = +blk.getAttribute('y') + 4.5;
+  const bez = (x1, y1, x2, y2) => (t) => {
+    let s = t;
+    for (let i = 0; i < 8; i++) {
+      const u = 1 - s, x = 3 * u * u * s * x1 + 3 * u * s * s * x2 + s * s * s - t, d = 3 * u * u * x1 + 6 * u * s * (x2 - x1) + 3 * s * s * (1 - x2);
+      if (Math.abs(x) < 1e-5 || !d) break;
+      s = Math.min(1, Math.max(0, s - x / d));
+    }
+    const u = 1 - s;
+    return 3 * u * u * s * y1 + 3 * u * s * s * y2 + s * s * s;
+  };
+  const ease = bez(0.62, 0, 0.2, 1);
+  const done = () => fig.classList.add('is-done');
+  const fallback = setTimeout(done, 3000);
+  const at = (x, y) => { dot.setAttribute('cx', x.toFixed(2)); dot.setAttribute('cy', y.toFixed(2)); };
+  function run() {
+    clearTimeout(fallback);
+    let t0 = 0;
+    const nx = CX + RX * Math.cos((T0 + LAP) * Math.PI / 180), ny = CY + RY * Math.sin((T0 + LAP) * Math.PI / 180);
+    fig.classList.remove('is-done');
+    gates.forEach((g) => g.classList.remove('is-lit'));
+    fig.classList.add('is-run');
+    const step = (now) => {
+      if (!t0) t0 = now;
+      const ms = now - t0;
+      if (ms < LAPMS) {
+        const e = ease(ms / LAPMS), a = T0 + LAP * e;
+        at(CX + RX * Math.cos(a * Math.PI / 180), CY + RY * Math.sin(a * Math.PI / 180));
+        gates.forEach((g) => { if (a >= T0 + 60 * (g.dataset.g - 1) - 4) g.classList.add('is-lit'); });
+      } else {
+        const q = ease(Math.min(1, (ms - LAPMS) / DROPMS));
+        at(nx + (bx - nx) * q, ny + (by - ny) * q);
+        if (q >= 1) {
+          done(); fig.classList.remove('is-run');
+          setTimeout(() => gates.forEach((g) => g.classList.remove('is-lit')), 700);
+          return;
+        }
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  const OXA = window.OXA = window.OXA || {};
+  const args = [fig, run, { visible: 0.6 }];
+  if (OXA.actOnce) OXA.actOnce(...args); else (OXA.q = OXA.q || []).push(args);
 })();
 
 /* The orbit (Lifecycles §04; award a1, a1-dev): each list of twelve callouts is one Tab stop, and the arrow keys (Home,

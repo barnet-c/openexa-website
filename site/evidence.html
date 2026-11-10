@@ -4,24 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Proof — OpenEXA · Agents ran the lifecycle. The broker confirmed it.</title>
-  <meta name="description" content="Lifecycle 01, a limited proof of concept on live capital: ten consecutive sessions, more than 10 basis points in each, every one confirmed by the executing broker. Not a forecast.">
+  <meta name="description" content="Lifecycle 01, a limited proof of concept on live capital: ten consecutive sessions, each above 10 bps and confirmed by the executing broker. Not a forecast.">
   <meta name="theme-color" content="#0E1512">
   <link rel="canonical" href="https://www.openexa.com/evidence.html">
   <meta property="og:url" content="https://www.openexa.com/evidence.html">
   <meta property="og:site_name" content="OpenEXA">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Proof — OpenEXA · Agents ran the lifecycle. The broker confirmed it.">
-  <meta property="og:description" content="Lifecycle 01, a limited proof of concept on live capital: ten consecutive sessions, more than 10 basis points in each, every one confirmed by the executing broker. Not a forecast.">
+  <meta property="og:description" content="Lifecycle 01, a limited proof of concept on live capital: ten consecutive sessions, each above 10 bps and confirmed by the executing broker. Not a forecast.">
   <meta property="og:image" content="https://www.openexa.com/assets/img/og/evidence.jpg">
-  <meta property="og:image:alt" content="Agents ran the lifecycle. The broker confirmed it. Beside it, the page’s plate: ten sessions on one record line: one block per session, one tick per broker confirmation.">
+  <meta property="og:image:alt" content="Agents ran the lifecycle. The broker confirmed it. Beside it, ten sessions on one record line: one block per session, one tick per broker confirmation.">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Proof — OpenEXA · Agents ran the lifecycle. The broker confirmed it.">
-  <meta name="twitter:description" content="Lifecycle 01, a limited proof of concept on live capital: ten consecutive sessions, more than 10 basis points in each, every one confirmed by the executing broker. Not a forecast.">
+  <meta name="twitter:description" content="Lifecycle 01, a limited proof of concept on live capital: ten consecutive sessions, each above 10 bps and confirmed by the executing broker. Not a forecast.">
   <meta name="twitter:image" content="https://www.openexa.com/assets/img/og/evidence.jpg">
-  <meta name="twitter:image:alt" content="Agents ran the lifecycle. The broker confirmed it. Beside it, the page’s plate: ten sessions on one record line: one block per session, one tick per broker confirmation.">
+  <meta name="twitter:image:alt" content="Agents ran the lifecycle. The broker confirmed it. Beside it, ten sessions on one record line: one block per session, one tick per broker confirmation.">
   <meta name="robots" content="max-image-preview:large">
   <link rel="alternate" type="application/atom+xml" title="OpenEXA Blog" href="/blog/feed.xml">
   <link rel="alternate" type="application/atom+xml" title="OpenEXA Research" href="/research/feed.xml">
@@ -30,10 +30,11 @@
   <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
   <link rel="preload" href="assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/instrument-serif-400i-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/css/site.css">
   <link rel="stylesheet" href="assets/css/proofchart.css">
   <link rel="stylesheet" href="assets/css/proof.css">
-  <script type="application/ld+json" id="ld-page">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"https://www.openexa.com/evidence.html#webpage","url":"https://www.openexa.com/evidence.html","name":"Proof — OpenEXA · Agents ran the lifecycle. The broker confirmed it.","description":"Lifecycle 01, a limited proof of concept on live capital: ten consecutive sessions, more than 10 basis points in each, every one confirmed by the executing broker. Not a forecast.","isPartOf":{"@type":"WebSite","@id":"https://www.openexa.com/#website","name":"OpenEXA","url":"https://www.openexa.com/"},"primaryImageOfPage":"https://www.openexa.com/assets/img/og/evidence.jpg","inLanguage":"en"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenEXA","item":"https://www.openexa.com/"},{"@type":"ListItem","position":2,"name":"Proof","item":"https://www.openexa.com/evidence.html"}]}]}</script>
+  <script type="application/ld+json" id="ld-page">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"https://www.openexa.com/evidence.html#webpage","url":"https://www.openexa.com/evidence.html","name":"Proof — OpenEXA · Agents ran the lifecycle. The broker confirmed it.","description":"Lifecycle 01, a limited proof of concept on live capital: ten consecutive sessions, each above 10 bps and confirmed by the executing broker. Not a forecast.","isPartOf":{"@type":"WebSite","@id":"https://www.openexa.com/#website","name":"OpenEXA","url":"https://www.openexa.com/"},"primaryImageOfPage":"https://www.openexa.com/assets/img/og/evidence.jpg","inLanguage":"en"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenEXA","item":"https://www.openexa.com/"},{"@type":"ListItem","position":2,"name":"Proof","item":"https://www.openexa.com/evidence.html"}]}]}</script>
 </head>
 <body data-page="proof" data-nav="dark-start">
   <a class="skip" href="#main">Skip to content</a>
@@ -70,42 +71,21 @@
 
   <main id="main">
 
-    <section class="page-hero page-hero--dark is-dark grain">
+    <!-- the hero (hc4, HC4 item 1): the headline and its evidence on one screen. Fig. 1.1, the ten sessions, moved up from
+         §01 (gone): assets/js/proof.js draws it from the record below, in the dark register Home §04 uses, and derives every
+         session count on this page; edit the sessions here, then the no-JS table and the text to match. Without JavaScript
+         the record is the table (Table 1.1's ditto marks); [data-plate-rec] per session and [data-plate-tick] per
+         broker-confirmed session (check_static proof_plate compares them with the record). -->
+    <section class="page-hero page-hero--dark is-dark grain" id="performance">
       <div class="container">
         <div class="grid page-hero--plate">
           <div class="hero-copy">
-            <h1 class="display-1" data-reveal style="--d:60ms"><span class="ln">Agents ran the lifecycle.</span> <span class="ln">The broker <span class="ph">confirmed it.</span></span></h1>
-            <p class="lede" data-reveal style="--d:120ms"><span data-proof="total" data-proof-as="Words">Ten</span> consecutive sessions of Lifecycle&nbsp;01, more than <span data-proof="floor" data-proof-as="words">ten</span> basis points in each, every fill <span class="nw">broker-confirmed</span>.</p>
+            <h1 class="display-1" data-reveal style="--d:60ms"><span class="ln">Agents ran the lifecycle.</span> <em class="ln">The broker <span class="ph">confirmed it.</span></em></h1>
+            <p class="lede" data-reveal style="--d:120ms"><span data-proof="total" data-proof-as="Words">Ten</span> consecutive sessions of&nbsp;Lifecycle&nbsp;01, more&nbsp;than&nbsp;<span data-proof="floor" data-proof-as="words">ten</span> basis points in&nbsp;each, every&nbsp;fill <span class="nw">broker-confirmed</span>.</p>
             <p class="pf-lc-hedge" data-reveal style="--d:150ms">Limited <span class="nw">proof-of-concept</span> period on <span class="nw">live capital</span>&nbsp;· <span class="nw">not a forecast</span></p>
+            <p class="pf-go" data-reveal style="--d:170ms"><a class="link-arrow" href="#verification">How each session is documented <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></p>
           </div>
-          <!-- Hero plate: the record line from #oxa-sessions, the top of Fig. 1.1 - one open block per session ON the 10 bps floor (above it, value not published: one unit, open, as the chart's), one broker tick just above each. [data-plate-rec] per session and [data-plate-tick] per broker-confirmed session (check_static compares them); change it with the record. On desktop the floor sits on the H1's last baseline. One pass of signal ink runs along the floor and ticks 01 to 10 as it reaches them, then the plate is still, its floor lit as the chart's (award a1, L5). The still drawing is the SVG; the marks that move at first paint sit in small HTML boxes over it, each holding the same 346 x 88 drawing (r4 perf). Written by .shots/v2x/work/proof/a1/plate.py. -->
-          <div class="pf-record">
-            <figure class="hero-plate hero-plate--records" data-reveal style="--d:180ms; --hp-ar:3.932" role="img" aria-label="Ten sessions on one record line: one block per session, one tick per broker confirmation">
-              <div class="hp-art">
-                <svg viewBox="0 0 346 88" aria-hidden="true" focusable="false"><g class="hp-s1"><path class="hp-h hp-strong" d="M0 46H346"/><path class="hp-h" d="M105 52Q113 66 121 52"/><path class="hp-h" d="M131 52Q139 66 147 52"/><path class="hp-h" d="M157 52Q165 66 173 52"/><path class="hp-h" d="M183 52Q191 66 199 52"/><path class="hp-h" d="M209 52Q217 66 225 52"/><path class="hp-h" d="M235 52Q243 66 251 52"/><path class="hp-h" d="M261 52Q269 66 277 52"/><path class="hp-h" d="M287 52Q295 66 303 52"/><path class="hp-h" d="M313 52Q321 66 329 52"/></g></svg>
-                <div class="pf-pl hp-s1" aria-hidden="true"><span class="pf-lit"><span><svg viewBox="0 0 346 88" focusable="false"><path class="pf-glow" d="M0 46H346"/><path class="pf-fl" d="M0 46H346"/></svg></span></span><span class="pf-rec" style="--i:0;--u:91"><svg viewBox="0 0 346 88" focusable="false"><rect class="hp-rec" data-plate-rec x="92" y="34" width="16" height="12" rx="1.2"/></svg></span><span class="pf-rec" style="--i:1;--u:117"><svg viewBox="0 0 346 88" focusable="false"><rect class="hp-rec" data-plate-rec x="118" y="34" width="16" height="12" rx="1.2"/></svg></span><span class="pf-rec" style="--i:2;--u:143"><svg viewBox="0 0 346 88" focusable="false"><rect class="hp-rec" data-plate-rec x="144" y="34" width="16" height="12" rx="1.2"/></svg></span><span class="pf-rec" style="--i:3;--u:169"><svg viewBox="0 0 346 88" focusable="false"><rect class="hp-rec" data-plate-rec x="170" y="34" width="16" height="12" rx="1.2"/></svg></span><span class="pf-rec" style="--i:4;--u:195"><svg viewBox="0 0 346 88" focusable="false"><rect class="hp-rec" data-plate-rec x="196" y="34" width="16" height="12" rx="1.2"/></svg></span><span class="pf-rec" style="--i:5;--u:221"><svg viewBox="0 0 346 88" focusable="false"><rect class="hp-rec" data-plate-rec x="222" y="34" width="16" height="12" rx="1.2"/></svg></span><span class="pf-rec" style="--i:6;--u:247"><svg viewBox="0 0 346 88" focusable="false"><rect class="hp-rec" data-plate-rec x="248" y="34" width="16" height="12" rx="1.2"/></svg></span><span class="pf-rec" style="--i:7;--u:273"><svg viewBox="0 0 346 88" focusable="false"><rect class="hp-rec" data-plate-rec x="274" y="34" width="16" height="12" rx="1.2"/></svg></span><span class="pf-rec" style="--i:8;--u:299"><svg viewBox="0 0 346 88" focusable="false"><rect class="hp-rec" data-plate-rec x="300" y="34" width="16" height="12" rx="1.2"/></svg></span><span class="pf-rec" style="--i:9;--u:325"><svg viewBox="0 0 346 88" focusable="false"><rect class="hp-rec" data-plate-rec x="326" y="34" width="16" height="12" rx="1.2"/></svg></span></div>
-                <div class="pf-pl hp-s2" aria-hidden="true"><span class="pf-tk" style="--i:0;--u:91;--t:846ms"><span><svg viewBox="0 0 346 88" focusable="false"><path class="hp-tick" data-plate-tick d="M92.5 24l5 5 10-10.5"/></svg></span></span><span class="pf-tk" style="--i:1;--u:117;--t:875ms"><span><svg viewBox="0 0 346 88" focusable="false"><path class="hp-tick" data-plate-tick d="M118.5 24l5 5 10-10.5"/></svg></span></span><span class="pf-tk" style="--i:2;--u:143;--t:903ms"><span><svg viewBox="0 0 346 88" focusable="false"><path class="hp-tick" data-plate-tick d="M144.5 24l5 5 10-10.5"/></svg></span></span><span class="pf-tk" style="--i:3;--u:169;--t:931ms"><span><svg viewBox="0 0 346 88" focusable="false"><path class="hp-tick" data-plate-tick d="M170.5 24l5 5 10-10.5"/></svg></span></span><span class="pf-tk" style="--i:4;--u:195;--t:962ms"><span><svg viewBox="0 0 346 88" focusable="false"><path class="hp-tick" data-plate-tick d="M196.5 24l5 5 10-10.5"/></svg></span></span><span class="pf-tk" style="--i:5;--u:221;--t:996ms"><span><svg viewBox="0 0 346 88" focusable="false"><path class="hp-tick" data-plate-tick d="M222.5 24l5 5 10-10.5"/></svg></span></span><span class="pf-tk" style="--i:6;--u:247;--t:1036ms"><span><svg viewBox="0 0 346 88" focusable="false"><path class="hp-tick" data-plate-tick d="M248.5 24l5 5 10-10.5"/></svg></span></span><span class="pf-tk" style="--i:7;--u:273;--t:1087ms"><span><svg viewBox="0 0 346 88" focusable="false"><path class="hp-tick" data-plate-tick d="M274.5 24l5 5 10-10.5"/></svg></span></span><span class="pf-tk" style="--i:8;--u:299;--t:1157ms"><span><svg viewBox="0 0 346 88" focusable="false"><path class="hp-tick" data-plate-tick d="M300.5 24l5 5 10-10.5"/></svg></span></span><span class="pf-tk" style="--i:9;--u:325;--t:1276ms"><span><svg viewBox="0 0 346 88" focusable="false"><path class="hp-tick" data-plate-tick d="M326.5 24l5 5 10-10.5"/></svg></span></span></div>
-                <div class="hp-labs" aria-hidden="true"><span class="hp-lab hp-lab--acc pf-l-ok" style="--x:26.6;--y:10.2">Broker confirmed</span><span class="hp-lab pf-l-fl" style="--x:0;--y:52.3">Floor<small><span data-proof="floor">10</span> bps</small></span><span class="hp-lab hp-lab--c hp-lab--n" style="--x:28.9;--y:89.8">01</span><span class="hp-lab hp-lab--c hp-lab--n" style="--x:36.4;--y:89.8">02</span><span class="hp-lab hp-lab--c hp-lab--n" style="--x:43.9;--y:89.8">03</span><span class="hp-lab hp-lab--c hp-lab--n" style="--x:51.4;--y:89.8">04</span><span class="hp-lab hp-lab--c hp-lab--n" style="--x:59;--y:89.8">05</span><span class="hp-lab hp-lab--c hp-lab--n" style="--x:66.5;--y:89.8">06</span><span class="hp-lab hp-lab--c hp-lab--n" style="--x:74;--y:89.8">07</span><span class="hp-lab hp-lab--c hp-lab--n" style="--x:81.5;--y:89.8">08</span><span class="hp-lab hp-lab--c hp-lab--n" style="--x:89;--y:89.8">09</span><span class="hp-lab hp-lab--c hp-lab--n" style="--x:96.5;--y:89.8">10</span></div>
-              </div>
-            </figure>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 01 PERFORMANCE REPORT -->
-    <section class="section section--open" id="performance" data-chapter-short="Performance">
-      <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">01</span><span class="lab">Performance</span></div>
-        <div class="proof-layout proof-layout--report">
-          <div class="proof-copy">
-            <h2 class="display-2" data-reveal>Both sides of the&nbsp;NAV.</h2>
-            <p class="body-lg mt-3" data-reveal style="--d:80ms" data-proof="regimes">Five premium, five discount.</p>
-            <p class="small mt-3 pf-hedge" data-reveal style="--d:140ms">Not a forecast. <a class="nw" href="#disclosures">See the disclosures.</a></p>
-          </div>
-          <div class="proof-main">
-            <!-- The one record of the ten sessions. assets/js/proof.js draws the chart (and its inspector: the record, session by
-                 session) and derives every session count on this page. Edit the sessions here, then the no-JS table and text to match. -->
+          <figure class="proof-fig pf-record">
             <script type="application/json" id="oxa-sessions">
 {"lifecycle": "Lifecycle 01", "unit": "bps", "floor": 10, "sessions": [
   {"day": "Day 01", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"},
@@ -120,77 +100,83 @@
   {"day": "Day 10", "regime": "Discount", "value": ">10", "confirmation": "Broker confirmation", "status": "Settled"}
 ]}
             </script>
-            <figure class="proof-fig" data-proof-fig hidden>
-              <div class="proof" data-proof-chart></div>
-              <figcaption class="figure-cap"><span class="fc-h">One block per basis point</span></figcaption>
-            </figure>
-            <noscript>
-            <div class="pf-nojs">
-              <div class="figure-cap pf-tcap"><span class="fc-t" id="pf-table-cap"><b class="fc-n">Table&nbsp;1.1</b><span class="fc-d"> — </span><span class="nw">Proof-of-concept</span> sessions · bps captured by the&nbsp;agents</span><span class="fc-h">Every session confirmed by the executing broker</span></div>
-              <div class="table-scroll" role="region" aria-labelledby="pf-table-cap" tabindex="0">
-                <table class="ledger proof-table" data-proof-table aria-labelledby="pf-table-cap">
-                <thead><tr><th>Session</th><th>NAV regime</th><th class="num">Captured</th><th>Verification</th><th>Status</th></tr></thead>
-                <tbody>
-                  <tr><td class="lab" data-th="Session">Day 01</td><td data-th="NAV regime"><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num" data-th="Captured">&gt;10 bps</td><td data-th="Verification">Broker confirmation</td><td data-th="Status"><span class="tag on">Settled</span></td></tr>
-                  <tr><td class="lab" data-th="Session">Day 02</td><td data-th="NAV regime"><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification"><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
-                  <tr><td class="lab" data-th="Session">Day 03</td><td data-th="NAV regime"><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification"><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
-                  <tr><td class="lab" data-th="Session">Day 04</td><td data-th="NAV regime"><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification"><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
-                  <tr><td class="lab" data-th="Session">Day 05</td><td data-th="NAV regime"><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification"><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
-                  <tr><td class="lab" data-th="Session">Day 06</td><td data-th="NAV regime"><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification"><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
-                  <tr><td class="lab" data-th="Session">Day 07</td><td data-th="NAV regime"><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification"><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
-                  <tr><td class="lab" data-th="Session">Day 08</td><td data-th="NAV regime"><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification"><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
-                  <tr><td class="lab" data-th="Session">Day 09</td><td data-th="NAV regime"><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification"><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
-                  <tr><td class="lab" data-th="Session">Day 10</td><td data-th="NAV regime"><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification"><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
-                </tbody>
-              </table>
+            <div class="proof" data-proof-chart>
+              <noscript>
+              <div class="pf-nojs">
+                <div class="figure-cap pf-tcap"><span class="fc-t" id="pf-table-cap"><span class="nw">Proof-of-concept</span> sessions · bps captured by the&nbsp;agents</span><span class="fc-h">Every session confirmed by the executing broker</span></div>
+                <div class="table-scroll" role="region" aria-labelledby="pf-table-cap" tabindex="0">
+                  <table class="ledger proof-table" data-proof-table aria-labelledby="pf-table-cap">
+                  <thead><tr><th>Session</th><th>NAV regime</th><th class="num">Captured</th><th>Verification</th><th>Status</th></tr></thead>
+                  <tbody>
+                    <tr><td class="lab" data-th="Session" data-plate-rec>Day 01</td><td data-th="NAV regime"><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num" data-th="Captured">&gt;10 bps</td><td data-th="Verification" data-plate-tick>Broker confirmation</td><td data-th="Status"><span class="tag on">Settled</span></td></tr>
+                    <tr><td class="lab" data-th="Session" data-plate-rec>Day 02</td><td data-th="NAV regime"><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification" data-plate-tick><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
+                    <tr><td class="lab" data-th="Session" data-plate-rec>Day 03</td><td data-th="NAV regime"><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification" data-plate-tick><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
+                    <tr><td class="lab" data-th="Session" data-plate-rec>Day 04</td><td data-th="NAV regime"><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification" data-plate-tick><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
+                    <tr><td class="lab" data-th="Session" data-plate-rec>Day 05</td><td data-th="NAV regime"><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification" data-plate-tick><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
+                    <tr><td class="lab" data-th="Session" data-plate-rec>Day 06</td><td data-th="NAV regime"><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification" data-plate-tick><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
+                    <tr><td class="lab" data-th="Session" data-plate-rec>Day 07</td><td data-th="NAV regime"><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification" data-plate-tick><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
+                    <tr><td class="lab" data-th="Session" data-plate-rec>Day 08</td><td data-th="NAV regime"><i class="pf-mini" data-side="1" aria-hidden="true"></i>Premium</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification" data-plate-tick><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
+                    <tr><td class="lab" data-th="Session" data-plate-rec>Day 09</td><td data-th="NAV regime"><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification" data-plate-tick><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
+                    <tr><td class="lab" data-th="Session" data-plate-rec>Day 10</td><td data-th="NAV regime"><i class="pf-mini" data-side="-1" aria-hidden="true"></i>Discount</td><td class="num pf-dt" data-th="Captured"><span>&gt;10 bps</span></td><td class="pf-dt" data-th="Verification" data-plate-tick><span>Broker confirmation</span></td><td class="pf-dt" data-th="Status"><span class="tag on">Settled</span></td></tr>
+                  </tbody>
+                </table>
+                </div>
+                <p class="pf-legend" aria-hidden="true"><b>”</b><span>repeats the cell above: more than <span data-proof="floor">10</span>&nbsp;bps (above the floor, exact value not published)&nbsp;· broker confirmation&nbsp;· settled.</span></p>
               </div>
-              <p class="pf-legend" aria-hidden="true"><b>”</b><span>repeats the cell above: more than <span data-proof="floor">10</span>&nbsp;bps (above the floor, exact value not published)&nbsp;· broker confirmation&nbsp;· settled.</span></p>
+              </noscript>
             </div>
-            </noscript>
-          </div>
+            <figcaption class="figure-cap figure-cap--stack"><span class="fc-h"><span data-proof="regimes">Five premium, five discount.</span> <span class="pf-js nw">One block per basis point.</span> <a class="nw" href="#disclosures">See the disclosures.</a></span></figcaption>
+          </figure>
         </div>
       </div>
     </section>
 
-    <!-- 02 VERIFICATION -->
+    <!-- 01 VERIFICATION -->
     <section class="section is-paper-2" id="verification" data-chapter-short="Verification">
       <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">02</span><span class="lab">Verification</span></div>
-        <div class="grid t-2">
-          <div class="col-6"><h2 class="display-2" data-reveal><span class="ln">Not our numbers.</span> <span class="ln">The broker’s.</span></h2></div>
-          <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Each session is documented by the executing broker’s own trade confirmation, available to qualified institutions and partners on&nbsp;request.</p></div>
+        <div class="sec-head" data-reveal><span class="idx">01</span><span class="lab">Verification</span></div>
+        <!-- hc12 (HC12 item 1): from 961 px the head over the paper trail, the three documents in a row on the grid's
+             thirds; 720-960 the head left (1-6) and the trail right (7-12); one column below 720. The head is site.css's -->
+        <div class="grid pf-ver">
+        <div class="ch-head">
+          <h2 class="display-2 ch-title" data-reveal><span class="ph">The executing broker’s</span> <span class="ph">confirmation,</span> <span class="ph">for every session.</span></h2>
+          <p class="ch-line" data-reveal style="--d:80ms">Available to qualified institutions and partners on&nbsp;request.</p>
         </div>
-        <!-- the paper trail (award a1; written by .shots/v2x/work/proof/a1/docs.py): the three documents drawn as sheets,
-             one session's fill on the same row of each (matched line by line, C-028); one line of signal ink runs
-             through that row once as the section arrives (L5), then the plate is still -->
-        <ol class="pf-docs pf-trail mt-4" role="list">
-          <li class="pf-doc" data-reveal><div class="hp-art pf-sheet" aria-hidden="true"><svg viewBox="0 0 320 180" focusable="false"><rect class="hp-h hp-strong" x="1" y="1" width="318" height="178" rx="2"/><rect class="hp-rec" x="20" y="20" width="58" height="8" rx="1"/><path class="hp-h" d="M236 24H300"/><path class="hp-h hp-faint" d="M20 40H300"/><path class="hp-h" d="M20 62H92"/><path class="hp-h" d="M110 62H170"/><path class="hp-h" d="M244 62H300"/><path class="hp-h" d="M20 84H74"/><path class="hp-h" d="M110 84H196"/><path class="hp-h" d="M260 84H300"/><path class="hp-h" d="M36 106H96"/><path class="hp-h" d="M110 106H188"/><path class="hp-h" d="M248 106H272"/><path class="hp-h" d="M20 128H84"/><path class="hp-h" d="M110 128H160"/><path class="hp-h" d="M252 128H300"/><path class="hp-h" d="M20 150H66"/><path class="hp-h" d="M110 150H182"/><rect class="hp-gf pf-mk pf-mk1" x="20" y="102" width="12" height="8" rx="1"/><path class="hp-tick pf-mk pf-mk1" d="M282 97l5 5 10-10.5"/></svg><i class="pf-tr"></i></div><h3 class="display-3">Broker confirmations</h3></li>
-          <li class="pf-doc" data-reveal style="--d:80ms"><div class="hp-art pf-sheet" aria-hidden="true"><svg viewBox="0 0 320 180" focusable="false"><rect class="hp-h hp-strong" x="1" y="1" width="318" height="178" rx="2"/><rect class="hp-rec" x="20" y="20" width="40" height="8" rx="1"/><rect class="hp-rec" x="176" y="20" width="40" height="8" rx="1"/><path class="hp-h hp-faint" d="M20 40H300"/><path class="hp-h hp-faint" d="M160 50V166"/><path class="hp-h" d="M20 62H124"/><path class="hp-h" d="M176 62H280"/><path class="hp-h" d="M155 60h10M155 64h10"/><path class="hp-h" d="M20 84H100"/><path class="hp-h" d="M176 84H256"/><path class="hp-h" d="M155 82h10M155 86h10"/><path class="hp-h" d="M20 106H108"/><path class="hp-h" d="M176 106H264"/><path class="hp-h" d="M155 104h10M155 108h10"/><path class="hp-h" d="M20 128H116"/><path class="hp-h" d="M176 128H272"/><path class="hp-h" d="M155 126h10M155 130h10"/><path class="hp-h" d="M20 150H90"/><path class="hp-h" d="M176 150H246"/><path class="hp-h" d="M155 148h10M155 152h10"/><rect class="hp-gf pf-mk pf-mk2" x="20" y="102" width="12" height="8" rx="1"/><rect class="hp-gf pf-mk pf-mk2" x="176" y="102" width="12" height="8" rx="1"/><path class="hp-g pf-mk pf-mk2" d="M155 104h10M155 108h10"/></svg><i class="pf-tr"></i></div><h3 class="display-3">Reconciliation reports</h3></li>
-          <li class="pf-doc" data-reveal style="--d:160ms"><div class="hp-art pf-sheet" aria-hidden="true"><svg viewBox="0 0 320 180" focusable="false"><rect class="hp-h hp-strong" x="1" y="1" width="318" height="178" rx="2"/><rect class="hp-rec" x="20" y="20" width="58" height="8" rx="1"/><path class="hp-h hp-faint" d="M20 40H300"/><rect class="hp-rec" x="20" y="58" width="12" height="8" rx="1"/><path class="hp-h" d="M44 62H236"/><path class="hp-h" d="M20 66Q11 73 20 80"/><rect class="hp-rec" x="20" y="80" width="12" height="8" rx="1"/><path class="hp-h" d="M44 84H280"/><path class="hp-h" d="M20 88Q11 95 20 102"/><rect class="hp-rec" x="20" y="102" width="12" height="8" rx="1"/><rect class="hp-gf pf-mk pf-mk3" x="20" y="102" width="12" height="8" rx="1"/><path class="hp-h hp-strong" d="M44 106H300"/><path class="hp-h" d="M20 110Q11 117 20 124"/><rect class="hp-rec" x="20" y="124" width="12" height="8" rx="1"/><path class="hp-h" d="M44 128H258"/><path class="hp-h" d="M20 132Q11 139 20 146"/><rect class="hp-rec" x="20" y="146" width="12" height="8" rx="1"/><path class="hp-h" d="M44 150H200"/></svg><i class="pf-tr"></i></div><h3 class="display-3"><a href="trust.html#ledger">The agents’ own record <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></h3></li>
+        <!-- the paper trail: three sheets, ten rows each, one per session (hc15; .shots/v2x/work/proof/hc26r/docs26.py); the
+             session's row the same on each (C-028), Day 10's until one is chosen on the hero's chart (proof.js). A scroll
+             scene (hc26r): the thread draws through the three as the reader passes, the ten checks written one per tenth
+             of its travel; at its end, and with reduced motion or without JS, the finished plate -->
+        <ol class="pf-docs pf-trail" role="list" data-scene>
+          <li class="pf-doc"><div class="hp-art pf-sheet" aria-hidden="true"><svg viewBox="0 0 100 126" focusable="false"><path class="hp-h hp-faint" d="M12 6V0H100V114H94"/><path class="hp-h hp-faint" d="M6 12V6H94V120H88"/><rect class="hp-h hp-strong" x="0" y="12" width="88" height="114"/><path class="hp-h hp-strong" d="M11 23H42"/><path class="hp-h" d="M58 23H77"/><path class="hp-h" d="M11 33H26M11 42H26M11 51H26M11 60H26M11 69H26M11 78H26M11 87H26M11 96H26M11 105H26M11 114H26M34 33H62M34 42H56M34 51H64M34 60H58M34 69H66M34 78H54M34 87H60M34 96H65M34 105H57M34 114H63"/><path class="hp-h hp-strong pf-ok" d="M73 32.8l1.4 1.4 2.6-2.8" style="--k:0"/><path class="hp-h hp-strong pf-ok" d="M73 41.8l1.4 1.4 2.6-2.8" style="--k:1"/><path class="hp-h hp-strong pf-ok" d="M73 50.8l1.4 1.4 2.6-2.8" style="--k:2"/><path class="hp-h hp-strong pf-ok" d="M73 59.8l1.4 1.4 2.6-2.8" style="--k:3"/><path class="hp-h hp-strong pf-ok" d="M73 68.8l1.4 1.4 2.6-2.8" style="--k:4"/><path class="hp-h hp-strong pf-ok" d="M73 77.8l1.4 1.4 2.6-2.8" style="--k:5"/><path class="hp-h hp-strong pf-ok" d="M73 86.8l1.4 1.4 2.6-2.8" style="--k:6"/><path class="hp-h hp-strong pf-ok" d="M73 95.8l1.4 1.4 2.6-2.8" style="--k:7"/><path class="hp-h hp-strong pf-ok" d="M73 104.8l1.4 1.4 2.6-2.8" style="--k:8"/><path class="hp-h hp-strong pf-ok" d="M73 113.8l1.4 1.4 2.6-2.8" style="--k:9"/><path class="pf-th pf-tk" d="M-20 118.5H77"/><path class="pf-th pf-sp" d="M-20 118.5V266.5"/></svg></div><h3 class="display-3">Broker confirmations</h3></li>
+          <li class="pf-doc"><div class="hp-art pf-sheet" aria-hidden="true"><svg viewBox="0 0 100 126" focusable="false"><path class="hp-h hp-faint" d="M6 12V6H94V120H88"/><rect class="hp-h hp-strong" x="0" y="12" width="88" height="114"/><path class="hp-h hp-strong" d="M11 23H30M50 23H69"/><path class="hp-h" d="M11 33H38M11 42H33M11 51H36M11 60H29M11 69H38M11 78H32M11 87H35M11 96H37M11 105H30M11 114H34M50 33H77M50 42H72M50 51H75M50 60H68M50 69H77M50 78H71M50 87H74M50 96H76M50 105H69M50 114H73"/><path class="hp-h" d="M41 31.6h6M41 34.4h6M41 40.6h6M41 43.4h6M41 49.6h6M41 52.4h6M41 58.6h6M41 61.4h6M41 67.6h6M41 70.4h6M41 76.6h6M41 79.4h6M41 85.6h6M41 88.4h6M41 94.6h6M41 97.4h6M41 103.6h6M41 106.4h6M41 112.6h6M41 115.4h6"/><path class="pf-th pf-tk" d="M-20 118.5H77"/><path class="pf-th pf-sp" d="M-20 118.5V266.5"/></svg></div><h3 class="display-3">Reconciliation reports</h3></li>
+          <li class="pf-doc"><div class="hp-art pf-sheet" aria-hidden="true"><svg viewBox="0 0 100 126" focusable="false"><path class="hp-h hp-faint" d="M12 6V0H100V114H94"/><path class="hp-h hp-faint" d="M6 12V6H94V120H88"/><rect class="hp-h hp-strong" x="0" y="12" width="88" height="114"/><path class="hp-h hp-strong" d="M11 23H42"/><path class="hp-h" d="M13 33V114"/><path class="hp-h" d="M21 33H70M21 42H74M21 51H62M21 60H77M21 69H66M21 78H72M21 87H58M21 96H75M21 105H68M21 114H73"/><rect class="hp-rec pf-nd" x="11.4" y="31.4" width="3.2" height="3.2"/><rect class="hp-rec pf-nd" x="11.4" y="40.4" width="3.2" height="3.2"/><rect class="hp-rec pf-nd" x="11.4" y="49.4" width="3.2" height="3.2"/><rect class="hp-rec pf-nd" x="11.4" y="58.4" width="3.2" height="3.2"/><rect class="hp-rec pf-nd" x="11.4" y="67.4" width="3.2" height="3.2"/><rect class="hp-rec pf-nd" x="11.4" y="76.4" width="3.2" height="3.2"/><rect class="hp-rec pf-nd" x="11.4" y="85.4" width="3.2" height="3.2"/><rect class="hp-rec pf-nd" x="11.4" y="94.4" width="3.2" height="3.2"/><rect class="hp-rec pf-nd" x="11.4" y="103.4" width="3.2" height="3.2"/><rect class="hp-gf pf-mk pf-nd" x="11.4" y="112.4" width="3.2" height="3.2"/><path class="pf-th pf-tk" d="M-20 118.5H77"/></svg></div><h3 class="display-3"><a href="trust.html#ledger">The agents’ own record <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></h3><p class="pf-rec" data-proof-rec><span>Day 10</span> <span>Discount</span> <span>Broker confirmation</span> <span>Settled</span></p></li>
         </ol>
-        <p class="figure-cap pf-trail-cap" data-reveal style="--d:200ms"><span class="fc-h">Schematic</span></p>
+        </div>
       </div>
     </section>
 
-    <!-- 03 COST & RISK -->
+    <!-- 02 COST & RISK -->
     <section class="section" id="economics" data-chapter-short="Cost">
       <div class="container">
-        <div class="sec-head" data-reveal><span class="idx">03</span><span class="lab">Cost</span></div>
-        <div class="grid t-2 mb-3">
-          <div class="col-6"><h2 class="display-2" data-reveal><span class="ln">Two costs go to zero.</span> <span class="ln">Two&nbsp;shrink.</span></h2></div>
-          <div class="col-5 offset-7"><p class="body-lg" data-reveal style="--d:80ms">Agents don’t hold inventory and don’t wait on a&nbsp;counterparty.</p></div>
+        <div class="sec-head" data-reveal><span class="idx">02</span><span class="lab">Cost</span></div>
+        <!-- the chapter head (site.css, hc2): a one-line lede sits under its heading, not across the page -->
+        <div class="ch-head">
+          <h2 class="display-2 ch-title" data-reveal><span class="ln">Two costs go to zero.</span> <em class="ln">Two&nbsp;shrink.</em></h2>
+          <p class="ch-line" data-reveal style="--d:80ms">Agents don’t hold inventory and&nbsp;don’t wait on a&nbsp;counterparty.</p>
         </div>
-        <!-- the indexed stack, as on home §05: the same weights (proof.js draws the index blocks); the key under it defines
-             each component in production's words (check_static cost_definitions) -->
-        <figure class="cost" data-cost>
+        <!-- the index, decomposed (hc13r, PROOF-2a): the same two bars as Home §04 hold the weights; proof.js draws each
+             component's row in the key (production's definitions, check_static cost_definitions) from them, its traditional
+             weight filled to what the agentic stack keeps, and sets the two totals at the foot. Without JS: the two bars
+             and the key, as on Home -->
+        <figure class="cost" data-cost data-cost-view="rows">
           <div class="cost-rows" data-reveal style="--d:120ms">
             <div class="cost-row">
               <div class="cost-lab"><b>Traditional</b></div>
               <div class="cost-bar">
-                <i style="--w:45%;--c:var(--ink)"><span>Cost of carry</span></i>
-                <i style="--w:37%;--c:var(--slate)"><span>Counterparty risk</span></i>
-                <i style="--w:10%;--c:var(--khaki-deep)"><span>Technology</span></i>
-                <i style="--w:8%;--c:var(--khaki)"><span>Management</span></i>
+                <i style="--w:45%;--c:var(--ink)"></i>
+                <i style="--w:37%;--c:var(--slate)"></i>
+                <i style="--w:10%;--c:var(--khaki-deep)"></i>
+                <i style="--w:8%;--c:var(--khaki)"></i>
               </div>
               <div class="cost-val">100</div>
             </div>
@@ -205,10 +191,10 @@
             </div>
           </div>
           <dl class="pf-ck" data-reveal style="--d:160ms">
-            <div><dt><i style="--c:var(--ink)"></i>Cost of carry</dt><dd>Interest on working capital</dd></div>
-            <div><dt><i style="--c:var(--slate)"></i>Counterparty risk</dt><dd>Settlement &amp; credit exposure</dd></div>
-            <div><dt><i style="--c:var(--khaki-deep)"></i>Technology</dt><dd>Infrastructure, routing, reconciliation</dd></div>
-            <div><dt><i style="--c:var(--khaki)"></i>Management</dt><dd>Research, oversight, operations</dd></div>
+            <div data-scene><dt><i style="--c:var(--ink)"></i>Cost of carry</dt><dd>Interest on working capital</dd></div>
+            <div data-scene><dt><i style="--c:var(--slate)"></i>Counterparty risk</dt><dd>Settlement &amp; credit exposure</dd></div>
+            <div data-scene><dt><i style="--c:var(--khaki-deep)"></i>Technology</dt><dd>Infrastructure, routing, reconciliation</dd></div>
+            <div data-scene><dt><i style="--c:var(--khaki)"></i>Management</dt><dd>Research, oversight, operations</dd></div>
           </dl>
           <figcaption class="figure-cap" data-reveal><span class="fc-h">Illustrative weights · <span class="nw">traditional = 100</span> · <span class="nw">OpenEXA operating model</span></span></figcaption>
         </figure>
@@ -216,7 +202,6 @@
     </section>
 
     <section class="cta-band is-dark grain">
-      <i class="mark globe" aria-hidden="true"></i>
       <div class="container">
         <h2 class="display-2" data-reveal style="--d:60ms"><span class="ln"><span class="ph">Ask</span> <span class="ph">for the confirmations,</span></span> <span class="ln"><span class="ph">then the&nbsp;ledger.</span></span></h2>
         <div class="row" data-reveal style="--d:120ms">
@@ -245,7 +230,6 @@
       <div class="bottom">
         <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
       </div>
-      <div class="wordmark" aria-hidden="true" data-word="OpenEXA"></div>
     </div>
   </footer>
 

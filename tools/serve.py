@@ -15,7 +15,8 @@ import fnmatch, gzip, http.server, io, json, sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-ROOT = Path(str(SITE)).resolve()
+# --root DIR serves another copy (a3: python tools/build_deploy.py && python tools/serve.py 8140 --root dist/site)
+ROOT = Path(sys.argv[sys.argv.index("--root") + 1]).resolve() if "--root" in sys.argv else Path(str(SITE)).resolve()
 CFG = json.loads((ROOT / "staticwebapp.config.json").read_text(encoding="utf-8"))
 HIDDEN = {"/staticwebapp.config.json"}  # Azure never serves its own config
 
@@ -86,6 +87,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8125
-    print(f"serving site/ like Azure at http://127.0.0.1:{port}/  (Ctrl+C to stop)", flush=True)
+    port = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8125
+    print(f"serving {ROOT.name}/ like Azure at http://127.0.0.1:{port}/  (Ctrl+C to stop)", flush=True)
     http.server.ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()

@@ -1,40 +1,95 @@
-/* OpenEXA — blog collections filter. Chips narrow the page to one collection; the hash keeps it linkable
-   (/blog/#markets). Without JavaScript the chips are plain jump links and every collection shows. */
+/* OpenEXA: the Blog's script (the index's plates beside its lists, the bundles under the H1; a long read's margin plate) */
 (function () {
   'use strict';
-  const chips = Array.from(document.querySelectorAll('[data-blog-filter]'));
-  const sections = Array.from(document.querySelectorAll('[data-blog-collection]'));
-  if (!chips.length || !sections.length) return;
-  const keys = sections.map(s => s.dataset.blogCollection);
-  function apply(key, scroll) {
-    const k = keys.includes(key) ? key : 'all';
-    const shown = []; // lab blog-moment: only what the filter has just un-hidden is revealed at once
-    sections.forEach(s => { const was = s.hidden; s.hidden = k !== 'all' && s.dataset.blogCollection !== k; if (was && !s.hidden) shown.push(s); });
-    const series = document.querySelector('[data-blog-series]');
-    if (series) { const was = series.hidden; series.hidden = !(k === 'all' || k === 'ai'); if (was && !series.hidden) shown.push(series); }
-    chips.forEach(c => { if (c.dataset.blogFilter !== k) c.removeAttribute('aria-current'); else if (!c.hasAttribute('aria-current')) c.setAttribute('aria-current', 'true'); });
-    // keep the active chip visible in the horizontally scrolling row (phones) without moving the page. Not on a plain
-    // load of the whole blog ('All' is the row's first cell): reading the row's width there forced a layout of the
-    // page (25 plates) before its first paint, the blog's one long task (blog r4, r4-perf)
-    const active = chips.find(c => c.dataset.blogFilter === k), row = active && active.parentElement;
-    if (row && (scroll || k !== 'all') && row.scrollWidth > row.clientWidth) row.scrollLeft += active.getBoundingClientRect().left - row.getBoundingClientRect().left - (row.clientWidth - active.offsetWidth) / 2;
-    // revealed-on-scroll content inside a newly shown section must not stay hidden; the rest keeps arriving on scroll
-    // (v2x forced every visible reveal in at load, so the series rail drew itself off-screen before anyone got there)
-    shown.forEach(s => s.querySelectorAll('[data-reveal]').forEach(el => el.classList.add('is-in')));
-    if (scroll) {
-      // to the bar's place in the page (the top of the collections), not where it is stuck: from mid-page the bar's
-      // rect is the stuck one, and the page stayed put inside the chosen collection (blog r4)
-      const top = document.querySelector('.blog-index');
-      const y = top ? top.getBoundingClientRect().top + window.scrollY - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 72) : 0;
-      window.scrollTo({ top: Math.max(0, y), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  const idx = document.querySelector('.blog-idx'), lib = document.querySelector('.lib-plate');
+  if (idx && lib) {
+    const name = a => (a && idx.contains(a)) ? a.getAttribute('href').slice(1) : '';
+    const lit = k => { if (k) lib.setAttribute('data-lit', k); else lib.removeAttribute('data-lit'); };
+    idx.addEventListener('pointerover', e => { if (e.pointerType !== 'touch') lit(name(e.target.closest && e.target.closest('a'))); });
+    idx.addEventListener('pointerleave', () => lit(idx.contains(document.activeElement) ? name(document.activeElement) : ''));
+    idx.addEventListener('focusin', e => lit(name(e.target.closest && e.target.closest('a'))));
+    idx.addEventListener('focusout', e => { if (!idx.contains(e.relatedTarget)) lit(''); });
+  }
+  if (document.body.classList.contains('blog-page')) window.addEventListener('pageswap', e => { if (e.viewTransition) try { e.viewTransition.types.add('lift'); } catch (err) { } });
+  const mp = document.querySelector('.post-mp-in');
+  const figs = mp ? document.querySelectorAll('.blog-article figure') : [];
+  if (figs.length && 'IntersectionObserver' in window) {
+    const seen = new Set();
+    const rest = new IntersectionObserver(es => {
+      es.forEach(e => { if (e.isIntersecting) seen.add(e.target); else seen.delete(e.target); });
+      mp.classList.toggle('is-rest', seen.size > 0);
+    }, { rootMargin: '-10% 0px -12% 0px' });
+    figs.forEach(f => rest.observe(f));
+  }
+  const boxes = Array.from(document.querySelectorAll('[data-blog-follow], [data-blog-turn]'));
+  if (!boxes.length || !('IntersectionObserver' in window)) return;
+  let wide, touch;
+  const USER = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
+  const doc = u => u.replace(/(\/index)?(\.html)?\/*$/, '');
+  const from = (() => { try { const a = window.navigation && navigation.activation; return a && a.navigationType === 'traverse' && a.from && a.from.url ? doc(new URL(a.from.url).pathname) : ''; } catch (err) { return ''; } })();
+
+  function follow(box, choose) {
+    const list = box.querySelector('.blog-register');
+    const rows = list ? Array.from(list.children) : [];
+    if (!rows.length) return null;
+    let current = -1, onList = false, near = false, queued = false, keyed = false, hold = false;
+    const set = i => { if (i !== current) { current = i; choose(i, rows); } };
+    const keyFocus = () => { const f = document.activeElement; return !!f && list.contains(f) && f.matches(':focus-visible'); };
+    rows.forEach((li, i) => {
+      li.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch' && wide.matches && !keyed) set(i); });
+      li.addEventListener('focusin', () => { if (!wide.matches) return; keyed = keyFocus(); set(i); });
+      li.addEventListener('click', () => { if (!wide.matches) return; keyed = false; box.classList.add('is-go'); set(i); void box.offsetWidth; box.classList.remove('is-go'); });
+    });
+    list.addEventListener('pointermove', e => {
+      if (!keyed || e.pointerType === 'touch' || !(e.movementX || e.movementY)) return;
+      keyed = false; const li = e.target.closest && e.target.closest('li'); const i = rows.indexOf(li);
+      if (i >= 0 && wide.matches) set(i);
+    });
+    list.addEventListener('focusout', e => { if (!list.contains(e.relatedTarget)) keyed = false; });
+    list.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') onList = true; });
+    list.addEventListener('pointerleave', () => { onList = false; });
+    const atLine = () => {
+      queued = false;
+      if (hold || !near || !wide.matches || (onList && !touch.matches) || keyFocus()) return;
+      const line = window.innerHeight * 0.4; let k = 0;
+      for (let i = 0; i < rows.length; i++) { if (rows[i].getBoundingClientRect().top <= line) k = i; else break; }
+      set(k);
+    };
+    const queue = () => { if (!queued) { queued = true; requestAnimationFrame(atLine); } };
+    new IntersectionObserver(es => { near = es[0].isIntersecting; if (near) queue(); }).observe(list);
+    window.addEventListener('scroll', queue, { passive: true });
+    const k = from ? rows.findIndex(li => { const a = li.querySelector('a'); return !!a && doc(a.pathname) === from; }) : -1;
+    if (k >= 0 && wide.matches) {
+      set(k); hold = true;
+      const free = () => { hold = false; USER.forEach(t => window.removeEventListener(t, free, true)); };
+      USER.forEach(t => window.addEventListener(t, free, { capture: true, passive: true }));
+    }
+    return set;
+  }
+
+  function start(box) {
+    if (!wide) {
+      wide = window.matchMedia('(min-width: 641px)');
+      touch = window.matchMedia('(hover: none)');
+    }
+    if (box.hasAttribute('data-blog-follow')) {
+      const panel = box.querySelector('.blog-panel');
+      const plates = panel ? Array.from(panel.querySelectorAll('.bpn')) : [];
+      if (!plates.length) return;
+      const set = follow(box, (i, rows) => {
+        rows.forEach((li, j) => li.classList.toggle('is-current', j === i));
+        plates.forEach((p, j) => p.classList.toggle('is-on', j === i));
+        panel.classList.add('is-live');
+      });
+      if (set && wide.matches && !box.querySelector('.blog-register > li.is-current')) box.querySelector('.blog-register > li').classList.add('is-current');
+    } else if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      box.classList.add('js-turn');
+      follow(box, i => box.style.setProperty('--turn', (-6 * i) + 'deg'));
     }
   }
-  chips.forEach(c => c.addEventListener('click', e => {
-    e.preventDefault();
-    const k = c.dataset.blogFilter;
-    history.replaceState(null, '', k === 'all' ? location.pathname : '#' + k);
-    apply(k, true);
-  }));
-  window.addEventListener('hashchange', () => apply(location.hash.slice(1), false));
-  apply(location.hash.slice(1), false);
+
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { io.unobserve(e.target); start(e.target); }
+  }), { rootMargin: '50% 0px' });
+  boxes.forEach(b => io.observe(b));
 })();

@@ -13,8 +13,9 @@ the signal green (--accent, 1.5), dashed lines for bounds and the "not yet", sma
 dots for what is left out, vertical engraving strokes for areas. Drawn in 400 x 225 units (the cards' 16:9; written at
 K = 2, viewBox 800 x 450, r4); the top 44 units stay clear for the card's label. Classes (styled in assets/css/blog.css):
   pa main line · pb secondary · pc faint (hatching, many paths) · pd dashed bound · pr base rule · pg the green line
-  pk filled dot · po hollow dot · pq green dot · pt hero-only label (hidden on cards)
-pathLength="1" on pa/pg lets CSS draw them in (the post hero at first paint; the green line again on a card's hover).
+  pk filled dot · po hollow dot · pq green dot · pt label (written on the post hero only: unlettered())
+pathLength="1" on pa/pg lets CSS draw them in (the post hero at first paint; a card's green line on arrival and again on
+hover or focus: build_blog.plate makes it site.css's .dm--line, hc3).
 """
 import hashlib, math, random, re
 
@@ -22,7 +23,8 @@ W, H = 400, 225
 X0, X1 = 28, 372
 # r4-perf: the drawers work in 400 x 225 units; the svg is written at K times that, on an 800 x 450 viewBox, in whole
 # numbers (half a drawing unit, a third of a pixel on the largest plate), so the index carries no decimals in its 25
-# plates (27.4 -> ~21 KB gzip). blog.css sets the strokes and lettering in the same doubled units (--u).
+# plates (27.4 -> ~21 KB gzip). blog.css sets the lettering in the same doubled units (--lu); since award a3 every line is a
+# non-scaling stroke on site.css's whole-pixel tokens (--u = 1 px x --stroke; the green line --stroke-2).
 K = 2
 
 
@@ -65,7 +67,8 @@ def dot(x, y, cls="pk", r=1.6):
 
 
 def label(x, y, text, anchor="middle"):
-    return f'<text class="pt" x="{f(x)}" y="{f(y)}" text-anchor="{anchor}">{text}</text>'
+    """hero-only lettering, in sentence case (hill climb hc1: Inter in the caption register, no longer mono capitals)"""
+    return f'<text class="pt" x="{f(x)}" y="{f(y)}" text-anchor="{anchor}">{text[:1].upper() + text[1:]}</text>'
 
 
 def xs(n, a=X0, b=X1):
@@ -165,9 +168,18 @@ def leverage(r):
 
 
 def legend(x, ia, ib, lo, hi):
-    """names on the two lines where they part most in the first half: leveraged above its peak, index below its line"""
+    """names on the two lines: leveraged above its peak, where the two part most in the first half; index just above its
+    own line, where it has the most clear height over the word's width (hc1: under the leveraged peak, the word sat on
+    the dashed start line, crossed by both)"""
+    Y = lambda v: fit([v], 60, 190, lo, hi)[0]
+    y0, ya, yb = Y(1.0), [Y(v) for v in ia], [Y(v) for v in ib]
     k = max(range(len(x) // 2), key=lambda j: ib[j] - ia[j])
-    return [label(x[k], fit([ib[k]], 60, 190, lo, hi)[0] - 8, "leveraged"), label(x[k], fit([ia[k]], 60, 190, lo, hi)[0] + 15, "index")]
+    def room(t):   # (clear height above the index line over the word's 32 units, the line's top there)
+        win = [j for j in range(len(x)) if abs(x[j] - x[t]) <= 16]
+        top = min(ya[j] for j in win)
+        return top - max([44] + [o for j in win for o in (y0, yb[j]) if o < ya[j] - .5]), top
+    t = max((j for j in range(len(x)) if X0 + 16 <= x[j] <= X1 - 16), key=lambda j: room(j)[0])
+    return [label(x[k], Y(ib[k]) - 8, "leveraged"), label(x[t], room(t)[1] - 5, "index")]
 
 
 def decomposition(r, rows=3, bursts=False):
@@ -365,7 +377,7 @@ def exercise(r):
     out = [rule(), line(X0, ys, X1, ys, "pc"), line(x[vest], 54, x[vest], 200, "pd"),
            path(list(zip(x[vest:], yb)), "pd"), path(list(zip(x[:hit + 1], yp[:hit + 1])), "pa", True),
            path(list(zip(x[hit:], yp[hit:])), "pc"), dot(x[hit], yp[hit], "pq", 3.2), f'<circle class="pg" cx="{f(x[hit])}" cy="{f(yp[hit])}" r="{f(7)}"/>',
-           label(x[vest], 216, "vesting"), label(X1, ys - 5, "strike", "end")]
+           label(x[vest], 216, "vesting"), label(X1, ys + 14, "strike", "end")]   # hc1: under its line (the boundary meets it above)
     return out
 
 
@@ -449,10 +461,13 @@ def five_stages(r):
     out.append(f'<ellipse class="pa" cx="{f(cx[4])}" cy="{f(cy)}" rx="{f(rr)}" ry="{f(rr)}" pathLength="1"/>')
     out += [dot(cx[4] + rr * math.cos(a), cy + rr * math.sin(a), "pk", 2.2) for a in (0.3, 2.4, 4.4)]
     out.append(path([(cx[4] + rr - 3, cy - 18), (cx[4] + rr + .5, cy - 10), (cx[4] + rr + 6, cy - 17)], "pa"))
-    a, b, top = cx[1] + 8, cx[2] - 8, cy - 62  # the bridge: an arc from the bell over to the line
-    out.append(path([(a + (b - a) * t, cy - 40 - (cy - 40 - top) * 4 * t * (1 - t)) for t in [i / 24 for i in range(25)]], "pg", True))
+    # the bridge ("bridge the gap from probabilistic models ... to ... deterministic systems", the post's words): an arc
+    # from the bell's peak to the line's last dot, the same small gap over each end (hc3: it hung over the gap, landing
+    # on neither); the ends sit level, the bell's peak and that dot being at one height
+    a, b, ends, top = cx[1], cx[2] + 21 * k_, cy - 30, cy - 60
+    out.append(path([(a + (b - a) * t, ends - (ends - top) * 4 * t * (1 - t)) for t in [i / 24 for i in range(25)]], "pg", True))
     for i, (c, name) in enumerate(zip(cx, ("Aggregative", "Probabilistic", "Deterministic", "Restrictive", "Automatic"))):
-        out.append(label(c, 190 if i % 2 == 0 else 203, name))
+        out.append(label(c, 189 if i % 2 == 0 else 208, name))   # hc1: two rows 19 units apart (Inter at the caption step)
     return out
 
 
@@ -463,6 +478,7 @@ def cohort(r):
     for _ in range(64):
         x, y = r.uniform(X0 + 8, X1 - 8), r.uniform(60, 194)
         if (x - tx) ** 2 / 46 ** 2 + (y - ty) ** 2 / 30 ** 2 < 1.3: continue
+        if tx + 54 < x < tx + 108 and ty - 54 < y < ty - 28: continue   # hc1: clear of the lettering (the word, at the caption step)
         out.append(dot(x, y, "po", 2.2))
     for _ in range(11):
         a, rr = r.uniform(0, 6.28), math.sqrt(r.uniform(.12, 1))
@@ -535,6 +551,57 @@ def rings(turn):
             for k, (rx, ry, rot) in enumerate(RINGS)]
 
 
+# award a2 (art director, medium): the economics register's plate stands at the list's full height. The same six rings,
+# one green, risen on a diagonal (the whole constellation turned RINGS_RISE degrees, each ring keeping its own tilt), so
+# a tall plate is filled by the mark instead of holding a thin band of it in an empty panel; written at K like every plate.
+# award a3 (art director, polish: "the drawing fills about half its frame"): the a2 sheet was a 5:8 viewBox with the
+# rings at 90% of its width, so on a desk (the frame about 5:7) the drawing stood in about two-thirds of the frame each
+# way. The viewBox is now the constellation's own box, taken over every angle blog.js turns it to (RINGS_STEP degrees a
+# paper, as many steps as the register has rows after its first), so the sheet's margins in blog.css are the drawing's:
+# it fills the frame at rest and never leaves it while it turns
+RINGS_RISE, RINGS_STEP = -58, -6   # RINGS_STEP: blog.js's turn per row (--turn = -6deg x the row's index)
+
+
+def _rings_box(rise):
+    """the constellation's bounding box (unit scale, about its centre) when turned by rise degrees"""
+    xs_, ys_ = [], []
+    for rx, ry, rot in RINGS:
+        a = math.radians(rot + rise)
+        for i in range(360):
+            t = math.radians(i)
+            x, y = rx * math.cos(t), ry * math.sin(t)
+            xs_.append(x * math.cos(a) - y * math.sin(a)); ys_.append(x * math.sin(a) + y * math.cos(a))
+    return min(xs_), max(xs_), min(ys_), max(ys_)
+
+
+def rings_tall(rows=8):
+    """the rings on a sheet as tall as the register beside them (rows: its papers): a viewBox that is the constellation's
+    box over its whole turn (RINGS_RISE to RINGS_RISE + RINGS_STEP x (rows - 1)), centred on the rings' common centre
+    (blog.css turns the svg about its own centre), with a stroke's room at the edges"""
+    w = h = 0.0
+    turn = RINGS_STEP * (rows - 1)
+    for t in range(0, turn - 1, -1):
+        x0, x1, y0, y1 = _rings_box(RINGS_RISE + t)
+        w, h = max(w, x1 - x0), max(h, y1 - y0)
+    vw, vh = math.ceil(w / 2 + 1) * 2, math.ceil(h / 2 + 1) * 2   # whole even drawing units: the centre lands on a whole unit
+    cx, cy = vw / 2, vh / 2
+    inner = [f'<ellipse class="{"pg" if k == 0 else "pb"}" cx="{f(cx)}" cy="{f(cy)}" rx="{f(rx)}" ry="{f(ry)}" transform="rotate({rot + RINGS_RISE} {f(cx)} {f(cy)})"' + (' pathLength="1"' if k == 0 else "") + "/>"
+             for k, (rx, ry, rot) in enumerate(RINGS)]
+    return f'<svg class="bp-art bp-rings bp-tall" viewBox="0 0 {vw * K} {vh * K}" fill="none" focusable="false" aria-hidden="true">{"".join(inner)}</svg>'
+
+
+def rings_wide():
+    """award a3: the economics mark where it heads its list on a phone (a 2:1 plate): the six rings lying flat, as the
+    cards and the library draw them, on a viewBox that is their own box (they stood in about 45% of the card sheet's
+    width there, the rest of the plate empty); written at K like every plate"""
+    x0, x1, y0, y1 = _rings_box(0)
+    vw, vh = math.ceil((x1 - x0) / 2 + 1) * 2, math.ceil((y1 - y0) / 2 + 1) * 2
+    cx, cy = vw / 2, vh / 2
+    inner = [f'<ellipse class="{"pg" if k == 0 else "pb"}" cx="{f(cx)}" cy="{f(cy)}" rx="{f(rx)}" ry="{f(ry)}" transform="rotate({rot} {f(cx)} {f(cy)})"/>'
+             for k, (rx, ry, rot) in enumerate(RINGS)]
+    return f'<svg class="bp-art bp-rings bp-wide" viewBox="0 0 {vw * K} {vh * K}" fill="none" focusable="false" aria-hidden="true">{"".join(inner)}</svg>'
+
+
 # ---------------------------------------------------------------- the register: slug -> what the plate draws
 
 # label: the plate's name (mono, on the card and over the caption); draw: the drawer; quote: a sentence from the post
@@ -584,6 +651,14 @@ PLATES = {
         "Drawdown risk is relevant to all stocks and portfolios."),
 }
 
+# hill climb hc6 (SYSTEM.md "The hedge stamp (hc6: one rule)"): a plate that simulates data (a price path, a curve over
+# a rule, a scatter: a reader could take it for the paper's figure) says "Illustrative"; a conceptual drawing (the
+# stages, the loop, the flow, the shelf, the groups) and the economics rings say nothing
+CONCEPTUAL = {five_stages, agent, credit, shelf, cardinality}
+ILLUSTRATIVE = "Illustrative"
+def stamp(slug, col):
+    return "" if col == "economics" or slug not in PLATES or PLATES[slug][1] in CONCEPTUAL else ILLUSTRATIVE
+
 
 PATH = re.compile(r'^<path class="(\w+)" d="([^"]+)"/>$')
 DOT = re.compile(r'^<circle class="(pk|po|pq)" (cx="[^"]+" cy="[^"]+" r="[^"]+")/>$')
@@ -615,19 +690,81 @@ def svg(inner, cls="bp-art"):
     return f'<svg class="{cls}" viewBox="0 0 {W * K} {H * K}" fill="none" focusable="false" aria-hidden="true">{compact(inner)}</svg>'
 
 
-def plate_svg(slug, col, turn=0):
-    """the plate for a post: its own drawing, or the economics rings (turned by the post's place in its collection)"""
+PT = re.compile(r'<text class="pt"[^>]*>[^<]*</text>')
+def unlettered(s):
+    """hill climb hc1: only the post hero draws its plate's lettering; every other copy (cards, the markets panel, the
+    margin plate, the library's faces, the collection plates) is written without it (CSS used to hide it there)"""
+    return PT.sub("", s)
+
+
+def plate_svg(slug, col, turn=0, lettering=False):
+    """the plate for a post: its own drawing, or the economics rings (turned by the post's place in its collection);
+    with its lettering on the post hero only"""
     if col == "economics" or slug not in PLATES:
         return svg(rings(turn), "bp-art bp-rings")
     _, fn, _ = PLATES[slug]
-    return svg(fn(rng(slug)))
+    out = svg(fn(rng(slug)))
+    return out if lettering else unlettered(out)
+
+
+NUM = re.compile(r"-?\d+(?:\.\d+)?")
+INK = re.compile(r"<(path|circle|ellipse)\b([^>]*)>")
+def _attr(a, name):
+    m = re.search(rf'\b{name}="([^"]+)"', a)
+    return m and m[1]
+
+
+def ink_box(s):
+    """hill climb hc2: the box of what a plate draws, in its viewBox's units, its lettering left out (the phone hides
+    it): every path's points (d()'s format: an absolute start, then relative steps; compact() joins subpaths), every
+    dot's and circle's extent, every ring's extent at its tilt"""
+    assert not re.search(r"<(rect|line|polyline|polygon|use|image)\b", s), "ink_box measures path, circle and ellipse only"
+    x0 = y0 = math.inf; x1 = y1 = -math.inf
+    def take(ax, ay, bx, by):
+        nonlocal x0, y0, x1, y1
+        x0, y0, x1, y1 = min(x0, ax), min(y0, ay), max(x1, bx), max(y1, by)
+    for tag, a in INK.findall(PT.sub("", s)):
+        if tag == "path":
+            for sub in _attr(a, "d").split("M")[1:]:
+                head, _, steps = sub.partition("l")
+                x, y = map(float, NUM.findall(head))
+                take(x, y, x, y)
+                ns = list(map(float, NUM.findall(steps)))
+                for dx, dy in zip(ns[::2], ns[1::2]):
+                    x, y = x + dx, y + dy
+                    take(x, y, x, y)
+        else:
+            cx, cy = float(_attr(a, "cx")), float(_attr(a, "cy"))
+            rx = float(_attr(a, "r") or _attr(a, "rx")); ry = float(_attr(a, "r") or _attr(a, "ry"))
+            rot = _attr(a, "transform")
+            t = math.radians(float(NUM.findall(rot)[0])) if rot else 0.0
+            hw, hh = math.hypot(rx * math.cos(t), ry * math.sin(t)), math.hypot(rx * math.sin(t), ry * math.cos(t))
+            take(cx - hw, cy - hh, cx + hw, cy + hh)
+    assert x0 < x1 and y0 < y1, "a plate with nothing drawn"
+    return x0, y0, x1, y1
+
+
+# hc2 (4K/390 look: on a phone the hero's 16:9 drawing stood in a 5:2 frame at 44-59% of its width, the lettering that
+# fills it on a desk hidden): the frame's share the drawing may take on a phone, each way, and the frame's aspect there
+PHONE_FILL, PHONE_ASPECT, PHONE_ZOOM = (.84, .74), 5 / 2, 2.0
+def phone_fit(s):
+    """where a hero plate's svg box goes inside its 5:2 frame on a phone (blog.css, <= 640 px) so that what it draws,
+    centred, fills PHONE_FILL of the frame: --fx/--fw in % of the frame's width, --fy/--fh of its height. The box keeps
+    the viewBox's own shape (no letterbox), so the lines stay non-scaling hairlines and the dots grow with the drawing"""
+    vw, vh = (float(v) for v in re.search(r'viewBox="0 0 (\S+) (\S+)"', s).groups())
+    x0, y0, x1, y1 = ink_box(s)
+    # k: frame widths per viewBox unit; the frame is 1 wide and 1 / PHONE_ASPECT tall
+    k = min(PHONE_FILL[0] / (x1 - x0), PHONE_FILL[1] / PHONE_ASPECT / (y1 - y0), PHONE_ZOOM * min(.96 / vw, .94 / PHONE_ASPECT / vh))
+    pct = lambda v: f"{v * 100:.2f}".rstrip("0").rstrip(".") + "%"
+    return (f"--fx:{pct(.5 - k * (x0 + x1) / 2)};--fw:{pct(k * vw)};"
+            f"--fy:{pct(.5 - k * (y0 + y1) / 2 * PHONE_ASPECT)};--fh:{pct(k * vh * PHONE_ASPECT)}")
 
 
 def collection_svg(col):
     """the plate a collection shows once at its head on phones (where the cards drop their plates)"""
-    if col == "economics": return svg(rings(0), "bp-art bp-rings")
-    if col == "markets": return svg(decomposition(rng("markets"), 3))
-    return svg(five_stages(rng("ai")))
+    if col == "economics": return rings_wide()
+    if col == "markets": return unlettered(svg(decomposition(rng("markets"), 3)))
+    return unlettered(svg(five_stages(rng("ai"))))
 
 
 # ---------------------------------------------------------------- the index hero: the library (lab: blog-moment)
@@ -669,9 +806,12 @@ def _mx(m, ox, oy):
     return f"matrix({a * LIB_S:.2f},{b * LIB_S:.2f},{c * LIB_S:.2f},{d * LIB_S:.2f},{e * LIB_S + ox:.1f},{f_ * LIB_S + oy:.1f})"
 
 
-def library_svg(labels=("Markets", "AI & agents", "Economics"), counts=(16, 5, 8), lit=4):
-    """the hero plate of the blog index (see the note above). Bundles are links to their collections (tabindex -1: the
-    nav's chapter list is the keyboard's way since the chips bar was cut on 1 Nov; the svg is aria-hidden)."""
+def library_svg(counts=(16, 5, 8), lit=4):
+    """the hero plate of the blog index (see the note above). Bundles are links to their collections for the pointer
+    (tabindex -1; the svg is aria-hidden). award a3 (a3-ux 6): the plate carries no lettering. The collections' names
+    under it (MARKETS · AI & AGENTS · ECONOMICS, in the drawing's order, not the page's) looked like tabs and did
+    nothing; the names are now links under the H1 (build_blog.py), keyboard-first and in the page's order, and each
+    bundle answers its link (blog.css)."""
     deg = math.radians
     # (key, angles, green leaves, face index, face drawing); angles run from the outermost leaf to the top one
     bundles = [
@@ -680,7 +820,7 @@ def library_svg(labels=("Markets", "AI & agents", "Economics"), counts=(16, 5, 8
         ("ai", [deg(-55 + 34 * k / max(counts[1] - 1, 1)) for k in range(counts[1])], set(range(counts[1] - lit, counts[1])), counts[1] - 1, five_stages(rng("ai"))),
         ("economics", [deg(88.6 - 4.4 * k / max(counts[2] - 1, 1)) for k in range(counts[2])], set(), counts[2] - 1, rings(0)),
     ]
-    # fit: the corners of every leaf at rest and fanned (hover), plus room for the lettering underneath
+    # fit: the corners of every leaf at rest and fanned (hover)
     pts = []
     for _, angs, _, _, _ in bundles:
         for a in angs + [a * 1.16 for a in angs]:
@@ -693,7 +833,7 @@ def library_svg(labels=("Markets", "AI & agents", "Economics"), counts=(16, 5, 8
     ox, oy = -x0 + pad, -y0 + pad
     vw = round(x1 - x0 + 2 * pad)
     face_t = f"scale({1 / (W * K):.7f},{1 / (H * K):.7f}) translate(0,{H * K}) scale(1,-1)"   # plate y down -> leaf t (front at the bottom)
-    groups = []
+    groups, low = [], oy   # low: the album's lowest point at rest (the spine, or a leaf's front fore-edge corner)
     for bi, (key, angs, green, face_i, face) in enumerate(bundles):
         leaves = []
         for i, a in enumerate(angs):
@@ -704,21 +844,85 @@ def library_svg(labels=("Markets", "AI & agents", "Economics"), counts=(16, 5, 8
             inner = f'<path class="lf{" lf-g" if i in green else ""}" d="M0 0H1V1H0Z"/>'
             if i == face_i:
                 mirror = f" translate({W * K},0) scale(-1,1)" if a < 0 else ""   # read from the fore-edge to the spine on the left
-                inner += f'<g class="lf-face" transform="{face_t}{mirror}">{compact(face)}</g>'
+                inner += f'<g class="lf-face" transform="{face_t}{mirror}">{unlettered(compact(face))}</g>'
             leaves.append((depth, f'<g class="lf-w" transform="{_mx(m, ox, oy)}"{style}>{inner}</g>'))
         leaves.sort(key=lambda t: -t[0])  # far first
-        # the lowest point of the bundle's front edge (the spine is at 0; a leaf's fore-edge corner at its u)
-        lows = [(m_[0] * LIB_S + ox, m_[1] * LIB_S + oy) for m_ in (_lib_matrix(a)[0] for a in angs)]
-        groups.append((key, "".join(h for _, h in leaves), lows))
-    # lettering on one line under the album, as an engraving's: Markets at the left stack's fore-edge, AI & agents at
-    # the spine the leaves turn on, Economics at the right stack's fore-edge
-    spine = (ox, oy)
-    base = max(max(y for _, y in g[2]) for g in groups) + 26
-    at = {"markets": (min(x for x, _ in groups[0][2]), "start"), "ai": (spine[0], "middle"),
-          "economics": (max(x for x, _ in groups[2][2]), "end")}
-    vh = round(base + 6)
-    groups = [f'<a class="lib-b lib-{key}" href="#{key}" tabindex="-1">{body}<text class="lib-t" x="{at[key][0]:.0f}" '
-              f'y="{base:.0f}" text-anchor="{at[key][1]}">{lab.replace("&", "&amp;")}</text></a>'
-              for (key, body, _), lab in zip(groups, labels)]
+        low = max([low] + [_lib_matrix(a)[0][1] * LIB_S + oy for a in angs])
+        groups.append(f'<a class="lib-b lib-{key}" href="#{key}" tabindex="-1">{"".join(h for _, h in leaves)}</a>')
+    vh = round(low + pad)   # the album's foot: no band for lettering under it since a3 (the names are links under the H1)
     return (f'<svg class="lib-art" viewBox="0 0 {vw} {vh}" fill="none" focusable="false" aria-hidden="true">'
             + "".join(groups) + "</svg>")
+
+
+# ---------------------------------------------------------------- the Gen-AI introduction's body figures (hc22)
+# Hill climb hc22 (design director, item 4.3, colour; the owner's 8 Nov "full freedom", point 2, lifted S-55's "the
+# Gen-AI diagrams are left"): the introduction's four figures were the site's only off-palette pictures (a Statista bar
+# chart, an I/O Fund bar chart, two purple-to-cyan diagrams with ~7 px text). They are drawn here in the site's chart
+# grammar instead: ink bars, the one signal-green series (the latest year; the reported growth), hairline axes, numbers
+# in mono on the 14 px data step, words in Inter, on a paper sheet in the post's paper-2 mat (blog.css .bp-fig). Same
+# data, same labels and credits, read off the images (data/blog_alt.json names the same values); the charts' own titles
+# go (the post's captions say them), logos and licence marks go with the raster. The stage diagrams are real text
+# (lists): a reader can select, find and translate them. The old files stay in assets/img/blog (build_blog copies them).
+# Typos in the rasters are fixed ("Probablistic", "Algorothims", "Gaurdrails"); capitals become sentence case.
+# HTML, not SVG: the words keep their size at every width (a bar chart turns into rows on a phone, a road runs down
+# the page), and nothing scales below 13 px.
+
+def _bars(groups, vmax, two=False):
+    """groups: (label, [(value, green)]); a value's bar is value / vmax of the plot's bar height (blog.css --bh)"""
+    out = []
+    for label, vals in groups:
+        cells = "".join(
+            f'<span class="bpc-c{" is-g" if g else ""}" style="--v:{v / vmax:.4f}"><span class="bp-n">{t}</span>'
+            f'<span class="bpc-b{" dm" if g else ""}"></span></span>' for v, t, g in vals)
+        out.append(f'<span class="bpc-g"><span class="bpc-x{" bp-n" if not two else ""}">{label}</span>{cells}</span>')
+    return f'<span class="bpc-p">{"".join(out)}</span>'
+
+
+def _road(stages):
+    return "".join(f'<li><span class="bpr-i bp-n">{n}</span><span class="bpr-h">{h}</span><span class="bpr-d">{d}</span></li>'
+                   for n, h, d in stages)
+
+
+INVEST = (2013, (14.6, 19.0, 25.4, 33.8, 53.7, 79.6, 95.6, 146.7, 276.1, 189.6))   # blog-095, $ billion
+GROWTH = (("Microsoft", 11.5, 17.0), ("Alphabet", 11.8, 15.4), ("Meta", 17.3, 27.3), ("Amazon", 11.1, 12.5))  # blog-096, %
+STAGES = ((1, "Aggregative", "Formed of separate units gathered into a mass or whole."),
+          (2, "Probabilistic", "Events that have no certain outcome but have a probability."),
+          (3, "Deterministic", "All events and actions are ultimately predetermined."),
+          (4, "Restrictive", "Guardrail places restrictions on what the system can do."),
+          (5, "Automatic", "Works on its own with little or no direct human control."))
+GATES = (("01", "Data", "General purpose", 1), ("02", "LLM", "Probabilistic models", .83),
+         ("03", "Algorithms", "Deterministic system", .66), ("04", "Guardrails", "Constrained system", .49))
+GATE_OPEN = .31   # the fifth gate the raster left empty (a grey box, no label): drawn dashed, the plates' "not yet"
+
+
+def genai_figure(key, alt):
+    """the inner drawing of one of the introduction's figures (blog-095 ... blog-098), for build_blog to set in the
+    figure in place of its <img> (the figure's caption stays the post's own). alt: the image's alt text, kept as the
+    bar charts' accessible name (role="img"); the stage diagrams are read as their lists"""
+    if key == "blog-095":
+        y0, vals = INVEST
+        vmax = max(vals)
+        groups = [(str(y0 + i), [(v, f"{v:.1f}", i == len(vals) - 1)]) for i, v in enumerate(vals)]
+        return (f'<div class="bpc" role="img" aria-label="{alt}">'
+                '<span class="bp-t">Total global corporate investment in artificial intelligence* (in billion U.S. dollars)</span>'
+                + _bars(groups, vmax) +
+                '<span class="bp-f">* Mergers/acquisitions, minority stake investments, private investments, public offerings</span>'
+                '<span class="bp-f">Source: Statista · Stanford University</span></div>')
+    if key == "blog-096":
+        groups = [(name, [(a, f"{a:.1f}%", False), (b, f"{b:.1f}%", True)]) for name, a, b in GROWTH]
+        return (f'<div class="bpc bpc--2" role="img" aria-label="{alt}">'
+                '<span class="bp-t">Q1 revenue growth <span class="bp-k"><span class="bp-sw"></span>October estimate</span>'
+                '<span class="bp-k"><span class="bp-sw is-g"></span>Reported</span></span>'
+                + _bars(groups, 30, two=True) + '</div>')
+    if key == "blog-097":
+        return ('<div class="bpr">'
+                f'<div class="bpr-grp" style="--n:2"><span class="bpr-k">LLM</span><span class="bpr-road"></span>'
+                f'<ol class="bpr-s" role="list">{_road(STAGES[:2])}</ol></div>'
+                f'<div class="bpr-grp" style="--n:3"><span class="bpr-k">Domain</span><span class="bpr-road is-g dm"></span>'
+                f'<ol class="bpr-s" role="list">{_road(STAGES[2:])}</ol></div></div>')
+    if key == "blog-098":
+        items = "".join(f'<li style="--h:{h}"><span class="bpg-s"><span class="bp-n">{n}</span></span>'
+                        f'<span class="bpr-h">{t}</span><span class="bpr-d">{d}</span></li>' for n, t, d, h in GATES)
+        return (f'<div class="bpg-w"><ol class="bpg" role="list">{items}'
+                f'<li class="bpg-o" style="--h:{GATE_OPEN}" aria-hidden="true"><span class="bpg-s"></span></li></ol></div>')
+    raise KeyError(key)

@@ -2,6 +2,11 @@
    Text only, from this tab's own location: nothing is sent or kept. Without script it reads "this address". */
 (function () {
   'use strict';
+  // the walk's dash is the drawing's scale on screen (notfound.css; a2): read once, before the walk starts at .4 s
+  document.querySelectorAll('.nf-plate svg').forEach(svg => {
+    const m = svg.getScreenCTM();
+    if (m && m.a) svg.style.setProperty('--k', Math.max(1, Math.hypot(m.a, m.b) * 1.02 + .02).toFixed(3));
+  });
   const outs = document.querySelectorAll('[data-nf-path]');
   if (!outs.length) return;
   let path = location.pathname.replace(/\/{2,}/g, '/');

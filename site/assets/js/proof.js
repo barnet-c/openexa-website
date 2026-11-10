@@ -1,10 +1,13 @@
-/* OpenEXA — proof: the Lifecycle 01 performance report (home §04 · Proof §01), drawn from the one record
+/* OpenEXA — proof: the Lifecycle 01 performance report (home §04 · the Proof hero), drawn from the one record
    <script type="application/json" id="oxa-sessions"> { lifecycle, unit, floor, sessions: [{ day, regime, value, confirmation, status }] }.
-   [data-proof-chart] the chart (replaces its fallback; un-hides a [data-proof-fig]) · [data-proof-table] rows rebuilt from
-   the record · [data-proof="k"] a count (total above premium discount confirmed settled floor, or "regimes"), data-proof-as
-   "words"/"Words" spells it; written once, final. The static HTML says the same without JS. Nothing is invented: ">10" is
-   drawn as above the floor, value not published; a missing field reads "Not stated". Lanes: hover, focus or tap for a
-   session's record; arrows, Home/End, Enter, Esc. One entrance, then still; none under reduced motion. Plain DOM. */
+   [data-proof-chart] the chart (replaces its fallback; un-hides a [data-proof-fig]) · [data-proof="k"] a count (total above
+   premium discount confirmed settled floor, or "regimes"), data-proof-as "words"/"Words" spells it; written once, final.
+   The static HTML says the same without JS (Proof's no-JS record is a table in a <noscript>). Nothing is invented: ">10" is
+   drawn as above the floor, value not published; a missing field reads "Not stated". Lanes: hover, focus or tap to light a
+   session (each lane names its record to assistive tech; hc11: the caption reads it out); arrows, Home/End, Enter, Esc.
+   One entrance, then still; none under reduced motion. hc4: the inspector under the chart and the table builder went
+   (Proof's chart moved into its hero, where the lanes and the lede carry the record; the table has been <noscript> only
+   since the 1 Nov cut). Plain DOM. */
 (function () {
   'use strict';
   const src = document.getElementById('oxa-sessions');
@@ -16,6 +19,7 @@
   if (!raw.length || !(floor > 0)) return;
 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const trail = document.querySelector('.pf-trail'); // Proof §01 (hc13r, hc15)
   const NUM = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty'.split(' ');
   const words = n => NUM[n] || String(n);
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -45,10 +49,13 @@
     total: sessions.length, above: count(s => s.above), premium: count(s => s.side > 0), discount: count(s => s.side < 0),
     confirmed: count(s => s.confirmed), settled: count(s => s.settled), floor
   };
-  const valueText = s => !s.value ? NOT : Number.isFinite(s.amount) ? s.value.replace(/\s+/g, '') + ' ' + unit : s.value;
   const valueSaid = s => !Number.isFinite(s.amount) ? (s.value ? s.value : 'value not stated')
-    : (s.bound === '>' ? 'more than ' : s.bound ? 'at least ' : '') + s.amount + ' ' + unit;
+    : (s.bound === '>' ? 'more than ' : s.bound ? 'at least ' : '') + s.amount + '\u00a0' + unit;
   const regimeSaid = s => s.side > 0 ? 'premium regime, price above NAV' : s.side < 0 ? 'discount regime, price below NAV' : 'NAV regime not stated';
+  // a session's record after its regime: what the lane says to assistive tech, and (hc11) the caption's readout (hc18:
+  // no-break spaces keep "the 10 bps floor" whole, as proof.css's sizer does)
+  const restSaid = s => '; ' + valueSaid(s) + ' captured' + (s.above ? ', above the\u00a0' + floor + '\u00a0' + unit + ' floor' : '') + '; ' + s.confirmation.toLowerCase() + '; ' + s.status.toLowerCase() + '.';
+  const readSaid = s => s.day + ': ' + (s.side > 0 ? 'premium' : s.side < 0 ? 'discount' : 'regime not stated') + restSaid(s);
 
   /* ---------------- derived counts in the copy ---------------- */
   const derived = (key, as) => {
@@ -67,57 +74,10 @@
   const NS = 'http://www.w3.org/2000/svg';
   const sv = (tag, attrs) => { const e = document.createElementNS(NS, tag); Object.keys(attrs).forEach(k => e.setAttribute(k, attrs[k])); return e; };
   const mute = e => { e.setAttribute('aria-hidden', 'true'); return e; };
-  const charts = [], tables = [];
-  const hot = i => tables.forEach(t => t.hot(i));
-  const preview = i => charts.forEach(c => c.preview(i));
-  const sameValue = sessions.every(s => s.value === sessions[0].value);
-  const SUMMARY = [
-    ['All ' + C.total, lifecycle || 'sessions'],
-    [C.premium + ' and ' + C.discount, 'premium · discount'],
-    [sameValue ? valueText(sessions[0]) : 'Varies', C.above === C.total ? 'in every session' : C.above + ' of ' + C.total + ' above the floor'],
-    [C.confirmed + ' of ' + C.total, 'broker-confirmed'],
-    [C.settled + ' of ' + C.total, 'settled']
-  ];
-  const recordOf = (s, i) => [
-    [s.day, (i + 1) + ' of ' + C.total],
-    [s.regime, s.side > 0 ? 'price above NAV' : s.side < 0 ? 'price below NAV' : ''],
-    [valueText(s), s.above ? 'above the floor' : Number.isFinite(s.amount) ? 'not above the floor' : ''],
-    [s.confirmation, ''],
-    [s.status, '']
-  ];
   const summarySaid = cap(words(C.total)) + ' sessions' + (lifecycle ? ' of ' + lifecycle : '') + ': ' +
     (C.above === C.total ? 'all' : words(C.above) + ' of ' + words(C.total)) + ' above the ' + floor + ' ' + unit + ' floor, exact values above it not published. ' +
     cap(words(C.premium)) + ' in a premium regime, price above NAV; ' + words(C.discount) + ' in a discount regime, price below NAV. ' +
     cap(words(C.confirmed)) + ' of ' + words(C.total) + ' confirmed by the broker; ' + words(C.settled) + ' settled.';
-
-  /* ---------------- the evidence table: rows from the record, linked to the chart ---------------- */
-  function buildTable(table) {
-    let tb = table.tBodies[0];
-    if (!tb) { tb = h('tbody'); table.append(tb); }
-    // data-th: each cell names its column (phones restack the rows)
-    const head = table.tHead && table.tHead.rows[0] ? Array.from(table.tHead.rows[0].cells, c => c.textContent.trim()) : [];
-    const TH = ['Session', 'NAV regime', 'Captured', 'Verification', 'Status'].map((k, j) => head[j] || k);
-    // a value equal to the one above is a ditto mark (.pf-dt); its text stays in the cell
-    const rows = sessions.map((s, i) => {
-      const tr = h('tr'), up = sessions[i - 1];
-      const td = (cls, same, kid) => {
-        const c = h('td', [cls, same ? 'pf-dt' : ''].filter(Boolean).join(' ') || null);
-        c.dataset.th = TH[tr.cells.length];
-        c.append(same && typeof kid === 'string' ? h('span', null, kid) : kid); tr.append(c);
-      };
-      const mini = mute(h('i', 'pf-mini')); mini.dataset.side = String(s.side);
-      td('lab', false, s.day);
-      const reg = h('td'); reg.dataset.th = TH[1]; reg.append(mini, s.regime); tr.append(reg);
-      td('num', up && valueText(up) === valueText(s), valueText(s));
-      td(null, up && up.confirmation === s.confirmation, s.confirmation);
-      td(null, up && up.status === s.status && up.settled === s.settled, h('span', 'tag' + (s.settled ? ' on' : ''), s.status));
-      tr.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') preview(i); });
-      return tr;
-    });
-    tb.replaceChildren(...rows);
-    tb.addEventListener('pointerleave', () => preview(-1));
-    tables.push({ hot: i => rows.forEach((tr, j) => tr.classList.toggle('is-hot', j === i)) });
-  }
 
   /* ---------------- the chart ---------------- */
   const ENTRANCE_MS = 1400; // the CSS entrance ends by ~1.1 s; then its delayed transitions are dropped
@@ -140,7 +100,7 @@
       if (short) b.append(h('span', 'pf-lw', k), h('span', 'pf-ls', short)); else b.textContent = k;
       e.append(b); if (note) e.append(h('small', null, note)); gut.append(e); return e;
     };
-    lab('y-above', 'Above', 'exact value not published');
+    lab('y-above', 'Above the floor', 'Exact value not published'); // hc9: two lines, as the floor's and Note 09's (hc11: its case too)
     lab('y-floor', 'Floor', floor + ' ' + unit + (per > 1 ? ' · 1 block = ' + per + ' bps' : ''));
     lab('y-zero', '0');
     lab('y-prem', 'Premium', null, 'Prem.').append(h('i', 'pf-n', String(C.premium)));
@@ -182,7 +142,7 @@
       if (s.confirmed && s.settled) { const t = sv('svg', { viewBox: '0 0 12 12', focusable: 'false' }); t.append(sv('path', { d: 'M2.4 6.5 5 9 9.7 3.3', pathLength: '1' })); ok.append(t); }
       else ok.append(h('i', 'pf-o-no'));
       lane.append(g, c, r, mute(h('span', 'pf-d', s.num)), ok,
-        h('span', 'sr-only', s.day + ': ' + regimeSaid(s) + '; ' + valueSaid(s) + ' captured' + (s.above ? ', above the ' + floor + ' ' + unit + ' floor' : '') + '; ' + s.confirmation.toLowerCase() + '; ' + s.status.toLowerCase() + '.'));
+        h('span', 'sr-only', s.day + ': ' + regimeSaid(s) + restSaid(s)));
       return lane;
     });
     box.append(...lanes);
@@ -191,45 +151,40 @@
     const body = h('div', 'pf-body');
     body.append(gut, plot, mute(h('i', 'pf-floor')), mute(h('i', 'pf-base')), mute(h('i', 'pf-nav')));
 
-    // the inspector: the summary, or the record of the session in hand.
-    const sec = host.closest('section');
-    const read = sec && sec.querySelector('.stats') ? null : mute(h('div', 'pf-read'));
-    const bracket = h('i', 'pf-bracket');
-    const cells = h('div', 'pf-cells');
-    const out = ['Session', 'NAV regime', 'Captured', 'Verification', 'Status'].map(k => {
-      const cell = h('div', 'pf-cell'), v = h('span', 'pf-v'), note = h('span', 'pf-s');
-      cell.append(h('span', 'pf-k', k), v, note); cells.append(cell); return { v, note };
-    });
     const said = h('p', 'sr-only', summarySaid); said.id = id + '-sum';
-    pf.append(body);
-    if (read) { read.append(bracket, cells); pf.append(read); }
-    pf.append(said);
+    pf.append(body, said);
     host.append(pf);
 
-    /* state: the session in hand (sel), the one under the pointer (pre), the lane that takes Tab (tab) */
-    let sel = -1, pre = -1, tab = 0, shown = null;
+    /* state: the session in hand (sel), the one under the pointer (pre), the lane that takes Tab (tab); hc11: the caption's
+       readout (below the entrance) */
+    let sel = -1, pre = -1, tab = 0, shown = null, readout = null;
+    // hc13r (PROOF-2b): §01's thread is a session's row; the session chosen here is written where the thread ends
+    // (the record's last until one is chosen; it stays when the pointer leaves). hc15 (HC15 4.2): and the thread moves
+    // to that session's row of the three sheets (row k at 33 + 9k of 126 units: work/proof/hc15/docs15.py), with the
+    // record's green node; proof.css reads --pr for the line, the signal and the card
+    const tag = Array.from(document.querySelectorAll('[data-proof-rec] > span'));
+    const nodes = trail ? Array.from(trail.querySelectorAll('.pf-nd')) : [];
+    const row = i => {
+      if (!nodes[i]) return;
+      const y = 33 + 9 * i, u = y + 4.5; // hc16 (HC16 4.2): the thread underlines the row (proof.css --ul), never strikes it
+      trail.style.setProperty('--pr', String(y / 100));
+      trail.querySelectorAll('.pf-tk').forEach(p => p.setAttribute('d', 'M-20 ' + u + 'H77'));
+      trail.querySelectorAll('.pf-sp').forEach(p => p.setAttribute('d', 'M-20 ' + u + 'V' + (u + 148)));
+      nodes.forEach((n, j) => { n.classList.toggle('hp-rec', j !== i); n.classList.toggle('hp-gf', j === i); n.classList.toggle('pf-mk', j === i); });
+    };
+    const write = i => { const x = sessions[i]; if (tag.length === 4 && x) [x.day, x.regime, x.confirmation, x.status].forEach((t, k) => { if (tag[k].textContent !== t) tag[k].textContent = t; }); row(i); };
+    write(N - 1);
     function render() {
       const i = pre >= 0 ? pre : sel;
       if (i === shown) return;
       shown = i;
+      if (readout) readout(i);
+      if (i >= 0) write(i);
       lanes.forEach((lane, j) => lane.classList.toggle('is-on', j === i));
       segs.forEach((p, j) => p.classList.toggle('is-on', j === i));
       areas.forEach((a, j) => a.classList.toggle('is-on', j === i));
       host.classList.toggle('has-on', i >= 0);
       host.dataset.side = i >= 0 ? String(sessions[i].side) : '';
-      hot(i);
-      if (!read) return;
-      bracket.style.setProperty('--i', i >= 0 ? i : 0);
-      bracket.style.setProperty('--span', i >= 0 ? 1 : N);
-      const vals = i >= 0 ? recordOf(sessions[i], i) : SUMMARY;
-      out.forEach((o, k) => {
-        const v = vals[k][0], note = vals[k][1] || ' ';
-        if (o.v.textContent === v && o.note.textContent === note) return;
-        o.v.textContent = v; o.note.textContent = note;
-        if (!reduce.matches && o.v.animate && host.classList.contains('is-in')) {
-          o.v.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.2,.7,.2,1)' });
-        }
-      });
     }
     function select(i) {
       sel = i;
@@ -262,7 +217,8 @@
     });
     render();
 
-    /* entrance once, when it is reached from above and a quarter of it is in view (not under reduced motion). */
+    /* entrance once, when it is reached from above and a quarter of it is in view, or when it is in the first screen of a
+       page opened at its top (Proof's hero, hc4); not under reduced motion. */
     let inView = false, seen = false;
     const away = () => host.classList.toggle('is-away', !inView);
     const whole = () => { // no entrance: the final state in one style change, with no transition on the way
@@ -275,8 +231,10 @@
       new IntersectionObserver(entries => entries.forEach(e => {
         inView = e.isIntersecting;
         if (inView && !seen) {
-          // reached from below (scrolling up, a reload mid-page) or already more than half in view
-          if (e.boundingClientRect.top < 0 || e.intersectionRatio > 0.5) { seen = true; whole(); }
+          // reached from below (scrolling up, a reload mid-page) or already more than half in view, except in the first
+          // screen of a page at its top, where the entrance is the page's opening
+          const first = window.scrollY < 2 && e.boundingClientRect.top >= 0 && e.boundingClientRect.top < window.innerHeight * 0.75;
+          if (!first && (e.boundingClientRect.top < 0 || e.intersectionRatio > 0.5)) { seen = true; whole(); }
           else if (e.intersectionRatio >= 0.24) {
             seen = true;
             host.classList.add('is-in');
@@ -290,22 +248,56 @@
       if ('IntersectionObserver' in window) new IntersectionObserver(entries => entries.forEach(e => { inView = e.isIntersecting; away(); })).observe(host);
     }
     if (reduce.addEventListener) reduce.addEventListener('change', () => { if (reduce.matches) host.classList.remove('is-armed'); host.classList.add('is-in'); });
-    charts.push({ preview: i => { pre = i; render(); } });
+
+    /* hc11: the session in hand, read in the caption. Its words before the link step aside (kept for assistive tech; the
+       readout is aria-hidden, the lanes already speak); the link stays. A hidden copy of the longest record shares the
+       caption's grid cell (.pf-cap), so nothing moves. Instant. No .pf-cap rule, no readout. Built after the entrance is
+       armed: the rule's test computes styles, and computed before is-armed the blocks would transition out, then in. */
+    const cap = host.closest('figure') && host.closest('figure').querySelector('.figure-cap--stack');
+    const capH = cap && cap.querySelector('.fc-h');
+    if (capH) {
+      cap.classList.add('pf-cap');
+      if (getComputedStyle(cap).display !== 'grid') cap.classList.remove('pf-cap');
+      else {
+        const link = capH.querySelector('a'), gap = link ? ' ' : '', reads = sessions.map(readSaid);
+        const own = h('span', 'pf-cap-d'), rd = mute(h('span', 'pf-cap-r'));
+        while (capH.firstChild && capH.firstChild !== link) own.append(capH.firstChild);
+        rd.hidden = true;
+        capH.prepend(own, rd);
+        const sz = mute(capH.cloneNode(false));
+        sz.classList.add('pf-cap-sz');
+        sz.append(reads.reduce((a, b) => (b.length > a.length ? b : a)) + gap);
+        if (link) sz.append(h('span', link.className, link.textContent));
+        cap.append(sz);
+        readout = i => {
+          if (i >= 0) rd.textContent = reads[i] + gap;
+          rd.hidden = i < 0;
+          own.classList.toggle('sr-only', i >= 0);
+        };
+      }
+    }
   }
 
-  document.querySelectorAll('table[data-proof-table]').forEach(buildTable);
   document.querySelectorAll('[data-proof-chart]').forEach((host, i) => buildChart(host, i + 1));
 })();
 
-/* The cost figure (home §05 Fig. 5.1 · Proof §03 Fig. 3.1) */
+/* The cost figure (home §05 · Proof §02). (hc5, HC5 item 6) One reveal of at most 600 ms, both rows at once: the solid
+   blocks first, in one sweep through both rows column by column (the Agentic row's survivors land with the Traditional
+   blocks above them), then the outlines (what is eliminated and what shrank away). Each block's delay is set here (0-160 ms
+   solid, 200-280 ms outlines) and proofchart.css gives it --dur-move (.32 s), so the last block is whole at ~600 ms after
+   site.js reveals the rows. Under reduced motion, in print and on a jump, proofchart.css / site.css drop the transition
+   (!important beats these inline delays): the final state at once. */
 (function () {
   'use strict';
+  const SOLID_MS = 160, OUTLINE_AT = 200, OUTLINE_MS = 80;
   const weight = el => parseFloat(el.style.getPropertyValue('--w'));
   const runsOf = bar => Array.from(bar.children).filter(e => e.tagName === 'I');
   document.querySelectorAll('[data-cost]').forEach(fig => {
     const bars = Array.from(fig.querySelectorAll('.cost-bar'));
     const base = bars.length ? runsOf(bars[0]).map(weight) : [];
-    if (!base.length || base.some(v => !(v > 0)) || Math.abs(base.reduce((a, b) => a + b, 0) - 100) > 0.01) return;
+    // hc29 (integrate): proofchart.css lays an unbuilt rows figure out as its rows; where they cannot be built, the bars stay
+    const flat = () => fig.removeAttribute('data-cost-view');
+    if (!base.length || base.some(v => !(v > 0)) || Math.abs(base.reduce((a, b) => a + b, 0) - 100) > 0.01) return flat();
     const plans = bars.map((bar, n) => {
       const out = [];
       let slot = 0, x = 0;
@@ -327,7 +319,9 @@
       }
       return out;
     });
-    if (plans.some(p => !p)) return;
+    if (plans.some(p => !p)) return flat();
+    if (fig.dataset.costView === 'rows' && rows(fig, plans)) return;
+    flat();
     bars.forEach((bar, n) => {
       const grid = document.createElement('span');
       grid.className = 'cost-blk';
@@ -346,8 +340,56 @@
           grid.append(b);
         }
       });
+      // the reveal's order: solid by column (the same block index is the same column in both rows), then the outlines
+      const all = Array.from(grid.children), outline = b => b.matches('.is-gone, .is-rest');
+      const last = Math.max(1, all.length - 1), lastOut = Math.max(1, all.filter(outline).length - 1);
+      let o = 0;
+      all.forEach((b, i) => {
+        b.style.transitionDelay = Math.round(outline(b) ? OUTLINE_AT + o++ * OUTLINE_MS / lastOut : i * SOLID_MS / last) + 'ms';
+      });
       bar.append(grid);
       bar.classList.add('is-blocks');
     });
   });
+
+  /* hc13r (PROOF-2a): Proof's index decomposed. The key's four rows (dt, dd: production's definitions) each take their
+     component's blocks from the same two bars: the traditional weight, filled to what the agentic row keeps; a component
+     the agentic row eliminates is dashed and says "Eliminated" (the bar's own word). The two bars give way to their
+     totals (Traditional 100 · Agentic <10), at the foot; the hedge stays under them. Without JS: the two bars and key. */
+  function rows(fig, plans) {
+    const keys = Array.from(fig.querySelectorAll('.pf-ck > div')), base = plans[0], rest = [];
+    const gone = fig.querySelector('.cost-gone em'), word = gone ? gone.textContent : '';
+    if (keys.length !== base.length || !word) return false;
+    plans[1].forEach(r => { if (!r.gone) { rest.push(r.solid); return; } let left = r.n; while (left > 0.01) { left -= base[rest.length].n; rest.push(0); } });
+    if (rest.length !== base.length) return false;
+    keys.forEach((row, k) => {
+      const dd = row.querySelector('dd'), db = document.createElement('span'), grid = document.createElement('span');
+      if (!dd) return;
+      db.className = 'cost-db'; grid.className = 'cost-blk'; grid.setAttribute('aria-hidden', 'true');
+      const n = Math.round(base[k].n), r = rest[k], solid = [], out = [];
+      let first = -1;
+      for (let i = 0; i < n; i++) {
+        const b = document.createElement('i'), fill = r - i;
+        b.style.setProperty('--c', base[k].c);
+        if (fill >= 1) solid.push(b);
+        else if (fill > 0) { b.className = 'is-part'; b.style.setProperty('--f', Math.round(fill * 100) + '%'); solid.push(b); }
+        else { b.className = r > 0 ? 'is-rest' : 'is-gone'; out.push(b); }
+        if (fill < 1 && first < 0) first = i;
+        // hc25 (HC25 item 2): the block's place in its row's emptying under scroll (proof.css --t, 0 first): the bar's end
+        // first, back to what the agentic stack keeps
+        if (fill < 1) b.style.setProperty('--t', (n - 1 > first ? (n - 1 - i) / (n - 1 - first) : 0).toFixed(3));
+        grid.append(b);
+      }
+      // one reveal, <= 600 ms: row by row, its kept blocks, then what went
+      solid.forEach((b, i) => { b.style.transitionDelay = Math.round(k * 60 + i * 120 / Math.max(1, solid.length)) + 'ms'; });
+      out.forEach((b, i) => { b.style.transitionDelay = Math.round(240 + k * 40 + i * 120 / Math.max(1, out.length)) + 'ms'; });
+      db.append(grid);
+      if (!(r > 0)) { const em = document.createElement('em'); em.textContent = word; db.append(em); }
+      dd.append(db);
+    });
+    const key = keys[0].parentNode, two = fig.querySelector('.cost-rows');
+    if (two) fig.insertBefore(key, two);
+    fig.classList.add('is-dec');
+    return true;
+  }
 })();

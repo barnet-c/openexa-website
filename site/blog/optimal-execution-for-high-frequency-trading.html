@@ -13,7 +13,7 @@
   <meta property="og:title" content="Optimal Execution for High Frequency Trading — OpenEXA Blog">
   <meta property="og:description" content="In high-frequency trading, large buy (or sell) orders may cause other traders to raise (or lower) their offered price. ">
   <meta property="og:image" content="https://www.openexa.com/assets/img/og/blog-optimal-execution-for-high-frequency-trading.jpg">
-  <meta property="og:image:alt" content="Optimal Execution for High Frequency Trading. Beside it, the dotted globe of the OpenEXA mark.">
+  <meta property="og:image:alt" content="Optimal Execution for High Frequency Trading. Beside it, the post’s engraved plate.">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:locale" content="en_US">
@@ -21,7 +21,7 @@
   <meta name="twitter:title" content="Optimal Execution for High Frequency Trading — OpenEXA Blog">
   <meta name="twitter:description" content="In high-frequency trading, large buy (or sell) orders may cause other traders to raise (or lower) their offered price. ">
   <meta name="twitter:image" content="https://www.openexa.com/assets/img/og/blog-optimal-execution-for-high-frequency-trading.jpg">
-  <meta name="twitter:image:alt" content="Optimal Execution for High Frequency Trading. Beside it, the dotted globe of the OpenEXA mark.">
+  <meta name="twitter:image:alt" content="Optimal Execution for High Frequency Trading. Beside it, the post’s engraved plate.">
   <meta name="robots" content="max-image-preview:large">
   <link rel="alternate" type="application/atom+xml" title="OpenEXA Blog" href="/blog/feed.xml">
   <link rel="alternate" type="application/atom+xml" title="OpenEXA Research" href="/research/feed.xml">
@@ -30,6 +30,7 @@
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="preload" href="../assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="../assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../assets/fonts/instrument-serif-400i-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="../assets/css/site.css">
   <link rel="stylesheet" href="../assets/css/blog.css">
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BlogPosting","@id":"https://www.openexa.com/blog/optimal-execution-for-high-frequency-trading.html#article","headline":"Optimal Execution for High Frequency Trading","description":"In high-frequency trading, large buy (or sell) orders may cause other traders to raise (or lower) their offered price. ","url":"https://www.openexa.com/blog/optimal-execution-for-high-frequency-trading.html","mainEntityOfPage":"https://www.openexa.com/blog/optimal-execution-for-high-frequency-trading.html","datePublished":"2022-04-22","inLanguage":"en","image":["https://www.openexa.com/assets/img/og/blog-optimal-execution-for-high-frequency-trading.jpg"],"author":{"@type":"Person","name":"Tim Leung","url":"https://www.openexa.com/company.html#tim-leung","honorificSuffix":"Ph.D."},"publisher":{"@type":"Organization","@id":"https://www.openexa.com/#organization","name":"OpenEXA","url":"https://www.openexa.com/","logo":{"@type":"ImageObject","url":"https://www.openexa.com/assets/img/icon-512.png","width":512,"height":512}},"isPartOf":{"@type":"Blog","@id":"https://www.openexa.com/blog/#blog","name":"OpenEXA Blog","url":"https://www.openexa.com/blog/"},"articleSection":"Financial markets research","timeRequired":"PT1M","isBasedOn":"https://timleungresearch.medium.com/optimal-execution-for-high-frequency-trading-a1db67964607"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenEXA","item":"https://www.openexa.com/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://www.openexa.com/blog/"},{"@type":"ListItem","position":3,"name":"Optimal Execution for High Frequency Trading","item":"https://www.openexa.com/blog/optimal-execution-for-high-frequency-trading.html"}]}]}</script>
@@ -45,7 +46,7 @@
         <a href="../lifecycles.html">Lifecycles</a>
         <a href="../evidence.html">Proof</a>
         <a href="../trust.html">Trust</a>
-        <a href="../research.html">Research</a>
+        <a href="../research.html" aria-current="true">Research</a>
         <a href="../company.html">Company</a>
         <i class="nav-ink" aria-hidden="true"></i>
       </nav>
@@ -60,7 +61,7 @@
         <li><a href="../lifecycles.html">Lifecycles</a></li>
         <li><a href="../evidence.html">Proof</a></li>
         <li><a href="../trust.html">Trust</a></li>
-        <li><a href="../research.html">Research</a></li>
+        <li><a href="../research.html" aria-current="true">Research</a></li>
         <li><a href="../company.html">Company</a></li>
       </ol>
       <a class="btn" href="../access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
@@ -76,8 +77,8 @@
           <p class="post-byline" data-reveal><a href="../company.html#tim-leung">Dr. Tim Leung</a><span><time datetime="2022-04-22">Apr 22, 2022</time></span><span>1&nbsp;min read</span></p>
         </div>
         <figure class="post-plate" id="plate">
-          <div class="post-plate-art" aria-hidden="true"><svg class="bp-art" viewBox="0 0 800 450" fill="none" focusable="false" aria-hidden="true"><path class="pr" d="M48 396l704 0"/><path class="pa" d="M56 320l6-4 7-4 6 6 6-3 7 3 6-1 6-5 6 0 7 0 6-3 6 0 7-5 6 2 6-96 7 12 6 8 6 5 7 12 6 3 6 6 7 2 6 6 6 4 6-7 7 1 6 5 6 11 7-1 6 2 6-51 7 5 6 4 6-41 7 0 6 7 6 4 7 3 6 6 6 2 6-5 7 4 6 0 6 2 7 4 6 3 6 4 7-1 6 1 6-2 7 9 6-1 6 6 7-5 6-1 6-3 6 4 7-70 6 5 6 7 7 1 6 2 6 9 7 5 6-76 6 9 7 8 6 5 6 2 7 3 6-2 6-4 6 5 7 3 6 2 6 1 7-2 6 0 6-6 7-1 6 4 6 1 7-5 6-4 6-8 7 4 6 5 6 9 6 2 7 2 6-6 6 0 7-2 6 0 6 6 7-1 6-5 6 1 7-1 6 5 6-4 7 1 6 1 6 3 6 4 7-3 6 5 6 5 7-7 6 7" pathLength="1"/><path class="pg" d="M144 396l0-61" pathLength="1"/><path class="pb" d="M245 396l0-43M264 396l0-40M416 396l0-46M460 396l0-50"/><path class="pg" d="M144 306l0-96" pathLength="1"/></svg></div>
-          <figcaption class="pp-h">Schematic · no data is plotted</figcaption>
+          <div class="post-plate-art" style="--fx:7.1%;--fw:85.8%;--fy:-19.17%;--fh:120.65%" aria-hidden="true"><svg class="bp-art" data-vt-dest viewBox="0 0 800 450" fill="none" focusable="false" aria-hidden="true"><path class="pr" d="M48 396l704 0"/><path class="pa" d="M56 320l6-4 7-4 6 6 6-3 7 3 6-1 6-5 6 0 7 0 6-3 6 0 7-5 6 2 6-96 7 12 6 8 6 5 7 12 6 3 6 6 7 2 6 6 6 4 6-7 7 1 6 5 6 11 7-1 6 2 6-51 7 5 6 4 6-41 7 0 6 7 6 4 7 3 6 6 6 2 6-5 7 4 6 0 6 2 7 4 6 3 6 4 7-1 6 1 6-2 7 9 6-1 6 6 7-5 6-1 6-3 6 4 7-70 6 5 6 7 7 1 6 2 6 9 7 5 6-76 6 9 7 8 6 5 6 2 7 3 6-2 6-4 6 5 7 3 6 2 6 1 7-2 6 0 6-6 7-1 6 4 6 1 7-5 6-4 6-8 7 4 6 5 6 9 6 2 7 2 6-6 6 0 7-2 6 0 6 6 7-1 6-5 6 1 7-1 6 5 6-4 7 1 6 1 6 3 6 4 7-3 6 5 6 5 7-7 6 7" pathLength="1"/><path class="pg" d="M144 396l0-61" pathLength="1"/><path class="pb" d="M245 396l0-43M264 396l0-40M416 396l0-46M460 396l0-50"/><path class="pg" d="M144 306l0-96" pathLength="1"/></svg><span class="hp-reg" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div>
+          <figcaption class="pp-h">Illustrative</figcaption>
         </figure>
       </div>
     </section>
@@ -89,7 +90,7 @@
             <p class="lead">In high-frequency trading, large buy (or sell) orders may cause other traders to raise (or lower) their offered price. This additional implementation cost due to short-term liquidity demand is often called <em>market impact.</em></p><p>Practitioners commonly view this as a significant cost to track, avoid, or minimize. This can be done by slowly trading the asset, which usually reduces market impact by minimally affecting demand and supply over time. However, this exposes the trader to stock price fluctuations and risks falling behind a trading schedule. Hence, many trading algorithms seek to strategically trade off costs and risks in trade execution.</p><p>We analyze a continuous-time stochastic model for optimal execution using both market and limit orders. Our objective is to investigate how to optimally allocate aggressive (market) and passive (limit) orders over time to achieve trading goals. The aggressive nature of market orders tends to result in a higher market impact, whereas limit orders have less market impact but are less likely to fill. We model this fill uncertainty using an affine function of the trading rate in limit orders; this leads to an additional diffusion term that is correlated with the stock price process.</p><p>The trader’s objective is to maximize the expectation of the compensated P&amp;L by choosing trading rates for market and limit orders. This amounts to solving a constrained stochastic control problem. This leads us to study the associated nonlinear Hamilton-Jacobi-Bellman (HJB) partial differential equation (PDE) problem. An analytic solution to the stochastic control problem is derived in the paper.</p><p>We explore the special cases of constant and linear uncertainty to examine the properties of the solutions and analyze the corresponding explicit optimal strategies.</p>
             <div class="article-end"><span class="mark" aria-hidden="true"></span></div>
           </article>
-          <div class="post-side"><div class="ps-in"><p class="ps-src">A summary of work first published on <a href="https://timleungresearch.medium.com/optimal-execution-for-high-frequency-trading-a1db67964607" target="_blank" rel="noopener">timleungresearch.medium.com<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M5 11L11 5M6 5h5v5"/></svg></a>.</p></div></div>
+          <div class="post-side"><div class="ps-in"><p class="ps-src">A summary of work first published on <a href="https://timleungresearch.medium.com/optimal-execution-for-high-frequency-trading-a1db67964607" target="_blank" rel="noopener">timleungresearch.<wbr><span class="nowrap">medium.com<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M5 11L11 5M6 5h5v5"/></svg></span></a>.</p></div></div>
         </div>
       </div>
     </section>
@@ -117,10 +118,9 @@
       <div class="bottom">
         <span>© 2026 OpenEXA Inc. · Seattle, WA</span>
       </div>
-      <div class="wordmark" aria-hidden="true" data-word="OpenEXA"></div>
     </div>
   </footer>
 
-  <script src="../assets/js/site.js" defer></script>
+  <script src="../assets/js/afterpaint.js" defer data-after-paint="../assets/js/site.js"></script>
 </body>
 </html>
