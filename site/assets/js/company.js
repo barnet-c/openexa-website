@@ -1,8 +1,8 @@
 /* OpenEXA — the Company page (company.html; loaded after site.js and figure.js).
    1. (cut, 1 Nov) The manifesto left the page with its section; its writer went with it (v2x r5 in git history).
    2. The hero plate's caption follows the mode (figure.js switches the formation; the caption is the mode's name, read
-      out by screen readers: cut, 1 Nov, the mode paragraph went).
-   3. §03 (was §04), the constants plate (lab, 31 Oct): "The lifecycles vary. Four constants don't.", drawn. A proposal walks the
+      out by screen readers: cut, 1 Nov, the mode paragraph went). hc29: Pause motion joins the tab row.
+   3. §02 (was §04), the constants plate (lab, 31 Oct; head since hc22: "Four constants hold in every lifecycle."), drawn. A proposal walks the
       loop of gates: above the boundary (agents decide), across it (constant 1), below it (code executes), and is
       written to the ledger when the counterparty confirms (4); one pass in four is rejected at the Council and written
       too. Every second pass the loop takes another shape (another lifecycle); the boundary, the agents scoped to their
@@ -11,7 +11,14 @@
       with the proposal on the boundary: what readers see without JavaScript and under reduced motion. It runs only on
       screen, with Pause motion; the constant being read (from 961 px) or pointed at is marked on the plate.
       The still SVG in company.html is maintained by hand: it is draw(lay(SHAPES[0])) with the proposal on the boundary,
-      so a change to SHAPES[0], CX/CY or the label positions means redrawing it to match (r1, 31 Oct). */
+      so a change to SHAPES[0], CX/CY or the label positions means redrawing it to match (r1, 31 Oct).
+      award a4 (pixel): the labels are HTML over the drawing (.kl-labs, at the plate-label token, so they no longer scale
+      with the plate), and the Council's label follows the Council.
+      hc1 (4 Nov, the council's copy item and system's instrument frame): the plate names its halves by their layers only
+      (the list beside it says "Agents decide. Code executes."), the running line (.k-state) is the status in the plate's
+      head, not a footer line in the drawing, and says only what happens (no "Agents decide ·", no "Code executes · below
+      the boundary"); Pause motion ends that head, boxed (.figure-motion.is-head).
+      hc2 (5 Nov): the labels and the running line are in the caption register (Inter, sentence case; company.css). */
 (function () {
   'use strict';
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -19,6 +26,11 @@
   /* ---------------- the hero plate's caption follows the mode ---------------- */
   const label = document.querySelector('[data-plate-label]');
   $$('.company-modes [data-plate]').forEach(b => b.addEventListener('click', () => { if (label) label.textContent = b.dataset.plate; }));
+  /* hc29: Pause motion ends the tab row, after the tabs in the Tab order as on screen (figure.js appends it to the stage's
+     parent once the stage runs; it moves before the frame is drawn) */
+  const ctl = document.querySelector('.company-ctl'), sc = document.querySelector('.company-sculpture');
+  const move = () => { const m = sc.querySelector(':scope > .figure-motion'); if (m) ctl.appendChild(m); return !!m; };
+  if (ctl && sc && !move()) new MutationObserver((_, o) => { if (move()) o.disconnect(); }).observe(sc, { childList: true });
 
   /* ---------------- §04: the constants plate ---------------- */
   const kfig = document.querySelector('[data-kplate]');
@@ -46,8 +58,9 @@
     const mix = (A, B, t) => { const o = {}; for (const k in A) o[k] = Array.isArray(A[k]) ? A[k].map((v, i) => lerp(v, B[k][i], t)) : lerp(A[k], B[k], t); return o; };
     const loopUp = one('.k-loop--up'), loopDn = one('.k-loop--dn'), gUp = all('.k-gate--up'), gDn = all('.k-gate--dn');
     const council = one('.k-council'), stop = one('.k-stop'), bar = one('.k-bar'), lead = one('.k-lead');
-    const tok = one('.k-tok'), recs = one('.k-recs'), bnd = all('.k-bnd'), state = one('.k-state');
-    const say = t => { if (state && state.textContent !== t) state.textContent = t; };
+    const tok = one('.k-tok'), recs = one('.k-recs'), bnd = all('.k-bnd'), state = fig.querySelector('.k-state');
+    const clab = fig.querySelector('.kl--council'), pc = (v, d) => String(Math.round(v / d * 1e4) / 100); // % of 640 x 470
+    const say = t => { t = t.replace(' · ', '\u00a0· '); if (state && state.textContent !== t) state.textContent = t; }; // hc2: a line that wraps (961-1099 px, beside the hedge) breaks after its dot, not before
     const spur = document.createElementNS(NS, 'path');
     spur.setAttribute('class', 'k-spur'); spur.setAttribute('opacity', '0'); council.parentNode.insertBefore(spur, council);
     const ledger = Array.from(recs.children).map(r => (r.classList.contains('k-rec--rej') ? 'rej' : 'ok'));
@@ -65,6 +78,7 @@
       });
       gDn.forEach((g, j) => { const [x, y] = pt(L, L.dn[j]); at(g, x, y); g.setAttribute('opacity', f(L.do[j])); });
       const [cx, cy] = pt(L, lastOf(L.up, L.uo)); at(council, cx, cy);
+      if (clab) { clab.style.setProperty('--x', pc(cx + 16, 640)); clab.style.setProperty('--y', pc(cy + 24, 470)); }
       const [ex, ey] = pt(L, L.dn[0]); stop.setAttribute('d', `M${f(ex - 9)} ${f(ey)}H160`); bar.setAttribute('d', `M156 ${f(ey - 8)}V${f(ey + 8)}`);
       const [sx, sy] = pt(L, lastOf(L.dn, L.do)); lead.setAttribute('d', `M${f(sx)} ${f(sy + 8)}V372H${LX}V${LY - 6}`);
     }
@@ -97,7 +111,7 @@
     function walk(from) {
       phase = 'walk'; s = from; stops = plan(); si = stops.findIndex(x => x.s > s + 1e-6); if (si < 0) si = stops.length;
       rejecting = pass % 4 === 3;
-      if (s < .5) say('Agents decide · a proposal, gate by gate');
+      if (s < .5) say('A proposal, gate by gate');
       tok.setAttribute('opacity', '1'); tok.setAttribute('class', 'k-tok' + (s >= .5 ? ' is-ok' : ''));
     }
     function arrive(x) {
@@ -117,7 +131,7 @@
         lead.classList.add('is-hit'); say('The counterparty confirms · written to the ledger');
         hold = 620; onStop = () => { el.classList.remove('is-hit'); lead.classList.remove('is-hit'); write('ok'); }; return;
       }
-      say(x.s < .5 ? 'Agents decide · a proposal, gate by gate' : 'Code executes · below the boundary');
+      if (x.s < .5) say('A proposal, gate by gate'); // below the boundary the crossing's line stands until the counterparty confirms
       hold = 300; onStop = () => el.classList.remove('is-hit');
     }
     function end() { tok.setAttribute('opacity', '0'); pass++; next = pass % 2 === 0 ? 'morph' : 'walk'; phase = 'gap'; gap = 700; si = stops.length; }
@@ -148,9 +162,10 @@
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
     let raf = 0, last = 0, visible = false, paused = false;
     const btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'figure-motion'; btn.textContent = 'Pause motion';
+    const head = fig.querySelector('.kplate-head');
+    btn.type = 'button'; btn.className = 'figure-motion' + (head ? ' is-head' : ''); btn.textContent = 'Pause motion';
     btn.addEventListener('click', () => { paused = !paused; btn.textContent = paused ? 'Resume motion' : 'Pause motion'; kick(); });
-    fig.appendChild(btn);
+    (head || fig).appendChild(btn);
     function frame(now) { raf = 0; tick(Math.min(64, now - last)); last = now; kick(); }
     function kick() {
       const go = visible && !paused && !reduce.matches && !document.hidden;

@@ -15,7 +15,9 @@ ids = {f: set(re.findall(r'\sid="([^"]+)"', s)) for f, s in pages.items()}
 bad, total = [], 0
 for f, s in pages.items():
     base = os.path.dirname(f)
-    for attr, ref in re.findall(r'(href|src)="([^"]+)"', s):
+    # hc26r (research's ask; SYS-2): an attribute that only ends in src (data-vt-src, the id of the drawing a link carries)
+    # is not a URL
+    for attr, ref in re.findall(r'(?<![\w-])(href|src)="([^"]+)"', s):
         if ref.startswith(("http", "mailto:", "tel:", "data:")): continue
         total += 1
         u = urlsplit(ref); path, anchor = unquote(u.path), u.fragment

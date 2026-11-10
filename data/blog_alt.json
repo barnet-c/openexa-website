@@ -20,12 +20,12 @@
  "blog-091-664fe712804484c8f65ea733-screenshot-2024-05-23-at-6-849bff5e.webp": "Almost You diagram: an AI Agent hub cycles through broker-dealer, prime broker, data and transfer-agent APIs for ETF create/redeem between two SMAs",
  "blog-092-664fe92746895a7fac73cbf8-screenshot-2024-05-23-at-6-e4db4549.webp": "Two iShares flow diagrams: revised in-kind (prepay) and cash redemption models, with numbered steps among market makers, AP, issuer and custodians",
  "blog-093-664fea9dcd8a8ba7f405d554-screenshot-2024-05-23-at-6-230ee30f.webp": "iShares flow diagram, original in-kind redemption model: numbered steps among market makers, AP, ETF issuer, transfer agent and bitcoin custodian",
- "blog-094-6650eb93b32772052e84688f-screenshot-2024-05-24-at-12-e573576a.webp": "OpenEXA RelVal screen: 3D scatter of securities colored by cluster, a risk/yield/price hover label, and a Copilot AI chat panel",
+ "blog-094-6650eb93b32772052e84688f-screenshot-2024-05-24-at-12-e573576a.webp": "OpenEXA RelVal screen: 3D scatter of securities in clusters, a risk/yield/price hover label, and a Copilot AI chat panel",
  "blog-095-6666383add349b0f7b1d3ecc-31314-1d35be50.webp": "Bar chart: global corporate AI investment rose from $14.6B in 2013 to a $276.1B peak in 2021, then $189.6B in 2022",
  "blog-096-66674f9be55fd1adc0cbd411-capex-7e457aae.webp": "Bar chart, Q1 revenue growth, October estimate vs reported: Microsoft 11.5→17.0%, Alphabet 11.8→15.4%, Meta 17.3→27.3%, Amazon 11.1→12.5%",
  "blog-097-6668c9f356051415b2dce1b3-screenshot-2024-06-11-at-3-40122cf4.webp": "Gen AI Value Creation Engine: five stages along a road, Aggregative and Probabilistic (LLM), then Deterministic, Restrictive and Automatic (domain)",
  "blog-098-6668ce7aed9a24bada291d7b-screenshot-2024-06-11-at-3-43ff5cc1.webp": "Gen-AI value creation road graphic, four stages: 01 Data (general purpose), 02 LLM (probabilistic), 03 Algorithms (deterministic), 04 Guardrails",
- "blog-rel-val-6642935f1c232aafd0b3d1f0-relvel-31089e95.webp": "OpenEXA 2D RelVal scatter plot of securities by risk (x-axis) and yield (y-axis), grouped into color-coded clusters",
- "blog-rel-val-664fc5556689eea6651d760a-screenshot-2024-05-23-at-3-37-46-pm-1b8ac813.webp": "OpenEXA 3D RelVal scatter of securities on risk, yield and price axes, grouped into colored clusters, with a hover label for one security",
+ "blog-rel-val-6642935f1c232aafd0b3d1f0-relvel-31089e95.webp": "OpenEXA 2D RelVal scatter plot of securities by risk (x-axis) and yield (y-axis), grouped into clusters",
+ "blog-rel-val-664fc5556689eea6651d760a-screenshot-2024-05-23-at-3-37-46-pm-1b8ac813.webp": "OpenEXA 3D RelVal scatter of securities on risk, yield and price axes, grouped into clusters, with a hover label for one security",
  "blog-rel-val-680fc49a6247b672488f2172-chatgpt-image-apr-28-2025-11-09-49-am-771a47fb.webp": "Table of AAPL and ten cohort tickers (CHD to URI): return on assets, equity and invested capital, gross and operating margin, net income growth"
 }

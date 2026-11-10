@@ -29,7 +29,10 @@ async def main():
         await pg.wait_for_timeout(2500)
         assert await pg.evaluate("document.querySelector('#company-figure').classList.contains('figure-ready')"), "company figure not ready"
         await pg.screenshot(path=str(OUT / "company-hero.png"))
-        for name in ("swarm", "boundary"):  # Specialize, Act (Coordinate = "company" is the default)
+        # hc26r (COMP-1): Specialize ("swarm") is the default now; the opening state, then Coordinate and Act
+        await expect(pg.locator('button[data-figure-target="swarm"]')).to_have_attribute("aria-pressed", "true")
+        assert await pg.evaluate("document.querySelector('#company-figure').dataset.figureCurrent") == "swarm"
+        for name in ("company", "boundary"):  # Coordinate, Act
             await pg.locator(f'button[data-figure-target="{name}"]').click()
             await pg.wait_for_timeout(1500)
             await expect(pg.locator(f'button[data-figure-target="{name}"]')).to_have_attribute("aria-pressed", "true")
@@ -60,7 +63,10 @@ async def main():
 
         await pg.goto(f"{BASE}/", wait_until="load")
         await pg.wait_for_timeout(3000)
-        assert await pg.locator(".nav-ch-list a").count() == 7 and await pg.locator(".chapters").count() == 0
+        # the nav's readout lists every chapter of the page (7 until hc11, 6 since Home's §02 left, 5 since hc13r when §03
+        # #proof left; this may run against an older deploy, so count, don't pin)
+        nch = await pg.evaluate("document.querySelectorAll('main section[data-chapter]').length")
+        assert nch >= 5 and await pg.locator(".nav-ch-list a").count() == nch and await pg.locator(".chapters").count() == 0, nch
         await pg.locator("#research").scroll_into_view_if_needed()
         await pg.wait_for_timeout(1200)
         await pg.screenshot(path=str(OUT / "home-research.png"))
@@ -72,9 +78,10 @@ async def main():
         await pg.locator(".crew--team").scroll_into_view_if_needed()
         # polled with evaluate: the site's CSP has no 'unsafe-eval', so wait_for_function(<string>) cannot run there
         for _ in range(75):
-            if await pg.evaluate("[...document.querySelectorAll('.crew img')].every(i => i.complete && i.naturalWidth === 560)"): break
+            if await pg.evaluate("[...document.querySelectorAll('.crew img')].every(i => i.complete && i.naturalWidth > 0 && /-v2x-/.test(i.currentSrc))"): break
             await pg.wait_for_timeout(200)
-        team = await pg.evaluate("[...document.querySelectorAll('.crew img')].map(i => i.complete && i.naturalWidth === 560)")
+        # every portrait decoded from the v2x srcset (160/320 px webp since fix:r1:company; v2's 560 px files are gone from the page)
+        team = await pg.evaluate("[...document.querySelectorAll('.crew img')].map(i => i.complete && i.naturalWidth > 0 && /-v2x-/.test(i.currentSrc))")
         assert len(team) == 13 and all(team), team
         # a clipped page screenshot (round 2): never Locator.screenshot's 'element is stable' wait
         box = await pg.evaluate("(() => { const r = document.querySelector('.crew').getBoundingClientRect(); const y0 = Math.max(0, r.top), y1 = Math.min(innerHeight, r.bottom); return {x: Math.max(0, r.left), y: y0, width: Math.min(innerWidth, r.right) - Math.max(0, r.left), height: y1 - y0}; })()")

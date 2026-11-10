@@ -120,23 +120,28 @@
     // far above the floor a session went is not published, and the drawing no longer suggests it. The stack is centred
     // (build_research.py LABELS["sessions"] pins its labels to these points: B, F and U move together with them)
     sessions(N, rnd, g) {
-      // each column's NAV regime comes from the session record: data-regimes on the stage (p = premium, d = discount),
-      // written by build_research.py from #oxa-sessions. The literal is only the fallback (the research index's morph).
-      const rec = (document.querySelector('[data-figure][data-regimes]') || { dataset: {} }).dataset.regimes;
-      const P = []; const regime = /^[pd]{10}$/.test(rec || '') ? rec : 'ddppppdpdd'; const per = Math.floor(N * 0.082);
-      const B = -0.72, F = 0.48, U = (F - B) / 10, w = 0.07, o0 = F + 0.025, o1 = o0 + U; // ten units to the floor; one open unit above
+      // hill climb hc7 (director item 8): Proof's and Home's encoding of the same ten sessions. Every column fills to the
+      // floor in green; the open unit above it is a khaki outline, quieter than the data, as Proof's grey "above, exact
+      // value not published" box (ivory made the unpublished part the brightest mark). The regime is Proof's step line,
+      // not this drawing's colour (green beside white read as two outcomes), so the figure no longer reads the regimes
+      const P = []; const per = Math.floor(N * 0.082);
+      // hc29 (director): Proof's geometry, one block per basis point: ten square blocks to the floor (a fifth of each unit
+      // left as the gap), the open unit the eleventh block's outline (build_research _forms: the same, line for line)
+      const B = -0.72, F = 0.48, U = (F - B) / 10, w = 0.048, H = 0.8 * U, o0 = F + 0.1 * U, o1 = o0 + H;
+      const cell = r => { r *= 10; const k = Math.floor(r); return B + (k + 0.1 + 0.8 * (r - k)) * U; };
       for (let c = 0; c < 10; c++) {
-        const x = -1.08 + c * 0.24, k = regime[c] === 'p' ? 2 : 0;
+        const x = -1.08 + c * 0.24;
         for (let i = 0; i < per; i++) {
-          if (rnd() < 0.86) { P.push([x + (rnd() - 0.5) * 2 * w, B + rnd() * (F - B), (rnd() - 0.5) * 0.1, k]); continue; }
+          if (rnd() < 0.86) { P.push([x + (rnd() - 0.5) * 2 * w, cell(rnd()), (rnd() - 0.5) * 0.1, 2]); continue; }
           // the open unit: its outline only (the perimeter, sides weighted by length)
-          const e = rnd() * (4 * w + 2 * U); let px, py;
+          const e = rnd() * (4 * w + 2 * H); let px, py;
           if (e < 2 * w) { px = x - w + e; py = o0; } else if (e < 4 * w) { px = x - w + (e - 2 * w); py = o1; }
-          else if (e < 4 * w + U) { px = x - w; py = o0 + (e - 4 * w); } else { px = x + w; py = o0 + (e - 4 * w - U); }
-          P.push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, k]);
+          else if (e < 4 * w + H) { px = x - w; py = o0 + (e - 4 * w); } else { px = x + w; py = o0 + (e - 4 * w - H); }
+          P.push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, 1]);
         }
       }
-      for (let i = 0; i < N * 0.08; i++) P.push([(rnd() * 2 - 1) * 1.25, F + g() * 0.005, 0.07, 1]);
+      // award a2 (a2-pixel): the 10 bps floor is a rule over the points (.fl-line, build_research RULES), crisp at any
+      // density; as 1,200 khaki points it was a 6-8 px soft band at 1:1, where Proof draws the same floor as a hairline
       while (P.length < N) P.push([(rnd() * 2 - 1) * 1.4, (rnd() * 2 - 1) * 0.9, -0.9 - rnd() * 0.6, 7]);
       return P;
     },
@@ -148,14 +153,6 @@
       for (let c = 0; c < 5; c++) { const a = (c / 4 - 0.5) * 2.4; const cx = Math.sin(a) * 1.0, cy = -0.35, cz = Math.cos(a) * 0.35 - 0.2; sphere(cx, cy, cz, 0.17, Math.floor(N * 0.07), c === 0 ? 0 : 1, 0.74); for (let i = 0; i < N * 0.035; i++) { const s = rnd(); P.push([cx * s + g() * 0.006, 0.6 + (cy - 0.6) * s + g() * 0.006, cz * s + g() * 0.006, 7, 0.1 + s * 0.6]); } }
       for (let i = 0; i < N * 0.1; i++) P.push([(rnd() * 2 - 1) * 1.3, -0.75 + g() * 0.004, (rnd() * 2 - 1) * 0.5, 1, 0.9]);
       while (P.length < N) P.push([(rnd() * 2 - 1) * 1.4, (rnd() * 2 - 1) * 0.9, -0.9 - rnd() * 0.6, 7]);
-      return P;
-    },
-    // Index · the library: ten leaves fanned round one spine like the pages of an open book, the two research notes lit
-    // (v2x: v2 set the leaves edge to edge on one arc, which read as a single slab)
-    library(N, rnd, g) {
-      const P = []; const per = Math.floor(N * 0.088);
-      for (let l = 0; l < 10; l++) { const a = (l / 9 - 0.5) * 2.2; const ux = Math.sin(a), uz = Math.cos(a); for (let i = 0; i < per; i++) { const rim = rnd() < 0.3; let u = 0.12 + rnd() * 0.86, v = rnd() * 2 - 1; if (rim) { if (rnd() < 0.5) v = rnd() < 0.5 ? -1 : 1; else u = rnd() < 0.5 ? 0.12 : 0.98; } P.push([ux * u + g() * 0.003, v * 0.46 + g() * 0.003, uz * u - 0.35 + g() * 0.003, l < 2 ? 2 : (rim ? 0 : 1), (l + u * 0.7) / 10.7]); } }
-      while (P.length < N) P.push([(rnd() * 2 - 1) * 1.4, (rnd() * 2 - 1) * 0.9, -1.2 - rnd() * 0.6, 7]);
       return P;
     },
     // Company · the swarm as one body: a sphere of agents with three orbits of work around it
@@ -201,9 +198,11 @@
     float pulse = accent > 1.0 ? (0.86 + 0.14 * sin(u_time * 2.2 + a_rand.w * 6.283)) : 1.0;
     float sz = (1.65 + a_rand.x * 2.0) * (0.6 + depth * 0.8) * accent * (dust < 0.5 ? 0.7 : 1.0) * pulse * (1.0 + 0.4 * glow) * mix(0.3, 1.0, vis);
     float al = (0.26 + 0.6 * depth) * dust * (accent > 1.0 ? 1.15 : 1.0) * (1.0 + 1.15 * glow) * vis;
-    float px = min(sz * u_pr * (u_halo > 0.5 ? 3.6 : 1.0), u_maxpt);
+    /* award a2 (a2-pixel): the accent's halo is half the radius and half the alpha it was (1.8x the point, .085): the green
+       points read as sharp as the ivory ones at 1:1 (3840@1, 390@3), a glow at their edge, not a blur round them */
+    float px = min(sz * u_pr * (u_halo > 0.5 ? (accent > 1.0 ? 1.8 : 3.6) : 1.0), u_maxpt);
     gl_PointSize = px; v_size = px;
-    v_alpha = u_halo > 0.5 ? al * (accent > 1.0 ? 0.17 : 0.038) * u_ha : al;
+    v_alpha = u_halo > 0.5 ? al * (accent > 1.0 ? 0.085 : 0.038) * u_ha : al;
     v_col = mix(mix(kcol(kA), kcol(kB), t), vec3(1.0), 0.14 * glow);
   }`;
   /* Sprites are resolution-aware: the disc edge is one device pixel wide whatever the size, so points stay round
@@ -314,10 +313,10 @@
        never below .75 or above 1.1: a small stage's points no longer run together (390@3: neon bars). Linear in the
        drawing's size overshot (measured, award-a1 p1: 3840 twice as heavy as 1440); the eye reads weight sub-linearly.
        The halo is a little lighter at 2.5x DPR and up. The words beside the points take the same u (rules, dots, gaps) */
-    let ref = 432, u = 1;
+    let ref = 432, u = 1, wmin = 0.75;
     const SWAY = 0.2, FLOW_S = 1.5; // radians either side of face-on; seconds per pass of the pulse
     const groups = {}; let grp = null, grpOn = false;
-    stage.querySelectorAll('.fig-labels').forEach(el => { groups[el.dataset.for] = { el, items: Array.from(el.querySelectorAll('.fl')).map(l => ({ el: l, at: l.dataset.at.split(',').map(Number), side: l.dataset.side || 'r', ph: l.dataset.ph ? l.dataset.ph.split(',').map(Number) : null, to: l.dataset.to ? l.dataset.to.split(',').map(Number) : null, keep: l.hasAttribute('data-keep'), sides: (l.dataset.keep || '').split(' ').filter(Boolean), lead: 19, w: 0, h: 0, w1: 0, h1: 0, drop: 0, one: false, dropSet: 0, oneSet: false, x: NaN, y: NaN, dx: 0, out: false, lit: false })) }; });
+    stage.querySelectorAll('.fig-labels').forEach(el => { groups[el.dataset.for] = { el, items: Array.from(el.querySelectorAll('.fl')).map(l => ({ el: l, at: l.dataset.at.split(',').map(Number), side: l.dataset.side || 'r', ph: l.dataset.ph ? l.dataset.ph.split(',').map(Number) : null, to: l.dataset.to ? l.dataset.to.split(',').map(Number) : null, keep: l.hasAttribute('data-keep'), sides: (l.dataset.keep || '').split(' ').filter(Boolean), lead: 19, w: 0, h: 0, w1: 0, h1: 0, drop: 0, one: false, dropSet: 0, oneSet: false, x: NaN, y: NaN, dx: 0, out: false, lit: false })), lines: Array.from(el.querySelectorAll('.fl-line')).map(l => ({ el: l, a: l.dataset.at.split(',').map(Number), b: l.dataset.line.split(',').map(Number), k: '' })) }; });
     grp = groups[initial] || null;
     // where the words may stand (stage px): inside the page's content edge, never under the bar (a hero stage starts at
     // the top of the page); a label that cannot stand there whole is not shown
@@ -334,9 +333,10 @@
     const cssScale = () => {
       const cs = getComputedStyle(stage), v = parseFloat(cs.getPropertyValue('--figure-scale')), rf = parseFloat(cs.getPropertyValue('--figure-ref'));
       scale = v > 0 ? v : baseScale; ref = rf > 0 ? rf : 432;
+      const wm = parseFloat(cs.getPropertyValue('--figure-wmin')); wmin = wm > 0 ? wm : 0.75; // hc23: a 44 px mark (research's phone strip) may draw finer points
       u = (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16;
     };
-    const weight = sc => u * Math.min(1.1, Math.max(0.75, Math.sqrt(H * sc / (u * ref)) * Math.pow(15000 / N, 0.25)));
+    const weight = sc => u * Math.min(1.1, Math.max(wmin, Math.sqrt(H * sc / (u * ref)) * Math.pow(15000 / N, 0.25)));
     const restView = new Float32Array(16); lookAt(restView, [0, 0.35, 4.4]); // the pose a plate rests in (no tilt)
     // the factor (<= 1) that brings the formation's points and the words beside them inside the safe box, at rest
     function widthFit(name) {
@@ -354,6 +354,7 @@
           if (pts[i * 4 + 3] >= 6.5 || !project(pts[i * 4], pts[i * 4 + 1], pts[i * 4 + 2], 0, 1, sc, restView)) continue;
           fitX(scr[0] - cx, 0, 0); fitY(scr[1] - cy, 0, 0);
         }
+        if (g) g.lines.forEach(ln => [ln.a, ln.b].forEach(q => { if (project(q[0], q[1], q[2], 0, 1, sc, restView)) { fitX(scr[0] - cx, 0, 0); fitY(scr[1] - cy, 0, 0); } })); // a2: a rule's ends
         words = true;
         if (g) g.items.forEach(it => {
           const t = it.el.firstElementChild, w = t ? t.offsetWidth : 0, h = t ? t.offsetHeight : 0;
@@ -375,6 +376,9 @@
     function publish() {
       if (!('bbox' in stage.dataset) || !stage.parentElement) return;
       const pts = built[current], host = stage.parentElement; if (!pts) return;
+      // hc21: once the labels are planned (a plan may set words under the drawing, and the caption goes under them): hung
+      // before, it moved down a line when they landed (phones: note 03, 05, 07; a layout shift)
+      if (groups[current] && !planned) return;
       const hung = Array.from(host.querySelectorAll('[data-hang]')).filter(el => el.offsetParent); if (!hung.length) return;
       const sc = scale * (narrow() ? 0.86 : 1) * fitOf(current);
       let x0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -383,9 +387,12 @@
         if (scr[0] < x0) x0 = scr[0]; if (scr[0] > x1) x1 = scr[0]; if (scr[1] > y1) y1 = scr[1];
       }
       const g = groups[current];
+      if (g) g.lines.forEach(ln => [ln.a, ln.b].forEach(q => { if (project(q[0], q[1], q[2], 0, 1, sc, restView)) { if (scr[0] < x0) x0 = scr[0]; if (scr[0] > x1) x1 = scr[0]; } }));
+      // award a4 (r4): the words below the drawing on the side the plan gave them (a hedge label with no room on its own
+      // side drops below on a small stage: note 10's "copies" on a sideways phone) and at the plan's drop
       if (g) g.items.forEach(it => {
-        const t = it.el.firstElementChild, h = t ? t.offsetHeight : 0;
-        if (h && it.side[0] === 'b' && project(it.at[0], it.at[1], it.at[2], 0, 1, sc, restView)) y1 = Math.max(y1, scr[1] + 18 * u + h);
+        const sd = it.sd || it.side, t = it.el.firstElementChild, h = (it.one ? it.h1 : it.h) || (t ? t.offsetHeight : 0);
+        if (h && sd[0] === 'b' && !it.blocked && project(it.at[0], it.at[1], it.at[2], 0, 1, sc, restView)) y1 = Math.max(y1, scr[1] + 18 * u + Math.max(0, it.drop || 0) + h);
       });
       if (!isFinite(x0)) return;
       const rs = stage.getBoundingClientRect();
@@ -445,6 +452,7 @@
       grpOn = true; planned = false; grp.items.forEach(it => {
         if (it.oneSet) { it.el.classList.remove('is-one'); it.oneSet = false; }
         const t = it.el.firstElementChild; it.w = t ? t.offsetWidth : 0; it.h = t ? t.offsetHeight : 0; it.x = NaN; it.sd = it.side; it.blocked = false; it.drop = 0; it.one = false;
+        it.em = (t && parseFloat(getComputedStyle(t).fontSize)) || 11 * u; // hc3: the words' own size (Inter, or a numeral's mono) sets where a beside-the-point first line sits
         if (!it.to) { const l = Math.round(19 * u); if (l !== it.lead) { it.lead = l; it.el.style.setProperty('--lead', `${l}px`); } } // the rule's reach in the root's step (a1)
         // a hedge label's words on one line, measured for the slot search (r3)
         it.w1 = it.h1 = 0;
@@ -483,7 +491,10 @@
         if (pts[i * 4 + 3] >= 6.5 || !project(pts[i * 4], pts[i * 4 + 1], pts[i * 4 + 2], 0, 1, sc)) continue;
         if (scr[0] >= 0 && scr[1] >= 0 && scr[0] < W && scr[1] < H) { occ[Math.floor(scr[1] / CELL) * oc + Math.floor(scr[0] / CELL)]++; S++; }
       }
+      grp.lines.forEach(ln => { for (let j = 0; j <= 64; j++) { const t = j / 64; if (project(ln.a[0] + (ln.b[0] - ln.a[0]) * t, ln.a[1] + (ln.b[1] - ln.a[1]) * t, ln.a[2] + (ln.b[2] - ln.a[2]) * t, 0, 1, sc) && scr[0] >= 0 && scr[1] >= 0 && scr[0] < W && scr[1] < H) { occ[Math.floor(scr[1] / CELL) * oc + Math.floor(scr[0] / CELL)]++; S++; } } });
       occN = S; place(0, sc, true);
+      // the caption hangs from the planned drawing (under any words the plan set below it)
+      publish();
     }
     function labelsOff() { if (grp) { grp.el.classList.remove('is-on'); grp.items.forEach(it => { if (it.lit) { it.el.classList.remove('is-lit'); it.lit = false; } }); } grpOn = false; }
     // the pulse names each part as it passes: a label whose part (data-ph, the span of the formation's own path it
@@ -492,16 +503,17 @@
       grp.items.forEach(it => { const on = !!it.ph && f >= it.ph[0] - 0.02 && f <= it.ph[it.ph.length - 1] + 0.08; if (on !== it.lit) { it.el.classList.toggle('is-lit', on); it.lit = on; } });
     }
     const mirror = d => d === 'l' ? 'r' : d === 'r' ? 'l' : (d[0] === 't' ? 'b' : 't') + d.slice(1);
-    /* r3 (a11y): a label that carries a hedge (data-keep: note 09 "how far is not published", note 10 "phase two, on the
+    /* r3 (a11y): a label that carries a hedge (data-keep: note 09 "exact value not published", note 10 "phase two, on the
        roadmap") is listed first, so the claim-side labels yield to it where words would cross. Where its own side and
        the other have no room (a phone's stage), it tries the sides its data-keep allows (all if empty), a rule 8 px
        shorter or up to 96 px longer, and its two lines set as one; the first slot inside the stage, clear of the drawing
        (at most three of its sampled points) and of its own point wins. If none does, no label of the group is shown: a
        part is never named without its hedge (the caption says it all) */
     const SIDES = ['t', 'b', 'r', 'l', 'tr', 'tl', 'br', 'bl'], DROPS = [0, -8, 12, 24, 36, 48, 60, 72, 84, 96];
+    const NEAR = { r: ['tr', 'br'], l: ['tl', 'bl'], t: ['tr', 'tl'], b: ['br', 'bl'], tr: ['t', 'r'], tl: ['t', 'l'], br: ['b', 'r'], bl: ['b', 'l'] };
     const setOut = (it, out) => { if (out !== it.out) { it.el.classList.toggle('is-out', out); it.out = out; } };
     function place(spin, sc, planning) {
-      const s = Math.sin(spin), c = Math.cos(spin), M = 6 * u, L = safe.l + M, R = safe.r - M, T = safe.t + 4 * u, B = H - 4 * u, taken = [];
+      const s = Math.sin(spin), c = Math.cos(spin), M = 6 * u, L = safe.l + M, R = safe.r - M, T = safe.t + 4 * u, B = H - 4 * u, taken = [], pl = [];
       let bare = false; // the hedge label is not shown, so no other label is
       /* award a1 (D5): words below (or above) points that share a height in the formation stand on one baseline. Note 09's
          ten column numbers climbed 12 device px from 01 to 10 while the plate swayed (the near columns project lower);
@@ -524,9 +536,12 @@
         const off = (d, w) => d === 'l' ? -it.lead - w : d === 'r' ? it.lead : d.length > 1 ? (d[1] === 'l' ? 6 * u - w : -6 * u) : -w / 2;
         const over = q => Math.max(L - q.left, q.left + q.w - R, 0);
         const at = (sd, drop, one) => {
-          const w = one ? it.w1 : it.w, h = one ? it.h1 : it.h, left = px + off(sd, w), top = sd[0] === 't' ? py - 18 * u - drop - h : sd[0] === 'b' ? py + 18 * u + drop : py - 7 * u;
+          const w = one ? it.w1 : it.w, h = one ? it.h1 : it.h, left = px + off(sd, w), top = sd[0] === 't' ? py - 18 * u - drop - h : sd[0] === 'b' ? py + 18 * u + drop : py - 0.675 * it.em;
           const dx = left < L ? L - left : left + w > R ? R - left - w : 0;
-          return { sd, drop, one, w, h, left, top, dx, bad: top < T || top + h > B || Math.abs(dx) > w * 0.5 + 12 * u || w > R - L };
+          // hc3: words beside their point may slide along the rule, never back over the point (at 320 "Execution Council"
+          // slid onto the council's bar)
+          const back = sd === 'l' ? left + dx + w > px - 5 * u : sd === 'r' ? left + dx < px + 5 * u : false;
+          return { sd, drop, one, w, h, left, top, dx, bad: top < T || top + h > B || Math.abs(dx) > w * 0.5 + 12 * u || w > R - L || back };
         };
         if (planning) {
           // words beside a point that lack room on their side (more than a short slide) stand on the other, if they fit
@@ -536,6 +551,14 @@
           const covered = q => hits(q.left + q.dx, q.top, q.left + q.dx + q.w, q.top + q.h) > Math.max(6, 0.35 * occN * q.w * q.h / (W * H));
           it.blocked = false;
           if (it.w && covered(g)) { const o = at(mirror(g.sd), 0, false); if (!o.bad && !covered(o)) g = o; else it.blocked = true; }
+          // hc3: a part's name with no room or no clear side tries the two slots nearest its own (above or below its
+          // point) before it is hidden, as a hedge label does; the first clear one inside the stage wins (note 08's link
+          // on phones)
+          if ((it.blocked || g.bad) && it.w && !it.keep) for (const sd of NEAR[it.side] || []) { const o = at(sd, 0, false); if (!o.bad && !covered(o)) { g = o; it.blocked = false; break; } }
+          // then, for words set above or below their point, the same slots on a longer rule (12 or 24 px), clear of the
+          // drawing's edge (note 10's "One control plane" at 1920 and 3840). Not for words beside a point: dropped under
+          // it they read as the name of the part below (tried: note 05's "The boundary", 07's "Approved" on phones)
+          if ((it.blocked || g.bad) && it.w && !it.keep && /^[tb]/.test(it.side)) drops: for (const d of [12, 24]) for (const sd of [it.side, ...(NEAR[it.side] || [])]) { if (!/^[tb]/.test(sd)) continue; const o = at(sd, Math.round(d * u), false); if (!o.bad && !covered(o)) { g = o; it.blocked = false; break drops; } }
           if (it.keep && it.w && (it.blocked || g.bad)) {
             it.blocked = true;
             const clear = q => hits(q.left + q.dx, q.top, q.left + q.dx + q.w, q.top + q.h) <= 3 && !(px > q.left + q.dx - 4 * u && px < q.left + q.dx + q.w + 4 * u && py > q.top - 3 * u && py < q.top + q.h + 3 * u);
@@ -545,6 +568,13 @@
               const q = at(sd, drop, one); if (!q.bad && clear(q)) { g = q; it.blocked = false; break search; }
             }
           }
+          // hc3: words never cross words, so a part's name whose planned words would touch an earlier label's tries its
+          // two nearest slots, then the other side, before it waits (note 04's "One gate, one job each" beside "One large
+          // agent" on phones); the margins are wider than place()'s, so the sway cannot bring them back into touch
+          const box = q => [q.left + q.dx - 8 * u, q.top - 5 * u, q.left + q.dx + q.w + 8 * u, q.top + q.h + 5 * u];
+          const crosses = q => { const a = box(q); return pl.some(b => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1]); };
+          if (it.w && !it.keep && !it.blocked && !g.bad && crosses(g)) for (const sd of [...(NEAR[g.sd] || []), mirror(g.sd)]) { const o = at(sd, 0, false); if (!o.bad && !covered(o) && !crosses(o)) { g = o; break; } }
+          if (it.w && !it.blocked && !g.bad) pl.push(box(g));
           it.sd = g.sd; it.drop = g.drop; it.one = g.one; return;
         }
         const row = rows.get((it.sd || it.side)[0] + it.at[1] + ',' + it.at[2]), drop = it.drop + (row && row.n > 1 ? Math.abs(row.v - py) : 0);
@@ -559,6 +589,18 @@
         if (px !== it.x || py !== it.y) { it.el.style.transform = `translate(${px}px, ${py}px)`; it.x = px; it.y = py; }
         if (dx !== it.dx) { it.el.style.setProperty('--dx', `${Math.round(dx)}px`); it.dx = dx; }
         setOut(it, out);
+      });
+      /* award a2 (a2-pixel): a plate's rule (note 09's 10 bps floor) is a line between two of the formation's points, drawn
+         over the points in the labels' space: both ends projected with the sway, so it moves with the drawing, and level
+         (no rotation) when its ends land on one pixel row, as at rest, so it is one crisp hairline at any density. It is
+         the drawing, not a word: never hidden with the labels (bare, out) */
+      if (!planning) grp.lines.forEach(ln => {
+        if (!project(ln.a[0], ln.a[1], ln.a[2], s, c, sc)) return; const x0 = scr[0], y0 = scr[1];
+        if (!project(ln.b[0], ln.b[1], ln.b[2], s, c, sc)) return;
+        const ddx = scr[0] - x0, ddy = scr[1] - y0, len = Math.round(Math.hypot(ddx, ddy)), ang = ddy ? Math.atan2(ddy, ddx) : 0;
+        const k = `${x0} ${y0} ${len} ${ang}`; if (k === ln.k) return; ln.k = k;
+        // a 1 px box stretched by scaleX: a transform only, so a swaying rule costs no layout
+        ln.el.style.transform = `translate(${x0}px, ${y0}px)` + (ang ? ` rotate(${ang.toFixed(4)}rad)` : '') + ` scaleX(${len})`;
       });
     }
     function frame() { frameId = 0; if (!visible || document.hidden || lost || paused) return; draw(false); }
@@ -615,8 +657,15 @@
     // the context in this task, the program in the next: two shorter tasks, not one long one (r1 perf)
     setTimeout(() => { if (!lost) setup(() => { resize(); request(); addMotion(); }); }, 0);
   }
-  // after the first paint, one stage per task: context creation and shader compilation never hold up a frame
-  requestAnimationFrame(() => stages.forEach(s => setTimeout(() => init(s), 0)));
+  // after the first paint, one stage per task: context creation and shader compilation never hold up a frame. Award a3
+  // (a3-dev: 82 + 69 ms tasks at a phone's start on Research): on a phone, a stage that is not on the screen at the start
+  // (the index's strip, below the screen until the list is read) starts when it first comes on, not in the first second
+  // (an observer answers after the frame's own layout: no layout is forced to ask)
+  requestAnimationFrame(() => stages.forEach(s => {
+    if (!narrow() || !('IntersectionObserver' in window)) { setTimeout(() => init(s), 0); return; }
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { io.disconnect(); setTimeout(() => init(s), 0); } });
+    io.observe(s);
+  }));
 
   // the research index: point at a post, the sculpture becomes that post's figure
   document.querySelectorAll('[data-figure-target]').forEach(el => {

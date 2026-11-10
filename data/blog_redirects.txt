@@ -4,6 +4,8 @@
 /for-managers/  /access#managers  301
 /for-investors/  /access#investors  301
 /beta/  /access  301
+/proof  /evidence  301
+/proof.html  /evidence  301
 /blog/in-search-gen-ai-business-model/  /blog/in-search-gen-ai-business-model.html  301
 /blog/rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies/  /blog/rel-val-a-new-approach-to-relative-value-analysis-of-securities-and-cryptocurrencies.html  301
 /blog/tearsheet-how-to-use-tearsheet-in-the-face-of-volatile-crypto-and-bond-markets-as-a-means-of-capital-preservation-and-asset-appreciation/  /blog/tearsheet-how-to-use-tearsheet-in-the-face-of-volatile-crypto-and-bond-markets-as-a-means-of-capital-preservation-and-asset-appreciation.html  301

@@ -23,7 +23,7 @@
   (csp_markup); the footer's columns, Sentiment desk link and verbatim disclosures in #disclosures on every page
   (footer); the skip link first and one main#main on every page, data-page as SYSTEM.md names it (landmarks); the
   shared head lines, theme-color by opening, canonical = og:url = the page's own address, robots and manifest (heads);
-  the CEO's fixed lines, no "$22 trillion", Proof ends at §03 and Trust at §04 (decisions).
+  the CEO's fixed lines, no "$22 trillion", Proof ends at its cost section (§03 at most) and Trust at §04 (decisions).
     python tools/check_static.py [--only=count_not_on_proof,regime_split,...]   (--only limits the round-1 guards)
 """
 import sys as _sys, os as _os
@@ -233,8 +233,13 @@ def check_regime_split():
 
 
 def check_research09_regimes():
-    """Research 09's figure draws the sessions' regimes from the record, not from a second copy: build_research.py writes
-    data-regimes on its figure stage (PF5) and it equals #oxa-sessions; figure.js's fallback literal, if any, agrees."""
+    """Research 09's figure never keeps a second copy of the record's regimes (PF5; D15). hc7 (research, director item 8):
+    the figure draws the ten sessions as Home and Proof do (every column green to the floor, the regime Proof's step line,
+    not the drawing's colour), so its stage carries no data-regimes and figure.js no regime literal: the principle holds
+    by construction, and this guard keeps it so. A data-regimes on the stage must equal #oxa-sessions (a regime colour
+    back in the drawing comes with its check); a p/d literal of the record's length in figure.js fails outright (a copy of
+    the record the page cannot correct). Was (a2-hc6): data-regimes required and equal to the record, figure.js's
+    fallback literal equal to it."""
     if not RECORD: fail("research09_regimes: no #oxa-sessions record"); return
     want = counts_of(RECORD)["regimes"]
     notes = sorted(p for p in pages if re.match(r"research/09-", p))
@@ -244,13 +249,13 @@ def check_research09_regimes():
         stage = re.search(r'<[a-z]+\b[^>]*\sdata-figure="sessions"[^>]*>', s)
         if not stage: fail(rel, "research09_regimes: no data-figure=\"sessions\" stage"); continue
         attr = re.search(r'\sdata-regimes="([^"]*)"', stage[0])
-        if not attr: fail(rel, f"research09_regimes: the figure stage has no data-regimes (figure.js keeps its own copy of the record); the record says {want!r}"); continue
+        if not attr: continue  # hc7: the drawing reads no regime
         v = attr[1].strip()
         got = v.lower() if re.fullmatch(r"[pdPD]+", v) else "".join("p" if w.startswith("prem") else "d" if w.startswith("disc") else "?" for w in re.findall(r"[a-z]+", v.lower()))
         if got != want: fail(rel, f"research09_regimes: data-regimes={v!r} reads {got!r}; the record says {want!r}")
     js = (ROOT / "assets/js/figure.js").read_text(encoding="utf-8")
-    for lit in re.findall(r"['\"]([pd]{%d})['\"]" % len(want), js):
-        if lit != want: fail("assets/js/figure.js", f"research09_regimes: the fallback regime literal {lit!r} differs from the record {want!r}")
+    for lit in re.findall(r"['\"]([pdPD]{%d})['\"]" % len(want), js):
+        fail("assets/js/figure.js", f"research09_regimes: a regime literal {lit!r} is a second copy of the record (the figure reads the stage's data-regimes or draws no regime)")
 
 
 def css_style_rules(css, first_line=1):
@@ -387,7 +392,8 @@ def check_blog_placeholder():
 
 def check_proof_plate():
     """The Proof page's hero plate draws the record: one [data-plate-rec] per session and one [data-plate-tick] per
-    broker-confirmed session in #oxa-sessions (PG3)."""
+    broker-confirmed session in #oxa-sessions (PG3). hc4: the hero's record is the no-JS table under the chart (its Session
+    cells carry data-plate-rec, its Verification cells data-plate-tick); the chart is drawn from the same record."""
     if "evidence.html" not in records: fail("evidence.html", "proof_plate: no #oxa-sessions record"); return
     c = counts_of(records["evidence.html"][0])
     s = records["evidence.html"][1]
@@ -450,6 +456,11 @@ GROUP_CSS_BUDGET = 12000   # gzip -9 bytes per group stylesheet
 # v2x r2 (system, perf): the five instrument regions left site.css for their own sheets, linked after site.css and before
 # the group's sheet only on the pages that draw them, so the other pages no longer wait for ~29 KB they never use.
 INSTRUMENT_CSS = {"overture": "overture.css", "swarm": "swarm.css", "ledger": "ledger.css", "arch": "arch.css", "proof": "proofchart.css"}
+# hc5 (integrate): Home §02 draws Platform's plate (still), not the explorer, and no longer starts arch.js; it still links
+# arch.css (scoped to the explorer: styles nothing on Home), because dropping that sheet cost Lighthouse's simulated mobile
+# FCP one round trip (96 -> 95 on 3 of 3 runs, the observed paint earlier): keep it until a change holds the score.
+# hc11 (integrate): §02 left Home, so the sheet styles nothing there at all; dropped with this entry and measured again
+# (Home mobile, interleaved, 3 runs each on the same tree): FCP 1,814 -> 1,958 ms and 96 -> 95 on 3 of 3, so it stays
 INSTRUMENT_PAGES = {"index.html": ["overture", "swarm", "ledger", "arch", "proof"], "platform.html": ["swarm", "arch"],
                     "evidence.html": ["proof"], "trust.html": ["ledger"]}
 INSTRUMENT_BUDGET = 8500   # gzip -9 bytes per instrument sheet (the largest, arch.css, is 7,558 at the split)
@@ -460,6 +471,8 @@ PAGE_JS_BUDGET = 8000      # gzip -9 bytes per page-only script (access.js, comp
 SHARED_JS = {"site.js", "loader.js", "story.js", "swarm.js", "ledger.js", "chain.js", "arch.js", "lane.js", "proof.js", "gap.js", "figure.js", "blog.js",
              "afterpaint.js"}  # v2x r3 (system): the after-paint starter, a shared module (Lifecycles now; any page may use it)
 PAGE_SCRIPTS_BUDGET = 151000  # gzip -9 bytes: the scripts any one page loads (index.html's budget, for every page)
+FIRST_WINDOW = 10 * 1460      # bytes: Lighthouse's simulated initial congestion window (hc5: Home's document must fit it)
+FIRST_WINDOW_STD = 220        # bytes: serve.py's status line and standard headers (Server, Date, Content-*, Vary, Last-Modified: 209 at hc5)
 
 
 def script_srcs(html):
@@ -476,7 +489,8 @@ def check_weight():
     """Transfer weight cannot grow unnoticed while the CSS split is deferred: gzip -9 of site.css <= 66,000 bytes and the
     sum of gzip -9 over the scripts index.html loads (<script src>) <= 151,000 bytes: 59,799 and 137,253 at 1a6b9fb,
     plus 10% (director's test list; _cross 'rejected': the split is deferred). A page's scripts are its <script src>
-    tags plus the ones a tag names in data-after-paint (home.js starts those after the first paint; v2x, 30 Oct)."""
+    tags plus the ones a tag names in data-after-paint (home.js starts those after the first paint; v2x, 30 Oct). hc5:
+    Home's first response (gzip-6 body + headers) fits Lighthouse's first TCP window, 14,600 B."""
     import gzip
     gz = lambda rel: len(gzip.compress((ROOT / rel).read_bytes(), 9))
     css = gz("assets/css/site.css")
@@ -518,11 +532,24 @@ def check_weight():
         if gone: fail(rel, "weight: scripts not found:", gone); continue
         total = sum(len(gzip.compress(f.read_bytes(), 9)) for f in files)
         if total > PAGE_SCRIPTS_BUDGET: fail(rel, f"weight: its {len(files)} scripts are {total:,} bytes gzipped; budget {PAGE_SCRIPTS_BUDGET:,} per page")
+    # hc5 (integrate, on home's proposal): Home's document fits the first TCP window Lighthouse's simulated mobile run
+    # models (10 segments of 1,460 B); past it the first paint pays one more round trip (home hc5: FCP 1.81 -> 1.96 s,
+    # performance 96 -> 95 on every run). The response as serve.py sends it: the body gzipped at level 6, the global
+    # headers of staticwebapp.config.json, and the status line and eight standard headers (209 B measured at hc5). Azure
+    # sends Brotli (smaller), so the rule is conservative.
+    try:
+        hdr = sum(len(k) + len(v) + 4 for k, v in json.loads((ROOT / "staticwebapp.config.json").read_text(encoding="utf-8")).get("globalHeaders", {}).items())
+    except (OSError, ValueError):
+        hdr = 0  # the config's own check reports it
+    body = len(gzip.compress((ROOT / "index.html").read_bytes(), 6))
+    if body + hdr + FIRST_WINDOW_STD > FIRST_WINDOW:
+        fail("index.html", f"weight: the first response is {body + hdr + FIRST_WINDOW_STD:,} B (gzip-6 body {body:,} + headers {hdr + FIRST_WINDOW_STD:,}); "
+             f"Lighthouse's first TCP window is {FIRST_WINDOW:,} B: past it Home's first paint pays a round trip (move weight out of the document)")
 
 
 def check_story_fallback():
     """story.js's fallback table (used only when #oxa-sessions cannot be read) is the record too: its regime literal
-    (/'([PD]{10})'.split/) equals the record's regimes in order (figure.js's literal is research09_regimes'; D15)."""
+    (/'([PD]{10})'.split/) equals the record's regimes in order (D15; figure.js may hold none: research09_regimes)."""
     if not RECORD: fail("story_fallback: no #oxa-sessions record"); return
     want = counts_of(RECORD)["regimes"].upper()
     js = (ROOT / "assets/js/story.js").read_text(encoding="utf-8")
@@ -543,6 +570,65 @@ def check_cost_definitions():
         t = re.sub(r"\s+", " ", visible((ROOT / rel).read_text(encoding="utf-8"))).lower()
         missing = [d for d in COST_DEFS if d not in t]
         if missing: fail(rel, f"cost_definitions: production's cost definitions missing from the visible text: {missing}")
+
+
+def srgb_lum(rgb):
+    c = [v / 255 for v in rgb]
+    c = [v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in c]
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+
+def css_colour(v):
+    """'#rgb' / '#rrggbb' / 'rgb(a)(r, g, b[, a])' -> (r, g, b, a); None for anything else"""
+    m = re.fullmatch(r"#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})", v.strip())
+    if m:
+        h = m[1] if len(m[1]) == 6 else "".join(ch * 2 for ch in m[1])
+        return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), 1.0)
+    m = re.fullmatch(r"rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+%?)\s*)?\)", v.strip())
+    if m:
+        a = 1.0 if m[4] is None else (float(m[4][:-1]) / 100 if m[4].endswith("%") else float(m[4]))
+        return (float(m[1]), float(m[2]), float(m[3]), a)
+    return None
+
+
+def check_cost_gone_contrast():
+    """hc18 (integrate; the director's HC18 4.1, done by system): the cost index's eliminated blocks carry the section's
+    message ("two costs go to zero"; Proof §02's 82 dashed blocks, `.cost-blk .is-gone`, and the eliminated share of the
+    flat bar on Home §03 and Proof §02, `.cost-bar > .cost-gone`). Outside forced colours (there CanvasText draws them),
+    every rule in proofchart.css whose last compound names .is-gone or .cost-gone and sets a border colour must reach
+    3:1 against the figures' ground (--paper), composited (WCAG 1.4.11, meaningful graphics; hc17's .34 ink was 2.17:1);
+    each class must have such a rule (a stroke that goes away fails too). A var() colour resolves through site.css."""
+    site = (ROOT / "assets/css/site.css").read_text(encoding="utf-8")
+    tok = dict(re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", re.sub(r"/\*.*?\*/", "", site, flags=re.S)))
+    def resolve(v, depth=0):
+        m = re.fullmatch(r"var\((--[\w-]+)(?:,\s*(.+))?\)", v.strip())
+        if not m or depth > 4: return v.strip()
+        return resolve(tok.get(m[1], m[2] or ""), depth + 1)
+    paper = css_colour(resolve("var(--paper)"))
+    if not paper: fail("assets/css/site.css", "cost_gone_contrast: --paper is not a plain colour"); return
+    rel = "assets/css/proofchart.css"
+    css = (ROOT / rel).read_text(encoding="utf-8")
+    plain = re.sub(r"/\*.*?\*/", lambda m: re.sub(r"[^\n]", " ", m[0]), css, flags=re.S)
+    seen = {".is-gone": 0, ".cost-gone": 0}
+    for sel, ats, line in css_style_rules(css):
+        if any("forced-colors" in a or a.startswith("@media print") for a in ats): continue
+        lasts = [compounds(s)[-1] for s in split_top(sel, ",")[0] if compounds(s)]
+        names = [k for k in seen if any(re.search(re.escape(k) + r"(?![\w-])", c) for c in lasts)]
+        if not names: continue
+        start = sum(len(l) + 1 for l in plain.split("\n")[:line - 1])
+        body = plain[plain.index("{", plain.index(sel, start)) + 1:]
+        body = body[:body.index("}")]
+        for prop, val in re.findall(r"(?:^|;)\s*(border(?:-color)?)\s*:\s*([^;]+)", body):
+            cols = [c for c in (css_colour(resolve(x)) for x in re.findall(r"rgba?\([^)]*\)|#[0-9a-fA-F]{3,6}\b|var\([^)]*\)", val)) if c]
+            if not cols: continue
+            r, g, bl, a = cols[0]
+            mix = [a * x + (1 - a) * y for x, y in zip((r, g, bl), paper[:3])]
+            lo, hi = sorted((srgb_lum(mix), srgb_lum(paper[:3])))
+            ratio = (hi + 0.05) / (lo + 0.05)
+            for k in names: seen[k] += 1
+            if ratio < 3: fail(rel, f"cost_gone_contrast: l.{line} `{sel.strip()}` {prop} draws the eliminated blocks at {ratio:.2f}:1 on --paper (3:1 needed)")
+    for k, n in seen.items():
+        if not n: fail(rel, f"cost_gone_contrast: no rule outside forced colours gives `{k}` a border colour (the eliminated blocks' stroke)")
 
 
 def chapter_by_id(s, cid):
@@ -572,6 +658,9 @@ def chrome_norm(s, rel):
     """the chrome as index.html would write it for this page: no current-page marks, no 'nav--solid' start state,
     links as written from the site root"""
     s = re.sub(r' aria-current="page"', "", s).replace('<header class="nav nav--solid">', '<header class="nav">')
+    # award budgets (blog): the blog's chrome states its section mark, Research's aria-current="true" (site.js set it at
+    # start); only that mark on that link is not drift (integrate: a stray "true" elsewhere still is)
+    if rel.startswith("blog/"): s = re.sub(r'(<a href="(?:\.\./)*research\.html") aria-current="true"', r"\1", s)
     depth = rel.count("/")
     if rel == "404.html": s = s.replace('href="/', 'href="')
     elif depth: s = s.replace('href="' + "../" * depth, 'href="')
@@ -613,6 +702,7 @@ HEADERS = {
     "Permissions-Policy": "accelerometer=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), hid=(), "
                           "magnetometer=(), microphone=(), midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=()",
     "X-Frame-Options": "DENY", "Referrer-Policy": "same-origin", "X-Content-Type-Options": "nosniff",
+    "Strict-Transport-Security": "max-age=31536000",  # a2 (system's decision): no includeSubDomains, no preload
     "Speculation-Rules": '"/speculation.specrules"',
 }
 CACHE_ROUTES = [  # (route, Cache-Control), in order: the first match wins on Azure (contracts §1.13)
@@ -753,6 +843,24 @@ HEAD_INDEXED = ['<link rel="alternate" type="application/atom+xml" title="OpenEX
                 '<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">', '<link rel="manifest" href="site.webmanifest">']
 
 
+ITALIC_PRELOAD = ['<link rel="preload" href="assets/fonts/instrument-serif-400i-latin.woff2" as="font" type="font/woff2" crossorigin>']
+def own_preloads(rel, s):
+    """the faces a page preloads beside the shared two: Home and Company the italic serif (a3: their first screen sets it),
+    and since hc24 Proof, whose H1's second beat is in em ("The broker confirmed it.", the LCP text on phones; Proof
+    measured CLS 0 with it, a swap without), and Platform whenever its H1 sets em/i (hc24's "Eight layers, one boundary."
+    in italic cost Platform's mobile Lighthouse a point under the award pass, 94 for 95, with or without the preload: the
+    integrator set it roman again, so platform.html preloads nothing of its own today);
+    award budgets (blog): a post whose article sets text in em/i (blog.css a3: Instrument Serif italic), found in the CSS
+    during layout and so at the end of the render chain, +300 ms on mobile FCP and LCP. Both ways: no post preloads it
+    without using it."""
+    if rel in ("index.html", "company.html"): return ITALIC_PRELOAD
+    if rel in ("evidence.html", "platform.html"):  # both ways: only while the H1 sets text in em/i
+        h = re.search(r"<h1\b[^>]*>(.*?)</h1>", s, re.S)
+        return ITALIC_PRELOAD if h and re.search(r"<(em|i)\b[^>]*>(?:\s|<[^>]*>)*[^\s<]", h.group(1)) else []
+    if rel.startswith("blog/") and rel != "blog/index.html":
+        a = re.search(r'<article class="[^"]*\bblog-article\b[^"]*">(.*?)</article>', s, re.S)
+        if a and re.search(r"<(em|i)\b[^>]*>(?:\s|<[^>]*>)*[^\s<]", a.group(1)): return ITALIC_PRELOAD
+    return []
 def check_heads():
     """The shared head (contracts §1.8, §1.32.5): every page's head has the charset, viewport and icon as index.html
     writes them, preloads exactly index.html's fonts (each a woff2 file in assets/fonts), and one theme-color, ink
@@ -760,7 +868,11 @@ def check_heads():
     the two feed links, the touch icon and the manifest, a canonical URL that is its own address and an og:url equal to
     it. robots.txt points at the sitemap; the manifest parses, its colours are ink and its icons exist; favicon.ico exists."""
     head_lines = lambda s: [l.strip() for l in s.split("</head>", 1)[0].split("\n")]
-    want_pre = [l for l in head_lines((ROOT / "index.html").read_text(encoding="utf-8")) if l.startswith('<link rel="preload"')]
+    # award a3 (system): the italic serif is preloaded only where it sets the first screen (Home's eyebrow, Company's H1;
+    # Lighthouse found it late on the critical path there, median of 3: Home 95 -> 96, Company 95 -> 97; hc24: Proof's H1
+    # too, its second beat in em, and Platform's while its H1 sets one); award budgets:
+    # and on a post whose article sets it (own_preloads); every other page preloads the two shared faces only
+    want_pre = [l for l in head_lines((ROOT / "index.html").read_text(encoding="utf-8")) if l.startswith('<link rel="preload"') and l not in ITALIC_PRELOAD]
     for l in want_pre:
         href = (re.search(r'\shref="([^"]*)"', l) or [None, ""])[1]
         if not re.fullmatch(r"assets/fonts/[\w.-]+\.woff2", href) or not (ROOT / href).is_file() or 'as="font"' not in l:
@@ -776,7 +888,7 @@ def check_heads():
         missing = [l for l in need if l not in lines]
         if missing: fail(rel, "heads: missing or changed:", missing)
         preloads = [l for l in lines if l.startswith('<link rel="preload"')]
-        if not want_pre or preloads != want_pre: fail(rel, "heads: preloads differ from index.html's fonts:", preloads)
+        if not want_pre or preloads != want_pre + own_preloads(rel, s): fail(rel, "heads: preloads differ from the shared fonts (and the page's own):", preloads)
         tc = re.findall(r'<meta name="theme-color" content="([^"]*)">', head)
         dark = bool(re.search(r'<body\b[^>]*\sdata-nav="dark-start"', s))
         if tc != ["#0E1512" if dark else "#F5F2EC"]: fail(rel, f"heads: theme-color {tc}; want {'#0E1512 (opens dark)' if dark else '#F5F2EC (opens on paper)'}")
@@ -843,6 +955,10 @@ def check_offscreen_pause():
             if pre.startswith("@") or re.match(r"^(from|to|[\d.]+%)\b", pre): continue
             am = re.search(r"(?<![-\w])animation(?:-name)?\s*:\s*([^;]+)", m[2])
             if not am or am[1].strip().startswith("none"): continue
+            # hc26r (system; platform's hc25 ask): an animation the same block puts on a scroll or view timeline (every
+            # entry: none is 'auto') only moves with the scroll, so pausing it off screen saves nothing (the scene primitive)
+            tl = re.search(r"animation-timeline\s*:\s*([^;]+)", m[2])
+            if tl and all(v.strip() and v.strip() != "auto" for v in split_top(tl[1], ",")[0]): continue
             for sel in split_top(pre, ",")[0]:
                 if any(k in sel for k in OFFSCREEN_CHROME): continue
                 for cs, last in lasts(sel):
@@ -864,8 +980,8 @@ def check_decisions():
     """The CEO's fixed lines and page-length decisions (CLAUDE.md content decisions; EVOLVE: 'The CEO's lines stay word for
     word'), which no check pinned: Home's h1 'Infrastructure for agentic lifecycles.', its sub-line, 'An AI agentic
     company', 'Not tasks. Lifecycles.' and 'Trillions' (Lifecycles says 'Trillions' too); Company's h1 'Intelligence, put to
-    work.' with 'put to work.' as its italic; never '$22 trillion' or '$22T' anywhere; Proof ends at its §03 and Trust at
-    its §04; no Investors page."""
+    work.' with 'put to work.' as its italic; never '$22 trillion' or '$22T' anywhere; Proof ends at its cost section (§03 at most)
+    and Trust at its §04; no Investors page."""
     vis = {rel: plain(visible((ROOT / rel).read_text(encoding="utf-8"))).replace("’", "'") for rel in ("index.html", "company.html", "lifecycles.html")}
     for line in ("Infrastructure for agentic lifecycles.", SUBLINE, "An AI agentic company", "Not tasks. Lifecycles.", "Trillions"):
         if line not in vis["index.html"]: fail("index.html", f"decisions: the CEO's line {line!r} is not on the page word for word")
@@ -878,16 +994,85 @@ def check_decisions():
     for rel in pages:
         t = visible((ROOT / rel).read_text(encoding="utf-8"))
         if re.search(r"\$\s?22\s?(?:T\b|tn\b|trillion)", t, re.I): fail(rel, "decisions: '$22 trillion' / '$22T' (the CEO's word is 'Trillions')")
-    for rel, last in (("evidence.html", 3), ("trust.html", 4)):
+    # hc4 (proof, HC4 director item 1): Proof's §01 moved into its hero, so its sections are 01 Verification and 02 Cost; the
+    # CEO's decision ("Proof ends at 03: no economics slider / TAM") is that nothing follows the cost index, so Proof's
+    # last numbered section is #economics (and no §03 or later comes after it); Trust still ends at its §04 (no Risk factors)
+    ev = (ROOT / "evidence.html").read_text(encoding="utf-8")
+    secs = re.findall(r'<section\b[^>]*>.*?</section>', ev.split('<main', 1)[-1].split('</main>', 1)[0], re.S)
+    numbered = [x for x in secs if re.search(r'<span class="idx">\d+</span>', x)]
+    if not numbered or not re.match(r'<section\b[^>]*\sid="economics"', numbered[-1]):
+        fail("evidence.html", "decisions: the page ends at its cost section (#economics; CEO: no economics slider / TAM after it); its last numbered section is", re.search(r'\sid="([^"]*)"', numbered[-1])[1] if numbered else None)
+    idx = [int(x) for x in re.findall(r'<span class="idx">(\d+)</span>', ev)]
+    if not idx or idx != list(range(1, len(idx) + 1)) or max(idx) > 3: fail("evidence.html", f"decisions: the sections run 01.. without a gap and never past §03 (CEO); they read {idx}")
+    for rel, last in (("trust.html", 4),):
         idx = [int(x) for x in re.findall(r'<span class="idx">(\d+)</span>', (ROOT / rel).read_text(encoding="utf-8"))]
         if not idx or max(idx) != last: fail(rel, f"decisions: the page ends at its §{last:02d} (CEO); its sections run to {max(idx) if idx else 'none'}")
     if any(p for p in pages if re.search(r"(^|/)investors?\.html$", p)): fail("decisions: an Investors page exists (no Investors page, CEO)")
 
 
+def check_close_globe():
+    """HC24 4.2 (the director): the cropped fine-bead globe ended Home's close only; integrate hc24 pinned that markup.
+    hc29 (integrate, standing in for tests; system's request, the HC29 director's item 5: "give all seven closes one
+    composition"): the globe is behind every close now, drawn by the band itself, so the principle reads: site.css draws
+    it with `.cta-band::before` (the fine globe, `globe-fine.svg`, set once the close reveals: a `.cta-band:has(...)`
+    rule, and at once without JavaScript: a `@media (scripting: none)` rule), behind the copy (`z-index: -1` in an
+    `isolation: isolate` band that clips it, `overflow: hidden`); no page carries a globe element (`class="mark globe"`,
+    or any `.globe` in a close) any more, which would draw a second one; every close keeps exactly one head (an h2); and
+    the eight pages with a close (Home, Platform, Lifecycles, Proof, Trust, Research, Company, the blog index) each have
+    exactly one."""
+    css = re.sub(r"/\*.*?\*/", " ", (ROOT / "assets/css/site.css").read_text(encoding="utf-8"), flags=re.S)
+    rules = [(m[1].strip(), m[2]) for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", css)]
+    band = [b for sel, b in rules if re.fullmatch(r"\.cta-band", sel)]
+    before = [b for sel, b in rules if re.fullmatch(r"\.cta-band::before", sel)]
+    shown = [b for sel, b in rules if re.fullmatch(r"\.cta-band:has\(\[data-reveal\]\.is-in\)::before", sel)]
+    nojs = re.search(r"@media\s*\(scripting:\s*none\)\s*\{\s*\.cta-band::before\s*\{([^{}]*)\}", css)
+    if not band or not re.search(r"overflow:\s*hidden", band[0]) or not re.search(r"isolation:\s*isolate", band[0]):
+        fail("assets/css/site.css", "close_globe: `.cta-band` must clip its globe and isolate it (overflow: hidden; isolation: isolate)")
+    if not before or not re.search(r'content:\s*""', before[0]) or not re.search(r"z-index:\s*-1\b", before[0]) or re.search(r"url\(", before[0]):
+        fail("assets/css/site.css", "close_globe: `.cta-band::before` draws the globe behind the copy (content, z-index: -1) and asks for no image before the close reveals")
+    for what, body in (("once the close reveals (`.cta-band:has([data-reveal].is-in)::before`)", shown[0] if shown else ""),
+                       ("without JavaScript (`@media (scripting: none) { .cta-band::before }`)", nojs[1] if nojs else "")):
+        if not re.search(r'background-image:\s*url\("?\.\./img/globe-fine\.svg"?\)', body): fail("assets/css/site.css", f"close_globe: the close draws the fine globe {what}")
+    closes = []
+    for rel in pages:
+        s = (ROOT / rel).read_text(encoding="utf-8")
+        marks = len(re.findall(r'<i\b[^>]*\bclass="mark globe"', s))
+        if marks: fail(rel, f"close_globe: {marks} globe element(s); the band's ::before draws the globe (hc29)")
+        bands = re.findall(r'<section class="cta-band\b[^"]*">(.*?)</section>', s, re.S)
+        if bands: closes.append(rel)
+        if len(bands) > 1: fail(rel, f"close_globe: {len(bands)} closes on one page")
+        for b in bands:
+            if len(re.findall(r"<h2\b", b)) != 1: fail(rel, "close_globe: a close without exactly one head (h2)")
+            if re.search(r'\bclass="[^"]*\bglobe\b', b): fail(rel, "close_globe: a .globe element in the close (the band draws it)")
+    want = {"index.html", "platform.html", "lifecycles.html", "evidence.html", "trust.html", "research.html", "company.html", "blog/index.html"}
+    missing = sorted(want - set(closes))
+    if missing: fail("close_globe: no close on " + ", ".join(missing))
+
+
+def check_scenes():
+    """hc26r (system; SYS-1, SYS-2, SYSTEM.md 13): the markup the scene primitive and the travelling drawing rely on.
+    A pinned scene (`data-scene="pin"`) opens on its `.scene-stage` (its first element child: the sticky stage); a tone
+    sentinel says dark or paper; a page has at most one `data-vt-dest` (site.css names it `fig`: two would make every
+    page turn to that page fail, duplicate view-transition names abort a transition), and it and every `.vt-src` sit
+    inside <main>."""
+    for rel in pages:
+        s = (ROOT / rel).read_text(encoding="utf-8")
+        for m in re.finditer(r'<(\w+)\b[^>]*\sdata-scene="pin"[^>]*>\s*(?:<!--.*?-->\s*)*<(\w+)\b([^>]*)>', s, re.S):
+            if not re.search(r'\sclass="[^"]*\bscene-stage\b', m[3]): fail(rel, f"scenes: a pinned scene's first child is <{m[2]}> without class scene-stage")
+        for v in re.findall(r'\sdata-scene-tone="([^"]*)"', s):
+            if v not in ("dark", "paper"): fail(rel, f"scenes: data-scene-tone={v!r} (dark or paper)")
+        dests = re.findall(r"<[a-z][\w-]*\b[^>]*\sdata-vt-dest\b", s)
+        if len(dests) > 1: fail(rel, f"scenes: {len(dests)} data-vt-dest elements; one per page (a duplicate 'fig' aborts the page turn)")
+        main = re.search(r"<main\b.*?</main>", s, re.S)
+        outside = s.replace(main[0], "") if main else s
+        if re.search(r"\sdata-vt-dest\b|\sclass=\"[^\"]*\bvt-src\b", outside): fail(rel, "scenes: a data-vt-dest or .vt-src outside <main>")
+
+
 GUARDS = [check_count_not_on_proof, check_count_static_final, check_regime_split, check_research09_regimes, check_has_guard,
           check_has_regions, check_figure_labels, check_blog_placeholder, check_proof_plate, check_table_th,
           check_hover_guard, check_weight, check_story_fallback, check_cost_definitions, check_platform04, check_chrome_sync,
-          check_headers, check_csp_markup, check_footer, check_landmarks, check_heads, check_decisions, check_offscreen_pause]
+          check_headers, check_csp_markup, check_footer, check_landmarks, check_heads, check_decisions, check_offscreen_pause,
+          check_cost_gone_contrast, check_close_globe, check_scenes]
 only = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--only=")), None)
 if "--only" in sys.argv[1:-1]: only = sys.argv[sys.argv.index("--only") + 1]
 for g in GUARDS:

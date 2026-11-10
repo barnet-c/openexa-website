@@ -80,7 +80,10 @@ suites are heavy (software WebGL); prefer letting CI run them.
 ## Deploy
 
 Push to GitHub; Azure Static Web Apps does the rest (`.github/workflows/azure-static-web-apps-thankful-mushroom-0dd42611e.yml`
-uploads `site/` as-is, no build step).
+uploads `dist/site`, which `tools/build_deploy.py` writes from `site/` in the same job: the same files, with the CSS
+minified, the scripts' comments out, and every stylesheet and script also at a content-hashed address that the pages
+name and browsers keep for a year. `site/` stays the readable source every check reads; `python tools/build_deploy.py &&
+python tools/serve.py 8140 --root dist/site` shows the deployed form locally).
 
 - **Push to `main`** → deploys the live site.
 - **Open a pull request into `main`** → Azure builds a separate preview site for it (its URL appears on the PR and in

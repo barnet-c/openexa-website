@@ -10,7 +10,7 @@ import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE, og_image
 from meta import HOME, ORG, FEED_LINKS, ROBOTS, ld, crumbs, atom
-from blog_plates import PLATES, plate_svg, collection_svg, library_svg
+from blog_plates import PLATES, plate_svg, collection_svg, library_svg, rings_tall, phone_fit, stamp, ILLUSTRATIVE, genai_figure
 import html as H, io, json, os, re, shutil
 from datetime import datetime
 from pathlib import Path
@@ -83,6 +83,12 @@ DESC = {
     "modern-trends-in-financial-engineering":
         "This new book series, Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering.",
 }
+# award a3 (a3-dev 12): a meta description is at most 160 characters. One excerpt is the post's own 164-character
+# sentence; its meta (description, og:, twitter:) drops "new", a word dated by the post (May 2022; no claim gets stronger). The
+# card text, the feed and JSON-LD keep the sentence as the post has it
+META_DESC = {"modern-trends-in-financial-engineering":
+    "This book series, Modern Trends in Financial Engineering, publishes monographs on important contemporary topics in theory and practice of Financial Engineering."}
+assert all(len(v) <= 160 for v in META_DESC.values())
 # v2x: the two hero images that are screenshots of the author's own 2024 work (the relative-value map; the create and
 # redeem loop) stay in their articles as the first figure. Every other hero image (stock photos, a 3D render, a logo,
 # clip-art) leaves the page: cards and post heroes are drawn as plates (blog_plates.py). The files stay in assets.
@@ -139,13 +145,19 @@ def clean_body(p):
         src = m.group(1); alt = (re.search(r'alt="([^"]*)"', m.group(0)) or [None, ""])[1]
         if alt == "__wf_reserved_inherit": alt = ""  # a Webflow placeholder, not a description: screen readers read it out
         name = src.rsplit("/", 1)[-1]
-        alt = alt or ALT.get(name, "")
+        alt = smart(alt or ALT.get(name, ""))   # award a3: the alt text's apostrophes and quotes as the page sets them
         shutil.copyfile(OLD / "img" / name, IMG / name) if (OLD / "img" / name).exists() else None
+        if duo(name):  # hc22: the picture in the palette (duo_file), under a new name; the old file stays beside it
+            stem = name.rsplit(".", 1)[0]
+            return f'<img class="duo" src="../assets/img/blog/{stem}{DUO}.webp"{body_srcset(name, DUO)} alt="{esc(alt)}"{size(name)}{body_cap(name)} loading="lazy" decoding="async">'
         return f'<img src="../assets/img/blog/{name}"{body_srcset(name)} alt="{esc(alt)}"{size(name)}{body_cap(name)} loading="lazy" decoding="async">'
     b = re.sub(r'<img[^>]*src="(/graphics/[^"]+)"[^>]*>', img, b)
     b = re.sub(r"<figure>\s*(<img[^>]+>)\s*</figure>", r"<figure>\1</figure>", b)
     b = re.sub(r"<p>\s*(<img[^>]+>)\s*</p>", r"<figure>\1</figure>", b)
     b = re.sub(r"(?<!<figure>)(<img[^>]+>)(?!</figure>)", r"<figure>\1</figure>", b)
+    # award a3 (4K inspector): a picture capped at its own pixels (body_cap) names its cap on its figure, so the caption
+    # under it starts on the picture's edge, not the mat's
+    b = re.sub(r'<figure><img([^>]*) style="max-width:(\d+px)"', r'<figure style="--cap:\2"><img\1 style="max-width:\2"', b)
     levels = [int(n) for n in re.findall(r"<h([2-6])[\s>]", b)]
     if levels and min(levels) > 2:  # no h2 under the page's h1: shift the post's headings up, class keeps the old look
         k = min(levels) - 2
@@ -174,12 +186,18 @@ BODY_W = 800
 # the 1,800 px file instead of stretching the 800 px copy 1.5 times
 BODY_SIZES = "(min-width: 1921px) 31.4vw, (max-width: 660px) calc(100vw - 64px), (max-width: 960px) 552px, 603px"
 BODY_COPIES = set()
-def body_srcset(name):
+def body_srcset(name, sfx=""):
+    """sfx: hc22, the recoloured copy's suffix (DUO): its own 800 px copy and full file"""
     d = dims(name)
     if not d or d[0] <= BODY_W * 1.1: return ""
     BODY_COPIES.add(name)
     stem = name.rsplit(".", 1)[0]; src = "../assets/img/blog/"
-    return f' srcset="{src}{stem}-{BODY_W}w.webp {BODY_W}w, {src}{name} {d[0]}w" sizes="{BODY_SIZES}"'
+    full = f"{stem}{sfx}.webp" if sfx else name
+    return f' srcset="{src}{stem}{sfx}-{BODY_W}w.webp {BODY_W}w, {src}{full} {d[0]}w" sizes="{BODY_SIZES}"'
+def fig_cap(name):
+    """the cap of body_cap() on its figure, for the caption (award a3)"""
+    m = re.search(r"max-width:(\d+px)", body_cap(name) if name else "")
+    return f' style="--cap:{m.group(1)}"' if m else ""
 def body_cap(name):
     """award a1 (4K inspector): a picture is never drawn wider than its pixels. Its widest file in CSS px (so a 1x screen
     never stretches it: the 700 px Medium figures at 2560 and 3840); a macOS screenshot (a 2x capture) at half its
@@ -212,6 +230,55 @@ def thumb(name, sizes):
     if not ws: return f'<img src="{src}{name}" alt=""{size(name)} loading="lazy" decoding="async">'
     srcset = ", ".join([f"{src}{stem}-{t}w.webp {t}w" for t in ws] + [f"{src}{name} {d[0]}w"])
     return f'<img src="{src}{stem}-{ws[-1]}w.webp" srcset="{srcset}" sizes="{sizes}" alt=""{size(name)} loading="lazy" decoding="async">'
+# Hill climb hc22 (design director, item 4.3, colour; the owner's 8 Nov "full freedom", point 2): the pictures in the post
+# bodies were the site's last pixels outside its palette (purple-to-cyan diagrams, navy dashboards, matplotlib blue).
+# - The Gen-AI introduction's four figures are drawn in the site's chart grammar instead (DRAWN; blog_plates.genai_figure).
+# - Every other body picture is shown as a duotone in the palette (duo_file): its luminance from ink #0E1512 through
+#   build_team's portrait mid-tone to paper #F5F2EC, the page's own background mapped to an end (a dark dashboard's panel
+#   to ink, a light chart's page to paper; a mid-tone graphic keeps its whole range so dark words stay on it), set on the
+#   paper-2 mat as a print (blog.css: no multiply). Where a chart tells two series apart by hue alone, the hue goes to the
+#   palette first (DUO_HUES): the tearsheet's strategy (cyan) to the green, the heatmap's best month to green and worst to
+#   ink, so its legend still reads true.
+# - KEEP_COLOUR: two charts whose authors' captions name their colours ("SPY in green ... GLD in blue", "shaded in
+#   blue"): recoloured, the post's own words would describe what the picture no longer shows. They stay as published.
+# New names (<stem>-duo.webp and its 800 px copy); the old files stay in assets/img/blog beside them, so the owner can
+# have any picture back by taking its name out of duo() (or a figure out of DRAWN).
+DUO = "-duo"
+DRAWN = {"blog-095", "blog-096", "blog-097", "blog-098"}   # blog_plates.genai_figure draws them
+KEEP_COLOUR = {"blog-071", "blog-072"}
+DUO_INK, DUO_MID, DUO_PAPER = (14, 21, 18), (112, 112, 104), (245, 242, 236)   # build_team's portraits: ink, mid-tone, paper
+SIGNAL, SIGNAL_BRIGHT = (0x1E, 0x7A, 0x5A), (0x4F, 0xCB, 0x93)                 # site.css --signal, --signal-bright
+DUO_HUES = {k: ((170, 215, SIGNAL_BRIGHT),) for k in ("blog-080", "blog-081", "blog-083", "blog-084", "blog-087")}
+DUO_HUES["blog-086"] = ((60, 160, SIGNAL), (340, 15, DUO_INK))
+DUO_FILES = set()
+def duo(name):
+    """a body picture shown recoloured (everything but the drawn four and KEEP_COLOUR); records it for duo_file"""
+    if name[:8] in DRAWN or name[:8] in KEEP_COLOUR or name in PLACEHOLDER: return False
+    DUO_FILES.add(name); return True
+def duo_file(im, hues=()):
+    """the duotone (see above). Deterministic: the same pixels in, the same pixels out"""
+    import numpy as np
+    from PIL import Image
+    im = im.convert("RGBA"); im = Image.alpha_composite(Image.new("RGBA", im.size, (255, 255, 255, 255)), im).convert("RGB")
+    a = np.asarray(im).astype(np.float64) / 255
+    lum = a @ np.array([0.2126, 0.7152, 0.0722])
+    k = max(2, round(min(lum.shape) * .02))
+    edge = np.median(np.concatenate([lum[:k].ravel(), lum[-k:].ravel(), lum[:, :k].ravel(), lum[:, -k:].ravel()]))
+    if edge < .3: lo, hi, g = np.percentile(lum, 30), np.percentile(lum, 99.8), 1.0      # a dashboard: its panel is ink
+    elif edge > .7: lo, hi, g = np.percentile(lum, .3), np.percentile(lum, 60), 1.15     # a chart on a page: the page is paper
+    else: lo, hi, g = np.percentile(lum, .3), np.percentile(lum, 99.8), 1.25            # a mid-tone graphic: all of it
+    t = np.clip((lum - lo) / max(hi - lo, .05), 0, 1) ** g
+    ink, mid, paper = (np.array(c, np.float64) for c in (DUO_INK, DUO_MID, DUO_PAPER))
+    lowr = t[..., None] < .5
+    out = np.where(lowr, ink + (mid - ink) * (t[..., None] * 2), mid + (paper - mid) * (t[..., None] * 2 - 1))
+    if hues:
+        mx, mn = a.max(-1), a.min(-1); c = mx - mn; r, gr, b = a[..., 0], a[..., 1], a[..., 2]; dv = np.where(c == 0, 1, c)
+        h = np.where(mx == r, ((gr - b) / dv) % 6, np.where(mx == gr, (b - r) / dv + 2, (r - gr) / dv + 4)) * 60
+        for h0, h1, tgt in hues:
+            band = ((h >= h0) & (h <= h1)) if h0 <= h1 else ((h >= h0) | (h <= h1))
+            w = (np.clip((c - .12) / .18, 0, 1) * band)[..., None]
+            out = out * (1 - w) + np.array(tgt, np.float64) * w
+    return Image.fromarray(np.clip(out + .5, 0, 255).astype(np.uint8))
 # The plates (v2x, 30 Oct 2026; tools/blog_plates.py draws them). Every card and every post hero carries its post's own
 # engraved plate instead of a stock photo, the CMS's 3D art or a WebGL formation borrowed from Research (EVOLVE, Blog):
 # the plate draws what the post says in its own words, schematically. Market structure & economics keeps v2's mark
@@ -219,10 +286,26 @@ def thumb(name, sizes):
 # The old image files stay in assets/img/blog/ (the owner may want them back); only the markup stops using them.
 def pos_in_col(p): return [q["slug"] for q in by_col[p["col"]]].index(p["slug"])
 def turn(p): return (-8, -2, 4, 10)[pos_in_col(p) % 4]
+CARD_ACCENT = re.compile(r'<(path|circle|ellipse) class="pg"(?=[^>]*pathLength="1")')
 def plate(p, cls="blog-thumb"):
     """A card's plate: the drawing alone (cut, 1 Nov: the 'Plate · <name>' label over it went; the title names the
-    post). aria-hidden: the card's h3 names the post."""
-    return f'<div class="{cls} blog-plate" aria-hidden="true">{plate_svg(p["slug"], p["col"], turn(p))}</div>'
+    post). aria-hidden: the card's h3 names the post.
+    Hill climb hc3 (director, item 10): the plate is the site's [data-draw] plate (site.js, site.css .dm): its one green
+    line draws as the card arrives, and again, once, 400 ms, when the card is pointed at or focused, as every card's plate
+    does on the site (it was blog.css's own 1.1 s redraw on hover, and no draw on arrival).
+    Hill climb hc26r (BLOG-1; SYSTEM.md 13, SYS-2): the drawing itself (the svg, not its paper box) is the card's .vt-src,
+    so it travels with the page turn into the post's hero drawing (post_plate's data-vt-dest)"""
+    s, n = CARD_ACCENT.subn(r'<\1 class="pg dm dm--line"', plate_svg(p["slug"], p["col"], turn(p)))
+    assert n == 1, f"{p['slug']}: a card's plate has one green line to draw ({n})"
+    s = vt_src(s)
+    return f'<div class="{cls} blog-plate" data-draw aria-hidden="true">{s}</div>'
+SVG_CLASS = re.compile(r'<svg class="bp-art[^"]*"')  # build_og.still() reads a post's first <svg class="bp-art...: the class leads
+def vt_src(s, ident=""):
+    """hc26r (SYS-2): mark a plate's svg as a travelling drawing: .vt-src inside a card's link, or an id that a register's
+    row names (data-vt-src) where the drawing stands beside the list (the markets panel)"""
+    m = SVG_CLASS.match(s)
+    assert m, s[:40]
+    return (s[:m.end()] + f' id="{ident}"' if ident else s[:m.end() - 1] + ' vt-src"') + s[m.end():]
 SERIF_HY = re.compile(r"(?<=[^\W\d_])-(?=[^\W\d_])")
 # v2x lab (blog-editorial, 31 Oct): typography on the page, never words (VOICE §7; r1-art M8, r1-copy 31). The old CMS
 # kept typewriter marks: straight quotes and apostrophes, a spaced hyphen for a dash, three dots. What the page shows
@@ -305,28 +388,84 @@ def bind(t):
     t = INNER_END.sub("\u00a0", BIND.sub(lambda m: m.group(1) + "\u00a0", t))
     return KEEP_RE.sub(lambda m: m.group(1).replace(" ", "\u00a0"), t)
 def post_title(s):
-    """a post's title as a display line (index cards, the register, the series rail, the H1, the pager)"""
-    return tight_hy(esc(bind(smart(s))))
+    """a post's title as a display line (index cards, the register, the series rail, the H1, the pager).
+    hill climb hc7: a hyphenated word in a title no longer breaks at its hyphen ("frictions, and the long- / run labor
+    share" at 390 and 320; work/blog/hc7/hyprobe.py) where its bound run (the words bind() ties to it) is at most
+    COMPOUND_RUN characters. A longer run keeps the break, as before: kept whole, "in a Regime-Switching" (21) took the
+    H1 at 320 to four lines with "Portfolio" and "Market" alone. Typography only: the same characters"""
+    t = bind(smart(s))
+    t = TITLE_COMPOUND.sub(lambda m: "\ue000" + m.group(0) + "\ue001" if len(run_at(t, m)) <= COMPOUND_RUN else m.group(0), t)
+    return tight_hy(esc(t)).replace("\ue000", '<span class="nowrap">').replace("\ue001", "</span>")
+TITLE_COMPOUND = re.compile(r"[^\W\d_][\w’']*(?:-[^\W\d_][\w’']*)+")
+COMPOUND_RUN = 18  # hc7: "and the long-run" (16) is kept whole; "in a Regime-Switching" (21) is not (see post_title)
+def run_at(t, m):
+    """the unbreakable run (between plain spaces) holding match m of text t"""
+    return t[t.rfind(" ", 0, m.start()) + 1:(t.find(" ", m.end()) + 1 or len(t) + 1) - 1]
 # r5-copy (minor): JSON-LD now sets a title and an excerpt as the page does (’, the house dash), as r4 did for <title> and
 # the share text, with plain spaces (a no-break space is for line breaking, which structured data has none of). The feed
 # alone keeps the text as published (every subscriber's copy of an entry would change)
 def ld_text(s): return smart(s).replace("\u00a0", " ")
 def prose(s): return esc(smart(s))
 def hang(h):
-    """a paragraph that opens on a quote mark hangs it in the margin, so the text's left edge stays straight"""
-    return re.sub(r'<p( class="[^"]*")?>([“‘])', r'<p\1><span class="hang">\2</span>', h)
+    """a paragraph that opens on a quote mark hangs it in the margin, so the text's left edge stays straight (also when
+    the mark opens an italic quotation: marks_in_em)"""
+    return re.sub(r'<p( class="[^"]*")?>(<em>)?([“‘])', r'<p\1>\2<span class="hang">\3</span>', h)
+def marks_in_em(h):
+    """award a3 (4K inspector): a quotation set in italic between quote marks (“<em>...</em>”) takes its marks into the
+    italic, so they are drawn in the quotation's face (Instrument Serif italic, blog.css), not in upright Inter beside it,
+    where the closing mark read as a straight one. Typography only: the same characters in the same order"""
+    return re.sub(r"</em>”", "”</em>", re.sub(r"“<em>", "<em>“", h))
+def bare_marks(h):
+    """award a4 (blog's own find): the CMS left bold or italic round a lone mark: a bold comma in the Gen-AI introduction,
+    an italic full stop, italic and bold spaces, bold zero-width joiners (6 posts). Since a3 an italic is Instrument Serif
+    at 1.08em, so such a mark showed in another face. The tags go; the characters stay, in the same order"""
+    return re.sub(r"<(strong|b|em|i)>([^<\w]*)</\1>", r"\2", h)
+def link_spaces(h):
+    """hill climb hc3 (blog's own find, 390): the CMS closed a link after a space ("... Marketing and Sales.” </a>"), so
+    the link's underline ran on under the space. The space moves out after the link: the same characters in the same
+    order"""
+    return re.sub(r"(\s+)</a>", r"</a>\1", h)
+QUOTED_MIN = 25  # words: longer than two lines of the 39.2rem column
+def quoted(h):
+    """hill climb hc3 (design director, item 8): a paragraph the author set wholly in italic, longer than two lines, is a
+    quotation from another writer (the Introduction's 89 words from a16z). In Instrument Serif italic at 20 px over seven
+    lines the face thins out; it is set as a quoted passage instead (blog.css p.pq: Inter, upright, the body's size, a
+    hairline rule). Its italic tags go (it is no longer set in italic, and so the post neither preloads the italic face
+    nor is held to: sets_italic, check_static own_preloads); the characters stay, in the same order"""
+    def one(m):
+        inner = m.group(1)
+        outside = plain(re.sub(r"<(em|i)\b[^>]*>.*?</\1>", " ", inner, flags=re.S)).strip("  ")
+        if outside or not re.search(r"<(em|i)\b", inner) or len(plain(inner).split()) < QUOTED_MIN: return m.group(0)
+        return '<p class="pq">' + re.sub(r"</?(?:em|i)\b[^>]*>", "", inner) + "</p>"
+    return re.sub(r"<p>(.*?)</p>", one, h, flags=re.S)
 def lead(h):
     """the post's lead (larger, with the notes' drop initial): its first paragraph, unless a heading or list comes
     first. Jury (blog): a label line is not a lead. A one-line bold subhead ('Regime-Switching Market') passes the lead
-    to the paragraph after it; a short first paragraph ('Book Title: ...') means the post has none."""
+    to the paragraph after it; a short first paragraph ('Book Title: ...') means the post has none.
+    hill climb hc7: a lead the author set wholly in bold (Part 3's 74 words, 13 bold lines on a phone) is set as every
+    other lead: the drop initial alone marks it (blog.css a1), so the one wrapper goes; the characters stay, in order"""
     blocks = list(re.finditer(r"<(p|h2|h3|ul|ol)\b([^>]*)>(.*?)</\1>", h, re.S))[:2]
     for i, m in enumerate(blocks):
         if m.group(1) != "p" or m.group(2): return h
         inner = m.group(3).strip()
         if len(re.sub(r"<[^>]+>", " ", inner).split()) >= 15:
+            whole = re.fullmatch(r"<(strong|b)>((?:(?!</?(?:strong|b)\b).)*)</\1>", inner, re.S)
+            if whole: return h[:m.start()] + '<p class="lead">' + whole.group(2) + "</p>" + h[m.end():]
             return h[:m.start()] + '<p class="lead">' + h[m.start() + 3:]
         if i or not re.fullmatch(r"<strong>[^<]*</strong>", inner): return h
     return h
+STANDFIRST_MAX = 30  # words: a deck, not a quoted passage
+def standfirst(h):
+    """hill climb hc9 (council, hierarchy): an article that opens on a short blockquote (only the Introduction: "In Search
+    of the Gen-AI Business Model. The Next Phase of …") opens on its standfirst (blog.css: set as a research note's
+    p.dek, the text's face, size and leading over a hairline), not on a second title. Each of its two sentences is a
+    line of its own (span.sf, balanced on its own), so it reads as a deck, not as a paragraph broken mid-phrase ("The
+    Next / Phase" at 1440 and up). The characters stay, in order"""
+    m = re.match(r"\s*<blockquote>(.*?)</blockquote>", h, re.S)
+    if not m or len(plain(m.group(1)).split()) > STANDFIRST_MAX: return h
+    parts = re.split(r"(?<=[.?!]) (?=[A-Z])", m.group(1))
+    if len(parts) != 2 or min(len(plain(s).split()) for s in parts) < 4: return h
+    return h[:m.start(1)] + " ".join(f'<span class="sf">{x}</span>' for x in parts) + h[m.end(1):]
 def said(p):
     """the post's own text, normalised for quoting: tags out, entities decoded, whitespace collapsed, no space before
     punctuation (the old CMS left 'Engineering , publishes')"""
@@ -378,15 +517,32 @@ PFX = "../"
 def chrome():
     nav = NAV.replace('href="', f'href="{PFX}').replace(f'href="{PFX}#', 'href="#')
     foot = FOOTER.replace('href="', f'href="{PFX}').replace(f'href="{PFX}http', 'href="http').replace(f'href="{PFX}mailto', 'href="mailto')
+    # award budgets: the section mark site.js set at start (aria-current="true" on Research, in the bar and the sheet)
+    nav = nav.replace(f'<a href="{PFX}research.html">Research</a>', f'<a href="{PFX}research.html" aria-current="true">Research</a>')
     return nav, foot
 # award a1 (system's request, ~18:00): the share card's alt says what the card shows, as launch_meta_v9's card_alt() does
-# for the top pages: the page's H1 (plain spaces), then its picture (blog cards keep the dotted globe); og:locale too
-CARD_PIC = "Beside it, the dotted globe of the OpenEXA mark."
-def card_alt(h1):
+# for the top pages: the page's H1 (plain spaces), then its picture; og:locale too.
+# award a2 (system's request, ~23:30): build_og.py now draws the blog index's card with its open book (svg.lib-art) and
+# each post's with its own plate (the post's first svg.bp-art), not the globe. The book has one leaf per post, filed in
+# its three collections (library_svg), so the alt says "one leaf for each post" (system's draft: "each collection")
+CARD_PIC = {"index": "Beside it, the blog’s open book, one leaf for each post.", "post": "Beside it, the post’s engraved plate."}
+def card_alt(h1, pic):
     t = re.sub(r"\s+", " ", h1.replace(" ", " ")).strip()
-    return t + ("" if t[-1:] in ".?!" else ".") + " " + CARD_PIC  # a title without closing punctuation still ends its sentence
-def head(url, title, desc, kind="article", extra="", h1="", links=""):
-    alt = esc(card_alt(h1 or title))
+    return t + ("" if t[-1:] in ".?!" else ".") + " " + CARD_PIC[pic]  # a title without closing punctuation still ends its sentence
+# award budgets (the guard's big item for the post, system's lines): a post whose article sets text in em/i (blog.css a3:
+# Instrument Serif italic) preloads that face as Home and Company do. Found in the CSS during layout, it loaded at
+# VeryHigh at the end of the render chain (site.css -> the face), +300 ms on mobile FCP and LCP. Only where it is used:
+# a preload nobody uses is a warning and 23 KB of a phone's first second
+ITALIC_PRE = f'  <link rel="preload" href="{PFX}assets/fonts/instrument-serif-400i-latin.woff2" as="font" type="font/woff2" crossorigin>\n'
+def sets_italic(article):
+    return bool(re.search(r"<(em|i)\b[^>]*>(?:\s|<[^>]*>)*[^\s<]", article))  # an em or i with something to set
+# award budgets: the scripts start after the first paint (system's afterpaint.js: site.js at the paint, then the rest on
+# oxa:loaded), as Lifecycles, Trust and Research do. As defer tags their download and evaluation were counted into
+# Lighthouse's simulated first paint. Without JavaScript nothing changes; with it the first screen is the same
+def after_paint(scripts):
+    return f'  <script src="{PFX}assets/js/afterpaint.js" defer data-after-paint="{" ".join(PFX + "assets/js/" + n for n in scripts)}"></script>'
+def head(url, title, desc, kind="article", extra="", h1="", links="", pic="post", italic=False):
+    alt = esc(card_alt(h1 or title, pic))
     return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -419,7 +575,7 @@ def head(url, title, desc, kind="article", extra="", h1="", links=""):
   <link rel="icon" type="image/svg+xml" href="{PFX}assets/img/favicon.svg">
   <link rel="preload" href="{PFX}assets/fonts/instrument-serif-400-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{PFX}assets/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="{PFX}assets/css/site.css">
+{ITALIC_PRE if italic else ""}  <link rel="stylesheet" href="{PFX}assets/css/site.css">
   <link rel="stylesheet" href="{PFX}assets/css/blog.css">
 {extra}</head>'''
 span = lambda a, b: f"{a}" if a == b else f"{a}–{b}"
@@ -455,6 +611,12 @@ SERIES = [("in-search-gen-ai-business-model", "Introduction", "Business model"),
           ("empowering-the-future-ai-copilots-and-autonomous-intelligent-agents-leading-the-way", "Part 3", "AI agents")]
 SERIES_NAME = "The Gen-AI series"
 SERIES_POS = {s: i for i, (s, _, _) in enumerate(SERIES)}
+def part_name(i):
+    """award a2 (a2-ux 16: one post carried three names, "Introduction" in the crumb, "Business model" in the rails, and
+    "Part 1" in the pager for the post the rail calls "Relative value"): on a post, the series rail and the pager name a
+    part by both, "Part 1 · Relative value", so the crumb's word and the index rail's word are each in it. The part leads
+    in the small step's grey (span.ps-p), the name follows in the link's colour"""
+    return f'<span class="ps-p">{esc(SERIES[i][1])}</span> · {esc(SERIES[i][2])}'
 assert all(s in SLUGS and not SLUGS[s]["stub"] for s, _, _ in SERIES)
 assert all(any(k in p["title"] for p in kept) for k in KEEP), [k for k in KEEP if not any(k in p["title"] for p in kept)]  # a stale keep-together term
 _runs = [(max(bind(smart(p["title"])).split(" "), key=len), p["slug"]) for p in kept]
@@ -465,21 +627,29 @@ assert all(len(r) <= CHAIN_MAX for r, _ in _runs), [(r, s) for r, s in _runs if 
 # collection's five posts), drawn as a dated rail; v2 showed it as a featured band and then again as four cards of the
 # AI grid. The chips stick only over the collections (a wrapper ends them before the closing band and the footer).
 nav, foot = chrome()
+assert nav.count('aria-current="true"') == 2, "the bar and the sheet each mark Research once"
+# the index is the footer's Blog page (site.js marked it at start, as the footer marks its own page everywhere)
+foot_index = foot.replace(f'<a href="{PFX}blog/index.html">Blog</a>', f'<a href="{PFX}blog/index.html" aria-current="page">Blog</a>', 1)
+assert foot_index != foot
 def iso(p): return p["dt"].strftime("%Y-%m-%d")
 # cut (1 Nov, the owner: "so many words everywhere"; the index's budget is 250 words and the 29 titles alone are 242):
 # a card is its plate and its title. The dateline, the excerpt and the read time left the index (each post page keeps
 # its date and read time; the excerpt stays the post's meta description and feed summary). A collection says its
 # author and years once, in its head
 day = lambda d: d.strftime("%b %-d") if os.name != "nt" else d.strftime("%b %#d")
-def card(p, lead=False, kicker=""):
+def card(p, lead=False, kicker="", row=False):
     """lead (award a1, art director + a1-ux 16): a collection's newest post leads its grid, two columns by two rows, its
     plate drawn larger; the rest stay compact. Same plate, same title: no new words. kicker: a line over the title (the
-    fifth AI post's "Also in AI & agents"); a post with a short name (SHORT_TITLE) shows it, as the rail's parts do"""
+    fifth AI post's "Also in AI & agents"); a post with a short name (SHORT_TITLE) shows it, as the rail's parts do.
+    row (hill climb hc15, the director's 4.6): the card carries the registers' arrow, shown where it is set as a row
+    (tablets since hc29; the rail's fifth tile from 1081 px has none, as the parts have none)"""
     ext = ' target="_blank" rel="noopener"' if p["stub"] else ""
     k = f'<span class="k">{esc(kicker)}</span>' if kicker else ""
     t = esc(SHORT_TITLE[p["slug"]]) if p["slug"] in SHORT_TITLE else post_title(p["title"])
+    arr = f'<span class="br-min">{OUTB if p["stub"] else ARROW}</span>' if row else ""
+    out = " " + OUTB if p["stub"] and not row else ""
     return f'''          <a class="blog-card{' blog-card--lead' if lead else ''}" href="{esc(href(p))}"{ext}>
-            {plate(p)}<div class="blog-card-body">{k}<h3>{t}{(" " + OUTB) if p["stub"] else ""}</h3></div>
+            {plate(p)}<div class="blog-card-body">{k}<h3>{t}{out}</h3>{arr}</div>
           </a>'''
 # award a1 (art director, a1-ux 21): the AI collection's fifth post sat under the series rail with no word saying what it
 # was. It is marked as S-42 signed it off ("Also in AI & agents"), and the index names it by the question its own title
@@ -487,14 +657,40 @@ def card(p, lead=False, kicker=""):
 SHORT_TITLE = {"why-banks-exist-unveiling-the-vital-role-of-credit-in-the-financial-system": "Why Banks Exist?"}
 assert all(v in SLUGS[k]["title"] for k, v in SHORT_TITLE.items()), "a short title must be the post's own words"
 ALSO_AI = "Also in AI & agents"
-def row(p):
-    """a post as a line of the register (Market structure & economics): its year, its title, the arrow"""
-    ext = ' target="_blank" rel="noopener"' if p["stub"] else ""
-    return f'''          <li><a class="blog-card blog-row" href="{esc(href(p))}"{ext}>
-            <time class="br-date" datetime="{iso(p)}">{p["dt"].year}</time>
+PANEL_ID = lambda i: f"bpn-{i + 1}"
+def register(posts, col, after=None, panel=False):
+    """posts as the lines of a register (both research collections since award a2): the year, the title, the arrow.
+    award a2 (a2-ux 8: "give every card its year"; the index has a 250-word budget): the year is said once, at the head of
+    its rows, as an archive sets it (Financial markets research: 3 years for 15 rows, not 15; Market structure &
+    economics: 6 for 8), and a new year opens on a darker rule. The rows under it keep their date for machines (an
+    empty <time datetime>) and are described by it (aria-describedby), so a list of links still says each post's year.
+    after: the year said just above the list (the markets lead's): on a phone the lead is the list's first row, so a first
+    year equal to it is not shown twice there (.br-cont: still read out)
+    panel (hc26r, SYS-2): the list stands beside a plate that shows the row's own drawing (the markets panel): each row
+    names its drawing there (data-vt-src, PANEL_ID), so the drawing travels into the post's hero with the page turn"""
+    out, last = [], None
+    for i, p in enumerate(posts):
+        y = p["dt"].year; first = y != last; last = y
+        yid = f"y-{col}-{y}"
+        ext = ' target="_blank" rel="noopener"' if p["stub"] else ""
+        vt = f' data-vt-src="{PANEL_ID(i)}"' if panel and not p["stub"] else ""
+        cont = ' br-cont' if not i and y == after else ''
+        when = (f'<time class="br-date{cont}" id="{yid}" datetime="{iso(p)}">{y}</time>' if first
+                else f'<time class="br-date" datetime="{iso(p)}"></time>')
+        out.append(f'''          <li{' class="br-g"' if first and i else ''}><a class="blog-card blog-row" href="{esc(href(p))}"{ext}{'' if first else f' aria-describedby="{yid}"'}{vt}>
+            {when}
             <h3>{post_title(p["title"])}</h3>
             <span class="br-min">{OUTB if p["stub"] else ARROW}</span>
-          </a></li>'''
+          </a></li>''')
+    return "\n".join(out)
+def lead_card(p):
+    """award a2: Financial markets research opens on its newest post as a card across the collection, its plate on the
+    register's seven columns and its year and title beside it (a1's two-by-two lead, kept as the lead; the grid it led
+    is now the register below)"""
+    return f'''        <a class="blog-card blog-lead" href="{esc(href(p))}" data-reveal>
+          {plate(p)}<div class="blog-card-body"><time class="br-date" datetime="{iso(p)}">{p["dt"].year}</time><h3>{post_title(p["title"])}</h3><span class="br-min">{OUTB if p["stub"] else ARROW}</span></div>
+        </a>
+'''
 rail = []
 for i, (s, part, short) in enumerate(SERIES):
     p = SLUGS[s]
@@ -505,9 +701,8 @@ for i, (s, part, short) in enumerate(SERIES):
             <h3>{esc(short)}</h3>
           </a></li>''')
 series_minutes = sum(SLUGS[s]["minutes"] for s, _, _ in SERIES)
-# a post hero's plate carries this hedge. The index says it once for all its plates, under the first one (cut, 1 Nov:
-# the markets grid's and the phone head plates' copies went with their caption lines)
-PLATES_HEDGE = "Schematic · no data is plotted"
+# hill climb hc6 (SYSTEM.md "The hedge stamp (hc6: one rule)"; was "Schematic · no data plotted" under every drawn plate
+# and the index's book): a plate's stamp is blog_plates.stamp(), "Illustrative" where it simulates data, else none
 in_series = {s for s, _, _ in SERIES}
 # cut (1 Nov): the series' two-line head, its paragraph, "Start with the introduction", the "Featured series" row and
 # the "Also in AI & agents" label went. The head is the series' name; the rail says the rest (four dated nodes, the
@@ -518,6 +713,8 @@ SERIES_BLOCK = f'''        <div class="blog-series" id="series" data-blog-series
           </ol>
         </div>
 '''
+# hill climb hc2: the head is the site's chapter head (site.css .ch-head, .ch-title): the byline, one short line, stands
+# under the name at every width (it hung alone at the far right on desks, an 800 px jump: the director's orphan lede)
 # the collection's one head: its name (the series' name for AI & agents), then its author and years on one line. The
 # author is the collection's (collection() assigns by author); Tim Leung's name leads to his papers on Google Scholar
 # (v2x's "The papers on Google Scholar" link), the others to their place on Company, as a post's byline does
@@ -534,27 +731,51 @@ for n, (k, label, lede) in enumerate(COLLECTIONS, 1):
     assert len(authors) == 1, (k, authors)  # collections are assigned by author: the head can carry the byline once
     # award a1: the phone's markets head plate (collection_svg) went: the lead card's own plate heads the list on a phone
     # as on a desk, so the collection opens on one post's drawing everywhere
-    shead = f'''        <div class="blog-head" data-reveal><h2 class="display-2">{serif(HEADS[k])}</h2><p class="blog-by">{byline_link(authors.pop())}<span>{span_}</span></p></div>
+    shead = f'''        <div class="blog-head ch-head" data-reveal><h2 class="display-2 ch-title">{serif(HEADS[k])}</h2><p class="blog-by">{byline_link(authors.pop())}<span>{span_}</span></p></div>
 '''
     if k == "economics":
         # v2x lab (blog-editorial): eight cards carried one mark eight times (r1-art M6, r1-mobile 9). The collection
         # is set as a register, the way Research lists its notes, beside its plate, shown once.
-        body = f'''        <div class="blog-econ">
+        # award a2 (art director, medium): the plate stands at the register's full height, the rings risen on a diagonal
+        # to fill it (blog_plates.rings_tall); tablets and phones keep the wide mark over the list. blog.js turns the
+        # rings a step for each paper pointed at, focused or read (v2's hover turn, per row)
+        body = f'''        <div class="blog-reg blog-econ" data-blog-turn>
           <ol class="blog-register" role="list" data-reveal>
-{chr(10).join(row(p) for p in by_col[k])}
+{register(by_col[k], k)}
           </ol>
-          <div class="blog-econ-plate" aria-hidden="true"><div class="blog-econ-art">{collection_svg(k)}</div></div>
+          <div class="blog-econ-plate" aria-hidden="true"><div class="blog-econ-art">{rings_tall(len(by_col[k]))}{collection_svg(k)}</div></div>
         </div>
 '''
     elif k == "ai":
+        # hill climb hc29 (director 11, layout: hc15's hairline row left "one title stranded bottom-left, an arrow in
+        # mid-field and a thumbnail far right"). The rail and the fifth post share one row (.blog-ai): from 1081 px the
+        # post is the rail's fifth tile (its label where the parts carry their dates, no node, off the series' line);
+        # on tablets a compact row under the rail, its plate left at the tile size, its words and arrow beside it at the
+        # plate's foot (the markets lead's form); phones as before (blog.css)
         rest = [p for p in by_col[k] if p["slug"] not in in_series]
-        body = SERIES_BLOCK + f'''        <div class="blog-grid blog-grid--wide" data-reveal>
-{chr(10).join(card(p, kicker=ALSO_AI) for p in rest)}
+        body = '        <div class="blog-ai">\n' + SERIES_BLOCK + f'''        <div class="blog-grid blog-grid--wide" data-reveal>
+{chr(10).join(card(p, kicker=ALSO_AI, row=True) for p in rest)}
+        </div>
         </div>
 '''
     else:
-        body = f'''        <div class="blog-grid blog-grid--lead" data-reveal>
-{chr(10).join(card(p, lead=not i) for i, p in enumerate(by_col[k]))}
+        # award a2 (art director, medium: the grid ended on an orphan card with ~70% of its row empty; a2-ux 8: fifteen
+        # title-only cards ran ~3.5 screens at 1440 with no years). The lead card stays; the other fifteen are the
+        # economics register's pattern (year, title, arrow) beside one plate that shows the drawing of the post pointed
+        # at, focused or read (blog.js; Research's sticky figure, in the blog's plates). Every post's own plate is still
+        # on the index, drawn larger than its card was; without JavaScript the plate shows the first row's. Phones and
+        # tablets: the lead's plate heads the list, as the phone did since a1
+        lead_p, rest_ = by_col[k][0], by_col[k][1:]  # not "lead": that name is the posts' lead() below
+        # hc26r (SYS-2): each drawing carries the id its row names (register(panel=True)), so the one shown travels
+        panel = "".join(f'<div class="bpn{" is-on" if i == 0 else ""}">{vt_src(plate_svg(p["slug"], p["col"]), PANEL_ID(i))}</div>' for i, p in enumerate(rest_))
+        # hill climb hc6: the index's one stamp, under the figure that follows the list (as Research's index figure says
+        # it); the cards' plates, as every card's on the site, carry none. aria-hidden with its drawing (the margin plate's way)
+        assert any(stamp(p["slug"], p["col"]) for p in rest_)
+        body = lead_card(lead_p) + f'''        <div class="blog-reg blog-mkt" data-blog-follow>
+          <ol class="blog-register" role="list" data-reveal>
+{register(rest_, k, after=lead_p["dt"].year, panel=True)}
+          </ol>
+          <div class="blog-panel" aria-hidden="true"><div class="blog-panel-art">{panel}</div><p class="pp-h">{ILLUSTRATIVE}</p></div>
         </div>
 '''
     # chapters for the nav readout come from the section's own attributes (site.js), as on Home since the cut: no
@@ -569,25 +790,30 @@ years = sorted(p["dt"].year for p in kept)
 # this page drew the wrong library. The leaf counts come from the collections, so a new post adds a leaf.
 assert sum(1 for p in by_col["ai"] if p["slug"] in in_series) == 4
 # cut (1 Nov): the plate's title ("The library") and its sentence went (the drawing shows it: three bundles, the
-# collections' names under them, the series in green). The page's one hedge for every plate on it stays, short
-# (award a1: "Schematic · no data plotted", was "Schematic · no plate plots data": same hedge, one word shorter, so the
-# specific H1 fits the index's 250 words)
-INDEX_HEDGE = "Schematic · no data plotted"
+# series in green; since award a3 the collections' names are links under the H1, HERO_INDEX). Hill climb hc6: its
+# hedge went too ("Schematic · no data plotted" under a drawing of the blog itself, the HC6 director's label noise): the
+# book is a conceptual drawing (SYSTEM.md's stamp rule); the page says "Illustrative" under the markets figure instead
 # award a1 (art director, a1-ux 15): "The blog." was the site's last template headline. The H1 says what the blog is,
 # with its count bound to the posts (C-139). One text box (verify_v9 reflow_400 reads phrase spans that wrap as crossing
 # boxes): the count keeps its noun and bind() its function words, so it breaks only by sense ("29 posts on AI / and
 # markets." from 1024 up)
 INDEX_H1 = (f"{len(kept)} posts", "on AI and markets.")
 LIBRARY = f'''<figure class="lib-plate">
-          <div class="lib-stage">{library_svg((SHORT["markets"], SHORT["ai"], SHORT["economics"]), tuple(len(by_col[k]) for k in ("markets", "ai", "economics")), sum(1 for p in by_col["ai"] if p["slug"] in in_series))}</div>
-          <figcaption><span class="pp-h">{INDEX_HEDGE}</span></figcaption>
+          <div class="lib-stage">{library_svg(tuple(len(by_col[k]) for k in ("markets", "ai", "economics")), sum(1 for p in by_col["ai"] if p["slug"] in in_series))}</div>
         </figure>'''
+# award a3 (a3-ux 6: "a 29-post page whose hero offers no way in"; the plate's lettering looked like tabs and did nothing):
+# the collections' short names (SHORT, the bar's readout words) as links under the H1, in the page's order, the first
+# stops after the skip link and the bar. They replace the plate's lettering, so each name is on the page once there.
+# Under the H1, not the plate: the plate files Markets left, AI & agents at the spine, Economics right; a row in the
+# page's order under it would put each name under another bundle. Hovering or focusing a name lights its bundle (CSS)
+HERO_INDEX = (f'<nav class="blog-idx" aria-label="Collections" data-reveal style="--d:120ms">'
+              + "".join(f'<a href="#{k}">{esc(SHORT[k])}{ARROW}</a>' for k, _, _ in COLLECTIONS) + "</nav>")
 desc = f"The OpenEXA blog: {len(kept)} posts from {years[0]} to {years[-1]} on AI agents in finance, financial markets research and market structure."
 blog_ld = ld(dict(BLOG_LD, description=desc, inLanguage="en", publisher=ORG, blogPost=[
     {"@type": "BlogPosting", "headline": ld_text(p["title"]), "url": BASE + p["slug"] + ".html", "datePublished": p["dt"].strftime("%Y-%m-%d"),
      "author": person(p["author"])} for p in sorted(kept, key=lambda p: p["dt"], reverse=True) if not p["stub"]]),
     crumbs(("Blog", BASE)))
-page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".join(INDEX_H1)).replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
+page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".join(INDEX_H1), pic="index").replace('<meta charset="utf-8">\n', '<meta charset="utf-8">\n  <base href="/blog/">\n', 1) + f'''
 <body data-page="blog" data-nav="dark-start" class="blog-page">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -597,6 +823,7 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".
       <div class="container blog-hero-grid">
         <div class="blog-hero-copy">
           <h1 class="display-1 blog-h1" data-reveal>{esc(bind(INDEX_H1[0].replace(" ", chr(0xA0)) + " " + INDEX_H1[1]))}</h1>
+          {HERO_INDEX}
         </div>
         {LIBRARY}
       </div>
@@ -605,9 +832,8 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".
 {chr(10).join(sections)}
 
     <section class="cta-band is-dark grain">
-      <i class="mark globe" aria-hidden="true"></i>
       <div class="container">
-        <h2 class="display-2" data-reveal data-split>The thinking behind the swarm.</h2>
+        <h2 class="display-2" data-reveal data-split>Ten notes behind&nbsp;the&nbsp;swarm.</h2>
         <div class="row" data-reveal style="--d:120ms">
           <a class="btn" href="{PFX}research.html">Read the research {ARROW}</a>
         </div>
@@ -615,11 +841,15 @@ page = head(BASE, "Blog — OpenEXA", desc, "website", f"  {blog_ld}\n", h1=" ".
     </section>
   </main>
 
-{foot}
-  <script src="{PFX}assets/js/site.js" defer></script>
+{foot_index}
+{after_paint(("site.js", "blog.js"))}
 </body>
 </html>
 '''
+# hc27 (director item 5): the close no longer repeats Research's H1; it names what the link holds, so it must stay true
+assert len(list((ROOT / "research").glob("[0-9][0-9]-*.html"))) == 10, "the index's close says Ten notes"
+# hc26r (SYS-2): every card's drawing travels (.vt-src inside its link), and every markets row names its own drawing
+assert page.count(' vt-src"') == page.count('class="blog-thumb blog-plate"') > 0 and all(f'id="{PANEL_ID(i)}"' in page for i in range(page.count(' data-vt-src="'))), "the index's travelling drawings"
 if OUT.exists(): shutil.rmtree(OUT)
 if (ROOT / "research" / "blog").exists(): shutil.rmtree(ROOT / "research" / "blog")  # the blog lived here until 2026-09-30
 write(OUT / "index.html", page)
@@ -629,14 +859,62 @@ write(OUT / "index.html", page)
 # a research note's figure with each collection, e.g. a decaying curve over a grains-futures summary). The CMS's hero
 # image leaves the top of the article, except the two 2024 screenshots of the author's own work (KEEP_HERO), which stay
 # as the article's first figure. Figures keep their own captions (cut, 1 Nov: the added 'Fig. N' labels went).
+HOST_WHOLE = 24  # hc7: the longest host (characters) kept whole on one line; see host_html
+def host_html(h):
+    """hill climb hc6: the source line's host keeps its arrow (it stood alone on the next line on 11 posts from 1920 px and
+    on phones): the last two labels and the arrow never part; a longer host may break after its other dots (at 961 px
+    "timleungresearch.medium.com" and the arrow are wider than the column). The same characters.
+    hc7: a host that fits the narrowest column whole never breaks: it was split after its first dot ("faculty." /
+    "washington.edu") on 46 page-widths, 3840 and 390 among them, where the whole host fit on the next line
+    (work/blog/hc7/hostprobe.py). Measured at 961 px (the column at its narrowest, 205 px): the 23-character
+    "corpgov.law.harvard.edu" is 176 px with its arrow, the 27-character "timleungresearch.medium.com" 215 px; so a host of
+    up to HOST_WHOLE characters is one unbreakable unit, a longer one keeps the hc6 breaks"""
+    if len(h) <= HOST_WHOLE: return f'<span class="nowrap">{esc(h)}{OUTB}</span>'
+    *head, a, b = h.split(".")
+    return "".join(esc(x) + ".<wbr>" for x in head) + f'<span class="nowrap">{esc(a)}.{esc(b)}{OUTB}</span>'
 def post_plate(p):
     """cut (1 Nov): the plate's title line and the quoted sentence under it went (the drawing is the post's idea; the
-    title says what the post is). A drawn plate keeps its hedge; the economics collection's mark (rings) has none to keep"""
-    econ = p["col"] == "economics" or p["slug"] not in PLATES
-    cap = "" if econ else f'\n          <figcaption class="pp-h">{PLATES_HEDGE}</figcaption>'
+    title says what the post is). hc6: a plate that simulates data says "Illustrative" (blog_plates.stamp); a conceptual
+    drawing and the economics collection's mark (rings) say nothing"""
+    st = stamp(p["slug"], p["col"])
+    cap = f'\n          <figcaption class="pp-h">{st}</figcaption>' if st else ""
+    art = plate_svg(p["slug"], p["col"], turn(p), lettering=True)
+    # hill climb hc26r (BLOG-1; SYSTEM.md 13, SYS-2): the drawing is the page's one data-vt-dest, so a card's drawing (or
+    # the markets panel's) lands on it with the page turn; its registration marks arrive with the page
+    m = SVG_CLASS.match(art)
+    assert m, art[:40]
+    dest = art[:m.end()] + " data-vt-dest" + art[m.end():]
+    # hill climb hc2: on a phone the drawing fills its 5:2 frame (blog_plates.phone_fit, placed by blog.css at <= 640 px)
     return f'''<figure class="post-plate" id="plate">
-          <div class="post-plate-art" aria-hidden="true">{plate_svg(p["slug"], p["col"], turn(p))}</div>{cap}
+          <div class="post-plate-art" style="{phone_fit(art)}" aria-hidden="true">{dest}{REG}</div>{cap}
         </figure>'''
+# award a3 (4K inspector, polish; AWARD_BAR L7): the post's hero plate was the site's one box-framed hero plate. It takes
+# the hero plates' registration marks (site.css .hp-reg, the same four corners; blog.css places them on the old box)
+REG = '<span class="hp-reg" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
+# a long read: words, and a figure as about 150 words of column (the 8 longest posts; the others end within about a screen)
+LONG_READ = 600
+def long_read(p): return len(plain(p["body"]).split()) + 150 * p["body"].count("<figure") >= LONG_READ
+def margin_plate(p):
+    """award a3 (art director, medium: "at 1920 the body runs 31-64% with the right 36% empty for about nine screens"):
+    on a long read (long_read), from 1440 px the reading grid has three parts, as a note's: the post's wayfinding
+    (columns 1-3), the text (4-9) and, sticky beside it, the post's own plate (10-12) on the index's sheet (the same plate
+    as the hero's, the same stamp under it, or none, as in the hero). aria-hidden: the hero's plate
+    and hedge are the ones read out. It starts half a screen down the column and rises with the text until it sticks
+    (blog.css), so one screen never shows the hero's drawing and this one together. A short post ends within about a
+    screen: no plate, its a2 layout"""
+    if not long_read(p): return ""
+    st = stamp(p["slug"], p["col"])
+    cap = f'<p class="pp-h">{st}</p>' if st else ""
+    return f'''
+          <div class="post-mp" aria-hidden="true"><div class="post-mp-in"><div class="post-mp-art">{plate_svg(p["slug"], p["col"], turn(p))}</div>{cap}</div></div>'''
+DRAWN_FIG = re.compile(r'<figure(?: style="[^"]*")?><img src="\.\./assets/img/blog/(blog-09[5-8])[^"]*"[^>]*?\balt="([^"]*)"[^>]*>(<figcaption>.*?</figcaption>)?</figure>', re.S)
+def drawn(article):
+    """hc22: the Gen-AI introduction's four figures, drawn (blog_plates.genai_figure) in place of their pictures; each
+    keeps the post's own caption. data-draw: the figure's one green element draws as it arrives (site.js, site.css .dm)"""
+    def one(m):
+        inner = genai_figure(m.group(1), m.group(2))
+        return f'<figure class="bp-fig"{" data-draw" if " dm" in inner else ""}>{inner}{m.group(3) or ""}</figure>'
+    return DRAWN_FIG.sub(one, article)
 for p in order:
     if p["stub"]: continue
     if p["col"] != "economics":
@@ -654,8 +932,11 @@ for p in order:
     # cut (1 Nov): the side column went (its links repeated the crumb, the pager and the article end: "N posts in this
     # collection", "All 29 posts", "The original on <host>", "The papers on Google Scholar", and the series list, which
     # the crumb and the pager now carry)
-    hero_img = (f'<figure class="blog-hero-img"><img src="{PFX}assets/img/blog/{p["hero_file"]}"{body_srcset(p["hero_file"])} alt=""{size(p["hero_file"])}{body_cap(p["hero_file"])} decoding="async"></figure>\n            '
-                if p.get("hero_file") and p["slug"] in KEEP_HERO else "")
+    hero_img = ""
+    if p.get("hero_file") and p["slug"] in KEEP_HERO:  # hc22: in the palette, as the body's pictures are (duo)
+        hf = p["hero_file"]; hd = duo(hf)
+        hsrc, hcls = (hf.rsplit(".", 1)[0] + DUO + ".webp", ' class="duo"') if hd else (hf, "")
+        hero_img = (f'<figure class="blog-hero-img"{fig_cap(hf)}><img{hcls} src="{PFX}assets/img/blog/{hsrc}"{body_srcset(hf, DUO if hd else "")} alt=""{size(hf)}{body_cap(hf)} decoding="async"></figure>\n            ')
     # the pager: where it goes and the title (cut: the dates under the titles, and the end cards' second lines)
     pcard = lambda cls, url, k, h: f"<a class='pager-card {cls}' href='{url}'><span class='k'>{k}</span><h3>{h}</h3></a>"
     pager = "".join([
@@ -669,14 +950,14 @@ for p in order:
         crumb = f' · <a href="index.html#series">{SERIES_NAME}</a> · {esc(part)}'
         sp = SLUGS[SERIES[j - 1][0]] if j else None; sn = SLUGS[SERIES[j + 1][0]] if j + 1 < len(SERIES) else None
         pager = "".join([
-            pcard("prev", f"{sp['slug']}.html", f"← {esc(SERIES[j - 1][1])}", post_title(sp["title"])) if sp else pcard("prev", "index.html#series", "← The blog", f"{SERIES_NAME}."),
-            pcard("next", f"{sn['slug']}.html", f"{esc(SERIES[j + 1][1])} →", post_title(sn["title"])) if sn else pcard("next", f"{PFX}research.html", "Research →", "The thinking behind the swarm."),
+            pcard("prev", f"{sp['slug']}.html", f"← {part_name(j - 1)}", post_title(sp["title"])) if sp else pcard("prev", "index.html#series", "← The blog", serif(f"{SERIES_NAME}.")),
+            pcard("next", f"{sn['slug']}.html", f"{part_name(j + 1)} →", post_title(sn["title"])) if sn else pcard("next", f"{PFX}research.html", "Research →", "The thinking behind the swarm."),
         ])
         post_ld["isPartOf"] = [BLOG_LD, {"@type": "CreativeWorkSeries", "name": f"{SERIES_NAME} — OpenEXA Blog", "url": BASE + "#series"}]
         post_ld["position"] = j + 1
     # cut (1 Nov): "Originally published on openexa.com, <date>." (C-147: likely false for the pre-2023 posts) and the
     # separate "The original on <host>" link. A post that summarises work published elsewhere keeps saying so, with the link
-    original = (f'<p class="ps-src">A summary of work first published on <a href="{esc(p["source"])}" target="_blank" rel="noopener">{esc(src_host)}{OUTB}</a>.</p>'
+    original = (f'<p class="ps-src">A summary of work first published on <a href="{esc(p["source"])}" target="_blank" rel="noopener">{host_html(src_host)}</a>.</p>'
                 if p["source"] else "")
     # award a1 (art director, big; AWARD_BAR post 2): the reading column's left side carries the post's wayfinding, as a
     # note's "In this note" does, so posts and notes are one long-read template. The bodies have no section heads to
@@ -688,8 +969,8 @@ for p in order:
     side = ""
     if p["col"] == "ai":
         rail_ = "".join(
-            (f'<li class="is-on"><span aria-current="page">{esc(short)}</span></li>' if s == p["slug"]
-             else f'<li><a href="{s}.html">{esc(short)}</a></li>') for s, _, short in SERIES)
+            (f'<li class="is-on"><span aria-current="page">{part_name(i)}</span></li>' if s == p["slug"]
+             else f'<li><a href="{s}.html">{part_name(i)}</a></li>') for i, (s, _, _) in enumerate(SERIES))
         side += f'<nav class="ps-series" aria-label="{SERIES_NAME}"><p class="ps-k">{SERIES_NAME}</p><ol class="ps-rail" role="list">{rail_}</ol></nav>'
     side += original
     # (a post whose column holds the series alone shows nothing there on tablets and phones: no empty row after the text)
@@ -705,8 +986,12 @@ for p in order:
         j = SERIES_POS[p["slug"]]
         if j: rel_links += f'  <link rel="prev" href="{BASE}{SERIES[j - 1][0]}.html">\n'
         if j + 1 < len(SERIES): rel_links += f'  <link rel="next" href="{BASE}{SERIES[j + 1][0]}.html">\n'
-    page = head(url, f'{smart(p["title"])} — OpenEXA Blog', smart(p["excerpt"]), "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (ld_text(p["title"]), url)))}\n',
-                h1=ld_text(p["title"]), links=rel_links) + f'''
+    article = drawn(standfirst(hero_img + lead(hang(quoted(marks_in_em(bare_marks(link_spaces(smart_html(p["body"])))))))))
+    # award a4 (a4-ux medium, a4-design polish): a long read with figures loads blog.js for one thing, the margin
+    # plate's rest while a figure is on screen (blog.js; the other posts load no script of their own)
+    post_js = ("site.js",) + (("blog.js",) if long_read(p) and "<figure" in article else ())
+    page = head(url, f'{smart(p["title"])} — OpenEXA Blog', smart(META_DESC.get(p["slug"], p["excerpt"])), "article", f'  {ld(post_ld, crumbs(("Blog", BASE), (ld_text(p["title"]), url)))}\n',
+                h1=ld_text(p["title"]), links=rel_links, italic=sets_italic(article)) + f'''
 <body data-page="post" data-nav="dark-start" class="article-page blog-post">
   <a class="skip" href="#main">Skip to content</a>
 
@@ -725,11 +1010,11 @@ for p in order:
 
     <section class="section article-body-section">
       <div class="container">
-        <div class="grid">
+        <div class="grid{' has-mp' if long_read(p) else ''}">
           <article class="col-7 article blog-article">
-            {hero_img + lead(hang(smart_html(p["body"])))}
+            {article}
             <div class="article-end"><span class="mark" aria-hidden="true"></span></div>
-          </article>{side}
+          </article>{side}{margin_plate(p)}
         </div>
       </div>
     </section>
@@ -740,10 +1025,11 @@ for p in order:
   </main>
 
 {foot}
-  <script src="{PFX}assets/js/site.js" defer></script>
+{after_paint(post_js)}
 </body>
 </html>
 '''
+    assert page.count(" data-vt-dest") == 1, (p["slug"], "one landing for a travelling drawing per post (SYS-2)")
     write(OUT / f'{p["slug"]}.html', page)
 atom(OUT / "feed.xml", "OpenEXA Blog", "AI agents in finance, financial markets research and market structure.", BASE,
      [{"url": BASE + p["slug"] + ".html", "title": p["title"], "published": p["dt"].strftime("%Y-%m-%d"), "updated": p["dt"].strftime("%Y-%m-%d"),
@@ -767,7 +1053,10 @@ json.dump({"total": len(kept), "years": [years[0], years[-1]],
 def rd(route, to): return {"route": route, "redirect": to, "statusCode": 301}
 OLD_PAGES = [("/strategies", "/lifecycles"), ("/trust-risk", "/trust"), ("/status", "/evidence"),
              ("/for-managers", "/access#managers"), ("/for-investors", "/access#investors"), ("/beta", "/access")]
-routes = [rd(src, dst) for src, dst in OLD_PAGES]
+# award a4 (a4-dev polish 11): the bar, the footer and the share card say "Proof"; the page's file is evidence.html (its
+# old route, /status, above). A visitor who types the name gets the page, not the 404
+ALIASES = [("/proof", "/evidence"), ("/proof.html", "/evidence")]
+routes = [rd(src, dst) for src, dst in OLD_PAGES + ALIASES]
 # the blog's previous home (a link to it was shared on 2026-09-30); longest slugs first so no prefix shadows another
 for p in sorted(kept, key=lambda q: -len(q["slug"])):
     routes.append(rd(f'/research/blog/{p["slug"]}*', p["source"] if p["stub"] else f'/blog/{p["slug"]}.html'))
@@ -796,6 +1085,9 @@ HEADERS = {
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "same-origin",
     "X-Content-Type-Options": "nosniff",
+    # award a2 (a2-dev polish 18; system's request ~23:30, with system's consent to the header change): HTTPS only, for a
+    # year. No includeSubDomains and no preload: those commit every subdomain and the browsers' lists, the owner's call
+    "Strict-Transport-Security": "max-age=31536000",
     # instant navigation: Chrome/Edge prefetch a page's HTML when a link is hovered (prefetch only - no script runs early)
     "Speculation-Rules": '"/speculation.specrules"',
 }
@@ -820,6 +1112,7 @@ if (ROOT / "_redirects").exists(): (ROOT / "_redirects").unlink()  # Netlify-onl
 # the same old-URL map, for tools/verify_redirects.py
 rules = []
 for src, dst in OLD_PAGES: rules.append(f"{src}/  {dst}  301")
+for src, dst in ALIASES: rules.append(f"{src}  {dst}  301")
 for p in posts:
     s = p["slug"]
     if s in EXCLUDE or s in REMOVED: rules.append(f"/blog/{s}/  /blog/  301")
@@ -855,6 +1148,21 @@ for name in sorted(BODY_COPIES):  # the in-body figures' 800 px copies (body_src
     im = im.convert("RGBA" if "A" in im.mode or "transparency" in im.info else "RGB")
     im.resize((BODY_W, round(h * BODY_W / w)), Image.LANCZOS).save(out, "WEBP", quality=82, method=6)
     assert out.stat().st_size < (IMG / name).stat().st_size, (name, "the 800 px copy is not smaller")
+for name in sorted(DUO_FILES):  # hc22: the pictures in the palette (duo_file), at full size and as their 800 px copies
+    stem = name.rsplit(".", 1)[0]; full = IMG / f"{stem}{DUO}.webp"
+    im = duo_file(Image.open(IMG / name), DUO_HUES.get(name[:8], ()))
+    im.save(full, "WEBP", quality=84, method=6)
+    if name in BODY_COPIES:
+        w, h = im.size; out = IMG / f"{stem}{DUO}-{BODY_W}w.webp"
+        im.resize((BODY_W, round(h * BODY_W / w)), Image.LANCZOS).save(out, "WEBP", quality=82, method=6)
+        assert out.stat().st_size < full.stat().st_size, (name, "the recoloured 800 px copy is not smaller")
+assert len(DUO_FILES) == 25, (len(DUO_FILES), "recoloured: the 31 pictures in the posts (2 of them heroes), less the drawn 4 and KEEP_COLOUR's 2")
+for f in OUT.glob("*.html"):  # every picture a post shows exists; none of the drawn four is shown as a picture
+    t = read(f)
+    for ref in re.findall(r'(?:src="|srcset="|, )\.\./assets/img/blog/([^" ]+)', t):
+        assert (IMG / ref).exists(), (f.name, ref)
+    assert not re.search(r"img/blog/blog-09[5-8]", t), (f.name, "a drawn figure is shown as a picture")
+assert read(OUT / "in-search-gen-ai-business-model.html").count('<figure class="bp-fig"') == 4, "the introduction draws its four figures"
 
 # ---------------- report ----------------
 imgs = list(IMG.iterdir())

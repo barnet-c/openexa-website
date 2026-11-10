@@ -22,15 +22,23 @@ def meta(s, name, prop=False):
 KIND = {"company.html": "AboutPage", "access.html": "ContactPage"}
 CRUMB = {"platform.html": "Platform", "lifecycles.html": "Lifecycles", "evidence.html": "Proof", "trust.html": "Trust & governance",
          "company.html": "Company", "access.html": "Request access"}
-def card_alt(s):
+def card_alt(s, name=""):
     """award a1: the share card's alt text describes the card (build_og.py): the page's headline, then its picture, the
-    page's hero plate in the plate's own words (its aria-label), else the dotted globe of the mark."""
+    page's hero plate in the plate's own words (its aria-label), else the dotted globe of the mark. hc5 (integrate): the
+    plate is read in the page's hero only (<section class="page-hero">), the plates build_og.py draws on a card: Home's §02
+    now shows Platform's plate further down the page, and its card keeps the globe."""
     h1 = re.search(r"<h1[^>]*>(.*?)</h1>", s, re.S)
     h1 = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", h1.group(1)))).replace("‐", "-").strip() if h1 else ""
-    m = re.search(r'<figure class="hero-plate[^"]*"[^>]*\baria-label="([^"]*)"', s)
+    hero = re.search(r'<section\b[^>]*\bclass="[^"]*\bpage-hero\b[^"]*"[^>]*>.*?</section>', s, re.S)
+    m = re.search(r'<figure class="hero-plate[^"]*"[^>]*\baria-label="([^"]*)"', hero.group(0)) if hero else None
     pic = html.unescape(m.group(1)).strip() if m else ""
-    pic = "Beside it, the page’s plate: " + pic[0].lower() + pic[1:] if pic else "Beside it, the dotted globe of the OpenEXA mark"
+    pic = "Beside it, the page’s plate: " + pic[0].lower() + pic[1:] if pic else STILL_PIC.get(name, "Beside it, the dotted globe of the OpenEXA mark")
     return (h1 + " " if h1 else "") + (pic if pic.endswith(".") else pic + ".")
+# award a2: the cards of Research and Company carry their page's own still (build_og.py); Home and Access keep the globe
+STILL_PIC = {"research.html": "Beside it, the page’s open book: ten engraved leaves, one for each note",  # hc29 (research, HC29 12): the engraved book
+             "company.html": "Beside it, the page’s figure: one large agent beside a lattice of small ones",  # hc26r (COMP-1)
+             # hc4: Proof's hero is Fig. 1.1 (a chart, no plate); its card keeps the record strip (build_og OWN_PLATES)
+             "evidence.html": "Beside it, ten sessions on one record line: one block per session, one tick per broker confirmation"}
 
 pages = []
 for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
@@ -55,7 +63,7 @@ for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
     if not meta(s, "og:description", True): block.append(f'<meta property="og:description" content="{html.escape(og_desc, quote=True)}">')
     block += [
         f'<meta property="og:image" content="{og_image(url)}">',
-        f'<meta property="og:image:alt" content="{html.escape(card_alt(s), quote=True)}">',
+        f'<meta property="og:image:alt" content="{html.escape(card_alt(s, name), quote=True)}">',
         '<meta property="og:image:width" content="1200">',
         '<meta property="og:image:height" content="630">',
         '<meta property="og:locale" content="en_US">',
@@ -63,7 +71,7 @@ for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
         f'<meta name="twitter:title" content="{html.escape(og_title, quote=True)}">',
         f'<meta name="twitter:description" content="{html.escape(og_desc, quote=True)}">',
         f'<meta name="twitter:image" content="{og_image(url)}">',
-        f'<meta name="twitter:image:alt" content="{html.escape(card_alt(s), quote=True)}">',
+        f'<meta name="twitter:image:alt" content="{html.escape(card_alt(s, name), quote=True)}">',
         ROBOTS, *FEED_LINKS,
         '<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">',
         '<link rel="manifest" href="site.webmanifest">',
@@ -107,6 +115,8 @@ from nf_plate import plate as nf_plate
 PLATE = nf_plate()
 index = read(os.path.join(ROOT, "index.html"))
 head_common = re.search(r'  <link rel="icon".*?<link rel="stylesheet" href="assets/css/site.css">\n', index, re.S).group(0)
+# award a3: Home also preloads the italic serif (its eyebrow is in the first screen); the 404 sets none
+head_common = re.sub(r'  <link rel="preload" href="assets/fonts/instrument-serif-400i-latin\.woff2"[^>]*>\n', "", head_common)
 NAV = re.search(r'  <header class="nav">.*?</header>\n  <div class="nav-menu">.*?</div>\n', index, re.S).group(0)
 FOOTER = re.search(r'  <footer class="footer">.*?</footer>\n', index, re.S).group(0)
 page404 = f'''<!DOCTYPE html>
@@ -132,7 +142,7 @@ page404 = f'''<!DOCTYPE html>
             <h1 class="display-1">This page didn’t pass.</h1>
           </div>
           <div class="nf-next">
-            <p class="lede">The address is wrong, has moved, or never existed. Nothing&nbsp;was&nbsp;executed.</p>
+            <p class="lede">The address is wrong, has moved, or&nbsp;never&nbsp;existed. Nothing&nbsp;was&nbsp;executed.</p>
             <div class="row mt-3">
               <a class="btn" href="index.html">Back to the start <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
               <a class="btn btn--ghost" href="platform.html">The platform</a>

@@ -22,6 +22,12 @@ jobs:
         with:
           submodules: true
           lfs: false
+      # award a3 (system): Azure serves dist/site, the copy tools/build_deploy.py writes: site/ with its CSS minified, its
+      # scripts' comments out, and every stylesheet and script also at a content-hashed address (/assets/v/<hash>/...)
+      # that pages name and that is cached for a year (immutable). site/ itself stays the readable source. To ship site/
+      # as-is again: delete this step and set app_location back to "./site".
+      - name: Build the deploy copy (dist/site)
+        run: python3 tools/build_deploy.py
       - name: Install OIDC Client from Core Package
         run: npm install @actions/core@1.6.0 @actions/http-client
       - name: Get Id Token
@@ -40,7 +46,7 @@ jobs:
           action: "upload"
           ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "./site" # App source code path
+          app_location: "./dist/site" # App source code path (tools/build_deploy.py writes it from site/)
           api_location: "" # Api source code path - optional
           output_location: "." # Built app content directory - optional
           github_id_token: ${{ steps.idtoken.outputs.result }}
