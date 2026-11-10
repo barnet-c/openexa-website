@@ -1,5 +1,6 @@
-"""Smoke a deploy (full URL, e.g. the Azure site, or a local server) in a real browser: figures render, company modes switch,
-research hover morphs, the team is on /company only, no errors."""
+"""Smoke a deploy (full URL, e.g. the Azure site, or a local server) in a real browser: figures render, Company's hero
+answers its control (Replay since hc30r; the three modes on an older deploy), research hover morphs, the team is on
+/company only, no errors."""
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import REPO, SITE, DATA, SHOTS, DIST, ARCHIVE
@@ -26,17 +27,36 @@ async def main():
         pg.on("response", lambda r: errs.append(f"HTTP {r.status} {r.url}") if r.status >= 400 and r.url.startswith(BASE) else None)
 
         await pg.goto(f"{BASE}/company", wait_until="load")
-        await pg.wait_for_timeout(2500)
-        assert await pg.evaluate("document.querySelector('#company-figure').classList.contains('figure-ready')"), "company figure not ready"
-        await pg.screenshot(path=str(OUT / "company-hero.png"))
-        # hc26r (COMP-1): Specialize ("swarm") is the default now; the opening state, then Coordinate and Act
-        await expect(pg.locator('button[data-figure-target="swarm"]')).to_have_attribute("aria-pressed", "true")
-        assert await pg.evaluate("document.querySelector('#company-figure').dataset.figureCurrent") == "swarm"
-        for name in ("company", "boundary"):  # Coordinate, Act
-            await pg.locator(f'button[data-figure-target="{name}"]').click()
-            await pg.wait_for_timeout(1500)
-            await expect(pg.locator(f'button[data-figure-target="{name}"]')).to_have_attribute("aria-pressed", "true")
-            assert await pg.evaluate("document.querySelector('#company-figure').dataset.figureCurrent") == name
+        await pg.wait_for_timeout(3000)
+        # hc30r (COMP-1; integrate, on company's request): Company's hero is one act on a 2D canvas (company-hero.js) with
+        # one control, Replay. A deploy from before hc30r still has the figure.js stage and its three modes; this may run
+        # against either (as the chapter count below), so it walks the hero the page has: the figure is drawn, and its
+        # control changes the picture
+        if await pg.evaluate("!document.querySelector('.company-modes')"):
+            SUM = ("(() => { const s = document.getElementById('company-figure'), c = s && s.querySelector('canvas'); if (!c || !c.width || !s.classList.contains('is-live')) return null;"
+                   " const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let h = 0, n = 0;"
+                   " for (let i = 0; i < d.length; i += 4) { if (d[i + 3]) n++; h = (h * 31 + d[i] * 65536 + d[i + 1] * 256 + d[i + 2] + d[i + 3]) | 0; } return [h, n]; })()")
+            rest = await pg.evaluate(SUM)
+            assert rest and rest[1] > 0, "company figure not live, or it draws nothing"
+            await pg.screenshot(path=str(OUT / "company-hero.png"))
+            await pg.locator("[data-co-replay]").click()
+            await pg.wait_for_timeout(450)
+            assert (await pg.evaluate(SUM))[0] != rest[0], "Replay did not move the company figure"
+            for _ in range(60):  # the sheet is dealt again within about 2.5 s; polled (the CSP has no 'unsafe-eval')
+                await pg.wait_for_timeout(250)
+                if await pg.evaluate(SUM) == rest: break
+            assert await pg.evaluate(SUM) == rest, "after Replay the company figure did not come back to its sheet"
+        else:
+            assert await pg.evaluate("document.querySelector('#company-figure').classList.contains('figure-ready')"), "company figure not ready"
+            await pg.screenshot(path=str(OUT / "company-hero.png"))
+            # hc26r (COMP-1): Specialize ("swarm") is the default now; the opening state, then Coordinate and Act
+            await expect(pg.locator('button[data-figure-target="swarm"]')).to_have_attribute("aria-pressed", "true")
+            assert await pg.evaluate("document.querySelector('#company-figure').dataset.figureCurrent") == "swarm"
+            for name in ("company", "boundary"):  # Coordinate, Act
+                await pg.locator(f'button[data-figure-target="{name}"]').click()
+                await pg.wait_for_timeout(1500)
+                await expect(pg.locator(f'button[data-figure-target="{name}"]')).to_have_attribute("aria-pressed", "true")
+                assert await pg.evaluate("document.querySelector('#company-figure').dataset.figureCurrent") == name
         await pg.screenshot(path=str(OUT / "company-act.png"))
 
         await pg.goto(f"{BASE}/research", wait_until="load")
@@ -96,7 +116,7 @@ async def main():
             assert not any(n in txt for n in ("Dubey", "Leung", "Lockhart", "Gamolsky", "Choudhri", "Schuster", "Ekeroma", "Nanawati")), path
             assert not PEOPLE.search(txt), (path, "names outside Company and the blog (v2x: every name in rules.PEOPLE)", sorted(set(PEOPLE.findall(txt))))
         assert not errs, errs
-        print(f"live smoke OK: team on /company only (13 portraits), no Barnet anywhere, company figure + modes, research hover morph, article 02 (toc {toc} = h2 {h2}), insights -> research, 7 chapters, 0 errors")
+        print(f"live smoke OK: team on /company only (13 portraits), no Barnet anywhere, company figure + its control, research hover morph, article 02 (toc {toc} = h2 {h2}), insights -> research, 7 chapters, 0 errors")
         await b.close()
 
 asyncio.run(main())

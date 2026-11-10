@@ -930,7 +930,7 @@ def check_offscreen_pause():
         if ".is-offscreen" not in m[1] or not re.search(r"animation-play-state\s*:\s*paused\s*!important", m[2]): continue
         for sel in split_top(m[1], ",")[0]:
             sel = " ".join(sel.split())
-            a = re.match(r"\.is-offscreen\s+:is\((.*)\)(::before|::after)?$", sel)
+            a = re.match(r"\.is-offscreen\s*:is\((.*)\)(::before|::after)?$", sel)  # hc30r: '.is-offscreen:is(.x)::after' names a band's own pseudo-element (the close's bead)
             if not a: continue
             for arg in split_top(a[1], ",")[0]:
                 cs = compounds(arg)
@@ -1068,11 +1068,127 @@ def check_scenes():
         if re.search(r"\sdata-vt-dest\b|\sclass=\"[^\"]*\bvt-src\b", outside): fail(rel, "scenes: a data-vt-dest or .vt-src outside <main>")
 
 
+def check_turn():
+    """hc30r (system; RETHINK-hc30 SYS-2, SYS-4): the page turn is the boundary, and the close closes its loop; the parts a
+    browser check cannot see from one page. site.css: the page you leave takes its own name (`html.vt-leave`), the views
+    of the turn carry no fade (no opacity or scale in any rule or keyframes of the root / leave pseudo-elements; the old
+    recede, rise and jump-sheet keyframes are gone), the page you reach is shown on a stage under the bar
+    (`::view-transition-group(root)`: clipped, its top on `--nav-h`, so the rule stops at the bar's foot) through a window
+    that clips and only translates (`::view-transition-image-pair(root)`, the rule on its edge), the bar is held with the
+    page you leave and switched when the turn ends, never cross-faded (`step-end` on its two views), and reduced motion
+    turns the turn off (`@view-transition { navigation: none }`). The script that starts the turn is the
+    same code wherever it is carried (site.js, afterpaint.js, and home.js once it carries it: whichever runs first
+    serves), as the two hc26r blocks are. The close: its ring is drawn and its bead runs only with motion and scripting
+    (the rules sit inside one `prefers-reduced-motion: no-preference` and `scripting: enabled` block), and the bead's lap
+    is a transform (it stays off the main thread)."""
+    css = re.sub(r"/\*.*?\*/", " ", (ROOT / "assets/css/site.css").read_text(encoding="utf-8"), flags=re.S)
+    rules = [(" ".join(m[1].split()), m[2]) for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", css)]
+    if not any(sel == "html.vt-leave" and re.search(r"view-transition-name:\s*leave\b", body) for sel, body in rules):
+        fail("assets/css/site.css", "turn: no `html.vt-leave { view-transition-name: leave }` (the page you leave keeps its own name, so it stays whole above the rule)")
+    for sel, body in rules:
+        if re.search(r"::view-transition-(?:old|new|group|image-pair)\((?:root|leave)\)", sel) and re.search(r"(?<![-\w])(?:opacity|scale)\s*:", body):
+            fail("assets/css/site.css", f"turn: {sel!r} sets opacity or scale (never a fade: both pages stay whole)")
+    for gone in ("vt-recede", "vt-rise", "jump-sheet", "jump-under"):
+        if re.search(rf"(?<![-\w]){gone}", css): fail("assets/css/site.css", f"turn: the old turn's {gone!r} is still in the sheet")
+    kf = dict(re.findall(r"@keyframes\s+(vt-edge|vt-hold|vt-back)\s*\{((?:[^{}]|\{[^{}]*\})*)\}", css))
+    for name in ("vt-edge", "vt-hold", "vt-back"):
+        if name not in kf: fail("assets/css/site.css", f"turn: no @keyframes {name}")
+        elif re.search(r"(?<![-\w])(?:opacity|scale|clip-path)\s*:", kf[name]) or not re.search(r"transform:\s*translateY\(", kf[name]):
+            fail("assets/css/site.css", f"turn: @keyframes {name} must only translate (the compositor runs it while the new page starts up)")
+    grp = [b for s_, b in rules if s_ == "::view-transition-group(root)"]
+    if not grp or not re.search(r"overflow:\s*clip", grp[0]) or not re.search(r"(?<![-\w])top:\s*var\(--nav-h\)", grp[0]):
+        fail("assets/css/site.css", "turn: `::view-transition-group(root)` is the stage under the bar (overflow: clip; top: var(--nav-h)): the rule stops at the bar's foot")
+    win = [b for s_, b in rules if s_ == "::view-transition-image-pair(root)"]
+    if not win or not re.search(r"overflow:\s*clip", win[0]) or not re.search(r"box-shadow:[^;]*var\(--signal-bright\)[^;]*var\(--signal\)", win[0]):
+        fail("assets/css/site.css", "turn: `::view-transition-image-pair(root)` is the clipping window with the rule on its edge (overflow: clip; a box-shadow of the two signal greens)")
+    bar = [b for s_, b in rules if "::view-transition-old(site-nav)" in s_ and "::view-transition-new(site-nav)" in s_ and ":only-child" not in s_]
+    if not bar or not re.search(r"animation-timing-function:\s*step-end", bar[0]):
+        fail("assets/css/site.css", "turn: the bar's two views (`::view-transition-old(site-nav), ::view-transition-new(site-nav)`) must switch at the turn's end (`animation-timing-function: step-end`): held with the page you leave, never cross-faded")
+    if not re.search(r"@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{\s*@view-transition\s*\{\s*navigation:\s*none", css):
+        fail("assets/css/site.css", "turn: reduced motion must turn the page turn off (`@view-transition { navigation: none }`)")
+    def block(rel):
+        s = (ROOT / rel).read_text(encoding="utf-8")
+        a = s.find("if (!OXA.turn) {")
+        if a < 0: return None
+        b = s.find("\n  }\n", a)
+        return re.sub(r"\s+", " ", s[a:b]) if b > 0 else None
+    blocks = {rel: block(rel) for rel in ("assets/js/site.js", "assets/js/afterpaint.js", "assets/js/home.js")}
+    for rel in ("assets/js/site.js", "assets/js/afterpaint.js"):
+        if not blocks[rel]: fail(rel, "turn: no `if (!OXA.turn) { ... }` block (it names the page you leave at pageswap and makes the first screen whole at pagereveal)")
+    for rel in ("assets/js/afterpaint.js", "assets/js/home.js"):
+        if blocks[rel] and blocks["assets/js/site.js"] and blocks[rel] != blocks["assets/js/site.js"]:
+            fail(rel, "turn: its `OXA.turn` block differs from site.js's (the same code wherever it is carried: whichever runs first serves)")
+    m = re.search(r"@media\s*\(prefers-reduced-motion:\s*no-preference\)\s*and\s*\(scripting:\s*enabled\)\s*\{\s*@supports[^{]*\{((?:[^{}]|\{[^{}]*\})*)\}\s*\}", css)
+    inner = m[1] if m else ""
+    for need in (".cta-band:not(.is-whole)", ".cta-band::after", ".cta-band.is-whole::after"):
+        if need not in inner: fail("assets/css/site.css", f"turn: the close's {need!r} rule must sit inside the motion-and-scripting block (reduced motion, no support, no JavaScript: the whole ring, no bead)")
+    outside = css.replace(m[0], "") if m else css
+    stray = [x.strip() for m2 in re.finditer(r"([^{}]+)\{[^{}]*\}", outside) for x in split_top(m2[1], ",")[0] if ".cta-band" in x and "::after" in x and ".is-offscreen" not in x]
+    if stray: fail("assets/css/site.css", f"turn: {stray[0]!r} sits outside the motion-and-scripting block (the bead exists only with motion)")
+    lap = re.search(r"@keyframes\s+close-lap\s*\{((?:[^{}]|\{[^{}]*\})*)\}", css)
+    if not lap or re.search(r"(?<![-\w])(?:offset-distance|left|top|translate|--[\w-]+)\s*:", lap[1]) or lap[1].count("transform:") != 2:
+        fail("assets/css/site.css", "turn: @keyframes close-lap must animate `transform` alone, from and to (the bead's lap runs on the compositor)")
+
+
+# hc30r (system; RETHINK-hc30 SYS-3, the director's HC30 item 3): one place and one register for every hedge. Each
+# instrument: (page, what it is, the element that opens it, its header's hedge classes, today's words).
+HEDGED = (
+    ("index.html", "the swarm lab", r'<div class="swarm-live\b', ("sw-kicker",), "Illustrative"),
+    ("index.html", "the chain", r'<div class="chain\b', ("instr-hedge",), "Illustrative · Real SHA-256, computed in your browser"),
+    ("platform.html", "the swarm lab", r'<div class="swarm-live\b', ("sw-kicker",), "Illustrative · Scaled down for your browser; a production swarm runs 5,000–50,000 agents."),
+    ("lifecycles.html", "the desk", r'<div class="desk\b', ("desk-kicker",), "Illustrative · not market data"),
+    ("trust.html", "the ledger", r'<div class="lt\b', ("instr-hedge",), "Illustrative · Real SHA-256, computed in your browser"),
+    ("company.html", "the constants plate", r'<figure class="kplate\b', ("instr-hedge",), "Illustrative"),
+)
+# the pages whose hedge still leads its instrument's header: the move is each page group's (hc30r HOME-2, PLAT-1, PLAT-3,
+# PROOF-3, COMP-2). A page listed here may still be in the old form (reported, not failed); a page in the new form must be
+# right either way. The integrator empties this once the groups' moves have landed: then the header form fails.
+HEDGES_PENDING = set()   # hc30r (integrate): the five pages have moved their hedge to the foot; the guard is strict
+
+
+def check_hedges():
+    """hc30r (system; RETHINK-hc30 SYS-3): every instrument carries exactly one hedge, in its foot caption (`.fc-h`: inside
+    the instrument's own foot, or in the `.figure-cap` that closes it), with today's words; none in its header strip
+    (`.sw-kicker`, `.instr-hedge`, `.desk-kicker`; the explorer's is written by arch.js as `.arch-kicker`). The hedge
+    itself never goes (the claims rule): an instrument with no hedge at all fails whatever the page's state. A page in
+    HEDGES_PENDING may still carry it in the header (one hedge, today's word first); that is reported."""
+    pending = []
+    norm = lambda t: " ".join(H.unescape(re.sub(r"<[^>]+>", "", t)).replace("\u00a0", " ").split())
+    def to_next(s, at):   # from `at` to the next chapter (or the end of <main>): the instrument and what closes it
+        nxt = re.search(r'<section class="(?:section|cta-band)\b|</main>', s[at + 1:])
+        return s[at: at + 1 + nxt.start()] if nxt else s[at:]
+    for rel, what, opener, heads, words in HEDGED:
+        s = (ROOT / rel).read_text(encoding="utf-8")
+        m = re.search(opener, s)
+        if not m: fail(rel, f"hedges: no {what} on the page"); continue
+        span = to_next(s, m.start())
+        head = [h for h in heads if re.search(rf'class="[^"]*\b{h}\b', span)]
+        foot = [norm(x) for x in re.findall(r'<span class="fc-h">(.*?)</span>\s*(?=</(?:div|p|figcaption)>|<span class="(?:chain-fallback|lt-key)|<noscript)', span, re.S)]
+        foot = [t for t in foot if t.startswith("Illustrative")]
+        if head and not foot:
+            if rel in HEDGES_PENDING: pending.append(f"{rel} ({what})")
+            else: fail(rel, f"hedges: {what}: the hedge leads the header ({', '.join(head)}); it belongs in the foot caption (.fc-h)")
+            continue
+        if head and foot: fail(rel, f"hedges: {what}: hedged twice, in the header ({', '.join(head)}) and in the foot ({foot[0]!r})"); continue
+        if not foot: fail(rel, f"hedges: {what} has no hedge at all (one .fc-h opening on 'Illustrative' in its foot caption)"); continue
+        if len(foot) > 1: fail(rel, f"hedges: {what}: {len(foot)} hedges in its foot ({foot})")
+        if foot[0] != norm(words): fail(rel, f"hedges: {what}: the hedge reads {foot[0]!r}; today's words are {norm(words)!r}")
+    arch = (ROOT / "assets/js/arch.js").read_text(encoding="utf-8")
+    if "arch-kicker" in arch:
+        if "platform.html" in HEDGES_PENDING: pending.append("assets/js/arch.js (the explorer's header)")
+        else: fail("assets/js/arch.js", "hedges: the explorer still writes its hedge into its header (.arch-kicker); it belongs in a foot caption (.fc-h) under the instrument")
+    else:
+        ps = (ROOT / "platform.html").read_text(encoding="utf-8"); at = ps.find('id="architecture"')
+        if not re.search(r"fc-h[^;\n]*Illustrative|Illustrative[^;\n]*fc-h", arch) and not (at >= 0 and re.search(r'<span class="fc-h">Illustrative\b', to_next(ps, at))):
+            fail("platform.html", "hedges: the explorer has no hedge (one .fc-h 'Illustrative' under the instrument, in the page or from arch.js)")
+    if pending: print(f"check_static: hedges: {len(pending)} still lead their header (pending the page groups' moves, hc30r): {', '.join(pending)}")
+
+
 GUARDS = [check_count_not_on_proof, check_count_static_final, check_regime_split, check_research09_regimes, check_has_guard,
           check_has_regions, check_figure_labels, check_blog_placeholder, check_proof_plate, check_table_th,
           check_hover_guard, check_weight, check_story_fallback, check_cost_definitions, check_platform04, check_chrome_sync,
           check_headers, check_csp_markup, check_footer, check_landmarks, check_heads, check_decisions, check_offscreen_pause,
-          check_cost_gone_contrast, check_close_globe, check_scenes]
+          check_cost_gone_contrast, check_close_globe, check_scenes, check_turn, check_hedges]
 only = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--only=")), None)
 if "--only" in sys.argv[1:-1]: only = sys.argv[sys.argv.index("--only") + 1]
 for g in GUARDS:

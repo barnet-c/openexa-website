@@ -37,9 +37,11 @@
   if (story && !root.classList.contains('story-ready') && !root.classList.contains('no-webgl')) root.classList.add('story-failed');
   const toggle = $('.nav-toggle');
   const sheet = $('.nav-sheet');
-  let navH = 72, vh = 0, maxScroll = 1, clearUntil = -1, bands = [], tones = [], navRaf = 0, menuOpen = false, lastY = 0;
+  const close = $('main > .cta-band');
+  let navH = 72, vh = 0, maxScroll = 1, clearUntil = -1, bands = [], tones = [], navRaf = 0, menuOpen = false, lastY = 0, closeTop = Infinity;
 
   const pins = $$('[data-scene="pin"]');
+  if (pins.length) root.classList.add('tone-parts'); // the bar reads a tone named inside an unpinned scene (measure(), below)
   const pinOf = el => {
     const s = pins.length && el && el.closest ? el.closest('[data-scene="pin"]') : null, st = s && s.firstElementChild;
     return st && st.classList.contains('scene-stage') && getComputedStyle(st).position === 'sticky' ? s : null;
@@ -210,9 +212,15 @@
       const r = el.getBoundingClientRect();
       return { el, top: r.top + y, bottom: r.bottom + y, dark: el.classList.contains('is-dark') };
     });
+    const cb = close && !close.classList.contains('is-whole') && bands.find(b => b.el === close);
+    closeTop = cb ? cb.top : Infinity;
     tones = [];
     pins.forEach(s => {
-      if (!pinOf(s)) return;
+      if (!pinOf(s)) {
+        // unpinned (phones, reduced motion): a part of the stage that names its tone (data-tone) is a band of its own
+        $$(':scope > .scene-stage > [data-tone]', s).forEach(t => { const r = t.getBoundingClientRect(); tones.push({ el: s, top: r.top + y, bottom: r.bottom + y, dark: t.dataset.tone === 'dark' }); });
+        return;
+      }
       const end = s.getBoundingClientRect().bottom + y;
       const m = $$(':scope > [data-scene-tone]', s).filter(t => t.getClientRects().length)
         .map(t => ({ el: s, top: t.getBoundingClientRect().top + y, dark: t.dataset.sceneTone === 'dark' })).sort((p, q) => p.top - q.top);
@@ -262,6 +270,7 @@
     }
     const p = clamp01(y / maxScroll);
     if (Math.abs(p - fillP) > 0.001) { fillP = p; ui.fill.style.transform = `scaleX(${p.toFixed(4)})`; }
+    if (y + vh > closeTop && (y >= maxScroll - 1 || +getComputedStyle(close).getPropertyValue('--scene-p') >= 1)) { closeTop = Infinity; close.classList.add('is-whole'); }
     if (!live.length) return;
     let k = -1;
     for (const c of live) if (y >= c.s) k = c.k;
@@ -382,7 +391,7 @@
   function placePanel() {
     if (!ui.panel || !sheet) return;
     const inSheet = narrowMQ.matches;
-    if (inSheet && ui.panel.parentElement !== sheet) { setPanel(false); sheet.prepend(ui.panel); }
+    if (inSheet && ui.panel.parentElement !== sheet) { setPanel(false); sheet.append(ui.panel); }
     else if (!inSheet && ui.panel.parentElement !== ui.wrap) { setMenu(false); ui.wrap.appendChild(ui.panel); }
     sheet.classList.toggle('has-ch', inSheet);
     ui.btn.setAttribute('aria-controls', inSheet ? sheet.id : ui.panel.id);
@@ -416,8 +425,9 @@
     if (reducedMQ.matches || typeof document.startViewTransition !== 'function' || document.hidden) { go(); return; }
     if (from + window.innerHeight > VT_LIMIT) { go(); settle(); return; }
     root.dataset.jump = to > from ? 'down' : 'up';
+    root.classList.add('vt-leave');
     let vt;
-    try { vt = document.startViewTransition(go); } catch (err) { delete root.dataset.jump; go(); return; }
+    try { vt = document.startViewTransition(() => { root.classList.remove('vt-leave'); go(); }); } catch (err) { delete root.dataset.jump; root.classList.remove('vt-leave'); go(); return; }
     vt.ready.catch(() => {}); vt.updateCallbackDone.catch(() => {});
     vt.finished.catch(() => {}).then(() => { delete root.dataset.jump; });
   }
@@ -499,9 +509,6 @@
   const seen = new WeakSet();
   function turned(vt) {
     if (!vt) return;
-    const a = window.navigation && navigation.activation;
-    const moving = () => document.getAnimations().some(x => x.effect && /^::view-transition/.test(x.effect.pseudoElement || '') && x.currentTime > 0);
-    if (a && a.navigationType === 'traverse' && a.from && a.entry && a.entry.index < a.from.index && !moving()) { try { vt.types.add('back'); } catch (err) { } }
     if (!seen.has(vt)) { seen.add(vt); landed = vt.finished.catch(() => {}).then(() => {}); }
   }
   window.addEventListener('pagereveal', e => turned(e.viewTransition));
@@ -563,13 +570,18 @@
 
   const stageEl = $('.story-stage');
   if (stageEl) {
+    const mark = $('.story-static-mark');
+    const whole = () => { root.classList.remove('vt-out'); if (mark) mark.style.cssText = ''; };
     window.addEventListener('pageswap', e => {
       if (!e.viewTransition) return;
       const r = stageEl.getBoundingClientRect();
-      if (r.height > 0 && r.bottom > 0 && r.top < window.innerHeight) root.classList.add('vt-out');
+      if (!(r.height > 0 && r.bottom > 0 && r.top < window.innerHeight)) return;
+      root.classList.add('vt-out');
+      const g = (root.dataset.globe || '').split(' ').map(parseFloat), w = g[2] * 240 / 92;
+      if (mark && w > 0 && window.scrollY < 48 && !(OXA.stageStill && OXA.stageStill())) mark.style.cssText = `display:block;left:${(g[0] - w / 2).toFixed(1)}px;top:${(g[1] - w / 2).toFixed(1)}px;right:auto;width:${w.toFixed(1)}px;max-width:none;opacity:1`;
     });
-    window.addEventListener('pageshow', () => root.classList.remove('vt-out'));
-    window.addEventListener('pagereveal', () => root.classList.remove('vt-out'));
+    window.addEventListener('pageshow', whole);
+    window.addEventListener('pagereveal', whole);
   }
 
   if (!OXA.figs) {
@@ -610,6 +622,45 @@
       figSet(src, 'fig');
     });
     addEventListener('pageshow', e => { if (e.persisted) figClear(); });
+  }
+  if (!OXA.turn) {
+    OXA.turn = true;
+    const docOf = u => { try { const x = new URL(u, location.href); return x.origin + x.pathname.replace(/(\/index)?(\.html)?\/*$/, ''); } catch (err) { return ''; } };
+    const sent = v => { try { if (v === undefined) return JSON.parse(sessionStorage.getItem('oxa-turn') || 'null'); sessionStorage.setItem('oxa-turn', JSON.stringify(v)); } catch (err) { } return null; };
+    const named = () => Array.from(document.querySelectorAll('[data-vt-dest], [style*="view-transition-name: fig"]'));
+    const arrive = (vt, early) => {
+      root.classList.add('vt-in'); OXA.byTurn = true;
+      const f = sent(), a = window.navigation && navigation.activation;
+      const moving = () => document.getAnimations().some(x => x.effect && /^::view-transition/.test(x.effect.pseudoElement || '') && x.currentTime > 0);
+      if (a && a.navigationType === 'traverse' && a.from && a.entry && a.entry.index < a.from.index && (early || !moving())) { try { vt.types.add('back'); } catch (err) { } }
+      if (early && !(f && f.fig && docOf(f.to) === docOf(location.href) && Date.now() - f.at < 4000)) {
+        const un = named(); un.forEach(d => d.style.setProperty('view-transition-name', 'none'));
+        vt.finished.catch(() => {}).then(() => un.forEach(d => d.style.removeProperty('view-transition-name')));
+      }
+      const first = document.querySelector('main > :first-child'), band = first && !first.classList.contains('story') && first.getAnimations ? first : null;
+      const whole = () => band && band.getAnimations({ subtree: true }).forEach(x => {
+        const t = x.effect && x.effect.getComputedTiming && x.effect.getComputedTiming();
+        if (t && t.iterations !== Infinity && x.timeline === document.timeline && x.playState !== 'finished') { try { x.finish(); } catch (err) { } }
+      });
+      let on = true;
+      const tick = () => { whole(); if (on) requestAnimationFrame(tick); };
+      tick();
+      vt.finished.catch(() => {}).then(() => { on = false; });
+      vt.ready.then(() => {
+        if (!document.getAnimations().some(x => x.effect && x.effect.pseudoElement === '::view-transition-old(fig)')) return;
+        const g = getComputedStyle(root, '::view-transition-group(fig)'), m = /matrix\(([^)]+)\)/.exec(g.transform), t = m ? parseFloat(m[1].split(',')[5]) : 0;
+        root.style.setProperty('--vt-t', t + 'px'); root.style.setProperty('--vt-b', t + (parseFloat(g.height) || 0) + 'px');
+      }, () => { });
+    };
+    addEventListener('pageswap', e => {
+      if (!e.viewTransition) return;
+      const a = e.activation;
+      sent({ to: a && a.entry ? a.entry.url : '', at: Date.now(), fig: named().some(d => getComputedStyle(d).viewTransitionName === 'fig') });
+      root.classList.add('vt-leave');
+    });
+    addEventListener('pageshow', () => root.classList.remove('vt-leave'));
+    addEventListener('pagereveal', e => { root.classList.remove('vt-leave'); if (e.viewTransition) arrive(e.viewTransition, true); });
+    if (document.activeViewTransition && !root.dataset.jump && !root.classList.contains('vt-in')) arrive(document.activeViewTransition, false);
   }
 
   if (nav) {

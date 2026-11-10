@@ -14,6 +14,10 @@ award a2 (system): every other card carries its page's own drawing too, cut from
 script: Research its library still, the blog index its open book, Company its plate still, each note its formation still,
 each post its own plate; Home and Access (no drawing of their own in the first screen) the site's fine-dot globe (the chunky
 globe.svg was off the mark). STILL_ALT describes each for og:image:alt.
+hc30r (integrate, on company's and research's requests): Company's still (a sheet of 96 agents, 82 x 54 cells) and the
+notes' stills (lattices of hard square marks) are set as the pages set them, not stretched to the field: a cell is the
+largest whole number of px that fits the field and a mark half a cell (lattice(), LATTICE_FIELD), so every mark is a
+square on whole pixels on the card too.
 Run last, after the other builders. Cards are cached by a hash of their inputs (data/og_cards.json), so a rerun only
 re-renders the pages whose headline, description or kicker changed and leaves every other JPEG byte-identical.
 """
@@ -218,15 +222,46 @@ def still_spec(rel):
     if rel.startswith("blog/"): return ("bp-art", "blog.css", "post", "blog-post")
     return None
 
+# hc30r: a lattice still's field on the card (.card-still.is-wide: left 784, top 112, 392 x 420) and what it measures in
+# cells: Company's sheet from its viewBox; a note's from the box its generator wrote (.fg: --w x --h cells)
+LATTICE_FIELD = (784, 112, 392, 420)
+def lattice(rel, svg, s):
+    """(w, h) in cells where the page's still is a lattice of square marks, else None."""
+    if rel == "company.html":
+        m = re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', svg)
+        return (float(m.group(1)), float(m.group(2))) if m else None
+    if rel.startswith("research/"):
+        m = re.search(r'<div class="fg" style="--w:([\d.]+);--h:([\d.]+);[^"]*"><svg class="fs-still"', s)
+        return (float(m.group(1)), float(m.group(2))) if m else None
+    return None
+
 def still(rel):
-    """The page's still drawing as the card shows it, '' where the card keeps the fine-dot globe."""
+    """The page's still drawing as the card shows it, '' where the card keeps the fine-dot globe. A lattice still comes
+    in its own box (.lat), sized and placed here in whole px: left, top, width and height in the card's field, the cell
+    (--k) and the mark (--m) as the page's sheet computes them (research.css .fg: the largest whole cell that fits, the
+    mark half of it rounded down)."""
     spec = still_spec(rel)
     if not spec: return ""
     s = (ROOT / rel).read_text(encoding="utf-8")
     m = re.search(r'<svg class="%s[^"]*"[^>]*>.*?</svg>' % spec[0], s, re.S)
     if not m: return ""
     svg = re.sub(r"</?a[^>]*>", "", m.group(0))  # the open book's leaves are links on the page: on a card, a drawing
+    lat = lattice(rel, svg, s)
+    if lat:
+        w, h = lat
+        fw, fh = LATTICE_FIELD[2], LATTICE_FIELD[3]
+        k = max(2, int(min(fw / w, fh / h)))
+        bw, bh = round(k * w), round(k * h)
+        left, top = (fw - bw) // 2, (fh - bh) // 2
+        cls = "lat fg" if spec[0] == "fs-still" else "lat"
+        svg = (f'<div class="{cls}" data-box="{left} {top} {bw} {bh}" style="--w:{w:g};--h:{h:g};--k:{k}px;--m:{max(1, k // 2)}px;'
+               f'position:absolute;left:{left}px;top:{top}px;width:{bw}px;height:{bh}px">{svg}</div>')
     return svg
+
+def lattice_box(markup):
+    """a lattice still's box on the card (left, top, width, height in the field), None for any other still"""
+    m = re.match(r'<div class="lat[^"]*" data-box="(\d+) (\d+) (\d+) (\d+)"', markup or "")
+    return tuple(int(x) for x in m.groups()) if m else None
 
 def still_hedge(rel):
     """The hedge the page sets beside the drawing ("Illustrative", "Illustrative · heights not to scale"): a card keeps it
@@ -243,7 +278,7 @@ def still_hedge(rel):
 
 # what each still shows, for og:image:alt (launch_meta_v9 for the top pages; build_research and build_blog for theirs)
 STILL_ALT = {"research.html": "the page’s open book: ten engraved leaves, one for each note",  # hc29 (research, HC29 12): the engraved book
-             "company.html": "the page’s figure, one large agent beside a lattice of small ones",  # hc26r (COMP-1): the hero opens on Specialize
+             "company.html": "the page’s figure, a sheet of ninety-six small agents, twelve of them green",  # hc30r (COMP-1): the hero is one act; its still is the sheet
              "blog/index.html": "the page’s open book, one leaf for each collection"}
 
 def pages():
@@ -295,6 +330,7 @@ body { position: relative; background: #0E1512; color: #F5F2EC; font-family: 'In
 .card-still { position: absolute; left: 800px; top: 112px; width: 344px; height: 420px; display: grid; place-items: center; }
 .card-still > svg { position: static !important; inset: auto !important; width: 100%% !important; height: 100%% !important; scale: 1 !important; opacity: 1 !important; overflow: visible; }
 .card-still.is-wide { left: 784px; width: 392px; }
+.card-still.has-lat { display: block; } /* hc30r: a lattice is placed in whole px by its own box (still()), never scaled */
 .card-hedge { position: absolute; left: 800px; top: 538px; font-size: 15px; color: rgba(245,242,236,.56); }
 
 </style></head><body%(bodyattr)s>
@@ -373,10 +409,13 @@ async def main():
                 elif c["still"]:
                     cut, sheet, page, bcls = still_spec(c["rel"])
                     links = "".join(f'<link rel="stylesheet" href="{(CSS / f).as_uri()}">' for f in ("site.css", sheet))
-                    wide = (" is-wide" if cut in ("lib-art", "bp-art") else "") + " k-" + cut
+                    box = lattice_box(c["still"])
+                    wide = (" is-wide" if cut in ("lib-art", "bp-art") or box else "") + (" has-lat" if box else "") + " k-" + cut
+                    # a lattice's hedge hangs under its box's lower-left corner (the script places every other still's)
+                    hat = f' style="left:{LATTICE_FIELD[0] + box[0]}px;top:{min(548, LATTICE_FIELD[1] + box[1] + box[3] + 12)}px"' if box else ""
                     extra = dict(links=links, bodyattr=f' class="has-still {bcls}" data-page="{page}"', art='<div class="glow"></div>',
                                  plate=f'<div class="card-still is-dark{wide}" style="background:none">{c["still"]}</div>'
-                                       + (f'<p class="card-hedge">{H.escape(c["hedge"], quote=False)}</p>' if c["hedge"] else ""))
+                                       + (f'<p class="card-hedge"{hat}>{H.escape(c["hedge"], quote=False)}</p>' if c["hedge"] else ""))
                 else:
                     extra = dict(links="", bodyattr="", art='<div class="glow"></div><div class="globe"></div>', plate="")
                 src = SHOTS / "og-card.html"

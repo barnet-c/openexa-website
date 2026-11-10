@@ -234,7 +234,9 @@
           // reached from below (scrolling up, a reload mid-page) or already more than half in view, except in the first
           // screen of a page at its top, where the entrance is the page's opening
           const first = window.scrollY < 2 && e.boundingClientRect.top >= 0 && e.boundingClientRect.top < window.innerHeight * 0.75;
-          if (!first && (e.boundingClientRect.top < 0 || e.intersectionRatio > 0.5)) { seen = true; whole(); }
+          // hc30r (system's SYS-2): a page reached by a turn arrives whole under the rule, so no entrance then
+          const turned = document.documentElement.classList.contains('vt-in') || !!document.activeViewTransition;
+          if (turned || (!first && (e.boundingClientRect.top < 0 || e.intersectionRatio > 0.5))) { seen = true; whole(); }
           else if (e.intersectionRatio >= 0.24) {
             seen = true;
             host.classList.add('is-in');
@@ -387,6 +389,10 @@
       if (!(r > 0)) { const em = document.createElement('em'); em.textContent = word; db.append(em); }
       dd.append(db);
     });
+    // hc30r (PROOF-1): one grid of units for the four rows: the columns of the longest row (two units a column) and
+    // the gaps between its tens, for the sheet's unit width (proofchart.css --cn, --cgp)
+    const cn = Math.ceil(Math.max(...base.map(b => Math.round(b.n))) / 2);
+    fig.style.setProperty('--cn', cn); fig.style.setProperty('--cgp', Math.ceil(cn / 5) - 1);
     const key = keys[0].parentNode, two = fig.querySelector('.cost-rows');
     if (two) fig.insertBefore(key, two);
     fig.classList.add('is-dec');

@@ -1,7 +1,7 @@
-/* OpenEXA — the Company page (company.html; loaded after site.js and figure.js).
+/* OpenEXA — the Company page (company.html; loaded after site.js and company-hero.js).
    1. (cut, 1 Nov) The manifesto left the page with its section; its writer went with it (v2x r5 in git history).
-   2. The hero plate's caption follows the mode (figure.js switches the formation; the caption is the mode's name, read
-      out by screen readers: cut, 1 Nov, the mode paragraph went). hc29: Pause motion joins the tab row.
+   2. (cut, hc30r) The hero's three modes, their caption and Pause left with figure.js: the hero is one act, drawn by
+      company-hero.js.
    3. §02 (was §04), the constants plate (lab, 31 Oct; head since hc22: "Four constants hold in every lifecycle."), drawn. A proposal walks the
       loop of gates: above the boundary (agents decide), across it (constant 1), below it (code executes), and is
       written to the ledger when the counterparty confirms (4); one pass in four is rejected at the Council and written
@@ -21,18 +21,7 @@
       hc2 (5 Nov): the labels and the running line are in the caption register (Inter, sentence case; company.css). */
 (function () {
   'use strict';
-  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
-
-  /* ---------------- the hero plate's caption follows the mode ---------------- */
-  const label = document.querySelector('[data-plate-label]');
-  $$('.company-modes [data-plate]').forEach(b => b.addEventListener('click', () => { if (label) label.textContent = b.dataset.plate; }));
-  /* hc29: Pause motion ends the tab row, after the tabs in the Tab order as on screen (figure.js appends it to the stage's
-     parent once the stage runs; it moves before the frame is drawn) */
-  const ctl = document.querySelector('.company-ctl'), sc = document.querySelector('.company-sculpture');
-  const move = () => { const m = sc.querySelector(':scope > .figure-motion'); if (m) ctl.appendChild(m); return !!m; };
-  if (ctl && sc && !move()) new MutationObserver((_, o) => { if (move()) o.disconnect(); }).observe(sc, { childList: true });
-
-  /* ---------------- §04: the constants plate ---------------- */
+  /* ---------------- §02: the constants plate ---------------- */
   const kfig = document.querySelector('[data-kplate]');
   if (kfig && kfig.querySelector('.k-recs')) plate(kfig);
 

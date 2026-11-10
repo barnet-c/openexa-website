@@ -89,11 +89,11 @@ jobs:
           - shard: ledger
             only: ledger_height,ledger_wheel,ledger_time,counters,nav_handoff,chain_keys,chain_contrast
           - shard: nav
-            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures,deep_links,tab_walk,pill_focus,nav_h_px,readout_end,footer_end,close_step,footer_phone
+            only: nav_readout,jump_touch,label_in_name,forced_focus,lab_gate_labels,disclosures,deep_links,tab_walk,pill_focus,nav_h_px,readout_end,footer_end,close_step,footer_phone,close_loop
           - shard: plates
             only: draw_rest,crisp_4k,zoom_wide,market_draw_once,first_screen_sizes,page_type_sizes,research_strip,section_links
           - shard: scenes
-            only: scenes,vt_fig,scroll_scenes,stack_scene,plate_scenes,lc_hero_once
+            only: scenes,vt_fig,scroll_scenes,stack_scene,plate_scenes,lc_hero_once,page_turn
           - shard: desk-pages
             only: desk,desk_warm_start,desk_phone_follow,desk_say,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab,trust_tamper,desk_order
     steps:

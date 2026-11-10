@@ -631,7 +631,8 @@
   const fig = document.querySelector('.hero-plate--rings');
   const dot = fig && fig.querySelector('.lr-dot'), blk = fig && fig.querySelector('.lc-new');
   if (!dot || !blk) return;
-  const gates = [...fig.querySelectorAll('.lc-gate')];
+  // in gate order, not the drawing's order (3, 2, 4, 1, 5, 6): a slow frame that passes two gates lights them 01 -> 06
+  const gates = [...fig.querySelectorAll('.lc-gate')].sort((a, b) => a.dataset.g - b.dataset.g);
   const CX = 260, CY = 174, RX = 239, RY = 100, T0 = 180, LAP = 330, LAPMS = 1150, DROPMS = 250;
   const bx = +blk.getAttribute('x') + 4.5, by = +blk.getAttribute('y') + 4.5;
   const bez = (x1, y1, x2, y2) => (t) => {
@@ -677,6 +678,52 @@
   }
   const OXA = window.OXA = window.OXA || {};
   const args = [fig, run, { visible: 0.6 }];
+  if (OXA.actOnce) OXA.actOnce(...args); else (OXA.q = OXA.q || []).push(args);
+})();
+
+/* §01 (hc30r PLAT-2): the stack and its register are one index. A trait's row and the place it lands in the stack light
+   together (.is-on; platform.css): under a fine pointer, from either side (a row lights its landing; a plate or a mark
+   lights its rows), and once, when the plate is well in view, in one pass of signal ink down the stack (OXA.actOnce).
+   The plate is whole without any of it: nothing under reduced motion (the pass) or without JavaScript. */
+(function () {
+  'use strict';
+  const fig = document.querySelector('#test .lc-traits'), OXA = window.OXA = window.OXA || {};
+  const rows = fig ? [...document.querySelectorAll('#test .traits > li')] : [];
+  if (!rows.length) return;
+  // one trait: its row, its mark and its plate (data-t names the traits a part answers, 1-6)
+  const parts = rows.map((li, k) => [li, ...fig.querySelectorAll(`[data-t~="${k + 1}"]`)]);
+  let lit = [], timers = [];
+  const light = (ks, pick) => {
+    const keep = new Set(ks.flatMap((k) => parts[k]));
+    lit.forEach((k) => parts[k].forEach((el) => { if (!keep.has(el)) el.classList.remove('is-on'); }));
+    keep.forEach((el) => el.classList.add('is-on'));
+    lit = ks; fig.classList.toggle('is-pick', !!pick && ks.length > 0);
+  };
+  const quiet = () => { timers.splice(0).forEach(clearTimeout); };
+  if (window.matchMedia('(hover: hover)').matches) {
+    rows.forEach((li, k) => {
+      li.addEventListener('pointerenter', () => { quiet(); light([k], true); });
+      li.addEventListener('pointerleave', () => light([]));
+    });
+    const svg = fig.querySelector('svg');
+    svg.addEventListener('pointerover', (e) => {
+      const el = e.target.closest('[data-t]');
+      if (el) { quiet(); light(el.dataset.t.split(' ').map((n) => n - 1), true); }
+    });
+    svg.addEventListener('pointerout', (e) => { if (e.target.closest('[data-t]') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('[data-t]'))) light([]); });
+  } else {
+    // under a thumb: a tap on a row lights its landing and holds it; the same row again lets it go
+    rows.forEach((li, k) => li.addEventListener('click', () => { quiet(); light(lit.length === 1 && lit[0] === k ? [] : [k], true); }));
+  }
+  // the pass: each landing in the stack's order, 03 twice, 04, 06, 07 and the newest record; a pointer takes over at once
+  const STEP = 190, HOLD = 300;
+  const run = () => {
+    if (lit.length) return;
+    rows.forEach((li, k) => {
+      timers.push(setTimeout(() => light([...lit, k]), k * STEP), setTimeout(() => light(lit.filter((n) => n !== k)), k * STEP + HOLD));
+    });
+  };
+  const args = [fig, run];
   if (OXA.actOnce) OXA.actOnce(...args); else (OXA.q = OXA.q || []).push(args);
 })();
 

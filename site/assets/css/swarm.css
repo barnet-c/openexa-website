@@ -150,10 +150,10 @@
 .sw-btns { display: flex; flex-direction: column; flex-wrap: wrap; align-items: stretch; gap: .25rem; align-self: end; } /* wraps: at 400% zoom (320 x 256) Pause takes its own row inside the lab */
 /* a3: Halt and Pause motion are the site's buttons (Inter, sentence case). hc20: Halt is neutral (red means rejected); its
    hover is the ghost button's, its halted state ("Resume") the paper button */
-.swarm-controls .halt { display: inline-flex; align-items: center; justify-content: center; font: var(--w-ui) var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; min-width: 10.25em; min-height: 2.75rem; padding: .625rem 1.125rem; border: var(--hair) solid rgba(245, 242, 236, .42); color: var(--fg); border-radius: var(--r); transition: background var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), border-color var(--dur-feedback) var(--ease-out); }
-@media (hover: hover) { .swarm-controls .halt:hover { background: color-mix(in srgb, var(--fg) 7%, transparent); border-color: var(--fg); } }
+.swarm-controls .halt { display: inline-flex; align-items: center; justify-content: center; font: var(--w-ui) var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; min-width: 10.25em; min-height: 2.75rem; padding: .625rem 1.125rem; border: var(--hair) solid rgba(245, 242, 236, .42); color: var(--fg); border-radius: var(--r); box-shadow: inset 0 0 0 3rem rgba(245, 242, 236, 0); transition: box-shadow var(--dur-feedback) var(--ease-out), border-color var(--dur-feedback) var(--ease-out); } /* hc30r: the hover's tint is an inset shadow, so Halt <-> Resume changes ground and text at once (site.css's pressed controls) */
+@media (hover: hover) { .swarm-controls .halt:hover { box-shadow: inset 0 0 0 3rem rgba(245, 242, 236, .07); border-color: var(--fg); } }
 .swarm-live.is-halted .halt { background: var(--paper); color: #0B110F; border-color: var(--paper); font-weight: var(--w-ui-x); }
-@media (hover: hover) { .swarm-live.is-halted .halt:hover { background: color-mix(in srgb, var(--paper) 86%, var(--ink)); } }
+@media (hover: hover) { .swarm-live.is-halted .halt:hover { box-shadow: inset 0 0 0 3rem rgba(14, 21, 18, .14); } }
 /* hc25: "Emergency halt" and "Resume" at one width (10.25em, so a toggle moves nothing); beside the counters at 1101-1359 px the
    sliders are too short for name and value on one line: the value goes under its name, never "·" at a line's end */
 @media (min-width: 1100.5px) and (max-width: 1359.98px) { .swarm-controls output { display: block; margin-top: calc(2 * var(--hair)); } .swarm-controls output::before { content: none; } }
@@ -169,7 +169,6 @@
 @media (max-width: 1180px) { .swarm-live .sw-key { order: 5; flex-basis: 100%; margin: 0; } .swarm-live .sw-follow { margin-left: auto; } } /* hc1: from 1180 (980), room for Pause at the head's end */
 @media (max-width: 640px) {
   .sw-head { padding-left: 1rem; row-gap: .5rem; }
-  .swarm-live .sw-kicker { order: -1; flex-basis: 100%; } /* its own first line: the lab names itself an illustrative model at every width */
   .swarm-live .sw-key { gap: .375rem .875rem; }
   .sw-stage { --sw-h: 18.25rem; }
   .swarm-stats > div { padding: .875rem .625rem .75rem .75rem; }
@@ -243,6 +242,20 @@
 .sw-title { display: inline-flex; align-items: baseline; gap: 1.375rem; }
 @media (max-width: 640px) {
   .sw-title { order: -1; flex-basis: 100%; gap: 1rem; }
-  .swarm-live .sw-title .sw-kicker { order: 0; flex-basis: auto; }
 }
+/* hc30r SYS-1, the stage (SYSTEM.md 14): the lab without its card. The section's ink is the ground and the stage runs to
+   the viewport's edges (cqw reads the section); the head and the rail keep the container, the rail on one hairline; the
+   page sets --sw-stage-h. Without the class the card above stands */
+section:has(.swarm-live--stage) { container-type: inline-size; }
+.swarm-live--stage { --sw-in: calc(max(0px, 50cqw - var(--max) / 2) + max(var(--gutter), env(safe-area-inset-left))); border: 0; border-radius: 0; background: none; overflow: visible; margin-bottom: 0; }
+.swarm-live--stage .sw-head { padding-inline: 0; border: 0; }
+.swarm-live--stage .sw-stage { margin-inline: calc(50% - 50cqw); background: none; }
+@media (min-width: 1000px) and (min-height: 501px) { .swarm-live--stage .sw-stage { --sw-h: var(--sw-stage-h, clamp(26rem, 62svh, 46rem)); } }
+.swarm-live--stage:not(.sw-on) .sw-gates { padding-inline: var(--sw-in); }
+.swarm-live--stage .sw-trace:not([hidden]) { left: var(--sw-in); }
+.swarm-live--stage.is-stacked .sw-trace:not([hidden]) { margin-inline: var(--sw-in); }
+.swarm-live--stage :is(.swarm-stats, .swarm-stats > div) { border: 0; }
+.swarm-live--stage .swarm-stats > div { padding-left: 0; }
+.swarm-live--stage .swarm-controls { padding-right: 0; }
+@media (max-width: 1100px) { .swarm-live--stage .swarm-controls { padding-left: 0; } }
 /* v2:swarm:end */
