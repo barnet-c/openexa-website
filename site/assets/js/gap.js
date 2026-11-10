@@ -631,7 +631,8 @@
   const fig = document.querySelector('.hero-plate--rings');
   const dot = fig && fig.querySelector('.lr-dot'), blk = fig && fig.querySelector('.lc-new');
   if (!dot || !blk) return;
-  const gates = [...fig.querySelectorAll('.lc-gate')];
+  // in gate order, not the drawing's order (3, 2, 4, 1, 5, 6): a slow frame that passes two gates lights them 01 -> 06
+  const gates = [...fig.querySelectorAll('.lc-gate')].sort((a, b) => a.dataset.g - b.dataset.g);
   const CX = 260, CY = 174, RX = 239, RY = 100, T0 = 180, LAP = 330, LAPMS = 1150, DROPMS = 250;
   const bx = +blk.getAttribute('x') + 4.5, by = +blk.getAttribute('y') + 4.5;
   const bez = (x1, y1, x2, y2) => (t) => {

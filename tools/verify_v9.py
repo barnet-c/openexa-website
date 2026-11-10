@@ -4019,8 +4019,11 @@ async def market_draw_once(b):
                 notes.append(f"rest = still, {off} of {total} px off")
         if cut.size != ref.size: bad.append(f"1440: the still after a jump is {cut.size}, under reduced motion {ref.size}")
         else:
+            # Two layouts, so the plate sits at two sub-pixel offsets and text is rasterized twice. Chromium on Windows
+            # leaves 88 of 399,848 pixels off (10 Nov); CI's Linux font rasterizer leaves 417 (run 42782516694). 0.2% still
+            # means the same drawing: a missing mark or label is thousands of pixels.
             off, total = near_off(cut, ref), cut.size[0] * cut.size[1]
-            if off > total * 0.0005: bad.append(f"1440: the still after a jump is not the reduced-motion plate: {off} of {total} pixels off by more than 8 levels within a pixel")
+            if off > total * 0.002: bad.append(f"1440: the still after a jump is not the reduced-motion plate: {off} of {total} pixels off by more than 8 levels within a pixel")
             notes.append(f"still = reduced-motion still within a pixel, {off} px off")
     await ctx.close()
     notes.append("reduced motion, deep link and jump: the still")
@@ -4969,12 +4972,28 @@ async def scenes(b):
                 for y, want in steps:
                     await pg.evaluate(f"window.scrollTo({{top: {y}, behavior: 'instant'}})"); await pg.wait_for_timeout(350)
                     r = (await pg.evaluate(REAL_SCENES))[k]
+                    # A scroll timeline's time is sampled once a frame. Where the page draws a few frames a second (CI's
+                    # software GL on Home) the value can still be the last position's after 350 ms (CI run 42782516694:
+                    # Home's scene 3 read 1.000 from the step before), so give it frames to land before judging it.
+                    waited = 350
+                    while want is not None and y > 0 and abs(r["p"] - want) > 0.01 and waited < 4000 * max(1.0, MODE["throttle"]):
+                        await pg.wait_for_timeout(150); waited += 150
+                        r = (await pg.evaluate(REAL_SCENES))[k]
                     if r["faded"]: bad.append(f"{tag} at {y:.0f}: text faded on scroll ({r['faded'][:3]}): text arrives by translate or clip")
                     if want is not None and y > 0 and abs(r["p"] - want) > 0.01: bad.append(f"{tag} at {y:.0f}: --scene-p {r['p']:.3f} ({want})")
                 if s0["pin"]:
                     fr = await scene_frames(pg, s0["top"] - 300, s0["top"] + s0["h"])
                     over = [round(x, 1) for x in fr if x > lim]
-                    if long_frames(fr, lim): bad.append(f"{tag}: {len(over)} of {len(fr)} frames over {lim:.0f} ms through the scene ({over[:6]})")
+                    if MODE["gl"] == "gpu":
+                        if long_frames(fr, lim): bad.append(f"{tag}: {len(over)} of {len(fr)} frames over {lim:.0f} ms through the scene ({over[:6]})")
+                    else:
+                        # The 33 ms rule is a real-GPU rule (run it with --gpu, as the integrator does). Under SwiftShader the
+                        # CPU draws a scene's WebGL: Platform's explorer starts with one frame of about 1.3 s at the scene's end
+                        # (measured 10 Nov: 1350 and 1283 ms; with a GPU 67 and 33 ms). Here the frames are reported, and only
+                        # a hang fails.
+                        hang = [round(x) for x in fr if x > 5000 * max(1.0, MODE["throttle"])]
+                        if hang: bad.append(f"{tag}: a frame of {hang[0]} ms through the scene under software GL (a hang; 5 s at most)")
+                        notes.append(f"{name} scene {k + 1} under software GL: {len(over)} of {len(fr)} frames over {lim:.0f} ms, longest {max(fr) if fr else 0:.0f} ms (judged with --gpu only)")
             await ctx.close()
     assert not bad, "scenes:\n  " + "\n  ".join(bad[:24])
     print(f"scenes: the primitive pins, runs 0 -> 1 over its travel, turns the bar at its sentinel, lands links, the address and Tab at its end; static under reduced motion and narrow; {seen} real scene(s) checked ({'; '.join(notes)})")
@@ -5369,8 +5388,14 @@ async def lab_copy(b):
         if not touch: notes.append(f"{w}: lit {lits.get(.1)} -> {lits.get(1)}")
         fr = await scroll_frames(pg, round(ctr - 0.95 * h), round(ctr - 0.3 * h))
         over = [round(x, 1) for x in fr if x > lim]
-        if long_frames(fr, lim): bad.append(f"{tag}: {len(over)} of {len(fr)} frames over {lim:.0f} ms through the act ({over[:6]})")
-        notes.append(f"frames <= {max(fr) if fr else 0:.1f} ms")
+        if MODE["gl"] == "gpu":
+            if long_frames(fr, lim): bad.append(f"{tag}: {len(over)} of {len(fr)} frames over {lim:.0f} ms through the act ({over[:6]})")
+        else:
+            # as in scenes: the 33 ms rule is a real-GPU rule (--gpu). Under SwiftShader the CPU draws the lab's WebGL field
+            # (CI run 42782516694: frames of 183 to 483 ms through the act; 283 ms here on 10 Nov), so only a hang fails.
+            hang = [round(x) for x in fr if x > 5000 * max(1.0, MODE["throttle"])]
+            if hang: bad.append(f"{tag}: a frame of {hang[0]} ms through the act under software GL (a hang; 5 s at most)")
+        notes.append(f"frames <= {max(fr) if fr else 0:.1f} ms" + ("" if MODE["gl"] == "gpu" else f" under software GL, {len(over)} of {len(fr)} over {lim:.0f} ms (judged with --gpu only)"))
         if not touch:
             for ctl in ("[data-sw-motion]", "[data-sw-halt]"):
                 await pg.close(); pg = await ctx.new_page(); await pg.goto(f"{BASE}/platform.html", wait_until="load"); await until(pg, HOME_ENGINES, 15000)
