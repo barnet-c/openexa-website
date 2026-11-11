@@ -256,8 +256,7 @@
 .cost.is-dec .pf-ck > div:first-child { padding-top: 0; }
 .cost.is-dec .pf-ck :is(dt, dd) { grid-column: 1; }
 .cost.is-dec .pf-ck dt { font-size: var(--fs-body); }
-.cost.is-dec .cost-db { --cols: 32; --rows: 2; --g: .1875rem; --bq: 1px; --bw: round(down, (100cqi - (var(--cols) - 1) * var(--g)) / var(--cols), var(--bq)); container-type: inline-size; position: absolute; left: calc(var(--lw) + var(--cg)); right: 0; top: 50%; display: flex; align-items: center; gap: .875rem; transform: translateY(-50%); }
-.cost.is-dec .pf-ck > div:first-child .cost-db { top: calc(50% - clamp(.875rem, 1.5vw, 1.375rem) / 2); }
+.cost.is-dec .cost-db { --cols: 32; --rows: 2; --g: .1875rem; --bq: 1px; --bw: round(down, (100cqi - (var(--cols) - 1) * var(--g)) / var(--cols), var(--bq)); container-type: inline-size; position: absolute; left: calc(var(--lw) + var(--cg)); right: 0; display: flex; align-items: center; gap: .875rem; }
 .cost.is-dec .cost-blk { flex: none; width: auto; }
 .cost.is-dec .cost-db em { font: 400 var(--fs-small)/1.3 var(--sans); color: var(--fg-2); white-space: nowrap; }
 .cost.is-dec .pf-ck .cost-blk i { transition: opacity var(--dur-move) linear, transform var(--dur-move) var(--ease); }
@@ -287,7 +286,7 @@
    without JavaScript the two bars and the key, as before; proof.js drops data-cost-view if it cannot build the rows */
 @media (scripting: enabled) {
   .cost[data-cost-view="rows"]:not(.is-dec) { display: flex; flex-direction: column; }
-  .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck { --lw: clamp(15rem, 30%, 24rem); --cg: clamp(1.25rem, 3vw, 3rem); order: -1; display: block; margin: 0; padding: 0; border-top: 0; font-size: var(--fs-small); }
+  .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck { --cg: clamp(1.25rem, 3vw, 3rem); order: -1; display: block; margin: 0; padding: 0; border-top: 0; font-size: var(--fs-small); }
   .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck > div { position: relative; display: grid; grid-template-columns: var(--lw) minmax(0, 1fr); column-gap: var(--cg); align-items: center; padding: clamp(.875rem, 1.5vw, 1.375rem) 0; border-bottom: var(--hair) solid var(--line); }
   .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck > div:first-child { padding-top: 0; }
   .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck :is(dt, dd) { grid-column: 1; }
@@ -300,4 +299,59 @@
   .cost[data-cost-view="rows"]:not(.is-dec) .cost-lab b { display: inline; }
   @container cost (max-width: 560px) { .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck > div { display: block; } }
 }
+/* cost:start (hc30r, PROOF-1; moved here from proof.css by the integrator, as proof asked): the rows view on one
+   grid of units, in tens, so Home §03 draws what Proof §02 draws. --cost-n is Proof's alone (proof.css) */
+.cost[data-cost-view="rows"], .cost[data-cost-view="rows"] .pf-ck { --lw: clamp(15rem, 30cqi, 24rem); --cg: clamp(1.25rem, 3vw, 3rem); }
+.cost[data-cost-view="rows"] .pf-ck > div { --g: .1875rem; --gd: .5625rem; --bq: 1px; --rp: clamp(.875rem, 1.5vw, 1.375rem); --bw: round(down, (100cqi - var(--lw) - var(--cg) - (var(--cn, 23) - 1 - var(--cgp, 4)) * var(--g) - var(--cgp, 4) * var(--gd) - 5.75rem) / var(--cn, 23), var(--bq)); --rh: calc(2 * var(--bw) + var(--g)); }
+@media (min-resolution: 2dppx) { .cost[data-cost-view="rows"] .pf-ck > div { --bq: .5px; } }
+.cost.is-dec .pf-ck > div { min-height: calc(var(--rh) + 2 * var(--rp)); }
+.cost.is-dec .pf-ck > div:first-child { min-height: calc(var(--rh) + var(--rp)); }
+.cost.is-dec .pf-ck > div:last-child { border-bottom-color: var(--line-strong); }
+.cost.is-dec .cost-db { --g: inherit; --bw: inherit; container-type: normal; gap: 0; top: 0; bottom: 0; justify-content: space-between; transform: none; }
+.cost.is-dec .pf-ck > div:first-child .cost-db { top: 0; bottom: var(--rp); }
+.cost.is-dec .cost-blk { grid-auto-columns: auto; }
+.cost.is-dec .cost-blk i { width: var(--bw); border-radius: 0; box-shadow: none; }
+.cost.is-dec .cost-blk i:nth-child(10n + 1):not(:first-child), .cost.is-dec .cost-blk i:nth-child(10n + 2):not(:nth-child(2)) { margin-left: calc(var(--gd) - var(--g)); }
+.cost.is-dec .cost-blk :is(.is-gone, .is-rest, .is-part) { border: var(--hair) dashed var(--ink); }
+.cost.is-dec .cost-blk :is(.is-gone, .is-rest) { background: none; }
+.cost.is-dec .cost-blk .is-part { background-origin: border-box; }
+.cost.is-dec .cost-db em { margin-left: .875rem; }
+.cost.is-dec .cost-rows, .cost.is-dec > .figure-cap { margin-left: calc(var(--lw) + var(--cg)); }
+.cost.is-dec .cost-rows { margin-top: clamp(1.125rem, 1.8vw, 1.75rem); }
+.cost.is-dec .cost-lab b { font: 400 var(--fs-body)/1.2 var(--sans); letter-spacing: 0; }
+.cost.is-dec .cost-val { font-size: var(--cost-n, var(--fs-heading)); }
+.cost.is-dec > .figure-cap { margin-top: .625rem; }
+@container cost (max-width: 560px) {
+  .cost[data-cost-view="rows"] .pf-ck > div { --g: .125rem; --gd: .4375rem; --bw: round(down, (100cqi - (var(--cn, 23) - 1 - var(--cgp, 4)) * var(--g) - var(--cgp, 4) * var(--gd)) / var(--cn, 23), var(--bq)); }
+  .cost.is-dec .pf-ck > div, .cost.is-dec .pf-ck > div:first-child { min-height: 0; }
+  .cost.is-dec .cost-blk :is(.is-gone, .is-rest, .is-part) { border-width: .5px; }
+  .cost.is-dec .cost-db em { position: absolute; right: 0; top: calc(var(--rp) + .25rem); margin: 0; }
+  .cost.is-dec .pf-ck > div:first-child .cost-db em { top: .25rem; }
+  .cost.is-dec .cost-rows, .cost.is-dec > .figure-cap { margin-left: 0; }
+}
+@media screen and (prefers-reduced-motion: no-preference) and (forced-colors: none) { @supports (animation-timeline: view()) {
+  .cost.is-dec .cost-blk :is(.is-gone, .is-rest, .is-part)::before { inset: calc(-1 * var(--hair)); box-shadow: none; opacity: clamp(0, (var(--t) * .875 + .125 - var(--scene-p)) * 9999, 1); }
+  /* the word arrives when its row has emptied, in one step, by a clip (the scene rule: text never changes opacity on scroll; integrate hc30r) */
+  .cost.is-dec .cost-db em { clip-path: inset(0 calc((1 - clamp(0, (var(--scene-p) - .9999) * 99999, 1)) * 100%) 0 0); }
+  /* the long rows empty in the middle of the screen; the last are done by the time the totals under them are well in view */
+  .cost.is-dec .pf-ck > div:nth-child(1) { --scene-range: cover 12% cover 52%; }
+  .cost.is-dec .pf-ck > div:nth-child(2) { --scene-range: cover 12% cover 46%; }
+  .cost.is-dec .pf-ck > div:nth-child(n + 3) { --scene-range: cover 9% cover 30%; }
+} }
+/* until proof.js builds the rows the figure stands at their size (proofchart.css's holder, with this view's geometry) */
+@media (scripting: enabled) {
+  .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck { --lw: clamp(15rem, 30cqi, 24rem); }
+  .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck > div { min-height: calc(var(--rh) + 2 * var(--rp)); }
+  .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck > div:first-child { min-height: calc(var(--rh) + var(--rp)); }
+  .cost[data-cost-view="rows"]:not(.is-dec) :is(.cost-rows, .figure-cap) { margin-left: calc(var(--lw) + var(--cg)); }
+  .cost[data-cost-view="rows"]:not(.is-dec) .cost-rows { margin-top: clamp(1.125rem, 1.8vw, 1.75rem); }
+  .cost[data-cost-view="rows"]:not(.is-dec) .cost-lab b { font: 400 var(--fs-body)/1.2 var(--sans); letter-spacing: 0; }
+  .cost[data-cost-view="rows"]:not(.is-dec) .cost-val { font-size: var(--cost-n, var(--fs-heading)); }
+  .cost[data-cost-view="rows"]:not(.is-dec) > .figure-cap { margin-top: .625rem; }
+  @container cost (max-width: 560px) {
+    .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck > div, .cost[data-cost-view="rows"]:not(.is-dec) .pf-ck > div:first-child { min-height: 0; padding-bottom: calc(var(--rp) + .875rem + var(--rh)); }
+    .cost[data-cost-view="rows"]:not(.is-dec) :is(.cost-rows, .figure-cap) { margin-left: 0; }
+  }
+}
+/* cost:end */
 /* v2:proof:end */

@@ -219,11 +219,11 @@
 .chain-list > li.is-heal .chain-seg::before, .chain-list > li.is-heal .chain-seg::after { animation: chain-mend .85s var(--ease) 55ms backwards; }
 .chain-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .375rem 1rem; padding: .75rem 1.25rem; border-top: var(--hair) solid var(--line); font: var(--mono-tick)/1.5 var(--mono); letter-spacing: .06em; color: var(--fg-3); }
 .chain-fallback { color: var(--fg-2); }
-/* hc1: the hedge in the caption register */
-.chain-foot > span:first-child, .lt-foot > span:first-child { font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .72); }
+/* hc1: the foot line in the caption register; hc30r SYS-3: where the foot opens on the hedge (.fc-h) site.css sets it */
+.chain-foot > span:first-child:not(.fc-h), .lt-foot > span:first-child:not(.fc-h) { font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .72); }
 /* before the hashes exist (no JavaScript, or the first frames) */
 .chain:not(.chain-ready) .chain-status { color: var(--fg-3); }
-.chain-foot.is-static > span:first-child { display: none; } /* no hashes are shown until the browser computes them */
+.chain-foot.is-static > span:first-child:not(.fc-h), .chain-foot.is-static > .fc-h > span { display: none; } /* no hashes are shown until the browser computes them */
 .chain:not(.chain-ready) .chain-list > li { padding-bottom: 1rem; }
 .chain:not(.chain-ready) .chain-list > li::before { content: ""; position: absolute; left: .5625rem; top: .8125rem; width: .6875rem; height: .6875rem; background: var(--fg); }
 .chain:not(.chain-ready) .chain-list > li::after { content: ""; position: absolute; left: .875rem; top: 1.6875rem; bottom: -.625rem; width: var(--hair); background: var(--line-strong); }

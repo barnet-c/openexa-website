@@ -21,8 +21,8 @@
 /* tablets and phones (hc21): the words first, where every page's start, then the figure in the room the hero keeps at its foot,
    as a post (title, meta, drawing). hc29: the index's book stands at the foot, --bk-w wide, its keys in the band above it */
 @media (max-width: 960px) {
-  :is(.research-hero, .article-hero) { --stage-h: 66vw; --stage-b: 2.75rem; padding-top: calc(var(--nav-h) + clamp(3.5rem, 9vw, 7.5rem)); padding-bottom: calc(var(--stage-h) + 4rem); }
-  .research-hero { --bk-w: min(60vw, 21rem); --stage-h: calc(var(--bk-w) / var(--bk-r) + 3rem); padding-bottom: calc(var(--stage-h) + 4.5rem); }
+  :is(.research-hero, .article-hero) { padding-top: calc(var(--nav-h) + clamp(3.5rem, 9vw, 7.5rem)); }
+  .research-hero { --bk-w: min(60vw, 21rem); --stage-b: 2.75rem; --stage-h: calc(var(--bk-w) / var(--bk-r) + 3rem); padding-bottom: calc(var(--stage-h) + 4.5rem); }
 }
 @media (max-width: 600px) { .research-hero h1.display-1 { font-size: min(var(--h1-plate), clamp(2.6rem, 14vw, 3.4rem)); } }
 
@@ -96,11 +96,10 @@
   }
   .rs-plate { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr); align-items: center; column-gap: 1rem; min-height: 3.5rem; }
   .rs-stage { width: 2.75rem; height: 2.75rem; border-radius: 0; }
-  .rs-stage .figure-stage { --figure-scale: 1.4; --figure-wmin: .45; } /* finer points (figure.js): not a blot */
+  .rs-stage .fs-still { display: none; } /* figure.js bins the lattice to 2 px cells here; the still waits for it */
   .rs-caption { padding-block: .5rem; overflow: hidden; }
   .rs-shelf .rs-rail { transform: translateY(101%); transition: transform .5s var(--ease-move); } /* a1 (W3): it travels */
   .rs-shelf.is-reading .rs-rail { transform: none; }
-  .rs-rail .fig-labels .fl { display: none; } /* the words; a plate's rule (note 09's floor) is the drawing and stays */
   /* what is drawn (the row's short phrase), a middle dot, the hedge (whole); a hedge that takes a second line leaves its
      dot in the clipped margin. Held at the longest caption's height (research.js): a swap moves nothing */
   .research-page .rs-cap { display: flex; flex-wrap: wrap; align-items: baseline; align-content: center; gap: 0; font-size: var(--fs-small); margin-left: -.875em; min-height: var(--rs-c-h, 0px); }
@@ -132,11 +131,9 @@
   .research-page .row-links .link-arrow .arr { display: inline; vertical-align: -.125rem; margin-left: .35em; }
 }
 @media (scripting: none) { .rs-rail { display: none; } }
-/* no figure (no JavaScript, or no WebGL: figure.js 'figure:none'): no plate, no caption, no empty frame for it on phones */
-.rs-shelf.no-plate .rs-rail, .no-figure-cap .figcap { display: none; }
+/* no figure (no JavaScript, or no canvas: figure.js 'figure:none'): no plate, no empty frame for it on phones */
+.rs-shelf.no-plate .rs-rail { display: none; }
 .rs-shelf.no-plate .rs-col { margin-right: 0; }
-/* a1: without WebGL a note keeps its still and its hedge (research.js .still-cap) */
-.still-cap .figcap.article-figcap:not(.is-hung) { opacity: 1; visibility: visible; } /* (0,4,0): over the hidden state below */
 
 /* ---------- research index: the hero's book (hc29, build_research library_svg; engraved as blog.css's library) ---------- */
 #research-library { container-type: size; }
@@ -165,28 +162,46 @@
 @keyframes rs-fall { from { transform: var(--k); } }
 @keyframes rs-fade { from { opacity: 0; } }
 @media (forced-colors: active) { .rs-still .lf { fill: Canvas; stroke: CanvasText; } .rs-still .lf-g { stroke: Highlight; } .rs-still .pc { stroke: CanvasText; } }
-/* a note's still (award a1): its formation's points as dots where the plate's land at rest (build_research's port of
-   figure.js FORMS), at the plate's scale (drawn at .84; .86 more on phones); colours and depth as the points */
-.fs-still { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke-linecap: round; scale: calc(var(--figure-scale, 1) / .84); transition: opacity 1.2s var(--ease); }
-.fs-still path { vector-effect: non-scaling-stroke; stroke: var(--paper); stroke-width: .1875rem; stroke-opacity: .7; }
-/* a phone's drawing is a third the size; its dots 2 px (award a4: this rule had stood before the one above, so phones drew
-   3 px dots, heavier than the stipple, since r1) */
-@media (max-width: 759.98px) { .fs-still { scale: calc(var(--figure-scale, 1) / .84 * .86); } .fs-still path { stroke-width: .125rem; } }
-.fs-still .far { stroke-opacity: .4; }
-.fs-still .k1 { stroke: var(--khaki); }
-.fs-still .k2 { stroke: var(--signal-bright); stroke-opacity: .9; }
-.fs-still .k2.far { stroke-opacity: .6; }
-.fs-still .k3 { stroke: var(--reject-bright); }
-/* a2: a plate's rule as a line; no crispEdges (it made note 09's first figure.js task 115-180 ms) */
-.fs-still .rule { stroke: var(--khaki); stroke-width: calc(1px * var(--stroke, 1)); stroke-opacity: 1; stroke-linecap: butt; }
-/* hc29: note 09's 0 baseline (build_research BASE): the axis the columns stand on, quieter than the floor, as on Proof */
-.fs-still .rule.is-0 { stroke: var(--line-strong); }
-.figure-stage.has-still.no-figure::after { content: none; } /* no globe mark over a drawn figure */
-.article-hero .figure-stage.has-still { container-type: size; }
-.fs-keys { display: none; position: absolute; inset: 0; pointer-events: none; --u: calc(min(100cqw / var(--fs-vbw, 400), 100cqh / 400) * var(--figure-scale, 1) / .84); }
-@media (max-width: 759.98px) { .fs-keys { --u: calc(min(100cqw / var(--fs-vbw, 400), 100cqh / 400) * var(--figure-scale, 1) / .84 * .86); } }
-@supports (width: 1cqh) { @media (scripting: none) { .fs-keys { display: block; } } .figure-stage.no-figure > .fs-keys { display: block; } } /* (no container units: no key) */
-.fs-keys .fl { left: calc(50% + var(--x) * var(--u)); top: calc(50% + var(--y) * var(--u)); }
+
+/* ---------- the figures (hc30r, RETHINK-hc30 RES-1): a lattice of hard square marks ----------
+   .fg is the lattice's box: --w x --h cells and the room its words take (--pt/--pr/--pb/--pl), from the generator. The
+   cell (--k) is the largest whole number of device px that fits the stage; the mark (--m) half of it, rounded down. A still's marks
+   are strokes of that width (non-scaling, square caps): figure.js draws the same rects on its canvas */
+.fg {
+  --px: 1px; --fw: 100cqw; --fh: 100cqh; --in: 0rem; --cap: 0rem;
+  --aw: calc(var(--fw) - var(--pl) - var(--pr) - 2 * var(--in)); --ah: calc(var(--fh) - var(--pt) - var(--pb) - var(--cap) - 2 * var(--in));
+  --kf: min(var(--aw) / var(--w), var(--ah) / var(--h)); --k: var(--kf); --m: calc(var(--k) / 2); --lit: calc(var(--m) * 1.5);
+  position: absolute; left: calc(var(--in) + var(--pl) + (var(--aw) - var(--k) * var(--w)) / 2); top: calc(var(--in) + var(--pt) + (var(--ah) - var(--k) * var(--h)) / 2);
+  width: calc(var(--k) * var(--w)); height: calc(var(--k) * var(--h));
+}
+@media (resolution: 1.25dppx) { .fg { --px: .8px; } }
+@media (resolution: 1.5dppx) { .fg { --px: .66667px; } }
+@media (min-resolution: 2dppx) { .fg { --px: .5px; } }
+@media (min-resolution: 3dppx) { .fg { --px: .33334px; } }
+@supports (width: round(down, 1px, 1px)) { .fg { --k: max(var(--px), round(down, var(--kf), var(--px))); --m: max(var(--px), round(down, var(--k) / 2, var(--px))); --lit: calc(var(--m) + 2 * max(var(--px), round(var(--m) / 4, var(--px)))); } }
+/* the still's root: a box of 6 x 6 cells (whole px), half a mark in; its marks overflow it (build_research _still) */
+.fs-still { position: absolute; left: calc(var(--m) / 2); top: calc(var(--m) / 2); width: calc(6 * var(--k)); height: calc(6 * var(--k)); overflow: visible; fill: none; stroke-linecap: square; shape-rendering: crispEdges; }
+/* a hero's pass of light (figure.js .is-pass, once): each step of the path stands a step larger as the light reaches it */
+@media (prefers-reduced-motion: no-preference) { .is-pass .pt { animation: mk-on .15s steps(1) calc(115ms + var(--p) * 1154ms); } }
+@keyframes mk-on { from { stroke-width: var(--lit); } }
+.mk { vector-effect: non-scaling-stroke; stroke: var(--paper); stroke-width: var(--m); }
+.mk.r { stroke-dasharray: 0 var(--k); }
+.mk.r2 { stroke-dasharray: 0 calc(2 * var(--k)); }
+.mk.k1 { stroke-opacity: .6; }
+.mk.k2 { stroke: var(--signal-bright); }
+.mk.k3 { stroke: var(--reject-bright); }
+.mk.b { fill: var(--paper); stroke-linejoin: miter; }
+.mk.b.k2 { fill: var(--signal-bright); }
+.mk:is(.l, .o) { stroke-width: var(--hair); stroke-linecap: butt; stroke-linejoin: miter; }
+:is(.rs-stage, .article-hero) .figure-stage { container-type: size; }
+.rs-stage .figure-stage canvas { opacity: 1; transition: none; } /* clear until it draws: the still hands over in one frame */
+@media (min-width: 760px) { .rs-stage .fg { --in: 1.5rem; } }
+/* a keyed still (build_research KEYED: note 09) carries its labels where figure.js does not set them (no JavaScript),
+   and its hedge label on the margin plate: each at its point, in cells */
+.fs-keys { display: none; position: absolute; inset: 0; pointer-events: none; }
+@media (scripting: none) { .fs-keys { display: block; } }
+.np-stage .fs-keys { display: block; }
+.fs-keys .fl { left: calc(var(--x) * var(--k)); top: calc(var(--y) * var(--k)); }
 
 /* ---------- research index: the blog's three collections ----------
    a2 (a2-design): a spread, the heading left, three ruled rows right (title, size and years on its baseline, arrow), as
@@ -232,51 +247,24 @@
   .article-hero .article-title--long { max-width: min(21ch, calc(50vw - var(--gutter) - 2rem)); }
   .article-hero .article-title--split { max-width: min(22ch, calc(50vw - var(--gutter) - 2rem)); }
 }
-/* a1: with or without JavaScript, as every note now draws its still (it was the scripted layout only) */
+/* hc30r: the drawing stands on the last six columns from the bar to the hero's foot, the title centred beside it; its
+   hedge hangs under the lattice's left edge, below its lower words (no script places it) */
+.article-hero .fg { --cap: 2.5rem; }
+.fg > .figcap { position: absolute; left: 0; top: calc(100% + var(--pb) + .875rem); white-space: nowrap; }
 @media (min-width: 961px) {
   .article-hero { padding-bottom: 0; }
-  .article-hero .figure-stage { top: calc(var(--nav-h) * .6); bottom: 7.5rem; } /* cut: the drawing sits nearer its hedge */
-  .article-hero-grid { padding-bottom: 11rem; }
-  /* the hedge hangs under the drawing's left edge, a line under its words (figure.js data-hang: --fig-l, --fig-b,
-     .is-hung); until then centred under the stage */
-  .article-figcap { position: absolute; z-index: 1; left: 50%; right: max(var(--gutter), calc((100% - var(--max)) / 2 + var(--gutter))); bottom: 4.5rem; text-align: center; }
-  .article-figcap.is-hung { left: var(--fig-l); right: auto; top: calc(var(--fig-b) + 1.25rem); bottom: auto; text-align: left; }
+  .article-hero .figure-stage { top: calc(var(--nav-h) + .75rem); bottom: .75rem; -webkit-mask-image: none; mask-image: none; }
+  .article-hero-grid { padding-bottom: 7.5rem; }
 }
-.article-hero .figcap.article-figcap {
-  --sw: calc(50cqw - max(var(--gutter), calc((100cqw - var(--max)) / 2 + var(--gutter)))); --p: calc(var(--nav-h) + clamp(3.5rem, 9vw, 7.5rem));
-  --hl: calc(50% + var(--sw) / 2 - var(--fs-x, .5) * min(78svh - var(--nav-h) * .6 - 7.5rem, var(--sw) / var(--fs-w, 1)));
-  --ht: calc(50% + var(--nav-h) * .3 - 2.5rem - var(--p) / 2 + var(--fs-y, .5) * min(max(78svh, var(--p) + 100%) - var(--nav-h) * .6 - 7.5rem, var(--sw) / var(--fs-w, 1)) + var(--fs-kb, 0rem));
-  --hp: max(0px, calc(50cqw - var(--fs-x, .5) * min(100cqw / var(--fs-w, 1), 66vw) / .84 * var(--hs, 1) - max(var(--gutter), env(safe-area-inset-left))));
-}
-@media (max-width: 759.98px) { .article-hero .figcap.article-figcap { --hs: .86; } }
-@media (scripting: none) { .article-hero { container-type: inline-size; } }
-.article-hero.still-cap { container-type: inline-size; }
-@supports (width: 1cqw) {
-  @media (scripting: none) and (min-width: 961px) { .article-hero .figcap.article-figcap { left: var(--hl); top: var(--ht); right: auto; bottom: auto; text-align: left; } }
-  @media (min-width: 961px) { .article-hero.still-cap .figcap.article-figcap:not(.is-hung) { left: var(--hl); top: var(--ht); right: auto; bottom: auto; text-align: left; } }
-  @media (scripting: none) and (max-width: 960px) { .article-hero .figure-stage.has-still ~ .container .figcap.article-figcap { text-align: left; padding-left: var(--hp); } }
-  @media (max-width: 960px) { .article-hero.still-cap .figcap.article-figcap:not(.is-hung) { text-align: left; padding-left: var(--hp); } }
-}
-/* (a phone held sideways stands the drawing in the right half: without a hang the hedge stands at its top right, the
-   key is not set; the hero's sideways block, below) */
-@media (min-width: 540px) and (max-width: 960px) and (max-height: 520px) and (min-aspect-ratio: 23/20) {
-  @media (scripting: none) { .article-hero .figure-stage.has-still ~ .container .figcap.article-figcap { padding-left: 0; text-align: right; } }
-  .article-hero.still-cap .figcap.article-figcap:not(.is-hung) { padding-left: 0; text-align: right; }
-  .fs-keys { display: none !important; }
-}
-/* with JavaScript the hedge comes in with the drawing, already in its place: hidden (not only transparent) until figure.js
-   hangs it, so moving it is no layout shift (on phones it moved 80 px: CLS .003-.005 in Lighthouse) */
-.article-hero .article-figcap { transition: opacity .6s var(--ease-out); }
-@media (scripting: enabled) { .article-hero .article-figcap:not(.is-hung) { opacity: 0; visibility: hidden; } }
+/* tablets and phones: the stage follows the title in the flow, as wide as the text; its height is the lattice's */
 @media (max-width: 960px) {
-  .article-hero .figcap.article-figcap { position: absolute; top: calc(100% + 2.125rem + var(--stage-h) * (.5 + var(--fs-y, .4) * var(--hs, 1) / .84) + var(--fs-kb, 0rem)); left: max(var(--gutter), env(safe-area-inset-left)); right: max(var(--gutter), env(safe-area-inset-right)); margin: 0; text-align: right; }
-  .article-hero .figcap.article-figcap.is-hung { top: calc(var(--fig-b) + .875rem); text-align: left; padding-left: max(0px, calc(var(--fig-l) - max(var(--gutter), env(safe-area-inset-left)))); }
+  .article-hero { padding-bottom: 1.5rem; }
+  .article-hero .figure-stage { position: relative; inset: auto; height: auto; margin: 2.5rem max(var(--gutter), env(safe-area-inset-right)) 0 max(var(--gutter), env(safe-area-inset-left)); container-type: inline-size; }
+  .article-hero .fg { --fh: min(56svh, 100cqw); --ah: calc(var(--fh) - var(--pt) - var(--pb)); position: relative; top: 0; margin-block: var(--pt) calc(var(--pb) + var(--cap)); }
 }
-/* tablets: the figure takes half the screen's width in height, not two thirds */
-@media (scripting: enabled) and (min-width: 601px) and (max-width: 960px) { .article-hero { --stage-h: 50vw; } }
-
 @media (scripting: enabled) and (min-width: 760px) and (max-height: 520px) and (min-aspect-ratio: 23/20) {
   .rs-stage { aspect-ratio: auto; height: 40svh; }
+  .rs-stage .fg { --in: .75rem; }
 }
 
 /* ---------- a note: the reading column ---------- */
@@ -307,37 +295,29 @@
 /* a1 (a1-ux): on phones a part's head is a clear step over 17 px text (25.6 px at 320, 28 from 400) */
 @media (max-width: 600px) { .article-page .article h2 { font-size: clamp(1.6rem, 7vw, 1.75rem); line-height: 1.12; } }
 
-/* ---------- a note: the margin plate (award a3; from 1440 px) ---------- */
+/* ---------- a note: the margin plate (award a3; from 1440 px) ----------
+   hc30r: the hero's still again by reference, in whole px cells; the part the note's marked part names (build_research
+   PARTS; research.js .is-lit) stands at full strength while the rest recedes, and the caption says its name */
 .np-rail { display: none; }
 @media (min-width: 1440px) {
   .article-page .article-body-section .article { grid-column: 4 / 10; }
   .np-rail { display: block; grid-column: 10 / -1; grid-row: 1; margin: var(--np-t, 50svh) 0 var(--np-b, 0px); }
   .np-plate { position: sticky; top: calc(var(--nav-h) + 2.5rem); margin: 0; }
-  .np-stage { position: relative; border-radius: var(--r); overflow: hidden; }
-  .np-still { display: block; width: 100%; height: auto; }
-  /* note 09's floor: a hairline over the image (its file draws the points), snapped to device pixels at any density */
-  .np-rule { position: absolute; top: var(--y); left: var(--x0); right: calc(100% - var(--x1)); height: var(--hair); margin-top: calc(var(--hair) / -2); background: var(--khaki); }
-  .np-cap { padding-top: .875rem; }
-  /* award a4 (a4-design): the part the note's marked part names (build_research PARTS; research.js .is-lit) is drawn
-     again at full strength, the rest recedes, its label (the hero's words) beside it. Note 09's key (.np-key) stays */
-  .np-part { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .32s var(--ease-out); }
-  .np-part.is-lit { opacity: 1; }
-  .np-still { transition: opacity .32s var(--ease-out); }
+  .np-stage { border-radius: var(--r); overflow: hidden; container-type: inline-size; padding-block: 1.25rem; }
+  .np-stage .fg { --in: 1rem; --fh: 200vh; position: relative; top: 0; margin-top: var(--pt); }
+  .np-part { opacity: 0; }
+  .np-still, .np-part, .np-name { transition: opacity .32s var(--ease-out); }
+  .np-part.is-lit, .np-name.is-lit { opacity: 1; }
   .np-stage.has-lit .np-still { opacity: .4; }
-  .np-rule { transition: background-color .32s var(--ease-out); }
-  .np-rule.is-lit { background: var(--paper); }
-  .np-rule.is-0 { background: var(--line-strong); }
-  /* a label at its point (--x, --y: % of the plate, from the generator, which grew the box until the words fit at 1440) */
-  .np-stage .fl { left: var(--x); top: var(--y); transition: opacity .32s var(--ease-out), color .32s var(--ease); }
-  .np-stage .fl:not(.np-key, .is-lit) { opacity: 0; }
+  .article-page .np-cap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem; padding-top: .875rem; }
+  .np-names { display: grid; margin-left: auto; font-size: var(--fs-small); line-height: 1.5; color: var(--fg); text-align: right; }
+  .np-name { grid-area: 1 / 1; opacity: 0; }
 }
 @media (scripting: enabled) and (min-width: 1440px) {
   .np-rail:not(.is-set) { visibility: hidden; }
   .np-plate { opacity: 0; transition: opacity .6s var(--ease-out); }
   .np-rail.is-in .np-plate { opacity: 1; }
 }
-/* without JavaScript nothing is lit: the parts' labels stay hidden, the still and the key stand */
-@media (scripting: none) { .np-part, .np-stage .fl:not(.np-key) { display: none; } }
 @media print, (forced-colors: active) { .np-rail { display: none !important; } } /* a repeat of the hero's drawing, on ink */
 
 /* ---------- a note: "In this note" (the part being read is marked by research.js) ---------- */
@@ -368,25 +348,15 @@
 @media (min-width: 961px) {
   :is(.research-hero, .article-hero) .figure-stage { left: 50%; right: max(var(--gutter), calc((100% - var(--max)) / 2 + var(--gutter))); }
 }
-.rs-stage .figure-stage { --figure-ref: 404; }
-.article-hero .figure-stage { --figure-ref: 453; }
-
-/* ---------- the figures as plates (lab): labels pinned to their points ---------- */
-.figure-stage[data-plate] { container-type: inline-size; }
-@media (min-width: 961px) {
-  .article-hero .figure-stage[data-plate] { -webkit-mask-image: none; mask-image: none; --figure-scale: .84; }
-}
 @media (max-width: 960px) {
-  :is(.research-hero, .article-hero) .figure-stage { top: auto; bottom: var(--stage-b); height: var(--stage-h); } /* a plate or not */
+  .research-hero .figure-stage { top: auto; bottom: var(--stage-b); height: var(--stage-h); }
 }
-.fig-labels { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .2s var(--ease), visibility 0s linear .2s; }
+
+/* ---------- the figures' labels, pinned to their points (figure.js; build_research LABELS) ---------- */
+.fig-labels { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .12s var(--ease), visibility 0s linear .12s; }
 .fig-labels.is-on { opacity: 1; visibility: visible; transition: opacity .2s var(--ease); }
 .fl { position: absolute; left: 0; top: 0; color: var(--fg-3); }
 .fl.is-out { visibility: hidden; }
-/* a2 (a2-pixel): a plate's rule (note 09's 10 bps floor), one hairline over the points (1,200 points drew a soft
-   band); figure.js sets its start, length and sway; level at rest. The drawing, not a word: the strip keeps it */
-.fl-line { position: absolute; left: 0; top: 0; width: 1px; height: calc(1px * var(--stroke, 1)); background: var(--khaki); transform-origin: 0 0; transform: scaleX(0); }
-.fl-line.is-0 { background: var(--line-strong); }
 /* award a1: the geometry is in rem (16 px up to 1920, then the root's step), as figure.js places it, so at 3840 the dot,
    the rule and the gaps are the 1920 plate at twice the size, not 1440's px beside 22 px words. Rules: --stroke (site.css) */
 .fl::after { content: ""; position: absolute; left: -.125rem; top: -.125rem; width: .25rem; height: .25rem; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 .125rem var(--ink); }
@@ -429,42 +399,40 @@
 .fl.is-lit:not(.fl--acc, .fl--rej) { color: var(--fg); }
 .fl.is-lit:not(.fl--rej) .fl-t { color: var(--fg); }
 .fl.is-lit::after { transform: scale(1.75); }
-.fig-labels.is-on .fl { animation: fl-in .5s var(--ease) both; animation-delay: calc(60ms + var(--i, 0) * 70ms); }
+.fig-labels.is-on .fl { animation: fl-in .24s var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 6) * 30ms); }
 @keyframes fl-in { from { opacity: 0; } }
-@container (max-width: 460px) { .fl--minor, .fl-t .fl-minor { display: none; } } /* a small stage keeps the part's name, not its gloss */
+@container (max-width: 460px) {
+  .fl--minor, .fl-t .fl-minor { display: none; } /* a small stage keeps the part's name, not its gloss */
+  .fl--rej .fl-t { white-space: normal; width: min-content; } /* "Rejected, / logged": beside the ring there is room for one word */
+}
 
 /* a phone held sideways (short and wide): the hero two-up, words left, figure right; the plate capped to the screen.
    From 540 px only (r2, WCAG 1.4.10: a desktop at 400 % zoom is short and wide too, and stays one column) */
 @media (min-width: 540px) and (max-width: 960px) and (max-height: 520px) and (min-aspect-ratio: 23/20) {
   .research-hero, .article-hero { padding-top: calc(var(--nav-h) + 1.5rem); padding-bottom: 1.75rem; }
-  :is(.research-hero .figure-stage, .article-hero .figure-stage[data-plate]) { left: 54%; top: var(--nav-h); bottom: auto; height: calc(100vh - var(--nav-h)); height: calc(100svh - var(--nav-h)); }
+  .research-hero .figure-stage { left: 54%; top: var(--nav-h); bottom: auto; height: calc(100vh - var(--nav-h)); height: calc(100svh - var(--nav-h)); }
   /* hc29: the book centred in the half-width stage, inside the gutter, its keys above it */
   .research-hero .figure-stage { right: max(var(--gutter), env(safe-area-inset-right)); }
   .rs-bk { top: calc(50% + 1.25rem); bottom: auto; width: min(72cqw, (100cqh - 5rem) * var(--bk-r)); translate: -50% -50%; }
   .research-hero .grid > .col-7, .article-hero-grid > div:first-child { max-width: 54%; }
   .research-hero h1.display-1, .article-hero .article-title { font-size: clamp(1.9rem, 10vh, 2.6rem); }
   .research-hero .lede, .article-hero .lede { font-size: 1rem; margin-top: .875rem; }
-  .article-hero .figure-stage[data-plate] { --figure-scale: .72; }
-  /* award a4 (r4): the hero is the screen the stage fills (at 78svh the drawings were cut), its words centred; the
-     note's hedge hangs under the drawing's left edge, as on desktop, out of the flow (hanging moves nothing); unhung
-     (no JavaScript or WebGL) it stands top right */
+  /* award a4 (r4): the hero is the screen the stage fills, its words centred; hc30r: a note's stage stands in the right
+     half again (placed, a size container), its hedge under the lattice as everywhere */
   .research-hero, .article-hero { display: flex; align-items: stretch; min-height: 100vh; min-height: 100svh; }
   :is(.research-hero, .article-hero) > .container { display: grid; align-content: center; }
-  .article-hero .figure-stage[data-plate] { height: calc(100vh - var(--nav-h) - 1.5rem); height: calc(100svh - var(--nav-h) - 1.5rem); }
-  .article-hero .figcap.article-figcap { position: absolute; top: 0; left: auto; right: max(var(--gutter), env(safe-area-inset-right)); max-width: 44%; margin: 0; }
-  .article-hero .figcap.article-figcap.is-hung { --hx: var(--fig-l); left: var(--hx); right: auto; top: calc(var(--fig-b) + .75rem); max-width: calc(100% - var(--hx) - max(var(--gutter), env(safe-area-inset-right))); padding-left: 0; text-align: left; }
+  .article-hero .figure-stage { position: absolute; left: 54%; right: max(var(--gutter), env(safe-area-inset-right)); top: calc(var(--nav-h) + .5rem); bottom: .5rem; margin: 0; container-type: size; }
+  .article-hero .fg { --fh: 100cqh; --ah: calc(var(--fh) - var(--pt) - var(--pb) - var(--cap)); position: absolute; top: calc(var(--pt) + (var(--ah) - var(--k) * var(--h)) / 2); margin: 0; }
 }
-/* the narrowest (568 x 320): the drawing is ~120 px wide, so its hedge starts at its column's edge, not the drawing's */
-@media (min-width: 540px) and (max-width: 639.98px) and (max-height: 520px) and (min-aspect-ratio: 23/20) { .article-hero .figcap.article-figcap.is-hung { --hx: min(var(--fig-l), 54%); } }
 
 /* ---------- reduced motion and print ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .rs-cap, .rs-shelf .rs-rail, .fig-labels, .fig-labels.is-on, .fs-still, .article-figcap, .np-plate, .np-part, .np-still, .np-rule, .np-stage .fl { transition: none; }
+  .rs-cap, .rs-shelf .rs-rail, .fig-labels, .fig-labels.is-on, .np-plate, .np-part, .np-still, .np-name { transition: none; }
   .fig-labels.is-on .fl { animation: none; }
   .fl, .fl-t, .fl::after { transition: none; }
 }
 @media print {
-  .rs-rail, .article-figcap, .note-run, .fig-labels { display: none !important; }
+  .rs-rail, .note-run, .fig-labels { display: none !important; }
   .rs-col { margin-right: 0 !important; }
   .posts-list .post.is-current > a::before { transform: scaleY(0) !important; }
   .posts-list .post.is-current .post-n { color: inherit !important; }

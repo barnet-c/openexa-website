@@ -77,6 +77,10 @@ Changes from the source, deliberately:
     L* 14 / 93. Mike Lockhart's snapshot keeps his eyes at 50 % (the photo ends under his shoulders). New file names
     (<slug>-g2-v2x.webp and its 160 / 320 twins); the -v2x files stay for pages cached before the change and can go a
     day after the live site switches. No one is swapped or retouched; words and markup otherwise unchanged.
+  - 2026-11-10 (hill climb hc30r, RETHINK-hc30 COMP-1): this script also draws the hero's still, the sheet of 96 agents
+    the page shows without JavaScript (hero_still(), written between <!-- THE STILL --> and <!-- /THE STILL -->). It
+    reads the agents from the AGENTS literal in site/assets/js/company-hero.js, the one place they are defined, so the
+    still and the live figure cannot drift; it fails if the literal is missing or its marks do not fill the disc.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -296,5 +300,37 @@ page = ROOT / "company.html"
 s = page.read_text(encoding="utf-8")
 a, b = s.index("    <!-- 03 THE TEAM -->"), s.index(END)
 page.write_text(s[:a] + SECTION + s[b:], encoding="utf-8", newline="")
+
+
+def hero_still():
+    """hc30r COMP-1: the hero figure at rest, as the page shows it without JavaScript: 96 agents, 12 by 8, each a 5 x 5
+    bitmap (four hex digits in company-hero.js's AGENTS: bit 15 green; bits 0-14 the left three columns of five rows,
+    row-major, mirrored). One unit is one cell; an agent takes 5 and the gap 2, so the sheet is 82 by 54. A mark is a
+    zero-length stroke with a square cap, .72 of a cell (company.css), which keeps 1,141 marks to about 8 KB."""
+    js = (ROOT / "assets" / "js" / "company-hero.js").read_text(encoding="utf-8")
+    m = re.search(r"const AGENTS = '([0-9a-f]+)';", js)
+    if not m or len(m.group(1)) != 96 * 4: raise SystemExit("build_team: company-hero.js has no AGENTS literal of 96 agents")
+    marks = {0: [], 1: []}
+    for i in range(96):
+        v = int(m.group(1)[4 * i:4 * i + 4], 16)
+        for y in range(5):
+            for x in range(5):
+                if v >> (y * 3 + (x if x < 3 else 4 - x)) & 1: marks[v >> 15 & 1].append(((i % 12) * 7 + x, (i // 12) * 7 + y))
+    n = len(marks[0]) + len(marks[1])
+    if n != 1 + 3 * 19 * 20: raise SystemExit(f"build_team: the 96 agents hold {n} marks; the disc of nineteen rings holds 1,141")
+    def d(pts):
+        out, at = [], None
+        for x, y in pts:
+            out.append(f"M{x + .36:g} {y + .36:g}h0" if at is None else f"m{x - at[0]} {y - at[1]}h0"); at = (x, y)
+        return "".join(out)
+    return ('<svg class="plate-still" viewBox="0 0 82 54" aria-hidden="true" focusable="false">'
+            f'<path class="k0" d="{d(marks[0])}"/><path class="k2" d="{d(marks[1])}"/></svg>'), n, len(marks[1])
+
+still_svg, n_marks, n_green = hero_still()
+s = page.read_text(encoding="utf-8")
+a, b = s.index("<!-- THE STILL -->"), s.index("<!-- /THE STILL -->")
+PAD = "\n" + " " * 12
+page.write_text(s[:a] + "<!-- THE STILL -->" + PAD + still_svg + PAD + s[b:], encoding="utf-8", newline="")
 for name, where, h in r1 + r2: print(f"{name:24} portrait from {where:12} face {h:.0%} of the frame")
+print(f"hero still: 96 agents, {n_marks} marks ({n_green} green), {len(still_svg):,} B")
 print(f"team {len(TEAM)} + advisors {len(ADVISORS)}; images {len(list(IMGDIR.glob(STEM.format('*') + '.webp')))}")

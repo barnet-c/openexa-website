@@ -171,7 +171,6 @@
 .arch.is-narrow .arch-lab { flex: 1 1 14em; }
 .arch.is-narrow .arch-hint { margin-left: auto; }
 .arch.is-narrow .arch-legend { order: 3; flex: 1 1 auto; margin-left: 0; gap: .375rem .75rem; }
-.arch.is-narrow .arch-kicker { order: 3; } /* with the key, under the title and Pause */
 /* tablets: the wide head's order (title, Illustrative, key, Pause at the end); the head fits one row from ~661 px (hc2) */
 @media (min-width: 601px) {
   .arch.is-narrow :is(.arch-lab, .arch-legend) { flex: 0 1 auto; } /* title, hedge and key from the left; Pause at the right end */

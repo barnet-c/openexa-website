@@ -285,38 +285,27 @@
     const w = 1 - u; return 3 * y1 * u * w * w + 3 * y2 * u * u * w + u * u * u;
   };
   const EASE_MOVE = bez(0.62, 0, 0.2, 1);
-  const ACT_A = 0.35, ZOOM0 = 3, ZOOM_A = 1.2, ZOOM_END = 1 / 1.3, OX = GX[0] - 0.03;
-  const act = { p: COPY ? 0 : 1, done: !COPY, F: 500, cx: 0, cy: 0, ccx: 0, ccy: 0, va: false };
-  const VA = COPY ? new Float32Array(CAP).fill(1) : null, HSH = COPY ? new Float32Array(CAP) : null;
-  if (HSH) for (let i = 0; i < CAP; i++) HSH[i] = (i * 0.6180339887 + 0.13) % 1;
-  const actP = () => (act.done ? 1 : act.p);
-  const actA = () => (act.done || act.p >= 1 ? 1 : smooth(ACT_A + 0.05, 0.85, act.p));
-  const masterX = (p) => OX + (LX - OX) * easeInOut(clamp(p / (ACT_A - 0.04), 0, 1));
-  function actCam() {
-    if (!COPY) return;
-    const p = actP();
-    cam.F = act.F; cam.cx = act.cx; cam.cy = act.cy;
-    const zEnd = narrow ? 1 / 1.12 : ZOOM_END;
-    let z = zEnd, fx = act.ccx, fy = act.ccy, ax = act.ccx, ay = act.ccy;
-    if (p < 1) {
-      proj(masterX(p), 0, 0); const mx = P_X, my = P_Y, q = smooth(0, ACT_A, p), a0x = W * (0.3 + 0.42 * q), a0y = H * 0.4 + (act.ccy - H * 0.4) * q;
-      if (p <= ACT_A) { z = ZOOM0 + (ZOOM_A - ZOOM0) * q; fx = mx; fy = my; ax = a0x; ay = a0y; }
-      else { const e = EASE_MOVE((p - ACT_A) / (1 - ACT_A)); z = ZOOM_A + (zEnd - ZOOM_A) * e; fx = mx + (act.ccx - mx) * e; fy = my + (act.ccy - my) * e; ax = a0x + (act.ccx - a0x) * e; ay = a0y + (act.ccy - a0y) * e; }
-    }
-    cam.F = act.F * z; cam.cx = ax - z * (fx - act.cx); cam.cy = ay - z * (fy - act.cy); cam.k0 = cam.F / cam.D;
-  }
-  function actStep() {
+  /* the copy preset (Platform): the lab opens on its resting field at low brightness with the master bright, and the copies
+     light outward from the master in ACT_MS once the stage stands on screen (and a page turn has landed). Never an empty
+     field, never a moving camera: every frame of it is a whole picture (hc30r HOME-2) */
+  const ACT_MS = 900, DIM = 0.24, ZOOM_END = 1 / 1.3, OX = GX[0] - 0.03;
+  const act = { p: COPY ? 0 : 1, done: !COPY, t0: 0, wait: 0, va: false };
+  const VA = COPY ? new Float32Array(CAP).fill(1) : null;
+  const actA = () => (act.done ? 1 : DIM + (1 - DIM) * EASE_MOVE(act.p));
+  function actEnd() { act.done = true; act.p = 1; root.dataset.swCopy = '1.00'; if (act.va) { VA.fill(1); act.va = false; } }
+  function actStep(now = performance.now()) {
+    if (act.done) return;
+    if (reduced.matches || paused || halted || follow.active) { actEnd(); return; }
     const was = act.p;
-    let p = 1;
-    if (!act.done) {
-      if (reduced.matches || paused || halted || follow.active) act.done = true;
-      else { const r = stage.getBoundingClientRect(), vh = window.innerHeight || 1; p = clamp((0.85 * vh - (r.top + r.height / 2)) / (0.45 * vh), 0, 1); }
+    if (!act.t0) {
+      if (!act.wait) { const L = window.OXA && window.OXA.landed; act.wait = 1; if (L) L().then(() => { act.wait = 2; }); else act.wait = 2; }
+      const r = stage.getBoundingClientRect(), vh = window.innerHeight || 1;
+      if (act.wait === 2 && Math.min(r.bottom, vh) - Math.max(r.top, 0) >= 0.4 * Math.min(r.height, vh)) act.t0 = now;
     }
-    act.p = p;
-    const pv = p.toFixed(2); if (root.dataset.swCopy !== pv) root.dataset.swCopy = pv;
-    if (p === was && p >= 1) return;
-    if (p > was && p - was < 0.2) { const a = masterX(was), b = masterX(p); for (let g = 0; g < 6; g++) if (a < GX[g] && b >= GX[g]) { GF[g] = 1; if (g === 3) pulse = 1; } if (a < LX - 0.002 && b >= LX - 0.002) openPulse = 1; }
-    actCam(); hc.fill(0);
+    act.p = act.t0 ? clamp((now - act.t0) / ACT_MS, 0, 1) : 0;
+    const pv = act.p.toFixed(2); if (root.dataset.swCopy !== pv) root.dataset.swCopy = pv;
+    if (act.p > was) { const a = OX + (LX - OX) * was * 1.2, b = OX + (LX - OX) * act.p * 1.2; for (let g = 0; g < 6; g++) if (a < GX[g] && b >= GX[g]) { GF[g] = 1; if (g === 3) pulse = 1; } if (a < LX && b >= LX) openPulse = 1; }
+    if (act.p >= 1) actEnd();
   }
   const FAN = [-1, 1];
   function drawRest(k, r0) {
@@ -334,22 +323,10 @@
     ctx.globalCompositeOperation = 'source-over'; blit('ring', x0, y0, r0 * 2.2, k);
   }
   function drawMaster() {
-    const p = actP(), fade = 1 - smooth(ACT_A + 0.05, ACT_A + 0.3, p), r0 = clamp(0.0036 * cam.k0, 0.8, 2.1) * 2.3;
-    const em = p > ACT_A && p < 1 ? Math.sin(Math.PI * clamp((p - ACT_A) / (1 - ACT_A), 0, 1)) : 0;
-    const rest = reduced.matches ? 0 : smooth(ACT_A + 0.3, 1, p) * (1 - follow.dim);
+    if (reduced.matches) return;
+    const r0 = clamp(0.0036 * cam.k0, 0.8, 2.1) * 2.3, lead = act.done ? 0 : 1 - EASE_MOVE(act.p), rest = 1 - follow.dim;
     if (rest > 0.01) drawRest(rest, r0);
-    if (p >= 1) { ctx.globalAlpha = 1; return; }
-    ctx.globalCompositeOperation = 'lighter';
-    if (em > 0.01) { proj(OX, 0, 0); blit('halo', P_X, P_Y, r0 * 8, 0.55 * em); }
-    if (fade > 0.01) {
-      proj(OX, 0, 0); const x0 = P_X, y0 = P_Y; proj(masterX(p), 0, 0);
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.lineWidth = 1.5; ctx.strokeStyle = `rgba(${GR},${(0.6 * fade).toFixed(3)})`; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(P_X, P_Y); ctx.stroke(); ctx.lineWidth = 1;
-      ctx.globalCompositeOperation = 'lighter'; blit('halo', P_X, P_Y, r0 * 12, 0.75 * fade);
-      ctx.globalCompositeOperation = 'source-over'; blit('ring', P_X, P_Y, r0 * 3.2, fade);
-    }
-    ctx.globalCompositeOperation = 'source-over';
-    if (em > 0.01) { proj(OX, 0, 0); blit('ring', P_X, P_Y, r0 * 2.2, em); }
+    if (lead > 0.01) { proj(OX, 0, 0); ctx.globalCompositeOperation = 'lighter'; blit('halo', P_X, P_Y, r0 * (8 + 8 * lead), 0.6 * lead * rest); ctx.globalCompositeOperation = 'source-over'; }
     ctx.globalAlpha = 1;
   }
   function camera() {
@@ -368,24 +345,12 @@
   }
   const fog = (d) => clamp((d - cam.dmin) / (cam.dmax - cam.dmin), 0, 1);
   function projectAll() {
-    const p = actP();
-    if (p >= 1) {
-      if (act.va) { VA.fill(1); act.va = false; }
-      for (let i = 0; i < hi; i++) {
-        if (!st[i]) continue;
-        proj(X[i], Y[i], Z[i]); PX[i] = P_X; PY[i] = P_Y; PF[i] = fog(P_D); PS[i] = cam.D / P_D;
-      }
-      return;
-    }
-    act.va = true;
-    const f = clamp((p - ACT_A) / (0.92 - ACT_A), 0, 1) * 1.2, wx = OX + 0.42;
+    const lit = !act.done && act.p < 1, f = act.p * 1.2, span = LX - OX;
+    if (!lit && act.va) { VA.fill(1); act.va = false; } else if (lit) act.va = true;
     for (let i = 0; i < hi; i++) {
       if (!st[i]) continue;
-      const e = clamp((f - HSH[i]) / 0.2, 0, 1);
-      VA[i] = smooth(0, 0.12, e);
-      if (e >= 1) proj(X[i], Y[i], Z[i]);
-      else { const k = easeInOut(e), u = 1 - k, sl = (i % 3) - 1, a = u * u, b = 2 * u * k, c = k * k; proj(a * OX + b * wx + c * X[i], b * sl * 0.36 + c * Y[i], b * sl * 0.1 + c * Z[i]); }
-      PX[i] = P_X; PY[i] = P_Y; PF[i] = fog(P_D); PS[i] = cam.D / P_D;
+      proj(X[i], Y[i], Z[i]); PX[i] = P_X; PY[i] = P_Y; PF[i] = fog(P_D); PS[i] = cam.D / P_D;
+      if (lit) VA[i] = DIM + (1 - DIM) * smooth(0, 0.2, f - clamp((X[i] - OX) / span, 0, 1));
     }
   }
   function sample() {
@@ -396,7 +361,13 @@
       if (hc[i] < TRAIL) hc[i]++;
     }
   }
-  let W = 1, H = 1, CW = 1, CH = 1, SK = 1, dpr = 1, narrow = false, tight = false, rowTop = 14, rowH = 30, botH = 0;
+  /* the stage (hc30r, swarm.css .swarm-live--stage): the canvas runs to the viewport's edges; IN is the container's inset from
+     them (the gates, the Council and the ledger's head keep the container; the floor, the far field and the chain run on).
+     data-sw-clear names what lies over the stage's top (the page's head, the lab's own): the gate names start under it */
+  const STAGE = root.classList.contains('swarm-live--stage');
+  const CLEAR = root.dataset.swClear ? Array.from(document.querySelectorAll(root.dataset.swClear)) : [];
+  const docTop = (n) => { let y = 0; for (; n; n = n.offsetParent) y += n.offsetTop; return y; };
+  let W = 1, H = 1, CW = 1, CH = 1, SK = 1, dpr = 1, IN = 0, narrow = false, tight = false, rowTop = 14, rowH = 30, botH = 0;
   function fit() {
     camera();
     const keep = { cx: cam.cx, cy: cam.cy, F: cam.F };
@@ -404,15 +375,16 @@
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, d0 = 1e9, d1 = -1e9;
     const pts = [];
     for (let g = 0; g < 6; g++) { const [hy, hz] = frameDims(g, true); for (const sy of [-1, 1]) for (const sz of [-1, 1]) pts.push([GX[g], sy * hy, sz * hz]); }
-    pts.push([GX[0] - (narrow ? 0.06 : 0.3), 0, 0], [LX + (narrow ? 0.1 : 0.3), 0, 0], [XR, FLOOR, 0.2], [XR, FLOOR, -0.2]);
+    const far = STAGE && !COPY;
+    pts.push([GX[0] - (narrow ? 0.06 : far ? 0.14 : 0.3), 0, 0], [LX + (narrow ? 0.1 : far ? 0.2 : 0.3), 0, 0], [XR, FLOOR, 0.2], [XR, FLOOR, -0.2]);
     for (const p of pts) { proj(p[0], p[1], p[2]); x0 = Math.min(x0, P_X); x1 = Math.max(x1, P_X); y0 = Math.min(y0, P_Y); y1 = Math.max(y1, P_Y); d0 = Math.min(d0, P_D); d1 = Math.max(d1, P_D); }
-    const padT = narrow ? rowTop + rowH + 18 : rowTop + rowH + 26, padB = narrow ? botH + 22 : 16, padX = narrow ? 4 : 10;
+    const padT = narrow ? rowTop + rowH + 18 : rowTop + rowH + 26, padB = narrow ? botH + 22 : 16, padX = narrow ? 4 : COPY ? 10 : IN + 10;
     const aw = W - padX * 2, ah = H - padT - padB;
     cam.F = Math.min(aw / (x1 - x0), ah / (y1 - y0));
     cam.cx = padX + (aw - (x1 - x0) * cam.F) / 2 - x0 * cam.F; cam.cy = padT + (ah - (y1 - y0) * cam.F) / 2 - y0 * cam.F;
     cam.dmin = d0; cam.dmax = d1; cam.k0 = cam.F / cam.D;
     if (!isFinite(cam.F) || cam.F <= 0) Object.assign(cam, keep);
-    if (COPY) { Object.assign(act, { F: cam.F, cx: cam.cx, cy: cam.cy, ccx: padX + aw / 2, ccy: padT + ah / 2 }); actCam(); }
+    else if (COPY) { const z = narrow ? 1 / 1.12 : ZOOM_END, ccx = padX + aw / 2, ccy = padT + ah / 2; cam.F *= z; cam.cx = ccx - z * (ccx - cam.cx); cam.cy = ccy - z * (ccy - cam.cy); cam.k0 = cam.F / cam.D; }
   }
   function frameDims(g, fitting) { const a = (fitting ? AP_MAX : apR) + 0.11; return g <= 2 ? [RY + 0.07, RZ + 0.07] : g === 3 ? [a, a] : [0.245, 0.075]; }
 
@@ -500,9 +472,10 @@
   }
   function drawFloor() {
     ctx.lineWidth = 1;
+    const fx = IN / cam.k0 * 1.5;
     for (let k = -3; k <= 3; k++) {
       const z = k * 0.13;
-      ctx.beginPath(); seg(-1.7, FLOOR, z, 1.9, FLOOR, z);
+      ctx.beginPath(); seg(-1.7 - fx, FLOOR, z, 1.9 + fx, FLOOR, z);
       ctx.strokeStyle = `rgba(${IV},${(0.03 + 0.03 * (k + 3) / 6).toFixed(3)})`; ctx.stroke();
     }
     ctx.beginPath();
@@ -642,7 +615,7 @@
     ctx.strokeStyle = `rgba(${GR},${(0.5 + 0.4 * pulse).toFixed(3)})`; ctx.stroke();
   }
   function drawMotes() {
-    const shut = (1 - 0.75 * shutK) * (actP() < 1 ? smooth(ACT_A, 0.85, act.p) : 1), dim = 1 - 0.7 * follow.dim;
+    const shut = (1 - 0.75 * shutK) * actA(), dim = 1 - 0.7 * follow.dim;
     if (shut < 0.005) return;
     for (let m = 0; m < MOTES; m++) {
       const o = m * 6, t = MS[m], e = t * t * (3 - 2 * t);
@@ -666,7 +639,7 @@
     const g = tctx || ctx, kd = tctx ? tdpr : dpr;
     if (tctx) { tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.globalAlpha = 1; tctx.clearRect(0, 0, tcv.width, tcv.height); tctx.setTransform(tdpr * SK, 0, 0, tdpr * SK, 0, 0); }
     const hair = Math.min(1, 1 / kd), boost = kd > 1.4 ? 1.35 : 1;
-    const cols = [IV, GR, RD], base = [0.24 * boost, 0.34 * boost, 0.55 * boost], dim = 1 - 0.72 * follow.dim;
+    const cols = [IV, GR, RD], base = [0.24 * boost, 0.34 * boost, 0.55 * boost], dim = (1 - 0.72 * follow.dim) * actA();
     const at = (i, k) => (i * TRAIL + ((hHead - k + TRAIL * 2) % TRAIL)) * 2;
     g.lineWidth = hair; g.lineCap = 'butt'; g.lineJoin = 'bevel';
     let drew = false;
@@ -778,11 +751,13 @@
       ctx.stroke(); ctx.globalAlpha = 1;
     }
   }
+  let leadK = COPY ? 0 : 1;
   function drawLeaders() {
+    if (COPY) { leadK += ((follow.active || T.open ? 1 : 0) - leadK) * (reduced.matches ? 1 : 1 - Math.exp(-frameDt * 10)); if (leadK < 0.01) return; }
     ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
     for (const b of lbl) {
       if (!b) continue;
-      ctx.strokeStyle = `rgba(${b.c},${b.a})`; ctx.beginPath();
+      ctx.strokeStyle = `rgba(${b.c},${(b.a * leadK).toFixed(3)})`; ctx.beginPath();
       if (b.bottom) { ctx.moveTo(b.ax, b.ay + 5); ctx.lineTo(b.lx, b.y - 4); } else { ctx.moveTo(b.lx, b.y + b.h + 4); ctx.lineTo(b.ax, b.ay - 5); }
       ctx.stroke();
     }
@@ -793,21 +768,21 @@
   let tiny = false;
   const nums = (show) => el.gates.forEach((li) => { const b = li.firstElementChild; if (b && b.tagName === 'B') b.hidden = !show; });
   function measure() {
-    const was = narrow, wasT = tight, wasN = tiny;
+    const was = narrow, wasT = tight, wasN = tiny, top0 = rowTop, Wi = W - 2 * IN;
     if (wasN) { nums(true); tiny = false; }
     if (wasT) root.classList.remove('is-tight');
     if (was) root.classList.remove('is-narrow');
     let need = 14 * (el.gates.length - 1);
     for (const li of el.gates) need += li.offsetWidth / SK;
-    narrow = W < 560 || need > W - 8 - (was ? 72 : 0);
+    narrow = W < 560 || need > Wi - 8 - (was ? 72 : 0);
     tight = false;
     if (narrow) {
       root.classList.add('is-narrow');
       const g = el.gates, up = g.length === 6 ? (g[1].offsetWidth + g[3].offsetWidth + g[5].offsetWidth) / SK + 16 : 0;
-      tight = up > W - 8 - (wasT ? 24 : 0);
+      tight = up > Wi - 8 - (wasT ? 24 : 0);
       if (tight) {
         root.classList.add('is-tight');
-        tiny = g.length === 6 && (g[1].offsetWidth + g[3].offsetWidth + g[5].offsetWidth) / SK + 16 > W - 8 - (wasN ? 24 : 0);
+        tiny = g.length === 6 && (g[1].offsetWidth + g[3].offsetWidth + g[5].offsetWidth) / SK + 16 > Wi - 8 - (wasN ? 24 : 0);
         if (tiny) nums(false);
       }
     }
@@ -820,14 +795,16 @@
     const h = (g) => (lw[g] ? lw[g][1] : 24);
     rowH = Math.max(24, ...el.gates.map((li, g) => (!narrow || g % 2 ? h(g) : 0)));
     botH = narrow ? Math.max(16, ...el.gates.map((li, g) => (g % 2 ? 0 : h(g)))) : 0;
-    return narrow !== was || tight !== wasT || tiny !== wasN;
+    rowTop = 14;
+    if (CLEAR.length) { const t = docTop(cv), b = t + CH; for (const n of CLEAR) { const y = docTop(n), nh = n.offsetHeight; if (nh && y < b && y + nh > t) rowTop = Math.max(rowTop, (y + nh - t) / SK + 20); } }
+    return narrow !== was || tight !== wasT || tiny !== wasN || rowTop !== top0;
   }
   const setPos = (node, x, y) => { const v = `translate3d(${(x * SK).toFixed(1)}px, ${(y * SK).toFixed(1)}px, 0)`; if (node.__t !== v) { node.style.transform = v; node.__t = v; } };
   function spread(row) {
     if (!row.length) return;
     row.sort((p, q) => p.ax - q.ax);
     let tw = 0; for (const b of row) tw += b.w;
-    const gap = tw + 14 * (row.length - 1) <= W - 8 ? 14 : 8, lo = 4, hiX = W - 4;
+    const gap = tw + 14 * (row.length - 1) <= W - 2 * IN - 8 ? 14 : 8, lo = IN + 4, hiX = W - IN - 4;
     for (let k = 0; k < row.length; k++) { const b = row[k]; b.x = Math.max(b.x, lo); if (k) b.x = Math.max(b.x, row[k - 1].x + row[k - 1].w + gap); }
     for (let k = row.length - 1; k >= 0; k--) { const b = row[k]; b.x = Math.min(b.x, (k === row.length - 1 ? hiX : row[k + 1].x - gap) - b.w); }
     row[0].x = Math.max(row[0].x, lo);
@@ -848,14 +825,14 @@
     if (el.ledger && lw[6]) {
       proj(LX + 1, 0, 0); const ex = P_X, ey = P_Y;
       proj(LX + 0.04, 0, 0);
-      const x = clamp(P_X, 4, W - lw[6][0] - 4), k = Math.abs(ex - P_X) > 1 ? (ey - P_Y) / (ex - P_X) : 0;
+      const x = clamp(P_X, IN + 4, W - IN - lw[6][0] - 4), k = Math.abs(ex - P_X) > 1 ? (ey - P_Y) / (ex - P_X) : 0;
       setPos(el.ledger, x, P_Y + Math.max(0, k * (x + lw[6][0] - P_X)) + 12);
     }
-    if (el.banner && lw[7]) setPos(el.banner, narrow ? 8 : W - lw[7][0] - 14, narrow ? H - botH - 18 - lw[7][1] : H - lw[7][1] - 14);
+    if (el.banner && lw[7]) setPos(el.banner, narrow ? IN + 8 : W - IN - lw[7][0] - 14, narrow ? H - botH - 18 - lw[7][1] : H - lw[7][1] - 14);
     if (el.bound && lw[8]) {
       proj(XB, BHY, -BHZ);
       const w = lw[8][0], h = lw[8][1], x = P_X + 8, y = P_Y - h + 2;
-      let ok = !narrow && x + w < W - 6 && y > rowTop + rowH + 6;
+      let ok = !narrow && x + w < W - IN - 6 && y > rowTop + rowH + 6;
       for (const b of lbl) {
         if (!ok) break;
         if (x < b.x + b.w + 8 && x + w > b.x - 8 && y < b.y + b.h + 6 && y + h > b.y - 6) ok = false;
@@ -1301,7 +1278,7 @@
       paused = !paused;
       el.motion.textContent = paused ? 'Resume motion' : 'Pause motion';
       root.classList.toggle('is-paused', paused);
-      if (COPY && paused && !act.done) { act.done = true; act.p = 1; root.dataset.swCopy = '1.00'; actCam(); hc.fill(0); projectAll(); paint(); }
+      if (COPY && paused && !act.done) { actEnd(); projectAll(); paint(); }
       stats(); schedule();
     });
   }
@@ -1338,7 +1315,7 @@
   });
 
   function still() {
-    if (COPY) { act.done = true; act.p = 1; root.dataset.swCopy = '1.00'; actCam(); }
+    if (COPY) actEnd();
     clearFollow();
     seed = 11; reset(); apR = apT; shutK = halted ? 1 : 0; camera(); warmStart();
     const steps = halted ? 100 : 40;
@@ -1390,7 +1367,8 @@
     SK = Math.max(1, (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16); W = CW / SK; H = CH / SK;
     const ndpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(3840 * 2160 / (CW * CH)));
     const rebuild = ndpr !== dpr || !SPR.bead; dpr = ndpr;
-    root.classList.toggle('is-stacked', W < 1100);
+    IN = STAGE ? Math.max(0, (CW - root.clientWidth) / 2 / SK) : 0;
+    root.classList.toggle('is-stacked', W - 2 * IN < 1100);
     cv.width = Math.round(CW * dpr); cv.height = Math.round(CH * dpr);
     const qStart = dpr >= 2 || cv.width * cv.height > 2e6 ? 1 : 2;
     if (quality > qStart) { quality = qStart; root.dataset.swQuality = quality; }
@@ -1422,7 +1400,7 @@
     if (!running() || !onScreen) return;
     const raw = Math.max(0, (now - last) / 1000), dt = Math.min(ema > 0.2 ? 0.5 : 0.25, raw), sub = Math.max(1, Math.ceil(dt / 0.05 - 1e-6)); last = now; frameDt = dt;
     const t0 = performance.now();
-    if (COPY) actStep();
+    if (COPY) actStep(now);
     inLoop = true;
     for (let k = 1; k <= sub; k++) step(dt / sub, k === sub);
     if (mouse) updateHover();

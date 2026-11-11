@@ -1248,18 +1248,27 @@ async def blog(b):
 
 @check
 async def resolution(b):
-    """canvases render at device resolution (2x here), within the UHD budget"""
+    """canvases render at device resolution (2x here), within the UHD budget.
+    hc30r (COMP-1, RES-1; integrate, standing in for tests, on company's and research's requests; TESTS.md section 53):
+    Company's hero dropped its figure.js stage (`[data-figure] canvas` found nothing there) and figure.js draws lattices
+    on a 2D canvas, so the figure clause reads the two figure canvases the site has now: Company's hero
+    (#company-figure canvas, company-hero.js) and the research index's plate (#research-figure canvas, figure.js). The
+    principle is the same and held tighter: each canvas's bitmap is its box in device pixels, in width and in height
+    (within 1; it was the width within 2)."""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=2)
     pg = await ctx.new_page()
     await pg.goto(f"{BASE}/index.html", wait_until="load")
     await pg.wait_for_timeout(3000)
     story = await pg.evaluate("(c => ({w: c.width, cw: c.clientWidth}))(document.querySelector('canvas'))")
     assert story["w"] == story["cw"] * 2, story
-    await pg.goto(f"{BASE}/company.html", wait_until="load")
-    await pg.wait_for_timeout(2500)
-    figs = await pg.evaluate("[...document.querySelectorAll('[data-figure] canvas')].map(c => ({w: c.width, cw: c.clientWidth}))")
-    assert figs and all(abs(f["w"] - f["cw"] * 2) <= 2 for f in figs), figs
-    print(f"resolution: story canvas {story['w']}px for {story['cw']}css px; figures {[(f['cw'], f['w']) for f in figs]}")
+    figs = []
+    for path, sel in (("company.html", "#company-figure canvas"), ("research.html", "#research-figure canvas")):
+        await pg.goto(f"{BASE}/{path}", wait_until="load")
+        await pg.wait_for_timeout(2500)
+        f = await pg.evaluate("(sel) => [...document.querySelectorAll(sel)].map(c => { const r = c.getBoundingClientRect(); return {w: c.width, h: c.height, bw: +(r.width * devicePixelRatio).toFixed(2), bh: +(r.height * devicePixelRatio).toFixed(2), cw: Math.round(r.width)}; })", sel)
+        assert len(f) == 1 and f[0]["w"] > 0 and abs(f[0]["w"] - f[0]["bw"]) <= 1 and abs(f[0]["h"] - f[0]["bh"]) <= 1, (path, sel, "the canvas's bitmap is not its box in device pixels", f)
+        figs += f
+    print(f"resolution: story canvas {story['w']}px for {story['cw']}css px; figures {[(f['cw'], f['w'], f['h']) for f in figs]}")
     await ctx.close()
 
 
@@ -1891,7 +1900,22 @@ async def no_js(b):
 
 @check
 async def no_webgl(b):
-    """no WebGL: the homepage falls back (html.no-webgl) and every figure stage falls back"""
+    """no WebGL: the homepage falls back (html.no-webgl), and every page with a figure still shows a complete picture.
+    hc30r (RES-1, COMP-1; integrate, standing in for tests, on research's and company's requests; TESTS.md section 53):
+    the figures use no WebGL now (figure.js draws lattices on a 2D canvas, a note's hero is its generated still, Company's
+    hero is a 2D canvas of its own), so "every figure stage falls back (.no-figure)" would now assert a fault. The
+    principle, "a page that cannot draw shows a complete picture", is held in both of its cases. Without WebGL the
+    figures are drawn as ever: the index's stage is figure-ready and not no-figure, a note's hero shows its still
+    (svg.fs-still, laid out) and is figure-ready, Company's hero is live. Without any canvas context (getContext
+    returning null for every kind) the pages fall back whole: the index's stage is no-figure, its shelf is no-plate and
+    the list is wider than beside the plate; a note is unchanged (it has no canvas); Company's hero shows its still
+    (company.css brings it in 4 s after the page shows where the script has not gone live) and never says it is live."""
+    FIGS = r"""(() => { const q = s => document.querySelector(s), on = e => !!e && !!e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden';
+      const idx = q('#research-figure'), art = q('.article-figure'), co = q('#company-figure'), shelf = q('.rs-shelf'), list = q('.posts-list');
+      return { idx: idx && { ready: idx.classList.contains('figure-ready'), none: idx.classList.contains('no-figure'), canvas: on(idx.querySelector('canvas')),
+                             noPlate: !!shelf && shelf.classList.contains('no-plate'), listW: list ? Math.round(list.getBoundingClientRect().width) : 0 },
+               art: art && { ready: art.classList.contains('figure-ready'), none: art.classList.contains('no-figure'), still: on(art.querySelector('svg.fs-still')), canvas: !!art.querySelector('canvas') },
+               co: co && { live: co.classList.contains('is-live'), still: on(co.querySelector('svg.plate-still')), canvas: on(co.querySelector('canvas')) } }; })()"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     await ctx.add_init_script("(() => { const o = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function(k, ...a) { return /webgl/.test(k) ? null : o.call(this, k, ...a); }; })();")
     pg = await ctx.new_page()
@@ -1901,14 +1925,41 @@ async def no_webgl(b):
     t_shot = asyncio.get_running_loop().time()
     await pg.screenshot(path=str(OUT / "index-nowebgl.png"))
     print(f"no-WebGL homepage screenshot: {asyncio.get_running_loop().time() - t_shot:.1f}s")
+    seen = {}
     for name in FIGURE_PAGES:
         await pg.goto(f"{BASE}/{name}.html", wait_until="load")
-        await pg.wait_for_timeout(1200)
-        st = await pg.evaluate("[...document.querySelectorAll('[data-figure]')].map(s => s.classList.contains('no-figure'))")
-        assert st and all(st), (name, "figure stage did not fall back without WebGL", st)
+        await pg.wait_for_timeout(1500)
+        st = seen[name] = await pg.evaluate(FIGS)
+        if name == "company": assert st["co"] and st["co"]["live"] and st["co"]["canvas"], (name, "without WebGL Company's hero is not live on its 2D canvas", st)
+        elif name == "research": assert st["idx"] and st["idx"]["ready"] and not st["idx"]["none"] and st["idx"]["canvas"] and not st["idx"]["noPlate"], (name, "without WebGL the index's plate is not drawn", st)
+        else: assert st["art"] and st["art"]["ready"] and not st["art"]["none"] and st["art"]["still"], (name, "without WebGL the note's hero does not show its still", st)
     await pg.screenshot(path=str(OUT / "article-nowebgl.png"))
     await ctx.close()
-    print("fallbacks: no-WebGL homepage + figure stages fall back")
+    # no canvas context of any kind
+    ctx = await b.new_context(viewport={"width": 1440, "height": 900})
+    await ctx.add_init_script("HTMLCanvasElement.prototype.getContext = function () { return null; };")
+    pg = await ctx.new_page()
+    errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    for name in FIGURE_PAGES:
+        await pg.goto(f"{BASE}/{name}.html", wait_until="load")
+        await pg.wait_for_timeout(1500)
+        st = await pg.evaluate(FIGS)
+        if name == "company":
+            # the still comes in 4 s after the page shows (company.css: transition: visibility 0s 4s), not before
+            for _ in range(40):
+                if st["co"] and st["co"]["still"]: break
+                await pg.wait_for_timeout(250); st = await pg.evaluate(FIGS)
+            assert st["co"] and st["co"]["still"] and not st["co"]["live"], (name, "without a canvas context Company's hero does not show its still", st)
+        elif name == "research":
+            assert st["idx"] and st["idx"]["none"] and st["idx"]["noPlate"] and not st["idx"]["canvas"], (name, "without a canvas context the index's stage did not fall back (no-figure, the shelf no-plate)", st)
+            assert st["idx"]["listW"] > seen[name]["idx"]["listW"], (name, "without its plate the list is no wider than beside it", st["idx"]["listW"], seen[name]["idx"]["listW"])
+        else:
+            assert st["art"] and st["art"]["still"] and not st["art"]["canvas"] and st["art"] == seen[name]["art"], (name, "a note's hero changed without a canvas context (it has no canvas)", st, seen[name])
+    await pg.screenshot(path=str(OUT / "company-nocanvas.png"))
+    assert not errs, ("a page threw without a canvas context", errs)
+    await ctx.close()
+    print("fallbacks: the no-WebGL homepage falls back; without WebGL the figures are drawn (the index's plate, a note's still, Company's hero); without any canvas context the index's stage and shelf fall back, a note keeps its still and Company shows its still")
 
 
 # ================================================================ round 1 (v2) guards, one per item of the director's list
@@ -1962,18 +2013,40 @@ HANDOFF = "async (n) => { " + FRAMES + """ await frames(n);
   const nav = document.querySelector('header.nav') || document.querySelector('.nav'), sp = document.querySelector('.story-paper');
   const nb = nav.getBoundingClientRect().bottom, r = sp ? sp.getBoundingClientRect() : null;
   const vis = !!sp && getComputedStyle(sp).visibility !== 'hidden' && r.height > 0.5;
-  return { y: Math.round(scrollY), dark: nav.classList.contains('nav--dark'), vis, top: r ? +r.top.toFixed(1) : null, nb: +nb.toFixed(1) }; }"""
+  // hc30r: what lies under the bar, read with the bar out of the way at three heights round site.js's own probe line
+  // (1.1 bar heights): the top-level band (a child of <main>, or the footer) that is drawn there, and whether it is ink
+  const band = (y) => { let e = document.elementFromPoint(innerWidth / 2, y); while (e && e.parentElement && e.parentElement.id !== 'main' && e.parentElement !== document.body) e = e.parentElement;
+    return e ? { id: e.id || (e.className && String(e.className).split(' ')[0]) || e.tagName, dark: e.classList.contains('is-dark') } : null; };
+  nav.style.visibility = 'hidden'; const under = [nb * 1.1 - 8, nb * 1.1, nb * 1.1 + 8].map(band); nav.style.visibility = '';
+  return { y: Math.round(scrollY), dark: nav.classList.contains('nav--dark'), vis, top: r ? +r.top.toFixed(1) : null, bot: r ? +r.bottom.toFixed(1) : null, nb: +nb.toFixed(1), under }; }"""
 
 
 @check
 async def nav_handoff(b):
     """at 1440, 768 and 390, from story end - innerHeight - 120 to story end + 60 in 20 px steps: the bar is never ink
-    (.nav--dark) while the rising .story-paper is visible with its top at or above the bar's bottom (a one-frame lag that
-    clears within six frames is not counted). hc16 (system's request): and after a one-shot jump, at 1440 x 900 and
-    3840 x 2160: from story end - 2h (the paper hidden, 400 ms), one scrollTo to story end - h + k h / 6 (k = 2..6), read
-    30 frames later: never ink over the paper (20 px steps re-read the paper on every scroll and could not catch a single
-    stale read after a jump; the render frames did)"""
+    (.nav--dark) while the rising .story-paper lies under it (a one-frame lag that clears within six frames is not
+    counted). hc16 (system's request): and after a one-shot jump, at 1440 x 900 and 3840 x 2160: from story end - 2h (the
+    paper hidden, 400 ms), one scrollTo to story end - h + k h / 6 (k = 2..6), read 30 frames later: never ink over the
+    paper (20 px steps re-read the paper on every scroll and could not catch a single stale read after a jump; the render
+    frames did).
+    hc30r (HOME-2; integrate, standing in for tests, on home's request; TESTS.md section 53): the paper is §01 itself and
+    §01 is shorter than the stage it covers, so the lab (an ink chapter since HOME-2) rises over the stage's foot behind
+    it: .story-paper now ends at §01's foot (story.js sets its bottom) and the bar turns to ink there, which is right.
+    "The paper lies under the bar" therefore reads the marker's foot too: its top at or above the bar's foot and its foot
+    below the bar's probe line (1.1 bar heights, site.js's own edge). And the other half of the same principle, which
+    home's fix needed and nothing held (the bar stayed paper over the lab's first 172 px at 1440 x 900): wherever the
+    band under the bar is plainly ink or plainly paper (the same band 8 px above and below the probe line) and the
+    paper's marker is not the thing under the bar, the bar's tone is that band's."""
     bad, n = [], 0
+    over = lambda s: s["vis"] and s["top"] <= s["nb"] and s["bot"] > s["nb"] * 1.1          # the paper under the bar
+    viol = lambda s: s["dark"] and over(s)
+    def tone(s):
+        """the tone the bar should have from the band under it, None where that is the paper's own business or a boundary"""
+        u = s["under"]
+        if over(s) or (s["vis"] and s["top"] <= s["nb"] * 1.1 + 8 and s["bot"] > s["nb"] * 1.1 - 8): return None   # the marker at the probe line
+        if not all(u) or len({(x["id"], x["dark"]) for x in u}) != 1: return None                                   # a boundary between two bands
+        return u[0]["dark"]
+    def wrong(s): t = tone(s); return t is not None and t != s["dark"]
     for w, h in ((1440, 900), (3840, 2160)):
         ctx, pg = await open_page(b, "index.html", w, h)
         end = await story_end(pg)
@@ -1983,26 +2056,29 @@ async def nav_handoff(b):
             await pg.evaluate(f"window.scrollTo({{top: {end - 2 * h}, behavior: 'instant'}})"); await pg.wait_for_timeout(400)
             await pg.evaluate(f"window.scrollTo({{top: {y}, behavior: 'instant'}})")
             s = await pg.evaluate(HANDOFF, 30); n += 1
-            if s["vis"] and s["top"] <= s["nb"]: seen += 1
-            if s["dark"] and s["vis"] and s["top"] <= s["nb"]: bad.append(f"index.html@{w}x{h} jump to y={y}: nav--dark 30 frames after the jump with the paper's top at {s['top']} <= bar bottom {s['nb']}")
-        if not seen: bad.append(f"index.html@{w}x{h}: no jump landed with the paper at the bar (nothing was tested)")
+            if over(s): seen += 1
+            if viol(s): bad.append(f"index.html@{w}x{h} jump to y={y}: nav--dark 30 frames after the jump with the paper under the bar (its top at {s['top']}, its foot at {s['bot']}; bar bottom {s['nb']})")
+            elif wrong(s): bad.append(f"index.html@{w}x{h} jump to y={y}: the bar is {'ink' if s['dark'] else 'paper'} 30 frames after the jump over {s['under'][1]['id']!r}, {'an ink' if s['under'][1]['dark'] else 'a paper'} band")
+        if not seen: bad.append(f"index.html@{w}x{h}: no jump landed with the paper under the bar (nothing was tested)")
         await ctx.close()
     for w, h in ((1440, 900), (768, 1024), (390, 844)):
         ctx, pg = await open_page(b, "index.html", w, h)
         end = await story_end(pg)
-        seen = 0
+        seen, tones = 0, set()
         for y in range(end - h - 120, end + 61, 20):
             await pg.evaluate(f"window.scrollTo({{top: {y}, behavior: 'instant'}})")
             s = await pg.evaluate(HANDOFF, 2); n += 1
-            viol = lambda s: s["dark"] and s["vis"] and s["top"] <= s["nb"]
-            if s["vis"] and s["top"] <= s["nb"]: seen += 1
-            if viol(s):
+            if over(s): seen += 1
+            if tone(s) is not None: tones.add(tone(s))
+            if viol(s) or wrong(s):
                 s2 = await pg.evaluate(HANDOFF, 6)
-                if viol(s2): bad.append(f"index.html@{w}x{h} y={y}: nav--dark with the paper's top at {s2['top']} <= bar bottom {s2['nb']}")
-        if not seen: bad.append(f"index.html@{w}x{h}: the paper never reached the bar in the hand-off window (nothing was tested)")
+                if viol(s2): bad.append(f"index.html@{w}x{h} y={y}: nav--dark with the paper under the bar (its top at {s2['top']}, its foot at {s2['bot']}; bar bottom {s2['nb']})")
+                elif wrong(s2): bad.append(f"index.html@{w}x{h} y={y}: the bar is {'ink' if s2['dark'] else 'paper'} over {s2['under'][1]['id']!r}, {'an ink' if s2['under'][1]['dark'] else 'a paper'} band")
+        if not seen: bad.append(f"index.html@{w}x{h}: the paper never lay under the bar in the hand-off window (nothing was tested)")
+        if True not in tones: bad.append(f"index.html@{w}x{h}: no ink band stood under the bar in the hand-off window (the bar's tone over ink was not tested)")
         await ctx.close()
-    assert not bad, f"nav_handoff: {len(bad)} ink samples over the paper:\n  " + "\n  ".join(bad[:12])
-    print(f"nav_handoff: {n} samples (steps at 1440, 768, 390; one-shot jumps at 1440 and 3840); the bar is never ink over the rising paper")
+    assert not bad, f"nav_handoff: {len(bad)} samples with the bar in the wrong tone:\n  " + "\n  ".join(bad[:12])
+    print(f"nav_handoff: {n} samples (steps at 1440, 768, 390; one-shot jumps at 1440 and 3840); the bar is never ink over the rising paper, and it takes the tone of the band under it on either side of the paper")
 
 
 # ---- the ledger panel never moves the page (LG2)
@@ -2708,10 +2784,14 @@ PILL_ACTIVE = """() => { const a = document.activeElement, sh = document.querySe
 async def pill_focus(b):
     """v2x r5 (system; r5-a11y moderate), re-expressed for the 1 Nov cut: under 961 px there is one menu control. The
     readout's pill is not drawn (it read as a second menu beside the toggle; the owner's cut took the bar's running head
-    away); Enter on the menu toggle opens the sheet with this page's chapters first and the reader's chapter marked
-    (a[aria-current] is the chapter the bar names for where the reader is); Tab enters the sheet on a chapter link with
-    its visible ring (:focus-visible); Escape closes the sheet and returns focus to the toggle. Home 390 (touch),
-    Platform 900, Trust 390 (touch), each read with the reader 45% down the page."""
+    away); Enter on the menu toggle opens the sheet with the reader's chapter marked (a[aria-current] is the chapter the
+    bar names for where the reader is); Tab enters the sheet on a link with its visible ring (:focus-visible); Escape
+    closes the sheet and returns focus to the toggle. Home 390 (touch), Platform 900, Trust 390 (touch), each read with
+    the reader 45% down the page.
+    hc30r (system; RETHINK-hc30 SYS-6, the director's HC30 item 11: "a visitor who opens the menu wants the site first"):
+    the sheet leads with the site. In its own order (the order Tab walks): the six pages, then Request access, then "On
+    this page" and the chapters (was: the chapters first, pinned here since the 1 Nov cut); the chapter rows carry no
+    hairline at their right but the reader's own (its progress)."""
     said = []
     for path, w, h, touch in (("index.html", 390, 844, True), ("platform.html", 900, 900, False), ("trust.html", 390, 844, True)):
         ctx, pg = await open_page(b, path, w, h, dpr=2 if touch else 1, touch=touch)
@@ -2722,8 +2802,10 @@ async def pill_focus(b):
         await pg.focus(".nav-toggle"); await pg.keyboard.press("Enter")
         st = await until(pg, """(() => { const sh = document.querySelector('#site-menu'); if (!sh || !sh.matches(':popover-open')) return null;
           const cur = sh.querySelector('.nav-ch-list a[aria-current]'), lab = (document.querySelector('.nav-ch-btn') || { getAttribute: () => '' }).getAttribute('aria-label') || '';
-          const first = sh.querySelector('a[href], button'), t = cur && (cur.querySelector('.t') || cur);
-          return { current: t ? t.textContent.trim() : null, label: lab.split(' · ')[0], firstIsChapter: !!first && !!first.closest('.nav-ch-list') }; })()""", 3000)
+          const t = cur && (cur.querySelector('.t') || cur);
+          const order = [...sh.querySelectorAll('a[href], button')].filter(e => e.getClientRects().length).map(e => e.closest('.nav-sheet-links') ? 'page' : e.matches('.btn') ? 'access' : e.closest('.nav-ch-list') ? 'chapter' : e.matches('.nav-ch-top') ? 'top' : 'other');
+          const lines = [...sh.querySelectorAll('.nav-ch-list a')].filter(a => getComputedStyle(a.querySelector('.p')).visibility !== 'hidden').map(a => a.getAttribute('aria-current'));
+          return { current: t ? t.textContent.trim() : null, label: lab.split(' · ')[0], order, lines }; })()""", 3000)
         await pg.keyboard.press("Tab"); await pg.wait_for_timeout(250)
         a1 = await pg.evaluate(PILL_ACTIVE)
         await pg.keyboard.press("Escape"); await pg.wait_for_timeout(500)
@@ -2731,10 +2813,13 @@ async def pill_focus(b):
         await ctx.close()
         where = f"{path}@{w}"
         assert not pill, f"pill_focus {where}: the readout's pill is drawn beside the menu toggle under 961 px (two menus)"
-        assert st and st["firstIsChapter"] and st["current"] and st["current"] in st["label"], f"pill_focus {where}: Enter on the toggle: the sheet {st} (want it open, this page's chapters first, the reader's chapter marked as the bar names it)"
+        assert st and st["current"] and st["current"] in st["label"], f"pill_focus {where}: Enter on the toggle: the sheet {st} (want it open, the reader's chapter marked as the bar names it)"
+        ch = len([k for k in st["order"] if k == "chapter"])
+        assert st["order"] == ["page"] * 6 + ["access"] + ["chapter"] * ch + ["top"] and ch >= 2, f"pill_focus {where}: the sheet's order is {st['order']} (the six pages, Request access, then this page's chapters and Back to top)"
+        assert st["lines"] == ["true"], f"pill_focus {where}: {len(st['lines'])} chapter rows draw their hairline ({st['lines']}); only the reader's chapter keeps its own"
         assert a1 and a1["inSheet"] and a1["tag"] == "A" and a1["ring"], f"pill_focus {where}: Tab after opening the sheet left focus on {a1} (want a link inside the sheet, with its visible ring)"
         assert a2["toggle"] and not a2["open"], f"pill_focus {where}: Escape in the sheet left {a2} (want the sheet closed and focus on the toggle)"
-        said.append(f"{where}: no pill; Enter on the toggle -> sheet, '{st['current']}' marked current; Tab -> '{a1['text']}' (ring); Escape -> the toggle")
+        said.append(f"{where}: no pill; Enter on the toggle -> sheet (six pages, Request access, {ch} chapters), '{st['current']}' marked current; Tab -> '{a1['text']}' (ring); Escape -> the toggle")
     print("pill_focus: " + "; ".join(said))
 
 
@@ -4608,6 +4693,100 @@ async def close_step(b):
     print(f"close_step: eight closes on the H1 step, inside their columns, each with the fine globe behind it from the band's ::before, none before it reveals, at once without JS (Proof {'; '.join(notes)})")
 
 
+# ---- hc30r (system; RETHINK-hc30 SYS-4, the director's HC30 item 9; EVOLVE "Owner, 8 Nov" motion conditions): the close
+# closes the loop
+CLOSE_LOOP = r"""(() => { const c = document.querySelector('main > .cta-band'); if (!c) return null; const r = c.getBoundingClientRect();
+  const a = getComputedStyle(c, '::after'), b = getComputedStyle(c, '::before');
+  const an = c.getAnimations({ subtree: true }).map(x => ({ n: x.animationName || '', pe: (x.effect && x.effect.pseudoElement) || '', st: x.playState, d: x.effect ? x.effect.getComputedTiming().duration : 0,
+    it: x.effect ? String(x.effect.getComputedTiming().iterations) : '', tl: x.timeline === document.timeline ? 'time' : 'view' }));
+  const m = /matrix\(([^)]+)\)/.exec(a.transform), gw = parseFloat(b.width), gy = parseFloat(b.bottom), br = { l: parseFloat(b.left), t: parseFloat(b.top) };
+  return { top: r.top, h: r.height, H: innerHeight, p: +getComputedStyle(c).getPropertyValue('--scene-p'), whole: c.classList.contains('is-whole'), off: c.classList.contains('is-offscreen'),
+    inn: !!c.querySelector('[data-reveal].is-in'), mask: b.maskImage || b.webkitMaskImage || 'none', comp: b.maskComposite || '', bead: a.content === 'none' || a.content === 'normal' ? null : { op: +a.opacity, w: parseFloat(a.width), bg: a.backgroundColor,
+      at: m ? [+m[1].split(',')[4], +m[1].split(',')[5]] : [0, 0], c: [parseFloat(a.left) + parseFloat(a.marginLeft) + parseFloat(a.width) / 2 - br.l, parseFloat(a.top) + parseFloat(a.marginTop) + parseFloat(a.height) / 2 - br.t] }, gw, gy, an,
+    end: Math.round(document.documentElement.scrollHeight - innerHeight - scrollY) }; })()"""
+
+
+@check
+async def close_loop(b):
+    """hc30r (system; RETHINK-hc30 SYS-4, the director's HC30 item 9): every page ended on a still. On Proof and the blog
+    index at 1440 x 900 and with touch at 390 x 844, with motion: before the close is on screen its ring is not drawn
+    (--scene-p 0); as the band rises the ring is drawn round once with the scroll (--scene-p never falls while scrolling
+    down), by a mask on the band's ::before (a conic gradient: the
+    globe's own picture is untouched) with one green bead at its tip (the band's ::after: on the ring's ellipse, 104/240
+    of the globe's width from its centre, within 3 px); when the ring is whole the band takes .is-whole, the scroll
+    animation is gone, and the bead runs the ellipse on the clock (close-lap, 20 s, endless, a transform: nothing on the
+    main thread); scrolling back up never un-draws it (drawn once); with the close off screen the lap is paused. Under
+    reduced motion and without JavaScript: the whole ring, no mask, no bead, nothing animated.
+    hc30r, third sitting (system): the ring is drawn while it stands on screen, not while it enters (on a phone the whole
+    drawing happened in the last 55 px above the fold). The clause "whole by the time the whole band is in view" now
+    reads: nothing is drawn before the ring's centre has crossed the foot of the screen (--scene-p under .02 there), and
+    the ring is whole when its centre stands .45 of the globe's width above it (the band's foot `-bottom - .05 width` of
+    the globe above the fold), which every page reaches before its end (at least 40 px of scroll left). The walk runs
+    from the band's top at the fold to that point."""
+    bad, notes = [], []
+    for path in ("evidence.html", "blog/index.html"):
+        for w, h, dpr, touch in ((1440, 900, 1, False), (390, 844, 3, True)):
+            tag = f"{path}@{w}x{h}"
+            ctx, pg = await open_page(b, path, w, h, dpr=dpr, touch=touch)
+            top = await pg.evaluate("(() => { const c = document.querySelector('main > .cta-band'); return c ? c.getBoundingClientRect().top + scrollY : null; })()")
+            if top is None: bad.append(f"{tag}: no close"); await ctx.close(); continue
+            bh = await pg.evaluate("document.querySelector('main > .cta-band').offsetHeight")
+            await pg.evaluate(f"window.scrollTo({{top: {max(0, top - h - 40)}, behavior: 'instant'}})"); await pg.wait_for_timeout(500)
+            r0 = await pg.evaluate(CLOSE_LOOP)
+            if r0["p"] > 0.001 or r0["whole"]: bad.append(f"{tag}: before the close is on screen its ring reads --scene-p {r0['p']} (whole: {r0['whole']})")
+            if "conic-gradient" not in r0["mask"]: bad.append(f"{tag}: the ring is not drawn by a mask on the band's ::before ({r0['mask'][:60]!r})")
+            if not r0["bead"]: bad.append(f"{tag}: no bead (the band's ::after)")
+            ps, seen_mid = [], None
+            done = bh + (-r0["gy"] - r0["gw"] * .05)   # the band's foot this far above the fold: the ring's centre .45 of the globe's width up
+            for k in range(0, 41):
+                y = top - h + (done + 6) * k / 40
+                await pg.evaluate(f"window.scrollTo({{top: {y}, behavior: 'instant'}})"); await pg.wait_for_timeout(120)
+                r = await pg.evaluate(CLOSE_LOOP); ps.append(r["p"])
+                centre = r["H"] - (r["top"] + r["h"]) + r["gw"] / 2 + r["gy"]   # the ring's centre above the fold
+                if centre < -2 and r["p"] > 0.02: bad.append(f"{tag}: the ring is part drawn (--scene-p {r['p']:.2f}) with its centre still {-centre:.0f} px under the fold")
+                if k == 40 and r["end"] < 40: bad.append(f"{tag}: the ring is whole only {r['end']} px before the page's end")
+                if r["bead"] and 0.15 < r["p"] < 0.85 and r["inn"] and not r["whole"]: seen_mid = r
+            if any(q < p - 0.002 for p, q in zip(ps, ps[1:])): bad.append(f"{tag}: --scene-p falls while the band rises ({[round(p, 2) for p in ps]})")
+            if ps[-1] < 0.999: bad.append(f"{tag}: with its centre .45 of the globe's width above the fold the ring is not whole (--scene-p {ps[-1]:.2f})")
+            if not [p for p in ps if 0.02 < p < 0.98]: bad.append(f"{tag}: the ring is never part drawn on the way in ({[round(p, 2) for p in ps]}): it is not tied to the scroll")
+            if seen_mid:
+                bd, gw = seen_mid["bead"], seen_mid["gw"]
+                dx, dy = bd["c"][0] + bd["at"][0] - gw / 2, bd["c"][1] + bd["at"][1] - gw / 2   # the bead from the globe's centre
+                import math
+                t = math.radians(4); u, v = dx * math.cos(t) - dy * math.sin(t), dx * math.sin(t) + dy * math.cos(t)   # into the ellipse's own axes (it is tilted -4 deg)
+                off = abs(math.hypot(u / (gw * 104 / 240), v / (gw * 24 / 240)) - 1) * gw * 24 / 240
+                if off > 3: bad.append(f"{tag}: at --scene-p {seen_mid['p']:.2f} the bead is {off:.1f} px off the ring's ellipse (at {dx:.0f}, {dy:.0f} from the globe's centre, globe {gw:.0f} px)")
+                if bd["op"] < 0.99 or bd["bg"] != "rgb(79, 203, 147)": bad.append(f"{tag}: the bead at opacity {bd['op']:.2f}, {bd['bg']} (1, signal bright)")
+            else: bad.append(f"{tag}: no step showed the bead on a part-drawn ring")
+            await pg.evaluate("window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'})"); await pg.wait_for_timeout(700)
+            e = await pg.evaluate(CLOSE_LOOP)
+            lap = [a for a in e["an"] if a["n"] == "close-lap"]
+            if not e["whole"] or e["p"] < 0.999: bad.append(f"{tag}: at the page's end the ring is not whole (.is-whole {e['whole']}, --scene-p {e['p']})")
+            if [a for a in e["an"] if a["n"] == "scene-p"]: bad.append(f"{tag}: once whole the band still runs its scroll animation")
+            if not lap or lap[0]["pe"] != "::after" or lap[0]["st"] != "running" or abs(lap[0]["d"] - 20000) > 1 or lap[0]["it"] != "Infinity" or lap[0]["tl"] != "time":
+                bad.append(f"{tag}: once whole the bead does not run its lap (close-lap on ::after, running, 20 s, endless): {lap or e['an']}")
+            await pg.evaluate(f"window.scrollTo({{top: {top - h + bh * 0.5}, behavior: 'instant'}})"); await pg.wait_for_timeout(400)
+            u = await pg.evaluate(CLOSE_LOOP)
+            if not u["whole"] or u["p"] < 0.999: bad.append(f"{tag}: scrolling back up un-draws the ring (--scene-p {u['p']}): it is drawn once")
+            await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(600)
+            o = await pg.evaluate(CLOSE_LOOP)
+            run = [a for a in o["an"] if a["n"] == "close-lap" and a["st"] == "running"]
+            if run and o["off"]: bad.append(f"{tag}: with the close off screen its bead still runs")
+            if path == "evidence.html": notes.append(f"{w}: drawn over {len([p for p in ps if 0 < p < 1])} of 41 steps")
+            await ctx.close()
+    for mode, kw in (("reduced motion", dict(reduced=True)), ("no JavaScript", dict(js=False))):
+        ctx, pg = await open_page(b, "evidence.html", 1440, 900, **kw)
+        await pg.evaluate("(() => { const c = document.querySelector('main > .cta-band'); c.scrollIntoView({block: 'center', behavior: 'instant'}); })()"); await pg.wait_for_timeout(900)
+        r = await pg.evaluate(CLOSE_LOOP)
+        await ctx.close()
+        if r["bead"]: bad.append(f"evidence.html@1440x900, {mode}: a bead is drawn ({r['bead']})")
+        if "conic-gradient" in r["mask"]: bad.append(f"evidence.html@1440x900, {mode}: the ring is masked")
+        if r["an"]: bad.append(f"evidence.html@1440x900, {mode}: the close animates ({r['an'][:2]})")
+        if abs(r["p"] - 1) > 0.001: bad.append(f"evidence.html@1440x900, {mode}: --scene-p {r['p']} (1: the whole ring)")
+    assert not bad, "close_loop:\n  " + "\n  ".join(bad[:24])
+    print(f"close_loop: the close's ring is drawn round once with the scroll, a bead at its tip, then the bead laps on the clock; drawn once, paused off screen, whole and still under reduced motion and without JavaScript (Proof {'; '.join(notes)})")
+
+
 # hc29 (integrate, standing in for tests; home's request, the HC29 director's item 1): the record row on paper left with
 # the strip (§01 itself is the paper now); the probe reads S4's parts: the headline, the lede, its last line, the shown
 # labels (each with its effective opacity, ancestors included) and the stage's canvas, against the paper's edge
@@ -4773,10 +4952,17 @@ STACK_SCENE = r"""(() => { const f = document.querySelector('[data-plate="stack"
            lay: pl.length, y: scrollY, H: innerHeight }; })()"""
 COST_SCENE = r"""(() => { const fig = document.querySelector('#economics figure.cost'); if (!fig) return null;
   const rows = [...fig.querySelectorAll('.pf-ck > div')];
+  const shown = e => { const cs = getComputedStyle(e), m = (cs.clipPath || '').match(/^inset\(([^)]*)\)/); let cut = 0;
+    if (m) { const p = m[1].trim().split(/\s+/), rgt = p.length > 1 ? p[1] : p[0]; cut = /%$/.test(rgt) ? parseFloat(rgt) / 100 : parseFloat(rgt) / (e.getBoundingClientRect().width || 1); }
+    return +cs.opacity * Math.max(0, 1 - cut); };
   return { top: fig.getBoundingClientRect().top + scrollY, H: innerHeight, dec: fig.classList.contains('is-dec') && !!fig.querySelector('.pf-ck'),
     rows: rows.map(d => { const r = d.getBoundingClientRect(), g = [...d.querySelectorAll('.cost-blk .is-gone, .cost-blk .is-rest')];
-      const op = g.map(i => { const s = getComputedStyle(i, '::before'); return s.content === 'none' ? 0 : +s.opacity; });
+      const cover = i => { const s = getComputedStyle(i, '::before'); return s.content === 'none' ? 0 : +s.opacity; };
+      const op = g.map(cover), all = [...d.querySelectorAll('.cost-blk .is-gone, .cost-blk .is-rest, .cost-blk .is-part')].map(cover), em = d.querySelector('.cost-db em');
       return { t: r.top, h: r.height, prog: (innerHeight - r.top) / (innerHeight + r.height), cp: +getComputedStyle(d).getPropertyValue('--scene-p'), out: g.length, max: op.length ? Math.max(...op) : 0, min: op.length ? Math.min(...op) : 0,
+               // hc30r (PROOF-1): the drain steps. mid: units whose cover is neither there nor gone; on: units still covered; em: "Eliminated"
+               // (how much of the word shows: its opacity times the part its clip leaves, 0 while it is clipped away)
+               mid: all.filter(v => v > .02 && v < .98).length, on: op.filter(v => v >= .98).length, em: em ? shown(em) : null,
                anims: d.getAnimations().length }; }) }; })()"""
 
 
@@ -4800,7 +4986,13 @@ async def scroll_scenes(b):
     hc29 (integrate, standing in for tests; home's request, the HC29 director's item 3: "one dataset, one picture"): Home
     §03 is now the same rows component (`figure.cost[data-cost-view="rows"]`, proof.js rows(), the same data-scene rows
     and range), so the Proof half runs on Home's #economics too, with the same pictures and the same reduced-motion still;
-    on both pages the figure must be in its rows view (.is-dec with its key rows)."""
+    on both pages the figure must be in its rows view (.is-dec with its key rows).
+    hc30r (PROOF-1; integrate, standing in for tests, on proof's request; TESTS.md section 53): the rows are drawn on one
+    grid of units and the drain steps: a unit is ink or hollow at every scroll offset, never a blend, and "Eliminated"
+    arrives when its row has emptied. The rows' ranges are their own now (cover 12%-52%, 12%-46%, 9%-30%), so "risen" is
+    read past the longest (53%; it was 41%). New, on both pages with motion: at 16 offsets from the first row entering to
+    the last row risen, no unit's cover is between 0 and 1, the count of covered units never rises as the page goes down,
+    and "Eliminated" is shown only on a row whose every unit is hollow; at the end every row that has the word shows it."""
     bad, notes = [], []
     for w, h, dpr, touch, rms in ((960, 900, 1, False, (False, True)), (1440, 900, 1, False, (True,)), (390, 844, 3, True, (False, True))):
         for reduced in rms:
@@ -4836,27 +5028,47 @@ async def scroll_scenes(b):
             # entering: the first row's top 2 px above the screen's foot; past the middle: the last row's top at 30% of the screen
             first = g["rows"][0]["t"] + (await pg.evaluate("scrollY"))
             last = g["rows"][-1]["t"] + (await pg.evaluate("scrollY"))
-            await pg.evaluate(f"window.scrollTo({{top: {first} - innerHeight + 2, behavior: 'instant'}})"); await pg.wait_for_timeout(600)
+            y_in, y_out = first - h + 2, last - h * .3
+            await pg.evaluate(f"window.scrollTo({{top: {y_in}, behavior: 'instant'}})"); await pg.wait_for_timeout(600)
             a = await pg.evaluate(COST_SCENE)
-            await pg.evaluate(f"window.scrollTo({{top: {last} - innerHeight * .3, behavior: 'instant'}})"); await pg.wait_for_timeout(600)
+            steps = []
+            if not reduced:
+                # hc30r: the drain, offset by offset (the two ends are read below as before)
+                for k in range(1, 16):
+                    await pg.evaluate(f"window.scrollTo({{top: {y_in + (y_out - y_in) * k / 16}, behavior: 'instant'}})"); await pg.wait_for_timeout(250)
+                    steps.append(await pg.evaluate(COST_SCENE))
+            await pg.evaluate(f"window.scrollTo({{top: {y_out}, behavior: 'instant'}})"); await pg.wait_for_timeout(600)
             z = await pg.evaluate(COST_SCENE)
             await ctx.close()
             if not any(r["out"] for r in z["rows"]): bad.append(f"{tag}: no emptied blocks in the index"); continue
             if reduced:
                 for k, s in (("entering", a), ("past the middle", z)):
                     if any(abs(r["cp"] - 1) > 0.001 or r["max"] > 0.001 or r["anims"] for r in s["rows"]): bad.append(f"{tag} {k}: under reduced motion a row is not the still picture ({[(round(r['cp'], 2), round(r['max'], 2), r['anims']) for r in s['rows']]})")
+                    if any(r["em"] is not None and r["em"] < 0.98 for r in s["rows"]): bad.append(f"{tag} {k}: under reduced motion a row's 'Eliminated' is not shown ({[r['em'] for r in s['rows']]})")
                 continue
-            # a row's own view timeline runs from cover 10% to cover 40%: entering (<= 9%) it is filled, risen (>= 41%) it is still
+            # a row's own view timeline starts at cover 9% or later and ends by cover 52%: entering (<= 9%) it is filled,
+            # risen (>= 53%) it is still
             for i, r in enumerate(a["rows"]):
                 if r["prog"] > 0.09: continue
                 if r["cp"] > 0.02 or (r["out"] and r["min"] < 0.98): bad.append(f"{tag}: row {i + 1} entering is not filled (--scene-p {r['cp']:.2f}, blocks {r['min']:.2f}-{r['max']:.2f})")
             if a["rows"][0]["prog"] > 0.09: bad.append(f"{tag}: the first row did not stand at the screen's foot (cover {a['rows'][0]['prog']:.2f})")
             for i, r in enumerate(z["rows"]):
-                if r["prog"] < 0.41: bad.append(f"{tag}: row {i + 1} did not rise past its range (cover {r['prog']:.2f})"); continue
+                if r["prog"] < 0.53: bad.append(f"{tag}: row {i + 1} did not rise past its range (cover {r['prog']:.2f})"); continue
                 if r["cp"] < 0.98 or r["max"] > 0.02: bad.append(f"{tag}: row {i + 1} past the middle is not the still picture (--scene-p {r['cp']:.2f}, a block at {r['max']:.2f})")
-            notes.append(f"cost {path.split('.')[0]} {w}: {a['rows'][0]['cp']:.2f} -> {min(r['cp'] for r in z['rows']):.2f}")
+                if r["em"] is not None and r["em"] < 0.98: bad.append(f"{tag}: row {i + 1} past the middle does not show 'Eliminated' (opacity {r['em']:.2f})")
+            # hc30r: the steps
+            walk = [a] + steps + [z]
+            covered = [sum(r["on"] for r in s["rows"]) for s in walk]
+            for k, s in enumerate(walk):
+                for i, r in enumerate(s["rows"]):
+                    if r["mid"]: bad.append(f"{tag} at offset {k} of 16: row {i + 1} has {r['mid']} unit(s) between ink and hollow (the drain steps, never a blend)")
+                    if r["em"] is not None and r["em"] > 0.02 and r["on"]: bad.append(f"{tag} at offset {k} of 16: row {i + 1} shows 'Eliminated' (opacity {r['em']:.2f}) with {r['on']} unit(s) still covered")
+            up = [k for k in range(1, len(covered)) if covered[k] > covered[k - 1]]
+            if up: bad.append(f"{tag}: covered units rise as the page goes down ({covered})")
+            if covered[0] <= covered[-1]: bad.append(f"{tag}: nothing drained between the first row entering and the last row risen ({covered})")
+            notes.append(f"cost {path.split('.')[0]} {w}: {a['rows'][0]['cp']:.2f} -> {min(r['cp'] for r in z['rows']):.2f}, covered units {covered[0]} -> {covered[-1]} in {len(set(covered))} steps")
     assert not bad, "scroll_scenes:\n  " + "\n  ".join(bad[:24])
-    print(f"scroll_scenes: Platform's stack parts on the page's scroll and the cost index (Proof §02, Home §03) empties as it rises; reduced motion keeps them still ({'; '.join(notes)})")
+    print(f"scroll_scenes: Platform's stack parts on the page's scroll and the cost index (Proof §02, Home §03) empties as it rises, unit by unit, never blended; reduced motion keeps them still ({'; '.join(notes)})")
 
 
 # ---- hc26r (system): SYS-1, one scroll-scene primitive (site.css v2:scenes, site.js); SYS-2, the drawing travels
@@ -5056,6 +5268,185 @@ async def vt_fig(b):
         await ctx.close()
     assert not bad, "vt_fig:\n  " + "\n  ".join(bad[:24])
     print(f"vt_fig: Home §05's first card turns into note 01's hero ({'; '.join(notes)}); no turn under reduced motion")
+
+
+# ---- hc30r (system; RETHINK-hc30 SYS-2, under EVOLVE's "Owner, 8 Nov" motion conditions): the page turn is the boundary.
+# The recorder runs in the page you reach (pagereveal) and reads, frame by frame, the transition's pseudo-elements and the
+# first band's own animations; JUMP_REC does the same for an in-page jump (a same-document transition)
+TURN_REC = r"""(() => { const ids = new WeakMap(); let nid = 0; const idOf = a => { if (!ids.has(a)) ids.set(a, ++nid); return ids.get(a); };
+  const rec = (R, vt) => { const root = document.documentElement, cs = n => getComputedStyle(root, n);
+  const f = () => { const an = document.getAnimations().filter(a => a.effect && /^::view-transition/.test(a.effect.pseudoElement || ''));
+    if (an.length) { an.forEach(a => { const n = a.effect.pseudoElement.replace('::view-transition-', ''); if (!R.names.includes(n)) R.names.push(n); });
+      const g = an.find(a => a.effect.pseudoElement === '::view-transition-image-pair(root)'), first = document.querySelector('main > :first-child');
+      const bar = ['old', 'new'].map(k => R.names.includes(k + '(site-nav)') ? +cs('::view-transition-' + k + '(site-nav)').opacity : null);
+      const live = first && !first.classList.contains('story') ? first.getAnimations({ subtree: true }).filter(a => a.timeline === document.timeline && a.effect.getComputedTiming().iterations !== Infinity && a.playState !== 'finished').map(a => (a.animationName || a.transitionProperty || '?') + '#' + idOf(a)) : [];
+      try { if (vt) R.types = [...vt.types]; } catch (err) { }
+      const m = /matrix\(([^)]+)\)/.exec(cs('::view-transition-image-pair(root)').transform);
+      R.f.push({ t: Math.round(performance.now()), p: g ? +(g.effect.getComputedTiming().progress || 0).toFixed(3) : null, g: g ? g.animationName : null,
+        end: Math.max(...an.map(a => a.effect.getComputedTiming().endTime || 0)),
+        fade: an.filter(a => /-(old|new)\((root|leave)\)$/.test(a.effect.pseudoElement) && a.effect.getKeyframes().some(k => k.opacity !== undefined || k.scale !== undefined)).map(a => a.effect.pseudoElement),
+        old: an.filter(a => /-old\((root|leave)\)$/.test(a.effect.pseudoElement)).map(a => a.animationName), oldOp: +cs('::view-transition-old(leave)').opacity,
+        leave: cs('::view-transition-group(leave)').width, clip: cs('::view-transition-group(root)').overflow + ' ' + cs('::view-transition-image-pair(root)').overflow, z: [cs('::view-transition-group(leave)').zIndex, cs('::view-transition-group(root)').zIndex],
+        top: parseFloat(cs('::view-transition-group(root)').top), navh: parseFloat(getComputedStyle(root).getPropertyValue('--nav-h')), bar,
+        rule: cs('::view-transition-image-pair(root)').boxShadow, ty: m ? +(+m[1].split(',')[5]).toFixed(1) : 0, live, vtin: root.classList.contains('vt-in'), jump: root.dataset.jump || '' }); }
+    if (an.length || (R.k = (R.k || 0) + 1) < 4) requestAnimationFrame(f); else R.done = true; };
+  requestAnimationFrame(f); };
+  window.__turnRec = () => { const R = window.__turn = { vt: true, f: [], types: [], names: [], H: innerHeight }; rec(R, null); };
+  addEventListener('pagereveal', e => { const R = window.__turn = { vt: !!e.viewTransition, f: [], types: [], names: [], H: innerHeight }; if (e.viewTransition) rec(R, e.viewTransition); else R.done = true; }); })()"""
+GREENS = ("rgb(79, 203, 147)", "rgb(30, 122, 90)")
+
+
+def turn_issues(tag, r, *, back=False, jump=""):
+    """one recorded turn against the principle: the page you leave is whole and still above the rule (its own name, no
+    animation, opacity 1), the page you reach is revealed under it (a clipping window that only translates: no fade, no
+    scale) on a stage that starts at the bar's foot (the rule stops there), the bar is held with the page you leave and
+    switched at the turn's end (its two views are never both drawn and never part-faded), the rule is the two signal
+    greens, the turn is over by 550 ms, and it runs the other way on Back / a jump up"""
+    bad = []
+    if not r or not r.get("vt") or not r.get("f"): return [f"{tag}: no page turn ran ({str(r)[:160]})"]
+    f, H = r["f"], r["H"]
+    if "image-pair(root)" not in r["names"] or "new(root)" not in r["names"]: bad.append(f"{tag}: the turn has no window on the page you reach ({r['names'][:8]})")
+    if "old(root)" in r["names"] or any(x["leave"] == "auto" for x in f[:-1]): bad.append(f"{tag}: the page you leave did not take its own name ('leave'): old(root) {'old(root)' in r['names']}, group(leave) width {f[0]['leave']}")
+    fade = sorted({n for x in f for n in x["fade"]}); moved = sorted({n for x in f for n in x["old"] if n and n != "none"})
+    if fade: bad.append(f"{tag}: a page view fades or scales during the turn ({fade}): never a fade")
+    if moved or any(x["oldOp"] < 0.999 for x in f): bad.append(f"{tag}: the page you leave is not still and opaque for the whole turn (animations {moved}, opacity {min(x['oldOp'] for x in f)})")
+    if any(x["clip"] != "clip clip" for x in f): bad.append(f"{tag}: the stage and the window on the page you reach do not both clip it (overflow {f[0]['clip']})")
+    if any(abs(x["top"] - x["navh"]) > 1.5 for x in f): bad.append(f"{tag}: the stage starts at {f[0]['top']} px, the bar's foot is at {f[0]['navh']} px (the rule stops at the bar's foot)")
+    mixed = [x["bar"] for x in f if x["bar"][0] is not None and x["bar"][1] is not None and (0.02 < x["bar"][0] < 0.98 or 0.02 < x["bar"][1] < 0.98 or (x["bar"][0] > 0.5) == (x["bar"][1] > 0.5))]
+    if mixed: bad.append(f"{tag}: the bar is cross-faded in {len(mixed)} frames (old, new opacity e.g. {mixed[:3]}): it is held with the page you leave and switched at the end")
+    z = f[0]["z"]
+    if not (z[0].lstrip("-").isdigit() and z[1].lstrip("-").isdigit() and int(z[0]) < int(z[1]) < 0): bad.append(f"{tag}: z-index leave {z[0]} / root {z[1]}: the page you leave lies under the window, both under the bar and the travelling drawing")
+    if not all(g in f[0]["rule"] for g in GREENS): bad.append(f"{tag}: the rule is {f[0]['rule'][:80]!r}, not the two signal greens")
+    end = max(x["end"] for x in f)
+    if end > 551: bad.append(f"{tag}: the turn runs to {end:.0f} ms (550)")
+    down = back or jump == "up"
+    want = "vt-hold" if down else "vt-edge"
+    if any(x["g"] != want for x in f if x["g"]): bad.append(f"{tag}: the window's animation is {sorted({x['g'] for x in f if x['g']})} ({want}: the rule runs {'down from the bar' if down else 'up from the foot'})")
+    ty = [x["ty"] for x in f if x["p"] is not None and 0.02 < x["p"] < 0.98]
+    if ty and not all((v < 0) if down else (v > 0) for v in ty): bad.append(f"{tag}: the window sits at {ty[:4]} px mid-turn ({'above' if down else 'below'} its place expected)")
+    if ty and any(abs(v) > H + 2 for v in ty): bad.append(f"{tag}: the window is further than one screen from its place ({ty[:4]})")
+    if jump and any(x["jump"] != jump for x in f): bad.append(f"{tag}: html[data-jump] reads {sorted({x['jump'] for x in f})} ({jump})")
+    return bad
+
+
+@check
+async def page_turn(b):
+    """hc30r (system; RETHINK-hc30 SYS-2): the page turn is the boundary. At 1440 x 900, from Proof (scrolled 500 px) the
+    bar's link to Platform, Trust, Lifecycles, Company and Research turns the page under the rule: the page you leave takes
+    the name `leave` and is whole, still and opaque for the whole turn; the page you reach is revealed in a clipping window
+    that only translates (no fade, no scale) from the foot of the screen to the bar's foot (the stage it moves on starts
+    at --nav-h); the bar is held with the page you leave and switched at the end, never cross-faded; the rule on the
+    window's edge is the two signal greens; every part ends by 550 ms; and from the turn's midpoint on, no entrance in the first band is still running
+    (html.vt-in: arriving by a turn the first screen is whole; an act that should still play goes through OXA.actOnce,
+    which waits for the turn; third sitting: an entrance a script starts during the turn, as figure.js's swap of
+    Company's still for its canvas, is finished in the frame it is first seen, so "still running" reads: the same
+    animation live in two successive frames. The recorder's frame callback runs before the page's and saw such a swap
+    once, in the run where the script booted after the midpoint). Back turns the other way (type `back`, the rule down from the bar). A hero drawing that
+    nothing travels to keeps no name of its own (Platform -> Lifecycles: no `fig` in the turn). A click on the bar during
+    a turn lands. An in-page jump (Platform, the chapter list's last row, then Back to top) takes the same rule, up for
+    down and down for up. Leaving Home at the top, the hero keeps a globe for the snapshot though the WebGL canvas cannot
+    be kept (hidden): the stage's own frame on its 2D canvas (story.js's OXA.stageStill, home's hc30r; the same box and
+    bitmap, the globe drawn), or else the static mark on the globe's place (shown, centred within 2 px of
+    html[data-globe]); never neither, never both. At 390 x 844
+    with touch the menu's link turns the page the same way. Under reduced motion there is no turn and a jump lands at once."""
+    bad, notes = [], []
+    ctx, pg = await open_page(b, "evidence.html", 1440, 900, init=TURN_REC)
+    for dest in ("platform", "trust", "lifecycles", "company", "research"):
+        if "/evidence" not in pg.url: await pg.goto(f"{BASE}/evidence.html", wait_until="load"); await until(pg, LOADED, 15000)
+        await pg.evaluate("window.scrollTo({top: 500, behavior: 'instant'})"); await pg.wait_for_timeout(500)
+        await pg.click(f".nav-links a[href*='{dest}']"); await pg.wait_for_url(f"**/{dest}*")
+        await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20)
+        r = await pg.evaluate("window.__turn"); tag = f"evidence -> {dest} at 1440"
+        bad += turn_issues(tag, r)
+        if r and r.get("f"):
+            late = [x for x in r["f"] if x["p"] is not None and x["p"] >= 0.5]
+            live = sorted({n.split("#")[0] for x, y in zip(late, late[1:]) for n in x["live"] if n in y["live"]})
+            if live: bad.append(f"{tag}: from the turn's midpoint the first band still runs {live[:6]} (arriving by a turn the first screen is whole)")
+            if not all(x["vtin"] for x in late): bad.append(f"{tag}: html.vt-in is not set by the turn's midpoint")
+            if dest == "platform": notes.append(f"{len(r['f'])} frames, ends {max(x['end'] for x in r['f']):.0f} ms")
+    # Back turns the other way
+    await pg.goto(f"{BASE}/evidence.html", wait_until="load"); await until(pg, LOADED, 15000)
+    await pg.click(".nav-links a[href*='platform']"); await pg.wait_for_url("**/platform*"); await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20); await pg.wait_for_timeout(400)
+    await pg.go_back(wait_until="commit"); await pg.wait_for_url("**/evidence*"); await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20)
+    r = await pg.evaluate("window.__turn")
+    bad += turn_issues("platform -> Back to evidence at 1440", r, back=True)
+    if r and "back" not in (r.get("types") or []): bad.append(f"platform -> Back to evidence at 1440: the turn's types are {r.get('types')} ('back' expected)")
+    # a hero drawing nothing travels to keeps no name; a click during the turn lands
+    await pg.goto(f"{BASE}/platform.html", wait_until="load"); await until(pg, LOADED, 15000); await pg.wait_for_timeout(600)
+    await pg.click(".nav-links a[href*='lifecycles']"); await pg.wait_for_url("**/lifecycles*"); await until(pg, "!!(window.__turn && window.__turn.f.length)", 6000, 5)
+    box = await pg.evaluate("(() => { const a = [...document.querySelectorAll('.nav-links a')].find(x => /trust/.test(x.href)); const r = a.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2, !!document.activeViewTransition]; })()")
+    names = (await pg.evaluate("window.__turn"))["names"]
+    await pg.mouse.click(box[0], box[1])
+    try: await pg.wait_for_url("**/trust*", timeout=4000); notes.append(f"a click {'during' if box[2] else 'after'} the turn landed")
+    except Exception: bad.append(f"platform -> lifecycles at 1440: a click on the bar's Trust link {'during' if box[2] else 'after'} the turn was lost")
+    if any("fig" in n for n in names): bad.append(f"platform -> lifecycles at 1440: the hero drawing took the name fig though nothing travelled to it ({[n for n in names if 'fig' in n]})")
+    # the in-page jump takes the same rule
+    await pg.goto(f"{BASE}/platform.html", wait_until="load"); await until(pg, LOADED, 15000); await pg.wait_for_timeout(1200)
+    for way, js in (("down", "document.querySelector('.nav-ch-list li:last-child a').click()"), ("up", "document.querySelector('.nav-ch-top').click()")):
+        y0 = await pg.evaluate("scrollY")
+        await pg.evaluate("window.__turnRec()"); await pg.evaluate(js)
+        await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20)
+        r = await pg.evaluate("window.__turn"); y1 = await pg.evaluate("scrollY")
+        bad += turn_issues(f"platform, a jump {way} at 1440", r, jump=way)
+        if abs(y1 - y0) < 900: bad.append(f"platform, a jump {way} at 1440: the page moved {y1 - y0} px")
+        await pg.wait_for_timeout(300)
+    await ctx.close()
+    # leaving Home at the top: the hero keeps a globe for the snapshot though the WebGL canvas cannot be kept.
+    # hc30r (HOME; integrate, standing in for tests; TESTS.md section 53): home took system's offer (SYSTEM.md 15,
+    # OXA.stageStill): story.js copies the stage's current frame to the 2D canvas at pageswap, and site.js then leaves the
+    # static mark alone. So the hero's picture for the snapshot is one of two, never neither and never both: the stage's
+    # own frame (canvas.story-2d shown over the hidden WebGL canvas, the same box, the same bitmap size, and drawn: the
+    # globe's limb lit inside the globe's place), or, where there is no frame to copy, the static mark on the globe's place
+    # as before (shown, centred within 2 px of html[data-globe]).
+    ctx, pg = await open_page(b, "index.html", 1440, 900, init=TURN_REC)
+    await to_top_settled(pg)
+    await pg.evaluate("""addEventListener('pageswap', () => { const m = document.querySelector('.story-static-mark'), r = m.getBoundingClientRect(), g = (document.documentElement.dataset.globe || '').split(' ').map(parseFloat);
+      const gl = document.querySelector('.story-gl'), s2 = document.querySelector('canvas.story-2d'), a = gl.getBoundingClientRect(), z = s2.getBoundingClientRect();
+      let lit = -1; const on = !s2.hidden && !!s2.getClientRects().length && getComputedStyle(s2).visibility !== 'hidden';
+      if (on && g.length === 3 && g[2] > 0) { try { const k = s2.width / z.width, x0 = Math.max(0, Math.round((g[0] - g[2] - z.left) * k)), y0 = Math.max(0, Math.round((g[1] - g[2] - z.top) * k)), n = Math.round(2 * g[2] * k);
+        const d = s2.getContext('2d').getImageData(x0, y0, Math.min(n, s2.width - x0), Math.min(n, s2.height - y0)).data; lit = 0;
+        for (let i = 0; i < d.length; i += 4) if (d[i] * .2126 + d[i + 1] * .7152 + d[i + 2] * .0722 > 60) lit++; } catch (e) { lit = -2; } }
+      sessionStorage.setItem('__mark', JSON.stringify({ shown: getComputedStyle(m).display !== 'none' && +getComputedStyle(m).opacity > .9, c: [r.left + r.width / 2, r.top + r.height / 2], w: r.width, g,
+        still: on, box: [z.left - a.left, z.top - a.top, z.width - a.width, z.height - a.height], bmp: [s2.width - gl.width, s2.height - gl.height], lit,
+        gl: getComputedStyle(gl).visibility, name: getComputedStyle(document.documentElement).viewTransitionName })); })""")
+    await pg.click(".nav-links a[href*='platform']"); await pg.wait_for_url("**/platform*"); await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20)
+    r = await pg.evaluate("window.__turn"); mk = await pg.evaluate("JSON.parse(sessionStorage.getItem('__mark') || 'null')")
+    bad += turn_issues("home (the overture) -> platform at 1440", r)
+    if not mk: bad.append("home -> platform at 1440: no pageswap on Home")
+    else:
+        if mk["name"] != "leave": bad.append(f"home -> platform at 1440: the root's name at the snapshot is {mk['name']!r} (leave)")
+        if mk["gl"] != "hidden": bad.append(f"home -> platform at 1440: the WebGL canvas is {mk['gl']} for the snapshot (it cannot be kept: hidden)")
+        g = mk["g"]
+        if len(g) == 3 and g[2] > 0:
+            if mk["still"] and mk["shown"]: bad.append("home -> platform at 1440: the stage's frame and the static mark are both shown for the snapshot (two globes)")
+            elif mk["still"]:
+                if any(abs(v) > 1 for v in mk["box"]) or any(mk["bmp"]): bad.append(f"home -> platform at 1440: the stage's frame is not the WebGL canvas's box and bitmap (box off by {[round(v, 1) for v in mk['box']]}, bitmap by {mk['bmp']})")
+                elif mk["lit"] < 200: bad.append(f"home -> platform at 1440: the stage's frame is blank where the globe stands ({mk['lit']} lit pixels in the globe's place; the hero keeps a globe)")
+                else: notes.append(f"Home leaves with its stage's own frame ({mk['lit']} lit pixels on the globe at {g[0]:.0f}, {g[1]:.0f}, r {g[2]:.0f})")
+            elif not mk["shown"]: bad.append("home -> platform at 1440: neither the stage's frame nor the static mark is shown for the snapshot (the hero keeps a globe)")
+            elif abs(mk["c"][0] - g[0]) > 2 or abs(mk["c"][1] - g[1]) > 2 or abs(mk["w"] * 92 / 240 - g[2]) > 2:
+                bad.append(f"home -> platform at 1440: the static mark at {[round(v) for v in mk['c']]} / limb {mk['w'] * 92 / 240:.0f} px, the globe at {g}")
+            else: notes.append(f"Home leaves with its mark on the globe ({g[0]:.0f}, {g[1]:.0f}, r {g[2]:.0f})")
+    await ctx.close()
+    # a phone: the menu's link
+    ctx, pg = await open_page(b, "evidence.html", 390, 844, touch=True, init=TURN_REC)
+    await bounded(pg.locator(".nav-toggle").tap(), "a tap on the menu toggle", 60); await pg.wait_for_timeout(700)
+    await bounded(pg.locator(".nav-sheet-links a[href*='trust']").tap(), "a tap on the menu's Trust link", 60); await pg.wait_for_url("**/trust*")
+    await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20)
+    bad += turn_issues("evidence -> trust at 390 (the menu)", await pg.evaluate("window.__turn"))
+    await ctx.close()
+    # reduced motion: no turn, a jump lands at once
+    ctx, pg = await open_page(b, "evidence.html", 1440, 900, reduced=True, init=TURN_REC)
+    await pg.click(".nav-links a[href*='platform']"); await pg.wait_for_url("**/platform*"); await pg.wait_for_timeout(700)
+    r = await pg.evaluate("window.__turn")
+    if r and (r.get("vt") or r.get("f")): bad.append(f"evidence -> platform, reduced motion: a page turn ran ({(r.get('names') or [])[:4]})")
+    if await pg.evaluate("document.documentElement.classList.contains('vt-in')"): bad.append("evidence -> platform, reduced motion: html.vt-in is set without a turn")
+    await pg.evaluate("window.__turnRec()"); await pg.evaluate("document.querySelector('.nav-ch-list li:last-child a').click()"); await pg.wait_for_timeout(500)
+    r = await pg.evaluate("window.__turn")
+    if r["f"] or await pg.evaluate("scrollY") < 900: bad.append(f"platform, a jump under reduced motion: {len(r['f'])} transition frames, scrollY {await pg.evaluate('scrollY')}")
+    await ctx.close()
+    assert not bad, "page_turn:\n  " + "\n  ".join(bad[:28])
+    print(f"page_turn: the page you leave stays whole above the rule and the page you reach is revealed under it, no fade, on five turns from Proof, on Back (the other way), on a jump down and up, from Home's overture and on a phone ({'; '.join(notes)}); no turn under reduced motion")
 
 
 # ---- hc26r (integrate, standing in for tests): the rethink's scenes, checked to their principles (RETHINK-hc26 PLAT-1,
@@ -5333,9 +5724,16 @@ LAB_COPY = r"""(() => { const l = document.querySelector('[data-swarm-live]'), s
   const r = st.getBoundingClientRect(); let lit = null;
   if (cv && cv.width) { try { const g = cv.getContext('2d'), W = cv.width, H = cv.height, x1 = Math.floor(W * .5), d = g.getImageData(0, 0, x1, H).data; lit = 0;
       for (let i = 0; i < d.length; i += 4) if (d[i] * .2126 + d[i + 1] * .7152 + d[i + 2] * .0722 > 70) lit++; } catch (e) { lit = -1; } }
-  const il = [...l.querySelectorAll('*')].filter(e => [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.includes('Illustrative')));
-  const ilOk = il.some(e => { const b = e.getBoundingClientRect(); if (!b.width || b.bottom < 0 || b.top > innerHeight) return false; for (let x = e; x; x = x.parentElement) { const cs = getComputedStyle(x); if (+cs.opacity < .99 || cs.visibility === 'hidden') return false; } return true; });
-  return { c: (r.top + r.bottom) / 2, top: r.top + scrollY, h: r.height, H: innerHeight, copy: l.dataset.swCopy === undefined ? null : l.dataset.swCopy, lit, ilOk, il: il.length }; })()"""
+  // hc30r (SYS-3, PLAT-1): the lab's one hedge is its foot caption: inside the root (Home) or the caption the root names
+  // (aria-describedby; Platform's #sw-cap). None in the lab's head.
+  const named = (l.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean).map(id => document.getElementById(id)).filter(Boolean);
+  const il = [l, ...named].flatMap(root => [...root.querySelectorAll('*')].filter(e => [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.includes('Illustrative'))));
+  const onScreen = e => { const b = e.getBoundingClientRect(); return !!b.width && b.bottom > 0 && b.top < innerHeight; };
+  const whole = e => { for (let x = e; x; x = x.parentElement) { const cs = getComputedStyle(x); if (+cs.opacity < .99 || cs.visibility === 'hidden') return false; } return true; };
+  const shown = Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) / Math.max(1, Math.min(r.height, innerHeight));
+  return { c: (r.top + r.bottom) / 2, top: r.top + scrollY, h: r.height, H: innerHeight, copy: l.dataset.swCopy === undefined ? null : l.dataset.swCopy, lit, shown,
+           il: il.length, ilOn: il.some(onScreen), ilOk: il.some(e => onScreen(e) && whole(e)), ilHead: il.filter(e => e.closest('.sw-head')).length,
+           ilText: il.length ? il[0].textContent.replace(/\s+/g, ' ').trim() : '' }; })()"""
 
 
 async def scroll_frames(pg, y0, y1, steps=40):
@@ -5351,44 +5749,65 @@ async def scroll_frames(pg, y0, y1, steps=40):
 @check
 async def lab_copy(b):
     """hc26r (integrate, standing in for tests; home's request, RETHINK-hc26 HOME-4, under EVOLVE's "Owner, 8 Nov" motion
-    conditions): Platform §02 plays its own act of the swarm lab, the master agent copied out across the field, as the
-    lab crosses the screen. On platform.html at 1440 x 900 and 390 x 844 (touch), the stage's centre placed at (0.85 -
-    0.45 p) of the screen: the lab reads data-sw-copy = p (two decimals) for p 0, .1, .5 and 1; at 1440 the field's half
-    of the canvas (left of the Council's ring) holds next to nothing lit at .1 (the master alone) and at least four times
-    as much at 1 (the field drawn; on a phone the camera's ring fills that half early, so no census there); the
-    lab's "Illustrative" is visible at every p; scrolling through the act, no frame over 33 ms (x the throttle). With
+    conditions): Platform §02 plays its own act of the swarm lab, the master agent copied out across the field. With
     reduced motion, and after Pause motion or Emergency halt, data-sw-copy reads "1.00" at once. Home's lab never carries
     data-sw-copy. hc27 (integrate, standing in for home and tests; the director's HC27 2: Platform's lab rests in its own
-    pose): at 1440 x 900 with the act done (p 1) Platform's lab names no gate and no boundary (the gate list and the
-    "Boundary" tag at opacity 0) until "Follow a proposal" is pressed (both back at 1); Home's lab names them at rest.
-    The resting drawing itself (the master's track, its origin, the fan) is judged on renders, not here."""
+    pose): at 1440 x 900 with the act done Platform's lab names no gate and no boundary (the gate list and the "Boundary"
+    tag at opacity 0) until "Follow a proposal" is pressed (both back at 1); Home's lab names them at rest. The resting
+    drawing itself (the master's track, its origin, the fan) is judged on renders, not here.
+    hc30r (HOME-2, PLAT-1, SYS-3; integrate, standing in for tests, on platform's and home's requests; TESTS.md section
+    53). Three things the check read are staged another way, and each keeps its principle:
+    - The act is on a clock, once, not tied to the scroll (RETHINK-hc30 rule 1: every frame of it is a whole picture; it
+      was data-sw-copy = p at four scroll positions). On platform.html at 1440 x 900 and 390 x 844 (touch): with the lab
+      started and a fifth of its stage on screen the act has not begun (data-sw-copy "0.00", and it stays there); brought
+      to the middle of the screen it runs 0 -> 1 without ever falling, reads "1.00" within 1.5 s of arriving (x the
+      throttle) and still reads "1.00" after the page has left and come back.
+    - The field is never empty (it was: next to nothing lit at .1, four times as much at 1; the wide lab only, as before):
+      waiting, before its act, the field's half of the canvas already holds at least 60% of the lit pixels it holds at
+      rest, and at rest it holds no fewer than nine tenths of that.
+    - The hedge is the lab's foot caption, not a word in its head (it was: "Illustrative" inside the lab's root, visible
+      at every scroll position): the lab names its caption (aria-describedby), the caption opens "Illustrative", no hedge
+      stands in the lab's head, and whenever the caption is on screen it is whole (never faded or hidden); it is read
+      on screen at rest at both widths. check_static `hedges` holds the words.
+    Through the act, no frame over 33 ms (x the throttle; judged with --gpu only, as before)."""
     bad, notes = [], []
     lim = 33.4 * max(1.0, MODE["throttle"])
+    copy = "(() => { const l = document.querySelector('[data-swarm-live]'); return l.dataset.swCopy === undefined ? null : l.dataset.swCopy; })()"
+    WATCH = "(() => { const l = document.querySelector('[data-swarm-live]'), R = window.__cp = []; const f = () => { R.push(l.dataset.swCopy === undefined ? -1 : +l.dataset.swCopy); if (R.length < 2400) requestAnimationFrame(f); }; requestAnimationFrame(f); })()"
+    async def wait_at(pg, h):
+        """come down to the lab from above and stop where a fifth of its stage shows: it starts, its act does not"""
+        g = await pg.evaluate(LAB_COPY)
+        if not g: return None, None
+        y = 0
+        for f in (1.6, 1.2):
+            await pg.evaluate(f"window.scrollTo({{top: {round(g['top'] + g['h'] / 2 - f * h)}, behavior: 'instant'}})"); await pg.wait_for_timeout(500)
+        for _ in range(3):  # three times: the page above the lab may still settle by a few pixels
+            g = await pg.evaluate(LAB_COPY); y = round(g["top"] - h + 0.2 * min(g["h"], h))
+            await pg.evaluate(f"window.scrollTo({{top: {y}, behavior: 'instant'}})"); await pg.wait_for_timeout(450)
+        await until(pg, "!!document.querySelector('[data-swarm-live].sw-on')", 10000)
+        await pg.wait_for_timeout(400)
+        return await pg.evaluate(LAB_COPY), y
     for w, h, touch in ((1440, 900, False), (390, 844, True)):
         tag = f"platform.html@{w}x{h}"
         ctx, pg = await open_page(b, "platform.html", w, h, dpr=2 if touch else 1, touch=touch)
-        g = await pg.evaluate(LAB_COPY)
-        if not g: bad.append(f"{tag}: no swarm lab"); await ctx.close(); continue
-        ctr = g["top"] + g["h"] / 2
-        for f in (1.6, 1.2, 1.0):  # come down to it from above, so it boots before its act
-            await pg.evaluate(f"window.scrollTo({{top: {round(ctr - f * h)}, behavior: 'instant'}})"); await pg.wait_for_timeout(500)
-        await until(pg, "!!document.querySelector('[data-swarm-live].sw-on')", 10000)
-        lits = {}
-        ctr = (await pg.evaluate(LAB_COPY))["top"] + g["h"] / 2
-        for p in (0, .1, .5, 1):
-            for _ in range(2):  # twice: the page above the lab may still settle by a few pixels
-                await pg.evaluate(f"window.scrollTo({{top: {round(ctr - (0.85 - 0.45 * p) * h)}, behavior: 'instant'}})"); await pg.wait_for_timeout(450)
-                q = await pg.evaluate(LAB_COPY); ctr = q["top"] + q["h"] / 2
-            r = await pg.evaluate(LAB_COPY)
-            want = 0.0 if p == 0 else p
-            if r["copy"] is None or abs(float(r["copy"]) - want) > 0.021: bad.append(f"{tag} at p {p}: data-sw-copy {r['copy']!r} ({want:.2f}; the stage's centre at {r['c'] / h:.3f} of the screen)")
-            if not r["ilOk"]: bad.append(f"{tag} at p {p}: the lab's 'Illustrative' is not visible ({r['il']} found)")
-            lits[p] = r["lit"]
-        if touch: pass  # on a phone the Council's ring fills the field's half early in the act: the census is the wide lab's
-        elif lits.get(.1) is None or lits.get(1) is None or lits[1] < 0: bad.append(f"{tag}: the canvas could not be read ({lits})")
-        elif lits[1] < max(200, 4 * lits[.1]): bad.append(f"{tag}: the field's half of the canvas holds {lits[.1]} lit pixels at .1 and {lits[1]} at 1 (the field drawn by the end: 4x at least)")
-        if not touch: notes.append(f"{w}: lit {lits.get(.1)} -> {lits.get(1)}")
-        fr = await scroll_frames(pg, round(ctr - 0.95 * h), round(ctr - 0.3 * h))
+        r0, y_wait = await wait_at(pg, h)
+        if not r0: bad.append(f"{tag}: no swarm lab"); await ctx.close(); continue
+        if not await pg.evaluate("!!document.querySelector('[data-swarm-live].sw-on')"): bad.append(f"{tag}: the lab did not start with a fifth of its stage on screen")
+        # waiting: the act has not begun, and does not begin on its own
+        held = [await pg.evaluate(copy)]
+        for _ in range(6): await pg.wait_for_timeout(100); held.append(await pg.evaluate(copy))
+        if any(v != "0.00" for v in held): bad.append(f"{tag} waiting ({r0['shown']:.2f} of the stage on screen): data-sw-copy reads {sorted(set(map(str, held)))} (0.00 until the stage stands on screen)")
+        lit0 = r0["lit"]
+        # the act: the stage's centre brought to the middle of the screen
+        await pg.evaluate(WATCH)
+        y_mid = round(r0["top"] + r0["h"] / 2 - h / 2)
+        fr = await scroll_frames(pg, y_wait, y_mid, steps=16)
+        done = await until(pg, copy + " === '1.00'", int(900 * max(1.0, MODE["throttle"])), 50)
+        seq = [v for v in await pg.evaluate("window.__cp") if v >= 0]
+        if not done: bad.append(f"{tag}: data-sw-copy reads {await pg.evaluate(copy)!r} 1.5 s after the stage reached the middle of the screen (1.00)")
+        falls = [(round(seq[i - 1], 2), round(seq[i], 2)) for i in range(1, len(seq)) if seq[i] < seq[i - 1] - 0.001]
+        if falls: bad.append(f"{tag}: data-sw-copy falls back during the act ({falls[:4]})")
+        if not seq or seq[0] > 0.001 or len(set(seq)) < 4: bad.append(f"{tag}: the act was not seen running from 0 ({len(set(seq))} values, first {seq[:1]})")
         over = [round(x, 1) for x in fr if x > lim]
         if MODE["gl"] == "gpu":
             if long_frames(fr, lim): bad.append(f"{tag}: {len(over)} of {len(fr)} frames over {lim:.0f} ms through the act ({over[:6]})")
@@ -5397,17 +5816,42 @@ async def lab_copy(b):
             # (CI run 42782516694: frames of 183 to 483 ms through the act; 283 ms here on 10 Nov), so only a hang fails.
             hang = [round(x) for x in fr if x > 5000 * max(1.0, MODE["throttle"])]
             if hang: bad.append(f"{tag}: a frame of {hang[0]} ms through the act under software GL (a hang; 5 s at most)")
-        notes.append(f"frames <= {max(fr) if fr else 0:.1f} ms" + ("" if MODE["gl"] == "gpu" else f" under software GL, {len(over)} of {len(fr)} over {lim:.0f} ms (judged with --gpu only)"))
+        notes.append(f"{w}: 0 -> 1 in {len(set(seq))} steps, frames <= {max(fr) if fr else 0:.1f} ms" + ("" if MODE["gl"] == "gpu" else f" under software GL, {len(over)} of {len(fr)} over {lim:.0f} ms (judged with --gpu only)"))
+        # at rest: the field, the hedge
+        await pg.wait_for_timeout(600)
+        r1 = await pg.evaluate(LAB_COPY)
+        if not touch:  # on a phone the Council's ring fills the field's half: the census is the wide lab's
+            if lit0 is None or r1["lit"] is None or lit0 < 0 or r1["lit"] < 0: bad.append(f"{tag}: the canvas could not be read ({lit0}, {r1['lit']})")
+            else:
+                if lit0 < max(200, 0.6 * r1["lit"]): bad.append(f"{tag}: waiting, the field's half of the canvas holds {lit0} lit pixels against {r1['lit']} at rest (never an empty field: 60% at least)")
+                if r1["lit"] < 0.9 * lit0: bad.append(f"{tag}: at rest the field's half holds {r1['lit']} lit pixels, fewer than the {lit0} it opened on")
+                notes.append(f"lit {lit0} waiting, {r1['lit']} at rest")
+        if not r1["il"] or not r1["ilText"].startswith("Illustrative"): bad.append(f"{tag}: the lab names no caption that opens 'Illustrative' ({r1['il']} found: {r1['ilText'][:40]!r})")
+        if r1["ilHead"]: bad.append(f"{tag}: a hedge stands in the lab's head ({r1['ilHead']}; one hedge, in the foot)")
+        seen_cap = 0
+        for where in ("the stage in the middle", "the caption at the screen's foot"):
+            if where.startswith("the caption"):
+                await pg.evaluate("(() => { const l = document.querySelector('[data-swarm-live]'), c = document.getElementById((l.getAttribute('aria-describedby') || '').split(/\\s+/)[0]) || l.querySelector('.figure-cap'); if (c) c.scrollIntoView({block: 'end', behavior: 'instant'}); })()")
+                await pg.wait_for_timeout(900)
+            q = await pg.evaluate(LAB_COPY)
+            if q["ilOn"]:
+                seen_cap += 1
+                if not q["ilOk"]: bad.append(f"{tag} with {where}: the lab's 'Illustrative' is on screen but not whole (faded or hidden)")
+        if not seen_cap: bad.append(f"{tag}: the lab's caption was never on screen (nothing was tested)")
+        # it never falls back: away and back
+        await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(500)
+        await pg.evaluate(f"window.scrollTo({{top: {y_mid}, behavior: 'instant'}})"); await pg.wait_for_timeout(700)
+        v = await pg.evaluate(copy)
+        if v != "1.00": bad.append(f"{tag}: back at the lab after leaving, data-sw-copy reads {v!r} (1.00: the act runs once)")
         if not touch:
             for ctl in ("[data-sw-motion]", "[data-sw-halt]"):
                 await pg.close(); pg = await ctx.new_page(); await pg.goto(f"{BASE}/platform.html", wait_until="load"); await until(pg, HOME_ENGINES, 15000)
-                await pg.evaluate(f"window.scrollTo({{top: {round(ctr - 1.0 * h)}, behavior: 'instant'}})"); await pg.wait_for_timeout(500)
-                await pg.evaluate(f"window.scrollTo({{top: {round(ctr - 0.8 * h)}, behavior: 'instant'}})")
-                await until(pg, "!!document.querySelector('[data-swarm-live].sw-on')", 10000); await pg.wait_for_timeout(500)
-                before = await pg.evaluate("document.querySelector('[data-swarm-live]').dataset.swCopy")
+                rw, _ = await wait_at(pg, h)
+                before = await pg.evaluate(copy)
+                if before != "0.00": bad.append(f"{tag}: before {ctl}, waiting, data-sw-copy reads {before!r} (0.00)")
                 if await pg.evaluate(f"!!document.querySelector('{ctl}') && !document.querySelector('{ctl}').hidden"):
                     await pg.evaluate(f"document.querySelector('{ctl}').click()"); await pg.wait_for_timeout(150)
-                    after = await pg.evaluate("document.querySelector('[data-swarm-live]').dataset.swCopy")
+                    after = await pg.evaluate(copy)
                     if after != "1.00": bad.append(f"{tag}: after {ctl} data-sw-copy reads {after!r} (was {before!r}; 1.00 at once)")
                 else: bad.append(f"{tag}: no {ctl} to press")
         await ctx.close()
@@ -5432,6 +5876,7 @@ async def lab_copy(b):
     for _ in range(2):
         await pg.evaluate(f"window.scrollTo({{top: {round(ctr - 0.4 * 900)}, behavior: 'instant'}})"); await pg.wait_for_timeout(700)
         q = await pg.evaluate(LAB_COPY); ctr = q["top"] + q["h"] / 2
+    await until(pg, copy + " === '1.00'", int(3000 * max(1.0, MODE["throttle"])), 100)
     await pg.wait_for_timeout(800)
     rest = await pg.evaluate(tags); cp = await pg.evaluate("document.querySelector('[data-swarm-live]').dataset.swCopy")
     if cp != "1.00" or rest != [0, 0]: bad.append(f"platform.html@1440 at rest (data-sw-copy {cp!r}): the gate list / Boundary tag at opacity {rest} (0 until a proposal is followed)")
@@ -5447,7 +5892,7 @@ async def lab_copy(b):
     notes.append(f"Platform at rest names {rest}, following {fol}; Home {t_home}")
     await ctx.close()
     assert not bad, "lab_copy:\n  " + "\n  ".join(bad[:24])
-    print(f"lab_copy: Platform §02's act follows the lab across the screen, 0 -> 1, the field drawn by its end; at once 1 under reduced motion, Pause and halt; never on Home ({'; '.join(notes)})")
+    print(f"lab_copy: Platform §02's act runs once on its clock, 0 -> 1, from a field that is never empty, under one hedge in the lab's foot; at once 1 under reduced motion, Pause and halt; never on Home ({'; '.join(notes)})")
 
 
 # hc29 (integrate, standing in for tests; home's request): the chart is drawn in WebGL, so the band it fills counts as
@@ -5556,9 +6001,18 @@ async def footer_phone(b):
 
 
 CH_LINKS = r"""(() => { const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  // a line of text's baseline: the foot of its first glyph's box less the face's descent at that size
+  const base = (e) => { const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT); let t; while ((t = w.nextNode())) if (t.textContent.trim()) break; if (!t) return null;
+    const rg = document.createRange(), i = t.textContent.search(/\S/); rg.setStart(t, i); rg.setEnd(t, i + 1); const r = rg.getBoundingClientRect(), cs = getComputedStyle(t.parentElement);
+    const g = document.createElement('canvas').getContext('2d'); g.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; const m = g.measureText(t.textContent[i]);
+    return r.bottom - (m.fontBoundingBoxDescent || 0); };
   return [...document.querySelectorAll('#lc01 .ch-head, #governance .ch-head, #research .ch-head')].map(h => { const t = h.querySelector('.ch-title'), a = h.querySelector('.ch-link'); if (!t || !a) return null;
     const u = a.previousElementSibling && a.previousElementSibling.matches('.ch-title, .ch-line') ? a.previousElementSibling : t;
-    const tr = t.getBoundingClientRect(), ur = u.getBoundingClientRect(), ar = a.getBoundingClientRect(); return { id: h.closest('section').id, under: u.classList.contains('ch-line') ? 'line' : 'head', gap: ar.top - ur.bottom, dx: ar.left - tr.left, rem }; }); })()"""
+    const tr = t.getBoundingClientRect(), ur = u.getBoundingClientRect(), ar = a.getBoundingClientRect();
+    // hc30r: the head laid over the stage (Home §02's one-screen form): the link stands on its line's row
+    const over = getComputedStyle(h).position === 'absolute';
+    return { id: h.closest('section').id, under: u.classList.contains('ch-line') ? 'line' : 'head', gap: ar.top - ur.bottom, dx: ar.left - tr.left, rem,
+             over, row: over ? { db: base(a) - base(u), dt: base(a) - base(t), dx: ar.left - ur.right } : null }; }); })()"""
 DPL_ART = r"""(() => { const cols = [...document.querySelectorAll('#mcp .dpl-col')]; return cols.map(c => { const s = c.querySelector('.dpl-plate svg'), g = s && s.querySelector(':scope > g'), h = c.querySelector('h3');
   if (!g) return null; const sb = s.getBoundingClientRect(), k = sb.height / 112, gb = g.getBBox(), m = g.transform.baseVal.consolidate(), ty = m ? m.matrix.f : 0;
   return { base: (gb.y + gb.height + ty), h3: h ? h.getBoundingClientRect().top : null, k }; }); })()"""
@@ -5574,7 +6028,14 @@ async def section_links(b):
     under the lab to under its lede), never on the head's baseline. Platform §04 at 3840 x 2160, 1440 x 900
     and 1024 x 768 (three columns): the three drawings' art ends on one baseline (0.5 of the drawing's 112 units) and the
     three titles start on one line (1 px). Before hc25 §05's link sat on its head's baseline at the row's right (x 953 at
-    1440) and §04's three drawings ended at three different heights."""
+    1440) and §04's three drawings ended at three different heights.
+    hc30r (HOME-2; integrate, standing in for tests, on home's request; TESTS.md section 53): where Home's lab is one
+    screen (home.css: from 1200 px wide in a window at least 800 px and 50rem tall, with scripting; here 3840 x 2160 and
+    1440 x 900) the head lies over the stage and must stay short, so §02's link stands on its line's row: on the line's
+    baseline (2 px), 1.75rem (2 px) right of the line's end, and still never on the title's baseline (it is a line's
+    height or more under it). The form is read from the page (the head laid over the stage: position absolute), and must
+    be the one-screen form at those two windows and the stacked form at the other four; in the stacked form, and for §04
+    and §05 everywhere, the check holds as written."""
     bad, notes = [], []
     for w, h, dpr, touch in ((3840, 2160, 1, False), (1440, 900, 1, False), (1024, 768, 1, False), (768, 1024, 2, False), (390, 844, 3, True), (320, 640, 2, True)):
         tag = f"index.html@{w}x{h}"
@@ -5584,10 +6045,19 @@ async def section_links(b):
         await ctx.close()
         if not r or len(r) != 3 or not all(r): bad.append(f"{tag}: §02 / §04 / §05 without a head and its link ({r})"); continue
         if r[0]["under"] != "line": bad.append(f"{tag} #lc01: the link follows the {r[0]['under']}, not the line under the title")
+        if r[0]["over"] != (w >= 1200 and h >= 800): bad.append(f"{tag} #lc01: the head {'lies over the stage' if r[0]['over'] else 'stands above the stage'} (the one-screen form is for 1200 px by 800 px and up)")
+        if r[1]["over"] or r[2]["over"]: bad.append(f"{tag}: §04's or §05's head is laid over its content")
         for x in r:
+            if x["over"]:
+                row = x["row"]
+                if abs(row["db"]) > 2: bad.append(f"{tag} #{x['id']}: the link's baseline is {row['db']:.1f} px off its line's (one row)")
+                if abs(row["dx"] - 1.75 * x["rem"]) > 2: bad.append(f"{tag} #{x['id']}: the link starts {row['dx']:.1f} px right of its line's end (1.75rem = {1.75 * x['rem']:.0f})")
+                if row["dt"] < x["rem"]: bad.append(f"{tag} #{x['id']}: the link's baseline is {row['dt']:.1f} px under the title's (never on the head's baseline)")
+                continue
             if abs(x["dx"]) > 1: bad.append(f"{tag} #{x['id']}: the link starts {x['dx']:.1f} px from its head's left edge")
             if abs(x["gap"] - 1.5 * x["rem"]) > 2: bad.append(f"{tag} #{x['id']}: the link is {x['gap']:.1f} px under its {x['under']} (1.5rem = {1.5 * x['rem']:.0f})")
-        if w == 1440: notes.append("Home 1440: " + ", ".join("#%s %.0f px under its %s" % (x["id"], x["gap"], x["under"]) for x in r))
+        if w == 1440: notes.append("Home 1440: " + ", ".join(("#%s on its line's row, %.0f px right of it" % (x["id"], x["row"]["dx"])) if x["over"] else ("#%s %.0f px under its %s" % (x["id"], x["gap"], x["under"])) for x in r))
+        if w == 1024: notes.append("Home 1024: " + ", ".join("#%s %.0f px under its %s" % (x["id"], x["gap"], x["under"]) for x in r if not x["over"]))
     for w, h in ((3840, 2160), (1440, 900), (1024, 768)):
         tag = f"platform.html@{w}x{h}"
         ctx, pg = await open_page(b, "platform.html", w, h, reduced=True)
@@ -5601,7 +6071,7 @@ async def section_links(b):
         if None in tops or max(tops) - min(tops) > 1: bad.append(f"{tag}: the three titles start at {tops}")
         if w == 1440: notes.append(f"Platform §04 baseline {[round(v, 1) for v in bases]}")
     assert not bad, "section_links:\n  " + "\n  ".join(bad[:24])
-    print(f"section_links: Home's chapter links under their heads (§02's under its line); Platform §04's drawings on one baseline ({'; '.join(notes)})")
+    print(f"section_links: Home's chapter links under their heads (§02's under its line, or on its line's row where the lab is one screen); Platform §04's drawings on one baseline ({'; '.join(notes)})")
 
 
 # ---------------------------------------------------------------- runner

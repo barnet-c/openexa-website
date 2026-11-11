@@ -109,7 +109,6 @@
       const shelf = st.closest('.rs-shelf'); if (shelf) shelf.classList.add('no-plate');
       $$('.posts-list .post.is-current').forEach(li => li.classList.remove('is-current'));
     }
-    else { const host = st.closest('section'); if (host) host.classList.add(st.classList.contains('has-still') ? 'still-cap' : 'no-figure-cap'); }
   };
   document.addEventListener('figure:none', e => noFigure(e.target));
   $$('.figure-stage.no-figure').forEach(noFigure);
@@ -117,7 +116,7 @@
   const toc = $$('.toc a[href^="#"]');
   if (toc.length) {
     const heads = toc.map(a => document.getElementById(decodeURIComponent(a.hash.slice(1))));
-    const npStage = $('.np-stage'), lits = npStage ? $$('[data-parts]', npStage) : [];
+    const npStage = $('.np-stage'), lits = npStage ? $$('[data-parts]', npStage.closest('.np-plate')) : [];
     const light = id => {
       let any = false;
       lits.forEach(el => { const on = !!id && el.dataset.parts.split(' ').indexOf(id) > -1; el.classList.toggle('is-lit', on); any = any || on; });
