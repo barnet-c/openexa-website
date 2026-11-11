@@ -109,8 +109,6 @@
     // (hc1, director item 2) the keys' hint shows only while the keyboard is in the instrument (focusin below)
     const hint = H('span', 'arch-hint', head);
     hint.hidden = true;
-    const motionBtn = H('button', 'arch-motion', head, 'Pause motion');
-    motionBtn.type = 'button';
     const bodyEl = H('div', 'arch-body');
     const fig = H('div', 'arch-fig', bodyEl);
     fig.setAttribute('aria-hidden', 'true');
@@ -491,7 +489,7 @@
       if (!pin || !wide || !hsvg || N !== 8 || e !== stage) { ST.concat(ST2).forEach((k) => scn.style.removeProperty(k)); R0 = null; return; }
       if (exStart < 0) { exStart = performance.now(); ex = 1; started = true; }
       const s0 = parseFloat(getComputedStyle(hp).scale) || 1, st = stage.getBoundingClientRect(), fr0 = hp.getBoundingClientRect(), sr = hsvg.getBoundingClientRect(), fa = fig.getBoundingClientRect();
-      const u = sr.width / s0 / 420;
+      const u = sr.width / s0 / (hsvg.viewBox.baseVal.width || 420);
       if (!(u > 0)) return;
       const S = (2 * halfW) / (230 * u), X = fa.left + cx, Y = fa.top + byT, su = S * u;
       const dy = EY.map((y, i) => (fa.top + baseT[i] - Y) / su - (y - 159));
@@ -652,12 +650,16 @@
     const kbdFocus = (el) => { try { return el.matches(':focus-visible'); } catch (_) { return true; } };
     inst.addEventListener('focusin', (e) => { focusIn = true; hint.hidden = !kbdFocus(e.target); wake(); });
     inst.addEventListener('focusout', (e) => { if (!inst.contains(e.relatedTarget)) { focusIn = false; hint.hidden = true; lastActive = performance.now(); } });
-    motionBtn.addEventListener('click', () => {
-      paused = !paused;
-      motionBtn.textContent = paused ? 'Resume motion' : 'Pause motion';
-      inst.classList.toggle('is-paused', paused);
-      kick();
-    });
+    // hc31r: the explorer obeys the run. The header's pause and a halt hold its ambient motion; it has no Pause of its own
+    // (OXA.run fires oxa:run once when it is ready and after every change of state)
+    const obey = () => {
+      const run = window.OXA && window.OXA.run;
+      if (!run) return;
+      const R = run.sample(), p = R.paused || R.halted;
+      if (p === paused) return;
+      paused = p; inst.classList.toggle('is-paused', paused); kick();
+    };
+    document.addEventListener('oxa:run', obey);
 
     /* ---------------- 7 · the illustrative flow: one proposal's way down the stack ---------------- */
     const flows = [];
@@ -980,11 +982,11 @@
     /* ---------------- 9 · wiring ---------------- */
     setMode(wideMQ.matches, true);
     inst.classList.remove('is-building');
-    motionBtn.hidden = reduced;
+    obey();
     wideMQ.addEventListener('change', (e) => setMode(e.matches));
     fineMQ.addEventListener('change', () => setMode(wideMQ.matches));
     reduceMQ.addEventListener('change', (e) => {
-      reduced = e.matches; motionBtn.hidden = reduced;
+      reduced = e.matches;
       if (reduced) { flows.splice(0).forEach((f) => f.g.remove()); pulse = permit = 0; bound.flash = bound.ripT = 0; if (floor) floor.land = 0; ex = exStart >= 0 ? 1 : ex; }
       kick(true);
     });

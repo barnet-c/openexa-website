@@ -148,6 +148,9 @@
     box.append(...lanes);
     const plot = h('div', 'pf-plot');
     plot.append(trace, box);
+    // hc31r (PROOF-3): on Proof the day in hand is marked by the hand's read-only mark: it rides the day row, and sets nothing
+    const pip = document.body.dataset.page === 'proof' ? mute(h('span', 'pf-pip')) : null;
+    if (pip) { pip.append(h('i', 'pip pip--read')); plot.append(pip); }
     const body = h('div', 'pf-body');
     body.append(gut, plot, mute(h('i', 'pf-floor')), mute(h('i', 'pf-base')), mute(h('i', 'pf-nav')));
 
@@ -175,9 +178,14 @@
     const write = i => { const x = sessions[i]; if (tag.length === 4 && x) [x.day, x.regime, x.confirmation, x.status].forEach((t, k) => { if (tag[k].textContent !== t) tag[k].textContent = t; }); row(i); };
     write(N - 1);
     function render() {
-      const i = pre >= 0 ? pre : sel;
+      const i = pre >= 0 ? pre : sel, was = shown;
       if (i === shown) return;
       shown = i;
+      if (pip && i >= 0) { // it arrives on its day, then rides to the next
+        if (was < 0) pip.style.transition = 'none';
+        pip.style.setProperty('--at', i);
+        if (was < 0) { void pip.offsetWidth; pip.style.transition = ''; }
+      }
       if (readout) readout(i);
       if (i >= 0) write(i);
       lanes.forEach((lane, j) => lane.classList.toggle('is-on', j === i));

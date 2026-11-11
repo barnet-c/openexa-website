@@ -91,6 +91,8 @@
     const docOf = u => { try { const x = new URL(u, location.href); return x.origin + x.pathname.replace(/(\/index)?(\.html)?\/*$/, ''); } catch (err) { return ''; } };
     const sent = v => { try { if (v === undefined) return JSON.parse(sessionStorage.getItem('oxa-turn') || 'null'); sessionStorage.setItem('oxa-turn', JSON.stringify(v)); } catch (err) { } return null; };
     const named = () => Array.from(document.querySelectorAll('[data-vt-dest], [style*="view-transition-name: fig"]'));
+    const edge = () => { const b = document.querySelector('[data-run-boundary]'), r = b && b.getBoundingClientRect(); return r && r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth ? b : null; };
+    const look = b => { const c = getComputedStyle(b); return [c.borderTopLeftRadius, c.borderTopColor, c.borderBottomWidth]; };
     const arrive = (vt, early) => {
       root.classList.add('vt-in'); OXA.byTurn = true;
       const f = sent(), a = window.navigation && navigation.activation;
@@ -99,6 +101,14 @@
       if (early && !(f && f.fig && docOf(f.to) === docOf(location.href) && Date.now() - f.at < 4000)) {
         const un = named(); un.forEach(d => d.style.setProperty('view-transition-name', 'none'));
         vt.finished.catch(() => {}).then(() => un.forEach(d => d.style.removeProperty('view-transition-name')));
+      }
+      // the match cut needs both ends: only at pagereveal can this page's boundary still take its name
+      const b = early && f && f.b && docOf(f.to) === docOf(location.href) && Date.now() - f.at < 4000 ? edge() : null;
+      if (b) {
+        b.style.setProperty('view-transition-name', 'boundary');
+        look(b).forEach((v, i) => { root.style.setProperty('--b-' + 'rcw'[i] + '0', f.b[i]); root.style.setProperty('--b-' + 'rcw'[i] + '1', v); });
+        try { vt.types.add('match'); } catch (err) { }
+        vt.finished.catch(() => {}).then(() => b.style.removeProperty('view-transition-name'));
       }
       const first = document.querySelector('main > :first-child'), band = first && !first.classList.contains('story') && first.getAnimations ? first : null;
       const whole = () => band && band.getAnimations({ subtree: true }).forEach(x => {
@@ -117,11 +127,13 @@
     };
     addEventListener('pageswap', e => {
       if (!e.viewTransition) return;
-      const a = e.activation;
-      sent({ to: a && a.entry ? a.entry.url : '', at: Date.now(), fig: named().some(d => getComputedStyle(d).viewTransitionName === 'fig') });
+      // a boundary under the open menu sheet (the page is inert then) is not on screen: no match cut from the menu
+      const a = e.activation, m = document.querySelector('main'), b = scrollY < innerHeight / 2 && !(m && m.inert) ? edge() : null;
+      if (b) b.style.setProperty('view-transition-name', 'boundary');
+      sent({ to: a && a.entry ? a.entry.url : '', at: Date.now(), fig: named().some(d => getComputedStyle(d).viewTransitionName === 'fig'), b: b ? look(b) : null });
       root.classList.add('vt-leave');
     });
-    addEventListener('pageshow', () => root.classList.remove('vt-leave'));
+    addEventListener('pageshow', () => { root.classList.remove('vt-leave'); document.querySelectorAll('[data-run-boundary]').forEach(b => b.style.removeProperty('view-transition-name')); });
     addEventListener('pagereveal', e => { root.classList.remove('vt-leave'); if (e.viewTransition) arrive(e.viewTransition, true); });
     if (document.activeViewTransition && !root.dataset.jump && !root.classList.contains('vt-in')) arrive(document.activeViewTransition, false);
   }

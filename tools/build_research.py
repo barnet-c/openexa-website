@@ -617,13 +617,13 @@ def mark_svg(fig, tones=("#F5F2EC", "#F5F2EC", "#4FCB93", "#D9675D"), quiet=".6"
 # award a3 (a3-ux): the desk is Lifecycles #desk (its own hero links there; the cut moved it off #lc01), and the act on
 # the chain has one verb sitewide, "Change a record" (Home §06, Trust)
 RUN = {
-    "horizon": [("Watch the Council verify proposals in the swarm lab", "../index.html#lc01")],
+    "horizon": [("Watch the Council verify proposals on Home", "../index.html#lc01")],
     "weights": [("Change a record and watch the chain fail", "../index.html#governance")],
     "lifecycle": [("The lifecycle test, trait by trait", "../lifecycles.html#test")],
-    "swarm": [("See the swarm by role in the swarm lab", "../platform.html#swarm")],
+    "swarm": [("Watch the swarm at work on Platform", "../platform.html#swarm")],
     "boundary": [("Explore the eight layers and the boundary", "../platform.html#architecture")],
     "rulebook": [("Find the model layer in the architecture explorer", "../platform.html#architecture")],
-    "council": [("Tighten the Council in the swarm lab", "../index.html#lc01")],
+    "council": [("Tighten the Council on Home", "../index.html#lc01")],
     "ledger": [("Replay a ledger excerpt, then try to change the past", "../trust.html#ledger")],
     "sessions": [("See the ten sessions on the Proof page", "../evidence.html"), ("Run one simulated session on the desk", "../lifecycles.html#desk")],
     "mastercopy": [("The six lifecycle classes, status by ring", "../lifecycles.html#classes")],
@@ -1059,7 +1059,7 @@ index_page = f'''<!DOCTYPE html>
       <div class="container">
         <h2 class="display-2" data-reveal data-split>Three of these ideas run in your browser.</h2>
         <div class="row" data-reveal style="--d:120ms">
-          <a class="btn" href="index.html#lc01">Open the swarm lab {ARROW}</a>
+          <a class="btn" href="index.html#lc01">Open the run {ARROW}</a>
           <a class="btn btn--ghost" href="index.html#governance">Change a record</a>
           <a class="btn btn--ghost" href="lifecycles.html#desk">Run the desk</a>
         </div>

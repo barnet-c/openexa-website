@@ -33,6 +33,7 @@
   <link rel="preload" href="assets/fonts/instrument-serif-400i-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/css/site.css">
   <link rel="stylesheet" href="assets/css/proofchart.css">
+  <link rel="stylesheet" href="assets/css/run.css">
   <link rel="stylesheet" href="assets/css/proof.css">
   <script type="application/ld+json" id="ld-page">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"https://www.openexa.com/evidence.html#webpage","url":"https://www.openexa.com/evidence.html","name":"Proof — OpenEXA · Agents ran the lifecycle. The broker confirmed it.","description":"Lifecycle 01, a limited proof of concept on live capital: ten consecutive sessions, each above 10 bps and confirmed by the executing broker. Not a forecast.","isPartOf":{"@type":"WebSite","@id":"https://www.openexa.com/#website","name":"OpenEXA","url":"https://www.openexa.com/"},"primaryImageOfPage":"https://www.openexa.com/assets/img/og/evidence.jpg","inLanguage":"en"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"OpenEXA","item":"https://www.openexa.com/"},{"@type":"ListItem","position":2,"name":"Proof","item":"https://www.openexa.com/evidence.html"}]}]}</script>
 </head>
@@ -71,7 +72,11 @@
 
   <main id="main">
 
-    <!-- the hero (hc4, HC4 item 1): the headline and its evidence on one screen. Fig. 1.1, the ten sessions, moved up from
+    <!-- the hero (hc31r, LEAP-hc31 PROOF-3): the cut to the record. One green line (.run-b, the page's boundary) on the chart's
+         zero line: above it, ink (what the agents ran: the first beat standing on the line, the ten columns); below it, paper
+         (what the broker confirmed: the second beat, the regime step, the days, the ticks, then the words). proof.css lays it
+         out from the screen's height; without scripts, or without subgrid, the hero is all ink and the record is the table.
+         (hc4, HC4 item 1): the headline and its evidence on one screen. Fig. 1.1, the ten sessions, moved up from
          §01 (gone): assets/js/proof.js draws it from the record below, in the dark register Home §04 uses, and derives every
          session count on this page; edit the sessions here, then the no-JS table and the text to match. Without JavaScript
          the record is the table (Table 1.1's ditto marks); [data-plate-rec] per session and [data-plate-tick] per
@@ -79,12 +84,8 @@
     <section class="page-hero page-hero--dark is-dark grain" id="performance">
       <div class="container">
         <div class="grid page-hero--plate">
-          <div class="hero-copy">
-            <h1 class="display-1" data-reveal style="--d:60ms"><span class="ln">Agents ran the lifecycle.</span> <em class="ln">The broker <span class="ph">confirmed it.</span></em></h1>
-            <p class="lede" data-reveal style="--d:120ms"><span data-proof="total" data-proof-as="Words">Ten</span> consecutive sessions of&nbsp;Lifecycle&nbsp;01, more&nbsp;than&nbsp;<span data-proof="floor" data-proof-as="words">ten</span> basis points in&nbsp;each, every&nbsp;fill <span class="nw">broker-confirmed</span>.</p>
-            <p class="pf-lc-hedge" data-reveal style="--d:150ms">Limited <span class="nw">proof-of-concept</span> period on <span class="nw">live capital</span>&nbsp;· <span class="nw">not a forecast</span></p>
-            <p class="pf-go" data-reveal style="--d:170ms"><a class="link-arrow" href="#verification">How each session is documented <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></p>
-          </div>
+          <h1 class="display-1" data-reveal style="--d:60ms"><span class="ln">Agents ran <br class="pf-br">the lifecycle.</span> <em class="ln">The broker <span class="ph">confirmed it.</span></em></h1>
+          <div class="pf-col">
           <figure class="proof-fig pf-record">
             <script type="application/json" id="oxa-sessions">
 {"lifecycle": "Lifecycle 01", "unit": "bps", "floor": 10, "sessions": [
@@ -127,8 +128,13 @@
             </div>
             <figcaption class="figure-cap figure-cap--stack"><span class="fc-h"><span data-proof="regimes">Five premium, five discount.</span> <span class="pf-js nw">One block per basis point.</span> <a class="nw" href="#disclosures">See the disclosures.</a></span></figcaption>
           </figure>
+          <p class="lede" data-reveal style="--d:120ms"><span data-proof="total" data-proof-as="Words">Ten</span> consecutive sessions of&nbsp;Lifecycle&nbsp;01, more&nbsp;than&nbsp;<span data-proof="floor" data-proof-as="words">ten</span> basis points in&nbsp;each, every&nbsp;fill <span class="nw">broker-confirmed</span>.</p>
+          <p class="pf-lc-hedge" data-reveal style="--d:150ms">Limited <span class="nw">proof-of-concept</span> period on <span class="nw">live capital</span>&nbsp;· <span class="nw">not a forecast</span></p>
+          <p class="pf-go" data-reveal style="--d:170ms"><a class="link-arrow" href="#verification">How each session is documented <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></p>
+          </div>
         </div>
       </div>
+      <i class="run-b run-b--line" data-run-boundary aria-hidden="true"></i>
     </section>
 
     <!-- 01 VERIFICATION -->

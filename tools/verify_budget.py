@@ -49,10 +49,10 @@ The checks (the item each one guards in brackets):
                        5 s cap) is < 0.01; /#economics (/#proof until hc13r), /#lc01, /#governance fresh, five loads each
                        at both widths: the target's top at the bar's bottom (2 px) and that window < 0.1 in every load
                        [r3-motion M1, r3-perf moderate]
-  loader_curtain+      v2x r3: 20 first visits to / at 390x844@2, touch, 4x CPU: every visit ends with the loader's exit (the
-                       curtain until a1, the hand-off since: .is-done comes, and before the loader is removed; none ends at
-                       .is-complete alone) and the beat (the exit's transition start + delay - the '100' pulse) is 85-110 ms
-                       in every visit (designed 90)   [r3-perf moderate, r3-motion minor; award a1]
+  loader_curtain+      v2x r3, re-expressed at hc31r (Home has no loader): 20 first visits to / at 390x844@2, touch, 4x CPU:
+                       no `.loader` is ever in the document, and the page's ready signal (`oxa:loaded`, `html.is-loaded`)
+                       comes within 600 ms of the first contentful paint in every visit (until hc31r: every visit ended
+                       with the loader's hand-off, its beat 85-110 ms)   [r3-perf moderate, r3-motion minor; LEAP-hc31 SYS-1]
   trust_landing+       v2x r5: Trust opened mid-way. Reload and Back with §03 80 px under the top (390@2 and 320@2 touch,
                        1024) and §02/§04 at 20/80/500 (390): the section's top within 2 px of where it was, the largest
                        layout-shift window < 0.01   [r5-perf issues 2, 4]
@@ -212,9 +212,29 @@ async def offscreen_work(b):
         anims = await pg.evaluate(OFFSCREEN)
         await pg.evaluate(RAF_ZERO); await pg.wait_for_timeout(3000)
         raf = await pg.evaluate("window.__raf")
+        await_band = await pg.evaluate("(() => { const c = document.querySelector('main > .cta-band'); if (!c) return false; const r = c.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; })()")
+        # a place with no camera on screen: the first chapter whose top can stand under the bar with no plate, stage, desk,
+        # explorer, canvas or close in the viewport ("one frame loop a page; only cameras on screen draw": run.js idles there)
+        quiet_at = await pg.evaluate("""(() => { const cams = [...document.querySelectorAll('.hero-plate, svg[data-run-plate], figure.stage, .swarm-live, .take, .desk, [data-gap], .arch, canvas, main > .cta-band, [data-kplate], #company-figure')];   // the elements the run's subscribers and the other engines watch
+          const nav = document.querySelector('.nav').getBoundingClientRect().bottom, max = document.documentElement.scrollHeight - innerHeight;
+          // each place is tried where it stands (a pinned stage's box depends on the scroll): scrolled there, no camera's box lies between the bar's foot and 10 % under the fold
+          for (let y = 300; y <= max - 300; y += 100) { window.scrollTo({ top: y, behavior: 'instant' });
+            if (cams.every(c => { const r = c.getBoundingClientRect(); return r.height === 0 || r.bottom <= nav + 2 || r.top >= innerHeight * 1.1; })) return 'y=' + y; }
+          return null; })()""")
+        quiet = None
+        if quiet_at:
+            await pg.wait_for_timeout(1500); await pg.evaluate(RAF_ZERO); await pg.wait_for_timeout(3000)
+            quiet = await pg.evaluate("window.__raf")
         await ctx.close()
-        ok = ok and not anims and raf["n"] == 0
-        out.append(f"{path} at the footer: {len(anims)} off-screen animations {sorted(set(anims))[:4]}, {raf['n']} rAF callbacks {raf['by']}")
+        # hc31r (integrate): at the footer the close is on screen and its end card rides the run's ledger, so run.js's one
+        # frame loop is on-screen work there (LEAP-hc31 SYS-5); no other script may draw, and with no camera on screen
+        # (below) nothing draws at all
+        band = await_band
+        others = {k: v for k, v in raf["by"].items() if k != "run.js"}
+        ok = ok and not anims and not others and (band or raf["n"] == 0)
+        out.append(f"{path} at the footer (the close {'on' if band else 'off'} screen): {len(anims)} off-screen animations {sorted(set(anims))[:4]}, {raf['n']} rAF callbacks {raf['by']}")
+        ok = ok and quiet is not None and quiet["n"] == 0
+        out.append(f"{path} with no camera on screen ({quiet_at}): {quiet['n'] if quiet else '?'} rAF callbacks {quiet['by'] if quiet else 'no such place found'}")
     # round 2 (OV-R2-3b): landing on the home page's first chapter, the overture (under the opaque bar) draws nothing
     for w, h, dpr in ((1440, 900, 1), (390, 844, 3)):
         ctx = await b.new_context(viewport={"width": w, "height": h}, device_scale_factor=dpr)
@@ -224,9 +244,11 @@ async def offscreen_work(b):
         await pg.evaluate(RAF_ZERO); await pg.wait_for_timeout(3000)
         raf = await pg.evaluate("window.__raf"); y = await pg.evaluate("scrollY")
         await ctx.close()
-        story = raf["by"].get("story.js", 0)
+        # hc31r: the overture's engines are run.js, stage.js and take.js (story.js left the site); under the bar and off
+        # screen they draw nothing
+        story = sum(raf["by"].get(k, 0) for k in ("run.js", "stage.js", "take.js", "home.js", "story.js"))
         ok = ok and story == 0
-        out.append(f"/#lifecycles at {w}x{h}@{dpr} (scrollY {y}): story.js {story} rAF in 3 s")
+        out.append(f"/#lifecycles at {w}x{h}@{dpr} (scrollY {y}): the take's engines {story} rAF in 3 s")
     # round 2 (PF-R2-3c): Proof's chart seen (its entrance and idle loops start), then scrolled just above the view while
     # its band stays on screen: no animation runs on it
     ctx, pg = await V.open_page(b, "evidence.html", 1440, 900)
@@ -265,26 +287,35 @@ async def desk_reduced_raf(b):
     return gap == 0, f"lifecycles.html@1440x900, reduced motion, desk centred, 3 s: gap.js {gap} rAF callbacks (all scripts: {raf['by']}); budget 0"
 
 
-HEADLINE = """async (i) => { document.querySelector('.story-idx [data-n="0' + i + '"]').click(); await new Promise(r => setTimeout(r, 400));
-  const ws = [...document.querySelectorAll('.beat-' + i + ' h1 .wi, .beat-' + i + ' h2 .wi')];
-  const ty = w => { const t = getComputedStyle(w).transform; return !t || t === 'none' ? 0 : new DOMMatrixReadOnly(t).m42; };
-  const low = ws.filter(w => ty(w) > 0.04 * (w.offsetHeight || 1)).map(w => w.textContent + ' ' + Math.round(ty(w)) + '/' + w.offsetHeight);
-  return { n: ws.length, low }; }"""
+# hc31r (integrate): the take's index scrolls to the beat's mark and the cut plays on the clock, so "the headline is up
+# 400 ms after the step" reads: the time from the tick's click until the beat's headline is whole on screen (the beat
+# is the one asked for, at opacity 1, no cut playing), against HEADLINE_MS. On the WebGL overture the index jumped and
+# the words rose within 400 ms; here the time is the scroll's (one screen, smooth) and the cut's (240 ms).
+HEADLINE_MS = 1000
+HEADLINE = """async (i) => { const s = document.querySelector('.story'), f = document.querySelector('.take-stage'), b = s.querySelectorAll('.beat')[i], t0 = performance.now();
+  document.querySelector('.story-idx [data-n="0' + i + '"]').click();
+  const done = () => +s.dataset.beat === i && +getComputedStyle(b).opacity > 0.999 && !(f.__stage && f.__stage.cut) && !f.dataset.stageCut;
+  while (!done() && performance.now() - t0 < 4000) await new Promise(r => requestAnimationFrame(r));
+  const h = b.querySelector('h1, h2').getBoundingClientRect();
+  return { ms: Math.round(performance.now() - t0), ok: done(), on: h.top >= 0 && h.bottom <= innerHeight }; }"""
 
 
 @check
 @timing
 async def headline_after_step(b):
-    out, low = [], 0
+    out, worst, bad = [], 0, 0
     for w, h in ((1440, 900), (390, 844)):
-        ctx, pg = await V.open_page(b, "index.html", w, h)
-        await pg.wait_for_timeout(800)
-        for i in range(1, 5):
+        ctx, pg = await V.open_page(b, "index.html", w, h, init=V.RUN_PRESET)
+        await V.until(pg, V.TAKE_READY, 15000)
+        await V.take_to(pg, 1, 400)   # the index is not shown on the first beat: the walk starts on beat 1
+        for i in (2, 3, 4, 1):
             r = await pg.evaluate(HEADLINE, i)
-            if not r["n"] or r["low"]: low += max(1, len(r["low"])); out.append(f"{w}x{h} step 0{i}: {len(r['low'])} of {r['n']} words still low {r['low'][:3]}")
+            worst = max(worst, r["ms"] if r["ok"] else 9999)
+            if not r["ok"] or not r["on"] or r["ms"] > HEADLINE_MS: bad += 1
+            out.append(f"{w} step 0{i}: {r['ms']} ms")
             await V.scene_rest(pg, i)
         await ctx.close()
-    return not low, "400 ms after each index step at 1440 and 390: " + ("every headline word is up" if not low else "; ".join(out)), low
+    return not bad, f"from an index tick's click to the beat's headline whole on screen, at 1440 and 390: {'; '.join(out)}; budget {HEADLINE_MS} ms each", worst
 
 
 @check
@@ -348,52 +379,47 @@ async def proof_entrance_time(b):
     return ms is not None and ms <= 1300, f"evidence.html@1440x900, the hero at load: the entrance's transitions ran {'%.0f ms' % ms if ms is not None else '(never finished / never ran / revealed before: ' + str(r) + ')'} after .is-in; budget 1.3 s", ms if ms is not None else float("inf")
 
 
+# hc31r (integrate): the swarm lab left the site; the model is drawn by stage.js, on Home's take and on Platform's console.
+# The two frame budgets are read there (it was [data-swarm-live], swarm.js).
+FRAME_GAPS = """(ms) => new Promise(done => { const d = []; let last = 0, t0 = 0; const f = t => { if (!t0) t0 = t; if (last) d.push(t - last); last = t;
+  if (t - t0 < ms) requestAnimationFrame(f); else { d.sort((a, b) => a - b); done({ n: d.length, median: d[d.length >> 1] || 0, p95: d[Math.floor(d.length * .95)] || 0, worst: d[d.length - 1] || 0, fps: d.length / (ms / 1000) }); } }; requestAnimationFrame(f); })"""
+
+
 @check
 @timing
 async def swarm_pacing(b):
-    ctx, pg = await V.open_page(b, "index.html", 1440, 900, dpr=2)
-    await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-    await pg.wait_for_timeout(3000)
-    iv = await pg.evaluate("""() => new Promise(res => { const out = []; let last = 0; const t0 = performance.now();
-      const f = t => { if (last) out.push(t - last); last = t; if (t - t0 < 4000) requestAnimationFrame(f); else res(out); }; requestAnimationFrame(f); })""")
-    q = await pg.evaluate("(document.querySelector('[data-swarm-live]').dataset.swQuality || '?')")
-    await ctx.close()
-    iv = sorted(iv)
-    med = statistics.median(iv) if iv else 999
-    p95 = iv[min(len(iv) - 1, int(len(iv) * 0.95))] if iv else 999
-    return med <= 18 and p95 <= 33, f"index.html@1440x900@2, lab centred, 4 s: {len(iv)} frames, median {med:.1f} ms, p95 {p95:.1f} ms (quality {q}); budget <= 18 / <= 33 ms", p95
+    out, ok, worst = [], True, 0.0
+    for name, path in (("Home's stage, beat 1", "index.html"), ("Platform's console", "platform.html")):
+        ctx, pg = await V.open_page(b, path, 1440, 900, dpr=2, init=V.RUN_PRESET)
+        if path == "index.html":
+            await V.until(pg, V.TAKE_READY, 15000); await V.take_to(pg, 1, 600)
+            rate = await pg.evaluate("document.querySelector('.take-stage').__stage.rate")
+        else:
+            await V.until(pg, V.RUN_READY, 15000); await pg.evaluate(V.CONSOLE_UP); await V.until(pg, V.CONSOLE_LIVE, 10000); await pg.evaluate(V.CONSOLE_UP); await pg.wait_for_timeout(800)
+            rate = await pg.evaluate("document.querySelector('#swarm figure.stage').__stage.rate")
+        r = await pg.evaluate(FRAME_GAPS, 3000)
+        await ctx.close()
+        ok = ok and r["n"] > 60 and r["median"] <= 18 and r["p95"] <= 33 and rate == 1
+        worst = max(worst, r["p95"])
+        out.append(f"{name}: {r['n']} frames, median {r['median']:.1f} ms, p95 {r['p95']:.1f} ms, worst {r['worst']:.1f} ms, the stage at rate {rate}")
+    return ok, "the model's stage centred at 1440x900@2, 3 s: " + "; ".join(out) + "; budget: median <= 18 ms, p95 <= 33 ms, the stage at full rate", worst
 
 
 @check
 @timing
 async def swarm_phone_fps(b):
-    ctx, pg = await V.open_page(b, "index.html", 390, 844, dpr=3, touch=True)
+    ctx, pg = await V.open_page(b, "index.html", 390, 844, dpr=3, touch=True, init=V.RUN_PRESET)
     cdp = await ctx.new_cdp_session(pg)
-    await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-    await pg.wait_for_timeout(1500)
-    await pg.evaluate("(() => { const s = document.querySelector('[data-sw-n]'); s.value = s.max; s.dispatchEvent(new Event('input', {bubbles: true})); s.dispatchEvent(new Event('change', {bubbles: true})); })()")
+    await V.until(pg, V.TAKE_READY, 15000)
     await cdp.send("Emulation.setCPUThrottlingRate", {"rate": 4})
-    # round 2: the governor sheds trails, then population, in steps; wait (up to 30 s) until its cap holds for 5 s.
-    # The hold counts only while the lane carries the population it is held to (in flight within 15 % of the cap, or of
-    # the slider's target while uncapped): the governor judges a step once the lane is down to it, so before the lane has
-    # filled (about 5 s after the slider moves) an unchanged output means it has not acted yet, not that it settled
-    LAB = r"""(() => { const t = s => (document.querySelector(s) || {}).textContent || '', out = t('[data-sw-n-out]');
-      const m = [...out.matchAll(/([\d.,]+)\s*(k?)\b/g)].pop(), pop = m ? parseFloat(m[1].replace(/,/g, '')) * (m[2] ? 1000 : 1) : 0;
-      return { out, pop, fl: +(t('[data-sw-inflight]').replace(/\D/g, '') || 0) }; })()"""
-    t0, last, since = time.monotonic(), None, None
-    while time.monotonic() - t0 < 30:
-        s = await pg.evaluate(LAB)
-        full = s["pop"] > 0 and abs(s["fl"] - s["pop"]) <= 0.15 * s["pop"]
-        if s["out"] != last or not full: last, since = s["out"], (time.monotonic() if full else None)
-        elif since is None: since = time.monotonic()
-        if since is not None and time.monotonic() - since >= 5: break
-        await pg.wait_for_timeout(500)
-    settled = f"settled after {time.monotonic() - t0:.0f} s" if since is not None and time.monotonic() - since >= 5 else "still moving after 30 s"
-    r = await pg.evaluate("""() => new Promise(res => { let n = 0; const t0 = performance.now(); const f = t => { n++; if (t - t0 < 4000) requestAnimationFrame(f); else res({ n, ms: t - t0 }); }; requestAnimationFrame(f); })""")
-    await cdp.send("Emulation.setCPUThrottlingRate", {"rate": 1})
+    await V.take_to(pg, 1, 300)
+    await pg.wait_for_timeout(3000)   # the stage's own guard has settled (it halves its rate if its first frames cost over 14 ms)
+    r = await pg.evaluate(FRAME_GAPS, 3000)
+    st = await pg.evaluate("(() => { const s = document.querySelector('.take-stage').__stage; return { rate: s.rate, cost: +(s.cost || 0).toFixed(2), dead: !!s.dead, n: OXA.run.sample().n }; })()")
     await ctx.close()
-    fps = r["n"] * 1000 / max(1, r["ms"])
-    return fps >= 30, f"index.html@390x844@3, touch, 4x CPU, agents at the slider's maximum, governor {settled} at {last!r}: {fps:.1f} fps; budget >= 30 fps", fps
+    ok = r["fps"] >= 30 and not st["dead"] and st["n"] > 20
+    return ok, (f"index.html@390x844@3, touch, 4x CPU, the take's stage on beat 1, 3 s after its guard settled: {r['fps']:.0f} frames a second (median {r['median']:.1f} ms), "
+                f"the stage at rate {st['rate']} drawing {st['n']} proposals in {st['cost']} ms; budget >= 30 fps, the stage still drawing"), -r["fps"]
 
 
 # ---- round 2 (NV-R2-3): page transitions never flash white between dark pages, never show two headlines
@@ -427,7 +453,7 @@ async def page_transition(b):
     from PIL import Image
     worst, msgs, ok = 0.0, [], True
     for dest, sel in (("company.html", ".nav-links a[href*='company']"), ("evidence.html", ".nav-links a[href*='evidence']")):
-        hi = []
+        hi, lims = [], []
         for run in range(5):
             ctx, pg = await V.open_page(b, "index.html", 1440, 900)
             await V.to_top_settled(pg)
@@ -448,11 +474,15 @@ async def page_transition(b):
                 body = im.crop((0, int(im.size[1] * 64 / 900), im.size[0], im.size[1]))
                 lums.append((int(ts - t0), sum(i * c for i, c in enumerate(body.histogram())) / max(1, body.size[0] * body.size[1])))
             peak = max(lums, key=lambda x: x[1]) if lums else (0, 999)
+            lims.append(max(60, max(lums[0][1], lums[-1][1]) + 10) if lums else 60)
             hi.append(peak)
             worst = max(worst, peak[1])
-        bad = [p for p in hi if p[1] >= 60]
+        # hc31r (integrate; proof's PROOF-3): Proof's first screen is ink above its line and paper below, so the page a turn
+        # reaches may be brighter than 60 at rest. "No flash" reads: no frame is brighter than the brighter of the two pages
+        # at rest by more than 10 (and never over 60 between two dark pages, as before)
+        bad = [p for p, lim in zip(hi, lims) if p[1] >= lim]
         ok = ok and not bad
-        msgs.append(f"/ (S0) -> {dest}: brightest frame per run (ms, mean luminance) {[(p[0], round(p[1])) for p in hi]}")
+        msgs.append(f"/ (S0) -> {dest}: brightest frame per run (ms, mean luminance) {[(p[0], round(p[1])) for p in hi]}, the pages at rest up to {round(max(lims) - 10)}")
     both = []
     for run in range(5):
         ctx = await b.new_context(viewport={"width": 1440, "height": 900})
@@ -467,7 +497,7 @@ async def page_transition(b):
         both.append((len(r), len(two), two[:2]))
     ok = ok and not any(x[1] for x in both)
     msgs.append(f"platform -> lifecycles: (frames, frames with both views at >= .25, e.g.) per run {both}")
-    return ok, "; ".join(msgs) + "; budget: luminance < 60 in every frame, never both views at .25", worst
+    return ok, "; ".join(msgs) + "; budget: no frame brighter than both pages at rest (+10; under 60 between dark pages), never both views at .25", worst
 
 
 def shift_window(ls):
@@ -566,6 +596,12 @@ async def home_landing(b):
                                  " were and CLS < 0.05; deep links at the bar (2 px), CLS < 0.1"), worst
 
 
+READY_MS = 600  # hc31r: the page's ready signal after its first contentful paint, on a phone at 4x CPU (measured 132-177 ms over 20 visits: TESTS.md 54)
+READY = r"""(() => { const R = window.__rd = {};
+  const seen = () => { if (document.querySelector('.loader')) R.loader = true; };
+  new MutationObserver(seen).observe(document, { subtree: true, childList: true });
+  document.addEventListener('oxa:loaded', () => { if (R.ready == null) R.ready = Math.round(performance.now()); seen(); });
+  try { new PerformanceObserver(l => { for (const e of l.getEntries()) if (e.name === 'first-contentful-paint' && R.fcp == null) R.fcp = Math.round(e.startTime); }).observe({ type: 'paint', buffered: true }); } catch (e) { } })();"""
 CURTAIN = r"""(() => { const E = window.__ev = {}, A = window.__an = {}; const mark = k => { if (!(k in E)) E[k] = Math.round(performance.now()); };
   // v2x r4 (system): when .is-done appears, find the exit's transition and the dial's 'loader-pulse' (it starts in the
   // '100' frame) and read their start times once the compositor has set them (rAF until both are set).
@@ -603,31 +639,31 @@ async def loader_curtain(b):
     hc29 (system, the HC29 director's item 8; integrate): the 00 -> 100 count is gone; the ring draws itself in CSS and
     loader.js completes it 310 ms after the first paint (.is-complete and .is-done together, the pulse and the 90 ms
     beat as before), so '100' above reads 'the ring completes'; the principle and the reading are unchanged."""
+    # hc31r (system; LEAP-hc31 SYS-1 and section 6: "`.loader` goes; `oxa:loaded` and `html.is-loaded` still fire at first
+    # paint"): Home has no loader, so there is no hand-off to time. The principle the check protected is "on a slow phone a
+    # first visit never sits behind a cover that outstays the page". It now reads: in 20 first visits no `.loader` is ever in
+    # the document, and the page's ready signal (`oxa:loaded`, with `html.is-loaded` set) comes within READY_MS of the first
+    # contentful paint (the engines that wait for it start then; with the loader it came 400 ms after the paint by design).
     runs = []
     for _ in range(20):
         ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
-        await ctx.add_init_script(CURTAIN)
+        await ctx.add_init_script(READY)
         pg = await ctx.new_page(); pg.set_default_navigation_timeout(60000)
         cdp = await ctx.new_cdp_session(pg)
         await cdp.send("Emulation.setCPUThrottlingRate", {"rate": 4})
-        await pg.goto(f"{V.BASE}/index.html", wait_until="load"); await pg.wait_for_timeout(4500)
-        ev = await pg.evaluate("Object.assign({}, window.__ev || {})")
-        an = await pg.evaluate("Object.assign({}, window.__an || {})")
+        await pg.goto(f"{V.BASE}/index.html", wait_until="load"); await pg.wait_for_timeout(3000)
+        ev = await pg.evaluate("Object.assign({ cls: document.documentElement.classList.contains('is-loaded'), now: !!document.querySelector('.loader') }, window.__rd || {})")
         await ctx.close()
-        c, d, r = ev.get("loader.is-complete"), ev.get("loader.is-done"), ev.get("loader.removed")
-        ts, td, ps = an.get("tr_start"), an.get("tr_delay"), an.get("pulse_start")
-        beat = round(ts + td - ps) if None not in (ts, td, ps) else None
-        runs.append({"curtain": bool(d and (not r or d <= r)), "beat": beat, "complete_only": bool(c and not d), "found": an.get("found"), "err": an.get("err")})
-    beats = [x["beat"] for x in runs if x["beat"] is not None]
-    curt, alone = sum(x["curtain"] for x in runs), sum(x["complete_only"] for x in runs)
-    off = [x for x in beats if not 85 <= x <= 110]
-    unread = [(x["found"], x["err"]) for x in runs if x["beat"] is None]
-    ok = curt == len(runs) and not alone and len(beats) == len(runs) and not off
-    med = statistics.median(beats) if beats else None
-    return ok, (f"20 first visits at 390x844@2, 4x CPU: {curt}/20 hand off before the loader goes, {alone} end at .is-complete alone; "
-                f"beat (the ground's fade start + delay - '100' pulse start) median {med} ms, range {min(beats) if beats else None}-{max(beats) if beats else None} ms "
-                f"({len(off)} outside 85-110; {len(unread)} unread{': ' + str(unread[:3]) if unread else ''}); "
-                "budget: 20/20, none alone, every beat 85-110 ms"), (max(beats) if beats else float("inf"))
+        runs.append(ev)
+    covered = sum(1 for x in runs if x.get("loader") or x.get("now"))
+    waits = [x["ready"] - x["fcp"] for x in runs if x.get("ready") is not None and x.get("fcp") is not None]
+    unread = sum(1 for x in runs if x.get("ready") is None or x.get("fcp") is None or not x.get("cls"))
+    late = [w for w in waits if w > READY_MS]
+    ok = not covered and not unread and not late
+    med = statistics.median(waits) if waits else None
+    return ok, (f"20 first visits at 390x844@2, 4x CPU: {covered}/20 ever had a loader in the document; ready (oxa:loaded, html.is-loaded) "
+                f"median {med} ms after the first contentful paint, range {min(waits) if waits else None}-{max(waits) if waits else None} ms "
+                f"({len(late)} over {READY_MS}; {unread} unread); budget: no loader, every visit ready within {READY_MS} ms of its first paint"), (max(waits) if waits else float("inf"))
 
 
 # v2x r5 (system; r5-perf issues 2/4): Trust starts its engines after the first paint and ledger.css holds its replay's

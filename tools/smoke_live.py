@@ -31,8 +31,28 @@ async def main():
         # hc30r (COMP-1; integrate, on company's request): Company's hero is one act on a 2D canvas (company-hero.js) with
         # one control, Replay. A deploy from before hc30r still has the figure.js stage and its three modes; this may run
         # against either (as the chapter count below), so it walks the hero the page has: the figure is drawn, and its
-        # control changes the picture
-        if await pg.evaluate("!document.querySelector('.company-modes')"):
+        # control changes the picture.
+        # hc31r (COMP-1 of LEAP-hc31; integrate, on company's request): from hc31r the sheet is a camera on the run and has
+        # no Replay: the figure is drawn, it moves while the model runs (agents light as they propose), and the header's
+        # pause holds it. A deploy with Replay (hc30r) is still walked as before
+        if await pg.evaluate("!document.querySelector('.company-modes') && !document.querySelector('[data-co-replay]')"):
+            SUM = ("(() => { const s = document.getElementById('company-figure'), c = s && s.querySelector('canvas'); if (!c || !c.width || !s.classList.contains('is-live')) return null;"
+                   " const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let h = 0, n = 0;"
+                   " for (let i = 0; i < d.length; i += 4) { if (d[i + 3]) n++; h = (h * 31 + d[i] * 65536 + d[i + 1] * 256 + d[i + 2] + d[i + 3]) | 0; } return [h, n]; })()")
+            first = await pg.evaluate(SUM)
+            assert first and first[1] > 0, "company figure not live, or it draws nothing"
+            await pg.screenshot(path=str(OUT / "company-hero.png"))
+            moved = False
+            for _ in range(24):  # an agent lights within a few hundred ms while the model runs; polled (the CSP has no 'unsafe-eval')
+                await pg.wait_for_timeout(250)
+                if (await pg.evaluate(SUM))[0] != first[0]: moved = True; break
+            assert moved, "the company figure does not move while the model runs"
+            assert await pg.evaluate("!!document.querySelector('button.nav-run')"), "no transport in the header on Company"
+            await pg.evaluate("OXA.run.pause(true)"); await pg.wait_for_timeout(400)
+            a = await pg.evaluate(SUM); await pg.wait_for_timeout(700)
+            assert await pg.evaluate(SUM) == a, "the header's pause does not hold the company figure"
+            await pg.evaluate("OXA.run.pause(false)")
+        elif await pg.evaluate("!document.querySelector('.company-modes')"):
             SUM = ("(() => { const s = document.getElementById('company-figure'), c = s && s.querySelector('canvas'); if (!c || !c.width || !s.classList.contains('is-live')) return null;"
                    " const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let h = 0, n = 0;"
                    " for (let i = 0; i < d.length; i += 4) { if (d[i + 3]) n++; h = (h * 31 + d[i] * 65536 + d[i + 1] * 256 + d[i + 2] + d[i + 3]) | 0; } return [h, n]; })()")

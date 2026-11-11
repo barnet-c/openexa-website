@@ -89,6 +89,8 @@
     const docOf = u => { try { const x = new URL(u, location.href); return x.origin + x.pathname.replace(/(\/index)?(\.html)?\/*$/, ''); } catch (err) { return ''; } };
     const sent = v => { try { if (v === undefined) return JSON.parse(sessionStorage.getItem('oxa-turn') || 'null'); sessionStorage.setItem('oxa-turn', JSON.stringify(v)); } catch (err) { } return null; };
     const named = () => Array.from(document.querySelectorAll('[data-vt-dest], [style*="view-transition-name: fig"]'));
+    const edge = () => { const b = document.querySelector('[data-run-boundary]'), r = b && b.getBoundingClientRect(); return r && r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth ? b : null; };
+    const look = b => { const c = getComputedStyle(b); return [c.borderTopLeftRadius, c.borderTopColor, c.borderBottomWidth]; };
     const arrive = (vt, early) => {
       root.classList.add('vt-in'); OXA.byTurn = true;
       const f = sent(), a = window.navigation && navigation.activation;
@@ -97,6 +99,14 @@
       if (early && !(f && f.fig && docOf(f.to) === docOf(location.href) && Date.now() - f.at < 4000)) {
         const un = named(); un.forEach(d => d.style.setProperty('view-transition-name', 'none'));
         vt.finished.catch(() => {}).then(() => un.forEach(d => d.style.removeProperty('view-transition-name')));
+      }
+      // the match cut needs both ends: only at pagereveal can this page's boundary still take its name
+      const b = early && f && f.b && docOf(f.to) === docOf(location.href) && Date.now() - f.at < 4000 ? edge() : null;
+      if (b) {
+        b.style.setProperty('view-transition-name', 'boundary');
+        look(b).forEach((v, i) => { root.style.setProperty('--b-' + 'rcw'[i] + '0', f.b[i]); root.style.setProperty('--b-' + 'rcw'[i] + '1', v); });
+        try { vt.types.add('match'); } catch (err) { }
+        vt.finished.catch(() => {}).then(() => b.style.removeProperty('view-transition-name'));
       }
       const first = document.querySelector('main > :first-child'), band = first && !first.classList.contains('story') && first.getAnimations ? first : null;
       const whole = () => band && band.getAnimations({ subtree: true }).forEach(x => {
@@ -115,11 +125,13 @@
     };
     addEventListener('pageswap', e => {
       if (!e.viewTransition) return;
-      const a = e.activation;
-      sent({ to: a && a.entry ? a.entry.url : '', at: Date.now(), fig: named().some(d => getComputedStyle(d).viewTransitionName === 'fig') });
+      // a boundary under the open menu sheet (the page is inert then) is not on screen: no match cut from the menu
+      const a = e.activation, m = document.querySelector('main'), b = scrollY < innerHeight / 2 && !(m && m.inert) ? edge() : null;
+      if (b) b.style.setProperty('view-transition-name', 'boundary');
+      sent({ to: a && a.entry ? a.entry.url : '', at: Date.now(), fig: named().some(d => getComputedStyle(d).viewTransitionName === 'fig'), b: b ? look(b) : null });
       root.classList.add('vt-leave');
     });
-    addEventListener('pageshow', () => root.classList.remove('vt-leave'));
+    addEventListener('pageshow', () => { root.classList.remove('vt-leave'); document.querySelectorAll('[data-run-boundary]').forEach(b => b.style.removeProperty('view-transition-name')); });
     addEventListener('pagereveal', e => { root.classList.remove('vt-leave'); if (e.viewTransition) arrive(e.viewTransition, true); });
     if (document.activeViewTransition && !root.dataset.jump && !root.classList.contains('vt-in')) arrive(document.activeViewTransition, false);
   }
@@ -130,15 +142,27 @@
     return !!src && (!k || !!document.querySelector(k));
   });
   if (!list.length) return;
-  if (list.some(src => /story\.js$/.test(src))) root.classList.add('story-wait');
-  const FIRST = /(?:^|\/)(?:loader|story|site)\.js$/;
+  // the take is pinned (overture.css, html.story-ready; site.js keeps the bar clear over it) while the window can hold a beat and its engines
+  // are on their way; in a shorter window, or if one of them fails, the five beats stand in normal flow with their stills
+  const TAKE = /(?:^|\/)(?:run|stage|take)\.js$/;
+  let down = !list.some(src => /take\.js$/.test(src));
+  const pin = () => {
+    const on = !down && innerHeight >= (innerWidth < 640 || innerWidth * 20 < innerHeight * 23 ? 37.5 : 31) * (parseFloat(getComputedStyle(root).fontSize) || 16);
+    if (on === root.classList.contains('story-ready')) return;
+    root.classList.toggle('story-ready', on);
+    document.dispatchEvent(new CustomEvent('story:gl-ready'));
+  };
+  const fail = () => { down = true; pin(); };
+  pin();
+  addEventListener('resize', pin);
+  const FIRST = /(?:^|\/)(?:run|stage|take|site)\.js$/;
   const queue = [];
   let pumping = false;
   const script = (src) => {
     const s = document.createElement('script');
     s.src = src;
     s.async = false;
-    if (/story\.js$/.test(src)) s.addEventListener('error', () => root.classList.add('story-failed'));
+    if (TAKE.test(src)) { s.addEventListener('error', fail); if (/take\.js$/.test(src)) s.addEventListener('load', () => { if (!OXA.take) fail(); }); }
     return s;
   };
   const pump = () => {
@@ -176,18 +200,12 @@
   } catch (e) { }
   if (at) { ['wheel', 'touchstart', 'keydown'].forEach(t => addEventListener(t, () => { moved = 1; }, { once: true, passive: true })); hold(1); requestAnimationFrame(land); }
   const rest = () => { if (later) return; later = true; spread(list.filter(src => !FIRST.test(src))); };
-  const lifted = () => {
-    const l = document.querySelector('.loader'), up = () => !l.isConnected || l.classList.contains('is-done');
-    if (!l || up()) return rest();
-    const mo = new MutationObserver(() => { if (up()) { mo.disconnect(); rest(); } });
-    mo.observe(l, { attributes: true }); mo.observe(document.body, { childList: true });
-  };
   const start = () => {
     if (started) return;
     started = true;
     add(list.filter(src => later || FIRST.test(src)), at ? () => requestAnimationFrame(() => { land(); hold(0); H.scrollRestoration = 'auto'; }) : null);
-    if (root.classList.contains('is-loaded')) lifted();
-    else document.addEventListener('oxa:loaded', lifted, { once: true });
+    if (root.classList.contains('is-loaded')) rest();
+    else document.addEventListener('oxa:loaded', rest, { once: true });
     setTimeout(rest, 2500);
   };
   if (document.visibilityState === 'hidden') { start(); return; }

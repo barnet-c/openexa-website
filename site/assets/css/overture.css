@@ -1,330 +1,213 @@
-/* OpenEXA · the overture (Home): own sheet since r2, linked where drawn. */
+/* OpenEXA · the take (Home's opening): one run, five beats, one stage. Home's sheet since hc31r. */
 /* v2:overture:start */
-/* ---------- the overture: one instrument, five scenes (story.js) — copy on the left, the instrument on the right, the scene index below;
-   portrait screens stack the instrument above the copy and move the index under the nav ---------- */
-/* the stage's text keeps clear of a phone's notch or island held sideways (viewport-fit=cover); registered, so story.js
-   can read the inset in px for its callouts (r2 mobile) */
-@property --story-in-l { syntax: "<length>"; inherits: true; initial-value: 0px; }
-@property --story-in-r { syntax: "<length>"; inherits: true; initial-value: 0px; }
-.story { --story-in-l: max(var(--gutter), env(safe-area-inset-left)); --story-in-r: max(var(--gutter), env(safe-area-inset-right)); --story-bar-h: 4rem; position: relative; height: calc(100vh + 322vh); height: calc(100svh + 322svh); background: #0B110F; color: var(--paper); }
-.story-stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; isolation: isolate; outline: none;
-  background: radial-gradient(42% 46% at 60% 24%, rgba(30, 122, 90, .11), transparent 72%), radial-gradient(85% 75% at 70% 50%, #111915 0%, #0B110F 64%, #080D0B 100%); }
-/* the stage's focus ring is the site's, on a frame inset under the bar (the bar covers the stage's top edge; WCAG 2.4.11;
-   a3, from home.css): ::after is free on the stage, z-index 5 is over its layers 0-4 */
-.story-stage:focus-visible { outline: none; }
-.story-stage:focus-visible::after { content: ""; position: absolute; inset: calc(var(--nav-h) + .5rem) .5rem .5rem; z-index: 5; border: calc(2 * var(--hair)) solid var(--signal-bright); border-radius: .125rem; pointer-events: none; }
-.story-stage.is-pointing { cursor: pointer; }
-.story-gl, .story-2d { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+/* Without scripts, in a window too short to pin, or if the engines never arrive: five beats in normal flow, each with its still.
+   html.story-ready (home.js) pins the stage: the beats share one screen and take.js picks the shot. Beat 0 is laid out the same in both. */
+.story { --bar-h: 3.5rem; --pad-b: clamp(1.25rem, 3.4svh, 2.25rem); --edge-l: max(var(--gutter), env(safe-area-inset-left), (100vw - var(--max)) / 2 + var(--gutter)); --edge-r: max(var(--gutter), env(safe-area-inset-right), (100vw - var(--max)) / 2 + var(--gutter)); position: relative; background: #0B110F; color: var(--paper); }
+.take { position: relative; isolation: isolate; background: radial-gradient(90% 80% at 56% 46%, #111915 0%, #0B110F 62%, #090E0C 100%); }
+.take-ui { position: relative; z-index: 1; }
+.take-ui > .take-stage, .take-bar, .take-at, .beat-shot, .beat input, .take-ro { display: none; }
+.beat { position: relative; padding: clamp(3.5rem, 9vh, 6rem) 0; border-top: var(--hair) solid rgba(245, 242, 236, .12); }
+.beat h2 { max-width: 15ch; }
+.beat h2 .nb { white-space: nowrap; }
+.beat .body-lg { margin-top: 1.25rem; max-width: 44ch; text-wrap: pretty; }
+.beat-4 .body-lg a { color: var(--fg); text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .1875rem; text-decoration-color: var(--line-strong); transition: text-decoration-color var(--dur-feedback) var(--ease-out); }
+@media (hover: hover) { .beat-4 .body-lg a:hover { text-decoration-color: var(--accent); } }
+.beat-more { margin-top: clamp(1.125rem, 2.4vh, 1.625rem); }
+.beat-fig { display: block; width: 100%; max-width: 27.5rem; height: auto; margin-top: 2.125rem; }
+.take-follow, .trace { display: none; }
+.beat-list { display: flex; flex-wrap: wrap; gap: .375rem 1.5rem; max-width: 44rem; margin: 1.5rem 0 0; padding: 0; list-style: none; font-size: var(--fs-small); line-height: 1.4; color: var(--fg-2); }
+.beat-list b { margin-right: .3em; font-weight: 400; font-variant-numeric: tabular-nums; color: var(--fg-3); } /* not mono: mono text in the first layout fetched that font before the first paint (0.3 s of simulated FCP) */
+.beat-list .is-b { color: var(--accent); }
+.story-ready .beat-list { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* the copy */
-.story-ui { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-.story-ui .container { position: relative; height: 100%; }
-.beat { position: absolute; left: var(--story-in-l); right: var(--story-in-r); bottom: calc(var(--story-bar-h) + clamp(1.125rem, 3.6vh, 2.5rem)); opacity: 0; pointer-events: none; will-change: opacity, transform; }
-.beat-0 { opacity: 1; } /* the opening scene holds from the first paint; story.js takes over every beat's opacity */
-.beat.is-active .beat-text, .beat.is-active .hero-stats { pointer-events: auto; }
-/* the copy relay (story.js): each part of a beat follows the scroll position. --eo the eyebrow */
-.beat .eyebrow, .beat-0 .hero-kicker { opacity: var(--eo, 1); }
-.beat .body-lg, .beat-0 .hero-sub, .beat .hero-cta, .beat-0 .hero-stats { opacity: var(--bo, 1); }
-/* at 0 the paragraph, buttons, key and figures are not there at all */
-.beat.is-bo0 .body-lg, .beat.is-bo0 .hero-sub, .beat.is-bo0 .hero-cta, .beat.is-bo0 .hero-stats { visibility: hidden; }
-.story-ready .beat:not(.beat-0) [data-split] .wi, .story-ready .beat-0.is-relay [data-split] .wi { transform: translateY(calc((1 - clamp(0, var(--w, 1) * 1.5 - var(--i, 0) * .05, 1)) * 112%)); transition: none; }
-.beat-text { max-width: min(44%, 35rem); }
-.beat-0 .beat-text { max-width: min(50%, 41.25rem); }
-.beat-0 .display-1 { font-size: clamp(3rem, max(6.2vw, 2.1325rem + 3.23vw), 5.58rem); } /* hc1: the hero step (--fs-hero) from ~1150 (89 at 1440, where it was 80.6); a3's 67 px at 1024 */
-.beat-0 .hero-sub { max-width: 44ch; }
-.beat .eyebrow { margin-bottom: 1.125rem; color: rgba(245, 242, 236, .62); }
-.beat h2 { max-width: 15ch; text-wrap: balance; }
-.beat h2 .nb { white-space: nowrap; } /* 'One autonomous' stays on one line */
-.beat .body-lg { margin-top: 1.375rem; max-width: 46ch; } /* hc4: the lede step (--fs-body, .body-lg's), as the sub-line above it (was 1.04rem) */
-.beat .hero-cta { margin-top: 1.875rem; }
-.hero-stats { display: grid; grid-template-columns: 1fr 1fr .8fr 1.45fr; gap: 1.25rem; margin-top: 2.125rem; padding-top: 1.25rem; border-top: var(--hair) solid rgba(245, 242, 236, .14); max-width: min(52%, 40rem); }
-.hero-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: var(--fs-item); line-height: 1; letter-spacing: var(--track-figure); white-space: nowrap; }
-.hero-stats span { display: block; margin-top: .5625rem; font-family: var(--mono); font-size: var(--mono-tick); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .58); line-height: 1.4; }
-/* Lifecycle 01: a numeral like its neighbours, with the live dot */
-.hero-stats .live { display: inline-block; width: .375rem; height: .375rem; margin-left: .5625rem; border-radius: 50%; background: var(--signal-bright); vertical-align: .62em; animation: pulse 2s var(--ease-move) 3; } /* three beats, then still, as .badge i (WCAG 2.2.2; award a1: it was the one CSS animation on the site that never stopped) */
-/* the chapter mark: absent at rest; inside a hand-over the incoming scene's numeral rises above the copy column and rolls over */
-.story-num { position: absolute; left: var(--story-in-l); top: calc(var(--nav-h) + clamp(1rem, 4.5vh, 3rem)); opacity: 0; pointer-events: none; color: var(--paper); will-change: opacity, transform; }
-.story-num b, .story-num span { display: block; overflow: hidden; transform-origin: 0 0; }
-.story-num i { display: block; font-style: normal; transform: translate3d(0, calc(var(--roll, 0) * -100%), 0); transition: transform var(--dur-draw) var(--ease-move); } /* two lines, rolled like a counter */
-.story-num b { height: 1em; font: 400 clamp(6rem, 12vw, 10.5rem)/1 var(--serif); letter-spacing: -0.045em; color: rgba(245, 242, 236, .16); font-variant-numeric: tabular-nums; }
-.story-num b i { height: 1em; }
-.story-num span { height: 1.4em; margin-top: .25rem; font: var(--mono-tick)/1.4 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 242, 236, .62); }
-.story-num span i { height: 1.4em; }
-/* the role-coded vocabulary, as a key */
-.story-lab i.lg-r, .story-lab i.lg-b { content: ""; display: inline-block; flex: none; width: .5625rem; height: .5625rem; box-sizing: border-box; }
-.story-lab i.lg-r { width: .4375rem; height: .4375rem; background: var(--reject-bright); border-radius: 50%; }
-.story-lab i.lg-b { width: .875rem; height: .375rem; background: rgba(245, 242, 236, .92); border-radius: .0625rem; }
+/* beat 0, the cold open: the words, the machine from edge to edge, the four figures */
+.beat-0 { display: grid; grid-template-rows: auto minmax(11rem, 1fr) auto; box-sizing: border-box; min-height: 100vh; min-height: 100svh; padding: var(--nav-h) 0 0; border-top: 0; }
+.beat-0 .beat-text { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr auto; column-gap: clamp(2.5rem, 6vw, 7.5rem); padding-top: clamp(1.25rem, 5.6svh, 3.75rem); }
+.beat-0 .hero-kicker { grid-area: 1 / 1 / 2 / 3; margin-bottom: clamp(.625rem, 2svh, 1.25rem); font-size: var(--fs-body); }
+.beat-0 .display-1 { grid-area: 2 / 1 / 4 / 2; max-width: 6.6em; font-size: min(clamp(3rem, max(6.2vw, 2.1325rem + 3.23vw), 5.58rem), 11.6svh); }
+.beat-0 .hero-sub { grid-area: 2 / 2; align-self: end; max-width: 40ch; margin: 0; text-wrap: pretty; }
+.beat-0 .hero-cta { grid-area: 3 / 2; margin-top: clamp(1.125rem, 3svh, 1.75rem); }
+.beat-0 .beat-shot { display: block; position: relative; container-type: size; overflow: clip; min-width: 0; }
+/* the still stands where stage.js frames the wide shot in this box (SET.wide: cover, at least 2.2 units across, .68 up; 1.05 across in a phone's or an upright box) */
+.beat-0 .beat-shot > * { --wm: 1.136364; --Wf: min(max(100cqw, 100cqh * 2.777778), 100cqw * var(--wm), 100cqh * 3.676471); --Hf: calc(var(--Wf) * .36); --L: calc((100cqw - var(--Wf)) * .535); --T: calc((100cqh - var(--Hf)) * .5); position: absolute; }
+@container (max-aspect-ratio: 8/5) { .beat-0 .beat-shot > * { --wm: 2.380952; } }
+@media (max-width: 599.98px) { .beat-0 .beat-shot > * { --wm: 2.380952; } }
+.beat-0 .stage-still { left: var(--L); top: var(--T); width: var(--Wf); height: var(--Hf); max-width: none; color: var(--fg); }
+.beat-0 .beat-shot > .run-b { left: calc(var(--L) + var(--Wf) * .516752); top: calc(var(--T) + var(--Hf) * .367859); width: calc(var(--Wf) * .036497); height: calc(var(--Hf) * .301436); transform-origin: 0 0; transform: matrix(1, -.36648, 0, 1, 0, 0); }
+.beat-foot { position: relative; padding-bottom: clamp(1.25rem, 4svh, 2.5rem); }
+.take-hedge { margin: 0; font-size: var(--fs-small); line-height: 1.3; color: var(--fg-3); }
+.beat-foot .take-hedge { position: absolute; right: max(var(--gutter), env(safe-area-inset-right)); bottom: calc(100% + .625rem); }
+.hero-stats { display: grid; grid-template-columns: 1fr 1fr .8fr auto; column-gap: clamp(1.5rem, 4vw, 4rem); padding-top: clamp(.875rem, 2.4svh, 1.375rem); border-top: var(--hair) solid var(--line); }
+.hero-stats b { display: block; font: 400 var(--fs-item)/1 var(--serif); letter-spacing: var(--track-figure); font-variant-numeric: lining-nums; white-space: nowrap; }
+.hero-stats span { display: block; margin-top: .5rem; font-size: var(--fs-small); line-height: 1.4; color: rgba(245, 242, 236, .72); }
+.hero-stats span span { display: inline; margin: 0; }
+.hero-stats .live { display: inline-block; width: .375rem; height: .375rem; margin: 0 .5em 0 0; border-radius: 50%; background: var(--signal-bright); vertical-align: .08em; animation: pulse 2s var(--ease-move) 3; }
+.hero-stats .hs-l2 { white-space: nowrap; }
+html.run-paused .hero-stats .live { animation-play-state: paused; }
 
-/* callouts: DOM text projected from the instrument, with leader lines */
-.story-labels { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
-.story-leaders { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-/* callouts, leaders and nodes take their opacity from story.js */
-.story-leader { fill: none; stroke: rgba(245, 242, 236, .3); stroke-width: var(--stroke); opacity: 0; transition: stroke var(--dur-feedback) var(--ease-out); }
-.story-leader.is-live, .story-leader.is-council, .story-leader.bound { stroke: rgba(79, 203, 147, .5); }
-.story-leader.is-hot { stroke: rgba(245, 242, 236, .75); }
-.story-node { fill: rgba(245, 242, 236, .86); opacity: 0; } /* where a leader meets its own ring */
-.story-node.is-live { fill: var(--signal-bright); }
-.story-lab { position: absolute; left: 0; top: 0; font: 400 var(--mono-tick)/1.35 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(245, 242, 236, .66); white-space: nowrap; opacity: 0; transition: color var(--dur-feedback) var(--ease-out); user-select: text; pointer-events: none; }
-.story-lab.is-on { pointer-events: auto; }
-button.story-lab { cursor: pointer; text-align: left; }
-button.story-lab:focus-visible { outline: var(--hair) solid var(--signal-bright); outline-offset: .1875rem; }
-.story-lab b { font-weight: 500; color: rgba(245, 242, 236, .86); }
-.story-lab .k { color: rgba(245, 242, 236, .92); font-variant-numeric: tabular-nums; }
-.story-lab .n { color: rgba(245, 242, 236, .72); transition: color var(--dur-feedback) var(--ease-out); }
-.story-lab .dt { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); } /* read by screen readers; shown in the inspector */
-.story-lab.ring, .story-lab.layer, .story-lab.gate, .story-lab.note, .story-lab.bound { display: flex; align-items: center; gap: .625rem; min-height: 1.375rem; padding: .125rem 0; }
-.story-lab .st { padding: .0625rem .4375rem; border: var(--hair) solid rgba(245, 242, 236, .24); border-radius: .125rem; font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .7); }
-.story-lab .st-live { color: var(--signal-bright); border-color: rgba(79, 203, 147, .55); } /* story.js writes st-live / st-next / st-roadmap from each ring's status */
-.story-lab .st-roadmap { color: var(--khaki); border-color: rgba(172, 166, 142, .34); border-style: dotted; }
-.story-lab .st-next { border-style: dashed; }
-.story-lab.is-live .k, .story-lab.is-council .k, .story-lab.is-council .n, .story-lab.bound .n { color: var(--signal-bright); }
-.story-lab.is-hot .k, .story-lab.is-hot .n { color: var(--paper); }
-.story-lab.is-hot::before { content: ""; position: absolute; left: -.875rem; top: 50%; width: .5rem; height: var(--hair); background: var(--paper); }
-.story-lab.day.is-hot::before { display: none; }
-.story-lab.note .n { color: rgba(245, 242, 236, .52); }
-/* hc2: the scenes' words in the plates' caption register (Inter at the small step, sentence case; names at paper .72),
-   as the swarm lab's gates below them; codes and numerals stay mono at the label step (data): .k, the days, the floor */
-.story-lab:is(.ring, .layer, .gate, .note, .bound) { font: 400 var(--fs-small)/1.35 var(--sans); letter-spacing: 0; text-transform: none; }
-.story-lab:is(.ring, .layer, .gate) .k { font: 500 var(--fs-label)/1 var(--mono); letter-spacing: .04em; }
-.story-lab.is-terse .n { display: none; } /* short landscape, where names would crowd the structure: code and status (the inspector names it) */
-/* a plate's caption leads with what kind of picture it is, and wraps rather than leave the screen */
-.story-lab.cap { white-space: normal; max-width: calc(100% - 2 * var(--gutter)); line-height: 1.5; letter-spacing: .12em; color: rgba(245, 242, 236, .6); } /* AA on the ground */
-.story-lab.cap b { color: rgba(245, 242, 236, .8); font-weight: 400; margin-right: .7em; }
-.story-lab.day { display: grid; justify-items: center; gap: calc(2 * var(--hair)); padding: .1875rem .25rem; min-width: 1.625rem; line-height: 1.25; }
-.story-lab.day.is-hot .k { color: var(--paper); }
-.story-lab.day.is-thin:not(:focus-visible) { opacity: 0 !important; } /* columns too close for every tag: 01, 03 … 09 print */
-.story-lab.floor { color: rgba(245, 242, 236, .74); text-align: right; }
-.story-lab.navtag { color: rgba(245, 242, 236, .5); }
-/* hc3: scene 4 is recorded data, as Fig. 1.1: its words (Floor, NAV) in the caption register, its value and the days mono */
-.story-lab:is(.floor, .navtag) { font: 400 var(--fs-small)/1.35 var(--sans); letter-spacing: 0; text-transform: none; }
-.story-lab.floor .u { font: 400 var(--fs-label)/1 var(--mono); letter-spacing: .02em; }
-/* hc20: from 600 x 500 (landscape and upright tablets), the floor's value and the days at the data step, as Proof's chart */
-@media (min-width: 600px) and (min-height: 500px) { .story-lab.floor .u, .story-lab.day { font-size: var(--fs-small); letter-spacing: 0; } }
-.story-lab.sum { text-align: right; line-height: 1.8; color: rgba(245, 242, 236, .62); }
-.story-lab.sum b { color: var(--paper); }
-.story-lab.sum .sep { display: block; }
-.story-insp { position: absolute; left: 0; top: 0; z-index: 2; max-width: 16.25rem; padding: .5625rem .75rem .625rem; border-left: var(--hair) solid var(--signal-bright); background: rgba(11, 17, 15, .96); font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; color: rgba(245, 242, 236, .8); opacity: 0; pointer-events: none; white-space: normal; }
-.story-insp.is-on { opacity: 1; transition: opacity var(--dur-feedback) var(--ease); } /* it comes up softly and goes at once */
-.story-insp b { display: block; margin-bottom: calc(3 * var(--hair)); color: var(--paper); font-weight: var(--w-ui); }
-.story-insp em { font-style: normal; color: var(--signal-bright); }
-/* while the inspector is up, the caption and the summary give way to it (classes only: no :has()) */
-.story-labels.has-insp .story-lab.cap, .story-labels.has-insp .story-lab.sum { opacity: 0 !important; }
+/* ---------- pinned: one stage, five beats ---------- */
+.story-ready .story { height: 500vh; height: 500svh; }
+.story-ready .take { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: clip; }
+.story-ready .take-ui { position: absolute; inset: 0; pointer-events: none; }
+.story-ready .take-ui > .take-stage { display: block; position: absolute; inset: var(--nav-h) 0 0; z-index: 0; width: auto; height: auto; margin: 0; outline: none; pointer-events: auto; }
+.story-ready .take-ui > .take-stage.is-off > * { visibility: hidden; }
+.story-ready .take-ui > .take-stage:focus-visible::after { content: ""; position: absolute; inset: .5rem; z-index: 3; border: calc(2 * var(--hair)) solid var(--signal-bright); border-radius: .125rem; pointer-events: none; }
+.story-ready .take-at { display: block; position: absolute; inset: 0; pointer-events: none; }
+/* where each beat holds: a mark a beat, the screen's middle line inside it (take.js); 4svh between marks is the cut's hysteresis. A window scrolled
+   by whole screens stands on beats 0, 1, 2, 3, 4 */
+.take-at i { display: block; height: 96vh; height: 96svh; margin-bottom: 4vh; margin-bottom: 4svh; }
+.take-at i:first-child { height: 86vh; height: 86svh; }
+.take-at i:nth-child(4) { height: 101vh; height: 101svh; }
+.take-at i:last-child { height: 105vh; height: 105svh; margin: 0; }
+.story-ready .beat { position: absolute; inset: var(--nav-h) 0 0; z-index: 1; display: grid; grid-template-rows: minmax(0, 1fr) auto; box-sizing: border-box; min-height: 0; padding: 0 0 calc(var(--bar-h) + var(--pad-b)); border: 0; opacity: 0; transition: opacity .12s var(--ease-out); }
+.story-ready .beat-0 { inset: 0; grid-template-rows: auto minmax(0, 1fr) auto; padding: var(--nav-h) 0 0; }
+.story-ready .story:not([data-beat]) .beat-0, .story-ready .story[data-beat="0"] .beat-0, .story-ready .story[data-beat="1"] .beat-1, .story-ready .story[data-beat="2"] .beat-2, .story-ready .story[data-beat="3"] .beat-3, .story-ready .story[data-beat="4"] .beat-4 { --pe: auto; opacity: 1; z-index: 2; transition: opacity .18s var(--ease-out) var(--beat-in, .12s); }
+.story-ready .story[data-via="move"] { --beat-in: .32s; }
+.story-ready .story[data-via="hard"] :is(.beat, .take-bar) { transition: none; }
+.story-ready .beat-text > *, .story-ready .hero-stats, .story-ready .take-rec { pointer-events: var(--pe, none); }
+.story-ready .beat input { display: block; position: absolute; left: 0; top: 0; width: 18rem; }
+.story-ready .take-ro:not([hidden]) { display: grid; }
+.story-ready .beat-shot { display: block; min-width: 0; min-height: 0; }
+.story-ready .beat-fig { display: none; }
+.beat-0 .stage-still { transition: opacity var(--dur-feedback) linear; }
+.story-ready .story.is-live .beat-0 .stage-still { opacity: 0; }
+.story-next-target:focus { outline: none; }
+.story-ready .beat:not(.beat-0) .beat-text { align-self: end; }
+.story-ready .beat .body-lg { margin-top: clamp(.75rem, 2.2svh, 1.25rem); }
+.story-ready .beat h2 { font-size: min(var(--fs-display), 8.4svh); }
+/* beats 2 and 4: the picture has the right of the stage, the words stand at the foot of the left */
+.story-ready .beat-2, .story-ready .beat-4 { grid-template: minmax(0, 1fr) / minmax(0, 38fr) minmax(0, 62fr); }
+.story-ready :is(.beat-2, .beat-4) .beat-text { grid-area: 1 / 1; max-width: none; margin: 0; padding-left: var(--edge-l); padding-right: 0; }
+.story-ready .beat-2 .beat-shot { grid-area: 1 / 2; }
+/* beat 4, the record: a hard cut, ten columns in ten steps, then nothing moves */
+.take-rec { margin: 0; }
+.story-ready .take-rec { grid-area: 1 / 2; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; width: 100%; max-width: calc(46rem + var(--edge-r)); margin: 0 0 0 auto; padding: 0 var(--edge-r) 0 0; }
+.take-rec .figure-cap { margin-top: 1rem; }
+.story-ready .take-rec > [data-proof-chart]:not(.is-built) + .figure-cap { visibility: hidden; }
+.story-ready .take-rec .pf-lane { opacity: 0; }
+.story-ready .story[data-beat="4"] .take-rec .pf-lane { opacity: 1; transition: opacity 0s linear calc(var(--l) * 40ms); }
 
-/* the scene index, the key hint, the motion control */
-.story-bar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; height: var(--story-bar-h); pointer-events: none; }
-.story-bar .container { height: 100%; display: flex; align-items: center; gap: 1.375rem; }
-.story-idx { pointer-events: auto; margin-right: auto; }
-.story-idx ol { display: flex; gap: .375rem; }
-.story-idx button { position: relative; display: inline-flex; align-items: center; gap: .5625rem; min-height: 2.75rem; padding: 0 .875rem .25rem 0; font: var(--mono-tick)/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: rgba(245, 242, 236, .54); transition: color var(--dur-move) var(--ease-out); }
-.story-idx button .n { font-variant-numeric: tabular-nums; }
-.story-idx button::before, .story-idx button i { content: ""; position: absolute; left: 0; right: .875rem; bottom: .5625rem; height: var(--hair); background: rgba(245, 242, 236, .16); }
-.story-idx button i { background: rgba(245, 242, 236, .8); transform: scaleX(var(--fill, 0)); transform-origin: left; }
-.story-idx button.is-on { color: var(--paper); }
-@media (hover: hover) { .story-idx button:hover { color: var(--paper); } } /* a tap leaves no lit button behind */
-.story-idx button:focus-visible { outline: var(--hair) solid var(--signal-bright); outline-offset: .125rem; }
-.story-keys { position: absolute; width: var(--hair); height: var(--hair); margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.story-stage:focus-visible .story-keys { position: static; width: auto; height: auto; overflow: visible; clip-path: none; font: var(--mono-tick)/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--signal-bright); }
-.story-motion { position: relative; pointer-events: auto; } /* the instruments' one control (site.css, hc1), at the right end of the scene bar */
-@media (pointer: coarse) { .story-bar .story-motion { min-height: 2.25rem; } .story-bar .story-motion::after { content: ""; position: absolute; inset: -.25rem 0; } } /* hc6: outlined, it keeps the bar's 36 px box under the nav (46 px bar); a finger's 44 px target is the ::after */
-.story-labels.has-insp ~ .story-bar .story-motion { opacity: .35; } /* the inspector is up: the control steps back */
-/* hc28: where the bar sits under the menu button, Pause motion is a glyph at the tick row's end (pause; play once paused), in the menu button's box, flush right with it; its words stay its name */
-@media (max-width: 639.98px), (max-aspect-ratio: 23/20) and (max-width: 960px) {
-  .story-bar .story-motion { justify-content: flex-start; width: 2.75rem; height: 2.75rem; min-height: 0; margin-right: -.6875rem; padding: 0 0 0 2.75rem; border: 0; border-radius: 0; overflow: hidden; color: rgba(245, 242, 236, .56); }
-  .story-bar .story-motion::before, .story-bar .story-motion::after { content: ""; position: absolute; inset: auto; top: 1rem; right: .6875rem; width: .5rem; height: .625rem; background: currentColor; clip-path: polygon(12.5% 0, 37.5% 0, 37.5% 100%, 12.5% 100%); }
-  .story-bar .story-motion::after { clip-path: polygon(75% 0, 100% 0, 100% 100%, 75% 100%); }
-  .story.is-paused .story-bar .story-motion::before { clip-path: polygon(0 0, 50% 25%, 50% 75%, 0 100%); }
-  .story.is-paused .story-bar .story-motion::after { clip-path: polygon(50% 25%, 100% 50%, 100% 50%, 50% 75%); }
-  @media (hover: hover) { .story-bar .story-motion:hover { color: var(--paper); } }
-  @media (prefers-reduced-motion: no-preference) { .story-bar .story-motion::before, .story-bar .story-motion::after { transition: clip-path var(--dur-move) var(--ease-out); } }
-  @media (forced-colors: active) { .story-bar .story-motion::before, .story-bar .story-motion::after { forced-color-adjust: none; background: ButtonText; } }
-}
-.story.is-scrolled .hero-stats .live, .story.is-paused .hero-stats .live { animation-play-state: paused; } /* its loop (transform, opacity) stops once S0 has gone, and with Pause motion */
-/* the hand-off (hc29): §01 is the paper and rises over the stage; .story-paper, empty and unseen on Home, tracks its top (site.js, story.js) */
-.story-paper { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; height: 0; overflow: hidden; visibility: hidden; background: var(--paper); color: var(--ink); pointer-events: none; }
-.story-next-target:focus { outline: none; } /* the chapter the keys stepped into from the last scene: focus moves there, no ring on the section */
+/* the bar: where the take stands, the hand's receipt, the hedge */
+.story-ready .take-bar { position: absolute; left: 0; right: 0; bottom: var(--pad-b); z-index: 2; pointer-events: none; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: clamp(1.5rem, 3vw, 3rem); height: var(--bar-h); transition: opacity .18s var(--ease-out) .12s, visibility 0s .12s; }
+.story-ready .story:is(:not([data-beat]), [data-beat="0"]) .take-bar { opacity: 0; visibility: hidden; transition: opacity .12s var(--ease-out), visibility 0s .12s; }
+.story-ready .story:not([data-beat="3"]) .take-bar .receipt { visibility: hidden; }
+.story-ready .story[data-beat="4"] .take-bar .take-hedge { visibility: hidden; }
+.story-idx, .take-bar .receipt a { pointer-events: auto; }
+.story-idx ol { display: flex; margin: 0; padding: 0; list-style: none; }
+.story-idx button { position: relative; display: block; width: 2.875rem; height: 2.75rem; padding: 0; }
+.story-idx button::before, .story-idx button i { content: ""; position: absolute; left: 0; right: .75rem; top: 50%; height: calc(1px * var(--stroke)); background: rgba(245, 242, 236, .3); }
+.story-idx button i { background: rgba(245, 242, 236, .9); transform: scaleX(var(--fill, 0)); transform-origin: 0 50%; }
+.story-idx li.is-past button i { transform: none; }
+.story-idx button:focus-visible { outline: calc(2 * var(--hair)) solid var(--signal-bright); outline-offset: -.375rem; }
+@media (hover: hover) { .story-idx button:hover::before { background: rgba(245, 242, 236, .62); } }
 
-/* the layout modes story.js measures. */
-@media (max-width: 599.98px) { .story-compact .beat-0 .hero-stats { display: none; } } /* a4: portrait tablets keep v2's four figures (owner, 2 Nov) */
-.story-compact .beat h2 { font-size: clamp(1.55rem, 6.4vw, 2.1rem); }
-.story-compact .beat-0 .display-1 { font-size: clamp(2.1rem, 8.8vw, 3.4rem); }
-.story-compact .beat-0 .hero-kicker { margin-bottom: .5rem; font-size: .95rem; }
-.story-compact .beat .eyebrow { margin-bottom: .5rem; }
-.story-compact .beat .body-lg, .story-compact .beat-0 .hero-sub { margin-top: .625rem; font-size: .86rem; line-height: 1.5; }
-.story-compact .beat .hero-cta, .story-short .beat .hero-cta { flex-wrap: wrap; gap: .625rem; margin-top: .875rem; } /* a4: a larger reader font wraps the second button, never cuts it */
-.story-compact .beat .hero-cta .btn, .story-short .beat .hero-cta .btn { padding: .78em 1.05em; font-size: var(--fs-small); } /* hc9: the site's one button size, with Pause motion's */
-/* a portrait phone is always compact: the same rules from the first paint */
-@media (scripting: enabled) and (max-width: 599.98px) {
-  html:not(.no-webgl) .beat-0 .hero-stats { display: none; }
-  html:not(.no-webgl) .beat h2 { font-size: clamp(1.55rem, 6.4vw, 2.1rem); }
-  html:not(.no-webgl) .beat-0 .display-1 { font-size: clamp(2.1rem, 8.8vw, 3.4rem); }
-  html:not(.no-webgl) .beat-0 .hero-kicker { margin-bottom: .5rem; font-size: .95rem; }
-  html:not(.no-webgl) .beat .eyebrow { margin-bottom: .5rem; }
-  html:not(.no-webgl) .beat .body-lg, html:not(.no-webgl) .beat-0 .hero-sub { margin-top: .625rem; font-size: .86rem; line-height: 1.5; }
-  html:not(.no-webgl) .beat .hero-cta { flex-wrap: wrap; gap: .625rem; margin-top: .875rem; }
-  html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: var(--fs-small); }
-}
-/* a landscape phone is short from the first paint too */
-/* tall phones: the overture's type closer to the chapters that follow (body 15 px) */
-@media (scripting: enabled) and (max-width: 599.98px) and (min-height: 740px) {
-  html:not(.no-webgl) .beat .body-lg { font-size: .94rem; }
-  html:not(.no-webgl) .beat h2 { font-size: clamp(1.7rem, 7vw, 2.2rem); }
-  html:not(.no-webgl) .beat-0 .hero-stats { display: block; max-width: 100%; margin-top: 1rem; padding-top: .75rem; }
-  html:not(.no-webgl) .beat-0 .hero-stats > div:not(:last-child) { display: none; }
-  html:not(.no-webgl) .beat-0 .hero-stats > div:last-child { display: flex; align-items: baseline; gap: .625rem; }
-  html:not(.no-webgl) .beat-0 .hero-stats > div:last-child b { flex: none; font: 500 var(--mono-tick)/1.4 var(--mono); letter-spacing: .12em; color: var(--paper); }
-  html:not(.no-webgl) .beat-0 .hero-stats > div:last-child .live { width: .3125rem; height: .3125rem; margin-left: .4375rem; vertical-align: .15em; }
-  html:not(.no-webgl) .beat-0 .hero-stats > div:last-child span { margin-top: 0; }
-}
-@media (min-width: 600px) and (min-height: 740px) {
-  html.story-compact:not(.no-webgl) .beat .body-lg { font-size: .94rem; }
-  html.story-compact:not(.no-webgl) .beat h2 { font-size: clamp(1.7rem, 7vw, 2.2rem); }
-}
-@media (scripting: enabled) and (max-height: 599.98px) and (min-aspect-ratio: 23/20) {
-  html:not(.no-webgl) .beat .hero-cta { flex-wrap: wrap; gap: .625rem; margin-top: .875rem; }
-  html:not(.no-webgl) .beat .hero-cta .btn { padding: .78em 1.05em; font-size: var(--fs-small); }
-}
-/* 320-359 px (a4): less side padding keeps the two buttons on one row at the default size */
-@media (scripting: enabled) and (max-width: 359.98px) {
-  .story-compact .beat .hero-cta, html:not(.no-webgl) .beat .hero-cta { column-gap: .5rem; }
-  .story-compact .beat .hero-cta .btn, html:not(.no-webgl) .beat .hero-cta .btn { padding-inline: .875em; }
-}
-.story-short .beat-4 .body-lg { display: none; } /* its callouts and the paper's caption carry the record */
-.beat.is-tight .body-lg, .beat-0.is-tight .hero-sub { display: none; }
-.story-short .story-lab.floor span { display: block; } /* two short lines, left of column 01 */
-.story-short .story-lab.floor { line-height: 1.3; }
-.story-short .story-lab.day { padding: .125rem 0; min-width: 0; }
-.story-short .story-lab.layer, .story-short .story-lab.bound { min-height: 1.25rem; } /* nine rows beside the stack from 360 px of height */
+/* beat 1: follow a proposal; the followed one's tag opens into its gate log */
+.story-ready .take-follow { display: inline-flex; align-items: center; min-height: 2.75rem; margin-top: clamp(1rem, 2.8svh, 1.625rem); padding: 0 1.125rem; border: var(--hair) solid var(--line-strong); border-radius: var(--r); font: var(--w-ui) var(--fs-small)/1 var(--sans); letter-spacing: .005em; color: var(--fg); transition: border-color var(--dur-feedback) var(--ease-out), background-color var(--dur-feedback) var(--ease-out), transform var(--dur-feedback) var(--ease-out); }
+.take-follow[aria-pressed="true"] { border-color: var(--accent); background: rgba(79, 203, 147, .1); }
+.take-follow:active { transform: scale(.97); }
+.take-follow:disabled { color: var(--fg-3); border-style: dashed; }
+@media (hover: hover) { .take-follow:not(:disabled):hover { border-color: var(--fg); } }
+.story-ready .trace:not([hidden]) { display: block; position: absolute; right: max(var(--gutter), env(safe-area-inset-right)); bottom: calc(var(--bar-h) + var(--pad-b)); box-sizing: border-box; width: min(27rem, 46vw); padding: .75rem .875rem .625rem; border: var(--hair) solid var(--line-strong); background: #0B110F; font: 400 var(--fs-small)/1.35 var(--mono); font-variant-numeric: tabular-nums; transition: opacity var(--dur-move) var(--ease-out), transform var(--dur-move) var(--ease-out); }
+@starting-style { .story-ready .trace:not([hidden]) { opacity: 0; transform: translateY(.375rem); } }
+.trace-head { display: flex; align-items: baseline; gap: .75rem; margin-bottom: .5rem; }
+.trace-head b { font-weight: 500; color: var(--accent); }
+.trace-head span { flex: 1; color: var(--fg-2); }
+.trace.is-no .trace-head b { color: var(--reject-bright); }
+.trace-close { position: relative; font: var(--w-ui) 1em/1 var(--sans); color: var(--fg-2); text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .1875rem; }
+.trace-close::after { content: ""; position: absolute; inset: -.875rem -.5rem; }
+.trace ol { margin: 0; padding: 0; list-style: none; }
+.trace li { display: grid; grid-template-columns: 6.25em 3.75em minmax(0, 1fr); column-gap: .5rem; padding: .1875rem 0; border-top: var(--hair) solid var(--line); color: var(--fg-3); }
+.trace li.is-hit { color: var(--fg); }
+.trace li.is-hit i { color: var(--fg-2); }
+.trace li i { font-style: normal; }
+.trace li.is-ok span { color: var(--accent); }
+.trace li.is-bad span { color: var(--reject-bright); }
 
-/* without JavaScript, and when WebGL is unavailable */
-.story-static-mark { position: absolute; top: calc(var(--nav-h) + 4rem); right: 9%; width: min(32%, 27.5rem); opacity: .5; pointer-events: none; }
-.story-ready .story-static-mark, .no-webgl .story-static-mark { display: none; }
-.beat-fig { display: none; }
-@media (scripting: none) {
-  .story { height: auto; }
-  .story-stage { position: relative; height: auto; min-height: 100svh; }
-  .story-ui { position: relative; }
-  .beat { position: relative; left: auto; right: auto; bottom: auto; opacity: 1; transform: none; pointer-events: auto; padding: clamp(3.5rem, 9vh, 6rem) 0; border-top: var(--hair) solid rgba(245, 242, 236, .12); }
-  .beat-0 { border-top: 0; padding-top: calc(var(--nav-h) + clamp(6rem, 20vh, 13.75rem)); }
-  .beat .beat-text { pointer-events: auto; }
-  .story-labels, .story-bar, .story-gl, .story-paper, .story-num { display: none; }
-  .beat-fig { display: block; width: 100%; max-width: 27.5rem; height: auto; margin-top: 2.125rem; }
-}
-.no-webgl .story, .story-tiny .story { height: auto; }
-.no-webgl .story-stage, .story-tiny .story-stage { position: relative; height: auto; min-height: 100svh; }
-.no-webgl .story-ui, .story-tiny .story-ui { position: relative; }
-.no-webgl .beat, .story-tiny .beat { position: relative; left: auto; right: auto; bottom: auto; opacity: 1; transform: none; pointer-events: auto; padding: clamp(3.5rem, 9vh, 6rem) 0; border-top: var(--hair) solid rgba(245, 242, 236, .12); }
-.no-webgl .beat-0, .story-tiny .beat-0 { border-top: 0; padding-top: calc(var(--nav-h) + clamp(6rem, 20vh, 13.75rem)); }
-.no-webgl .beat .beat-text, .story-tiny .beat .beat-text { pointer-events: auto; }
-.no-webgl .beat [data-split] .wi { transform: none; }
-.no-webgl .story-labels, .no-webgl .story-bar, .no-webgl .story-gl, .no-webgl .story-paper, .no-webgl .story-num,
-.story-tiny .story-labels, .story-tiny .story-bar, .story-tiny .story-gl, .story-tiny .story-paper, .story-tiny .story-num { display: none; }
-.no-webgl .beat-fig, .story-tiny .beat-fig { display: block; width: 100%; max-width: 27.5rem; height: auto; margin-top: 2.125rem; }
-.no-webgl .story-2d { height: 100vh; height: 100svh; }
-@media (min-aspect-ratio: 23/20) and (min-width: 640px) {
-  .no-webgl .beat-fig { position: absolute; right: 0; top: 50%; width: min(46vw, 35rem); max-width: none; margin: 0; transform: translateY(-50%); } /* plates, not thumbnails */
-}
-@media (scripting: none) and (min-aspect-ratio: 23/20) and (min-width: 640px) {
-  .beat-fig { position: absolute; right: 0; top: 50%; width: min(46vw, 35rem); max-width: none; margin: 0; transform: translateY(-50%); }
-}
-/* wide screens: site.js's 2D globe gets a canvas of its own on the right */
-@media (min-aspect-ratio: 23/20) and (min-width: 1200px) { .no-webgl .story-2d { left: auto; right: 0; width: max(60rem, 56%); } }
-/* the safety net, JavaScript on but story.js never ran: at once if it failed (site.js), 20 s while on its way (home.js), else 4 s */
-@media (scripting: enabled) {
-  html { --story-net: 4s; }
-  html.story-wait { --story-net: 20s; }
-  html.story-failed { --story-net: 0s; }
-  html:not(.story-ready):not(.no-webgl) .story { animation: story-static-h 1ms var(--ease-out) var(--story-net) forwards; }
-  html:not(.story-ready):not(.no-webgl) .story-stage { animation: story-static-stage 1ms var(--ease-out) var(--story-net) forwards; }
-  html:not(.story-ready):not(.no-webgl) .story-ui { animation: story-static-ui 1ms var(--ease-out) var(--story-net) forwards; }
-  html:not(.story-ready):not(.no-webgl) .beat { animation: story-static-beat 1ms var(--ease-out) var(--story-net) forwards; }
-  html:not(.story-ready):not(.no-webgl) .beat [data-split] .wi { animation: story-static-wi 1ms var(--ease-out) var(--story-net) forwards; }
-  html:not(.story-ready):not(.no-webgl) .story-bar, html:not(.story-ready):not(.no-webgl) .story-labels { animation: story-static-off 1ms var(--ease-out) var(--story-net) forwards; }
-}
-@keyframes story-static-h { to { height: auto; } }
-@keyframes story-static-stage { to { position: relative; height: auto; min-height: 100svh; } }
-@keyframes story-static-ui { to { position: relative; } }
-@keyframes story-static-beat { to { position: relative; left: auto; right: auto; bottom: auto; opacity: 1; transform: none; pointer-events: auto; padding-top: clamp(3.5rem, 9vh, 6rem); padding-bottom: clamp(3.5rem, 9vh, 6rem); } }
-@keyframes story-static-wi { to { transform: none; } }
-@keyframes story-static-off { to { visibility: hidden; } }
+/* a name on the stage is knocked out of whatever runs behind it (a rail, a leader, a plane's edge), as the site letters every drawing */
+@supports (paint-order: stroke fill) and (-webkit-text-stroke: 1px #000) { .take-stage .stage-lab, .take-ro span { -webkit-text-stroke: .3125rem #0C1210; paint-order: stroke fill; } }
 
-/* short wide screens (a phone held sideways, 200% zoom): every beat fits between the nav and the index */
-@media (max-height: 760px) and (min-aspect-ratio: 23/20) {
-  .beat-0 .display-1 { font-size: clamp(2.6rem, 5vw, 4.6rem); }
-  .beat-0 .hero-sub { margin-top: 1rem; }
-  .beat .hero-cta { margin-top: 1.375rem; }
-  .hero-stats { margin-top: 1.375rem; padding-top: .875rem; }
-}
-@media (max-height: 600px) and (min-aspect-ratio: 23/20) {
-  .story { --story-bar-h: 2.875rem; }
-  .beat .eyebrow { margin-bottom: .5rem; }
-  .beat-0 .hero-kicker, .beat-0 .hero-stats { display: none; }
-  .beat-0 .display-1 { font-size: clamp(1.9rem, 10vh, 3.4rem); }
-  .beat h2 { font-size: clamp(1.35rem, 3.4vw, 1.7rem); max-width: 24ch; } /* a smaller short scale: the paragraphs keep their place */
-  .beat .body-lg, .beat-0 .hero-sub { margin-top: .625rem; font-size: .86rem; line-height: 1.45; }
-  .beat .body-lg { font-size: .8rem; line-height: 1.42; }
-  .beat .hero-cta, .beat-0 .hero-cta { margin-top: .875rem; }
-  .story-idx button .t { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-}
-@media (min-aspect-ratio: 23/20) and (max-width: 1100px) { .story-idx button .t { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .story-idx button.is-on .t { position: static; width: auto; height: auto; clip-path: none; } }
+/* beat 3: the hand's read-out, placed by the stage beside its scale */
+.take-ro { position: absolute; left: 0; top: 0; z-index: 1; margin: 0; font: 400 var(--fs-small)/1.45 var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--fg); pointer-events: none; }
+.take-ro span + span { color: var(--fg-3); }
+.take-ro small { font: 400 1em/1.45 var(--sans); color: var(--accent); }
+.take-ro.is-moved small { display: none; }
+.take-ro.is-under { grid-auto-flow: column; column-gap: .875rem; }
+.take-ro.is-under small { display: none; }
 
-/* portrait: the instrument above, the copy below, the index under the nav */
+/* upright screens and phones: the stage above, the words under it */
 @media (max-width: 639.98px), (max-aspect-ratio: 23/20) {
-  .story { --story-bar-h: 2.875rem; }
-  .story-bar { top: var(--nav-h); bottom: auto; }
-  .story-bar .container { gap: .625rem; }
-  .story-idx ol { gap: 0; }
-  .story-idx button { padding-right: .625rem; min-width: 2.125rem; }
-  .story-idx button::before, .story-idx button i { right: .625rem; }
-  .story-idx button .t { position: absolute; width: var(--hair); height: var(--hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .beat { bottom: clamp(1rem, 3vh, 2.125rem); }
-  .beat-text, .beat-0 .beat-text { max-width: 100%; }
-  .beat h2 { font-size: clamp(1.85rem, 7.2vw, 3rem); max-width: 18ch; }
-  .beat .body-lg { margin-top: .75rem; font-size: clamp(.9rem, 2.3vw, 1.02rem); line-height: 1.55; max-width: 60ch; }
-  .beat .eyebrow { margin-bottom: .625rem; }
-  .beat-0 .display-1 { font-size: clamp(2.3rem, 9.6vw, 4.2rem); }
-  .beat-0 .hero-kicker { margin-bottom: .625rem; font-size: 1.02rem; }
-  .beat-0 .hero-sub { margin-top: .75rem; font-size: clamp(.98rem, 2.6vw, 1.15rem); }
-  .beat-0 .hero-cta, .beat .hero-cta { margin-top: 1.125rem; }
-  .hero-stats { max-width: 100%; grid-template-columns: repeat(4, auto); justify-content: space-between; gap: .75rem .875rem; margin-top: 1.125rem; padding-top: .875rem; }
-  .hero-stats b { font-size: clamp(1.15rem, 4.6vw, 1.6rem); }
-  .hero-stats span { margin-top: .375rem; }
-  .story-lab.gate .k { display: none; }
-  .story-lab.floor span { display: block; } /* two short lines, left of column 01 */
-  .story-lab.floor { line-height: 1.3; }
-  .story-lab.day { padding: .125rem .0625rem; min-width: 1.375rem; }
-  .story-static-mark { width: 56%; top: calc(var(--nav-h) + 1.875rem); right: 22%; }
-  .story-num { display: none; } /* portrait: the index under the nav already marks the scene */
-  .no-webgl .beat-0 { padding-top: calc(var(--nav-h) + 66vw + 3rem); }
+  .story { --bar-h: 2.75rem; --pad-b: .5rem; }
+  .beat-0 .beat-text { display: block; padding-top: clamp(.75rem, 3svh, 2.5rem); }
+  .beat-0 .display-1 { font-size: min(clamp(2.3rem, 11.2vw, 4.6rem), 8.6svh); }
+  .beat-0 .hero-kicker { margin-bottom: .5rem; }
+  .beat-0 .hero-sub { max-width: 36ch; margin-top: clamp(.625rem, 1.8svh, 1.125rem); }
+  .beat-0 .hero-sub span { display: block; }
+  .beat-0 .hero-cta { margin-top: clamp(.875rem, 2.2svh, 1.375rem); flex-wrap: wrap; gap: .625rem; }
+  .beat-foot { padding-bottom: clamp(.875rem, 2.6svh, 1.75rem); }
+  .hero-stats { grid-template-columns: repeat(3, auto) 1fr; column-gap: 1.5rem; }
+  .story-ready .beat h2 { font-size: min(var(--fs-display), clamp(1.85rem, 7.6vw, 3rem), 6svh); }
+  .story-ready .beat-2, .story-ready .beat-4 { grid-template: minmax(0, 1fr) auto / minmax(0, 1fr); }
+  .story-ready :is(.beat-2, .beat-4) .beat-text { grid-area: 2 / 1; padding-right: var(--edge-r); }
+  .story-ready .beat-2 .beat-shot { grid-area: 1 / 1; }
+  .story-ready .take-rec { grid-area: 1 / 1; max-width: 34rem; margin: 0 auto; padding: 0 var(--edge-r) 0 var(--edge-l); }
+  .story-ready .beat:not(.beat-0) .beat-text { padding-top: clamp(.75rem, 2svh, 1.5rem); }
+  .story-idx button { width: 2.25rem; }
+  .story-idx button::before, .story-idx button i { right: .5rem; }
+  /* the stack is the whole picture here, so the log is its newest line only, in a slot kept between the stage and the head */
+  .story-ready .beat.beat-1 .beat-text { position: relative; padding-top: 5.75rem; }
+  .story-ready .trace:not([hidden]) { left: max(var(--gutter), env(safe-area-inset-left)); right: max(var(--gutter), env(safe-area-inset-right)); top: 1rem; bottom: auto; width: auto; max-width: 27rem; padding: .5rem .75rem .375rem; }
+  .trace-head { margin-bottom: .375rem; }
+  .trace li { grid-template-columns: max-content max-content minmax(0, 1fr); }
+  .trace li > :is(b, i) { white-space: nowrap; }
+  .trace li:not(.is-hit), .trace li.is-hit:has(~ .is-hit) { display: none; }
 }
-@media (scripting: none) and (max-width: 639.98px), (scripting: none) and (max-aspect-ratio: 23/20) { .beat-0 { padding-top: calc(var(--nav-h) + 66vw + 3rem); } }
-/* phones leave out the rings' and layers' names (the inspector has them) */
+@media (max-width: 899.98px) {
+  .hero-stats { grid-template-columns: repeat(3, auto); justify-content: space-between; row-gap: .625rem; column-gap: 1rem; }
+  .hero-stats > div:last-child { grid-column: 1 / -1; display: flex; align-items: baseline; gap: .625rem; }
+  .hero-stats > div:last-child span { margin-top: 0; }
+}
 @media (max-width: 599.98px) {
-  .story-lab.ring .n, .story-lab.layer .n { display: none; }
-  .story-lab.ring { flex-direction: column; align-items: flex-start; gap: calc(3 * var(--hair)); } /* code over status: a narrow column, so the rings can fill the width */
-  .story-lab.ring.is-row { flex-direction: row; align-items: center; gap: .5rem; } /* a short phone: code beside status, so all six fit above the copy */
-  .story-lab.gate { min-height: 1.25rem; } /* six gates above a short phone's copy (they take no pointer) */
-  .story-lab.layer::after, .story-lab.day::after { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 1.5rem); height: max(100%, 1.5rem); transform: translate(-50%, -50%); } /* a 24 px hit area */
+  .hero-stats b { font-size: 1.45rem; }
+  .hero-stats span { margin-top: .3125rem; }
+  .hero-stats .hs-l2 { white-space: normal; }
+  .beat-0 .hero-cta .btn { padding: .78em 1.05em; }
+  .story-ready .take-bar { grid-template-columns: auto 1fr; }
+  .story-ready .take-bar .receipt { grid-area: 1 / 1 / 2 / 3; position: absolute; left: max(var(--gutter), env(safe-area-inset-left)); right: max(var(--gutter), env(safe-area-inset-right)); bottom: 100%; }
+  .story-ready .take-bar .take-hedge { justify-self: end; }
+  .story-ready .beat-3 { padding-bottom: calc(var(--bar-h) + var(--pad-b) + 4.5rem); }
+  .story-ready .beat .body-lg { font-size: 1rem; line-height: 1.5; }
+  .story-ready .trace:not([hidden]) { padding-inline: .625rem; font-size: var(--fs-label); }
+  .trace li { column-gap: .375rem; }
 }
-@media (min-width: 600px) and (max-aspect-ratio: 23/20) { .story-lab { font-size: clamp(.625rem, .5rem + .4vw, .8rem); } }
-/* hc13r SYS-1: upright tablets' scene heads take the chapter step (38.4 px at 768-909), so Home has one H2 size there too */
-@media (min-width: 600px) and (max-aspect-ratio: 23/20) { .beat h2 { font-size: var(--fs-display); } }
-@media (max-width: 400px) { .hero-stats { grid-template-columns: repeat(2, auto); justify-content: start; gap: .75rem 1.625rem; } .story-lab.day { padding: .125rem 0; min-width: 0; } }
-/* 400% zoom on a desktop */
-html.story-tiny .story .beat-0 { padding-top: calc(var(--nav-h) + 1.75rem); }
-html.story-tiny .story .beat [data-split] .wi { transform: none; }
-html.story-tiny .story .beat-0 .hero-kicker { display: block; }
-html.story-tiny .story .beat-0 .hero-stats { display: grid; }
-@media (prefers-reduced-motion: reduce) { .hero-stats .live { animation: none; } .story-lab, .story-leader, .story-node, .story-insp.is-on, .story-idx button, .story-num i { transition: none; } }
-/* print: the overture prints as its static sequence, ink on white */
+@media (max-width: 599.98px) and (max-height: 699.98px) {
+  .beat-0 .hero-kicker { display: none; }
+  .story-ready .beat:not(.beat-0, .beat-4) .body-lg { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .story-ready .beat-4 .body-lg { font-size: .9375rem; line-height: 1.45; }
+  .story-ready .beat-4 .beat-more { margin-top: .75rem; }
+  .story-ready .take-rec .figure-cap { margin-top: .625rem; }
+}
+@media (max-width: 599.98px) and (max-height: 659.98px) {
+  .story-ready .take-rec .figure-cap { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@media (max-width: 359.98px) { .beat-0 .hero-cta { column-gap: .5rem; } .beat-0 .hero-cta .btn { padding-inline: .875em; } .hero-stats { column-gap: .75rem; } }
+/* a short wide window: every beat still fits between the bar and the foot */
+@media (max-height: 640px) and (min-aspect-ratio: 23/20) {
+  .beat-0 .hero-kicker { display: none; }
+  .beat-0 .beat-text { padding-top: 1rem; }
+  .hero-stats b { font-size: 1.375rem; }
+  .hero-stats span { margin-top: .25rem; }
+}
+@media (prefers-reduced-motion: reduce) { .hero-stats .live { animation: none; } .story-ready .beat, .story-ready .take-bar, .story-ready .take-rec .pf-lane, .story-ready .trace { transition: none !important; } .story-idx button[aria-current] i { transform: none; } }
+@media (forced-colors: active) { .story-idx button::before, .story-idx button i { background: CanvasText; } .story-idx button::before { opacity: .4; } }
 @media print {
-  .story-bar, .story-paper, .story-insp, .story-leaders { display: none !important; }
-  .story, .story-stage { height: auto !important; min-height: 0 !important; background: none !important; }
-  .story-gl, .story-2d, .story-labels, .story-num, .story-static-mark, .beat-fig { display: none !important; }
-  .story .beat { position: static !important; opacity: 1 !important; visibility: visible !important; transform: none !important; --eo: 1 !important; --w: 1 !important; --bo: 1 !important; }
-  .story .beat .beat-text > *, .story .beat-0 .hero-stats { visibility: visible !important; }
-  .story .beat .body-lg, .story .beat-0 .hero-sub { display: block !important; }
-  .story .beat-0 .hero-stats { display: grid !important; }
-  .story .beat [data-split] .wi { transform: none !important; }
+  .story, .take { height: auto !important; background: none !important; }
+  .take { position: static !important; overflow: visible !important; }
+  .take-ui > .take-stage, .take-bar, .take-at, .beat-shot:not(.beat-0 .beat-shot), .take-follow, .trace, .beat input, .take-ro { display: none !important; }
+  .story .beat { position: static !important; display: block !important; padding: 0 0 10mm !important; opacity: 1 !important; }
+  .story .beat-0 { min-height: 0 !important; }
+  .story .beat-0 .beat-shot { height: 60mm; }
+  .story .beat-fig { display: block !important; }
+  .story .take-rec .pf-lane { opacity: 1 !important; }
   .story, .story * { color: #000 !important; }
 }
 /* v2:overture:end */

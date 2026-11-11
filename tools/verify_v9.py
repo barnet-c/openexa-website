@@ -254,10 +254,46 @@ async def shared_home(b):
     return SHARED["home"][1]
 
 
+# ---------------------------------------------------------------- hc31r: the run, and Home's take (integrate, standing in for tests; TESTS.md 55)
+# LEAP-hc31: Home opens on the run. The overture is the take: five beats on one stage (stage.js on run.js; take.js picks
+# the shot from the scroll and the clock plays the change). html.story-ready (home.js) says the take is pinned; where the
+# window cannot hold a beat (short phones on their side, a 400 % zoom) the five beats stand in normal flow with no stage.
+# A preset store gives a known run (SYSTEM.md 16 "Tests"): the same seed and arrival on every page of a context.
+def run_preset(t=134, paused=None, ev=None, follow=None, seed=20261110):
+    st = {"v": 1, "seed": seed, "paused": paused, "follow": follow, "ev": ev or [], "rec": [], "head": None}
+    return ("try { if (!sessionStorage.getItem('oxa:run')) { const s = " + json.dumps(st) + f"; s.t0 = Date.now() - {int(t * 1000)}; sessionStorage.setItem('oxa:run', JSON.stringify(s)); }} }} catch (e) {{}}")
+RUN_PRESET = run_preset()
+RUN_READY = "!!(window.OXA && OXA.run && document.querySelector('.nav-run'))"
+RUN_STATE = """(() => { const b = document.querySelector('button.nav-run'), r = document.documentElement.classList; let s = null; try { s = JSON.parse(sessionStorage.getItem('oxa:run') || 'null'); } catch (e) {}
+  return { t: OXA.run.now(), text: b ? b.textContent : '', state: b ? b.dataset.state : '', label: b ? b.getAttribute('aria-label') : '', shown: !!b && !b.hidden && getComputedStyle(b).visibility !== 'hidden' && b.getClientRects().length > 0,
+    t0: s && s.t0, seed: s && s.seed, paused: r.contains('run-paused'), halted: r.contains('run-halted'), wall: Date.now() }; })()"""
+TAKE_PINNED = "document.documentElement.classList.contains('story-ready')"
+TAKE_READY = "(() => { const f = document.querySelector('.take-stage'); return document.documentElement.classList.contains('story-ready') && !!(window.OXA && OXA.take) && !!(f && f.__stage && f.__stage.live); })()"
+# the take at rest on a beat: the beat the page is on once no cut is playing and the stage's labels are in (-1 while it moves)
+TAKE_AT = """(() => { const s = document.querySelector('.story'), f = document.querySelector('.take-stage'), st = f && f.__stage; if (!s || !st || s.dataset.beat == null) return -1;
+  const b = +s.dataset.beat; if (st.cut || f.dataset.stageCut || (b < 4 && st.labs.classList.contains('is-out'))) return -1; return b; })()"""
+TAKE_Y = "(i) => { const m = document.querySelectorAll('.take-at i')[i].getBoundingClientRect(); return i ? Math.round(m.top + scrollY + m.height / 2 - innerHeight / 2) : 0; }"
+# every beat's effective opacity (its own and the take's), the stage's shot, the index's current scene
+TAKE_SNAP = """(() => { const s = document.querySelector('.story'), f = s.querySelector('.take-stage'), st = f && f.__stage, i = s.querySelector('.story-idx [aria-current]');
+  return { beat: s.dataset.beat == null ? -1 : +s.dataset.beat, ops: [...s.querySelectorAll('.beat')].map(b => +(+getComputedStyle(b).opacity).toFixed(2)), shot: f ? f.dataset.stage : '', off: !!f && f.classList.contains('is-off'),
+    cut: !!(st && st.cut) || !!(f && f.dataset.stageCut), out: !!(st && st.labs.classList.contains('is-out')), labs: st ? st.lab.length : -1, cur: i ? i.dataset.n : '', via: s.dataset.via || '' }; })()"""
+TAKE_SHOTS = ("wide", "wide", "section", "close")
+
+
+async def take_to(pg, i, wait=0):
+    """bring the take to beat i (its mark's middle on the screen's middle; the page's own index and arrows scroll there
+    smoothly, a test jumps) and wait until it rests there; False if it does not within 8 s"""
+    await pg.evaluate(f"window.scrollTo({{ top: ({TAKE_Y})({i}), behavior: 'instant' }})")
+    ok = await until(pg, f"({TAKE_AT}) === {i}", int(8000 * max(1.0, MODE["throttle"])), 50)
+    if wait: await pg.wait_for_timeout(wait)
+    return bool(ok)
+
+
 async def to_top_settled(pg):
-    """scroll to the top and wait until the overture rests on scene 00 (beat-0 whole, the index on 00)"""
+    """scroll to the top and wait until the overture rests on scene 00 (beat-0 whole, the index on 00; hc31r: the take
+    on beat 0 with no cut playing, where it is pinned)"""
     await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})")
-    ok = await until(pg, "(() => { const b = document.querySelector('.beat-0'), i = document.querySelector('.story-idx [aria-current]'); return +getComputedStyle(b).opacity > 0.98 && (!i || i.dataset.n === '00'); })()", 8000)
+    ok = await until(pg, f"(() => {{ const b = document.querySelector('.beat-0'), i = document.querySelector('.story-idx [aria-current]'); return +getComputedStyle(b).opacity > 0.98 && (!i || i.dataset.n === '00') && (!{TAKE_PINNED} || ({TAKE_AT}) === 0); }})()", 8000)
     await pg.wait_for_timeout(500)
     return ok
 
@@ -269,43 +305,42 @@ SETTLED_SUPPORT = {}  # base URL -> whether its story.js exposes .story[data-set
 
 
 async def has_settled(pg=None):
-    """does the overture under test expose .story[data-settled] (OV-R2-1)? Read once from its story.js"""
-    if BASE not in SETTLED_SUPPORT:
-        import urllib.request
-        try:
-            with urllib.request.urlopen(f"{BASE}/assets/js/story.js", timeout=30) as r: js = r.read().decode("utf-8", "replace")
-            SETTLED_SUPPORT[BASE] = bool(re.search(r"data-settled|dataset\.settled", js))
-        except Exception:
-            SETTLED_SUPPORT[BASE] = False
-    return SETTLED_SUPPORT[BASE]
+    """hc31r: the take has no .story[data-settled]; its rest is read from the stage (TAKE_AT). Kept for the callers."""
+    return False
 
 
 async def scene_rest(pg, n, timeout=None):
-    """click the overture's index button for scene n and wait until it rests there: the index on n, beat n whole and,
-    where the overture exposes it, .story[data-settled] (OV-R2-1); then the callouts unchanged across two reads with
-    at least two frames between them (round 2: under CI's software GL a frame can take longer than the poll, and three
-    equal reads with no frame between them passed a scene that was still moving). The limit is generous (30 s; 60 s
-    with --cpu-throttle): no wall-clock assertion here."""
+    """bring the overture to scene n and wait until it rests there. hc31r (integrate): the overture is the take. Where it
+    is pinned (html.story-ready) the page is put on beat n's mark and the rest is the take's own: the beat is n, the
+    index says 0n, beat n is whole (opacity >= .95), no cut is playing, the stage's labels are in, and their places are
+    the same across two reads with at least two frames between them (the run never stops moving, the labels do: they
+    belong to things that stand still). Where the take is not pinned (a window too short to hold a beat) the five beats
+    stand in normal flow: beat n is scrolled to the top and is at rest once its box is the same in two reads. The limit
+    is generous (30 s; 60 s with --cpu-throttle): no wall-clock assertion here."""
     timeout = timeout or (60000 if MODE["throttle"] > 1 else 30000)
-    settled = await has_settled(pg)
-    # v2x (30 Oct): story.js wires the index once its WebGL scene is built (begin(), after html.gl-ready), and since v2x it
-    # builds in slices after the first paint, so on a slow runner the loader (capped at 1.2 s) can lift first and an
-    # index click sent at once is lost. Wait for the overture to be wired (gl-ready, or the static no-webgl sequence);
-    # if it never is, the click goes anyway and the check fails as before. (Requested of home: wire the index earlier.)
-    await until(pg, "['gl-ready', 'no-webgl'].some(c => document.documentElement.classList.contains(c))", timeout)
+    await until(pg, "document.documentElement.classList.contains('is-loaded')", timeout)
+    await until(pg, HOME_ENGINES, timeout)
     await pg.evaluate(FRAME_COUNTER)
-    await pg.evaluate(f"document.querySelector('.story-idx [data-n=\"0{n}\"]').click()")
-    snap = """(() => { const i = document.querySelector('.story-idx [aria-current]'); const b = document.querySelector('.beat-%d');
-      return JSON.stringify([i && i.dataset.n, +(+getComputedStyle(b).opacity).toFixed(2), !!document.querySelector('.story[data-settled]'),
-        [...document.querySelectorAll('.story-labels .story-lab.is-on')].map(l => l.style.transform + '|' + getComputedStyle(l).opacity), window.__oxaF]); })()""" % n
+    if not await pg.evaluate(TAKE_PINNED):
+        await pg.evaluate(f"document.querySelectorAll('.story .beat')[{n}].scrollIntoView({{block: 'start', behavior: 'instant'}})")
+        last = None
+        for _ in range(20):
+            box = await pg.evaluate(f"(() => {{ const r = document.querySelectorAll('.story .beat')[{n}].getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height), window.__oxaF]; }})()")
+            if last and box[:2] == last[:2] and box[2] - last[2] >= 2: return True
+            last = box; await pg.wait_for_timeout(150)
+        return False
+    await until(pg, TAKE_READY, timeout)
+    await pg.evaluate(f"window.scrollTo({{ top: ({TAKE_Y})({n}), behavior: 'instant' }})")
+    snap = """(() => { const t = %s, f = document.querySelector('.take-stage'), st = f.__stage;
+      return JSON.stringify([t.beat, t.cur, t.ops[%d], t.cut || (t.beat < 4 && t.out), [...st.labs.children].map(l => l.style.transform + '|' + l.textContent).join(';'), window.__oxaF]); })()""" % (TAKE_SNAP, n)
     t0, prev, same = time.monotonic(), None, 0
-    await pg.wait_for_timeout(250)  # the click's own frame
+    await pg.wait_for_timeout(250)
     while time.monotonic() - t0 < timeout / 1000:
         st = json.loads(await pg.evaluate(snap))
-        key, frames = json.dumps(st[:4]), st[4]
-        if not (st[0] == f"0{n}" and st[1] >= 0.95 and (st[2] or not settled)): same, prev = 0, (key, frames)
+        key, frames = json.dumps(st[:5]), st[5]
+        if not (st[0] == n and st[1] == f"0{n}" and st[2] >= 0.95 and not st[3]): same, prev = 0, (key, frames)
         elif prev and key == prev[0]:
-            if frames - prev[1] >= 2: same, prev = same + 1, (key, frames)  # unchanged across frames: one step of rest
+            if frames - prev[1] >= 2: same, prev = same + 1, (key, frames)
         else: same, prev = 0, (key, frames)
         if same >= 2: return True
         await pg.wait_for_timeout(180)
@@ -408,141 +443,105 @@ async def pages(b):
 
 @check
 async def home(b):
-    """the homepage systems as one page at 1440: beats, record-driven overture, nav, swarm, chain, proof (the running ledger
-    left Home on 1 Nov; hc5: §02 drew Platform's plate, still; hc11: that chapter left Home, whose hero's "See the stack"
-    goes to Platform: the explorer's keys, boundary and readout are checked on Platform §01, its one page: platform_spec;
-    hc13r: §03 #proof left Home, its parts closing the overture's scene 4 (the count with its hedge, the record, the regime
-    split, the way to Proof), and the chart's keyboard is checked on Proof, its one page: interior; Home's lab follows one
-    proposal by itself, quietly, once it is well in view, and rests in its follow view: HOME-2, also lab_act)"""
+    """the homepage systems as one page at 1440: beats, the record-driven record beat, nav, the run on its stage, chain.
+    hc31r (integrate, standing in for tests; home's request, LEAP-hc31 HOME-1 to HOME-4; TESTS.md 55): Home opens on the
+    run (no loader, no WebGL) and the overture is the take: five beats on one stage. What this check has always held,
+    on the new page: the five scenes are navigable (the stage by the arrow keys from the first screen, where the index is
+    not shown, then the index's ticks) and each rests as one shot with the index on it (wide, wide, section, close, then
+    the record with the stage off); the four figures stand whole on the first screen; motion can be paused, now by the
+    one control in the header (the clock stands, the stage stops drawing, a second press resumes); the record beat
+    reads the sessions record (#oxa-sessions: one column per session, the premium and discount counts, the derived
+    count in its lede in the case it is set, the hedge inside the claim's own sentence with its link to the disclosures,
+    the regime split, the way to Proof) and carries the columns' own hedge ("Exact value not published") inside the
+    viewport; the header says Record while the record has the screen and Model again once it is left; the last beat is
+    never seen through the bar as the take scrolls away (the bar is solid over it); the bar's chapter list names every
+    chapter and takes a dark band's tone; Home draws no explorer and fetches neither arch.js nor the lab's or the
+    explorer's sheet; a proposal is followed by keyboard on the stage (Enter follows the next one born, its log opens
+    on that ID; Escape lets go) and nothing is recorded by following; the chain breaks (typed and one-tap) and restores.
+    The lab's halt left Home with the lab (Platform keeps it: platform_lab, halt_toggle, run_halt)."""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
-    await ctx.add_init_script(EVENTS)
+    await ctx.add_init_script(RUN_PRESET)
     pg = await ctx.new_page()
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.goto(f"{BASE}/index.html", wait_until="load")
-    await pg.wait_for_timeout(2600)
-    assert await pg.evaluate("document.documentElement.classList.contains('story-ready')")
-    t_loader = await pg.evaluate("performance.now()")
-    await pg.locator(".loader").wait_for(state="detached", timeout=15000)  # generous: CPU contention delays timers
-    t_loader = (await pg.evaluate("performance.now()")) - t_loader
-    print(f"loader removed within {t_loader / 1000 + 2.6:.1f}s of load")
-    for i in range(5):
+    assert await until(pg, TAKE_READY, int(15000 * max(1.0, MODE["throttle"]))), ("the take did not start (pinned, take.js run, the stage live)", await pg.evaluate("document.documentElement.className"))
+    assert await pg.locator(".loader").count() == 0, "Home has a loader again (hc31r: the page opens on the run)"
+    assert await to_top_settled(pg), "the take did not rest on its first beat"
+    # the four figures: whole on the first screen, v2's data
+    stats = await pg.evaluate("[...document.querySelectorAll('.beat-0 .hero-stats > div')].map(d => { const r = d.getBoundingClientRect(); return [d.querySelector('b').textContent, r.top > 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1]; })")
+    assert [s[0] for s in stats] == ["5k–50k", "90%", "6", "01"] and all(s[1] for s in stats), ("the four figures on the first screen", stats)
+    # five beats: the stage's arrow keys from the first screen (its index is not shown there), then the index
+    async def rest_on(i, how):
+        ok = await until(pg, f"({TAKE_AT}) === {i} && +getComputedStyle(document.querySelectorAll('.story .beat')[{i}]).opacity > 0.999", 8000, 50)
+        s = await pg.evaluate(TAKE_SNAP)
+        whole = [k for k, o in enumerate(s["ops"]) if o >= 0.99]; part = [o for o in s["ops"] if 0.01 < o < 0.99]
+        assert ok and s["cur"] == f"0{i}" and whole == [i] and not part, (f"beat {i} ({how}): not one shot at rest with the index on it", s)
+        assert (s["off"] and i == 4) or (not s["off"] and s["shot"] == TAKE_SHOTS[i] and s["labs"] >= 3), (f"beat {i} ({how}): the stage's shot", s)
+    await pg.locator(".take-stage").focus(); await pg.keyboard.press("ArrowDown"); await rest_on(1, "ArrowDown on the stage")
+    for i in (2, 3, 4, 0):
         await pg.locator(f'.story-idx [data-n="0{i}"]').click()
-        await pg.wait_for_timeout(1400)
-        await expect(pg.locator(f'.story-idx [data-n="0{i}"]')).to_have_attribute("aria-current", "step")
-        if i == 4:  # hc12: the ten columns above the floor stand with their hedge (HEDGE_S4)
-            assert await until(pg, HEDGE_S4, 3000), "scene 04 at 1440: no shown label says 'Exact value not published' inside the viewport"
-        await pg.screenshot(path=str(OUT / f"story-b{i}.png"))
-    # hero stats must not overlap the globe canvas region: check they sit under the copy (left half)
-    box = await pg.locator(".beat-0 .hero-stats").bounding_box()
-    assert box and box["x"] + box["width"] < 1440 * 0.56, ("hero stats intrude on the globe", box)
-    await pg.locator("[data-story-motion]").click()
-    await expect(pg.locator("[data-story-motion]")).to_have_text("Resume motion")
-    await pg.locator("[data-story-motion]").click()
-    # the overture reads the sessions record (#oxa-sessions): a column, a day tag and an ink copy per session; derived copy.
-    # Round 1 (OV4): the coda states the derived summary instead of repeating the tally, so the tally is checked against
-    # the record wherever it is written instead of against two literal copies. v2x cut (1 Nov): the beat-4 tally "Ten for
-    # ten." left the page; the derived count is now written as the coda ("Ten of ten above the floor.") and the first
-    # screen's fact ("ten sessions above 10 bps"), so every derived number the page writes ([data-story-n] above / total /
-    # floor / tally, in the case its data-story-as asks for) must equal the record, and the coda's above and total must be
-    # there at least once. hc6 (home, HC6 item 1): the coda is gone (no [data-story-n] is left on Home; the derive code
-    # stays for any future one); the derived count is written as §04's heading ("Ten of ten above the floor."), whose
-    # above and total must equal the record, in the case it is set (Words / words).
-    # hc29 (integrate, standing in for tests; home's request, the HC29 director's item 1): the ink copy of each day tag on
-    # the paper (.story-ink) went with the paper's record row (§01 itself is the paper now), so there is no ink copy to
-    # count (any ink copy the overture draws again must still be one per session); the day tags (one per session), the
-    # premium count and the derived copy stay checked against the record
-    st = await pg.evaluate("""(() => ({ days: document.querySelectorAll('.story-labels .story-lab.day').length,
-        prem: document.querySelectorAll('.story-labels .story-lab.day.is-prem').length, ink: document.querySelectorAll('.story-ink .story-lab').length,
-        n: [...document.querySelectorAll('[data-story-n]')].map(e => [e.dataset.storyN, e.dataset.storyAs || '', e.textContent]) }))()""")
+        await rest_on(i, "the index")
+        if i == 4:
+            hedge = await until(pg, "(() => { const e = [...document.querySelectorAll('.take-rec .pf-gut small')].find(x => /Exact value not published/i.test(x.textContent)); if (!e) return ''; const r = e.getBoundingClientRect(); return r.width > 0 && r.top >= 0 && r.bottom <= innerHeight + .5 && r.left >= 0 && r.right <= innerWidth + .5 && e.checkVisibility({opacityProperty: true, visibilityProperty: true}) ? e.textContent : ''; })()", 3000)
+            assert hedge, "the record beat at 1440: the ten columns stand without 'Exact value not published' inside the viewport"
+            assert await until(pg, "!document.querySelector('.nav-run--rec').hidden && document.querySelector('button.nav-run').hidden", 2000), "the header does not say Record while the record has the screen"
+            await pg.screenshot(path=str(OUT / "story-b4.png"))
+    assert await until(pg, "document.querySelector('.nav-run--rec').hidden && !document.querySelector('button.nav-run').hidden", 2000), "back on the first beat the header still says Record"
+    # one pause, in the header: the clock stands and the stage draws nothing; a second press resumes
+    await pg.evaluate("(() => { const g = document.querySelector('.take-stage').__stage.g, c = g.clearRect.bind(g); window.__draws = 0; g.clearRect = (...a) => { window.__draws++; c(...a); }; })()")
+    await pg.wait_for_timeout(500); d_run = await pg.evaluate("window.__draws")
+    await pg.locator("button.nav-run").click(); await pg.wait_for_timeout(300)
+    a = await pg.evaluate(RUN_STATE); d0 = await pg.evaluate("window.__draws"); await pg.wait_for_timeout(700)
+    a2 = await pg.evaluate(RUN_STATE); d1 = await pg.evaluate("window.__draws")
+    assert d_run > 0 and a["state"] == "pause" and a["paused"] and a["label"] == "Resume the model" and a["t"] == a2["t"] and d1 == d0, ("the header's pause: the clock stands and the stage stops drawing", a, a2, [d_run, d0, d1])
+    await pg.locator("button.nav-run").click(); await pg.wait_for_timeout(500)
+    a3 = await pg.evaluate(RUN_STATE)
+    assert a3["state"] == "run" and not a3["paused"] and a3["t"] > a["t"] and await pg.evaluate("window.__draws") > d1, ("the header's resume", a3)
+    # the record beat reads the sessions record
+    assert await take_to(pg, 4), "the take did not rest on the record"
     rc = await pg.evaluate(RECORD)
-    tally = capw(words(rc["above"])) + " for " + words(rc["total"]) + "."
-    def story_want(k, as_):
-        if k == "tally": return tally
-        v = rc.get(k)
-        if k not in ("above", "total", "floor") or v is None: return None
-        v = int(v) if float(v).is_integer() else v
-        return words(v) if as_ == "words" else capw(words(v)) if as_ == "Words" else str(v)
-    wrong = [(k, a, t, story_want(k, a)) for k, a, t in st["n"] if story_want(k, a) is not None and t != story_want(k, a)]
-    assert st["days"] == rc["total"] and st["prem"] == rc["premium"] and st["ink"] in (0, rc["total"]) and not wrong, (st, "record", rc, "differ", wrong)
-    # hc13r (home, HOME-1): §03's heading left with its band; the derived count is scene 4's lede, which must equal the record
+    st = await pg.evaluate("""(() => { const r = document.querySelector('.take-rec'), n = s => { const e = r.querySelector(s); return e ? +e.textContent : -1; };
+      return { lanes: r.querySelectorAll('.pf-lane').length, prem: n('.y-prem .pf-n'), disc: n('.y-disc .pf-n'), n: [...document.querySelectorAll('[data-story-n]')].length }; })()""")
+    assert st["lanes"] == rc["total"] and st["prem"] == rc["premium"] and st["disc"] == rc["total"] - rc["premium"] and st["n"] == 0, (st, "record", rc, "differ")
     h = await pg.evaluate("[...document.querySelectorAll('.beat-4 .body-lg [data-proof]')].map(e => [e.dataset.proof, e.textContent])")
-    assert h == [["above", capw(words(rc["above"]))], ["total", words(rc["total"])]], ("scene 4's lede: the derived count", h, "record", rc)
-    # hc13r (HOME-1): the overture carries the record (#oxa-sessions), the hedge inside the claim's own sentence (proof-of-concept,
-    # "not a forecast" -> #disclosures), the regime split in its static HTML and the way to Proof; Home draws no second chart
+    assert h == [["above", capw(words(rc["above"]))], ["total", words(rc["total"])]], ("the record beat's lede: the derived count", h, "record", rc)
     p4 = await pg.evaluate("""(() => { const b = document.querySelector('.beat-4'), l = b.querySelector('.body-lg');
-      return { rec: !!b.querySelector('#oxa-sessions'), charts: document.querySelectorAll('[data-proof-chart]').length,
+      return { rec: !!b.querySelector('#oxa-sessions'), charts: document.querySelectorAll('[data-proof-chart]').length, mine: b.querySelectorAll('[data-proof-chart]').length,
         hedge: !!l && /proof-of-concept/.test(l.textContent) && !!l.querySelector('a[href="#disclosures"]'), split: /Five premium, five discount\\./.test(b.textContent),
         proof: !!b.querySelector('a[href="evidence.html"]') }; })()""")
-    assert p4 == {"rec": True, "charts": 0, "hedge": True, "split": True, "proof": True}, ("scene 4 carries the record, its hedge, the split and the way to Proof; no chart on Home", p4)
-    # the last beat is never carried under the bar by the stage's exit: it has faded, or (hc26r, home's HOME-3: it leaves by
-    # being clipped at the bar's edge, never faded) what still shows of it starts at the bar's foot (integrate hc26r)
-    await pg.evaluate("(() => { const s = document.querySelector('.story'); window.scrollTo({top: s.offsetTop + s.offsetHeight - innerHeight * 0.5, behavior: 'instant'}); })()")
-    B4 = r"""(() => { const b = document.querySelector('.beat-4'), o = +getComputedStyle(b).opacity, r = b.getBoundingClientRect(), nb = document.querySelector('.nav').getBoundingClientRect().bottom;
-      const k = +((getComputedStyle(b).clipPath.match(/inset\(\s*(-?[\d.]+)px/) || [0, 0])[1]), top = r.top + k;
-      return { o, top: Math.round(top * 10) / 10, bottom: Math.round(r.bottom), nb: Math.round(nb * 10) / 10, ok: o < 0.05 || r.bottom <= nb + 0.5 || top >= nb - 1 }; })()"""
-    op = await until(pg, f"({B4}).ok ? 'ok' : ''", 4000)
-    assert op, ("beat 4 drawn under the bar past the stage's end (faded, or clipped at the bar's foot)", await pg.evaluate(B4))
+    assert p4 == {"rec": True, "charts": 1, "mine": 1, "hedge": True, "split": True, "proof": True}, ("the record beat carries the record, its hedge, the split and the way to Proof; its chart is Home's one chart", p4)
+    # the last beat is never seen through the bar as the take scrolls away: the bar is solid wherever the take is under it
     under = []
-    for f in (1.0, .9, .8, .7, .6, .5, .4, .3):  # through the stage's exit, where the beat crosses the bar
+    for f in (1.0, .9, .8, .7, .6, .5, .4, .3):
         await pg.evaluate(f"(() => {{ const s = document.querySelector('.story'); window.scrollTo({{top: s.offsetTop + s.offsetHeight - innerHeight * {f}, behavior: 'instant'}}); }})()")
         await pg.wait_for_timeout(450)
-        q = await pg.evaluate(B4)
-        if not q["ok"]: under.append((f, q))
-    assert not under, ("beat 4 drawn under the bar during the stage's exit (faded, or clipped at the bar's foot)", under[:3])
-    # the nav: the chapter readout replaced the fixed rail; its list names every chapter of the page (7 until hc11, 6 since
-    # §02 left, 5 since hc13r when §03 #proof left: counted from the page and pinned at 5); the readout names the chapter
-    # under the bar, and the bar takes a dark band's tone (hc13r: Home has no dark chapter now; its dark band is the close)
+        q = await pg.evaluate("(() => { const n = document.querySelector('.nav'), s = document.querySelector('.story').getBoundingClientRect(), nb = n.getBoundingClientRect().bottom; return { y: Math.round(scrollY), over: s.bottom > nb, released: scrollY > document.querySelector('.story').offsetHeight - innerHeight + 2, solid: n.classList.contains('nav--solid'), dark: n.classList.contains('nav--dark') }; })()")
+        if q["over"] and q["released"] and not (q["solid"] and q["dark"]): under.append((f, q))
+    assert not under, ("the bar is clear over the take while it scrolls away (the last beat shows through it)", under[:3])
+    # the nav: the bar's chapter list names every chapter (4 since hc31r: the lab's chapter left with the lab); the readout
+    # names the chapter under the bar; the bar takes a dark band's tone
     nch = await pg.evaluate("document.querySelectorAll('main section[data-chapter]').length")
-    assert nch == 5 and await pg.locator(".nav-ch-list a").count() == nch and await pg.locator(".chapters").count() == 0, ("the readout lists every chapter", nch)
+    assert nch == 4 and await pg.locator(".nav-ch-list a").count() == nch and await pg.locator(".chapters").count() == 0, ("the readout lists every chapter", nch)
     await pg.evaluate("document.querySelector('#economics').scrollIntoView({behavior: 'instant'})")
     lab = await until(pg, "(() => { const l = document.querySelector('.nav-ch-btn').getAttribute('aria-label') || ''; return l.includes('Why agents') ? l : ''; })()", 4000)
     assert lab, ("chapter readout over #economics", await pg.locator(".nav-ch-btn").get_attribute("aria-label"))
     await pg.evaluate("document.querySelector('.cta-band').scrollIntoView({behavior: 'instant'})")
     assert await until(pg, "document.querySelector('.nav').classList.contains('nav--dark')", 4000), "the bar over the dark close (.cta-band) is not dark"
-    # hc5 (home, HC5 item 1): Home §02 drew Platform's engraved stack plate, still, with no explorer on Home. hc11 (home,
-    # HC11 item 1): that chapter left Home; the principle stays: Home draws no explorer and does not fetch its engine
-    # (arch.js), and the stack is one click away: the hero's "See the stack" goes to Platform, whose hero is the plate and
-    # whose §01 is the explorer (its keys and readout: platform_spec)
+    # no explorer, no lab on Home: neither engine nor sheet is fetched; the stack is one click away
     plate = await pg.evaluate("""(() => ({ stack: !!document.querySelector('#stack'),
         see: (document.querySelector('.beat-0 .hero-cta a.btn--ghost') || { getAttribute: () => null }).getAttribute('href'),
-        arch: document.querySelectorAll('[data-arch], .arch').length,
-        fetched: performance.getEntriesByType('resource').map(e => e.name).filter(n => /\\/arch\\.js(\\?|$)/.test(n)) }))()""")
-    assert not plate["stack"] and plate["see"] == "platform.html" and plate["arch"] == 0 and not plate["fetched"], ("home: no stack chapter, 'See the stack' goes to Platform, no explorer on Home, arch.js not fetched", plate)
-    # swarm lab: runs, announces settlements (at most 4 a second, in the agreed shape), follows by keyboard, halts and drains
-    await pg.locator("[data-swarm-live]").scroll_into_view_if_needed()
-    # hc13r (home, HOME-2): the lab follows one proposal by itself, quietly (its live region stays empty), then rests;
-    # hc22 (home, HC22 4.4): the act leaves the Follow control alone, so it is read from the lab root's data-sw-act
-    assert await until(pg, "document.querySelector('[data-swarm-live]').dataset.swAct === 'on'", 4000), "the lab did not follow a proposal by itself"
-    assert await pg.evaluate("document.querySelector('[data-sw-say]').textContent === ''"), "the lab's own act announced itself"
-    n0 = await pg.evaluate("window.__oxaEv.settled.length")
-    await pg.wait_for_timeout(4500)
-    s1 = await pg.evaluate("({inflight: document.querySelector('[data-sw-inflight]').textContent, recorded: document.querySelector('[data-sw-recorded]').textContent})")
-    assert int(s1["recorded"].replace(",", "")) > 0, s1
-    # a stream of announcements (how many a second depends on the frame rate: software GL in CI is slow), never two within 250 ms
-    assert await until(pg, f"window.__oxaEv.settled.length - {n0} >= 8", 15000, 200), ("oxa:settled events in view", await pg.evaluate(f"window.__oxaEv.settled.length - {n0}"))
-    ev = await pg.evaluate(f"window.__oxaEv.settled.slice({n0})")
-    gaps = [e2["at"] - e1["at"] for e1, e2 in zip(ev, ev[1:])]
-    assert min(gaps) >= 245, ("oxa:settled closer than 250 ms", min(gaps))
-    assert all(re.fullmatch(r"P-\d{5}", e["id"]) and 1 <= e["lane"] <= 5 and isinstance(e["ts"], (int, float)) for e in ev), ev[:3]
-    await still_shot(pg, "[data-swarm-live]", OUT / "swarm.png", pause="[data-sw-motion]")  # round 2 (CI): never Locator.screenshot on the running lab
-    # hc13r (HOME-2): the act rests in its follow view: the six gates hit, the trace shown (1440); hc22 (HC22 4.4): the
-    # control was never pressed and still reads "Follow a proposal" (it answers a reader's own follow only)
-    rest = await until(pg, "(() => { const f = document.querySelector('[data-sw-follow]'); return document.querySelector('[data-swarm-live]').dataset.swAct === 'rest' && f.getAttribute('aria-pressed') === 'false' && f.textContent === 'Follow a proposal' && document.querySelectorAll('[data-sw-gates] li.is-hit').length === 6 && !document.querySelector('[data-sw-callout]').hidden; })()", 15000, 200)
-    assert rest, ("the lab's act did not rest in its follow view", await pg.evaluate("[document.querySelector('[data-sw-follow]').textContent, document.querySelectorAll('[data-sw-gates] li.is-hit').length]"))
-    await pg.locator("[data-sw-follow]").focus(); await pg.keyboard.press("Enter")
-    await expect(pg.locator("[data-sw-follow]")).to_have_attribute("aria-pressed", "true")
-    await expect(pg.locator("[data-sw-callout]")).to_be_visible()
+        arch: document.querySelectorAll('[data-arch], .arch, [data-swarm-live]').length,
+        fetched: performance.getEntriesByType('resource').map(e => e.name).filter(n => /\\/(arch|swarm|story|loader)\\.(js|css)(\\?|$)/.test(n)) }))()""")
+    assert not plate["stack"] and plate["see"] == "platform.html" and plate["arch"] == 0 and not plate["fetched"], ("home: no stack chapter, 'See the stack' goes to Platform, no explorer or lab on Home, their engines and sheets not fetched", plate)
+    # follow by keyboard on the stage: Enter follows the next proposal born and its log opens on it; Escape lets go
+    assert await take_to(pg, 1), "the take did not rest on beat 1"
+    await pg.locator(".take-stage").focus(); await pg.keyboard.press("Enter")
+    fo = await until(pg, "(() => { const t = document.querySelector('[data-take-trace]'), b = document.querySelector('[data-take-follow]'); return !t.hidden && b.getAttribute('aria-pressed') === 'true' && t.querySelector('[data-trace-id]').textContent === OXA.run.sample().tagId ? t.querySelector('[data-trace-id]').textContent : ''; })()", 3000)
+    assert fo and re.fullmatch(r"P-\d{5}", fo), ("Enter on the stage did not follow a proposal and open its log on it", await pg.evaluate("[document.querySelector('[data-take-trace]').hidden, document.querySelector('[data-take-follow]').textContent, OXA.run.sample().tagId]"))
     await pg.keyboard.press("Escape")
-    await expect(pg.locator("[data-sw-callout]")).to_be_hidden()
-    assert await pg.evaluate("document.activeElement === document.querySelector('[data-sw-follow]')")
-    await pg.locator("[data-sw-halt]").click()
-    await expect(pg.locator("[data-sw-state]")).to_have_text("Halted")
-    drained = await until(pg, "document.querySelector('[data-sw-inflight]').textContent.trim() === '0' && document.querySelector('[data-sw-banner]').textContent.includes('drained')", 30000, 250)
-    assert drained, ("halt did not drain", await pg.evaluate("[document.querySelector('[data-sw-inflight]').textContent, document.querySelector('[data-sw-banner]').textContent]"), lab_why(await pg.evaluate(LAB_STATE), errs))
-    # v2x cut, owner's-eye fix (1 Nov): Home's running agent log ("[data-ledger=live]", once home 06) left the page with
-    # its stream keyboard; the swarm's announcements are no longer sealed on Home (the lab's trace links to Trust's ledger:
-    # swarm_trace_to_ledger), so the ledger answers, the five-announcement test and the stream's keys are not read here.
+    assert await until(pg, "document.querySelector('[data-take-trace]').hidden && document.querySelector('[data-take-follow]').getAttribute('aria-pressed') === 'false'", 3000), "Escape on the stage did not let the proposal go"
+    assert await pg.evaluate("OXA.run.records().length") == 0, "following a proposal wrote a record (reading is never recorded)"
     assert await pg.locator("[data-ledger=live]").count() == 0, "Home draws a running ledger again: restore its block in `home` (git show e5720dc:tools/verify_v9.py)"
     # chain
     await pg.locator("[data-chain]").scroll_into_view_if_needed()
@@ -562,12 +561,9 @@ async def home(b):
     await pg.locator("[data-chain-restore]").click()
     await expect(pg.locator(".chain-list .is-broken")).to_have_count(0)
     await expect(pg.locator("[data-chain-status]")).to_contain_text("Chain intact")
-    # hc13r (home, HOME-1): Home draws no proof chart (asserted above); its listbox, keyboard and caption readout are
-    # checked on Proof, the chart's one page (interior)
     assert not errs, errs
-    print(f"home: 5 beats navigable, stats clear of the globe, motion pause, overture reads the record ({rc['total']} columns, {rc['premium']} premium), last beat clear of the bar, "
-          f"{nch} chapters in the nav list (no rail), 'See the stack' to Platform (no explorer, arch.js not fetched), swarm {len(ev)} events in view (gaps >= {min(gaps):.0f} ms), follow by keyboard, halt drains, "
-          f"chain breaks (typed and one-tap) + restores; the lab acted once, quietly, and rested in its follow view; scene 4 carries the record (count, hedge, split, link; no chart on Home)")
+    print(f"home: 5 beats navigable (keys, then the index), each one shot at rest; the four figures on the first screen; the header's pause stops the clock and the stage; the record reads the record ({rc['total']} columns, {rc['premium']} premium) with its hedges and says Record in the header; "
+          f"the bar solid over the leaving take; {nch} chapters in the nav list; 'See the stack' to Platform (no explorer, no lab, their files not fetched); {fo} followed by keyboard and let go, nothing recorded; chain breaks (typed and one-tap) + restores")
     await ctx.close()
 
 
@@ -929,7 +925,11 @@ async def chain_contrast(b):
 
 @check
 async def desk(b):
-    """the desk on Lifecycles runs after a deep link (its clock has left 09:30)"""
+    """the desk on Lifecycles runs after a deep link (its clock has left 09:30). hc31r (integrate, standing in for tests;
+    platform's request, LEAP-hc31 PLAT-4): the desk has no Pause motion of its own; it obeys the run. With Follow centred
+    in the viewport the pause that holds it, the header's transport, is on screen and answers at its centre (it was the
+    desk's own button, under the bar); pressed, the desk says "Model paused" and its clock stands (two reads 1.5 s
+    apart); pressed again, the clock moves on."""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
     pg = await ctx.new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -942,17 +942,25 @@ async def desk(b):
     # at its centre (it had sat under the bar or off screen while the walk ran)
     await pg.evaluate("document.querySelector('[data-gap-follow]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(600)
     mo = await pg.evaluate(GAP_MOTION)
-    assert mo["inside"] and mo["hit"], ("1440x900: with Follow centred, Pause must lie under the bar inside the viewport and answer at its centre", mo)
-    await still_shot(pg, "[data-gap]", OUT / "desk.png", pause="[data-gap-motion]")
+    assert mo["inside"] and mo["hit"], ("1440x900: with Follow centred, the header's pause must be on screen and answer at its centre", mo)
+    await pg.locator("button.nav-run").click(); await pg.wait_for_timeout(400)
+    p1 = await pg.evaluate("[document.querySelector('[data-gap-state]').textContent, document.querySelector('[data-gap-time]').textContent]"); await pg.wait_for_timeout(1500)
+    p2 = await pg.evaluate("[document.querySelector('[data-gap-state]').textContent, document.querySelector('[data-gap-time]').textContent]")
+    assert p1 == p2 and p1[0] == "Model paused", ("the header's pause does not hold the desk", p1, p2)
+    await pg.locator("button.nav-run").click()
+    assert await until(pg, f"document.querySelector('[data-gap-time]').textContent !== {p2[1]!r}", 6000, 100), ("the desk's clock did not move on after the header's resume", p2)
+    await still_shot(pg, "[data-gap]", OUT / "desk.png", pause="button.nav-run")
     assert not errs, errs
-    print("desk:", info, "; Pause in view under the bar with Follow centred")
+    print("desk:", info, "; the header's pause in view with Follow centred; it holds the desk (Model paused) and releases it")
     await ctx.close()
 
 
-GAP_MOTION = r"""(() => { const m = document.querySelector('[data-gap-motion]'), n = document.querySelector('header.nav') || document.querySelector('.nav');
-  const r = m.getBoundingClientRect(), bar = n.getBoundingClientRect().bottom, e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-  return { box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)], bar: Math.round(bar), vh: innerHeight,
-    inside: r.top >= bar - 1 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth, hit: !!e && (e === m || m.contains(e)) }; })()"""
+# hc31r: the pause that holds the desk is the header's transport (button.nav-run); the desk's own [data-gap-motion] left the page
+GAP_MOTION = r"""(() => { const m = document.querySelector('button.nav-run'), g = document.querySelector('[data-gap-motion]');
+  if (!m) return { inside: false, hit: false, own: !!g };
+  const r = m.getBoundingClientRect(), e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+  return { box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)], vh: innerHeight, own: !!g, tall: Math.round(r.height),
+    inside: !g && r.width > 0 && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth && getComputedStyle(m).visibility !== 'hidden', hit: !!e && (e === m || m.contains(e)) }; })()"""
 DESK_HEAD = "(() => Math.round(document.querySelector('.desk-head').getBoundingClientRect().height))()"
 
 
@@ -1127,8 +1135,8 @@ async def company(b):
     # register codes C-01...C-04 left the list and the plate (label noise); the four constants are their lines, in order,
     # and the plate's own words carry them: pointing at the third lights its label ('Custody'), not the boundary words.
     await pg.evaluate("document.documentElement.style.scrollBehavior = 'auto'; document.querySelector('[data-kplate]').scrollIntoView({ block: 'center', behavior: 'instant' })")
-    kp = await pg.evaluate("(() => { const f = document.querySelector('[data-kplate]'); return { codes: (document.querySelector('#constants').textContent.match(/C-0[0-9]/g) || []).length, recs: f.querySelectorAll('.k-recs rect').length, pause: !!f.querySelector('button.figure-motion:not([hidden])'), list: [...document.querySelectorAll('#constants [data-k]')].map(d => d.dataset.k + ':' + d.textContent.replace(/\\s+/g, ' ').trim()) }; })()")
-    assert kp["codes"] == 0 and [x.split(":")[0] for x in kp["list"]] == ["c1", "c2", "c3", "c4"] and kp["list"][0] == "c1:Agents decide. Code executes." and kp["recs"] >= 10 and kp["pause"], ("the constants plate", kp)
+    kp = await pg.evaluate("(() => { const f = document.querySelector('[data-kplate]'); return { codes: (document.querySelector('#constants').textContent.match(/C-0[0-9]/g) || []).length, recs: f.querySelectorAll('.k-recs rect').length, pause: f.querySelectorAll('button').length, list: [...document.querySelectorAll('#constants [data-k]')].map(d => d.dataset.k + ':' + d.textContent.replace(/\\s+/g, ' ').trim()) }; })()")
+    assert kp["codes"] == 0 and [x.split(":")[0] for x in kp["list"]] == ["c1", "c2", "c3", "c4"] and kp["list"][0] == "c1:Agents decide. Code executes." and kp["recs"] >= 10 and kp["pause"] == 0, ("the constants plate (no control of its own: it obeys the header's)", kp)
     first = await pg.evaluate("[...document.querySelectorAll('.k-recs rect')].map(r => r.getAttribute('class')).join()")
     assert await until(pg, f"[...document.querySelectorAll('.k-recs rect')].map(r => r.getAttribute('class')).join() !== {first!r} || document.querySelectorAll('.k-recs rect').length > {kp['recs']}", 12000), "the plate wrote no record"
     await pg.locator('#constants [data-k="c3"]').hover(); await pg.wait_for_timeout(500)
@@ -1136,6 +1144,24 @@ async def company(b):
     # a4 (company): the plate's labels are HTML now (.kl-labs), so their ink is `color`, not the SVG's `fill`
     lit = await pg.evaluate("(() => { const t = document.querySelector('[data-kplate] .k-c3 .kl--box'), r = document.querySelector('[data-kplate] .k-c1 .kl--word'); return t && r ? [getComputedStyle(t).color, getComputedStyle(r).color] : null; })()")
     assert lit and lit[0] != lit[1], ("pointing at the third constant should light 'Custody' on the plate, not the boundary words", lit)
+    # hc31r (integrate, standing in for tests; company's request, LEAP-hc31 COMP-1): the plate's Pause motion is gone; it
+    # obeys the run. The header's pause holds its token where it is (1 s) and its resume lets it go; a halt of the run
+    # ends the pass in flight (the head reads "Halted · no new proposals", the token gone, no record written) and a
+    # resume starts it again ("A proposal, gate by gate")
+    await pg.mouse.move(5, 5)
+    TOK = "(() => { const t = document.querySelector('[data-kplate] .k-tok'); return t ? [t.getAttribute('cx'), getComputedStyle(t).opacity] : null; })()"
+    await pg.evaluate("OXA.run.pause(true)"); await pg.wait_for_timeout(300)
+    k1 = await pg.evaluate(TOK); await pg.wait_for_timeout(1000); k2 = await pg.evaluate(TOK)
+    assert k1 and k1 == k2 and await pg.evaluate("document.documentElement.classList.contains('run-paused')"), ("the header's pause does not hold the constants plate", k1, k2)
+    await pg.evaluate("OXA.run.pause(false)")
+    assert await until(pg, f"JSON.stringify({TOK}) !== {json.dumps(json.dumps(k2))}", 6000, 100), ("the constants plate did not move on after the resume", k2)
+    await pg.evaluate("OXA.run.halt()")
+    halted = await until(pg, "document.querySelector('[data-kplate] .k-state').textContent.replace(/\\s+/g, ' ').trim() === 'Halted · no new proposals' && +getComputedStyle(document.querySelector('[data-kplate] .k-tok')).opacity === 0", 14000, 200)
+    assert halted, ("halted, the plate's head does not read 'Halted · no new proposals' with its token gone within 14 s", await pg.evaluate("[document.querySelector('[data-kplate] .k-state').textContent, getComputedStyle(document.querySelector('[data-kplate] .k-tok')).opacity]"))
+    r0 = await pg.evaluate("[...document.querySelectorAll('.k-recs rect')].map(r => r.getAttribute('class')).join()"); await pg.wait_for_timeout(2500)
+    assert await pg.evaluate("[...document.querySelectorAll('.k-recs rect')].map(r => r.getAttribute('class')).join()") == r0, "halted, the constants plate wrote a record"
+    await pg.evaluate("OXA.run.resume()")
+    assert await until(pg, "document.querySelector('[data-kplate] .k-state').textContent.replace(/\\s+/g, ' ').trim() === 'A proposal, gate by gate'", 6000, 100), ("resumed, the plate's head does not read 'A proposal, gate by gate'", await pg.evaluate("document.querySelector('[data-kplate] .k-state').textContent"))
     assert not errs, errs
     await ctx.close()
 
@@ -1556,31 +1582,40 @@ async def deep_links(b):
 
 @check
 async def overture_net(b):
-    """v2x r1 (qa-hostile S7): a failed overture engine leaves a readable page at once. With assets/js/story.js aborted,
-    html.story-failed is set and the overture's stage is no longer pinned (.story-stage position: relative) within 1.5 s
-    of 'load' (x the CPU throttle), at 390 and 1440: no waiting for the safety net's clock (20 s while story.js is
-    expected) and no pinned dark screen."""
+    """v2x r1 (qa-hostile S7): a failed overture engine leaves a readable page at once. hc31r (integrate, standing in for
+    tests; home's request): the overture's engines are run.js, stage.js and take.js. With each of them aborted in turn,
+    at 390 and 1440, within 1.5 s (x the CPU throttle) of the page's ready signal (html.is-loaded): the take is not
+    pinned (no html.story-ready), its five beats stand in normal flow (position relative, whole), every beat's heading is
+    laid out inside the viewport's width, the first screen keeps its still, and nothing scrolls sideways: no pinned dark
+    screen waiting for an engine that will not come."""
     bad = []
     limit = int(1500 * max(1.0, MODE["throttle"]))
-    for w, h, touch in ((390, 844, True), (1440, 900, False)):
-        ctx = await b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch)
-        pg = await ctx.new_page()
-        # path-agnostic (a3): the deploy copy (tools/build_deploy.py) serves it at /assets/v/<hash>/js/story.js
-        await pg.route("**/js/story.js*", lambda r: r.abort())
-        await pg.goto(f"{BASE}/index.html", wait_until="load")
-        ok = await until(pg, "document.documentElement.classList.contains('story-failed') && getComputedStyle(document.querySelector('.story-stage')).position === 'relative'", limit)
-        if not ok:
-            st = await pg.evaluate("({ cls: document.documentElement.className, pos: getComputedStyle(document.querySelector('.story-stage')).position })")
-            bad.append(f"index.html@{w}x{h} with story.js aborted: not static within {limit} ms of load: {st}")
-        await ctx.close()
+    for eng in ("run.js", "stage.js", "take.js"):
+        for w, h, touch in ((390, 844, True), (1440, 900, False)):
+            ctx = await b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch)
+            pg = await ctx.new_page()
+            # path-agnostic (a3): the deploy copy (tools/build_deploy.py) serves it at /assets/v/<hash>/js/<name>
+            await pg.route(f"**/js/{eng}*", lambda r: r.abort())
+            await pg.goto(f"{BASE}/index.html", wait_until="load")
+            await until(pg, "document.documentElement.classList.contains('is-loaded')", int(15000 * max(1.0, MODE["throttle"])))
+            st = lambda: pg.evaluate("""(() => { const s = document.querySelector('.story'), bs = [...s.querySelectorAll('.beat')], still = s.querySelector('.beat-0 .stage-still');
+              return { ready: document.documentElement.classList.contains('story-ready'), pos: bs.map(b => getComputedStyle(b).position), op: bs.map(b => +getComputedStyle(b).opacity),
+                heads: bs.map(b => { const r = b.querySelector('h1, h2').getBoundingClientRect(); return r.width > 0 && r.left >= -1 && r.right <= innerWidth + 1; }),
+                still: !!still && still.getBoundingClientRect().width > 0 && +getComputedStyle(still).opacity > .9, sw: document.documentElement.scrollWidth - innerWidth }; })()""")
+            good = lambda s: not s["ready"] and all(p == "relative" for p in s["pos"]) and all(o == 1 for o in s["op"]) and all(s["heads"]) and s["still"] and s["sw"] <= 0
+            t0, s = time.monotonic(), await st()
+            while not good(s) and (time.monotonic() - t0) * 1000 < limit:
+                await pg.wait_for_timeout(100); s = await st()
+            if not good(s): bad.append(f"index.html@{w}x{h} with {eng} aborted: not five beats in normal flow within {limit} ms of the ready signal: {s}")
+            await ctx.close()
     assert not bad, "overture_net:\n  " + "\n  ".join(bad)
-    print(f"overture_net: with story.js aborted the overture is static (html.story-failed, stage unpinned) within {limit} ms of load at 390 and 1440")
+    print(f"overture_net: with run.js, stage.js or take.js aborted the take is five beats in normal flow (not pinned, the still kept, nothing sideways) within {limit} ms of the ready signal at 390 and 1440")
 
 
 @check
 async def phone(b):
-    """phone: the explorer is an accordion (hc5: on Platform §01, its one page), Home's lab (§02 since hc11, when the still
-    stack plate left Home) is drawn inside the 390 px page, a chapter lands under the 64 px bar, the menu sheet is a popover
+    """phone: the explorer is an accordion (hc5: on Platform §01, its one page), Home's model (hc31r: the take's stage, live
+    on the Council's beat, which is where #lc01 points; until then the lab) is drawn inside the 390 px page, a chapter lands under the 64 px bar, the menu sheet is a popover
     over an inert page"""
     # v2x r3: open_page, not 'loader detached': since home r3 the instruments are added as the curtain lifts, so at CI
     # speed arch.js had not built `#stack .arch` yet when the loader left (TypeError on null); open_page waits until
@@ -1588,9 +1623,12 @@ async def phone(b):
     errs = []
     ctx, pg = await open_page(b, "index.html", 390, 844, errs=errs)
     await pg.locator(".loader").wait_for(state="detached", timeout=15000)
-    # hc11: Home's first chapter drawing after the overture's lifecycles is the swarm lab (#lc01; the still plate left)
-    await pg.evaluate("document.querySelector('#lc01').scrollIntoView({block: 'center', behavior: 'instant'})")
-    await expect(pg.locator("#lc01 [data-swarm-live]")).to_be_visible()
+    # hc31r (integrate; home's request, LEAP-hc31 HOME-2): the lab left Home; the model on Home is the take's stage, and
+    # #lc01 is the take's fourth mark (the Council, with the hand). The stage is live there, drawn inside the 390 px page
+    assert await until(pg, TAKE_READY, 15000), "390: the take did not start"
+    assert await take_to(pg, 3, 300), "390: the take did not rest on the Council's beat (#lc01)"
+    st3 = await pg.evaluate("(() => { const f = document.querySelector('.take-stage'), r = f.getBoundingClientRect(), c = f.querySelector('canvas').getBoundingClientRect(), m = document.getElementById('lc01'); return { mark: !!m && m.closest('.take-at') !== null, live: f.__stage.live, box: [r.left, r.right, c.left, c.right], shot: f.dataset.stage }; })()")
+    assert st3["mark"] and st3["live"] and st3["shot"] == "close" and st3["box"][0] >= 0 and st3["box"][1] <= 390 and st3["box"][2] >= 0 and st3["box"][3] <= 390, ("390: Home's stage at #lc01", st3)
     assert await pg.evaluate("document.documentElement.scrollWidth") == 390
     await pg.locator(".nav-toggle").click()  # v2x cut (1 Nov): on phones the toggle opens the sheet; its first items are the chapters
     # a4 (system): the sheet names this page's chapters ("On this page", the list labelled by it) and numbers them, so
@@ -1635,7 +1673,7 @@ async def phone(b):
     assert await pg.evaluate("document.documentElement.scrollWidth") == 390
     assert not errs, errs
     await ctx.close()
-    print(f"phone: Home's lab drawn inside 390, Platform's explorer accordion opens inline, the sheet's chapters headed \"On this page\" and numbered ({', '.join(sheet['nums'])}), the Why agents chapter lands under the bar, menu sheet opens (page inert) and Escape closes it, also from a link inside it ({inside!r}: focus back on the toggle); "
+    print(f"phone: Home's stage live inside 390 at #lc01, Platform's explorer accordion opens inline, the sheet's chapters headed \"On this page\" and numbered ({', '.join(sheet['nums'])}), the Why agents chapter lands under the bar, menu sheet opens (page inert) and Escape closes it, also from a link inside it ({inside!r}: focus back on the toggle); "
           f"{len(foot)} footer links answer over >= 32 px (least {min(x['span'] for x in foot)})")
 
 
@@ -1651,29 +1689,46 @@ FOOT_HIT = r"""(async () => { const out = [];
 
 @check
 async def reduced_motion(b):
-    """reduced motion: the explorer is open and still (hc5: on Platform §01, its one page); Home's swarm lab is a still study with no motion control (until
-    the 1 Nov cut: Home's ledger stream started paused; the stream left the site); Trust verifies at once"""
+    """reduced motion: the explorer is open and still (hc5: on Platform §01, its one page); Home's model is a still study
+    with no motion control (hc31r: the take's stage, one composed still with its labels and tag, nothing redrawn, the
+    shot changing with its beat in one frame, the header's transport not shown, the hand still working; until then the
+    swarm lab); Trust verifies at once"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
     pg = await ctx.new_page(); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.goto(f"{BASE}/index.html", wait_until="load")
     await pg.locator(".loader").wait_for(state="detached", timeout=15000)
-    # v2x cut (1 Nov): Home's running instrument is the swarm lab (the agent log left the page); under reduced motion it is
-    # drawn as a still study and offers no Pause motion
-    await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-    await expect(pg.locator("[data-swarm-live] [data-sw-state]")).to_have_text("Static study")
-    await expect(pg.locator("[data-swarm-live] [data-sw-motion]")).to_be_hidden()
+    # hc31r (integrate; home's request, LEAP-hc31 HOME-1, HOME-2, SYS-1): Home's running instrument is the take's stage.
+    # Under reduced motion it is one composed still (its labels and its tag drawn, nothing redrawn in 1.5 s, no animation
+    # running), the shot changes with its beat in one frame, the page offers no motion control (the header's transport
+    # is not shown: there is nothing to pause; no button in <main> reads Pause or Replay), and the hand still works
+    assert await until(pg, "!!(window.OXA && OXA.take) && !!document.querySelector('.take-stage').__stage && document.querySelector('.take-stage').__stage.live", 15000), "reduced motion: Home's stage did not draw its still"
+    await pg.evaluate("(() => { const g = document.querySelector('.take-stage').__stage.g, c = g.clearRect.bind(g); window.__draws = 0; g.clearRect = (...a) => { window.__draws++; c(...a); }; })()")
+    await pg.wait_for_timeout(1500)
+    rm0 = await pg.evaluate("""(() => { const b = document.querySelector('button.nav-run');
+      return { draws: window.__draws, anims: document.getAnimations().filter(a => a.playState === 'running').length, labs: document.querySelectorAll('.take-stage .stage-lab').length, tag: !document.querySelector('.take-stage .stage-tag').hidden,
+        bar: !!b && getComputedStyle(b).visibility !== 'hidden' && b.getBoundingClientRect().width > 0, own: [...document.querySelectorAll('main button')].filter(x => /pause|resume motion|replay/i.test(x.textContent)).length }; })()""")
+    assert rm0["draws"] == 0 and rm0["anims"] == 0 and rm0["labs"] >= 6 and rm0["tag"] and not rm0["bar"] and rm0["own"] == 0, ("reduced motion: Home's stage is not one composed still with no motion control", rm0)
+    shots = []
+    for i in (1, 2, 3):
+        await pg.evaluate(f"window.scrollTo({{ top: ({TAKE_Y})({i}), behavior: 'instant' }})"); await pg.wait_for_timeout(350)
+        shots.append(await pg.evaluate("document.querySelector('.take-stage').dataset.stage + ':' + document.querySelector('.story').dataset.beat + ':' + document.getAnimations().filter(a => a.playState === 'running').length"))
+    assert shots == ["wide:1:0", "section:2:0", "close:3:0"], ("reduced motion: the shot does not change with its beat in one frame", shots)
+    await pg.locator("[data-sw-strict]").focus()
+    for _ in range(9): await pg.keyboard.press("ArrowRight")
+    assert await until(pg, "OXA.run.records().length === 1 && OXA.run.strict() === 0.21", 3000), ("reduced motion: the hand does not work (nine arrows: one record, strictness 21%)", await pg.evaluate("[OXA.run.records().length, OXA.run.strict()]"))
     # hc5 (integrate): the explorer runs on Platform §01 only (Home §02 draws its plate, still): open at once, no Pause
     await pg.goto(f"{BASE}/platform.html", wait_until="load")
     await pg.evaluate("document.querySelector('#architecture .arch').scrollIntoView({block: 'center', behavior: 'instant'})")
     assert await until(pg, "!!document.querySelector('#architecture .arch.is-ready')", 1500), "Platform's explorer not open at once under reduced motion"
-    await expect(pg.locator("#architecture .arch-motion")).to_be_hidden()
+    assert await pg.locator("#architecture .arch-motion").count() == 0 and await pg.evaluate("[...document.querySelectorAll('main button')].filter(x => /pause|resume motion|replay/i.test(x.textContent)).length") == 0, "reduced motion: Platform offers a motion control (hc31r: no figure has one of its own)"
     await pg.goto(f"{BASE}/trust.html", wait_until="load")
     await pg.locator("[data-lt-verify]").click()
-    await expect(pg.locator("[data-ledger=replay] [data-lt-state]")).to_contain_text("Verified here · 8 of 8 links hold", timeout=1500)
+    # hc31r (PROOF-2): the record the hand sealed on Home above chains onto the excerpt's nine: ten records, nine links
+    await expect(pg.locator("[data-ledger=replay] [data-lt-state]")).to_contain_text("Verified here · 9 of 9 links hold", timeout=1500)
     assert not errs, errs
     await ctx.close()
-    print("reduced motion: explorer open and still (no motion control), the swarm lab a still study (no motion control), Trust verifies at once")
+    print("reduced motion: explorer open and still (no motion control), Home's stage one composed still (no motion control, no transport, the hand works), Trust verifies at once")
 
 
 # where the loader is, read in the page: [performance.now(), 'parsing' | 'shown' | 'hidden' | 'removed', opacity, visibility]
@@ -1758,7 +1813,12 @@ def fade_crossing(anim, kfs):
 @check
 async def loader(b):
     """the loader finishes on elapsed time, not on frames: with requestAnimationFrame starved it is not visible
-    (removed, or computed visibility hidden / opacity < .05) by 4.5 s after navigation, and removed by 9 s"""
+    (removed, or computed visibility hidden / opacity < .05) by 4.5 s after navigation, and removed by 9 s.
+    hc31r (system; LEAP-hc31 SYS-1 and section 6, "`.loader` goes; `oxa:loaded` and `html.is-loaded` still fire at first
+    paint"): Home has no loader, the page opens on its picture. The principle is the same and is now also asserted for what
+    took the loader's place as the page's "ready" signal: with requestAnimationFrame starved, no loader is on screen by
+    4.5 s, and by then `html.is-loaded` is set and `oxa:loaded` has been sent (the engines that start on it never wait on
+    a frame)."""
     # Round 2 (NV-R2-1, director's test list): 'removed by 4.5 s' became 'not visible by 4.5 s, removed by 9 s'. What a
     # reader sees is the same criterion (no loader on screen after 4.5 s); the DOM removal may follow the late scripts.
     # While scripts hold the main thread the page cannot answer a poll, but the compositor still runs a fade whose
@@ -1766,7 +1826,7 @@ async def loader(b):
     # domain gives its start, delay and duration; the page's style sheet its keyframes). A fade that also animates
     # visibility or pointer-events runs on the main thread and freezes with it, so the reader sees what the poll sees.
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
-    await ctx.add_init_script("window.requestAnimationFrame = () => 0;")
+    await ctx.add_init_script("window.requestAnimationFrame = () => 0; document.addEventListener('oxa:loaded', () => { if (window.__oxaLoaded == null) window.__oxaLoaded = performance.now(); });")
     pg = await ctx.new_page()
     cdp = await ctx.new_cdp_session(pg)
     started = []
@@ -1795,6 +1855,9 @@ async def loader(b):
         except Exception: kfs = None
         at, comp, others = fade_crossing(a, kfs)
         if at is not None: fades.append((a.get("name"), a.get("startTime"), at, comp, others))
+    try: await pg.wait_for_function("document.documentElement.classList.contains('is-loaded') && window.__oxaLoaded != null", timeout=9000)
+    except Exception: pass
+    ready = await pg.evaluate("({ cls: document.documentElement.classList.contains('is-loaded'), ev: window.__oxaLoaded == null ? null : window.__oxaLoaded, loader: !!document.querySelector('.loader') })")
     await ctx.close()
     first = lambda states: next((i for i, s in enumerate(samples) if s[1] in states), None)
     ih, ir = first(("hidden", "removed")), first(("removed",))
@@ -1816,7 +1879,8 @@ async def loader(b):
                      ("on the compositor" if comp else f"on the main thread (it also animates {', '.join(o)}), so it froze while scripts held the page") for n, st, at, comp, o in fades)
     assert t_hid is not None and t_hid <= 4500 and t_rem is not None and t_rem <= 9000, \
         f"loader index.html@1440x900, requestAnimationFrame starved: {detail} (must be not visible by 4500 ms and removed by 9000 ms)"
-    print(f"loader: with requestAnimationFrame starved, {detail}")
+    assert ready["cls"] and ready["ev"] is not None and ready["ev"] <= 4500,         f"loader index.html@1440x900, requestAnimationFrame starved: html.is-loaded {ready['cls']}, oxa:loaded at {ready['ev']} ms (the page must say it is ready by 4500 ms without waiting on a frame)"
+    print(f"loader: with requestAnimationFrame starved, {detail}; " + ("no loader in the document, " if not ready["loader"] else "") + f"html.is-loaded set and oxa:loaded sent at {ready['ev']:.0f} ms")
 
 
 LINK_PAGES = ["index", "platform", "lifecycles", "evidence", "trust", "company", "access", "research"]
@@ -1838,8 +1902,11 @@ async def no_js(b):
     await pg.goto(f"{BASE}/index.html", wait_until="load")
     await pg.screenshot(path=str(OUT / "index-nojs-390.png"), full_page=False)
     nj = await pg.evaluate("""(() => { const q = s => document.querySelectorAll(s).length;
-      return { loader: getComputedStyle(document.querySelector('.loader')).display, proof: q('.proof-list li'), stream: q('[data-ledger-stream] .lt-rec'),
-        chain: q('.chain-list li'), gates: q('[data-sw-gates] li'), bar: getComputedStyle(document.querySelector('.swarm-bar')).display,
+      return { loader: document.querySelector('.loader') ? getComputedStyle(document.querySelector('.loader')).display : 'none', proof: q('.proof-list li'), stream: q('[data-ledger-stream] .lt-rec'),
+        chain: q('.chain-list li'), gates: q('.beat-1 .beat-list li'), bar: getComputedStyle(document.querySelector('.take-stage')).display,
+        dead: [...document.querySelectorAll('main button, main input')].filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden').length,
+        still: !!document.querySelector('.beat-0 .stage-still') && document.querySelector('.beat-0 .stage-still').getBoundingClientRect().height > 50,
+        beats: [...document.querySelectorAll('.story .beat')].map(b => getComputedStyle(b).position + ':' + getComputedStyle(b).opacity).join(),
         stack: q('#stack'), see: (document.querySelector('.beat-0 .hero-cta a.btn--ghost') || { getAttribute: () => null }).getAttribute('href') }; })()""")
     # v2x cut (1 Nov): each layer of the stack shows its name (the In / Out pairs left the page; the job line is the
     # explorer's, with JavaScript); integrate hc1 (4 Nov): the name alone, no verb column (HC1 item 2: the name says it, as
@@ -1848,7 +1915,12 @@ async def no_js(b):
     # hc5 (integrate): Home §02 drew Platform's plate as static markup; hc11: that chapter left Home, and its hero's "See the
     # stack" reaches Platform without JS. The eight layers with the boundary after 04, each name readable, are checked on
     # Platform §01 below (the list is the explorer's, Platform's)
-    assert nj["loader"] == "none" and nj["proof"] == 10 and nj["stream"] == 0 and nj["chain"] == 8 and nj["gates"] == 6 and nj["bar"] == "none", nj
+    # hc31r (system; LEAP-hc31 SYS-1): Home has no loader any more, so "not displayed without JavaScript" also holds when
+    # there is none in the document (the principle: nothing covers the page while scripts are off)
+    # hc31r (integrate; home's request, LEAP-hc31 HOME-1, HOME-2): Home's static objects are the take's: the five beats in
+    # normal flow and whole, the first screen's still, the six gates as beat 1's list, the record's ten sessions as its
+    # <noscript> list; the stage is not displayed and no control that needs a script is (no dead control: v2x r1 S3)
+    assert nj["loader"] == "none" and nj["proof"] == 10 and nj["stream"] == 0 and nj["chain"] == 8 and nj["gates"] == 6 and nj["bar"] == "none" and nj["dead"] == 0 and nj["still"] and nj["beats"] == ",".join(["relative:1"] * 5), nj
     assert nj["stack"] == 0 and nj["see"] == "platform.html", nj
     await pg.locator(".nav-toggle").click()
     assert await pg.evaluate("document.querySelector('#site-menu').matches(':popover-open')"), "menu sheet does not open without JavaScript"
@@ -1862,6 +1934,12 @@ async def no_js(b):
         io: [...document.querySelectorAll('#architecture .layers .layer')].every(l => { const h = l.querySelector('h3');
           return !!h && h.textContent.trim().length > 0 && !h.querySelector('small') && h.getClientRects().length > 0; }) }; })()""")
     assert pl["layers"] == 8 and pl["before"] == 4 and pl["io"], ("platform.html@390 without JavaScript: the eight layers, the boundary after 04, each name shown", pl)
+    # hc31r (integrate; platform's request, PLAT-1, PLAT-2): without JavaScript the console is its still and its hedge, with
+    # no dead control (its bar and its hand are not displayed), and the hero plate shows its authored still with its tag
+    cn = await pg.evaluate("""(() => { const d = s => { const e = document.querySelector(s); return e ? getComputedStyle(e).display : null; }, i = document.querySelector('#swarm img.stage-still'), t = document.querySelector('.hero-plate--stack .pl-tag0');
+      return { bar: d('#swarm .swarm-bar'), hand: d('#swarm [data-sw-strict]'), still: !!i && getComputedStyle(i).display !== 'none' && i.getBoundingClientRect().height > 50, hedge: /^Illustrative/.test((document.querySelector('#sw-cap') || { textContent: '' }).textContent.trim()),
+        tag0: !!t && t.getBoundingClientRect().height > 0, dead: [...document.querySelectorAll('main button, main input')].filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden').length }; })()""")
+    assert cn == {"bar": "none", "hand": "none", "still": True, "hedge": True, "tag0": True, "dead": 0}, ("platform.html@390 without JavaScript: the console's still and hedge, no dead control, the hero's authored tag", cn)
     # v2x r1 (qa-hostile S3): no dead controls without JavaScript: on Lifecycles the desk and its caption are not drawn
     # and its no-JS note is, at 390 here and at 768 below
     DESK_NOJS = "(() => { const d = s => { const e = document.querySelector(s); return e ? getComputedStyle(e).display : null; }; return { desk: d('.desk'), cap: d('.desk-cap'), note: d('.desk-nojs') }; })()"
@@ -1900,7 +1978,9 @@ async def no_js(b):
 
 @check
 async def no_webgl(b):
-    """no WebGL: the homepage falls back (html.no-webgl), and every page with a figure still shows a complete picture.
+    """no WebGL: every page with a figure shows a complete picture. Until hc31r the homepage fell back (html.no-webgl);
+    hc31r (integrate, standing in for tests; home's request): Home's stage is a 2D canvas, so without WebGL it is whole
+    as it stands (pinned, live), and neither Home nor a figure page asks for a WebGL context at all.
     hc30r (RES-1, COMP-1; integrate, standing in for tests, on research's and company's requests; TESTS.md section 53):
     the figures use no WebGL now (figure.js draws lattices on a 2D canvas, a note's hero is its generated still, Company's
     hero is a 2D canvas of its own), so "every figure stage falls back (.no-figure)" would now assert a fault. The
@@ -1917,11 +1997,16 @@ async def no_webgl(b):
                art: art && { ready: art.classList.contains('figure-ready'), none: art.classList.contains('no-figure'), still: on(art.querySelector('svg.fs-still')), canvas: !!art.querySelector('canvas') },
                co: co && { live: co.classList.contains('is-live'), still: on(co.querySelector('svg.plate-still')), canvas: on(co.querySelector('canvas')) } }; })()"""
     ctx = await b.new_context(viewport={"width": 1440, "height": 900})
-    await ctx.add_init_script("(() => { const o = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function(k, ...a) { return /webgl/.test(k) ? null : o.call(this, k, ...a); }; })();")
+    await ctx.add_init_script("(() => { window.__gl = 0; const o = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function(k, ...a) { if (/webgl/.test(k)) { window.__gl++; return null; } return o.call(this, k, ...a); }; })();")
+    await ctx.add_init_script(RUN_PRESET)
     pg = await ctx.new_page()
     await pg.goto(f"{BASE}/index.html", wait_until="load")
-    await pg.wait_for_timeout(2500)
-    assert await pg.evaluate("document.documentElement.classList.contains('no-webgl')")
+    # hc31r (integrate, standing in for tests; home's request, LEAP-hc31 HOME-1): Home draws on a 2D canvas and asks for
+    # no WebGL context at all, so there is no fallback to fall to (html.no-webgl is never set): without WebGL the take is
+    # pinned and its stage live, as with it. (Without any canvas context it keeps its still: overture_ctx_lost.)
+    assert await until(pg, TAKE_READY, 15000), ("without WebGL Home's take is not pinned with its stage live", await pg.evaluate("document.documentElement.className"))
+    await pg.wait_for_timeout(1200)
+    assert await pg.evaluate("window.__gl") == 0 and not await pg.evaluate("document.documentElement.classList.contains('no-webgl')"), ("Home asked for a WebGL context", await pg.evaluate("window.__gl"))
     t_shot = asyncio.get_running_loop().time()
     await pg.screenshot(path=str(OUT / "index-nowebgl.png"))
     print(f"no-WebGL homepage screenshot: {asyncio.get_running_loop().time() - t_shot:.1f}s")
@@ -1930,6 +2015,7 @@ async def no_webgl(b):
         await pg.goto(f"{BASE}/{name}.html", wait_until="load")
         await pg.wait_for_timeout(1500)
         st = seen[name] = await pg.evaluate(FIGS)
+        assert await pg.evaluate("window.__gl") == 0, (name, "the page asked for a WebGL context (no page of the site draws with WebGL since hc31r)")
         if name == "company": assert st["co"] and st["co"]["live"] and st["co"]["canvas"], (name, "without WebGL Company's hero is not live on its 2D canvas", st)
         elif name == "research": assert st["idx"] and st["idx"]["ready"] and not st["idx"]["none"] and st["idx"]["canvas"] and not st["idx"]["noPlate"], (name, "without WebGL the index's plate is not drawn", st)
         else: assert st["art"] and st["art"]["ready"] and not st["art"]["none"] and st["art"]["still"], (name, "without WebGL the note's hero does not show its still", st)
@@ -1959,7 +2045,7 @@ async def no_webgl(b):
     await pg.screenshot(path=str(OUT / "company-nocanvas.png"))
     assert not errs, ("a page threw without a canvas context", errs)
     await ctx.close()
-    print("fallbacks: the no-WebGL homepage falls back; without WebGL the figures are drawn (the index's plate, a note's still, Company's hero); without any canvas context the index's stage and shelf fall back, a note keeps its still and Company shows its still")
+    print("fallbacks: without WebGL the homepage's take is pinned and live and no page asks for WebGL; without WebGL the figures are drawn (the index's plate, a note's still, Company's hero); without any canvas context the index's stage and shelf fall back, a note keeps its still and Company shows its still")
 
 
 # ================================================================ round 1 (v2) guards, one per item of the director's list
@@ -2010,9 +2096,10 @@ async def counters(b):
 
 # ---- the bar at the paper hand-off (NV3, cross: paper hand-off)
 HANDOFF = "async (n) => { " + FRAMES + """ await frames(n);
-  const nav = document.querySelector('header.nav') || document.querySelector('.nav'), sp = document.querySelector('.story-paper');
+  // hc31r: the paper is §01 itself, the band that follows the take in the page's flow (it was the marker .story-paper)
+  const nav = document.querySelector('header.nav') || document.querySelector('.nav'), st = document.querySelector('.story'), sp = st ? st.nextElementSibling : null;
   const nb = nav.getBoundingClientRect().bottom, r = sp ? sp.getBoundingClientRect() : null;
-  const vis = !!sp && getComputedStyle(sp).visibility !== 'hidden' && r.height > 0.5;
+  const vis = !!sp && !sp.classList.contains('is-dark') && r.height > 0.5;
   // hc30r: what lies under the bar, read with the bar out of the way at three heights round site.js's own probe line
   // (1.1 bar heights): the top-level band (a child of <main>, or the footer) that is drawn there, and whether it is ink
   const band = (y) => { let e = document.elementFromPoint(innerWidth / 2, y); while (e && e.parentElement && e.parentElement.id !== 'main' && e.parentElement !== document.body) e = e.parentElement;
@@ -2036,14 +2123,19 @@ async def nav_handoff(b):
     below the bar's probe line (1.1 bar heights, site.js's own edge). And the other half of the same principle, which
     home's fix needed and nothing held (the bar stayed paper over the lab's first 172 px at 1440 x 900): wherever the
     band under the bar is plainly ink or plainly paper (the same band 8 px above and below the probe line) and the
-    paper's marker is not the thing under the bar, the bar's tone is that band's."""
+    paper's marker is not the thing under the bar, the bar's tone is that band's.
+    hc31r (integrate, standing in for tests; home's request, LEAP-hc31 HOME-2): the take is one sticky screen and the
+    paper is §01, the band after it in the page's own flow; there is no marker. "The paper lies under the bar" reads
+    §01's own box (its top at or above the bar's foot, its foot below the probe line), and the tone clause now judges
+    every sample, the paper's too: wherever one band lies under the bar (the same band 8 px above and below the probe
+    line) the bar's tone is that band's, ink over the take (pinned or leaving) and paper over §01. Both an ink band
+    and the paper must come under the bar in each stepped window, and the paper after a jump, or nothing was tested."""
     bad, n = [], 0
     over = lambda s: s["vis"] and s["top"] <= s["nb"] and s["bot"] > s["nb"] * 1.1          # the paper under the bar
     viol = lambda s: s["dark"] and over(s)
     def tone(s):
         """the tone the bar should have from the band under it, None where that is the paper's own business or a boundary"""
         u = s["under"]
-        if over(s) or (s["vis"] and s["top"] <= s["nb"] * 1.1 + 8 and s["bot"] > s["nb"] * 1.1 - 8): return None   # the marker at the probe line
         if not all(u) or len({(x["id"], x["dark"]) for x in u}) != 1: return None                                   # a boundary between two bands
         return u[0]["dark"]
     def wrong(s): t = tone(s); return t is not None and t != s["dark"]
@@ -2168,36 +2260,54 @@ RELAY_REC = "(() => { " + EFF + """ const story = document.querySelector('.story
 
 @check
 async def overture_relay(b):
-    """a slow wheel pass through the overture at 1440 (120 px every 80 ms): no frame shows a beat's .body-lg above 0.3
-    opacity while its headline's words have risen less than half way (mean rise < 0.5): the headline leads its scene"""
+    """a slow wheel pass through the overture at 1440 (120 px every 80 ms). Until hc31r: no frame showed a beat's
+    paragraph before its headline had risen (the headline leads its scene). hc31r (integrate, standing in for tests;
+    LEAP-hc31 rule 2, "moves and cuts, never morphs"): a beat's copy arrives whole with its shot, so the same principle
+    reads: in every frame of the pass at most one beat's copy shows above 0.3, a beat's paragraph never shows above its
+    own headline's opacity, no beat is seen that the scroll has not reached (a frame never shows a beat more than one
+    ahead of or behind the mark on the screen's middle), and the pass ends on the last beat, whole."""
     pg = await shared_home(b)
     await to_top_settled(pg)
     pin = await pg.evaluate("document.querySelector('.story').offsetHeight - innerHeight")
     await pg.mouse.move(720, 450)
-    await pg.evaluate(RELAY_REC)
+    await pg.evaluate("(() => { " + EFF + """ const story = document.querySelector('.story'), beats = [...story.querySelectorAll('.beat')], marks = [...story.querySelectorAll('.take-at i')];
+      const R = window.__relay = { n: 0, bad: [], on: true };
+      const f = () => { R.n++; const o = beats.map(b => eff(b, story)), up = o.map((v, i) => v > 0.3 ? i : -1).filter(i => i >= 0), mid = innerHeight / 2;
+        let at = marks.findIndex(m => { const q = m.getBoundingClientRect(); return q.top <= mid && q.bottom > mid; });
+        const lag = up.some(i => at >= 0 && Math.abs(i - at) > 1);
+        const body = beats.some((b, i) => { const p = b.querySelector('.body-lg, .lede'), h = b.querySelector('h1, h2'); return p && h && eff(p, story) > eff(h, story) + 0.05; });
+        if ((up.length > 1 || lag || body) && R.bad.length < 30) R.bad.push({ y: Math.round(scrollY), shown: up, at, body });
+        if (R.on) requestAnimationFrame(f); };
+      requestAnimationFrame(f); })()""")
     for _ in range(int(pin / 120) + 3):
         await pg.mouse.wheel(0, 120); await pg.wait_for_timeout(80)
     await pg.wait_for_timeout(1200)
     await pg.evaluate("window.__relay.on = false"); r = await pg.evaluate("window.__relay")
+    end = await pg.evaluate(TAKE_SNAP)
     assert r["n"] >= 5, f"overture_relay index.html@1440x900: only {r['n']} frames sampled"
-    assert not r["bad"], f"overture_relay index.html@1440x900: {len(r['bad'])}+ frames with a paragraph before its headline, e.g. {r['bad'][:4]}"
-    print(f"overture_relay: {r['n']} frames over a slow wheel pass, every visible paragraph under a risen headline")
+    assert not r["bad"], f"overture_relay index.html@1440x900: {len(r['bad'])}+ frames with two beats' copy at once, a beat the scroll has not reached, or a paragraph above its headline, e.g. {r['bad'][:4]}"
+    assert end["beat"] == 4 and end["ops"][4] > 0.99, f"overture_relay index.html@1440x900: the pass did not end on the last beat, whole ({end})"
+    print(f"overture_relay: {r['n']} frames over a slow wheel pass, one beat's copy at a time, never ahead of the scroll, ending on the record")
 
 
 @check
 async def overture_numeral(b):
-    """at s ~ 0.02 (scrollY 260 at 1440, from a settled S0) the ghost numeral .story-num stays under 0.05 opacity in
-    every frame: it never pops in above the S0 eyebrow"""
+    """at s ~ 0.02 (scrollY 260 at 1440, from a settled S0) nothing pops in over the first screen's copy. Until hc31r that
+    was the ghost numeral .story-num (it stayed under 0.05 opacity in every frame). hc31r (integrate, standing in for
+    tests): the take has no numeral; the principle reads the whole first screen: in every frame of the 1.8 s after the
+    jump no .story-num exists, the first beat's copy stays whole (opacity >= .95: kicker, h1, lede, buttons, figures),
+    no other beat shows at 0.05 or more, and the take's bar (the index, hidden on the first beat) stays hidden."""
     pg = await shared_home(b)
     await to_top_settled(pg)
-    await pg.evaluate("""(() => { const n = document.querySelector('.story-num'), story = document.querySelector('.story'); const R = window.__num = { max: 0, n: 0, on: true };
-      const eff = el => { let o = 1; for (let e = el; e && e !== story; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return 0; o *= +cs.opacity; } return o; };
-      const f = () => { R.n++; R.max = Math.max(R.max, n ? eff(n) : 0); if (R.on) requestAnimationFrame(f); }; requestAnimationFrame(f); })()""")
+    await pg.evaluate("(() => { " + EFF + """ const story = document.querySelector('.story'), beats = [...story.querySelectorAll('.beat')], parts = [...beats[0].querySelectorAll('.hero-kicker, h1, .lede, .hero-cta, .hero-stats')], bar = story.querySelector('.take-bar');
+      const R = window.__num = { max: 0, min: 1, bar: 0, num: 0, n: 0, on: true };
+      const f = () => { R.n++; R.num = Math.max(R.num, document.querySelectorAll('.story-num').length); R.max = Math.max(R.max, ...beats.slice(1).map(b => eff(b, story))); R.min = Math.min(R.min, ...parts.map(p => eff(p, story)));
+        R.bar = Math.max(R.bar, bar && getComputedStyle(bar).visibility !== 'hidden' ? eff(bar, story) : 0); if (R.on) requestAnimationFrame(f); }; requestAnimationFrame(f); })()""")
     await pg.evaluate("window.scrollTo({top: 260, behavior: 'instant'})")
     await pg.wait_for_timeout(1800)
     await pg.evaluate("window.__num.on = false"); r = await pg.evaluate("window.__num")
-    assert r["max"] < 0.05, f"overture_numeral index.html@1440x900 y=260: .story-num reached opacity {r['max']:.2f} ({r['n']} frames)"
-    print(f"overture_numeral: .story-num stays at {r['max']:.2f} at s~0.02 ({r['n']} frames)")
+    assert r["n"] >= 5 and r["num"] == 0 and r["max"] < 0.05 and r["min"] >= 0.95 and r["bar"] < 0.05, f"overture_numeral index.html@1440x900 y=260: something showed over the first screen's copy ({r})"
+    print(f"overture_numeral: at s~0.02 the first screen's copy stays whole ({r['min']:.2f}), nothing else shows ({r['max']:.2f}; the take's bar {r['bar']:.2f}), no ghost numeral ({r['n']} frames)")
 
 
 # ---- the overture on phones: nothing prints over anything; the illustrative caption reads (OV1, OV10, D14)
@@ -2263,58 +2373,90 @@ async def callout_pixels(pg, boxes):
     return out
 
 
+# hc31r (integrate): the take's labels are the stage's (stage.js: DOM text placed from the projector; a proposal's tag).
+# What prints over what, at a beat's rest: every shown label against the nav, the scene index, the take's hedge, the
+# receipt, each visible part of the beat's copy, and every other label.
+TAKE_LAB = "(() => { " + EFF + """
+  const box = el => { const r = el.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; };
+  const ov = (a, b) => Math.min(a.r, b.r) - Math.max(a.l, b.l) > 1 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 1;
+  const shown = el => eff(el, document.documentElement) > 0.3 && el.getBoundingClientRect().width > 0;
+  const inside = el => { const r = el.getBoundingClientRect(); return r.left >= -0.5 && r.top >= -0.5 && r.right <= innerWidth + 0.5 && r.bottom <= innerHeight + 0.5; };
+  const s = document.querySelector('.story'), beat = s.dataset.beat == null ? -1 : +s.dataset.beat, bt = s.querySelectorAll('.beat')[beat];
+  const labs = [...s.querySelectorAll('.take-stage .stage-lab, .take-stage .stage-tag:not([hidden])')].filter(shown).map(l => ({ t: l.textContent.replace(/\\s+/g, ' ').trim().slice(0, 44), bx: box(l), tag: l.classList.contains('stage-tag'),
+    ground: l.classList.contains('stage-tag') ? getComputedStyle(l).backgroundColor : parseFloat(getComputedStyle(l).webkitTextStrokeWidth) + 'px ' + getComputedStyle(l).paintOrder }));
+  const obst = [['the nav', box(document.querySelector('header.nav') || document.querySelector('.nav'))]];
+  const idx = s.querySelector('.story-idx'); if (idx && shown(idx)) obst.push(['the scene index', box(idx)]);
+  s.querySelectorAll('.take-bar .take-hedge, .take-bar .receipt').forEach(p => { if (shown(p) && p.getBoundingClientRect().height > 1) obst.push([p.className.split(' ')[0], box(p)]); });
+  if (bt) bt.querySelectorAll('.beat-text > *, .hero-stats, .take-hedge').forEach(p => { if (!p.matches('input') && p.getBoundingClientRect().height > 1 && shown(p)) obst.push(['beat ' + beat + ' ' + (p.className || p.tagName.toLowerCase()).toString().split(' ')[0], box(p)]); });
+  const issues = [];
+  labs.forEach((l, i) => { obst.forEach(([n, bx]) => { if (ov(l.bx, bx)) issues.push(`'${l.t}' x ${n}`); });
+    for (let j = i + 1; j < labs.length; j++) if (ov(l.bx, labs[j].bx)) issues.push(`'${l.t}' x '${labs[j].t}'`); });
+  const hedges = [...s.querySelectorAll('.take-hedge')].filter(shown).map(e => ({ t: e.textContent.replace(/\\s+/g, ' ').trim(), inside: inside(e) }));
+  const rec = [...s.querySelectorAll('.take-rec .pf-gut small')].find(e => /Exact value not published/i.test(e.textContent) && shown(e));
+  const days = [...s.querySelectorAll('.take-rec .pf-d')].filter(shown).map(box).sort((a, b) => a.l - b.l);
+  return { beat, issues, labs: labs.length, bare: labs.filter(l => l.tag ? /rgba\\(.*, 0\\)|transparent/.test(l.ground) : !(parseFloat(l.ground) >= 2 && /stroke/.test(l.ground.split(' ')[1] || ''))).map(l => l.t + ' [' + l.ground + ']'),
+    hedges, rec: rec ? inside(rec) : null, days: days.length, dayGaps: days.slice(1).map((d, k) => +(d.l - days[k].r).toFixed(1)), sw: document.documentElement.scrollWidth - innerWidth };
+})()"""
+# the take where the window cannot hold a beat: five beats in normal flow, no stage, the first screen's still, nothing past the width
+TAKE_FLOW = """(() => { const s = document.querySelector('.story'), bs = [...s.querySelectorAll('.beat')], still = s.querySelector('.beat-0 .stage-still'), f = s.querySelector('.take-stage');
+  const wide = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.left >= -1 && r.right <= innerWidth + 1; };
+  return { pinned: document.documentElement.classList.contains('story-ready'), pos: bs.map(b => getComputedStyle(b).position), op: bs.map(b => +getComputedStyle(b).opacity),
+    heads: bs.map(b => wide(b.querySelector('h1, h2'))), copy: bs.map(b => [...b.querySelectorAll('.beat-text > *')].filter(e => e.getBoundingClientRect().height > 1).every(wide)),
+    stage: f ? getComputedStyle(f).display : 'none', still: !!still && still.getBoundingClientRect().width > 0 && +getComputedStyle(still).opacity > 0.9,
+    hedges: [...s.querySelectorAll('.take-hedge')].filter(e => e.getBoundingClientRect().height > 1 && getComputedStyle(e).visibility !== 'hidden').map(e => e.textContent.trim()),
+    rec: [...s.querySelectorAll('.take-rec .pf-gut small, .take-rec noscript')].length > 0, sw: document.documentElement.scrollWidth - innerWidth }; })()"""
+
+
 @check
 async def overture_phones(b):
-    """at 390x664, 375x667, 360x780, 320x640, 844x390, 320x568, 667x375, 740x360 and 568x320 with touch, at each scene's rest: no
-    visible callout box crosses the scene index, 'Pause motion', the nav, a visible beat's text or another callout; with
-    the callouts hidden, under 2% of the stage's pixels inside each callout's box are brighter than luminance 120 (no
-    structure under a callout); Plate 03's caption lies inside the viewport and says 'Illustrative' (its full text: v2x r3 sets
-    the hedge after the mark and title, past the 44 characters the messages quote); at 320x640 adjacent
-    S4 day tags are at least 3 px apart; at scene 4's rest a shown label carries the columns' hedge "Exact value not
-    published" inside the viewport (hc12); at 844x390 and 667x375, the inspector opened by tapping each S1 ring and S2
-    plate callout crosses none of .story-bar, .story-idx, .story-motion or another callout (OV1, OV10, D14; round 2:
-    OV-R2-1, OV-R2-4, OV-R2-5; v2x r2: 568x320, where a plate caption crossed the headline, r2-a11y M)"""
-    bad = []
+    """at 390x664, 375x667, 360x780, 320x640, 844x390, 320x568, 667x375, 740x360 and 568x320 with touch: nothing prints
+    over anything, and the hedges read (OV1, OV10, D14; round 2: OV-R2-1, OV-R2-4, OV-R2-5; v2x r2).
+    hc31r (integrate, standing in for tests; home's request, LEAP-hc31 HOME-1 and HOME-2): the overture is the take and
+    its callouts are the stage's labels. Where the take is pinned (the four upright phones), at each beat's rest: no
+    shown label or tag crosses the nav, the scene index, the take's hedge, the receipt, a visible part of the beat's
+    copy or another label; every label over the drawing carries its own ground (a label's text stroke of 2 px or more
+    painted under its fill, a tag's opaque box: until hc31r this read "under 2 % of the stage's pixels under a callout
+    are lit", which a label that stands on the gate it names cannot hold); beats 0 to 3 show the take's hedge once,
+    "Illustrative", inside the viewport (it was Plate 03's caption), and at least one label; the record beat shows the
+    columns' own hedge "Exact value not published" inside the viewport (hc12) and, at 320x640, its ten day tags at
+    least 3 px apart; nothing scrolls sideways. Where the window cannot hold a beat (the five phones on their side or
+    short: the take is not pinned) the same principle reads the static sequence: five beats in normal flow, whole, each
+    heading and each part of its copy inside the viewport's width, no stage laid out, the first screen's still drawn,
+    the take's hedge and the record's in the flow, nothing sideways. (The inspectors a tap opened at 844x390 and
+    667x375 left with the WebGL overture; what a tap does on the stage is overture_tap's.)"""
+    bad, pinned_at = [], []
     for w, h in PHONES:
-        ctx, pg = await open_page(b, "index.html", w, h, touch=True)
+        ctx, pg = await open_page(b, "index.html", w, h, touch=True, init=RUN_PRESET)
+        await pg.wait_for_timeout(600)
+        if not await pg.evaluate(TAKE_PINNED):
+            f = await pg.evaluate(TAKE_FLOW)
+            if not (all(p == "relative" for p in f["pos"]) and all(o == 1 for o in f["op"]) and all(f["heads"]) and all(f["copy"]) and f["stage"] == "none" and f["still"] and f["sw"] <= 0):
+                bad.append(f"index.html@{w}x{h} scene 00: the static sequence is not five whole beats in normal flow inside the width with the still drawn ({f})")
+            if "Illustrative" not in f["hedges"] or not f["rec"]: bad.append(f"index.html@{w}x{h} scene 03: the static sequence has lost a hedge (the take's {f['hedges']}, the record's {f['rec']})")
+            await ctx.close(); continue
+        pinned_at.append(f"{w}x{h}")
         for i in range(5):
             if not await scene_rest(pg, i): bad.append(f"index.html@{w}x{h} scene 0{i}: did not come to rest")
-            m = await pg.evaluate(PHONE_LAB)
+            m = await pg.evaluate(TAKE_LAB)
             bad += [f"index.html@{w}x{h} scene 0{i}: {x}" for x in m["issues"]]
-            lit = await callout_pixels(pg, m["boxes"])
-            if lit: bad.append(f"index.html@{w}x{h} scene 0{i}: a structure under callouts (share of pixels > 120 in the box, callouts hidden): {lit[:4]}")
-            if i == 3:
-                c = m["cap3"]
-                if not c: bad.append(f"index.html@{w}x{h} scene 03: no visible Plate 03 caption")
-                elif not c["inside"] or "Illustrative" not in c["t"]: bad.append(f"index.html@{w}x{h} scene 03: caption {c['t']!r} at {c['bx']} (inside: {c['inside']}; must lie in the viewport and say 'Illustrative')")
-            if i == 4 and not await until(pg, HEDGE_S4, 3000):
-                bad.append(f"index.html@{w}x{h} scene 04: no shown label says 'Exact value not published' inside the viewport (the ten columns above the floor without their hedge)")
-            if i == 4 and (w, h) == (320, 640):
-                tight = [g for g in m["dayGaps"] if g < 3]
-                if tight: bad.append(f"index.html@320x640 scene 04: adjacent day tags closer than 3 px {len(tight)} times (gaps {m['dayGaps']})")
-            if i in (1, 2) and (w, h) in ((844, 390), (667, 375)):
-                sel = ".story-labels .story-lab.ring.is-on" if i == 1 else ".story-labels .story-lab.layer.is-on"
-                for k in range(await pg.locator(sel).count()):
-                    lab = pg.locator(sel).nth(k)
-                    bb = await lab.bounding_box()
-                    if not bb: continue
-                    idx = await lab.evaluate("l => [...document.querySelectorAll('.story-labels .story-lab')].indexOf(l)")
-                    await bounded(pg.touchscreen.tap(bb["x"] + bb["width"] * 0.3, bb["y"] + bb["height"] / 2), f"a tap on callout {k + 1} at {w}x{h}")
-                    await until(pg, "!!document.querySelector('.story-insp.is-on')", 3000)
-                    await pg.wait_for_timeout(400)
-                    r = await until(pg, f"(() => {{ const r = ({INSP_BOX})({idx}); return r ? JSON.stringify(r) : ''; }})()", 3000, 150)
-                    r = json.loads(r) if r else None
-                    # a tap must open its inspector (OV-R2-4: ring_tap opens 6/6 at 844x390 and 667x375), or nothing was tested
-                    if not r: bad.append(f"index.html@{w}x{h} scene 0{i}: callout {k + 1} tapped at ({bb['x'] + bb['width'] * 0.3:.0f}, {bb['y'] + bb['height'] / 2:.0f}): no inspector opened")
-                    elif r["hits"]: bad.append(f"index.html@{w}x{h} scene 0{i}: the inspector {r['text']!r} at {r['box']} (callout {k + 1} tapped) crosses {r['hits']}")
-                    await bounded(pg.touchscreen.tap(6, h * 0.5), "a tap on empty stage"); await pg.wait_for_timeout(400)  # a tap on empty stage closes it
+            if m["bare"]: bad.append(f"index.html@{w}x{h} scene 0{i}: labels without a ground of their own over the drawing: {m['bare'][:4]}")
+            if m["sw"] > 0: bad.append(f"index.html@{w}x{h} scene 0{i}: the page scrolls sideways by {m['sw']} px")
+            if i < 4:
+                if m["labs"] < 1: bad.append(f"index.html@{w}x{h} scene 0{i}: no label on the stage")
+                if [x["t"] for x in m["hedges"]] != ["Illustrative"] or not m["hedges"][0]["inside"]: bad.append(f"index.html@{w}x{h} scene 0{i}: the take's hedge reads {m['hedges']} (one 'Illustrative', inside the viewport)")
+            else:
+                if not m["rec"]: bad.append(f"index.html@{w}x{h} scene 04: no shown label says 'Exact value not published' inside the viewport (the ten columns above the floor without their hedge)")
+                if (w, h) == (320, 640):
+                    tight = [g for g in m["dayGaps"] if g < 3]
+                    if m["days"] != 10 or tight: bad.append(f"index.html@320x640 scene 04: {m['days']} day tags, adjacent ones closer than 3 px {len(tight)} times (gaps {m['dayGaps']})")
         await ctx.close()
     by = {}
     for x in bad:
         m = re.match(r"index\.html@(\S+) scene 0(\d)", x)
         if m: by[f"{m[1]} S{m[2]}"] = by.get(f"{m[1]} S{m[2]}", 0) + 1
+    if len(pinned_at) < 3: bad.append(f"only {pinned_at} of the nine phones pin the take (the upright ones should): too little was tested")
     assert not bad, f"overture_phones: {len(bad)} problems (by viewport and scene: {', '.join(f'{k} {v}' for k, v in by.items())}):\n  " + "\n  ".join(bad[:30])
-    print(f"overture_phones: {len(PHONES)} phone viewports x 5 scenes, no callout over the index, the nav, the copy, a structure or another callout")
+    print(f"overture_phones: {len(PHONES)} phone viewports; pinned at {', '.join(pinned_at)} x 5 beats: no label over the nav, the index, the hedge, the copy or another label, each on its own ground, the hedges in view; the other {len(PHONES) - len(pinned_at)} show the static sequence whole inside the width")
 
 
 # ---- S1 on a phone: a tap opens its own lifecycle; a swipe never inspects (OV2)
@@ -2334,36 +2476,74 @@ async def touch_drag(cdp, x0, y0, x1, y1, steps=10, dt=16):
     await bounded(cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []}), "touchEnd")
 
 
+# where the hand's pip is on the scale (a native range input: 44 px of thumb room), and the stage's proposals under a finger
+TAKE_PIP = "(() => { const i = document.querySelector('[data-sw-strict]'), q = i.getBoundingClientRect(), v = (+i.value - +i.min) / (+i.max - +i.min), w = 44 * (parseFloat(getComputedStyle(document.documentElement).fontSize) / 16); return { x: q.left + w / 2 + v * (q.width - w), y: q.top + q.height / 2, w: q.width - w, v: +i.value }; })()"
+TAKE_HIT = """(() => { const f = document.querySelector('.take-stage'), st = f.__stage, q = st.cv.getBoundingClientRect(), nb = document.querySelector('.nav').getBoundingClientRect().bottom; let best = null, d = 1e9;
+  for (let i = 0; i < st.nh; i++) { const x = q.left + st.hits[i * 3], y = q.top + st.hits[i * 3 + 1]; if (x < 24 || x > innerWidth - 24 || y < nb + 24 || y > innerHeight * 0.6) continue;
+    const e = document.elementFromPoint(x, y); if (!e || !(e === f || f.contains(e)) || e.closest('.stage-lab, .stage-tag, input')) continue;
+    const c = Math.hypot(x - innerWidth / 2, y - innerHeight * 0.3); if (c < d) { d = c; best = { x, y, k: st.hits[i * 3 + 2] }; } }
+  return best; })()"""
+
+
 @check
 async def overture_tap(b):
-    """S1 at 390x844@3 with touch: a 150 px vertical drag that starts on a ring leaves no inspector open; tapping each
-    visible ring callout opens an inspector whose text starts with that callout's LC code (6 of 6)"""
-    ctx, pg = await open_page(b, "index.html", 390, 844, dpr=3, touch=True)
+    """the overture under a finger at 390x844@3 with touch (OV2). Until hc31r: a 150 px vertical drag that started on a
+    ring left no inspector open, and a tap on each ring callout opened its own lifecycle. hc31r (integrate, standing in
+    for tests; home's request, LEAP-hc31 HOME-2 and SYS-4): the stage's things under a finger are its proposals and the
+    hand's scale, and the same two principles read: a swipe never acts, a tap acts on what it touched. On beat 1 a
+    150 px vertical drag that starts on a proposal follows nothing (the log stays shut, the Follow control unpressed)
+    and scrolls the page; a tap on that proposal follows it: the log opens on the ID of the proposal that was touched
+    and the tag is its own. On beat 3 a vertical swipe that starts on the scale scrolls the page, leaves the scale's
+    value where it was and seals no record (run.js hand(): a gesture the browser takes back is put back); a sideways
+    pull of the pip moves it and seals exactly one record, which the receipt shows."""
+    ctx, pg = await open_page(b, "index.html", 390, 844, dpr=3, touch=True, init=RUN_PRESET)
     cdp = await ctx.new_cdp_session(pg)
     bad = []
-    if not await scene_rest(pg, 1): bad.append("S1 did not come to rest")
-    pt = await pg.evaluate(RING_POINT)
-    if not pt: bad.append("no visible ring callout with a leader in S1")
+    if not await scene_rest(pg, 1): bad.append("beat 1 did not come to rest")
+    pt = await until(pg, TAKE_HIT, 6000, 120)
+    if not pt: bad.append("no proposal under a finger's reach on the stage at beat 1")
     else:
+        y0 = await pg.evaluate("scrollY")
         await touch_drag(cdp, pt["x"], pt["y"], pt["x"], pt["y"] - 150)
-        await pg.wait_for_timeout(150); i1 = await pg.evaluate(INSP)
-        await pg.wait_for_timeout(900); i2 = await pg.evaluate(INSP)
-        if i1 or i2: bad.append(f"a drag from the ring at ({pt['x']:.0f}, {pt['y']:.0f}) left the inspector open: {(i1 or i2)[:50]!r}")
-    if not await scene_rest(pg, 1): bad.append("S1 did not come to rest again")
-    n = await pg.locator(".story-lab.ring.is-on").count()
+        await pg.wait_for_timeout(700)
+        st = await pg.evaluate("({ shut: document.querySelector('[data-take-trace]').hidden, pressed: document.querySelector('[data-take-follow]').getAttribute('aria-pressed'), y: scrollY, follow: (JSON.parse(sessionStorage.getItem('oxa:run') || '{}')).follow })")
+        if not st["shut"] or st["pressed"] != "false" or st["follow"] is not None: bad.append(f"a drag from the proposal at ({pt['x']:.0f}, {pt['y']:.0f}) followed it: {st}")
+        if st["y"] - y0 < 60: bad.append(f"a 150 px vertical drag that starts on the stage did not scroll the page ({y0} -> {st['y']})")
+    if not await scene_rest(pg, 1): bad.append("beat 1 did not come to rest again")
     ok = 0
-    for k in range(n):
-        lab = pg.locator(".story-lab.ring.is-on").nth(k)
-        code = re.search(r"LC-\d\d", (await lab.text_content()) or "")
-        bb = await lab.bounding_box()
-        await bounded(pg.touchscreen.tap(bb["x"] + bb["width"] * 0.25, bb["y"] + bb["height"] / 2), f"a tap on ring callout {k + 1}")
-        got = await until(pg, INSP, 1500)
-        if code and got.startswith(code[0]): ok += 1
-        else: bad.append(f"tapped {code[0] if code else '?'} at ({bb['x'] + bb['width'] * 0.25:.0f}, {bb['y'] + bb['height'] / 2:.0f}); the inspector reads {got[:40]!r}")
-    if n != 1: bad.append(f"{n} visible ring callouts in S1 (1 expected: LC-01's; the other five left at hc13r, HOME-1)")
+    for _ in range(3):   # the run moves: a proposal may have left the point between the read and the tap
+        pt = await until(pg, TAKE_HIT, 6000, 120)
+        if not pt: break
+        await bounded(pg.touchscreen.tap(pt["x"], pt["y"]), "a tap on a proposal")
+        got = await until(pg, "(() => { const t = document.querySelector('[data-take-trace]'); return t.hidden ? '' : JSON.stringify([t.querySelector('[data-trace-id]').textContent, (JSON.parse(sessionStorage.getItem('oxa:run') || '{}')).follow]); })()", 1500)
+        if got:
+            tid, fk = json.loads(got)
+            want = await pg.evaluate(f"OXA.run.prop({fk}).id") if fk is not None else None
+            if tid == want: ok = 1
+            else: bad.append(f"a tap at ({pt['x']:.0f}, {pt['y']:.0f}) opened the log on {tid!r}; the followed proposal is {want!r}")
+            break
+        await pg.wait_for_timeout(300)
+    if not ok and not bad: bad.append("three taps on proposals opened no log")
+    await pg.evaluate("(() => { const c = document.querySelector('[data-trace-close]'); if (c && !document.querySelector('[data-take-trace]').hidden) c.click(); })()")
+    # the hand: a vertical swipe on the scale scrolls and seals nothing; a sideways pull seals one record
+    if not await scene_rest(pg, 3): bad.append("beat 3 did not come to rest")
+    pip = await pg.evaluate(TAKE_PIP); y0 = await pg.evaluate("scrollY")
+    ta = await pg.evaluate("getComputedStyle(document.querySelector('[data-sw-strict]')).touchAction")
+    await touch_drag(cdp, pip["x"] + 80, pip["y"], pip["x"] + 80, pip["y"] - 176, steps=8)
+    await pg.wait_for_timeout(1100)
+    sw = await pg.evaluate("({ y: scrollY, v: +document.querySelector('[data-sw-strict]').value, n: OXA.run.records().length, strict: OXA.run.strict() })")
+    if ta != "pan-y" or sw["y"] - y0 < 60 or sw["n"] != 0 or sw["v"] != pip["v"] or abs(sw["strict"] - pip["v"] / 100) > 1e-9:
+        bad.append(f"a vertical swipe that starts on the scale (touch-action {ta}): the page went {y0} -> {sw['y']} (60 px or more), {sw['n']} records (none), the scale reads {sw['v']} and the model {sw['strict']} (they stood at {pip['v']})")
+    if not await scene_rest(pg, 3): bad.append("beat 3 did not come to rest again")
+    pip = await pg.evaluate(TAKE_PIP)
+    await touch_drag(cdp, pip["x"], pip["y"], pip["x"] + pip["w"] * 0.3, pip["y"], steps=10)
+    await pg.wait_for_timeout(900)
+    pull = await pg.evaluate("({ v: +document.querySelector('[data-sw-strict]').value, recs: OXA.run.records().map(r => r.ev + ' ' + r.d), receipt: (document.querySelector('.take-bar .receipt') || { textContent: '' }).textContent })")
+    if pull["v"] <= pip["v"] or len(pull["recs"]) != 1 or not pull["recs"][0].startswith("Council strictness") or "#0001" not in pull["receipt"]:
+        bad.append(f"a sideways pull of the pip: the scale reads {pull['v']} (it stood at {pip['v']}), records {pull['recs']} (one, 'Council strictness'), the receipt {pull['receipt'][:60]!r}")
     await ctx.close()
-    assert not bad, f"overture_tap index.html@390x844@3 ({ok}/{n} taps right):\n  " + "\n  ".join(bad)
-    print(f"overture_tap: {ok}/{n} ring taps open their own lifecycle; a drag from a ring inspects nothing")
+    assert not bad, "overture_tap index.html@390x844@3:\n  " + "\n  ".join(bad)
+    print(f"overture_tap: a drag from a proposal follows nothing and scrolls; a tap follows the proposal it touched; a vertical swipe on the scale scrolls and seals nothing; a sideways pull seals one record ({pull['recs'][0]})")
 
 
 # ---- resizing and rotation keep the reader's scene (OV8)
@@ -2407,32 +2587,63 @@ async def overture_resize(b):
 
 
 # ---- the swarm lab and the ledger (SW1, SW2, LG4, LG3)
+# hc31r (integrate): Platform §02's lab is the run's console (PLAT-2): a camera on the run (stage.js, mounted by plate.js
+# when the section comes within a screen), the hand on the Council, three counts, Follow and the emergency halt.
+CONSOLE_UP = "(() => { const r = document.querySelector('#swarm .swarm-live').getBoundingClientRect(); window.scrollTo({ top: scrollY + r.top - 90, behavior: 'instant' }); })()"
+CONSOLE_LIVE = "(() => { const f = document.querySelector('#swarm figure.stage'); return !!(f && f.__stage && f.__stage.live); })()"
+CONSOLE = """(() => { const q = s => document.querySelector(s), n = s => +q(s).textContent.replace(/,/g, ''), c = OXA.run.sample().counts, b = q('button.nav-run'), h = q('[data-sw-halt]'), fo = q('[data-sw-follow]');
+  return { f: n('[data-sw-inflight]'), s: n('[data-sw-recorded]'), r: n('[data-sw-rejected]'), n: c.n, rs: c.s, rr: c.r, rf: c.f, halt: h.textContent.trim(), pressed: h.getAttribute('aria-pressed'), banner: q('[data-sw-banner]').textContent,
+    follow: fo.textContent.trim(), fpressed: fo.getAttribute('aria-pressed'), say: q('[data-sw-say]').textContent, state: b ? b.dataset.state : '', head: b ? b.textContent.trim() : '', halted: document.documentElement.classList.contains('run-halted') }; })()"""
+
+
+async def console_page(b, w=1440, h=900, *, touch=False, dpr=1, reduced=False, init=RUN_PRESET, errs=None):
+    """Platform with its console brought under the bar and mounted (its stage live, or a still under reduced motion)"""
+    ctx, pg = await open_page(b, "platform.html", w, h, dpr=dpr, touch=touch, reduced=reduced, init=init, errs=errs)
+    await until(pg, RUN_READY, 15000)
+    await pg.evaluate(CONSOLE_UP)
+    ok = await until(pg, CONSOLE_LIVE, int(10000 * max(1.0, MODE["throttle"])))
+    await pg.evaluate(CONSOLE_UP); await pg.wait_for_timeout(400)
+    return ctx, pg, bool(ok)
+
+
 @check
 async def swarm_rate(b):
-    """after Halt, once in flight reads 0, 'Settled / s' ([data-sw-rate]) reads 0 within 0.5 s and stays 0 (it is the
-    model's own rate, not a trailing window)"""
+    """the model's own numbers stand still once it has drained (SW1). Until hc31r: after Halt, once in flight read 0,
+    'Settled / s' read 0 within 0.5 s and stayed 0 (the model's own rate, not a trailing window). hc31r (integrate,
+    standing in for tests; platform's request, LEAP-hc31 PLAT-2: the rate left the page with the lab's key, and the lab
+    is the run's console, on Platform alone): the same principle on the three counts that stayed. On Platform at
+    1440 x 900 the console's Emergency halt is pressed; once in flight reads 0 (within 9.5 s: the run's own drain), the
+    console's settled and rejected read the same in six reads over 3 s (no trailing count), in flight stays 0, each
+    equals the run's own count at that instant and proposed = settled + rejected (the sum closes), the status reads
+    "Halted · no new proposals · nothing in flight", and the end card under the page's close states the same four
+    numbers. Resume, and a first proposal is in flight again within 1 s."""
     errs = []
-    ctx, pg = await open_page(b, "index.html", 1440, 900, errs=errs)
-    await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-    num = "(s => +((document.querySelector(s) || {}).textContent || 'NaN').replace(/[^\\d.]/g, ''))"
-    assert await until(pg, f"{num}('[data-sw-inflight]') > 0 && {num}('[data-sw-recorded]') > 0", 25000, 200), "swarm_rate index.html@1440x900: the lab never ran"
-    await pg.evaluate("""(() => { const q = s => (document.querySelector(s) || {}).textContent || ''; const R = window.__rate = { f: [], on: true }; const t0 = performance.now();
-      const f = () => { R.f.push([Math.round(performance.now() - t0), q('[data-sw-inflight]').trim(), q('[data-sw-rate]').trim()]); if (R.on) requestAnimationFrame(f); }; requestAnimationFrame(f); })()""")
+    ctx, pg, live = await console_page(b, errs=errs)
+    assert live, "swarm_rate platform.html@1440x900: the console's stage did not go live"
+    await pg.wait_for_timeout(1500)
+    before = await pg.evaluate(CONSOLE)
     await pg.locator("[data-sw-halt]").click()
-    drained = await until(pg, "document.querySelector('[data-sw-inflight]').textContent.trim() === '0'", 45000, 200)
-    await pg.wait_for_timeout(1200)
-    await pg.evaluate("window.__rate.on = false"); fr = (await pg.evaluate("window.__rate"))["f"]
-    st = None if drained else await pg.evaluate(LAB_STATE)
+    drained = await until(pg, "document.querySelector('[data-sw-inflight]').textContent.trim() === '0'", int(9500 * max(1.0, MODE["throttle"])), 100)
+    reads = []
+    for _ in range(6):
+        reads.append(await pg.evaluate(CONSOLE)); await pg.wait_for_timeout(500)
+    await pg.evaluate("document.querySelector('main > .cta-band').scrollIntoView({ block: 'end', behavior: 'instant' })"); await pg.wait_for_timeout(700)   # the end card draws while its band is on screen
+    card = await pg.evaluate("[...document.querySelectorAll('.cta-band .ll-eq b')].map(e => +e.textContent.replace(/,/g, ''))")
+    await pg.evaluate(CONSOLE_UP); await pg.wait_for_timeout(300)
+    bad = []
+    if not drained: bad.append(f"in flight did not reach 0 within 9.5 s of the halt ({reads[0]})")
+    if before["f"] < 5 or abs(before["f"] - before["rf"]) > 3: bad.append(f"before the halt the console read {before['f']} in flight, the run {before['rf']}")
+    if len({(x["f"], x["s"], x["r"]) for x in reads}) != 1: bad.append(f"the counts moved after the drain: {[(x['f'], x['s'], x['r']) for x in reads]}")
+    z = reads[-1]
+    if (z["f"], z["s"], z["r"]) != (z["rf"], z["rs"], z["rr"]) or z["f"] != 0 or z["n"] != z["s"] + z["r"]: bad.append(f"drained, the console reads {z['f']} / {z['s']} / {z['r']}; the run {z['rf']} / {z['rs']} / {z['rr']} of {z['n']} proposed (the sum closes)")
+    if z["banner"] != "Halted · no new proposals · nothing in flight" or z["state"] != "halt": bad.append(f"drained, the status reads {z['banner']!r} and the header {z['head']!r}")
+    if card != [z["n"], z["s"], z["r"], 0]: bad.append(f"the end card states {card}; the console and the run {[z['n'], z['s'], z['r'], 0]}")
+    await pg.locator("[data-sw-halt]").click()
+    again = await until(pg, "OXA.run.sample().counts.f >= 1 && !document.documentElement.classList.contains('run-halted')", 1000, 50)
+    if not again: bad.append("resumed, no proposal is in flight within 1 s")
     await ctx.close()
-    assert drained, f"swarm_rate index.html@1440x900: Halt never drained (in flight {fr[-1][1] if fr else '?'}); " + lab_why(st, errs, fr)
-    zero = lambda t: re.sub(r"[^\d.]", "", t or "x") in ("0", "0.0", "0.00")
-    i0 = next((i for i, x in enumerate(fr) if x[1] == "0"), None)
-    assert i0 is not None, f"swarm_rate index.html@1440x900: no frame recorded in flight 0 ({len(fr)} frames)"
-    i1 = next((i for i in range(i0, len(fr)) if zero(fr[i][2])), None)
-    late = None if i1 is None else fr[i1][0] - fr[i0][0]
-    after = [x for x in fr[i1 or len(fr):] if not zero(x[2])]
-    assert i1 is not None and late <= 500 and not after, f"swarm_rate index.html@1440x900: in flight reached 0 at {fr[i0][0]} ms; the rate read {[x[2] for x in fr[i0:i0 + 8]]}... (zero after {late} ms; non-zero afterwards: {after[:3]})"
-    print(f"swarm_rate: Settled / s read 0 {late} ms after in flight reached 0, and stayed 0")
+    assert not bad and not errs, "swarm_rate platform.html@1440x900:\n  " + "\n  ".join(bad + errs[:2])
+    print(f"swarm_rate: halted with {before['f']} in flight; drained, the console stands at {z['s']} settled + {z['r']} rejected = {z['n']} proposed through six reads, as the run and the end card state; a proposal is in flight within 1 s of Resume")
 
 
 BLOCK_WATCH = """(() => { const hit = window.__blk = []; const sel = ['#sw-trace', '[data-sw-callout]', '[data-sw-agent]', '[data-sw-say]'];
@@ -2449,60 +2660,68 @@ SW_LINK = "(() => { const a = document.querySelector('[data-sw-log] a.sw-led-a')
 @check
 async def swarm_trace_to_ledger(b):
     """follow one proposal to Settled on Home (council strictness 0): the trace ends at a ledger the reader can inspect.
-    v2x cut, owner's-eye fix (1 Nov): Home has no ledger of its own any more (its agent log left the page), so the
-    trace's ledger row becomes a link to Trust's (a.sw-led-a, href trust.html#ledger, named 'The ledger on the Trust
-    page'), never a record button; following it lands on Trust with the ledger in view and its nine records. On the
-    homepage the trace, its stage tag and its live region never print 'block' or 'no ledger'. (Until then the row became
-    a button naming the record, which Home's own ledger selected when it was clicked.) hc13r (home, HOME-2): Home's lab
-    follows one proposal the Council passes by itself, once it is well in view, and rests in its follow view: that trace
-    ends on the same link without a click. hc22 (home, HC22 4.4): the act leaves the Follow control at rest ("Follow a
-    proposal", not pressed); the reader's own follow starts from it at the act's rest; that trace too must end at the
-    link, which is followed to Trust."""
-    errs = []
-    ctx, pg = await open_page(b, "index.html", 1440, 900, init=EVENTS, errs=errs)
-    await pg.evaluate(BLOCK_WATCH)
-    await pg.evaluate(TEXT_WATCH, r"no ledger")
-    await pg.mouse.move(5, 450)
-    await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-    assert await until(pg, "+document.querySelector('[data-sw-inflight]').textContent.replace(/\\D/g, '') > 0", 25000, 200), "swarm_trace_to_ledger index.html@1440x900: the lab never ran"
-    bad, t0 = [], time.monotonic()
-    want = lambda a: bool(a) and a["href"] == "trust.html#ledger" and a["name"] == "The ledger on the Trust page" and a["text"].startswith("Ledger")
-    if not await until(pg, LAB_ACT_REST + " && !!document.querySelector('[data-sw-log] a.sw-led-a')", 40000, 250):
-        bad.append(f"the lab's own act did not rest on the trace's ledger link within 40 s: link {await pg.evaluate(SW_LINK)}, at rest {await pg.evaluate(LAB_ACT_REST)}")
-    else:
-        a = await pg.evaluate(SW_LINK)
-        if not want(a): bad.append(f"the act's trace ends on a ledger link that reads {a}")
-    t_act = time.monotonic() - t0
-    # the reader's own follow, from the act's rest
-    await pg.evaluate(SET_RANGE, ["[data-sw-strict]", 0])
-    await pg.evaluate("document.querySelectorAll('[data-sw-log] a.sw-led-a').forEach(a => a.setAttribute('data-oxa-old', ''))")
-    await pg.locator("[data-sw-follow]").click()
-    t0 = time.monotonic()
-    got = await until(pg, """(() => { if (document.querySelector('[data-sw-log] a.sw-led-a:not([data-oxa-old])')) return 'link';
-        return document.querySelector('[data-sw-log] [data-sw-rec]') ? 'button' : ''; })()""", 60000, 250)
-    blk, tw = await pg.evaluate("window.__blk || []"), await pg.evaluate("window.__tw || []")
-    if blk: bad.append(f"the trace printed 'block': {blk[:3]}")
-    if tw: bad.append(f"the trace printed 'no ledger': {tw[:3]}")
-    if got != "link":
-        log = await pg.evaluate("(document.querySelector('[data-sw-log]') || {}).textContent || ''")
-        bad.append(f"the reader's follow: the trace's ledger row is no link to Trust's ledger after {time.monotonic() - t0:.0f} s ({got or 'nothing'}): {log[-120:]!r}")
-    else:
-        a = await pg.evaluate(SW_LINK)
-        if not want(a):
-            bad.append(f"the trace's ledger link reads {a}")
-        elif not bad:
-            await pg.locator("[data-sw-log] a.sw-led-a").click()
-            await pg.wait_for_url(re.compile(r"/trust(\.html)?#ledger$"), timeout=15000)
-            await pg.wait_for_load_state("load")
-            land = await until(pg, """(() => { const s = document.getElementById('ledger'); if (!s) return null; const r = s.getBoundingClientRect();
-                return r.top < innerHeight * 0.5 && r.bottom > innerHeight * 0.5 && document.querySelectorAll('[data-ledger=replay] .lt-rec').length === 9 ? [Math.round(r.top), Math.round(r.bottom)] : null; })()""", 8000, 100)
-            if not land:
-                where = await pg.evaluate("(() => { const s = document.getElementById('ledger'); return [location.href, s ? Math.round(s.getBoundingClientRect().top) : null, document.querySelectorAll('[data-ledger=replay] .lt-rec').length]; })()")
-                bad.append(f"after the link Trust's ledger is not in view with its nine records: {where}")
-            else: print(f"swarm_trace_to_ledger: the lab's own act rested on the ledger link after {t_act:.1f} s; the reader's follow ('Follow a proposal') links to Trust's ledger after {time.monotonic() - t0:.1f} s; it lands in view (top {land[0]} px) with nine records")
-    if bad and not got == "link": bad.append(lab_why(await pg.evaluate(LAB_STATE), errs))
-    await ctx.close()
-    assert not bad, "swarm_trace_to_ledger index.html@1440x900:\n  " + "\n  ".join(bad)
+    v2x cut (1 Nov): Home has no ledger of its own, so the trace's ledger row was a link to Trust's. hc31r (integrate,
+    standing in for tests; home's and proof's requests, LEAP-hc31 HOME-2 and PROOF-2): the followed proposal's log is the
+    take's panel on beat 1 (the gate log's words and rows kept) and its last row is the ledger's, plain: the model's
+    ledger is the run's, drawn on the end card, and the ledger a reader can inspect is their own, on Trust. So, at
+    1440 x 900 with the strictness set to 0 through the model's own input: Follow a proposal opens the log on the tagged
+    ID; within 12 s every row is hit in order (01 Signal ... 06 Settle, Ledger), the state reads "Settled", the last row
+    reads "Ledger" and "sealed", the control reads "Follow another" (not pressed), and neither the log, its tag nor its
+    live region ever prints "block" or "no ledger" (20 reads); following wrote no record (reading is never recorded).
+    Then the way to a ledger the reader can inspect: one move of the hand (the pip, by keyboard, on beat 3) seals one
+    record and the receipt carries its link "1 record · Your ledger"; following it lands on Trust with the ledger in
+    view, its nine sample records and the reader's own after them, carrying the hash the receipt printed, the state
+    "9 sample records · 1 of yours · Chain intact". The same follow at 390 x 844 (touch) never prints "block" either."""
+    said = []
+    for w, h, touch in ((1440, 900, False), (390, 844, True)):
+        errs = []
+        ctx, pg = await open_page(b, "index.html", w, h, touch=touch, dpr=2 if touch else 1, init=RUN_PRESET, errs=errs)
+        tag = f"index.html@{w}x{h}"
+        assert await until(pg, TAKE_READY, 15000), f"swarm_trace_to_ledger {tag}: the take did not start"
+        await pg.evaluate("OXA.run.set('strict', 0)"); await pg.wait_for_timeout(400)
+        assert await take_to(pg, 1, 300), f"swarm_trace_to_ledger {tag}: beat 1 did not come to rest"
+        if touch: await bounded(pg.locator("[data-take-follow]").tap(), "a tap on Follow")
+        else: await pg.locator("[data-take-follow]").click()
+        TR = """(() => { const t = document.querySelector('[data-take-trace]'), f = document.querySelector('[data-take-follow]'), rows = [...t.querySelectorAll('li')];
+          return { shown: !t.hidden, id: t.querySelector('[data-trace-id]').textContent, state: t.querySelector('[data-trace-state]').textContent, rows: rows.map(li => [li.querySelector('b').textContent, li.classList.contains('is-hit'), li.querySelector('span').textContent]),
+            follow: f.textContent.trim(), pressed: f.getAttribute('aria-pressed'), tag: (document.querySelector('.take-stage .stage-tag') || { textContent: '' }).textContent, say: document.querySelector('[data-take-say]').textContent, text: t.textContent, recs: OXA.run.records().length }; })()"""
+        first = await pg.evaluate(TR)
+        assert first["shown"] and re.fullmatch(r"P-\d{5}", first["id"]) and first["pressed"] == "true" and first["follow"] == "Stop following" and first["say"] == f"Following {first['id']}.", (f"swarm_trace_to_ledger {tag}: Follow did not open the log on a proposal", first)
+        words_seen, last, order_ok = [], first, True
+        for _ in range(40):
+            await pg.wait_for_timeout(300)
+            last = await pg.evaluate(TR)
+            words_seen.append(" ".join([last["text"], last["tag"], last["say"]]))
+            hits = [r[1] for r in last["rows"]]
+            if hits != sorted(hits, reverse=True): order_ok = False
+            if last["state"] in ("Settled", "Rejected at 04") and all(hits): break
+        printed = [x for x in ("block", "no ledger") if any(re.search(rf"\b{x}\b", t, re.I) for t in words_seen)]
+        names = [r[0] for r in last["rows"]]
+        assert last["state"] == "Settled" and all(r[1] for r in last["rows"]) and order_ok and names == ["01 Signal", "02 Predict", "03 Decide", "04 Approve", "05 Execute", "06 Settle", "Ledger"] and last["rows"][-1][2] == "sealed", (f"swarm_trace_to_ledger {tag}: the followed proposal did not read to its ledger row in 12 s", last)
+        assert last["follow"] == "Follow another" and last["pressed"] == "false" and not printed and last["recs"] == 0, (f"swarm_trace_to_ledger {tag}: at its end the control reads {last['follow']!r} ({last['pressed']}), printed {printed}, {last['recs']} records (none: reading is never recorded)")
+        if touch:
+            await ctx.close(); assert not errs, errs
+            said.append(f"390: {first['id']} read to 'Ledger sealed', never 'block'"); continue
+        # the reader's own ledger: one move of the hand, the receipt's link, Trust
+        assert await take_to(pg, 3, 300), f"swarm_trace_to_ledger {tag}: beat 3 did not come to rest"
+        await pg.locator("[data-sw-strict]").focus()
+        for _ in range(7): await pg.keyboard.press("ArrowRight"); await pg.wait_for_timeout(30)
+        rc = await until(pg, "(() => { const L = OXA.run.records(), a = document.querySelector('.take-bar .receipt a.receipt-go'); return L.length === 1 && a ? JSON.stringify({ d: L[0].ev + ' ' + L[0].d, hash: L[0].hash.slice(0, 8), link: a.textContent.trim(), href: a.getAttribute('href'), receipt: document.querySelector('.take-bar .receipt .receipt-rec').textContent }) : ''; })()", 3000)
+        assert rc, (f"swarm_trace_to_ledger {tag}: seven arrow presses on the pip sealed no single record with its receipt", await pg.evaluate("[OXA.run.records().length, document.querySelector('.take-bar .receipt').textContent]"))
+        rc = json.loads(rc)
+        assert rc["d"] == "Council strictness 0 → 7%" and rc["link"].startswith("1 record · Your ledger") and rc["href"].endswith("trust.html#ledger") and rc["hash"] in rc["receipt"], (f"swarm_trace_to_ledger {tag}: the receipt", rc)
+        await pg.locator(".take-bar .receipt a.receipt-go").click()
+        await pg.wait_for_url("**/trust*", timeout=15000)
+        land = await until(pg, """(() => { const l = document.querySelector('[data-ledger=replay]'), st = l && l.querySelector('[data-lt-state]'); if (!l || !st || !/of yours/.test(st.textContent)) return '';
+          const r = l.getBoundingClientRect(), mine = [...l.querySelectorAll('.lt-rec.is-mine')];
+          return JSON.stringify({ state: st.textContent, recs: l.querySelectorAll('.lt-rec').length, mine: mine.map(li => li.querySelector('.lt-tag').textContent), inview: r.top < innerHeight && r.bottom > 0, last: mine.length && l.querySelectorAll('.lt-rec')[l.querySelectorAll('.lt-rec').length - 1] === mine[mine.length - 1] }); })()""", 10000)
+        assert land, (f"swarm_trace_to_ledger {tag}: the receipt's link did not land on Trust's ledger with the reader's record", pg.url)
+        land = json.loads(land)
+        assert land["state"] == "9 sample records · 1 of yours · Chain intact" and land["recs"] == 10 and land["mine"] == [rc["hash"]] and land["inview"] and land["last"], (f"swarm_trace_to_ledger {tag}: Trust's ledger after the link", land, rc)
+        await ctx.close()
+        assert not errs, errs
+        said.append(f"1440: {first['id']} read to 'Ledger sealed' in order, 'Follow another', nothing recorded; the hand's record {rc['hash']} ({rc['d']}) is on Trust's ledger after the nine, in view")
+    print("swarm_trace_to_ledger: " + "; ".join(said))
 
 
 @check
@@ -2673,19 +2892,31 @@ LANE_STEPS = """(() => { const sec = document.querySelector('#lc01'), ol = sec &
 
 @check
 async def lifecycle_lane_home(b):
-    """home: no .flow; Lifecycle 01 (#lc01) names the six gates 01 Signal ... 06 Settle in order, with and without
-    JavaScript. v2x cut, owner's-eye fix (1 Nov): the lane figure (ex Fig. 3.1, [data-lane]) left Home, where the six
-    gates were told twice; they are named once, by the swarm lab's gate list ([data-sw-gates]). Lifecycles keeps the lane
-    (lifecycle_lane_steps)."""
+    """home: no .flow; Lifecycle 01 names the six gates 01 Signal ... 06 Settle in order, with and without JavaScript.
+    v2x cut, owner's-eye fix (1 Nov): the lane figure (ex Fig. 3.1, [data-lane]) left Home, where the six gates were
+    told twice; they are named once. hc31r (integrate, standing in for tests; home's request, LEAP-hc31 HOME-2: the lab
+    section left Home, so its gate list [data-sw-gates] went with it): the six gates are beat 1's list (`.beat-1
+    .beat-list li`, a real list for every reader: laid out without JavaScript and where the take is not pinned, kept
+    for assistive technology and clipped from sight where the stage draws the gates). With JavaScript at 1440 x 900 the
+    stage's own labels at beat 1's rest name the same six gates once each, in order, left to right. Lifecycles keeps
+    the lane (lifecycle_lane_steps)."""
+    want = ["01 Signal", "02 Predict", "03 Decide", "04 Approve", "05 Execute", "06 Settle"]
     bad = []
     for js in (True, False):
-        ctx, pg = await open_page(b, "index.html", 1440, 900, js=js, reduced=True)
-        m = await pg.evaluate(LANE_HOME)
-        ok = len(m["gates"]) == 6 and all(re.match(rf"0{k + 1}\b", t) and GATES[k] in t for k, t in enumerate(m["gates"]))
-        if m["flow"] or m["lane"] or not ok: bad.append(f"index.html@1440x900 js={'on' if js else 'off'}: .flow {m['flow']}, lane figures {m['lane']} (none expected), gates {[t[:28] for t in m['gates']]}")
+        ctx, pg = await open_page(b, "index.html", 1440, 900, js=js)
+        r = await pg.evaluate("""(() => { const l = document.querySelector('.beat-1 .beat-list');
+          return { flow: document.querySelectorAll('.flow').length, lanes: document.querySelectorAll('[data-lane]').length, lists: document.querySelectorAll('.story [aria-label="The six gates"]').length,
+            gates: l ? [...l.querySelectorAll('li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()) : [], laid: !!l && l.getBoundingClientRect().height > 10 && l.getBoundingClientRect().width > 200 && getComputedStyle(l).clipPath === 'none', hidden: !!l && (l.closest('[aria-hidden="true"]') !== null || getComputedStyle(l).display === 'none') }; })()""")
+        tag = f"index.html@1440x900 js={'on' if js else 'off'}"
+        if r["flow"] or r["lanes"] or r["lists"] != 1 or r["gates"] != want or r["hidden"]: bad.append(f"{tag}: .flow {r['flow']}, lane figures {r['lanes']} (none expected), gate lists {r['lists']} (one), gates {r['gates']}, hidden from readers {r['hidden']}")
+        if not js and not r["laid"]: bad.append(f"{tag}: the six gates are not laid out as a visible list without JavaScript")
+        if js:
+            if not await scene_rest(pg, 1): bad.append(f"{tag}: beat 1 did not come to rest")
+            labs = await pg.evaluate("[...document.querySelectorAll('.take-stage .stage-lab')].filter(e => e.checkVisibility({opacityProperty: true, visibilityProperty: true}) && /^0[1-6] /.test(e.textContent.trim())).map(e => [e.textContent.replace(/\\s+/g, ' ').trim(), Math.round(e.getBoundingClientRect().left)])")
+            if [x[0] for x in labs] != want or [x[1] for x in labs] != sorted(x[1] for x in labs): bad.append(f"{tag}: the stage's labels at beat 1 read {labs} (the six gates once each, in order, left to right)")
         await ctx.close()
     assert not bad, "lifecycle_lane_home:\n  " + "\n  ".join(bad)
-    print("lifecycle_lane_home: no .flow, no second lane; Lifecycle 01's lab names 01 Signal ... 06 Settle, with and without JavaScript")
+    print("lifecycle_lane_home: the six gates by name, 01 Signal ... 06 Settle in order, as beat 1's list with and without JavaScript and as the stage's labels at beat 1's rest; no .flow, no lane on Home")
 
 
 @check
@@ -2787,7 +3018,8 @@ async def pill_focus(b):
     away); Enter on the menu toggle opens the sheet with the reader's chapter marked (a[aria-current] is the chapter the
     bar names for where the reader is); Tab enters the sheet on a link with its visible ring (:focus-visible); Escape
     closes the sheet and returns focus to the toggle. Home 390 (touch), Platform 900, Trust 390 (touch), each read with
-    the reader 45% down the page.
+    the reader 45% down the page's second chapter (until hc31r: 45% down the page, which on Home is now inside the take,
+    a band with no chapter).
     hc30r (system; RETHINK-hc30 SYS-6, the director's HC30 item 11: "a visitor who opens the menu wants the site first"):
     the sheet leads with the site. In its own order (the order Tab walks): the six pages, then Request access, then "On
     this page" and the chapters (was: the chapters first, pinned here since the 1 Nov cut); the chapter rows carry no
@@ -2795,7 +3027,9 @@ async def pill_focus(b):
     said = []
     for path, w, h, touch in (("index.html", 390, 844, True), ("platform.html", 900, 900, False), ("trust.html", 390, 844, True)):
         ctx, pg = await open_page(b, path, w, h, dpr=2 if touch else 1, touch=touch)
-        await pg.evaluate("window.scrollTo({top: document.body.scrollHeight * .45, behavior: 'instant'})")
+        # hc31r (integrate): 45% down the page's second chapter (45% down the page is inside Home's take now, five screens of
+        # one band, where the bar names no chapter and the sheet rightly marks none)
+        await pg.evaluate("(() => { const cs = [...document.querySelectorAll('.nav-ch-list a[href^=\"#\"]')].map(a => document.getElementById(decodeURIComponent(a.getAttribute('href').slice(1)))).filter(Boolean), c = cs[Math.min(1, cs.length - 1)], r = c.getBoundingClientRect(); window.scrollTo({top: scrollY + r.top + r.height * .45 - innerHeight * .2, behavior: 'instant'}); })()")
         await expect(pg.locator(".nav-toggle")).to_be_visible()
         await pg.wait_for_timeout(600)
         pill = await pg.evaluate("(() => { const p = document.querySelector('.nav-ch-btn'); return !!p && p.checkVisibility({ visibilityProperty: true, opacityProperty: true }) && p.getBoundingClientRect().width > 0; })()")
@@ -2884,7 +3118,7 @@ async def platform_spec(b):
     """Platform's explorer. v2x cut (1 Nov): the spec sheet under it (eight paragraphs, chip lists, In/Out pairs) left the
     page; each layer keeps its name, verb and one job line (data-job), which the readout shows, as on Home. At 1440 the
     markup lists the eight layers, each with its job, and pointing at each layer shows its name and that job in the
-    readout; at 900 Tab from Pause reaches layer 01, ArrowDown 02, Enter opens its panel (aria-expanded, the panel shown)
+    readout; at 900 Tab from the hero's link (hc31r: the explorer's own Pause is gone) reaches layer 01, ArrowDown 02, Enter opens its panel (aria-expanded, the panel shown)
     and Escape closes it with focus kept; on short windows (844x390, 320x256) the eight layer buttons stay targets: each
     at least 24 px tall, none overlapping another, none outside the instrument (WCAG 2.5.8, r4). hc5 (integrate): the
     keys Home's check held until Home §02 drew Platform's plate (HC5 item 1), here at 1440: the boundary after 04;
@@ -2947,14 +3181,17 @@ async def platform_spec(b):
     await ctx.close()
     assert len(m["layers"]) == 8 and all(j for _, j in m["layers"]) and shown == [n for n, _ in m["layers"]], f"platform_spec platform.html@1440x900: layers {[(n, j[:24]) for n, j in m['layers']]}; opening each layer showed its job under the row named {shown} (want each layer's name with its job line)"
     ctx, pg = await open_page(b, "platform.html", 900, 900)
-    await pg.evaluate("document.querySelector('#architecture .arch-motion').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(1500)
-    await pg.focus("#architecture .arch-motion")
+    # hc31r (integrate; platform's request, system's of 10 Nov): the explorer has no Pause motion of its own (it obeys the
+    # header's), so the walk starts on the control before the explorer, the hero's link, and Tab must reach layer 01 next
+    assert await pg.locator("#architecture .arch-motion").count() == 0, "platform_spec platform.html@900x900: the explorer has a Pause of its own again (hc31r: it obeys the header's)"
+    await pg.evaluate("document.querySelector('#architecture .arch').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(1500)
+    await pg.focus(".page-hero a[href='#architecture']")
     keys = []
     for k in ("Tab", "ArrowDown", "Enter", "Escape"):
         await pg.keyboard.press(k); await pg.wait_for_timeout(500 if k == "Enter" else 250)
         keys.append(await pg.evaluate("[document.activeElement.id, document.activeElement.getAttribute('aria-expanded'), !!document.querySelector('#arch0-p2') && !document.querySelector('#arch0-p2').hidden]"))
     await ctx.close()
-    assert keys == [["arch0-b1", "false", False], ["arch0-b2", "false", False], ["arch0-b2", "true", True], ["arch0-b2", "false", False]], f"platform_spec platform.html@900x900: Tab, ArrowDown, Enter, Escape from Pause give [focus, aria-expanded, panel 02 shown] {keys}"
+    assert keys == [["arch0-b1", "false", False], ["arch0-b2", "false", False], ["arch0-b2", "true", True], ["arch0-b2", "false", False]], f"platform_spec platform.html@900x900: Tab, ArrowDown, Enter, Escape from the hero's link give [focus, aria-expanded, panel 02 shown] {keys}"
     sizes = []
     for w, h, touch in ((844, 390, True), (320, 256, False)):
         ctx, pg = await open_page(b, "platform.html", w, h, dpr=2 if touch else 1, touch=touch)
@@ -2969,27 +3206,45 @@ async def platform_spec(b):
 
 @check
 async def platform_lab(b):
-    """Platform §03 holds a running swarm lab (.sw-on, agents in flight and settling once in view) and an 'Illustrative'
-    marking that is visible, >= 10 px and inside the viewport"""
-    ctx, pg = await open_page(b, "platform.html", 1440, 900)
-    has = await pg.evaluate("!!document.querySelector('#swarm [data-swarm-live].sw-on')")
+    """Platform's swarm chapter holds a running model and an 'Illustrative' marking that is visible, >= 10 px and inside
+    the viewport. hc31r (integrate, standing in for tests; platform's request, LEAP-hc31 PLAT-2): the lab is the run's
+    console. At 1440 x 900: nothing of the stage is built while the chapter is more than a screen away (the figure holds
+    its still image and no canvas: a load spends nothing on a camera two screens down); brought under the bar the stage
+    goes live on a canvas; the three counts are the run's own (each within 3 of the run's count at that instant: a
+    frame apart), proposed = in flight + settled + rejected at every read, in flight is above 5 and settled grows within
+    4 s; Follow by keyboard takes the tag (the stage's tag shows the followed ID, the live region says "Following
+    P-nnnnn." once, the control reads "Stop following") and Escape on the stage lets it go; the chapter's hedge
+    ("Illustrative · Scaled down for your browser; a production swarm runs 5,000-50,000 agents.") is the caption the
+    console names, visible, at 10 px or more and inside the viewport with the console's foot in view."""
+    errs = []
+    ctx, pg = await open_page(b, "platform.html", 1440, 900, init=RUN_PRESET, errs=errs)
+    await until(pg, RUN_READY, 15000)
     bad = []
-    if not has: bad.append("no #swarm [data-swarm-live].sw-on")
+    far = await pg.evaluate("(() => { const f = document.querySelector('#swarm figure.stage'), r = f.getBoundingClientRect(), i = f.querySelector('img.stage-still'); return { away: r.top > innerHeight * 1.5, canvas: f.querySelectorAll('canvas').length, mounted: !!f.dataset.stage, img: !!i }; })()")
+    if far["away"] and (far["canvas"] or far["mounted"]): bad.append(f"at the top of the page the console is already built two screens down ({far})")
+    await pg.evaluate(CONSOLE_UP)
+    if not await until(pg, CONSOLE_LIVE, 10000): bad.append("the console's stage did not go live once in view")
+    await pg.evaluate(CONSOLE_UP); await pg.wait_for_timeout(600)
+    a = await pg.evaluate(CONSOLE); await pg.wait_for_timeout(4000); z = await pg.evaluate(CONSOLE)
+    for x in (a, z):
+        if abs(x["f"] - x["rf"]) > 3 or abs(x["s"] - x["rs"]) > 3 or abs(x["r"] - x["rr"]) > 3 or x["n"] != x["rf"] + x["rs"] + x["rr"]: bad.append(f"the console reads {x['f']} / {x['s']} / {x['r']}; the run {x['rf']} / {x['rs']} / {x['rr']} of {x['n']} proposed")
+    if a["f"] <= 5 or z["s"] <= a["s"]: bad.append(f"the model is not running in view: in flight {a['f']}, settled {a['s']} -> {z['s']} in 4 s")
+    await pg.locator("[data-sw-follow]").focus(); await pg.keyboard.press("Enter")
+    fo = await until(pg, "(() => { const t = document.querySelector('#swarm .stage-tag'), b = document.querySelector('[data-sw-follow]'), s = OXA.run.sample(); return b.getAttribute('aria-pressed') === 'true' && t && !t.hidden && t.textContent.includes(s.tagId) && s.tagId ? JSON.stringify([s.tagId, b.textContent.trim(), document.querySelector('[data-sw-say]').textContent]) : ''; })()", 4000)
+    if not fo: bad.append(f"Follow by keyboard did not put the tag on the followed proposal ({await pg.evaluate(CONSOLE)})")
     else:
-        await pg.evaluate("document.querySelector('#swarm [data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-        num = "(s => +((document.querySelector('#swarm ' + s) || {}).textContent || 'NaN').replace(/[^\\d.]/g, ''))"
-        if not await until(pg, f"{num}('[data-sw-inflight]') > 0 && {num}('[data-sw-recorded]') > 0", 25000, 200): bad.append("the lab has nothing in flight and nothing settled 25 s after it came into view")
-        a = await pg.evaluate(f"{num}('[data-sw-recorded]')")
-        if not await until(pg, f"{num}('[data-sw-recorded]') > {a or 0}", 12000, 200): bad.append(f"the lab's Settled counter did not move in 12 s ({a})")
-    il = await pg.evaluate("""(() => { const out = []; document.querySelectorAll('#swarm *').forEach(e => {
-        if (![...e.childNodes].some(n => n.nodeType === 3 && n.textContent.includes('Illustrative'))) return;
-        e.scrollIntoView({block: 'center', behavior: 'instant'}); const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
-        out.push({ t: e.textContent.trim().slice(0, 40), ok: r.width > 0 && cs.visibility !== 'hidden' && parseFloat(cs.fontSize) >= 10 && r.left >= 0 && r.right <= innerWidth, fs: cs.fontSize }); });
-      return out; })()""")
-    if not any(x["ok"] for x in il): bad.append(f"no readable 'Illustrative' in §03: {il[:3]}")
+        tid, lab, say = json.loads(fo)
+        if lab != "Stop following" or say != f"Following {tid}.": bad.append(f"following {tid}: the control reads {lab!r}, the live region {say!r}")
+        await pg.locator("#swarm figure.stage").focus(); await pg.keyboard.press("Escape")
+        if not await until(pg, "document.querySelector('[data-sw-follow]').getAttribute('aria-pressed') === 'false'", 3000): bad.append("Escape on the stage did not let the proposal go")
+    await pg.evaluate("document.querySelector('#sw-cap').scrollIntoView({ block: 'center', behavior: 'instant' })"); await pg.wait_for_timeout(500)
+    il = await pg.evaluate("""(() => { const f = document.querySelector('#swarm figure.stage'), c = document.getElementById(f.getAttribute('aria-describedby') || ''), h = c && c.querySelector('.fc-h'); if (!h) return null;
+      const r = h.getBoundingClientRect(), cs = getComputedStyle(h); return { t: h.textContent.replace(/\\s+/g, ' ').trim(), fs: parseFloat(cs.fontSize), vis: h.checkVisibility({ opacityProperty: true, visibilityProperty: true }) && +cs.opacity > 0.9,
+        inside: r.top >= -1 && r.bottom <= innerHeight + 1 && r.left >= -1 && r.right <= innerWidth + 1 && document.querySelector('#swarm .sw-btns').getBoundingClientRect().bottom > 0, head: document.querySelectorAll('#swarm .ch-head .fc-h, #swarm .swarm-bar .fc-h').length }; })()""")
+    if not il or not il["t"].startswith("Illustrative") or il["fs"] < 10 or not il["vis"] or not il["inside"] or il["head"]: bad.append(f"the console's hedge: {il}")
     await ctx.close()
-    assert not bad, "platform_lab platform.html@1440x900:\n  " + "\n  ".join(bad)
-    print(f"platform_lab: a running lab in Platform §03, marked {il[0]['t']!r}")
+    assert not bad and not errs, "platform_lab platform.html@1440x900:\n  " + "\n  ".join(bad + errs[:2])
+    print(f"platform_lab: the run's console in Platform §02 (built on approach), its counts the run's own ({z['n']} = {z['rf']} + {z['rs']} + {z['rr']}), Follow by keyboard, marked {il['t'][:40]!r}")
 
 
 LAB_BOXES = """(() => { const l = document.querySelector('[data-swarm-live]'), h = e => e ? +e.getBoundingClientRect().height.toFixed(1) : null;
@@ -2997,35 +3252,60 @@ LAB_BOXES = """(() => { const l = document.querySelector('[data-swarm-live]'), h
     bar: h(l.querySelector('.swarm-bar')), btns: h(l.querySelector('.sw-btns')) }; })()"""
 
 
+LAB_BOXES = """(() => { const l = document.querySelector('#swarm .swarm-live'), h = e => e ? +e.getBoundingClientRect().height.toFixed(1) : null, f = l.querySelector('figure.stage');
+  return { live: !!(f && f.__stage && f.__stage.live), lab: h(l), stage: h(f), bar: h(l.querySelector('.swarm-bar')), stats: h(l.querySelector('.swarm-stats')), btns: h(l.querySelector('.sw-btns')), foot: h(l.querySelector('.sw-foot')), sec: h(document.querySelector('#swarm')) }; })()"""
+CLS_REC = "(() => { window.__cls = []; try { new PerformanceObserver(l => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls.push([+e.value.toFixed(4), Math.round(e.startTime)]); }).observe({ type: 'layout-shift', buffered: true }); } catch (e) {} })()"
+
+
 @check
 async def lab_hold(b):
-    """integrate hc1: the swarm lab's start moves nothing. With swarm.js blocked, the lab (Home §03, Platform §02) holds
-    the boxes the running lab draws: the lab, its head, stage, bar and controls within 1 px at 1440 and on a 390 phone.
-    hc1 moved Pause motion into the head; its place before the start moved with it (swarm.css), so a hold left in the
-    controls, or none in the head where the phone's glyph shares the name's line, fails here."""
+    """integrate hc1: the model's start moves nothing. Until hc31r: with swarm.js blocked, the lab (Home, Platform) held
+    the boxes the running lab drew. hc31r (integrate, standing in for tests; LEAP-hc31 HOME-1, PLAT-2: the lab is the
+    stage on Home's take and Platform's console, both drawn by stage.js). Platform, at 1440 and on a 390 phone: with
+    stage.js blocked the console holds the boxes the live one draws (the console, its stage, its bar, the three counts,
+    the two buttons, the status row, and the chapter itself, each within 1 px), and 3 s after the engine failed to arrive
+    it shows its still (plate.js marks it .no-stage; until then, and for good before this round, a failed request left
+    an empty box: found here and fixed in plate.js and swarm.css); unblocked, it goes live. Home, at 1440 and on a 390 phone: the page records no layout shift (CLS 0) from navigation to 3 s after
+    the stage is live: the canvas arrives over the still in the still's own box, the header's transport takes no room
+    from anything, and the take's pin moves nothing on the first screen."""
     bad, seen = [], []
     limit = int(15000 * max(1.0, MODE["throttle"]))
-    for path, frag in (("index.html", "lc01"), ("platform.html", "swarm")):
-        for w, h, touch in ((1440, 900, False), (390, 844, True)):
-            got = []
-            for block in (True, False):
-                ctx = await b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch, device_scale_factor=2 if touch else 1)
-                pg = await ctx.new_page()
-                if block: await pg.route("**/js/swarm.js*", lambda r: r.abort())  # path-agnostic: the deploy copy is versioned
-                await pg.goto(f"{BASE}/{path}#{frag}", wait_until="load")
-                await pg.evaluate("document.fonts.ready.then(() => 1)")
-                if block: await pg.wait_for_timeout(int(2500 * max(1.0, MODE["throttle"])))
-                elif not await until(pg, "!!document.querySelector('[data-swarm-live].sw-on')", limit, 200):
-                    bad.append(f"{path}@{w}: the lab did not start within {limit} ms")
-                else: await pg.wait_for_timeout(1000)
-                got.append(await pg.evaluate(LAB_BOXES)); await ctx.close()
-            st, lv = got
-            if st["on"]: bad.append(f"{path}@{w}: the lab ran with swarm.js blocked")
-            diff = {k: (st[k], lv[k]) for k in ("lab", "head", "stage", "bar", "btns") if st[k] is None or lv[k] is None or abs(st[k] - lv[k]) > 1}
-            if diff: bad.append(f"{path}@{w}: static -> live boxes differ {diff}")
-            seen.append(f"{path[:-5]}@{w} {lv['lab']}")
+    for w, h, touch in ((1440, 900, False), (390, 844, True)):
+        got = []
+        for block in (True, False):
+            ctx = await b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch, device_scale_factor=2 if touch else 1)
+            await ctx.add_init_script(RUN_PRESET)
+            pg = await ctx.new_page()
+            if block: await pg.route("**/js/stage.js*", lambda r: r.abort())  # path-agnostic: the deploy copy is versioned
+            await pg.goto(f"{BASE}/platform.html#swarm", wait_until="load")
+            await pg.evaluate("document.fonts.ready.then(() => 1)")
+            await until(pg, "document.documentElement.classList.contains('is-loaded')", limit)
+            await pg.evaluate(CONSOLE_UP)
+            if block: await until(pg, "document.querySelector('#swarm .swarm-live').classList.contains('no-stage')", int(8000 * max(1.0, MODE["throttle"])), 200); await pg.wait_for_timeout(900)
+            elif not await until(pg, CONSOLE_LIVE, limit, 200): bad.append(f"platform.html@{w}: the console did not go live within {limit} ms")
+            else: await pg.wait_for_timeout(1000)
+            boxes = await pg.evaluate(LAB_BOXES)
+            if block:
+                boxes["still"] = await pg.evaluate("(() => { const i = document.querySelector('#swarm img.stage-still'); return !!i && i.complete && i.naturalWidth > 0 && i.getBoundingClientRect().height > 50 && getComputedStyle(i).display !== 'none' && +getComputedStyle(i).opacity > 0.9; })()")
+            got.append(boxes); await ctx.close()
+        st, lv = got
+        if st["live"]: bad.append(f"platform.html@{w}: the console went live with stage.js blocked")
+        if not st.get("still"): bad.append(f"platform.html@{w}: with stage.js blocked the console does not show its still")
+        diff = {k: (st[k], lv[k]) for k in ("lab", "stage", "bar", "stats", "btns", "foot", "sec") if st[k] is None or lv[k] is None or abs(st[k] - lv[k]) > 1}
+        if diff: bad.append(f"platform.html@{w}: static -> live boxes differ {diff}")
+        seen.append(f"platform@{w} {lv['lab']}")
+        ctx = await b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch, device_scale_factor=2 if touch else 1)
+        await ctx.add_init_script(RUN_PRESET); await ctx.add_init_script(CLS_REC)
+        pg = await ctx.new_page()
+        await pg.goto(f"{BASE}/index.html", wait_until="load")
+        if not await until(pg, TAKE_READY, limit): bad.append(f"index.html@{w}: the take did not start")
+        await pg.wait_for_timeout(3000)
+        cls = await pg.evaluate("window.__cls")
+        if sum(x[0] for x in cls) > 0.001: bad.append(f"index.html@{w}: the stage's start moved the page: layout shifts {cls[:5]} (value, ms)")
+        seen.append(f"home@{w} CLS {sum(x[0] for x in cls):.4f}")
+        await ctx.close()
     assert not bad, "lab_hold:\n  " + "\n  ".join(bad)
-    print(f"lab_hold: the lab's static boxes equal its live ones ({', '.join(seen)} px)")
+    print(f"lab_hold: the console's static boxes equal its live ones and Home's stage starts with no layout shift ({', '.join(seen)})")
 
 
 
@@ -3043,88 +3323,62 @@ LAB_SIZE = "(() => [Math.round(document.querySelector('[data-swarm-live]').getBo
 
 @check
 async def lab_act(b):
-    """hc13r (home, HOME-2, on system's SYS-3 OXA.actOnce; home's optional request 9): Home's lab acts by itself only as the
-    rule allows. At 1440: once it is well in view it follows one proposal, quietly (its live region stays empty), across
-    the six gates, and rests in its follow view; hc22 (HC22 4.4): through the act and at its rest the Follow control never
-    changes (not pressed, "Follow a proposal"); it never acts again (no second follow at rest, nor
-    after the lab leaves the screen and comes back). Under reduced motion it never acts (6 s in view). After a mouse press
-    on one of its controls before it is 60% in view, it never acts. On a stacked lab (390 phone, 1024) the act leaves the
-    lab's height and the page's unchanged (no layout shift without input)."""
-    bad, notes = [], []
-    lim = lambda ms: int(ms * max(1.0, MODE["throttle"]))
-    center = "document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})"
-    # 1. the act, once, quiet, to its rest
-    ctx, pg = await open_page(b, "index.html", 1440, 900, init=ACT_WATCH)
-    await pg.mouse.move(5, 450)
-    await pg.evaluate(center)
-    if not await until(pg, "document.querySelector('[data-swarm-live]').dataset.swAct === 'on'", lim(6000), 100):
-        bad.append("1440: the lab did not follow a proposal by itself within 6 s in view")
+    """what moves by itself is quiet and changes nothing (hc13r HOME-2, on system's SYS-3). Until hc31r Home's lab acted
+    once by itself (it followed one proposal, quietly, and rested) and never again. hc31r (integrate, standing in for
+    tests; home's request, LEAP-hc31: the one-off acts left the site; the run runs, on every camera, from arrival): the
+    rule the act had to keep is the run's rule now. On Home at 1440 x 900, through 6 s on the first screen and 6 s on
+    beat 1: the stage draws (it runs) while the take's live region stays empty, the Follow control never changes
+    ("Follow a proposal", not pressed), the log stays shut, no record is written, the receipt stays empty, focus stays
+    where it was (the body), and the one thing that changes by rule, the tag, names a proposal in flight each time it is
+    read (or none). After the take has left the screen and come back: the same. Under reduced motion nothing runs at
+    all: in 6 s in view the stage draws nothing, no animation is running and the header's transport is not shown.
+    Stacked (a 390 phone and 1024 x 768), over 6 s on the first screen and on beat 1, the take's height and the page's
+    do not change (no layout shift without input)."""
+    bad = []
+    QUIET = """(() => { const q = s => document.querySelector(s), f = q('[data-take-follow]'), t = q('.take-stage .stage-tag'), S = OXA.run.sample(), ids = Array.from(S.k.slice(0, S.n)).map(k => OXA.run.prop(k).id);
+      return { say: q('[data-take-say]').textContent, follow: f.textContent.trim(), pressed: f.getAttribute('aria-pressed'), shut: q('[data-take-trace]').hidden, recs: OXA.run.records().length, receipt: q('.take-bar .receipt').textContent.trim(),
+        focus: document.activeElement === document.body, tag: t && !t.hidden ? (t.querySelector('b') || t).textContent.trim() : '', inflight: ids, draws: window.__draws || 0, story: Math.round(q('.story').getBoundingClientRect().height), page: document.documentElement.scrollHeight }; })()"""
+    COUNT = "(() => { const g = document.querySelector('.take-stage').__stage.g, c = g.clearRect.bind(g); window.__draws = 0; g.clearRect = (...a) => { window.__draws++; c(...a); }; })()"
+    def quiet(tag, reads):
+        out = []
+        for r in reads:
+            if r["say"] or r["follow"] != "Follow a proposal" or r["pressed"] != "false" or not r["shut"] or r["recs"] or r["receipt"] or not r["focus"]:
+                out.append(f"{tag}: the run was not quiet ({ {k: r[k] for k in ('say', 'follow', 'pressed', 'shut', 'recs', 'receipt', 'focus')} })"); break
+            if r["tag"] and r["tag"] not in r["inflight"]: out.append(f"{tag}: the tag names {r['tag']}, which is not in flight"); break
+        return out
+    errs = []
+    ctx, pg = await open_page(b, "index.html", 1440, 900, init=RUN_PRESET, errs=errs)
+    if not await until(pg, TAKE_READY, 15000): bad.append("index.html@1440x900: the take did not start")
     else:
-        if await pg.evaluate("document.querySelector('[data-sw-say]').textContent !== ''"): bad.append("1440: the act announced itself")
-        if not await until(pg, LAB_ACT_REST + " && document.querySelectorAll('[data-sw-gates] li.is-hit').length === 6", lim(20000), 200):
-            bad.append(f"1440: the act did not rest in its follow view across six gates: {await pg.evaluate(TRACE_STATE)!r}")
-        say = await pg.evaluate("document.querySelector('[data-sw-say]').textContent")
-        if say: bad.append(f"1440: the act announced {say!r}")
-        if await pg.evaluate("window.__act.ctl"): bad.append("1440: the Follow control changed without input during the act")
-        await pg.wait_for_timeout(4000)
-        await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(1200)
-        await pg.evaluate(center); await pg.wait_for_timeout(lim(4000))
-        n = await pg.evaluate("window.__act.pressed")
-        if n != 1: bad.append(f"1440: the follow was pressed {n} times without input (one act expected, also after leaving and coming back)")
-        notes.append(f"1440 acted once ({n})")
+        await pg.evaluate(COUNT)
+        for name, beat in (("the first screen", 0), ("beat 1", 1), ("beat 1 after leaving and coming back", 1)):
+            if name.endswith("back"):
+                await pg.evaluate("document.querySelector('#research').scrollIntoView({ block: 'start', behavior: 'instant' })"); await pg.wait_for_timeout(1200)
+            if not await take_to(pg, beat, 300): bad.append(f"index.html@1440x900: {name} did not come to rest")
+            d0 = await pg.evaluate("window.__draws"); reads = []
+            for _ in range(8):
+                await pg.wait_for_timeout(750); reads.append(await pg.evaluate(QUIET))
+            if reads[-1]["draws"] - d0 < 60: bad.append(f"index.html@1440x900 {name}: the stage drew {reads[-1]['draws'] - d0} frames in 6 s (it runs by itself)")
+            bad += quiet(f"index.html@1440x900 {name}", reads)
     await ctx.close()
-    # 2. never under reduced motion
-    ctx, pg = await open_page(b, "index.html", 1440, 900, init=ACT_WATCH, reduced=True)
-    await pg.mouse.move(5, 450)
-    await pg.evaluate(center); await pg.wait_for_timeout(lim(6000))
-    n = await pg.evaluate("window.__act.pressed")
-    if n: bad.append(f"reduced motion: the lab followed by itself ({n})")
-    await ctx.close()
-    # 3. never after a press on one of its controls before it is well in view (the loader gone first: until then its
-    # overlay takes the press)
-    ctx, pg = await open_page(b, "index.html", 1440, 900, init=ACT_WATCH)
-    await pg.locator(".loader").wait_for(state="detached", timeout=lim(15000))
-    await pg.evaluate("(() => { const r = document.querySelector('[data-swarm-live]'); window.__pd = []; r.addEventListener('pointerdown', e => window.__pd.push(e.pointerType + ' ' + e.target.tagName), true); })()")
-    await pg.evaluate("(() => { const r = document.querySelector('[data-swarm-live]').getBoundingClientRect(); window.scrollTo({top: r.bottom + scrollY - innerHeight * 0.32, behavior: 'instant'}); })()")
-    await pg.wait_for_timeout(300)
-    seen = await pg.evaluate(LAB_SEEN)
-    box = await pg.locator("[data-sw-strict]").bounding_box()
-    if seen >= 0.6 or not box or box["y"] < 0 or box["y"] + box["height"] > 900:
-        bad.append(f"press: could not reach the Council slider with the lab under 60% in view (seen {seen}, slider {box})")
+    ctx, pg = await open_page(b, "index.html", 1440, 900, reduced=True, init=RUN_PRESET, errs=errs)
+    if not await until(pg, "!!(window.OXA && OXA.take) && !!document.querySelector('.take-stage').__stage", 15000): bad.append("index.html@1440x900 reduced motion: the take did not start")
     else:
-        await pg.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-        await pg.mouse.down(); await pg.mouse.up()
-        await pg.mouse.move(5, 450)
-        pd = await pg.evaluate("window.__pd")
-        if not any(x.startswith("mouse") for x in pd): bad.append(f"press: the mouse press did not reach the lab ({pd})")
-        await pg.evaluate(center); await pg.wait_for_timeout(lim(5000))
-        n = await pg.evaluate("window.__act.pressed")
-        if n: bad.append(f"press: after a mouse press on the Council slider (lab {seen:.0%} in view) the lab followed by itself ({n})")
-        notes.append(f"pressed at {seen:.0%} in view")
+        await pg.wait_for_timeout(800); await pg.evaluate(COUNT); await pg.wait_for_timeout(6000)
+        r = await pg.evaluate("({ draws: window.__draws, anims: document.getAnimations().filter(a => a.playState === 'running').length, bar: (() => { const b = document.querySelector('button.nav-run'); return !!b && getComputedStyle(b).visibility !== 'hidden' && b.getClientRects().length > 0 && b.getBoundingClientRect().width > 0; })() })")
+        if r["draws"] or r["anims"] or r["bar"]: bad.append(f"index.html@1440x900 reduced motion: in 6 s in view the stage drew {r['draws']} times, {r['anims']} animations run, the transport shown: {r['bar']} (nothing runs)")
     await ctx.close()
-    # 4. stacked labs: the act moves nothing
     for w, h, touch in ((390, 844, True), (1024, 768, False)):
-        ctx, pg = await open_page(b, "index.html", w, h, touch=touch, init=ACT_WATCH)
-        await pg.evaluate(center); await pg.wait_for_timeout(200)
-        # The engine names the lab stacked in its first resize(), once it has started. Under CI's software GL that can be
-        # later than 200 ms (run 42785737245 read 1024 too early), so wait for it, then measure.
-        stacked = await until(pg, "document.querySelector('[data-swarm-live]').classList.contains('is-stacked')", lim(6000), 100)
-        before = await pg.evaluate(LAB_SIZE)
-        if not await until(pg, "document.querySelector('[data-swarm-live]').dataset.swAct === 'on'", lim(6000), 100):
-            bad.append(f"{w}: the lab did not follow a proposal by itself within 6 s in view")
-        else:
-            during = await pg.evaluate(LAB_SIZE)
-            await until(pg, LAB_ACT_REST, lim(20000), 200)
-            after = await pg.evaluate(LAB_SIZE)
-            trace = await pg.evaluate("(() => { const t = document.querySelector('#sw-trace, [data-sw-callout]'); return t ? t.hidden : null; })()")
-            if not stacked: bad.append(f"{w}: the lab is not stacked")
-            if any(abs(x[0] - before[0]) > 0.5 or x[1] != before[1] for x in (during, after)):
-                bad.append(f"{w}: the act moved the page: lab height / page height {before} -> {during} (acting) -> {after} (rest)")
-            if trace is False: bad.append(f"{w}: the act opened the trace on a stacked lab")
-            notes.append(f"{w} held {before[0]} px")
+        ctx, pg = await open_page(b, "index.html", w, h, touch=touch, dpr=2 if touch else 1, init=RUN_PRESET, errs=errs)
+        if not await until(pg, TAKE_READY, 15000): bad.append(f"index.html@{w}x{h}: the take did not start"); await ctx.close(); continue
+        for beat in (0, 1):
+            await take_to(pg, beat, 300)
+            a = await pg.evaluate(QUIET); await pg.wait_for_timeout(6000); z = await pg.evaluate(QUIET)
+            if (a["story"], a["page"]) != (z["story"], z["page"]): bad.append(f"index.html@{w}x{h} beat {beat}: the take's height went {a['story']} -> {z['story']} and the page's {a['page']} -> {z['page']} in 6 s with no input")
+            bad += quiet(f"index.html@{w}x{h} beat {beat}", [a, z])
         await ctx.close()
-    assert not bad, "lab_act:\n  " + "\n  ".join(bad)
-    print(f"lab_act: Home's lab acts once, quietly, to its rest at 1440; never under reduced motion; never after a press on a control before it is in view; the act moves nothing on a stacked lab ({'; '.join(notes)})")
+    assert not bad and not errs, "lab_act:\n  " + "\n  ".join(bad + errs[:2])
+    print("lab_act: Home's run runs by itself and is quiet (no announcement, no record, no focus, the Follow control and the log untouched, the tag on a proposal in flight), also after leaving and coming back; nothing runs under reduced motion; no height changes without input at 390 and 1024")
 
 # ================================================================ round 2 (v2) guards: the director's test list of 28 Oct
 # ---- the swarm lab: the trace says where its record went (SW-R2-1); gate labels never collide (SW-R2-2)
@@ -3154,39 +3408,50 @@ async def follow_once(pg, want=None, tries=1, limit=45000):
 
 @check
 async def platform_trace(b):
-    """a followed proposal never says the page has no ledger while the lab draws one: on Platform (no inspectable
-    ledger) the trace, its stage tag and its live region never print 'no ledger', for a settled proposal at 1440 and 390
-    and a rejected one at 1440 (SW-R2-1); on home at 390 the trace still never prints 'block' (SW2)"""
-    bad = []
-    for path, (w, h), touch, wants in (("platform.html", (1440, 900), False, ("settled", "rejected")), ("platform.html", (390, 844), True, ("settled",)),
-                                         ("index.html", (390, 844), True, ("settled",))):
-        tag = f"{path}@{w}x{h}"
-        ctx, pg = await open_page(b, path, w, h, touch=touch)
-        await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-        if not await until(pg, "+((document.querySelector('[data-sw-inflight]') || {}).textContent || '0').replace(/\\D/g, '') > 0", 25000, 200):
-            bad.append(f"{tag}: the lab never ran"); await ctx.close(); continue
-        await pg.evaluate(TEXT_WATCH, r"no ledger|\bblock\b" if path == "index.html" else r"no ledger")
-        await pg.mouse.move(2, 2)
-        # hc13r (home, HOME-2): Home's lab follows one proposal by itself once it is well in view; the reader's follow waits
-        # for the act's rest (hc22, HC22 4.4: data-sw-act="rest", the control unpressed, "Follow a proposal"; a press during
-        # the act would start the reader's follow, no longer stop the act)
-        if path == "index.html" and not await until(pg, LAB_ACT_REST, 40000, 250):
-            bad.append(f"{tag}: the lab's own act never came to rest ({await pg.evaluate(TRACE_STATE)!r})"); await ctx.close(); continue
-        for want in wants:
-            await pg.evaluate(SET_RANGE, ["[data-sw-strict]", 0 if want == "settled" else 60])
-            # integrate hc20: up to 10 follows for a rejection (was 6): at the range's top (60%) about 6 in 10 are rejected
-            # (trace_probe.py: 10 of 16), so six settled in a row, ~0.4% by chance, failed one full run; ten, ~0.01%
-            seen = await follow_once(pg, want, tries=1 if want == "settled" else 10)
-            log = re.sub(r"\s+", " ", await pg.evaluate("(document.querySelector('[data-sw-log]') || {}).textContent || ''"))
-            if not seen[-1].lower().startswith(want): bad.append(f"{tag}: no {want} proposal to follow (outcomes {seen})")
-            elif not re.search(r"seal|record|rejection|ledger", log, re.I): bad.append(f"{tag}: the {want} trace never reached its record step: {log[-140:]!r}")
-            if await pg.evaluate("document.querySelector('[data-sw-follow]').getAttribute('aria-pressed') === 'true'"):
-                await pg.locator("[data-swarm-live] [data-sw-follow]").click()
-        hits = await pg.evaluate("window.__tw")
-        if hits: bad.append(f"{tag}: {hits[:3]}")
+    """a followed proposal never says the page has no ledger while the model draws one (SW-R2-1), and never prints
+    'block' (SW2). hc31r (integrate, standing in for tests; platform's request, LEAP-hc31 PLAT-2): on Platform the
+    followed proposal is the console's tag (the lab's log panel left the page) and its words are the model's own line.
+    A proposal followed from the console's button to its end, a settled one at 1440 x 900 and at 390 x 844 (touch;
+    strictness 0) and a rejected one at 1440 x 900 (strictness 0.6, following until one is refused, six tries): from
+    the press to its end the tag carries the followed ID, and neither the tag, the live region, the status nor the
+    Follow control ever prints "no ledger" or "block" (reads every 300 ms); the live region says "Following <ID>." and
+    then its outcome ("<ID>: settled." or "<ID>: its rejection is recorded."); a settled one's tag has read 05 Execute or
+    06 Settle on the way and a rejected one's "Rejected"; at the end the control reads "Follow another", not pressed;
+    following wrote no record."""
+    said, bad = [], []
+    for w, h, touch, strict, want in ((1440, 900, False, 0, "settled"), (390, 844, True, 0, "settled"), (1440, 900, False, 0.6, "rejected")):
+        errs = []
+        ctx, pg, live = await console_page(b, w, h, touch=touch, dpr=2 if touch else 1, errs=errs)
+        tag = f"platform.html@{w}x{h} ({want})"
+        if not live: bad.append(f"{tag}: the console did not go live"); await ctx.close(); continue
+        await pg.evaluate(f"OXA.run.set('strict', {strict})"); await pg.wait_for_timeout(500)
+        got = None
+        for _ in range(6):
+            await pg.evaluate("document.querySelector('[data-sw-follow]').click()")
+            fid = await until(pg, "(() => { const s = OXA.run.sample(), f = document.querySelector('[data-sw-follow]'); return f.getAttribute('aria-pressed') === 'true' && s.tagId ? s.tagId : ''; })()", 3000)
+            if not fid: bad.append(f"{tag}: Follow did not take a proposal"); break
+            seen, tags, says = [], [], []
+            for _ in range(45):
+                r = await pg.evaluate("(() => { const t = document.querySelector('#swarm .stage-tag'), f = document.querySelector('[data-sw-follow]'); return { tag: t && !t.hidden ? t.textContent.replace(/\\s+/g, ' ').trim() : '', say: document.querySelector('[data-sw-say]').textContent, ban: document.querySelector('[data-sw-banner]').textContent, follow: f.textContent.trim(), pressed: f.getAttribute('aria-pressed') }; })()")
+                seen.append(" ".join([r["tag"], r["say"], r["ban"], r["follow"]])); tags.append(r["tag"]); says.append(r["say"])
+                if r["pressed"] == "false": break
+                await pg.wait_for_timeout(300)
+            outcome = "rejected" if any("rejection" in s_ for s_ in says) else "settled" if any(": settled." in s_ for s_ in says) else None
+            printed = [x for x in ("no ledger", "block") if any(re.search(rf"\b{x}\b", t, re.I) for t in seen)]
+            if printed: bad.append(f"{tag}: following {fid} printed {printed}")
+            if not any(t.startswith(fid) for t in tags if t): bad.append(f"{tag}: the tag never carried {fid} ({[t for t in tags if t][:3]})")
+            if says[0] != f"Following {fid}." or outcome is None or r["follow"] != "Follow another" or r["pressed"] != "false": bad.append(f"{tag}: {fid} was announced {says[0]!r}, ended {says[-1]!r} with the control {r['follow']!r} ({r['pressed']})")
+            if outcome == want:
+                mark = any(re.search(r"05 Execute|06 Settle|Settled|0[5-8] ", t) for t in tags) if want == "settled" else any("Rejected" in t for t in tags)
+                if not mark: bad.append(f"{tag}: {fid}'s tag never read its {'rail' if want == 'settled' else 'refusal'} ({sorted(set(t for t in tags if t))[:6]})")
+                got = fid; break
+        if not got and not any(x.startswith(tag) for x in bad): bad.append(f"{tag}: no followed proposal was {want} in six tries")
+        if await pg.evaluate("OXA.run.records().length"): bad.append(f"{tag}: following wrote a record")
         await ctx.close()
-    assert not bad, "platform_trace:\n  " + "\n  ".join(bad)
-    print("platform_trace: Platform's trace never says 'no ledger' (settled at 1440 and 390, rejected at 1440); home's never says 'block'")
+        if errs: bad.append(f"{tag}: page errors {errs[:2]}")
+        said.append(f"{w} {want} {got}")
+    assert not bad, "platform_trace:\n  " + "\n  ".join(bad[:12])
+    print(f"platform_trace: followed from the console to their end ({'; '.join(said)}): the tag carries the ID, the outcome is said once, never 'no ledger' or 'block', nothing recorded")
 
 
 GATE_BOXES = r"""(() => { const labs = [...document.querySelectorAll('[data-sw-gates] > li')].map(li => { const r = li.getBoundingClientRect(), cs = getComputedStyle(li);
@@ -3199,22 +3464,47 @@ GATE_BOXES = r"""(() => { const labs = [...document.querySelectorAll('[data-sw-g
 
 @check
 async def lab_gate_labels(b):
-    """at 667x375, 844x390, 390x844 and 320x640 (touch), on home and Platform: no two [data-sw-gates] > li boxes of the
-    swarm lab intersect (no 'SIGN02ALPREDICT'; SW-R2-2: the label mode follows the measured fit)"""
+    """at 667x375, 844x390, 390x844 and 320x640 (touch), on Home and Platform: the six gates' names never print over one
+    another. hc31r (integrate, standing in for tests; home's and platform's requests, LEAP-hc31 HOME-2 and PLAT-2): the
+    gate list [data-sw-gates] left with the lab; the gates are named by the stage's own labels (stage.js: "no label
+    touches another"), on Home's take at beat 1 and on Platform's console, and by beat 1's list where the take is not
+    pinned. At each size: Home pinned, at beat 1's rest, and Platform's console once live: the six gate labels are all
+    there (01 Signal ... 06 Settle; on the two upright phones the console's wide shot has room for the boundary alone and
+    names no gate, which is the engine's rule: a label that would touch another is left out), no two shown labels of the stage overlap (1 px), none overlaps the tag, and every
+    label lies inside its stage's box (2 px); Home not pinned (the two sideways phones): the list's six items are laid
+    out, none overlapping another, inside the viewport's width."""
     bad, n = [], 0
+    LABS = """(sel) => { const f = document.querySelector(sel), fr = f.getBoundingClientRect();
+      const ls = [...f.querySelectorAll('.stage-lab, .stage-tag:not([hidden])')].filter(e => e.checkVisibility({ opacityProperty: true, visibilityProperty: true }) && e.getBoundingClientRect().width > 0).map(e => { const r = e.getBoundingClientRect(); return { t: e.textContent.replace(/\\s+/g, ' ').trim().slice(0, 28), l: r.left, t0: r.top, r: r.right, b: r.bottom }; });
+      const hit = []; ls.forEach((a, i) => ls.slice(i + 1).forEach(c => { if (Math.min(a.r, c.r) - Math.max(a.l, c.l) > 1 && Math.min(a.b, c.b) - Math.max(a.t0, c.t0) > 1) hit.push(a.t + ' x ' + c.t); }));
+      return { names: ls.map(x => x.t), hit, out: ls.filter(x => x.l < fr.left - 2 || x.r > fr.right + 2 || x.t0 < fr.top - 2 || x.b > fr.bottom + 2).map(x => x.t) }; }"""
+    gates = ["01 Signal", "02 Predict", "03 Decide", "04 Approve", "05 Execute", "06 Settle"]
     for w, h in ((667, 375), (844, 390), (390, 844), (320, 640)):
-        for path in ("index.html", "platform.html"):
-            ctx, pg = await open_page(b, path, w, h, touch=True)
-            await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-            await pg.evaluate("document.fonts.ready.then(() => 1)")
-            await until(pg, "document.querySelectorAll('[data-sw-gates] > li').length >= 6", 10000)
-            await pg.wait_for_timeout(1500)
-            m = await pg.evaluate(GATE_BOXES); n += 1
-            if m["n"] < 6: bad.append(f"{path}@{w}x{h}: only {m['n']} visible gate labels")
-            if m["ov"]: bad.append(f"{path}@{w}x{h}: {'; '.join(m['ov'][:4])}")
-            await ctx.close()
+        ctx, pg = await open_page(b, "index.html", w, h, touch=True, init=RUN_PRESET)
+        tag = f"index.html@{w}x{h}"
+        if await pg.evaluate(TAKE_PINNED):
+            if not await scene_rest(pg, 1): bad.append(f"{tag}: beat 1 did not come to rest")
+            r = await pg.evaluate(LABS, ".take-stage"); n += len(r["names"])
+            if [x for x in r["names"] if re.match(r"0[1-6] ", x)] != gates: bad.append(f"{tag}: the stage names {r['names']} at beat 1 (the six gates in order)")
+            if r["hit"] or r["out"]: bad.append(f"{tag}: labels overlap {r['hit'][:4]} or leave the stage {r['out'][:4]}")
+        else:
+            r = await pg.evaluate("""(() => { const ls = [...document.querySelectorAll('.beat-1 .beat-list li')].map(e => { const r = e.getBoundingClientRect(); return { t: e.textContent.replace(/\\s+/g, ' ').trim(), l: r.left, t0: r.top, r: r.right, b: r.bottom, w: r.width }; });
+              const hit = []; ls.forEach((a, i) => ls.slice(i + 1).forEach(c => { if (Math.min(a.r, c.r) - Math.max(a.l, c.l) > 1 && Math.min(a.b, c.b) - Math.max(a.t0, c.t0) > 1) hit.push(a.t + ' x ' + c.t); }));
+              return { names: ls.map(x => x.t), hit, out: ls.filter(x => x.w < 1 || x.l < -1 || x.r > innerWidth + 1).map(x => x.t) }; })()"""); n += len(r["names"])
+            if r["names"] != gates or r["hit"] or r["out"]: bad.append(f"{tag} (the take in normal flow): the gate list reads {r['names']}, overlaps {r['hit'][:3]}, outside the width {r['out'][:3]}")
+        await ctx.close()
+        ctx, pg, live = await console_page(b, w, h, touch=True)
+        tag = f"platform.html@{w}x{h}"
+        if not live: bad.append(f"{tag}: the console did not go live")
+        else:
+            await pg.wait_for_timeout(900)
+            r = await pg.evaluate(LABS, "#swarm figure.stage"); n += len(r["names"])
+            shown = [x for x in r["names"] if re.match(r"0[1-6] ", x)]
+            if (w >= 600 and shown != gates) or shown != [g for g in gates if g in shown]: bad.append(f"{tag}: the console names {r['names']} (the six gates in order; an upright phone's wide shot may name fewer, never out of order)")
+            if r["hit"] or r["out"]: bad.append(f"{tag}: labels overlap {r['hit'][:4]} or leave the stage {r['out'][:4]}")
+        await ctx.close()
     assert not bad, "lab_gate_labels:\n  " + "\n  ".join(bad)
-    print(f"lab_gate_labels: {n} layouts, no two gate labels intersect")
+    print(f"lab_gate_labels: the six gates named once each, no label over another or outside its stage, on Home (pinned: the stage; not pinned: the list) and Platform's console at four phone sizes ({n} labels read)")
 
 
 # ---- the ledger: time only moves forward (LG-R2-2; the digests of LG-R2-3 left with Home's stream, 1 Nov)
@@ -3325,8 +3615,8 @@ REFLOW_TEXT = """(() => {
 @check
 async def reflow_400(b):
     """at 320x256 (a 1280x1024 screen at 400%): no horizontal scroll on the seven hand-written pages
-    (scrollWidth <= 320), and the overture either shows its static sequence (html.story-tiny) or, at each scene's rest,
-    no visible callout crosses the copy; v2x r2: on Research, notes 06 and 09, the blog index and a post, no sideways
+    (scrollWidth <= 320), and the overture either shows its static sequence (hc31r: the take not pinned, five whole beats
+    in normal flow inside the width; it was html.story-tiny) or, at each scene's rest, no visible label crosses the copy; v2x r2: on Research, notes 06 and 09, the blog index and a post, no sideways
     scroll, no first-screen text past the edge or crossing other text, the lede >= 260 px, the blog hero one column"""
     bad = []
     for name in ("index", "platform", "lifecycles", "evidence", "trust", "company", "access"):
@@ -3342,12 +3632,20 @@ async def reflow_400(b):
                 sh = await pg.evaluate(SHEET_FIT)
                 if sh["sw"] > sh["cw"] or sh["over"]: bad.append(f"{name}.html@320x256: the menu sheet scrolls sideways (scrollWidth {sh['sw']} > clientWidth {sh['cw']}) or a link leaves the width: {sh['over'][:3]}")
                 await pg.keyboard.press("Escape"); await until(pg, "!document.querySelector('#site-menu').matches(':popover-open')", 3000)
-        if name == "index" and not await pg.evaluate("document.documentElement.classList.contains('story-tiny')"):
-            for i in range(5):
-                if not await scene_rest(pg, i): bad.append(f"index.html@320x256 scene 0{i}: no story-tiny and the scene did not come to rest"); continue
-                m = await pg.evaluate(PHONE_LAB)
-                hits = [x for x in m["issues"] if " x beat " in x]
-                if hits: bad.append(f"index.html@320x256 scene 0{i} (no story-tiny): {hits[:3]}")
+        if name == "index":
+            # hc31r (integrate): the static sequence is the take not pinned (html.story-ready absent; it was html.story-tiny):
+            # five whole beats in normal flow inside the width, no stage. If a later design pins the take here, its
+            # labels must keep off the copy at each beat's rest, as on the phones (TAKE_LAB)
+            if not await pg.evaluate(TAKE_PINNED):
+                f = await pg.evaluate(TAKE_FLOW)
+                if not (all(p == "relative" for p in f["pos"]) and all(o == 1 for o in f["op"]) and all(f["heads"]) and all(f["copy"]) and f["stage"] == "none" and f["sw"] <= 0):
+                    bad.append(f"index.html@320x256: the take's static sequence is not five whole beats in normal flow inside the width ({f})")
+            else:
+                for i in range(5):
+                    if not await scene_rest(pg, i): bad.append(f"index.html@320x256 scene 0{i}: pinned, and the scene did not come to rest"); continue
+                    m = await pg.evaluate(TAKE_LAB)
+                    hits = [x for x in m["issues"] if " x beat " in x]
+                    if hits: bad.append(f"index.html@320x256 scene 0{i} (pinned): {hits[:3]}")
         await ctx.close()
     # v2x r2 (research, blog; r2-a11y serious): the generated pages too. A sideways-phone two-up hero also fired at 400 %
     # zoom (labels over titles, a hedge cut at the edge, ledes in a 151 px column) because this check opened only the
@@ -3421,7 +3719,9 @@ async def names_by_mark(pg, cdp):
 
 @check
 async def label_in_name(b):
-    """on the seven hand-written pages at 1440, plus the lab's record button after a followed proposal settles: every
+    """on the seven hand-written pages at 1440 (hc31r: Home also at beat 1 with a proposal followed and at beat 3 after one
+    move of the hand, whose receipt link took the place of the trace's ledger link; Platform also with its console in
+    view), plus the lab's record button after a followed proposal settles (until the 1 Nov cut): every
     visible control's visible text (a label with an <output> read up to its value; digits and punctuation stripped on
     both sides) is a case-insensitive substring of its accessible name (WCAG 2.5.3): the nav readout, the lab's sliders
     and the trace's ledger link, the desk's threshold slider among them (NV-R2-5, SW-R2-3, LC-R2-3). v2x cut, owner's-eye
@@ -3429,22 +3729,43 @@ async def label_in_name(b):
     (it was a record button 'record #id · hash' answered by Home's ledger)"""
     bad, n = [], 0
     for name in ("index", "platform", "lifecycles", "evidence", "trust", "company", "access"):
-        ctx, pg = await open_page(b, f"{name}.html", 1440, 900)
+        ctx, pg = await open_page(b, f"{name}.html", 1440, 900, init=RUN_PRESET)
         cdp = await ctx.new_cdp_session(pg)
-        if name == "index":  # the trace's ledger link exists once a followed proposal has settled; hc13r (HOME-2): the lab's
-            # own act follows one the Council passes, once the lab is well in view, and rests on it without a click; hc22
-            # (HC22 4.4): the act leaves the control at "Follow a proposal", read here like every control
+        async def read(where=""):
+            nonlocal n
+            ctrls = await pg.evaluate(LIN_MARK)
+            names = await names_by_mark(pg, cdp)
+            for c in ctrls:
+                vis, name_ = LIN_NORM(c["vis"]), names.get(str(c["k"]))
+                if not vis or name_ is None: continue
+                n += 1
+                if vis not in LIN_NORM(name_): bad.append(f"{name}.html@1440{where} {c['sel']}: visible {c['vis']!r}, accessible name {name_!r}")
+            return len(ctrls)
+        if name == "index":
+            # hc31r (integrate; home's request, LEAP-hc31 HOME-2): the take's controls show at their beats, so Home is read
+            # three times: the first screen as it loads; beat 1 with a proposal followed (the Follow control in its pressed
+            # words, the log's Close, the scene index); beat 3 after one move of the hand (the range, and the receipt's
+            # link "1 record · Your ledger", which took the place of the trace's ledger link)
             await pg.mouse.move(2, 2)
-            await pg.evaluate("document.querySelector('[data-swarm-live]').scrollIntoView({block: 'center', behavior: 'instant'})")
-            await until(pg, "+((document.querySelector('[data-sw-inflight]') || {}).textContent || '0').replace(/\\D/g, '') > 0", 25000, 200)
-            if not await until(pg, LAB_ACT_REST + " && !!document.querySelector('[data-sw-log] a.sw-led-a')", 60000, 250): bad.append("index.html: no ledger link in the trace of the lab's own act after 60 s (nothing to check)")
-        ctrls = await pg.evaluate(LIN_MARK)
-        names = await names_by_mark(pg, cdp)
-        for c in ctrls:
-            vis, name_ = LIN_NORM(c["vis"]), names.get(str(c["k"]))
-            if not vis or name_ is None: continue
-            n += 1
-            if vis not in LIN_NORM(name_): bad.append(f"{name}.html@1440 {c['sel']}: visible {c['vis']!r}, accessible name {name_!r}")
+            if not await until(pg, TAKE_READY, 15000): bad.append("index.html: the take did not start (its controls were not read)")
+            await read(" (first screen)")
+            await take_to(pg, 1, 300); await pg.locator("[data-take-follow]").click()
+            if not await until(pg, "!document.querySelector('[data-take-trace]').hidden", 3000): bad.append("index.html: Follow did not open the log (its controls were not read)")
+            await read(" (beat 1, following)")
+            await pg.locator("[data-trace-close]").click()
+            await take_to(pg, 3, 300); await pg.locator("[data-sw-strict]").focus()
+            for _ in range(5): await pg.keyboard.press("ArrowRight")
+            if not await until(pg, "!!document.querySelector('.take-bar .receipt a.receipt-go')", 3000): bad.append("index.html: no receipt link after a move of the hand (nothing to check)")
+            await pg.mouse.move(2, 2); await read(" (beat 3, one record)")
+        elif name == "platform":
+            # the console's controls (the range, Follow, the halt) are built when its chapter comes near: read the page as it
+            # loads, then with the console in view
+            await read()
+            await pg.evaluate(CONSOLE_UP)
+            if not await until(pg, CONSOLE_LIVE, 10000): bad.append("platform.html: the console did not go live (its controls were not read)")
+            await pg.evaluate(CONSOLE_UP); await pg.wait_for_timeout(400); await read(" (the console)")
+        else:
+            await read()
         await ctx.close()
     assert not bad, f"label_in_name: {len(bad)} of {n} controls:\n  " + "\n  ".join(bad[:24])
     print(f"label_in_name: {n} visible controls on 7 pages carry their visible text in their accessible names")
@@ -3589,39 +3910,51 @@ BEAT_READ = r"""(i) => { const b = document.querySelector('.beat-' + i); if (!b)
 
 @check
 async def overture_ctx_lost(b):
-    """the overture's WebGL context lost and never restored: html.no-webgl within 3 s of the loss (page time) and beat 2
-    readable at S2 (its eyebrow, h2 and paragraph at opacity >= .9, on screen); lost and restored after 0.6 s: no
-    fallback, and every scene comes to rest as before (OV-R2-3a)"""
+    """the overture's drawing surface fails and the page stays readable. Until hc31r: the WebGL context lost and never
+    restored set html.no-webgl within 3 s and beat 2 stayed readable; lost and restored, every scene came to rest as
+    before (OV-R2-3a). hc31r (integrate, standing in for tests; home's HOME-1: no WebGL anywhere on Home, the stage is a
+    2D canvas over an inline still): the same two cases on the new surface. (a) No canvas context at all (getContext
+    returns null): the stage never says live and adds no canvas, the first screen keeps its inline still (opacity 1),
+    the take still pins and steps, beat 2 is readable at its rest (its h2 and paragraph at opacity >= .9, on screen),
+    and no page error is thrown. (b) The surface stops and comes back (the tab hidden for 0.6 s, as when a context is
+    lost and restored: run.js draws nothing while the page is hidden): the stage draws nothing while hidden and draws
+    again within 1 s of coming back, and every beat comes to rest as before."""
     bad = []
-    ctx, pg = await open_page(b, "index.html", 1440, 900)
+    errs = []
+    ctx, pg = await open_page(b, "index.html", 1440, 900, init="HTMLCanvasElement.prototype.getContext = function () { return null; };", errs=errs)
     await pg.wait_for_timeout(1500)
-    err = await pg.evaluate(LOSE, False)
-    if err: bad.append(f"lost: {err}")
+    a = await pg.evaluate("""(() => { const f = document.querySelector('.take-stage'), s = document.querySelector('.beat-0 .stage-still');
+      return { ready: document.documentElement.classList.contains('story-ready'), live: f.classList.contains('is-live') || document.querySelector('.story').classList.contains('is-live'), cv: f.querySelectorAll('canvas').length,
+        still: !!s && s.getBoundingClientRect().width > 0 ? +getComputedStyle(s).opacity : 0 }; })()""")
+    if a["live"] or a["cv"] or a["still"] < 0.99: bad.append(f"no canvas context: the stage says live or the still is not shown ({a})")
+    if a["ready"]:
+        await pg.evaluate(f"window.scrollTo({{ top: ({TAKE_Y})(2), behavior: 'instant' }})")
+        ok = await until(pg, "document.querySelector('.story').dataset.beat === '2'", 4000)
+        await pg.wait_for_timeout(600)
+        r = await pg.evaluate("""(() => { const b = document.querySelector('.beat-2'), parts = [b.querySelector('h2'), b.querySelector('.body-lg')];
+          return parts.map(p => { const q = p.getBoundingClientRect(); let o = 1; for (let e = p; e && e.nodeType === 1; e = e.parentElement) o *= +getComputedStyle(e).opacity; return [+o.toFixed(2), q.top >= 0 && q.bottom <= innerHeight && q.width > 0]; }); })()""")
+        if not ok or any(o < 0.9 or not on for o, on in r): bad.append(f"no canvas context: beat 2 is not readable at its rest (h2, paragraph: opacity, on screen) {r}")
     else:
-        await until(pg, "document.documentElement.classList.contains('no-webgl')", 10000, 100)
-        L = await pg.evaluate("window.__lost")
-        if not L["cls"]: bad.append(f"lost, not restored: no html.no-webgl {(await pg.evaluate('performance.now()') - L['ev']) / 1000:.1f} s after the loss (the stage freezes on S0)")
-        elif L["cls"] - L["ev"] > 3000: bad.append(f"lost, not restored: html.no-webgl came {L['cls'] - L['ev']:.0f} ms after the loss (3000 allowed)")
-        else:
-            idx = await pg.locator('.story-idx [data-n="02"]').count() and await pg.locator('.story-idx [data-n="02"]').is_visible()
-            if idx: await pg.evaluate("document.querySelector('.story-idx [data-n=\"02\"]').click()")
-            else: await pg.evaluate("document.querySelector('.beat-2').scrollIntoView({block: 'center', behavior: 'instant'})")
-            await pg.wait_for_timeout(2000)
-            r = await pg.evaluate(BEAT_READ, 2)
-            if not r or any(x["o"] < 0.9 or not x["in"] for x in r): bad.append(f"lost, not restored: beat 2 at S2 reads {r}")
+        bad.append("no canvas context: the take is not pinned at 1440 x 900 (the copy does not need the canvas)")
+    if errs: bad.append(f"no canvas context: page errors {errs[:2]}")
     await ctx.close()
-    ctx, pg = await open_page(b, "index.html", 1440, 900)
-    await pg.wait_for_timeout(1500)
-    err = await pg.evaluate(LOSE, True)
-    if err: bad.append(f"restored: {err}")
+    errs = []
+    ctx, pg = await open_page(b, "index.html", 1440, 900, init=RUN_PRESET, errs=errs)
+    if not await until(pg, TAKE_READY, 15000): bad.append("hidden and back: the take did not start")
     else:
-        await pg.wait_for_timeout(4000)
-        if await pg.evaluate("document.documentElement.classList.contains('no-webgl')"): bad.append("lost and restored after 0.6 s: the page fell back to no-WebGL anyway")
-        for i in range(5):
-            if not await scene_rest(pg, i): bad.append(f"lost and restored: scene 0{i} did not come to rest")
+        await pg.evaluate("(() => { const g = document.querySelector('.take-stage').__stage.g, c = g.clearRect.bind(g); window.__draws = 0; g.clearRect = (...a) => { window.__draws++; c(...a); }; })()")
+        await pg.wait_for_timeout(400); d0 = await pg.evaluate("window.__draws")
+        await pg.evaluate("(() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' }); document.dispatchEvent(new Event('visibilitychange')); })()")
+        await pg.wait_for_timeout(150); d1 = await pg.evaluate("window.__draws"); await pg.wait_for_timeout(450); d2 = await pg.evaluate("window.__draws")
+        await pg.evaluate("(() => { delete document.hidden; delete document.visibilityState; document.dispatchEvent(new Event('visibilitychange')); })()")
+        await pg.wait_for_timeout(1000); d3 = await pg.evaluate("window.__draws")
+        if not (d0 > 0 and d2 - d1 <= 1 and d3 - d2 >= 5): bad.append(f"hidden and back: the stage's draws read {d0} running, {d1} -> {d2} while hidden (none expected), {d3} one second after coming back")
+        for i in (1, 2, 3, 4, 0):
+            if not await scene_rest(pg, i): bad.append(f"hidden and back: scene 0{i} did not come to rest")
+    if errs: bad.append(f"hidden and back: page errors {errs[:2]}")
     await ctx.close()
     assert not bad, "overture_ctx_lost index.html@1440x900:\n  " + "\n  ".join(bad)
-    print("overture_ctx_lost: a lost context falls back within 3 s with beat 2 readable; a restored one recovers every scene")
+    print("overture_ctx_lost: without a canvas context the first screen keeps its still and beat 2 reads at its rest, no error; hidden for 0.6 s the stage draws nothing, draws again on return and every beat comes to rest")
 
 
 # ---- the overture comes to rest on one complete headline wherever the reader stops (OV-R2-2)
@@ -3690,56 +4023,39 @@ async def stop_at(pg, cdp, y, touch, w, h):
 
 @check
 async def overture_rest(b):
-    """where the reader stops, the copy settles: at 1440 (wheel) and 390x844 (touch), stopping at 25, 50 and 75% of each
-    of the four hand-overs, the frame 1 s later (or later, once the copy has stopped changing) shows exactly one beat with
-    every headline word risen (translateY <= 6%) and its .body-lg (S0: its lede) at >= .9, and no other beat's eyebrow
-    above .1; from S0 to S1 .story-num never shows '00' (every frame) (OV-R2-2). v2x cut (1 Nov): scenes 3 and 4 have
-    no paragraph any more (the headline is the scene's one line), so a beat without a .body-lg is complete when every
-    headline word has risen; a beat that has one still needs it at >= .9. hc16: and the scene index lands scenes 1-4 where
-    STORY_Y puts them (2 px): the stops are where the check means them"""
+    """where the reader stops, the copy settles (OV-R2-2). Until hc31r: stopping at 25, 50 and 75% of each hand-over, the
+    frame 1 s later showed exactly one beat with its headline risen and its paragraph whole. hc31r (integrate, standing
+    in for tests; home's request, LEAP-hc31 M2's acceptance: "every stop is one shot"): the take cuts on the clock, so a
+    stop can only ever be on a shot. At 1440 x 900 (every 100 px of the take, 37 stops) and at 390 x 844 with touch
+    (25, 50 and 75% of each of the four hand-overs, and each beat's own mark): 0.8 s after the stop exactly one beat
+    shows and it is whole (no beat between 0.01 and 0.99), no cut is playing, the stage's labels are in and, on beats 0
+    to 3, at least two of them stand (one on the phone, whose first shot names the boundary alone); the index names that beat; and the stage's shot is the beat's (wide, wide or down
+    on an upright screen, section, close; off on the record). And the scene index lands scenes 1 to 4 where their marks
+    put them (the mark's middle on the screen's middle, 2 px), from the scene before."""
     bad, n = [], 0
     for w, h, touch in ((1440, 900, False), (390, 844, True)):
-        tag = f"index.html@{w}x{h}" + (" touch" if touch else " wheel")
-        ctx, pg = await open_page(b, "index.html", w, h, touch=touch)
-        cdp = await ctx.new_cdp_session(pg)
-        await scene_rest(pg, 0)
-        await pg.evaluate(NUM_REC)
-        await stop_at(pg, cdp, await pg.evaluate(STORY_Y, 1.0), touch, w, h)
-        await pg.wait_for_timeout(1200)
-        await pg.evaluate("window.__nr.on = false"); nr = await pg.evaluate("window.__nr")
-        if nr["bad"]: bad.append(f"{tag} S0 -> S1: .story-num shows '00' in {len(nr['bad'])}+ of {nr['n']} frames, e.g. {nr['bad'][:2]}")
-        # the reader moves on from each stop to the next (forward through the four hand-overs, 25/50/75% of each relay
-        # window [i+.32, i+.68]); each stop is judged where it settles
-        await pg.evaluate(FRAME_COUNTER)
-        for i in range(4):
-            for f in (0.25, 0.5, 0.75):
-                s = i + 0.32 + 0.36 * f
-                y = await stop_at(pg, cdp, await pg.evaluate(STORY_Y, s), touch, w, h)
-                await pg.wait_for_timeout(1000)
-                # then the copy as it stays: two equal reads with at least two frames between them (up to 8 s; 16 s
-                # throttled). Not .story[data-settled]: story.js sets it only at a scene's rest, never mid-hand-over
-                # (86db818), so waiting for it cost 20 s a stop and timed the check out at 1200 s
-                st, last, t_w = None, None, time.monotonic()
-                while time.monotonic() - t_w < (16 if MODE["throttle"] > 1 else 8):
-                    st, fr = await pg.evaluate(f"[{REST_STATE}, window.__oxaF]")
-                    if last and st == last[0] and fr - last[1] >= 2: break
-                    if not last or st != last[0]: last = (st, fr)
-                    await pg.wait_for_timeout(150)
-                n += 1
-                whole = [x["i"] for x in st if x["n"] and x["up"] == x["n"] and (x["body"] is None or x["body"] >= 0.9)]
-                eyes = [(x["i"], x["eye"]) for x in st if x["i"] not in whole and x["eye"] > 0.1]
-                if len(whole) != 1 or eyes:
-                    bad.append(f"{tag} S{i}->S{i + 1} stop at {int(f * 100)}% (s={s:.2f}, y={y}): complete beats {whole}, other eyebrows {eyes}; "
-                               f"beats [words up/n, body, eyebrow] {[(x['up'], x['n'], x['body'], x['eye']) for x in st]}")
-        # hc16 (integrate): the check's model of the run is the page's own: the scene index lands each scene where STORY_Y
-        # puts it (2 px), so a change in the run's length (hc15's 4.9 scenes, hc16's paper slack) fails here, not by drift
-        for i in range(1, 5):
-            await pg.evaluate(f"document.querySelectorAll('.story-idx button')[{i}].click()"); await pg.wait_for_timeout(900)
-            yi, ys = await pg.evaluate(f"[Math.round(scrollY), ({STORY_Y})({i})]")
-            if abs(yi - ys) > 2: bad.append(f"{tag}: the scene index lands scene {i} at y={yi}, STORY_Y({i}) says {ys}: the check's run is not the page's")
+        ctx, pg = await open_page(b, "index.html", w, h, touch=touch, init=RUN_PRESET)
+        tag = f"index.html@{w}x{h}"
+        if not await until(pg, TAKE_READY, 15000): bad.append(f"{tag}: the take did not start"); await ctx.close(); continue
+        marks = [await pg.evaluate(f"({TAKE_Y})({i})") for i in range(5)]
+        pin = await pg.evaluate("document.querySelector('.story').offsetHeight - innerHeight")
+        stops = list(range(0, int(pin) + 1, 100)) if not touch else sorted({round(a + (z - a) * f) for a, z in zip(marks, marks[1:]) for f in (0, .25, .5, .75)} | {marks[4]})
+        for y in stops:
+            await pg.evaluate(f"window.scrollTo({{ top: {y}, behavior: 'instant' }})"); await pg.wait_for_timeout(800); n += 1
+            s = await pg.evaluate(TAKE_SNAP)
+            vis = [k for k, o in enumerate(s["ops"]) if o > 0.01]; part = [o for o in s["ops"] if 0.01 < o < 0.99]
+            shot_ok = s["off"] if s["beat"] == 4 else (not s["off"] and s["shot"] in ((TAKE_SHOTS[s["beat"]], "down") if s["beat"] == 1 else (TAKE_SHOTS[s["beat"]],)))
+            if vis != [s["beat"]] or part or s["cut"] or s["cur"] != f"0{s['beat']}" or not shot_ok or (s["beat"] < 4 and (s["out"] or s["labs"] < (1 if touch else 2))):
+                bad.append(f"{tag} stop at y={y}: not one whole shot with its labels and the index on it ({s})")
+        if not touch:
+            for i in (1, 2, 3, 4):
+                await take_to(pg, i - 1)
+                await pg.evaluate(f"document.querySelector('.story-idx [data-n=\"0{i}\"]').click()")
+                ok = await until(pg, f"({TAKE_AT}) === {i} && Math.abs(scrollY - ({TAKE_Y})({i})) <= 2", 6000, 60)
+                if not ok: bad.append(f"{tag}: the index's tick for scene 0{i} landed at y={await pg.evaluate('Math.round(scrollY)')}, its mark is at {marks[i]} (2 px)")
         await ctx.close()
-    assert not bad, f"overture_rest: {len(bad)} problems ({n} stops):\n  " + "\n  ".join(bad[:16])
-    print(f"overture_rest: {n} stops mid-hand-over at 1440 (wheel) and 390 (touch) each settle on one complete headline; no '00'")
+    assert not bad, f"overture_rest: {len(bad)} problems ({n} stops):\n  " + "\n  ".join(bad[:14])
+    print(f"overture_rest: {n} stops (every 100 px at 1440; quarter stops with touch at 390): each is one whole shot with its labels and the index on it; the index lands scenes 1-4 on their marks")
 
 
 
@@ -3762,56 +4078,68 @@ PAPER_OPEN = """() => { const st = document.querySelector('.story'), sec = st &&
     tail: Math.max(0, -parseFloat(getComputedStyle(sec).marginTop) || 0), end: Math.round(st.offsetTop + st.offsetHeight), H: innerHeight }; }"""
 
 
+# the take's hand-over to §01 (the paper), read at one scroll position: where the take ends, where §01 and its heading
+# start, what of the record still shows and how whole, the bar's state, and the largest band of ink without content
+# between the bar's foot and the paper
+TAKE_OUT = "(() => { " + EFF + """
+  const s = document.querySelector('.story'), nx = s.nextElementSibling, nav = document.querySelector('header.nav') || document.querySelector('.nav'), b4 = s.querySelector('.beat-4');
+  const sr = s.getBoundingClientRect(), nr = nx.getBoundingClientRect(), nb = nav.getBoundingClientRect().bottom, hd = nx.querySelector('h2'), rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  const parts = [...b4.querySelectorAll('h2, .body-lg, .beat-more, .take-rec, .pf-lane, .take-rec .figure-cap')].filter(e => e.getBoundingClientRect().height > 1);
+  const seen = parts.filter(e => { const r = e.getBoundingClientRect(); return r.bottom > nb && r.top < Math.min(innerHeight, nr.top); });
+  const ink = [...b4.querySelectorAll('h2, .body-lg, .beat-more, .pf-lane, .pf-gut > *, .take-rec .figure-cap'), ...s.querySelectorAll('.take-bar .story-idx, .take-bar .take-hedge')]
+    .filter(e => e.getBoundingClientRect().height > 1 && eff(e, document.documentElement) > 0.3).map(e => e.getBoundingClientRect()).map(r => [r.top, r.bottom]).sort((a, b) => a[0] - b[0]);
+  let at = nb, hole = 0; const foot = Math.min(innerHeight, nr.top);
+  for (const [t, b] of ink) { if (b <= nb || t >= foot) continue; hole = Math.max(hole, Math.max(t, nb) - at); at = Math.max(at, Math.min(b, foot)); }
+  const tail = foot > nb ? foot - at : 0; if (foot > nb) hole = Math.max(hole, tail);
+  const tk = s.querySelector('.take').getBoundingClientRect();
+  const pad = document.createElement('i'); pad.style.cssText = 'position:absolute;visibility:hidden;height:var(--sec-open)'; document.body.append(pad); const open = pad.getBoundingClientRect().height; pad.remove();
+  return { y: Math.round(scrollY), beat: s.dataset.beat, pinned: document.documentElement.classList.contains('story-ready'), take: [+sr.top.toFixed(1), +sr.bottom.toFixed(1)], tk: [+tk.top.toFixed(1), +tk.bottom.toFixed(1)], tail: Math.round(tail), next: +nr.top.toFixed(1), head: hd ? +hd.getBoundingClientRect().top.toFixed(1) : null,
+    padTop: parseFloat(getComputedStyle(nx).paddingTop), open: +open.toFixed(1), rem, nb: +nb.toFixed(1), vh: innerHeight, nextDark: nx.classList.contains('is-dark'),
+    minO: seen.length ? Math.min(...seen.map(e => +eff(e, document.documentElement).toFixed(2))) : 1, seen: seen.length, hole: Math.round(hole),
+    solid: nav.classList.contains('nav--solid'), dark: nav.classList.contains('nav--dark'), rec: !(document.querySelector('.nav-run--rec') || { hidden: true }).hidden,
+    half: (Math.min(sr.bottom, innerHeight) - Math.max(sr.bottom - innerHeight, 0)) / innerHeight }; })()"""
+
+
+async def take_walk(pg, h, past=0.5):
+    """the walk the three hand-over checks share: from the record's rest down in tenth-of-a-screen steps to `past` screens
+    beyond the take's end, each step settled (two frames and 250 ms); one TAKE_OUT read a step"""
+    y4 = await pg.evaluate(f"({TAKE_Y})(4)"); end = await story_end(pg)
+    out, y = [], y4
+    while y <= end + past * h + 1:
+        await pg.evaluate(f"window.scrollTo({{ top: {round(y)}, behavior: 'instant' }})"); await pg.wait_for_timeout(250)
+        out.append(await pg.evaluate(TAKE_OUT)); y += h / 10
+    return end, out
+
+
 @check
 async def paper_opening(b):
     """hc17 (integrate, new coverage for the director's hc16 / hc17 item 4.1): the overture hands over to §01 as a chapter
-    opens. At 390 x 844 (touch), 768 x 1024, 1024 x 1366, 1440 x 900 and 3840 x 2160: at the release (story end - h, the
-    stage starts to move) §01's heading stands one --sec-open under the paper caption's rule (4 px), where the frame once
-    left 150-750 px of blank paper (stacked: 295 px at 390, 572 at 1024 x 1366); and on a wheel walk in 0.1 h steps from
-    scene 4's rest to half a screen past the release, each step settled, §01's top never shows above the paper's top (over
-    the dark stage) or over the caption
-    hc29 (integrate, standing in for tests; home's request, the HC29 director's item 1: "the paper wipes the chart",
-    the ten-tick strip deleted): §01 itself is the paper now (lifted over the pinned stage, one screen of slack; the
-    empty `.story-paper` tracks its top), so the same chapter opening reads: at the release (story end - h) §01's top
-    is at the viewport's top (2 px) and its heading one --sec-open under it (4 px); on the walk, wherever §01's top
-    shows between the bar's foot and the screen's foot, the paper is drawn with its top on §01's top (1 px: never §01
-    over the dark stage) and §01 covers what it has passed over (the point 2 px under its top, mid-width, is §01's).
-    The caption clause stays for a page that draws the strip again."""
-    bad, n = [], 0
+    opens. hc29: §01 itself was the paper, lifted over the pinned stage. hc31r (integrate, standing in for tests; home's
+    request, LEAP-hc31 HOME-2): the take is one sticky screen in a story five screens long and §01 follows it in the
+    page's own flow, so the same chapter opening reads, at 390 x 844 (touch), 768 x 1024, 1024 x 1366, 1440 x 900 and
+    3840 x 2160: with the page at the take's end §01's top is at the viewport's top (2 px), it is a paper band, its top
+    padding is one --sec-open (1 px) and its heading starts under that padding by no more than its own leading (1rem):
+    no blank paper above the head, where a frame once left 150 to 750 px; and on a walk in tenth-of-a-screen steps from
+    the record's rest to half a screen past the end, each step settled, §01's top is the take's foot (1 px): the paper
+    never shows over the take, and no band opens between them."""
+    bad, n, notes = [], 0, []
     for w, h, touch in ((390, 844, True), (768, 1024, False), (1024, 1366, False), (1440, 900, False), (3840, 2160, False)):
         tag = f"index.html@{w}x{h}"
-        ctx, pg = await open_page(b, "index.html", w, h, touch=touch)
-        await pg.wait_for_timeout(1500)
-        g = await pg.evaluate(PAPER_OPEN)
-        if not g: bad.append(f"{tag}: no .story-paper / §01 h2"); await ctx.close(); continue
-        rel = g["end"] - h
-        await pg.evaluate(f"window.scrollTo({{top: {rel}, behavior: 'instant'}})"); await pg.wait_for_timeout(1500)
-        at = await pg.evaluate(PAPER_OPEN)
-        gap = at["h2"] - (at["cap"] if at["cap"] is not None else at["sec"])
-        if at["paper"] is None: bad.append(f"{tag} at the release (y={at['y']}): the paper is not drawn")
-        elif at["cap"] is None and abs(at["sec"]) > 2: bad.append(f"{tag} at the release (y={at['y']}): §01's top at {at['sec']} (the viewport's top, 2 px)")
-        if abs(gap - at["open"]) > 4: bad.append(f"{tag} at the release (y={at['y']}): §01's heading {gap} px under {'the caption' if at['cap'] is not None else '§01'}'s top, --sec-open is {at['open']:.1f} (tail {at['tail']})")
-        y0 = await pg.evaluate(STORY_Y, 3.95)
-        y1 = rel + round(0.45 * h)
-        await pg.evaluate(f"window.scrollTo({{top: {y0}, behavior: 'instant'}})"); await pg.wait_for_timeout(1200)
-        await pg.mouse.move(w // 2, h // 2)
-        cur, step, steps = await pg.evaluate("scrollY"), max(1, round(0.1 * h)), 0
-        for y in range(y0, y1 + step, step):
-            while cur < y - 3:
-                await pg.mouse.wheel(0, min(120, y - cur)); await pg.wait_for_timeout(30); cur = await pg.evaluate("scrollY")
-            await pg.wait_for_timeout(750)
-            s = await pg.evaluate(PAPER_OPEN); n += 1; steps += 1
-            if s["cap"] is not None:
-                if s["sec"] < h - 1:
-                    if s["paper"] is None or s["sec"] < s["paper"] - 1: bad.append(f"{tag} y={s['y']}: §01's top at {s['sec']} over the dark stage (paper top {s['paper']})")
-                    elif s["cap"] > 0 and s["sec"] < s["cap"] + 1: bad.append(f"{tag} y={s['y']}: §01's top at {s['sec']} covers the paper's caption (rule at {s['cap']})")
-            elif s["navB"] < s["sec"] < h - 1:
-                if s["paper"] is None or abs(s["sec"] - s["paper"]) > 1: bad.append(f"{tag} y={s['y']}: §01's top at {s['sec']}, the paper's top at {s['paper']} (§01 is the paper: 1 px)")
-                if s["hit"] is False: bad.append(f"{tag} y={s['y']}: the point under §01's top ({s['sec']}) is not §01's: the stage shows over it")
-        print(f"  {tag}: {'rule' if at['cap'] is not None else '§01 top'} -> heading {gap} px (--sec-open {at['open']:.1f}, tail {at['tail']}, top {at['sec']}); {steps} settled steps")
+        ctx, pg = await open_page(b, "index.html", w, h, touch=touch, init=RUN_PRESET)
+        if not await until(pg, TAKE_READY, 15000): bad.append(f"{tag}: the take is not pinned (nothing was tested)"); await ctx.close(); continue
+        end, walk = await take_walk(pg, h)
+        n += len(walk)
+        for s in walk:
+            if abs(s["next"] - s["take"][1]) > 1: bad.append(f"{tag} y={s['y']}: §01's top is at {s['next']}, the take's foot at {s['take'][1]} (one edge)")
+        await pg.evaluate(f"window.scrollTo({{ top: {end}, behavior: 'instant' }})"); await pg.wait_for_timeout(400)
+        s = await pg.evaluate(TAKE_OUT)
+        if abs(s["next"]) > 2 or s["nextDark"]: bad.append(f"{tag}: at the take's end §01's top is at {s['next']} (the viewport's top) and it is {'ink' if s['nextDark'] else 'paper'}")
+        if abs(s["padTop"] - s["open"]) > 1 or s["head"] is None or not (-1 <= s["head"] - s["next"] - s["padTop"] <= s["rem"]):
+            bad.append(f"{tag}: §01 opens with {s['padTop']} px of padding (--sec-open is {s['open']}) and its heading {None if s['head'] is None else round(s['head'] - s['next'] - s['padTop'], 1)} px under it (0 to 1rem = {s['rem']})")
+        notes.append(f"{w}: heading {s['head'] - s['next']:.0f} px under §01's top (--sec-open {s['open']:.0f})")
         await ctx.close()
-    assert not bad, f"paper_opening: {len(bad)} problems ({n} steps):\n  " + "\n  ".join(bad[:16])
-    print(f"paper_opening: §01 is the paper and opens one --sec-open under its top at the release at five sizes; {n} settled steps, its top on the paper's, never over the dark stage")
+    assert not bad, f"paper_opening: {len(bad)} problems ({n} steps):\n  " + "\n  ".join(bad[:12])
+    print(f"paper_opening: the take hands over to §01 as a chapter opens ({'; '.join(notes)}); over {n} settled steps §01's top is the take's foot")
 
 
 # ---- hc18 (integrate; the director's HC18 4.2-4.4, done by platform, proof and home): under text-wrap: balance (site.css,
@@ -4136,7 +4464,8 @@ mins = lambda t: (lambda m: int(m[1]) * 60 + int(m[2]) if m else None)(re.search
 
 @check
 async def desk_phone_follow(b):
-    """the desk at 390x844 with touch, agents at the maximum and the threshold at its minimum: while 'Follow the next
+    """the desk at 390x844 with touch, the threshold at its minimum (hc31r, PLAT-4: there is no population slider any more,
+    and the pause that holds the desk is the header's: it is on screen with Follow centred, 44 px tall): while 'Follow the next
     action' walks its gates, [data-gap-lane] stays inside the viewport once its scroll-in (during gate 01) has landed
     (LC-R2-2); the strip's records plus its '+N
     earlier records' equal Creates + Redeems (read while paused, and at 'Session complete'; LC-R2-6a); Follow pressed
@@ -4145,14 +4474,15 @@ async def desk_phone_follow(b):
     ctx, pg = await open_page(b, "lifecycles.html", 390, 844, touch=True)
     await pg.evaluate("document.querySelector('[data-gap]').scrollIntoView({block: 'start', behavior: 'instant'})")
     await pg.wait_for_timeout(800)
-    await pg.evaluate("(() => { const n = document.querySelector('[data-gap-n]'), t = document.querySelector('[data-gap-thr]'); for (const [i, v] of [[n, n.max], [t, t.min]]) { i.value = v; i.dispatchEvent(new Event('input', {bubbles: true})); i.dispatchEvent(new Event('change', {bubbles: true})); } })()")
+    # hc31r (PLAT-4): the population slider left the page (the model runs at one size); the threshold is the hand
+    await pg.evaluate("(() => { const t = document.querySelector('[data-gap-thr]'); t.value = t.min; t.dispatchEvent(new Event('input', {bubbles: true})); t.dispatchEvent(new Event('change', {bubbles: true})); })()")
     await pg.wait_for_timeout(1500)
     # (a) the walk, in view
     await pg.evaluate("document.querySelector('[data-gap-follow]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(400)
     # v2x r3 (platform; r3-motion minor): with Follow centred, Pause lies under the bar and answers at its centre; the
     # desk's head keeps its height during a followed walk (the state no longer wraps Pause onto a third row)
     mo, head0 = await pg.evaluate(GAP_MOTION), await pg.evaluate(DESK_HEAD)
-    if not (mo["inside"] and mo["hit"]): bad.append(f"lifecycles.html@390x844: with Follow centred, Pause is not under the bar inside the viewport or does not answer at its centre {mo}")
+    if not (mo["inside"] and mo["hit"] and mo["tall"] >= 44): bad.append(f"lifecycles.html@390x844: with Follow centred, the header's pause is not on screen, 44 px tall, answering at its centre {mo}")
     await bounded(pg.locator("[data-gap-follow]").tap(), "a tap on Follow the next action", 60)
     walk, heads, t0 = [], set(), time.monotonic()
     while time.monotonic() - t0 < 40:
@@ -4170,9 +4500,9 @@ async def desk_phone_follow(b):
     if out: bad.append(f"lifecycles.html@390x844: the lane is outside the viewport during the walk in {len(out)} of {len(walk)} samples (after its scroll-in), e.g. (gate, [top, bottom]) {out[:3]} (viewport 0-844)")
     # (c) the strip accounts for every fill: read while paused (the counters and the strip from the same instant)
     async def strip_vs_counts(when):
-        await pg.evaluate("document.querySelector('[data-gap-motion]').click()"); await pg.wait_for_timeout(400)
+        await pg.evaluate("OXA.run.pause(true)"); await pg.wait_for_timeout(400)   # hc31r: the header's pause holds the desk
         d = await pg.evaluate(DESK)
-        await pg.evaluate("document.querySelector('[data-gap-motion]').click()")
+        await pg.evaluate("OXA.run.pause(false)")
         if d["recs"] + d["more"] != d["creates"] + d["redeems"]:
             bad.append(f"lifecycles.html@390x844 {when}: the strip holds {d['recs']} records + '+{d['more']}' while Creates + Redeems read {d['creates']} + {d['redeems']} ({d['time']})")
         return d
@@ -4210,11 +4540,15 @@ VT_REC = r"""(() => { const R = window.__vt = { f: [], on: true }; const root = 
     if (R.on && R.f.length < 900) requestAnimationFrame(f); }; requestAnimationFrame(f); })()"""
 
 
-def frame_issues(png, bar_h):
+def frame_issues(png, bar_h, rest=None):
     """for one screencast frame: (the lit share below the bar, the band: [first row, rows] of a run of at least 4
     full-width rows of the ink root #0B110F (+-2) below the bar in a frame that also shows a paper view, else None).
     The band sits between the bar and the paper on a jump up, and between the paper and the incoming sheet on a jump
-    down (1a6b9fb: rows 724-844 at 390 for 280 ms on 01 -> 06), so both places count."""
+    down (1a6b9fb: rows 724-844 at 390 for 280 ms on 01 -> 06), so both places count.
+    hc31r (integrate): `rest` is the row mask of the settled frame (the last one). A row that is the same plain ink
+    there is the destination's own ground, not a hole: Home's top is the take, whose first rows under the bar are the
+    ink root's colour by design (its ground runs to the bar; until hc31r the WebGL globe's glow lay there). With
+    rest=True the frame's own mask is returned as the third value."""
     from PIL import Image, ImageChops
     import io
     im = Image.open(io.BytesIO(png)).convert("RGB")
@@ -4226,9 +4560,10 @@ def frame_issues(png, bar_h):
     ink = ImageChops.lighter(ImageChops.lighter(r_, g_), b_).point(lambda v: 255 if v <= 2 else 0)
     ink_rows = [v >= 0.98 * 255 for v in ink.resize((1, below.size[1]), Image.BOX).tobytes()]
     paper = any(v >= 0.9 * 255 for v in luma.point(lambda v: 255 if v > 200 else 0).resize((1, below.size[1]), Image.BOX).tobytes())
+    if rest is True: return lit, None, ink_rows
     band, run = None, 0
     for y, full in enumerate(ink_rows + [False]):
-        if full: run += 1; continue
+        if full and not (rest and y < len(rest) and rest[y]): run += 1; continue
         if run >= 4 and paper and band is None: band = [bar_h + y - run, run]
         run = 0
     return lit, band
@@ -4238,7 +4573,8 @@ def frame_issues(png, bar_h):
 async def jump_touch(b):
     """at 390x844 with touch, every screencast frame of Back to top (from the footer) and of a chapter jump from 01 to 06
     on home: at least 2% lit pixels below the bar (no blank frame), no band (4+ full-width rows) of the ink root #0B110F
-    beside a paper view (between the bar and the paper, or between the paper and the incoming sheet), and one chapter
+    beside a paper view (between the bar and the paper, or between the paper and the incoming sheet; hc31r: rows that
+    are the same plain ink in the settled frame are the destination's own ground and do not count), and one chapter
     readout (never the old and the new bar both drawn) (NV-R2-2). v2x cut (1 Nov): phones have no readout pill; the menu
     toggle opens the sheet that holds Back to top and the chapters, so the tap that opens it is on the toggle"""
     bad, summary = [], []
@@ -4271,8 +4607,9 @@ async def jump_touch(b):
         name = "Back to top" if case == "top" else "chapter 01 -> 06"
         if len(shots) < 3: bad.append(f"index.html@390x844 {name}: only {len(shots)} screencast frames after the tap")
         dark, bands = [], []
+        rest = frame_issues(shots[-1][1], bar_h, rest=True)[2] if shots else None
         for t, png in shots:
-            lit, band = frame_issues(png, bar_h)
+            lit, band = frame_issues(png, bar_h, rest)
             if lit < 0.02: dark.append((int(t - t_click), f"{lit * 100:.1f}%"))
             if band: bands.append((int(t - t_click), band))
         two = [(int(x["t"] - t_click), x["old"], x["neu"]) for x in vt if x["vt"] and x["old"] > 0.05 and x["neu"] > 0.05]
@@ -4343,7 +4680,8 @@ MAIN_PAGES = ("index.html", "platform.html", "lifecycles.html", "evidence.html",
 LC_STAGE = r"""(() => { const h = document.querySelector('.page-hero'), s1 = document.querySelector('#test .ch-head'),
     labs = [...document.querySelectorAll('.hero-plate--rings .hp-labs .hp-lab')], fs = el => +parseFloat(getComputedStyle(el).fontSize).toFixed(2);
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-  return { vh: innerHeight, rem, heroTop: h.getBoundingClientRect().top + scrollY, heroB: h.getBoundingClientRect().bottom + scrollY, s1: s1 ? s1.getBoundingClientRect().top + scrollY : null,
+  const cap = document.querySelector('.hero-plate--rings .hp-cap');
+  return { vh: innerHeight, rem, heroTop: h.getBoundingClientRect().top + scrollY, heroB: h.getBoundingClientRect().bottom + scrollY, s1: s1 ? s1.getBoundingClientRect().top + scrollY : null, cap: cap ? cap.getBoundingClientRect().bottom + scrollY : null,
     labs: labs.map(l => [l.textContent.trim().slice(0, 12), fs(l), ...[...l.querySelectorAll('*')].map(fs)]) }; })()"""
 EDGE_LINE = r"""(() => { const a = document.querySelector('.stack-scene #architecture'); if (!a) return null;
   const c = a.querySelector('.container'), cs = getComputedStyle(c), cr = c.getBoundingClientRect(), ar = a.getBoundingClientRect(), b = getComputedStyle(a, '::before');
@@ -4360,7 +4698,9 @@ async def page_type_sizes(b):
     <main> in at most four sizes at 1440 x 900 and, with touch, at 390 x 844 (the council's probe: SCREEN_SIZES). (2) Every
     half screen of Platform (its pinned scene included) and Lifecycles, top to foot, at 1440 x 900 and 390 x 844: at most four.
     (3) Facts the platform group pinned: the Lifecycles hero is a whole stage again (its foot 2.5rem above the first screen's
-    foot, +-2 px, at 1440 x 900 and 390 x 844; at 390 x 844 §01's head starts below the fold), and its ring carries one label
+    foot, +-2 px, at 1440 x 900; hc31r, PLAT-3 and the HC31 director's item 9: at 390 x 844 it no longer fills the screen,
+    it ends 3rem under its drawing's caption and §01's head starts on the first screen; until then its foot stood
+    2.5rem above the fold there too and §01's head below it), and its ring carries one label
     register (every gate numeral and label at one size: "01"-"06" at the label step, not 11 px mono under 14 px labels);
     Platform's ink edge line (`#architecture::before`, pinned at 1440 x 900) runs the content's width (the container's
     content box, +-1 px each side) at two hairlines. At hc28's review Lifecycles' first screen showed six sizes at 1440 and
@@ -4380,8 +4720,14 @@ async def page_type_sizes(b):
             if path == "lifecycles.html":
                 st = await pg.evaluate(LC_STAGE)
                 want = st["vh"] - 2.5 * st["rem"]
-                if abs(st["heroB"] - want) > 2: bad.append(f"{path}@{w}x{h}: the hero ends at {st['heroB']:.1f}, not on its stage ({want:.1f}: the first screen less 2.5rem)")
-                if touch and (st["s1"] is None or st["s1"] < st["vh"]): bad.append(f"{path}@{w}x{h}: §01's head starts at {st['s1']} (inside the first screen of {st['vh']})")
+                if not touch:
+                    if abs(st["heroB"] - want) > 2: bad.append(f"{path}@{w}x{h}: the hero ends at {st['heroB']:.1f}, not on its stage ({want:.1f}: the first screen less 2.5rem)")
+                else:
+                    # hc31r (integrate; platform's request, LEAP-hc31 PLAT-3, the HC31 director's item 9): on a phone the hero no
+                    # longer fills the screen. It ends 3rem under its drawing's caption (4 px) and inside the first screen, so
+                    # §01's head starts on the first screen: the page shows where it goes next
+                    if st["cap"] is None or abs(st["heroB"] - st["cap"] - 3 * st["rem"]) > 4 or st["heroB"] > st["vh"]: bad.append(f"{path}@{w}x{h}: the hero ends at {st['heroB']:.1f}, {None if st['cap'] is None else round(st['heroB'] - st['cap'], 1)} px under its caption (3rem = {3 * st['rem']:.0f}) in a first screen of {st['vh']}")
+                    if st["s1"] is None or st["s1"] >= st["vh"]: bad.append(f"{path}@{w}x{h}: §01's head starts at {st['s1']} (on the first screen of {st['vh']} since hc31r)")
                 sizes = {x for lab in st["labs"] for x in lab[1:]}
                 if not st["labs"] or len(sizes) != 1: bad.append(f"{path}@{w}x{h}: the ring's gate numerals and labels in {len(sizes)} sizes, not one register: {st['labs']}")
                 else: notes.append(f"Lifecycles {w}: hero foot {st['heroB']:.0f}, ring labels {sizes.pop()} px")
@@ -4618,6 +4964,13 @@ CLOSE = r"""(() => { const band = document.querySelector('main .cta-band'), h = 
     content: gb.content, z: gb.zIndex, bx, bw: br.width, bh: br.height, ov: bs.overflowX + ' ' + bs.overflowY, iso: bs.isolation,
     inn: !!band.querySelector('[data-reveal].is-in'),
     top: h.getBoundingClientRect().top, bar: bar ? bar.getBoundingClientRect().bottom : 0 }; })()"""
+# hc31r (system; LEAP-hc31 SYS-5): on the five camera pages the close's one device is the run's ledger, drawn by run.js
+RUN_CLOSE_PAGES = ("index.html", "platform.html", "lifecycles.html", "trust.html", "company.html")
+RUN_CLOSE = r"""(() => { const band = document.querySelector('main > .cta-band'), box = band && band.querySelector('.ledger-line'); if (!box) return null;
+  const q = s => band.querySelector(s).getBoundingClientRect(), sum = q('.ll-sum'), row = q('.row'), tr = q('.ll-track'), br = band.getBoundingClientRect();
+  const rg = document.createRange(); rg.selectNodeContents(band.querySelector('.ll-sum')); const lines = [...rg.getClientRects()].filter(x => x.width > 1);
+  return { gap: Math.min(...lines.map(x => x.top)) - row.bottom, foot: br.bottom - tr.bottom, globe: parseFloat(getComputedStyle(band, '::before').width) || 0,
+    out: Math.max(0, ...lines.map(x => Math.max(-x.left, x.right - br.width))), blocks: [...box.querySelectorAll('.ll-b')].filter(x => x.dataset.h).length, sum: band.querySelector('.ll-sum').textContent.replace(/\s+/g, ' ').trim() }; })()"""
 CLOSE_GLOBE_OK = "(() => { const b = document.querySelector('main .cta-band'); return !!b && !!b.querySelector('[data-reveal].is-in') && +getComputedStyle(b, '::before').opacity > .99; })()"
 
 
@@ -4656,7 +5009,14 @@ async def close_step(b):
     its width and half its height inside the band, and from 1440 up at least a third of the band's width (it composes the
     right half at 4K: 1,440 px of 3,840); before the close reveals, with JavaScript, it asks for no image (the globe waits
     for the close: no request in the first paint's graph); without JavaScript it is drawn at once (1440, Home and
-    Research). Everything else is unchanged."""
+    Research). Everything else is unchanged.
+    hc31r (system; LEAP-hc31 SYS-5, "there is still one close device"): on Home, Platform, Lifecycles, Trust and Company
+    the device is the run's ledger, so the globe clause reads there: with scripts the band draws no globe (its ::before has
+    no width) and ends on the ledger: the sum line ("Since you arrived ... proposed = settled + rejected + in flight",
+    "Illustrative model") stands at least 16 px under the band's buttons at every size (it stood ON them at 768 and 8 px
+    under them at 1024 while it hung from the band's bottom padding), inside the screen, over a track of blocks whose
+    hairline is the band's own foot (2 px). Proof, Research and the Blog keep the globe clause as it was; without
+    JavaScript every close draws the globe at once, as before (no script, no run)."""
     bad, notes = [], []
     for w, h, dpr, touch in ((3840, 2160, 1, False), (1440, 900, 1, False), (1024, 768, 1, False), (768, 1024, 2, False), (390, 844, 3, True), (320, 640, 2, True)):
         for path in CLOSE_PAGES:
@@ -4673,7 +5033,18 @@ async def close_step(b):
             if w < 396 and not (36 - 0.5 <= r["fs"] <= r["hero"] + 0.5): bad.append(f"{tag}: the close's head is {r['fs']:.1f} px, not between 36 and the H1 step {r['hero']:.1f}")
             if r["fs"] < r["head"] - 0.5: bad.append(f"{tag}: the close's head ({r['fs']:.1f} px) is smaller than a chapter head ({r['head']:.1f})")
             if r["over"] > 1: bad.append(f"{tag}: a line of the close's head passes its column by {r['over']:.1f} px")
-            bad += close_globe_issues(tag, r, w)
+            if path in RUN_CLOSE_PAGES:
+                await until(pg, "!!document.querySelector('main > .cta-band .ll-b:not([data-h=\"\"])')", 4000)
+                e = await pg.evaluate(RUN_CLOSE)
+                if not e: bad.append(f"{tag}: the close has no ledger (the run's end card, `.ledger-line`)")
+                else:
+                    if e["globe"] > 0.5: bad.append(f"{tag}: the close draws a globe ({e['globe']:.0f} px) beside the run's ledger (one close device)")
+                    if e["gap"] < 16: bad.append(f"{tag}: the ledger's sum stands {e['gap']:.0f} px under the band's buttons (16)")
+                    if e["out"] > 1: bad.append(f"{tag}: the ledger's sum passes the screen by {e['out']:.0f} px")
+                    if not 0 <= e["foot"] <= 2.5: bad.append(f"{tag}: the ledger's track ends {e['foot']:.1f} px above the band's foot (its hairline is the band's last line)")
+                    if e["blocks"] < 3 or "Illustrative model" not in e["sum"] or "Since you arrived" not in e["sum"]: bad.append(f"{tag}: the ledger shows {e['blocks']} blocks and reads {e['sum'][:80]!r}")
+                    if path == "index.html": notes.append(f"{w}: Home's ledger {e['gap']:.0f} px under the buttons")
+            else: bad += close_globe_issues(tag, r, w)
             if (w, h) in ((1440, 900), (3840, 2160)):
                 await pg.evaluate("window.scrollTo({top: document.documentElement.scrollHeight, behavior: 'instant'})"); await pg.wait_for_timeout(700)
                 e = await pg.evaluate(CLOSE)
@@ -4690,7 +5061,7 @@ async def close_step(b):
         if r["img"] != ["globe-fine.svg"] or r["op"] < 0.99: bad.append(f"{path}@1440x900 no JS: the close's globe is {r['img']} at opacity {r['op']:.2f} (drawn at once)")
         if r["els"]: bad.append(f"{path}@1440x900 no JS: {r['els']} .globe element(s) shown in the close")
     assert not bad, "close_step:\n  " + "\n  ".join(bad[:24])
-    print(f"close_step: eight closes on the H1 step, inside their columns, each with the fine globe behind it from the band's ::before, none before it reveals, at once without JS (Proof {'; '.join(notes)})")
+    print(f"close_step: eight closes on the H1 step, inside their columns; Proof, Research and the Blog with the fine globe behind them from the band's ::before, the five camera pages on the run's ledger under their buttons; no globe before a close reveals, at once without JS ({'; '.join(notes)})")
 
 
 # ---- hc30r (system; RETHINK-hc30 SYS-4, the director's HC30 item 9; EVOLVE "Owner, 8 Nov" motion conditions): the close
@@ -4806,53 +5177,38 @@ PAPER_ROW = r"""(() => { const paper = document.querySelector('.story-paper'), s
 
 @check
 async def paper_row(b):
-    """hc24 (integrate, standing in for tests; the director's HC24 8, done by home in story.js and home.css): the overture's
-    last frame landed the record row whole on paper (the paper's edge over the printed ticks, no record across it); hc26r
-    took that to the portrait exit. hc29 (integrate, standing in for tests; home's request, the HC29 director's item 1:
-    "the paper wipes the chart; nothing fades first", the ten-tick strip and the ink row deleted): §01 itself is the
-    paper, and the principle is now the wipe. At 1440 x 900, 1920 x 1080, 3840 x 2160, 1024 x 768, 1280 x 600 (a short
-    one), 768 x 1024 and with touch at 390 x 844, walking down in tenth-of-a-screen steps from S4's rest (STORY_Y(4)) to
-    the release (story end - h), each step settled: S4's parts shown at rest (the headline, the lede, "The full proof
-    file", every label at opacity 1 then, and the stage's canvas) are still at opacity 1 (effective, ancestors included)
-    at every step wherever any of them stands above the paper's edge (or the paper is not up yet): nothing of S4 fades
-    before the edge reaches it; the paper rises at least half a screen during the walk; and at the release the story is
-    .is-covered and every beat hidden (visibility hidden or opacity 0: nothing of S4 rides under the bar or takes focus
-    behind the paper)."""
-    bad, notes = [], []
-    for w, h, touch in ((1440, 900, False), (1920, 1080, False), (3840, 2160, False), (1024, 768, False),
-                        (1280, 600, False), (390, 844, True), (768, 1024, False)):
+    """hc24 (integrate, standing in for tests; the director's HC24 8): the overture's last frame landed the record whole on
+    paper; hc29 made it the wipe: "the paper wipes the chart; nothing fades first". hc31r (integrate, standing in for
+    tests; home's request, LEAP-hc31 HOME-2, rule 3: "what stands still is a record"): the record is the take's last
+    beat and it leaves with the page. At 1440 x 900, 1920 x 1080, 3840 x 2160, 1024 x 768, 1280 x 600 (a short one),
+    768 x 1024 and with touch at 390 x 844, walking down in tenth-of-a-screen steps from the record's rest to the take's
+    end, each step settled: every part of the record shown at its rest (the headline, the sentence, "The full proof
+    file", the figure, its ten columns and its caption) is at opacity 1 (effective, ancestors included) wherever it
+    still stands between the bar and the paper: nothing of it fades before the edge reaches it; the beat stays the
+    record (no cut back to the model on the way out); the take moves with the page once released (its top is the
+    scroll's own, 1 px: it leaves by scrolling, never by a transform or a fade); and the header says Record while the
+    take holds half the screen or more and Model once it holds less (within one step of the half)."""
+    bad, n, notes = [], 0, []
+    for w, h, touch in ((1440, 900, False), (1920, 1080, False), (3840, 2160, False), (1024, 768, False), (1280, 600, False), (768, 1024, False), (390, 844, True)):
         tag = f"index.html@{w}x{h}"
-        ctx, pg = await open_page(b, "index.html", w, h, dpr=2 if touch else 1, touch=touch)
-        await pg.wait_for_timeout(1500)
-        y0 = await pg.evaluate(STORY_Y, 4.0)
-        cur, y, steps, rest, rel, rose = 0, y0, 0, None, None, 0.0
-        while True:
-            while cur < y:
-                cur = min(y, cur + h // 4); await pg.evaluate(f"window.scrollTo(0, {cur})"); await pg.wait_for_timeout(80)
-            await pg.wait_for_timeout(800)
-            r = await pg.evaluate(PAPER_ROW); steps += 1
-            if not r: bad.append(f"{tag}: no .story-paper / .story / .beat-4"); break
-            if rel is None: rel = r["end"] - h
-            if rest is None:
-                rest = {x["k"] for x in r["parts"] if x["o"] > 0.99}
-                if not {"headline", "lede", "last line", "canvas"} <= rest: bad.append(f"{tag}: at S4's rest not every part is at opacity 1 ({sorted(k for k in ('headline', 'lede', 'last line', 'canvas') if k not in rest)})")
-            e = r["edge"]
-            if e is not None: rose = max(rose, h - e)
-            if y < rel:
-                for x in r["parts"]:
-                    if x["k"] not in rest or x["b"] <= r["navB"] or x["t"] >= h: continue
-                    if (e is None or x["t"] < e - 0.5) and x["o"] < 0.99:
-                        bad.append(f"{tag} at {cur} ({(cur - y0) / h:.1f} screens into the exit, edge {'none' if e is None else round(e)}): {x['k']} at opacity {x['o']:.2f} above the paper's edge (it fades before the edge reaches it)")
-            else:
-                if not r["cov"]: bad.append(f"{tag} at the release ({cur}): the story is not .is-covered")
-                if not all(r["beats"]): bad.append(f"{tag} at the release ({cur}): {r['beats'].count(False)} beat(s) still shown behind the paper")
-                break
-            y = min(rel, round(y + h * 0.1))
-        if rose < 0.5 * h: bad.append(f"{tag}: the paper rose {rose:.0f} px on the walk (half a screen at least)")
-        notes.append(f"{w}x{h} {steps} steps, {len(rest or ())} parts held")
+        ctx, pg = await open_page(b, "index.html", w, h, touch=touch, init=RUN_PRESET)
+        if not await until(pg, TAKE_READY, 15000): bad.append(f"{tag}: the take is not pinned (nothing was tested)"); await ctx.close(); continue
+        if not await take_to(pg, 4, 600): bad.append(f"{tag}: the record did not come to rest")
+        rest = await pg.evaluate(TAKE_OUT)
+        if rest["seen"] < 14 or rest["minO"] < 0.99: bad.append(f"{tag}: at its rest the record shows {rest['seen']} parts (headline, sentence, link, figure, ten columns, caption), the least at opacity {rest['minO']}")
+        end, walk = await take_walk(pg, h, past=0)
+        n += len(walk); faded = 0
+        for s in walk:
+            rel = s["y"] - (end - h)
+            if s["beat"] != "4": bad.append(f"{tag} y={s['y']}: the take cut to beat {s['beat']} on the way out")
+            if s["seen"] and s["minO"] < 0.99: faded += 1; bad.append(f"{tag} y={s['y']}: a part of the record is at opacity {s['minO']} above the paper (nothing fades before the edge reaches it)")
+            if rel > 1 and abs(s["tk"][0] + rel) > 1: bad.append(f"{tag} y={s['y']}: the take's top is at {s['tk'][0]}, the scroll put it at {-rel:.0f} (it leaves with the page)")
+            if (s["half"] >= 0.6 and not s["rec"]) or (s["half"] <= 0.4 and s["rec"]): bad.append(f"{tag} y={s['y']}: the header says {'Record' if s['rec'] else 'Model'} with {s['half'] * 100:.0f}% of the screen on the take")
+        if not any(s["rec"] for s in walk) or all(s["rec"] for s in walk): bad.append(f"{tag}: the header never changed between Record and Model on the way out")
+        if w in (1440, 390): notes.append(f"{w}: {len(walk)} steps, {rest['seen']} parts at 1")
         await ctx.close()
-    assert not bad, "paper_row:\n  " + "\n  ".join(bad[:24])
-    print(f"paper_row: the paper (§01) wipes S4 whole, nothing of it faded before the edge, the beats hidden once covered ({'; '.join(notes)})")
+    assert not bad, f"paper_row: {len(bad)} problems ({n} steps):\n  " + "\n  ".join(bad[:12])
+    print(f"paper_row: the record leaves whole with the page at seven sizes ({n} settled steps; {'; '.join(notes)}); the header says Record until the take holds less than half the screen")
 
 
 DESK_ORDER = r"""(() => { const d = document.querySelector('#desk .desk') || document.querySelector('.desk'); if (!d) return null;
@@ -4904,44 +5260,49 @@ HALT_BAR = r"""(() => { const bar = document.querySelector('.swarm-bar'), b = do
 
 @check
 async def halt_toggle(b):
-    """hc25 (integrate, standing in for tests; the director's HC25 5, done by home and platform, the width in swarm.css):
-    the lab's stop button names the product's emergency halt, as Platform §05's table and Trust's rail do, and toggling it
-    moves nothing. On Home and Platform at 1440 x 900, 1280 x 800, 1101 x 800, 1024 x 768 and with touch at 390 x 844 and
-    320 x 640: the button reads "Emergency halt"; pressed, it reads "Resume" and, pressed again, "Emergency halt"; its box
-    and both sliders' boxes are the same in all three states (0.5 px). Each slider's value is one box (never split from its
-    separator over two lines), and where it sits under its name it carries no "·" (no separator at a line's end). Before
-    hc25 the button read "Halt", "Emergency halt" was 34 px wider than "Resume" (every toggle moved the sliders 17 px), and
-    from 1101 to 1359 px "Agents in this model · 1.8k" broke after its "·"."""
-    bad, notes = [], []
-    for path in ("index.html", "platform.html"):
-        for w, h, dpr, touch in ((1440, 900, 1, False), (1280, 800, 1, False), (1101, 800, 1, False), (1024, 768, 1, False), (390, 844, 3, True), (320, 640, 2, True)):
-            tag = f"{path}@{w}x{h}"
-            ctx, pg = await open_page(b, path, w, h, dpr=dpr, touch=touch, reduced=True)
-            await pg.evaluate("document.querySelector('.swarm-bar').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(500)
-            states = [await pg.evaluate(HALT_BAR)]
-            for _ in range(2):
-                if not states[-1]: break
-                await pg.evaluate("document.querySelector('[data-sw-halt]').click()"); await pg.wait_for_timeout(350)
-                states.append(await pg.evaluate(HALT_BAR))
-            await ctx.close()
-            if not all(states): bad.append(f"{tag}: no lab bar or halt button"); continue
-            got = [s["label"] for s in states]
-            if got != ["Emergency halt", "Resume", "Emergency halt"]: bad.append(f"{tag}: the button reads {got}, not Emergency halt / Resume / Emergency halt")
-            a = states[0]
-            for i, s in enumerate(states[1:], 1):
-                d = max(abs(x - y) for x, y in zip(a["btn"], s["btn"]))
-                if d > 0.5: bad.append(f"{tag}: toggle {i} moves or resizes the button by {d:.1f} px ({a['btn']} -> {s['btn']})")
-                for la, ls in zip(a["labs"], s["labs"]):
-                    if la and ls:
-                        d = max(abs(x - y) for x, y in zip(la["input"], ls["input"]))
-                        if d > 0.5: bad.append(f"{tag}: toggle {i} moves the slider '{la['name']}' by {d:.1f} px")
-            for l in a["labs"]:
-                if not l: bad.append(f"{tag}: a slider without its name and value"); continue
-                if l["boxes"] != 1: bad.append(f"{tag}: '{l['name']}''s value (with its separator) is split over {l['boxes']} lines")
-                if l["under"] and l["sep"] not in ("none", "normal"): bad.append(f"{tag}: '{l['name']}''s value sits under its name and still draws {l['sep']}")
-            if w in (1440, 1101) and path == "index.html": notes.append(f"{w}: {a['btn'][2]:.0f} px, values {'under' if a['labs'][0]['under'] else 'beside'} their names")
-    assert not bad, "halt_toggle:\n  " + "\n  ".join(bad[:24])
-    print(f"halt_toggle: Emergency halt / Resume at one width on Home and Platform, nothing moves on a toggle, no '·' at a line's end ({'; '.join(notes)})")
+    """hc25 (integrate, standing in for tests; the director's HC25 5): the stop button names the product's emergency halt,
+    as Platform §05's table and Trust's rail do, and toggling it moves nothing. hc31r (integrate, standing in for tests;
+    platform's request, LEAP-hc31 PLAT-2: Home has no halt, the console on Platform keeps it and it halts the run): on
+    Platform at 1440 x 900, 1280 x 800, 1101 x 800, 1024 x 768 and with touch at 390 x 844 and 320 x 640: the button
+    reads "Emergency halt"; pressed, it reads "Resume" and the header says Halted in the same task (its state, its
+    word, html.run-halted); pressed again, "Emergency halt" and the header runs; the button's box, the Follow control's,
+    the three counts' and the hand's scale are the same in all three states (0.5 px: the Follow control's least width
+    holds its longest label, "Halted · no new proposals"; found here and fixed in swarm.css, it grew 49 px on a halt), and
+    the page's height too from 961 px (to 960 px the status line opens under the controls, 40 px at most, and closes); the
+    hand's read-out stands on one line each ("approves 88%", "rejects risk > 0.88": never split); each press seals one
+    record ("Emergency halt on · N in flight", then "off · resumed") and the chain of the two verifies."""
+    bad = []
+    BOX = """(() => { const q = s => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return [+r.left.toFixed(1), +r.top.toFixed(1), +r.width.toFixed(1), +r.height.toFixed(1)]; };
+      const ro = [...document.querySelectorAll('#swarm [data-stage-ro] span')].filter(e => e.textContent.trim()).map(e => { const lh = parseFloat(getComputedStyle(e).lineHeight) || parseFloat(getComputedStyle(e).fontSize) * 1.4; return e.getBoundingClientRect().height <= lh * 1.5; });
+      const b = document.querySelector('button.nav-run');
+      return { halt: q('[data-sw-halt]'), follow: q('[data-sw-follow]'), stats: q('.swarm-stats'), scale: q('#swarm [data-sw-strict]'), page: document.documentElement.scrollHeight, text: document.querySelector('[data-sw-halt]').textContent.trim(),
+        pressed: document.querySelector('[data-sw-halt]').getAttribute('aria-pressed'), ro, state: b ? b.dataset.state : '', word: b ? (b.querySelector('b') || b).textContent : '', halted: document.documentElement.classList.contains('run-halted') }; })()"""
+    for w, h, touch in ((1440, 900, False), (1280, 800, False), (1101, 800, False), (1024, 768, False), (390, 844, True), (320, 640, True)):
+        ctx, pg, live = await console_page(b, w, h, touch=touch, dpr=2 if touch else 1)
+        tag = f"platform.html@{w}x{h}"
+        if not live: bad.append(f"{tag}: the console did not go live"); await ctx.close(); continue
+        await pg.evaluate("document.querySelector('[data-sw-halt]').scrollIntoView({ block: 'center', behavior: 'instant' })"); await pg.wait_for_timeout(500)
+        s0 = await pg.evaluate(BOX)
+        s1 = await pg.evaluate(f"(() => {{ document.querySelector('[data-sw-halt]').click(); return {BOX}; }})()")
+        await pg.wait_for_timeout(500); s1b = await pg.evaluate(BOX)
+        s2 = await pg.evaluate(f"(() => {{ document.querySelector('[data-sw-halt]').click(); return {BOX}; }})()")
+        await pg.wait_for_timeout(500); s2b = await pg.evaluate(BOX)
+        recs = await pg.evaluate("({ recs: OXA.run.records().map(r => r.ev + ' ' + r.d), ok: OXA.run.verify() })")
+        await ctx.close()
+        if [s0["text"], s1["text"], s2["text"]] != ["Emergency halt", "Resume", "Emergency halt"] or [s0["pressed"], s1["pressed"], s2["pressed"]] != ["false", "true", "false"]:
+            bad.append(f"{tag}: the button reads {[s0['text'], s1['text'], s2['text']]} (pressed {[s0['pressed'], s1['pressed'], s2['pressed']]})")
+        if not (s1["state"] == "halt" and s1["word"] == "Halted" and s1["halted"]) or not (s2["state"] == "run" and not s2["halted"]) or s0["state"] != "run":
+            bad.append(f"{tag}: the header in the task of each press: {[(s['state'], s['word'], s['halted']) for s in (s0, s1, s2)]} (run, then Halted, then run)")
+        for k in ("halt", "follow", "stats", "scale"):
+            boxes = [s[k] for s in (s0, s1b, s2b)]
+            if None in boxes or any(abs(a - z) > 0.5 for bx in boxes[1:] for a, z in zip(boxes[0], bx)): bad.append(f"{tag}: the {k}'s box moves with the toggle: {boxes}")
+        grow = s1b["page"] - s0["page"]
+        if s2b["page"] != s0["page"] or grow < 0 or grow > (40 if w <= 960 else 0): bad.append(f"{tag}: the page's height goes {[s['page'] for s in (s0, s1b, s2b)]} with the toggle (unchanged from 961 px; to 960 px the status line opens under the controls, 40 px at most, and closes again)")
+        if not s0["ro"] or not all(s0["ro"]) or not all(s1b["ro"]): bad.append(f"{tag}: the hand's read-out is split over lines ({s0['ro']}, halted {s1b['ro']})")
+        if len(recs["recs"]) != 2 or not re.fullmatch(r"Emergency halt on · [\d,]+ in flight", recs["recs"][0]) or recs["recs"][1] != "Emergency halt off · resumed" or not recs["ok"]["ok"]:
+            bad.append(f"{tag}: the two presses sealed {recs['recs']} (verify {recs['ok']})")
+    assert not bad, "halt_toggle:\n  " + "\n  ".join(bad[:14])
+    print("halt_toggle: Platform's console at six sizes: Emergency halt -> Resume -> Emergency halt, the header Halted in the press's own task, nothing moves, the read-out on one line each, one record a press and the chain verifies")
 
 
 STACK_SCENE = r"""(() => { const f = document.querySelector('[data-plate="stack"]'); if (!f) return null; const g = f.querySelector('.hp-s1');
@@ -4949,6 +5310,7 @@ STACK_SCENE = r"""(() => { const f = document.querySelector('[data-plate="stack"
   const pl = [...f.querySelectorAll('.pl')].map(x => x.querySelector('.hp-h')), n = [...f.querySelectorAll('.hp-lab--n')];
   return { p: g ? +getComputedStyle(g).getPropertyValue('--st-p') : null, dy: n.map((e, i) => pl[i] ? Math.abs(C(e) - C(pl[i])) : 99),
            anims: f.getAnimations({subtree: true}).length, scroll: f.getAnimations({subtree: true}).filter(a => a.timeline && a.timeline !== document.timeline).length,
+           live: !!f.querySelector('svg[data-run-plate].is-live'), away: f.classList.contains('is-away'), marks: f.querySelector('.rp') ? +getComputedStyle(f.querySelector('.rp')).opacity : -1,
            lay: pl.length, y: scrollY, H: innerHeight }; })()"""
 COST_SCENE = r"""(() => { const fig = document.querySelector('#economics figure.cost'); if (!fig) return null;
   const rows = [...fig.querySelectorAll('.pf-ck > div')];
@@ -5001,22 +5363,38 @@ async def scroll_scenes(b):
             await pg.wait_for_timeout(600)
             r0 = await pg.evaluate(STACK_SCENE)
             if not r0 or r0["p"] is None: bad.append(f"{tag}: no stack plate scene (.hp-s1)"); await ctx.close(); continue
-            await pg.evaluate(f"window.scrollTo({{top: Math.ceil(innerHeight * .3) + 2, behavior: 'instant'}})"); await pg.wait_for_timeout(500)
+            if not reduced: await until(pg, "!!document.querySelector('[data-plate=\"stack\"] svg[data-run-plate].is-live')", 8000); r0 = await pg.evaluate(STACK_SCENE)
+            await pg.evaluate(f"window.scrollTo({{top: Math.ceil(innerHeight * .3) + 2, behavior: 'instant'}})"); await pg.wait_for_timeout(600)
             r1 = await pg.evaluate(STACK_SCENE)
-            await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(500)
+            await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(600)
             r2 = await pg.evaluate(STACK_SCENE)
             await ctx.close()
             if reduced:
                 if r0["anims"] or r1["anims"]: bad.append(f"{tag}: the plate runs {max(r0['anims'], r1['anims'])} animation(s) under reduced motion")
                 if abs(r1["p"]) > 0.001: bad.append(f"{tag}: --st-p is {r1['p']:.3f} after scrolling under reduced motion (0)")
                 continue
-            if abs(r0["p"]) > 0.01: bad.append(f"{tag}: at the top --st-p is {r0['p']:.3f} (0: the plate as drawn)")
-            if r1["p"] < 0.99: bad.append(f"{tag}: 30% of a screen down --st-p is {r1['p']:.3f} (1)")
-            if abs(r2["p"]) > 0.01: bad.append(f"{tag}: back at the top --st-p is {r2['p']:.3f} (0)")
-            if not r1["scroll"]: bad.append(f"{tag}: no animation on a scroll timeline in the plate")
+            # hc31r (integrate; platform's request, LEAP-hc31 PLAT-1): the plate is a camera on the run and its marks ride
+            # fixed paths, so where the scene is not pinned the stack no longer comes apart on the scroll (it would tear the
+            # picture): --st-p stays 0 and every numeral stays on its layer at every offset, nothing in the plate is on a
+            # scroll timeline, and the run's marks stay live and shown at every offset (the plate leaves with the page, a whole
+            # picture at any instant). Where the scene is pinned (1440 x 900, below) the marks step aside for the hand-over
+            if abs(r0["p"]) > 0.01 or abs(r1["p"]) > 0.01 or abs(r2["p"]) > 0.01: bad.append(f"{tag}: --st-p reads {r0['p']:.3f}, {r1['p']:.3f}, {r2['p']:.3f} at the top, 30% down and back (0: the plate does not part where the scene is not pinned)")
+            if r1["scroll"]: bad.append(f"{tag}: {r1['scroll']} animation(s) on a scroll timeline in the plate (none: its marks ride fixed paths)")
             off = [i + 1 for i, d in enumerate(r1["dy"]) if d > 1.5]
-            if r1["lay"] != 8 or off: bad.append(f"{tag}: parted, layer numeral(s) {off} off their layers ({[round(d, 1) for d in r1['dy']]}; {r1['lay']} layers)")
-            notes.append(f"stack {w}: {r0['p']:.2f} -> {r1['p']:.2f} -> {r2['p']:.2f}, numerals <= {max(r1['dy']):.1f} px")
+            if r1["lay"] != 8 or off: bad.append(f"{tag}: scrolled, layer numeral(s) {off} off their layers ({[round(d, 1) for d in r1['dy']]}; {r1['lay']} layers)")
+            if not all(r["live"] and r["marks"] > 0.99 for r in (r0, r1, r2)):
+                bad.append(f"{tag}: the run's marks (live, opacity) read {[(r['live'], round(r['marks'], 2)) for r in (r0, r1, r2)]} at the top, 30% down and back (live and shown throughout)")
+            notes.append(f"stack {w}: whole at every offset, marks live, numerals <= {max(r1['dy']):.1f} px")
+    # hc31r (platform's request): in the pinned scene (1440 x 900, with motion) the run's marks and tag step aside as soon as
+    # the hand-over starts (the figure .is-away past 8 px of scroll, the marks at opacity 0 within 0.4 s) and are back at the top
+    ctx, pg = await open_page(b, "platform.html", 1440, 900)
+    await until(pg, "!!document.querySelector('[data-plate=\"stack\"] svg[data-run-plate].is-live')", 8000); await pg.wait_for_timeout(400)
+    reads = [await pg.evaluate(STACK_SCENE)]
+    for y in (40, 0):
+        await pg.evaluate(f"window.scrollTo({{top: {y}, behavior: 'instant'}})"); await pg.wait_for_timeout(500); reads.append(await pg.evaluate(STACK_SCENE))
+    await ctx.close()
+    if not (reads[0]["live"] and not reads[0]["away"] and reads[0]["marks"] > 0.99 and reads[1]["away"] and reads[1]["marks"] < 0.01 and not reads[2]["away"] and reads[2]["marks"] > 0.99):
+        bad.append(f"platform.html@1440x900 (pinned): the run's marks (live, away, opacity) read {[(r['live'], r['away'], round(r['marks'], 2)) for r in reads]} at the top, 40 px down and back (shown, aside, shown)")
     for path, w, h, dpr, touch in (("evidence.html", 1440, 900, 1, False), ("evidence.html", 390, 844, 3, True), ("index.html", 1440, 900, 1, False), ("index.html", 390, 844, 3, True)):
         for reduced in (False, True):
             tag = f"{path}@{w}x{h}{' reduced' if reduced else ''}"
@@ -5068,7 +5446,7 @@ async def scroll_scenes(b):
             if covered[0] <= covered[-1]: bad.append(f"{tag}: nothing drained between the first row entering and the last row risen ({covered})")
             notes.append(f"cost {path.split('.')[0]} {w}: {a['rows'][0]['cp']:.2f} -> {min(r['cp'] for r in z['rows']):.2f}, covered units {covered[0]} -> {covered[-1]} in {len(set(covered))} steps")
     assert not bad, "scroll_scenes:\n  " + "\n  ".join(bad[:24])
-    print(f"scroll_scenes: Platform's stack parts on the page's scroll and the cost index (Proof §02, Home §03) empties as it rises, unit by unit, never blended; reduced motion keeps them still ({'; '.join(notes)})")
+    print(f"scroll_scenes: Platform's plate stays whole on the page's scroll where its scene is not pinned (the run's marks step aside) and the cost index (Proof §02, Home §03) empties as it rises, unit by unit, never blended; reduced motion keeps them still ({'; '.join(notes)})")
 
 
 # ---- hc26r (system): SYS-1, one scroll-scene primitive (site.css v2:scenes, site.js); SYS-2, the drawing travels
@@ -5329,6 +5707,51 @@ def turn_issues(tag, r, *, back=False, jump=""):
     return bad
 
 
+def match_issues(tag, r, back=False):
+    """hc31r (system's SYS-3, SYSTEM.md 16 "The boundary and the match cut"; integrate, standing in for tests): a turn between
+    two pages that each show their boundary, left at its top, is a match cut. One device a turn: the green outline that
+    travels from the old boundary to the new (its group is in the turn; its two snapshots are hidden by the sheet), and no
+    rule on the page's edge. The page cuts at the midpoint by a translate that steps (the page you reach stands a whole
+    screen away until the midpoint and in its place after it, never between), nothing fades or scales, the page you leave
+    is opaque until the cut, the bar is the old one before the midpoint and the new one after it (never cross-faded), and
+    every part ends by 420 ms. Back is the same cut, typed `back` too."""
+    if not r or not r.get("vt") or not r.get("f"): return [f"{tag}: no view transition ran ({r and {k: r.get(k) for k in ('vt', 'types', 'names')}})"]
+    f, H, bad = r["f"], r["H"], []
+    if "match" not in (r.get("types") or []): bad.append(f"{tag}: the turn's types are {r.get('types')} (both pages show their boundary at the top: a match cut)")
+    if back and "back" not in (r.get("types") or []): bad.append(f"{tag}: the turn's types are {r.get('types')} ('back' expected)")
+    if "group(boundary)" not in r["names"]: bad.append(f"{tag}: no boundary travels in the turn ({sorted(r['names'])[:8]})")
+    fade = sorted({n for x in f for n in x["fade"]})
+    if fade: bad.append(f"{tag}: a page view fades or scales during the cut ({fade}): never a fade")
+    g = sorted({x["g"] for x in f if x["g"]})
+    if g != ["vt-cut"]: bad.append(f"{tag}: the page's animation is {g} (vt-cut: a stepped translate)")
+    if any(x["rule"] != "none" for x in f): bad.append(f"{tag}: a rule is drawn on the page's edge ({f[0]['rule'][:60]!r}): the travelling boundary is the turn's one device")
+    if any(x["oldOp"] < 0.999 for x in f): bad.append(f"{tag}: the page you leave is at opacity {min(x['oldOp'] for x in f)} during the cut")
+    between = [(x["p"], x["ty"]) for x in f if x["p"] is not None and 2 < abs(x["ty"]) < H - 2]
+    early = [(x["p"], x["ty"]) for x in f if x["p"] is not None and x["p"] < 0.45 and abs(abs(x["ty"]) - H) > 2]
+    late = [(x["p"], x["ty"]) for x in f if x["p"] is not None and x["p"] > 0.55 and abs(x["ty"]) > 2]
+    if between or early or late: bad.append(f"{tag}: the page does not cut at the midpoint (progress, offset): between places {between[:3]}, in place before it {early[:3]}, away after it {late[:3]}")
+    mixed = [x["bar"] for x in f if x["bar"][0] is not None and x["bar"][1] is not None and (0.02 < x["bar"][0] < 0.98 or 0.02 < x["bar"][1] < 0.98 or (x["bar"][0] > 0.5) == (x["bar"][1] > 0.5))]
+    wrong = [(x["p"], x["bar"]) for x in f if x["p"] is not None and x["bar"][0] is not None and x["bar"][1] is not None and ((x["p"] < 0.4 and x["bar"][0] < 0.98) or (x["p"] > 0.6 and x["bar"][1] < 0.98))]
+    if mixed or wrong: bad.append(f"{tag}: the bar is cross-faded in {len(mixed)} frames or does not switch at the cut (progress, [old, new] opacity e.g. {(wrong or [(None, m) for m in mixed])[:3]})")
+    end = max(x["end"] for x in f)
+    if end > 421: bad.append(f"{tag}: the cut runs to {end:.0f} ms (420)")
+    return bad
+
+
+def match_or_turn(tag, r, seen, back=False):
+    """a turn that may be a match cut (both pages show their boundary, the page you leave at its top). The page you reach
+    takes part only if its script is there at pagereveal (its boundary must take its name before the new state is
+    captured); arriving later it leaves the turn as hc30r's, whole. Either is right; a half of each is not: judged by
+    the rules of the turn it is, and counted in `seen`."""
+    kind = "match" if r and "match" in (r.get("types") or []) else "rule"
+    seen.append(kind)
+    if kind == "match": return match_issues(tag, r, back=back)
+    out = turn_issues(tag, r, back=back)
+    if r and back and "back" not in (r.get("types") or []): out.append(f"{tag}: the turn's types are {r.get('types')} ('back' expected)")
+    if r and any("new(boundary)" in n or "group(boundary)" in n for n in r.get("names") or []): out.append(f"{tag}: hc30r's turn, yet a boundary travels in it ({[n for n in r['names'] if 'boundary' in n]})")
+    return out
+
+
 @check
 async def page_turn(b):
     """hc30r (system; RETHINK-hc30 SYS-2): the page turn is the boundary. At 1440 x 900, from Proof (scrolled 500 px) the
@@ -5348,8 +5771,21 @@ async def page_turn(b):
     be kept (hidden): the stage's own frame on its 2D canvas (story.js's OXA.stageStill, home's hc30r; the same box and
     bitmap, the globe drawn), or else the static mark on the globe's place (shown, centred within 2 px of
     html[data-globe]); never neither, never both. At 390 x 844
-    with touch the menu's link turns the page the same way. Under reduced motion there is no turn and a jump lands at once."""
-    bad, notes = [], []
+    with touch the menu's link turns the page the same way. Under reduced motion there is no turn and a jump lands at once.
+    hc31r (system's SYS-3, proof's and home's requests; integrate, standing in for tests; TESTS.md 55): the match cut.
+    Where the page you leave is at its top and both pages show their boundary (SYSTEM.md 16), the turn is a match cut
+    and is judged by its own rules (match_issues: the boundary travels, the page cuts at the midpoint by a stepped
+    translate, nothing fades, no rule, the bar switches at the cut, 420 ms; the page you reach joins only if its
+    script is there at pagereveal, when its boundary can still take its name: arriving later the turn stays hc30r's,
+    whole, never a half of each, which this check's first re-expression found and the turn block now holds; two of
+    the four turns at least must be match cuts): Proof -> Platform and Back from their tops,
+    Home's first screen -> Platform, and on a phone Home's "See the stack". hc30r's turn is still read wherever it
+    still runs: the five turns from Proof scrolled 500 px, Back from a scrolled Platform, the jumps, and the phone's
+    menu from Proof scrolled and at its top (the sheet covers the page's boundary, so no boundary may travel there:
+    before this round's fix in the turn block the match cut drew its outline across the open menu). Leaving Home at the top the hero is never blank for the snapshot: the stage's 2D canvas
+    is shown and drawn, or else the first screen's still is shown (it was: the stage's frame copied to a 2D canvas, or
+    the static mark, because a WebGL canvas could not be kept)."""
+    bad, notes, cuts = [], [], []
     ctx, pg = await open_page(b, "evidence.html", 1440, 900, init=TURN_REC)
     for dest in ("platform", "trust", "lifecycles", "company", "research"):
         if "/evidence" not in pg.url: await pg.goto(f"{BASE}/evidence.html", wait_until="load"); await until(pg, LOADED, 15000)
@@ -5364,13 +5800,24 @@ async def page_turn(b):
             if live: bad.append(f"{tag}: from the turn's midpoint the first band still runs {live[:6]} (arriving by a turn the first screen is whole)")
             if not all(x["vtin"] for x in late): bad.append(f"{tag}: html.vt-in is not set by the turn's midpoint")
             if dest == "platform": notes.append(f"{len(r['f'])} frames, ends {max(x['end'] for x in r['f']):.0f} ms")
-    # Back turns the other way
+    # Back turns the other way. hc31r: from a page scrolled past half a screen it is hc30r's turn (the rule down from the
+    # bar); from two pages at their tops, each with its boundary on screen (Proof's line, Platform's plane), the turn there
+    # and the turn back are match cuts (SYSTEM.md 16)
     await pg.goto(f"{BASE}/evidence.html", wait_until="load"); await until(pg, LOADED, 15000)
+    await pg.evaluate("window.scrollTo({top: 500, behavior: 'instant'})"); await pg.wait_for_timeout(500)
     await pg.click(".nav-links a[href*='platform']"); await pg.wait_for_url("**/platform*"); await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20); await pg.wait_for_timeout(400)
+    await pg.evaluate("window.scrollTo({top: 700, behavior: 'instant'})"); await pg.wait_for_timeout(500)
     await pg.go_back(wait_until="commit"); await pg.wait_for_url("**/evidence*"); await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20)
     r = await pg.evaluate("window.__turn")
-    bad += turn_issues("platform -> Back to evidence at 1440", r, back=True)
-    if r and "back" not in (r.get("types") or []): bad.append(f"platform -> Back to evidence at 1440: the turn's types are {r.get('types')} ('back' expected)")
+    bad += turn_issues("platform (scrolled) -> Back to evidence at 1440", r, back=True)
+    if r and "back" not in (r.get("types") or []): bad.append(f"platform (scrolled) -> Back to evidence at 1440: the turn's types are {r.get('types')} ('back' expected)")
+    await pg.goto(f"{BASE}/evidence.html", wait_until="load"); await until(pg, LOADED, 15000); await pg.wait_for_timeout(600)
+    await pg.click(".nav-links a[href*='platform']"); await pg.wait_for_url("**/platform*"); await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20)
+    r = await pg.evaluate("window.__turn"); bad += match_or_turn("evidence (top) -> platform at 1440", r, cuts)
+    if r and r.get("f") and cuts[-1] == "match": notes.append(f"match cut: {len(r['f'])} frames, ends {max(x['end'] for x in r['f']):.0f} ms")
+    await pg.wait_for_timeout(600)
+    await pg.go_back(wait_until="commit"); await pg.wait_for_url("**/evidence*"); await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20)
+    bad += match_or_turn("platform (top) -> Back to evidence at 1440", await pg.evaluate("window.__turn"), cuts, back=True)
     # a hero drawing nothing travels to keeps no name; a click during the turn lands
     await pg.goto(f"{BASE}/platform.html", wait_until="load"); await until(pg, LOADED, 15000); await pg.wait_for_timeout(600)
     await pg.click(".nav-links a[href*='lifecycles']"); await pg.wait_for_url("**/lifecycles*"); await until(pg, "!!(window.__turn && window.__turn.f.length)", 6000, 5)
@@ -5391,50 +5838,50 @@ async def page_turn(b):
         if abs(y1 - y0) < 900: bad.append(f"platform, a jump {way} at 1440: the page moved {y1 - y0} px")
         await pg.wait_for_timeout(300)
     await ctx.close()
-    # leaving Home at the top: the hero keeps a globe for the snapshot though the WebGL canvas cannot be kept.
-    # hc30r (HOME; integrate, standing in for tests; TESTS.md section 53): home took system's offer (SYSTEM.md 15,
-    # OXA.stageStill): story.js copies the stage's current frame to the 2D canvas at pageswap, and site.js then leaves the
-    # static mark alone. So the hero's picture for the snapshot is one of two, never neither and never both: the stage's
-    # own frame (canvas.story-2d shown over the hidden WebGL canvas, the same box, the same bitmap size, and drawn: the
-    # globe's limb lit inside the globe's place), or, where there is no frame to copy, the static mark on the globe's place
-    # as before (shown, centred within 2 px of html[data-globe]).
+    # leaving Home at the top. Until hc31r the WebGL canvas could not be kept for the snapshot and the hero kept a globe by
+    # other means (the stage's frame on a 2D canvas, or the static mark). hc31r (integrate, standing in for tests; home's
+    # HOME-1, system's SYS-3): Home's stage is a 2D canvas, which the snapshot holds as it stands, and Home and Platform
+    # both show their boundary, so the turn is a match cut. The principle kept: the hero is never blank for the snapshot.
+    # At pageswap the stage's canvas is shown and drawn (lit pixels in it), or else the first screen's still is shown;
+    # never neither.
     ctx, pg = await open_page(b, "index.html", 1440, 900, init=TURN_REC)
+    await until(pg, TAKE_READY, 15000)
     await to_top_settled(pg)
-    await pg.evaluate("""addEventListener('pageswap', () => { const m = document.querySelector('.story-static-mark'), r = m.getBoundingClientRect(), g = (document.documentElement.dataset.globe || '').split(' ').map(parseFloat);
-      const gl = document.querySelector('.story-gl'), s2 = document.querySelector('canvas.story-2d'), a = gl.getBoundingClientRect(), z = s2.getBoundingClientRect();
-      let lit = -1; const on = !s2.hidden && !!s2.getClientRects().length && getComputedStyle(s2).visibility !== 'hidden';
-      if (on && g.length === 3 && g[2] > 0) { try { const k = s2.width / z.width, x0 = Math.max(0, Math.round((g[0] - g[2] - z.left) * k)), y0 = Math.max(0, Math.round((g[1] - g[2] - z.top) * k)), n = Math.round(2 * g[2] * k);
-        const d = s2.getContext('2d').getImageData(x0, y0, Math.min(n, s2.width - x0), Math.min(n, s2.height - y0)).data; lit = 0;
-        for (let i = 0; i < d.length; i += 4) if (d[i] * .2126 + d[i + 1] * .7152 + d[i + 2] * .0722 > 60) lit++; } catch (e) { lit = -2; } }
-      sessionStorage.setItem('__mark', JSON.stringify({ shown: getComputedStyle(m).display !== 'none' && +getComputedStyle(m).opacity > .9, c: [r.left + r.width / 2, r.top + r.height / 2], w: r.width, g,
-        still: on, box: [z.left - a.left, z.top - a.top, z.width - a.width, z.height - a.height], bmp: [s2.width - gl.width, s2.height - gl.height], lit,
-        gl: getComputedStyle(gl).visibility, name: getComputedStyle(document.documentElement).viewTransitionName })); })""")
+    await pg.evaluate("""addEventListener('pageswap', () => { const f = document.querySelector('.take-stage'), cv = f && f.querySelector('canvas'), st = document.querySelector('.beat-0 .stage-still');
+      const on = e => !!e && !!e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > .9;
+      let lit = -1; if (on(cv)) { try { const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; lit = 0; for (let i = 0; i < d.length; i += 16) if (d[i + 3] > 40 && d[i] * .2126 + d[i + 1] * .7152 + d[i + 2] * .0722 > 60) lit++; } catch (e) { lit = -2; } }
+      sessionStorage.setItem('__mark', JSON.stringify({ canvas: on(cv), lit, still: on(st), b: !!document.querySelector('[data-run-boundary]') })); })""")
     await pg.click(".nav-links a[href*='platform']"); await pg.wait_for_url("**/platform*"); await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20)
     r = await pg.evaluate("window.__turn"); mk = await pg.evaluate("JSON.parse(sessionStorage.getItem('__mark') || 'null')")
-    bad += turn_issues("home (the overture) -> platform at 1440", r)
+    bad += match_or_turn("home (the take's first screen) -> platform at 1440", r, cuts)
     if not mk: bad.append("home -> platform at 1440: no pageswap on Home")
-    else:
-        if mk["name"] != "leave": bad.append(f"home -> platform at 1440: the root's name at the snapshot is {mk['name']!r} (leave)")
-        if mk["gl"] != "hidden": bad.append(f"home -> platform at 1440: the WebGL canvas is {mk['gl']} for the snapshot (it cannot be kept: hidden)")
-        g = mk["g"]
-        if len(g) == 3 and g[2] > 0:
-            if mk["still"] and mk["shown"]: bad.append("home -> platform at 1440: the stage's frame and the static mark are both shown for the snapshot (two globes)")
-            elif mk["still"]:
-                if any(abs(v) > 1 for v in mk["box"]) or any(mk["bmp"]): bad.append(f"home -> platform at 1440: the stage's frame is not the WebGL canvas's box and bitmap (box off by {[round(v, 1) for v in mk['box']]}, bitmap by {mk['bmp']})")
-                elif mk["lit"] < 200: bad.append(f"home -> platform at 1440: the stage's frame is blank where the globe stands ({mk['lit']} lit pixels in the globe's place; the hero keeps a globe)")
-                else: notes.append(f"Home leaves with its stage's own frame ({mk['lit']} lit pixels on the globe at {g[0]:.0f}, {g[1]:.0f}, r {g[2]:.0f})")
-            elif not mk["shown"]: bad.append("home -> platform at 1440: neither the stage's frame nor the static mark is shown for the snapshot (the hero keeps a globe)")
-            elif abs(mk["c"][0] - g[0]) > 2 or abs(mk["c"][1] - g[1]) > 2 or abs(mk["w"] * 92 / 240 - g[2]) > 2:
-                bad.append(f"home -> platform at 1440: the static mark at {[round(v) for v in mk['c']]} / limb {mk['w'] * 92 / 240:.0f} px, the globe at {g}")
-            else: notes.append(f"Home leaves with its mark on the globe ({g[0]:.0f}, {g[1]:.0f}, r {g[2]:.0f})")
+    elif not ((mk["canvas"] and mk["lit"] >= 200) or mk["still"]): bad.append(f"home -> platform at 1440: the hero is blank for the snapshot (the stage's canvas shown: {mk['canvas']}, {mk['lit']} lit samples; the still shown: {mk['still']})")
+    else: notes.append(f"Home leaves with its stage's own frame ({mk['lit']} lit samples)" if mk["canvas"] and mk["lit"] >= 200 else "Home leaves with its still")
     await ctx.close()
     # a phone: the menu's link
-    ctx, pg = await open_page(b, "evidence.html", 390, 844, touch=True, init=TURN_REC)
-    await bounded(pg.locator(".nav-toggle").tap(), "a tap on the menu toggle", 60); await pg.wait_for_timeout(700)
-    await bounded(pg.locator(".nav-sheet-links a[href*='trust']").tap(), "a tap on the menu's Trust link", 60); await pg.wait_for_url("**/trust*")
+    # hc31r (proof's request; integrate): the menu's turn is hc30r's turn from a scrolled Proof and from its top alike. The
+    # sheet covers the page, so the boundary of the page you leave is not on screen and nothing can travel from it: a
+    # match cut there drew its outline across the open menu (found by this check's first re-expression and fixed in the
+    # turn block: site.js, afterpaint.js, home.js). A phone's match cut is an in-page link's: Home's "See the stack"
+    for scrolled in (True, False):
+        ctx, pg = await open_page(b, "evidence.html", 390, 844, touch=True, init=TURN_REC)
+        if scrolled: await pg.evaluate("window.scrollTo({top: 600, behavior: 'instant'})"); await pg.wait_for_timeout(500)
+        else: await pg.wait_for_timeout(600)
+        await bounded(pg.locator(".nav-toggle").tap(), "a tap on the menu toggle", 60); await pg.wait_for_timeout(700)
+        await bounded(pg.locator(".nav-sheet-links a[href*='trust']").tap(), "a tap on the menu's Trust link", 60); await pg.wait_for_url("**/trust*")
+        await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20)
+        r = await pg.evaluate("window.__turn"); tag = f"evidence ({'scrolled' if scrolled else 'top'}) -> trust at 390 (the menu)"
+        bad += turn_issues(tag, r)
+        if r and ("match" in (r.get("types") or []) or any("boundary" in n for n in r.get("names") or [])): bad.append(f"{tag}: a boundary travels across the open menu (types {r.get('types')}, {[n for n in r['names'] if 'boundary' in n]})")
+        await ctx.close()
+    ctx, pg = await open_page(b, "index.html", 390, 844, touch=True, init=TURN_REC)
+    await until(pg, TAKE_READY, 15000); await to_top_settled(pg)
+    await bounded(pg.locator(".beat-0 .hero-cta a[href*='platform']").tap(), "a tap on See the stack", 60); await pg.wait_for_url("**/platform*")
     await until(pg, "!!(window.__turn && window.__turn.done)", 6000, 20)
-    bad += turn_issues("evidence -> trust at 390 (the menu)", await pg.evaluate("window.__turn"))
+    bad += match_or_turn("home (top) -> platform at 390 (See the stack)", await pg.evaluate("window.__turn"), cuts)
     await ctx.close()
+    if cuts.count("match") < 2: bad.append(f"of the four turns that may be a match cut, {cuts.count('match')} was one ({cuts}): the match cut was not tested (two at least)")
+    notes.append(f"turns from the top: {cuts}")
     # reduced motion: no turn, a jump lands at once
     ctx, pg = await open_page(b, "evidence.html", 1440, 900, reduced=True, init=TURN_REC)
     await pg.click(".nav-links a[href*='platform']"); await pg.wait_for_url("**/platform*"); await pg.wait_for_timeout(700)
@@ -5446,7 +5893,7 @@ async def page_turn(b):
     if r["f"] or await pg.evaluate("scrollY") < 900: bad.append(f"platform, a jump under reduced motion: {len(r['f'])} transition frames, scrollY {await pg.evaluate('scrollY')}")
     await ctx.close()
     assert not bad, "page_turn:\n  " + "\n  ".join(bad[:28])
-    print(f"page_turn: the page you leave stays whole above the rule and the page you reach is revealed under it, no fade, on five turns from Proof, on Back (the other way), on a jump down and up, from Home's overture and on a phone ({'; '.join(notes)}); no turn under reduced motion")
+    print(f"page_turn: the page you leave stays whole above the rule and the page you reach is revealed under it, no fade, on five turns from Proof, on Back (the other way), on a jump down and up and on a phone, all from scrolled pages; from the top, between pages that show their boundary, the turn is a match cut (Proof and Platform both ways, Home's first screen, a phone's in-page link; never from the open menu) ({'; '.join(notes)}); no turn under reduced motion")
 
 
 # ---- hc26r (integrate, standing in for tests): the rethink's scenes, checked to their principles (RETHINK-hc26 PLAT-1,
@@ -5569,7 +6016,7 @@ async def stack_scene(b):
     await pg.focus(".stack-scene .page-hero a[href='#architecture']")
     for _ in range(14):
         await pg.keyboard.press("Tab"); await pg.wait_for_timeout(150)
-        if await pg.evaluate("!!document.activeElement && document.activeElement.matches('#architecture .arch-motion')"): break
+        if await pg.evaluate("!!document.activeElement && !!document.activeElement.closest('#architecture .arch')"): break   # hc31r: the explorer's first stop is its first layer (its Pause is gone)
     await pg.wait_for_timeout(1000)
     r = await pg.evaluate(STACK_PIN)
     if not (r["act"] and r["act"][2]) or r["p"] < 0.99: bad.append(f"platform.html@1440: Tab into the explorer: focus on {r['act']}, --scene-p {r['p']:.2f} (the end)")
@@ -5667,57 +6114,71 @@ LC_STATE = r"""(() => { const f = document.querySelector('.hero-plate--rings'), 
     op: +getComputedStyle(n).opacity, lit: f.querySelectorAll('.is-lit').length, anims: f.getAnimations({ subtree: true }).filter(a => a.playState === 'running').length }; })()"""
 
 
+# hc31r: the hero ring on Lifecycles is a camera on the run (runplate.js; gap.js lights the gate the tagged proposal is at)
+LC_RING = r"""(() => { const f = document.querySelector('.hero-plate--rings'), sv = f && f.querySelector('svg[data-run-plate]'); if (!f || !sv) return null;
+  const S = window.OXA && OXA.run ? OXA.run.sample() : null, t = f.querySelector('[data-run="tag"]'), lit = [...f.querySelectorAll('.lc-gate.is-lit')].map(g => +g.dataset.g), d = c => { const e = sv.querySelector('.rp > .' + c); return e ? e.getAttribute('d') || '' : null; };
+  return { live: sv.classList.contains('is-live'), lit, gate: S && S.ti >= 0 && S.ph[S.ti] !== 4 ? (S.gate[S.ti] || 1) : 0, tag: t && !t.hidden ? t.textContent.replace(/\s+/g, ' ').trim() : '', tagId: S ? S.tagId : '', line: S ? S.tagLine : '',
+    rings: d('rp-ring'), sq: d('rp-sq'), blocks: d('rp-b'), n: S ? S.n : -1, still0: !!f.querySelector('.lc-tag0') && f.querySelector('.lc-tag0').getBoundingClientRect().height > 0,
+    anims: f.getAnimations({ subtree: true }).filter(a => a.playState === 'running').length, cls: f.className }; })()"""
+
+
 @check
 async def lc_hero_once(b):
-    """hc26r (integrate, standing in for tests; platform's optional request, RETHINK-hc26 PLAT-2): Lifecycles' hero ring
-    runs its one proposal once, quietly (OXA.actOnce). At 1440 x 900 with motion it gains .is-run within 4 s of load, its
-    six gates light 01 -> 06 in order, it ends .is-done with the green block (.lc-new) whole (opacity 1) and, 1.2 s later,
-    no gate still lit. Under reduced motion and without JavaScript the block is there at once and nothing runs; a click on
-    the drawing before the run (the visitor's own hand) keeps it from running, and the fallback shows the block within
-    3.5 s."""
+    """hc26r (integrate, standing in for tests; platform's optional request, RETHINK-hc26 PLAT-2): Lifecycles' hero ring ran
+    its one proposal once, quietly, and rested with its block. hc31r (integrate, standing in for tests; platform's
+    request, LEAP-hc31 PLAT-3: "the loop runs"; there is no one-pass act): the ring is a camera on the run, and what the
+    act had to hold is held by the run. At 1440 x 900 with motion: the plate is live within 4 s of load; over 8 s (reads
+    every 250 ms) the gate that is lit is the gate the tagged proposal is at in the same read (one frame apart at most:
+    nine reads in ten agree; none is lit while the tag is on a refusal or absent), the tag shows the run's tagged ID
+    whenever it shows, and the marks move (the rings' path changes); several gates are seen lit, in the ring's order
+    when they follow one proposal (never backwards within one ID). The header's pause holds it: the marks and the lit
+    gate are the same in two reads 1 s apart; resumed, they move again. A halt: after its drain (9.5 s) no proposal is
+    on the ring, no gate is lit and the record's chain stands. Under reduced motion it is one still of the run (live,
+    a tag, nothing redrawn in 3 s, no animation running). Without JavaScript it is the authored still: its tag
+    (.lc-tag0) shown and gate 04 lit."""
     bad, notes = [], []
     lim = lambda ms: int(ms * max(1.0, MODE["throttle"]))
-    ctx, pg = await open_page(b, "lifecycles.html", 1440, 900, init=LC_WATCH)
-    if not await until(pg, "!!(window.__lc && window.__lc.done !== null)", lim(8000), 50): bad.append(f"1440: never .is-done ({await pg.evaluate(LC_STATE)})")
+    ctx, pg = await open_page(b, "lifecycles.html", 1440, 900, init=RUN_PRESET)
+    if not await until(pg, f"(() => {{ const r = {LC_RING}; return !!r && r.live; }})()", lim(4000) + 4000, 50): bad.append(f"1440: the ring never went live ({await pg.evaluate(LC_RING)})")
     else:
-        s = await pg.evaluate(LC_STATE); R = s["R"]
-        if R["run"] is None: bad.append("1440: the ring never ran (.is-run)")
-        elif R["run"] - s["load"] > lim(4000): bad.append(f"1440: the run began {R['run'] - s['load']:.0f} ms after load (4 s at most)")
-        if R["lit"] != ["1", "2", "3", "4", "5", "6"]: bad.append(f"1440: the gates lit in the order {R['lit']} (01 -> 06)")
-        await pg.wait_for_timeout(500)
-        s = await pg.evaluate(LC_STATE)
-        if s["op"] < 0.99: bad.append(f"1440: at .is-done the green block is at opacity {s['op']}")
-        await pg.wait_for_timeout(1200)
-        s2 = await pg.evaluate(LC_STATE)
-        if s2["lit"]: bad.append(f"1440: {s2['lit']} gate(s) still lit 1.2 s after the run")
-        if R["run"] is not None: notes.append(f"ran {R['run'] - s['load']:.0f} ms after load, gates {''.join(R['lit'])}, done {R['done'] - R['run']:.0f} ms later")
+        reads = []
+        for _ in range(32):
+            reads.append(await pg.evaluate(LC_RING)); await pg.wait_for_timeout(250)
+        agree = sum(1 for r in reads if r["lit"] == ([r["gate"]] if r["gate"] else []))
+        if agree < 0.9 * len(reads): bad.append(f"1440: the lit gate is the tagged proposal's gate in {agree} of {len(reads)} reads (lit, gate): {[(r['lit'], r['gate']) for r in reads if r['lit'] != ([r['gate']] if r['gate'] else [])][:5]}")
+        if any(len(r["lit"]) > 1 for r in reads): bad.append("1440: two gates lit at once")
+        wrong = [(r["tag"], r["tagId"]) for r in reads if r["tag"] and r["tagId"] and r["tagId"] not in r["tag"]]
+        if len(wrong) > 2: bad.append(f"1440: the ring's tag does not show the run's tagged ID ({wrong[:3]})")
+        if len({r["rings"] for r in reads}) < 8: bad.append(f"1440: the marks do not move ({len({r['rings'] for r in reads})} different ring paths in {len(reads)} reads)")
+        seq = {}
+        for r in reads:
+            if r["gate"] and r["tagId"]: seq.setdefault(r["tagId"], []).append(r["gate"])
+        back = {k: v for k, v in seq.items() if v != sorted(v)}
+        seen = sorted({g for v in seq.values() for g in v})
+        if back: bad.append(f"1440: a tagged proposal's gate went backwards ({back})")
+        if len(seen) < 3: bad.append(f"1440: only gates {seen} were seen lit in 8 s")
+        notes.append(f"gates {seen} lit with the tag over 8 s, {agree}/{len(reads)} reads agree")
+        await pg.evaluate("OXA.run.pause(true)"); await pg.wait_for_timeout(300)
+        p1 = await pg.evaluate(LC_RING); await pg.wait_for_timeout(1000); p2 = await pg.evaluate(LC_RING)
+        if (p1["rings"], p1["sq"], p1["lit"]) != (p2["rings"], p2["sq"], p2["lit"]): bad.append("1440: the header's pause does not hold the ring (its marks or its lit gate changed in 1 s)")
+        await pg.evaluate("OXA.run.pause(false)"); await pg.wait_for_timeout(700)
+        if (await pg.evaluate(LC_RING))["rings"] == p2["rings"]: bad.append("1440: resumed, the ring's marks did not move")
+        await pg.evaluate("OXA.run.halt()"); await pg.wait_for_timeout(lim(9500))
+        h1 = await pg.evaluate(LC_RING); await pg.wait_for_timeout(1500); h2 = await pg.evaluate(LC_RING)
+        if h1["rings"] or h1["sq"] or h1["lit"] or h1["n"] != 0 or h1["blocks"] != h2["blocks"] or not h1["blocks"]: bad.append(f"1440: halted and drained, the ring still shows a proposal or a lit gate, or its chain moves ({ {k: (h1[k] if k != 'blocks' else len(h1[k] or '')) for k in ('rings', 'sq', 'lit', 'n', 'blocks')} })")
     await ctx.close()
-    for tag, kw in (("reduced motion", {"reduced": True}), ("no JavaScript", {"js": False})):
-        ctx, pg = await open_page(b, "lifecycles.html", 1440, 900, init=LC_WATCH if "js" not in kw else None, **kw)
-        await pg.wait_for_timeout(300)
-        op = await pg.evaluate("+getComputedStyle(document.querySelector('.hero-plate--rings .lc-new')).opacity")
-        if op < 0.99: bad.append(f"1440 {tag}: the green block is at opacity {op} (shown at once)")
-        if "js" not in kw:
-            await pg.wait_for_timeout(3000)
-            s = await pg.evaluate(LC_STATE)
-            if s["R"]["run"] is not None or s["R"]["lit"] or s["anims"]: bad.append(f"1440 {tag}: something ran ({s['R']}, {s['anims']} animation(s))")
-        await ctx.close()
-    ctx, pg = await open_page(b, "lifecycles.html", 1440, 900, init=LC_WATCH, loaded=False)
-    await until(pg, HOME_ENGINES, lim(15000), 20)
-    box = await pg.evaluate("(() => { const r = document.querySelector('.hero-plate--rings').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
-    early = await pg.evaluate("window.__lc.run === null")
-    await pg.mouse.click(box[0], box[1])
-    t0 = time.monotonic()
-    got = await until(pg, "!!(window.__lc && window.__lc.done !== null)", lim(4000), 50)
-    s = await pg.evaluate(LC_STATE)
-    if not early: notes.append("the click came after the run began (not judged)")
-    else:
-        if s["R"]["run"] is not None: bad.append(f"1440: a click before the run did not keep it from running ({s['R']})")
-        if not got or s["R"]["done"] - s["load"] > lim(3500) + 500: bad.append(f"1440: after a click before the run the block came {(s['R']['done'] or 0) - s['load']:.0f} ms after load (the 3 s fallback)")
-        notes.append(f"a click before the run: block by the fallback {(s['R']['done'] or 0) - s['load']:.0f} ms after load")
+    ctx, pg = await open_page(b, "lifecycles.html", 1440, 900, reduced=True, init=RUN_PRESET)
+    await until(pg, f"(() => {{ const r = {LC_RING}; return !!r && r.live; }})()", lim(6000), 50); await pg.wait_for_timeout(600)
+    a = await pg.evaluate(LC_RING); await pg.wait_for_timeout(3000); z = await pg.evaluate(LC_RING)
+    if not a or not a["live"] or (a["rings"], a["sq"], a["blocks"], a["lit"]) != (z["rings"], z["sq"], z["blocks"], z["lit"]) or z["anims"]: bad.append(f"1440 reduced motion: the ring is not one still of the run (live {a and a['live']}, redrawn in 3 s, {z['anims']} animation(s))")
+    await ctx.close()
+    ctx, pg = await open_page(b, "lifecycles.html", 1440, 900, js=False)
+    nj = await pg.evaluate("(() => { const f = document.querySelector('.hero-plate--rings'), t = f.querySelector('.lc-tag0'), lit = [...f.querySelectorAll('.lc-gate')].filter(g => g.classList.contains('is-lit') || +getComputedStyle(g).opacity > 0).map(g => g.dataset.g); return { tag: !!t && t.getBoundingClientRect().height > 0 ? t.textContent.replace(/\\s+/g, ' ').trim() : '', lit: [...f.querySelectorAll('.lc-gate.is-lit')].map(g => g.dataset.g), sv: f.querySelector('svg').getBoundingClientRect().height > 100 }; })()")
+    if not nj["tag"] or not nj["sv"]: bad.append(f"1440 no JavaScript: the ring is not its authored still with its tag ({nj})")
+    else: notes.append(f"no JS: the still, tagged {nj['tag'][:30]!r}")
     await ctx.close()
     assert not bad, "lc_hero_once:\n  " + "\n  ".join(bad)
-    print(f"lc_hero_once: Lifecycles' ring runs once, 01 -> 06, and rests with its block; still under reduced motion and without JS ({'; '.join(notes)})")
+    print(f"lc_hero_once: Lifecycles' ring runs on the run: the lit gate is the tagged proposal's, the header's pause holds it, a halt drains it; one still under reduced motion, the authored still without JS ({'; '.join(notes)})")
 
 
 LAB_COPY = r"""(() => { const l = document.querySelector('[data-swarm-live]'), st = l && l.querySelector('[data-sw-stage]'), cv = l && l.querySelector('[data-sw-stage] canvas, canvas'); if (!st) return null;
@@ -5748,151 +6209,74 @@ async def scroll_frames(pg, y0, y1, steps=40):
 
 @check
 async def lab_copy(b):
-    """hc26r (integrate, standing in for tests; home's request, RETHINK-hc26 HOME-4, under EVOLVE's "Owner, 8 Nov" motion
-    conditions): Platform §02 plays its own act of the swarm lab, the master agent copied out across the field. With
-    reduced motion, and after Pause motion or Emergency halt, data-sw-copy reads "1.00" at once. Home's lab never carries
-    data-sw-copy. hc27 (integrate, standing in for home and tests; the director's HC27 2: Platform's lab rests in its own
-    pose): at 1440 x 900 with the act done Platform's lab names no gate and no boundary (the gate list and the "Boundary"
-    tag at opacity 0) until "Follow a proposal" is pressed (both back at 1); Home's lab names them at rest. The resting
-    drawing itself (the master's track, its origin, the fan) is judged on renders, not here.
-    hc30r (HOME-2, PLAT-1, SYS-3; integrate, standing in for tests, on platform's and home's requests; TESTS.md section
-    53). Three things the check read are staged another way, and each keeps its principle:
-    - The act is on a clock, once, not tied to the scroll (RETHINK-hc30 rule 1: every frame of it is a whole picture; it
-      was data-sw-copy = p at four scroll positions). On platform.html at 1440 x 900 and 390 x 844 (touch): with the lab
-      started and a fifth of its stage on screen the act has not begun (data-sw-copy "0.00", and it stays there); brought
-      to the middle of the screen it runs 0 -> 1 without ever falling, reads "1.00" within 1.5 s of arriving (x the
-      throttle) and still reads "1.00" after the page has left and come back.
-    - The field is never empty (it was: next to nothing lit at .1, four times as much at 1; the wide lab only, as before):
-      waiting, before its act, the field's half of the canvas already holds at least 60% of the lit pixels it holds at
-      rest, and at rest it holds no fewer than nine tenths of that.
-    - The hedge is the lab's foot caption, not a word in its head (it was: "Illustrative" inside the lab's root, visible
-      at every scroll position): the lab names its caption (aria-describedby), the caption opens "Illustrative", no hedge
-      stands in the lab's head, and whenever the caption is on screen it is whole (never faded or hidden); it is read
-      on screen at rest at both widths. check_static `hedges` holds the words.
-    Through the act, no frame over 33 ms (x the throttle; judged with --gpu only, as before)."""
+    """hc26r (integrate, standing in for tests; home's request, RETHINK-hc26 HOME-4): the lab's opening act; hc30r: on its
+    clock, once, over a field that is never empty, its one hedge in the foot. hc31r (integrate, standing in for tests;
+    platform's and home's requests, LEAP-hc31 PLAT-2, HOME-2): there is no opening act (the run runs from arrival); the
+    lab is the run's console on Platform. What the check held, on the console, at 1440 x 900 and 390 x 844 (touch):
+    the field is never empty: before the stage is built the figure holds nothing that could be blank (no canvas), and
+    from the moment its canvas exists it is drawn in the same task (lit pixels in the first read and in every read
+    over 1.5 s); mounted, the canvas's bitmap is its box in device pixels (1 px); the console names a caption that
+    opens "Illustrative", none stands in its head or its bar, and whenever the caption is on screen it is whole (it
+    must be seen on screen at each width); the header's pause, pressed while the console is on screen, stops its
+    drawing at once and the picture stays whole (as many lit pixels, within 2 %); a halt keeps the picture (the ledger
+    and the Council stand) while its proposals drain; under reduced motion the console is one still, drawn (lit pixels),
+    with its hedge. Through the mount and the first 2 s on screen no frame runs over 33 ms (x the throttle; judged with
+    --gpu only, as before)."""
     bad, notes = [], []
-    lim = 33.4 * max(1.0, MODE["throttle"])
-    copy = "(() => { const l = document.querySelector('[data-swarm-live]'); return l.dataset.swCopy === undefined ? null : l.dataset.swCopy; })()"
-    WATCH = "(() => { const l = document.querySelector('[data-swarm-live]'), R = window.__cp = []; const f = () => { R.push(l.dataset.swCopy === undefined ? -1 : +l.dataset.swCopy); if (R.length < 2400) requestAnimationFrame(f); }; requestAnimationFrame(f); })()"
-    async def wait_at(pg, h):
-        """come down to the lab from above and stop where a fifth of its stage shows: it starts, its act does not"""
-        g = await pg.evaluate(LAB_COPY)
-        if not g: return None, None
-        y = 0
-        for f in (1.6, 1.2):
-            await pg.evaluate(f"window.scrollTo({{top: {round(g['top'] + g['h'] / 2 - f * h)}, behavior: 'instant'}})"); await pg.wait_for_timeout(500)
-        for _ in range(3):  # three times: the page above the lab may still settle by a few pixels
-            g = await pg.evaluate(LAB_COPY); y = round(g["top"] - h + 0.2 * min(g["h"], h))
-            await pg.evaluate(f"window.scrollTo({{top: {y}, behavior: 'instant'}})"); await pg.wait_for_timeout(450)
-        await until(pg, "!!document.querySelector('[data-swarm-live].sw-on')", 10000)
-        await pg.wait_for_timeout(400)
-        return await pg.evaluate(LAB_COPY), y
+    LIT = """(() => { const f = document.querySelector('#swarm figure.stage'), cv = f.querySelector('canvas'); if (!cv) return null;
+      const r = cv.getBoundingClientRect(); let lit = 0; try { const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; for (let i = 0; i < d.length; i += 16) if (d[i + 3] > 40 && d[i] * .2126 + d[i + 1] * .7152 + d[i + 2] * .0722 > 60) lit++; } catch (e) { lit = -1; }
+      return { lit, bmp: [cv.width, cv.height], box: [r.width * devicePixelRatio, r.height * devicePixelRatio], live: !!(f.__stage && f.__stage.live) }; })()"""
+    CAP = """(() => { const f = document.querySelector('#swarm figure.stage'), c = document.getElementById(f.getAttribute('aria-describedby') || ''), h = c && c.querySelector('.fc-h'); if (!h) return null;
+      const r = h.getBoundingClientRect(), on = r.bottom > 0 && r.top < innerHeight; let o = 1; for (let e = h; e && e.nodeType === 1; e = e.parentElement) o *= +getComputedStyle(e).opacity;
+      return { t: h.textContent.replace(/\\s+/g, ' ').trim(), on, whole: !on || (o > 0.99 && getComputedStyle(h).clipPath === 'none'), o: +o.toFixed(2), head: document.querySelectorAll('#swarm .ch-head .fc-h, #swarm .swarm-bar .fc-h').length }; })()"""
+    FR = "(() => { window.__fr = []; let last = 0; const f = t => { if (last) window.__fr.push(t - last); last = t; if (window.__frOn) requestAnimationFrame(f); }; window.__frOn = true; requestAnimationFrame(f); })()"
     for w, h, touch in ((1440, 900, False), (390, 844, True)):
         tag = f"platform.html@{w}x{h}"
-        ctx, pg = await open_page(b, "platform.html", w, h, dpr=2 if touch else 1, touch=touch)
-        r0, y_wait = await wait_at(pg, h)
-        if not r0: bad.append(f"{tag}: no swarm lab"); await ctx.close(); continue
-        if not await pg.evaluate("!!document.querySelector('[data-swarm-live].sw-on')"): bad.append(f"{tag}: the lab did not start with a fifth of its stage on screen")
-        # waiting: the act has not begun, and does not begin on its own
-        held = [await pg.evaluate(copy)]
-        for _ in range(6): await pg.wait_for_timeout(100); held.append(await pg.evaluate(copy))
-        if any(v != "0.00" for v in held): bad.append(f"{tag} waiting ({r0['shown']:.2f} of the stage on screen): data-sw-copy reads {sorted(set(map(str, held)))} (0.00 until the stage stands on screen)")
-        lit0 = r0["lit"]
-        # the act: the stage's centre brought to the middle of the screen
-        await pg.evaluate(WATCH)
-        y_mid = round(r0["top"] + r0["h"] / 2 - h / 2)
-        fr = await scroll_frames(pg, y_wait, y_mid, steps=16)
-        done = await until(pg, copy + " === '1.00'", int(900 * max(1.0, MODE["throttle"])), 50)
-        seq = [v for v in await pg.evaluate("window.__cp") if v >= 0]
-        if not done: bad.append(f"{tag}: data-sw-copy reads {await pg.evaluate(copy)!r} 1.5 s after the stage reached the middle of the screen (1.00)")
-        falls = [(round(seq[i - 1], 2), round(seq[i], 2)) for i in range(1, len(seq)) if seq[i] < seq[i - 1] - 0.001]
-        if falls: bad.append(f"{tag}: data-sw-copy falls back during the act ({falls[:4]})")
-        if not seq or seq[0] > 0.001 or len(set(seq)) < 4: bad.append(f"{tag}: the act was not seen running from 0 ({len(set(seq))} values, first {seq[:1]})")
-        over = [round(x, 1) for x in fr if x > lim]
-        if MODE["gl"] == "gpu":
-            if long_frames(fr, lim): bad.append(f"{tag}: {len(over)} of {len(fr)} frames over {lim:.0f} ms through the act ({over[:6]})")
-        else:
-            # as in scenes: the 33 ms rule is a real-GPU rule (--gpu). Under SwiftShader the CPU draws the lab's WebGL field
-            # (CI run 42782516694: frames of 183 to 483 ms through the act; 283 ms here on 10 Nov), so only a hang fails.
-            hang = [round(x) for x in fr if x > 5000 * max(1.0, MODE["throttle"])]
-            if hang: bad.append(f"{tag}: a frame of {hang[0]} ms through the act under software GL (a hang; 5 s at most)")
-        notes.append(f"{w}: 0 -> 1 in {len(set(seq))} steps, frames <= {max(fr) if fr else 0:.1f} ms" + ("" if MODE["gl"] == "gpu" else f" under software GL, {len(over)} of {len(fr)} over {lim:.0f} ms (judged with --gpu only)"))
-        # at rest: the field, the hedge
+        ctx, pg = await open_page(b, "platform.html", w, h, touch=touch, dpr=2 if touch else 1, init=RUN_PRESET)
+        await until(pg, RUN_READY, 15000)
+        pre = await pg.evaluate("(() => { const f = document.querySelector('#swarm figure.stage'); return { canvas: f.querySelectorAll('canvas').length, away: f.getBoundingClientRect().top > innerHeight * 1.5 }; })()")
+        if pre["away"] and pre["canvas"]: bad.append(f"{tag}: a canvas stands in the console before its chapter is near (a blank field two screens down)")
+        await pg.evaluate(FR)
+        await pg.evaluate(CONSOLE_UP)
+        first = await until(pg, f"(() => {{ const r = {LIT}; return r ? JSON.stringify(r) : ''; }})()", 10000, 16)
+        if not first: bad.append(f"{tag}: the console's canvas never arrived"); await ctx.close(); continue
+        first = json.loads(first)
+        await pg.evaluate(CONSOLE_UP)
+        reads, caps = [first], []
+        for _ in range(10):
+            await pg.wait_for_timeout(150); reads.append(await pg.evaluate(LIT)); caps.append(await pg.evaluate(CAP))
         await pg.wait_for_timeout(600)
-        r1 = await pg.evaluate(LAB_COPY)
-        if not touch:  # on a phone the Council's ring fills the field's half: the census is the wide lab's
-            if lit0 is None or r1["lit"] is None or lit0 < 0 or r1["lit"] < 0: bad.append(f"{tag}: the canvas could not be read ({lit0}, {r1['lit']})")
-            else:
-                if lit0 < max(200, 0.6 * r1["lit"]): bad.append(f"{tag}: waiting, the field's half of the canvas holds {lit0} lit pixels against {r1['lit']} at rest (never an empty field: 60% at least)")
-                if r1["lit"] < 0.9 * lit0: bad.append(f"{tag}: at rest the field's half holds {r1['lit']} lit pixels, fewer than the {lit0} it opened on")
-                notes.append(f"lit {lit0} waiting, {r1['lit']} at rest")
-        if not r1["il"] or not r1["ilText"].startswith("Illustrative"): bad.append(f"{tag}: the lab names no caption that opens 'Illustrative' ({r1['il']} found: {r1['ilText'][:40]!r})")
-        if r1["ilHead"]: bad.append(f"{tag}: a hedge stands in the lab's head ({r1['ilHead']}; one hedge, in the foot)")
-        seen_cap = 0
-        for where in ("the stage in the middle", "the caption at the screen's foot"):
-            if where.startswith("the caption"):
-                await pg.evaluate("(() => { const l = document.querySelector('[data-swarm-live]'), c = document.getElementById((l.getAttribute('aria-describedby') || '').split(/\\s+/)[0]) || l.querySelector('.figure-cap'); if (c) c.scrollIntoView({block: 'end', behavior: 'instant'}); })()")
-                await pg.wait_for_timeout(900)
-            q = await pg.evaluate(LAB_COPY)
-            if q["ilOn"]:
-                seen_cap += 1
-                if not q["ilOk"]: bad.append(f"{tag} with {where}: the lab's 'Illustrative' is on screen but not whole (faded or hidden)")
-        if not seen_cap: bad.append(f"{tag}: the lab's caption was never on screen (nothing was tested)")
-        # it never falls back: away and back
-        await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(500)
-        await pg.evaluate(f"window.scrollTo({{top: {y_mid}, behavior: 'instant'}})"); await pg.wait_for_timeout(700)
-        v = await pg.evaluate(copy)
-        if v != "1.00": bad.append(f"{tag}: back at the lab after leaving, data-sw-copy reads {v!r} (1.00: the act runs once)")
-        if not touch:
-            for ctl in ("[data-sw-motion]", "[data-sw-halt]"):
-                await pg.close(); pg = await ctx.new_page(); await pg.goto(f"{BASE}/platform.html", wait_until="load"); await until(pg, HOME_ENGINES, 15000)
-                rw, _ = await wait_at(pg, h)
-                before = await pg.evaluate(copy)
-                if before != "0.00": bad.append(f"{tag}: before {ctl}, waiting, data-sw-copy reads {before!r} (0.00)")
-                if await pg.evaluate(f"!!document.querySelector('{ctl}') && !document.querySelector('{ctl}').hidden"):
-                    await pg.evaluate(f"document.querySelector('{ctl}').click()"); await pg.wait_for_timeout(150)
-                    after = await pg.evaluate(copy)
-                    if after != "1.00": bad.append(f"{tag}: after {ctl} data-sw-copy reads {after!r} (was {before!r}; 1.00 at once)")
-                else: bad.append(f"{tag}: no {ctl} to press")
+        await pg.evaluate("window.__frOn = false"); fr = await pg.evaluate("window.__fr")
+        if any(r["lit"] < 200 for r in reads): bad.append(f"{tag}: the console's field is empty in a read (lit samples {[r['lit'] for r in reads]})")
+        z = reads[-1]
+        if abs(z["bmp"][0] - z["box"][0]) > 1 or abs(z["bmp"][1] - z["box"][1]) > 1: bad.append(f"{tag}: the canvas's bitmap is {z['bmp']} for a box of {[round(v, 1) for v in z['box']]} device px")
+        await pg.evaluate("document.querySelector('#sw-cap').scrollIntoView({ block: 'center', behavior: 'instant' })"); await pg.wait_for_timeout(500)
+        caps.append(await pg.evaluate(CAP))
+        if not caps[-1] or not caps[-1]["t"].startswith("Illustrative") or caps[-1]["head"]: bad.append(f"{tag}: the console's hedge: {caps[-1]}")
+        if not any(c and c["on"] for c in caps): bad.append(f"{tag}: the hedge was never seen on screen (nothing was tested)")
+        if any(c and not c["whole"] for c in caps): bad.append(f"{tag}: the hedge is on screen and not whole ({[c['o'] for c in caps if c and not c['whole']][:3]})")
+        await pg.evaluate(CONSOLE_UP); await pg.wait_for_timeout(500)
+        a = await pg.evaluate(LIT)
+        await pg.evaluate("(() => { const g = document.querySelector('#swarm figure.stage').__stage.g, c = g.clearRect.bind(g); window.__draws = 0; g.clearRect = (...x) => { window.__draws++; c(...x); }; })()")
+        await pg.locator("button.nav-run").click(); await pg.wait_for_timeout(300); d0 = await pg.evaluate("window.__draws"); await pg.wait_for_timeout(700)
+        d1 = await pg.evaluate("window.__draws"); pz = await pg.evaluate(LIT)
+        if d1 != d0 or abs(pz["lit"] - a["lit"]) > 0.02 * a["lit"] + 20: bad.append(f"{tag}: the header's pause: the console drew {d1 - d0} times in 0.7 s, its picture went {a['lit']} -> {pz['lit']} lit samples")
+        await pg.locator("button.nav-run").click(); await pg.wait_for_timeout(300)
+        await pg.evaluate("document.querySelector('[data-sw-halt]').click()"); await pg.wait_for_timeout(1200)
+        hz = await pg.evaluate(LIT)
+        if hz["lit"] < 0.5 * a["lit"]: bad.append(f"{tag}: halted, the console's picture fell to {hz['lit']} lit samples of {a['lit']} (the ledger and the Council stand)")
         await ctx.close()
-    ctx, pg = await open_page(b, "platform.html", 1440, 900, reduced=True)
-    await pg.evaluate("document.querySelector('[data-sw-stage]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(1200)
-    v = await pg.evaluate("document.querySelector('[data-swarm-live]').dataset.swCopy")
-    if v != "1.00": bad.append(f"platform.html@1440 reduced motion: data-sw-copy {v!r} (1.00)")
-    await ctx.close()
-    ctx, pg = await open_page(b, "index.html", 1440, 900)
-    await pg.evaluate("document.querySelector('[data-sw-stage]').scrollIntoView({block: 'center', behavior: 'instant'})"); await pg.wait_for_timeout(1500)
-    v = await pg.evaluate("document.querySelector('[data-swarm-live]').dataset.swCopy")
-    if v is not None: bad.append(f"index.html@1440: Home's lab carries data-sw-copy {v!r} (Platform's act alone)")
-    tags = "(() => { const r = document.querySelector('[data-swarm-live]'), o = s => { const e = r && r.querySelector(s); return e ? +getComputedStyle(e).opacity : null; }; return [o('[data-sw-gates]'), o('[data-sw-bound]')]; })()"
-    t_home = await pg.evaluate(tags)
-    if t_home != [1, 1]: bad.append(f"index.html@1440: Home's lab hides its gate list or Boundary tag at rest (opacity {t_home})")
-    await ctx.close()
-    ctx, pg = await open_page(b, "platform.html", 1440, 900)
-    g = await pg.evaluate(LAB_COPY); ctr = g["top"] + g["h"] / 2
-    for f in (1.6, 1.2, 1.0):
-        await pg.evaluate(f"window.scrollTo({{top: {round(ctr - f * 900)}, behavior: 'instant'}})"); await pg.wait_for_timeout(500)
-    await until(pg, "!!document.querySelector('[data-swarm-live].sw-on')", 10000)
-    for _ in range(2):
-        await pg.evaluate(f"window.scrollTo({{top: {round(ctr - 0.4 * 900)}, behavior: 'instant'}})"); await pg.wait_for_timeout(700)
-        q = await pg.evaluate(LAB_COPY); ctr = q["top"] + q["h"] / 2
-    await until(pg, copy + " === '1.00'", int(3000 * max(1.0, MODE["throttle"])), 100)
-    await pg.wait_for_timeout(800)
-    rest = await pg.evaluate(tags); cp = await pg.evaluate("document.querySelector('[data-swarm-live]').dataset.swCopy")
-    if cp != "1.00" or rest != [0, 0]: bad.append(f"platform.html@1440 at rest (data-sw-copy {cp!r}): the gate list / Boundary tag at opacity {rest} (0 until a proposal is followed)")
-    await pg.evaluate("document.querySelector('[data-sw-follow]').click()"); await pg.wait_for_timeout(900)
-    fol = await pg.evaluate(tags)
-    # The tags fade in over the follow's first frames. Where frames are slow (CI's software GL, run 42785737245) 900 ms
-    # is mid-fade (0.81), so give the fade time to end before judging where it ended.
-    waited = 900
-    while fol != [1, 1] and waited < 6000 * max(1.0, MODE["throttle"]):
-        await pg.wait_for_timeout(150); waited += 150
-        fol = await pg.evaluate(tags)
-    if fol != [1, 1]: bad.append(f"platform.html@1440 following a proposal: the gate list / Boundary tag at opacity {fol} (1)")
-    notes.append(f"Platform at rest names {rest}, following {fol}; Home {t_home}")
-    await ctx.close()
-    assert not bad, "lab_copy:\n  " + "\n  ".join(bad[:24])
-    print(f"lab_copy: Platform §02's act runs once on its clock, 0 -> 1, from a field that is never empty, under one hedge in the lab's foot; at once 1 under reduced motion, Pause and halt; never on Home ({'; '.join(notes)})")
+        lim = 33.4 * max(1.0, MODE["throttle"]); over = [round(x) for x in fr if x > lim]
+        if MODE["gl"] == "gpu":
+            if len(over) > max(1, len(fr) // 100): bad.append(f"{tag}: {len(over)} of {len(fr)} frames over {lim:.0f} ms through the console's mount ({over[:6]})")
+        elif any(x > 5000 for x in fr): bad.append(f"{tag}: a frame of {max(fr):.0f} ms through the console's mount (a hang)")
+        notes.append(f"{w}: first read {first['lit']} lit samples, frames <= {max(fr) if fr else 0:.1f} ms" + ("" if MODE["gl"] == "gpu" else f" under software GL, {len(over)} of {len(fr)} over {lim:.0f} ms (judged with --gpu only)"))
+        ctx, pg, live = await console_page(b, w, h, touch=touch, dpr=2 if touch else 1, reduced=True)
+        r = await pg.evaluate(LIT); c = await pg.evaluate(CAP)
+        if not r or r["lit"] < 200 or not c or not c["t"].startswith("Illustrative"): bad.append(f"{tag} reduced motion: the console is not one drawn still with its hedge ({r}, {c and c['t'][:20]})")
+        await ctx.close()
+    assert not bad, "lab_copy:\n  " + "\n  ".join(bad[:12])
+    print(f"lab_copy: the run's console is never an empty field (drawn in the task its canvas arrives), its bitmap its box, one hedge in the caption it names, whole on screen; the header's pause stops its drawing with the picture whole; a still under reduced motion ({'; '.join(notes)})")
 
 
 # hc29 (integrate, standing in for tests; home's request): the chart is drawn in WebGL, so the band it fills counts as
@@ -5920,47 +6304,47 @@ HANDOFF_INK = r"""(() => { const H = innerHeight, nav = document.querySelector('
 @check
 async def overture_handoff(b):
     """hc26r (integrate, standing in for tests; home's request, RETHINK-hc26 HOME-3): the overture hands over to the paper
-    with no empty ink. At 390 x 844 (touch) and 768 x 1024, walking down in tenth-of-a-screen steps from the exit's start
-    (STORY_Y(4)) to one screen past the release, each step settled: wherever the paper shows, the band between the bar's
-    foot and the paper's edge never holds more than 48 px of ink without content (beat text, the day labels, the ink
-    records), through the paper's rise as well as once it has taken the record row (.story.is-paper-up); and S4 leaves by
-    being clipped at the bar, never faded: while any of it shows above the paper its opacity is 1. hc27 (integrate,
-    standing in for tests; home's request): the rise is judged too, now that home closed it (story.js EXIT.tall: the paper
-    rises under "The full proof file" as the exit starts and follows the lifting copy; hc26r's walk judged only the
-    paper-up steps and reported the rise, 330 px of empty ink at 2.2 screens on a 390 phone then). The probe is
-    HANDOFF_INK (it shadowed nav_handoff's HANDOFF until hc27).
-    hc29 (integrate, standing in for tests; home's request, the HC29 director's item 1): S4 now holds whole while §01
-    (the paper) rises over it at scroll speed, so the paper opens no band of its own; what lies between the content and
-    the rising edge is S4's own layout (on a 390 phone the bar's foot to the hedge, the key line to the headline). The
-    chart (WebGL) counts as content, from the hedge label's top to the key label's bottom; and the empty run above the
-    paper may be as long as S4's longest empty run at rest (read before the paper shows) but no longer, nor longer than
-    48 px where S4 has no such run: content that faded or lifted early would open a longer one. S4's "clipped, never
-    faded" clause is unchanged."""
-    bad, notes = [], []
+    with no empty ink, and its last scene leaves by an edge, never by a fade. hc31r (integrate, standing in for tests;
+    home's request, LEAP-hc31 HOME-2): the take's last beat is the record and the paper is §01, which follows the take
+    in the page's own flow. At 390 x 844 (touch) and 768 x 1024, walking down in tenth-of-a-screen steps from the
+    record's rest to one screen past the take's end, each step settled: wherever the take still shows under the bar,
+    the largest band of ink without content between the bar's foot and the paper's edge (or the screen's foot) is never
+    larger than the one the record's own composition holds at its rest (2 px; content: the record's headline, sentence,
+    link, columns, axis labels and caption, the scene index, the hedge), that composition's own largest band is under a
+    fifth of the screen (the figure stands in the upper cell and the copy at the foot: 104 px at 390 x 844, 165 px at
+    768 x 1024), and once the paper shows no more than 64 px of ink lie between the take's last content and the paper
+    (it was 48 px of the WebGL stage; the take's foot padding is 29 to 56 px): the hand-over opens no hole of its own;
+    what shows of the record is at opacity 1; and the bar is solid ink over the take from the release on,
+    and paper as soon as §01 is under it (the bar's probe line inside §01), never ink over the paper."""
+    bad, n, worst = [], 0, {}
     for w, h, touch in ((390, 844, True), (768, 1024, False)):
         tag = f"index.html@{w}x{h}"
-        ctx, pg = await open_page(b, "index.html", w, h, dpr=2 if touch else 1, touch=touch)
-        await pg.wait_for_timeout(1500)
-        y0 = await pg.evaluate(STORY_Y, 4.0)
-        end = await pg.evaluate("Math.round(document.querySelector('.story').offsetTop + document.querySelector('.story').offsetHeight)")
-        cur, worst, n, rise, allow = 0, 0.0, 0, 0.0, None
-        y = y0
-        while y <= end + 1:
-            while cur < y:
-                cur = min(y, cur + h // 4); await pg.evaluate(f"window.scrollTo(0, {cur})"); await pg.wait_for_timeout(100)
-            await pg.wait_for_timeout(900)
-            r = await pg.evaluate(HANDOFF_INK); n += 1
-            if allow is None: allow = max(48.0, r["runs"] + 2)  # S4 at rest, the paper not up yet
-            if r["gap"] is not None:
-                if r["up"]: worst = max(worst, r["gap"])
-                else: rise = max(rise, r["gap"])
-                if r["gap"] > allow: bad.append(f"{tag} at {r['y']:.0f} ({(r['y'] - y0) / h:.1f} screens into the exit{'' if r['up'] else ', the paper rising'}): {r['gap']:.1f} px of ink without content over the paper (S4's own longest run at rest {allow - 2:.1f})")
-            if r["b4"] and r["b4"]["shown"] and r["b4"]["op"] < 0.99: bad.append(f"{tag} at {r['y']:.0f}: S4 shows at opacity {r['b4']['op']:.2f} (clipped, never faded)")
-            y = round(y + h * 0.1)
-        notes.append(f"{w}: {n} steps, ink without content <= {worst:.1f} px with the paper up, <= {rise:.1f} px while it rises (S4's own run at rest {allow - 2:.1f})")
+        ctx, pg = await open_page(b, "index.html", w, h, touch=touch, init=RUN_PRESET)
+        if not await until(pg, TAKE_READY, 15000): bad.append(f"{tag}: the take is not pinned (nothing was tested)"); await ctx.close(); continue
+        await take_to(pg, 4, 600)
+        rest = await pg.evaluate(TAKE_OUT)
+        if rest["hole"] > 0.2 * h: bad.append(f"{tag}: at its rest the record holds a band of {rest['hole']} px of ink without content (a fifth of the screen, {0.2 * h:.0f} px, at most)")
+        end, walk = await take_walk(pg, h, past=1.0)
+        n += len(walk); ink = paper = 0
+        for s in walk:
+            over_take = s["take"][1] > s["nb"] + 1
+            if over_take:
+                worst[w] = max(worst.get(w, 0), s["hole"])
+                if s["hole"] > rest["hole"] + 2: bad.append(f"{tag} y={s['y']}: {s['hole']} px of ink without content between the bar's foot and the paper (the record's own composition holds {rest['hole']} at most)")
+                if s["next"] < s["vh"] and s["tail"] > 64: bad.append(f"{tag} y={s['y']}: {s['tail']} px of ink between the take's last content and the paper (64 at most)")
+                if s["seen"] and s["minO"] < 0.99: bad.append(f"{tag} y={s['y']}: the record shows at opacity {s['minO']} above the paper (it leaves by the edge, never faded)")
+            released = s["y"] > end - h + 2
+            probe = s["nb"] * 1.1
+            if released and s["take"][1] > probe + 8:
+                ink += 1
+                if not (s["solid"] and s["dark"]): bad.append(f"{tag} y={s['y']}: over the leaving take the bar is {'solid' if s['solid'] else 'clear'} and {'ink' if s['dark'] else 'paper'} (solid ink)")
+            if s["next"] < probe - 8:
+                paper += 1
+                if s["dark"] or not s["solid"]: bad.append(f"{tag} y={s['y']}: with §01 under the bar it is {'ink' if s['dark'] else 'paper'}, {'solid' if s['solid'] else 'clear'} (solid paper)")
+        if not ink or not paper: bad.append(f"{tag}: the walk never put the leaving take ({ink} steps) or the paper ({paper} steps) under the bar (nothing was tested)")
         await ctx.close()
-    assert not bad, "overture_handoff:\n  " + "\n  ".join(bad[:24])
-    print(f"overture_handoff: the paper takes over with no empty ink band and S4 clipped, never faded ({'; '.join(notes)})")
+    assert not bad, f"overture_handoff: {len(bad)} problems ({n} steps):\n  " + "\n  ".join(bad[:12])
+    print(f"overture_handoff: {n} settled steps at 390 and 768: no band of empty ink beyond the record's own composition (largest {worst}), 64 px at most before the paper, the record whole to the edge, the bar solid ink over the take and paper over §01")
 
 
 FOOT_LINKS = r"""(() => { const top = document.querySelector('.footer .top'); if (!top) return null; const groups = [...top.children].slice(1);
@@ -6013,20 +6397,25 @@ CH_LINKS = r"""(() => { const rem = parseFloat(getComputedStyle(document.documen
     const over = getComputedStyle(h).position === 'absolute';
     return { id: h.closest('section').id, under: u.classList.contains('ch-line') ? 'line' : 'head', gap: ar.top - ur.bottom, dx: ar.left - tr.left, rem,
              over, row: over ? { db: base(a) - base(u), dt: base(a) - base(t), dx: ar.left - ur.right } : null }; }); })()"""
-DPL_ART = r"""(() => { const cols = [...document.querySelectorAll('#mcp .dpl-col')]; return cols.map(c => { const s = c.querySelector('.dpl-plate svg'), g = s && s.querySelector(':scope > g'), h = c.querySelector('h3');
-  if (!g) return null; const sb = s.getBoundingClientRect(), k = sb.height / 112, gb = g.getBBox(), m = g.transform.baseVal.consolidate(), ty = m ? m.matrix.f : 0;
-  return { base: (gb.y + gb.height + ty), h3: h ? h.getBoundingClientRect().top : null, k }; }); })()"""
+DPL_ART = r"""(() => { const cols = [...document.querySelectorAll('#mcp .dpl-col')]; return cols.map(c => { const sv = c.querySelector('.dpl-plate svg'), rail = sv && sv.querySelector('.dp-rail'), h = c.querySelector('h3');
+  if (!rail) return null; const sb = sv.getBoundingClientRect(), vb = sv.viewBox.baseVal, rb = rail.getBBox(), cb = c.getBoundingClientRect();
+  // hc31r (PLAT-5): each cell's plate is a window on one rail: the rail's height on the page, where it starts and ends in the cell's own drawing, the plate's and the cell's edges
+  return { y: +(sb.top + (rb.y + rb.height / 2 - vb.y) / vb.height * sb.height).toFixed(2), x0: +rb.x.toFixed(1), x1: +(rb.x + rb.width).toFixed(1), vw: vb.width, plate: [+sb.left.toFixed(1), +sb.right.toFixed(1)], cell: [+cb.left.toFixed(1), +cb.right.toFixed(1)], h3: h ? h.getBoundingClientRect().top : null }; }); })()"""
 
 
 @check
 async def section_links(b):
     """hc25 (integrate, standing in for tests; the director's HC25 6 and 7, done by home and platform): a chapter's action
-    sits under its head and a row of drawings stands on one line. Home §02, §04 and §05 at 3840 x 2160, 1440 x 900, 1024 x
+    sits under its head and a row of drawings stands on one line (hc31r: Home's chapters with a link are Trust &
+    governance and Research, "The governance model" and "All ten notes"; the lab's chapter and its link left Home with
+    the lab, LEAP-hc31 HOME-2, so the clauses about §02's line and its one-screen form below describe hc25 to hc30r and
+    hold for any head that is laid over its content again). Home §02, §04 and §05 at 3840 x 2160, 1440 x 900, 1024 x
     768, 768 x 1024 and with touch at 390 x 844 and 320 x 640: the link ("Lifecycle 01 in depth", "The governance model",
     "All ten notes") starts at its head's left edge (1 px) and 1.5rem (2 px) under what it follows (the title, or §02's
     line "Tighten the Council and it rejects more.": hc27, home's request, the director's HC27 7 moved §02's link from
     under the lab to under its lede), never on the head's baseline. Platform §04 at 3840 x 2160, 1440 x 900
-    and 1024 x 768 (three columns): the three drawings' art ends on one baseline (0.5 of the drawing's 112 units) and the
+    and 1024 x 768 (three columns): the three drawings' art ends on one baseline (0.5 of the drawing's 112 units; hc31r,
+    PLAT-5: the baseline is drawn, one rail at one height across the three cells, from edge to edge of each plate) and the
     three titles start on one line (1 px). Before hc25 §05's link sat on its head's baseline at the row's right (x 953 at
     1440) and §04's three drawings ended at three different heights.
     hc30r (HOME-2; integrate, standing in for tests, on home's request; TESTS.md section 53): where Home's lab is one
@@ -6043,10 +6432,11 @@ async def section_links(b):
         await pg.evaluate("document.querySelector('#research').scrollIntoView({block: 'start', behavior: 'instant'})"); await pg.wait_for_timeout(500)
         r = await pg.evaluate(CH_LINKS)
         await ctx.close()
-        if not r or len(r) != 3 or not all(r): bad.append(f"{tag}: §02 / §04 / §05 without a head and its link ({r})"); continue
-        if r[0]["under"] != "line": bad.append(f"{tag} #lc01: the link follows the {r[0]['under']}, not the line under the title")
-        if r[0]["over"] != (w >= 1200 and h >= 800): bad.append(f"{tag} #lc01: the head {'lies over the stage' if r[0]['over'] else 'stands above the stage'} (the one-screen form is for 1200 px by 800 px and up)")
-        if r[1]["over"] or r[2]["over"]: bad.append(f"{tag}: §04's or §05's head is laid over its content")
+        # hc31r (integrate; home's request, LEAP-hc31 HOME-2): the lab's chapter left Home with the lab, and "Lifecycle 01
+        # in depth" with it; the chapters that carry a link are Trust & governance and Research (§03 and §04 now), and
+        # no head is laid over its content any more (the one-screen form was the lab's)
+        if not r or len(r) != 2 or not all(r) or [x["id"] for x in r] != ["governance", "research"]: bad.append(f"{tag}: Trust & governance / Research without a head and its link ({r})"); continue
+        if r[0]["over"] or r[1]["over"]: bad.append(f"{tag}: a chapter's head is laid over its content")
         for x in r:
             if x["over"]:
                 row = x["row"]
@@ -6064,15 +6454,395 @@ async def section_links(b):
         await pg.evaluate("document.querySelector('#mcp').scrollIntoView({block: 'start', behavior: 'instant'})"); await pg.wait_for_timeout(500)
         r = await pg.evaluate(DPL_ART)
         await ctx.close()
-        if not r or len(r) != 3 or not all(r): bad.append(f"{tag}: §04 without three drawings ({r})"); continue
-        bases = [x["base"] for x in r]
-        if max(bases) - min(bases) > 0.5: bad.append(f"{tag}: the three drawings end at {[round(v, 1) for v in bases]} of 112 (one baseline)")
+        if not r or len(r) != 3 or not all(r): bad.append(f"{tag}: §04 without three drawings on a rail ({r})"); continue
+        # hc31r (integrate; platform's PLAT-5: "one rail across section 04's three cells"): the row of drawings stands on one
+        # line, and the line is now drawn: each cell's rail is at one height (0.5 px), it leaves the first cell at its
+        # drawing's right edge, crosses the second from edge to edge and enters the third at its left edge, and each
+        # plate spans its cell (to the cell's hairline: 2.5 px), so the rail is one line across the cells' hairlines
+        ys = [x["y"] for x in r]
+        if max(ys) - min(ys) > 0.5: bad.append(f"{tag}: the three cells' rails stand at {ys} px (one line)")
+        if abs(r[0]["x1"] - r[0]["vw"]) > 0.5 or abs(r[1]["x0"]) > 0.5 or abs(r[1]["x1"] - r[1]["vw"]) > 0.5 or abs(r[2]["x0"]) > 0.5:
+            bad.append(f"{tag}: the rail does not run from cell to cell (it ends at {r[0]['x1']} of {r[0]['vw']} in the first, runs {r[1]['x0']} to {r[1]['x1']} in the second, starts at {r[2]['x0']} in the third)")
+        if any(abs(x["plate"][0] - x["cell"][0]) > 2.5 or abs(x["plate"][1] - x["cell"][1]) > 2.5 for x in r): bad.append(f"{tag}: a plate does not span its cell (plates {[x['plate'] for x in r]}, cells {[x['cell'] for x in r]})")
         tops = [x["h3"] for x in r]
         if None in tops or max(tops) - min(tops) > 1: bad.append(f"{tag}: the three titles start at {tops}")
-        if w == 1440: notes.append(f"Platform §04 baseline {[round(v, 1) for v in bases]}")
+        if w == 1440: notes.append(f"Platform §04 rail at {ys}")
     assert not bad, "section_links:\n  " + "\n  ".join(bad[:24])
-    print(f"section_links: Home's chapter links under their heads (§02's under its line, or on its line's row where the lab is one screen); Platform §04's drawings on one baseline ({'; '.join(notes)})")
+    print(f"section_links: Home's chapter links under their heads (§02's under its line, or on its line's row where the lab is one screen); Platform §04's drawings on one rail ({'; '.join(notes)})")
 
+
+# ---------------------------------------------------------------- hc31r: the run (new coverage; LEAP-hc31 section 6, TESTS.md 55)
+# Ported from the groups' acceptance harnesses (.shots/v2x/work/system-hc31r/accept.py, proof/hc31r/accept.py,
+# platform-hc31r/journey.py and drag.py, company-hc31r/accept.py), on the real pages.
+CAMERA_PAGES = ("index.html", "platform.html", "lifecycles.html", "trust.html", "company.html")
+# what a camera page shows of the run, as text: the marks each engine last drew (so two equal reads are a still picture)
+RUN_PICTURE = r"""(() => { const out = {}, q = s => document.querySelector(s);
+  document.querySelectorAll('svg[data-run-plate]').forEach((sv, i) => { out['plate' + i] = ['rp-ring', 'rp-sq', 'rp-no', 'rp-b', 'rp-new'].map(c => { const e = sv.querySelector('.rp > .' + c); return e ? e.getAttribute('d') || '' : ''; }).join('|'); });
+  document.querySelectorAll('figure.stage, .take-stage').forEach((f, i) => { const st = f.__stage; if (st && st.cv) { let h = 0; try { const d = st.g.getImageData(0, 0, st.cv.width, st.cv.height).data; for (let k = 0; k < d.length; k += 97) h = (h * 31 + d[k]) >>> 0; } catch (e) { h = -1; } out['stage' + i] = h; } });
+  const co = q('#company-figure canvas'); if (co) { let h = 0; try { const d = co.getContext('2d').getImageData(0, 0, co.width, co.height).data; for (let k = 0; k < d.length; k += 53) h = (h * 31 + d[k]) >>> 0; } catch (e) { h = -1; } out.company = h; }
+  const tok = q('[data-kplate] .k-tok'); if (tok) out.token = tok.getAttribute('cx') + ',' + tok.getAttribute('cy');
+  const desk = q('[data-gap-time]'); if (desk) out.desk = desk.textContent;
+  const sum = q('main > .cta-band .ll-sum'); if (sum) out.sum = sum.textContent.replace(/\s+/g, ' ');
+  return JSON.stringify(out); })()"""
+# animations that run on the document's clock (a scene's scroll-linked ones only move with the scroll)
+RUN_ANIMS = "document.getAnimations().filter(a => a.playState === 'running' && a.timeline === document.timeline).map(a => (a.animationName || a.transitionProperty || '?') + '@' + ((a.effect && a.effect.target && (a.effect.target.className.baseVal !== undefined ? a.effect.target.className.baseVal : a.effect.target.className)) || '') + ((a.effect && a.effect.pseudoElement) || ''))"
+
+
+async def run_go(pg, path, wait=700):
+    await pg.goto(f"{BASE}/{path}", wait_until="load")
+    assert await until(pg, RUN_READY, int(15000 * max(1.0, MODE["throttle"]))), f"{path}: the run did not start (OXA.run, the header's transport)"
+    await pg.wait_for_timeout(wait)
+    return await pg.evaluate(RUN_STATE)
+
+
+@check
+async def run_clock(b):
+    """hc31r (integrate, standing in for tests; LEAP-hc31 rule 1 "one clock", section 6: "same store, same t, same frame;
+    Home and Trust show the same tagged ID"; system's accept.py `clock` and `same`, proof's PROOF-1): one run a visit.
+    At 1440 x 900, through Home, Platform, Lifecycles, Trust, Company, then Back twice: the run's time never goes back
+    and never restarts (each read later than the one before, and by the wall clock's own difference, 0.05 s), every
+    page reads one seed and one arrival from the store, and the header's clock shows the run's elapsed time (1 s).
+    With a known store (SYSTEM.md 16 "Tests"), every camera page computes the same sample for the same instant (t =
+    174: the tagged ID and its line, the proposals in flight by number, their first 24 places, the newest block's hash,
+    the counts). With that store frozen at an instant (paused), at two instants: Home's stage, Platform's plate, the
+    Lifecycles ring and Trust's plate tag the same proposal, the one the run names, and the end card on Home and on
+    Trust opens on the same newest block, the run's."""
+    bad = []
+    ctx = await b.new_context(viewport={"width": 1440, "height": 900}); pg = await ctx.new_page(); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    seq = [await run_go(pg, p) for p in CAMERA_PAGES]
+    for _ in range(2):
+        await pg.go_back(wait_until="load"); await until(pg, RUN_READY, 15000); await pg.wait_for_timeout(600); seq.append(await pg.evaluate(RUN_STATE))
+    if not all(y["t"] > x["t"] for x, y in zip(seq, seq[1:])): bad.append(f"the run's time went back or restarted across the pages: {[round(x['t'], 2) for x in seq]}")
+    drift = max(abs((y["t"] - x["t"]) - (y["wall"] - x["wall"]) / 1000) for x, y in zip(seq, seq[1:]))
+    if drift > 0.05: bad.append(f"the run's time and the wall clock differ by {drift:.3f} s between two pages (one clock)")
+    if len({(x["t0"], x["seed"]) for x in seq}) != 1: bad.append(f"the pages read {len({(x['t0'], x['seed']) for x in seq})} different stores (one seed, one arrival)")
+    for x, path in zip(seq, CAMERA_PAGES):
+        m = re.search(r"(\d\d):(\d\d)", x["text"]); el = x["t"] - 40
+        if not m or abs(int(m[1]) * 60 + int(m[2]) - el) > 1.5: bad.append(f"{path}: the header reads {x['text']!r} with the run {el:.1f} s in")
+    await ctx.close()
+    # same store, same instant, same sample
+    DIG = "(() => { const S = OXA.run.sample(174), top = Math.floor(S.bl) - 1; return JSON.stringify([S.tagId, S.tagLine, S.n, Array.from(S.k.slice(0, S.n)), Array.from(S.x.slice(0, 24)).map(v => +v.toFixed(5)), OXA.run.block(top).slice(0, 8), S.counts]); })()"
+    ctx = await b.new_context(viewport={"width": 1440, "height": 900}); await ctx.add_init_script(RUN_PRESET); pg = await ctx.new_page()
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    digs = {}
+    for path in CAMERA_PAGES:
+        await run_go(pg, path, 300); digs[path] = await pg.evaluate(DIG)
+    if len(set(digs.values())) != 1: bad.append(f"the pages compute different samples for t = 174: {[(k, v[:60]) for k, v in digs.items()]}")
+    await ctx.close()
+    # one frozen instant on four cameras
+    said = []
+    for t in (138.9, 150.3):
+        ctx = await b.new_context(viewport={"width": 1440, "height": 900}); await ctx.add_init_script(run_preset(134, paused=t)); pg = await ctx.new_page()
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        got = {}
+        for path, sel in (("index.html", ".take-stage .stage-tag"), ("platform.html", ".hero-plate--stack [data-run='tag']"), ("lifecycles.html", ".hero-plate--rings [data-run='tag']"), ("trust.html", ".hero-plate--council [data-run='tag']")):
+            await run_go(pg, path, 900)
+            if path == "index.html": await until(pg, TAKE_READY, 15000)
+            await pg.evaluate("document.querySelector('main > .cta-band').scrollIntoView({ block: 'end', behavior: 'instant' })"); await pg.wait_for_timeout(500)
+            card = await pg.evaluate("(() => { const b = document.querySelector('main > .cta-band .ll-b'); return b ? b.dataset.h : null; })()")
+            await pg.evaluate("window.scrollTo({ top: 0, behavior: 'instant' })"); await pg.wait_for_timeout(500)
+            r = await pg.evaluate(f"(() => {{ const S = OXA.run.sample(), e = document.querySelector({json.dumps(sel)}), id = e && !e.hidden ? (e.querySelector('[data-run-id], b') || e).textContent.trim() : null; return {{ run: S.tagId, shown: id, newest: OXA.run.block(Math.floor(S.bl) - 1).slice(0, 8), t: S.t }}; }})()")
+            r["card"] = card; got[path] = r
+        runs = {(v["run"], v["newest"], v["t"]) for v in got.values()}
+        if len(runs) != 1: bad.append(f"frozen at t = {t}: the pages do not read one instant ({runs})")
+        tagged = next(iter(got.values()))["run"]
+        if not tagged: bad.append(f"frozen at t = {t}: no proposal is tagged")
+        off = {k: v["shown"] for k, v in got.items() if v["shown"] != v["run"]}
+        if off: bad.append(f"frozen at t = {t}: a camera's tag is not the run's tagged proposal {tagged} ({off})")
+        cards = {k: v["card"] for k, v in got.items() if k in ("index.html", "trust.html")}
+        if any(c != got["index.html"]["newest"] for c in cards.values()): bad.append(f"frozen at t = {t}: the end card opens on {cards}; the run's newest block is {got['index.html']['newest']}")
+        said.append(f"t={t}: {tagged}, block {got['index.html']['newest']}")
+        await ctx.close()
+    assert not bad and not errs, "run_clock:\n  " + "\n  ".join(bad + errs[:2])
+    print(f"run_clock: one clock through five pages and Back twice (drift {drift:.3f} s), one store; the same sample at t = 174 on every camera page; frozen, four cameras tag the same proposal and the end cards open on the same block ({'; '.join(said)})")
+
+
+@check
+async def run_pause(b):
+    """hc31r (integrate, standing in for tests; LEAP-hc31 section 6: "the per-figure Pause controls become: one pause in
+    the header stops every motion on the page and persists"; system's accept.py `pause` and `keys`): the controls this
+    replaces (the overture's, the lab's, the explorer's, the desk's, the hero plates' Replay, Company's two) were each
+    checked on their own figure until hc31r. At 1440 x 900, on each of the five camera pages in turn (Home on its
+    first screen, then with each page's own instrument on screen: Platform's console, the Lifecycles desk, Company's
+    constants plate), running: the page's picture of the run changes within 1.5 s (it runs). One press of the header's
+    transport: its state is `pause`, its name "Resume the model", html.run-paused; the run's time stands (two reads
+    0.9 s apart); everything the page draws of the run is the same in two reads 1 s apart (the plates' marks, the
+    stages' pixels, Company's sheet and token, the desk's clock, the end card's sum); and no animation is running on
+    the document's clock in <main> or the bar. The next page opens paused at the same instant, as still. No button in
+    <main> reads Pause motion, Resume motion or Replay on any of them (Trust's ledger keeps its Replay: it writes the
+    excerpt again, an act of the instrument, not a motion control, and it reads the header's pause). A press on the last page resumes from where it stood
+    (0.4 to 1.4 s on, 0.7 s later) and its picture moves again. By keyboard: Enter on the transport pauses, Space
+    resumes, focus stays on it. On a phone (390 x 844, touch) the transport is at least 44 px tall, clear of the menu
+    button, and a tap pauses."""
+    bad = []
+    ctx = await b.new_context(viewport={"width": 1440, "height": 900}); await ctx.add_init_script(RUN_PRESET); pg = await ctx.new_page(); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    SHOW = {"platform.html": CONSOLE_UP, "lifecycles.html": "document.querySelector('.desk').scrollIntoView({ block: 'center', behavior: 'instant' })", "company.html": "document.querySelector('[data-kplate]').scrollIntoView({ block: 'center', behavior: 'instant' })"}
+    async def views(path):
+        """the page's first screen, then its own instrument"""
+        out = [("the first screen", "window.scrollTo({ top: 0, behavior: 'instant' })")]
+        if path in SHOW: out.append(("its instrument", SHOW[path]))
+        return out
+    async def still(path, what):
+        # a first read is thrown away: after a canvas's first getImageData the browser moves it off the GPU, and the same
+        # picture reads a few antialiased pixels differently once (no draw happens: counted in the page)
+        await pg.evaluate(RUN_PICTURE); await pg.wait_for_timeout(300)
+        a = await pg.evaluate(RUN_PICTURE); await pg.wait_for_timeout(1000); z = await pg.evaluate(RUN_PICTURE)
+        an = [x for x in await pg.evaluate(RUN_ANIMS) if not re.search(r"scene-p|view-transition", x)]
+        if a != z:
+            ja, jz = json.loads(a), json.loads(z)
+            bad.append(f"{path} ({what}), paused: the picture of the run changed in 1 s ({[k for k in ja if ja[k] != jz.get(k)]})")
+        if an: bad.append(f"{path} ({what}), paused: {len(an)} animation(s) run on the clock ({an[:4]})")
+        return len(json.loads(a))
+    first = True; t_pause = None; parts = 0
+    for path in CAMERA_PAGES:
+        s = await run_go(pg, path, 900)
+        if path == "index.html": await until(pg, TAKE_READY, 15000)
+        own = await pg.evaluate("[...document.querySelectorAll('main button')].filter(x => /^(pause|resume) motion$/i.test(x.textContent.trim()) || (/^replay$/i.test(x.textContent.trim()) && !x.closest('[data-ledger]'))).map(x => x.textContent.trim())")
+        if own: bad.append(f"{path}: a figure has a motion control of its own again ({own})")
+        if first:
+            a = await pg.evaluate(RUN_PICTURE); await pg.wait_for_timeout(1500)
+            if await pg.evaluate(RUN_PICTURE) == a: bad.append(f"{path}: running, the picture of the run did not change in 1.5 s")
+            await pg.locator("button.nav-run").click(); await pg.wait_for_timeout(300)
+            s = await pg.evaluate(RUN_STATE); await pg.wait_for_timeout(900); s2 = await pg.evaluate(RUN_STATE)
+            if not (s["state"] == "pause" and s["paused"] and s["label"] == "Resume the model" and s["t"] == s2["t"]): bad.append(f"{path}: one press of the transport: {s['state']!r}, {s['label']!r}, html.run-paused {s['paused']}, the time {s['t']} -> {s2['t']}")
+            t_pause = s["t"]; first = False
+        elif not (s["state"] == "pause" and s["paused"] and abs(s["t"] - t_pause) < 1e-6): bad.append(f"{path}: opened {s['state']!r} at {s['t']:.3f}; the run was paused at {t_pause:.3f} on the page before")
+        for what, js in await views(path):
+            await pg.evaluate(js); await pg.wait_for_timeout(900)
+            if path == "platform.html" and what == "its instrument": await until(pg, CONSOLE_LIVE, 10000); await pg.wait_for_timeout(1500)   # the stage's tag arrives 0.9 s after its first frame
+            parts += await still(path, what)
+    a = await pg.evaluate(RUN_PICTURE)
+    await pg.evaluate("window.scrollTo({ top: 0, behavior: 'instant' })"); await pg.locator("button.nav-run").click(); await pg.wait_for_timeout(700)
+    r = await pg.evaluate(RUN_STATE)
+    if not (r["state"] == "run" and not r["paused"] and 0.4 < r["t"] - t_pause < 1.4): bad.append(f"company.html: a press there resumed to {r['state']!r} at {r['t'] - t_pause:.2f} s past the pause (0.4 to 1.4)")
+    await pg.evaluate(SHOW["company.html"]); await pg.wait_for_timeout(1500)
+    if await pg.evaluate(RUN_PICTURE) == a: bad.append("company.html: resumed, the picture of the run did not move")
+    # by keyboard
+    await run_go(pg, "trust.html", 600)
+    await pg.focus("button.nav-run"); await pg.keyboard.press("Enter"); await pg.wait_for_timeout(250); k1 = await pg.evaluate(RUN_STATE)
+    await pg.keyboard.press("Space"); await pg.wait_for_timeout(250); k2 = await pg.evaluate(RUN_STATE)
+    kf = await pg.evaluate("document.activeElement === document.querySelector('button.nav-run')")
+    if k1["state"] != "pause" or k2["state"] != "run" or not kf: bad.append(f"trust.html: Enter then Space on the transport gave {k1['state']!r} then {k2['state']!r} (pause, run) with focus {'on' if kf else 'off'} it")
+    await ctx.close()
+    ctx = await b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True); await ctx.add_init_script(RUN_PRESET); pg = await ctx.new_page()
+    await run_go(pg, "trust.html", 600)
+    box = await pg.evaluate("(() => { const r = document.querySelector('button.nav-run').getBoundingClientRect(), m = document.querySelector('.nav-toggle').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), Math.round(m.left - r.right)]; })()")
+    await bounded(pg.locator("button.nav-run").tap(), "a tap on the transport"); await pg.wait_for_timeout(250)
+    if box[1] < 44 or box[2] < 0 or (await pg.evaluate(RUN_STATE))["state"] != "pause": bad.append(f"trust.html@390x844: the transport is {box[0]} x {box[1]} px, {box[2]} px from the menu button, and a tap gave {(await pg.evaluate(RUN_STATE))['state']!r} (44 px tall, clear of the button, pause)")
+    await ctx.close()
+    assert not bad and not errs, "run_pause:\n  " + "\n  ".join(bad[:14] + errs[:2])
+    print(f"run_pause: one press in the header holds every picture of the run on five pages ({parts} parts read still, no animation on the clock), persists from page to page and resumes where it stood; Enter and Space by keyboard; 44 px on a phone")
+
+
+@check
+async def run_halt(b):
+    """hc31r (integrate, standing in for tests; LEAP-hc31 M4 "halt the run", section 6: "a halt drains to 0 and the sum
+    closes"; system's accept.py `halt`, platform's journey.py): the emergency halt is the run's. At 1440 x 900, on
+    Platform, the console's button pressed once: in that task the header's state is `halt`, it reads "Halted", and
+    html.run-halted is set; nothing is born after it (the proposed count 3 s later is the count at the press); within
+    9.5 s nothing is in flight, on the run and in the console's count, and proposed = settled + rejected; the ledger
+    stands (its length the same 2 s later); the dial in §05 stands on Emergency halt. Then Home, Trust, Lifecycles and
+    Company each open Halted in the header, with nothing in flight; Home's Follow control is disabled and says so; the
+    Lifecycles desk says Halted and its clock stands; Company's constants plate reads "Halted · no new proposals". The
+    header's play glyph, on Lifecycles, resumes the run: a proposal is in flight within 0.5 s, and back on Platform the
+    console's button reads "Emergency halt" again and the dial has left the halt. The dial and the button are one
+    state both ways (the dial's fourth mode halts; Resume on the console moves the dial off it). The records sealed
+    are the visitor's own gestures, one each, and the chain verifies."""
+    bad, errs = [], []
+    ctx, pg, live = await console_page(b, errs=errs)
+    assert live, "run_halt platform.html@1440x900: the console's stage did not go live"
+    await pg.wait_for_timeout(1200)
+    same = await pg.evaluate("(() => { document.querySelector('[data-sw-halt]').click(); const n = document.querySelector('button.nav-run'), c = OXA.run.sample().counts; return { state: n.dataset.state, word: n.textContent.trim().slice(0, 6), btn: document.querySelector('[data-sw-halt]').textContent.trim(), cls: document.documentElement.classList.contains('run-halted'), n: c.n, f: c.f }; })()")
+    if not (same["state"] == "halt" and same["word"] == "Halted" and same["btn"] == "Resume" and same["cls"]): bad.append(f"one press: the header and the button in the press's own task read {same}")
+    await pg.wait_for_timeout(3000)
+    born = await pg.evaluate("OXA.run.sample().counts.n")
+    if born != same["n"]: bad.append(f"a proposal was born after the halt ({same['n']} proposed at the press, {born} 3 s later)")
+    drained = await until(pg, "(() => { const S = OXA.run.sample(); return S.n === 0 && S.counts.f === 0 && document.querySelector('[data-sw-inflight]').textContent.trim() === '0'; })()", int(6500 * max(1.0, MODE["throttle"])), 100)
+    d = await pg.evaluate("(() => { const S = OXA.run.sample(), c = S.counts; return { n: c.n, s: c.s, r: c.r, f: c.f, bl: S.bl }; })()")
+    if not drained or d["n"] != d["s"] + d["r"]: bad.append(f"halted with {same['f']} in flight: not drained within 9.5 s, or the sum does not close ({d})")
+    await pg.wait_for_timeout(1500)   # the ledger stands from the end of the drain's time (8.6 s after the press), not from the last proposal's landing
+    bl0 = await pg.evaluate("OXA.run.sample().bl"); await pg.wait_for_timeout(2000)
+    if abs(await pg.evaluate("OXA.run.sample().bl") - bl0) > 1e-9: bad.append("halted and drained, the ledger still grows")
+    dial = await pg.evaluate("(() => { const e = document.querySelector('#modes .hp-lab[data-m=\"3\"]'); return e ? e.getAttribute('aria-checked') : null; })()")
+    if dial != "true": bad.append(f"halted, the dial's Emergency halt reads aria-checked {dial}")
+    for path in ("index.html", "trust.html", "lifecycles.html", "company.html"):
+        s = await run_go(pg, path, 1000)
+        n = await pg.evaluate("OXA.run.sample().n")
+        if not (s["state"] == "halt" and s["halted"] and s["text"].strip().startswith("Halted") and n == 0): bad.append(f"{path}: opened {s['state']!r} ({s['text'].strip()[:12]!r}) with {n} in flight (Halted, none)")
+        if path == "index.html":
+            await until(pg, TAKE_READY, 15000)
+            f = await pg.evaluate("(() => { const f = document.querySelector('[data-take-follow]'); return [f.disabled, f.textContent.trim()]; })()")
+            if f != [True, "Halted · no new proposals"]: bad.append(f"index.html: halted, the Follow control reads {f} (disabled, 'Halted · no new proposals')")
+        if path == "lifecycles.html":
+            await pg.evaluate("document.querySelector('.desk').scrollIntoView({ block: 'center', behavior: 'instant' })"); await pg.wait_for_timeout(2500)
+            d1 = await pg.evaluate("[document.querySelector('[data-gap-state]').textContent, document.querySelector('[data-gap-time]').textContent]"); await pg.wait_for_timeout(1500)
+            d2 = await pg.evaluate("[document.querySelector('[data-gap-state]').textContent, document.querySelector('[data-gap-time]').textContent]")
+            if d1 != d2 or d1[0] != "Halted": bad.append(f"lifecycles.html: halted, the desk reads {d1} then {d2} (Halted, its clock standing)")
+        if path == "company.html":
+            await pg.evaluate("document.querySelector('[data-kplate]').scrollIntoView({ block: 'center', behavior: 'instant' })")
+            if not await until(pg, "document.querySelector('[data-kplate] .k-state').textContent.replace(/\\s+/g, ' ').trim() === 'Halted · no new proposals'", 14000, 200):
+                ks = await pg.evaluate("document.querySelector('[data-kplate] .k-state').textContent")
+                bad.append(f"company.html: halted, the constants plate reads {ks!r}")
+    await run_go(pg, "lifecycles.html", 800)
+    await pg.locator("button.nav-run").click()
+    back = await until(pg, "(() => { const S = OXA.run.sample(); return document.querySelector('button.nav-run').dataset.state === 'run' && !S.halted && S.n > 0; })()", int(500 * max(1.0, MODE["throttle"])), 25)
+    if not back: bad.append(f"lifecycles.html: the header's play glyph did not resume the run with a proposal in flight within 0.5 s ({await pg.evaluate(RUN_STATE)})")
+    await run_go(pg, "platform.html", 800)
+    st = await pg.evaluate("[document.querySelector('[data-sw-halt]').textContent.trim(), document.querySelector('[data-sw-halt]').getAttribute('aria-pressed'), document.querySelector('#modes .hp-lab[data-m=\"3\"]').getAttribute('aria-checked'), document.querySelector('#modes .hp-lab[data-m=\"0\"]').getAttribute('aria-checked')]")
+    if st != ["Emergency halt", "false", "false", "true"]: bad.append(f"platform.html: resumed elsewhere, the console's button and the dial read {st}")
+    await pg.evaluate("document.querySelector('#modes').scrollIntoView({ block: 'center', behavior: 'instant' })"); await pg.wait_for_timeout(700)
+    await pg.locator('#modes .hp-lab[data-m="3"]').click(); await pg.wait_for_timeout(400)
+    st = await pg.evaluate("[document.querySelector('[data-sw-halt]').textContent.trim(), document.querySelector('button.nav-run').dataset.state, OXA.run.sample().halted]")
+    if st != ["Resume", "halt", True]: bad.append(f"platform.html: the dial on Emergency halt gave the console and the header {st}")
+    await pg.evaluate("document.querySelector('[data-sw-halt]').click()"); await pg.wait_for_timeout(400)
+    st = await pg.evaluate("[document.querySelector('#modes .hp-lab[data-m=\"3\"]').getAttribute('aria-checked'), OXA.run.sample().halted]")
+    if st != ["false", False]: bad.append(f"platform.html: Resume on the console left the dial and the run at {st}")
+    recs = await pg.evaluate("({ recs: OXA.run.records().map(r => r.ev + ' ' + r.d + ' @' + r.where), ok: OXA.run.verify() })")
+    if len(recs["recs"]) != 3 or not recs["ok"]["ok"] or not all(x.startswith("Emergency halt ") and x.endswith("@Platform") for x in recs["recs"]): bad.append(f"the halts sealed {recs['recs']} (three of the visitor's own gestures on Platform; the header's resume is not one), verify {recs['ok']}")
+    await ctx.close()
+    assert not bad and not errs, "run_halt:\n  " + "\n  ".join(bad[:14] + errs[:2])
+    print(f"run_halt: halted on Platform with {same['f']} in flight: Halted in the press's own task, nothing born, drained ({d['n']} = {d['s']} + {d['r']}), the ledger stands; Home, Trust, Lifecycles and Company open Halted and drained; the header's glyph resumes from Lifecycles; the dial and the button are one state; three records, the chain verifies")
+
+
+@check
+async def run_hand(b):
+    """hc31r (integrate, standing in for tests; LEAP-hc31 rule 4 "what the hand does is on the record", M5 "your own
+    past", section 6: "a chain sealed on Home verifies on Trust; one gesture is one record"; system's accept.py `hand`,
+    home's probe `hand`, platform's drag.py, proof's PROOF-2). At 1440 x 900. Home, beat 3: while the pip is held the
+    model follows it (its strictness within 2 points of the scale's value), the figure says .is-held and nothing is
+    recorded; released, one record ("Council strictness 12 -> N%") and the receipt shows #0001 with its hash; eighteen
+    arrow presses are one record, written 700 ms after the last and not before; a drag back to where it began is none;
+    a double click returns to 12% as one record; the chain of three verifies and its first link is Trust's excerpt
+    (OXA.run.ROOT). Platform: the chain verifies there, the strictness came along (the console's pip stands at 12).
+    Lifecycles, the desk: three arrow presses on the threshold are one record ("Threshold 6 -> N bps ..."), the three
+    counts answer the hand in the frame of each move (at the scale's two ends the counts differ), and a double click
+    returns to 6 bps as one record. Trust: the five records stand after the excerpt's nine, in view, each naming its
+    page and carrying the hash it was sealed with; the state reads "9 sample records · 5 of yours · Chain intact";
+    Verify reads "Verified here · 13 of 13 links hold"; Change puts the caret in the visitor's first record, and one
+    edit breaks that record and every later one and none of the nine; Restore heals; Clear returns the nine and empties
+    the store. Reading records nothing: Trust, Proof and Home opened and scrolled seal no record."""
+    bad, errs = [], []
+    ctx, pg = await open_page(b, "index.html", 1440, 900, init=RUN_PRESET, errs=errs)
+    assert await until(pg, TAKE_READY, 15000), "run_hand index.html@1440x900: the take did not start"
+    assert await take_to(pg, 3, 500), "run_hand index.html@1440x900: beat 3 did not come to rest"
+    pip = await pg.evaluate(TAKE_PIP)
+    await pg.mouse.move(pip["x"], pip["y"]); await pg.mouse.down(); await pg.mouse.move(pip["x"] + 60, pip["y"], steps=6); await pg.mouse.move(pip["x"] + pip["w"] * 27 / 60, pip["y"], steps=8); await pg.wait_for_timeout(350)
+    mid = await pg.evaluate("({ v: +document.querySelector('[data-sw-strict]').value, held: !!document.querySelector('.take-stage.is-held, .story .is-held'), strict: OXA.run.strict(), n: OXA.run.records().length, ro: document.querySelector('.take-ro').textContent })")
+    await pg.mouse.up(); await pg.wait_for_timeout(500)
+    a = await pg.evaluate("({ recs: OXA.run.records().map(r => [r.id, r.ev, r.d, r.sub, r.hash.slice(0, 8)]), receipt: document.querySelector('.take-bar .receipt').textContent })")
+    if not (mid["held"] and mid["n"] == 0 and abs(mid["strict"] * 100 - mid["v"]) <= 2 and f"approves {100 - mid['v']}%" in mid["ro"]): bad.append(f"index.html: while the pip is held: {mid} (held, the model and the read-out with the pip, nothing recorded)")
+    if not (len(a["recs"]) == 1 and a["recs"][0][:3] == ["#0001", "Council strictness", f"12 → {mid['v']}%"] and a["recs"][0][3] == "you · Home" and "#0001" in a["receipt"] and a["recs"][0][4] in a["receipt"]): bad.append(f"index.html: one drag: records {a['recs']}, the receipt {a['receipt'][:80]!r}")
+    await pg.wait_for_timeout(1200)
+    await pg.locator("[data-sw-strict]").focus()
+    for _ in range(18): await pg.keyboard.press("ArrowLeft"); await pg.wait_for_timeout(30)
+    n_mid = await pg.evaluate("OXA.run.records().length"); await pg.wait_for_timeout(1000)
+    n2 = await pg.evaluate("OXA.run.records().length")
+    if n_mid != 1 or n2 != 2: bad.append(f"index.html: eighteen arrow presses: {n_mid} records right after the last press, {n2} a second later (1, then 2)")
+    pip = await pg.evaluate(TAKE_PIP)
+    await pg.mouse.move(pip["x"], pip["y"]); await pg.mouse.down(); await pg.mouse.move(pip["x"] + 50, pip["y"], steps=5); await pg.mouse.move(pip["x"], pip["y"], steps=5); await pg.mouse.up(); await pg.wait_for_timeout(700)
+    if await pg.evaluate("OXA.run.records().length") != 2: bad.append(f"index.html: a drag back to where it began wrote a record ({await pg.evaluate('OXA.run.records().length')})")
+    await pg.mouse.dblclick(pip["x"], pip["y"]); await pg.wait_for_timeout(800)
+    dd = await pg.evaluate("({ v: +document.querySelector('[data-sw-strict]').value, n: OXA.run.records().length, d: OXA.run.records().slice(-1)[0].d, ok: OXA.run.verify(), root: OXA.run.records()[0].prev === OXA.run.ROOT })")
+    if not (dd["v"] == 12 and dd["n"] == 3 and dd["d"].endswith("→ 12%") and dd["ok"]["ok"] and dd["ok"]["n"] == 3 and dd["root"]): bad.append(f"index.html: a double click: {dd} (back to 12 as one record; the chain of three verifies from Trust's excerpt)")
+    # Platform: the chain and the strictness came along
+    await run_go(pg, "platform.html", 600)
+    await pg.evaluate(CONSOLE_UP); await until(pg, CONSOLE_LIVE, 10000); await pg.wait_for_timeout(400)
+    v = await pg.evaluate("({ ok: OXA.run.verify(), strict: OXA.run.strict(), pip: +document.querySelector('#swarm [data-sw-strict]').value })")
+    if not (v["ok"]["ok"] and v["ok"]["n"] == 3 and abs(v["strict"] - 0.12) < 1e-9 and v["pip"] == 12): bad.append(f"platform.html: the chain sealed on Home and the strictness: {v}")
+    # Lifecycles: the desk's hand
+    await run_go(pg, "lifecycles.html", 600)
+    await pg.evaluate("document.querySelector('.desk').scrollIntoView({ block: 'center', behavior: 'instant' })"); await pg.wait_for_timeout(2500)
+    await pg.locator("[data-gap-thr]").focus()
+    CNT = "[document.querySelector('[data-gap-creates]').textContent, document.querySelector('[data-gap-redeems]').textContent, +document.querySelector('[data-gap-thr]').value]"
+    lo = await pg.evaluate("(() => { const t = document.querySelector('[data-gap-thr]'); return [+t.min, +t.max, +t.value]; })()")
+    seen = []
+    for key, n in (("End", 1), ("Home", 1)):
+        await pg.keyboard.press(key); seen.append(await pg.evaluate(CNT))
+    await pg.wait_for_timeout(1000)   # End then Home: one gesture by keys, ending away from 6
+    n3 = await pg.evaluate("OXA.run.records().length")
+    ends = {x[2] for x in seen}
+    if ends != {lo[0], lo[1]} or seen[0][:2] == seen[1][:2]: bad.append(f"lifecycles.html: at the scale's two ends the desk's counts read {seen} (they answer the hand in the move's own frame)")
+    if n3 != 4: bad.append(f"lifecycles.html: End then Home on the threshold wrote {n3 - 3} records (one gesture, one record)")
+    box = await pg.evaluate("(() => { const r = document.querySelector('[data-gap-thr]').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+    await pg.mouse.dblclick(box[0], box[1]); await pg.wait_for_timeout(900)
+    d2 = await pg.evaluate("({ v: +document.querySelector('[data-gap-thr]').value, recs: OXA.run.records().slice(3).map(r => r.ev + ' ' + r.d + ' @' + r.where) })")
+    if not (d2["v"] == 6 and len(d2["recs"]) == 2 and all(x.startswith("Threshold ") and x.endswith("@Lifecycles") for x in d2["recs"]) and re.search(r"→ 6 bps", d2["recs"][1])): bad.append(f"lifecycles.html: the desk's hand: {d2} (two records, the double click back to 6 bps)")
+    sealed = await pg.evaluate("OXA.run.records().map(r => [r.id, r.hash.slice(0, 8), r.where])")
+    # Trust: the visitor's own past
+    await pg.goto(f"{BASE}/trust.html#ledger", wait_until="load")
+    state = "document.querySelector('[data-ledger=replay] [data-lt-state]').textContent"
+    ok = await until(pg, f"/of yours/.test({state})", 10000)
+    mine = await pg.evaluate("[...document.querySelectorAll('[data-ledger=replay] .lt-rec.is-mine')].map(li => { const r = li.getBoundingClientRect(); return [li.querySelector('.lt-id').textContent.trim(), li.querySelector('.lt-tag').textContent.trim(), li.querySelector('.lt-sub').textContent, r.left >= 0 && r.right <= innerWidth]; })")
+    if not ok or [m[:2] for m in mine] != [s_[:2] for s_ in sealed] or not all(m[3] and " · on " in m[2] for m in mine) or await pg.evaluate(state) != f"9 sample records · {len(sealed)} of yours · Chain intact":
+        bad.append(f"trust.html: the visitor's records on the ledger: {mine} (sealed {sealed}); the state {await pg.evaluate(state)!r}")
+    await pg.locator("[data-lt-verify]").click()
+    want = f"Verified here · {8 + len(sealed)} of {8 + len(sealed)} links hold"
+    if not await until(pg, f"{state}.includes({json.dumps(want)})", 8000): bad.append(f"trust.html: Verify reads {await pg.evaluate(state)!r} ({want!r})")
+    await pg.locator("[data-lt-edit]").click(); await pg.wait_for_timeout(800)
+    focus = await pg.evaluate("document.activeElement.getAttribute('aria-label')")
+    await pg.keyboard.type("12 → 0%"); await pg.keyboard.press("Enter")
+    brk = await until(pg, f"/Chain broken at #0001/.test({state})", 8000)
+    broken = await pg.evaluate("[...document.querySelectorAll('[data-ledger=replay] .lt-rec')].map(li => li.classList.contains('is-broken'))")
+    if focus != "Detail of record #0001" or not brk or broken != [False] * 9 + [True] * len(sealed): bad.append(f"trust.html: Change put the caret in {focus!r}; after one edit the state reads {await pg.evaluate(state)!r} and the broken records are {broken}")
+    await pg.locator("[data-lt-restore]").click()
+    if not await until(pg, f"/Chain intact/.test({state})", 6000): bad.append(f"trust.html: Restore left {await pg.evaluate(state)!r}")
+    await pg.locator(".lt-foot .link-arrow").click(); await pg.wait_for_timeout(800)
+    end = await pg.evaluate("[document.querySelectorAll('[data-ledger=replay] .lt-rec').length, JSON.parse(sessionStorage.getItem('oxa:run')).rec.length, OXA.run.records().length]")
+    if end != [9, 0, 0]: bad.append(f"trust.html: Clear my records left {end[0]} records on the ledger and {end[1]} in the store")
+    for path in ("trust.html", "evidence.html", "index.html"):
+        await pg.goto(f"{BASE}/{path}", wait_until="load"); await pg.wait_for_timeout(1200); await pg.mouse.move(900, 400); await pg.mouse.wheel(0, 900); await pg.wait_for_timeout(400)
+    if await pg.evaluate("JSON.parse(sessionStorage.getItem('oxa:run')).rec.length") != 0: bad.append("reading (three pages opened and scrolled) sealed a record")
+    await ctx.close()
+    assert not bad and not errs, "run_hand:\n  " + "\n  ".join(bad[:14] + errs[:2])
+    print(f"run_hand: one gesture, one record (a drag, eighteen keys, a drag back none, a double click) on Home; the chain verifies on Platform with the strictness; the desk's hand seals two; Trust holds the five after its nine, verifies 13 of 13, breaks from #0001 on one edit, heals, clears; reading records nothing")
+
+
+@check
+async def run_still(b):
+    """hc31r (integrate, standing in for tests; LEAP-hc31 section 6: "with reduced motion no frame loop runs and the
+    transport is hidden unless halted; with storage blocked each page works on a run of its own"; system's accept.py
+    `rm` and `storage blocked`; platform's request: a still when a halt's drain ends). Reduced motion, 1440 x 900, on
+    the five camera pages: in 1.5 s the run's engines (run.js, stage.js, runplate.js) ask for no animation frame, no
+    animation is running, and the header's transport is not shown. Halted there (Platform), the transport shows, the
+    one time it does under reduced motion, and reads Halted; and when the drain ends (within 9.6 s of the halt) the
+    hero plate is drawn once more, empty of proposals (run.js: one still at the drain's end; until this round the
+    plates kept the frame of the press, proposals standing in flight, until the next change). Storage blocked
+    (sessionStorage throws), with motion: each camera page and the 404 start a run of their own (its time moves, more
+    than 20 proposals in flight on the camera pages) and throw no error."""
+    bad = []
+    ctx = await b.new_context(viewport={"width": 1440, "height": 900}, reduced_motion="reduce"); await ctx.add_init_script(RUN_PRESET)
+    await ctx.add_init_script(r"window.__raf = 0; (() => { const r = window.requestAnimationFrame; window.requestAnimationFrame = f => { if (/\/(run|stage|runplate)\.js/.test(new Error().stack || '')) window.__raf++; return r.call(window, f); }; })();")
+    pg = await ctx.new_page(); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    for path in CAMERA_PAGES:
+        await pg.goto(f"{BASE}/{path}", wait_until="load"); await until(pg, "!!(window.OXA && OXA.run)", 15000); await pg.wait_for_timeout(1500)
+        n0 = await pg.evaluate("window.__raf"); await pg.wait_for_timeout(1500)
+        r = await pg.evaluate("({ raf: window.__raf, anims: document.getAnimations().filter(a => a.playState === 'running').length, bar: (() => { const b = document.querySelector('button.nav-run'); return !!b && getComputedStyle(b).visibility !== 'hidden' && b.getBoundingClientRect().width > 0; })() })")
+        if r["raf"] != n0 or r["raf"] > 2 or r["anims"] or r["bar"]: bad.append(f"{path} reduced motion: the run's engines asked for {r['raf']} frames ({r['raf'] - n0} in the last 1.5 s), {r['anims']} animations run, the transport shown: {r['bar']}")
+    await pg.goto(f"{BASE}/platform.html", wait_until="load"); await until(pg, "!!(window.OXA && OXA.run) && !!document.querySelector('.hero-plate--stack svg[data-run-plate].is-live')", 15000); await pg.wait_for_timeout(600)
+    RINGS = "(() => { const e = document.querySelector('.hero-plate--stack svg[data-run-plate] .rp > .rp-ring'), s = document.querySelector('.hero-plate--stack svg[data-run-plate] .rp > .rp-sq'); return (e ? e.getAttribute('d') || '' : '') + '|' + (s ? s.getAttribute('d') || '' : ''); })()"
+    h = await pg.evaluate(f"(() => {{ OXA.run.halt(); const b = document.querySelector('button.nav-run'); return {{ vis: getComputedStyle(b).visibility, text: b.textContent.trim(), marks: {RINGS} }}; }})()")
+    if h["vis"] != "visible" or not h["text"].startswith("Halted"): bad.append(f"platform.html reduced motion, halted: the transport is {h['vis']} and reads {h['text'][:12]!r} (shown, Halted)")
+    if len(h["marks"]) < 4: bad.append("platform.html reduced motion: no proposal on the hero plate at the halt (nothing to drain)")
+    empty = await until(pg, f"{RINGS} === '|'", int(9600 * max(1.0, MODE["throttle"])), 200)
+    if not empty: bad.append(f"platform.html reduced motion: 9.6 s after the halt the hero plate still shows proposals in flight ({len(await pg.evaluate(RINGS))} characters of marks): no still at the drain's end")
+    await ctx.close()
+    ctx = await b.new_context(viewport={"width": 1440, "height": 900})
+    await ctx.add_init_script("Object.defineProperty(window, 'sessionStorage', { get() { throw new DOMException('blocked', 'SecurityError'); } });")
+    pg = await ctx.new_page(); log = []
+    pg.on("pageerror", lambda e: log.append(str(e)))
+    for path in CAMERA_PAGES + ("this-page-does-not-exist",):
+        await pg.goto(f"{BASE}/{path}", wait_until="load")
+        if not await until(pg, "!!(window.OXA && OXA.run)", 15000): bad.append(f"{path} with storage blocked: the run did not start"); continue
+        await pg.wait_for_timeout(900)
+        x = await pg.evaluate("({ a: OXA.run.now(), n: OXA.run.sample().n })"); await pg.wait_for_timeout(500); y = await pg.evaluate("OXA.run.now()")
+        if not (y > x["a"]) or (path in CAMERA_PAGES and x["n"] <= 20) or log: bad.append(f"{path} with storage blocked: the run's time {x['a']:.2f} -> {y:.2f}, {x['n']} in flight, errors {log[:2]}")
+        log.clear()
+    await ctx.close()
+    assert not bad and not errs, "run_still:\n  " + "\n  ".join(bad[:14] + errs[:2])
+    print("run_still: under reduced motion the run's engines ask for no frame on five pages, nothing animates and the transport is not shown; halted it shows, and the plate is redrawn empty when the drain ends; with storage blocked each page runs on a run of its own")
 
 # ---------------------------------------------------------------- runner
 def parse_args(argv):

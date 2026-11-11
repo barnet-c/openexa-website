@@ -93,7 +93,8 @@ async def main():
             n[k === paper ? 'paper' : k === green ? 'green' : d[i + 3] === 0 ? 'clear' : 'other']++; h = (h * 31 + d[i] * 65536 + d[i + 1] * 256 + d[i + 2] + d[i + 3]) | 0; }
           const r = c.getBoundingClientRect(), t = s => { const e = document.querySelector(s); return e ? e.textContent.replace(/\s+/g, ' ').trim() : null; }, b = document.querySelector('[data-co-replay]');
           return { live: st.classList.contains('is-live'), w: c.width, h: c.height, bw: r.width * devicePixelRatio, bh: r.height * devicePixelRatio, n, hash: h,
-                   label: t('.company-readout .fc-t'), hedge: t('.company-readout .fc-h'), replay: !!b && !b.hidden && !!b.getClientRects().length,
+                   label: t('.company-readout .fc-t'), hedge: t('.company-readout .fc-h'), replay: !!b && !b.hidden && !!b.getClientRects().length, buttons: st.querySelectorAll('button').length,
+                   tag: (() => { const g = st.querySelector('.co-tag:not(.co-tag--hot)'); return g && !g.hidden ? (g.querySelector('.stage-tag b') || g).textContent.trim() : ''; })(), say: t('#company-figure [role=status]'),
                    old: document.querySelectorAll('[data-figure], .company-modes, [data-plate-label], script[src$="figure.js"]').length }; }"""
         async def co_rest(why, first=None):
             """the figure once two readings 600 ms apart are the same picture (the act has ended), within 12 s"""
@@ -103,19 +104,40 @@ async def main():
                 if now and last and now["hash"] == last["hash"] and (first is None or now["hash"] == first): return now
                 last = now; await pg.wait_for_timeout(600)
             raise AssertionError((why, last))
-        co = await co_rest("company's hero figure never came to rest")
+        # hc31r (integrate, standing in for tests; company's request, LEAP-hc31 COMP-1): after its opening act the sheet is a
+        # camera on the run (an agent is green while it proposes), so with the model running it does not come to rest and
+        # there is no Replay. "It comes to rest" reads: the header's pause holds it (two readings 600 ms apart the same
+        # picture); "its one control changes the picture and brings the same picture back" reads: the figure's one control
+        # is following (Enter on the focused figure follows a proposal and says so, Escape lets go), and the header's pause
+        # and resume change nothing but the motion: paused again the sheet holds the same marks' colours, nothing blended
+        assert await V.until(pg, "!!(window.OXA && OXA.run) && document.getElementById('company-figure').classList.contains('is-live')", 15000), "company's hero never went live on the run"
+        await pg.wait_for_timeout(2600)   # its opening act (the disc becomes the sheet)
+        seen = [await pg.evaluate(CO) for _ in range(1)]
+        for _ in range(11):
+            await pg.wait_for_timeout(210); seen.append(await pg.evaluate(CO))
+        assert all(x and x["n"]["other"] == 0 for x in seen), ("company's hero: a frame of the running sheet is blended", [x and x["n"] for x in seen][:3])
+        assert len({x["hash"] for x in seen}) > 1 and sum(1 for x in seen if x["n"]["green"] > 0) >= 6, ("company's hero does not light as agents propose (twelve readings 210 ms apart)", [x["n"]["green"] for x in seen])
+        await pg.evaluate("OXA.run.pause(true)")
+        co = await co_rest("paused in the header, company's hero figure never came to rest")
         assert co["live"] and co["old"] == 0, ("company's hero: the canvas is live and nothing of the old stage is left", co)
         assert abs(co["w"] - co["bw"]) <= 1 and abs(co["h"] - co["bh"]) <= 1, ("company's hero canvas is not its box in device pixels", co)
         assert co["n"]["paper"] > 0 and co["n"]["green"] > 0 and co["n"]["other"] == 0, ("company's hero: marks in paper and signal green only, nothing blended", co["n"])
         assert co["label"] == "Narrow agents, one job each" and co["hedge"] == "Illustrative", ("company's hero caption", co["label"], co["hedge"])
         await pg.screenshot(path=shot(f"company-hero.png"))
-        assert co["replay"], ("company's hero: Replay is offered with motion", co)
-        await pg.locator("[data-co-replay]").click(); await pg.wait_for_timeout(450)
+        assert not co["replay"] and co["buttons"] == 0, ("company's hero: it has no Replay and no button of its own (it obeys the header's)", co)
+        await pg.evaluate("OXA.run.pause(false)"); await pg.wait_for_timeout(700)
         mid = await pg.evaluate(CO)
-        assert mid["hash"] != co["hash"] and mid["n"]["other"] == 0, ("Replay did not gather the sheet, or a frame of it is blended", mid["n"])
+        assert mid["hash"] != co["hash"] and mid["n"]["other"] == 0, ("resumed in the header, the sheet did not move, or a frame of it is blended", mid["n"])
         await pg.screenshot(path=shot(f"company-act.png"))
-        back = await co_rest("after Replay the sheet did not come back to the same picture", first=co["hash"])
-        assert back["n"] == co["n"], ("after Replay the sheet holds other marks", co["n"], back["n"])
+        await pg.locator("#company-figure").focus(); await pg.keyboard.press("Enter")
+        fo = await V.until(pg, "(() => { const s = document.querySelector('#company-figure [role=status]'); return s && /^Following P-\\d+\\.$/.test(s.textContent.trim()) ? s.textContent.trim() : ''; })()", 3000)
+        assert fo, ("Enter on the focused figure did not follow a proposal and say so", (await pg.evaluate(CO))["say"])
+        await pg.keyboard.press("Escape")
+        assert await V.until(pg, "document.querySelector('#company-figure [role=status]').textContent.trim() === 'Stopped following.'", 3000), ("Escape did not let the proposal go and say so", (await pg.evaluate(CO))["say"])
+        await pg.evaluate("OXA.run.pause(true)")
+        back = await co_rest("paused again, the sheet did not come to rest")
+        assert back["n"]["other"] == 0 and back["n"]["paper"] + back["n"]["green"] == co["n"]["paper"] + co["n"]["green"], ("paused again the sheet holds other marks", co["n"], back["n"])
+        await pg.evaluate("OXA.run.pause(false)")
         # (hc14) the walk visits every chapter the page lists, whatever their number (§04 #lifecycles left with its heading;
         # its line is §01's): the three chapters, in order. (hc15) "How we build" comes before the team (why, how, who)
         cids = await pg.evaluate("[...document.querySelectorAll('main section[data-chapter]')].map(s => s.id)")
@@ -129,14 +151,14 @@ async def main():
         await pg.evaluate("document.querySelector('#research').scrollIntoView()"); await pg.wait_for_timeout(1500)
         await pg.screenshot(path=shot(f"home-research.png"))
         # the chapters live in the nav's readout list now (the fixed right rail is gone); it lists every chapter of the page
-        # (7 until hc11, 6 since Home's §02 left, 5 since hc13r when §03 #proof left)
+        # (7 until hc11, 6 since Home's §02 left, 5 since hc13r when §03 #proof left, 4 since hc31r when the lab's chapter left with the lab)
         nch = await pg.evaluate("document.querySelectorAll('main section[data-chapter]').length")
-        assert nch == 5 and await pg.locator(".nav-ch-list a").count() == nch and await pg.locator(".chapters").count() == 0, nch
+        assert nch == 4 and await pg.locator(".nav-ch-list a").count() == nch and await pg.locator(".chapters").count() == 0, nch
         # insights redirect
         await pg.goto(f"{BASE}/insights.html", wait_until="load"); await pg.wait_for_timeout(800)
         assert pg.url.endswith("/research.html"), pg.url
         assert not errs, errs
-        print(f"desktop: research index morphs on hover, 10 articles render with TOC + figure, company's hero is live, rests on its sheet ({co['n']['paper']} paper and {co['n']['green']} green pixels, none blended) and Replay brings the same sheet back, the timeline reveals, {nch} chapters, insights redirects")
+        print(f"desktop: research index morphs on hover, 10 articles render with TOC + figure, company's hero is live on the run (agents light as they propose, none blended), the header's pause holds it on its sheet ({co['n']['paper']} paper and {co['n']['green']} green pixels), Enter follows a proposal and Escape lets it go, the timeline reveals, {nch} chapters, insights redirects")
         await ctx.close()
         # mobile
         ctx = await b.new_context(viewport={"width": 390, "height": 844})

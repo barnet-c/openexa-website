@@ -81,6 +81,10 @@ Changes from the source, deliberately:
     the page shows without JavaScript (hero_still(), written between <!-- THE STILL --> and <!-- /THE STILL -->). It
     reads the agents from the AGENTS literal in site/assets/js/company-hero.js, the one place they are defined, so the
     still and the live figure cannot drift; it fails if the literal is missing or its marks do not fill the disc.
+  - 2026-11-11 (hill climb hc31r, LEAP-hc31 COMP-1): with scripts and motion the sheet is lit by the run (company-hero.js:
+    an agent is green for 300 ms when it proposes), so an agent's bit 15 is now read only here, for the still without
+    JavaScript, and by company-hero.js under reduced motion: the still stays twelve agents green. Nothing this script
+    writes changed.
 """
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))

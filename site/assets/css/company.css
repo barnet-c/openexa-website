@@ -22,10 +22,18 @@
 [data-page="company"] .company-readout { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; align-items: baseline; gap: .25rem 1.25rem; margin-top: .875rem; }
 [data-page="company"] .company-readout .fc-t { color: var(--fg); }
 [data-page="company"] .company-readout .fc-h { flex-basis: auto; }
-[data-page="company"] .co-replay { margin: -.5rem 0 -.5rem auto; padding: .5rem 0; color: var(--fg-2); text-decoration: underline dashed var(--line-strong); text-underline-offset: .1875rem; transition: color var(--dur-feedback) var(--ease-out), text-decoration-color var(--dur-feedback) var(--ease-out); }
-@media (hover: hover) { [data-page="company"] .co-replay:hover { color: var(--fg); text-decoration-color: currentColor; } }
-[data-page="company"] .co-replay:active { color: var(--signal-bright); }
-@media (pointer: coarse) { [data-page="company"] .co-replay { margin: -.875rem -.5rem -.875rem auto; padding: .875rem .5rem; } }
+.co-stage.is-near { cursor: pointer; }
+.co-stage:focus-visible { outline-offset: .5rem; }
+.co-tag { position: absolute; left: 0; top: 0; z-index: 1; display: flex; box-sizing: border-box; border: var(--hair) solid var(--line-strong); pointer-events: none; }
+.co-tag[hidden] { display: none; }
+.co-tag.is-left { flex-direction: row-reverse; }
+.co-tag.is-wait { border-style: dashed; }
+.co-tag::before { content: ""; flex: none; width: var(--cw); }
+.co-tag > .stage-tag { position: static; flex: 1; min-width: 0; height: auto; align-content: center; justify-items: start; padding: 0 .625rem 0 .375rem; border: 0; overflow: hidden; }
+.co-tag.is-left > .stage-tag { padding: 0 .375rem 0 .625rem; }
+.co-tag.is-flat span { display: none; }
+.co-stage.is-own > .co-tag { border-color: var(--fg-2); }
+.co-stage:active > .co-tag--hot, .co-stage.is-own:active > .co-tag { border-color: var(--accent); }
 @media (min-width: 961px) {
   [data-page="company"] .company-hero .container { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 0 clamp(1rem, 2.2vw, 2rem); }
   [data-page="company"] .company-intro { grid-column: 1 / span 5; }
@@ -168,10 +176,8 @@
 @media (prefers-reduced-motion: reduce) { [data-page="company"] .crew .ph, [data-page="company"] .crew .links .arr, [data-page="company"] .crew-more-l { transition: none; } }
 
 #constants { overflow: clip; --kh: 2.75rem; }
-@media (pointer: coarse) { #constants { --kh: 3.25rem; } }
 .kplate { position: relative; margin: 0; }
 .kplate-head { display: flex; align-items: center; gap: 1rem; height: var(--kh); margin-bottom: 1.125rem; border-bottom: var(--hair) solid var(--line); }
-.kplate-head > .figure-motion { margin-left: auto; flex: none; }
 .kplate .k-state { margin: 0; min-width: 0; font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); text-wrap: balance; }
 .kplate-art { position: relative; }
 .kplate-cap { margin-top: .75rem; }
@@ -242,7 +248,7 @@
   .kplate .kl--dn { top: 43.6%; }
   .kplate .kl--in { --tx: 0%; --ty: 0%; left: 3.75%; top: 73.6%; }
   .kplate .kl--led { --ty: 0%; top: 90.2%; }
-  .kplate-head { margin-bottom: .75rem; }
+  .kplate-head { display: none; }
 }
 @media (max-width: 760px) {
   [data-page="company"] .constants > div, [data-page="company"] .constants > div:nth-child(n) { padding: 1.375rem 0 1.5rem; border-right: 0; border-bottom: var(--hair) solid var(--line); }

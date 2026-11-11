@@ -94,6 +94,8 @@ jobs:
             only: draw_rest,crisp_4k,zoom_wide,market_draw_once,first_screen_sizes,page_type_sizes,research_strip,section_links
           - shard: scenes
             only: scenes,vt_fig,scroll_scenes,stack_scene,plate_scenes,lc_hero_once,page_turn
+          - shard: run
+            only: run_clock,run_pause,run_halt,run_hand,run_still
           - shard: desk-pages
             only: desk,desk_warm_start,desk_phone_follow,desk_say,lifecycle_lane_home,lifecycle_lane_steps,access,company,blog,platform_spec,grid_slab,trust_tamper,desk_order
     steps:

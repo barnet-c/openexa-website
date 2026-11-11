@@ -128,7 +128,8 @@ page404 = f'''<!DOCTYPE html>
   <meta name="description" content="This page did not pass the gate.">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0E1512">
-{head_common}  <link rel="stylesheet" href="assets/css/notfound.css">
+{head_common}  <link rel="stylesheet" href="assets/css/run.css">
+  <link rel="stylesheet" href="assets/css/notfound.css">
 </head>
 <body data-page="404" data-nav="dark-start">
   <a class="skip" href="#main">Skip to content</a>
@@ -158,13 +159,16 @@ page404 = f'''<!DOCTYPE html>
           </div>
         </div>
         {PLATE}
-        <p class="notfound-log"><span>REJECTED</span>&nbsp;· gate&nbsp;04&nbsp;· reason:&nbsp;unknown&nbsp;route</p>
+        <div class="nf-foot">
+          <p class="notfound-log"><span>REJECTED</span>&nbsp;· gate&nbsp;04&nbsp;· reason:&nbsp;unknown&nbsp;route</p>
+          <p class="receipt nf-receipt" data-run-receipt role="status"></p>
+        </div>
       </div>
     </section>
   </main>
 
 {FOOTER}
-  <script src="assets/js/site.js" defer></script>
+  <script src="assets/js/site.js" defer data-after-paint="/assets/js/run.js"></script>
   <script src="assets/js/notfound.js" defer></script>
 </body>
 </html>

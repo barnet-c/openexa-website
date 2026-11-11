@@ -30,7 +30,7 @@
   .nf-more li:nth-child(3) a { padding-left: 0; } .nf-more li:nth-child(3) a::after { left: 0; }
   .nf-more li:nth-child(n + 3) { border-top: var(--hair) solid var(--line); }
 }
-.notfound-log { margin-top: 1.5rem; font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .06em; color: var(--fg-3); } /* the gate's record: data, at the one mono size (hc1) */
+.notfound-log { font-family: var(--mono); font-size: var(--fs-label); letter-spacing: .06em; color: var(--fg-3); } /* the gate's record: data, at the one mono size (hc1) */
 .notfound-log span { color: var(--reject); }
 /* a spread from 961 px: the headline left, the way on beside its foot; the plate across the page below */
 @media (min-width: 961px) {
@@ -146,9 +146,13 @@
   .notfound .row { margin-top: 1.625rem; gap: .875rem; }
   .nf-copy { column-gap: 2rem; }
   .nf-plate { margin-top: 4.5rem; }
-  .notfound-log { margin-top: 1.5rem; }
   .nf-more { margin-top: 1.625rem; }
   .nf-more a { min-height: 2.75rem; padding: 0 .875rem; }
   .nf-more a::after { left: .875rem; right: .875rem; bottom: .6875rem; }
   .nf-more li:first-child a { padding-left: 0; } .nf-more li:first-child a::after { left: 0; }
 }
+/* hc31r: the gate's log line and the visitor's receipt (run.js) share one slot: the receipt takes it once the rejection is on their record */
+.nf-foot { display: grid; align-items: center; min-height: 2.75rem; margin-top: .875rem; }
+.nf-foot > * { grid-area: 1 / 1; margin: 0; }
+.nf-foot.is-recorded .notfound-log, .nf-foot:not(.is-recorded) .nf-receipt { visibility: hidden; }
+@media (max-width: 600px) { .nf-foot { align-items: start; } .nf-foot .notfound-log { padding-top: .5rem; } }

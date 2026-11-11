@@ -124,32 +124,32 @@
   "sha": "e683683e5eb312d0"
  },
  "company.html": {
-  "date": "2026-11-10",
-  "sha": "d586350f6b41479f"
+  "date": "2026-11-11",
+  "sha": "13a4794f337f433d"
  },
  "evidence.html": {
-  "date": "2026-11-10",
-  "sha": "204d2e8d150a4add"
+  "date": "2026-11-11",
+  "sha": "9eb516203eb65a12"
  },
  "index.html": {
-  "date": "2026-11-10",
-  "sha": "31c015ec08beface"
+  "date": "2026-11-11",
+  "sha": "4d4564fdf0cf19b9"
  },
  "lifecycles.html": {
-  "date": "2026-11-10",
-  "sha": "78aaa941bd07b9ec"
+  "date": "2026-11-11",
+  "sha": "12dc003f97e615fd"
  },
  "platform.html": {
-  "date": "2026-11-10",
-  "sha": "c9f8c98ed8792ce9"
+  "date": "2026-11-11",
+  "sha": "f9050e971329bbd5"
  },
  "research.html": {
-  "date": "2026-11-10",
-  "sha": "d35a8e1d438230a4"
+  "date": "2026-11-11",
+  "sha": "cee928769f760125"
  },
  "research/01-compounding-error.html": {
-  "date": "2026-11-10",
-  "sha": "ea8a1a08460f79d0"
+  "date": "2026-11-11",
+  "sha": "4ee6dfbd8c6ce665"
  },
  "research/02-post-training-and-audit.html": {
   "date": "2026-11-10",
@@ -160,8 +160,8 @@
   "sha": "71dcf927d3eacaec"
  },
  "research/04-five-thousand-small-agents.html": {
-  "date": "2026-11-10",
-  "sha": "4ca735384bf2b6f5"
+  "date": "2026-11-11",
+  "sha": "6929f1a14b57ea12"
  },
  "research/05-agents-decide-code-executes.html": {
   "date": "2026-11-10",
@@ -172,8 +172,8 @@
   "sha": "9d3ddaaa48a17a2b"
  },
  "research/07-the-execution-council.html": {
-  "date": "2026-11-10",
-  "sha": "738270eafbe771b1"
+  "date": "2026-11-11",
+  "sha": "495e419a6691aa42"
  },
  "research/08-a-ledger-nobody-can-edit.html": {
   "date": "2026-11-10",
@@ -188,7 +188,7 @@
   "sha": "e6212939048964dd"
  },
  "trust.html": {
-  "date": "2026-11-10",
-  "sha": "9396db60d1055aed"
+  "date": "2026-11-11",
+  "sha": "fd880ef7433240a8"
  }
 }

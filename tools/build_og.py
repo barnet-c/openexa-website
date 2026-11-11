@@ -103,6 +103,9 @@ def card(rel):
 PLATE_PAGES = {"platform.html": ("platform", "platform.css"), "lifecycles.html": ("lifecycles", "platform.css"),
                "evidence.html": ("proof", None), "trust.html": ("trust", "proof.css")}
 CSS = (ROOT / "assets" / "css")
+# hc31r (integrate): a plate that is a camera on the run (svg[data-run-plate]) is styled by run.css on its page (linked
+# after site.css, before the group's sheet): its card links the same three sheets in the same order
+def plate_sheets(c): return ["site.css"] + (["run.css"] if "data-run-plate" in c["plate"] else []) + [PLATE_PAGES[c["rel"]][1]]
 
 # hc4 (integrate, on proof's request): Proof's hero carries Fig. 1.1 now (proof.js draws it; the page has no static plate),
 # so Proof's card keeps the record strip its hero drew from award a3 to hc3: ten open blocks on the 10 bps floor, the days,
@@ -323,6 +326,8 @@ body { position: relative; background: #0E1512; color: #F5F2EC; font-family: 'In
 .has-plate .s { width: 590px; }
 .card-plate { position: absolute; left: 700px; top: 118px; width: 440px; height: 410px; display: flex; flex-direction: column; justify-content: center; font-family: 'Inter', sans-serif; }
 .card-plate .hero-plate, .card-plate .pf-record { width: 100%% !important; max-width: none !important; margin: 0 !important; }
+.card-plate .hero-plate--full { display: block !important; height: auto !important; container-type: normal !important; } /* hc31r: a full-strength plate takes the card's field, not a hero's height */
+.card-plate .hero-plate--full > :is(.hp-art, .hp-cap) { width: 100%% !important; margin-left: 0 !important; }
 .card-plate .hp-cap { margin-top: 10px; }
 .card-plate .hp-cap .fc-h { font-size: 15px; text-align: left; color: rgba(245,242,236,.56); }
 .card-plate .pf-record::before { content: none; } /* a2: Proof's record line runs edge to edge on the H1's baseline; a card has no such baseline (it struck through the headline) */
@@ -389,7 +394,7 @@ async def main():
     todo = []
     for c in cards:
         spec = still_spec(c["rel"]) if c["still"] else None
-        sheets = "".join((CSS / f).read_text(encoding="utf-8") for f in (["site.css", PLATE_PAGES[c["rel"]][1]] if c["plate"] else ["site.css", spec[1]] if spec else []) if f)
+        sheets = "".join((CSS / f).read_text(encoding="utf-8") for f in (plate_sheets(c) if c["plate"] else ["site.css", spec[1]] if spec else []) if f)
         if c["plate"] and c["rel"] in OWN_PLATES: sheets += OWN_PLATES[c["rel"]][1]
         c["key"] = hashlib.sha256((TEMPLATE + GLOBE + FINE + sheets + json.dumps(c, sort_keys=True)).encode("utf-8")).hexdigest()[:16]
         if cache.get(c["rel"]) != c["key"] or not (OUT / og_name(c["rel"])).exists(): todo.append(c)
@@ -402,7 +407,7 @@ async def main():
                 fill = {k: (c[k] if k == "headline" else H.escape(c[k], quote=False)) for k in ("kicker", "headline", "sub", "foot")}
                 if c["plate"]:
                     page, sheet = PLATE_PAGES[c["rel"]]
-                    links = "".join(f'<link rel="stylesheet" href="{(CSS / f).as_uri()}">' for f in ("site.css", sheet) if f)
+                    links = "".join(f'<link rel="stylesheet" href="{(CSS / f).as_uri()}">' for f in plate_sheets(c) if f)
                     if c["rel"] in OWN_PLATES: links += "<style>" + OWN_PLATES[c["rel"]][1] + "</style>"
                     extra = dict(links=links, bodyattr=f' class="has-plate" data-page="{page}"', art='<div class="glow"></div>',
                                  plate=f'<div class="card-plate is-dark" style="background:none">{c["plate"]}</div>')

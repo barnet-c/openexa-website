@@ -1,4 +1,4 @@
-/* OpenEXA: shared behaviour (nav, chapter readout, menu sheet, jumps, page turns, scenes, footer, clocks, loader hand-off, kinetic type, reveals, 2D swarm) */
+/* OpenEXA: shared behaviour (nav, chapter readout, menu sheet, jumps, page turns, scenes, footer, clocks, ready signal, kinetic type, reveals) */
 (function () {
   'use strict';
 
@@ -9,6 +9,7 @@
   const pad = (n) => String(n).padStart(2, '0');
   const clamp01 = (v) => v < 0 ? 0 : v > 1 ? 1 : v;
   const root = document.documentElement;
+  const runList = ((document.currentScript && document.currentScript.getAttribute('data-after-paint')) || '').split(/\s+/).filter(Boolean);
   const unhash = h => { try { return decodeURIComponent(h); } catch (e) { return h; } };
 
   const ZOOMS = [0.25, 1 / 3, 0.5, 2 / 3, 0.75, 0.8, 0.85, 0.9, 1.1, 1.15, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
@@ -33,8 +34,6 @@
   const darkStart = document.body.dataset.nav === 'dark-start';
   const themeMeta = $('meta[name="theme-color"]');
   const story = $('.story');
-  const paper = story && $('.story-paper', story);
-  if (story && !root.classList.contains('story-ready') && !root.classList.contains('no-webgl')) root.classList.add('story-failed');
   const toggle = $('.nav-toggle');
   const sheet = $('.nav-sheet');
   const close = $('main > .cta-band');
@@ -141,11 +140,12 @@
   function fitModes() {
     if (!ui.roll || !live.length) return;
     const zoomed = root.classList.contains('uz'), rootPx = zoomed ? parseFloat(getComputedStyle(root).fontSize) || 16 : 16;
-    const key = [window.innerWidth, rootPx, live.map(c => c.k).join(), document.fonts ? document.fonts.status : ''].join('|');
+    const run = !narrowMQ.matches && $('.nav-run:not([hidden])', nav); // hc31r: the transport stands between the readout and the links
+    const key = [window.innerWidth, rootPx, live.map(c => c.k).join(), document.fonts ? document.fonts.status : '', run ? Math.round(run.getBoundingClientRect().left) : 0].join('|');
     if (key === fitKey) return;
     fitKey = key;
     live.forEach(c => { c.mode = 'full'; });
-    const links = (midMQ.matches || (zoomed && !narrowMQ.matches && window.innerWidth / rootPx < 80)) && $('.nav-links', nav);
+    const links = (midMQ.matches || run || (zoomed && !narrowMQ.matches && window.innerWidth / rootPx < 80)) && $('.nav-links', nav);
     if (narrowMQ.matches || links) {
       const box = document.createElement('span'); box.className = 'nav-ch-measure'; box.setAttribute('aria-hidden', 'true');
       const forms = [];
@@ -153,7 +153,7 @@
       forms.forEach(f => box.appendChild(f[2]));
       ui.btn.appendChild(box);
       const r0 = ui.roll.getBoundingClientRect();
-      const avail = links ? Math.min(parseFloat(getComputedStyle(ui.roll).maxWidth) || 1e4, links.getBoundingClientRect().left
+      const avail = links ? Math.min(parseFloat(getComputedStyle(ui.roll).maxWidth) || 1e4, (run || links).getBoundingClientRect().left
           - (parseFloat(getComputedStyle(links.parentNode).columnGap) || 24) - (ui.btn.getBoundingClientRect().right - r0.right) - r0.left - 2)
         : ui.wrap.getBoundingClientRect().width - (ui.btn.getBoundingClientRect().width - r0.width) - 1;
       const w = new Map(forms.map(([c, m, l]) => [c.k + m, l.getBoundingClientRect().width]));
@@ -245,6 +245,9 @@
     update();
   }
   const queue = () => { if (!navRaf) navRaf = requestAnimationFrame(() => { navRaf = 0; update(); }); };
+  // hc31r: the transport takes its place between the readout and the links (or changes its width) after the readout was fitted
+  let runFit = 0;
+  document.addEventListener('oxa:run', () => { clearTimeout(runFit); runFit = setTimeout(fitModes, 150); });
 
   function update() {
     if (!nav) return;
@@ -253,14 +256,8 @@
     const edge = y + navH * 1.1;
     for (const b of tones) if (edge >= b.top && edge < b.bottom) { dark = b.dark; band = b; break; }
     if (!band) for (const b of bands) if (edge >= b.top && edge < b.bottom) { dark = b.dark; band = b; break; }
-    let overPaper = false;
-    if (band && band.el === story && paper) {
-      const r = getComputedStyle(paper).visibility !== 'hidden' ? paper.getBoundingClientRect() : null;
-      overPaper = !!r && r.height > 0 && r.top <= edge - y && r.bottom > edge - y;
-    }
-    if (overPaper) dark = false;
     if (darkStart) { const opening = bands[0] && bands[0].dark ? bands[0] : null; root.classList.toggle('is-paper-root', !!opening && y >= opening.bottom); }
-    const clear = y <= (root.classList.contains('story-tiny') ? 16 : clearUntil) && !menuOpen && !overPaper;
+    const clear = y <= (root.classList.contains('story-tiny') ? 16 : clearUntil) && !menuOpen;
     nav.classList.toggle('nav--solid', !clear);
     nav.classList.toggle('nav--dark', dark);
     if (themeMeta) {
@@ -270,7 +267,7 @@
     }
     const p = clamp01(y / maxScroll);
     if (Math.abs(p - fillP) > 0.001) { fillP = p; ui.fill.style.transform = `scaleX(${p.toFixed(4)})`; }
-    if (y + vh > closeTop && (y >= maxScroll - 1 || +getComputedStyle(close).getPropertyValue('--scene-p') >= 1)) { closeTop = Infinity; close.classList.add('is-whole'); }
+    if (y + vh > closeTop && (y >= maxScroll - 1 || +getComputedStyle(close).getPropertyValue('--scene-p') >= 1)) { closeTop = Infinity; if (!close.classList.contains('cta-band--run')) close.classList.add('is-whole'); }
     if (!live.length) return;
     let k = -1;
     for (const c of live) if (y >= c.s) k = c.k;
@@ -505,6 +502,12 @@
   }
 
   const OXA = window.OXA = window.OXA || {};
+  if (document.body.dataset.page === 'proof' && nav && !$('.nav-run', nav)) {
+    const rec = document.createElement('span'), word = document.createElement('span'), read = document.createElement('i'), row = $('.container', nav);
+    rec.className = 'nav-run nav-run--rec'; word.className = 'nav-run-s'; word.textContent = 'Record'; read.className = 'nav-run-g'; read.setAttribute('aria-hidden', 'true');
+    rec.append(word, read);
+    row.insertBefore(rec, $('.nav-links', row) || toggle);
+  }
   let landed = Promise.resolve();
   const seen = new WeakSet();
   function turned(vt) {
@@ -568,22 +571,6 @@
   OXA.actOnce = actOnce;
   (OXA.q || []).splice(0).forEach(a => actOnce(...a));
 
-  const stageEl = $('.story-stage');
-  if (stageEl) {
-    const mark = $('.story-static-mark');
-    const whole = () => { root.classList.remove('vt-out'); if (mark) mark.style.cssText = ''; };
-    window.addEventListener('pageswap', e => {
-      if (!e.viewTransition) return;
-      const r = stageEl.getBoundingClientRect();
-      if (!(r.height > 0 && r.bottom > 0 && r.top < window.innerHeight)) return;
-      root.classList.add('vt-out');
-      const g = (root.dataset.globe || '').split(' ').map(parseFloat), w = g[2] * 240 / 92;
-      if (mark && w > 0 && window.scrollY < 48 && !(OXA.stageStill && OXA.stageStill())) mark.style.cssText = `display:block;left:${(g[0] - w / 2).toFixed(1)}px;top:${(g[1] - w / 2).toFixed(1)}px;right:auto;width:${w.toFixed(1)}px;max-width:none;opacity:1`;
-    });
-    window.addEventListener('pageshow', whole);
-    window.addEventListener('pagereveal', whole);
-  }
-
   if (!OXA.figs) {
     const figs = OXA.figs = [], all = s => Array.from(document.querySelectorAll(s));
     const figSet = (el, v) => { el.style.setProperty('view-transition-name', v); figs.push(el); };
@@ -628,6 +615,8 @@
     const docOf = u => { try { const x = new URL(u, location.href); return x.origin + x.pathname.replace(/(\/index)?(\.html)?\/*$/, ''); } catch (err) { return ''; } };
     const sent = v => { try { if (v === undefined) return JSON.parse(sessionStorage.getItem('oxa-turn') || 'null'); sessionStorage.setItem('oxa-turn', JSON.stringify(v)); } catch (err) { } return null; };
     const named = () => Array.from(document.querySelectorAll('[data-vt-dest], [style*="view-transition-name: fig"]'));
+    const edge = () => { const b = document.querySelector('[data-run-boundary]'), r = b && b.getBoundingClientRect(); return r && r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth ? b : null; };
+    const look = b => { const c = getComputedStyle(b); return [c.borderTopLeftRadius, c.borderTopColor, c.borderBottomWidth]; };
     const arrive = (vt, early) => {
       root.classList.add('vt-in'); OXA.byTurn = true;
       const f = sent(), a = window.navigation && navigation.activation;
@@ -636,6 +625,14 @@
       if (early && !(f && f.fig && docOf(f.to) === docOf(location.href) && Date.now() - f.at < 4000)) {
         const un = named(); un.forEach(d => d.style.setProperty('view-transition-name', 'none'));
         vt.finished.catch(() => {}).then(() => un.forEach(d => d.style.removeProperty('view-transition-name')));
+      }
+      // the match cut needs both ends: only at pagereveal can this page's boundary still take its name
+      const b = early && f && f.b && docOf(f.to) === docOf(location.href) && Date.now() - f.at < 4000 ? edge() : null;
+      if (b) {
+        b.style.setProperty('view-transition-name', 'boundary');
+        look(b).forEach((v, i) => { root.style.setProperty('--b-' + 'rcw'[i] + '0', f.b[i]); root.style.setProperty('--b-' + 'rcw'[i] + '1', v); });
+        try { vt.types.add('match'); } catch (err) { }
+        vt.finished.catch(() => {}).then(() => b.style.removeProperty('view-transition-name'));
       }
       const first = document.querySelector('main > :first-child'), band = first && !first.classList.contains('story') && first.getAnimations ? first : null;
       const whole = () => band && band.getAnimations({ subtree: true }).forEach(x => {
@@ -654,11 +651,13 @@
     };
     addEventListener('pageswap', e => {
       if (!e.viewTransition) return;
-      const a = e.activation;
-      sent({ to: a && a.entry ? a.entry.url : '', at: Date.now(), fig: named().some(d => getComputedStyle(d).viewTransitionName === 'fig') });
+      // a boundary under the open menu sheet (the page is inert then) is not on screen: no match cut from the menu
+      const a = e.activation, m = document.querySelector('main'), b = scrollY < innerHeight / 2 && !(m && m.inert) ? edge() : null;
+      if (b) b.style.setProperty('view-transition-name', 'boundary');
+      sent({ to: a && a.entry ? a.entry.url : '', at: Date.now(), fig: named().some(d => getComputedStyle(d).viewTransitionName === 'fig'), b: b ? look(b) : null });
       root.classList.add('vt-leave');
     });
-    addEventListener('pageshow', () => root.classList.remove('vt-leave'));
+    addEventListener('pageshow', () => { root.classList.remove('vt-leave'); document.querySelectorAll('[data-run-boundary]').forEach(b => b.style.removeProperty('view-transition-name')); });
     addEventListener('pagereveal', e => { root.classList.remove('vt-leave'); if (e.viewTransition) arrive(e.viewTransition, true); });
     if (document.activeViewTransition && !root.dataset.jump && !root.classList.contains('vt-in')) arrive(document.activeViewTransition, false);
   }
@@ -668,7 +667,6 @@
     const measureSoon = () => { if (!mRaf) mRaf = requestAnimationFrame(() => { mRaf = 0; measure(); }); };
     measureSoon();
     window.addEventListener('scroll', queue, { passive: true });
-    if (paper) new MutationObserver(queue).observe(paper, { attributes: true, attributeFilter: ['style'] });
     window.addEventListener('resize', measure);
     window.addEventListener('load', measureSoon);
     const handoff = () => {
@@ -899,6 +897,16 @@
       if ((r.width || r.height) && r.top + y < b && r.bottom + y > a) revealNow(el);
     });
   }
+  // a jump lands whole (hc31r; proof's hc30r request): when one scroll event moves the page by nearly a screen or more (End, Home, a click in
+  // the scrollbar, find-in-page, a script) what it lands on is shown at once; Page Down and the space bar move 87.5% of a screen and keep their entrances
+  if (!prefersReduced) {
+    let jumpY = window.scrollY;
+    window.addEventListener('scroll', () => {
+      const y = window.scrollY, d = Math.abs(y - jumpY);
+      jumpY = y;
+      if (d > window.innerHeight * 0.95) revealRange(y, y + window.innerHeight);
+    }, { passive: true });
+  }
   document.addEventListener('focusin', e => {
     let el = e.target.closest && e.target.closest('.will-reveal');
     while (el) {
@@ -913,198 +921,22 @@
     $$('main > section, main > div, body > .footer').forEach(el => oio.observe(el));
   }
 
-  const loaded = () => {
+  if (!root.classList.contains('is-loaded')) {
     $$('.beat-0 [data-split]').forEach(el => el.classList.add('is-in'));
     root.classList.add('is-loaded');
     document.dispatchEvent(new CustomEvent('oxa:loaded'));
-  };
-  if (!root.classList.contains('is-loaded') && !document.body.classList.contains('is-loading')) {
-    const stray = $('.loader');
-    if (stray) stray.remove();
-    loaded();
+  }
+  // hc31r: a page whose scripts are plain tags lists the run's engines on this tag (data-after-paint, as afterpaint.js and home.js read it):
+  // they start once the first paint is on screen, in order, so they are no request before it
+  if (runList.length) {
+    let went = false;
+    const go = () => { if (went) return; went = true; runList.forEach(src => { const sc = document.createElement('script'); sc.src = src; sc.async = false; document.body.appendChild(sc); }); };
+    if (document.visibilityState !== 'hidden' && window.PerformanceObserver && (PerformanceObserver.supportedEntryTypes || []).includes('paint')) {
+      new PerformanceObserver((list, po) => { if (list.getEntriesByName('first-contentful-paint').length) { po.disconnect(); setTimeout(go, 0); } }).observe({ type: 'paint', buffered: true });
+      setTimeout(go, 5000);
+    } else if (document.visibilityState === 'hidden' || document.readyState === 'complete') go();
+    else window.addEventListener('load', go, { once: true });
   }
   window.addEventListener('beforeprint', () => $$('details.footer-legal').forEach(d => { d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; }));
   window.addEventListener('afterprint', () => $$('details.footer-legal').forEach(d => { d.open = d.dataset.wasOpen === '1'; }));
-
-  const canvas = $('canvas[data-swarm]');
-  const inStory = canvas && canvas.closest('.story');
-  if (canvas && (!inStory || document.documentElement.classList.contains('no-webgl'))) initSwarm(canvas);
-  else if (inStory) document.addEventListener('story:no-webgl', () => initSwarm(canvas), { once: true });
-
-  function initSwarm(cv) {
-    const ctx = cv.getContext('2d', { alpha: true });
-    if (!ctx) return;
-    cv.hidden = false;
-    const story = cv.closest('.story');
-    const copy = story ? $$('.beat-0 .beat-text > *, .beat-0 .hero-stats', story) : $$('.container > *', cv.parentElement);
-    const strict = story ? [] : copy.filter(el => el.matches('h1, .lede'));
-    const IVORY = [245, 242, 236], GREEN = [79, 203, 147], RED = [217, 103, 93], TAU = Math.PI * 2;
-    const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
-    const orbits = [{ r: 1.34, tiltX: 1.16, rotZ: -0.36 }, { r: 1.6, tiltX: 1.42, rotZ: 0.52 }];
-    const PIXEL_BUDGET = 3840 * 2160;
-    const WAKE = 5000, RAMP = 0.6, EASE = 1.5, P = 4, FALL = 2.6, PHASE = 0.3;
-    let W = 0, H = 0, dpr = 1, G = null, sphere = [], visible = true, frameId = 0, tau = 0, plan = null, last = 0;
-    const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
-    const rot = (p, ax, ay, az) => { let [x, y, z] = p; let c = Math.cos(ax), s = Math.sin(ax); let y1 = y * c - z * s, z1 = y * s + z * c; y = y1; z = z1; c = Math.cos(ay); s = Math.sin(ay); let x1 = x * c + z * s; z1 = -x * s + z * c; x = x1; z = z1; c = Math.cos(az); s = Math.sin(az); x1 = x * c - y * s; y1 = x * s + y * c; return [x1, y1, z]; };
-    const view = (tt) => ({ spin: tt * 0.10 + mouse.x * 0.25, tilt: 0.32 + mouse.y * 0.12 });
-    const onOrbit = (o, a, v) => { const q = rot(rot([Math.cos(a) * o.r, Math.sin(a) * o.r, 0], o.tiltX, 0, o.rotZ), v.tilt, v.spin * 0.3, 0); return [G.cx + q[0] * G.R, G.cy + q[1] * G.R, q[2]]; };
-    const hidden = (x, y, z) => z < 0 && Math.hypot((x - G.cx) / G.R, (y - G.cy) / G.R) < 0.99;
-    const ringAt = (tt) => onOrbit(orbits[0], tt * 0.32 + 1.1, view(tt));
-    function reject(te) {
-      const [x0, y0, z0] = ringAt(te);
-      if (hidden(x0, y0, z0) || x0 < 12 || x0 > W - 12) return null;
-      const drop = Math.min(G.R * 0.5, G.floor - y0 - 10);
-      return drop < G.R * 0.22 ? null : { x0, y0, dx: (x0 >= G.cx ? 1 : -1) * G.R * 0.14, drop };
-    }
-    function good(tt) {
-      const te = Math.floor((tt - PHASE) / P) * P + PHASE, u = (tt - te) / FALL;
-      if (u < 0.55 || u > 0.68 || !reject(te)) return false;
-      const [x, y, z] = ringAt(tt);
-      return !hidden(x, y, z) && x > 16 && x < W - 16 && y > G.top && y < G.floor;
-    }
-    const goodFrom = (t0) => { for (let tt = t0; tt < t0 + 3 * P; tt += 0.02) if (good(tt)) return tt; return t0; };
-    function extent(els, cr) {
-      let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
-      els.forEach(el => {
-        const box = el.getBoundingClientRect(); if (box.width < 1 || box.height < 1) return;
-        let ty = 0; try { ty = new DOMMatrixReadOnly(getComputedStyle(el).transform).m42; } catch (e) { }
-        const rg = document.createRange(); rg.selectNodeContents(el);
-        for (const q of rg.getClientRects()) if (q.width >= 1) { l = Math.min(l, q.left - cr.left); r = Math.max(r, q.right - cr.left); }
-        t = Math.min(t, box.top - ty - cr.top); b = Math.max(b, box.bottom - ty - cr.top);
-      });
-      return l < Infinity ? { l, t, r, b } : null;
-    }
-    function holes(els, cr) {
-      const out = [];
-      els.forEach(el => {
-        let ty = 0; try { ty = new DOMMatrixReadOnly(getComputedStyle(el).transform).m42; } catch (e) { }
-        const rg = document.createRange(); rg.selectNodeContents(el);
-        for (const q of rg.getClientRects()) if (q.width >= 1 && q.height >= 1) out.push([q.left - cr.left - 9, q.top - ty - cr.top - 7, q.right - cr.left + 9, q.bottom - ty - cr.top + 7]);
-      });
-      return out;
-    }
-    function place() {
-      const cr = cv.getBoundingClientRect(), bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 64;
-      const top = Math.max(0, bar - cr.top) + 14, C = extent(copy, cr), S = extent(strict, cr), gap = 18;
-      const wide = cr.left > 1;
-      const beside = (cap) => {
-        const x0 = C ? Math.max(0, C.r + gap) : 0, R = Math.min(cap, (W - 8 - x0) / 2.6, (H - top - 12) / 2), mid = C ? (C.t + C.b) / 2 : H * 0.48;
-        return { mode: 'beside', R, cx: Math.min(W - R - 8, Math.max(W * 0.6, x0 + 1.6 * R)), cy: Math.max(top + R, Math.min(H - R - 12, mid)), floor: H - 12, alpha: 1 };
-      };
-      let g;
-      if (story && wide) g = { mode: 'beside', R: Math.min(W * 0.20, H * 0.30), cx: W * 0.735, cy: H * 0.42, floor: H - 12, alpha: 1 };
-      else if (wide || !C) g = beside(Math.min(W * 0.30, H * 0.36));
-      else {
-        const cap = story ? W * 0.40 : Math.min(W * 0.30, H * 0.36);
-        const room = (y0, y1, mode) => ({ mode, R: Math.min(cap, (y1 - y0) / 2), cy: (y0 + y1) / 2, floor: y1, alpha: 1 });
-        const side = beside(cap), pick = [side, room(C.b + gap, H - 12, 'below'), room(top, C.t - gap, 'above')].reduce((a, b) => (b.R > a.R ? b : a));
-        if (pick.R >= Math.min(cap, 54)) g = pick;
-        else if (S) g = { ...room(S.b + gap, H - 12, 'under'), mode: 'under', alpha: 0.7 };
-        else { const R = W * 0.40; g = { mode: 'behind', R, cy: Math.max(H * 0.3, top + R * 0.6), floor: H - 12, alpha: 0.55 }; }
-        g.R = Math.max(24, g.R);
-        if (g.mode !== 'beside') g.cx = Math.max(g.R + 8, Math.min(W - g.R - 8, story ? W * 0.62 : W * 0.6));
-        if (g.mode === 'under' || g.mode === 'behind') g.holes = holes(copy, cr);
-      }
-      g.top = top; g.bead = W < 600 ? 1.6 : 1.25;
-      G = g; cv.dataset.globe = g.mode;
-      const sp = W < 600 ? 12.5 : 11.5, rows = Math.max(14, Math.min(64, Math.round(2.93 * g.R / sp) + 1)), eq = Math.round(TAU * g.R / sp);
-      sphere = [];
-      for (let r = 0; r < rows; r++) { const la = (84 - 168 * r / (rows - 1)) * Math.PI / 180, n = Math.max(8, Math.round(eq * Math.cos(la))); for (let k = 0; k < n; k++) sphere.push({ la, lo: (k + (r % 2) * 0.5) / n * TAU }); }
-    }
-    function draw() {
-      if (!G) return;
-      const { R, cx, cy, bead } = G, v = view(tau), small = W < 600, hs = G.holes;
-      const out = hs ? (x, y) => { for (const h of hs) if (x > h[0] && x < h[2] && y > h[1] && y < h[3]) return true; return false; } : () => false;
-      ctx.clearRect(0, 0, W, H);
-      ctx.globalAlpha = G.alpha;
-      const body = ctx.createRadialGradient(cx - R * 0.38, cy - R * 0.42, R * 0.05, cx, cy, R);
-      body.addColorStop(0, rgba(GREEN, 0.075)); body.addColorStop(0.55, rgba(IVORY, 0.03)); body.addColorStop(1, rgba(IVORY, 0.012));
-      ctx.fillStyle = body; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.fill();
-      ctx.lineWidth = 1;
-      orbits.forEach((o, oi) => {
-        ctx.beginPath(); let pen = false;
-        for (let i = 0; i <= 180; i++) { const [x, y, z] = onOrbit(o, i / 180 * TAU, v); if (hidden(x, y, z) || out(x, y)) { pen = false; continue; } if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; } }
-        ctx.strokeStyle = rgba(oi ? IVORY : GREEN, oi ? 0.16 : 0.26); ctx.stroke();
-      });
-      const eb = new Map();
-      sphere.forEach(pt => {
-        const lo = pt.lo + v.spin, q = rot([Math.cos(pt.la) * Math.sin(lo), Math.sin(pt.la), Math.cos(pt.la) * Math.cos(lo)], v.tilt, 0, 0);
-        if (q[2] <= 0.04 || out(cx + q[0] * R, cy + q[1] * R)) return;
-        const k = Math.round((0.22 + 0.38 * Math.pow(q[2], 1.2)) * 50);
-        let f = eb.get(k); if (!f) eb.set(k, f = []); f.push(cx + q[0] * R, cy + q[1] * R, bead * (0.75 + 0.6 * q[2]));
-      });
-      eb.forEach((f, k) => { ctx.beginPath(); for (let i = 0; i < f.length; i += 3) { ctx.moveTo(f[i] + f[i + 2], f[i + 1]); ctx.arc(f[i], f[i + 1], f[i + 2], 0, TAU); } ctx.fillStyle = rgba(IVORY, k / 50); ctx.fill(); });
-      const te = Math.floor((tau - PHASE) / P) * P + PHASE, u = (tau - te) / FALL, rj = u >= 0 && u <= 1 ? reject(te) : null;
-      if (rj) {
-        const fade = u < 0.7 ? 1 : Math.max(0, 1 - (u - 0.7) / 0.3), at = (s) => [rj.x0 + rj.dx * s, rj.y0 + rj.drop * Math.pow(s, 1.6)];
-        ctx.beginPath(); let pen = false; for (let i = 0; i <= 14; i++) { const [x, y] = at(u * i / 14); if (out(x, y)) { pen = false; continue; } if (pen) ctx.lineTo(x, y); else { ctx.moveTo(x, y); pen = true; } }
-        ctx.setLineDash([2, 3.5]); ctx.strokeStyle = rgba(RED, 0.55 * fade); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
-        if (u < 0.18) { const k = u / 0.18; ctx.beginPath(); ctx.arc(rj.x0, rj.y0, 4 + 7 * k, 0, TAU); ctx.strokeStyle = rgba(RED, 0.5 * (1 - k)); ctx.stroke(); }
-        const [mx, my] = at(u); if (!out(mx, my)) { ctx.beginPath(); ctx.arc(mx, my, small ? 2.6 : 2.2, 0, TAU); ctx.fillStyle = rgba(RED, 0.95 * fade); ctx.fill(); }
-      }
-      const [px, py, pz] = ringAt(tau);
-      if (!hidden(px, py, pz) && !out(px, py)) { ctx.beginPath(); ctx.arc(px, py, small ? 4.2 : 3.6, 0, TAU); ctx.strokeStyle = rgba(GREEN, 0.95); ctx.lineWidth = 1.3; ctx.stroke(); }
-      ctx.globalAlpha = 1;
-    }
-    const speedAt = (p, t) => { const d = (t - p.t0) / 1000; if (d < RAMP) return p.s0 + (1 - p.s0) * d / RAMP; const x = (p.tEnd - t) / 1000 / EASE; return x >= 1 ? 1 : Math.max(0, x * x); };
-    function tauAt(p, t) {
-      if (t >= p.tEnd) return p.tauEnd;
-      const d = Math.max(0, (t - p.t0) / 1000), x = (p.tEnd - t) / 1000 / EASE;
-      if (x < 1) return p.tauEnd - EASE / 3 * x * x * x;
-      const ramp = Math.min(d, RAMP);
-      return p.tau0 + p.s0 * ramp + (1 - p.s0) * ramp * ramp / (2 * RAMP) + Math.max(0, d - RAMP);
-    }
-    function wake(t, s0, tau0) {
-      const nominal = tau0 + RAMP * (1 + s0) / 2 + (WAKE / 1000 - RAMP - EASE) + EASE / 3, tauEnd = goodFrom(nominal);
-      plan = { t0: t, s0, tau0, tauEnd, tEnd: t + WAKE + (tauEnd - nominal) * 1000 };
-      delete cv.dataset.still; request();
-    }
-    const rests = () => !plan || performance.now() >= plan.tEnd;
-    function frame(now) {
-      frameId = 0;
-      if (!visible || document.hidden || !plan) return;
-      const k = 1 - Math.exp(-Math.min(0.1, (now - last) / 1000) * 3); last = now;
-      mouse.x += (mouse.tx - mouse.x) * k; mouse.y += (mouse.ty - mouse.y) * k;
-      tau = tauAt(plan, now); draw();
-      if (now < plan.tEnd) frameId = requestAnimationFrame(frame); else cv.dataset.still = '';
-    }
-    function request() {
-      if (frameId || !visible || document.hidden || !plan) return;
-      if (!rests()) { last = performance.now(); frameId = requestAnimationFrame(frame); return; }
-      if (tau !== plan.tauEnd) { tau = plan.tauEnd; draw(); }
-      cv.dataset.still = '';
-    }
-    function stop() { cancelAnimationFrame(frameId); frameId = 0; }
-    function relayout() {
-      place();
-      if (rests()) { tau = goodFrom(plan ? plan.tauEnd : tau); if (plan) plan.tauEnd = tau; } else tau = tauAt(plan, performance.now());
-      draw();
-    }
-    function resize() {
-      const r = cv.getBoundingClientRect(); W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height));
-      dpr = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / (W * H)), 4096 / W, 4096 / H);
-      cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      relayout();
-    }
-    tau = 2.4; resize();
-    window.addEventListener('resize', resize);
-    if (document.fonts) document.fonts.ready.then(relayout);
-    setTimeout(relayout, 1800);
-    (function watchRatio() { window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { resize(); watchRatio(); }, { once: true }); })();
-    if (prefersReduced) { cv.dataset.still = ''; return; }
-    const t0 = performance.now(), still = tau;
-    plan = { t0, s0: 0, tau0: still - (RAMP / 2 + (WAKE / 1000 - RAMP - EASE) + EASE / 3), tauEnd: still, tEnd: t0 + WAKE };
-    tau = plan.tau0; draw();
-    window.addEventListener('pointermove', (e) => {
-      if (!G) return; const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-      if (x < 0 || y < 0 || x > r.width || y > r.height || Math.hypot(x - G.cx, y - G.cy) > G.R * 1.7) return;
-      mouse.tx = Math.max(-1, Math.min(1, (x - G.cx) / (G.R * 1.7))); mouse.ty = Math.max(-1, Math.min(1, (y - G.cy) / (G.R * 1.7)));
-      const now = performance.now();
-      if (!rests() && now < plan.t0 + 250) return;
-      wake(now, rests() ? 0 : speedAt(plan, now), rests() ? tau : tauAt(plan, now));
-    }, { passive: true });
-    if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) request(); else stop(); }, { threshold: 0 }).observe(cv);
-    document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else request(); });
-    request();
-  }
 })();

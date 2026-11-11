@@ -9,7 +9,11 @@
       gates (2), the stop short of custody (3) and the ledger do not move. Fix (1 Nov): the register codes C-01...C-04
       left the list and the plate; the constant being read is marked by the plate itself (its part lit, the rest back). The still in the markup is shape 0
       with the proposal on the boundary: what readers see without JavaScript and under reduced motion. It runs only on
-      screen, with Pause motion; the constant being read (from 961 px) or pointed at is marked on the plate.
+      screen; the constant being read (from 961 px) or pointed at is marked on the plate.
+      hc31r (COMP-1): the plate runs on the run's clock (window.OXA.run, system's run.js, started after the first paint;
+      SYSTEM.md 16): its frames come from OXA.run.subscribe, so the header's pause holds it, reduced motion and a hidden
+      tab keep the still, and it starts no loop of its own. Under a halt the proposal on the loop finishes its pass and
+      no other starts ("Halted · no new proposals") until the model is resumed. Its own Pause motion is gone.
       The still SVG in company.html is maintained by hand: it is draw(lay(SHAPES[0])) with the proposal on the boundary,
       so a change to SHAPES[0], CX/CY or the label positions means redrawing it to match (r1, 31 Oct).
       award a4 (pixel): the labels are HTML over the drawing (.kl-labs, at the plate-label token, so they no longer scale
@@ -17,7 +21,7 @@
       hc1 (4 Nov, the council's copy item and system's instrument frame): the plate names its halves by their layers only
       (the list beside it says "Agents decide. Code executes."), the running line (.k-state) is the status in the plate's
       head, not a footer line in the drawing, and says only what happens (no "Agents decide ·", no "Code executes · below
-      the boundary"); Pause motion ends that head, boxed (.figure-motion.is-head).
+      the boundary").
       hc2 (5 Nov): the labels and the running line are in the caption register (Inter, sentence case; company.css). */
 (function () {
   'use strict';
@@ -137,7 +141,8 @@
       } else if (phase === 'gap') {
         gap -= dt;
         if (gap <= 0) {
-          if (next === 'morph') { const A = L; shape = (shape + 1) % SHAPES.length; morph = { A, B: lay(SHAPES[shape]), t: 0 }; phase = 'morph'; next = 'walk'; say('Another lifecycle · the same four constants'); }
+          if (halted) say('Halted · no new proposals'); // the run is halted: the pass in flight has ended, no other starts
+          else if (next === 'morph') { const A = L; shape = (shape + 1) % SHAPES.length; morph = { A, B: lay(SHAPES[shape]), t: 0 }; phase = 'morph'; next = 'walk'; say('Another lifecycle · the same four constants'); }
           else walk(0);
         }
       } else if (phase === 'morph') { // another lifecycle: only the loop and its gates move
@@ -147,25 +152,17 @@
         if (t >= 1) { L = morph.B; morph = null; phase = 'gap'; gap = 450; }
       }
     }
-    // it runs only on screen, with the page visible, not paused and not under reduced motion (the still stays)
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let raf = 0, last = 0, visible = false, paused = false;
-    const btn = document.createElement('button');
-    const head = fig.querySelector('.kplate-head');
-    btn.type = 'button'; btn.className = 'figure-motion' + (head ? ' is-head' : ''); btn.textContent = 'Pause motion';
-    btn.addEventListener('click', () => { paused = !paused; btn.textContent = paused ? 'Resume motion' : 'Pause motion'; kick(); });
-    (head || fig).appendChild(btn);
-    function frame(now) { raf = 0; tick(Math.min(64, now - last)); last = now; kick(); }
-    function kick() {
-      const go = visible && !paused && !reduce.matches && !document.hidden;
-      if (go && !raf) { last = performance.now(); raf = requestAnimationFrame(frame); }
-      else if (!go && raf) { cancelAnimationFrame(raf); raf = 0; }
+    // it runs on the run's clock: a frame while the plate is on screen, the model runs and motion is allowed (the still stays otherwise)
+    let run = null, last = 0, halted = false;
+    function cam(S, why) {
+      halted = S.halted;
+      if (why !== 'frame') { last = 0; return; }
+      tick(last ? Math.min(64, Math.max(0, (S.t - last) * 1000)) : 16); last = S.t;
     }
-    const sync = () => { btn.hidden = reduce.matches; kick(); };
+    const hook = () => { if (!run && window.OXA && window.OXA.run) { run = window.OXA.run; run.subscribe(cam, svg); } };
     walk(.5);
-    if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick(); }).observe(svg);
-    document.addEventListener('visibilitychange', kick);
-    reduce.addEventListener('change', sync); sync();
+    hook();
+    if (!run) document.addEventListener('oxa:run', hook);
 
     // the constant being read (from 961 px, where the plate stays beside the list) or pointed at
     const cons = Array.from(document.querySelectorAll('#constants [data-k]'));

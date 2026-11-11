@@ -2,7 +2,11 @@
    the hash before it. Edit a field: that record and every one after it turn red in a cascade (110 ms a record), the
    status names the record where the chain broke (Trust's words; hc2) and its last sentence is announced once. Restore
    heals from the top. hc3 (HC3 director item 4): a record's id is the page's own (.i): a ledger id such as "#4f23", as
-   Trust's replay writes them, is named as it is ("Chain broken at #4f25"); a bare number reads "record 03". */
+   Trust's replay writes them, is named as it is ("Chain broken at #4f25"); a bare number reads "record 03".
+   hc31r (PROOF-2): the visitor's own records (run.js: OXA.run.records(), sealed where they were made) stand under the
+   eight, the newest three, as a chain of their own: a line states the previous hash their first one stores (the last
+   record of Trust's ledger, or their own record before it), each row shows the hash it was sealed with, and a row is red
+   when what it says no longer produces that hash. Kept in this tab; 'Clear my records' empties them. */
 (function () {
   'use strict';
   const root = document.querySelector('[data-chain]');
@@ -48,7 +52,7 @@
   const ID = RECORDS.map((r, i) => r[3] || pad(i + 1)), name = i => (/^#/.test(ID[i]) ? ID[i] : 'record ' + ID[i]);
 
   // a row per record: node, record, and the link carrying its hash to the next
-  const rows = RECORDS.map((r, i) => {
+  const mk = (r, i) => {
     const li = document.createElement('li');
     li.innerHTML = `<i class="chain-node" aria-hidden="true"></i><span class="i" role="button" tabindex="${i ? -1 : 0}" aria-describedby="chain-how-i"></span><span class="who"></span>` +
       `<b class="ev" tabindex="-1" spellcheck="false" role="textbox" aria-multiline="false"></b>` +
@@ -64,7 +68,8 @@
     li.querySelector('.ev').textContent = r[1];
     li.querySelector('.what').textContent = r[2];
     return li;
-  });
+  };
+  const rows = RECORDS.map(mk), N0 = rows.length, M = rows.map(() => null); // M[i]: the visitor's sealed record behind row i
   const links = rows.map(li => li.querySelector('.chain-link b'));
   list.replaceChildren(...rows);
   if (fallback) fallback.remove();
@@ -74,14 +79,17 @@
   if ('IntersectionObserver' in window) new IntersectionObserver(([en]) => root.classList.toggle('is-away', !en.isIntersecting)).observe(root);
   const stored = []; // the chain as it was written: [prevHash, hash] per record
   const want = []; // the hash each link is showing, or rolling towards
-  let busy = false, pending = false, revision = 0;
+  let busy = false, pending = false, revision = 0, editable = false;
+  const firstBad = c => c.findIndex((record, i) => record[1] !== stored[i][1]);
 
   async function compute() {
     const snapshot = rows.map(li => `${li.querySelector('.who').textContent}|${li.querySelector('.ev').textContent}|${li.querySelector('.what').textContent}`);
     let prev = '0'.repeat(64);
     const out = [];
     for (let i = 0; i < rows.length; i++) {
-      const h = await sha(prev + '|' + snapshot[i]);
+      const m = M[i];
+      if (m && !M[i - 1]) prev = m.prev;
+      const h = await sha(prev + '|' + (m ? [m.id, m.t, rows[i].querySelector('.ev').textContent, m.sub, rows[i].querySelector('.what').textContent].join('|') : snapshot[i]));
       out.push([prev, h]); prev = h;
     }
     return out;
@@ -94,7 +102,6 @@
     paint(c, -1, true);
     // the fields become editable as the chain nears the screen, or on a first touch or focus inside it: each set lays
     // out the chain, which on Home sits far below the overture (a4, home's request: the phone's second second)
-    let editable = false;
     const arm = () => { if (editable) return; editable = true; rows.forEach(li => li.querySelectorAll('.ev, .what').forEach(field => field.setAttribute('contenteditable', 'plaintext-only'))); };
     if ('IntersectionObserver' in window) { const io = new IntersectionObserver(es => { if (es.some(en => en.isIntersecting)) { io.disconnect(); arm(); } }, { rootMargin: '100% 0px' }); io.observe(root); } else arm();
     root.addEventListener('pointerdown', arm, { once: true, capture: true }); root.addEventListener('focusin', arm, { once: true, capture: true });
@@ -111,7 +118,7 @@
         const version = revision;
         const c = await compute();
         if (version !== revision) { pending = true; continue; }
-        paint(c, c.findIndex((record, i) => record[1] !== stored[i][1]));
+        paint(c, firstBad(c));
       } while (pending);
     } finally {
       busy = false;
@@ -154,7 +161,8 @@
     if (broken < 0) return `Restoring · ${plural(n, 'record still fails', 'records still fail')}`;
     // hc2: one vocabulary with Trust's replay: 'Chain intact' or 'Chain broken at <record> · every later link fails'
     const first = rows.findIndex(li => li.classList.contains('is-broken'));
-    return `Chain broken at ${name(first)}${first < rows.length - 1 ? ' · every later link fails' : ''}`;
+    const end = M[first] || rows.length === N0 ? rows.length - 1 : N0 - 1;
+    return `Chain broken at ${name(first)}${first < end ? ' · every later link' + (end < rows.length - 1 ? ' to ' + name(end) : '') + ' fails' : ''}`;
   }
   let said = '';
   function settled(broken, quiet) { // the last record reached: the final sentence, announced once
@@ -175,7 +183,7 @@
       const edited = li.querySelector('.ev').textContent !== ORIGINAL[i][1] || li.querySelector('.what').textContent !== ORIGINAL[i][2];
       li.classList.toggle('is-edited', edited);
       li.querySelector('.chain-flag').hidden = !edited;
-      const bad = broken >= 0 && i >= broken, h = c[i][1].slice(0, 8);
+      const bad = c[i][1] !== stored[i][1], h = c[i][1].slice(0, 8);
       if (li.classList.contains('is-broken') !== bad || want[i] !== h) steps.push({ i, bad, h });
     });
     const now = quiet || motion.matches;
@@ -204,7 +212,7 @@
     syncActs();
   }
   // r4 a11y: one Tab stop, the record's number (roving; Enter edits). A record's fields are Tab stops only while in use
-  const idx = rows.map(li => li.querySelector('.i')), F = li => li.querySelectorAll('.ev, .what');
+  const idx = rows.map(li => li.querySelector('.i')), F = li => li.querySelectorAll('.ev, .what'), lists = root;
   [['i', 'Enter types over its detail; Up and Down choose another record.'], ['f', 'Type to change this record: it and every record after it stop verifying. Enter or Escape goes back to the record.']].forEach(([k, s]) => {
     const e = document.createElement('span'); e.id = 'chain-how-' + k; e.hidden = true; e.textContent = s; root.append(e);
   });
@@ -226,12 +234,12 @@
   }
   // a1-dev: the whole record row is the press target (the number alone was 15 x 20 px on a phone); a press inside a
   // field still puts the caret where it lands
-  list.addEventListener('click', e => { const j = rows.indexOf(e.target.closest('li')); if (j >= 0 && !e.target.closest('[contenteditable]')) edit(j); });
-  list.addEventListener('focusin', e => { const f = e.target.closest('.ev, .what'); if (f && f.isContentEditable) arm(rows.indexOf(f.parentNode)); });
-  list.addEventListener('focusout', e => { const to = e.relatedTarget; if (armed >= 0 && !(to && to.parentNode === rows[armed] && to.matches('.ev, .what'))) arm(-1); });
+  lists.addEventListener('click', e => { const j = rows.indexOf(e.target.closest('li')); if (j >= 0 && !e.target.closest('[contenteditable]')) edit(j); });
+  lists.addEventListener('focusin', e => { const f = e.target.closest('.ev, .what'); if (f && f.isContentEditable) arm(rows.indexOf(f.parentNode)); });
+  lists.addEventListener('focusout', e => { const to = e.relatedTarget; if (armed >= 0 && !(to && to.parentNode === rows[armed] && to.matches('.ev, .what'))) arm(-1); });
   let t = 0;
-  list.addEventListener('input', () => { revision++; clearTimeout(t); t = setTimeout(() => verify().catch(reportCryptoError), 120); });
-  list.addEventListener('keydown', e => {
+  lists.addEventListener('input', () => { revision++; clearTimeout(t); t = setTimeout(() => verify().catch(reportCryptoError), 120); });
+  lists.addEventListener('keydown', e => {
     const j = rows.indexOf(e.target.closest('li')), k = e.key;
     if (j < 0 || e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.target !== idx[j]) { if (k === 'Enter' || k === 'Escape') { e.preventDefault(); getSelection().removeAllRanges(); idx[j].focus(); } return; }
@@ -256,5 +264,51 @@
     rows.forEach((li, i) => { li.querySelector('.ev').textContent = ORIGINAL[i][1]; li.querySelector('.what').textContent = ORIGINAL[i][2]; });
     verify().then(() => { if (tryIt && !tryIt.hidden) tryIt.focus(); }).catch(reportCryptoError);
   });
-  write().catch(reportCryptoError);
+  /* hc31r (PROOF-2): the visitor's own records, under the eight */
+  const run = window.OXA && window.OXA.run, foot0 = foot && foot.querySelector('.fc-h') ? Array.from(foot.querySelector('.fc-h').childNodes) : [];
+  let join = null, list2 = null, clear = null;
+  async function yours() {
+    while (rows.length > N0) { rows.pop(); links.pop(); idx.pop(); ID.pop(); ORIGINAL.pop(); M.pop(); stored.pop(); want.pop(); }
+    if (rove >= N0) rove = 0;
+    armed = -1;
+    const mine = run ? run.records().slice(-3) : [], fc = foot && foot.querySelector('.fc-h');
+    if (!mine.length) {
+      if (join) { join.remove(); list2.remove(); join = list2 = null; }
+      if (clear) { clear.remove(); clear = null; if (fc) fc.replaceChildren(...foot0); }
+    } else {
+      if (!join) {
+        join = document.createElement('p'); join.className = 'chain-genesis';
+        list2 = document.createElement('ol'); list2.className = 'chain-list'; list2.setAttribute('role', 'list');
+        (foot || list).before(join, list2);
+      }
+      const h = document.createElement('span'), says = document.createElement('span');
+      h.style.textTransform = 'none'; h.textContent = mine[0].prev.slice(0, 8);
+      says.append('Your moves · previous hash ', h);
+      join.replaceChildren(document.createElement('i'), says);
+      join.firstChild.setAttribute('aria-hidden', 'true');
+      mine.forEach(m => {
+        const i = rows.length, r = ['you', m.ev, m.d, m.id];
+        ID.push(m.id); ORIGINAL.push(r.slice()); M.push(m);
+        const li = mk(r, i);
+        li.querySelector('.i').tabIndex = -1;
+        li.querySelector('.chain-was').textContent = m.hash.slice(0, 8);
+        if (editable) li.querySelectorAll('.ev, .what').forEach(field => field.setAttribute('contenteditable', 'plaintext-only'));
+        rows.push(li); links.push(li.querySelector('.chain-link b')); idx.push(li.querySelector('.i')); stored.push([m.prev, m.hash]);
+      });
+      list2.replaceChildren(...rows.slice(N0));
+      if (fc && !clear) {
+        const tail = document.createElement('span');
+        tail.textContent = ' · real SHA-256, computed in your browser · kept in this tab, sent nowhere';
+        fc.replaceChildren('Illustrative excerpt, then your own moves', tail);
+        clear = document.createElement('button'); clear.type = 'button'; clear.className = 'link-arrow'; clear.textContent = 'Clear my records';
+        clear.addEventListener('click', () => { run.clear(); if (tryIt && !tryIt.hidden) tryIt.focus(); });
+        fc.after(clear);
+      }
+    }
+    root.classList.toggle('has-mine', mine.length > 0);
+    const c = await compute();
+    paint(c, firstBad(c), true);
+  }
+  const again = () => { if (stored.length >= N0) yours().catch(reportCryptoError); };
+  write().then(() => { if (run) { document.addEventListener('oxa:record', again); window.addEventListener('pageshow', e => { if (e.persisted) again(); }); return yours(); } }).catch(reportCryptoError);
 })();

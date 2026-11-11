@@ -26,7 +26,7 @@
   const brokeAt = i => `Chain broken at ${recs[i].id}${i < recs.length - 1 ? ' · every later link fails' : ''}`;
   function setIdle() {
     const n = recs.length, ok = verified();
-    T.idle = brokenAt >= 0 && recs[brokenAt] ? brokeAt(brokenAt) : ok === n ? 'Chain intact' : `${n - ok} of ${n} records fail verification`;
+    T.idle = brokenAt >= 0 && recs[brokenAt] ? brokeAt(brokenAt) : ok === n ? T.lead() + 'Chain intact' : `${n - ok} of ${n} records fail verification`;
   }
   let said = '';
   const say = t => { if (ui.say && t && t !== said) ui.say.textContent = said = t; };
@@ -86,7 +86,7 @@
       T.state(i < all.length ? `Replaying · ${i} of ${all.length}` : `Replayed · ${all.length} records`);
       if (i < all.length) {
         const gap = secs(all[i].t) - secs(r.t);
-        replaying = setTimeout(next, Math.min(1500, Math.max(380, gap * 600)));
+        replaying = setTimeout(next, all[i].mine ? Math.max(60, Math.min(420, 5000 / T.mine())) : Math.min(1500, Math.max(380, gap * 600)));
       } else { replaying = 0; hold(false); }
     };
     next();
@@ -104,7 +104,7 @@
   }
 
   function verify() {
-    unfold(true);
+    if (!T.mine()) unfold(true);
     if (T.sel !== null) { T.sel = null; T.markSel(); }
     T.following = false; T.inspect();
     armed = null; pending = false; tabs();
@@ -132,6 +132,7 @@
     });
     sweep.push(setTimeout(() => {
       brokenAt = first >= 0 && canEdit ? first : -1; setIdle();
+      if (cause && !cause.getClientRects().length) unfold(true);
       if (cause && cause.isConnected && performance.now() > T.intent) T.select(cause, false);
       T.state(done); say(done);
     }, reduced ? 0 : lead + lis.length * STEP + 120));
@@ -143,8 +144,8 @@
     const ed = isEdited(r), t = T.tone(r.ev), o = orig().get(r.seq);
     r.lc = ed ? 'edited' : (o ? o.lc : r.lc);
     li.classList.toggle('is-settled', t === ' is-settled'); li.classList.toggle('is-rejected', t === ' is-rejected'); li.classList.toggle('is-edited', ed);
-    T.put(li.querySelector('.lt-ev'), r.ev); T.put(li.querySelector('.lt-sub'), r.sub); T.put(li.querySelector('.lt-lc'), r.lc || '');
-    li.setAttribute('aria-label', `${r.id}, ${r.ev}, ${r.d}, ${r.t}${ed ? ', edited' : ''}`);
+    T.put(li.querySelector('.lt-ev'), r.ev); T.put(li.querySelector('.lt-sub'), T.shownSub(r)); T.put(li.querySelector('.lt-lc'), r.lc || '');
+    li.setAttribute('aria-label', `${r.id}, ${r.ev}, ${r.d}, ${r.t}${r.mine ? ', your own record, made on ' + r.where : ''}${ed ? ', edited' : ''}`);
   }
   function changed() {
     X.v++; X.dirty = anyEdited(); brokenAt = -1; unbreak(); setIdle();
@@ -162,7 +163,7 @@
     pending = true;
     const v = el.textContent.replace(/[\r\n]+/g, ' ');
     if (el === F.ev) r.ev = v;
-    else { r.d = v; r.sub = o && v === o.d ? o.sub : v; }
+    else { r.d = v; if (!r.mine) r.sub = o && v === o.d ? o.sub : v; }
     refresh(r); changed();
   }
   let armed = null, pending = false;
@@ -209,11 +210,12 @@
   const toVerify = () => { ui.verify.focus({ preventScroll: true }); place(false); };
 
   const more = root.querySelector('[data-lt-more]'), shut = more ? more.textContent : '';
+  const foldSays = open => (T.mine() ? (open ? 'Show the last four records' : `Show all ${recs.length} records`) : open ? 'Show the first four records' : shut);
   function unfold(open) {
     if (!more || root.classList.contains('is-open') === open) return;
     root.classList.toggle('is-open', open);
     more.setAttribute('aria-expanded', String(open));
-    more.textContent = open ? 'Show the first four records' : shut;
+    more.textContent = foldSays(open);
     if (!open) {
       if (replaying) { clearTimeout(replaying); replaying = 0; whole(); }
       const li = T.sel !== null ? els.get(T.sel) : null;
@@ -224,6 +226,38 @@
   }
   if (more) more.addEventListener('click', () => unfold(!root.classList.contains('is-open')));
 
+  // hc31r (PROOF-2): the visitor's own records. The foot says whose the records are and where they are kept, and clears
+  // them; X.sync(false) puts every record back as it was sealed before the engine reads theirs again, X.sync(true) after
+  const footH = root.querySelector('.lt-foot > .fc-h'), foot0 = footH ? Array.from(footH.childNodes) : [];
+  let clear = null;
+  function foot() {
+    if (!footH) return;
+    const m = T.mine() > 0;
+    root.classList.toggle('has-mine', m);
+    if (more) more.textContent = foldSays(root.classList.contains('is-open'));
+    if (m === !!clear) return;
+    if (!m) { footH.replaceChildren(...foot0); clear.remove(); clear = null; return; }
+    const tail = T.node('span', null, ' · real ');
+    tail.append(T.node('span', 'nw', 'SHA-256'), ', computed in your browser · kept in this tab, sent nowhere');
+    footH.replaceChildren('Illustrative excerpt, then your own moves', tail);
+    clear = T.node('button', 'link-arrow', 'Clear my records'); clear.type = 'button';
+    clear.addEventListener('click', () => {
+      const R = T.run();
+      if (R) R.clear();
+      say('Your records are cleared · ' + T.idle);
+      if (ui.edit && !ui.edit.hidden) ui.edit.focus();
+    });
+    footH.after(clear);
+  }
+  X.sync = after => {
+    if (!after) {
+      recs.forEach(r => { const o = ORIG.get(r.seq); if (o) { r.ev = o.ev; r.sub = o.sub; r.d = o.d; r.lc = o.lc; } });
+      ORIG.clear(); armed = null; pending = false; brokenAt = -1; X.dirty = false; T.flag('is-broken', false);
+      return;
+    }
+    X.v++; setIdle(); foot();
+    if (canEdit) ctrls();
+  };
   X.whole = whole;
   X.check = r => {
     const a = X.v ? at(r) || { linked: true, now: r.hash, ok: true } : null;
@@ -249,9 +283,11 @@
       });
     });
     ui.edit.addEventListener('click', () => {
-      T.mount(); unfold(true);
+      T.mount();
+      if (!T.mine()) unfold(true);
       let li = T.sel !== null ? els.get(T.sel) : null;
-      if (!li) { const r = recs.find(x => /^REJECTED/.test(x.ev)) || recs[0]; li = r ? els.get(r.seq) : null; }
+      if (li && !li.getClientRects().length) li = null;
+      if (!li) { const r = recs.find(x => x.mine) || recs.find(x => /^REJECTED/.test(x.ev)) || recs[0]; li = r ? els.get(r.seq) : null; }
       if (!li) return;
       orig();
       armed = +li.dataset.seq;
@@ -286,13 +322,72 @@
     }));
   }
   if (ui.ctrl) ui.ctrl.hidden = false;
+  T.init(); // (the chain is hashed now: the bar and the foot say whose records these are)
+  if (T.mine()) { X.v++; setIdle(); T.state(); }
+  foot();
 })();
 
-/* hc30r (PROOF-2, on system's SYS-2): reached by a page turn the hero plate arrives whole, so its act (a proposal passes
-   the Council and settles) runs once when the turn has landed (OXA.actOnce: in view, never under reduced motion);
-   proof.css .is-act. A direct load plays the act in the plate's entrance, as before */
+/* hc31r (PROOF-1): the Council camera. runplate.js draws the run's proposals and blocks on the hero plate; this adds what
+   is Trust's own: the ring closes round the tagged proposal while the Council checks it (half a second, once), and the
+   blocks on the chain carry their hashes (the run's: OXA.run.block, the ones the closing band shows). A still when the
+   run stands (paused, halted, reduced motion); with reduced motion a still always has a proposal tagged. */
 (function () {
   'use strict';
-  const plate = document.querySelector('.hero-plate--council'), O = window.OXA;
-  if (plate && O && O.byTurn && O.actOnce) O.actOnce(plate, () => plate.classList.add('is-act'), { delay: 900 });
+  const svg = document.querySelector('.hero-plate--council svg[data-run-plate]'), run = window.OXA && window.OXA.run;
+  if (!svg || !run) return;
+  const sw = svg.querySelector('.tp-sw'), hx = svg.parentNode.querySelector('.tp-hx'), tag = svg.parentNode.querySelector('[data-run="tag"]');
+  const gap = +svg.dataset.runGap || 44, nb = +svg.dataset.runBlocks || 8, W = svg.viewBox.baseVal.width;
+  const still = matchMedia('(prefers-reduced-motion: reduce)');
+  const pool = hx ? Array.from({ length: nb }, () => { const e = document.createElement('span'); e.className = 'tp-h'; e.hidden = true; hx.append(e); return e; }) : [];
+  let gpx = 0, every = 1, near = 0, far = 0, arc = -1, asked = false, aw = 0, room = 0, roomL = 0, rem = 16, tw = 0, line = '';
+  function size() {
+    const q = svg.getBoundingClientRect(), w = q.width;
+    rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const lw = rem * .875 * .6 * 8;
+    aw = w; room = document.documentElement.clientWidth - q.right; roomL = q.left; tw = 0; line = '';
+    gpx = gap / W * w;
+    every = Math.max(1, Math.ceil((lw + rem * .75) / (gpx || 1))); // eight digits and air, in blocks
+    near = lw / 2 + rem * 1.5; far = (hx ? parseFloat(hx.style.getPropertyValue('--x')) / 100 * w : 0) - lw / 2; // clear of the pass's way down, and inside the plate
+  }
+  size();
+  window.addEventListener('resize', size);
+  run.subscribe((S, why) => {
+    const i = S.ti, ph = i >= 0 ? S.ph[i] : -1, u = i >= 0 ? S.u[i] : 0;
+    // the check: the band grows from the proposal's way in, both ways round, and lets go as it leaves
+    const a = ph === 1 ? u : (ph === 2 && u < .08) || (ph === 4 && u < .2) ? 1 : 0, o = ph === 1 ? .3 : ph === 2 ? .3 * (1 - u / .08) : ph === 4 ? .34 * (1 - u / .2) : 0;
+    const key = a ? Math.round(a * 500) + (ph === 4 ? 1000 : 0) + Math.round(o * 100) * 2000 : 0;
+    if (sw && key !== arc) {
+      arc = key;
+      sw.setAttribute('stroke-dasharray', (2 * a).toFixed(3) + ' ' + (2 - 2 * a).toFixed(3));
+      sw.setAttribute('stroke-dashoffset', a.toFixed(3));
+      sw.style.strokeOpacity = a ? o.toFixed(2) : '0';
+      sw.classList.toggle('is-no', ph === 4);
+    }
+    // the blocks' hashes ride with their blocks: every block where there is room, every second or third where not
+    const top = Math.floor(S.bl) - 1, fr = S.bl - Math.floor(S.bl);
+    for (let j = 0; j < pool.length; j++) {
+      const b = top - j, el = pool[((b % nb) + nb) % nb], d = (fr + j) * gpx, on = b >= 0 && b % every === 0 && d >= near && d <= far;
+      if (el.hidden === on) el.hidden = !on;
+      if (!on) continue;
+      if (el._b !== b) { el._b = b; el.textContent = run.block(b).slice(0, 8); }
+      el.classList.toggle('is-new', !j && !S.halted);
+      el.style.transform = 'translate3d(' + (-d).toFixed(1) + 'px,0,0) translate(-50%,-100%)';
+    }
+    // the tag: under its proposal while it is on the ways in (over them it would leave the plate); right of it where
+    // there is room on the screen, else left of it, else over it
+    if (tag && !tag.hidden) {
+      if (line !== S.tagLine) { line = S.tagLine; tw = tag.offsetWidth; }
+      const x = parseFloat(tag.style.left) / 100 * aw, right = x + rem + tw <= aw + room - 4, left = x - rem - tw >= 4 - roomL;
+      tag.classList.toggle('is-low', parseFloat(tag.style.top) < 14);
+      tag.classList.toggle('is-left', !right && left);
+      tag.classList.toggle('is-mid', !right && !left);
+    }
+    // reduced motion: a still with no proposal tagged takes the one nearest the Council
+    if (why === 'still' && still.matches && i < 0 && !asked && !S.halted) {
+      asked = true;
+      let k = -1, best = -1;
+      for (let n = 0; n < S.n; n++) if (S.ph[n] < 2 && S.ph[n] + S.u[n] > best) { best = S.ph[n] + S.u[n]; k = S.k[n]; }
+      if (k >= 0) run.follow(k);
+    }
+  }, svg.parentNode); // (the plate's own subscription watches the svg: one element, one subscriber)
 })();

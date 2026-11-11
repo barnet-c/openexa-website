@@ -7,8 +7,10 @@
      announcement with 'oxa:recorded' {id, record, hash, seq, followed}. Announcements are sealed into digest rows
      ('SETTLED ×1,741', 'Swarm digest'; at most one per 2 s in view, 8 s out of view); a followed proposal gets a record
      of its own, selected and pulsed when next in view. Each record is stamped later than the one before it.
-   [data-ledger="replay"] (Trust §01): a fixed excerpt. Replay, verify and change-a-record are trust.js's (Trust only); it
-     reaches the engine through root.oxaTrace and the hooks X (end of trace()) and hashes with sha256() and body() here.
+   [data-ledger="replay"] (Trust §01): a fixed excerpt and, sealed on after it, the visitor's own records (hc31r: OXA.run.records(),
+     in run.js's own format; each keeps the previous hash and the hash it was sealed with where it was made, so verifying
+     here is a real check of that chain). Replay, verify and change-a-record are trust.js's (Trust only); it reaches the
+     engine through root.oxaTrace and the hooks X (end of trace()) and hashes with sha256() and body() here.
    The strip is drawn (the one step that reads layout) within 1.5 viewports, or when first needed. Select a record
    (click, tap, arrow keys) to inspect its id, event and both hash links. */
 (function () {
@@ -126,7 +128,7 @@
     let reduced = motionQuery.matches, mounted = false, fitRaf = 0; // mounted: the strip is drawn
 
     /* ---- the chain, in memory: newest last; the DOM shows a contiguous window onto it ---- */
-    const CAP = 400, DOM_CAP = 36;
+    const CAP = 400, DOM_CAP = stream ? 36 : 1e4;
     const recs = [], els = new Map();
     let seq = 0, total = 0, nextId = 0x4f21;
     const sw = { digests: 0, followed: 0, settled: 0, rejected: 0 };
@@ -147,9 +149,40 @@
       inited = true;
       head = genesis = sha256('genesis|' + (excerpt[0] ? excerpt[0].id : '#4f20'));
       excerpt.forEach(write);
-      if (!stream) stateIdle = 'Chain intact'; // hc2: Home's chain's word (trust.js says how it broke)
+      if (!stream) { yours(); stateIdle = lead() + 'Chain intact'; } // hc2: Home's chain's word (trust.js says how it broke)
       rendered = newest();
       counts(); state();
+    }
+    // hc31r: the visitor's own records, as run.js sealed them (id, t, ev, sub, d; the previous hash and the hash are the
+    // stored ones, never recomputed here: the checks do that). mine(): how many; lead(): the bar's count while they stand
+    const run = () => (!stream && window.OXA && window.OXA.run) || null;
+    const mine = () => recs.reduce((n, r) => n + (r.mine ? 1 : 0), 0);
+    const lead = () => { const m = mine(); return m ? `${recs.length - m} sample records · ${m} of yours · ` : ''; };
+    const shownSub = r => (r.mine ? `${r.d} · on ${r.where}` : r.sub);
+    function yours() {
+      const R = run();
+      (R ? R.records() : []).forEach(m => {
+        const r = { id: m.id, lc: 'you', ev: m.ev, sub: m.sub, d: m.d, t: m.t, src: 'you', mine: true, where: m.where || 'this site', prev: m.prev, hash: m.hash };
+        r.seq = ++seq; r.prevId = recs.length ? recs[recs.length - 1].id : null;
+        head = r.hash; recs.push(r); total++;
+      });
+    }
+    // the visitor's records changed (cleared here, or the page came back from the cache): the excerpt stays, theirs are read again
+    function resync() {
+      if (!inited) return;
+      if (X.sync) X.sync(false);
+      while (recs.length && recs[recs.length - 1].mine) recs.pop();
+      const last = recs[recs.length - 1];
+      seq = last ? last.seq : 0; head = last ? last.hash : genesis; total = recs.length;
+      yours();
+      stateIdle = lead() + 'Chain intact';
+      if (X.sync) X.sync(true);
+      root.classList.toggle('has-mine', mine() > 0);
+      if (!mounted) return;
+      sel = null; fit();
+      if (X.whole) X.whole(); else rebuild();
+      shown = ''; edges(); counts(); inspect(); state();
+      if (mine()) requestAnimationFrame(() => { toEnd(false); edges(); inspect(); });
     }
     function write(r) {
       if (!inited) init();
@@ -172,17 +205,17 @@
     /* ---- one record = one column on the line ---- */
     function build(r) {
       const ed = edited(r);
-      const li = node('li', 'ln lt-rec' + tone(r.ev) + (r.src === 'swarm' ? ' is-swarm' : '') + (r.followed ? ' is-followed' : '') + (ed ? ' is-edited' : ''));
+      const li = node('li', 'ln lt-rec' + tone(r.ev) + (r.src === 'swarm' ? ' is-swarm' : '') + (r.followed ? ' is-followed' : '') + (r.mine ? ' is-mine' : '') + (ed ? ' is-edited' : ''));
       li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false'); li.tabIndex = -1;
       li.dataset.seq = r.seq;
-      li.setAttribute('aria-label', r.digest ? `${r.id}, swarm digest, ${r.d}, ${r.t}` : `${r.id}, ${r.ev}, ${r.d}, ${r.t}${r.followed ? ', the proposal you followed' : ''}${ed ? ', edited' : ''}`);
+      li.setAttribute('aria-label', r.digest ? `${r.id}, swarm digest, ${r.d}, ${r.t}` : `${r.id}, ${r.ev}, ${r.d}, ${r.t}${r.followed ? ', the proposal you followed' : ''}${r.mine ? ', your own record, made on ' + r.where : ''}${ed ? ', edited' : ''}`);
       const meta = node('span', 'lt-meta'); meta.append(node('span', 'lt-id', r.id), node('span', 'lt-lc', r.lc || ''));
       const line = node('span', 'lt-line'); line.setAttribute('aria-hidden', 'true');
       line.append(node('i', 'lt-node'), node('i', 'lt-seg'), node('span', 'lt-tag', r.hash.slice(0, 8)));
       // a digest's count is data beside its event word: 'SETTLED ×1,741'
       const ev = node('b', 'lt-ev', r.digest ? r.kind + ' ' : r.ev);
       if (r.digest) ev.append(node('span', 'lt-n', r.ev.slice(r.kind.length + 1)));
-      li.append(meta, ev, node('span', 'lt-sub', r.sub), node('time', 'lt-t', r.t), line);
+      li.append(meta, ev, node('span', 'lt-sub', shownSub(r)), node('time', 'lt-t', r.t), line);
       if (X.built) X.built(r, li);
       els.set(r.seq, li);
       return li;
@@ -243,7 +276,7 @@
     }
     // a folded column (Trust's phone, hc3) hides its later records: the record shown at or nearest before li (li itself
     // when nothing is laid out yet)
-    const drawn = li => { let x = li; while (x && !x.getClientRects().length) x = x.previousElementSibling; return x || li; };
+    const drawn = li => { let x = li; while (x && !x.getClientRects().length) x = x.previousElementSibling; for (x = x || li; x && !x.getClientRects().length;) x = x.nextElementSibling; return x || li; };
     let tabStop = null;
     function stop(li) { // roving tabindex: the list is one tab stop
       li = li && drawn(li);
@@ -304,8 +337,8 @@
       const cur = e.target.closest('.lt-rec'); if (!cur) return;
       let back = cur.previousElementSibling, on = cur.nextElementSibling;
       while (on && !on.getClientRects().length) on = on.nextElementSibling; // a folded record is skipped (hc3)
-      if (back) back = drawn(back);
-      const go = { ArrowLeft: back, ArrowRight: on, Home: track.firstElementChild, End: track.lastElementChild && drawn(track.lastElementChild), ...(G.vert ? G.rev ? { ArrowUp: on, ArrowDown: back } : { ArrowUp: back, ArrowDown: on } : {}) }[e.key];
+      while (back && !back.getClientRects().length) back = back.previousElementSibling;
+      const go = { ArrowLeft: back, ArrowRight: on, Home: track.firstElementChild && drawn(track.firstElementChild), End: track.lastElementChild && drawn(track.lastElementChild), ...(G.vert ? G.rev ? { ArrowUp: on, ArrowDown: back } : { ArrowUp: back, ArrowDown: on } : {}) }[e.key];
       if (go !== undefined) { e.preventDefault(); if (go) select(go, true); return; }
       if (e.key === 'Escape') { e.preventDefault(); follow(); const b = [ui.play, ui.replay, ui.latest].find(x => x && !x.hidden); if (b) b.focus(); }
     });
@@ -383,7 +416,7 @@
       put(F.prevok, !linkOk ? '✗ does not match the record before' : before ? `✓ the hash of ${before.id}` : r.seq === 1 ? '✓ genesis of this ledger' : '✓ the hash of the record before');
       F.prevok.classList.toggle('is-bad', !linkOk);
       put(F.next, !selfOk ? (!a ? '✗ does not recompute from this record' : edited(r) ? '✗ edited · not the hash it was sealed with' : '✗ not the hash it was sealed with')
-        : drawnAfter ? `✓ recomputes · stored as previous hash by ${after.id}` : after ? '✓ recomputes · stored by the next record' : stream ? '✓ recomputes · awaiting the next record' : '✓ recomputes · last record of this excerpt');
+        : drawnAfter ? `✓ recomputes · stored as previous hash by ${after.id}` : after ? '✓ recomputes · stored by the next record' : stream ? '✓ recomputes · awaiting the next record' : r.mine ? '✓ recomputes · your newest record' : '✓ recomputes · last record of this excerpt');
       F.next.classList.toggle('is-bad', !selfOk);
       leader();
     }
@@ -724,6 +757,7 @@
         requestAnimationFrame(() => { toEnd(false); edges(); });
       }
       edges(); counts(); inspect(); state();
+      if (!stream && mine()) { root.classList.add('has-mine'); requestAnimationFrame(() => { toEnd(false); edges(); inspect(); }); }
       if ('IntersectionObserver' in window) {
         // the stream runs only while some of it is on screen
         new IntersectionObserver(([en]) => { visible = en.isIntersecting; wake(); }).observe(root);
@@ -747,10 +781,14 @@
       near.observe(root);
     } else mount();
     motionQuery.addEventListener('change', e => { reduced = e.matches; if (reduced && playing) { playing = false; clearTimeout(timer); timer = 0; state(); } });
-    if (!stream) root.oxaTrace = { X, recs, els, track, view, ui, F, sha256, body, put, node, tone, init, build, landed, markHead, markSel,
+    if (!stream) {
+      document.addEventListener('oxa:record', resync);
+      window.addEventListener('pageshow', e => { if (e.persisted) resync(); });
+    }
+    if (!stream) root.oxaTrace = { X, recs, els, track, view, ui, F, sha256, body, put, node, tone, init, build, landed, markHead, markSel, mine, lead, shownSub, run,
       stop, toEnd, edges, inspect, state, maxScroll, rebuild, bySeq, flag, select, follow, mount,
       get sel() { return sel; }, set sel(v) { sel = v; }, get following() { return following; }, set following(v) { following = v; },
-      get rendered() { return rendered; }, set rendered(v) { rendered = v; }, get reduced() { return reduced; },
+      get rendered() { return rendered; }, set rendered(v) { rendered = v; }, get reduced() { return reduced || document.documentElement.classList.contains('run-paused'); },
       get intent() { return intentUntil; }, get idle() { return stateIdle; }, set idle(t) { stateIdle = t; },
       forget() { selLi = beforeLi = headLi = null; }, reshow() { shown = ''; } };
   }

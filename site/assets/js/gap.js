@@ -1,16 +1,20 @@
 /* OpenEXA — the desk: an illustrative model of one trading session of Lifecycle 01 (Lifecycles §03).
-   The gap (price minus NAV, in basis points) wanders as an Ornstein–Uhlenbeck process with occasional flow shocks.
-   Whenever it runs past the threshold a strategy agent proposes: create above NAV, redeem below. The proposal is a ring
-   at the crossing; a few session minutes later it fills, the ring squares up, the gap is pulled back, and the action is
-   sealed as a record on the ledger strip (one block per record; each link carries the first 8 hex of the SHA-256 of the
-   record it leaves, computed here, or no hex at all where the browser has no crypto.subtle).
-   The panel opens with the day already run to about 13:30 ET (the trace covers most of the plot at first sight) and runs
-   on through the afternoon. Every counter is read from the model's state; the strip keeps the records it can show and
-   counts the rest in a leading '+N earlier records' line, so its records plus N always equal creates plus redeems.
-   "Follow the next action" runs the session quickly (but drawn, at most a session minute a frame) to the next proposal,
-   holds the model and walks that proposal down the six gates, one line per gate, then lands its record in the strip.
-   Off screen, in a hidden tab or paused, nothing runs. Under reduced motion the panel is a still of the whole session;
-   the sliders redraw it. Nothing here is market data. */
+   The gap (price minus NAV, in basis points) wanders as an Ornstein–Uhlenbeck process with occasional flow shocks: one path a
+   session, drawn before the session runs. Wherever it runs past the threshold a strategy agent proposes: create above NAV,
+   redeem below. The proposal is a ring at the crossing; a few session minutes later it fills, the ring squares up, and the
+   action is sealed as a record on the ledger strip (one block per record; each link carries the first 8 hex of the SHA-256
+   of the record it leaves, computed here, or no hex at all where the browser has no crypto.subtle).
+   hc31r (PLAT-4): the session's actions are a pure function of the threshold and the clock (the path no longer bends to
+   the fills), so the threshold is the hand: a pip on the chart's own axis at the end of the upper threshold line (flat
+   under the plot under a thumb). Pulling it closes both lines on NAV and recomputes every crossing, the three counts and
+   the strip in the same frame; a gesture is one record in the visitor's own ledger (OXA.run.hand). The desk obeys the
+   run: the header's pause and a halt hold it, so it has no Pause of its own.
+   The panel opens with the day already run to about 13:30 ET and runs on through the afternoon. Every counter is read
+   from the model's state; the strip keeps the records it can show and counts the rest in a leading '+N earlier records'
+   line, so its records plus N always equal creates plus redeems. "Follow the next action" runs the session quickly (but
+   drawn) to the next proposal, holds the model and walks that proposal down the six gates, then lands its record in the
+   strip. Off screen, in a hidden tab or paused, nothing runs. Under reduced motion the panel is a still of the whole
+   session; the hand recomputes it. Nothing here is market data. */
 (function () {
   'use strict';
   const root = document.querySelector('[data-gap]');
@@ -21,7 +25,7 @@
   const $ = (s) => root.querySelector(s);
   const el = {
     time: $('[data-gap-time]'), creates: $('[data-gap-creates]'), redeems: $('[data-gap-redeems]'), avg: $('[data-gap-avg]'),
-    log: $('[data-gap-log]'), thr: $('[data-gap-thr]'), thrOut: $('[data-gap-thr-out]'), n: $('[data-gap-n]'), nOut: $('[data-gap-n-out]'),
+    log: $('[data-gap-log]'), thr: $('[data-gap-thr]'), thrOut: $('[data-gap-thr-out]'), thrBox: $('.desk-thr'),
     state: $('[data-gap-state]'), follow: $('[data-gap-follow]'), lane: $('[data-gap-lane]'), say: $('[data-gap-say]'),
     dot: $('.desk-head .live i'),
   };
@@ -32,53 +36,89 @@
   const SESSION = 390;            // minutes, 09:30 → 16:00 ET
   const SPEED = 8.5;              // session minutes per real second
   const STEP = 0.25;              // integration step, minutes
-  const KAPPA = 0.02, SIGMA = 2.1; // OU mean reversion / volatility (bps per √minute)
+  const KAPPA = 0.03, SIGMA = 2.1; // OU mean reversion / volatility (bps per √minute)
   const WARM = 240;               // the panel opens at 13:30 ET with the day so far drawn ...
   const WARM_MAX = 275;           // ... and on an open proposal when one comes before 14:05
   const FILL = 12;                // session minutes from proposal to fill
-  let seed = 11;
+  const COOL = 9;                 // session minutes an agent waits after a proposal, about (x 0.6 to 1.4)
+  const NS = SESSION / STEP;      // steps a session
+  const SEED = 22;                // the first session's path (and the still's): both sides of NAV worked before 13:30
+  let seed = SEED;
   const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
   const randn = () => { let u = 0, v = 0; while (u === 0) u = rnd(); while (v === 0) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185 * v); };
+  const wait = (i) => { let x = Math.imul(i + 1, 0x9E3779B1) >>> 0; x = Math.imul(x ^ (x >>> 15), 0x85EBCA77) >>> 0; return COOL * (0.6 + 0.8 * ((x ^ (x >>> 13)) >>> 0) / 4294967296); };
 
-  let thr = 6, agents = 2000, live = false;
-  const S = { t: 0, g: 0, samples: [], acts: [], cooldown: 0, creates: 0, redeems: 0, sumGap: 0, done: 0, nextJump: 0 };
-  const cooldownFor = () => { const f = Math.log10(agents / 500) / 2; return 42 - 38 * Math.min(1, Math.max(0, f)); }; // 500 agents: every ~40 min · 50,000: every ~4 min
-  const pullFor = () => 0.45 + 0.4 * Math.min(1, Math.max(0, Math.log10(agents / 500) / 2));
+  let thr = 6, live = false;
+  // G: the session's path, one value a step, drawn when the session opens; S.i: the step the clock has reached; S.at: the
+  // step the scan for crossings has reached, and S.cool the minute before which no agent proposes again
+  const G = new Float32Array(NS + 1);
+  const S = { t: 0, g: 0, i: 0, at: 0, cool: 0, samples: [], acts: [], creates: 0, redeems: 0, sumGap: 0, done: 0 };
+  function path() {
+    let g = (rnd() - 0.5) * 6, jump = 20 + rnd() * 60;
+    G[0] = g;
+    for (let i = 1; i <= NS; i++) {
+      g += -KAPPA * g * STEP + SIGMA * Math.sqrt(STEP) * randn();
+      if (i * STEP >= jump) { g += (rnd() < 0.5 ? -1 : 1) * (6 + rnd() * 9); jump = i * STEP + 30 + rnd() * 70; }
+      G[i] = Math.max(-28.5, Math.min(28.5, g));
+    }
+  }
 
-  function reset() {
-    S.t = 0; S.g = (rnd() - 0.5) * 6; S.samples = [[0, S.g]]; S.acts = []; S.cooldown = 0;
-    S.creates = 0; S.redeems = 0; S.sumGap = 0; S.done = 0; S.nextJump = 20 + rnd() * 60;
+  function clearLog() {
     dropped = 0; more = null; clearReceipt();
     if (el.log) { el.log.replaceChildren(); el.log.classList.remove('has-more'); }
+  }
+  function reset() {
+    path();
+    S.t = 0; S.i = 0; S.g = G[0]; S.samples = [[0, S.g]]; S.at = 0; S.cool = 0; S.acts = [];
+    S.creates = 0; S.redeems = 0; S.sumGap = 0; S.done = 0;
+    clearLog();
+  }
+  // the crossings up to step `to`: wherever the path is past the threshold and no agent is waiting, one proposes
+  function scan(to) {
+    while (S.at < to) {
+      const i = ++S.at, t = i * STEP;
+      if (Math.abs(G[i]) > thr && t >= S.cool) { S.cool = t + wait(i); propose(t, G[i]); if (follow.state === 'waiting' && follow.act) return true; }
+    }
+    return false;
   }
   // integrate the session by `mins` minutes (stops early once a followed proposal exists)
   function advance(mins) {
     let left = mins;
-    while (left > 0 && S.t < SESSION) {
-      const h = Math.min(STEP, left); left -= h;
-      S.g += -KAPPA * S.g * h + SIGMA * Math.sqrt(h) * randn();
-      if (S.t >= S.nextJump) { S.g += (rnd() < 0.5 ? -1 : 1) * (6 + rnd() * 9); S.nextJump = S.t + 30 + rnd() * 70; }
-      S.t += h; S.cooldown -= h;
+    while (left > 0 && S.i < NS) {
+      left -= STEP;
+      S.i++; S.t = S.i * STEP; S.g = G[S.i];
       for (const a of S.acts) if (!a.filled && !a.held && S.t >= a.tf) fill(a);
-      if (Math.abs(S.g) > thr && S.cooldown <= 0) propose();
+      const got = scan(S.i);
       if (S.samples[S.samples.length - 1][0] < S.t - 0.5) S.samples.push([S.t, S.g]);
-      if (follow.state === 'waiting' && follow.act) break;
+      if (got) break;
     }
-    if (S.t >= SESSION && !S.done) {
+    if (S.i >= NS && !S.done) {
       S.acts.forEach(a => { if (!a.filled && !a.held) fill(a); }); // the close fills what is still open
       S.done = performance.now(); S.samples.push([SESSION, S.g]);
     }
   }
-  function propose() {
-    const a = { t: S.t, g: S.g, create: S.g > 0, tf: S.t + FILL, filled: false, at: 0, held: false, followed: false, rec: null };
+  // the hand moved: the same path and the same clock under the new threshold. Every crossing so far is found again, what
+  // has had its twelve minutes is filled, the counts and the strip are written again, all before the next frame
+  function recount() {
+    if (follow.state !== 'idle') stopFollow(follow.quiet ? '' : 'Stopped following: the threshold moved.');
+    const was = live;
+    live = false;
+    S.at = 0; S.cool = 0; S.acts = []; S.creates = 0; S.redeems = 0; S.sumGap = 0;
+    seq = 0; chain = Promise.resolve(GENESIS);
+    clearLog();
+    scan(S.i);
+    for (const a of S.acts) if (S.done || S.t >= a.tf) fill(a);
+    live = was;
+    trim();
+  }
+  function propose(t, g) {
+    const a = { t, g, create: g > 0, tf: t + FILL, filled: false, at: 0, held: false, followed: false, rec: null };
     S.acts.push(a);
-    S.cooldown = cooldownFor() * (0.6 + rnd() * 0.8);
     if (follow.state === 'waiting' && !follow.act) { a.held = true; follow.act = a; }
     if (live) ping();
   }
   function fill(a) {
     a.filled = true; a.at = live ? performance.now() : 0;
-    S.g -= S.g * pullFor();
     if (a.create) S.creates++; else S.redeems++;
     S.sumGap += Math.abs(a.g);
     a.rec = record(a);
@@ -174,29 +214,30 @@
     if (c !== shownClock && el.time) { el.time.textContent = c; shownClock = c; }
   }
   const fmtAgents = (n) => n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n);
-  let paused = false;
+  let paused = false, halted = false; // the run's own state (the header's pause, a halt): the desk has no Pause of its own
   function stats() {
     if (el.creates) el.creates.textContent = S.creates;
     if (el.redeems) el.redeems.textContent = S.redeems;
     const n = S.creates + S.redeems;
     if (el.avg) el.avg.textContent = n ? (S.sumGap / n).toFixed(1) : '0.0';
     showClock();
-    if (el.state) el.state.textContent = reduced.matches ? 'Static session' : follow.state !== 'idle' ? 'Following an action' : paused ? 'Model paused' : S.done ? 'Session complete' : 'Model running';
+    if (el.state) el.state.textContent = reduced.matches ? 'Static session' : follow.state !== 'idle' ? 'Following an action' : halted ? 'Halted' : paused ? 'Model paused' : S.done ? 'Session complete' : 'Model running';
     root.classList.toggle('is-closed', !!S.done && follow.state === 'idle');
     // open proposals (rings on the chart), for tests and assistive tools: written only when it changes
     const open = String(S.acts.filter(a => !a.filled).length);
     if (root.dataset.gapOpen !== open) root.dataset.gapOpen = open;
   }
-  // the agent slider is log-scaled: screen readers announce what the outputs show, not the raw position
-  const showThr = () => { if (el.thrOut) el.thrOut.textContent = `${thr} bps`; if (el.thr) el.thr.setAttribute('aria-valuetext', `${thr} bps`); };
-  const showN = () => { if (el.nOut) el.nOut.textContent = fmtAgents(agents); if (el.n) el.n.setAttribute('aria-valuetext', `${fmtAgents(agents)} agents`); };
-  if (el.thr) { thr = +el.thr.value; el.thr.addEventListener('input', () => { thr = +el.thr.value; showThr(); if (reduced.matches) still(); else draw(); }); }
-  if (el.n) {
-    const read = () => Math.round(500 * Math.pow(100, el.n.value / 100) / 100) * 100;
-    agents = read();
-    el.n.addEventListener('input', () => { agents = read(); showN(); if (reduced.matches) still(); });
+  const showThr = () => { if (el.thrOut) el.thrOut.textContent = `${thr} bps`; if (el.thr) el.thr.setAttribute('aria-valuetext', `${thr} basis points`); };
+  // the hand: every move recomputes the session under the new threshold and redraws it at once; a gesture is one record
+  const move = (v) => { if (v === thr) return; thr = v; showThr(); if (!started) return; recount(); draw(); stats(); };
+  if (el.thr) {
+    thr = +el.thr.value;
+    const fmt = (a, b) => `${a} → ${b} bps · ${S.creates} create${S.creates === 1 ? '' : 's'}, ${S.redeems} redeem${S.redeems === 1 ? '' : 's'}`;
+    const hand = () => { const run = window.OXA && window.OXA.run; if (!run || el.thr.__hand) return; el.thr.__hand = run.hand(el.thr, { detent: 6, ev: 'Threshold', fmt, input: move, page: 4 }); };
+    el.thr.addEventListener('input', () => move(+el.thr.value));
+    if (window.OXA && window.OXA.run) hand(); else document.addEventListener('oxa:run', hand);
   }
-  showThr(); showN();
+  showThr();
   // the state dot pings once when an agent proposes (an event, not a loop)
   let pingT = 0;
   function ping() {
@@ -221,14 +262,28 @@
     K = Math.max(1, (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16);
     const r = cv.getBoundingClientRect(); CW = Math.max(1, Math.floor(r.width)); CH = Math.max(1, Math.floor(r.height));
     W = CW / K; H = CH / K;
-    PADR = W < 600 ? 74 : 92;
+    PADR = W < 600 ? 74 : 124;
     cv.width = Math.floor(CW * dpr); cv.height = Math.floor(CH * dpr); ctx.setTransform(dpr * K, 0, 0, dpr * K, 0, 0);
+    place();
     draw();
     // a narrower strip shows fewer records: the rest join the count, once the size has settled (a passing resize, such
     // as a page capture's, never drops records)
     clearTimeout(trimT); trimT = setTimeout(trim, 300);
   }
   let trimT = 0;
+  // the hand's place: where the pip is laid over the axis (a fine pointer on a wide plot; platform.css says when) the range
+  // input stands on end at the plot's right edge, its 2 on the 2 bps line and its 20 on the 20 bps line, so its thumb is the
+  // end of the upper threshold line; anywhere else it lies flat under the plot, in the page's flow
+  function place() {
+    const box = el.thrBox, inp = el.thr;
+    if (!box || !inp) return;
+    const on = getComputedStyle(box).position === 'absolute';
+    if (!on) { inp.style.width = ''; box.style.left = box.style.top = ''; return; }
+    const fs = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16, len = (yOf(2) - yOf(20)) * K + 2.75 * fs;
+    inp.style.width = len.toFixed(1) + 'px';
+    box.style.left = (cv.offsetLeft + (W - PADR) * K).toFixed(1) + 'px';
+    box.style.top = (cv.offsetTop + (yOf(2) + yOf(20)) / 2 * K).toFixed(1) + 'px';
+  }
   const ease = (p) => 1 - Math.pow(1 - p, 3);
   function mark(a, now) {
     // a proposal is a ring at its crossing; filled, it squares up over 220 ms and stays a settled square
@@ -272,7 +327,9 @@
       ctx.fillStyle = gr; ctx.fillRect(x0, Math.min(y, y + dir * 16), x1 - x0, 16);
       ctx.strokeStyle = `rgba(${GREEN}, .75)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y + .5 * -dir); ctx.lineTo(x1, y + .5 * -dir); ctx.stroke();
     }
-    ctx.fillStyle = `rgba(${GREEN}, .9)`; ctx.textAlign = 'left'; ctx.fillText(`+${thr} create`, W - PADR + 10, yTl); ctx.fillText(`−${thr} redeem`, W - PADR + 10, yBl);
+    const wideLab = PADR > 100; // beside the pip: '+6 bps · create'
+    if (wideLab) { ctx.strokeStyle = `rgba(${IVORY}, .22)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x1 + .5, yOf(20)); ctx.lineTo(x1 + .5, yOf(2)); for (const d of [6, 10]) { ctx.moveTo(x1 - 3, Math.round(yOf(d)) + .5); ctx.lineTo(x1 + 4, Math.round(yOf(d)) + .5); } ctx.stroke(); }
+    ctx.fillStyle = `rgba(${GREEN}, .9)`; ctx.textAlign = 'left'; ctx.fillText(wideLab ? `+${thr} bps · create` : `+${thr} create`, W - PADR + (wideLab ? 18 : 10), yTl); ctx.fillText(wideLab ? `−${thr} bps · redeem` : `−${thr} redeem`, W - PADR + (wideLab ? 18 : 10), yBl);
     // NAV: a dashed hairline
     ctx.setLineDash([3, 4]); ctx.strokeStyle = `rgba(${KHAKI}, .9)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, Math.round(yN) + .5); ctx.lineTo(x1, Math.round(yN) + .5); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = `rgba(${KHAKI}, 1)`; ctx.fillText('NAV', W - PADR + 10, yN);
@@ -384,10 +441,11 @@
   const voice = (on) => { if (el.say) el.say.setAttribute('aria-live', on ? 'polite' : 'off'); };
   function startFollow(quiet) {
     if (reduced.matches) { stillFollow(); return; }
+    if (halted) { voice(!quiet); say('The run is halted: no new actions. Resume it from the header.'); return; }
     voice(!quiet); follow.quiet = !!quiet;
     follow.state = 'waiting'; follow.act = null; follow.k = 0; follow.wt = 0; follow.waitT = 0;
     setFollowButton(true); setLane(0);
-    if (paused) togglePause();
+    if (paused && !halted && window.OXA && window.OXA.run) window.OXA.run.pause(false);
     // a proposal already on the chart (a ring not yet settled) is the next action: walk it at once; otherwise the line
     // says what runs (hc23: the desk's own act too, unannounced, so the line under the gates is never an empty hole)
     const open = !S.done && S.acts.find(a => !a.filled && !a.held);
@@ -499,15 +557,8 @@
 
   /* ---------------- loop ---------------- */
   let visible = false, last = performance.now(), uiTick = 0, frameId = 0, fresh = false;
-  const motion = document.createElement('button');
-  motion.type = 'button';
-  motion.className = 'model-motion';
-  motion.dataset.gapMotion = '';
-  motion.textContent = 'Pause motion'; // the label itself toggles: no aria-pressed (the site's one name for it)
-  const head = root.querySelector('.desk-head');
-  if (head) head.appendChild(motion);
   function still() {
-    seed = 11; seq = 0; chain = Promise.resolve(GENESIS);
+    seed = SEED; seq = 0; chain = Promise.resolve(GENESIS);
     live = false;
     reset();
     while (!S.done) advance(SESSION);
@@ -542,13 +593,17 @@
     else showClock(); // the clock moves a minute at a time, never two between frames
     requestFrame();
   }
-  function togglePause() {
-    paused = !paused;
-    motion.textContent = paused ? 'Resume motion' : 'Pause motion';
-    if (paused) stopFrames(); else requestFrame();
-    draw(); stats();
+  // the run's pause and halt hold the desk (OXA.run fires oxa:run once when it is ready and after every change)
+  function obey() {
+    const run = window.OXA && window.OXA.run;
+    if (!run) return;
+    const R = run.sample(), was = paused;
+    halted = R.halted; paused = R.paused || R.halted;
+    if (paused === was) { if (started) stats(); return; }
+    if (paused) { stopFrames(); if (follow.state !== 'idle') stopFollow(); } else requestFrame();
+    if (started) { draw(); stats(); }
   }
-  motion.addEventListener('click', togglePause);
+  document.addEventListener('oxa:run', obey);
   cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); hover = (e.clientX - r.left) / K; if (reduced.matches || paused) draw(); }, { passive: true });
   cv.addEventListener('pointerleave', () => { hover = null; if (reduced.matches || paused) draw(); });
 
@@ -556,7 +611,7 @@
   // screens (as the ledger strip does), so a load spends nothing on it. It re-measures whenever the canvas's box changes,
   // which also covers a browser that runs this before the stylesheets apply (WebKit: a 300 x 150 canvas until then).
   let started = false;
-  motion.hidden = reduced.matches;
+  obey();
   function start() {
     if (started) return;
     started = true;
@@ -602,7 +657,6 @@
   reduced.addEventListener('change', () => {
     stopFrames();
     if (follow.state !== 'idle') stopFollow();
-    motion.hidden = reduced.matches;
     if (!started) return;
     if (reduced.matches) still(); else { warm(); requestFrame(); }
     draw(); stats();
@@ -610,75 +664,28 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) stopFrames(); else requestFrame(); });
 })();
 
-/* The hero rings (award a3, 4K): once their one draw is over, the plate's animations let go (each ends on the plate's
-   own style), so the browser paints the plate straight onto the page again: while an animation holds its end state the
-   plate sits on a layer at a fractional offset, and every hairline spreads over three device rows. */
+/* The hero (hc31r PLAT-3): the ring is a camera on the run. runplate.js moves the run's marks along the plate's authored paths
+   (the swarm to gate 01, over the top to gate 04, the lower arc to the record) on the run's own clock: it obeys the header's
+   pause and the halt, and stands still under reduced motion. Here: the gate the tagged proposal is at is lit, so the tag's
+   words and the drawing say the same thing ("04 Approve · checking" lights gate 04 for the half second of its check). */
 (function () {
   'use strict';
-  const fig = document.querySelector('.hero-plate--rings');
-  if (!fig || typeof fig.getAnimations !== 'function') return;
-  requestAnimationFrame(() => {
-    const all = fig.getAnimations({ subtree: true });
-    if (all.length) Promise.all(all.map((a) => a.finished)).then(() => all.forEach((a) => a.cancel()), () => {});
-  });
-})();
-
-/* The hero (hc26r PLAT-2): once, quiet (OXA.actOnce), a proposal runs the ring from Signal through gates 01-06, each lit
-   as it passes, and writes the green block at Record (1.4 s, --ease-move). Still without JavaScript, under reduced motion
-   and in print; if it never runs, the block is shown after 3 s. */
-(function () {
-  'use strict';
-  const fig = document.querySelector('.hero-plate--rings');
-  const dot = fig && fig.querySelector('.lr-dot'), blk = fig && fig.querySelector('.lc-new');
-  if (!dot || !blk) return;
-  // in gate order, not the drawing's order (3, 2, 4, 1, 5, 6): a slow frame that passes two gates lights them 01 -> 06
-  const gates = [...fig.querySelectorAll('.lc-gate')].sort((a, b) => a.dataset.g - b.dataset.g);
-  const CX = 260, CY = 174, RX = 239, RY = 100, T0 = 180, LAP = 330, LAPMS = 1150, DROPMS = 250;
-  const bx = +blk.getAttribute('x') + 4.5, by = +blk.getAttribute('y') + 4.5;
-  const bez = (x1, y1, x2, y2) => (t) => {
-    let s = t;
-    for (let i = 0; i < 8; i++) {
-      const u = 1 - s, x = 3 * u * u * s * x1 + 3 * u * s * s * x2 + s * s * s - t, d = 3 * u * u * x1 + 6 * u * s * (x2 - x1) + 3 * s * s * (1 - x2);
-      if (Math.abs(x) < 1e-5 || !d) break;
-      s = Math.min(1, Math.max(0, s - x / d));
-    }
-    const u = 1 - s;
-    return 3 * u * u * s * y1 + 3 * u * s * s * y2 + s * s * s;
+  const fig = document.querySelector('.hero-plate--rings'), OXA = window.OXA = window.OXA || {};
+  const gates = fig ? [...fig.querySelectorAll('.lc-gate')].sort((a, b) => a.dataset.g - b.dataset.g) : [];
+  if (gates.length !== 6) return;
+  let lit = -1, on = false;
+  const start = () => {
+    const run = OXA.run;
+    if (on || !run) return;
+    on = true;
+    run.subscribe((S) => {
+      const g = S.ti >= 0 && S.ph[S.ti] !== 4 ? S.gate[S.ti] || 1 : 0;
+      if (g === lit) return;
+      lit = g;
+      gates.forEach((n, k) => n.classList.toggle('is-lit', k === g - 1));
+    }, fig);
   };
-  const ease = bez(0.62, 0, 0.2, 1);
-  const done = () => fig.classList.add('is-done');
-  const fallback = setTimeout(done, 3000);
-  const at = (x, y) => { dot.setAttribute('cx', x.toFixed(2)); dot.setAttribute('cy', y.toFixed(2)); };
-  function run() {
-    clearTimeout(fallback);
-    let t0 = 0;
-    const nx = CX + RX * Math.cos((T0 + LAP) * Math.PI / 180), ny = CY + RY * Math.sin((T0 + LAP) * Math.PI / 180);
-    fig.classList.remove('is-done');
-    gates.forEach((g) => g.classList.remove('is-lit'));
-    fig.classList.add('is-run');
-    const step = (now) => {
-      if (!t0) t0 = now;
-      const ms = now - t0;
-      if (ms < LAPMS) {
-        const e = ease(ms / LAPMS), a = T0 + LAP * e;
-        at(CX + RX * Math.cos(a * Math.PI / 180), CY + RY * Math.sin(a * Math.PI / 180));
-        gates.forEach((g) => { if (a >= T0 + 60 * (g.dataset.g - 1) - 4) g.classList.add('is-lit'); });
-      } else {
-        const q = ease(Math.min(1, (ms - LAPMS) / DROPMS));
-        at(nx + (bx - nx) * q, ny + (by - ny) * q);
-        if (q >= 1) {
-          done(); fig.classList.remove('is-run');
-          setTimeout(() => gates.forEach((g) => g.classList.remove('is-lit')), 700);
-          return;
-        }
-      }
-      requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }
-  const OXA = window.OXA = window.OXA || {};
-  const args = [fig, run, { visible: 0.6 }];
-  if (OXA.actOnce) OXA.actOnce(...args); else (OXA.q = OXA.q || []).push(args);
+  if (OXA.run) start(); else document.addEventListener('oxa:run', start);
 })();
 
 /* §01 (hc30r PLAT-2): the stack and its register are one index. A trait's row and the place it lands in the stack light

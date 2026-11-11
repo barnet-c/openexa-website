@@ -1,261 +1,57 @@
-/* OpenEXA · the swarm lab (Home §03, Platform §03): its own sheet since r2, linked only where drawn. */
+/* OpenEXA · the run's console (Platform §02; platform's sheet since hc31r): a canvas camera on the run (stage.js, mounted by markup), the hand on the Council, three counts, Follow and the emergency halt. */
 /* v2:swarm:start */
-/* ---------- the swarm lab (home §03, Platform §03; engine: assets/js/swarm.js) ----------
-   head · stage (canvas, projected gate labels, tag, trace) · counters + controls. No JS: a static six-gate diagram, no
-   dead controls. Mono labels >= 10 px. */
-.swarm-live { position: relative; border: var(--hair) solid var(--line-strong); border-radius: var(--r); background: #0B110F; overflow: hidden; margin-bottom: 2.5rem; }
-/* the head: site.css's one instrument head (hc2) */
-.sw-head { display: flex; align-items: center; gap: .625rem 1.375rem; flex-wrap: wrap; min-height: 3.5rem; padding: .5rem .75rem .5rem 1.25rem; border-bottom: var(--hair) solid var(--line); }
-.sw-on .sw-gates small, .sw-limit, .sw-ledger, .sw-bound, .sw-banner, .sw-agent, .sw-hover, .sw-trace { display: none; }
-.swarm-live .sw-live { min-width: 8.5em; } /* a still dot (r2: no "live" pulse on a model); the word carries the state */
-.swarm-live.is-halted .sw-live { color: var(--khaki); }
-.swarm-live.is-paused .sw-live { color: var(--fg-2); }
-/* the key: the same marks as the overture's lane (S3) and the explorer */
-.swarm-live .sw-key { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem 1rem; margin: 0 0 0 auto; padding: 0; list-style: none; }
-.sw-key li { display: inline-flex; align-items: center; gap: .4375rem; }
-.sw-key li::before { content: ""; flex: none; width: .5625rem; height: .5625rem; box-sizing: border-box; }
-.sw-key .k-p::before { border: .09375rem solid var(--signal-bright); border-radius: 50%; }
-.sw-key .k-s::before { background: var(--signal-bright); border-radius: .09375rem; }
-.sw-key .k-r::before { width: .4375rem; height: .4375rem; background: var(--reject-bright); border-radius: 50%; }
-.sw-key .k-b::before { width: .875rem; height: .375rem; background: rgba(245, 242, 236, .92); border-radius: .0625rem; }
-/* forced colours: the key keeps the canvas's swatches */
-@media (forced-colors: active) { .sw-key :is(.k-s, .k-r)::before { forced-color-adjust: none; } .sw-key .k-b::before { forced-color-adjust: none; background: CanvasText; } }
-.swarm-live .sw-follow { padding-left: .75rem; } /* the paper button (site.css, hc2) with its ring */
-.sw-follow::before { content: ""; flex: none; width: .625rem; height: .625rem; border-radius: 50%; border: .09375rem solid currentColor; box-sizing: border-box; }
-.sw-follow[aria-pressed="true"]::before { background: currentColor; border-radius: .0625rem; width: .5rem; height: .5rem; }
-.sw-trace-close:focus-visible, .swarm-live .halt:focus-visible, .sw-motion:focus-visible, .sw-rec:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
+section:has(> .container > .swarm-live) { container-type: inline-size; }
+.swarm-live { position: relative; }
+.swarm-live > .stage { height: clamp(21rem, 60svh, 44rem); margin: 0 calc(50% - 50cqw); outline: none; }
+.swarm-live > .stage:focus-visible::after { content: ""; position: absolute; inset: .5rem; z-index: 3; border: calc(2 * var(--hair)) solid var(--signal-bright); border-radius: .125rem; pointer-events: none; }
+.swarm-live .stage-frame { position: absolute; inset: 0; pointer-events: none; }
+@supports (paint-order: stroke fill) and (-webkit-text-stroke: 1px #000) { .swarm-live :is(.stage-lab, .sw-ro span) { -webkit-text-stroke: .3125rem #0C1210; paint-order: stroke fill; } }
+.sw-ro { position: absolute; left: 0; top: 0; z-index: 1; margin: 0; font: 400 var(--fs-small)/1.45 var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--fg); pointer-events: none; }
+.sw-ro:not([hidden]) { display: grid; }
+.sw-ro span + span { color: var(--fg-3); }
+.sw-ro small { font: 400 1em/1.45 var(--sans); color: var(--accent); }
+.sw-ro:is(.is-moved, .is-under) small { display: none; }
+.sw-ro.is-under { grid-auto-flow: column; column-gap: .875rem; }
 
-/* the stage: the canvas fills a fixed band at the top (--sw-h; hc19: less in a short window, never under the floor) */
-.sw-stage { --sw-h: clamp(20.625rem, min(32vw + 4.375rem, 100vh - 31rem), 35rem); position: relative; background: radial-gradient(110% 95% at 6% 0%, rgba(30, 122, 90, .17), rgba(30, 122, 90, 0) 56%), radial-gradient(70% 60% at 52% 46%, rgba(245, 242, 236, .025), rgba(245, 242, 236, 0) 70%), linear-gradient(180deg, #0E1512 0%, #0B110F 100%); }
-.sw-on .sw-stage { padding-top: var(--sw-h); }
-.sw-stage canvas { display: none; }
-.sw-on .sw-stage canvas { display: block; position: absolute; left: 0; top: 0; width: 100%; height: var(--sw-h); touch-action: pan-y; }
-/* hc18: on a light forced Canvas the lab's pixels print inverted */
-@media (forced-colors: active) and (prefers-color-scheme: light) { .sw-stage canvas { filter: invert(1) hue-rotate(180deg); } }
-
-/* the six gates: a static diagram without JavaScript ... */
-.sw-gates { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0 .875rem; margin: 0; padding: 2.125rem 1.375rem 2rem; list-style: none; }
-.sw-gates li { position: relative; padding: 1.25rem 0 0; border-top: var(--hair) solid var(--line-strong); font: 500 var(--fs-label)/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg); }
-.sw-gates li::before { content: ""; position: absolute; left: 0; top: -.25rem; width: .4375rem; height: .4375rem; border-radius: 50%; background: var(--paper); }
-.sw-gates li.is-council::before { left: -.25rem; top: -.5rem; width: .9375rem; height: .9375rem; border: .09375rem solid var(--accent); background: none; box-sizing: border-box; }
-.sw-gates li:nth-child(n+5)::before { border-radius: .0625rem; background: var(--accent); }
-.sw-gates b { font-weight: 500; color: var(--accent); }
-.sw-gates small { display: block; margin-top: .625rem; font: 400 var(--fs-small)/1.5 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); }
-@media (max-width: 760px) {
-  .sw-gates { grid-template-columns: 1fr; padding: 1.375rem 1.25rem 1.625rem 2.125rem; }
-  .sw-gates li { padding: 0 0 1.125rem 1.125rem; border-top: 0; border-left: var(--hair) solid var(--line-strong); }
-  .sw-gates li:last-child { padding-bottom: 0; }
-  .sw-gates li::before { left: -.25rem; top: calc(3 * var(--hair)); } .sw-gates li.is-council::before { left: -.5rem; top: calc(-1 * var(--hair)); }
-  .sw-gates small { margin-top: .25rem; }
+.swarm-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 clamp(1.5rem, 3vw, 3rem); padding-top: 1.5rem; }
+.swarm-stats { display: flex; gap: clamp(1.75rem, 4vw, 4rem); }
+.swarm-stats > div { min-width: 5.5rem; }
+.swarm-stats b { display: block; font: 400 var(--fs-item)/1 var(--serif); letter-spacing: var(--track-figure); font-variant-numeric: tabular-nums; }
+.swarm-stats span { display: block; margin-top: .5rem; font: 400 var(--fs-small)/1.35 var(--sans); color: var(--fg-3); white-space: nowrap; }
+.sw-btns { display: flex; gap: .75rem; }
+.swarm-live .sw-follow { min-width: 15.1em; min-height: 2.75rem; padding: 0 1.125rem; } /* its longest label ("Halted · no new proposals"): a halt moves nothing beside it */
+.swarm-live .sw-follow:disabled { border-color: var(--line-strong); border-style: dashed; background: none; color: var(--fg-3); box-shadow: none; }
+.swarm-live .halt {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 10.25em; min-height: 2.75rem; padding: 0 1.125rem; border: var(--hair) solid var(--reject-bright); border-radius: var(--r);
+  font: var(--w-ui) var(--fs-small)/1 var(--sans); letter-spacing: -.005em; color: var(--fg); white-space: nowrap;
+  transition: background-color var(--dur-feedback) var(--ease-out), border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), transform var(--dur-feedback) var(--ease-out);
 }
-/* ... and labels projected from the 3D gates with it (the descriptions stay for screen readers) */
-.sw-on .sw-gates { display: block; position: absolute; left: 0; top: 0; width: 100%; height: var(--sw-h); padding: 0; pointer-events: none; }
-/* hc2: the drawing's words in the plates' caption register (Inter, sentence case); the gate numbers and the policy stay mono (data) */
-/* hc13r SYS-1: the lab speaks at two sizes, the UI step (--fs-small: words in Inter, the gate numbers, the policy and the
-   sliders' values in mono) and the counters (--fs-item); no 11 px label inside the frame */
-.sw-on .sw-gates li { position: absolute; left: 0; top: 0; padding: 0; border: 0; white-space: nowrap; font: 400 var(--fs-small)/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .8); transition: color var(--dur-move) var(--ease-out); will-change: transform; }
-.sw-on .sw-gates li::before { display: none; }
-.sw-on .sw-gates b { margin-right: .5em; font: 400 var(--fs-small)/1 var(--mono); letter-spacing: 0; color: rgba(245, 242, 236, .5); transition: color var(--dur-move) var(--ease-out); }
-.sw-on .sw-gates li.is-council span, .sw-on .sw-gates li.is-council b, .sw-on .sw-gates li:last-child b { color: var(--accent); }
-.sw-on .sw-gates li.is-hit b { color: var(--accent); } .sw-on .sw-gates li.is-hit span { color: var(--paper); }
-.sw-on .sw-gates small { position: absolute; width: var(--hair); height: var(--hair); margin: calc(-1 * var(--hair)); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.swarm-live.is-halted .sw-gates li:first-child, .swarm-live.is-halted .sw-gates li:first-child b { color: var(--khaki); }
-/* the council's live state at 04: what it approves, what it rejects */
-.sw-on .sw-limit { display: block; margin-top: calc(2 * var(--hair)); font: 400 var(--fs-small)/1.45 var(--mono); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .62); transition: color var(--dur-move) var(--ease-out); }
-.sw-limit.is-all > span:nth-child(n+2) { display: none; }
-.sw-on .sw-gates li.is-tuned .sw-limit { color: var(--accent); transition-duration: var(--dur-feedback); }
-.sw-on.is-narrow .sw-limit:not(.is-all) > span:nth-child(-n+2) { display: none; }
-.sw-on.is-tight .sw-limit { white-space: normal; max-width: 13ch; } /* 320 px: 'rejects risk' / '> 0.88' (mono: 13ch holds 12 characters) */
-.sw-on.is-tight .sw-limit.is-all { max-width: 15ch; } /* 'approves every' / 'proposal' */
-/* (a4) phones: the narrow form from the first paint (before swarm.js measures); the Council's value may wrap under its name */
-@media (max-width: 599.98px) { .sw-on .sw-limit:not(.is-all) > span:nth-child(-n+2) { display: none; } }
-.sw-on .sw-gates li.is-council .sw-limit { white-space: normal; }
-.sw-on .sw-bound { display: block; position: absolute; left: 0; top: 0; white-space: nowrap; pointer-events: none; font: 400 var(--fs-small)/1.3 var(--sans); color: rgba(79, 203, 147, .8); will-change: transform; }
-.sw-on .sw-bound.is-off { visibility: hidden; }
-/* hc2: the stage's words (the ledger's name, the halt banner: a state, as the head's) in the caption register; the followed agent's tag is its record (data): mono */
-.sw-on .sw-ledger, .sw-on .sw-banner:not([hidden]), .sw-on .sw-agent:not([hidden]) { display: block; position: absolute; left: 0; top: 0; white-space: nowrap; pointer-events: none; font: 400 var(--fs-small)/1.35 var(--sans); will-change: transform; }
-.sw-on .sw-ledger { color: rgba(245, 242, 236, .72); text-shadow: 0 0 .1875rem var(--ink), 0 0 .375rem var(--ink); } /* a3: where the name is held inside a narrow stage, a plate's edge may cross it: the stage's ink parts round it */
-.sw-on .sw-banner:not([hidden]) { padding: .4375rem .6875rem; border: var(--hair) solid rgba(172, 166, 142, .45); background: rgba(11, 17, 15, .8); color: var(--khaki); }
-.sw-on .sw-agent:not([hidden]) { font: 400 var(--fs-small)/1.35 var(--mono); letter-spacing: 0; text-transform: none; padding: .375rem .625rem .4375rem; border: var(--hair) solid rgba(245, 242, 236, .34); background: rgba(11, 17, 15, .86); color: rgba(245, 242, 236, .8); }
-.sw-agent b { display: block; font-weight: 400; color: var(--accent); }
-.sw-agent span { display: block; }
-.sw-agent.is-bad { border-color: rgba(217, 103, 93, .6); } .sw-agent.is-bad b { color: var(--reject-bright); }
-.sw-agent.is-ok { border-color: rgba(79, 203, 147, .6); }
-/* the hover tag (mouse only): names the agent under the pointer and says it can be followed */
-.sw-on .sw-hover:not([hidden]) { display: block; position: absolute; left: 0; top: 0; padding: .3125rem .5625rem .375rem; border-left: var(--hair) solid var(--accent); background: rgba(11, 17, 15, .82); white-space: nowrap; pointer-events: none; font: 400 var(--fs-small)/1.4 var(--mono); letter-spacing: 0; text-transform: none; color: rgba(245, 242, 236, .66); will-change: transform; }
-.sw-hover b { display: block; font-weight: 400; color: var(--paper); }
-
-/* the trace of a followed proposal: over the stage's lower left; below the canvas on narrow screens. hc13r: the trace and
-   the tags at the UI step in sentence case (as the gates' "01 Signal"), so a follow adds no size to the lab's screen */
-.sw-on .sw-trace:not([hidden]) { display: block; position: absolute; left: 1rem; top: calc(var(--sw-h) - 1rem); transform: translateY(-100%); width: min(26.5rem, calc(100% - 2rem)); border: var(--hair) solid rgba(245, 242, 236, .2); background: rgba(11, 17, 15, .9); font-family: var(--mono); animation: sw-trace-in .35s var(--ease) both; }
-.sw-trace-head { display: flex; align-items: center; gap: .75rem; padding: .375rem .5rem .375rem .875rem; border-bottom: var(--hair) solid var(--line); font-size: var(--fs-small); letter-spacing: 0; text-transform: none; color: var(--paper); }
-.sw-trace-state { color: var(--fg-3); }
-.sw-trace-state.is-live { color: var(--accent); } .sw-trace-state.is-ok { color: var(--accent); } .sw-trace-state.is-bad { color: var(--reject-bright); }
-.sw-trace-close { margin-left: auto; min-height: 2.125rem; padding: .25rem .625rem; border: var(--hair) solid var(--line); border-radius: .125rem; color: var(--fg-2); font: inherit; letter-spacing: 0; text-transform: none; }
-@media (hover: hover) { .sw-trace-close:hover { border-color: var(--line-strong); color: var(--paper); } }
-.sw-log { margin: 0; padding: .1875rem .875rem .4375rem; list-style: none; font-size: var(--fs-small); line-height: 1.4; letter-spacing: 0; font-variant-numeric: tabular-nums; }
-.sw-log li { display: grid; grid-template-columns: 4em 6.6em minmax(0, 1fr); align-items: center; gap: .5rem; min-height: 1.9em; padding: .125rem 0; border-bottom: var(--hair) solid rgba(245, 242, 236, .08); color: var(--fg-2); }
-.sw-log li:last-child { border-bottom: 0; }
-.sw-log li[data-k="led"] { min-height: 2.125rem; } /* the ledger row holds the record button's height from the start */
-.sw-log .sw-t { color: var(--fg-3); text-align: right; }
-.sw-log .sw-v { text-wrap: balance; } /* a two-line verdict breaks evenly, never leaving one word on its own line */
-.sw-log b { font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--paper); }
-/* a page without a ledger (Platform): the Ledger row's name leads to the inspectable ledger on the home page */
-.sw-led-a { color: inherit; text-decoration: underline; text-decoration-thickness: var(--hair); text-underline-offset: .1875rem; text-decoration-color: color-mix(in srgb, currentColor 50%, transparent); }
-.sw-led-a i { font-style: normal; }
-.sw-led-a:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
-.sw-log .is-ok .sw-v, .sw-log .is-rec .sw-v { color: var(--accent); } .sw-log .is-bad .sw-v, .sw-log .is-bad b { color: var(--reject-bright); }
-.sw-log li.is-pend { opacity: .4; } .sw-log li.is-pend b, .sw-log li.is-pend .sw-t { color: var(--fg-3); }
-.sw-log li.is-wait .sw-v { color: rgba(79, 203, 147, .78); }
-.sw-log li.is-filled { animation: sw-fill .6s var(--ease) both; }
-@keyframes sw-fill { from { opacity: .4; } to { opacity: 1; } }
-/* the ledger's answer: the record it was chained into, one click from the ledger itself */
-.sw-rec { display: inline-flex; align-items: center; gap: .5rem; min-height: 1.875rem; margin: -.1875rem 0; padding: .1875rem .625rem; border: var(--hair) solid rgba(79, 203, 147, .5); border-radius: .125rem; color: var(--accent); font: inherit; letter-spacing: .03em; cursor: pointer; transition: background var(--dur-feedback) var(--ease-out), border-color var(--dur-feedback) var(--ease-out); }
-@media (hover: hover) { .sw-rec:hover { background: rgba(79, 203, 147, .12); border-color: var(--accent); } }
-.sw-rec i { font-style: normal; transition: transform var(--dur-feedback) var(--ease); }
-@media (hover: hover) { .sw-rec:hover i { transform: translateY(.125rem); } }
-/* pressed (pointer down, Enter or Space): it fills at once and its arrow nudges down */
-.sw-rec.is-going { background: var(--accent); border-color: var(--accent); color: #0B110F; transition-duration: 0s; }
-.sw-rec.is-going i { transform: translateY(.25rem); transition-duration: var(--dur-feedback); }
-@keyframes sw-trace-in { from { opacity: 0; transform: translateY(calc(-100% + .375rem)); } to { opacity: 1; transform: translateY(-100%); } }
-@keyframes sw-in { from { opacity: 0; transform: translateY(.25rem); } to { opacity: 1; transform: none; } }
-
-/* counters + controls */
-.swarm-bar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-top: var(--hair) solid var(--line); }
-.swarm-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-right: var(--hair) solid var(--line); }
-.swarm-stats > div { padding: 1.125rem 1.125rem 1rem; border-right: var(--hair) solid var(--line); } .swarm-stats > div:last-child { border-right: 0; }
-.swarm-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: var(--fs-item); line-height: 1; letter-spacing: var(--track-figure); font-variant-numeric: tabular-nums; } /* hc11: at every width, as the desk's (no phone or sideways size) */
-.swarm-stats span { display: block; margin-top: .5rem; font: 400 var(--fs-small)/1.35 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-3); white-space: nowrap; } /* a3: the counters' names in the desk's voice (Inter, sentence case, as the sliders' names); the counts stay serif figures */
-.swarm-controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1.125rem; align-items: end; padding: .875rem 1.125rem .75rem; }
-/* a3 (UX juror): the slider names in Inter at the small step, sentence case; their values stay mono (data) */
-.swarm-controls label { display: grid; gap: .375rem; font: 400 var(--fs-small)/1.35 var(--sans); letter-spacing: 0; text-transform: none; color: var(--fg-2); }
-.swarm-controls output { font: 400 var(--fs-small)/1 var(--mono); letter-spacing: 0; color: var(--accent); }
-.swarm-controls output::before { content: "· "; color: var(--fg-2); } /* the separator is drawn, so the label's text is its name ('Agents in this model') plus the value */
-.swarm-controls input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 1.75rem; background: transparent; margin: 0; cursor: pointer; font-size: 1rem; }
-.swarm-controls input[type=range]::-webkit-slider-runnable-track { height: var(--hair); background: var(--line-strong); }
-.swarm-controls input[type=range]::-moz-range-track { height: var(--hair); background: var(--line-strong); }
-.swarm-controls input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: .875rem; height: .875rem; border-radius: 50%; background: var(--paper); border: calc(3 * var(--hair)) solid #0B110F; box-shadow: 0 0 0 var(--hair) var(--line-strong); margin-top: -.40625rem; transition: transform var(--dur-feedback) var(--ease); }
-.swarm-controls input[type=range]::-moz-range-thumb { width: .5rem; height: .5rem; border-radius: 50%; background: var(--paper); border: calc(3 * var(--hair)) solid #0B110F; box-shadow: 0 0 0 var(--hair) var(--line-strong); }
-@media (hover: hover) { .swarm-controls input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); } }
-/* focus: the track lights and a green ring circles the thumb */
-.swarm-controls input[type=range]:focus-visible { outline: calc(2 * var(--hair)) solid transparent; outline-offset: .25rem; }
-.swarm-controls input[type=range]:focus-visible::-webkit-slider-runnable-track { background: var(--accent); }
-.swarm-controls input[type=range]:focus-visible::-moz-range-track { background: var(--accent); }
-.swarm-controls input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 calc(2 * var(--hair)) var(--accent); }
-.swarm-controls input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 calc(2 * var(--hair)) var(--accent); }
-@media (forced-colors: active) { /* the 1 px track is a background, which forced colours remove: draw it as a border */
-  .swarm-controls input[type=range]::-webkit-slider-runnable-track { height: 0; border-top: var(--hair) solid CanvasText; }
-  .swarm-controls input[type=range]::-moz-range-track { height: 0; border-top: var(--hair) solid CanvasText; }
+.swarm-live .halt[aria-pressed="true"] { border-color: var(--paper); background: var(--paper); color: var(--ink); font-weight: var(--w-ui-x); }
+.swarm-live :is(.sw-follow, .halt):not(:disabled):active { transform: scale(.97); }
+.swarm-live .halt:focus-visible { outline: calc(2 * var(--hair)) solid var(--accent); outline-offset: .125rem; }
+@media (hover: hover) {
+  .swarm-live .halt[aria-pressed="false"]:hover { background: rgba(217, 103, 93, .16); }
+  .swarm-live .halt[aria-pressed="true"]:hover { background: #fff; }
 }
-.sw-btns { display: flex; flex-direction: column; flex-wrap: wrap; align-items: stretch; gap: .25rem; align-self: end; } /* wraps: at 400% zoom (320 x 256) Pause takes its own row inside the lab */
-/* a3: Halt and Pause motion are the site's buttons (Inter, sentence case). hc20: Halt is neutral (red means rejected); its
-   hover is the ghost button's, its halted state ("Resume") the paper button */
-.swarm-controls .halt { display: inline-flex; align-items: center; justify-content: center; font: var(--w-ui) var(--fs-small)/1 var(--sans); letter-spacing: -0.005em; text-transform: none; min-width: 10.25em; min-height: 2.75rem; padding: .625rem 1.125rem; border: var(--hair) solid rgba(245, 242, 236, .42); color: var(--fg); border-radius: var(--r); box-shadow: inset 0 0 0 3rem rgba(245, 242, 236, 0); transition: box-shadow var(--dur-feedback) var(--ease-out), border-color var(--dur-feedback) var(--ease-out); } /* hc30r: the hover's tint is an inset shadow, so Halt <-> Resume changes ground and text at once (site.css's pressed controls) */
-@media (hover: hover) { .swarm-controls .halt:hover { box-shadow: inset 0 0 0 3rem rgba(245, 242, 236, .07); border-color: var(--fg); } }
-.swarm-live.is-halted .halt { background: var(--paper); color: #0B110F; border-color: var(--paper); font-weight: var(--w-ui-x); }
-@media (hover: hover) { .swarm-live.is-halted .halt:hover { box-shadow: inset 0 0 0 3rem rgba(14, 21, 18, .14); } }
-/* hc25: "Emergency halt" and "Resume" at one width (10.25em, so a toggle moves nothing); beside the counters at 1101-1359 px the
-   sliders are too short for name and value on one line: the value goes under its name, never "·" at a line's end */
-@media (min-width: 1100.5px) and (max-width: 1359.98px) { .swarm-controls output { display: block; margin-top: calc(2 * var(--hair)); } .swarm-controls output::before { content: none; } }
-/* Pause motion: site.css's one control (hc1); at the head's right end, after Follow a proposal, where the page puts it there */
-.sw-head > .sw-motion { flex: none; }
-/* hc6, one Pause everywhere: on phones and small tablets it keeps its word, at the end of the name's line; the name takes
-   that line less the button's room (its "Illustrative" wraps under it where the line is short), so nothing else joins it */
-@media (max-width: 800px) {
-  .sw-head > .sw-title { order: -2; flex: 1 0 calc(100% - 9.125rem); flex-wrap: wrap; row-gap: calc(2 * var(--hair)); }
-  .sw-head > .sw-motion { order: -1; margin-left: auto; }
+.sw-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 0 clamp(1.5rem, 3vw, 3rem); min-width: 0; }
+.sw-banner { flex: none; margin: 0; display: flex; align-items: center; font: 400 var(--fs-label)/1.3 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg); white-space: nowrap; }
+.sw-banner:empty { display: none; }
+.sw-banner::before { content: ""; flex: none; width: .5rem; height: .5rem; margin-right: .625rem; background: var(--reject-bright); }
+.sw-foot > .receipt { flex: 1 1 0; }
+.swarm-live + .figure-cap { margin-top: .25rem; }
+@media (max-width: 960px) {
+  .swarm-bar { grid-template-columns: minmax(0, 1fr); row-gap: 1.25rem; }
+  .sw-foot { flex-direction: column; align-items: stretch; margin-top: -.5rem; }
+  .sw-banner { min-height: 2rem; white-space: normal; }
 }
-@media (max-width: 1100px) { .swarm-bar { grid-template-columns: 1fr; } .swarm-stats { border-right: 0; border-bottom: var(--hair) solid var(--line); } }
-@media (max-width: 1180px) { .swarm-live .sw-key { order: 5; flex-basis: 100%; margin: 0; } .swarm-live .sw-follow { margin-left: auto; } } /* hc1: from 1180 (980), room for Pause at the head's end */
-@media (max-width: 640px) {
-  .sw-head { padding-left: 1rem; row-gap: .5rem; }
-  .swarm-live .sw-key { gap: .375rem .875rem; }
-  .sw-stage { --sw-h: 18.25rem; }
-  .swarm-stats > div { padding: .875rem .625rem .75rem .75rem; }
-  .swarm-controls { grid-template-columns: 1fr 1fr; gap: .875rem 1.125rem; padding: .75rem 1rem .875rem; }
-  .swarm-controls .sw-btns { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
+@media (max-width: 600px) {
+  .swarm-live > .stage { height: clamp(20rem, 54svh, 27rem); }
+  .swarm-stats { justify-content: space-between; gap: 1rem; }
+  .swarm-stats > div { min-width: 0; }
+  .sw-btns > * { flex: 1 1 0; min-height: 3rem; min-width: 0; padding: 0 .5rem; }
 }
-@media (max-width: 480px) { /* four counters as two rows: each label stays on one line at the small step */
-  .swarm-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .swarm-stats > div:nth-child(2) { border-right: 0; }
-  .swarm-stats > div:nth-child(-n+2) { border-bottom: var(--hair) solid var(--line); }
-}
-@media (max-width: 420px) { .swarm-controls { grid-template-columns: 1fr; } }
-@media (max-width: 380px) { .sw-head { column-gap: .875rem; } .swarm-live .sw-live { min-width: 0; } .swarm-live .sw-follow { gap: .5rem; padding-inline: .625rem; } } /* hc2: state and Follow share a row at 320 */
-/* set by the engine from the stage's own width: under 820px the trace flows under the canvas */
-.sw-on.is-stacked .sw-trace:not([hidden]) { position: relative; left: auto; top: auto; transform: none; width: auto; border: 0; border-top: var(--hair) solid var(--line); animation-name: sw-in; }
-/* in the flow the log keeps the height of a whole journey with its record button, so a rejection */
-.sw-on.is-stacked .sw-log { min-height: calc(6 * 1.9em + 2.125rem + .625rem); }
-.sw-on.is-narrow .sw-gates b { margin-right: .375em; }
-.sw-on.is-narrow .sw-ledger span { display: none; }
-.sw-on.is-narrow .sw-banner:not([hidden]) { max-width: calc(100% - 1rem); white-space: normal; } /* hc2: at 320 the halt line wraps inside the stage (it ran past its edge) */
-/* a3, 320 px: the top row (02, 04 with its policy, 06) needs 277 px of a 278 px stage: tighter tracking keeps 8 px between
-   them (swarm.js measures after the class is set) */
-.sw-on.is-tight .sw-gates b { margin-right: .3em; letter-spacing: 0; }
-.sw-on.is-narrow .sw-log li { grid-template-columns: 4em 6.6em minmax(0, 1fr); gap: .5rem; } /* a verdict ('approved · risk 0.04 ≤ 0.88') holds one line at 390 */
-/* touch: every control in the lab is at least 44 px tall, the sliders' thumbs 22 px */
-@media (pointer: coarse) {
-  .swarm-controls input[type=range] { height: 2.75rem; }
-  .swarm-controls input[type=range]::-webkit-slider-thumb { width: 1.375rem; height: 1.375rem; margin-top: -.65625rem; }
-  .swarm-controls input[type=range]::-moz-range-thumb { width: 1rem; height: 1rem; }
-  .swarm-live .sw-follow, .sw-trace-close, .sw-motion, .sw-rec { min-height: 2.75rem; }
-  .sw-rec { margin: 0; }
-  .sw-log li[data-k="led"] { min-height: 3rem; }
-  .sw-on.is-stacked .sw-log { min-height: calc(6 * 1.9em + 3rem + .625rem); }
-}
-/* phones held sideways: a shorter stage, the controls in two columns beside the counters (from 540 px: at 400% zoom,
-   320 x 256, the lab keeps its phone layout and scrolls) */
-@media (max-height: 500px) and (min-aspect-ratio: 23/20) and (min-width: 540px) {
-  .sw-stage { --sw-h: 52vh; }
-  @supports (height: 1svh) { .sw-stage { --sw-h: 52svh; } }
-  .sw-head { min-height: 0; padding-top: .25rem; padding-bottom: .25rem; }
-  .swarm-bar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .swarm-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); border-right: var(--hair) solid var(--line); border-bottom: 0; }
-  .swarm-stats > div { padding: .5rem .75rem; }
-  .swarm-stats > div:nth-child(2) { border-right: 0; }
-  .swarm-stats > div:nth-child(-n+2) { border-bottom: var(--hair) solid var(--line); }
-  .swarm-stats span { margin-top: .25rem; }
-  .swarm-controls { grid-template-columns: 1fr 1fr; gap: .375rem 1rem; padding: .5rem .875rem; }
-  .swarm-controls .sw-btns { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sw-on .sw-trace:not([hidden]), .sw-log li.is-filled { animation: none; }
-  .sw-rec i { transition: none; }
-}
-@media (scripting: none) { .swarm-live :is(.sw-live, .sw-follow, .sw-key), .swarm-live .swarm-bar { display: none; } } /* no script: the static six-gate diagram, no dead controls */
-/* (r4) until swarm.js runs (Home: as the curtain lifts) the lab holds its live boxes, empty: head items laid out, not
-   drawn; the stage at its band; the counters held. Its start moves nothing; the static gates show after 6 s if it never runs */
-@media (scripting: enabled) {
-  .swarm-live:not(.sw-on) :is(.sw-live, .sw-follow, .sw-key, .swarm-bar) { visibility: hidden; }
-  .swarm-live:not(.sw-on) .sw-stage { min-height: var(--sw-h); }
-  .swarm-live:not(.sw-on) .sw-gates { position: absolute; left: 0; right: 0; top: 0; visibility: hidden; animation: sw-late 0s var(--ease-out) 6s forwards; animation-play-state: running !important; } /* one step: not paused off screen */
-  @keyframes sw-late { to { visibility: visible; } }
-  /* Pause motion's place (hc1: it is in the head): on phones its box on the name's line; wider, it ends the row */
-  @media (prefers-reduced-motion: no-preference) and (max-width: 800px) {
-    .swarm-live:not(.sw-on) .sw-head::after { content: ""; order: -1; flex: none; width: 6.75rem; min-height: 2.25rem; margin-left: auto; }
-    @media (pointer: coarse) { .swarm-live:not(.sw-on) .sw-head::after { min-height: 2.75rem; } }
-  }
-}
-/* a3: the lab names itself where five links send you ("the swarm lab"), as the explorer's head says "The agentic stack"
-   (Home §03, Platform §03: the same markup); on phones the name and "Illustrative" share the head's first line */
-.sw-title { display: inline-flex; align-items: baseline; gap: 1.375rem; }
-@media (max-width: 640px) {
-  .sw-title { order: -1; flex-basis: 100%; gap: 1rem; }
-}
-/* hc30r SYS-1, the stage (SYSTEM.md 14): the lab without its card. The section's ink is the ground and the stage runs to
-   the viewport's edges (cqw reads the section); the head and the rail keep the container, the rail on one hairline; the
-   page sets --sw-stage-h. Without the class the card above stands */
-section:has(.swarm-live--stage) { container-type: inline-size; }
-.swarm-live--stage { --sw-in: calc(max(0px, 50cqw - var(--max) / 2) + max(var(--gutter), env(safe-area-inset-left))); border: 0; border-radius: 0; background: none; overflow: visible; margin-bottom: 0; }
-.swarm-live--stage .sw-head { padding-inline: 0; border: 0; }
-.swarm-live--stage .sw-stage { margin-inline: calc(50% - 50cqw); background: none; }
-@media (min-width: 1000px) and (min-height: 501px) { .swarm-live--stage .sw-stage { --sw-h: var(--sw-stage-h, clamp(26rem, 62svh, 46rem)); } }
-.swarm-live--stage:not(.sw-on) .sw-gates { padding-inline: var(--sw-in); }
-.swarm-live--stage .sw-trace:not([hidden]) { left: var(--sw-in); }
-.swarm-live--stage.is-stacked .sw-trace:not([hidden]) { margin-inline: var(--sw-in); }
-.swarm-live--stage :is(.swarm-stats, .swarm-stats > div) { border: 0; }
-.swarm-live--stage .swarm-stats > div { padding-left: 0; }
-.swarm-live--stage .swarm-controls { padding-right: 0; }
-@media (max-width: 1100px) { .swarm-live--stage .swarm-controls { padding-left: 0; } }
+@media (scripting: enabled) { .swarm-live:not(.no-stage) > .stage > .stage-still, .swarm-live.no-stage > .stage > :is(input, .sw-ro) { display: none; } } /* .no-stage (plate.js): the engine never came, the still stands */
+@media (scripting: none) { .swarm-live .js-only { display: none; } }
+@media (prefers-reduced-motion: reduce) { .swarm-live .halt { transition: none; } }
+@media print { .swarm-live > .stage > .stage-still { display: block; opacity: 1; } .swarm-bar { display: none; } }
 /* v2:swarm:end */
