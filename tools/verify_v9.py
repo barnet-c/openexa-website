@@ -5146,9 +5146,16 @@ async def scenes(b):
             if abs(r["p"] - want) > 0.02: bad.append(f"evidence.html@1440 test scene at {f} of the travel: --scene-p {r['p']:.3f} ({want})")
             if dark is not None and r["dark"] != dark: bad.append(f"evidence.html@1440 test scene at {f}: the bar is {'ink' if r['dark'] else 'paper'} ({'ink' if dark else 'paper'}: the sentinel is at .5)")
         fr = await scene_frames(pg, max(0, a - 450), z + 450)
+        again = ""
+        if MODE["gl"] != "gpu" and long_frames(fr, lim):
+            # a shared CI runner can stall the browser for a few vsyncs (CI run 43121251612: one frame of 66.7 ms among
+            # 120, the same tree having passed in run 43119441740). Under software GL a pass that breaks the rule is
+            # measured once more: a scene that janks breaks it both times, a stray stall does not. --gpu judges the first.
+            again = f"; measured twice (the first pass had {[round(x, 1) for x in fr if x > lim][:6]})"
+            fr = await scene_frames(pg, max(0, a - 450), z + 450)
         over = [round(x, 1) for x in fr if x > lim]
-        if long_frames(fr, lim): bad.append(f"evidence.html@1440 test scene: {len(over)} of {len(fr)} frames over {lim:.0f} ms while scrolling through ({over[:6]})")
-        notes.append(f"test scene --scene-p {rows}, frames <= {max(fr) if fr else 0:.1f} ms")
+        if long_frames(fr, lim): bad.append(f"evidence.html@1440 test scene: {len(over)} of {len(fr)} frames over {lim:.0f} ms while scrolling through ({over[:6]}){again}")
+        notes.append(f"test scene --scene-p {rows}, frames <= {max(fr) if fr else 0:.1f} ms{again}")
         await pg.evaluate("window.scrollTo({top: 0, behavior: 'instant'})"); await pg.wait_for_timeout(400)
         await pg.click("#scn-link"); await pg.wait_for_timeout(1500)
         r = await pg.evaluate(SCENE_STATE)
@@ -5855,7 +5862,12 @@ async def lab_copy(b):
                 before = await pg.evaluate(copy)
                 if before != "0.00": bad.append(f"{tag}: before {ctl}, waiting, data-sw-copy reads {before!r} (0.00)")
                 if await pg.evaluate(f"!!document.querySelector('{ctl}') && !document.querySelector('{ctl}').hidden"):
-                    await pg.evaluate(f"document.querySelector('{ctl}').click()"); await pg.wait_for_timeout(150)
+                    # "at once" is by the lab's next frame: Pause motion ends the act in its click handler, Emergency halt
+                    # on the next frame the lab draws (swarm.js actStep). On a GPU that is inside 150 ms, as before; under
+                    # SwiftShader one frame of the lab takes 183 to 483 ms (CI run 42782516694) and 150 ms can end before
+                    # it (CI run 43121251612: "0.00" after [data-sw-halt]), so software GL waits up to 2 s for it.
+                    await pg.evaluate(f"document.querySelector('{ctl}').click()")
+                    await until(pg, copy + " === '1.00'", 150 if MODE["gl"] == "gpu" else 2000, 50)
                     after = await pg.evaluate(copy)
                     if after != "1.00": bad.append(f"{tag}: after {ctl} data-sw-copy reads {after!r} (was {before!r}; 1.00 at once)")
                 else: bad.append(f"{tag}: no {ctl} to press")
