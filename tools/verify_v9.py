@@ -1515,9 +1515,14 @@ async def deep_links(b):
         await pg.wait_for_timeout(1500)
         r = await pg.evaluate(f"""(() => ({{ y: Math.round(scrollY), sc: window.__sc, fcp: window.__fcp, off: {DEEP_OFF}({hid!r}),
           sb: getComputedStyle(document.documentElement).scrollBehavior }}))()""")
-        far = [y for y in r["sc"] if abs(y - r["y"]) > 40]
+        # A glide from the top passes through positions hundreds of pixels away (the bug this guards: painted at 172 of
+        # 2,527). A late web font re-wrapping text above the target moves the landing by tens: on CI's Linux fallback
+        # fonts Lifecycles' §01 register (IBM Plex Mono, not preloaded) moved #desk 61 px after the first landing (run
+        # 43119441740: [2387, 2448]); Windows' fallbacks move it 0. So the positions passed through may be up to 120 px
+        # off; the first paint still has to be within 40 px. (Change request filed: preload the mono face.)
+        far = [y for y in r["sc"] if abs(y - r["y"]) > 120]
         if far or r["fcp"] is None or abs(r["fcp"] - r["y"]) > 40:
-            bad.append(f"{path}#{hid}@1440: a glide: scroll positions {r['sc'][:8]} (settled {r['y']}), first paint at {r['fcp']} (within 40 px of the settled position wanted)")
+            bad.append(f"{path}#{hid}@1440: a glide: scroll positions {r['sc'][:8]} (settled {r['y']}), first paint at {r['fcp']} (the first paint within 40 px of the settled position and every position within 120 px wanted)")
         if r["off"] is None or abs(r["off"]) > 2: bad.append(f"{path}#{hid}@1440: the target's top against scroll-padding-top {r['off']} px (within 2 wanted)")
         if not loaded or r["sb"] != "smooth": bad.append(f"{path}#{hid}@1440: after site.js (is-loaded {bool(loaded)}) html's scroll-behavior is {r['sb']!r}, want 'smooth'")
         if errs: bad.append(f"{path}#{hid}@1440: page errors {errs[:2]}")
