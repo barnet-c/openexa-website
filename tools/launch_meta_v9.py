@@ -82,7 +82,7 @@ for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
         page = {"@type": KIND.get(name, "WebPage"), "@id": url + "#webpage", "url": url, "name": title, "description": html.unescape(desc),
                 "isPartOf": WEBSITE, "primaryImageOfPage": og_image(url), "inLanguage": "en"}
         if name == "index.html":
-            org = dict(ORG, legalName="OpenEXA Inc.", image=og_image(url), description="OpenEXA is an AI agentic company. It builds the "
+            org = dict(ORG, legalName="OpenEXA Inc.", image=og_image(url), description="OpenEXA builds the "
                        "end-to-end infrastructure on which swarms of domain-specific AI agents run high-value lifecycles end to end. "
                        "Lifecycle 01 is live on real capital.",
                        address={"@type": "PostalAddress", "addressLocality": "Seattle", "addressRegion": "WA", "addressCountry": "US"})
@@ -125,7 +125,7 @@ page404 = f'''<!DOCTYPE html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Not found — OpenEXA</title>
-  <meta name="description" content="This page did not pass the gate.">
+  <meta name="description" content="Page not found.">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0E1512">
 {head_common}  <link rel="stylesheet" href="assets/css/notfound.css">
@@ -139,12 +139,12 @@ page404 = f'''<!DOCTYPE html>
       <div class="container">
         <div class="nf-copy">
           <div class="nf-title">
-            <h1 class="display-1">This page didn’t pass.</h1>
+            <h1 class="display-1">Page not found.</h1>
           </div>
           <div class="nf-next">
-            <p class="lede">The address is wrong, has moved, or&nbsp;never&nbsp;existed. Nothing&nbsp;was&nbsp;executed.</p>
+            <p class="lede">The address may be wrong, or&nbsp;the&nbsp;page may have&nbsp;moved.</p>
             <div class="row mt-3">
-              <a class="btn" href="index.html">Back to the start <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
+              <a class="btn" href="index.html">Go to the home page <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
               <a class="btn btn--ghost" href="platform.html">The platform</a>
             </div>
             <nav class="nf-more" aria-label="More of the site">

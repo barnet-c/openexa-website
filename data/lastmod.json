@@ -1,7 +1,7 @@
 {
  "access.html": {
-  "date": "2026-11-08",
-  "sha": "42b94ea2502b832e"
+  "date": "2026-11-12",
+  "sha": "4ff8e9285cfdf249"
  },
  "blog/an-optimization-algorithm-for-sparse-mean-reverting-portfolio-selection.html": {
   "date": "2026-11-09",
@@ -124,24 +124,24 @@
   "sha": "e683683e5eb312d0"
  },
  "company.html": {
-  "date": "2026-11-10",
-  "sha": "d586350f6b41479f"
+  "date": "2026-11-12",
+  "sha": "d169d33a527d3fab"
  },
  "evidence.html": {
-  "date": "2026-11-10",
-  "sha": "204d2e8d150a4add"
+  "date": "2026-11-12",
+  "sha": "e064ad00634c93c0"
  },
  "index.html": {
-  "date": "2026-11-10",
-  "sha": "31c015ec08beface"
+  "date": "2026-11-12",
+  "sha": "703602b68cec0951"
  },
  "lifecycles.html": {
-  "date": "2026-11-10",
-  "sha": "78aaa941bd07b9ec"
+  "date": "2026-11-12",
+  "sha": "530becc1ba85bbcb"
  },
  "platform.html": {
-  "date": "2026-11-10",
-  "sha": "c9f8c98ed8792ce9"
+  "date": "2026-11-12",
+  "sha": "47d0c1d9a03fc985"
  },
  "research.html": {
   "date": "2026-11-10",
@@ -176,19 +176,19 @@
   "sha": "738270eafbe771b1"
  },
  "research/08-a-ledger-nobody-can-edit.html": {
-  "date": "2026-11-10",
-  "sha": "9f2c1f075b71c4de"
+  "date": "2026-11-12",
+  "sha": "d4cae919f8cc4a80"
  },
  "research/09-lifecycle-01-ten-sessions.html": {
   "date": "2026-11-10",
   "sha": "c420b0c85866befd"
  },
  "research/10-master-and-copy.html": {
-  "date": "2026-11-10",
-  "sha": "e6212939048964dd"
+  "date": "2026-11-12",
+  "sha": "cbc98e6bab729963"
  },
  "trust.html": {
-  "date": "2026-11-10",
-  "sha": "9396db60d1055aed"
+  "date": "2026-11-12",
+  "sha": "12cbd321867ce38e"
  }
 }

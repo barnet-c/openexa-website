@@ -276,7 +276,7 @@ SECTION = f'''    <!-- 03 THE TEAM -->
     <section class="section" id="team" data-chapter="The team" data-n="03">
       <div class="container">
         <div class="ch-head ch-spread team-head">
-          <h2 class="display-2 ch-title" data-reveal data-split>Systems people and market people.</h2>
+          <h2 class="display-2 ch-title" data-reveal data-split>A team from systems engineering and capital markets.</h2>
           <p class="ch-line" data-reveal style="--d:80ms">Between them, they have built and led work at&nbsp;Google, Microsoft, Amazon, PayPal, Goldman&nbsp;Sachs, Bank&nbsp;of&nbsp;America and JPMorgan&nbsp;Chase.</p>
           <div class="crew-stats" data-reveal style="--d:140ms">
             <div><b>{len(TEAM)}</b><span>Team members</span></div>
