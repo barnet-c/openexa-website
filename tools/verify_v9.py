@@ -4492,6 +4492,10 @@ async def ui_weight(b):
         y, steps = 0, 0
         while y < total and steps < 40:
             await pg.evaluate(f"window.scrollTo({{top: {y}, behavior: 'instant'}})"); await pg.wait_for_timeout(450)
+            # the bar's colour turns over .6 s (--dur-draw) and its weight turns at once, so a read while a colour is
+            # still turning pairs the new weight with the old colour (CI run 43123160454: the bar's links "500 in light
+            # text" one screen down Home, on a tree that passed twice). Read once no colour transition is running.
+            await until(pg, "!document.getAnimations().some(a => a instanceof CSSTransition && /color/.test(a.transitionProperty))", 3000, 50)
             for e in await pg.evaluate(UI_WEIGHT):
                 want = 450 if e["light"] else 500
                 seen["light" if e["light"] else "dark"].add(e["k"].split(' "')[0])
