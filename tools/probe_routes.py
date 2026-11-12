@@ -34,7 +34,7 @@ CASES = [  # path, expected status, expected Location (or None), body must conta
     ("/research/01-compounding-error.html", 200, None, "Compounding"),
     ("/strategies/", 301, "/lifecycles", None),
     ("/for-managers/", 301, "/access#managers", None),
-    ("/definitely-missing/x/y", 404, None, "This page didn"),
+    ("/definitely-missing/x/y", 404, None, "Page not found"),
     ("/README.md", 404, None, None),
     ("/_redirects", 404, None, None),
     ("/staticwebapp.config.json", 404, None, None),
