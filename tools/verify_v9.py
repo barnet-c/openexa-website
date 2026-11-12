@@ -1121,7 +1121,7 @@ async def company(b):
     # heading's own colour, never the signal green; CLAUDE.md)
     hero = await pg.evaluate("""(() => { const h = document.querySelector('main h1'), em = h && h.querySelector('em'); if (!em) return null;
       const a = getComputedStyle(h), e = getComputedStyle(em); return { text: h.textContent.replace(/\\s+/g, ' ').trim(), h: a.color, em: e.color, style: e.fontStyle }; })()""")
-    assert hero and hero["text"] == "Intelligence, put to work." and hero["em"] == hero["h"] and hero["style"] == "italic", ("company hero", hero)
+    assert hero and hero["text"] == "The company behind agentic lifecycles." and hero["em"] == hero["h"] and hero["style"] == "italic", ("company hero", hero)
     # lab (31 Oct): §03 draws its idea, one loop of gates and the four constants; it runs on screen (a record is written
     # within a pass), has Pause motion, and pointing at a constant marks it. v2x cut, owner's-eye fix (1 Nov): the
     # register codes C-01...C-04 left the list and the plate (label noise); the four constants are their lines, in order,

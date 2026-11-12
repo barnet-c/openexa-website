@@ -973,7 +973,7 @@ def check_offscreen_pause():
                     fail(rel, f"offscreen_pause: {sel.strip()!r} animates but site.css's .is-offscreen pause does not name it")
 
 
-SUBLINE = "OpenEXA builds the end-to-end infrastructure on which swarms of domain-specific AI agents run the world's high-value lifecycles."
+SUBLINE = "OpenEXA builds the infrastructure on which swarms of domain-specific AI agents run a lifecycle, from first signal to auditable record."  # owner, 12 Nov: reworded
 
 
 def check_decisions():
@@ -983,7 +983,7 @@ def check_decisions():
     work.' with 'put to work.' as its italic; never '$22 trillion' or '$22T' anywhere; Proof ends at its cost section (§03 at most)
     and Trust at its §04; no Investors page."""
     vis = {rel: plain(visible((ROOT / rel).read_text(encoding="utf-8"))).replace("’", "'") for rel in ("index.html", "company.html", "lifecycles.html")}
-    for line in ("Infrastructure for agentic lifecycles.", SUBLINE, "Not tasks. Lifecycles.", "Trillions"):
+    for line in ("Infrastructure for agentic lifecycles.", SUBLINE, "Whole lifecycles, not single tasks.", "Trillions"):
         if line not in vis["index.html"]: fail("index.html", f"decisions: the CEO's line {line!r} is not on the page word for word")
     if "Trillions" not in vis["lifecycles.html"]: fail("lifecycles.html", "decisions: 'Trillions' is not on the page")
     for rel in ("index.html", "company.html"):  # owner, 12 Nov: the descriptor left the site ("remove this")
@@ -991,7 +991,7 @@ def check_decisions():
     h1 = lambda rel: (re.search(r"<h1\b[^>]*>(.*?)</h1>", (ROOT / rel).read_text(encoding="utf-8"), re.S) or [None, ""])[1]
     if plain(h1("index.html")) != "Infrastructure for agentic lifecycles.": fail("index.html", "decisions: the h1 is not the CEO's headline:", plain(h1("index.html")))
     ch = h1("company.html")
-    if plain(ch) != "Intelligence, put to work." or not re.search(r"<em>\s*put to work\.\s*</em>", ch): fail("company.html", "decisions: the h1 is not 'Intelligence, <em>put to work.</em>':", ch[:100])
+    if plain(ch) != "The company behind agentic lifecycles." or not re.search(r"<em>\s*agentic lifecycles\.\s*</em>", ch): fail("company.html", "decisions: the h1 is not 'The company behind <em>agentic lifecycles.</em>':", ch[:100])
     for rel in pages:
         t = visible((ROOT / rel).read_text(encoding="utf-8"))
         if re.search(r"\$\s?22\s?(?:T\b|tn\b|trillion)", t, re.I): fail(rel, "decisions: '$22 trillion' / '$22T' (the CEO's word is 'Trillions')")

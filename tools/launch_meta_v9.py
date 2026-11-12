@@ -83,7 +83,7 @@ for path in sorted(glob.glob(os.path.join(ROOT, "*.html"))):
                 "isPartOf": WEBSITE, "primaryImageOfPage": og_image(url), "inLanguage": "en"}
         if name == "index.html":
             org = dict(ORG, legalName="OpenEXA Inc.", image=og_image(url), description="OpenEXA builds the "
-                       "end-to-end infrastructure on which swarms of domain-specific AI agents run high-value lifecycles end to end. "
+                       "infrastructure on which swarms of domain-specific AI agents run a lifecycle, from first signal to auditable record. "
                        "Lifecycle 01 is live on real capital.",
                        address={"@type": "PostalAddress", "addressLocality": "Seattle", "addressRegion": "WA", "addressCountry": "US"})
             nodes = [org, dict(WEBSITE, inLanguage="en", publisher={"@id": ORG["@id"]}), dict(page, isPartOf={"@id": WEBSITE["@id"]}, about={"@id": ORG["@id"]})]
