@@ -67,6 +67,7 @@ body[data-page="home"] h2 .ph { white-space: nowrap; }
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] main > .story + .section { z-index: 1; margin-top: calc(-1 * var(--paper-slack, 0px)); background: var(--paper); }
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story-paper { opacity: 0; }
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story.is-covered .beat { visibility: hidden; opacity: 0 !important; }
+  html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story.is-covered .story-labels { visibility: hidden; } /* hc30r: under the paper the scene's names are out of the tab order and out of any reading of the screen, whatever frame the stage stopped on */
 }
 @media (scripting: enabled) and (max-width: 599.98px) and (max-aspect-ratio: 23/20) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story { height: calc(100vh + 230vh + var(--paper-slack, 0px)); height: calc(100svh + 230svh + var(--paper-slack, 0px)); }
@@ -112,7 +113,9 @@ body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(1.625re
 
 @media (hover: hover) and (pointer: fine) { body[data-page="home"] .story-stage.is-grab { cursor: grab; } body[data-page="home"] .story-stage.is-grabbing { cursor: grabbing; user-select: none; } }
 
-.lc-live { --lc-pw: clamp(9rem, 14vw, 12.5rem); position: relative; display: grid; grid-template-columns: var(--lc-pw) minmax(0, 1fr); grid-template-rows: 1fr auto auto auto 1fr; column-gap: clamp(1.75rem, 3.6vw, 3.75rem); padding: clamp(1.5rem, 2.6vw, 2.5rem) 0; border-top: calc(2 * var(--hair)) solid var(--accent); border-bottom: var(--hair) solid var(--line); }
+/* 01 (hc30r HOME-3): under one green rule, what is live on the left and what is next on the right */
+.lc-two { border-top: calc(2 * var(--hair)) solid var(--accent); }
+.lc-live { --lc-pw: clamp(9rem, 14vw, 12.5rem); --lc-pt: clamp(1.5rem, 2.6vw, 2.5rem); position: relative; display: grid; grid-template-columns: var(--lc-pw) minmax(0, 1fr); grid-template-rows: 1fr auto auto auto 1fr; column-gap: clamp(1.75rem, 3.6vw, 3.75rem); padding: var(--lc-pt) 0; border-bottom: var(--hair) solid var(--line); }
 .lc-plate { grid-column: 1; grid-row: 1 / -1; align-self: center; display: block; width: 100%; height: auto; }
 .lc-plate .lc-r1 { stroke-width: var(--stroke-2); }
 .lc-plate .lc-pane { fill: var(--bg); fill-opacity: .8; stroke: currentColor; stroke-opacity: .55; stroke-width: var(--stroke); stroke-linejoin: round; }
@@ -128,13 +131,19 @@ body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(1.625re
 @media (hover: hover) { .lc-live .h4 a:hover { text-decoration-color: currentColor; } .lc-live .h4 a:hover .arr { transform: translateX(.2em); } }
 .lc-live-st { grid-column: 2; grid-row: 3; margin-top: .375rem; font-size: var(--fs-small); line-height: 1.3; color: var(--khaki-ink); }
 .lc-live-line { grid-column: 2; grid-row: 4; margin-top: 1rem; max-width: 36ch; font-size: var(--fs-body); line-height: 1.5; color: var(--fg-2); }
-.lc-reg { display: grid; grid-template-columns: minmax(0, 1fr); margin: 0; padding: 0; list-style: none; }
+.lc-reg { margin: 0; padding: 0; list-style: none; }
 .lc-reg > li { display: grid; grid-template-columns: 1.75rem minmax(0, 1fr) auto; column-gap: .875rem; align-items: baseline; padding: .875rem 0 .9375rem; border-bottom: var(--hair) solid var(--line); }
 .lc-reg .lc-ring { align-self: center; }
 .lc-reg .h4 { margin: 0; line-height: 1.15; color: var(--fg-2); }
 .lc-reg li > span { font-size: var(--fs-small); line-height: 1.3; color: var(--khaki-ink); white-space: nowrap; }
 @media (min-width: 761px) { .lc-live .h4 a::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: calc(var(--lc-pw) + 1rem); } }
-@media (min-width: 961px) { .lc-reg { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(2.5rem, 5vw, 5rem); } }
+@media (min-width: 1000px) {
+  .lc-two { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: clamp(3rem, 6vw, 6rem); }
+  .lc-live { --lc-pw: min(100%, clamp(17rem, 26vw, 25rem)); display: block; padding-bottom: 0; border-bottom: 0; }
+  .lc-plate { width: var(--lc-pw); margin-bottom: clamp(1.5rem, 2.4vw, 2.25rem); }
+  .lc-live .h4 a::before { top: var(--lc-pt); bottom: auto; width: var(--lc-pw); aspect-ratio: 200 / 112.3; }
+  .lc-reg > li { padding: 1.125rem 0 1.1875rem; }
+}
 @media (max-width: 760px) {
   .lc-live { --lc-pw: 7.5rem; grid-template-rows: 1fr auto auto 1fr auto; column-gap: 1.125rem; padding: 1.375rem 0 1.25rem; }
   .lc-plate { grid-row: 1 / 5; }
@@ -143,20 +152,42 @@ body[data-page="home"] .beat-0 .hero-sub + .hero-cta { margin-top: clamp(1.625re
   .lc-reg .lc-ring { width: 1.375rem; height: 1.375rem; }
 }
 
-body[data-page="home"] #economics .cost .figure-cap { margin-top: 1.125rem; }
 
 body[data-page="home"] #governance .chain-row .ch-head { margin: 0; }
 @media (min-width: 961px) { body[data-page="home"] #governance .chain-row .ch-head { position: sticky; top: calc(var(--nav-h) + 2rem); } }
 
-body[data-page="home"] #research .card-grid--3 { border-left: 0; }
-body[data-page="home"] #research .research-card:last-child { border-right: 0; }
-body[data-page="home"] #research .research-card { display: flex; flex-direction: column; justify-content: space-between; gap: 1.75rem; min-height: clamp(9.375rem, 13vw, 13.125rem); padding: 1.375rem clamp(1.125rem, 2.2vw, 2rem) 1.25rem; background: none; }
-body[data-page="home"] #research .research-card:first-child { padding-left: 0; }
-body[data-page="home"] #research .research-card h3 { margin: 0; max-width: 20ch; font-size: var(--fs-heading); line-height: 1.15; text-wrap: balance; }
+/* 05 (hc30r HOME-4): three notes set as the Blog sets its tiles: the mark on a tinted 3:2 plate, the title under it */
+body[data-page="home"] #research .card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 clamp(1rem, 2vw, 1.75rem); border: 0; }
+body[data-page="home"] #research .research-card { container-type: inline-size; display: grid; grid-template-rows: auto auto; grid-column: auto; align-content: start; padding: 0; border: 0; background: none; }
+body[data-page="home"] #research .research-card::before { content: ""; grid-area: 1 / 1; align-self: start; aspect-ratio: 3 / 2; background: var(--paper-3); }
+/* the marks are the notes' own lattices (research's FORM; work/home-hc30r/marks_hc30r.py writes them): a cell is a whole
+   number of device pixels (--u) and a mark half a cell, stroked in px (non-scaling, square caps), so every mark is a
+   hard square at any tile width; ink, ink at half strength, signal */
+body[data-page="home"] #research .rc-mark { --u: 1px; --cw: 88cqi; --c: calc(var(--cw) / 92); --m: calc(var(--c) / 2); grid-area: 1 / 1; place-self: center; display: block; width: calc(var(--c) * var(--w)); height: calc(var(--c) * var(--h)); overflow: visible; fill: none; stroke: var(--ink); stroke-width: var(--m); stroke-linecap: square; stroke-linejoin: miter; shape-rendering: crispEdges; }
+@media (min-resolution: 2dppx) { body[data-page="home"] #research .rc-mark { --u: .5px; } }
+@media (min-resolution: 3dppx) { body[data-page="home"] #research .rc-mark { --u: calc(1px / 3); } }
+@supports (width: round(down, 1px, 1px)) { body[data-page="home"] #research .rc-mark { --c: round(down, calc(var(--cw) / 92), var(--u)); --m: max(var(--u), round(calc(var(--c) / 2), var(--u))); } }
+body[data-page="home"] #research .rc-mark path { vector-effect: non-scaling-stroke; }
+body[data-page="home"] #research .rc-mark .k1 { stroke-opacity: .5; }
+body[data-page="home"] #research .rc-mark .k2 { stroke: var(--signal-ink); }
+body[data-page="home"] #research .rc-mark .r { stroke-dasharray: 0 var(--c); }
+body[data-page="home"] #research .rc-mark .r2 { stroke-dasharray: 0 calc(2 * var(--c)); }
+body[data-page="home"] #research .rc-mark .b { fill: var(--ink); }
+body[data-page="home"] #research .rc-mark .b.k2 { fill: var(--signal-ink); }
+body[data-page="home"] #research .rc-mark :is(.l, .o) { stroke-width: var(--u); stroke-linecap: butt; }
+body[data-page="home"] #research .research-card h3 { margin: 1.125rem 0 0; max-width: 20ch; font-size: var(--fs-heading); line-height: 1.15; text-wrap: balance; }
 body[data-page="home"] #research .research-card h3 .t-head { display: block; }
 @media (max-width: 760px) {
-  body[data-page="home"] #research .card-grid--3 { grid-template-columns: minmax(0, 1fr); }
-  body[data-page="home"] #research .research-card, body[data-page="home"] #research .research-card:first-child { min-height: 0; gap: .75rem; padding: 1.125rem 0; border-right: 0; }
+  body[data-page="home"] #research .card-grid--3 { grid-template-columns: minmax(0, 1fr); border-top: var(--hair) solid var(--line); }
+  body[data-page="home"] #research .research-card { grid-template-columns: minmax(0, 1fr) 8.25rem; grid-template-rows: auto; align-items: center; column-gap: 1.125rem; padding: .875rem 0; border-bottom: var(--hair) solid var(--line); }
+  body[data-page="home"] #research .research-card::before, body[data-page="home"] #research .rc-mark { grid-area: 1 / 2; align-self: center; }
+  body[data-page="home"] #research .rc-mark { --cw: 7.25rem; }
+  @media (max-width: 374.98px) and (max-resolution: 2.99dppx) { body[data-page="home"] #research .rc-mark { --m: var(--c); } } /* a two-pixel cell cannot hold a mark and a gap that both read: the marks join into lines */
+  @media (min-width: 375px) { /* room for a cell of three device pixels at 2x: the lattice still reads as one */
+    body[data-page="home"] #research .research-card { grid-template-columns: minmax(0, 1fr) 9.75rem; }
+    body[data-page="home"] #research .rc-mark { --cw: 8.75rem; }
+  }
+  body[data-page="home"] #research .research-card h3 { grid-area: 1 / 1; margin: 0; }
 }
 
 body[data-page="home"] .cta-band .row { margin-top: clamp(1.75rem, 3vw, 2.5rem); }
@@ -170,7 +201,6 @@ html.story-compact body[data-page="home"] .beat-0 .hero-kicker { font-size: .86r
 @media (scripting: enabled) and (max-width: 599.98px) { html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker { font-size: .86rem; } }
 @media (scripting: enabled) and (max-width: 599.98px) and (min-height: 800px) { html:not(.no-webgl) body[data-page="home"] .beat-0 .hero-kicker { font-size: .94rem; } }
 @media (min-width: 600px) and (min-height: 900px) and (max-aspect-ratio: 23/20) { html.story-compact body[data-page="home"] .story .beat-0 .hero-kicker { font-size: clamp(1rem, 2.6vw, 1.15rem); } }
-body[data-page="home"] #research .research-card .link-arrow { font: 400 var(--fs-small)/1.3 var(--sans); letter-spacing: 0; text-transform: none; }
 
 @media (scripting: enabled) and (min-width: 1600px) and (min-height: 820px) and (min-aspect-ratio: 23/20) {
   html:not(.no-webgl):not(.story-tiny) body[data-page="home"] .story .beat-0 { top: var(--nav-h); bottom: var(--story-bar-h); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
@@ -193,58 +223,66 @@ body[data-page="home"] #research .research-card .link-arrow { font: 400 var(--fs
 @media (max-width: 339.98px) { body[data-page="home"] .story-idx button { min-width: 2rem; } }
 body[data-page="home"] #economics .cost-row:first-child { padding-top: 0; }
 @container cost (max-width: 860px) { body[data-page="home"] #economics .cost-row:first-child .cost-bar { margin-top: .875rem; } }
+/* The chapters after the overture are laid out near the screen only; each stand-in (--cis) is the chapter's drawn content
+   height, so the page is as long at load as drawn (verify_v9 home_standins). hc30r: re-measured for §01's two columns,
+   the lab on its stage, §03 on Proof's grid of units and §05's tiles (work/home-hc30r/standins2.py, cisgen.py): lines
+   through the measured heights, in rem + vw, so a stand-in follows its chapter between the widths it was measured at.
+   The lab's is everything but its stage (--cis) plus the stage as swarm.css sizes it (--cis-st) */
 body[data-page="home"] main > .story ~ section:not(.cta-band) { content-visibility: auto; contain-intrinsic-size: auto var(--cis, 46rem); }
-body[data-page="home"] #lifecycles { --cis: 34.796875rem; } body[data-page="home"] #lc01 { --cis: 64.00625rem; }
-body[data-page="home"] #economics { --cis: 43.8086rem; } body[data-page="home"] #governance { --cis: 44.25rem; }
-body[data-page="home"] #research { --cis: 36.3125rem; }
-@media (min-width: 600px) {
-  body[data-page="home"] #lifecycles { --cis: 32.3581rem; } body[data-page="home"] #lc01 { --cis: 51.865625rem; }
-  body[data-page="home"] #economics { --cis: 27.2373rem; } body[data-page="home"] #governance { --cis: 42.90625rem; }
-  body[data-page="home"] #research { --cis: 34.1975rem; }
-}
-@media (min-width: 761px) and (max-width: 960px) {
-  body[data-page="home"] #lifecycles { --cis: 33.8831rem; } body[data-page="home"] #lc01 { --cis: 49.640625rem; }
-  body[data-page="home"] #economics { --cis: 27.8194rem; } body[data-page="home"] #governance { --cis: 34.03rem; }
-  body[data-page="home"] #research { --cis: 26.6266rem; }
-}
-@media (min-width: 761px) and (max-width: 800px) { body[data-page="home"] #lc01 { --cis: 52.3375rem; } body[data-page="home"] #economics { --cis: 27.5068rem; } }
-@media (min-width: 961px) {
-  body[data-page="home"] #lifecycles { --cis: 33.1557rem; } body[data-page="home"] #lc01 { --cis: 60.640625rem; }
-  body[data-page="home"] #economics { --cis: 35.4053rem; } body[data-page="home"] #governance { --cis: 27rem; }
-  body[data-page="home"] #research { --cis: 34.1444rem; }
-}
-@media (min-width: 961px) and (max-width: 1099.98px) {
-  body[data-page="home"] #lifecycles { --cis: 27.9231rem; } body[data-page="home"] #lc01 { --cis: 55.0428rem; }
-  body[data-page="home"] #economics { --cis: 29.4775rem; } body[data-page="home"] #governance { --cis: 26.96875rem; }
-  body[data-page="home"] #research { --cis: 28.38rem; }
-}
-@media (min-width: 1100px) and (max-width: 1359.98px) {
-  body[data-page="home"] #lifecycles { --cis: 30.8519rem; } body[data-page="home"] #lc01 { --cis: 56.526875rem; }
-  body[data-page="home"] #economics { --cis: 33.1689rem; } body[data-page="home"] #governance { --cis: 27rem; }
-  body[data-page="home"] #research { --cis: 32.55rem; }
-}
-@media (min-width: 1680px) {
-  body[data-page="home"] #lifecycles { --cis: 33.7656rem; } body[data-page="home"] #lc01 { --cis: 62.921875rem; }
-  body[data-page="home"] #economics { --cis: 36.0078rem; } body[data-page="home"] #governance { --cis: 27rem; }
-  body[data-page="home"] #research { --cis: 36.8675rem; }
-}
-body[data-page="home"] #lc01 { contain-intrinsic-size: auto calc(var(--cis) - var(--lab-rm, 0rem) - clamp(20.625rem, 32vw + 4.375rem, 35rem) + clamp(20.625rem, min(32vw + 4.375rem, 100vh - 31rem), 35rem)); }
-@media (prefers-reduced-motion: reduce) and (max-width: 800px) { body[data-page="home"] #lc01 { --lab-rm: 1.165rem; } }
-@media (prefers-reduced-motion: reduce) and (max-width: 599.98px) { body[data-page="home"] #lc01 { --lab-rm: 1.69375rem; } }
+body[data-page="home"] #lifecycles { --cis: 43.611rem; } body[data-page="home"] #lc01 { --cis: 48.867rem; } body[data-page="home"] #economics { --cis: calc(31.528rem + 35vw); } body[data-page="home"] #governance { --cis: 51.156rem; } body[data-page="home"] #research { --cis: 36.944rem; }
+@media (min-width: 330.02px) { body[data-page="home"] #governance { --cis: 47.179rem; } body[data-page="home"] #research { --cis: 34.686rem; } }
+@media (min-width: 350.02px) { body[data-page="home"] #lifecycles { --cis: 38.956rem; } body[data-page="home"] #lc01 { --cis: 45.843rem; } body[data-page="home"] #governance { --cis: 46.03rem; } body[data-page="home"] #research { --cis: 32.427rem; } }
+@media (min-width: 367.02px) { body[data-page="home"] #lifecycles { --cis: 36.349rem; } body[data-page="home"] #governance { --cis: 43.832rem; } body[data-page="home"] #research { --cis: 31.725rem; } }
+@media (min-width: 375px) { body[data-page="home"] #research { --cis: 34.725rem; } }
+@media (min-width: 384.02px) { body[data-page="home"] #lifecycles { --cis: 34.797rem; } }
+@media (min-width: 402.02px) { body[data-page="home"] #governance { --cis: 42.625rem; } }
+@media (min-width: 421.02px) { body[data-page="home"] #lifecycles { --cis: 34.484rem; } body[data-page="home"] #lc01 { --cis: 40.763rem; } }
+@media (min-width: 510.02px) { body[data-page="home"] #lc01 { --cis: 36.112rem; } }
+@media (min-width: 600px) { body[data-page="home"] #lc01 { --cis: 34.644rem; } }
+@media (min-width: 600.02px) { body[data-page="home"] #lifecycles { --cis: calc(30.832rem + 3.63vw); } body[data-page="home"] #economics { --cis: 27.913rem; } body[data-page="home"] #governance { --cis: calc(40.345rem + 6.16vw); } body[data-page="home"] #research { --cis: calc(31.071rem + 3.66vw); } }
+@media (min-width: 640.02px) { body[data-page="home"] #lc01 { --cis: calc(29.063rem + 6.78vw); } }
+@media (min-width: 740.02px) { body[data-page="home"] #economics { --cis: calc(24.801rem + 4.55vw); } }
+@media (min-width: 760.02px) { body[data-page="home"] #lifecycles { --cis: max(32.082rem + 3.73vw, 25.893rem + 14.49vw); } body[data-page="home"] #governance { --cis: calc(31.732rem + 4.72vw); } body[data-page="home"] #research { --cis: calc(10.927rem + 25.11vw); } }
+@media (min-width: 800.02px) { body[data-page="home"] #lc01 { --cis: calc(26.172rem + 9.12vw); } }
+@media (min-width: 940.02px) { body[data-page="home"] #economics { --cis: calc(15.388rem + 21.38vw); } }
+@media (min-width: 960.02px) { body[data-page="home"] #governance { --cis: 27.038rem; } }
+@media (min-width: 1000px) { body[data-page="home"] #lifecycles { --cis: min(33.099rem, max(22.704rem + 9.27vw, 11.646rem + 22.29vw)); } body[data-page="home"] #lc01 { --cis: calc(22.819rem + 14.5vw); } body[data-page="home"] #economics { --cis: calc(13.364rem + 24.6vw); } body[data-page="home"] #research { --cis: calc(8.671rem + 28.72vw); } }
+@media (min-width: 1100.02px) { body[data-page="home"] #lc01 { --cis: calc(18.54rem + 14.48vw); } }
+@media (min-width: 1180.02px) { body[data-page="home"] #lc01 { --cis: calc(17.283rem + 14.14vw); } }
+@media (min-width: 1200px) { body[data-page="home"] #economics { --cis: calc(1.093rem + 41.58vw); } body[data-page="home"] #research { --cis: calc(4.04rem + 34.9vw); } }
+@media (min-width: 1320.02px) { body[data-page="home"] #research { --cis: calc(23.833rem + 10.91vw); } }
+@media (min-width: 1360px) { body[data-page="home"] #lc01 { --cis: min(29.991rem, 23.484rem + 6.71vw); } body[data-page="home"] #economics { --cis: calc(16.617rem + 22.05vw); } }
+@media (min-width: 1440px) { body[data-page="home"] #research { --cis: calc(21.114rem + 13.93vw); } }
+body[data-page="home"] #lc01 { --cis-st: clamp(20.625rem, min(32vw + 4.375rem, 100vh - 31rem), 35rem); contain-intrinsic-size: auto calc(var(--cis) + var(--cis-st) + var(--cis-m, 0rem)); }
+@media (prefers-reduced-motion: no-preference) and (max-width: 800px) { body[data-page="home"] #lc01 { --cis-m: 1.165rem; } }
+@media (prefers-reduced-motion: no-preference) and (max-width: 599.98px) { body[data-page="home"] #lc01 { --cis-m: 1.69375rem; } }
+@media (max-width: 640px) { body[data-page="home"] #lc01 { --cis-st: 18.25rem; } }
+@media (min-width: 1000px) and (min-height: 501px) { body[data-page="home"] #lc01 { --cis-st: clamp(26rem, 62svh, 46rem); } }
 @media print { body[data-page="home"] main > .story ~ section:not(.cta-band) { content-visibility: visible; } }
-body[data-page="home"] #lc01 .swarm-live { margin-bottom: 0; }
+/* 02 (hc30r HOME-2): the lab stands on ink (swarm.css .swarm-live--stage). From 1200 px wide in a window at least 50rem
+   tall (800 px; 12/5 holds that above 1920 px, where the rem grows with the width), with scripting: one screen, one
+   scene. The head lies over the stage's top left, the lab's own head over its top right, the rail closes the screen;
+   swarm.js keeps the gates under both (data-sw-clear). Anywhere else: the head above, the stage, the rail */
+body[data-page="home"] #lc01 .swarm-live > .figure-cap { margin-top: .875rem; }
+@media (scripting: enabled) and (min-width: 1200px) and (min-height: 800px) and (max-aspect-ratio: 12/5) {
+  body[data-page="home"] #lc01 { --lab-top: clamp(2.25rem, 4.6svh, 4rem); padding-block: 0 1.5rem; contain-intrinsic-size: auto min(100svh - var(--nav-h) - 1.5rem, 36rem + 24vw); }
+  body[data-page="home"] #lc01 > .container { position: relative; }
+  body[data-page="home"] #lc01 .ch-head { position: absolute; z-index: 2; top: var(--lab-top); display: grid; grid-template-columns: auto 1fr; justify-content: start; align-items: baseline; column-gap: 1.75rem; margin: 0; pointer-events: none; }
+  body[data-page="home"] #lc01 .ch-head .ch-title { grid-column: 1 / -1; }
+  @media (min-width: 1760px) { body[data-page="home"] #lc01 .ch-head .ch-title { max-width: none; } }
+  body[data-page="home"] #lc01 .ch-head .ch-line { margin-top: 1.25rem; }
+  body[data-page="home"] #lc01 .ch-head .ch-link { justify-self: start; margin-top: 0; pointer-events: auto; }
+  body[data-page="home"] #lc01 .swarm-live { display: grid; grid-template-rows: minmax(0, 1fr) auto auto; height: min(100svh - var(--nav-h) - 1.5rem, 36rem + 24vw); }
+  body[data-page="home"] #lc01 .sw-head { position: absolute; z-index: 2; top: calc(var(--lab-top) + .5rem); right: 0; max-width: 52%; min-height: 0; padding: 0; justify-content: flex-end; gap: .875rem 1.375rem; }
+  body[data-page="home"] #lc01 .swarm-live .sw-key { order: 5; flex-basis: 100%; justify-content: flex-end; margin: 0; }
+  body[data-page="home"] #lc01 .swarm-live .sw-follow { margin-left: 0; }
+  body[data-page="home"] #lc01 .swarm-live .sw-stage { min-height: 0; padding-top: 0; }
+  body[data-page="home"] #lc01 .sw-stage canvas, body[data-page="home"] #lc01 .sw-on .sw-gates { height: 100%; }
+  body[data-page="home"] #lc01 .sw-on .sw-trace:not([hidden]) { top: auto; bottom: 1rem; transform: none; animation-name: sw-in; }
+  body[data-page="home"] #lc01 .swarm-live:not(.sw-on) .sw-gates { top: auto; bottom: 0; }
+}
 
 body[data-page="home"] .story-static-mark { height: auto; }
-body[data-page="home"] #research .research-card { display: grid; grid-template-rows: auto auto 1fr; justify-content: stretch; row-gap: 0; }
-body[data-page="home"] #research .research-card .link-arrow { align-self: end; margin-top: 1.375rem; }
-body[data-page="home"] #research .rc-mark { display: block; width: auto; height: clamp(7.5rem, 9.4vw, 8.5rem); max-width: 100%; margin: .25rem 0 clamp(1.25rem, 2.2vw, 1.75rem); opacity: .88; transition: opacity var(--dur-feedback) var(--ease-out); }
-@media (hover: hover) { body[data-page="home"] #research .research-card:hover .rc-mark { opacity: 1; } }
-@media (max-width: 760px) {
-  body[data-page="home"] #research .research-card, body[data-page="home"] #research .research-card:first-child { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 1.125rem; }
-  body[data-page="home"] #research .rc-mark { grid-column: 2; grid-row: 1 / span 2; align-self: center; height: 5.5rem; margin: 0; }
-  body[data-page="home"] #research .research-card h3 { grid-column: 1; grid-row: 1; }
-  body[data-page="home"] #research .research-card .link-arrow { grid-column: 1; grid-row: 2; margin-top: .625rem; }
-}
 @media (scripting: none) {
   body[data-page="home"] .story .beat-0 { min-height: 100vh; min-height: 100svh; }
   body[data-page="home"] .story-static-mark { opacity: 1; }
@@ -262,10 +300,6 @@ body[data-page="home"] #research .rc-mark { display: block; width: auto; height:
 }
 html.no-webgl:not(.story-tiny) body[data-page="home"] .story .beat-0 { min-height: 100vh; min-height: 100svh; }
 
-@media (min-width: 761px) {
-  body[data-page="home"] #research .card-grid--3 { container-type: inline-size; }
-  body[data-page="home"] #research .rc-mark { height: max(7.5rem, 13.9cqi); }
-}
 body[data-page="home"] .story-lab.floor .u { color: rgba(245, 242, 236, .9); }
 body[data-page="home"] .story-lab.floor { line-height: 1.3; }
 body[data-page="home"] .story-lab.floor span { display: block; }
@@ -274,10 +308,6 @@ body[data-page="home"] .story-lab.hedge span { display: block; }
 body[data-page="home"] .story-lab.hedge span:first-child { color: rgba(245, 242, 236, .74); }
 body[data-page="home"] .story-lab:is(.hedge, .floor).is-flush { text-align: left; }
 body[data-page="home"] .story-labels.has-insp .story-lab.hedge { opacity: 0 !important; }
-@media (min-width: 761px) and (max-width: 960px) {
-  body[data-page="home"] #research .card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  body[data-page="home"] #research .card-grid--3 > :last-child:nth-child(odd) { grid-column: auto; }
-}
 @media (max-width: 600px) {
   body[data-page="home"] .ph-dot { display: block; height: 0; overflow: hidden; }
 }
@@ -304,7 +334,7 @@ html.story-short body[data-page="home"] .story-lab.key { display: none; }
 body[data-page="home"] .beat-4 :is(.body-lg, .beat-more) { translate: 0 calc(var(--bl, 0) * -.75rem); }
 @media (scripting: enabled) {
   body[data-page="home"] #governance .chain:not(.chain-ready) :is(.chain-acts, .chain-try)[hidden] { display: inline-flex !important; visibility: hidden; }
-  body[data-page="home"] #governance .chain:not(.chain-ready) .chain-foot.is-static > span:first-child { display: block; visibility: hidden; }
+  body[data-page="home"] #governance .chain:not(.chain-ready) .chain-foot.is-static > .fc-h > span { display: inline; visibility: hidden; }
   body[data-page="home"] #governance .chain:not(.chain-ready) .chain-fallback { display: none; }
 }
 

@@ -77,7 +77,9 @@
   const C1 = 0.8, C3 = C1 + 1;
   const ease = (t) => { const s = t * t * (3 - 2 * t), u = s - 1; return 1 + C3 * u * u * u + C1 * u * u; };
   const stag = (m, key) => { const sp = SPREADS[seg] || 0.42; return clamp((m - key * sp) / (1 - sp), 0, 1); };
-  const HOLD = 0.1, SPREADS = [0.6, 0.46, 0.42, 0.5];
+  const HOLD = 0.3, LEAN = 0.03, SPREADS = [0.6, 0.46, 0.42, 0.5];
+  const nearScene = (s) => clamp(Math.floor(s + 0.5 + LEAN), 0, 4);
+  const easeMove = (t) => { let u = t; for (let k = 0; k < 6; k++) { const w = 1 - u, f = 1.86 * u * w * w + 0.6 * u * u * w + u * u * u - t, d = 1.86 * w * w - 2.52 * u * w + 2.4 * u * u; if (Math.abs(d) < 1e-6) break; u = clamp(u - f / d, 0, 1); } return 3 * u * u * (1 - u) + u * u * u; };
   let EXIT_U = window.innerWidth < 600 ? 0.6 : 0.9, TOTAL_U = 4 + EXIT_U;
 
   const ORBITS = [[1.24, 0.40, 0.35, 0.15], [1.31, -0.30, 1.40, -0.11], [1.38, 0.60, 2.20, 0.09], [1.46, -0.52, 3.05, -0.13], [1.54, 0.24, 4.10, 0.08], [1.62, -0.70, 5.20, -0.07]];
@@ -734,9 +736,10 @@
     stageH = stage.offsetHeight || window.innerHeight;
     storyH = story.offsetHeight;
     run = Math.max(1, storyH - stageH - tail);
+    sec1H = sec1 ? sec1.offsetHeight : 0;
   }
   const sec1 = story.nextElementSibling;
-  let tail = 0;
+  let tail = 0, sec1H = 0;
   function setTail(px) {
     px = Math.max(0, Math.round(px));
     if (px === tail) return;
@@ -971,8 +974,9 @@
 
   let sNow = 0, sTarget = 0, xNow = 0, xTarget = 0, xeNow = 0, time = 14.3, intro = 0, introStart = -1, gather = 0;
   let seg = 0, mRaw = 0, mE = 0, scale = [1, 1];
-  let copyS = 0, copyMode = 'follow', copyFrom = 0, copyTo = 0, copyT0 = 0, lastInput = -1e9, touchDown = false, idleTimer = 0;
-  const COPY_IDLE = 160, COPY_EASE = 280, COPY_TAU = 0.12;
+  let copyS = 0, copyMode = 'follow', copyFrom = 0, copyTo = 0, copyT0 = 0, lastInput = -1e9, touchDown = false, idleTimer = 0, sPrev = 0;
+  const COPY_IDLE = 300, COPY_EASE = 420, CATCH_G = 3;
+  const inMorph = (c) => { const f = c - Math.floor(c); return c > 0 && c < 4 && f > HOLD + 0.004 && f < 1 - HOLD - 0.004; };
   const relayAt = (d) => { let bo = 1 - sstep(0.32, 0.42, d); if (bo < 0.08) bo = 0; return { eo: 1 - sstep(0.48, 0.54, d), w: 1 - sstep(0.38, 0.48, d), bo, op: d < 0.56 ? 1 : 0 }; };
   const part = (v) => v > 0.002 && v < 0.998;
   function relayMid(c) {
@@ -982,20 +986,28 @@
   }
   function handBack() {
     lastInput = performance.now();
-    if (copyMode === 'resolve' || copyMode === 'rest') copyMode = 'chase';
+    if (copyMode === 'resolve' || copyMode === 'rest') copyMode = 'catch';
     clearTimeout(idleTimer); idleTimer = setTimeout(requestFrame, COPY_IDLE + 20);
     if (shownSettled) { shownSettled = false; story.removeAttribute('data-settled'); }
   }
-  function stepCopy(now, dtS) {
+  function stepCopy(now, landed) {
+    const v = sNow - sPrev; sPrev = sNow;
     if (reducedMQ.matches) { copyS = sNow; copyMode = 'follow'; return; }
     if (copyMode === 'follow') copyS = sNow;
-    else if (copyMode === 'chase') { copyS += (sNow - copyS) * (1 - Math.exp(-dtS / COPY_TAU)); if (Math.abs(sNow - copyS) < 0.0015) { copyS = sNow; copyMode = 'follow'; } }
-    else if (copyMode === 'resolve') { const u = clamp((now - copyT0) / COPY_EASE, 0, 1), e = 1 - (1 - u) * (1 - u) * (1 - u); copyS = lerp(copyFrom, copyTo, e); if (u >= 1) { copyS = copyTo; copyMode = 'rest'; } }
-    if ((copyMode === 'follow' || copyMode === 'chase') && now - lastInput > COPY_IDLE && !touchDown && xTarget <= 0 && relayMid(copyS)) {
-      copyFrom = copyS; copyTo = clamp(Math.round(sTarget), 0, 4); copyT0 = now; copyMode = 'resolve';
+    else if (copyMode === 'catch') {
+      const i = Math.round(copyS);
+      if (Math.abs(copyS - i) <= HOLD && Math.abs(sNow - i) > HOLD) copyS = i + (sNow > i ? HOLD - 1e-4 : 1e-4 - HOLD);
+      const d = sNow - copyS;
+      if (Math.abs(d) < 0.0015 || (Math.abs(copyS - i) <= HOLD && Math.abs(sNow - i) <= HOLD)) { copyS = sNow; copyMode = 'follow'; }
+      else if (d * v > 0) copyS += Math.sign(d) * Math.min(Math.abs(d), Math.abs(v) * CATCH_G);
+    }
+    else if (copyMode === 'resolve') { const u = clamp((now - copyT0) / COPY_EASE, 0, 1); copyS = lerp(copyFrom, copyTo, easeMove(u)); if (u >= 1) { copyS = copyTo; copyMode = 'rest'; } }
+    if ((copyMode === 'follow' || copyMode === 'catch') && now - lastInput > COPY_IDLE && !touchDown && xTarget <= 0 && inMorph(copyS)) {
+      copyFrom = copyS; copyTo = nearScene(sTarget); copyT0 = now; copyMode = 'resolve';
+      if (landed) { copyS = copyTo; copyMode = 'rest'; }
     }
   }
-  const copyResting = () => copyMode === 'rest' || (copyMode === 'follow' && !relayMid(copyS));
+  const copyResting = () => copyMode === 'rest' || (copyMode !== 'resolve' && !inMorph(copyS));
   let eye = [0, 0, CAM_D], target = [0, 0, 0], camD = CAM_D;
   const mouse = { x: 0, y: 0, tx: 0, ty: 0, vx: 0, vy: 0 };
   const hand = { hold: false, id: -1, x: 0, a: 0, t: 0, to: 0, off: 0, v: 0, lx: 0, lt: 0, vm: 0 };
@@ -1006,11 +1018,10 @@
     sTarget = Math.min(4, u); xTarget = clamp((u - 4) / EXIT_U, 0, 1);
     belowBar = storyTop + storyH - tail - scrollY > navH + 1;
     const cov = !belowBar && tail > 0;
-    if (cov !== shownCov) story.classList.toggle('is-covered', shownCov = cov);
+    if (cov !== shownCov) { story.classList.toggle('is-covered', shownCov = cov); if (cov && sec1) sec1H = sec1.offsetHeight; }
   }
   function morphState() {
-    let s = sNow;
-    if (reducedMQ.matches) s = Math.round(s);
+    const s = reducedMQ.matches ? Math.round(sNow) : copyS;
     seg = Math.min(3, Math.floor(s));
     const f = s - seg;
     mRaw = clamp((f - HOLD) / (1 - 2 * HOLD), 0, 1);
@@ -1418,12 +1429,12 @@
     l.el.addEventListener('pointerenter', e => { if (e.pointerType === 'touch' || !moved(e)) return; hoverPtr = { scene: l.scene, idx: l.group }; setHover(); });
     l.el.addEventListener('pointerleave', e => { if (e.pointerType === 'touch' || !moved(e)) return; hoverPtr = null; setHover(); });
   });
-  let labelScene = -1, labA = 0, labOnT = 0;
-  const LAB_IN = 160;
+  let labelScene = -1, labA = 0, labOnT = 0, outScene = -1, outA = 0, outA0 = 0, outT = 0;
+  const LAB_IN = 160, LAB_OUT = 110;
   function sceneOfLabels() {
     if (lost || !ready || tiny) return -1;
     const red = reducedMQ.matches, ci = clamp(Math.round(red ? sNow : copyS), 0, 4);
-    if (!red && Math.abs(copyS - ci) >= 0.3) return -1;
+    if (!red && Math.abs(copyS - ci) > HOLD + 0.01) return -1;
     const sm = seg + mRaw;
     return Math.abs(sm - ci) < 0.02 ? ci : -1;
   }
@@ -1436,7 +1447,7 @@
     return labA * (1 - x);
   };
   const OUT4 = [0.04, 0.2];
-  const colIn = (c) => sNow >= 4 ? 1 : seg === 3 ? clamp(ease(stag(mRaw, (c + 0.55) / (NCOL + 0.55))), 0, 1) : 0;
+  const colIn = (c) => (reducedMQ.matches ? sNow : copyS) >= 4 ? 1 : seg === 3 ? clamp(ease(stag(mRaw, (c + 0.55) / (NCOL + 0.55))), 0, 1) : 0;
   let tabScene = -1, shownHasInsp = null;
   const FLANK = { x: 0, y: 0 };
   function ringFlank(k, sc) {
@@ -1470,6 +1481,7 @@
     const tagTop = navH + barH + 6;
     const listCol = [];
     labels.forEach(l => {
+      if (l.scene === outScene) { l.a = l.on ? outA : 0; return; }
       const a = vis(l);
       let on = a > 0.01 && !((stacked || short) && l.wide) && !(frameTiny[l.scene] && (l.kind !== 'cap' || !l.scene) && !l.hedge);
       if (l.key && !keyH) on = false;
@@ -1626,13 +1638,13 @@
   const shown = beats.map(() => ({ op: '', tr: '', on: null, eo: '', w: '', bo: '' }));
   const beatLinks = beats.map(b => Array.from(b.querySelectorAll('a[href], button')));
   const unseen = (el) => !tiny && !!el.closest('.beat .body-lg') && (short || el.closest('.beat').classList.contains('is-tight'));
-  let shownIdx = -1, shownScrolled = null, shownBar = '', shownPaper = '', shownFill = [];
+  let shownIdx = -1, shownAt = -2, shownScrolled = null, shownBar = '', shownPaper = '', shownFill = [];
   let paperH = 0, relay0 = false, relayReady = false, shownBarOff = null;
   let fadeT = 0, copyX = 0, fading = false, kF = 1;
   let leave4 = 1, barA = 1;
   let shownBl = '', shownClip = '';
   function syncIndex() {
-    const ci = clamp(Math.round(sTarget), 0, 4);
+    const ci = nearScene(sTarget);
     if (shownIdx === ci) return;
     shownIdx = ci;
     idx.forEach((button, i) => { const a = ci === i; button.classList.toggle('is-on', a); if (a) button.setAttribute('aria-current', 'step'); else button.removeAttribute('aria-current'); });
@@ -1643,7 +1655,12 @@
     const red = reducedMQ.matches, xe = xeNow;
     const cs = red ? Math.round(sNow) : copyS;
     const ls = sceneOfLabels();
-    if (ls !== labelScene) { labelScene = ls; labOnT = now || performance.now(); labA = 0; }
+    if (ls !== labelScene) {
+      const t = now || performance.now(), back = ls >= 0 && ls === outScene ? outA : 0;
+      if (labelScene >= 0 && labA > 0 && !red) { outScene = labelScene; outA0 = labA; outT = t; } else if (back) outScene = -1;
+      labelScene = ls; labOnT = t - back * LAB_IN; labA = back;
+    }
+    if (outScene >= 0) { outA = red || outScene === labelScene ? 0 : outA0 * (1 - clamp(((now || performance.now()) - outT) / LAB_OUT, 0, 1)); if (outA <= 0) outScene = -1; }
     if (labelScene >= 0) { labA = red ? 1 : clamp(((now || performance.now()) - labOnT) / LAB_IN, 0, 1); measureBeat(labelScene); } else labA = 0;
     const ov = Math.max(0, scrollY - storyTop - run - tail);
     const lean = stacked, X = stacked ? EXIT.tall : EXIT.wide;
@@ -1658,14 +1675,17 @@
     const tMove = lean && xe > 0 ? tallMove() : 0;
     const s1 = storyTop + storyH - tail - scrollY;
     paperH = tail ? clamp(H - s1, 0, H) : 0;
-    if (paper) { const v = paperH.toFixed(1); if (v !== shownPaper) { shownPaper = v; paper.style.height = v + 'px'; paper.style.visibility = paperH > 0.5 ? 'visible' : 'hidden'; } }
+    /* hc30r: the marker is §01's box and no more. §01 is shorter than the stage it covers, so the ink chapter after it
+       (the lab) rises over the stage's foot too: the marker's top is §01's top, as it was, and it stops at §01's foot,
+       where the bar turns to ink (site.js). Covered, the stage draws no more frames: the marker takes the foot's last place */
+    if (paper) { const gap = Math.max(0, (shownCov ? tail : paperH) - sec1H), ph = Math.max(0, paperH - gap), v = ph.toFixed(1) + '/' + gap.toFixed(1); if (v !== shownPaper) { shownPaper = v; paper.style.height = ph.toFixed(1) + 'px'; paper.style.bottom = gap.toFixed(1) + 'px'; paper.style.visibility = ph > 0.5 ? 'visible' : 'hidden'; } }
     if (!relay0 && (relayReady || sNow > 0.3)) { relay0 = true; beats[0].classList.add('is-relay'); }
     beats.forEach((b, i) => {
       const d = Math.abs(cs - i), s = shown[i];
       let op, eo, w, bo;
       if (red) { op = cs === i ? 1 : 0; eo = w = bo = 1; }
       else ({ eo, w, bo, op } = relayAt(d));
-      let dy = red ? 0 : (cs - i) * -18;
+      let dy = red ? 0 : Math.sign(i - cs) * 38 * Math.max(0, d - HOLD);
       if (i === 4 && xe > 0) {
         if (lean) dy += tMove;
         else if (headFits) dy += wideLift;
@@ -1694,6 +1714,8 @@
       if (s.gone !== gone) b.classList.toggle('is-bo0', s.gone = gone);
     });
     syncIndex();
+    const at = mRaw <= 0 ? seg : mRaw >= 1 ? seg + 1 : -1;
+    if (at !== shownAt) { shownAt = at; if (at < 0) story.removeAttribute('data-at'); else story.dataset.at = at; }
     idx.forEach((button, i) => { const f = clamp(sNow - i + 0.5, 0, 1).toFixed(2); if (shownFill[i] !== f) button.style.setProperty('--fill', shownFill[i] = f); });
     if (shownScrolled !== sNow > 0.3) story.classList.toggle('is-scrolled', shownScrolled = sNow > 0.3);
     barA = tail && s1 <= barTop ? 0 : 1;
@@ -1744,7 +1766,7 @@
   }
   function invalidate() {
     shown.forEach(s => { s.op = s.tr = s.eo = s.w = s.bo = ''; s.on = s.gone = null; });
-    shownIdx = labelScene = tabScene = -1; shownBarOff = shownLeaving = shownScrolled = shownHasInsp = null;
+    shownIdx = labelScene = tabScene = outScene = -1; shownAt = -2; shownBarOff = shownLeaving = shownScrolled = shownHasInsp = null;
     shownBar = shownPaper = inspTr = '';
     clearTall();
     labels.forEach(l => { l.tr = l.ov = l.d = l.nc = ''; l.on = null; });
@@ -1757,7 +1779,7 @@
       root.classList.remove('story-compact', 'story-short'); root.classList.add('story-tiny'); clearLift(); setTail(0);
       beats.forEach(b => { b.style.opacity = b.style.transform = ''; ['--eo', '--w', '--bo'].forEach(v => b.style.removeProperty(v)); b.classList.remove('is-active', 'is-tight', 'is-snug', 'is-bo0'); });
       if (bar) bar.style.opacity = bar.style.visibility = '';
-      if (paper) paper.style.height = paper.style.visibility = '';
+      if (paper) paper.style.height = paper.style.bottom = paper.style.visibility = '';
       clearTall();
       beatLinks.forEach(list => list.forEach(el => el.removeAttribute('tabindex')));
       hoverPtr = hoverFocus = null; setHover();
@@ -1907,9 +1929,9 @@
     if (jump) { sNow = sTarget; xNow = xTarget; settledOnce = true; }
     else { const k = 1 - Math.exp(-dtS * (performance.now() - lastGo.t < 1500 ? 10 : 6.5)), kx = scrollY > storyTop + run ? 1 - Math.exp(-dtS * 24) : k; sNow += (sTarget - sNow) * k; xNow += (xTarget - xNow) * kx; if (Math.abs(sTarget - sNow) < 0.0004) sNow = sTarget; if (Math.abs(xTarget - xNow) < 0.0004) xNow = xTarget; }
     xeNow = 0;
+    stepCopy(now, jump);
     morphState();
     greenBusy = stepGreen(dtS, jump || paused);
-    stepCopy(now, dtS);
     camera();
     if (pointerDirty) {
       pointerDirty = false;
@@ -1935,13 +1957,29 @@
     const settled = Math.abs(sTarget - sNow) < 0.002 && Math.abs(xTarget - xNow) < 0.002 && copyResting() && labA >= 1 && intro >= 1 && !greenBusy;
     if (settled !== shownSettled) { shownSettled = settled; if (settled) story.setAttribute('data-settled', ''); else story.removeAttribute('data-settled'); }
     const changing = Math.abs(sTarget - sNow) > 0.0004 || Math.abs(xTarget - xNow) > 0.0004 || hov.some((v, i) => Math.abs(v - hovT[i]) > 0.002) || (intro < 1 && introStart >= 0) || introStart < 0
-      || copyMode === 'resolve' || copyMode === 'chase' || (labelScene >= 0 && labA < 1) || fading || greenBusy || (moving && (hand.hold || hand.v !== 0 || Math.abs(mouse.vx) + Math.abs(mouse.vy) > 0.002));
+      || copyMode === 'resolve' || outScene >= 0 || (labelScene >= 0 && labA < 1) || fading || greenBusy || (moving && (hand.hold || hand.v !== 0 || Math.abs(mouse.vx) + Math.abs(mouse.vy) > 0.002));
     if (changing) requestFrame();
     else if (moving) { if (SOFT) { clearTimeout(softTimer); softTimer = setTimeout(requestFrame, 45); } else requestFrame(); }
   }
   let shownSettled = false, SOFT = false, softTimer = 0;
   function requestFrame() { if (!frameId && running && !lost && ready && !tiny && visible && belowBar && !document.hidden) frameId = requestAnimationFrame(frame); }
   function stopFrames() { cancelAnimationFrame(frameId); frameId = 0; clearTimeout(softTimer); t0 = performance.now(); }
+  /* hc30r (system's hook, SYSTEM.md 15): leaving Home with the stage on screen, the WebGL canvas cannot stand in the turn's
+     snapshot, so this frame is copied to the 2D canvas for the length of the turn: the page you leave stays whole */
+  const still2d = story.querySelector('canvas.story-2d');
+  let stillOn = false;
+  window.addEventListener('pageswap', (e) => {
+    stillOn = false;
+    if (!e.viewTransition || !still2d || !gl || lost || !ready || tiny || !running || !visible) return;
+    try {
+      cancelAnimationFrame(frameId); frame(performance.now(), true);
+      still2d.width = cv.width; still2d.height = cv.height;
+      const g = still2d.getContext('2d'); if (!g) return;
+      g.drawImage(cv, 0, 0); still2d.hidden = false; stillOn = true;
+    } catch (err) { stillOn = false; }
+  });
+  window.addEventListener('pageshow', () => { if (stillOn) { stillOn = false; still2d.hidden = true; requestFrame(); } });
+  (window.OXA = window.OXA || {}).stageStill = () => stillOn;
   function updateMotion() {
     if (!motionButton) return;
     motionButton.hidden = reducedMQ.matches;
@@ -2004,7 +2042,7 @@
     beatLinks.forEach(list => list.forEach(el => el.removeAttribute('tabindex')));
     labels.forEach(l => l.el.remove()); leaders.remove();
     if (bar) bar.style.opacity = bar.style.visibility = '';
-    if (paper) paper.style.height = paper.style.visibility = '';
+    if (paper) paper.style.height = paper.style.bottom = paper.style.visibility = '';
     clearTall();
     if (motionButton) motionButton.hidden = true;
     insp.remove();

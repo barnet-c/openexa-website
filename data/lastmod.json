@@ -124,71 +124,71 @@
   "sha": "e683683e5eb312d0"
  },
  "company.html": {
-  "date": "2026-11-09",
-  "sha": "97f7bd382a004c74"
+  "date": "2026-11-10",
+  "sha": "d586350f6b41479f"
  },
  "evidence.html": {
-  "date": "2026-11-09",
-  "sha": "d5ce6d6608e56759"
+  "date": "2026-11-10",
+  "sha": "204d2e8d150a4add"
  },
  "index.html": {
-  "date": "2026-11-09",
-  "sha": "ec79d2ca4d5bec2e"
+  "date": "2026-11-10",
+  "sha": "31c015ec08beface"
  },
  "lifecycles.html": {
-  "date": "2026-11-09",
-  "sha": "7be8466787d66ca7"
+  "date": "2026-11-10",
+  "sha": "78aaa941bd07b9ec"
  },
  "platform.html": {
-  "date": "2026-11-09",
-  "sha": "6d0350500ef47b07"
+  "date": "2026-11-10",
+  "sha": "c9f8c98ed8792ce9"
  },
  "research.html": {
-  "date": "2026-11-09",
-  "sha": "8afb43875107d563"
+  "date": "2026-11-10",
+  "sha": "d35a8e1d438230a4"
  },
  "research/01-compounding-error.html": {
-  "date": "2026-11-09",
-  "sha": "bf3dac421b42cb4d"
+  "date": "2026-11-10",
+  "sha": "ea8a1a08460f79d0"
  },
  "research/02-post-training-and-audit.html": {
-  "date": "2026-11-09",
-  "sha": "306d1073e1be7355"
+  "date": "2026-11-10",
+  "sha": "5c3f568dbdf1d599"
  },
  "research/03-not-tasks-lifecycles.html": {
-  "date": "2026-11-09",
-  "sha": "df9c609e121fbc88"
+  "date": "2026-11-10",
+  "sha": "71dcf927d3eacaec"
  },
  "research/04-five-thousand-small-agents.html": {
-  "date": "2026-11-09",
-  "sha": "085acc82d3568d22"
+  "date": "2026-11-10",
+  "sha": "4ca735384bf2b6f5"
  },
  "research/05-agents-decide-code-executes.html": {
-  "date": "2026-11-09",
-  "sha": "3fcf61f442d581bf"
+  "date": "2026-11-10",
+  "sha": "f825192814b82bb9"
  },
  "research/06-post-training-on-a-rulebook.html": {
-  "date": "2026-11-09",
-  "sha": "d6767b52ed3ff32c"
+  "date": "2026-11-10",
+  "sha": "9d3ddaaa48a17a2b"
  },
  "research/07-the-execution-council.html": {
-  "date": "2026-11-09",
-  "sha": "9de65398fc980116"
+  "date": "2026-11-10",
+  "sha": "738270eafbe771b1"
  },
  "research/08-a-ledger-nobody-can-edit.html": {
-  "date": "2026-11-09",
-  "sha": "eb60d237298ce40c"
+  "date": "2026-11-10",
+  "sha": "9f2c1f075b71c4de"
  },
  "research/09-lifecycle-01-ten-sessions.html": {
-  "date": "2026-11-09",
-  "sha": "43f24fb97e24915b"
+  "date": "2026-11-10",
+  "sha": "c420b0c85866befd"
  },
  "research/10-master-and-copy.html": {
-  "date": "2026-11-09",
-  "sha": "b5e595756095b8f8"
+  "date": "2026-11-10",
+  "sha": "e6212939048964dd"
  },
  "trust.html": {
-  "date": "2026-11-09",
-  "sha": "e12363872758d9a7"
+  "date": "2026-11-10",
+  "sha": "9396db60d1055aed"
  }
 }

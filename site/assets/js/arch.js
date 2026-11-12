@@ -102,8 +102,7 @@
     const lab = H('span', 'arch-lab', head), labTxt = root.dataset.archLabel || 'The agentic stack';
     const lm = /^(Fig\.\s*\d[\d.]*?)\.?(?:\s+[—–·:-])?\s+(\S.*)$/.exec(labTxt);
     if (lm) { H('b', 'fc-n', lab, lm[1].replace(/\s+/, ' ')); H('span', 'fc-d', lab, ' · '); lab.append(lm[2]); } else lab.textContent = labTxt;
-    // (hc2, the one instrument head) the hedge right after the title, out of the key
-    H('span', 'arch-kicker', head, 'Illustrative');
+    // (hc30r, one hedge in the foot) the hedge is the instrument's foot caption (below), not the first word of its head
     const legend = H('span', 'arch-legend', head);
     legend.setAttribute('aria-hidden', 'true');
     [['lg-bead', 'Agent'], ['lg-ring', 'Proposal'], ['lg-sq', 'Settled']].forEach(([c, t]) => { const s = H('span', '', legend); H('i', c, s); s.appendChild(document.createTextNode(t)); });
@@ -172,6 +171,13 @@
       items.forEach((it) => it.el.remove()); if (bEl) bEl.remove(); if (fEl) fEl.remove();
       if (bEl && bEl.id && bRow) bRow.id = bEl.id; // an anchor on the boundary (Platform #boundary) lands on its row
     }
+    // the hedge: a foot caption under the instrument, in the caption register (.fc-h: Illustrative), as every instrument's
+    const cap = H('p', 'figure-cap arch-cap'); H('span', 'fc-h', cap, 'Illustrative');
+    cap.style.setProperty('--ri', N + 2); // Platform's scene: it arrives after the last row (platform.css)
+    inst.after(cap);
+    // the explorer is an ink instrument: once it stands, its chapter says so (platform.css puts the chapter on ink where the
+    // scene is not pinned, once site.js gives the bar that tone); without JavaScript the list stays on paper
+    const sec = !spec && root.closest('section'); if (sec) sec.dataset.tone = 'dark';
 
     /* ---------------- 3 · the drawing ---------------- */
     // circles drawn in CSS px: above 1920 they grow with the root (RK = root / 16; measure() sets it) (award a2, 4K)

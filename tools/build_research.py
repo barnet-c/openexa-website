@@ -68,9 +68,8 @@ CAPTIONS = {
     "rulebook": ("A dense core, with documents drifting in.", "Illustrative"),
     "council": ("Proposals arrive from above; rejected ones leave to the side.", "Illustrative"),
     "ledger": ("Eight blocks in a chain, each linked to the one before.", "Illustrative"),
-    # note 09: the colours are the record's (data-regimes, from #oxa-sessions); the floor line is not a scale. Cut (1 Nov):
-    # each column fills to the floor and shows ONE open unit above it (figure.js), never a scatter; the label "above the
-    # floor / exact value not published" stays beside it
+    # note 09: the floor line is not a scale. Each column fills to the floor, one block per basis point, and shows ONE open
+    # unit above it (the lattice below), never more; the label "above the floor / exact value not published" stays beside it
     "sessions": ("Ten sessions, one column each, in the order of the record.", "Illustrative · heights not to scale"),
     "mastercopy": ("One proven agent above, its copies below, on one control plane.", "Illustrative · roadmap"),
 }
@@ -93,92 +92,239 @@ def _words(t): return re.findall(r"[a-z]+", t.lower())
 for _f, _s in STRIP.items():
     _cw = _words(CAPTIONS[_f][0])
     assert all(any(c.startswith(w[:6]) for c in _cw) for w in _words(_s)), f"STRIP[{_f}]: “{_s}” uses a word its caption does not"
-# award a2 gave note 09 a colour key ("Green: premium · white: discount"): each session was drawn in its NAV regime's
-# colour. Hill climb hc7 (director item 8): Home and Proof draw the same ten sessions as ten green columns, the regime
-# a step line below them, and white columns read as failed sessions there. Note 09 now draws them as Proof does (every
-# column green to the floor, the open unit above it a khaki outline), so it needs no key: KEYS and its slot are gone
-# v2x lab (research moment): every figure is read as a plate. Its labels pin to points of the formation (figure.js, a
-# stage with data-plate projects data-at, the formation's own x,y,z, onto the screen each frame) and say what each part
-# is, in the words of its caption or its note: no new fact, no number the caption does not already state. Points are
-# figure.js's geometry (FORMS): a formation that moves needs its labels moved here. Sides: r, l (text beside the point,
-# its first line on the rule), t, b (centred above, below), tl, tr, bl, br (above or below, text ending or starting at
-# the point). Flags: "minor" (dropped on a small stage), "minorsub" (its second line, a gloss, dropped on a small stage;
-# never for a hedge), "acc" (the green part), "rej" (a rejection: the only red text), "n" (a numeral alone, as note 09's
-# axis: mono, as a paper plate's .hp-lab--n), "nsub" (its second line a value, "10 bps": mono). Hill climb hc3 (director
-# item 2): the words are the paper plates' caption register (research.css .fl-t: Inter, sentence case; numerals in a
-# phrase stay in it, tabular, as Platform's "Above · 01–04"). An optional last item (r1) is where
-# the words begin when the point lies inside the drawing: the rule reaches out to it (figure.js data-to, --lead).
-# Path: the span of the formation's own path (FORMS' fifth value, 0..1) the label names; while the pulse walks the
-# path it lights each label it passes, so the plate reads itself out in the note's order. None: the part is not on
-# the path (it is named, never lit).
+# hc30r (RETHINK-hc30 RES-1, "the formations redrawn: ordered marks, two tones, full size"; RES-2, note 09's ten sessions
+# as Proof draws them). Every figure is a lattice of hard square marks, set where a plotter would set them: rows of
+# latitude for a sphere, rings, dot grids, fused blocks. One lattice, drawn twice: here as the note's still (inline SVG:
+# the hero's picture with or without JavaScript, and by reference the margin plate), and by figure.js on the index's
+# plate, where the marks of one formation travel to the next. _F and the ten formations below are figure.js's F and
+# FORMS, line for line (cells; x right, y down): a change to a formation there needs the same change here. A mark is
+# (x, y, kind, ph, bw, bh): its top-left cell; kind 0 paper white, 1 paper white at 60 %, 2 signal green, 3 red (a
+# refusal, nothing else); ph where it lies on the formation's own path (0..1, or -1); a fused block spans bw x bh cells
+# (a dot is 1 x 1); a rule is bw long and bh 0; an open unit (bw < 0) is a hairline square through the centres of the
+# marks at its corners. No khaki, no dust, nothing at random.
+PI, TILT = math.pi, 0.36   # the spheres are seen from a little above, as Home's globe
+def _Q(v): return math.floor(v * 4 + 0.5 + 1e-9) / 4   # a mark off the lattice rests on a quarter cell
+def _R(v): return math.floor(v + 0.5 + 1e-9)
+class _F:
+    def __init__(self, w, h): self.w, self.h, self.m = w, h, {}
+    def key(self, x, y): return (_R(x * 4), _R(y * 4))
+    def delete(self, x, y): self.m.pop(self.key(x, y), None)
+    def dot(self, x, y, k, ph=-1.0): self.m[self.key(x, y)] = (x, y, k, ph, 1, 1)
+    def blk(self, x, y, bw, bh, k, ph=-1.0): self.m[self.key(x, y)] = (x, y, k, ph, bw, bh)
+    def rule(self, x, y, n, k): self.m[self.key(x, y)] = (x, y, k, -1.0, n, 0)
+    def open(self, x, y, bw, bh, k): self.m[self.key(x, y)] = (x, y, k, -1.0, -bw, bh)
+    def run(self, x, y, n, dx, dy, k, p0=-1.0, p1=None):
+        for i in range(n): self.dot(x + i * dx, y + i * dy, k, p0 if p1 is None or n < 2 else p0 + (p1 - p0) * i / (n - 1))
+    def grid(self, x, y, cols, rows, dx, dy, k, ph=-1.0):
+        for r in range(rows):
+            for c in range(cols): self.dot(x + c * dx, y + r * dy, k, ph)
+    def line(self, x0, y0, x1, y1, step, k, p0=-1.0, p1=None):
+        n = max(1, math.floor(max(abs(x1 - x0), abs(y1 - y0)) / step))
+        for i in range(n + 1): self.dot(_R(x0 + (x1 - x0) * i / n), _R(y0 + (y1 - y0) * i / n), k, p0 if p1 is None else p0 + (p1 - p0) * i / n)
+    def ball(self, cx, cy, r, k, ph=-1.0, dy=2.0, s=2.0, avoid=()):
+        """a sphere as rows of latitude: a row every dy cells down the meridian, its marks s cells apart round it; the
+        near side only; no two of its marks in one half cell; none within 1.2 cells of a point of avoid (an orbit in front)"""
+        nr = _R(PI * r / dy); seen = set(); ce, se = math.cos(TILT), math.sin(TILT)
+        for i in range(nr):
+            la = (i + 0.5) * PI / nr - PI / 2; rr = math.cos(la); n = max(1, _R(2 * PI * r * rr / s))
+            for j in range(n):
+                lo = (j + 0.5) * 2 * PI / n; X, Y, Z = rr * math.sin(lo), math.sin(la), rr * math.cos(lo)
+                if Y * se + Z * ce < 0.03: continue
+                x, y = cx + r * X, cy - r * (Y * ce - Z * se); cell = (math.floor(x * 2 + 1e-9), math.floor(y * 2 + 1e-9))
+                if cell in seen or any(abs(x - ax) < 1.2 and abs(y - ay) < 1.2 for ax, ay in avoid): continue
+                seen.add(cell); self.dot(_Q(x - 0.25), _Q(y - 0.25), k, ph)
+    def orbit(self, cx, cy, rx, ry, rot, n, k, p0=-1.0, p1=None, hide=0.0, front=None):
+        """n marks at equal steps round an ellipse turned by rot; its far half is hidden behind a ball of radius hide at
+        its centre; front collects the near half's points over that ball"""
+        co, si = math.cos(rot), math.sin(rot)
+        for i in range(n):
+            a = 2 * PI * i / n; ex, ey = rx * math.cos(a), ry * math.sin(a); x, y = ex * co - ey * si, ex * si + ey * co
+            if hide and math.hypot(x, y) < hide:
+                if math.sin(a) < 0: continue
+                if front is not None: front.append((cx + x, cy + y))
+            self.dot(_Q(cx + x - 0.25), _Q(cy + y - 0.25), k, p0 if p1 is None else p0 + (p1 - p0) * i / n)
+    def marks(self): return sorted(self.m.values(), key=lambda t: (t[0], t[1]))   # the drawing order: left to right, then down
+    def trim(self):
+        """the box becomes the drawing's own: the marks move to its top-left corner (by whole cells, so the lattice
+        stays on whole px) and w, h are where the last mark ends (a mark is half a cell; a rule has no height of its
+        own). Returns the move, for the labels (figure.js make() does the same)"""
+        ms = list(self.m.values()); x0, y0 = math.floor(min(m[0] for m in ms)), math.floor(min(m[1] for m in ms))
+        self.m = {self.key(x - x0, y - y0): (x - x0, y - y0, k, ph, bw, bh) for x, y, k, ph, bw, bh in ms}
+        self.w = max(m[0] + (abs(m[4]) - 0.5 if m[5] else m[4]) for m in self.m.values())
+        self.h = max(m[1] + max(m[5], 1) - 0.5 for m in self.m.values())
+        return x0, y0
+def _horizon():   # 01: a monolithic run decays as p to the n; a gated run is caught at every gate and stays high
+    f = _F(91, 56)
+    f.run(0, 54, 46, 2, 0, 1)
+    ys = [_R(52 - 46 * math.pow(0.986, c * 160 / 90)) for c in range(92)]
+    for c in range(91):
+        for y in range(ys[c], max(ys[c] + 1, ys[c + 1] - 1) + 1): f.dot(c, y, 0, c / 90)
+    for s in range(11): f.run(s * 9, 0, 13, 0, 1, 1, s / 10)
+    for c in range(91):
+        if c % 9 == 0: continue
+        y = 6 + _R(4 * (c % 9 - 1) / 7); f.dot(c, y, 2, c / 90); f.dot(c, y + 1, 2, c / 90)
+    return f
+def _weights():   # 02: one base model, rings of adapters, the record below
+    f = _F(84, 55); cx, cy, fr = 42.25, 22.25, []
+    f.orbit(cx, cy, 31, 7, -0.42, 104, 1, 0.0, 0.5, 17.5, fr)
+    f.orbit(cx, cy, 30, 11, 0.5, 108, 2, 0.0, 0.5, 17.5, fr)
+    f.orbit(cx, cy, 27, 3.5, 0.05, 88, 1, 0.0, 0.5, 17.5, fr)
+    f.ball(cx, cy, 17, 0, -1.0, 2.0, 2.0, fr)
+    for b in range(5):
+        x = 12 + b * 13; p = 0.55 + b * 0.1
+        f.run(x, 45, 9, 1, 0, 2, p); f.run(x, 50, 9, 1, 0, 2, p); f.run(x, 46, 4, 0, 1, 2, p); f.run(x + 8, 46, 4, 0, 1, 2, p)
+        f.run(x + 2, 47, 5, 1, 0, 2, p)
+        if b: f.run(x - 3, 48, 2, 1, 0, 2, p - 0.05)
+    return f
+def _lifecycle():   # 03: one loop of six gates, agents on its middle track, the last gate lit
+    f = _F(92, 56); cx, cy, rx, ry, a0 = 46.25, 28.25, 42, 24, -5 * PI / 6
+    gates = [(_R(cx + rx * 0.92 * math.cos(a0 + n * PI / 3) - 2.25), _R(cy + ry * 0.86 * math.sin(a0 + n * PI / 3) - 2.25)) for n in range(6)]
+    for t in range(3):
+        n = 156 - t * 14; sx, sy = 1 - t * 0.08, 1 - t * 0.14
+        for i in range(n):
+            a = a0 + 2 * PI * i / n; x, y = _Q(cx + rx * sx * math.cos(a) - 0.25), _Q(cy + ry * sy * math.sin(a) - 0.25)
+            if any(gx - 2 < x < gx + 6 and gy - 2 < y < gy + 6 for gx, gy in gates): continue
+            f.dot(x, y, 0 if t == 1 else 1, min(1.0, i / n * 6 / 5.4))
+    for n, (x, y) in enumerate(gates):
+        if n == 5: f.blk(x, y, 5, 5, 2, 1.0)
+        else: f.grid(x, y, 5, 5, 1, 1, 0, n / 5.4)
+    return f
+def _swarm():   # 04: one large agent beside a lattice of small ones, each with its gate
+    f = _F(92, 48)
+    f.ball(21.25, 23.25, 21, 1)
+    for gy in range(7):
+        for gx in range(7):
+            x, y = 50 + gx * 6, 5 + gy * 6; p = (gx + gy) / 12
+            f.grid(x, y, 2, 2, 1, 1, 0, p); f.run(x + 3, y, 2, 0, 1, 2, p)
+    return f
+def _boundary():   # 05: eight layers, one boundary: agents decide above the bright plane, code executes below
+    f = _F(70, 71)
+    for l in range(8):
+        y0 = l * 8 + (9 if l > 3 else 0); p = (l + (1 if l > 3 else 0)) / 9
+        for d in range(5): f.run(4 + (4 - d) * 2, y0 + d, 27, 2, 0, 0 if l < 4 else 1, p)
+    for d in range(5): f.run((4 - d) * 2, 33 + d, 62, 1, 0, 2, 4 / 9)
+    return f
+def _rulebook():   # 06: a dense cube with a lit core, six documents drifting in
+    f = _F(88, 52)
+    for d in range(1, 6): f.run(35 + d, 17 - d, 19, 1, 0, 1, 0.96); f.run(53 + d, 18 - d, 18, 0, 1, 1, 0.96)
+    f.grid(35, 17, 19, 19, 1, 1, 0, 0.96)
+    for yy in range(23, 30):
+        for xx in range(41, 48): f.delete(xx, yy)
+    f.blk(41, 23, 7, 7, 2, 0.96)
+    for i in range(6):
+        x, y = (3 if i < 3 else 78), 3 + (i % 3) * 18
+        f.run(x, y, 7, 1, 0, 0, 0.08); f.run(x, y + 8, 7, 1, 0, 0, 0.08); f.run(x, y + 1, 7, 0, 1, 0, 0.08); f.run(x + 6, y + 1, 7, 0, 1, 0, 0.08)
+        for r in (2, 4, 6): f.run(x + 2, y + r, 3, 1, 0, 0, 0.08)
+        f.line(x + 9 if i < 3 else x - 3, y + 4, 32 if i < 3 else 61, 26 + ((i % 3) - 1) * 6, 2, 1, 0.12, 0.9)
+    return f
+def _council():   # 07: proposals arrive from above, approved go on down to the record, rejected leave to the side
+    f = _F(82, 60); cx = 38
+    for r in range(8):
+        for j in range(8 - r): f.dot(cx - (7 - r) * 2 + j * 4, r * 2, 1, r / 7 * 0.4)
+    for rr, n in ((13, 60), (10, 46), (7, 32)): f.orbit(cx + 0.25, 30.25, rr, rr, 0, n, 0, 0.42)
+    f.run(cx, 45, 10, 0, 1, 2, 0.46, 0.9)
+    f.run(22, 56, 33, 1, 0, 2, 0.92); f.run(22, 57, 33, 1, 0, 2, 0.92)
+    f.run(cx + 15, 30, 8, 2, 0, 3, 0.46, 0.9)
+    f.grid(69, 29, 3, 3, 1, 1, 3, 0.9)
+    return f
+def _ledger():   # 08: eight blocks in a chain, each holding the hash of the one before
+    f = _F(86, 55)
+    for b in range(8):
+        x, y = b * 11, 1 + b * 7
+        if b == 7: f.blk(x, y, 9, 5, 2, b / 8)
+        else: f.grid(x, y, 9, 5, 1, 1, 0, b / 8)
+        if b: f.run(x - 7, y - 1, 4, 0, 1, 2, (b - 1) / 8, (b - 0.5) / 8); f.run(x - 6, y + 2, 5, 1, 0, 2, (b - 0.5) / 8, b / 8)
+    return f
+def _sessions():
+    """09 (RES-2: "the note's ten sessions are Proof's ten columns"): ten blocks to the floor, one per basis point, and one
+    open unit above it, a hairline square as on Proof: how far above the floor a session went is not published, so
+    nothing taller is drawn (the site's rule for every picture of this record). The floor and the 0 line are rules"""
+    f = _F(76, 46)
+    for c in range(10):
+        x = c * 8
+        f.open(x, 0, 4, 4, 2)
+        for r in range(10): f.blk(x, 5 + r * 4, 4, 4, 2)
+    f.rule(-1, 4, 78, 0); f.rule(-1, 45, 78, 1)
+    return f
+def _mastercopy():   # 10: one proven agent, its copies below on one bus, one control plane
+    f = _F(92, 66)
+    f.ball(46.25, 11.25, 11, 2, 0.04, 1.5, 1.5)
+    f.run(46, 24, 4, 0, 1, 1, 0.1, 0.2)
+    f.run(10, 28, 73, 1, 0, 1, 0.2, 0.2)
+    for c in range(5):
+        x = 10 + c * 18
+        f.run(x, 29, 4, 0, 1, 1, 0.3, 0.6); f.ball(x + 0.25, 40.25, 6, 1, 0.74, 1.5, 1.5)
+    f.run(0, 60, 92, 1, 0, 1, 0.9)
+    return f
+FORM = {"horizon": _horizon(), "weights": _weights(), "lifecycle": _lifecycle(), "swarm": _swarm(), "boundary": _boundary(),
+        "rulebook": _rulebook(), "council": _council(), "ledger": _ledger(), "sessions": _sessions(), "mastercopy": _mastercopy()}
+RAW = {fig: f.marks() for fig, f in FORM.items()}    # the marks as the formations place them (PARTS selects by these)
+MOVE = {fig: f.trim() for fig, f in FORM.items()}    # then each box is trimmed to its drawing; the labels move with it
+# v2x lab (research moment): every figure is read as a plate. Its labels pin to points of the formation (figure.js sets
+# each at data-at, the formation's own cells) and say what each part is, in the words of its caption or its note: no new
+# fact, no number the caption does not already state. Points are the lattice's (above): a formation that moves needs
+# its labels moved here. Sides: r, l (text beside the point, its first line on the rule), t, b (centred above, below),
+# tl, tr, bl, br (above or below, text ending or starting at the point). Flags: "minor" (dropped on a small stage),
+# "minorsub" (its second line, a gloss, dropped on a small stage; never for a hedge), "acc" (the green part), "rej" (a
+# rejection: the only red text), "n" (a numeral alone, as note 09's axis: mono, as a paper plate's .hp-lab--n), "nsub"
+# (its second line a value, "10 bps": mono). The words are the paper plates' caption register (research.css .fl-t:
+# Inter, sentence case). An optional last item is where the words begin when the point lies inside the drawing: the
+# rule reaches out to it (figure.js data-to, --lead).
+# Path: the span of the formation's own path (the marks' ph, 0..1) the label names; while the light walks the path it
+# lights each label it passes, so the plate reads itself out in the note's order. None: the part is not on the path.
 # r3 (r3-a11y moderate): "keep" marks a label that carries a hedge (note 09 "exact value not published", note 10 "phase
 # two, on the roadmap"). It is listed first, so where words would cross, the claim-side label yields to it; where its
 # own side has no room (a phone's stage), figure.js looks for another free slot round its point; and if there is none,
 # the plate shows no labels at all, so a drawing never names its parts without their hedge (data-keep). "keep=t,tl,tr"
 # limits the slots to those sides: "above the floor" never stands below the columns it describes.
-def _cols():  # note 09: ten columns, x = -1.08 + c * 0.24 (figure.js sessions), numbered in the record's order
-    # award a1 (a1-pixel, D5): the numbers are the drawing's axis, read as one row (figure.js sets them on one baseline),
-    # at one weight and one dot size: the pulse no longer lights them one by one (a still showed a row that faded from
-    # left to right); it still runs through the columns themselves
-    return [(f"{c + 1:02d}", None, (round(-1.08 + c * 0.24, 2), -0.78, 0), "b", "n" if c in (0, 9) else "minor n", None)
-            for c in range(10)]
-def _loop(n):  # note 03: node n of figure.js lifecycle (a ring of r 0.95, tilted 0.9, from angle 0.5)
-    a = n / 6 * math.tau + 0.5; x, z = math.cos(a) * 0.95, math.sin(a) * 0.95
-    return (round(x, 3), round(z * math.sin(0.9) * 0.5, 3), round(z * math.cos(0.9), 3))
+def _cols():  # note 09: the ten columns' numbers, under the 0 line, in the record's order (the drawing's axis: one row)
+    return [(f"{c + 1:02d}", None, (c * 8 + 1.75, 46.25), "b", "n" if c in (0, 9) else "minor n", None) for c in range(10)]
+def _gate(n, dy):  # note 03: gate n of the loop (its block is five cells): the middle of its head (dy -1) or its foot (dy 5.5)
+    a = -5 * PI / 6 + n * PI / 3
+    return (_R(46.25 + 42 * 0.92 * math.cos(a) - 2.25) + 2.25, _R(28.25 + 24 * 0.86 * math.sin(a) - 2.25) + dy)
 LABELS = {
-    "horizon": [("Verification gate", None, (-0.69, -0.74, 0.14), "b", "", (0.2, 0.2)),
-                ("A gate after every step", None, (0.72, 0.57, 0.14), "t", "acc", (0.81, 0.81)),
-                ("p to the power n", None, (0.92, -0.55, -0.12), "b", "", (0.9, 0.9))],  # p, the note's variable, keeps its case
-    "weights": [("One base model", None, (-0.46, 0.22, 0), "l", "", None, (-0.84, 0.22, 0)),
-                ("Adapters", None, (0.705, 0.363, 0), "r", "", (0.0, 0.5)),
-                ("The record", "Each holds the previous hash", (0.14, -0.74, 0), "r", "minorsub", (0.55, 0.95))],
-    # the note's own definition of a lifecycle, in its order round the loop. hc3: Inter's taller line beside a node lay on
-    # the ring's arc (figure.js hid "Record" at 1440 and 3840, "Decisions, approvals" on the index's plate), so the two
-    # side labels' words begin just past the ring's edge, the rule reaching out to them
-    "lifecycle": [("Signal", None, _loop(0), "r", "", (0.0, 0.03)),
-                  ("Decisions, approvals", None, _loop(2), "l", "", (0.18, 0.56), (-1.04,) + _loop(2)[1:]),
-                  ("Executes against an external counterparty", None, _loop(4), "b", "minor", (0.74, 0.74)),
-                  ("Record", None, _loop(5), "r", "acc", (0.93, 0.93), (1.04,) + _loop(5)[1:])],
-    "swarm": [("One large agent", None, (-0.72, 0.45, 0), "t", "", None),
-              ("One gate, one job each", None, (0.64, 0.46, 0), "t", "acc", None)],
-    "boundary": [("01–04 Decide", None, (-0.8, 0.4, 0.36), "l", "", (0.0, 0.34)),
-                 ("The boundary", None, (-0.92, 0, 0.46), "l", "acc", (0.44, 0.44)),
-                 ("05–08 Execute", "Deterministic code", (-0.8, -0.4, 0.36), "l", "minorsub", (0.55, 0.89))],
-    "rulebook": [("Documents, exceptions", None, (1.05, -0.47, 0), "b", "", (0.08, 0.2)),
-                 ("The post-trained model", None, (0, 0.52, 0), "t", "", (0.96, 0.96))],
-    "council": [("Proposals", None, (0.02, 0.95, 0), "r", "", (0.0, 0.1)),
-                ("Execution Council", None, (-0.34, 0.1, 0), "l", "", (0.42, 0.42)),
-                ("Approved", None, (0, -0.86, 0), "l", "acc", (0.84, 0.92)),
-                ("Rejected, logged", None, (1.15, -0.5, 0), "b", "rej", (0.9, 0.9))],
-    "ledger": [("Record 01", None, (-1.0, 0.63, 0), "t", "", (0.0, 0.06)),
-               # hc3: on the link between records 02 and 03 (the margin plate's point since a4), its words beside the next
-               # record, the rule reaching out past it (on phones figure.js sets them above, "tr"): at the chain's middle
-               # figure.js hid them on every desktop since r1, the words lying on the blocks
-               ("Hash of the previous record", None, (-0.571, 0.314, 0.156), "r", "", (0.17, 0.21), (-0.27, 0.314, 0.156)),
-               ("Newest", None, (1.0, -0.63, 0), "b", "acc", (0.875, 0.9))],
-    # the floor is read like an axis, named at the line's left end, the first line on the rule. Award a3 (a3-design): the
-    # site's one order for it, the word then its value ("Floor" over "10 bps", as Proof's Fig. 1.1 and Home's overture,
-    # which since hc3 also set the word in Inter and the value in mono)
-    # r3: each hedge label first ("keep", below). Cut (1 Nov): "Above the floor" points at the top of the one open unit
-    # each column carries (figure.js sessions: the floor F = 0.48, the open unit up to 0.625)
-    "sessions": [("Above the floor", "Exact value not published", (0, 0.615, 0), "t", "keep=t,tl,tr", None),   # hc29: the open block's top is 0.588
-                 ("Floor", "10\u00a0bps", (-1.25, 0.48, 0.07), "l", "nsub", None),
-                 # hc29 (the director's HC29 item 2, for research): the columns stand on a 0 baseline, as on Proof's Fig. 1.1
-                 # (its "0" in mono at the rule's left end), and no longer hang from the floor
-                 ("0", None, (-1.25, -0.72, 0.07), "l", "n", None)] + _cols(),
-    "mastercopy": [("Copies", "Phase two, on the roadmap", (0.93, -0.18, -0.07), "tl", "keep", (0.74, 0.74)),
-                   ("Master agent", None, (0.31, 0.62, 0), "r", "acc", (0.0, 0.06)),
-                   ("One control plane", None, (-1.3, -0.77, 0), "br", "", (0.9, 0.9))],
+    "horizon": [("Verification gate", None, (45.25, 13.5), "b", "", (0.5, 0.5)),
+                ("A gate after every step", None, (72.25, -1), "t", "acc", (0.75, 0.85)),
+                ("p to the power n", None, (80.25, 44.5), "t", "", (0.86, 0.92))],  # p, the note's variable, keeps its case
+    "weights": [("One base model", None, (42.25, 3.5), "t", "", None),
+                ("Adapters", None, (70.75, 8.25), "t", "", (0.0, 0.5)),
+                ("The record", "Each holds the previous hash", (42.25, 52), "b", "minorsub", (0.55, 0.95))],
+    # the note's own definition of a lifecycle, in its order round the loop
+    # "Signal" and "Record" stand off the loop's corners (tl, bl): centred over their gates, their words lay on the outer track
+    "lifecycle": [("Signal", None, _gate(0, -1), "tl", "", (0.0, 0.03)),
+                  ("Decisions, approvals", None, _gate(1, -1), "t", "", (0.18, 0.56)),
+                  ("Executes against an external counterparty", None, _gate(4, 5.5), "b", "minor", (0.74, 0.74)),
+                  ("Record", None, _gate(5, 5.5), "bl", "acc", (0.93, 1.0))],
+    "swarm": [("One large agent", None, (21.25, 1), "t", "", None),
+              ("One gate, one job each", None, (70.25, 1), "t", "acc", None)],
+    "boundary": [("01–04 Decide", None, (2.75, 12.25), "l", "", (0.0, 0.34)),
+                 ("The boundary", None, (2.75, 35.25), "l", "acc", (0.44, 0.44)),
+                 ("05–08 Execute", None, (2.75, 53.25), "l", "", (0.55, 0.89))],   # hc30r: no gloss ("Deterministic code"): its room cost the stack a seventh of its size, and the title says it
+    "rulebook": [("Documents, exceptions", None, (81.25, 1.5), "t", "", (0.08, 0.2)),
+                 ("The post-trained model", None, (47.25, 10.5), "t", "", (0.96, 0.96))],
+    # "Proposals" stands over them (beside them it had no room on a phone, and the first step went unnamed there)
+    "council": [("Proposals", None, (38.25, -0.25), "t", "", (0.0, 0.1)),
+                ("Execution Council", None, (24, 30.5), "l", "", (0.42, 0.42)),
+                ("Approved", None, (37, 49.75), "l", "acc", (0.6, 0.9)),
+                ("Rejected, logged", None, (70.25, 33), "b", "rej", (0.9, 0.9))],
+    "ledger": [("Record 01", None, (4.25, 0), "tr", "", (0.0, 0.06)),
+               # on the link between records 04 and 05, its words in the empty corner under the chain
+               ("Hash of the previous record", None, (37.25, 32.5), "bl", "", (0.4, 0.5)),
+               ("Newest", None, (81.25, 55.5), "b", "acc", (0.875, 0.9))],
+    # the floor is read like an axis, named at the rule's left end, the first line on the rule: the site's one order for
+    # it, the word then its value ("Floor" over "10 bps", as Proof's Fig. 1.1 and Home's overture). Each hedge label
+    # first ("keep", above): "Above the floor" points at the top of the one open unit each column carries. The columns
+    # stand on a 0 line, as on Proof (its "0" in mono at the rule's left end)
+    "sessions": [("Above the floor", "Exact value not published", (37.75, -0.75), "t", "keep=t,tl,tr", None),
+                 ("Floor", "10 bps", (-1, 4.25), "l", "nsub", None),
+                 ("0", None, (-1, 45.25), "l", "n", None)] + _cols(),
+    # the copies' hedge stands under them, in the room above the control plane: the one place it has at every size
+    "mastercopy": [("Copies", "Phase two, on the roadmap", (46.25, 47.25), "b", "keep=b", (0.74, 0.74)),
+                   ("Master agent", None, (58.5, 11.25), "r", "acc", (0.0, 0.06)),
+                   ("One control plane", None, (0.25, 61.5), "br", "", (0.9, 0.9))],
 }
-# award a2 (a2-pixel, medium): a plate's rules, drawn as lines over its points in the labels' space (figure.js .fl-line:
-# both ends projected each frame, so the line sways with the drawing and rests level, on whole pixels). Note 09's 10 bps
-# floor was 1,200 khaki points, a 6-8 px soft band at 1:1, while Proof draws the same floor as a crisp rule; it is now
-# one hairline (--stroke), from end to end of where those points lay. It is part of the drawing, not a label: it shows
-# whenever the plate's words could not (a phone's strip, a hedge with no room)
-RULES = {"sessions": [((-1.25, 0.48, 0.07), (1.25, 0.48, 0.07)), ((-1.25, -0.72, 0.07), (1.25, -0.72, 0.07))]}
-# hc29: which of a figure's rules is its 0 baseline (the axis: drawn quieter than the floor, the data's own line, and never lit)
-BASE = {"sessions": {1}}
-def _base(fig, i): return " is-0" if i in BASE.get(fig, ()) else ""
+LABELS = {fig: [(l[0], l[1], (l[2][0] - MOVE[fig][0], l[2][1] - MOVE[fig][1])) + tuple(l[3:6]) + tuple((t[0] - MOVE[fig][0], t[1] - MOVE[fig][1]) for t in l[6:])
+                for l in ls] for fig, ls in LABELS.items()}
 def _keep(flags): return next((f for f in flags.split() if f.split("=")[0] == "keep"), None)
 def _small(sub, fl):
     """a label's second line: a gloss (minorsub: dropped on a small stage) or a value (nsub: mono, as .hp-lab--n)"""
@@ -186,17 +332,63 @@ def _small(sub, fl):
     c = ' class="fl-minor"' if "minorsub" in fl else ' class="fl-v"' if "nsub" in fl else ""
     return f"<small{c}>{H.escape(sub, quote=False)}</small>"
 assert all(not _keep(l[4]) for ls in LABELS.values() for l in ls[1:]), "a hedge label (keep) is listed first"
-def labels_html(fig):
-    out = [f'<span class="fl-line{_base(fig, i)}" data-at="{a[0]:g},{a[1]:g},{a[2]:g}" data-line="{b[0]:g},{b[1]:g},{b[2]:g}"></span>' for i, (a, b) in enumerate(RULES.get(fig, []))]
-    for i, (text, sub, (x, y, z), side, flags, path, *to) in enumerate(LABELS[fig]):
+# a label's words in CSS px (research.css .fl / .fl-t: Inter at --fs-small, 14 px at 1440; a numeral alone or a value
+# line (n, nsub) 11 px mono, an advance of .64 em with the tracking; 1.35 leading; the rule's 19 px lead beside the
+# point, 18 px above or below it, the tl/tr words 6 px past it). Inter's advances (thousandths of an em, measured in
+# Chromium from the vendored inter-var-latin.woff2; digits at their tabular width; kerning only narrows a word, so the
+# box is never short)
+_FS, _FN = 14, 11
+_ADV = {**dict(zip("abcdefghijklmnopqrstuvwxyz", (562, 612, 571, 612, 583, 370, 613, 591, 242, 242, 549, 242, 876, 591, 600, 612,
+                                                 612, 376, 528, 327, 591, 562, 818, 546, 562, 552))),
+        **dict(zip("ABCDEFGHIJKLMNOPQRSTUVWXYZ", (690, 654, 730, 722, 601, 590, 746, 743, 269, 571, 672, 565, 903, 753, 765, 639,
+                                                 765, 644, 642, 646, 744, 690, 985, 682, 679, 629))),
+        **{c: 650 for c in "0123456789"}, " ": 281, " ": 281, ",": 288, ".": 288, "-": 460, "–": 500}
+# a mono line is measured at 13 px, its size on a phone (research.css: --fs-small under 600 px), where the room is scarcest:
+# at 11 px note 09's "10 bps" had 8 px too little there, and "Floor" slid onto its own rule
+def _tw(t, mono=False): return len(t) * 0.64 * 13 if mono else sum(_ADV.get(c, 1000) for c in t) / 1000 * _FS
+def _lsize(lab, plate=False):
+    """a label's words: (width, height, the em its first line is set in), px at 1440"""
+    text, sub, _at, _side, flags = lab[:5]; fl = flags.split()
+    if "minorsub" in fl and plate: sub = None
+    em = _FN if "n" in fl else _FS
+    return max(_tw(text, "n" in fl), _tw(sub, "nsub" in fl) if sub else 0), 1.35 * em + (1.35 * (_FN if "nsub" in fl else _FS) if sub else 0), em
+def _lbox(side, ax, ay, w, h, em=_FS, lead=19):
+    if side in ("r", "l"):  # the first line on the rule (research.css: translate(.., -.675em))
+        x0 = ax + lead if side == "r" else ax - lead - w
+        return x0, ay - 0.675 * em, x0 + w, ay - 0.675 * em + h
+    y0 = ay - 18 - h if side[0] == "t" else ay + 18
+    x0 = ax - w / 2 if len(side) == 1 else ax + 6 - w if side[1] == "l" else ax - 6
+    return x0, y0, x0 + w, y0 + h
+def _pads(fig):
+    """the room a formation's labels take outside its box, (top, right, bottom, left) in rem: research.css takes it from
+    the stage before it sizes the lattice's cell (.fg), so the words named here have their place at any size. Words
+    above or below the box take its height; words beside it their width (words above or below slide along the box, so
+    their width takes none). Measured with the cell at 4 px and at 8 (a point outside the box moves out with the cell;
+    a point inside it moves in)"""
+    f = FORM[fig]; t = r = b = l = 0.0
+    for lab in LABELS[fig]:
+        w, h, em = _lsize(lab)
+        for K in (4, 8):
+            x0, y0, x1, y1 = _lbox(lab[3], lab[2][0] * K, lab[2][1] * K, w, h, em)
+            if lab[3] not in ("l", "r"): t, b = max(t, -y0), max(b, y1 - f.h * K)
+            elif "minor" not in lab[4].split(): l, r = max(l, -x0), max(r, x1 - f.w * K)   # dropped on a small stage, where the width matters
+    return tuple(math.ceil(v + 6) / 16 if v > 0 else 0 for v in (t, r, b, l))
+PADS = {fig: _pads(fig) for fig in FORM}
+def _rem(v): return f"{v:g}rem"
+def labels_html(fig, pad=False):
+    """a figure's labels, for figure.js (instrument text: nothing shows them until the figure is drawn). pad: the room
+    they take (the index's plate, whose box figure.js sizes for each formation; a hero's is in its markup)"""
+    out = []
+    for i, (text, sub, (x, y), side, flags, path, *to) in enumerate(LABELS[fig]):
         k = _keep(flags)
         cls = "".join(f" fl--{f}" for f in flags.split() if not f.endswith("sub") and f != k)
         keep = (f' data-keep="{k.partition("=")[2].replace(",", " ")}"' if "=" in k else " data-keep") if k else ""
         small = _small(sub, flags.split())
         ph = f' data-ph="{path[0]:g},{path[1]:g}"' if path else ""
-        reach = f' data-to="{to[0][0]:g},{to[0][1]:g},{to[0][2]:g}"' if to else ""
-        out.append(f'<span class="fl{cls}" data-at="{x:g},{y:g},{z:g}"{reach} data-side="{side}"{ph}{keep} style="--i:{i}"><span class="fl-t">{H.escape(text, quote=False)}{small}</span></span>')
-    return f'<template data-labels><div class="fig-labels" data-for="{fig}">{"".join(out)}</div></template>'
+        reach = f' data-to="{to[0][0]:g},{to[0][1]:g}"' if to else ""
+        out.append(f'<span class="fl{cls}" data-at="{x:g},{y:g}"{reach} data-side="{side}"{ph}{keep} style="--i:{i}"><span class="fl-t">{H.escape(text, quote=False)}{small}</span></span>')
+    room = f' data-pad="{" ".join(_rem(v) for v in PADS[fig])}"' if pad else ""
+    return f'<template data-labels><div class="fig-labels" data-for="{fig}"{room} aria-hidden="true">{"".join(out)}</div></template>'
 # hc29 (the director's HC29 item 12, visuals and consistency: "two books in two techniques on sibling pages, the particle
 # one the softer"): the index hero's book is engraved as the blog index's library is (blog_plates.library_svg): every leaf
 # one affine image of a unit square under an orthographic camera, an ink fill that hides what lies behind it, a hairline
@@ -280,417 +472,147 @@ def library_svg():
         keys.append(f'<span class="fl{" fl--" + flag if flag else ""}" data-side="{side}"{foot}>'
                     f'<span class="fl-t">{H.escape(words, quote=False)}</span></span>')
     return svg, f'<div class="rs-keys">{"".join(keys)}</div>', f"{vw / vh:.4f}"
-# award a1 (a1-dev, polish): every note's hero carries its formation as a still in the page, as the index's library has
-# since r2: without JavaScript or WebGL the hero's right half was empty, and with them the drawing arrived only after
-# figure.js started. FORMS below is figure.js's FORMS ported line for line, with its random generator (the same LCG, the
-# same seeds, the same order of draws), so the still's dots are the points the plate draws, seen by the same camera in
-# the pose it rests in (face-on; eye 0, 0.35, 4.4; fov 0.62; --figure-scale .84 x figure.js FIT). Every K-th point that
-# is not dust, as a zero-length stroke with round caps (a dot), one path per colour and depth step. research.css sizes
-# it as the stage sizes the points (.fs-still) and fades it out under them once they are drawn. A change to a formation
-# in figure.js needs the same change here (the build cannot see it): the still would then disagree with the plate.
-TAU = 2 * math.pi
-def _rng(seed):
-    s = [seed & 0xFFFFFFFF]
-    def r():
-        s[0] = (s[0] * 1664525 + 1013904223) & 0xFFFFFFFF
-        return s[0] / 4294967296
-    return r
-def _n(x): return math.ceil(x)  # JS "for (i = 0; i < x; i++)": ceil(x) passes for x > 0
-def _forms(name, N, rnd, g):
-    P = []; push = P.append
-    if name == "horizon":
-        floorN, curveN, stairN = math.floor(N * 0.18), math.floor(N * 0.30), math.floor(N * 0.34)
-        for i in range(floorN): push([(rnd() * 2 - 1) * 1.25, -0.72 + g() * 0.004, (rnd() * 2 - 1) * 0.5, 7])
-        for i in range(curveN):
-            t = rnd(); y = -0.72 + 1.3 * math.pow(0.986, t * 160); push([-1.15 + t * 2.3, y + g() * 0.02, (rnd() - 0.5) * 0.08 - 0.12, 0])
-        for i in range(stairN):
-            t = rnd(); step = math.floor(t * 10); y = 0.52 - (step % 2) * 0.05 + g() * 0.012; push([-1.15 + t * 2.3, y, (rnd() - 0.5) * 0.08 + 0.14, 2])
-        gateN = math.floor(N * 0.011)
-        for s in range(11):
-            x = -1.15 + s * 0.23
-            for i in range(gateN): push([x + g() * 0.004, -0.72 + rnd() * 1.26, 0.14 + g() * 0.01, 1])
-    elif name == "weights":
-        sph = math.floor(N * 0.42)
-        for i in range(sph):
-            la = math.asin(rnd() * 2 - 1); lo = rnd() * TAU; r = 0.46 * math.pow(rnd(), 0.25)
-            push([r * math.cos(la) * math.sin(lo), 0.22 + r * math.sin(la), r * math.cos(la) * math.cos(lo), 2 if rnd() < 0.08 else 0])
-        for k, (tx, tz) in enumerate([(0.35, 0.2), (1.25, 0.9), (2.1, -0.6)]):
-            for i in range(_n(N * 0.09)):
-                a = rnd() * TAU; x = math.cos(a) * 0.72; y = g() * 0.01; z = math.sin(a) * 0.72
-                y1 = y * math.cos(tx) - z * math.sin(tx); z1 = y * math.sin(tx) + z * math.cos(tx)
-                x1 = x * math.cos(tz) - y1 * math.sin(tz); y1 = x * math.sin(tz) + y1 * math.cos(tz)
-                push([x1, 0.22 + y1, z1, 2 if k == 1 else 1])
-        for b in range(5):
-            y = -0.42 - b * 0.16
-            for i in range(_n(N * 0.04)):
-                e = rnd(); w, h = 0.13, 0.05; side = math.floor(e * 4); t = rnd() * 2 - 1
-                pt = [t * w, h] if side == 0 else [t * w, -h] if side == 1 else [-w, t * h] if side == 2 else [w, t * h]
-                push([pt[0] + g() * 0.003, y + pt[1] + g() * 0.003, (rnd() - 0.5) * 0.02, 2])
-            for i in range(_n(N * 0.006)): push([0, y + 0.05 + rnd() * 0.06, 0, 7])
-    elif name == "lifecycle":
-        ringN, nodeN, tilt = math.floor(N * 0.34), math.floor(N * 0.05), 0.9
-        def on(a, r, lift):
-            x, z = math.cos(a) * r, math.sin(a) * r
-            return [x, lift + z * math.sin(tilt) * 0.5, z * math.cos(tilt)]
-        for i in range(ringN):
-            a = rnd() * TAU; r = 0.95 + g() * 0.02; lift = g() * 0.015; p = on(a, r, lift)
-            push([p[0], p[1], p[2], 2 if rnd() < 0.15 else 0])
-        for n in range(6):
-            p = on(n / 6 * TAU + 0.5, 0.95, 0)
-            for i in range(nodeN): push([p[0] + g() * 0.045, p[1] + g() * 0.045, p[2] + g() * 0.045, 2 if n == 5 else 0])
-        for i in range(_n(N * 0.18)):
-            a = rnd() * TAU; r = 0.2 + rnd() * 0.7; p = on(a, r, 0)
-            push([p[0] + g() * 0.01, p[1] + g() * 0.01, p[2] + g() * 0.01, 7])
-    elif name == "swarm":
-        mono = math.floor(N * 0.30)
-        for i in range(mono):
-            la = math.asin(rnd() * 2 - 1); lo = rnd() * TAU; r = 0.42 * math.pow(rnd(), 0.4)
-            push([-0.72 + r * math.cos(la) * math.sin(lo), r * math.sin(la), r * math.cos(la) * math.cos(lo), 1])
-        for i in range(_n(N * 0.56)):
-            gx = math.floor(rnd() * 7); gy = math.floor(rnd() * 7); gz = math.floor(rnd() * 3)
-            push([0.28 + gx * 0.12 + g() * 0.014, -0.42 + gy * 0.14 + g() * 0.014, -0.16 + gz * 0.16 + g() * 0.014, 2 if rnd() < 0.55 else 0])
-        for i in range(_n(N * 0.06)): push([-0.2 + g() * 0.01, (rnd() * 2 - 1) * 0.7, (rnd() - 0.5) * 0.3, 7])
-    elif name == "boundary":
-        per = math.floor(N * 0.085)
-        for l in range(8):
-            y = 0.7 - l * 0.2
-            for i in range(per):
-                rim = rnd() < 0.3; x = (rnd() * 2 - 1) * 0.8; z = (rnd() * 2 - 1) * 0.36
-                if rim:
-                    if rnd() < 0.5: z = (-1 if rnd() < 0.5 else 1) * 0.36
-                    else: x = (-1 if rnd() < 0.5 else 1) * 0.8
-                push([x + g() * 0.004, y + g() * 0.006, z + g() * 0.004, (2 if rnd() < 0.7 else 0) if l == 2 else (0 if l < 4 else 1)])
-        for i in range(_n(N * 0.14)): push([(rnd() * 2 - 1) * 0.92, 0.0 + g() * 0.004, (rnd() * 2 - 1) * 0.46, 2])
-    elif name == "rulebook":
-        cube = math.floor(N * 0.62)
-        for i in range(cube):
-            x = (rnd() * 2 - 1) * 0.5; y = (rnd() * 2 - 1) * 0.5; z = (rnd() * 2 - 1) * 0.5
-            push([x, y, z, 2] if math.hypot(x, y, z) < 0.22 else [x, y, z, 0 if rnd() < 0.5 else 1])
-        for d in range(6):
-            a = d / 6 * TAU; cx = math.cos(a) * 1.05; cz = math.sin(a) * 1.05; cy = (d % 3 - 1) * 0.35
-            for i in range(_n(N * 0.03)): push([cx + (rnd() - 0.5) * 0.02, cy + (rnd() - 0.5) * 0.22, cz + (rnd() - 0.5) * 0.16, 0])
-            for i in range(_n(N * 0.015)):
-                t = rnd(); push([cx * (1 - t) + g() * 0.01, cy * (1 - t) + g() * 0.01, cz * (1 - t) + g() * 0.01, 7])
-    elif name == "council":
-        for i in range(_n(N * 0.18)):
-            t = rnd(); a = rnd() * TAU; r = 0.36 + 0.24 * math.sqrt(rnd())
-            push([math.cos(a) * r * 0.55 + g() * 0.004, 0.1 + 0.02 * math.sin(a), math.sin(a) * r * 0.55 + g() * 0.004, 0])
-        for i in range(_n(N * 0.28)):
-            t = rnd(); push([g() * 0.09 * (1 - t) + g() * 0.02, 1.05 - t * 0.9, g() * 0.09 * (1 - t), 1])
-        for i in range(_n(N * 0.24)):
-            t = rnd(); push([g() * 0.05, 0.05 - t * 1.05, g() * 0.05, 2])
-        for i in range(_n(N * 0.09)):
-            t = rnd(); push([0.05 + t * 1.1, 0.06 - t * 0.55, g() * 0.03, 3])
-        for i in range(_n(N * 0.06)): push([(rnd() * 2 - 1) * 0.6, -1.02 + g() * 0.004, (rnd() * 2 - 1) * 0.3, 2])
-    elif name == "ledger":
-        blocks = 8
-        for b in range(blocks):
-            t = b / (blocks - 1); cx = -1.0 + t * 2.0; cy = 0.55 - t * 1.1; cz = math.sin(t * math.pi) * 0.25
-            for i in range(_n(N * 0.075)):
-                f = math.floor(rnd() * 6); u = rnd() * 2 - 1; v = rnd() * 2 - 1; w, h, d = 0.11, 0.07, 0.07
-                pt = ([u * w, v * h, d] if f == 0 else [u * w, v * h, -d] if f == 1 else [u * w, h, v * d] if f == 2 else
-                      [u * w, -h, v * d] if f == 3 else [w, u * h, v * d] if f == 4 else [-w, u * h, v * d])
-                push([cx + pt[0], cy + pt[1], cz + pt[2], 2 if b == blocks - 1 else 0])
-            if b:
-                q = (b - 1) / (blocks - 1); px = -1.0 + q * 2.0; py = 0.55 - q * 1.1; pz = math.sin(q * math.pi) * 0.25
-                for i in range(_n(N * 0.03)):
-                    s = rnd(); push([px + (cx - px) * s + g() * 0.004, py + (cy - py) * s + g() * 0.004, pz + (cz - pz) * s + g() * 0.004, 2])
-    elif name == "sessions":
-        per = math.floor(N * 0.082); B, F = -0.72, 0.48; U = (F - B) / 10; w = 0.048; H = 0.8 * U; o0 = F + 0.1 * U; o1 = o0 + H
-        def cell(r): r *= 10; k = math.floor(r); return B + (k + 0.1 + 0.8 * (r - k)) * U   # hc29: one block per basis point (figure.js)
-        for c in range(10):
-            x = -1.08 + c * 0.24  # hc7: every column green to the floor, the open unit a khaki outline (figure.js)
-            for i in range(per):
-                if rnd() < 0.86: push([x + (rnd() - 0.5) * 2 * w, cell(rnd()), (rnd() - 0.5) * 0.1, 2]); continue
-                e = rnd() * (4 * w + 2 * H)
-                if e < 2 * w: px, py = x - w + e, o0
-                elif e < 4 * w: px, py = x - w + (e - 2 * w), o1
-                elif e < 4 * w + H: px, py = x - w, o0 + (e - 4 * w)
-                else: px, py = x + w, o0 + (e - 4 * w - H)
-                push([px + g() * 0.004, py + g() * 0.004, (rnd() - 0.5) * 0.03, 1])
-        # award a2: the floor is a rule (RULES), no longer a band of points
-    elif name == "mastercopy":
-        def sphere(cx, cy, cz, r, n, k):
-            for i in range(n):
-                la = math.asin(rnd() * 2 - 1); lo = rnd() * TAU; rr = r * math.pow(rnd(), 0.3)
-                push([cx + rr * math.cos(la) * math.sin(lo), cy + rr * math.sin(la), cz + rr * math.cos(la) * math.cos(lo), k])
-        sphere(0, 0.6, 0, 0.3, math.floor(N * 0.28), 2)
-        for c in range(5):
-            a = (c / 4 - 0.5) * 2.4; cx = math.sin(a) * 1.0; cy = -0.35; cz = math.cos(a) * 0.35 - 0.2
-            sphere(cx, cy, cz, 0.17, math.floor(N * 0.07), 0 if c == 0 else 1)
-            for i in range(_n(N * 0.035)):
-                s = rnd(); push([cx * s + g() * 0.006, 0.6 + (cy - 0.6) * s + g() * 0.006, cz * s + g() * 0.006, 7])
-        for i in range(_n(N * 0.1)): push([(rnd() * 2 - 1) * 1.3, -0.75 + g() * 0.004, (rnd() * 2 - 1) * 0.5, 1])
-    else:
-        raise KeyError(name)
-    return P[:N]
-FIT_JS = {"lifecycle": 1.16, "rulebook": 1.12}  # figure.js FIT: the flat ring and the small cube are drawn larger
-def _camera(fig):
-    """figure.js's camera as the plate rests: a point of the formation (its own space) to the hero stage's units (its
-    height is 400, centred) and the depth term v2"""
-    f, eye, S0 = 1 / math.tan(0.31), (0.0, 0.35, 4.4), 0.84 * FIT_JS.get(fig, 1)
-    n = math.hypot(*eye); zx, zy, zz = (e / n for e in eye)
-    xx, xz = zz, -zx; n = math.hypot(xx, xz) or 1; xx, xz = xx / n, xz / n
-    yx, yy, yz = zy * xz, zz * xx - zx * xz, -zy * xx
-    def proj(px, py, pz):
-        x, y, z = px * S0, py * S0, pz * S0
-        v0 = xx * x + xz * z - (xx * eye[0] + xz * eye[2])
-        v1 = yx * x + yy * y + yz * z - (yx * eye[0] + yy * eye[1] + yz * eye[2])
-        v2 = zx * x + zy * y + zz * z - (zx * eye[0] + zy * eye[1] + zz * eye[2])
-        return 200 * f * v0 / -v2, -200 * f * v1 / -v2, v2  # the stage's height is 400 units, centred
-    return proj
-def _projected(fig, model=False):
-    """the note's formation as the plate rests: every point that is not dust, projected (x, y in units where the hero
-    stage's height is 400, centred; depth 0..1, nearer the eye brighter; kind; with model=True also the point in the
-    formation's own space, for PARTS), and the plate's rules (RULES) as lines"""
-    N = 15000; r = _rng(len(fig) * 977 + 13)
-    g = lambda: (r() + r() + r() - 1.5) * 0.82
-    pts = _forms(fig, N, r, g)
-    proj = _camera(fig)
-    dots = []
-    for p in pts:
-        if p[3] >= 7: continue
-        sx, sy, v2 = proj(p[0], p[1], p[2])
-        d = (sx, sy, min(1, max(0, (v2 + 5.6) / 2.6)), p[3])  # figure.js: nearer the eye, brighter
-        dots.append(d + (tuple(p[:3]),) if model else d)
-    rules = [(proj(*a)[:2], proj(*b)[:2]) for a, b in RULES.get(fig, [])]
-    return dots, rules
-def note_still(fig, every=7):
-    """the note's formation as a still: dots where the plate's points land at rest (see the comment above _rng)"""
-    dots, rules = _projected(fig)
-    paths, xm = {}, 0.0
-    # award a4 (r4): the bright half is the nearer half of the drawing (its own median depth), as the margin plate's since
-    # a3. A fixed 0.5 put every point of note 09's columns, the council's stream and the copies on the dim side (none of
-    # 09's 1,757 dots was "near"): its columns read mid-grey, dimmer than the live drawing they stand in for
-    med = sorted(d[2] for i, d in enumerate(dots, 1) if not i % every)[len(dots) // every // 2]
-    for i, (sx, sy, depth, k) in enumerate(dots, 1):
-        if i % every: continue
-        xm = max(xm, abs(sx))
-        paths.setdefault((k, depth > med), set()).add((round(sx), round(sy)))
-    # award budgets: each path's dots once (2,706 of the ten stills' dots repeated a dot of their own path) and in column
-    # order, each from the one before it (m dx dy), as the margin plates are written: the same dots in the same places, so
-    # the same picture (one path is one stroke: neither order nor a repeat changes a pixel), in 20.4 KB of gzip for the
-    # ten notes, not 46.8 (the notes' HTML -2.6 KB each on average; note 02 13.6 -> 10.7 KB, inside a first round trip)
-    num = lambda v: str(v) if v < 0 else f" {v}"
-    def rel(pts):
-        dd, px, py = [], None, None
-        for x, y in sorted(pts):
-            dd.append(f"M{x} {y}h0" if px is None else f"m{x - px}{num(y - py)}h0"); px, py = x, y
-        return "".join(dd)
-    # award a2: the plate's rules (RULES: note 09's floor) as lines, a hairline at any scale (research.css .fs-still .rule)
-    xm = max([xm] + [abs(q[0]) for ln in rules for q in ln])
-    w = math.ceil(xm + 12)
-    body = "".join(f'<path class="k{k}{" far" if not near else ""}" d="{rel(d)}"/>' for (k, near), d in sorted(paths.items()))
-    body += "".join(f'<path class="rule{_base(fig, i)}" d="M{a[0]:.1f} {a[1]:.1f}L{b[0]:.1f} {b[1]:.1f}"/>' for i, (a, b) in enumerate(rules))
-    return (f'<svg class="fs-still" viewBox="{-w} -200 {2 * w} 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'
-            f'{body}</svg>')
+# The stills. A formation's marks as SVG paths in its own cells (research.css .fs-still, .mk): a run of three or more
+# marks one cell apart is one stroke dashed at the lattice's pitch (.r; two cells apart .r2), every other mark a
+# zero-length stroke (.d), a fused block a filled path (.b), a rule a hairline (.l), an open unit a hairline square
+# (.o). The stroke is the mark (square caps, non-scaling: a whole number of px, research.css --m), so the still is the
+# lattice figure.js draws on the index's plate, at any size.
+# A hero's still is also what moves (lit): its marks on the formation's path are set in LIT steps of that path (.pt,
+# --p: where the step lies, 0..1), and research.css lets each stand a step larger as the pass of light reaches it
+# (.is-pass, set once by figure.js): one drawing, no second renderer over it. `pt` is a name site.css's off-screen
+# pause already lists (as hc29's lf-w), so the pass rests while its hero is off screen.
+def _num(v):
+    s = f"{v:.2f}".rstrip("0").rstrip(".")
+    return (s[1:] if s.startswith("0.") else "-" + s[2:] if s.startswith("-0.") else s) or "0"
+LIT = 16   # the steps of a hero's pass (here, so that Home's marks_hc30r.py, which takes _num .. _paths, has it)
+def _rel(pts):
+    out, px, py = [], None, None
+    for x, y in pts:
+        if px is None: out.append(f"M{_num(x)} {_num(y)}h0")
+        else:
+            dy = _num(y - py); out.append(f"m{_num(x - px)}{'' if dy.startswith('-') else ' '}{dy}h0")
+        px, py = x, y
+    return "".join(out)
+def _paths(marks, lit=False):
+    by = {}
+    for x, y, k, ph, bw, bh in marks:
+        by.setdefault((k, "l" if bh == 0 else "o" if bw < 0 else "b" if bw > 1 or bh > 1 else "", round(ph * LIT) if lit and ph >= 0 else -1), []).append((x, y, bw, bh))
+    out = []
+    for (k, kind, p), ms in sorted(by.items()):
+        tone = f" k{k}" if k else ""
+        on = f' pt" style="--p:{_num(p / LIT)}' if p >= 0 else ""
+        if kind == "l": d = "".join(f"M{_num(x)} {_num(y)}h{_num(bw)}" for x, y, bw, bh in ms)
+        elif kind == "o": d = "".join(f"M{_num(x)} {_num(y)}h{-bw - 1}v{bh - 1}h{bw + 1}z" for x, y, bw, bh in ms)
+        elif kind == "b": d = "".join(f"M{_num(x)} {_num(y)}h{bw - 1}v{bh - 1}h{1 - bw}z" for x, y, bw, bh in ms)
+        else:
+            left = {(x, y) for x, y, _, _ in ms}
+            for step, cls in ((1, "r"), (2, "r2")):
+                d = []
+                for horiz in (True, False):
+                    for x, y in sorted(left, key=(lambda p: (p[1], p[0])) if horiz else (lambda p: (p[0], p[1]))):
+                        if (x, y) not in left or x != int(x) or y != int(y): continue
+                        n = 1
+                        while ((x + n * step, y) if horiz else (x, y + n * step)) in left: n += 1
+                        if n < 3: continue
+                        for i in range(n): left.discard((x + i * step, y) if horiz else (x, y + i * step))
+                        d.append(f"M{_num(x)} {_num(y)}{'h' if horiz else 'v'}{_num((n - 1) * step + 0.01)}")
+                if d: out.append(f'<path class="mk{tone} {cls}{on}" d="{"".join(d)}"/>')
+            if not left: continue
+            kind, d = "d", _rel(sorted(left, key=lambda p: (p[1], p[0])))
+        out.append(f'<path class="mk{tone} {kind}{on}" d="{d}"/>')
+    return "".join(out)
+def _still(fig, body, cls=""):
+    """the still's root is a box of 6 x 6 cells at the lattice's corner, and the marks overflow it: a browser draws an
+    svg root in its box snapped to whole px and rescales the drawing to fit, so the box must be whole px at any cell
+    (6 cells are, at pixel ratios 1, 1.5, 2 and 3); the origin lies .016 of a cell in, so no mark's edge rests on half a
+    pixel, where the rasterizer rounds either way (at 1440 one mark in thirty stood a pixel off its lattice)"""
+    return f'<svg class="fs-still{cls}" viewBox="-.016 -.016 6 6" aria-hidden="true" focusable="false">{body}</svg>'
+def note_still(fig, gid=None):
+    """a formation as a still: the hero's picture, with or without JavaScript (gid: its marks in one group, which the
+    margin plate draws again by reference; its path's marks in the steps of the pass), and the index's plate before
+    figure.js takes it over"""
+    body = _paths(FORM[fig].marks(), lit=bool(gid))
+    return _still(fig, f'<g id="{gid}">{body}</g>' if gid else body)
+def fg(fig, inner, pads=None):
+    """the lattice's box (research.css .fg): its cells and the room its words take; the cell is a whole number of px"""
+    f = FORM[fig]; p = PADS[fig] if pads is None else pads
+    return f'<div class="fg" style="--w:{f.w:g};--h:{f.h:g};--pt:{_rem(p[0])};--pr:{_rem(p[1])};--pb:{_rem(p[2])};--pl:{_rem(p[3])}">{inner}</div>'
 # award a4 (a4-pixel, polish): a figure whose labels are its key (note 09: the floor and its value, the 01-10 axis, and so,
 # by r3's rule, the hedge label "above the floor / exact value not published") keeps that key on its still, where figure.js
-# cannot set the labels (no JavaScript, no WebGL), and on the margin plate. Same words, sides and flags as LABELS
+# cannot set the labels (no JavaScript). Same words, sides and flags as LABELS; each at its point in the lattice's cells
 KEYED = {"sessions"}
-def _fl(lab, style, cls="", attrs="", plate=False):
-    """one label as static markup, in figure.js's .fl grammar (research.css): the point, its rule and the words. On a
-    margin plate (plate=True) a gloss ("minorsub") is dropped, as on a small stage; a hedge (keep) never is"""
+def _fl(lab, style, cls="", attrs=""):
+    """one label as static markup, in figure.js's .fl grammar (research.css): the point, its rule and the words"""
     text, sub, _at, side, flags = lab[:5]
     k = _keep(flags); fl = flags.split()
-    if plate and "minorsub" in fl: sub = None
     c = "".join(f" fl--{f}" for f in fl if not f.endswith("sub") and f != k)
-    small = _small(sub, fl)
-    return f'<span class="fl{c}{cls}" data-side="{side}"{attrs} style="{style}"><span class="fl-t">{H.escape(text, quote=False)}{small}</span></span>'
-def still_keys(fig):
-    """the key over the hero's still (KEYED): each label at its point in the still's own units (the viewBox: the stage's
-    height is 400, centred), placed by research.css from the stage's size (.fs-keys: shown without JavaScript and when
-    figure.js cannot draw; figure.js sets its own labels over the live drawing)"""
+    return f'<span class="fl{c}{cls}" data-side="{side}"{attrs} style="{style}"><span class="fl-t">{H.escape(text, quote=False)}{_small(sub, fl)}</span></span>'
+def still_keys(fig, only=None):
     if fig not in KEYED: return ""
-    proj = _camera(fig)
-    out = []
-    for lab in LABELS[fig]:
-        x, y, _ = proj(*lab[2])
-        out.append(_fl(lab, f"--x:{x:.1f};--y:{y:.1f}"))
-    return f'<div class="fs-keys" aria-hidden="true">{"".join(out)}</div>'
-def still_geo(fig, every=7):
-    """award a3 (4K inspector): where the hero still's drawing lies in its stage, for the caption without JavaScript (or
-    WebGL). research.css hangs the hedge under the drawing's left edge, as figure.js does with the live drawing (--fig-l,
-    --fig-b), from three numbers in units of the stage's height (the viewBox's 400): the viewBox's width (--fs-w), how far
-    the drawing reaches left of the centre (--fs-x) and below it (--fs-y). Every point counts, as figure.js's edge sample.
-    award a4: a keyed still (KEYED) also gives the viewBox's width in its units (--fs-vbw), for its labels, and the hedge
-    hangs under the key's words"""
-    dots, rules = _projected(fig)
-    xm = max([abs(d[0]) for i, d in enumerate(dots, 1) if not i % every] + [abs(q[0]) for ln in rules for q in ln])
-    x0 = min([d[0] for d in dots] + [q[0] for ln in rules for q in ln]); y1 = max(d[1] for d in dots)
-    vbw = 2 * math.ceil(xm + 12)
-    if fig not in KEYED: return f"--fs-w:{vbw / 400:.4f};--fs-x:{-x0 / 400:.4f};--fs-y:{y1 / 400:.4f}"
-    # the hedge hangs under the key's lowest words (the axis): their point, then 18 px of rule and a 15 px line (--fs-kb)
-    proj = _camera(fig); y1 = max([y1] + [proj(*l[2])[1] for l in LABELS[fig] if l[3] == "b"])
-    return f"--fs-w:{vbw / 400:.4f};--fs-x:{-x0 / 400:.4f};--fs-y:{y1 / 400:.4f};--fs-vbw:{vbw};--fs-kb:2.0625rem"
+    labs = [l for l in LABELS[fig] if only is None or only(l)]
+    return '<div class="fs-keys" aria-hidden="true">' + "".join(_fl(l, f"--x:{l[2][0]:g};--y:{l[2][1]:g}") for l in labs) + "</div>"
 # award a4 (a4-design, medium: "the figure follows the argument"): the part of a note's drawing that a part of the note
-# names. While "In this note" marks that part (research.js), the margin plate lights it: its dots at full strength over
-# the rest of the drawing, which recedes, and its label (the hero's words, LABELS) beside it, in the figure.js pulse's
-# grammar (.is-lit). Only where the note's own text names a part the drawing has (its heading or its words); every other
-# part of the note shows the whole still, as before. Keys: the part heads, word for word (the build stops otherwise);
-# the label LABELS names; which of the formation's points are that part (figure.js FORMS: x, y, z, kind; None: the
-# plate's rule, note 09's floor). No new data and no new words: a label the hero already shows, a part already drawn
+# names. While "In this note" marks that part (research.js), the margin plate lights it: its marks stand at full strength
+# while the rest of the drawing recedes, and the caption under the plate names it in the hero's words (LABELS). Only
+# where the note's own text names a part the drawing has (its heading or its words); every other part of the note shows
+# the whole still. Keys: the part heads, word for word (the build stops otherwise); the label LABELS names; which of the
+# lattice's marks are that part (x, y, kind, ph, bw, bh). No new data and no new words
 PARTS = {
-    "horizon": [("The problem is horizon, not capability", "p to the power n", lambda x, y, z, k: k == 0),  # "p to the n"
-                ("Decomposition changes the exponent", "A gate after every step", lambda x, y, z, k: k in (1, 2))],  # the gate after step k
-    "weights": [("Post-training moves the rulebook into the weights", "One base model", lambda x, y, z, k: math.hypot(x, y - 0.22, z) < 0.5),
-                ("Parameter-efficient specialization and the forgetting problem", "Adapters", lambda x, y, z, k: 0.71 < math.hypot(x, y - 0.22, z) < 0.73),
-                (("Part two: proving what happened", "What must go in the record", "Replay as off-policy evaluation"), "The record", lambda x, y, z, k: y < -0.36)],
-    "swarm": [("The verification argument", "One gate, one job each", lambda x, y, z, k: x > 0.15)],  # "small agents are verifiable ... at which gate"
-    "boundary": [(("Why the boundary sits there", "MCP as the structural interface"), "The boundary", lambda x, y, z, k: abs(y) < 0.03),
-                 ("Idempotency as a safety property", "05–08 Execute", lambda x, y, z, k: y < -0.05)],  # "the execution layer"
-    "rulebook": [("Exceptions are the training set", "Documents, exceptions", lambda x, y, z, k: math.hypot(x, z) > 0.9),
-                 ("Why this creates a defensible position", "The post-trained model", lambda x, y, z, k: math.hypot(x, z) < 0.8)],  # "a post-trained model is a moat"
-    "council": [("What the council checks", "Execution Council", lambda x, y, z, k: k == 0),
-                ("Three operating modes", "Approved", lambda x, y, z, k: k == 2 and y > -1.0),  # "every approved proposal"
-                ("Conflict arbitration", "Proposals", lambda x, y, z, k: k == 1)],  # "two decision agents propose actions"
-    "ledger": [("Why append-only", "Hash of the previous record", lambda x, y, z, k: k == 2 and not (x > 0.885 and y < -0.475))],  # the links, not the newest block
-    "sessions": [("The result", "Floor", None)],  # "every one above the floor we set of ten basis points": the rule
-    "mastercopy": [("Phase one: prove one", "Master agent", lambda x, y, z, k: k == 2),
-                   ("Phase two: master and copy", "Copies", lambda x, y, z, k: k in (0, 1) and y > -0.6)],
+    "horizon": [("The problem is horizon, not capability", "p to the power n", lambda x, y, k, ph, bw, bh: k == 0),  # "p to the n"
+                ("Decomposition changes the exponent", "A gate after every step", lambda x, y, k, ph, bw, bh: y < 14 and k)],  # the gate after step k
+    "weights": [("Post-training moves the rulebook into the weights", "One base model", lambda x, y, k, ph, bw, bh: k == 0),
+                ("Parameter-efficient specialization and the forgetting problem", "Adapters", lambda x, y, k, ph, bw, bh: k and y < 44),
+                (("Part two: proving what happened", "What must go in the record", "Replay as off-policy evaluation"), "The record", lambda x, y, k, ph, bw, bh: y >= 44)],
+    "swarm": [("The verification argument", "One gate, one job each", lambda x, y, k, ph, bw, bh: x >= 50)],  # "small agents are verifiable ... at which gate"
+    "boundary": [(("Why the boundary sits there", "MCP as the structural interface"), "The boundary", lambda x, y, k, ph, bw, bh: k == 2),
+                 ("Idempotency as a safety property", "05–08 Execute", lambda x, y, k, ph, bw, bh: k == 1)],  # "the execution layer"
+    "rulebook": [("Exceptions are the training set", "Documents, exceptions", lambda x, y, k, ph, bw, bh: x < 33 or x > 60),
+                 ("Why this creates a defensible position", "The post-trained model", lambda x, y, k, ph, bw, bh: 33 <= x <= 60)],  # "a post-trained model is a moat"
+    "council": [("What the council checks", "Execution Council", lambda x, y, k, ph, bw, bh: k == 0),
+                ("Three operating modes", "Approved", lambda x, y, k, ph, bw, bh: k == 2 and y < 56),  # "every approved proposal"
+                ("Conflict arbitration", "Proposals", lambda x, y, k, ph, bw, bh: k == 1)],  # "two decision agents propose actions"
+    "ledger": [("Why append-only", "Hash of the previous record", lambda x, y, k, ph, bw, bh: k == 2 and bw == 1)],  # the links, not the newest block
+    "sessions": [("The result", "Floor", lambda x, y, k, ph, bw, bh: bh == 0 and k == 0)],  # "every one above the floor we set of ten basis points": the rule
+    "mastercopy": [("Phase one: prove one", "Master agent", lambda x, y, k, ph, bw, bh: k == 2),
+                   ("Phase two: master and copy", "Copies", lambda x, y, k, ph, bw, bh: 30 < y < 50)],
 }
-# a label's words beside its point on a margin plate, in CSS px where the plate is narrowest (1440: 278 px for its 300
-# units); research.css .fl / .fl-t: Inter at --fs-small (14 px at 1440; hc3, was 11 px mono), a numeral alone or a value
-# line (n, nsub) 11 px mono (an advance of .64 em with the tracking), 1.35 leading, the rule's 19 px lead beside the
-# point, 18 px above or below it, the tl/tr words 6 px past it. Where no side fits, the box grows. Inter's advances
-# (thousandths of an em, measured in Chromium from the vendored inter-var-latin.woff2; digits at their tabular width;
-# kerning only narrows a word, so the box is never short)
-_PU, _FS, _FN = 278 / 300, 14, 11
-_ADV = {**dict(zip("abcdefghijklmnopqrstuvwxyz", (562, 612, 571, 612, 583, 370, 613, 591, 242, 242, 549, 242, 876, 591, 600, 612,
-                                                 612, 376, 528, 327, 591, 562, 818, 546, 562, 552))),
-        **dict(zip("ABCDEFGHIJKLMNOPQRSTUVWXYZ", (690, 654, 730, 722, 601, 590, 746, 743, 269, 571, 672, 565, 903, 753, 765, 639,
-                                                 765, 644, 642, 646, 744, 690, 985, 682, 679, 629))),
-        **{c: 650 for c in "0123456789"}, " ": 281, "\u00a0": 281, ",": 288, ".": 288, "-": 460, "–": 500}
-def _tw(t, mono=False): return len(t) * 0.64 * _FN if mono else sum(_ADV.get(c, 1000) for c in t) / 1000 * _FS
-_NEAR = {"r": "tr br l tl bl t b", "l": "tl bl r tr br t b", "t": "tl tr b bl br r l", "b": "bl br t tl tr l r",
-         "tl": "t tr l bl r", "tr": "t tl r br l", "bl": "b br l tl r", "br": "b bl r tr l"}
-_NEAR = {k: v.split() for k, v in _NEAR.items()}
-# where a part's label stands on the small plate when the hero's point would put its words on its own part or past the
-# plate's edge: another point of the same part (the formation's own space) and its side. "Hash of the previous record"
-# on the link between records 02 and 03 (since hc3 the hero's point too), its words in the empty corner above the chain;
-# "05-08 execute" under the lowest layer; "one base model" over the sphere's top (beside its left edge the words took a third of the plate);
-# hc3: "Adapters" up and right from a point of the middle ring (Inter's taller line no longer fit beside the ring's right
-# edge, and the box grew right: the unlit drawing stood 26 units left of centre)
-PLATE_AT = {"Hash of the previous record": ((-0.571, 0.314, 0.156), "tr"), "05–08 Execute": ((0.0, -0.71, 0.0), "b"),
-            "One base model": ((0.0, 0.68, 0.0), "t"), "Adapters": ((0.526, 0.711, 0.036), "tr")}
-def _lbox(side, ax, ay, w, h, em=_FS):
-    if side in ("r", "l"):  # the first line on the rule (research.css: translate(.., -.675em))
-        x0 = ax + 19 if side == "r" else ax - 19 - w
-        return x0, ay - 0.675 * em, x0 + w, ay - 0.675 * em + h
-    y0 = ay - 18 - h if side[0] == "t" else ay + 18
-    x0 = ax - w / 2 if len(side) == 1 else ax + 6 - w if side[1] == "l" else ax - 6
-    return x0, y0, x0 + w, y0 + h
-def margin_still(fig, slugs=(), every=5):
+def margin_plate(fig, slugs=()):
     """award a3 (a3-design, big): the margin plate beside a note's text (from 1440 px; research.css .np-rail) is the
-    note's own still, drawn again for its size: the drawing cropped to its own extent (plus a margin), every 5th point
-    (the hero's still has every 7th over four times the area: at this size the plate needs more to read as the same
-    drawing, not dust), at the same depth and colour steps; the box's shape is the drawing's, between square and 8:5, so
-    a flat ring and a tall council both fill their plate. Each dot is a relative move in a 300-wide box.
-    It is a file (site/assets/img/research/plate-<fig>.svg, presentation attributes in the tokens' values: no style
-    element, so the CSP's style-src holds for it too), not inline: inline it took note 02's HTML from 13.3 to 16.7 KB
-    gzip, past the first round trip (Lighthouse FCP +120 ms on every note); as a lazy <img> in a rail that phones never
-    show, a phone never fetches it. Its dots scale with the plate (2 px at 1440, 5 at 3840 = 1920 doubled). A plate's
-    rule (note 09's floor) is not in the file: research.css draws it over the image as a hairline (--hair), crisp at any
-    density. Returns the <img> (and the rule) for the note's markup. Its caption is the hero's (cap_html: the hedge).
-    award a4: each part a part of the note names (PARTS) is a second file, plate-<fig>-<n>.svg: the same dots of that
-    part, at full strength, laid over the still and shown while the note's contents mark that part (research.js;
-    research.css .np-part); its label stands beside it then. A keyed figure (KEYED: note 09) carries its key on the plate
-    at all times. The box grows until every label it may show fits inside it at 1440, on its own side or the next free one"""
-    dots, rules = _projected(fig, model=True)
-    pick = [d for i, d in enumerate(dots, 1) if not i % every]
-    proj = _camera(fig)
-    byname = {l[0]: l for l in LABELS[fig]}
-    parts = []
+    note's own still, drawn again at the plate's size: the hero's marks by reference (<use>: no second copy in the page),
+    in whole px cells as everywhere. Each part a part of the note names (PARTS) is a second still of that part's marks
+    alone, shown over the first while the note's contents mark that part (research.js; research.css .np-part), and the
+    caption says its name. A keyed figure (KEYED: note 09) keeps its hedge label on the plate at all times.
+    Returns (the plate, the names for its caption)"""
+    f = FORM[fig]; marks = f.marks(); byname = {l[0]: l for l in LABELS[fig]}
+    out, names = [_still(fig, '<use href="#fs"/>', " np-still")], []
     for heads_, name, test in PARTS.get(fig, []):
         hs = heads_ if isinstance(heads_, tuple) else (heads_,)
         for h_ in hs: assert slugify(h_) in slugs, f"PARTS[{fig!r}]: “{h_}” is not a part head of its note"
-        parts.append((" ".join(slugify(h_) for h_ in hs), byname[name], test))
-    # the labels the plate may show: the key (always), each part's label (while lit); a key label a part names is lit too
-    labs = {}
-    if fig in KEYED:
-        for l in LABELS[fig]:
-            if "minor" not in l[4].split(): labs[l[0]] = [l, True, [], []]
-    for ss, l, test in parts:
-        e = labs.setdefault(l[0], [l, False, [], []]); e[2].append(ss)
-        if test: e[3].append(test)
-    xs = [d[0] for d in pick] + [q[0] for ln in rules for q in ln]; ys = [d[1] for d in pick] + [q[1] for ln in rules for q in ln]
-    x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
-    for _ in range(16):
-        w, h = x1 - x0, y1 - y0
-        W, H = w * 1.16, h * 1.2  # the drawing with a margin; then the box's shape clamped to 1:1 .. 8:5 (a tall drawing in
-        W = max(W, H); H = max(H, W / 1.6)  # a square, a flat one in an 8:5 box, centred)
-        s = 300 / W; hb = round(H * s)
-        ox, oy = (x0 + x1) / 2, (y0 + y1) / 2
-        fx = lambda x: (x - ox) * s + 150; fy = lambda y: (y - oy) * s + H * s / 2
-        placed, grow = [], [0.0, 0.0, 0.0, 0.0]
-        for l, perm, sss, tests in labs.values():
-            text, sub, at, side, flags = l[:5]
-            if "minorsub" in flags.split(): sub = None
-            k = _keep(flags); allowed = k.partition("=")[2].split(",") if k and "=" in k else None
-            if l[0] in PLATE_AT: at, side = PLATE_AT[l[0]]
-            ax, ay = proj(*at)[:2]
-            px, py = fx(ax) * _PU, fy(ay) * _PU
-            fl_ = flags.split(); em = _FN if "n" in fl_ else _FS
-            tw = max(_tw(text, "n" in fl_), _tw(sub, "nsub" in fl_) if sub else 0)
-            th = 1.35 * em + (1.35 * (_FN if "nsub" in fl_ else _FS) if sub else 0)
-            # a key keeps the hero's side (its own, or a hedge's allowed ones); a part's label, shown only while the rest
-            # of the drawing recedes, may take another side round its point, so long as no dot of its own part is under
-            # its words
-            order = [side] + [sd for sd in (allowed or (() if perm else _NEAR[side])) if sd != side]
-            lit_px = [(fx(d[0]) * _PU, fy(d[1]) * _PU) for d in pick if any(t(*d[4], d[3]) for t in tests)]
-            under = lambda b: sum(1 for x, y in lit_px if b[0] - 3 <= x <= b[2] + 3 and b[1] - 3 <= y <= b[3] + 3)
-            for sd in order:
-                b = _lbox(sd, px, py, tw, th, em)
-                if b[0] >= 4 and b[1] >= 4 and b[2] <= 300 * _PU - 4 and b[3] <= hb * _PU - 4 and not under(b):
-                    placed.append((l, perm, sss, sd, ax, ay)); break
-            else:  # no side fits: the drawing's extent grows, on the side that keeps the drawing largest (a taller box
-                # costs nothing while the box is wider than tall; a wider one shrinks the drawing)
-                P, best = s * _PU, None
-                for sd in [sd for sd in order if not under(_lbox(sd, px, py, tw, th, em))] or order[:1]:
-                    b = _lbox(sd, px, py, tw, th, em)
-                    g = [max(0.0, (4 - b[0]) / P), max(0.0, (b[2] - 300 * _PU + 4) / P), max(0.0, (4 - b[1]) / P), max(0.0, (b[3] - hb * _PU + 4) / P)]
-                    w2, h2 = (x1 - x0) + g[0] + g[1], (y1 - y0) + g[2] + g[3]
-                    sc = 1 / max(w2 * 1.16, h2 * 1.2)
-                    if best is None or sc > best[0] + 1e-9: best = (sc, g)
-                grow = [max(a, b) for a, b in zip(grow, best[1])]
-        if not any(g > 0 for g in grow): break
-        x0 -= max(0.0, grow[0]) + 0.5 * (grow[0] > 0); x1 += max(0.0, grow[1]) + 0.5 * (grow[1] > 0); y0 -= max(0.0, grow[2]) + 0.5 * (grow[2] > 0); y1 += max(0.0, grow[3]) + 0.5 * (grow[3] > 0)
-    else:
-        raise AssertionError(f"margin_still({fig!r}): a label does not fit its plate")
-    X = lambda x: round(fx(x)); Y = lambda y: round(fy(y))
-    # pass 3: nearer than the drawing's own median depth is the bright half (a fixed 0.5 left note 09's columns and the
-    # council all "far": grey, and dimmer than the hero they repeat)
-    med = sorted(d[2] for d in pick)[len(pick) // 2]
-    num = lambda v: str(v) if v < 0 else f" {v}"
-    # site.css's tokens: --paper, --khaki, --signal-bright, --reject-bright (the hero still's .fs-still .k0-.k3)
-    COL = {0: "#F5F2EC", 1: "#ACA68E", 2: "#4FCB93", 3: "#D9675D"}
-    def svg(name, sel, op):
-        groups = {}
-        for d in sel: groups.setdefault((d[3], d[2] > med), set()).add((Y(d[1]), X(d[0])))
-        paths = []
-        for (k, near), pts in sorted(groups.items()):
-            dd, px, py = [], None, None
-            for y, x in sorted(pts):
-                dd.append(f"M{x} {y}h0" if px is None else f"m{x - px}{num(y - py)}h0"); px, py = x, y
-            paths.append(f'<path stroke="{COL[k]}" stroke-opacity="{op(k, near)}" d="{"".join(dd)}"/>')
-        write(os.path.join(ROOT, "assets", "img", "research", name),
-              f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 {hb}" width="300" height="{hb}"><g fill="none" stroke-width="2.16" stroke-linecap="round">'
-              + "".join(paths) + "</g></svg>\n")
-    svg(f"plate-{fig}.svg", pick, lambda k, near: {(2, True): ".95", (2, False): ".74"}.get((k, near), ".9" if near else ".58"))
-    lit = {}  # the rule's parts
-    out = [f'<img class="np-still" src="../assets/img/research/plate-{fig}.svg" width="300" height="{hb}" alt="" loading="lazy" decoding="async">']
-    for n, (ss, l, test) in enumerate(parts, 1):
-        if test is None: lit.setdefault("rule", []).append(ss); continue
-        sel = [d for d in pick if test(*d[4], d[3])]
-        assert sel, f"PARTS[{fig!r}]: “{l[0]}” selects no point"
-        svg(f"plate-{fig}-{n}.svg", sel, lambda k, near: "1" if near or k == 2 else ".8")  # the part at full strength
-        out.append(f'<img class="np-part" data-parts="{ss}" src="../assets/img/research/plate-{fig}-{n}.svg" width="300" height="{hb}" alt="" loading="lazy" decoding="async">')
-    rp = f' data-parts="{" ".join(lit["rule"])}"' if "rule" in lit else ""
-    out += [f'<i class="np-rule{_base(fig, i)}"{"" if _base(fig, i) else rp} style="--y:{fy(a[1]) / hb * 100:.2f}%;--x0:{fx(a[0]) / 3:.2f}%;--x1:{fx(b[0]) / 3:.2f}%"></i>' for i, (a, b) in enumerate(rules)]
-    for l, perm, sss, sd, ax, ay in placed:
-        out.append(_fl((l[0], l[1], l[2], sd, l[4]), f"--x:{fx(ax) / 3:.2f}%;--y:{fy(ay) / hb * 100:.2f}%", " np-key" if perm else "",
-                       f' data-parts="{" ".join(sss)}"' if sss else "", plate=True))
-    return "".join(out)
+        sel = [m for m, raw in zip(marks, RAW[fig]) if test(*raw)]
+        assert sel and len(sel) < len(marks), f"PARTS[{fig!r}]: “{name}” selects {len(sel)} of {len(marks)} marks"
+        ss = " ".join(slugify(h_) for h_ in hs); lab = byname[name]
+        out.append(_still(fig, _paths(sel), " np-part" + (" np-rule" if all(m[5] == 0 for m in sel) else "")).replace("<svg ", f'<svg data-parts="{ss}" ', 1))
+        sub = lab[1] if lab[1] and "minorsub" not in lab[4].split() else None   # a value or a hedge stays with its name; a gloss does not
+        names.append(f'<span class="np-name" data-parts="{ss}">{H.escape(lab[0] + (" · " + sub[0].lower() + sub[1:] if sub else ""), quote=False)}</span>')
+    hedge = [l for l in LABELS[fig] if _keep(l[4])] if fig in KEYED else []
+    pt = max([math.ceil(_lsize(l)[1] + 18 + 6) / 16 for l in hedge] + [0])
+    return fg(fig, "".join(out) + still_keys(fig, lambda l: _keep(l[4])), (pt, 0, 0, 0)), "".join(names)
+def mark_svg(fig, tones=("#F5F2EC", "#F5F2EC", "#4FCB93", "#D9675D"), quiet=".6"):
+    """a formation as a file of its own (Home's three note marks, a share card): the same lattice, the tokens' values as
+    presentation attributes, in cells (a mark is half a cell). Crisp where it is shown at a whole number of px a cell
+    (a width that is a multiple of its viewBox's). tones: paper white, the quiet tone (drawn at `quiet`), green, red"""
+    f = FORM[fig]
+    def attrs(m):
+        cls = m.group(1).split(); k = next((int(c[1:]) for c in cls if c[0] == "k" and c[1:].isdigit()), 0); t = cls[-1]
+        a = f' stroke="{tones[k]}"' + (f' stroke-opacity="{quiet}"' if k == 1 else "")
+        if t == "r": a += ' stroke-dasharray="0 1"'
+        elif t == "r2": a += ' stroke-dasharray="0 2"'
+        elif t == "b": a += f' fill="{tones[k]}" stroke-linejoin="miter"'
+        elif t in ("l", "o"): a += ' stroke-width=".125" stroke-linecap="butt" stroke-linejoin="miter"'
+        return "<path" + a
+    body = re.sub(r'<path class="([^"]+)"', attrs, _paths(f.marks()))
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="-.25 -.25 {f.w + .5:g} {f.h + .5:g}" width="{f.w * 4 + 2:g}" height="{f.h * 4 + 2:g}">'
+            f'<g fill="none" stroke-width=".5" stroke-linecap="square" shape-rendering="crispEdges">{body}</g></svg>\n')
 # v2x: notes link to the instruments they describe (PAGES.md §6.4, NL-01..NL-10); targets are relative to research/
 # award a3 (a3-ux): the desk is Lifecycles #desk (its own hero links there; the cut moved it off #lc01), and the act on
 # the chain has one verb sitewide, "Change a record" (Home §06, Trust)
@@ -944,6 +866,10 @@ for i, post in enumerate(ordered):
     # hc26r (RES-1, SYS-2 "the drawing travels"): the hero's figure is the page's one data-vt-dest (site.css names it
     # `fig`), so the drawing a link carries (the index's plate, Home §05's marks) becomes it over the page turn. Its still
     # is whole at the first paint, so it lands drawn. The pager carries no drawing, so it has no source (notes/research.md)
+    # hc30r: the stage follows the words in the page (it is placed, not flowed), so the hedge it now holds is read after
+    # the title; the drawing and its labels are hidden from assistive technology one by one, the hedge is not. The hero
+    # has no canvas: its still is the figure, and the pass of light is the still's own (LIT, above)
+    plate = margin_plate(post["fig"], {a for a, _ in heads})
     first = "<a class='pager-card' href='../research.html'><span class='k'>← Research</span><h3>All ten notes</h3></a>"
     last = "<a class='pager-card next' href='../access.html'><span class='k'>Next →</span><h3>Bring us a lifecycle.</h3></a>"
     page = f'''<!DOCTYPE html>
@@ -963,17 +889,16 @@ for i, post in enumerate(ordered):
 
 {nav}
   <main id="main">
-    <section class="page-hero page-hero--dark is-dark grain article-hero" style="{still_geo(post['fig'])}">
-      <div class="figure-stage article-figure has-still" data-figure="{post['fig']}" data-spin="0.10" data-plate data-rest="2.5" data-bbox data-vt-dest aria-hidden="true">{note_still(post['fig'])}{still_keys(post['fig'])}<canvas></canvas>{labels_html(post['fig'])}</div>
+    <section class="page-hero page-hero--dark is-dark grain article-hero">
       <div class="container">
         <div class="article-hero-grid">
           <div>
             <h1 class="display-1 article-title{' article-title--long' if long_title else ''}{' article-title--split' if 't-head' in title_html(title) else ''}" data-reveal data-split>{title_html(title)}</h1>
             <div class="article-meta" data-reveal style="--d:120ms"><span>Founder’s notes</span><span>{post['minutes']}{NB}min read</span></div>
           </div>
-          {cap_html(post['fig'], "figcap article-figcap", attrs=" data-hang")}
         </div>
       </div>
+      <div class="figure-stage article-figure has-still" data-figure="{post['fig']}" data-vt-dest>{fg(post['fig'], note_still(post['fig'], "fs") + still_keys(post['fig']) + cap_html(post['fig'], "figcap article-figcap"))}{labels_html(post['fig'])}</div>
     </section>
 
     <section class="section article-body-section">
@@ -990,7 +915,7 @@ for i, post in enumerate(ordered):
             <div class="note-run"><ul>{run}</ul></div>
             <div class="note-disc"><p>{H.escape(SERIES_DISCLOSURE, quote=False)} <a href="#disclosures">See the disclosures.</a></p></div>
           </article>
-          <div class="np-rail" aria-hidden="true"><figure class="np-plate"><div class="np-stage is-dark">{margin_still(post['fig'], {a for a, _ in heads})}</div><figcaption>{cap_html(post['fig'], "figcap np-cap")}</figcaption></figure></div>
+          <div class="np-rail" aria-hidden="true"><figure class="np-plate"><div class="np-stage is-dark">{plate[0]}</div><figcaption>{cap_html(post['fig'], "figcap np-cap").replace("</p>", f'<span class="np-names">{plate[1]}</span></p>')}</figcaption></figure></div>
         </div>
       </div>
     </section>
@@ -1109,7 +1034,7 @@ index_page = f'''<!DOCTYPE html>
       <div class="rs-rail" aria-hidden="true">
         <div class="container rs-rail-in">
           <figure class="rs-plate">
-            <div class="rs-stage is-dark grain"><div class="figure-stage" id="research-figure" data-figure="{ordered[0]['fig']}" data-spin="0.07" data-rest="2.5" data-plate><canvas></canvas>{"".join(labels_html(p['fig']) for p in ordered)}</div></div>
+            <div class="rs-stage is-dark grain"><div class="figure-stage" id="research-figure" data-figure="{ordered[0]['fig']}">{fg(ordered[0]['fig'], note_still(ordered[0]['fig']))}<canvas></canvas>{"".join(labels_html(p['fig'], pad=True) for p in ordered)}</div></div>
             <figcaption class="rs-caption">{cap_html(ordered[0]['fig'], 'figcap rs-cap', title=True)}</figcaption>
           </figure>
         </div>

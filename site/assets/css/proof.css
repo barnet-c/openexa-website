@@ -138,6 +138,7 @@
 
 [data-page="proof"] .cost-row:first-child { padding-top: 0; }
 @container cost (max-width: 860px) { [data-page="proof"] .cost-row:first-child .cost-bar { margin-top: .875rem; } }
+[data-page="proof"] .cost { --cost-n: var(--fs-item); }
 
 @media (max-width: 600px) {
   [data-page="proof"] .proof-table > tbody > tr { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: .25rem .75rem; padding: .625rem 0 .5625rem; }
@@ -183,6 +184,15 @@
   [data-page="trust"] .hero-plate--council:is(:not(.will-reveal), .is-in) .tp-l-rj { animation: pf-fade .4s var(--ease-out) 1.80s backwards; }
 }
 @keyframes tp-drop { from { opacity: 0; transform: translateY(-1.375rem); } }
+[data-page="trust"] .tp-run { opacity: 0; }
+@media screen and (prefers-reduced-motion: no-preference) {
+  [data-page="trust"] .hero-plate--council.is-act .tp-prop.tp-run { animation: tp-run 1.8s linear both; }
+  [data-page="trust"] .hero-plate--council.is-act .tp-pass.hp-glow { animation: tp-chk 1.8s var(--ease) both; }
+  [data-page="trust"] .hero-plate--council.is-act .tp-set { transform-origin: 50% 50%; animation: tp-took 1.8s var(--ease-out) both; }
+}
+@keyframes tp-run { 0% { opacity: 1; transform: none; animation-timing-function: var(--ease-move); } 24% { opacity: 1; transform: translateY(74px); } 27%, 60% { opacity: 0; transform: translateY(74px); } 61% { opacity: 0; transform: translateY(266px); } 64% { opacity: 1; transform: translateY(266px); animation-timing-function: var(--ease-move); } 90% { opacity: 1; transform: translateY(362px); } 100% { opacity: 0; transform: translateY(362px); } }
+@keyframes tp-chk { 0%, 22% { stroke-opacity: .13; } 42% { stroke-opacity: .42; } 64%, 100% { stroke-opacity: .13; } }
+@keyframes tp-took { 0%, 88% { transform: none; } 93% { transform: scale(1.7); } 100% { transform: none; } }
 [data-page="trust"] .hero-plate--council .hp-art { margin-inline: 1rem; padding: 0; }
 [data-page="trust"] .hero-plate--council .hp-reg { inset: -.75rem -1rem; }
 [data-page="trust"] .hero-plate--council .hp-cap { margin: 1.25rem 0 0; }
@@ -198,11 +208,10 @@
   [data-page="trust"] .page-hero--plate > .hero-plate--council { grid-column: 7 / -1; justify-self: stretch; max-width: none; margin-top: 0; align-self: center; }
 }
 
-.tr-lt .lt-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: .125rem 1.375rem; }
 .tr-lt .lt-head { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "title state ctrl"; row-gap: .5rem; column-gap: 1.375rem; padding-top: .75rem; padding-bottom: .75rem; }
 .tr-lt .lt-state { justify-self: start; }
 @media (max-width: 79.99em) { .tr-lt .lt-head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title ctrl" "state state"; } }
-@media (scripting: none) { .tr-lt .lt-state, .tr-lt .lt-foot > span:first-child { display: none; } }
+@media (scripting: none) { .tr-lt .lt-state, .tr-lt .lt-foot > .fc-h > span { display: none; } }
 .tr-lt [data-lt-say] { text-transform: none; letter-spacing: 0; }
 .tr-lt .lt-btn svg path { vector-effect: non-scaling-stroke; stroke-width: var(--icon-stroke); }
 .tr-lt :is([data-lt-edit], [data-lt-verify], [data-lt-restore]) { background-image: linear-gradient(var(--signal), var(--signal)); background-repeat: no-repeat; background-size: 0 calc(2 * var(--hair)); background-position: 0 100%; transition: border-color var(--dur-feedback) var(--ease-out), color var(--dur-feedback) var(--ease-out), background-color var(--dur-feedback) var(--ease-out), background-size var(--dur-move) var(--ease); }
@@ -244,7 +253,6 @@
 .tr-lt .tr-enter { margin: 0; font: 400 .8125rem/1.45 var(--sans); letter-spacing: 0; color: var(--fg-2); }
 .tr-lt .tr-tap { display: none; }
 @media (hover: none) and (pointer: coarse) { .tr-lt .tr-key { display: none; } .tr-lt .tr-tap { display: inline; } }
-.tr-lt .lt-foot > span:first-child { font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; line-height: 1.45; text-transform: none; color: rgba(245, 242, 236, .72); }
 .tr-lt .tr-nojs { flex-basis: 100%; font-family: var(--sans); font-size: var(--fs-small); letter-spacing: 0; line-height: 1.45; color: rgba(245, 242, 236, .72); }
 @media (scripting: enabled) { .tr-lt .tr-nojs { display: none; } }
 @media (min-width: 961px) {

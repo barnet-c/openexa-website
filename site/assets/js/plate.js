@@ -59,7 +59,26 @@
   const sync = () => { btn.hidden = reduce.matches; };
   sync();
   if (reduce.addEventListener) reduce.addEventListener('change', sync);
-  btn.addEventListener('click', () => { fit(); if (!anims || !anims.length) anims = played(); anims.forEach((a) => { a.cancel(); a.play(); }); release(); });
+  // again(): the whole drawing from its first line (Replay), or, with a test, only the parts that pass it, begun .12 s
+  // before the first of them moves (their delays were timed to follow the plate's own entrance)
+  const again = (part) => {
+    fit(); if (!anims || !anims.length) anims = played();
+    const run = part ? anims.filter((a) => part(a.effect && a.effect.target)) : anims;
+    const lead = part ? Math.max(0, Math.min(...run.map((a) => a.effect.getComputedTiming().delay)) - 120) : 0;
+    run.forEach((a) => { a.cancel(); a.play(); if (lead) a.currentTime = lead; });
+    release();
+  };
+  btn.addEventListener('click', () => again());
+  // hc30r (system's SYS-2): arriving by a page turn the first screen lands whole (site.js ends the entrances that began with
+  // the page), so the plate's one decision was never seen by a visitor who came from another page. After a turn the three
+  // proposals run once more over the standing plate (the layers, the boundary and the labels do not redraw), by the site's
+  // rule for an act (OXA.actOnce: well in view, after the turn has landed, never under reduced motion, never after a touch)
+  const OXA = window.OXA = window.OXA || {};
+  let armed = false;
+  const decision = () => requestAnimationFrame(() => requestAnimationFrame(() => again((el) => el && el.closest && el.closest('.pm-rail'))));
+  const arm = () => { if (armed) return; armed = true; const args = [fig, decision, { paused: () => window.scrollY > 8 }]; if (OXA.actOnce) OXA.actOnce(...args); else (OXA.q = OXA.q || []).push(args); };
+  if (OXA.byTurn || document.documentElement.classList.contains('vt-in')) arm();
+  else window.addEventListener('pagereveal', (e) => { if (e.viewTransition) arm(); });
 })();
 
 /* Platform §05 (hc13r PLAT-1): the dial is the control. Its four labels are one radio group (arrow keys, Home, End; the

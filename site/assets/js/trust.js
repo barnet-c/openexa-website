@@ -287,3 +287,12 @@
   }
   if (ui.ctrl) ui.ctrl.hidden = false;
 })();
+
+/* hc30r (PROOF-2, on system's SYS-2): reached by a page turn the hero plate arrives whole, so its act (a proposal passes
+   the Council and settles) runs once when the turn has landed (OXA.actOnce: in view, never under reduced motion);
+   proof.css .is-act. A direct load plays the act in the plate's entrance, as before */
+(function () {
+  'use strict';
+  const plate = document.querySelector('.hero-plate--council'), O = window.OXA;
+  if (plate && O && O.byTurn && O.actOnce) O.actOnce(plate, () => plate.classList.add('is-act'), { delay: 900 });
+})();

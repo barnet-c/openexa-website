@@ -78,25 +78,44 @@ async def main():
         assert lit["the-result"] and lit["the-result"]["shown"] and lit["the-result"]["has"] and lit["the-result"]["rule"], ("note 09 at 'The result': the plate's rule lit", lit)
         assert not lit["the-setup"]["has"] and lit["the-setup"]["n"] == 0, ("note 09 at 'The setup': nothing lit", lit)
         print(f"note 09: the margin plate lights its rule at 'The result' ({lit['the-result']['n']} parts) and nothing at 'The setup'")
-        # company: sculpture + modes + timeline (1 Nov cut: the mode's copy is the plate's caption, the mode's name; the
-        # manifesto and #mission left the page, see .shots/v2x/TESTS.md section 16)
-        await pg.goto(f"{BASE}/company.html", wait_until="load"); await pg.wait_for_timeout(2500)
-        assert await pg.locator("#company-figure").evaluate("el => el.classList.contains('figure-ready')")
+        # company: the hero figure + timeline (1 Nov cut: the manifesto and #mission left the page, see .shots/v2x/TESTS.md
+        # section 16). hc30r (COMP-1; integrate, standing in for tests, on company's request; TESTS.md section 53): the hero
+        # is one act now, drawn by company-hero.js on a 2D canvas (no figure.js stage, no modes, no live readout). The walk
+        # holds what it held, for the new figure: the figure is drawn (live, its bitmap the box in device pixels, marks in
+        # paper and signal green only, nothing blended), it comes to rest, its caption names and hedges it, and its one
+        # control changes the picture and brings the same picture back (it was: each mode switches the formation and caption)
+        await pg.goto(f"{BASE}/company.html", wait_until="load")
+        CO = r"""() => { const st = document.getElementById('company-figure'), c = st && st.querySelector('canvas'); if (!c || !c.width) return null;
+          const rgba = v => { const g = document.createElement('canvas').getContext('2d'); g.fillStyle = v; g.fillRect(0, 0, 1, 1); return [...g.getImageData(0, 0, 1, 1).data].join(','); };
+          const cs = getComputedStyle(document.documentElement), paper = rgba(cs.getPropertyValue('--paper').trim()), green = rgba(cs.getPropertyValue('--signal-bright').trim());
+          const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, n = { paper: 0, green: 0, clear: 0, other: 0 }; let h = 0;
+          for (let i = 0; i < d.length; i += 4) { const k = d[i] + ',' + d[i + 1] + ',' + d[i + 2] + ',' + d[i + 3];
+            n[k === paper ? 'paper' : k === green ? 'green' : d[i + 3] === 0 ? 'clear' : 'other']++; h = (h * 31 + d[i] * 65536 + d[i + 1] * 256 + d[i + 2] + d[i + 3]) | 0; }
+          const r = c.getBoundingClientRect(), t = s => { const e = document.querySelector(s); return e ? e.textContent.replace(/\s+/g, ' ').trim() : null; }, b = document.querySelector('[data-co-replay]');
+          return { live: st.classList.contains('is-live'), w: c.width, h: c.height, bw: r.width * devicePixelRatio, bh: r.height * devicePixelRatio, n, hash: h,
+                   label: t('.company-readout .fc-t'), hedge: t('.company-readout .fc-h'), replay: !!b && !b.hidden && !!b.getClientRects().length,
+                   old: document.querySelectorAll('[data-figure], .company-modes, [data-plate-label], script[src$="figure.js"]').length }; }"""
+        async def co_rest(why, first=None):
+            """the figure once two readings 600 ms apart are the same picture (the act has ended), within 12 s"""
+            last, t0 = None, time.monotonic()
+            while time.monotonic() - t0 < 12 * max(1.0, V.MODE["throttle"]):
+                now = await pg.evaluate(CO)
+                if now and last and now["hash"] == last["hash"] and (first is None or now["hash"] == first): return now
+                last = now; await pg.wait_for_timeout(600)
+            raise AssertionError((why, last))
+        co = await co_rest("company's hero figure never came to rest")
+        assert co["live"] and co["old"] == 0, ("company's hero: the canvas is live and nothing of the old stage is left", co)
+        assert abs(co["w"] - co["bw"]) <= 1 and abs(co["h"] - co["bh"]) <= 1, ("company's hero canvas is not its box in device pixels", co)
+        assert co["n"]["paper"] > 0 and co["n"]["green"] > 0 and co["n"]["other"] == 0, ("company's hero: marks in paper and signal green only, nothing blended", co["n"])
+        assert co["label"] == "Narrow agents, one job each" and co["hedge"] == "Illustrative", ("company's hero caption", co["label"], co["hedge"])
         await pg.screenshot(path=shot(f"company-hero.png"))
-        # hc26r (COMP-1; integrate, standing in for tests): the hero opens on Specialize ("swarm"), so the walk asserts the
-        # opening state and then presses the other two modes, Coordinate and Act: each switches the formation and its caption
-        assert await pg.locator("#company-figure").get_attribute("data-figure-current") == "swarm"
-        assert await pg.locator('.company-modes button[data-figure-target="swarm"]').get_attribute("aria-pressed") == "true"
-        assert (await pg.locator("[data-plate-label]").inner_text()).startswith("Narrow agents"), await pg.locator("[data-plate-label]").inner_text()
-        await pg.screenshot(path=shot(f"company-specialize.png"))
-        await pg.locator('.company-modes button[data-figure-target="company"]').click(); await pg.wait_for_timeout(1500)
-        assert await pg.locator("#company-figure").get_attribute("data-figure-current") == "company"
-        assert (await pg.locator("[data-plate-label]").inner_text()).startswith("The swarm as one body"), await pg.locator("[data-plate-label]").inner_text()
-        await pg.screenshot(path=shot(f"company-coordinate.png"))
-        await pg.locator('.company-modes button[data-figure-target="boundary"]').click(); await pg.wait_for_timeout(1500)
-        assert await pg.locator("#company-figure").get_attribute("data-figure-current") == "boundary"
-        assert (await pg.locator("[data-plate-label]").inner_text()).startswith("Decide above"), await pg.locator("[data-plate-label]").inner_text()
+        assert co["replay"], ("company's hero: Replay is offered with motion", co)
+        await pg.locator("[data-co-replay]").click(); await pg.wait_for_timeout(450)
+        mid = await pg.evaluate(CO)
+        assert mid["hash"] != co["hash"] and mid["n"]["other"] == 0, ("Replay did not gather the sheet, or a frame of it is blended", mid["n"])
         await pg.screenshot(path=shot(f"company-act.png"))
+        back = await co_rest("after Replay the sheet did not come back to the same picture", first=co["hash"])
+        assert back["n"] == co["n"], ("after Replay the sheet holds other marks", co["n"], back["n"])
         # (hc14) the walk visits every chapter the page lists, whatever their number (§04 #lifecycles left with its heading;
         # its line is §01's): the three chapters, in order. (hc15) "How we build" comes before the team (why, how, who)
         cids = await pg.evaluate("[...document.querySelectorAll('main section[data-chapter]')].map(s => s.id)")
@@ -117,7 +136,7 @@ async def main():
         await pg.goto(f"{BASE}/insights.html", wait_until="load"); await pg.wait_for_timeout(800)
         assert pg.url.endswith("/research.html"), pg.url
         assert not errs, errs
-        print(f"desktop: research index morphs on hover, 10 articles render with TOC + figure, company modes switch the formation and its caption, the timeline reveals, {nch} chapters, insights redirects")
+        print(f"desktop: research index morphs on hover, 10 articles render with TOC + figure, company's hero is live, rests on its sheet ({co['n']['paper']} paper and {co['n']['green']} green pixels, none blended) and Replay brings the same sheet back, the timeline reveals, {nch} chapters, insights redirects")
         await ctx.close()
         # mobile
         ctx = await b.new_context(viewport={"width": 390, "height": 844})
@@ -134,8 +153,9 @@ async def main():
         await ctx.close()
         # hc21 (integrate, standing in for tests; research's optional pins, the director's HC21 4.1): on phones and upright
         # tablets the research pages lead with their words, as every page does: the h1 starts within 160 px of the top (the
-        # page heroes' 142-172; it was 303-526), and a note's hedge, once figure.js hangs it under the drawing, stands below
-        # the meta line and inside the hero (the order: title, meta, drawing, hedge)
+        # page heroes' 142-172; it was 303-526), and a note's hedge stands below the meta line and inside the hero (the
+        # order: title, meta, drawing, hedge). hc30r (RES-1; integrate, on research's request): the hedge hangs from the
+        # lattice's box by CSS (.fg > .figcap); no script places it and no class says so, so there is nothing to wait for
         tops = []
         for vw, vh in ((390, 844), (768, 1024)):
             ctx = await b.new_context(viewport={"width": vw, "height": vh})
@@ -147,7 +167,6 @@ async def main():
                 assert top <= 160, (name, vw, "the h1 starts too far down", top)
                 tops.append(top)
                 if name == "research.html": continue
-                await pg.wait_for_function("!!document.querySelector('.article-hero .article-figcap.is-hung')", timeout=10000)
                 box = await pg.evaluate("(() => { const r = s => document.querySelector(s).getBoundingClientRect(); const m = r('.article-hero .article-meta'), c = r('.article-hero .article-figcap'), h = r('.article-hero'); return { meta: m.bottom, cap: c.top, foot: c.bottom, hero: h.bottom }; })()")
                 assert box["meta"] <= box["cap"] and box["foot"] <= box["hero"] + 1, (name, vw, "the hedge is not under the meta line, in the hero", box)
             assert not errs, errs

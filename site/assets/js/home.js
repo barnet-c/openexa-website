@@ -84,6 +84,45 @@
     });
     addEventListener('pageshow', e => { if (e.persisted) figClear(); });
   }
+  if (!OXA.turn) {
+    OXA.turn = true;
+    const docOf = u => { try { const x = new URL(u, location.href); return x.origin + x.pathname.replace(/(\/index)?(\.html)?\/*$/, ''); } catch (err) { return ''; } };
+    const sent = v => { try { if (v === undefined) return JSON.parse(sessionStorage.getItem('oxa-turn') || 'null'); sessionStorage.setItem('oxa-turn', JSON.stringify(v)); } catch (err) { } return null; };
+    const named = () => Array.from(document.querySelectorAll('[data-vt-dest], [style*="view-transition-name: fig"]'));
+    const arrive = (vt, early) => {
+      root.classList.add('vt-in'); OXA.byTurn = true;
+      const f = sent(), a = window.navigation && navigation.activation;
+      const moving = () => document.getAnimations().some(x => x.effect && /^::view-transition/.test(x.effect.pseudoElement || '') && x.currentTime > 0);
+      if (a && a.navigationType === 'traverse' && a.from && a.entry && a.entry.index < a.from.index && (early || !moving())) { try { vt.types.add('back'); } catch (err) { } }
+      if (early && !(f && f.fig && docOf(f.to) === docOf(location.href) && Date.now() - f.at < 4000)) {
+        const un = named(); un.forEach(d => d.style.setProperty('view-transition-name', 'none'));
+        vt.finished.catch(() => {}).then(() => un.forEach(d => d.style.removeProperty('view-transition-name')));
+      }
+      const first = document.querySelector('main > :first-child'), band = first && !first.classList.contains('story') && first.getAnimations ? first : null;
+      const whole = () => band && band.getAnimations({ subtree: true }).forEach(x => {
+        const t = x.effect && x.effect.getComputedTiming && x.effect.getComputedTiming();
+        if (t && t.iterations !== Infinity && x.timeline === document.timeline && x.playState !== 'finished') { try { x.finish(); } catch (err) { } }
+      });
+      let on = true;
+      const tick = () => { whole(); if (on) requestAnimationFrame(tick); };
+      tick();
+      vt.finished.catch(() => {}).then(() => { on = false; });
+      vt.ready.then(() => {
+        if (!document.getAnimations().some(x => x.effect && x.effect.pseudoElement === '::view-transition-old(fig)')) return;
+        const g = getComputedStyle(root, '::view-transition-group(fig)'), m = /matrix\(([^)]+)\)/.exec(g.transform), t = m ? parseFloat(m[1].split(',')[5]) : 0;
+        root.style.setProperty('--vt-t', t + 'px'); root.style.setProperty('--vt-b', t + (parseFloat(g.height) || 0) + 'px');
+      }, () => { });
+    };
+    addEventListener('pageswap', e => {
+      if (!e.viewTransition) return;
+      const a = e.activation;
+      sent({ to: a && a.entry ? a.entry.url : '', at: Date.now(), fig: named().some(d => getComputedStyle(d).viewTransitionName === 'fig') });
+      root.classList.add('vt-leave');
+    });
+    addEventListener('pageshow', () => root.classList.remove('vt-leave'));
+    addEventListener('pagereveal', e => { root.classList.remove('vt-leave'); if (e.viewTransition) arrive(e.viewTransition, true); });
+    if (document.activeViewTransition && !root.dataset.jump && !root.classList.contains('vt-in')) arrive(document.activeViewTransition, false);
+  }
   if (window.innerWidth > root.clientWidth) root.classList.add('sb-keep');
   const draws = { 'ledger.js': '[data-ledger]', 'lane.js': '[data-lane]', 'arch.js': '[data-arch]' };
   const list = ((me && me.getAttribute('data-after-paint')) || '').split(/\s+/).filter(src => {
