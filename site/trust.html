@@ -75,7 +75,7 @@
           <div class="hero-copy">
             <h1 class="display-1" data-reveal style="--d:60ms">Nothing settles that didn’t&nbsp;pass.</h1>
             <p class="lede" data-reveal style="--d:120ms">The Execution Council checks every proposal against your&nbsp;policy.</p>
-            <p class="tr-go" data-reveal style="--d:160ms"><a class="link-arrow" href="#ledger" data-lt-go>Try to change the past <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></p>
+            <p class="tr-go" data-reveal style="--d:160ms"><a class="link-arrow" href="#ledger" data-lt-go>Try changing a record <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></p>
           </div>
           <!-- Hero plate (schematic): the Council ring standing on the record line; a pass settles as a record, a reject is recorded too. It writes itself once at first paint (proof.css, CSS only): the record so far, a proposal into the Council, the pass that settles, the reject that is logged. The ring 66 % of the plate's height (hc30r; written by .shots/v2x/work/proof/hc30r/trust_plate.py). -->
           <figure class="hero-plate hero-plate--council" data-reveal style="--d:180ms; --hp-ar:1.273" aria-label="The Council over the record: a proposal passes and settles; a rejected one is logged. Schematic.">
@@ -96,7 +96,7 @@
         <div class="sec-head" data-reveal><span class="idx">01</span><span class="lab">The ledger</span></div>
         <!-- the chapter head (site.css; hc5, HC5 item 3): the line under its heading, as in every chapter -->
         <div class="ch-head">
-          <h2 class="display-2 ch-title" data-reveal><span class="ln">Change one record.</span> <span class="ln"><span class="ph">Every link</span> <span class="ph">after it&nbsp;fails.</span></span></h2>
+          <h2 class="display-2 ch-title" data-reveal><span class="ln">Change one record</span> <span class="ln"><span class="ph">and every link</span> <span class="ph">after it&nbsp;fails.</span></span></h2>
           <p class="ch-line" data-reveal style="--d:80ms">Any state can be replayed with&nbsp;the&nbsp;inputs that produced it, by&nbsp;an&nbsp;operator, an auditor or a&nbsp;regulator.</p>
         </div>
 
@@ -158,8 +158,8 @@
       <div class="container">
         <div class="sec-head" data-reveal><span class="idx">02</span><span class="lab">Control plane</span></div>
         <div class="ch-head">
-          <h2 class="display-2 ch-title" data-reveal><span class="ph">Limits live</span> <span class="ph">below the&nbsp;boundary.</span></h2>
-          <p class="ch-line" data-reveal style="--d:80ms">Enforced in the deterministic execution&nbsp;layer, before an&nbsp;action exists, not&nbsp;in&nbsp;the&nbsp;agent that proposed&nbsp;it.</p>
+          <h2 class="display-2 ch-title" data-reveal><span class="ph">Limits are enforced</span> <span class="ph">below the&nbsp;boundary.</span></h2>
+          <p class="ch-line" data-reveal style="--d:80ms">Applied in the deterministic execution&nbsp;layer, before an&nbsp;action exists, not&nbsp;in&nbsp;the&nbsp;agent that proposed&nbsp;it.</p>
         </div>
         <div class="tr-cpl" data-scene>
           <!-- cp:start -->
@@ -184,8 +184,8 @@
         <div class="sec-head" data-reveal><span class="idx">03</span><span class="lab">Custody</span></div>
         <div class="grid tr-cu">
           <div class="col-5 tr-cu-copy">
-            <h2 class="display-2" data-reveal><span class="ph">Where</span> <span class="ph">the assets&nbsp;stay.</span></h2>
-            <p class="body-lg mt-3" data-reveal style="--d:80ms">In your brokerage account. Agents act through scoped permissions, revocable per agent, and can never&nbsp;withdraw.</p>
+            <h2 class="display-2" data-reveal><span class="ph">Assets stay</span> <span class="ph">with your&nbsp;broker.</span></h2>
+            <p class="body-lg mt-3" data-reveal style="--d:80ms">They remain in your brokerage account. Agents act through scoped permissions, revocable per agent, and can never&nbsp;withdraw.</p>
           </div>
           <figure class="col-7 tr-cu-plate" data-reveal data-draw style="--d:120ms">
             <div class="hp-art tr-cud" role="img" aria-label="Your broker holds the assets; an agent acts through one scoped, revocable permission; a withdrawal stops at the account's wall."><svg viewBox="0 0 600 160" focusable="false"><rect class="hp-h hp-strong" x="250" y="14" width="344" height="132" rx="2"/><path class="hp-h" d="M266 128H582"/><rect class="hp-rec" x="420" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="448" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="476" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="504" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="532" y="118" width="20" height="10" rx="1.2"/><rect class="hp-rec" x="560" y="118" width="20" height="10" rx="1.2"/><circle class="hp-g" cx="64" cy="64" r="7"/><path class="hp-gl dm dm--line" pathLength="1" d="M71 64H330V117"/><rect class="hp-gf" x="246.5" y="60.5" width="7" height="7" rx="1"/><rect class="hp-gf" x="323" y="118" width="14" height="10" rx="1.2"/><path class="hp-r hp-dash" d="M430 116C410 100 330 96 258 96"/><path class="hp-r hp-lit" d="M250 84V108"/></svg><div class="hp-labs"><span class="hp-lab hp-lab--c tr-cu-xs" style="--x:10.7;--y:27.5">Agent</span><span class="hp-lab" style="--x:44.3;--y:21.2">Your broker</span><span class="hp-lab hp-lab--r hp-lab--rej" style="--x:40.0;--y:60.0">No withdrawal</span><span class="hp-lab hp-lab--c tr-cu-xs" style="--x:84.0;--y:65.0">Assets</span></div></div>
@@ -211,7 +211,7 @@
 
     <section class="cta-band is-dark grain">
       <div class="container">
-        <h2 class="display-2" data-reveal style="--d:60ms">Bring your compliance team.</h2>
+        <h2 class="display-2" data-reveal style="--d:60ms">Review this with your compliance team.</h2>
         <div class="row" data-reveal style="--d:120ms">
           <a class="btn" href="access.html">Request access <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a>
           <a class="btn btn--ghost" href="platform.html">The platform</a>

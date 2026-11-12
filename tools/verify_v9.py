@@ -1091,7 +1091,7 @@ async def company(b):
       return [...document.querySelectorAll('main > section')].map(s => { const l = lum(getComputedStyle(s).backgroundColor); return (l == null ? body : l) < 0.5 ? 'dark' : 'paper'; }); })()""")
     assert len(tones) == 5 and tones[-1] == "dark" and tones[-2] == "paper" and not any(a == b == "dark" for a, b in zip(tones, tones[1:])), ("company grounds", tones)
     line = await pg.evaluate("(() => { const p = document.querySelector('#story .story-h + p.ch-line'); return p ? p.textContent.replace(/\\s+/g, ' ').trim() : null; })()")
-    assert line == "Finance was the proving ground. It will not be the last.", ("company §01: the chapter's line after its heading", line)
+    assert line == "Finance is the first industry. Others are on the roadmap.", ("company §01: the chapter's line after its heading", line)
     assert await pg.locator(".crew--team > li").count() == 4 and await pg.locator(".crew--advisors > li").count() == 9
     names_team = await pg.locator(".crew--team > li h3").all_inner_texts()
     names_adv = await pg.locator(".crew--advisors > li h3").all_inner_texts()
@@ -1121,7 +1121,7 @@ async def company(b):
     # heading's own colour, never the signal green; CLAUDE.md)
     hero = await pg.evaluate("""(() => { const h = document.querySelector('main h1'), em = h && h.querySelector('em'); if (!em) return null;
       const a = getComputedStyle(h), e = getComputedStyle(em); return { text: h.textContent.replace(/\\s+/g, ' ').trim(), h: a.color, em: e.color, style: e.fontStyle }; })()""")
-    assert hero and hero["text"] == "Intelligence, put to work." and hero["em"] == hero["h"] and hero["style"] == "italic", ("company hero", hero)
+    assert hero and hero["text"] == "The company behind agentic lifecycles." and hero["em"] == hero["h"] and hero["style"] == "italic", ("company hero", hero)
     # lab (31 Oct): §03 draws its idea, one loop of gates and the four constants; it runs on screen (a record is written
     # within a pass), has Pause motion, and pointing at a constant marks it. v2x cut, owner's-eye fix (1 Nov): the
     # register codes C-01...C-04 left the list and the plate (label noise); the four constants are their lines, in order,
@@ -3286,8 +3286,8 @@ async def print_home(b):
     await ctx.close()
     bad = [e for e in els if e["o"] < 0.99 or e["hidden"] or not e["w"] or e["bg"] < 0.8 or e["img"] or e["cr"] < 4.5]
     beats = {e["beat"] for e in els if e["el"].startswith(("h1", "h2"))}
-    kick0 = any(e["beat"] == 0 and re.search(r"eyebrow|kicker", e["el"]) for e in els)
-    assert beats == set(range(5)) and kick0 and not bad, f"print_home index.html@1280 (print): beats with a headline {sorted(beats)}, scene 0's kicker {kick0}; {len(bad)} of {len(els)} overture text elements do not print as dark text on white (opacity 1, contrast >= 4.5, no dark background or image behind), e.g. {bad[:4]}"
+    kick0 = any(e["beat"] == 0 and re.search(r"eyebrow|kicker", e["el"]) for e in els)  # owner, 12 Nov: Home has no kicker ("An AI agentic company" removed), so none may print
+    assert beats == set(range(5)) and not kick0 and not bad, f"print_home index.html@1280 (print): beats with a headline {sorted(beats)}, scene 0's kicker {kick0}; {len(bad)} of {len(els)} overture text elements do not print as dark text on white (opacity 1, contrast >= 4.5, no dark background or image behind), e.g. {bad[:4]}"
     print(f"print_home: {len(els)} overture text elements print at opacity 1, dark on white")
 
 

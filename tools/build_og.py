@@ -34,7 +34,7 @@ OUT = ROOT / "assets" / "img" / "og"
 CACHE = Path(str(DATA)) / "og_cards.json"
 TOP = {"index.html": "Agent swarms", "platform.html": "Platform", "lifecycles.html": "Lifecycles", "evidence.html": "Proof",
        "trust.html": "Trust & governance", "research.html": "Research", "company.html": "Company", "access.html": "Request access"}
-TAGLINE = "An AI agentic company · Lifecycle 01 live on real capital"  # v2x: the CEO's descriptor; C-009's status wording
+TAGLINE = "Lifecycle 01 live on real capital"  # v2x: the CEO's descriptor; C-009's status wording
 # v2x r2 (copy): each top-level card has its own sub-line, written to fit two lines and taken from the page's own words
 # (no claim stronger than the page; the foot already says Lifecycle 01 is live). Notes and posts keep their og:description,
 # clamped at a word boundary with an ellipsis.

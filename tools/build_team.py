@@ -96,6 +96,9 @@ ROOT = Path(str(SITE))
 IMGDIR = ROOT / "assets" / "img" / "team"
 SCHOLAR = "https://scholar.google.com/citations?user=P40aOHIAAAAJ"
 old = {p["name"]: p for p in json.load(open(SRC / "team.json", encoding="utf-8"))}
+# Owner, 12 Nov ("fix and publish as professionally as you can"): bios edited for register only (no fact, name, number or
+# title changed) live in data/team_bios.json; a person listed there prints that text, everyone else the scraped bio.
+BIOS = json.load(open(FILES / "team_bios.json", encoding="utf-8"))
 
 DROP = [  # sentences removed from bios (old crypto-business positioning)
     "At OpenEXA, Victor is busy designing the business workflow for the movement of real world assets into crypto markets.",
@@ -137,7 +140,7 @@ def tie(s):  # 2026-11-08 (hc19): a card line never ends a line on a short word 
     return f"{head}&nbsp;{last}" if head and len(unit) <= 24 else s  # 24: a longer tied unit leaves a short line above it on a phone
 # (slug, display name, source name, title, short line, v1 photo or None, extra links)
 TEAM = [
-    ("ajit-dubey", "Ajit K Dubey", "Ajit K Dubey", "Founder · CEO", "Founder and CEO of OpenEXA. Big Tech and capital-markets veteran, building the foundational infrastructure for agentic lifecycles.", "ajit-dubey", []),
+    ("ajit-dubey", "Ajit K Dubey", "Ajit K Dubey", "Founder · CEO", "Founder and CEO of OpenEXA. His background spans Big Tech and capital markets.", "ajit-dubey", []),
     ("tim-leung", "Dr. Tim Leung", "Tim Leung, Ph.D.", "Chief Scientist", "Boeing Endowed Chair Professor of Applied Mathematics and Director of Computational Finance & Risk Management at the University of Washington.", "tim-leung", [("Google Scholar", SCHOLAR)]),
     ("mike-lockhart", "Mike Lockhart", "Mike Lockhart", "Chief Technology", "Architect of high-stakes systems, including those that touch 90% of Microsoft's revenue.", "mike-lockhart", []),
     ("shalabh-choudhri", "Shalabh Choudhri", "Shalabh Choudhri", "Chief AI Agents", "Leads agent research and the post-trained models behind OpenEXA's domain-specific execution agents.", "shalabh-choudhri", []),
@@ -156,7 +159,7 @@ ADVISORS = [
     ("victor-gamolsky", "Victor Gamolsky", "Victor Gamolsky", "Advisor · Strategy & Technology", "A decade of building and scaling ventures with lean, evidence-driven product methods.", "victor-gamolsky", []),
     ("abhishek-sinha", "Abhishek Sinha", "Abhishek Sinha", "Advisor · Technology Programs", "Over a decade delivering V1 initiatives, with experience in large technology companies such as Amazon and Microsoft.", None, []),
     ("julius-ekeroma", "Dr. Julius E. Ekeroma", "Dr. Julius E. Ekeroma, Ph.D.", "Advisor · Compliance & Risk", "Expert in compliance and financial risk, with 25+ years in auditing, operations and financial forensics.", None, []),
-    ("dipit-nanawati", "Dipit Nanawati", "Dipit Nanawati", "Advisor · Financial Markets", "A trusted advisor to some of Wall Street's largest firms on operational efficiency, compliance and profitability.", None, []),
+    ("dipit-nanawati", "Dipit Nanawati", "Dipit Nanawati", "Advisor · Financial Markets", "Has advised some of Wall Street's largest firms on operational efficiency, compliance and profitability.", None, []),
     ("subuddh-parekh", "Subuddh Parekh", "Subuddh Parekh", "Advisor · AI & ML", "Engineering, product and machine-learning expert, with a BS and MS in Computer Science from Stanford.", None, []),
 ]
 
@@ -239,6 +242,7 @@ IMGDIR.mkdir(parents=True, exist_ok=True)  # never wiped: a renamed portrait's o
 
 # ---------------- markup ----------------
 def bio(src_name):
+    if src_name in BIOS: return "".join(f"<p>{H.escape(curly(p), quote=False)}</p>" for p in BIOS[src_name])
     out = []
     for para in old[src_name]["bio"]:
         for s in DROP: para = para.replace(s, "")
@@ -276,7 +280,7 @@ SECTION = f'''    <!-- 03 THE TEAM -->
     <section class="section" id="team" data-chapter="The team" data-n="03">
       <div class="container">
         <div class="ch-head ch-spread team-head">
-          <h2 class="display-2 ch-title" data-reveal data-split>Systems people and market people.</h2>
+          <h2 class="display-2 ch-title" data-reveal data-split>A team from systems engineering and capital markets.</h2>
           <p class="ch-line" data-reveal style="--d:80ms">Between them, they have built and led work at&nbsp;Google, Microsoft, Amazon, PayPal, Goldman&nbsp;Sachs, Bank&nbsp;of&nbsp;America and JPMorgan&nbsp;Chase.</p>
           <div class="crew-stats" data-reveal style="--d:140ms">
             <div><b>{len(TEAM)}</b><span>Team members</span></div>

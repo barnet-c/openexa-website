@@ -1,5 +1,5 @@
 {
- "access.html": "f87e791d0ad487c2",
+ "access.html": "74ba1ca61b77edd2",
  "blog/an-optimization-algorithm-for-sparse-mean-reverting-portfolio-selection.html": "e393b1a218646aa3",
  "blog/automation-financial-frictions-and-the-long-run-labor-share.html": "f58b974783ad30a4",
  "blog/buying-high-and-selling-low-stock-repurchases-and-persistent-asymmetric-information.html": "c33b9d600ada7825",
@@ -30,12 +30,12 @@
  "blog/the-labor-market-for-bankers-and-regulators.html": "225017953a9013c8",
  "blog/the-real-effects-of-financial-markets.html": "e9b9ef56f74c2fe2",
  "blog/why-banks-exist-unveiling-the-vital-role-of-credit-in-the-financial-system.html": "bc5e8eed5484f8e9",
- "company.html": "5d30ac67d7727302",
- "evidence.html": "4d67adb7b404e848",
- "index.html": "9c70f6578aa9baee",
- "lifecycles.html": "004443265a61fe59",
- "platform.html": "9da143ea3f05f702",
- "research.html": "6278bd7c451e8cca",
+ "company.html": "1f1d03b65ffb331d",
+ "evidence.html": "8de4001c3046964b",
+ "index.html": "8bd37b3a0a808bb1",
+ "lifecycles.html": "f766061dbf4eaa8a",
+ "platform.html": "86e584291afb6324",
+ "research.html": "d0f82756c41636ae",
  "research/01-compounding-error.html": "c2e9914901ac2193",
  "research/02-post-training-and-audit.html": "e5c2b1a7c6571bb3",
  "research/03-not-tasks-lifecycles.html": "f9c47a826cc4423b",
@@ -46,5 +46,5 @@
  "research/08-a-ledger-nobody-can-edit.html": "13dab169393403a8",
  "research/09-lifecycle-01-ten-sessions.html": "6525079eaf5e1b2f",
  "research/10-master-and-copy.html": "6a38de530d120626",
- "trust.html": "c07f078a81847a81"
+ "trust.html": "a890dd73b0072d49"
 }

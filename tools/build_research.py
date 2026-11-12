@@ -624,7 +624,7 @@ RUN = {
     "boundary": [("Explore the eight layers and the boundary", "../platform.html#architecture")],
     "rulebook": [("Find the model layer in the architecture explorer", "../platform.html#architecture")],
     "council": [("Tighten the Council in the swarm lab", "../index.html#lc01")],
-    "ledger": [("Replay a ledger excerpt, then try to change the past", "../trust.html#ledger")],
+    "ledger": [("Replay a ledger excerpt, then try changing a record", "../trust.html#ledger")],
     "sessions": [("See the ten sessions on the Proof page", "../evidence.html"), ("Run one simulated session on the desk", "../lifecycles.html#desk")],
     "mastercopy": [("The six lifecycle classes, status by ring", "../lifecycles.html#classes")],
 }
@@ -871,7 +871,7 @@ for i, post in enumerate(ordered):
     # has no canvas: its still is the figure, and the pass of light is the still's own (LIT, above)
     plate = margin_plate(post["fig"], {a for a, _ in heads})
     first = "<a class='pager-card' href='../research.html'><span class='k'>← Research</span><h3>All ten notes</h3></a>"
-    last = "<a class='pager-card next' href='../access.html'><span class='k'>Next →</span><h3>Bring us a lifecycle.</h3></a>"
+    last = "<a class='pager-card next' href='../access.html'><span class='k'>Next →</span><h3>Bring a lifecycle to OpenEXA.</h3></a>"
     page = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
